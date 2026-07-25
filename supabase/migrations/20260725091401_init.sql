@@ -1,0 +1,4 @@
+-- Initial schema migration.
+-- Add tables, indexes, and RLS policies here, then apply with:
+--   pnpm supabase:reset   (local, reapplies all migrations + seed)
+--   pnpm supabase db push (remote linked project)

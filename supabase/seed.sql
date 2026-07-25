@@ -1,0 +1,3 @@
+-- Seed data for local development (applied by `supabase db reset`).
+-- Example:
+-- insert into public.profiles (id, display_name) values (...);
