@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
-import { fetchDomainIdForTerm } from "@/lib/jargon/queries";
+import { fetchDomainIdForTerm } from "@/lib/jargon/terms";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
 import Link from "next/link";

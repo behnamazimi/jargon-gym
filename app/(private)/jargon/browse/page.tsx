@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { fetchSharedDomainsBrowse } from "@/lib/jargon/queries";
+import { fetchSharedDomainsBrowse } from "@/lib/jargon/browse";
 import { SharedDomainsBrowse } from "@/components/jargon/shared-domains-browse";
 
 export default async function BrowseSharedDomainsPage() {

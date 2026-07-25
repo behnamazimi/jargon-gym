@@ -5,12 +5,12 @@ import { loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
 import {
   addDomainToCollection,
   deleteDomain,
-  fetchSharedDomainsBrowse,
   removeDomainFromCollection,
   setDomainActiveForReview,
   setDomainVisibility,
-} from "@/lib/jargon/queries";
-import { upsertTermKnown } from "@/lib/jargon/queries";
+} from "@/lib/jargon/collections";
+import { fetchSharedDomainsBrowse } from "@/lib/jargon/browse";
+import { upsertTermKnown } from "@/lib/jargon/known-state";
 import { revalidatePath } from "next/cache";
 
 async function getAuthenticatedClient() {

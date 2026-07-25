@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchWidgetState } from "@/lib/jargon/queries";
+import { fetchWidgetState } from "@/lib/jargon/widget-projection";
 import { authenticateWidgetRequest } from "@/lib/widget/auth-request";
 
 export async function GET(request: Request) {

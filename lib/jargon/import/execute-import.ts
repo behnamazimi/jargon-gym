@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { createOrGetOwnedDomain } from "@/lib/jargon/queries";
+import { createOrGetOwnedDomain } from "@/lib/jargon/collections";
 import { formatImportFailure, ImportExecutionError } from "./errors";
 import type { ImportPayload, ImportResult } from "./types";
 

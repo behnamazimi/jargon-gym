@@ -1,12 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
-import {
-  fetchKnownTermIdsForDomains,
-  fetchTermRelationshipsForTerms,
-  fetchTermsByDomain,
-  resolveReviewDomainIds,
-} from "./queries";
+import { fetchKnownTermIdsForDomains, resolveReviewDomainIds } from "./known-state";
+import { fetchTermRelationshipsForTerms, fetchTermsByDomain } from "./terms";
 import type { JargonPageData } from "./types";
 
 type Client = SupabaseClient<Database>;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { isTermInReviewPool, upsertTermKnown } from "@/lib/jargon/queries";
+import { isTermInReviewPool, upsertTermKnown } from "@/lib/jargon/known-state";
 import { authenticateWidgetRequest } from "@/lib/widget/auth-request";
 
 const bodySchema = z.object({

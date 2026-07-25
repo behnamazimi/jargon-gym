@@ -17,11 +17,11 @@ Full visual report (Mermaid + before/after diagrams) was generated at review tim
 
 The same user action — "I know this term" — has three implementations with two different postconditions:
 
-| Channel | Pool check? | Clears `all_caught_up_at`? |
-|---|---|---|
-| Web UI (`setTermKnown` → `upsertTermKnown`) | No | No |
-| Widget API (`isTermInReviewPool` then `upsertTermKnown`) | Yes (TS) | No |
-| Telegram (`mark_term_known` RPC) | Yes (SQL) | Yes |
+| Channel                                                  | Pool check? | Clears `all_caught_up_at`? |
+| -------------------------------------------------------- | ----------- | -------------------------- |
+| Web UI (`setTermKnown` → `upsertTermKnown`)              | No          | No                         |
+| Widget API (`isTermInReviewPool` then `upsertTermKnown`) | Yes (TS)    | No                         |
+| Telegram (`mark_term_known` RPC)                         | Yes (SQL)   | Yes                        |
 
 **Problem:** nothing enforces that the three implementations agree; this is a live data-integrity risk, not a hypothetical one.
 
@@ -29,7 +29,7 @@ The same user action — "I know this term" — has three implementations with t
 
 **Wins:** locality (bug lives in one place), leverage (one interface, three call sites), interface shrinks to a single call.
 
-### 2. Stop defining the review pool twice — Strong
+### 2. Stop defining the review pool twice — Strong — **DONE, DO NOT include in any plan again** (planned 2026-07-25)
 
 **Files:** `lib/jargon/queries.ts` (`resolveReviewDomainIds`), `supabase/migrations/20260725200000_telegram.sql` (`telegram_review_domain_ids`)
 
@@ -79,7 +79,7 @@ A presentational menu directly imports five server actions (`deleteOwnedDomain`,
 
 **Wins:** menu becomes testable without mocking five actions; module reusable from tabs/browse too.
 
-### 7. `queries.ts` is one file playing four modules — Strong
+### 7. `queries.ts` is one file playing four modules — Strong — **DONE, DO NOT include in any plan again** (planned 2026-07-25)
 
 **Files:** `lib/jargon/queries.ts` (438 LOC), `supabase/functions/_shared/term-service.ts` (92 LOC)
 
