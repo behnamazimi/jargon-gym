@@ -15,6 +15,15 @@ import {
   SettingsGroup,
   StatusPill,
 } from "@/components/jargon/settings/ui";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   TELEGRAM_CADENCE_OPTIONS,
   type TelegramCadence,
@@ -107,7 +116,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
       <div className="flex flex-wrap items-center gap-2">
         <StatusPill variant={telegramStatusVariant(status)} />
         {status.connected && linkedSince ? (
-          <span className="text-[12px] text-muted">Linked {linkedSince}</span>
+          <span className="text-[12px] text-muted-foreground">Linked {linkedSince}</span>
         ) : null}
       </div>
 
@@ -118,14 +127,14 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
           title="Connect"
           description="Generate a one-time link, open it in Telegram, and tap Start. Links expire after 15 minutes."
         >
-          <button
+          <Button
             type="button"
-            onClick={handleGenerateLink}
-            disabled={isGenerating}
-            className="rounded-lg bg-accent px-3.5 py-2 text-[13px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+            onPress={handleGenerateLink}
+            isDisabled={isGenerating}
+            className="text-[13px]"
           >
             {isGenerating ? "Generating…" : "Generate Telegram link"}
-          </button>
+          </Button>
 
           {deepLink ? (
             <HighlightPanel label="Open in Telegram">
@@ -134,7 +143,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
                 href={deepLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-accent no-underline hover:underline"
+                className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-primary no-underline hover:underline"
               >
                 Open bot
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -150,38 +159,43 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
             title="Reminders"
             description="Scheduled sends use rolling intervals from your last reminder."
           >
-            <label className="flex max-w-xs flex-col gap-1.5 text-[13px]">
-              <span className="font-medium text-foreground">Cadence</span>
-              <select
-                value={status.cadence}
-                onChange={(event) => handleCadenceChange(event.target.value as TelegramCadence)}
-                disabled={isSavingCadence}
-                className="rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent disabled:opacity-50"
+            <Field className="max-w-xs">
+              <FieldLabel htmlFor="telegram-cadence">Cadence</FieldLabel>
+              <Select
+                selectedKey={status.cadence}
+                onSelectionChange={(key) => handleCadenceChange(key as TelegramCadence)}
+                isDisabled={isSavingCadence}
               >
-                {TELEGRAM_CADENCE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <SelectTrigger id="telegram-cadence" className="text-[13px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TELEGRAM_CADENCE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} id={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
           </SettingsGroup>
 
           <SettingsDivider />
 
           <SettingsGroup title="Disconnect">
-            <p className="text-[13px] text-muted">
+            <p className="text-[13px] text-muted-foreground">
               Stop Telegram reminders and unlink this chat. You can reconnect anytime.
             </p>
-            <button
+            <Button
               type="button"
-              onClick={handleDisconnect}
-              disabled={isDisconnecting}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-[13px] font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
+              variant="outline"
+              onPress={handleDisconnect}
+              isDisabled={isDisconnecting}
+              className="text-[13px] text-destructive hover:bg-destructive/10"
             >
               <Unlink className="h-3.5 w-3.5" />
               {isDisconnecting ? "Disconnecting…" : "Disconnect Telegram"}
-            </button>
+            </Button>
           </SettingsGroup>
         </>
       )}

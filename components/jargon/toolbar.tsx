@@ -1,4 +1,15 @@
+"use client";
+
 import type { SortMode } from "@/lib/jargon/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ToolbarProps = {
   hideKnown: boolean;
@@ -16,34 +27,35 @@ export function Toolbar({
   visibleCount,
 }: ToolbarProps) {
   return (
-    <>
-      <div className="-mt-0.5 mb-2.5 text-[11.5px] text-muted">
-        Tap a term to expand it · the ✓ circle marks it as known
-      </div>
-      <div className="mb-[18px] flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-3.5">
-          <label className="flex cursor-pointer items-center gap-1.5 text-[12.5px] text-muted select-none">
-            <input
-              type="checkbox"
-              checked={hideKnown}
-              onChange={(e) => onHideKnownChange(e.target.checked)}
-              className="accent-accent"
-            />
-            Hide terms I know
-          </label>
-          <select
-            className="cursor-pointer rounded-lg border border-border bg-surface px-2 py-[5px] text-[12.5px] text-muted"
-            value={sortMode}
-            onChange={(e) => onSortChange(e.target.value as SortMode)}
-            title="Change the order terms are listed in"
+    <div className="space-y-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <Field orientation="horizontal" className="w-auto items-center gap-1.5">
+            <Checkbox id="hide-known" isSelected={hideKnown} onChange={onHideKnownChange} />
+            <FieldLabel htmlFor="hide-known" className="text-xs font-normal text-muted-foreground">
+              Hide terms I know
+            </FieldLabel>
+          </Field>
+          <Select
+            selectedKey={sortMode}
+            onSelectionChange={(key) => onSortChange(key as SortMode)}
+            aria-label="Sort terms"
           >
-            <option value="default">Sort: category order</option>
-            <option value="az">Sort: A–Z</option>
-            <option value="unknown">Sort: unknown first</option>
-          </select>
+            <SelectTrigger size="sm" className="text-xs text-muted-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem id="default">Sort: category order</SelectItem>
+              <SelectItem id="az">Sort: A–Z</SelectItem>
+              <SelectItem id="unknown">Sort: unknown first</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <span className="text-[13px] text-muted">{visibleCount} shown</span>
+        <span className="text-sm text-muted-foreground">{visibleCount} shown</span>
       </div>
-    </>
+      <p className="text-xs text-muted-foreground">
+        Tap a term to expand it · the ✓ circle marks it as known
+      </p>
+    </div>
   );
 }

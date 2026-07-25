@@ -3,7 +3,6 @@
 import {
   BookmarkMinus,
   BookOpen,
-  CheckCircle2,
   FolderOpen,
   Globe,
   Link2,
@@ -15,6 +14,17 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import type { Domain } from "@/lib/jargon/types";
-import { MetaItem } from "./icon-ui";
+import { cn } from "@/lib/utils";
 
 type DomainActionsMenuProps = {
   domain: Domain;
@@ -33,6 +43,7 @@ type DomainActionsMenuProps = {
 
 export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
   const router = useRouter();
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const {
     error,
     isBusy,
@@ -46,13 +57,18 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
 
   const disabled = isBusy && busyId === domain.id;
 
+  function handleConfirmDelete() {
+    deleteOwnedDomain(domain.id, () => router.push("/jargon"));
+    setDeleteOpen(false);
+  }
+
   return (
     <div className="relative shrink-0">
       <DropdownMenuTrigger>
         <Button
           variant="ghost"
           size="icon-sm"
-          className="text-muted hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground"
           aria-label="Collection actions"
           isDisabled={disabled}
         >
@@ -88,10 +104,7 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
               <DropdownMenuItem
                 variant="destructive"
                 isDisabled={disabled}
-                onAction={() => {
-                  if (!confirm(`Delete "${domain.name}" and all its terms?`)) return;
-                  deleteOwnedDomain(domain.id, () => router.push("/jargon"));
-                }}
+                onAction={() => setDeleteOpen(true)}
               >
                 <Trash2 className="h-4 w-4" />
                 Delete domain
@@ -114,37 +127,94 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
         </DropdownMenu>
       </DropdownMenuTrigger>
 
+      <AlertDialog isOpen={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete domain?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Delete &ldquo;{domain.name}&rdquo; and all its terms? This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onPress={handleConfirmDelete}>
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
+
       {error ? (
-        <p className="absolute right-0 top-full mt-10 w-48 text-[11px] text-red-600">{error}</p>
+        <p className="absolute right-0 top-full mt-10 w-48 text-xs text-destructive">{error}</p>
       ) : null}
     </div>
   );
 }
 
-export function DomainMeta({ domain, categoryCount }: { domain: Domain; categoryCount: number }) {
+function StatusBadge({
+  icon: Icon,
+  label,
+  variant,
+}: {
+  icon: typeof Globe;
+  label: string;
+  variant: "private" | "shared" | "added" | "active" | "paused";
+}) {
   return (
-    <div className="min-w-0 flex-1">
-      {domain.description ? (
-        <p className="truncate text-[13px] text-foreground/80">{domain.description}</p>
-      ) : null}
-      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
-        {domain.source === "owned" ? (
-          domain.visibility === "shared" ? (
-            <MetaItem icon={Globe} label="Shared" />
-          ) : (
-            <MetaItem icon={Lock} label="Private" />
-          )
-        ) : (
-          <MetaItem icon={Link2} label="Added" />
-        )}
+    <Badge
+      variant="outline"
+      className={cn(
+        "gap-1 font-medium",
+        variant === "private" && "border-border bg-muted/50 text-muted-foreground",
+        variant === "shared" && "border-primary/30 bg-primary/10 text-primary",
+        variant === "added" && "border-border bg-secondary text-secondary-foreground",
+        variant === "active" && "border-primary/40 bg-primary/15 text-primary",
+        variant === "paused" && "border-border bg-muted text-muted-foreground",
+      )}
+    >
+      <Icon className="size-3" aria-hidden />
+      {label}
+    </Badge>
+  );
+}
 
-        <MetaItem
-          icon={domain.isActiveForReview ? Play : Pause}
-          label={domain.isActiveForReview ? "Active" : "Paused"}
-        />
-        <MetaItem icon={FolderOpen} label={`${domain.termCount} terms`} />
-        <MetaItem icon={BookOpen} label={`${categoryCount} categories`} />
-        <MetaItem icon={CheckCircle2} label={`${domain.knownCount}/${domain.termCount} known`} />
+function StatItem({ icon: Icon, label }: { icon: typeof FolderOpen; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+      <Icon className="size-3.5 shrink-0 opacity-60" aria-hidden />
+      {label}
+    </span>
+  );
+}
+
+export function DomainMeta({ domain, categoryCount }: { domain: Domain; categoryCount: number }) {
+  const visibilityVariant =
+    domain.source === "owned" ? (domain.visibility === "shared" ? "shared" : "private") : "added";
+
+  const VisibilityIcon =
+    domain.source === "owned" ? (domain.visibility === "shared" ? Globe : Lock) : Link2;
+
+  const visibilityLabel =
+    domain.source === "owned" ? (domain.visibility === "shared" ? "Shared" : "Private") : "Added";
+
+  return (
+    <div className="min-w-0 flex-1 space-y-2">
+      {domain.description ? (
+        <p className="max-w-prose text-base leading-relaxed text-foreground/85">
+          {domain.description}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <StatusBadge icon={VisibilityIcon} label={visibilityLabel} variant={visibilityVariant} />
+          <StatusBadge
+            icon={domain.isActiveForReview ? Play : Pause}
+            label={domain.isActiveForReview ? "Active" : "Paused"}
+            variant={domain.isActiveForReview ? "active" : "paused"}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <StatItem icon={FolderOpen} label={`${domain.termCount} terms`} />
+          <StatItem icon={BookOpen} label={`${categoryCount} categories`} />
+        </div>
       </div>
     </div>
   );

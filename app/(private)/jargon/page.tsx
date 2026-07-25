@@ -18,7 +18,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
   if (!user) {
     return (
       <div className="flex min-h-full items-center justify-center bg-background px-4 py-12 text-foreground">
-        <p className="text-sm text-muted">You must be logged in to view jargon.</p>
+        <p className="text-sm text-muted-foreground">You must be logged in to view jargon.</p>
       </div>
     );
   }
@@ -50,10 +50,10 @@ export default async function JargonListPage({ searchParams }: PageProps) {
 
     return (
       <div className="flex min-h-full flex-col items-center justify-center gap-3 bg-background px-4 py-12 text-foreground">
-        <p className="text-sm text-muted">{message}</p>
+        <p className="text-sm text-muted-foreground">{message}</p>
         <Link
           href="/jargon/import"
-          className="text-sm font-medium text-accent underline-offset-2 hover:underline"
+          className="text-sm font-medium text-primary underline-offset-2 hover:underline"
         >
           Import jargon
         </Link>

@@ -1,3 +1,8 @@
+"use client";
+
+import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
+
 type CategoryChipsProps = {
   categories: string[];
   counts: Record<string, number>;
@@ -5,6 +10,9 @@ type CategoryChipsProps = {
   activeCategories: Set<string>;
   onToggle: (cat: string) => void;
 };
+
+const chipClassName =
+  "h-auto min-w-0 rounded-full border-none px-3 py-2 text-xs font-normal data-selected:bg-primary data-selected:text-primary-foreground bg-secondary text-foreground hover:bg-secondary hover:text-foreground data-selected:hover:bg-primary";
 
 export function CategoryChips({
   categories,
@@ -14,33 +22,28 @@ export function CategoryChips({
   onToggle,
 }: CategoryChipsProps) {
   return (
-    <div className="mb-2 flex flex-wrap gap-1.5">
-      <button
-        type="button"
-        className={`flex cursor-pointer items-center gap-1.5 rounded-full border-none px-3 py-1.5 text-[12.5px] whitespace-nowrap transition-colors ${
-          activeCategories.size === 0
-            ? "bg-chip-active text-chip-active-foreground"
-            : "bg-chip text-foreground"
-        }`}
-        onClick={() => onToggle("All")}
-        title="Show every category"
+    <div className="flex flex-wrap gap-1.5">
+      <Toggle
+        isSelected={activeCategories.size === 0}
+        onChange={() => onToggle("All")}
+        aria-label="Show every category"
+        className={cn(
+          chipClassName,
+          activeCategories.size === 0 && "bg-primary text-primary-foreground",
+        )}
       >
-        All <span className="text-[11px] opacity-55"> {totalCount}</span>
-      </button>
-      {categories.map((c) => (
-        <button
-          key={c}
-          type="button"
-          className={`flex cursor-pointer items-center gap-1.5 rounded-full border-none px-3 py-1.5 text-[12.5px] whitespace-nowrap transition-colors ${
-            activeCategories.has(c)
-              ? "bg-chip-active text-chip-active-foreground"
-              : "bg-chip text-foreground"
-          }`}
-          onClick={() => onToggle(c)}
-          title="Click to add or remove this category from the filter"
+        All <span className="text-xs opacity-55"> {totalCount}</span>
+      </Toggle>
+      {categories.map((category) => (
+        <Toggle
+          key={category}
+          isSelected={activeCategories.has(category)}
+          onChange={() => onToggle(category)}
+          aria-label={`Filter by ${category}`}
+          className={chipClassName}
         >
-          {c} <span className="text-[11px] opacity-55">{counts[c] ?? 0}</span>
-        </button>
+          {category} <span className="text-xs opacity-55">{counts[category] ?? 0}</span>
+        </Toggle>
       ))}
     </div>
   );

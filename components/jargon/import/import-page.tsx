@@ -1,13 +1,14 @@
 "use client";
 
+import { Upload } from "lucide-react";
 import { useState } from "react";
-import Link from "next/link";
 import { confirmImport, validateImportJson } from "@/app/(private)/jargon/import/actions";
 import type { ImportFailure, ImportPreview } from "@/lib/jargon/import/types";
 import { ImportForm } from "@/components/jargon/import/import-form";
 import { ImportFailurePanel } from "@/components/jargon/import/import-errors";
 import { ImportPreviewPanel } from "@/components/jargon/import/import-preview";
 import { ImportLlmPrompt } from "@/components/jargon/import/import-llm-prompt";
+import { PageHeader } from "@/components/jargon/page-header";
 
 export function ImportPageClient() {
   const [raw, setRaw] = useState("");
@@ -47,40 +48,32 @@ export function ImportPageClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[720px] px-5 py-7">
-      <div className="mb-6 flex items-baseline justify-between gap-3">
-        <div>
-          <h1 className="m-0 text-[22px] font-bold tracking-tight">
-            <span className="text-accent">Import</span> jargon
-          </h1>
-          <p className="mt-1 text-[13px] text-muted">
-            Paste JSON to create or merge into one of your owned domains.
-          </p>
-        </div>
-        <Link
-          href="/jargon"
-          className="text-[13px] font-medium text-accent underline-offset-2 hover:underline"
-        >
-          Back to jargon
-        </Link>
-      </div>
-
-      <div className="space-y-4">
-        <ImportLlmPrompt />
-        <ImportForm
-          value={raw}
-          onChange={setRaw}
-          onValidate={handleValidate}
-          isValidating={isValidating}
-          onFailure={setFailure}
+    <div className="min-h-full bg-gradient-to-b from-primary/[0.06] via-background to-background text-foreground">
+      <div className="mx-auto max-w-[720px] space-y-5 px-5 py-7 pb-20">
+        <PageHeader
+          icon={Upload}
+          title="Import jargon"
+          description="Paste JSON to create or merge into one of your owned domains."
+          backLabel="Back to jargon"
         />
+
+        <div className="space-y-4">
+          <ImportLlmPrompt />
+          <ImportForm
+            value={raw}
+            onChange={setRaw}
+            onValidate={handleValidate}
+            isValidating={isValidating}
+            onFailure={setFailure}
+          />
+        </div>
+
+        {failure ? <ImportFailurePanel failure={failure} /> : null}
+
+        {preview ? (
+          <ImportPreviewPanel preview={preview} onImport={handleImport} isImporting={isImporting} />
+        ) : null}
       </div>
-
-      {failure ? <ImportFailurePanel failure={failure} /> : null}
-
-      {preview ? (
-        <ImportPreviewPanel preview={preview} onImport={handleImport} isImporting={isImporting} />
-      ) : null}
     </div>
   );
 }

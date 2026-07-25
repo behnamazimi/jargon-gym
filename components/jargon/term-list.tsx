@@ -18,12 +18,14 @@ export function TermList({
 }: TermListProps) {
   if (terms.length === 0) {
     return (
-      <p className="py-10 text-center text-[13.5px] text-muted">No terms match your filters.</p>
+      <p className="py-10 text-center text-sm text-muted-foreground">
+        No terms match your filters.
+      </p>
     );
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {terms.map((term) => (
         <TermCard
           key={term.id}

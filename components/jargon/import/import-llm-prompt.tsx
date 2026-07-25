@@ -2,6 +2,10 @@
 
 import { Check, Copy } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { buildImportLlmPrompt } from "@/lib/jargon/import/llm-prompt";
 
 export function ImportLlmPrompt() {
@@ -18,46 +22,49 @@ export function ImportLlmPrompt() {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-surface shadow-sm">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left text-[13px] font-medium"
-      >
+    <Collapsible
+      isExpanded={open}
+      onExpandedChange={setOpen}
+      className="rounded-lg bg-card text-card-foreground ring-1 ring-foreground/10"
+    >
+      <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium">
         <span>LLM prompt</span>
-        <span className="text-muted">{open ? "Hide" : "Show"}</span>
-      </button>
+        <span className="text-muted-foreground">{open ? "Hide" : "Show"}</span>
+      </CollapsibleTrigger>
 
-      {open ? (
+      <CollapsibleContent>
         <div className="space-y-3 border-t border-border px-4 py-4">
-          <p className="m-0 text-[13px] leading-relaxed text-muted">
+          <p className="m-0 text-sm leading-relaxed text-muted-foreground">
             Copy this prompt into ChatGPT, Claude, or another LLM. Paste the JSON it returns into
             the box below.
           </p>
 
-          <label className="flex flex-col gap-1.5 text-[13px]">
-            <span className="font-medium text-foreground">Your domain</span>
-            <input
+          <Field>
+            <FieldLabel htmlFor="import-llm-domain">Your domain</FieldLabel>
+            <Input
+              id="import-llm-domain"
               type="text"
               value={domain}
               onChange={(event) => setDomain(event.target.value)}
               placeholder="e.g. Product Management, DevOps, Finance"
-              className="rounded-lg border border-border bg-background px-3 py-2 text-[13px] outline-none focus:border-accent"
+              className="text-sm"
             />
-          </label>
+          </Field>
 
           <div className="relative">
-            <pre className="max-h-[320px] overflow-auto rounded-lg border border-border bg-background p-3 text-[12px] leading-5 text-foreground whitespace-pre-wrap">
+            <pre className="max-h-[320px] overflow-auto rounded-lg border border-border bg-background p-3 text-xs leading-5 whitespace-pre-wrap text-foreground">
               {prompt}
             </pre>
-            <button
+            <Button
               type="button"
-              onClick={handleCopy}
-              className="absolute right-2 top-2 inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[12px] font-medium shadow-sm"
+              variant="outline"
+              size="sm"
+              onPress={handleCopy}
+              className="absolute top-2 right-2 text-xs"
             >
               {copied ? (
                 <>
-                  <Check className="h-3.5 w-3.5 text-success" />
+                  <Check className="h-3.5 w-3.5 text-primary" />
                   Copied
                 </>
               ) : (
@@ -66,10 +73,10 @@ export function ImportLlmPrompt() {
                   Copy prompt
                 </>
               )}
-            </button>
+            </Button>
           </div>
         </div>
-      ) : null}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

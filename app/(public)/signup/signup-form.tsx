@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { signup } from "./actions";
 
 export default function SignupForm() {
@@ -11,54 +15,49 @@ export default function SignupForm() {
     <form action={action} className="flex w-full max-w-sm flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">Sign up</h1>
 
-      {state?.error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{state.error}</p>
-      )}
+      {state?.error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        Email
-        <input
-          type="email"
-          name="email"
-          required
-          autoComplete="email"
-          className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-500"
-        />
-      </label>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="signup-email">Email</FieldLabel>
+          <Input id="signup-email" type="email" name="email" required autoComplete="email" />
+        </Field>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        Password
-        <input
-          type="password"
-          name="password"
-          required
-          autoComplete="new-password"
-          className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-500"
-        />
-      </label>
+        <Field>
+          <FieldLabel htmlFor="signup-password">Password</FieldLabel>
+          <Input
+            id="signup-password"
+            type="password"
+            name="password"
+            required
+            autoComplete="new-password"
+          />
+        </Field>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        Reference code
-        <input
-          type="text"
-          name="referenceCode"
-          required
-          autoComplete="off"
-          autoCapitalize="characters"
-          spellCheck={false}
-          className="rounded-md border border-neutral-300 px-3 py-2 uppercase outline-none focus:border-neutral-500"
-        />
-      </label>
+        <Field>
+          <FieldLabel htmlFor="signup-reference-code">Reference code</FieldLabel>
+          <Input
+            id="signup-reference-code"
+            type="text"
+            name="referenceCode"
+            required
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            className="uppercase"
+          />
+        </Field>
+      </FieldGroup>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-2 rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60"
-      >
+      <Button type="submit" isDisabled={pending} className="mt-2">
         {pending ? "Creating account…" : "Sign up"}
-      </button>
+      </Button>
 
-      <p className="text-center text-sm text-neutral-600">
+      <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
         <Link href="/login" className="underline underline-offset-2">
           Log in

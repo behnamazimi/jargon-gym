@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { JargonPageData } from "@/lib/jargon/types";
+import { Card, CardContent } from "@/components/ui/card";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { CategoryChips } from "./category-chips";
 import { Header } from "./header";
-import { ProgressBar } from "./progress-bar";
 import { SearchBar } from "./search-bar";
 import { TermList } from "./term-list";
 import { Toolbar } from "./toolbar";
@@ -84,35 +84,41 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
   }, []);
 
   return (
-    <div className="min-h-full bg-background text-foreground">
-      <div className="mx-auto max-w-[900px] px-5 py-7 pb-20">
+    <div className="min-h-full bg-gradient-to-b from-primary/[0.06] via-background to-background text-foreground">
+      <div className="mx-auto max-w-[900px] space-y-5 px-5 py-7 pb-20">
         <Header
           domain={domainWithLiveCount}
           domains={domainsWithLiveCounts}
           categoryCount={categories.length}
         />
-        <ProgressBar known={knownTerms.size} total={terms.length} />
-        <SearchBar
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onClear={clearSearch}
-          inputRef={searchInputRef}
-        />
-        <CategoryChips
-          categories={categories}
-          counts={categoryCounts}
-          totalCount={terms.length}
-          activeCategories={activeCategories}
-          onToggle={toggleCategory}
-        />
-        <Toolbar
-          hideKnown={hideKnown}
-          onHideKnownChange={setHideKnown}
-          sortMode={sortMode}
-          onSortChange={setSortMode}
-          visibleCount={filteredTerms.length}
-        />
-        {termLinkNotice ? <p className="mb-3 text-[13px] text-muted">{termLinkNotice}</p> : null}
+
+        <Card className="gap-3 p-1 ring-foreground/5">
+          <CardContent className="space-y-3 px-3 py-2">
+            <SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onClear={clearSearch}
+              inputRef={searchInputRef}
+            />
+            <CategoryChips
+              categories={categories}
+              counts={categoryCounts}
+              totalCount={terms.length}
+              activeCategories={activeCategories}
+              onToggle={toggleCategory}
+            />
+            <Toolbar
+              hideKnown={hideKnown}
+              onHideKnownChange={setHideKnown}
+              sortMode={sortMode}
+              onSortChange={setSortMode}
+              visibleCount={filteredTerms.length}
+            />
+          </CardContent>
+        </Card>
+
+        {termLinkNotice ? <p className="text-sm text-muted-foreground">{termLinkNotice}</p> : null}
+
         <TermList
           terms={filteredTerms}
           knownTerms={knownTerms}

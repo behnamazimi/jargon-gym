@@ -77,10 +77,7 @@ function DropdownMenuLabel({
     <HeaderPrimitive
       data-slot="dropdown-menu-label"
       data-inset={inset}
-      className={cn(
-        "px-1.5 py-1 text-xs font-medium text-muted-foreground data-inset:pl-7",
-        className,
-      )}
+      className={cn("px-2 py-1.5 text-xs text-muted-foreground data-inset:pl-7.5", className)}
       {...props}
     />
   );
@@ -91,11 +88,11 @@ const dropdownMenuItemVariants = cva(
   {
     variants: {
       selectionMode: {
-        none: "gap-1.5 rounded-md px-1.5 py-1 text-sm focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg:not([class*='size-'])]:size-4 data-[variant=destructive]:*:[svg]:text-destructive",
+        none: "min-h-7 gap-2 rounded-md px-2 py-1 text-xs/relaxed focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7.5 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg:not([class*='size-'])]:size-3.5 data-[variant=destructive]:*:[svg]:text-destructive",
         single:
-          "gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7 [&_svg:not([class*='size-'])]:size-4",
+          "min-h-7 gap-2 rounded-md py-1.5 pr-8 pl-2 text-xs focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7.5 [&_svg:not([class*='size-'])]:size-3.5",
         multiple:
-          "gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7 [&_svg:not([class*='size-'])]:size-4",
+          "min-h-7 gap-2 rounded-md py-1.5 pr-8 pl-2 text-xs focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7.5 [&_svg:not([class*='size-'])]:size-3.5",
       },
     },
   },
@@ -161,7 +158,7 @@ function DropdownMenuSubTrigger({
       data-inset={inset}
       textValue={typeof children === "string" ? children : props.textValue}
       className={cn(
-        "flex cursor-default items-center gap-1.5 rounded-md px-1.5 py-1 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7 data-open:bg-accent data-open:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "flex min-h-7 cursor-default items-center gap-2 rounded-md px-2 py-1 text-xs outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7.5 data-open:bg-accent data-open:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
         className,
       )}
       {...props}
@@ -187,7 +184,7 @@ function DropdownMenuSubContent({
     <DropdownMenu
       data-slot="dropdown-menu-sub-content"
       className={cn(
-        "w-auto min-w-[96px] rounded-lg bg-popover p-1 text-popover-foreground shadow-lg ring-1 ring-foreground/10 duration-100",
+        "w-auto min-w-32 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100",
         className,
       )}
       placement={placement}
@@ -205,7 +202,7 @@ function DropdownMenuSeparator({
   return (
     <SeparatorPrimitive
       data-slot="dropdown-menu-separator"
-      className={cn("-mx-1 my-1 h-px bg-border", className)}
+      className={cn("-mx-1 my-1 h-px bg-border/50", className)}
       {...props}
     />
   );
@@ -216,7 +213,7 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
     <span
       data-slot="dropdown-menu-shortcut"
       className={cn(
-        "ml-auto text-xs tracking-widest text-muted-foreground group-focus/dropdown-menu-item:text-accent-foreground",
+        "ml-auto text-[0.625rem] tracking-widest text-muted-foreground group-focus/dropdown-menu-item:text-accent-foreground",
         className,
       )}
       {...props}

@@ -1,0 +1,70 @@
+---
+description: Use shadcn/ui (React Aria) for interactive UI primitives
+alwaysApply: true
+---
+
+# shadcn/ui + React Aria
+
+Use shadcn/ui components from `@/components/ui/*` for any interactive or accessible UI primitive. This project uses the `aria-nova` style on top of `react-aria-components`.
+
+## Required
+
+- **New components**: Prefer shadcn/ui. Add missing primitives with `npx shadcn@latest add <component>`.
+- **Touched components**: When editing existing UI, replace hand-rolled primitives in that file with shadcn/ui equivalents in the same change.
+- **Imports**: `@/components/ui/button`, `@/components/ui/dropdown-menu`, `@/components/ui/tabs`, etc.
+
+## Use shadcn/ui for
+
+- Buttons and button-styled links → `Button`, `LinkButton`
+- Menus and popovers → `DropdownMenu*`
+- Tabs → `Tabs`, `TabsList`, `TabsTrigger`
+- Form controls → `Input`, `Select`, etc.
+- Feedback → `Alert`, `Badge`
+- Layout shells with design-system semantics → `Card`, `Separator`
+
+## Colors and styling
+
+Use shadcn semantic Tailwind classes only — no custom theme tokens or hex colors in components.
+
+**Default: omit color classes.** `body` sets `bg-background text-foreground`; shadcn components (`Card`, `Button`, `Alert`, `Badge`, …) ship their own colors. Only add a color utility when the element must differ from its parent:
+
+- De-emphasized copy (hints, labels, metadata, footer) → `text-muted-foreground`
+- Brand emphasis or links → `text-primary`
+- Errors → `text-destructive`, `Alert variant="destructive"`
+- Interactive state styling on toggles, selected chips, etc.
+
+Do not repeat `text-foreground`, `bg-background`, `bg-card`, or `border-border` when inheritance or the component default already provides them.
+
+Do not use legacy app tokens (`text-accent`, `text-muted`, `bg-surface`, `bg-chip`, `text-success`, etc.).
+
+## Keep custom only when
+
+- No shadcn primitive exists and adding one is out of scope for the change
+- Pure layout/composition wrappers with no interaction semantics (e.g. section headings)
+- Static semantic markup (e.g. footer copyright text)
+
+## Examples
+
+```tsx
+// ❌ Hand-rolled menu with manual focus/escape handling
+<button onClick={() => setOpen(!open)} aria-haspopup="menu">...</button>
+{open ? <div role="menu">...</div> : null}
+
+// ✅ shadcn/ui dropdown
+<DropdownMenuTrigger>
+  <Button aria-label="Account menu">...</Button>
+  <DropdownMenu>...</DropdownMenu>
+</DropdownMenuTrigger>
+```
+
+```tsx
+// ❌ Styled native button for navigation
+<button className="border-b-2 ..." onClick={() => router.push(...)}>
+
+// ✅ shadcn/ui tabs
+<Tabs selectedKey={id} onSelectionChange={(key) => router.push(...)}>
+  <TabsList variant="line">...</TabsList>
+</Tabs>
+```
+
+Reference implementations: `components/site-header.tsx`, `components/jargon/profile-menu.tsx`, `components/jargon/collection-tabs.tsx`.

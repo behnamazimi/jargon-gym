@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { formatImportJson, readJsonFile } from "@/lib/jargon/import/json-helpers";
 import {
   IMPORT_MINIMAL_PAYLOAD,
@@ -70,49 +72,44 @@ export function ImportForm({
         <label className="block text-[13px] font-medium text-foreground" htmlFor="import-json">
           JSON payload
         </label>
-        <span className="text-[12px] text-muted">
+        <span className="text-[12px] text-muted-foreground">
           {value.trim() ? `${lineCount} lines` : "No content yet"}
         </span>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => applyTemplate("sample")}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium shadow-sm"
-        >
+        <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("sample")}>
           Load example
-        </button>
-        <button
-          type="button"
-          onClick={() => applyTemplate("minimal")}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium shadow-sm"
-        >
+        </Button>
+        <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("minimal")}>
           Load minimal
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          onClick={handleFormat}
-          disabled={!value.trim()}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium shadow-sm disabled:opacity-50"
+          variant="outline"
+          size="sm"
+          onPress={handleFormat}
+          isDisabled={!value.trim()}
         >
           Format JSON
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium shadow-sm"
+          variant="outline"
+          size="sm"
+          onPress={() => fileInputRef.current?.click()}
         >
           Upload .json
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          onClick={handleClear}
-          disabled={!value.trim()}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-[12px] font-medium shadow-sm disabled:opacity-50"
+          variant="outline"
+          size="sm"
+          onPress={handleClear}
+          isDisabled={!value.trim()}
         >
           Clear
-        </button>
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
@@ -122,30 +119,30 @@ export function ImportForm({
         />
       </div>
 
-      <textarea
+      <Textarea
         id="import-json"
         value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
+        onChange={(event) => {
+          onChange(event.target.value);
           onFailure?.(null);
         }}
         placeholder={`{\n  "domain": "Software Engineering",\n  "terms": [\n    {\n      "term": "Coupling",\n      "category": "Architecture",\n      "definition": "..."\n    }\n  ],\n  "relationships": [\n    {\n      "source": "Coupling",\n      "target": "Cohesion",\n      "relationship_type": "often confused with"\n    }\n  ]\n}`}
         spellCheck={false}
-        className="min-h-[320px] w-full rounded-lg border border-border bg-surface px-3 py-2 font-mono text-[13px] leading-5 text-foreground shadow-sm outline-none focus:border-accent"
+        className="min-h-[320px] font-mono text-[13px] leading-5"
       />
 
-      <p className="text-[12px] text-muted">
+      <p className="text-[12px] text-muted-foreground">
         Use the LLM prompt above to generate JSON, or Load example to start from a template.
       </p>
 
-      <button
+      <Button
         type="button"
-        onClick={onValidate}
-        disabled={isValidating || value.trim().length === 0}
-        className="rounded-lg bg-accent px-4 py-2 text-[13px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+        onPress={onValidate}
+        isDisabled={isValidating || value.trim().length === 0}
+        className="text-[13px]"
       >
         {isValidating ? "Validating…" : "Validate & preview"}
-      </button>
+      </Button>
     </div>
   );
 }

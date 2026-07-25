@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { login } from "./actions";
 
 export default function LoginForm() {
@@ -11,41 +15,35 @@ export default function LoginForm() {
     <form action={action} className="flex w-full max-w-sm flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
 
-      {state?.error && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{state.error}</p>
-      )}
+      {state?.error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{state.error}</AlertDescription>
+        </Alert>
+      ) : null}
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        Email
-        <input
-          type="email"
-          name="email"
-          required
-          autoComplete="email"
-          className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-500"
-        />
-      </label>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="login-email">Email</FieldLabel>
+          <Input id="login-email" type="email" name="email" required autoComplete="email" />
+        </Field>
 
-      <label className="flex flex-col gap-1.5 text-sm">
-        Password
-        <input
-          type="password"
-          name="password"
-          required
-          autoComplete="current-password"
-          className="rounded-md border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-500"
-        />
-      </label>
+        <Field>
+          <FieldLabel htmlFor="login-password">Password</FieldLabel>
+          <Input
+            id="login-password"
+            type="password"
+            name="password"
+            required
+            autoComplete="current-password"
+          />
+        </Field>
+      </FieldGroup>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-2 rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:opacity-60"
-      >
+      <Button type="submit" isDisabled={pending} className="mt-2">
         {pending ? "Logging in…" : "Log in"}
-      </button>
+      </Button>
 
-      <p className="text-center text-sm text-neutral-600">
+      <p className="text-center text-sm text-muted-foreground">
         Need an account?{" "}
         <Link href="/signup" className="underline underline-offset-2">
           Sign up

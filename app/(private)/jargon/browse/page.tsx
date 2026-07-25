@@ -11,16 +11,12 @@ export default async function BrowseSharedDomainsPage() {
   if (!user) {
     return (
       <div className="flex min-h-full items-center justify-center bg-background px-4 py-12 text-foreground">
-        <p className="text-sm text-muted">You must be logged in.</p>
+        <p className="text-sm text-muted-foreground">You must be logged in.</p>
       </div>
     );
   }
 
   const domains = await fetchSharedDomainsBrowse(supabase, user.id);
 
-  return (
-    <div className="min-h-full bg-background text-foreground">
-      <SharedDomainsBrowse domains={domains} />
-    </div>
-  );
+  return <SharedDomainsBrowse domains={domains} />;
 }

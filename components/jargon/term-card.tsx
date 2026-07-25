@@ -1,4 +1,11 @@
+"use client";
+
+import { AlertTriangle, Check, ChevronRight, Search } from "lucide-react";
 import type { Term } from "@/lib/jargon/types";
+import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Toggle } from "@/components/ui/toggle";
+import { cn } from "@/lib/utils";
 
 type TermCardProps = {
   term: Term;
@@ -12,92 +19,137 @@ export function TermCard({ term, known, open, onToggleOpen, onToggleKnown }: Ter
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(term.term + " definition")}`;
 
   return (
-    <div
-      className={`rounded-card border border-border bg-surface px-4 py-[13px] shadow-sm transition-[border-color] duration-100 ${known ? "opacity-65" : ""}`}
+    <Collapsible
+      isExpanded={open}
+      onExpandedChange={(expanded) => {
+        if (expanded !== open) onToggleOpen();
+      }}
+      className={cn(
+        "overflow-hidden rounded-lg bg-card text-card-foreground ring-1 transition-all duration-200",
+        open
+          ? "ring-primary/30 shadow-md"
+          : "ring-foreground/10 hover:shadow-sm hover:ring-foreground/20",
+        known && !open && "opacity-70",
+      )}
       data-term={term.term}
     >
       <div
-        className="flex cursor-pointer items-center justify-between gap-2.5"
-        onClick={onToggleOpen}
+        className={cn(
+          "flex items-stretch gap-3 px-4 py-3 transition-colors",
+          open && "border-b border-primary/15 bg-primary/5",
+        )}
       >
-        <div className="flex min-w-0 items-center gap-2.5">
-          <button
-            type="button"
-            className={`flex h-[22px] w-[22px] shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] text-xs leading-none transition-[background,border-color,color,opacity] duration-150 ${
+        <div className="flex shrink-0 items-center">
+          <Toggle
+            size="sm"
+            isSelected={known}
+            onChange={onToggleKnown}
+            aria-label={known ? "Mark as not known" : "Mark as known"}
+            className={cn(
+              "size-6 min-w-6 rounded-full border-2 p-0 opacity-100 hover:bg-transparent data-selected:hover:bg-primary",
               known
-                ? "border-success bg-success text-white opacity-100"
-                : "border-border bg-background text-muted opacity-45 hover:border-success hover:opacity-80"
-            }`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleKnown();
-            }}
-            title={known ? "Mark as not known" : "Mark as known"}
+                ? "border-primary bg-primary text-primary-foreground hover:bg-primary"
+                : "border-muted-foreground/30 bg-background text-transparent hover:border-primary hover:text-primary/40",
+            )}
           >
-            ✓
-          </button>
+            <Check className="size-3.5 stroke-[3]" aria-hidden />
+          </Toggle>
+        </div>
+        <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-md border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <span
-            className={`text-[15px] font-semibold ${known ? "text-foreground line-through decoration-success decoration-[1.5px]" : "text-foreground"}`}
+            className={cn(
+              "font-heading text-base font-semibold tracking-tight",
+              known
+                ? "text-muted-foreground line-through decoration-primary/60 decoration-2"
+                : "text-foreground",
+            )}
           >
             {term.term}
           </span>
-          <span className="shrink-0 rounded-full bg-accent-subtle px-2 py-0.5 text-[10.5px] text-accent">
-            {term.category}
+          <span className="inline-flex shrink-0 items-center gap-2">
+            <Badge className="border-0 bg-primary/10 font-normal text-primary hover:bg-primary/10">
+              {term.category}
+            </Badge>
+            <ChevronRight
+              className={cn(
+                "size-4 text-muted-foreground transition-transform duration-200",
+                open && "rotate-90 text-primary",
+              )}
+              aria-hidden
+            />
           </span>
-        </div>
-        <span
-          className={`shrink-0 text-xs text-muted transition-transform duration-[180ms] ${open ? "rotate-90" : ""}`}
-          title="Expand for definition, example, and discussion"
-        >
-          ▶
-        </span>
+        </CollapsibleTrigger>
       </div>
-      {open && (
-        <div className="mt-2.5 border-t border-border pt-2.5">
-          <div className="mb-2 text-[13.5px] leading-normal">{term.definition}</div>
+      <CollapsibleContent>
+        <div className="px-4 pt-4 pb-5">
+          <p className="text-base leading-relaxed font-medium">{term.definition}</p>
+
           {!!term.example && (
-            <div className="rounded-lg bg-background px-2.5 py-2 text-[13px] leading-normal text-muted">
-              <b className="font-semibold text-foreground">Example:</b> {term.example}
+            <div className="mt-4 rounded-lg border border-border/60 bg-muted/40 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Example</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{term.example}</p>
             </div>
           )}
+
           {!!term.discussion && (
-            <div className="mt-2 text-[13px] leading-normal text-muted">
-              <b className="font-semibold text-foreground">In practice:</b> {term.discussion}
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                In practice
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {term.discussion}
+              </p>
             </div>
           )}
+
           {term.controversy && (
-            <div className="mt-2 rounded-md border-l-[3px] border-accent bg-background px-2.5 py-2 text-[13px] leading-normal text-muted">
-              <b className="font-semibold text-foreground">⚠ Debated:</b> {term.controversy}
+            <div className="mt-3 flex gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                  Debated
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {term.controversy}
+                </p>
+              </div>
             </div>
           )}
+
           {term.relationships.length > 0 && (
-            <ul className="mt-2 space-y-2">
+            <ul className="mt-3 space-y-2">
               {term.relationships.map((relationship) => (
                 <li
                   key={`${relationship.id}-${relationship.direction}`}
-                  className="rounded-lg bg-background px-2.5 py-2 text-[13px] leading-normal text-muted"
+                  className="rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5"
                 >
-                  <span className="text-foreground">
-                    {relationship.relationshipType}{" "}
-                    <b className="font-semibold">{relationship.relatedTermName}</b>
-                  </span>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="italic">{relationship.relationshipType}</span>{" "}
+                    <span className="font-semibold text-primary">
+                      {relationship.relatedTermName}
+                    </span>
+                  </p>
                   {relationship.description ? (
-                    <p className="mt-1 mb-0 text-[12.5px]">{relationship.description}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground/80">
+                      {relationship.description}
+                    </p>
                   ) : null}
                 </li>
               ))}
             </ul>
           )}
+
           <a
-            className="mt-2.5 inline-flex items-center gap-1.5 text-[12.5px] text-accent no-underline hover:underline"
+            className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
             href={searchUrl}
             target="_blank"
             rel="noopener noreferrer"
           >
-            🔍 Search &ldquo;{term.term}&rdquo; on Google
+            <Search className="size-3.5" aria-hidden />
+            Search &ldquo;{term.term}&rdquo; on Google
           </a>
         </div>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

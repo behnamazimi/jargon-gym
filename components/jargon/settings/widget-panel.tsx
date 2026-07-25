@@ -7,6 +7,7 @@ import {
   revokeWidgetTokenAction,
 } from "@/app/(private)/jargon/settings/actions";
 import { AlertBanner, CopyField, HighlightPanel, SetupStep } from "@/components/jargon/settings/ui";
+import { Button } from "@/components/ui/button";
 import type { WidgetTokenRow } from "@/lib/widget/types";
 
 type WidgetPanelProps = {
@@ -88,13 +89,13 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
           description="Requires Übersicht on macOS. This command downloads the widget and pre-fills this site's URL in config.json."
         >
           <CopyField value={installCommand} />
-          <p className="text-[13px] text-muted">
+          <p className="text-[13px] text-muted-foreground">
             Get{" "}
             <a
               href="https://tracesof.net/uebersicht/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-accent hover:underline"
+              className="text-primary hover:underline"
             >
               Übersicht
             </a>{" "}
@@ -102,7 +103,7 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
             <a
               href="/downloads/jargon-gym.widget.zip"
               download
-              className="text-accent hover:underline"
+              className="text-primary hover:underline"
             >
               download the zip
             </a>{" "}
@@ -116,14 +117,14 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
           title="Create an API token"
           description="Tokens are shown once. Revoke any token you no longer use."
         >
-          <button
+          <Button
             type="button"
-            onClick={handleGenerate}
-            disabled={isGenerating}
-            className="rounded-lg bg-accent px-3.5 py-2 text-[13px] font-medium text-white hover:bg-accent/90 disabled:opacity-50"
+            onPress={handleGenerate}
+            isDisabled={isGenerating}
+            className="text-[13px]"
           >
             {isGenerating ? "Generating…" : "Generate widget token"}
-          </button>
+          </Button>
 
           {newToken ? (
             <HighlightPanel label="Copy your new token now">
@@ -132,30 +133,32 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
           ) : null}
 
           {tokens.length > 0 ? (
-            <ul className="divide-y divide-border rounded-lg border border-border">
+            <ul className="divide-y divide-border rounded-lg ring-1 ring-foreground/10">
               {tokens.map((token) => (
                 <li key={token.id} className="flex items-center justify-between gap-3 px-3 py-3">
                   <div className="min-w-0">
-                    <p className="m-0 text-[13px] font-medium">{token.label}</p>
-                    <p className="mt-0.5 text-[12px] text-muted">
+                    <p className="m-0 text-sm font-medium">{token.label}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       Created {formatDate(token.created_at)} · Last used{" "}
                       {formatDate(token.last_used_at)}
                     </p>
                   </div>
-                  <button
+                  <Button
                     type="button"
-                    onClick={() => handleRevoke(token.id)}
-                    disabled={busyId === token.id}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2.5 py-1.5 text-[12px] text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => handleRevoke(token.id)}
+                    isDisabled={busyId === token.id}
+                    className="shrink-0 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Revoke
-                  </button>
+                  </Button>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-[13px] text-muted">No active tokens yet.</p>
+            <p className="text-sm text-muted-foreground">No active tokens yet.</p>
           )}
         </SetupStep>
 
@@ -171,7 +174,7 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
               value={installWithTokenCommand}
             />
           ) : (
-            <p className="text-[13px] text-muted">
+            <p className="text-[13px] text-muted-foreground">
               Generate a token in step 2 to get the one-command install script.
             </p>
           )}

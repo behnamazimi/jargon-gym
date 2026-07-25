@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Outfit } from "next/font/google";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Geist, Inter, JetBrains_Mono } from "next/font/google";
 
-const outfitHeading = Outfit({ subsets: ["latin"], variable: "--font-heading" });
-
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const geist = Geist({
   subsets: ["latin"],
+  variable: "--font-geist",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -35,14 +36,13 @@ export default function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        geistSans.variable,
-        geistMono.variable,
-        "font-sans",
+        geist.variable,
         inter.variable,
-        outfitHeading.variable,
+        jetbrainsMono.variable,
+        "font-sans",
       )}
     >
-      <body className="flex min-h-full flex-col bg-background text-foreground">
+      <body className="flex min-h-full flex-col">
         <SiteHeader />
         <main className="flex flex-1 flex-col">{children}</main>
         <SiteFooter />
