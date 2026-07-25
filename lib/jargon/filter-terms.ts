@@ -17,7 +17,7 @@ export function filterTerms(terms: Term[], options: FilterOptions): Term[] {
 
   let list = terms.filter((t) => {
     if (activeCategories.size > 0 && !activeCategories.has(t.category)) return false;
-    if (hideKnown && knownTerms.has(t.term)) return false;
+    if (hideKnown && knownTerms.has(t.id)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       if (!t.term.toLowerCase().includes(q) && !t.definition.toLowerCase().includes(q)) {
@@ -37,8 +37,8 @@ function sortTerms(terms: Term[], sortMode: SortMode, knownTerms: Set<string>): 
   }
   if (sortMode === "unknown") {
     return [...terms].sort((a, b) => {
-      const aKnown = knownTerms.has(a.term);
-      const bKnown = knownTerms.has(b.term);
+      const aKnown = knownTerms.has(a.id);
+      const bKnown = knownTerms.has(b.id);
       if (aKnown !== bKnown) return aKnown ? 1 : -1;
       return a.term.localeCompare(b.term);
     });

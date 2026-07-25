@@ -5,8 +5,8 @@ type TermListProps = {
   terms: Term[];
   knownTerms: Set<string>;
   openTerms: Set<string>;
-  onToggleOpen: (term: string) => void;
-  onToggleKnown: (term: string) => void;
+  onToggleOpen: (termId: string) => void;
+  onToggleKnown: (termId: string) => void;
 };
 
 export function TermList({
@@ -26,12 +26,12 @@ export function TermList({
     <div className="flex flex-col gap-2">
       {terms.map((term) => (
         <TermCard
-          key={term.term}
+          key={term.id}
           term={term}
-          known={knownTerms.has(term.term)}
-          open={openTerms.has(term.term)}
-          onToggleOpen={() => onToggleOpen(term.term)}
-          onToggleKnown={() => onToggleKnown(term.term)}
+          known={knownTerms.has(term.id)}
+          open={openTerms.has(term.id)}
+          onToggleOpen={() => onToggleOpen(term.id)}
+          onToggleKnown={() => onToggleKnown(term.id)}
         />
       ))}
     </div>

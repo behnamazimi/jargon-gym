@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { DUMMY_DOMAIN } from "@/lib/jargon/dummy-data";
+import type { JargonPageData } from "@/lib/jargon/types";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { CategoryChips } from "./category-chips";
 import { Header } from "./header";
@@ -10,11 +10,16 @@ import { SearchBar } from "./search-bar";
 import { TermList } from "./term-list";
 import { Toolbar } from "./toolbar";
 
-export function JargonPage() {
+type JargonPageProps = {
+  initialData: JargonPageData;
+};
+
+export function JargonPage({ initialData }: JargonPageProps) {
   const [isDark, setIsDark] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const {
+    domain,
     terms,
     categories,
     categoryCounts,
@@ -32,7 +37,7 @@ export function JargonPage() {
     toggleOpen,
     toggleKnown,
     clearSearch,
-  } = useJargonList();
+  } = useJargonList(initialData);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -61,7 +66,7 @@ export function JargonPage() {
         <Header
           termCount={terms.length}
           categoryCount={categories.length}
-          domain={DUMMY_DOMAIN}
+          domain={domain}
           isDark={isDark}
           onToggleTheme={() => setIsDark((d) => !d)}
           onOpenStats={() => {}}
