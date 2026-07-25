@@ -6,11 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import {
   createOrRefreshTelegramLink,
   disconnectTelegram,
-  getTelegramLinkStatus,
   updateTelegramCadence,
 } from "@/lib/telegram/links";
 import type { TelegramCadence } from "@/lib/telegram/types";
-import { createWidgetToken, listWidgetTokens, revokeWidgetToken } from "@/lib/widget/tokens";
+import { createWidgetToken, revokeWidgetToken } from "@/lib/widget/tokens";
 
 async function getAuthenticatedUser() {
   const supabase = await createClient();
@@ -24,19 +23,6 @@ async function getAuthenticatedUser() {
   }
 
   return { supabase, user };
-}
-
-export async function loadWidgetTokens() {
-  const auth = await getAuthenticatedUser();
-  if ("error" in auth) return { error: auth.error, tokens: [] };
-
-  try {
-    const tokens = await listWidgetTokens(auth.supabase, auth.user.id);
-    return { tokens };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load widget tokens.";
-    return { error: message, tokens: [] };
-  }
 }
 
 export async function generateWidgetTokenAction(): Promise<{
@@ -70,19 +56,6 @@ export async function revokeWidgetTokenAction(tokenId: string): Promise<{ error?
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to revoke token.";
     return { error: message };
-  }
-}
-
-export async function loadTelegramStatus() {
-  const auth = await getAuthenticatedUser();
-  if ("error" in auth) return { error: auth.error, status: null };
-
-  try {
-    const status = await getTelegramLinkStatus(auth.supabase, auth.user.id);
-    return { status };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load Telegram settings.";
-    return { error: message, status: null };
   }
 }
 

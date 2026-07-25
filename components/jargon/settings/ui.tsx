@@ -2,12 +2,17 @@
 
 import { Check, Copy } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export function SettingsPanel({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-card border border-border bg-surface p-5 shadow-sm sm:p-6">
-      {children}
-    </div>
+    <Card className="rounded-card border-border bg-surface p-5 shadow-sm sm:p-6">{children}</Card>
   );
 }
 
@@ -58,7 +63,7 @@ export function SettingsGroup({
 }
 
 export function SettingsDivider() {
-  return <hr className="border-0 border-t border-border" />;
+  return <Separator />;
 }
 
 type StatusVariant = "connected" | "pending" | "disconnected";
@@ -69,19 +74,17 @@ const STATUS_LABELS: Record<StatusVariant, string> = {
   disconnected: "Not connected",
 };
 
-export function StatusPill({ variant }: { variant: StatusVariant }) {
-  const styles: Record<StatusVariant, string> = {
-    connected: "bg-success-subtle text-success",
-    pending: "bg-accent-subtle text-accent",
-    disconnected: "bg-chip text-muted",
-  };
+const STATUS_BADGE_CLASS: Record<StatusVariant, string> = {
+  connected: "bg-success-subtle text-success hover:bg-success-subtle",
+  pending: "bg-accent-subtle text-accent hover:bg-accent-subtle",
+  disconnected: "bg-chip text-muted hover:bg-chip",
+};
 
+export function StatusPill({ variant }: { variant: StatusVariant }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[12px] font-medium ${styles[variant]}`}
-    >
+    <Badge variant="secondary" className={cn("text-[12px]", STATUS_BADGE_CLASS[variant])}>
       {STATUS_LABELS[variant]}
-    </span>
+    </Badge>
   );
 }
 
@@ -109,30 +112,33 @@ export function CopyField({
       {label ? <p className="m-0 text-[12px] font-medium text-foreground">{label}</p> : null}
       {hint ? <p className="m-0 text-[12px] text-muted">{hint}</p> : null}
       <div className="flex items-start gap-2">
-        <code
-          className={`min-w-0 flex-1 break-all rounded-lg border border-border bg-background px-3 py-2 text-[12px] leading-5 text-foreground ${monospace ? "" : "whitespace-pre-wrap"}`}
-        >
-          {value}
-        </code>
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[12px] font-medium hover:bg-black/5"
-        >
+        <Input
+          readOnly
+          value={value}
+          className={cn(
+            "min-w-0 flex-1 text-[12px] leading-5",
+            monospace ? "font-mono" : "whitespace-pre-wrap",
+          )}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
           {copied ? (
             <Check className="h-3.5 w-3.5 text-success" />
           ) : (
             <Copy className="h-3.5 w-3.5" />
           )}
           {copied ? "Copied" : "Copy"}
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
 
 export function AlertBanner({ message }: { message: string }) {
-  return <p className="m-0 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-600">{message}</p>;
+  return (
+    <Alert variant="destructive">
+      <AlertDescription>{message}</AlertDescription>
+    </Alert>
+  );
 }
 
 export function HighlightPanel({ label, children }: { label: string; children: ReactNode }) {

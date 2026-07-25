@@ -1,7 +1,6 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
 import {
   addDomainToCollection,
   deleteDomain,
@@ -9,7 +8,6 @@ import {
   setDomainActiveForReview,
   setDomainVisibility,
 } from "@/lib/jargon/collections";
-import { fetchSharedDomainsBrowse } from "@/lib/jargon/browse";
 import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
 import { revalidatePath } from "next/cache";
 
@@ -127,35 +125,6 @@ export async function deleteOwnedDomain(domainId: string): Promise<{ error?: str
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to delete domain.";
-    return { error: message };
-  }
-}
-
-export async function loadSharedDomainsBrowse() {
-  const auth = await getAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error, domains: [] };
-
-  try {
-    const domains = await fetchSharedDomainsBrowse(auth.supabase, auth.user.id);
-    return { domains };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load shared domains.";
-    return { error: message, domains: [] };
-  }
-}
-
-export async function reloadJargonPageData(domainId?: string) {
-  const auth = await getAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    const data = await loadJargonPageData(auth.supabase, {
-      userId: auth.user.id,
-      selectedDomainId: domainId,
-    });
-    return { data };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to reload jargon data.";
     return { error: message };
   }
 }

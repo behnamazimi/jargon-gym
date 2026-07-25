@@ -1,10 +1,8 @@
 "use client";
 
 import { ArrowLeft, BookmarkMinus, CheckCircle2, Compass, Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Link from "next/link";
-import { addToCollection, removeFromCollection } from "@/app/(private)/jargon/actions";
+import { useCollectionActions } from "@/hooks/use-collection-actions";
 import type { SharedDomain } from "@/lib/jargon/types";
 
 type SharedDomainsBrowseProps = {
@@ -12,41 +10,7 @@ type SharedDomainsBrowseProps = {
 };
 
 export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  async function handleAdd(domainId: string) {
-    setBusyId(domainId);
-    setError(null);
-
-    const result = await addToCollection(domainId);
-
-    setBusyId(null);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    router.refresh();
-  }
-
-  async function handleRemove(domainId: string) {
-    setBusyId(domainId);
-    setError(null);
-
-    const result = await removeFromCollection(domainId);
-
-    setBusyId(null);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    router.refresh();
-  }
+  const { error, busyId, addToCollection, removeFromCollection } = useCollectionActions();
 
   return (
     <div className="mx-auto max-w-[720px] px-5 py-7">
@@ -101,7 +65,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
                     <button
                       type="button"
                       disabled={busyId === domain.id}
-                      onClick={() => handleRemove(domain.id)}
+                      onClick={() => removeFromCollection(domain.id)}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-[13px] font-medium disabled:opacity-50"
                     >
                       <BookmarkMinus className="h-4 w-4" />
@@ -112,7 +76,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
                   <button
                     type="button"
                     disabled={busyId === domain.id}
-                    onClick={() => handleAdd(domain.id)}
+                    onClick={() => addToCollection(domain.id)}
                     className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[13px] font-medium text-white disabled:opacity-50"
                   >
                     <Plus className="h-4 w-4" />

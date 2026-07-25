@@ -1,16 +1,19 @@
 import { createHash, randomBytes } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { TELEGRAM_LINK_TOKEN_CONTRACT } from "./link-token-contract";
 import type { TelegramCadence, TelegramLinkStatus } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-const LINK_TOKEN_TTL_MS = 15 * 60 * 1000;
-
+/** @see TELEGRAM_LINK_TOKEN_CONTRACT — Node adapter for token generation. */
 export function generateLinkTokenValue(): string {
-  return randomBytes(32).toString("base64url");
+  return randomBytes(TELEGRAM_LINK_TOKEN_CONTRACT.tokenBytes).toString(
+    TELEGRAM_LINK_TOKEN_CONTRACT.tokenEncoding,
+  );
 }
 
+/** @see TELEGRAM_LINK_TOKEN_CONTRACT — Node adapter (crypto.createHash). */
 export function hashLinkToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
@@ -63,7 +66,7 @@ export async function createOrRefreshTelegramLink(
 ): Promise<{ token: string; deepLink: string }> {
   const token = generateLinkTokenValue();
   const tokenHash = hashLinkToken(token);
-  const expiresAt = new Date(Date.now() + LINK_TOKEN_TTL_MS).toISOString();
+  const expiresAt = new Date(Date.now() + TELEGRAM_LINK_TOKEN_CONTRACT.ttlMs).toISOString();
 
   const { error } = await client.from("telegram_links").upsert(
     {
