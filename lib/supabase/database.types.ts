@@ -31,29 +31,35 @@ export type Database = {
       domains: {
         Row: {
           created_at: string;
-          created_by: string | null;
+          description: string | null;
           icon_url: string | null;
           id: string;
           name: string;
+          owner_id: string;
+          visibility: Database["public"]["Enums"]["domain_visibility"];
         };
         Insert: {
           created_at?: string;
-          created_by?: string | null;
+          description?: string | null;
           icon_url?: string | null;
           id?: string;
           name: string;
+          owner_id: string;
+          visibility?: Database["public"]["Enums"]["domain_visibility"];
         };
         Update: {
           created_at?: string;
-          created_by?: string | null;
+          description?: string | null;
           icon_url?: string | null;
           id?: string;
           name?: string;
+          owner_id?: string;
+          visibility?: Database["public"]["Enums"]["domain_visibility"];
         };
         Relationships: [
           {
             foreignKeyName: "domains_created_by_fkey";
-            columns: ["created_by"];
+            columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -211,6 +217,69 @@ export type Database = {
           },
         ];
       };
+      user_active_domains: {
+        Row: {
+          domain_id: string;
+          user_id: string;
+        };
+        Insert: {
+          domain_id: string;
+          user_id: string;
+        };
+        Update: {
+          domain_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_active_domains_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_active_domains_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_collection_domains: {
+        Row: {
+          added_at: string;
+          domain_id: string;
+          user_id: string;
+        };
+        Insert: {
+          added_at?: string;
+          domain_id: string;
+          user_id: string;
+        };
+        Update: {
+          added_at?: string;
+          domain_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_collection_domains_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_collection_domains_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_progress: {
         Row: {
           is_known: boolean;
@@ -270,6 +339,8 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
+      can_read_term: { Args: { p_term_id: string }; Returns: boolean };
       create_referral_code: {
         Args: { p_code?: string };
         Returns: {
@@ -289,9 +360,15 @@ export type Database = {
         };
       };
       is_admin: { Args: never; Returns: boolean };
+      is_domain_in_collection: {
+        Args: { p_domain_id: string };
+        Returns: boolean;
+      };
       is_referral_code_valid: { Args: { p_code: string }; Returns: boolean };
+      owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
     };
     Enums: {
+      domain_visibility: "private" | "shared";
       user_role: "admin" | "member";
     };
     CompositeTypes: {
@@ -421,6 +498,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      domain_visibility: ["private", "shared"],
       user_role: ["admin", "member"],
     },
   },

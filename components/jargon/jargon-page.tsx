@@ -12,9 +12,10 @@ import { Toolbar } from "./toolbar";
 
 type JargonPageProps = {
   initialData: JargonPageData;
+  userEmail: string;
 };
 
-export function JargonPage({ initialData }: JargonPageProps) {
+export function JargonPage({ initialData, userEmail }: JargonPageProps) {
   const [isDark, setIsDark] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -64,13 +65,12 @@ export function JargonPage({ initialData }: JargonPageProps) {
     >
       <div className="mx-auto max-w-[900px] px-5 py-7 pb-20">
         <Header
-          termCount={terms.length}
-          categoryCount={categories.length}
           domain={domain}
+          domains={initialData.domains}
+          categoryCount={categories.length}
+          userEmail={userEmail}
           isDark={isDark}
           onToggleTheme={() => setIsDark((d) => !d)}
-          onOpenStats={() => {}}
-          onOpenSettings={() => {}}
         />
         <ProgressBar known={knownTerms.size} total={terms.length} />
         <SearchBar

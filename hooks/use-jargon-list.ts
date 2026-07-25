@@ -77,6 +77,7 @@ export function useJargonList(initialData: JargonPageData) {
 
   return {
     domain: initialData.domain,
+    domains: initialData.domains,
     terms,
     categories,
     categoryCounts,

@@ -55,12 +55,16 @@ export function TermCard({ term, known, open, onToggleOpen, onToggleKnown }: Ter
       {open && (
         <div className="mt-2.5 border-t border-border pt-2.5">
           <div className="mb-2 text-[13.5px] leading-normal">{term.definition}</div>
-          <div className="rounded-lg bg-background px-2.5 py-2 text-[13px] leading-normal text-muted">
-            <b className="font-semibold text-foreground">Example:</b> {term.example}
-          </div>
-          <div className="mt-2 text-[13px] leading-normal text-muted">
-            <b className="font-semibold text-foreground">In practice:</b> {term.discussion}
-          </div>
+          {!!term.example && (
+            <div className="rounded-lg bg-background px-2.5 py-2 text-[13px] leading-normal text-muted">
+              <b className="font-semibold text-foreground">Example:</b> {term.example}
+            </div>
+          )}
+          {!!term.discussion && (
+            <div className="mt-2 text-[13px] leading-normal text-muted">
+              <b className="font-semibold text-foreground">In practice:</b> {term.discussion}
+            </div>
+          )}
           {term.controversy && (
             <div className="mt-2 rounded-md border-l-[3px] border-accent bg-background px-2.5 py-2 text-[13px] leading-normal text-muted">
               <b className="font-semibold text-foreground">⚠ Debated:</b> {term.controversy}

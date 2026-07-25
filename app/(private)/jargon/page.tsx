@@ -1,14 +1,40 @@
-import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
 import { createClient } from "@/lib/supabase/server";
+import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
 import { JargonPage } from "@/components/jargon/jargon-page";
+import { EmptyCollection } from "@/components/jargon/empty-collection";
+import Link from "next/link";
 
-export default async function JargonListPage() {
+type PageProps = {
+  searchParams: Promise<{ domain?: string }>;
+};
+
+export default async function JargonListPage({ searchParams }: PageProps) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return (
+      <div className="flex min-h-full items-center justify-center bg-background px-4 py-12 text-foreground">
+        <p className="text-sm text-muted">You must be logged in to view jargon.</p>
+      </div>
+    );
+  }
+
+  const { domain: domainId } = await searchParams;
 
   try {
-    const data = await loadJargonPageData(supabase);
-    return <JargonPage initialData={data} />;
+    const data = await loadJargonPageData(supabase, {
+      userId: user.id,
+      selectedDomainId: domainId,
+    });
+    return <JargonPage initialData={data} userEmail={user.email ?? ""} />;
   } catch (err) {
+    if (err instanceof JargonDataError && err.message.includes("No jargon domains")) {
+      return <EmptyCollection />;
+    }
+
     const message =
       err instanceof JargonDataError
         ? err.message
@@ -17,8 +43,14 @@ export default async function JargonListPage() {
           : "Something went wrong while loading jargon terms.";
 
     return (
-      <div className="flex min-h-full items-center justify-center bg-background px-4 py-12 text-foreground">
+      <div className="flex min-h-full flex-col items-center justify-center gap-3 bg-background px-4 py-12 text-foreground">
         <p className="text-sm text-muted">{message}</p>
+        <Link
+          href="/jargon/import"
+          className="text-sm font-medium text-accent underline-offset-2 hover:underline"
+        >
+          Import jargon
+        </Link>
       </div>
     );
   }

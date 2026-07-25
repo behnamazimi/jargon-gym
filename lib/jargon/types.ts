@@ -8,10 +8,18 @@ export type Term = {
   controversy?: string;
 };
 
+export type DomainSource = "owned" | "added";
+
 export type Domain = {
   id: string;
   name: string;
   icon: string;
+  description: string;
+  visibility: "private" | "shared";
+  source: DomainSource;
+  isActiveForReview: boolean;
+  termCount: number;
+  knownCount: number;
 };
 
 export type JargonPageData = {
@@ -19,6 +27,7 @@ export type JargonPageData = {
   domains: Domain[];
   terms: Term[];
   knownTermIds: string[];
+  activeDomainIds: string[];
 };
 
 export type SortMode = "default" | "az" | "unknown";
@@ -29,4 +38,14 @@ export type FilterOptions = {
   hideKnown: boolean;
   sortMode: SortMode;
   knownTerms: Set<string>;
+};
+
+export type SharedDomain = {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  ownerId: string;
+  termCount: number;
+  inCollection: boolean;
 };
