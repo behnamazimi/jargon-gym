@@ -31,31 +31,29 @@ export async function fetchKnownTermIdsForDomains(
   return data.map((row) => row.term_id);
 }
 
-export async function upsertTermKnown(
-  client: Client,
-  userId: string,
-  termId: string,
-  isKnown: boolean,
-) {
-  if (!isKnown) {
-    const { error } = await client
-      .from("user_progress")
-      .delete()
-      .eq("user_id", userId)
-      .eq("term_id", termId);
+export async function markTermKnown(client: Client, termId: string) {
+  const { error } = await client.rpc("my_mark_term_known", {
+    p_term_id: termId,
+  });
 
-    if (error) throw error;
-    return;
-  }
+  if (error) throw error;
+}
 
-  const { error } = await client.from("user_progress").upsert(
-    {
-      user_id: userId,
-      term_id: termId,
-      is_known: true,
-    },
-    { onConflict: "user_id,term_id" },
-  );
+export async function markTermKnownForUser(client: Client, userId: string, termId: string) {
+  const { error } = await client.rpc("mark_term_known", {
+    p_user_id: userId,
+    p_term_id: termId,
+  });
+
+  if (error) throw error;
+}
+
+export async function clearTermKnown(client: Client, userId: string, termId: string) {
+  const { error } = await client
+    .from("user_progress")
+    .delete()
+    .eq("user_id", userId)
+    .eq("term_id", termId);
 
   if (error) throw error;
 }
@@ -88,19 +86,4 @@ export async function resolveReviewDomainIdsForUser(client: Client, userId: stri
   ]);
 
   return { reviewDomainIds, collectionRows };
-}
-
-export async function isTermInReviewPool(client: Client, userId: string, termId: string) {
-  const { reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
-  if (reviewDomainIds.length === 0) return false;
-
-  const { data, error } = await client
-    .from("terms")
-    .select("id")
-    .eq("id", termId)
-    .in("domain_id", reviewDomainIds)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data !== null;
 }

@@ -1,8 +1,6 @@
-import { CAUGHT_UP_MESSAGE } from "../_shared/constants.ts";
 import { getCronSecret } from "../_shared/env.ts";
 import { createServiceClient } from "../_shared/supabase-admin.ts";
-import { buildInlineKeyboard, formatTermMessage, sendMessage } from "../_shared/telegram-api.ts";
-import { fetchUnknownTermCount, pickRandomUnknownTerm } from "../_shared/term-service.ts";
+import { sendTermOrCaughtUp } from "../_shared/term-service.ts";
 
 function verifyCronAuth(request: Request) {
   const header = request.headers.get("authorization");
@@ -43,39 +41,15 @@ Deno.serve(async (request) => {
         continue;
       }
 
-      const unknownCount = await fetchUnknownTermCount(supabase, userId);
+      const result = await sendTermOrCaughtUp(supabase, userId, chatId, {
+        recordSend: true,
+        skipIfAlreadyCaughtUp: true,
+        allCaughtUpAt: linkRow.all_caught_up_at,
+        persistCaughtUpFlag: true,
+      });
 
-      if (unknownCount === 0) {
-        if (linkRow.all_caught_up_at) {
-          continue;
-        }
-
-        await sendMessage(chatId, CAUGHT_UP_MESSAGE);
-        await supabase.rpc("set_telegram_all_caught_up", { p_user_id: userId });
-        await supabase.rpc("record_telegram_send", { p_user_id: userId });
-        caughtUp += 1;
-        continue;
-      }
-
-      const term = await pickRandomUnknownTerm(supabase, userId);
-      if (!term) {
-        if (!linkRow.all_caught_up_at) {
-          await sendMessage(chatId, CAUGHT_UP_MESSAGE);
-          await supabase.rpc("set_telegram_all_caught_up", { p_user_id: userId });
-          caughtUp += 1;
-        }
-        await supabase.rpc("record_telegram_send", { p_user_id: userId });
-        continue;
-      }
-
-      await supabase
-        .from("telegram_links")
-        .update({ all_caught_up_at: null, updated_at: new Date().toISOString() })
-        .eq("user_id", userId);
-
-      await sendMessage(chatId, formatTermMessage(term), buildInlineKeyboard(term));
-      await supabase.rpc("record_telegram_send", { p_user_id: userId });
-      sent += 1;
+      if (result.kind === "term") sent += 1;
+      else if (result.kind === "caught_up") caughtUp += 1;
     }
 
     return new Response(JSON.stringify({ ok: true, sent, caughtUp }), {

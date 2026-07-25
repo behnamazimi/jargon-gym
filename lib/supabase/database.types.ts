@@ -463,6 +463,10 @@ export type Database = {
         Args: { p_term_id: string; p_user_id: string };
         Returns: undefined;
       };
+      my_mark_term_known: {
+        Args: { p_term_id: string };
+        Returns: undefined;
+      };
       my_review_domain_ids: { Args: Record<string, never>; Returns: string[] };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
       pick_random_unknown_term: {

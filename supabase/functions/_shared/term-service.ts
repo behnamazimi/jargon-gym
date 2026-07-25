@@ -7,6 +7,20 @@ import {
   type TermRow,
 } from "./telegram-api.ts";
 
+type SendOptions = {
+  recordSend?: boolean;
+  /** Cron: don't re-notify if user already received caught-up */
+  skipIfAlreadyCaughtUp?: boolean;
+  allCaughtUpAt?: string | null;
+  /** Cron: persist all_caught_up_at when sending caught-up message */
+  persistCaughtUpFlag?: boolean;
+};
+
+export type SendResult =
+  | { kind: "term"; term: TermRow }
+  | { kind: "caught_up" }
+  | { kind: "skipped" };
+
 async function clearCaughtUpFlag(supabase: SupabaseClient, userId: string) {
   await supabase
     .from("telegram_links")
@@ -55,20 +69,54 @@ export async function sendCaughtUpMessage(chatId: number) {
   await sendMessage(chatId, CAUGHT_UP_MESSAGE);
 }
 
+async function sendCaughtUpAndMaybePersist(
+  supabase: SupabaseClient,
+  userId: string,
+  chatId: number,
+  options?: SendOptions,
+): Promise<{ kind: "caught_up" } | { kind: "skipped" }> {
+  if (options?.skipIfAlreadyCaughtUp && options?.allCaughtUpAt) {
+    return { kind: "skipped" };
+  }
+
+  await sendCaughtUpMessage(chatId);
+
+  if (options?.persistCaughtUpFlag) {
+    await supabase.rpc("set_telegram_all_caught_up", { p_user_id: userId });
+  }
+
+  return { kind: "caught_up" };
+}
+
 export async function sendTermOrCaughtUp(
   supabase: SupabaseClient,
   userId: string,
   chatId: number,
-  options?: { recordSend?: boolean },
-) {
+  options?: SendOptions,
+): Promise<SendResult> {
   const unknownCount = await fetchUnknownTermCount(supabase, userId);
 
   if (unknownCount === 0) {
-    await sendCaughtUpMessage(chatId);
-    return { kind: "caught_up" as const };
+    const result = await sendCaughtUpAndMaybePersist(supabase, userId, chatId, options);
+
+    if (result.kind === "caught_up" && options?.recordSend) {
+      await supabase.rpc("record_telegram_send", { p_user_id: userId });
+    }
+
+    return result;
   }
 
   const result = await sendTermCard(supabase, userId, chatId);
+
+  if (result.kind === "caught_up") {
+    const caughtUpResult = await sendCaughtUpAndMaybePersist(supabase, userId, chatId, options);
+
+    if (options?.recordSend) {
+      await supabase.rpc("record_telegram_send", { p_user_id: userId });
+    }
+
+    return caughtUpResult;
+  }
 
   if (options?.recordSend) {
     await supabase.rpc("record_telegram_send", { p_user_id: userId });

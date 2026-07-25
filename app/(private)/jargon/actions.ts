@@ -10,7 +10,7 @@ import {
   setDomainVisibility,
 } from "@/lib/jargon/collections";
 import { fetchSharedDomainsBrowse } from "@/lib/jargon/browse";
-import { upsertTermKnown } from "@/lib/jargon/known-state";
+import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
 import { revalidatePath } from "next/cache";
 
 async function getAuthenticatedClient() {
@@ -32,7 +32,11 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await upsertTermKnown(auth.supabase, auth.user.id, termId, isKnown);
+    if (isKnown) {
+      await markTermKnown(auth.supabase, termId);
+    } else {
+      await clearTermKnown(auth.supabase, auth.user.id, termId);
+    }
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update progress.";

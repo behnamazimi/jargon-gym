@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { isTermInReviewPool, upsertTermKnown } from "@/lib/jargon/known-state";
+import { markTermKnownForUser } from "@/lib/jargon/known-state";
 import { authenticateWidgetRequest } from "@/lib/widget/auth-request";
 
 const bodySchema = z.object({
@@ -20,15 +20,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const allowed = await isTermInReviewPool(auth.admin, auth.userId, body.termId);
-    if (!allowed) {
-      return NextResponse.json({ error: "Term not in your active review pool." }, { status: 403 });
-    }
-
-    await upsertTermKnown(auth.admin, auth.userId, body.termId, true);
+    await markTermKnownForUser(auth.admin, auth.userId, body.termId);
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to mark term as known.";
+    if (message.includes("not in review pool")) {
+      return NextResponse.json({ error: "Term not in your active review pool." }, { status: 403 });
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -11,9 +11,9 @@ Full visual report (Mermaid + before/after diagrams) was generated at review tim
 
 ## Candidates
 
-### 1. Give "mark term known" one interface — Strong
+### 1. Give "mark term known" one interface — Strong — **DONE, DO NOT include in any plan again** (completed 2026-07-25)
 
-**Files:** `app/(private)/jargon/actions.ts`, `app/api/widget/mark-known/route.ts`, `supabase/functions/telegram-webhook/index.ts`, `supabase/migrations/20260725200000_telegram.sql` (`mark_term_known`), `lib/jargon/queries.ts` (`upsertTermKnown`)
+**Files:** `app/(private)/jargon/actions.ts`, `app/api/widget/mark-known/route.ts`, `supabase/functions/telegram-webhook/index.ts`, `supabase/migrations/20260725200000_telegram.sql` (`mark_term_known`), `supabase/migrations/20260725220000_mark_term_known_authenticated.sql` (`my_mark_term_known`), `lib/jargon/known-state.ts`
 
 The same user action — "I know this term" — has three implementations with two different postconditions:
 
@@ -39,7 +39,7 @@ The same user action — "I know this term" — has three implementations with t
 
 **Wins:** one definition instead of two that can silently drift.
 
-### 3. Collapse the Telegram send flow into term-service — Worth exploring
+### 3. Collapse the Telegram send flow into term-service — Worth exploring — **DONE, DO NOT include in any plan again** (completed 2026-07-25)
 
 **Files:** `supabase/functions/_shared/term-service.ts`, `supabase/functions/telegram-send-due/index.ts`, `supabase/functions/telegram-webhook/index.ts`
 
@@ -91,4 +91,4 @@ Collection CRUD, known-state, shared-domain browse, and widget projection are al
 
 ## Top recommendation
 
-Start with **candidate 7** (split `queries.ts`), then **candidate 1** (deepen `markTermKnown`). Candidate 1 is the highest-stakes friction — three implementations of "mark known" with two different postconditions — but `queries.ts` needs to be split first to give that module a clean home. Candidate 2 (review-pool duplication) falls out of the same work almost for free.
+Candidates 1, 2, and 7 are done. Next up: **candidate 4** (name the Telegram link hash contract), **candidate 5** (trim settings shallow layers), or **candidate 6** (extract collection actions from DomainActionsMenu).
