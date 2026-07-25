@@ -12,7 +12,6 @@ import {
   Play,
   Share2,
   Trash2,
-  User,
   BookmarkMinus,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";

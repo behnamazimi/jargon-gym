@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { JargonPageData } from "@/lib/jargon/types";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { CategoryChips } from "./category-chips";
@@ -12,12 +12,13 @@ import { Toolbar } from "./toolbar";
 
 type JargonPageProps = {
   initialData: JargonPageData;
-  userEmail: string;
+  initialTermId?: string;
 };
 
-export function JargonPage({ initialData, userEmail }: JargonPageProps) {
-  const [isDark, setIsDark] = useState(false);
+export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
+  const [termLinkNotice, setTermLinkNotice] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const deepLinkApplied = useRef(false);
 
   const {
     domain,
@@ -38,7 +39,34 @@ export function JargonPage({ initialData, userEmail }: JargonPageProps) {
     toggleOpen,
     toggleKnown,
     clearSearch,
+    focusTerm,
   } = useJargonList(initialData);
+
+  const domainWithLiveCount = useMemo(
+    () => ({ ...domain, knownCount: knownTerms.size }),
+    [domain, knownTerms.size],
+  );
+
+  const domainsWithLiveCounts = useMemo(
+    () =>
+      initialData.domains.map((d) =>
+        d.id === domain.id ? { ...d, knownCount: knownTerms.size } : d,
+      ),
+    [initialData.domains, domain.id, knownTerms.size],
+  );
+
+  useEffect(() => {
+    if (!initialTermId || deepLinkApplied.current) return;
+    deepLinkApplied.current = true;
+
+    const term = terms.find((t) => t.id === initialTermId);
+    if (!term) {
+      setTermLinkNotice("That term is not in this collection.");
+      return;
+    }
+
+    focusTerm(term.id, term.term);
+  }, [initialTermId, terms, focusTerm]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -56,21 +84,12 @@ export function JargonPage({ initialData, userEmail }: JargonPageProps) {
   }, []);
 
   return (
-    <div
-      className={
-        isDark
-          ? "dark min-h-full bg-background text-foreground"
-          : "min-h-full bg-background text-foreground"
-      }
-    >
+    <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto max-w-[900px] px-5 py-7 pb-20">
         <Header
-          domain={domain}
-          domains={initialData.domains}
+          domain={domainWithLiveCount}
+          domains={domainsWithLiveCounts}
           categoryCount={categories.length}
-          userEmail={userEmail}
-          isDark={isDark}
-          onToggleTheme={() => setIsDark((d) => !d)}
         />
         <ProgressBar known={knownTerms.size} total={terms.length} />
         <SearchBar
@@ -93,6 +112,7 @@ export function JargonPage({ initialData, userEmail }: JargonPageProps) {
           onSortChange={setSortMode}
           visibleCount={filteredTerms.length}
         />
+        {termLinkNotice ? <p className="mb-3 text-[13px] text-muted">{termLinkNotice}</p> : null}
         <TermList
           terms={filteredTerms}
           knownTerms={knownTerms}

@@ -41,6 +41,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# widget local state (user-specific)
+widget/**/config.json
+widget/**/state.json
+
 # firebase
 .firebase/
 .firebaserc

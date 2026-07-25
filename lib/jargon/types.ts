@@ -1,3 +1,12 @@
+export type TermRelationship = {
+  id: string;
+  relationshipType: string;
+  description: string;
+  direction: "outgoing" | "incoming";
+  relatedTermId: string;
+  relatedTermName: string;
+};
+
 export type Term = {
   id: string;
   term: string;
@@ -6,6 +15,7 @@ export type Term = {
   example: string;
   discussion: string;
   controversy?: string;
+  relationships: TermRelationship[];
 };
 
 export type DomainSource = "owned" | "added";

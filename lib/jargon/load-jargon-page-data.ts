@@ -1,11 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { mapDomain, mapTerm } from "./mappers";
+import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
 import {
-  fetchActiveDomainIds,
   fetchKnownTermIdsForDomains,
+  fetchTermRelationshipsForTerms,
   fetchTermsByDomain,
-  fetchUserCollection,
+  resolveReviewDomainIds,
 } from "./queries";
 import type { JargonPageData } from "./types";
 
@@ -38,16 +38,13 @@ export async function loadJargonPageData(
   try {
     const { userId, selectedDomainId } = options;
 
-    const [collectionRows, activeDomainIds] = await Promise.all([
-      fetchUserCollection(client, userId),
-      fetchActiveDomainIds(client, userId),
-    ]);
+    const { reviewDomainIds, collectionRows } = await resolveReviewDomainIds(client, userId);
 
     if (collectionRows.length === 0) {
       throw new JargonDataError("No jargon domains in your collection yet.");
     }
 
-    const activeSet = new Set(activeDomainIds);
+    const activeSet = new Set(reviewDomainIds);
     const domains = collectionRows.map((row) =>
       mapDomain(row, {
         source: row.source,
@@ -56,11 +53,6 @@ export async function loadJargonPageData(
         knownCount: row.knownCount,
       }),
     );
-
-    const reviewDomainIds =
-      activeDomainIds.length > 0
-        ? activeDomainIds.filter((id) => collectionRows.some((row) => row.id === id))
-        : collectionRows.map((row) => row.id);
 
     const selectedRow =
       (selectedDomainId ? collectionRows.find((row) => row.id === selectedDomainId) : undefined) ??
@@ -76,17 +68,20 @@ export async function loadJargonPageData(
 
     const [termRows, knownTermIds] = await Promise.all([
       fetchTermsByDomain(client, selectedRow.id),
-      fetchKnownTermIdsForDomains(client, reviewDomainIds),
+      fetchKnownTermIdsForDomains(client, reviewDomainIds, userId),
     ]);
 
-    const terms = termRows.map(mapTerm);
-    const termIds = new Set(terms.map((t) => t.id));
+    const mappedTerms = termRows.map(mapTerm);
+    const termIds = mappedTerms.map((term) => term.id);
+    const relationshipRows = await fetchTermRelationshipsForTerms(client, termIds);
+    const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
+    const termIdSet = new Set(termIds);
 
     return {
       domain,
       domains,
       terms,
-      knownTermIds: knownTermIds.filter((id) => termIds.has(id)),
+      knownTermIds: knownTermIds.filter((id) => termIdSet.has(id)),
       activeDomainIds: reviewDomainIds,
     };
   } catch (err) {

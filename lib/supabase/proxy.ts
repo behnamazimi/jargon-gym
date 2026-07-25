@@ -3,7 +3,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/supabase/database.types";
 
 function isPublicPath(pathname: string) {
-  return pathname === "/" || pathname.startsWith("/login") || pathname.startsWith("/signup");
+  return (
+    pathname === "/" ||
+    pathname === "/install-widget.sh" ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/signup") ||
+    pathname.startsWith("/downloads/") ||
+    pathname.startsWith("/api/widget")
+  );
 }
 
 export async function updateSession(request: NextRequest) {

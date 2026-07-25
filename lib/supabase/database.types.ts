@@ -334,6 +334,41 @@ export type Database = {
         };
         Relationships: [];
       };
+      widget_tokens: {
+        Row: {
+          created_at: string;
+          id: string;
+          label: string;
+          last_used_at: string | null;
+          token_hash: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          label?: string;
+          last_used_at?: string | null;
+          token_hash: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          label?: string;
+          last_used_at?: string | null;
+          token_hash?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "widget_tokens_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;

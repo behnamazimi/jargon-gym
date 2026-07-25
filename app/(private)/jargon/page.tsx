@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
+import { fetchDomainIdForTerm } from "@/lib/jargon/queries";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
 import Link from "next/link";
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string }>;
+  searchParams: Promise<{ domain?: string; termId?: string }>;
 };
 
 export default async function JargonListPage({ searchParams }: PageProps) {
@@ -22,14 +23,19 @@ export default async function JargonListPage({ searchParams }: PageProps) {
     );
   }
 
-  const { domain: domainId } = await searchParams;
+  const { domain: domainParam, termId } = await searchParams;
+  let selectedDomainId = domainParam;
+
+  if (termId && !selectedDomainId) {
+    selectedDomainId = (await fetchDomainIdForTerm(supabase, termId)) ?? undefined;
+  }
 
   try {
     const data = await loadJargonPageData(supabase, {
       userId: user.id,
-      selectedDomainId: domainId,
+      selectedDomainId,
     });
-    return <JargonPage initialData={data} userEmail={user.email ?? ""} />;
+    return <JargonPage initialData={data} initialTermId={termId} />;
   } catch (err) {
     if (err instanceof JargonDataError && err.message.includes("No jargon domains")) {
       return <EmptyCollection />;

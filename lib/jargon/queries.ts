@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import type { WidgetStateResponse, WidgetTerm } from "@/lib/widget/types";
 
 type Client = SupabaseClient<Database>;
 type DomainVisibility = Database["public"]["Enums"]["domain_visibility"];
@@ -144,7 +145,24 @@ export async function fetchTermsByDomain(client: Client, domainId: string) {
   return data;
 }
 
-export async function fetchKnownTermIdsForDomains(client: Client, domainIds: string[]) {
+export async function fetchTermRelationshipsForTerms(client: Client, termIds: string[]) {
+  if (termIds.length === 0) return [];
+
+  const { data, error } = await client
+    .from("term_relationships")
+    .select("id, relationship_type, description, source_term_id, target_term_id")
+    .in("source_term_id", termIds)
+    .in("target_term_id", termIds);
+
+  if (error) throw error;
+  return data;
+}
+
+export async function fetchKnownTermIdsForDomains(
+  client: Client,
+  domainIds: string[],
+  userId: string,
+) {
   if (domainIds.length === 0) return [];
 
   const { data: terms, error: termsError } = await client
@@ -159,6 +177,7 @@ export async function fetchKnownTermIdsForDomains(client: Client, domainIds: str
   const { data, error } = await client
     .from("user_progress")
     .select("term_id")
+    .eq("user_id", userId)
     .eq("is_known", true)
     .in("term_id", termIds);
 
@@ -172,11 +191,22 @@ export async function upsertTermKnown(
   termId: string,
   isKnown: boolean,
 ) {
+  if (!isKnown) {
+    const { error } = await client
+      .from("user_progress")
+      .delete()
+      .eq("user_id", userId)
+      .eq("term_id", termId);
+
+    if (error) throw error;
+    return;
+  }
+
   const { error } = await client.from("user_progress").upsert(
     {
       user_id: userId,
       term_id: termId,
-      is_known: isKnown,
+      is_known: true,
     },
     { onConflict: "user_id,term_id" },
   );
@@ -322,4 +352,87 @@ export async function fetchSharedDomainsBrowse(client: Client, userId: string) {
     termCount: row.terms[0]?.count ?? 0,
     inCollection: inCollection.has(row.id),
   }));
+}
+
+export async function resolveReviewDomainIds(client: Client, userId: string) {
+  const [collectionRows, activeDomainIds] = await Promise.all([
+    fetchUserCollection(client, userId),
+    fetchActiveDomainIds(client, userId),
+  ]);
+
+  const collectionIdSet = new Set(collectionRows.map((row) => row.id));
+  const reviewDomainIds = activeDomainIds.filter((id) => collectionIdSet.has(id));
+
+  return { reviewDomainIds, collectionRows };
+}
+
+export async function fetchWidgetState(
+  client: Client,
+  userId: string,
+): Promise<WidgetStateResponse> {
+  const { reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+
+  if (reviewDomainIds.length === 0) {
+    return {
+      terms: [],
+      knownTermIds: [],
+      activeDomainIds: [],
+      totalCount: 0,
+      knownCount: 0,
+    };
+  }
+
+  const { data: termRows, error: termsError } = await client
+    .from("terms")
+    .select("id, term, category, definition, domain_id, domains(name)")
+    .in("domain_id", reviewDomainIds)
+    .order("term");
+
+  if (termsError) throw termsError;
+
+  const terms: WidgetTerm[] = termRows.map((row) => ({
+    id: row.id,
+    term: row.term,
+    category: row.category,
+    definition: row.definition,
+    domainId: row.domain_id,
+    domainName: row.domains?.name ?? "Jargon",
+  }));
+
+  const knownTermIds = await fetchKnownTermIdsForDomains(client, reviewDomainIds, userId);
+  const knownSet = new Set(knownTermIds);
+
+  return {
+    terms,
+    knownTermIds,
+    activeDomainIds: reviewDomainIds,
+    totalCount: terms.length,
+    knownCount: terms.filter((t) => knownSet.has(t.id)).length,
+  };
+}
+
+export async function fetchDomainIdForTerm(client: Client, termId: string) {
+  const { data, error } = await client
+    .from("terms")
+    .select("domain_id")
+    .eq("id", termId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.domain_id ?? null;
+}
+
+export async function isTermInReviewPool(client: Client, userId: string, termId: string) {
+  const { reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+  if (reviewDomainIds.length === 0) return false;
+
+  const { data, error } = await client
+    .from("terms")
+    .select("id")
+    .eq("id", termId)
+    .in("domain_id", reviewDomainIds)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data !== null;
 }

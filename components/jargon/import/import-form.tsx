@@ -135,9 +135,7 @@ export function ImportForm({
       />
 
       <p className="text-[12px] text-muted">
-        Required fields per term: <span className="font-mono">term</span>,{" "}
-        <span className="font-mono">category</span>, <span className="font-mono">definition</span>.
-        Use Load example to see optional fields and relationships.
+        Use the LLM prompt above to generate JSON, or Load example to start from a template.
       </p>
 
       <button

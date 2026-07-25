@@ -70,6 +70,24 @@ export function TermCard({ term, known, open, onToggleOpen, onToggleKnown }: Ter
               <b className="font-semibold text-foreground">⚠ Debated:</b> {term.controversy}
             </div>
           )}
+          {term.relationships.length > 0 && (
+            <ul className="mt-2 space-y-2">
+              {term.relationships.map((relationship) => (
+                <li
+                  key={`${relationship.id}-${relationship.direction}`}
+                  className="rounded-lg bg-background px-2.5 py-2 text-[13px] leading-normal text-muted"
+                >
+                  <span className="text-foreground">
+                    {relationship.relationshipType}{" "}
+                    <b className="font-semibold">{relationship.relatedTermName}</b>
+                  </span>
+                  {relationship.description ? (
+                    <p className="mt-1 mb-0 text-[12.5px]">{relationship.description}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
           <a
             className="mt-2.5 inline-flex items-center gap-1.5 text-[12.5px] text-accent no-underline hover:underline"
             href={searchUrl}

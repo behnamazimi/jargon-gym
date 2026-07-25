@@ -7,7 +7,7 @@ import type { ImportFailure, ImportPreview } from "@/lib/jargon/import/types";
 import { ImportForm } from "@/components/jargon/import/import-form";
 import { ImportFailurePanel } from "@/components/jargon/import/import-errors";
 import { ImportPreviewPanel } from "@/components/jargon/import/import-preview";
-import { ImportSchemaReference } from "@/components/jargon/import/import-schema-reference";
+import { ImportLlmPrompt } from "@/components/jargon/import/import-llm-prompt";
 
 export function ImportPageClient() {
   const [raw, setRaw] = useState("");
@@ -66,7 +66,7 @@ export function ImportPageClient() {
       </div>
 
       <div className="space-y-4">
-        <ImportSchemaReference />
+        <ImportLlmPrompt />
         <ImportForm
           value={raw}
           onChange={setRaw}

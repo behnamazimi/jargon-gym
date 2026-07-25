@@ -51,29 +51,41 @@ export function useJargonList(initialData: JargonPageData) {
     });
   }, []);
 
-  const toggleKnown = useCallback(async (termId: string) => {
-    let wasKnown = false;
+  const toggleKnown = useCallback(
+    async (termId: string) => {
+      const wasKnown = knownTerms.has(termId);
+      const nextIsKnown = !wasKnown;
 
-    setKnownTerms((prev) => {
-      wasKnown = prev.has(termId);
-      const next = new Set(prev);
-      if (wasKnown) next.delete(termId);
-      else next.add(termId);
-      return next;
-    });
-
-    const result = await setTermKnown(termId, !wasKnown);
-    if (result.error) {
       setKnownTerms((prev) => {
         const next = new Set(prev);
-        if (wasKnown) next.add(termId);
-        else next.delete(termId);
+        if (wasKnown) next.delete(termId);
+        else next.add(termId);
         return next;
       });
-    }
-  }, []);
+
+      const result = await setTermKnown(termId, nextIsKnown);
+      if (result.error) {
+        setKnownTerms((prev) => {
+          const next = new Set(prev);
+          if (wasKnown) next.add(termId);
+          else next.delete(termId);
+          return next;
+        });
+      }
+    },
+    [knownTerms],
+  );
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);
+
+  const focusTerm = useCallback((termId: string, termName: string) => {
+    setSearchQuery(termName);
+    setOpenTerms((prev) => {
+      const next = new Set(prev);
+      next.add(termId);
+      return next;
+    });
+  }, []);
 
   return {
     domain: initialData.domain,
@@ -95,5 +107,6 @@ export function useJargonList(initialData: JargonPageData) {
     toggleOpen,
     toggleKnown,
     clearSearch,
+    focusTerm,
   };
 }

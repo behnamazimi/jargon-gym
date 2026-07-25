@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 
@@ -80,6 +81,16 @@ export function ProfileMenu({ email }: ProfileMenuProps) {
               <p className="mt-0.5 truncate text-[13px] font-medium text-foreground">{email}</p>
             </div>
           </div>
+
+          <Link
+            href="/jargon/settings"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] text-foreground hover:bg-black/5"
+          >
+            <Settings className="h-4 w-4 shrink-0" aria-hidden />
+            Settings
+          </Link>
 
           <button
             type="button"
