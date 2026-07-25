@@ -1,427 +1,419 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   graphql_public: {
     Tables: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
       graphql: {
         Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
     Enums: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
+      [_ in never]: never;
+    };
+  };
   public: {
     Tables: {
       domains: {
         Row: {
-          created_at: string
-          created_by: string | null
-          icon_url: string | null
-          id: string
-          name: string
-        }
+          created_at: string;
+          created_by: string | null;
+          icon_url: string | null;
+          id: string;
+          name: string;
+        };
         Insert: {
-          created_at?: string
-          created_by?: string | null
-          icon_url?: string | null
-          id?: string
-          name: string
-        }
+          created_at?: string;
+          created_by?: string | null;
+          icon_url?: string | null;
+          id?: string;
+          name: string;
+        };
         Update: {
-          created_at?: string
-          created_by?: string | null
-          icon_url?: string | null
-          id?: string
-          name?: string
-        }
+          created_at?: string;
+          created_by?: string | null;
+          icon_url?: string | null;
+          id?: string;
+          name?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "domains_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "domains_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       referral_codes: {
         Row: {
-          code: string
-          created_at: string
-          created_by: string | null
-          id: string
-          is_active: boolean
-          used_at: string | null
-          used_by: string | null
-        }
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          is_active: boolean;
+          used_at: string | null;
+          used_by: string | null;
+        };
         Insert: {
-          code: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          used_at?: string | null
-          used_by?: string | null
-        }
+          code: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean;
+          used_at?: string | null;
+          used_by?: string | null;
+        };
         Update: {
-          code?: string
-          created_at?: string
-          created_by?: string | null
-          id?: string
-          is_active?: boolean
-          used_at?: string | null
-          used_by?: string | null
-        }
+          code?: string;
+          created_at?: string;
+          created_by?: string | null;
+          id?: string;
+          is_active?: boolean;
+          used_at?: string | null;
+          used_by?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "referral_codes_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "referral_codes_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "referral_codes_used_by_fkey"
-            columns: ["used_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "referral_codes_used_by_fkey";
+            columns: ["used_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       term_relationships: {
         Row: {
-          created_at: string
-          created_by: string | null
-          description: string
-          id: string
-          relationship_type: string
-          source_term_id: string
-          target_term_id: string
-        }
+          created_at: string;
+          created_by: string | null;
+          description: string;
+          id: string;
+          relationship_type: string;
+          source_term_id: string;
+          target_term_id: string;
+        };
         Insert: {
-          created_at?: string
-          created_by?: string | null
-          description: string
-          id?: string
-          relationship_type: string
-          source_term_id: string
-          target_term_id: string
-        }
+          created_at?: string;
+          created_by?: string | null;
+          description: string;
+          id?: string;
+          relationship_type: string;
+          source_term_id: string;
+          target_term_id: string;
+        };
         Update: {
-          created_at?: string
-          created_by?: string | null
-          description?: string
-          id?: string
-          relationship_type?: string
-          source_term_id?: string
-          target_term_id?: string
-        }
+          created_at?: string;
+          created_by?: string | null;
+          description?: string;
+          id?: string;
+          relationship_type?: string;
+          source_term_id?: string;
+          target_term_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "term_relationships_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "term_relationships_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "term_relationships_source_term_id_fkey"
-            columns: ["source_term_id"]
-            isOneToOne: false
-            referencedRelation: "terms"
-            referencedColumns: ["id"]
+            foreignKeyName: "term_relationships_source_term_id_fkey";
+            columns: ["source_term_id"];
+            isOneToOne: false;
+            referencedRelation: "terms";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "term_relationships_target_term_id_fkey"
-            columns: ["target_term_id"]
-            isOneToOne: false
-            referencedRelation: "terms"
-            referencedColumns: ["id"]
+            foreignKeyName: "term_relationships_target_term_id_fkey";
+            columns: ["target_term_id"];
+            isOneToOne: false;
+            referencedRelation: "terms";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       terms: {
         Row: {
-          category: string
-          controversy: string | null
-          created_at: string
-          created_by: string | null
-          definition: string
-          discussion: string | null
-          domain_id: string
-          example: string | null
-          id: string
-          term: string
-        }
+          category: string;
+          controversy: string | null;
+          created_at: string;
+          created_by: string | null;
+          definition: string;
+          discussion: string | null;
+          domain_id: string;
+          example: string | null;
+          id: string;
+          term: string;
+        };
         Insert: {
-          category: string
-          controversy?: string | null
-          created_at?: string
-          created_by?: string | null
-          definition: string
-          discussion?: string | null
-          domain_id: string
-          example?: string | null
-          id?: string
-          term: string
-        }
+          category: string;
+          controversy?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          definition: string;
+          discussion?: string | null;
+          domain_id: string;
+          example?: string | null;
+          id?: string;
+          term: string;
+        };
         Update: {
-          category?: string
-          controversy?: string | null
-          created_at?: string
-          created_by?: string | null
-          definition?: string
-          discussion?: string | null
-          domain_id?: string
-          example?: string | null
-          id?: string
-          term?: string
-        }
+          category?: string;
+          controversy?: string | null;
+          created_at?: string;
+          created_by?: string | null;
+          definition?: string;
+          discussion?: string | null;
+          domain_id?: string;
+          example?: string | null;
+          id?: string;
+          term?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "terms_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "terms_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "terms_domain_id_fkey"
-            columns: ["domain_id"]
-            isOneToOne: false
-            referencedRelation: "domains"
-            referencedColumns: ["id"]
+            foreignKeyName: "terms_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       user_progress: {
         Row: {
-          is_known: boolean
-          term_id: string
-          user_id: string
-        }
+          is_known: boolean;
+          term_id: string;
+          user_id: string;
+        };
         Insert: {
-          is_known?: boolean
-          term_id: string
-          user_id: string
-        }
+          is_known?: boolean;
+          term_id: string;
+          user_id: string;
+        };
         Update: {
-          is_known?: boolean
-          term_id?: string
-          user_id?: string
-        }
+          is_known?: boolean;
+          term_id?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "user_progress_term_id_fkey"
-            columns: ["term_id"]
-            isOneToOne: false
-            referencedRelation: "terms"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_progress_term_id_fkey";
+            columns: ["term_id"];
+            isOneToOne: false;
+            referencedRelation: "terms";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_progress_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
+            foreignKeyName: "user_progress_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       users: {
         Row: {
-          created_at: string
-          email: string
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-        }
+          created_at: string;
+          email: string;
+          id: string;
+          role: Database["public"]["Enums"]["user_role"];
+        };
         Insert: {
-          created_at?: string
-          email: string
-          id: string
-          role?: Database["public"]["Enums"]["user_role"]
-        }
+          created_at?: string;
+          email: string;
+          id: string;
+          role?: Database["public"]["Enums"]["user_role"];
+        };
         Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          role?: Database["public"]["Enums"]["user_role"]
-        }
-        Relationships: []
-      }
-    }
+          created_at?: string;
+          email?: string;
+          id?: string;
+          role?: Database["public"]["Enums"]["user_role"];
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
       create_referral_code: {
-        Args: { p_code?: string }
+        Args: { p_code?: string };
         Returns: {
-          code: string
-          created_at: string
-          created_by: string | null
-          id: string
-          is_active: boolean
-          used_at: string | null
-          used_by: string | null
-        }
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          id: string;
+          is_active: boolean;
+          used_at: string | null;
+          used_by: string | null;
+        };
         SetofOptions: {
-          from: "*"
-          to: "referral_codes"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      is_admin: { Args: never; Returns: boolean }
-      is_referral_code_valid: { Args: { p_code: string }; Returns: boolean }
-    }
+          from: "*";
+          to: "referral_codes";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      is_admin: { Args: never; Returns: boolean };
+      is_referral_code_valid: { Args: { p_code: string }; Returns: boolean };
+    };
     Enums: {
-      user_role: "admin" | "member"
-    }
+      user_role: "admin" | "member";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   graphql_public: {
@@ -432,5 +424,4 @@ export const Constants = {
       user_role: ["admin", "member"],
     },
   },
-} as const
-
+} as const;
