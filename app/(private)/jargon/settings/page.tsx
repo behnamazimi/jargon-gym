@@ -1,6 +1,7 @@
+import { SettingsPage } from "@/components/jargon/settings/settings-page";
+import { getTelegramLinkStatus } from "@/lib/telegram/links";
 import { createClient } from "@/lib/supabase/server";
 import { listWidgetTokens } from "@/lib/widget/tokens";
-import { WidgetSettings } from "@/components/jargon/widget-settings";
 
 export default async function JargonSettingsPage() {
   const supabase = await createClient();
@@ -16,7 +17,10 @@ export default async function JargonSettingsPage() {
     );
   }
 
-  const tokens = await listWidgetTokens(supabase, user.id);
+  const [tokens, telegramStatus] = await Promise.all([
+    listWidgetTokens(supabase, user.id),
+    getTelegramLinkStatus(supabase, user.id),
+  ]);
 
-  return <WidgetSettings initialTokens={tokens} />;
+  return <SettingsPage initialTokens={tokens} initialTelegramStatus={telegramStatus} />;
 }

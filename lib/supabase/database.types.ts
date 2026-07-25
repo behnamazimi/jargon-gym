@@ -111,6 +111,53 @@ export type Database = {
           },
         ];
       };
+      telegram_links: {
+        Row: {
+          all_caught_up_at: string | null;
+          cadence: Database["public"]["Enums"]["telegram_cadence"];
+          chat_id: number | null;
+          created_at: string;
+          last_sent_at: string | null;
+          link_token_expires_at: string | null;
+          link_token_hash: string | null;
+          linked_at: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          all_caught_up_at?: string | null;
+          cadence?: Database["public"]["Enums"]["telegram_cadence"];
+          chat_id?: number | null;
+          created_at?: string;
+          last_sent_at?: string | null;
+          link_token_expires_at?: string | null;
+          link_token_hash?: string | null;
+          linked_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          all_caught_up_at?: string | null;
+          cadence?: Database["public"]["Enums"]["telegram_cadence"];
+          chat_id?: number | null;
+          created_at?: string;
+          last_sent_at?: string | null;
+          link_token_expires_at?: string | null;
+          link_token_hash?: string | null;
+          linked_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "telegram_links_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       term_relationships: {
         Row: {
           created_at: string;
@@ -376,6 +423,11 @@ export type Database = {
     Functions: {
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
+      complete_telegram_link: {
+        Args: { p_chat_id: number; p_token_hash: string };
+        Returns: string;
+      };
+      count_unknown_terms: { Args: { p_user_id: string }; Returns: number };
       create_referral_code: {
         Args: { p_code?: string };
         Returns: {
@@ -400,10 +452,48 @@ export type Database = {
         Returns: boolean;
       };
       is_referral_code_valid: { Args: { p_code: string }; Returns: boolean };
+      list_due_telegram_users: {
+        Args: never;
+        Returns: {
+          chat_id: number;
+          user_id: string;
+        }[];
+      };
+      mark_term_known: {
+        Args: { p_term_id: string; p_user_id: string };
+        Returns: undefined;
+      };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
+      pick_random_unknown_term: {
+        Args: { p_user_id: string };
+        Returns: {
+          category: string;
+          definition: string;
+          discussion: string;
+          domain_id: string;
+          domain_name: string;
+          example: string;
+          id: string;
+          term: string;
+        }[];
+      };
+      record_telegram_send: { Args: { p_user_id: string }; Returns: undefined };
+      set_telegram_all_caught_up: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      telegram_review_domain_ids: {
+        Args: { p_user_id: string };
+        Returns: string[];
+      };
+      update_telegram_cadence: {
+        Args: { p_cadence: Database["public"]["Enums"]["telegram_cadence"] };
+        Returns: undefined;
+      };
     };
     Enums: {
       domain_visibility: "private" | "shared";
+      telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
     };
     CompositeTypes: {
@@ -534,6 +624,7 @@ export const Constants = {
   public: {
     Enums: {
       domain_visibility: ["private", "shared"],
+      telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],
     },
   },
