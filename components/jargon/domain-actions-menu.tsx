@@ -7,6 +7,7 @@ import {
   Globe,
   Link2,
   Lock,
+  Pencil,
   Settings,
   Pause,
   Play,
@@ -37,6 +38,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import type { Domain } from "@/lib/jargon/types";
 import { cn, pluralize } from "@/lib/utils";
+import { DomainFormDialog } from "./domain-form-dialog";
 
 type DomainActionsMenuProps = {
   domain: Domain;
@@ -56,6 +58,7 @@ function subscriberCountMessage(count: number) {
 export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [shareConfirmOpen, setShareConfirmOpen] = useState(false);
   const [unshareConfirmOpen, setUnshareConfirmOpen] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
@@ -146,6 +149,10 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
 
           {domain.source === "owned" ? (
             <>
+              <DropdownMenuItem isDisabled={disabled} onAction={() => setEditOpen(true)}>
+                <Pencil className="h-4 w-4" />
+                Edit domain
+              </DropdownMenuItem>
               {domain.visibility === "private" ? (
                 <DropdownMenuItem isDisabled={disabled} onAction={() => setShareConfirmOpen(true)}>
                   <Share2 className="h-4 w-4" />
@@ -186,6 +193,10 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
           )}
         </DropdownMenu>
       </DropdownMenuTrigger>
+
+      {domain.source === "owned" ? (
+        <DomainFormDialog domain={domain} isOpen={editOpen} onOpenChange={setEditOpen} />
+      ) : null}
 
       <AlertDialog isOpen={shareConfirmOpen} onOpenChange={setShareConfirmOpen}>
         <AlertDialogHeader>

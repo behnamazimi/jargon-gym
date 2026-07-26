@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export const pageContainerClass = "mx-auto w-full max-w-[900px] px-5";
+export const pageContainerClass = "mx-auto w-full max-w-6xl px-5";
 
 type PageShellProps = {
   children: ReactNode;

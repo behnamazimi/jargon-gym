@@ -24,7 +24,6 @@ export function BackLink({
     <LinkButton
       href={href}
       variant={variant}
-      size="sm"
       className={cn("shrink-0 text-muted-foreground hover:text-foreground", className)}
     >
       <ArrowLeft className="size-3.5" aria-hidden />

@@ -1,8 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { domainInputToUpdateRow, type DomainInput } from "@/lib/jargon/domain-schema";
 
 type Client = SupabaseClient<Database>;
 type DomainVisibility = Database["public"]["Enums"]["domain_visibility"];
+
+export class DomainMutationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DomainMutationError";
+  }
+}
 
 export type CollectionDomainRow = {
   id: string;
@@ -178,6 +186,51 @@ export async function setDomainVisibility(
   visibility: DomainVisibility,
 ) {
   const { error } = await client.from("domains").update({ visibility }).eq("id", domainId);
+
+  if (error) throw error;
+}
+
+export async function updateOwnedDomain(
+  client: Client,
+  userId: string,
+  domainId: string,
+  input: DomainInput,
+) {
+  const { data: domain, error: domainError } = await client
+    .from("domains")
+    .select("id, owner_id, name")
+    .eq("id", domainId)
+    .maybeSingle();
+
+  if (domainError) throw domainError;
+
+  if (!domain) {
+    throw new DomainMutationError("Domain not found.");
+  }
+
+  if (domain.owner_id !== userId) {
+    throw new DomainMutationError("You do not own this domain.");
+  }
+
+  const row = domainInputToUpdateRow(input);
+
+  if (row.name.toLowerCase() !== domain.name.toLowerCase()) {
+    const { data: existing, error: existingError } = await client
+      .from("domains")
+      .select("id")
+      .eq("owner_id", userId)
+      .ilike("name", row.name)
+      .neq("id", domainId)
+      .maybeSingle();
+
+    if (existingError) throw existingError;
+
+    if (existing) {
+      throw new DomainMutationError(`You already have a domain named "${row.name}".`);
+    }
+  }
+
+  const { error } = await client.from("domains").update(row).eq("id", domainId);
 
   if (error) throw error;
 }

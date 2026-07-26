@@ -5,10 +5,13 @@ import {
   addDomainToCollection,
   countDomainCollectionSubscribers,
   deleteDomain,
+  DomainMutationError,
   removeDomainFromCollection,
   setDomainActiveForReview,
   setDomainVisibility,
+  updateOwnedDomain as updateOwnedDomainRecord,
 } from "@/lib/jargon/collections";
+import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
 import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
@@ -229,6 +232,31 @@ export async function getDomainSubscriberCount(
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to load subscriber count.";
     return { error: message };
+  }
+}
+
+function domainMutationErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof DomainMutationError) return err.message;
+  if (err instanceof Error) return err.message;
+  return fallback;
+}
+
+export async function updateOwnedDomain(
+  domainId: string,
+  input: DomainInput,
+): Promise<{ error?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const parsed = parseDomainInput(input);
+  if (!parsed.ok) return { error: parsed.error };
+
+  try {
+    await updateOwnedDomainRecord(auth.supabase, auth.user.id, domainId, parsed.data);
+    revalidatePath("/jargon");
+    return {};
+  } catch (err) {
+    return { error: domainMutationErrorMessage(err, "Failed to update domain.") };
   }
 }
 

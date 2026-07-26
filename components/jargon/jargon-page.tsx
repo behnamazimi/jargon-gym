@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { PageShell } from "@/components/page-container";
 import { CategoryChips } from "./category-chips";
+import { DomainSidebar } from "./domain-sidebar";
+import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
 import { Header } from "./header";
 import { QuizFab } from "./quiz-fab";
 import { SearchBar } from "./search-bar";
@@ -92,51 +94,73 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
   return (
     <>
       <PageShell>
-        <Header
-          domain={domainWithLiveCount}
-          domains={domainsWithLiveCounts}
-          categoryCount={categories.length}
-          isOwner={isOwner}
-          onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
-        />
+        <div className="flex flex-col gap-5 md:flex-row md:items-start">
+          <DomainSidebarDrawer
+            domains={domainsWithLiveCounts}
+            currentDomain={domainWithLiveCount}
+            currentDomainId={domain.id}
+          />
 
-        <Card className="gap-0 p-0 ring-foreground/5">
-          <CardContent className="space-y-3 px-4 py-3">
-            <SearchBar
-              value={searchQuery}
-              onChange={setSearchQuery}
-              onClear={clearSearch}
-              inputRef={searchInputRef}
-            />
-            <CategoryChips
-              categories={categories}
-              counts={categoryCounts}
-              totalCount={terms.length}
-              activeCategories={activeCategories}
-              onToggle={toggleCategory}
-            />
-            <Toolbar
-              hideKnown={hideKnown}
-              onHideKnownChange={setHideKnown}
-              sortMode={sortMode}
-              onSortChange={setSortMode}
-              visibleCount={filteredTerms.length}
-            />
-          </CardContent>
-        </Card>
+          <aside className="hidden md:flex md:w-68 md:shrink-0">
+            <div className="sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-xl border bg-card/80 p-3 ring-foreground/5 backdrop-blur-sm">
+              <DomainSidebar
+                domains={domainsWithLiveCounts}
+                currentDomainId={domain.id}
+                className="min-h-0 flex-1"
+              />
+            </div>
+          </aside>
 
-        {termLinkNotice ? <p className="text-sm text-muted-foreground">{termLinkNotice}</p> : null}
+          <div className="min-w-0 flex-1 space-y-5">
+            <Header
+              domain={domainWithLiveCount}
+              domains={domainsWithLiveCounts}
+              categoryCount={categories.length}
+              isOwner={isOwner}
+              onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
+            />
 
-        <TermList
-          terms={filteredTerms}
-          knownTerms={knownTerms}
-          openTerms={openTerms}
-          isOwner={isOwner}
-          domainId={domain.id}
-          domainTerms={terms}
-          onToggleOpen={toggleOpen}
-          onToggleKnown={toggleKnown}
-        />
+            <Card className="gap-0 p-0 ring-foreground/5">
+              <CardContent className="space-y-3 px-4 py-3">
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onClear={clearSearch}
+                  inputRef={searchInputRef}
+                />
+                <CategoryChips
+                  categories={categories}
+                  counts={categoryCounts}
+                  totalCount={terms.length}
+                  activeCategories={activeCategories}
+                  onToggle={toggleCategory}
+                />
+                <Toolbar
+                  hideKnown={hideKnown}
+                  onHideKnownChange={setHideKnown}
+                  sortMode={sortMode}
+                  onSortChange={setSortMode}
+                  visibleCount={filteredTerms.length}
+                />
+              </CardContent>
+            </Card>
+
+            {termLinkNotice ? (
+              <p className="text-sm text-muted-foreground">{termLinkNotice}</p>
+            ) : null}
+
+            <TermList
+              terms={filteredTerms}
+              knownTerms={knownTerms}
+              openTerms={openTerms}
+              isOwner={isOwner}
+              domainId={domain.id}
+              domainTerms={terms}
+              onToggleOpen={toggleOpen}
+              onToggleKnown={toggleKnown}
+            />
+          </div>
+        </div>
       </PageShell>
       {isOwner ? (
         <TermFormDialog

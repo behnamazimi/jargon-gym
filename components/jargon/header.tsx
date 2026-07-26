@@ -4,7 +4,6 @@ import { Plus } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Domain } from "@/lib/jargon/types";
-import { CollectionTabs } from "./collection-tabs";
 import { DomainActionsMenu, DomainMeta } from "./domain-actions-menu";
 
 type HeaderProps = {
@@ -25,10 +24,14 @@ export function Header({
   return (
     <header>
       <Card className="gap-0 p-0 ring-foreground/5">
-        <CollectionTabs domains={domains} currentDomainId={domain.id} />
-
         <CardContent className="flex items-start justify-between gap-3 px-4 py-3">
-          <DomainMeta domain={domain} categoryCount={categoryCount} />
+          <div className="min-w-0 flex-1 space-y-2">
+            <h1 className="truncate text-lg font-semibold tracking-tight">
+              {domain.icon ? `${domain.icon} ` : ""}
+              {domain.name}
+            </h1>
+            <DomainMeta domain={domain} categoryCount={categoryCount} />
+          </div>
           <div className="flex shrink-0 items-center gap-1">
             {isOwner && onAddTerm ? (
               <Button
