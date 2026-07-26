@@ -50,7 +50,24 @@ export async function pickRandomUnknownTerm(
   });
 
   if (error) throw error;
-  return (data?.[0] as TermRow | undefined) ?? null;
+
+  const row = (data?.[0] as Record<string, unknown> | undefined) ?? null;
+  if (!row) return null;
+
+  return {
+    id: String(row.id),
+    term: String(row.term),
+    category: String(row.category),
+    definition: String(row.definition),
+    example: (row.example as string | null) ?? null,
+    discussion: (row.discussion as string | null) ?? null,
+    controversy: (row.controversy as string | null) ?? null,
+    domain_id: String(row.domain_id),
+    domain_name: String(row.domain_name),
+    relationships: Array.isArray(row.relationships)
+      ? (row.relationships as TermRow["relationships"])
+      : [],
+  };
 }
 
 export async function sendTermCard(supabase: SupabaseClient, userId: string, chatId: number) {

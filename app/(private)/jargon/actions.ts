@@ -3,12 +3,22 @@
 import { createClient } from "@/lib/supabase/server";
 import {
   addDomainToCollection,
+  countDomainCollectionSubscribers,
   deleteDomain,
   removeDomainFromCollection,
   setDomainActiveForReview,
   setDomainVisibility,
 } from "@/lib/jargon/collections";
 import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
+import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
+import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
+import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
+import {
+  createTerm as createTermRecord,
+  deleteTerm as deleteTermRecord,
+  TermMutationError,
+  updateTerm as updateTermRecord,
+} from "@/lib/jargon/terms";
 import { revalidatePath } from "next/cache";
 
 async function getAuthenticatedClient() {
@@ -23,6 +33,80 @@ async function getAuthenticatedClient() {
   }
 
   return { supabase, user };
+}
+
+function termMutationErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof TermMutationError || err instanceof RelationshipMutationError)
+    return err.message;
+  if (err instanceof Error) return err.message;
+  return fallback;
+}
+
+export async function createTerm(
+  domainId: string,
+  input: TermInput,
+  relationshipSync?: Pick<RelationshipSyncPayload, "create">,
+): Promise<{ error?: string; termId?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const parsed = parseTermInput(input);
+  if (!parsed.ok) return { error: parsed.error };
+
+  try {
+    const created = await createTermRecord(auth.supabase, domainId, auth.user.id, parsed.data);
+
+    if (relationshipSync?.create.length) {
+      await syncTermRelationships(auth.supabase, auth.user.id, created.id, {
+        create: relationshipSync.create,
+        update: [],
+        deleteIds: [],
+      });
+    }
+
+    revalidatePath("/jargon");
+    return { termId: created.id };
+  } catch (err) {
+    return { error: termMutationErrorMessage(err, "Failed to create term.") };
+  }
+}
+
+export async function updateTerm(
+  termId: string,
+  input: TermInput,
+  relationshipSync?: RelationshipSyncPayload,
+): Promise<{ error?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const parsed = parseTermInput(input);
+  if (!parsed.ok) return { error: parsed.error };
+
+  try {
+    await updateTermRecord(auth.supabase, termId, parsed.data);
+
+    if (relationshipSync) {
+      await syncTermRelationships(auth.supabase, auth.user.id, termId, relationshipSync);
+    }
+
+    revalidatePath("/jargon");
+    return {};
+  } catch (err) {
+    return { error: termMutationErrorMessage(err, "Failed to update term.") };
+  }
+}
+
+export async function deleteTerm(termId: string): Promise<{ error?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await deleteTermRecord(auth.supabase, termId);
+    revalidatePath("/jargon");
+    return {};
+  } catch (err) {
+    return { error: termMutationErrorMessage(err, "Failed to delete term.") };
+  }
 }
 
 export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ error?: string }> {
@@ -111,6 +195,39 @@ export async function unshareDomain(domainId: string): Promise<{ error?: string 
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to unshare domain.";
+    return { error: message };
+  }
+}
+
+export async function getDomainSubscriberCount(
+  domainId: string,
+): Promise<{ count?: number; error?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const { data: domain, error: domainError } = await auth.supabase
+    .from("domains")
+    .select("owner_id")
+    .eq("id", domainId)
+    .maybeSingle();
+
+  if (domainError) {
+    return { error: domainError.message };
+  }
+
+  if (!domain) {
+    return { error: "Domain not found." };
+  }
+
+  if (domain.owner_id !== auth.user.id) {
+    return { error: "You do not own this domain." };
+  }
+
+  try {
+    const count = await countDomainCollectionSubscribers(auth.supabase, domainId, auth.user.id);
+    return { count };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to load subscriber count.";
     return { error: message };
   }
 }

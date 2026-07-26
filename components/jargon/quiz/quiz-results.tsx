@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { RotateCcw } from "lucide-react";
+import { BackLink } from "@/components/jargon/back-link";
 import { Badge } from "@/components/ui/badge";
-import { Button, LinkButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { QuizTermStatus } from "@/lib/quiz/types";
@@ -73,10 +74,7 @@ export function QuizResults({
           <RotateCcw className="size-3.5" />
           Quiz again
         </Button>
-        <LinkButton href="/jargon" variant="outline">
-          <ArrowLeft className="size-3.5" />
-          Back to jargon
-        </LinkButton>
+        <BackLink variant="outline" />
       </div>
     </Card>
   );

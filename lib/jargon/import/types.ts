@@ -49,6 +49,7 @@ export type ImportPreview = {
   relationshipCount: number;
   categories: string[];
   isMerge: boolean;
+  conflictingTerms: string[];
 };
 
 export type ImportResult = {

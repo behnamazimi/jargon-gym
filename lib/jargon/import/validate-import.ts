@@ -141,11 +141,37 @@ export async function buildImportPreview(
 
   const categories = [...new Set(payload.terms.map((t) => t.category.trim()))].sort();
 
+  let conflictingTerms: string[] = [];
+
+  if (existing) {
+    const { data: existingTerms, error: existingTermsError } = await client
+      .from("terms")
+      .select("term")
+      .eq("domain_id", existing.id);
+
+    if (existingTermsError) {
+      throw new ImportExecutionError(
+        formatImportFailure(existingTermsError, {
+          step: "Could not check existing terms",
+          domain: payload.domain,
+        }),
+      );
+    }
+
+    const existingKeys = new Set((existingTerms ?? []).map((row) => row.term.trim().toLowerCase()));
+
+    conflictingTerms = payload.terms
+      .filter((item) => existingKeys.has(item.term.trim().toLowerCase()))
+      .map((item) => item.term.trim())
+      .sort((a, b) => a.localeCompare(b));
+  }
+
   return {
     domain: payload.domain,
     termCount: payload.terms.length,
     relationshipCount: payload.relationships?.length ?? 0,
     categories,
     isMerge: Boolean(existing),
+    conflictingTerms,
   };
 }

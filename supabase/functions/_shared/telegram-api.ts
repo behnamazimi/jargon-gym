@@ -1,5 +1,12 @@
 import { getAppBaseUrl, getTelegramBotToken } from "./env.ts";
 
+export type TermRelationshipRow = {
+  direction: "outgoing" | "incoming";
+  relationship_type: string;
+  related_term_name: string;
+  description: string;
+};
+
 export type TermRow = {
   id: string;
   term: string;
@@ -7,32 +14,85 @@ export type TermRow = {
   definition: string;
   example: string | null;
   discussion: string | null;
+  controversy: string | null;
   domain_id: string;
   domain_name: string;
+  relationships: TermRelationshipRow[];
 };
+
+const TELEGRAM_MESSAGE_LIMIT = 4096;
 
 export function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function formatTermMessage(term: TermRow): string {
+export function buildGoogleSearchUrl(term: string): string {
+  return `https://www.google.com/search?q=${encodeURIComponent(`${term} definition`)}`;
+}
+
+function formatQuotedSection(title: string, body: string): string {
+  const trimmed = body.trim();
+  if (!trimmed) return "";
+
+  return `\n\n<b>${escapeHtml(title)}</b>\n<blockquote>${escapeHtml(trimmed)}</blockquote>`;
+}
+
+function formatRelationships(relationships: TermRelationshipRow[]): string {
+  if (relationships.length === 0) return "";
+
+  let section = `\n\n<b>Relationships</b>`;
+
+  for (const relationship of relationships) {
+    const type = escapeHtml(relationship.relationship_type);
+    const name = escapeHtml(relationship.related_term_name);
+    section += `\n· <i>${type}</i> <b>${name}</b>`;
+
+    if (relationship.description?.trim()) {
+      section += `\n  ${escapeHtml(relationship.description.trim())}`;
+    }
+  }
+
+  return section;
+}
+
+function buildTermMessageBody(term: TermRow): string {
   let message = `<b>${escapeHtml(term.term)}</b>\n`;
   message += `<i>${escapeHtml(term.category)}</i> · ${escapeHtml(term.domain_name)}\n\n`;
-  message += escapeHtml(term.definition);
+  message += escapeHtml(term.definition.trim());
 
-  if (term.example?.trim()) {
-    message += `\n\n<b>Example:</b> ${escapeHtml(term.example.trim())}`;
-  }
-
-  if (term.discussion?.trim()) {
-    message += `\n\n<b>Discussion:</b> ${escapeHtml(term.discussion.trim())}`;
-  }
-
-  if (message.length > 4096) {
-    return `${message.slice(0, 4093)}…`;
-  }
+  message += formatQuotedSection("Example", term.example ?? "");
+  message += formatQuotedSection("In practice", term.discussion ?? "");
+  message += formatQuotedSection("Debated", term.controversy ?? "");
+  message += formatRelationships(term.relationships ?? []);
 
   return message;
+}
+
+function appendSearchLink(message: string, termName: string): string {
+  const searchUrl = buildGoogleSearchUrl(termName);
+  return `${message}\n\n<a href="${searchUrl}">Search "${escapeHtml(termName)}" on Google</a>`;
+}
+
+function trimMessageBody(body: string, reservedLength: number): string {
+  const maxBodyLength = TELEGRAM_MESSAGE_LIMIT - reservedLength;
+
+  if (body.length <= maxBodyLength) {
+    return body;
+  }
+
+  return `${body.slice(0, Math.max(0, maxBodyLength - 1)).trimEnd()}…`;
+}
+
+export function formatTermMessage(term: TermRow): string {
+  const body = buildTermMessageBody(term);
+  const searchLink = appendSearchLink("", term.term);
+  const reservedLength = searchLink.length;
+
+  if (body.length + reservedLength <= TELEGRAM_MESSAGE_LIMIT) {
+    return appendSearchLink(body, term.term);
+  }
+
+  return appendSearchLink(trimMessageBody(body, reservedLength), term.term);
 }
 
 export function buildInlineKeyboard(term: TermRow) {
@@ -76,6 +136,7 @@ export async function sendMessage(
     text,
     parse_mode: "HTML",
     reply_markup: replyMarkup,
+    link_preview_options: { is_disabled: true },
   });
 }
 
@@ -97,6 +158,7 @@ export async function editMessageText(
     message_id: messageId,
     text,
     parse_mode: "HTML",
+    link_preview_options: { is_disabled: true },
     reply_markup: replyMarkup,
   });
 }

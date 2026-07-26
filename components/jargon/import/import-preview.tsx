@@ -1,14 +1,35 @@
+import { AlertTriangle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
 import type { ImportPreview } from "@/lib/jargon/import/types";
+import { pluralize } from "@/lib/utils";
 
 type ImportPreviewPanelProps = {
   preview: ImportPreview;
+  confirmReplace: boolean;
+  onConfirmReplaceChange: (value: boolean) => void;
   onImport: () => void;
   isImporting: boolean;
 };
 
-export function ImportPreviewPanel({ preview, onImport, isImporting }: ImportPreviewPanelProps) {
+export function ImportPreviewPanel({
+  preview,
+  confirmReplace,
+  onConfirmReplaceChange,
+  onImport,
+  isImporting,
+}: ImportPreviewPanelProps) {
+  const conflictCount = preview.conflictingTerms.length;
+  const hasConflicts = conflictCount > 0;
+  const canImport = !hasConflicts || confirmReplace;
+
+  const confirmLabel = hasConflicts
+    ? `Replace ${pluralize(conflictCount, "term")} and import`
+    : "Confirm import";
+
   return (
     <Card className="ring-foreground/5">
       <CardContent>
@@ -36,8 +57,47 @@ export function ImportPreviewPanel({ preview, onImport, isImporting }: ImportPre
         <p className="mt-3 text-sm text-muted-foreground">
           Categories: {preview.categories.join(", ")}
         </p>
-        <Button type="button" onPress={onImport} isDisabled={isImporting} className="mt-4">
-          {isImporting ? "Importing…" : "Confirm import"}
+
+        {hasConflicts ? (
+          <Alert className="mt-4">
+            <AlertTriangle className="size-4" />
+            <AlertTitle>
+              {pluralize(conflictCount, "existing term", "existing terms")} will be replaced
+            </AlertTitle>
+            <AlertDescription className="space-y-3">
+              <p>
+                These names already exist in &ldquo;{preview.domain}&rdquo;. Importing will
+                overwrite their definitions and other fields with the imported data.
+              </p>
+              <ul className="list-disc space-y-1 pl-5">
+                {preview.conflictingTerms.map((term) => (
+                  <li key={term}>{term}</li>
+                ))}
+              </ul>
+              <Field orientation="horizontal" className="items-start gap-2">
+                <Checkbox
+                  id="confirm-replace-terms"
+                  isSelected={confirmReplace}
+                  onChange={onConfirmReplaceChange}
+                />
+                <FieldLabel
+                  htmlFor="confirm-replace-terms"
+                  className="text-sm font-normal leading-relaxed"
+                >
+                  Replace {pluralize(conflictCount, "term")} with the imported data
+                </FieldLabel>
+              </Field>
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        <Button
+          type="button"
+          onPress={onImport}
+          isDisabled={isImporting || !canImport}
+          className="mt-4"
+        >
+          {isImporting ? "Importing…" : confirmLabel}
         </Button>
       </CardContent>
     </Card>

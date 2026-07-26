@@ -1,14 +1,6 @@
 import { z } from "zod";
+import { termFieldsSchema } from "@/lib/jargon/term-schema";
 import type { ImportPayload } from "./types";
-
-const importTermSchema = z.object({
-  term: z.string().trim().min(1, "Term is required"),
-  category: z.string().trim().min(1, "Category is required"),
-  definition: z.string().trim().min(1, "Definition is required"),
-  example: z.string().nullable().optional(),
-  discussion: z.string().nullable().optional(),
-  controversy: z.string().nullable().optional(),
-});
 
 const importRelationshipSchema = z.object({
   source: z.string().trim().min(1, "Source term is required"),
@@ -20,7 +12,7 @@ const importRelationshipSchema = z.object({
 export const importPayloadSchema = z.object({
   domain: z.string().trim().min(1, "Domain name is required"),
   description: z.string().nullable().optional(),
-  terms: z.array(importTermSchema).min(1, "At least one term is required"),
+  terms: z.array(termFieldsSchema).min(1, "At least one term is required"),
   relationships: z.array(importRelationshipSchema).optional().default([]),
 });
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { pageContainerClass } from "@/components/page-container";
 import { SiteHeaderNav } from "@/components/site-header-nav";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 
 export async function SiteHeader() {
   const supabase = await createClient();
@@ -10,7 +12,7 @@ export async function SiteHeader() {
 
   return (
     <header className="border-b border-border bg-card/80 backdrop-blur-sm">
-      <div className="mx-auto flex max-w-[900px] items-center justify-between gap-4 px-5 py-3.5">
+      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
         <Link
           href={user ? "/jargon" : "/"}
           className="text-[17px] font-bold tracking-tight no-underline"

@@ -47,6 +47,7 @@ export async function validateImportJson(
 
 export async function confirmImport(
   raw: string,
+  confirmReplace = false,
 ): Promise<{ ok: true; result: ImportResult } | { ok: false; failure: ImportFailure }> {
   const supabase = await createClient();
   const {
@@ -69,6 +70,19 @@ export async function confirmImport(
 
   try {
     const preview = await buildImportPreview(supabase, user.id, parsed.data);
+
+    if (preview.conflictingTerms.length > 0 && !confirmReplace) {
+      return {
+        ok: false,
+        failure: {
+          title: "Confirmation required",
+          message: `${preview.conflictingTerms.length} existing term(s) would be replaced by this import.`,
+          details: preview.conflictingTerms,
+          hint: "Review the preview and confirm that you want to replace the conflicting terms.",
+        },
+      };
+    }
+
     const result = await executeImport(supabase, user.id, parsed.data, {
       isMerge: preview.isMerge,
     });

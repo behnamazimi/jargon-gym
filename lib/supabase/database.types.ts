@@ -511,12 +511,14 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: {
           category: string;
+          controversy: string;
           definition: string;
           discussion: string;
           domain_id: string;
           domain_name: string;
           example: string;
           id: string;
+          relationships: Json;
           term: string;
         }[];
       };

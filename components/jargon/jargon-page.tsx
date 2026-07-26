@@ -4,11 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { JargonPageData } from "@/lib/jargon/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { useJargonList } from "@/hooks/use-jargon-list";
+import { PageShell } from "@/components/page-container";
 import { CategoryChips } from "./category-chips";
 import { Header } from "./header";
 import { QuizFab } from "./quiz-fab";
 import { SearchBar } from "./search-bar";
 import { TermList } from "./term-list";
+import { TermFormDialog } from "./term-form-dialog";
 import { Toolbar } from "./toolbar";
 
 type JargonPageProps = {
@@ -18,6 +20,7 @@ type JargonPageProps = {
 
 export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
   const [termLinkNotice, setTermLinkNotice] = useState<string | null>(null);
+  const [addTermOpen, setAddTermOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const deepLinkApplied = useRef(false);
 
@@ -47,6 +50,8 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
     () => ({ ...domain, knownCount: knownTerms.size }),
     [domain, knownTerms.size],
   );
+
+  const isOwner = domain.source === "owned";
 
   const domainsWithLiveCounts = useMemo(
     () =>
@@ -85,12 +90,14 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
   }, []);
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-primary/[0.06] via-background to-background text-foreground">
-      <div className="mx-auto max-w-[900px] space-y-5 px-5 py-7 pb-20">
+    <>
+      <PageShell>
         <Header
           domain={domainWithLiveCount}
           domains={domainsWithLiveCounts}
           categoryCount={categories.length}
+          isOwner={isOwner}
+          onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
         />
 
         <Card className="gap-0 p-0 ring-foreground/5">
@@ -124,11 +131,23 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
           terms={filteredTerms}
           knownTerms={knownTerms}
           openTerms={openTerms}
+          isOwner={isOwner}
+          domainId={domain.id}
+          domainTerms={terms}
           onToggleOpen={toggleOpen}
           onToggleKnown={toggleKnown}
         />
-      </div>
+      </PageShell>
+      {isOwner ? (
+        <TermFormDialog
+          mode="create"
+          domainId={domain.id}
+          domainTerms={terms}
+          isOpen={addTermOpen}
+          onOpenChange={setAddTermOpen}
+        />
+      ) : null}
       <QuizFab />
-    </div>
+    </>
   );
 }

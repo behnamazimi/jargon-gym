@@ -157,7 +157,7 @@ export async function setDomainActiveForReview(
         user_id: userId,
         domain_id: domainId,
       },
-      { onConflict: "user_id,domain_id" },
+      { onConflict: "user_id,domain_id", ignoreDuplicates: true },
     );
     if (error) throw error;
     return;
@@ -180,6 +180,21 @@ export async function setDomainVisibility(
   const { error } = await client.from("domains").update({ visibility }).eq("id", domainId);
 
   if (error) throw error;
+}
+
+export async function countDomainCollectionSubscribers(
+  client: Client,
+  domainId: string,
+  ownerId: string,
+): Promise<number> {
+  const { count, error } = await client
+    .from("user_collection_domains")
+    .select("*", { count: "exact", head: true })
+    .eq("domain_id", domainId)
+    .neq("user_id", ownerId);
+
+  if (error) throw error;
+  return count ?? 0;
 }
 
 export async function deleteDomain(client: Client, domainId: string) {

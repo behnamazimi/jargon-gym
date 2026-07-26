@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -13,6 +14,11 @@ export default function LoginForm() {
 
   return (
     <form action={action} className="flex w-full max-w-sm flex-col gap-4">
+      <BackLink
+        href={PUBLIC_HOME_PATH}
+        label={PUBLIC_HOME_BACK_LABEL}
+        className="-ml-2 self-start"
+      />
       <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
 
       {state?.error ? (

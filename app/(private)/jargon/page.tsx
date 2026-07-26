@@ -3,7 +3,8 @@ import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-pa
 import { fetchDomainIdForTerm } from "@/lib/jargon/terms";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
-import Link from "next/link";
+import { PageCenter } from "@/components/page-container";
+import { LinkButton } from "@/components/ui/button";
 
 type PageProps = {
   searchParams: Promise<{ domain?: string; termId?: string }>;
@@ -17,9 +18,9 @@ export default async function JargonListPage({ searchParams }: PageProps) {
 
   if (!user) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-background px-4 py-12 text-foreground">
+      <PageCenter>
         <p className="text-sm text-muted-foreground">You must be logged in to view jargon.</p>
-      </div>
+      </PageCenter>
     );
   }
 
@@ -49,15 +50,10 @@ export default async function JargonListPage({ searchParams }: PageProps) {
           : "Something went wrong while loading jargon terms.";
 
     return (
-      <div className="flex min-h-full flex-col items-center justify-center gap-3 bg-background px-4 py-12 text-foreground">
+      <PageCenter className="gap-3">
         <p className="text-sm text-muted-foreground">{message}</p>
-        <Link
-          href="/jargon/import"
-          className="text-sm font-medium text-primary underline-offset-2 hover:underline"
-        >
-          Import jargon
-        </Link>
-      </div>
+        <LinkButton href="/jargon/import">Import jargon</LinkButton>
+      </PageCenter>
     );
   }
 }

@@ -9,6 +9,7 @@ import { ImportFailurePanel } from "@/components/jargon/import/import-errors";
 import { ImportPreviewPanel } from "@/components/jargon/import/import-preview";
 import { ImportLlmPrompt } from "@/components/jargon/import/import-llm-prompt";
 import { PageHeader } from "@/components/jargon/page-header";
+import { PageShell } from "@/components/page-container";
 
 export function ImportPageClient() {
   const [raw, setRaw] = useState("");
@@ -16,11 +17,13 @@ export function ImportPageClient() {
   const [failure, setFailure] = useState<ImportFailure | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [confirmReplace, setConfirmReplace] = useState(false);
 
   async function handleValidate() {
     setIsValidating(true);
     setFailure(null);
     setPreview(null);
+    setConfirmReplace(false);
 
     const response = await validateImportJson(raw);
 
@@ -38,7 +41,7 @@ export function ImportPageClient() {
     setIsImporting(true);
     setFailure(null);
 
-    const response = await confirmImport(raw);
+    const response = await confirmImport(raw, confirmReplace);
 
     setIsImporting(false);
 
@@ -48,32 +51,35 @@ export function ImportPageClient() {
   }
 
   return (
-    <div className="min-h-full bg-gradient-to-b from-primary/[0.06] via-background to-background text-foreground">
-      <div className="mx-auto max-w-[720px] space-y-5 px-5 py-7 pb-20">
-        <PageHeader
-          icon={Upload}
-          title="Import jargon"
-          description="Paste JSON to create or merge into one of your owned domains."
-          backLabel="Back to jargon"
+    <PageShell>
+      <PageHeader
+        icon={Upload}
+        title="Import jargon"
+        description="Paste JSON to create or merge into one of your owned domains."
+      />
+
+      <div className="space-y-4">
+        <ImportLlmPrompt />
+        <ImportForm
+          value={raw}
+          onChange={setRaw}
+          onValidate={handleValidate}
+          isValidating={isValidating}
+          onFailure={setFailure}
         />
-
-        <div className="space-y-4">
-          <ImportLlmPrompt />
-          <ImportForm
-            value={raw}
-            onChange={setRaw}
-            onValidate={handleValidate}
-            isValidating={isValidating}
-            onFailure={setFailure}
-          />
-        </div>
-
-        {failure ? <ImportFailurePanel failure={failure} /> : null}
-
-        {preview ? (
-          <ImportPreviewPanel preview={preview} onImport={handleImport} isImporting={isImporting} />
-        ) : null}
       </div>
-    </div>
+
+      {failure ? <ImportFailurePanel failure={failure} /> : null}
+
+      {preview ? (
+        <ImportPreviewPanel
+          preview={preview}
+          confirmReplace={confirmReplace}
+          onConfirmReplaceChange={setConfirmReplace}
+          onImport={handleImport}
+          isImporting={isImporting}
+        />
+      ) : null}
+    </PageShell>
   );
 }

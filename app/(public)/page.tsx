@@ -1,10 +1,14 @@
 import { ArrowRight } from "lucide-react";
+import { pageContainerClass } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export default function LandingPage() {
   return (
     <div className="flex flex-1 flex-col">
-      <section className="mx-auto flex w-full max-w-[640px] flex-1 flex-col justify-center px-5 py-16 sm:py-24">
+      <section
+        className={cn(pageContainerClass, "flex flex-1 flex-col justify-center py-16 sm:py-24")}
+      >
         <p className="m-0 text-[13px] font-medium uppercase tracking-[0.12em] text-primary">
           Personal use only
         </p>

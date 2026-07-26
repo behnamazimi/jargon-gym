@@ -1,6 +1,6 @@
-import { ArrowLeft, type LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { LinkButton } from "@/components/ui/button";
+import { BackLink, JARGON_HOME_BACK_LABEL, JARGON_HOME_PATH } from "@/components/jargon/back-link";
 
 type PageHeaderProps = {
   icon: LucideIcon;
@@ -8,14 +8,16 @@ type PageHeaderProps = {
   description?: string;
   backHref?: string;
   backLabel?: string;
+  showBack?: boolean;
 };
 
 export function PageHeader({
   icon: Icon,
   title,
   description,
-  backHref = "/jargon",
-  backLabel = "Back",
+  backHref = JARGON_HOME_PATH,
+  backLabel = JARGON_HOME_BACK_LABEL,
+  showBack = true,
 }: PageHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-3">
@@ -30,15 +32,7 @@ export function PageHeader({
           {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
         </div>
       </div>
-      <LinkButton
-        href={backHref}
-        variant="ghost"
-        size="sm"
-        className="shrink-0 text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" />
-        {backLabel}
-      </LinkButton>
+      {showBack ? <BackLink href={backHref} label={backLabel} /> : null}
     </div>
   );
 }

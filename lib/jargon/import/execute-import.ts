@@ -157,7 +157,7 @@ export async function executeImport(
       user_id: ownerId,
       domain_id: domain.id,
     },
-    { onConflict: "user_id,domain_id" },
+    { onConflict: "user_id,domain_id", ignoreDuplicates: true },
   );
 
   if (activeError) {
