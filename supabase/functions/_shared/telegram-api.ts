@@ -55,17 +55,26 @@ function formatRelationships(relationships: TermRelationshipRow[]): string {
   return section;
 }
 
+function buildTermHeader(term: TermRow): string {
+  return (
+    `<b>${escapeHtml(term.term)}</b>\n` +
+    `<i>${escapeHtml(term.category)}</i> · ${escapeHtml(term.domain_name)}`
+  );
+}
+
+function buildTermDetails(term: TermRow): string {
+  let details = escapeHtml(term.definition.trim());
+
+  details += formatQuotedSection("Example", term.example ?? "");
+  details += formatQuotedSection("In practice", term.discussion ?? "");
+  details += formatQuotedSection("Debated", term.controversy ?? "");
+  details += formatRelationships(term.relationships ?? []);
+
+  return details;
+}
+
 function buildTermMessageBody(term: TermRow): string {
-  let message = `<b>${escapeHtml(term.term)}</b>\n`;
-  message += `<i>${escapeHtml(term.category)}</i> · ${escapeHtml(term.domain_name)}\n\n`;
-  message += escapeHtml(term.definition.trim());
-
-  message += formatQuotedSection("Example", term.example ?? "");
-  message += formatQuotedSection("In practice", term.discussion ?? "");
-  message += formatQuotedSection("Debated", term.controversy ?? "");
-  message += formatRelationships(term.relationships ?? []);
-
-  return message;
+  return `${buildTermHeader(term)}\n\n${buildTermDetails(term)}`;
 }
 
 function appendSearchLink(message: string, termName: string): string {
@@ -93,6 +102,27 @@ export function formatTermMessage(term: TermRow): string {
   }
 
   return appendSearchLink(trimMessageBody(body, reservedLength), term.term);
+}
+
+/**
+ * Same content as `formatTermMessage`, but with everything except the term
+ * name, category, and domain hidden behind a Telegram spoiler. Used once a
+ * term is marked known so it reads like a flash card the user reveals by tapping.
+ */
+export function formatMaskedTermMessage(term: TermRow): string {
+  const header = buildTermHeader(term);
+  const details = buildTermDetails(term);
+  const searchLink = appendSearchLink("", term.term);
+
+  const spoilerOverhead = "<tg-spoiler></tg-spoiler>".length;
+  const reservedLength = header.length + "\n\n".length + spoilerOverhead + searchLink.length;
+
+  const trimmedDetails =
+    details.length + reservedLength <= TELEGRAM_MESSAGE_LIMIT
+      ? details
+      : trimMessageBody(details, reservedLength);
+
+  return `${header}\n\n<tg-spoiler>${trimmedDetails}${searchLink}</tg-spoiler>`;
 }
 
 export function buildInlineKeyboard(term: TermRow) {

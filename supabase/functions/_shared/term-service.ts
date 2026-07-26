@@ -41,19 +41,7 @@ export async function fetchUnknownTermCount(
   return Number(data ?? 0);
 }
 
-export async function pickRandomUnknownTerm(
-  supabase: SupabaseClient,
-  userId: string,
-): Promise<TermRow | null> {
-  const { data, error } = await supabase.rpc("pick_random_unknown_term", {
-    p_user_id: userId,
-  });
-
-  if (error) throw error;
-
-  const row = (data?.[0] as Record<string, unknown> | undefined) ?? null;
-  if (!row) return null;
-
+function mapTermRow(row: Record<string, unknown>): TermRow {
   return {
     id: String(row.id),
     term: String(row.term),
@@ -68,6 +56,36 @@ export async function pickRandomUnknownTerm(
       ? (row.relationships as TermRow["relationships"])
       : [],
   };
+}
+
+export async function pickRandomUnknownTerm(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<TermRow | null> {
+  const { data, error } = await supabase.rpc("pick_random_unknown_term", {
+    p_user_id: userId,
+  });
+
+  if (error) throw error;
+
+  const row = (data?.[0] as Record<string, unknown> | undefined) ?? null;
+  return row ? mapTermRow(row) : null;
+}
+
+export async function fetchTermById(
+  supabase: SupabaseClient,
+  userId: string,
+  termId: string,
+): Promise<TermRow | null> {
+  const { data, error } = await supabase.rpc("get_term_card", {
+    p_user_id: userId,
+    p_term_id: termId,
+  });
+
+  if (error) throw error;
+
+  const row = (data?.[0] as Record<string, unknown> | undefined) ?? null;
+  return row ? mapTermRow(row) : null;
 }
 
 export async function sendTermCard(supabase: SupabaseClient, userId: string, chatId: number) {

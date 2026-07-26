@@ -6,9 +6,15 @@ import {
 } from "../_shared/constants.ts";
 import { getWebhookSecret } from "../_shared/env.ts";
 import { createServiceClient } from "../_shared/supabase-admin.ts";
-import { answerCallbackQuery, editMessageText, sendMessage } from "../_shared/telegram-api.ts";
+import {
+  answerCallbackQuery,
+  editMessageText,
+  formatMaskedTermMessage,
+  sendMessage,
+} from "../_shared/telegram-api.ts";
 import { hashLinkToken } from "../_shared/token.ts";
 import {
+  fetchTermById,
   resolveUserIdByChatId,
   sendTermCard,
   sendTermOrCaughtUp,
@@ -117,10 +123,10 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
       return;
     }
 
-    const originalText = callback.message?.text ?? "";
-    const updatedText = originalText.includes(MARKED_KNOWN_SUFFIX)
-      ? originalText
-      : `${originalText}${MARKED_KNOWN_SUFFIX}`;
+    const term = await fetchTermById(supabase, userId, termId);
+    const updatedText = term
+      ? `${formatMaskedTermMessage(term)}${MARKED_KNOWN_SUFFIX}`
+      : `${callback.message?.text ?? ""}${MARKED_KNOWN_SUFFIX}`;
 
     await editMessageText(chatId, messageId, updatedText, { inline_keyboard: [] });
     await answerCallbackQuery(callback.id, "Marked as known.");
