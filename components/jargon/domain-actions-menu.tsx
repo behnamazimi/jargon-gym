@@ -7,7 +7,7 @@ import {
   Globe,
   Link2,
   Lock,
-  MoreHorizontal,
+  Settings,
   Pause,
   Play,
   Share2,
@@ -72,7 +72,7 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
           aria-label="Collection actions"
           isDisabled={disabled}
         >
-          <MoreHorizontal className="h-4 w-4" />
+          <Settings className="h-6 w-6" />
         </Button>
         <DropdownMenu className="min-w-[210px]">
           <DropdownMenuItem

@@ -2,18 +2,25 @@
 
 import { Settings2 } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
+import { LlmPanel } from "@/components/jargon/settings/llm-panel";
 import { SettingsPanel, SettingsSection } from "@/components/jargon/settings/ui";
 import { TelegramPanel } from "@/components/jargon/settings/telegram-panel";
 import { WidgetPanel } from "@/components/jargon/settings/widget-panel";
+import type { UserLlmSettings } from "@/lib/llm/types";
 import type { TelegramLinkStatus } from "@/lib/telegram/types";
 import type { WidgetTokenRow } from "@/lib/widget/types";
 
 type SettingsPageProps = {
   initialTokens: WidgetTokenRow[];
   initialTelegramStatus: TelegramLinkStatus;
+  initialLlmSettings: UserLlmSettings | null;
 };
 
-export function SettingsPage({ initialTokens, initialTelegramStatus }: SettingsPageProps) {
+export function SettingsPage({
+  initialTokens,
+  initialTelegramStatus,
+  initialLlmSettings,
+}: SettingsPageProps) {
   return (
     <div className="min-h-full bg-gradient-to-b from-primary/[0.06] via-background to-background text-foreground">
       <div className="mx-auto max-w-[720px] space-y-8 px-5 py-7 pb-20">
@@ -25,6 +32,15 @@ export function SettingsPage({ initialTokens, initialTelegramStatus }: SettingsP
         />
 
         <div className="space-y-10">
+          <SettingsSection
+            title="Quiz"
+            description="Connect an LLM provider to generate quizzes from your jargon collections."
+          >
+            <SettingsPanel>
+              <LlmPanel initialSettings={initialLlmSettings} />
+            </SettingsPanel>
+          </SettingsSection>
+
           <SettingsSection
             title="Telegram"
             description="Get terms in Telegram, mark them known, or type /next anytime."

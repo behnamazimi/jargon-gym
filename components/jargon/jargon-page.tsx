@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { CategoryChips } from "./category-chips";
 import { Header } from "./header";
+import { QuizFab } from "./quiz-fab";
 import { SearchBar } from "./search-bar";
 import { TermList } from "./term-list";
 import { Toolbar } from "./toolbar";
@@ -92,8 +93,8 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
           categoryCount={categories.length}
         />
 
-        <Card className="gap-3 p-1 ring-foreground/5">
-          <CardContent className="space-y-3 px-3 py-2">
+        <Card className="gap-0 p-0 ring-foreground/5">
+          <CardContent className="space-y-3 px-4 py-3">
             <SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
@@ -127,6 +128,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
           onToggleKnown={toggleKnown}
         />
       </div>
+      <QuizFab />
     </div>
   );
 }

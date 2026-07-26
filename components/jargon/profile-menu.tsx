@@ -42,7 +42,7 @@ export function ProfileMenu({ email }: ProfileMenuProps) {
       <Button
         variant="ghost"
         size="icon-lg"
-        className="rounded-full text-[12px] font-semibold text-primary hover:bg-primary/25"
+        className="rounded-full text-[12px] font-semibold text-primary bg-primary/15 hover:bg-primary/25"
         aria-label="Account menu"
       >
         <Avatar size="sm" className="size-8 after:hidden">

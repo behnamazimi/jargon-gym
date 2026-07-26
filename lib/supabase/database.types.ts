@@ -327,6 +327,47 @@ export type Database = {
           },
         ];
       };
+      user_llm_settings: {
+        Row: {
+          api_key_encrypted: string;
+          api_key_last4: string;
+          created_at: string;
+          mark_known_on_pass: boolean;
+          mark_unknown_on_fail: boolean;
+          provider: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          api_key_encrypted: string;
+          api_key_last4: string;
+          created_at?: string;
+          mark_known_on_pass?: boolean;
+          mark_unknown_on_fail?: boolean;
+          provider: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          api_key_encrypted?: string;
+          api_key_last4?: string;
+          created_at?: string;
+          mark_known_on_pass?: boolean;
+          mark_unknown_on_fail?: boolean;
+          provider?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_llm_settings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_progress: {
         Row: {
           is_known: boolean;
@@ -463,11 +504,8 @@ export type Database = {
         Args: { p_term_id: string; p_user_id: string };
         Returns: undefined;
       };
-      my_mark_term_known: {
-        Args: { p_term_id: string };
-        Returns: undefined;
-      };
-      my_review_domain_ids: { Args: Record<string, never>; Returns: string[] };
+      my_mark_term_known: { Args: { p_term_id: string }; Returns: undefined };
+      my_review_domain_ids: { Args: never; Returns: string[] };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
       pick_random_unknown_term: {
         Args: { p_user_id: string };

@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useEffect, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,11 +40,11 @@ export function SearchBar({ value, onChange, onClear, inputRef }: SearchBarProps
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="absolute top-1/2 right-1.5 -translate-y-1/2 text-lg leading-none text-muted-foreground hover:text-foreground"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             onPress={onClear}
             aria-label="Clear search"
           >
-            ×
+            <X className="size-3.5" aria-hidden />
           </Button>
           <Tooltip>Clear search</Tooltip>
         </TooltipTrigger>

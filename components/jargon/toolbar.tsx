@@ -41,7 +41,7 @@ export function Toolbar({
             onSelectionChange={(key) => onSortChange(key as SortMode)}
             aria-label="Sort terms"
           >
-            <SelectTrigger size="sm" className="text-xs text-muted-foreground">
+            <SelectTrigger size="sm" className="text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
