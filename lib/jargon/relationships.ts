@@ -19,7 +19,7 @@ function duplicateRelationshipMessage() {
   return "A relationship with the same type already exists between these terms.";
 }
 
-export async function createRelationship(
+async function createRelationship(
   client: Client,
   ownerId: string,
   sourceTermId: string,
@@ -45,7 +45,7 @@ export async function createRelationship(
   }
 }
 
-export async function updateRelationship(
+async function updateRelationship(
   client: Client,
   relationshipId: string,
   input: RelationshipInput,
@@ -67,7 +67,7 @@ export async function updateRelationship(
   }
 }
 
-export async function deleteRelationship(client: Client, relationshipId: string) {
+async function deleteRelationship(client: Client, relationshipId: string) {
   const { error } = await client.from("term_relationships").delete().eq("id", relationshipId);
   if (error) throw error;
 }

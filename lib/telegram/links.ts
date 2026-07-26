@@ -7,18 +7,18 @@ import type { TelegramCadence, TelegramLinkStatus } from "./types";
 type Client = SupabaseClient<Database>;
 
 /** @see TELEGRAM_LINK_TOKEN_CONTRACT — Node adapter for token generation. */
-export function generateLinkTokenValue(): string {
+function generateLinkTokenValue(): string {
   return randomBytes(TELEGRAM_LINK_TOKEN_CONTRACT.tokenBytes).toString(
     TELEGRAM_LINK_TOKEN_CONTRACT.tokenEncoding,
   );
 }
 
 /** @see TELEGRAM_LINK_TOKEN_CONTRACT — Node adapter (crypto.createHash). */
-export function hashLinkToken(token: string): string {
+function hashLinkToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-export function buildTelegramDeepLink(token: string): string {
+function buildTelegramDeepLink(token: string): string {
   const username = process.env.TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
   if (!username) {
     throw new Error("Missing TELEGRAM_BOT_USERNAME.");

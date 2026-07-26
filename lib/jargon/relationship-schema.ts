@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const relationshipInputSchema = z.object({
+const relationshipInputSchema = z.object({
   targetTermId: z.string().uuid("Choose a related term"),
   relationshipType: z.string().trim().min(1, "Relationship type is required"),
   description: z.string().optional().default(""),
@@ -8,7 +8,7 @@ export const relationshipInputSchema = z.object({
 
 export type RelationshipInput = z.infer<typeof relationshipInputSchema>;
 
-export type RelationshipUpdateInput = RelationshipInput & {
+type RelationshipUpdateInput = RelationshipInput & {
   id: string;
 };
 
@@ -27,14 +27,3 @@ export type RelationshipDraft = {
   relationshipType: string;
   description: string;
 };
-
-export function parseRelationshipInput(
-  input: unknown,
-): { ok: true; data: RelationshipInput } | { ok: false; error: string } {
-  const result = relationshipInputSchema.safeParse(input);
-  if (!result.success) {
-    const first = result.error.issues[0];
-    return { ok: false, error: first?.message ?? "Invalid relationship." };
-  }
-  return { ok: true, data: result.data };
-}

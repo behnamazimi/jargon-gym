@@ -24,7 +24,7 @@ export type CollectionDomainRow = {
   knownCount: number;
 };
 
-export async function fetchOwnedDomains(client: Client, userId: string) {
+async function fetchOwnedDomains(client: Client, userId: string) {
   const { data, error } = await client
     .from("domains")
     .select("id, name, icon_url, description, visibility, owner_id")
@@ -35,7 +35,7 @@ export async function fetchOwnedDomains(client: Client, userId: string) {
   return data;
 }
 
-export async function fetchAddedDomains(client: Client, userId: string) {
+async function fetchAddedDomains(client: Client, userId: string) {
   const { data, error } = await client
     .from("user_collection_domains")
     .select("domain_id, domains(id, name, icon_url, description, visibility, owner_id)")

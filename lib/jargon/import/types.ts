@@ -1,4 +1,4 @@
-export type ImportTerm = {
+type ImportTerm = {
   term: string;
   category: string;
   definition: string;
@@ -7,7 +7,7 @@ export type ImportTerm = {
   controversy?: string | null;
 };
 
-export type ImportRelationship = {
+type ImportRelationship = {
   source: string;
   target: string;
   relationship_type: string;
@@ -28,7 +28,7 @@ export type ImportValidationIssue = {
   received?: string;
 };
 
-export type ImportFailureContext = {
+type ImportFailureContext = {
   term?: string;
   domain?: string;
 };

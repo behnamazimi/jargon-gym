@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { termFieldsSchema } from "@/lib/jargon/term-schema";
-import type { ImportPayload } from "./types";
 
 const importRelationshipSchema = z.object({
   source: z.string().trim().min(1, "Source term is required"),
@@ -15,5 +14,3 @@ export const importPayloadSchema = z.object({
   terms: z.array(termFieldsSchema).min(1, "At least one term is required"),
   relationships: z.array(importRelationshipSchema).optional().default([]),
 });
-
-export type ParsedImportPayload = ImportPayload;

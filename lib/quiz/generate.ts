@@ -20,7 +20,7 @@ function formatDomainLabel(terms: QuizTerm[]): string {
   return names.join(", ");
 }
 
-export function buildQuizPrompt(terms: QuizTerm[]): string {
+function buildQuizPrompt(terms: QuizTerm[]): string {
   const mcqCount = Math.ceil(terms.length * 0.6);
   const trueFalseCount = Math.floor(terms.length * 0.4);
   const domainLabel = formatDomainLabel(terms);

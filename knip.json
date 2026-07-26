@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["widget/**/index.jsx"],
+  "ignore": ["lib/supabase/database.types.ts", "supabase/functions/**", "components/ui/**"],
+  "ignoreDependencies": ["uebersicht"]
+}

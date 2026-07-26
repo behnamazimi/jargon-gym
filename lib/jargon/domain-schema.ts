@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const domainFieldsSchema = z.object({
+const domainFieldsSchema = z.object({
   name: z.string().trim().min(1, "Domain name is required"),
   description: z.string().nullable().optional(),
 });
