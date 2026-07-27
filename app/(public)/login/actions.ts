@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { formatLoginError } from "@/lib/auth/format-auth-error";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { error: string } | null;
@@ -17,7 +18,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: error.message };
+    return { error: formatLoginError(error) };
   }
 
   redirect("/jargon");

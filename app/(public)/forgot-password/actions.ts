@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { createClient } from "@/lib/supabase/server";
 
 export type ForgotPasswordState = { error: string } | { success: true } | null;
@@ -23,7 +24,7 @@ export async function requestPasswordReset(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: formatAuthError(error, "forgot") };
   }
 
   return { success: true };

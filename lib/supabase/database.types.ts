@@ -487,12 +487,26 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      get_term_card: {
+        Args: { p_term_id: string; p_user_id: string };
+        Returns: {
+          category: string;
+          controversy: string;
+          definition: string;
+          discussion: string;
+          domain_id: string;
+          domain_name: string;
+          example: string;
+          id: string;
+          relationships: Json;
+          term: string;
+        }[];
+      };
       is_admin: { Args: never; Returns: boolean };
       is_domain_in_collection: {
         Args: { p_domain_id: string };
         Returns: boolean;
       };
-      is_referral_code_valid: { Args: { p_code: string }; Returns: boolean };
       list_due_telegram_users: {
         Args: never;
         Returns: {

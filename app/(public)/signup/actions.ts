@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { formatSignupError } from "@/lib/auth/format-auth-error";
+import { getPasswordValidationError } from "@/lib/auth/password-policy";
 import { createClient } from "@/lib/supabase/server";
 
 export type SignupState = { error: string } | null;
@@ -14,23 +16,12 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
     return { error: "All fields are required." };
   }
 
-  if (password.length < 6) {
-    return { error: "Password must be at least 6 characters." };
+  const passwordError = getPasswordValidationError(password);
+  if (passwordError) {
+    return { error: passwordError };
   }
 
   const supabase = await createClient();
-
-  const { data: codeValid, error: codeError } = await supabase.rpc("is_referral_code_valid", {
-    p_code: referenceCode,
-  });
-
-  if (codeError) {
-    return { error: codeError.message };
-  }
-
-  if (!codeValid) {
-    return { error: "Invalid or already used reference code." };
-  }
 
   const { error } = await supabase.auth.signUp({
     email,
@@ -43,10 +34,7 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
   });
 
   if (error) {
-    if (error.message.toLowerCase().includes("referral")) {
-      return { error: "Invalid or already used reference code." };
-    }
-    return { error: error.message };
+    return { error: formatSignupError(error) };
   }
 
   redirect("/jargon");

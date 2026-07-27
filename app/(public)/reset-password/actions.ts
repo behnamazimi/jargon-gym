@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { getPasswordValidationError } from "@/lib/auth/password-policy";
 import { createClient } from "@/lib/supabase/server";
 
 export type ResetPasswordState = { error: string } | null;
@@ -16,8 +18,9 @@ export async function resetPassword(
     return { error: "Both fields are required." };
   }
 
-  if (password.length < 6) {
-    return { error: "Password must be at least 6 characters." };
+  const passwordError = getPasswordValidationError(password);
+  if (passwordError) {
+    return { error: passwordError };
   }
 
   if (password !== confirmPassword) {
@@ -37,7 +40,7 @@ export async function resetPassword(
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return { error: error.message };
+    return { error: formatAuthError(error, "reset") };
   }
 
   redirect("/jargon");

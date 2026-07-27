@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { AuthFormError } from "@/components/auth/auth-form-error";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -22,11 +23,7 @@ export default function ForgotPasswordForm() {
       />
       <h1 className="text-2xl font-semibold tracking-tight">Forgot password</h1>
 
-      {state && "error" in state ? (
-        <Alert variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
-        </Alert>
-      ) : null}
+      <AuthFormError error={state && "error" in state ? state.error : null} />
 
       {success ? (
         <Alert>

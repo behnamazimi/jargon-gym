@@ -126,7 +126,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
       {!status.connected ? (
         <SettingsGroup
           title="Connect"
-          description="Generate a one-time link, open it in Telegram, and tap Start. Links expire after 15 minutes."
+          description="Generate a one-time link, open it in Telegram, and tap Start. Do not share the link. Links expire after 5 minutes."
         >
           <Button
             type="button"

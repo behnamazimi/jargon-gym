@@ -51,7 +51,7 @@ function getTrueFalseChoiceState(
   return "default";
 }
 
-export function QuizQuestionView({ question, termLabel, isLast, onAnswer }: QuizQuestionViewProps) {
+export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionViewProps) {
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);

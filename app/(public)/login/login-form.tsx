@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { AuthFormError } from "@/components/auth/auth-form-error";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -21,11 +21,7 @@ export default function LoginForm() {
       />
       <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
 
-      {state?.error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
-        </Alert>
-      ) : null}
+      <AuthFormError error={state?.error} />
 
       <FieldGroup>
         <Field>

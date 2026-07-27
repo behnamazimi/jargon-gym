@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { AuthFormError } from "@/components/auth/auth-form-error";
+import { PasswordRequirements } from "@/components/auth/password-requirements";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,17 @@ import { signup } from "./actions";
 
 export default function SignupForm() {
   const [state, action, pending] = useActionState(signup, null);
+  const [password, setPassword] = useState("");
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const wasPending = useRef(false);
+
+  useEffect(() => {
+    if (wasPending.current && !pending && state?.error) {
+      setPassword("");
+      setPasswordTouched(false);
+    }
+    wasPending.current = pending;
+  }, [pending, state]);
 
   return (
     <form action={action} className="flex w-full max-w-sm flex-col gap-4">
@@ -21,11 +33,7 @@ export default function SignupForm() {
       />
       <h1 className="text-2xl font-semibold tracking-tight">Sign up</h1>
 
-      {state?.error ? (
-        <Alert variant="destructive">
-          <AlertDescription>{state.error}</AlertDescription>
-        </Alert>
-      ) : null}
+      <AuthFormError error={state?.error} context="signup" />
 
       <FieldGroup>
         <Field>
@@ -41,6 +49,12 @@ export default function SignupForm() {
             name="password"
             required
             autoComplete="new-password"
+            onChange={(event) => setPassword(event.target.value)}
+            onBlur={() => setPasswordTouched(true)}
+          />
+          <PasswordRequirements
+            password={password}
+            visible={passwordTouched || password.length > 0}
           />
         </Field>
 

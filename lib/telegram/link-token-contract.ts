@@ -10,5 +10,5 @@ export const TELEGRAM_LINK_TOKEN_CONTRACT = {
   tokenEncoding: "base64url",
   hashAlgorithm: "SHA-256",
   hashOutput: "lowercase-hex",
-  ttlMs: 15 * 60 * 1000,
+  ttlMs: 5 * 60 * 1000,
 } as const;

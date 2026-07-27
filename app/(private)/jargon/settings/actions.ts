@@ -12,6 +12,7 @@ import type { LlmProvider } from "@/lib/llm/types";
 import {
   createOrRefreshTelegramLink,
   disconnectTelegram,
+  getTelegramLinkStatus,
   updateTelegramCadence,
 } from "@/lib/telegram/links";
 import type { TelegramCadence } from "@/lib/telegram/types";
@@ -74,6 +75,14 @@ export async function generateTelegramLinkAction(): Promise<{
 
   try {
     const admin = createAdminClient();
+    const status = await getTelegramLinkStatus(admin, auth.user.id);
+
+    if (status.connected) {
+      return {
+        error: "Telegram is already connected. Disconnect first to link a different account.",
+      };
+    }
+
     const result = await createOrRefreshTelegramLink(admin, auth.user.id);
     revalidatePath("/jargon/settings");
     return { deepLink: result.deepLink };
