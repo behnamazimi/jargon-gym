@@ -25,16 +25,16 @@ export function ImportLlmPrompt() {
     <Collapsible
       isExpanded={open}
       onExpandedChange={setOpen}
-      className="rounded-lg bg-card text-card-foreground ring-1 ring-foreground/10"
+      className="rounded-lg bg-base-100 text-base-content ring-1 ring-base-content/10"
     >
       <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium">
         <span>LLM prompt</span>
-        <span className="text-muted-foreground">{open ? "Hide" : "Show"}</span>
+        <span className="text-base-content/60">{open ? "Hide" : "Show"}</span>
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="space-y-3 border-t border-border px-4 py-4">
-          <p className="m-0 text-sm leading-relaxed text-muted-foreground">
+        <div className="space-y-3 border-t border-base-300 px-4 py-4">
+          <p className="m-0 text-sm leading-relaxed text-base-content/60">
             Copy this prompt into ChatGPT, Claude, or another LLM. Paste the JSON it returns into
             the box below.
           </p>
@@ -52,7 +52,7 @@ export function ImportLlmPrompt() {
           </Field>
 
           <div className="relative">
-            <pre className="max-h-[320px] overflow-auto rounded-lg border border-border bg-background p-3 text-xs leading-5 whitespace-pre-wrap text-foreground">
+            <pre className="max-h-[320px] overflow-auto rounded-lg border border-base-300 bg-base-100 p-3 text-xs leading-5 whitespace-pre-wrap text-base-content">
               {prompt}
             </pre>
             <Button

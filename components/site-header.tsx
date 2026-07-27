@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { pageContainerClass } from "@/components/page-container";
 import { SiteHeaderNav } from "@/components/site-header-nav";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/server";
+import { DARK_THEME, THEME_COOKIE_NAME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 export async function SiteHeader() {
@@ -9,9 +12,11 @@ export async function SiteHeader() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const cookieStore = await cookies();
+  const isDark = cookieStore.get(THEME_COOKIE_NAME)?.value === DARK_THEME;
 
   return (
-    <header className="border-b border-border bg-card/80 backdrop-blur-sm">
+    <header className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm">
       <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
         <Link
           href={user ? "/jargon" : "/"}
@@ -21,6 +26,7 @@ export async function SiteHeader() {
         </Link>
 
         <nav className="flex items-center gap-1">
+          <ThemeToggle initialIsDark={isDark} />
           <SiteHeaderNav email={user?.email ?? null} />
         </nav>
       </div>

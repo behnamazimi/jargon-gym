@@ -43,7 +43,7 @@ export function TermActionsMenu({ term, domainId, domainTerms }: TermActionsMenu
         <Button
           variant="ghost"
           size="icon-sm"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-base-content/60 hover:text-base-content"
           aria-label={`Actions for ${term.term}`}
           isDisabled={disabled}
         >

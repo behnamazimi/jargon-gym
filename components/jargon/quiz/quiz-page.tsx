@@ -145,7 +145,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
       />
 
       {step === "picker" ? (
-        <Card className="space-y-6 p-5 ring-foreground/5 sm:p-6">
+        <Card className="space-y-6 p-5 ring-base-content/5 sm:p-6">
           {!llmConfigured ? (
             <div className="space-y-4">
               <Alert>
@@ -256,14 +256,14 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
       ) : null}
 
       {step === "generating" ? (
-        <Card className="space-y-4 p-5 ring-foreground/5 sm:p-6">
+        <Card className="space-y-4 p-5 ring-base-content/5 sm:p-6">
           <div className="mx-auto flex max-w-sm flex-col items-center gap-4 text-center">
             <div className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Loader2 className="size-5 animate-spin" aria-hidden />
             </div>
             <div className="space-y-1">
               <h2 className="m-0 text-[16px] font-semibold">Building your quiz</h2>
-              <p className="m-0 text-[13px] text-muted-foreground">
+              <p className="m-0 text-[13px] text-base-content/60">
                 {activeProviderLabel ?? "Your LLM provider"} is writing questions for{" "}
                 {quizTermCount} term{quizTermCount === 1 ? "" : "s"}. This usually takes a few
                 seconds.
@@ -279,7 +279,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
       {step === "playing" && questions[currentIndex] ? (
         <div className="space-y-4">
           <QuizProgress current={currentIndex + 1} total={questions.length} />
-          <p className="m-0 text-[12px] text-muted-foreground">{correctSoFar} correct so far</p>
+          <p className="m-0 text-[12px] text-base-content/60">{correctSoFar} correct so far</p>
           <QuizQuestionView
             key={`${questions[currentIndex].termId}-${currentIndex}`}
             question={questions[currentIndex]}
@@ -301,7 +301,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
       ) : null}
 
       {step === "error" ? (
-        <Card className="space-y-4 p-5 ring-foreground/5 sm:p-6">
+        <Card className="space-y-4 p-5 ring-base-content/5 sm:p-6">
           <Alert variant="destructive">
             <AlertDescription>{errorMessage ?? "Something went wrong."}</AlertDescription>
           </Alert>

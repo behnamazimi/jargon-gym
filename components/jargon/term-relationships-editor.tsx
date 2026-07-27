@@ -58,11 +58,11 @@ export function TermRelationshipsEditor({
   }
 
   return (
-    <div className="space-y-3 border-t border-border pt-4">
+    <div className="space-y-3 border-t border-base-300 pt-4">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-medium">Relationships</h3>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-base-content/60">
             Link this term to others in the collection.
           </p>
         </div>
@@ -79,23 +79,23 @@ export function TermRelationshipsEditor({
       </div>
 
       {targetOptions.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-base-content/60">
           Add another term to this collection before creating relationships.
         </p>
       ) : null}
 
       {drafts.length === 0 ? (
-        <p className="text-xs text-muted-foreground">No relationships yet.</p>
+        <p className="text-xs text-base-content/60">No relationships yet.</p>
       ) : (
         <ul className="space-y-3">
           {drafts.map((draft) => (
             <li
               key={draft.key}
-              className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3"
+              className="space-y-2 rounded-lg border border-base-300/70 bg-base-200/20 p-3"
             >
               {draft.direction === "incoming" ? (
-                <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">{draft.relatedTermName}</span>{" "}
+                <p className="text-sm text-base-content/60">
+                  <span className="font-medium text-base-content">{draft.relatedTermName}</span>{" "}
                   <span className="italic">{draft.relationshipType}</span> this term
                 </p>
               ) : (

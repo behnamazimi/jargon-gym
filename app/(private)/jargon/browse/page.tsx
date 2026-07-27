@@ -10,8 +10,8 @@ export default async function BrowseSharedDomainsPage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-full items-center justify-center bg-background px-4 py-12 text-foreground">
-        <p className="text-sm text-muted-foreground">You must be logged in.</p>
+      <div className="flex min-h-full items-center justify-center bg-base-100 px-4 py-12 text-base-content">
+        <p className="text-sm text-base-content/60">You must be logged in.</p>
       </div>
     );
   }

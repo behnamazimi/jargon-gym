@@ -31,30 +31,30 @@ export function ImportPreviewPanel({
     : "Confirm import";
 
   return (
-    <Card className="ring-foreground/5">
+    <Card className="ring-base-content/5">
       <CardContent>
         <h2 className="font-heading text-base font-semibold">Preview</h2>
         <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
           <div>
-            <dt className="text-muted-foreground">Domain</dt>
+            <dt className="text-base-content/60">Domain</dt>
             <dd className="font-medium">{preview.domain}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Mode</dt>
+            <dt className="text-base-content/60">Mode</dt>
             <dd className="font-medium">
               {preview.isMerge ? "Merge into existing" : "Create new"}
             </dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Terms</dt>
+            <dt className="text-base-content/60">Terms</dt>
             <dd className="font-medium">{preview.termCount}</dd>
           </div>
           <div>
-            <dt className="text-muted-foreground">Relationships</dt>
+            <dt className="text-base-content/60">Relationships</dt>
             <dd className="font-medium">{preview.relationshipCount}</dd>
           </div>
         </dl>
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="mt-3 text-sm text-base-content/60">
           Categories: {preview.categories.join(", ")}
         </p>
 

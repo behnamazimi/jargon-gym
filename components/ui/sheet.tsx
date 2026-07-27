@@ -1,14 +1,14 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
 import {
   Heading,
   ModalOverlay as ModalOverlayPrimitive,
   Modal as ModalPrimitive,
   Dialog as SheetPrimitive,
   DialogTrigger as SheetTriggerPrimitive,
-  type ModalOverlayProps as ModalOverlayPrimitiveProps,
   type DialogProps as SheetPrimitiveProps,
+  type ModalOverlayProps as ModalOverlayPrimitiveProps,
   type DialogTriggerProps as SheetTriggerPrimitiveProps,
 } from "react-aria-components";
 
@@ -20,18 +20,13 @@ function SheetTrigger({ ...props }: SheetTriggerPrimitiveProps) {
   return <SheetTriggerPrimitive data-slot="sheet-trigger" {...props} />;
 }
 
-function SheetClose({
-  className,
-  variant = "outline",
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof Button>) {
+function SheetClose({ className, ...props }: React.ComponentProps<typeof Button>) {
   return (
     <Button
       slot="close"
       data-slot="sheet-close"
-      variant={variant}
-      size={size}
+      variant="ghost"
+      size="icon-sm"
       className={cn(className)}
       {...props}
     />
@@ -51,7 +46,7 @@ function SheetOverlay({
       data-slot="sheet-overlay"
       isDismissable
       className={cn(
-        "fixed inset-0 z-50 bg-black/80 transition-opacity duration-150 data-entering:opacity-0 data-exiting:opacity-0 supports-backdrop-filter:backdrop-blur-xs",
+        "fixed inset-0 z-50 bg-black/50 transition-opacity duration-150 data-entering:opacity-0 data-exiting:opacity-0",
         className,
       )}
       {...props}
@@ -80,7 +75,7 @@ function Sheet({
         data-slot="sheet-content"
         data-side={side}
         className={cn(
-          "fixed z-50 flex flex-col bg-popover bg-clip-padding text-xs/relaxed text-popover-foreground shadow-lg transition duration-200 ease-in-out data-entering:opacity-0 data-exiting:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:data-entering:translate-y-[2.5rem] data-[side=bottom]:data-exiting:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:data-entering:translate-x-[-2.5rem] data-[side=left]:data-exiting:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:data-entering:translate-x-[2.5rem] data-[side=right]:data-exiting:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:data-entering:translate-y-[-2.5rem] data-[side=top]:data-exiting:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
+          "fixed z-50 flex flex-col bg-base-100 shadow-lg transition duration-200 ease-in-out data-entering:opacity-0 data-exiting:opacity-0 data-[side=bottom]:inset-x-0 data-[side=bottom]:bottom-0 data-[side=bottom]:h-auto data-[side=bottom]:border-t data-[side=bottom]:border-base-300 data-[side=bottom]:data-entering:translate-y-[2.5rem] data-[side=bottom]:data-exiting:translate-y-[2.5rem] data-[side=left]:inset-y-0 data-[side=left]:left-0 data-[side=left]:h-full data-[side=left]:w-3/4 data-[side=left]:border-r data-[side=left]:border-base-300 data-[side=left]:data-entering:translate-x-[-2.5rem] data-[side=left]:data-exiting:translate-x-[-2.5rem] data-[side=right]:inset-y-0 data-[side=right]:right-0 data-[side=right]:h-full data-[side=right]:w-3/4 data-[side=right]:border-l data-[side=right]:border-base-300 data-[side=right]:data-entering:translate-x-[2.5rem] data-[side=right]:data-exiting:translate-x-[2.5rem] data-[side=top]:inset-x-0 data-[side=top]:top-0 data-[side=top]:h-auto data-[side=top]:border-b data-[side=top]:border-base-300 data-[side=top]:data-entering:translate-y-[-2.5rem] data-[side=top]:data-exiting:translate-y-[-2.5rem] data-[side=left]:sm:max-w-sm data-[side=right]:sm:max-w-sm",
           className,
         )}
       >
@@ -90,7 +85,7 @@ function Sheet({
         >
           {children}
           {showCloseButton && (
-            <SheetClose variant="ghost" className="absolute top-4 right-4" size="icon-sm">
+            <SheetClose className="absolute top-4 right-4">
               <XIcon />
               <span className="sr-only">Close</span>
             </SheetClose>
@@ -143,7 +138,7 @@ function SheetTitle({ className, ...props }: Omit<React.ComponentProps<typeof He
     <Heading
       slot="title"
       data-slot="sheet-title"
-      className={cn("font-heading text-sm font-medium text-foreground", className)}
+      className={cn("font-heading text-sm font-medium", className)}
       {...props}
     />
   );
@@ -153,7 +148,7 @@ function SheetDescription({ className, ...props }: Omit<React.ComponentProps<"di
   return (
     <div
       data-slot="sheet-description"
-      className={cn("text-xs/relaxed text-muted-foreground", className)}
+      className={cn("text-xs text-base-content/60", className)}
       {...props}
     />
   );

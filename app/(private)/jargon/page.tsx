@@ -19,7 +19,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
   if (!user) {
     return (
       <PageCenter>
-        <p className="text-sm text-muted-foreground">You must be logged in to view jargon.</p>
+        <p className="text-sm text-base-content/60">You must be logged in to view jargon.</p>
       </PageCenter>
     );
   }
@@ -51,7 +51,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
 
     return (
       <PageCenter className="gap-3">
-        <p className="text-sm text-muted-foreground">{message}</p>
+        <p className="text-sm text-base-content/60">{message}</p>
         <LinkButton href="/jargon/import">Import jargon</LinkButton>
       </PageCenter>
     );

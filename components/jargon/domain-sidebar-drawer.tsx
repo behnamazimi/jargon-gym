@@ -40,7 +40,7 @@ export function DomainSidebarDrawer({
           {currentDomain.icon ? `${currentDomain.icon} ` : ""}
           {currentDomain.name}
         </span>
-        <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <ChevronDown className="size-4 shrink-0 text-base-content/60" aria-hidden />
       </Button>
 
       <Sheet

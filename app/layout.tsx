@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
+import { THEME_COOKIE_NAME, DARK_THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Geist, Inter, JetBrains_Mono } from "next/font/google";
 
@@ -25,14 +27,18 @@ export const metadata: Metadata = {
   description: "A simple web app for reviewing industry jargon on your own. Personal use only.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const theme = cookieStore.get(THEME_COOKIE_NAME)?.value;
+
   return (
     <html
       lang="en"
+      data-theme={theme === DARK_THEME ? DARK_THEME : undefined}
       className={cn(
         "h-full",
         "antialiased",

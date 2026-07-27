@@ -116,9 +116,9 @@ export function QuizQuestionView({
       : [];
 
   return (
-    <Card className="space-y-5 p-5 ring-foreground/5 sm:p-6">
+    <Card className="space-y-5 p-5 ring-base-content/5 sm:p-6">
       <div className="space-y-2">
-        <p className="m-0 text-[12px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="m-0 text-[12px] font-medium uppercase tracking-wide text-base-content/60">
           {question.type === "multiple_choice" ? "Multiple choice" : "True or false"}
         </p>
         <h2 className="m-0 text-[16px] font-semibold leading-snug">{question.prompt}</h2>
@@ -136,10 +136,7 @@ export function QuizQuestionView({
                 className={cn(
                   "flex w-full cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 text-[13px] transition-colors",
                   submitted && isCorrect && "border-primary/40 bg-primary/10",
-                  submitted &&
-                    isSelected &&
-                    !isCorrect &&
-                    "border-destructive/40 bg-destructive/10",
+                  submitted && isSelected && !isCorrect && "border-error/40 bg-error/10",
                   !submitted && isSelected && "border-primary/30 bg-primary/5",
                   submitted && "cursor-default",
                 )}
@@ -170,11 +167,8 @@ export function QuizQuestionView({
                 isDisabled={submitted}
                 className={cn(
                   "w-full",
-                  submitted && isCorrect && "border-primary/40 bg-primary/10 text-foreground",
-                  submitted &&
-                    isSelected &&
-                    !isCorrect &&
-                    "border-destructive/40 bg-destructive/10 text-destructive",
+                  submitted && isCorrect && "border-primary/40 bg-primary/10 text-base-content",
+                  submitted && isSelected && !isCorrect && "border-error/40 bg-error/10 text-error",
                   !submitted && isSelected && "border-primary/30 bg-primary/5",
                 )}
               >
@@ -210,7 +204,7 @@ export function QuizQuestionView({
       ) : null}
 
       <div className="flex items-center justify-between gap-3">
-        <p className="m-0 text-[12px] text-muted-foreground">
+        <p className="m-0 text-[12px] text-base-content/60">
           {submitted ? "Press Enter for next" : "Press Enter to check"}
         </p>
         <div className="flex gap-2">

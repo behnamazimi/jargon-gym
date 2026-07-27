@@ -13,10 +13,10 @@ type CategoryChipsProps = {
 
 function chipClassName(selected: boolean) {
   return cn(
-    "h-7 min-h-7 rounded-full px-3 py-0 text-xs font-normal",
+    "h-7 min-h-7 px-3 py-0 text-xs font-normal",
     selected
       ? "border border-primary bg-transparent text-primary hover:bg-primary/10 hover:text-primary aria-pressed:border-primary aria-pressed:bg-transparent aria-pressed:text-primary data-[state=on]:border-primary data-[state=on]:bg-transparent data-[state=on]:text-primary data-selected:border-primary data-selected:bg-transparent data-selected:text-primary"
-      : "border border-transparent bg-secondary text-foreground hover:bg-secondary/80 hover:text-foreground",
+      : "border border-base-300 text-base-content hover:border-secondary/80 hover:bg-secondary/10",
   );
 }
 

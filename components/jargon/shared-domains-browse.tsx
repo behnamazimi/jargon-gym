@@ -44,7 +44,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
         <ul className="space-y-3">
           {domains.map((domain) => (
             <li key={domain.id}>
-              <Card className="ring-foreground/5">
+              <Card className="ring-base-content/5">
                 <CardContent className="flex flex-wrap items-start justify-between gap-3 text-sm">
                   <div className="min-w-0 flex-1">
                     <div className="font-heading text-base font-semibold">
@@ -52,9 +52,9 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
                       {domain.name}
                     </div>
                     {domain.description ? (
-                      <p className="mt-1 text-sm text-muted-foreground">{domain.description}</p>
+                      <p className="mt-1 text-sm text-base-content/60">{domain.description}</p>
                     ) : null}
-                    <div className="mt-1 text-sm text-muted-foreground">
+                    <div className="mt-1 text-sm text-base-content/60">
                       {pluralize(domain.termCount, "term")}
                     </div>
                   </div>

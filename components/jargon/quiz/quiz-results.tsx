@@ -36,7 +36,7 @@ export function QuizResults({
   const flippedLabel = quizStatus === "known" ? "Marked as unknown" : "Marked as known";
 
   return (
-    <Card className="space-y-6 p-5 ring-foreground/5 sm:p-6">
+    <Card className="space-y-6 p-5 ring-base-content/5 sm:p-6">
       <div className="space-y-3 text-center">
         <Badge variant={percent >= 80 ? "default" : "secondary"} className="text-[11px]">
           {percent}% correct
@@ -45,7 +45,7 @@ export function QuizResults({
           <h2 className="m-0 text-[22px] font-semibold tracking-tight">
             {score}/{total}
           </h2>
-          <p className="mt-1 text-[13px] text-muted-foreground">{scoreMessage(score, total)}</p>
+          <p className="mt-1 text-[13px] text-base-content/60">{scoreMessage(score, total)}</p>
         </div>
       </div>
 
@@ -58,7 +58,7 @@ export function QuizResults({
             {flippedTerms.map((term) => (
               <li
                 key={term.id}
-                className="rounded-md border px-3 py-2 text-[13px] text-muted-foreground"
+                className="rounded-md border px-3 py-2 text-[13px] text-base-content/60"
               >
                 {term.term}
               </li>
@@ -66,7 +66,7 @@ export function QuizResults({
           </ul>
         </div>
       ) : (
-        <p className="m-0 text-[13px] text-muted-foreground">No term status changes this round.</p>
+        <p className="m-0 text-[13px] text-base-content/60">No term status changes this round.</p>
       )}
 
       <div className="flex flex-wrap gap-2">

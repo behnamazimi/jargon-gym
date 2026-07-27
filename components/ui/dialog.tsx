@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
 import { X } from "lucide-react";
 import {
   Dialog as DialogPrimitive,
@@ -19,18 +19,13 @@ function DialogTrigger({ ...props }: DialogTriggerPrimitiveProps) {
   return <DialogTriggerPrimitive data-slot="dialog-trigger" {...props} />;
 }
 
-function DialogClose({
-  className,
-  variant = "outline",
-  size = "default",
-  ...props
-}: React.ComponentProps<typeof Button>) {
+function DialogClose({ className, ...props }: React.ComponentProps<typeof Button>) {
   return (
     <Button
       slot="close"
       data-slot="dialog-close"
-      variant={variant}
-      size={size}
+      variant="ghost"
+      size="icon-sm"
       className={cn(className)}
       {...props}
     />
@@ -48,10 +43,7 @@ function DialogOverlay({
   return (
     <ModalOverlayPrimitive
       data-slot="dialog-overlay"
-      className={cn(
-        "fixed inset-0 isolate z-50 grid place-items-center overflow-y-auto bg-black/80 p-4 duration-100 data-entering:animate-in data-entering:fade-in-0 data-exiting:animate-out data-exiting:fade-out-0 supports-backdrop-filter:backdrop-blur-xs",
-        className,
-      )}
+      className={cn("modal modal-open", className)}
       {...props}
     >
       {children}
@@ -75,15 +67,12 @@ function Dialog({
     <DialogOverlay isDismissable={isDismissable} {...props}>
       <ModalPrimitive
         data-slot="dialog-content"
-        className={cn(
-          "relative z-50 flex max-h-[min(calc(100dvh-2rem),100%)] w-full max-w-[calc(100vw-2rem)] flex-col gap-4 overflow-y-auto overscroll-contain rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 sm:max-w-lg",
-          className,
-        )}
+        className={cn("modal-box relative flex max-h-[85vh] flex-col gap-4", className)}
       >
         <DialogPrimitive data-slot="dialog" className="flex min-h-0 flex-col gap-4 outline-none">
           {children}
           {showCloseButton ? (
-            <DialogClose variant="ghost" className="absolute top-2 right-2" size="icon-sm">
+            <DialogClose className="absolute top-2 right-2">
               <X className="size-4" />
               <span className="sr-only">Close</span>
             </DialogClose>
@@ -115,10 +104,7 @@ function DialogFooter({
   return (
     <div
       data-slot="dialog-footer"
-      className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
-        className,
-      )}
+      className={cn("modal-action flex-col-reverse sm:flex-row sm:justify-end", className)}
       {...props}
     >
       {children}
@@ -132,7 +118,7 @@ function DialogTitle({ className, ...props }: Omit<React.ComponentProps<typeof H
     <Heading
       slot="title"
       data-slot="dialog-title"
-      className={cn("font-heading text-base font-semibold leading-none", className)}
+      className={cn("font-heading text-base font-semibold", className)}
       {...props}
     />
   );
@@ -142,10 +128,7 @@ function DialogDescription({ className, ...props }: Omit<React.ComponentProps<"d
   return (
     <div
       data-slot="dialog-description"
-      className={cn(
-        "text-sm text-muted-foreground *:[a]:underline *:[a]:underline-offset-3 *:[a]:hover:text-foreground",
-        className,
-      )}
+      className={cn("text-sm text-base-content/60", className)}
       {...props}
     />
   );

@@ -63,7 +63,7 @@ export default function SignupForm() {
         {pending ? "Creating account…" : "Sign up"}
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-base-content/60">
         Already have an account?{" "}
         <Link href="/login" className="underline underline-offset-2">
           Log in

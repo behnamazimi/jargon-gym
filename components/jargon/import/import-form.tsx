@@ -69,10 +69,10 @@ export function ImportForm({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="block text-[13px] font-medium text-foreground" htmlFor="import-json">
+        <label className="block text-[13px] font-medium text-base-content" htmlFor="import-json">
           JSON payload
         </label>
-        <span className="text-[12px] text-muted-foreground">
+        <span className="text-[12px] text-base-content/60">
           {value.trim() ? `${lineCount} lines` : "No content yet"}
         </span>
       </div>
@@ -131,7 +131,7 @@ export function ImportForm({
         className="min-h-[320px] font-mono text-[13px] leading-5"
       />
 
-      <p className="text-[12px] text-muted-foreground">
+      <p className="text-[12px] text-base-content/60">
         Use the LLM prompt above to generate JSON, or Load example to start from a template.
       </p>
 

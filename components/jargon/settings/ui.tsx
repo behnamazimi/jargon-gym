@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 export function SettingsPanel({ children }: { children: ReactNode }) {
-  return <Card className="ring-foreground/5 p-5 sm:p-6">{children}</Card>;
+  return <Card className="ring-base-content/5 p-5 sm:p-6">{children}</Card>;
 }
 
 export function SettingsSection({
@@ -26,10 +26,8 @@ export function SettingsSection({
   return (
     <section className="space-y-3">
       <div>
-        <h2 className="m-0 text-[15px] font-semibold text-foreground">{title}</h2>
-        {description ? (
-          <p className="mt-1 text-[13px] text-muted-foreground">{description}</p>
-        ) : null}
+        <h2 className="m-0 text-sm font-semibold text-base-content">{title}</h2>
+        {description ? <p className="mt-1 text-sm text-base-content/60">{description}</p> : null}
       </div>
       {children}
     </section>
@@ -49,13 +47,9 @@ export function SettingsGroup({
     <div className="space-y-3">
       {title || description ? (
         <div>
-          {title ? (
-            <h3 className="m-0 text-[14px] font-semibold text-foreground">{title}</h3>
-          ) : null}
+          {title ? <h3 className="m-0 text-sm font-semibold text-base-content">{title}</h3> : null}
           {description ? (
-            <div className="mt-1 text-[13px] leading-relaxed text-muted-foreground">
-              {description}
-            </div>
+            <div className="mt-1 text-sm leading-relaxed text-base-content/60">{description}</div>
           ) : null}
         </div>
       ) : null}
@@ -84,7 +78,7 @@ const STATUS_BADGE_VARIANT: Record<StatusVariant, "default" | "secondary" | "out
 
 export function StatusPill({ variant }: { variant: StatusVariant }) {
   return (
-    <Badge variant={STATUS_BADGE_VARIANT[variant]} className="text-[12px]">
+    <Badge variant={STATUS_BADGE_VARIANT[variant]} className="text-xs">
       {STATUS_LABELS[variant]}
     </Badge>
   );
@@ -111,14 +105,14 @@ export function CopyField({
 
   return (
     <div className="space-y-1.5">
-      {label ? <p className="m-0 text-[12px] font-medium text-foreground">{label}</p> : null}
-      {hint ? <p className="m-0 text-[12px] text-muted-foreground">{hint}</p> : null}
+      {label ? <p className="m-0 text-xs font-medium text-base-content">{label}</p> : null}
+      {hint ? <p className="m-0 text-xs text-base-content/60">{hint}</p> : null}
       <div className="flex items-start gap-2">
         <Input
           readOnly
           value={value}
           className={cn(
-            "min-w-0 flex-1 text-[12px] leading-5",
+            "min-w-0 flex-1 text-xs leading-5",
             monospace ? "font-mono" : "whitespace-pre-wrap",
           )}
         />
@@ -146,7 +140,7 @@ export function AlertBanner({ message }: { message: string }) {
 export function HighlightPanel({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="rounded-lg border border-primary/30 bg-primary/10 px-3 py-3">
-      <p className="m-0 text-[12px] font-medium uppercase tracking-wide text-primary">{label}</p>
+      <p className="m-0 text-xs font-medium uppercase tracking-wide text-primary">{label}</p>
       <div className="mt-2">{children}</div>
     </div>
   );
@@ -166,16 +160,16 @@ export function SetupStep({
   return (
     <li className="flex gap-4">
       <span
-        className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-[12px] font-semibold text-foreground"
+        className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-base-content"
         aria-hidden
       >
         {step}
       </span>
       <div className="min-w-0 flex-1 space-y-3">
         <div>
-          <h3 className="m-0 text-[14px] font-semibold text-foreground">{title}</h3>
+          <h3 className="m-0 text-sm font-semibold text-base-content">{title}</h3>
           {description ? (
-            <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{description}</p>
+            <p className="mt-1 text-sm leading-relaxed text-base-content/60">{description}</p>
           ) : null}
         </div>
         {children}

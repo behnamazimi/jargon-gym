@@ -24,9 +24,7 @@ export function TermList({
 }: TermListProps) {
   if (terms.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-muted-foreground">
-        No terms match your filters.
-      </p>
+      <p className="py-10 text-center text-sm text-base-content/60">No terms match your filters.</p>
     );
   }
 

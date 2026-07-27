@@ -102,7 +102,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
           />
 
           <aside className="hidden md:flex md:w-68 md:shrink-0">
-            <div className="sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-xl border bg-card/80 p-3 ring-foreground/5 backdrop-blur-sm">
+            <div className="sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-xl border border-base-300 bg-base-100/80 p-3 ring-base-content/5 backdrop-blur-sm">
               <DomainSidebar
                 domains={domainsWithLiveCounts}
                 currentDomainId={domain.id}
@@ -120,7 +120,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
               onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
             />
 
-            <Card className="gap-0 p-0 ring-foreground/5">
+            <Card className="gap-0 p-0 ring-base-content/5">
               <CardContent className="space-y-3 px-4 py-3">
                 <SearchBar
                   value={searchQuery}
@@ -146,7 +146,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
             </Card>
 
             {termLinkNotice ? (
-              <p className="text-sm text-muted-foreground">{termLinkNotice}</p>
+              <p className="text-sm text-base-content/60">{termLinkNotice}</p>
             ) : null}
 
             <TermList

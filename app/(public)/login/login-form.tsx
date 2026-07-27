@@ -38,7 +38,7 @@ export default function LoginForm() {
             <FieldLabel htmlFor="login-password">Password</FieldLabel>
             <Link
               href="/forgot-password"
-              className="text-xs text-muted-foreground underline underline-offset-2"
+              className="text-xs text-base-content/60 underline underline-offset-2"
             >
               Forgot password?
             </Link>
@@ -57,7 +57,7 @@ export default function LoginForm() {
         {pending ? "Logging in…" : "Log in"}
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-base-content/60">
         Need an account?{" "}
         <Link href="/signup" className="underline underline-offset-2">
           Sign up

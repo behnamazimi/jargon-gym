@@ -11,7 +11,7 @@ export function QuizProgress({ current, total, className }: QuizProgressProps) {
 
   return (
     <div className={cn("space-y-1.5", className)}>
-      <div className="flex items-center justify-between gap-3 text-[12px] text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 text-[12px] text-base-content/60">
         <span>
           Question {current} of {total}
         </span>

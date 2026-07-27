@@ -46,7 +46,7 @@ export function ImportFailurePanel({ failure }: ImportFailurePanelProps) {
             {failure.issues.map((issue) => (
               <li
                 key={`${issue.path}-${issue.message}`}
-                className="rounded-md border border-border bg-background/70 px-3 py-2"
+                className="rounded-md border border-base-300 bg-base-100/70 px-3 py-2"
               >
                 <div className="font-mono text-[12px] opacity-80">{issue.path}</div>
                 <div className="mt-0.5">{issue.message}</div>

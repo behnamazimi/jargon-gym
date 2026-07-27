@@ -22,7 +22,7 @@ export default function LandingPage() {
           own lists, mark what you know, and come back whenever you need a refresher.
         </p>
 
-        <p className="mt-4 m-0 max-w-[52ch] text-[15px] leading-relaxed text-muted-foreground">
+        <p className="mt-4 m-0 max-w-[52ch] text-[15px] leading-relaxed text-base-content/60">
           This is a personal tool — not a product or a service for others. If you have an account,
           log in to pick up where you left off.
         </p>

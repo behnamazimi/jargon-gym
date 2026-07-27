@@ -128,7 +128,7 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
         <Button
           variant="ghost"
           size="icon-sm"
-          className="text-muted-foreground hover:text-foreground"
+          className="text-base-content/60 hover:text-base-content"
           aria-label="Collection actions"
           isDisabled={disabled}
         >
@@ -279,11 +279,11 @@ function StatusBadge({
       variant="outline"
       className={cn(
         "gap-1 font-medium",
-        variant === "private" && "border-border bg-muted/50 text-muted-foreground",
+        variant === "private" && "border-base-300 bg-base-200/50 text-base-content/60",
         variant === "shared" && "border-primary/30 bg-primary/10 text-primary",
-        variant === "added" && "border-border bg-secondary text-secondary-foreground",
+        variant === "added" && "border-base-300 bg-secondary text-secondary-content",
         variant === "active" && "border-primary/40 bg-primary/15 text-primary",
-        variant === "paused" && "border-border bg-muted text-muted-foreground",
+        variant === "paused" && "border-base-300 bg-base-200 text-base-content/60",
       )}
     >
       <Icon className="size-3" aria-hidden />
@@ -294,7 +294,7 @@ function StatusBadge({
 
 function StatItem({ icon: Icon, label }: { icon: typeof FolderOpen; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+    <span className="inline-flex items-center gap-1 text-xs text-base-content/60">
       <Icon className="size-3.5 shrink-0 opacity-60" aria-hidden />
       {label}
     </span>
@@ -314,7 +314,7 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
   return (
     <div className="min-w-0 flex-1 space-y-2">
       {domain.description ? (
-        <p className="max-w-prose text-base leading-relaxed text-foreground/85">
+        <p className="max-w-prose text-base leading-relaxed text-base-content/85">
           {domain.description}
         </p>
       ) : null}

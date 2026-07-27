@@ -11,7 +11,7 @@ export default async function JargonQuizPage() {
   if (!user) {
     return (
       <div className="flex min-h-full items-center justify-center px-4 py-12">
-        <p className="text-sm text-muted-foreground">You must be logged in to take a quiz.</p>
+        <p className="text-sm text-base-content/60">You must be logged in to take a quiz.</p>
       </div>
     );
   }
@@ -21,7 +21,7 @@ export default async function JargonQuizPage() {
   if ("error" in setup) {
     return (
       <div className="flex min-h-full items-center justify-center px-4 py-12">
-        <p className="text-sm text-muted-foreground">{setup.error}</p>
+        <p className="text-sm text-base-content/60">{setup.error}</p>
       </div>
     );
   }

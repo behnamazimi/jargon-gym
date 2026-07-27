@@ -23,7 +23,7 @@ export function Header({
 }: HeaderProps) {
   return (
     <header>
-      <Card className="gap-0 p-0 ring-foreground/5">
+      <Card className="gap-0 p-0 ring-base-content/5">
         <CardContent className="flex items-start justify-between gap-3 px-4 py-3">
           <div className="min-w-0 flex-1 space-y-2">
             <h1 className="truncate text-lg font-semibold tracking-tight">
@@ -38,7 +38,7 @@ export function Header({
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                className="text-muted-foreground hover:text-foreground"
+                className="text-base-content/60 hover:text-base-content"
                 aria-label="Add term"
                 onPress={onAddTerm}
               >

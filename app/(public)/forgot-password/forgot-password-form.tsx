@@ -36,7 +36,7 @@ export default function ForgotPasswordForm() {
         </Alert>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-base-content/60">
             Enter your email and we&apos;ll send you a link to reset your password.
           </p>
 
@@ -59,7 +59,7 @@ export default function ForgotPasswordForm() {
         </>
       )}
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-base-content/60">
         Remembered your password?{" "}
         <Link href="/login" className="underline underline-offset-2">
           Log in

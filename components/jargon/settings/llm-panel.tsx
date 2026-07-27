@@ -123,7 +123,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
       <div className="flex flex-wrap items-center gap-2">
         <StatusPill variant={settings ? "connected" : "disconnected"} />
         {settings ? (
-          <span className="text-[12px] text-muted-foreground">
+          <span className="text-xs text-base-content/60">
             {LLM_PROVIDER_OPTIONS.find((option) => option.value === settings.provider)?.label} ·
             ••••
             {settings.apiKeyLast4}
@@ -144,7 +144,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
             onSelectionChange={(key) => setProvider(key as LlmProvider)}
             isDisabled={isSaving}
           >
-            <SelectTrigger id="llm-provider" className="text-[13px]">
+            <SelectTrigger id="llm-provider" className="text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -159,7 +159,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
 
         {settings && !replacingKey ? (
           <div className="space-y-3">
-            <p className="m-0 text-[13px] text-muted-foreground">
+            <p className="m-0 text-sm text-base-content/60">
               API key configured. Replace it if you need to switch keys.
             </p>
             <Button type="button" variant="outline" size="sm" onPress={() => setReplacingKey(true)}>
@@ -175,7 +175,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
               value={apiKey}
               onChange={(event) => setApiKey(event.target.value)}
               placeholder="Paste your API key"
-              className="text-[13px]"
+              className="text-sm"
               autoComplete="off"
             />
             <div className="flex flex-wrap gap-2 pt-1">
@@ -183,7 +183,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
                 type="button"
                 onPress={handleSaveKey}
                 isDisabled={isSaving || !apiKey.trim()}
-                className="text-[13px]"
+                className="text-sm"
               >
                 {isSaving ? "Saving…" : settings ? "Save new key" : "Save key"}
               </Button>
@@ -246,10 +246,9 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
           <SettingsGroup title="Remove configuration">
             <Button
               type="button"
-              variant="outline"
+              variant="destructive"
               onPress={handleClear}
               isDisabled={isClearing}
-              className="text-[13px] text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="h-3.5 w-3.5" />
               {isClearing ? "Removing…" : "Remove API key"}

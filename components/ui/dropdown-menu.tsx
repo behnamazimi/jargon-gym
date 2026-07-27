@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { cva } from "class-variance-authority";
 import {
   composeRenderProps,
   Header as HeaderPrimitive,
@@ -44,7 +43,8 @@ function DropdownMenu({
       offset={offset}
       crossOffset={crossOffset}
       className={cn(
-        "z-50 w-(--trigger-width) min-w-32 origin-(--trigger-anchor-point) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 outline-none data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:overflow-hidden data-exiting:fade-out-0 data-exiting:zoom-out-95 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2 **:data-[slot$=-item]:data-focused:bg-foreground/10",
+        "dropdown-content menu z-50 w-(--trigger-width) min-w-32 overflow-x-hidden overflow-y-auto rounded-box bg-base-100 p-1 shadow-md",
+        "**:data-[slot$=-item]:data-focused:bg-base-200",
         className,
       )}
     >
@@ -77,26 +77,19 @@ function DropdownMenuLabel({
     <HeaderPrimitive
       data-slot="dropdown-menu-label"
       data-inset={inset}
-      className={cn("px-2 py-1.5 text-xs text-muted-foreground data-inset:pl-7.5", className)}
+      className={cn("px-2 py-1.5 text-xs text-base-content/60 data-inset:pl-7.5", className)}
       {...props}
     />
   );
 }
 
-const dropdownMenuItemVariants = cva(
-  "group/dropdown-menu-item relative flex cursor-default items-center outline-hidden select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-  {
-    variants: {
-      selectionMode: {
-        none: "min-h-7 gap-2 rounded-md px-2 py-1 text-xs/relaxed focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7.5 data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 data-[variant=destructive]:focus:text-destructive dark:data-[variant=destructive]:focus:bg-destructive/20 [&_svg:not([class*='size-'])]:size-3.5 data-[variant=destructive]:*:[svg]:text-destructive",
-        single:
-          "min-h-7 gap-2 rounded-md py-1.5 pr-8 pl-2 text-xs focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7.5 [&_svg:not([class*='size-'])]:size-3.5",
-        multiple:
-          "min-h-7 gap-2 rounded-md py-1.5 pr-8 pl-2 text-xs focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-7.5 [&_svg:not([class*='size-'])]:size-3.5",
-      },
-    },
-  },
-);
+function dropdownMenuItemClassName(selectionMode: "none" | "single" | "multiple") {
+  return cn(
+    "group/dropdown-menu-item relative flex min-h-8 cursor-default items-center gap-2 rounded-field px-2 py-1 text-sm outline-hidden select-none data-focused:bg-base-200 data-disabled:pointer-events-none data-disabled:opacity-50 data-inset:pl-7.5",
+    selectionMode !== "none" && "pr-8",
+    "data-[variant=destructive]:text-error data-[variant=destructive]:data-focused:bg-error/10",
+  );
+}
 
 function DropdownMenuItem({
   className,
@@ -115,7 +108,7 @@ function DropdownMenuItem({
       data-variant={variant}
       textValue={typeof children === "string" ? children : props.textValue}
       className={composeRenderProps(className, (className, { selectionMode }) =>
-        cn(dropdownMenuItemVariants({ selectionMode }), className),
+        cn(dropdownMenuItemClassName(selectionMode), className),
       )}
       {...props}
     >
@@ -130,7 +123,7 @@ function DropdownMenuItem({
                   : "dropdown-menu-checkbox-item-indicator"
               }
             >
-              {isSelected ? <CheckIcon /> : null}
+              {isSelected ? <CheckIcon className="size-3.5" /> : null}
             </span>
           ) : null}
           {children}
@@ -158,7 +151,7 @@ function DropdownMenuSubTrigger({
       data-inset={inset}
       textValue={typeof children === "string" ? children : props.textValue}
       className={cn(
-        "flex min-h-7 cursor-default items-center gap-2 rounded-md px-2 py-1 text-xs outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-inset:pl-7.5 data-open:bg-accent data-open:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+        "flex min-h-8 cursor-default items-center gap-2 rounded-field px-2 py-1 text-sm outline-hidden select-none data-focused:bg-base-200 data-open:bg-base-200 data-inset:pl-7.5",
         className,
       )}
       {...props}
@@ -166,7 +159,7 @@ function DropdownMenuSubTrigger({
       {composeRenderProps(children, (children) => (
         <>
           {children}
-          <ChevronRightIcon className="ml-auto" />
+          <ChevronRightIcon className="ml-auto size-3.5" />
         </>
       ))}
     </MenuItemPrimitive>
@@ -183,10 +176,7 @@ function DropdownMenuSubContent({
   return (
     <DropdownMenu
       data-slot="dropdown-menu-sub-content"
-      className={cn(
-        "w-auto min-w-32 rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100",
-        className,
-      )}
+      className={cn("w-auto min-w-32", className)}
       placement={placement}
       crossOffset={crossOffset}
       offset={offset}
@@ -202,7 +192,7 @@ function DropdownMenuSeparator({
   return (
     <SeparatorPrimitive
       data-slot="dropdown-menu-separator"
-      className={cn("-mx-1 my-1 h-px bg-border/50", className)}
+      className={cn("-mx-1 my-1 h-px bg-base-300", className)}
       {...props}
     />
   );
@@ -212,10 +202,7 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
   return (
     <span
       data-slot="dropdown-menu-shortcut"
-      className={cn(
-        "ml-auto text-[0.625rem] tracking-widest text-muted-foreground group-focus/dropdown-menu-item:text-accent-foreground",
-        className,
-      )}
+      className={cn("ml-auto text-[0.625rem] tracking-widest text-base-content/60", className)}
       {...props}
     />
   );

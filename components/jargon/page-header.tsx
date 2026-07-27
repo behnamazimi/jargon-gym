@@ -26,10 +26,10 @@ export function PageHeader({
           <Icon className="size-5" aria-hidden />
         </div>
         <div className="min-w-0">
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="font-heading text-2xl font-bold tracking-tight text-base-content">
             {title}
           </h1>
-          {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
+          {description ? <p className="mt-1 text-sm text-base-content/60">{description}</p> : null}
         </div>
       </div>
       {showBack ? <BackLink href={backHref} label={backLabel} /> : null}

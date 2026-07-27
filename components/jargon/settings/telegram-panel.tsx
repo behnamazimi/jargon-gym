@@ -116,7 +116,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
       <div className="flex flex-wrap items-center gap-2">
         <StatusPill variant={telegramStatusVariant(status)} />
         {status.connected && linkedSince ? (
-          <span className="text-[12px] text-muted-foreground">Linked {linkedSince}</span>
+          <span className="text-xs text-base-content/60">Linked {linkedSince}</span>
         ) : null}
       </div>
 
@@ -131,7 +131,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
             type="button"
             onPress={handleGenerateLink}
             isDisabled={isGenerating}
-            className="text-[13px]"
+            className="text-sm"
           >
             {isGenerating ? "Generating…" : "Generate Telegram link"}
           </Button>
@@ -143,7 +143,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
                 href={deepLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-[13px] font-medium text-primary no-underline hover:underline"
+                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
               >
                 Open bot
                 <ExternalLink className="h-3.5 w-3.5" />
@@ -166,7 +166,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
                 onSelectionChange={(key) => handleCadenceChange(key as TelegramCadence)}
                 isDisabled={isSavingCadence}
               >
-                <SelectTrigger id="telegram-cadence" className="text-[13px]">
+                <SelectTrigger id="telegram-cadence" className="text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -183,15 +183,14 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
           <SettingsDivider />
 
           <SettingsGroup title="Disconnect">
-            <p className="text-[13px] text-muted-foreground">
+            <p className="text-sm text-base-content/60">
               Stop Telegram reminders and unlink this chat. You can reconnect anytime.
             </p>
             <Button
               type="button"
-              variant="outline"
+              variant="destructive"
               onPress={handleDisconnect}
               isDisabled={isDisconnecting}
-              className="text-[13px] text-destructive hover:bg-destructive/10"
             >
               <Unlink className="h-3.5 w-3.5" />
               {isDisconnecting ? "Disconnecting…" : "Disconnect Telegram"}

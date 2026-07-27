@@ -27,7 +27,7 @@ export function EmptyState({
       <div>
         <TitleTag className="font-heading text-2xl font-bold tracking-tight">{title}</TitleTag>
         {description ? (
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">{description}</p>
+          <p className="mt-2 max-w-md text-sm text-base-content/60">{description}</p>
         ) : null}
       </div>
       {children}

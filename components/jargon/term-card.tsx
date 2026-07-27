@@ -54,7 +54,7 @@ export function TermCard({
             "gap-0 p-0 overflow-hidden transition-all duration-200",
             open
               ? "ring-primary/30 shadow-md"
-              : "ring-foreground/5 hover:shadow-sm hover:ring-foreground/10",
+              : "ring-base-content/5 hover:shadow-sm hover:ring-base-content/10",
           )}
         >
           <div
@@ -70,28 +70,28 @@ export function TermCard({
                 aria-label={known ? "Mark as not known" : "Mark as known"}
                 className={cn(
                   "size-6 rounded-full border-2",
-                  !known && "border-muted-foreground/30 bg-background",
+                  !known && "border-base-content/30 bg-base-100",
                 )}
               />
             </div>
-            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-md border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-md border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <span
                 className={cn(
                   "font-heading text-base font-semibold tracking-tight",
                   known
-                    ? "text-muted-foreground line-through decoration-primary/60 decoration-2"
-                    : "text-foreground",
+                    ? "text-base-content/60 line-through decoration-primary/60 decoration-2"
+                    : "text-base-content",
                 )}
               >
                 {term.term}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
-                <Badge variant="secondary" className="border-0 font-normal">
+                <Badge variant="outline" className="font-normal text-secondary">
                   {term.category}
                 </Badge>
                 <ChevronRight
                   className={cn(
-                    "size-4 text-muted-foreground transition-transform duration-200",
+                    "size-4 text-base-content/60 transition-transform duration-200",
                     open && "rotate-90 text-primary",
                   )}
                   aria-hidden
@@ -109,11 +109,11 @@ export function TermCard({
               <p className="text-base leading-relaxed font-medium">{term.definition}</p>
 
               {!!term.example && (
-                <div className="mt-4 rounded-lg border border-border/60 bg-muted/40 p-3">
+                <div className="mt-4 rounded-lg border border-base-300/60 bg-base-200/40 p-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                     Example
                   </p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-1 text-sm leading-relaxed text-base-content/60">
                     {term.example}
                   </p>
                 </div>
@@ -121,10 +121,10 @@ export function TermCard({
 
               {!!term.discussion && (
                 <div className="mt-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
                     In practice
                   </p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-1 text-sm leading-relaxed text-base-content/60">
                     {term.discussion}
                   </p>
                 </div>
@@ -137,7 +137,7 @@ export function TermCard({
                     <p className="text-xs font-semibold uppercase tracking-wide text-primary">
                       Debated
                     </p>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    <p className="mt-1 text-sm leading-relaxed text-base-content/60">
                       {term.controversy}
                     </p>
                   </div>
@@ -149,16 +149,16 @@ export function TermCard({
                   {term.relationships.map((relationship) => (
                     <li
                       key={`${relationship.id}-${relationship.direction}`}
-                      className="rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5"
+                      className="rounded-lg border border-dashed border-base-300 bg-base-200/30 px-3 py-2.5"
                     >
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-base-content/60">
                         <span className="italic">{relationship.relationshipType}</span>{" "}
                         <span className="font-semibold text-primary">
                           {relationship.relatedTermName}
                         </span>
                       </p>
                       {relationship.description ? (
-                        <p className="mt-1 text-xs leading-relaxed text-muted-foreground/80">
+                        <p className="mt-1 text-xs leading-relaxed text-base-content/80">
                           {relationship.description}
                         </p>
                       ) : null}

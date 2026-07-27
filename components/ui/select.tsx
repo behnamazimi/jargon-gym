@@ -45,7 +45,7 @@ function SelectValue<T extends object>({ className, children, ...props }: Select
   return (
     <SelectValuePrimitive
       data-slot="select-value"
-      className={cn("flex flex-1 text-left data-placeholder:text-muted-foreground", className)}
+      className={cn("flex flex-1 text-left data-placeholder:text-base-content/60", className)}
       {...props}
     >
       {typeof children === "function"
@@ -70,13 +70,15 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "flex w-full items-center justify-between gap-1.5 rounded-md border border-input bg-input/20 px-2 py-1.5 text-xs/relaxed whitespace-nowrap transition-colors outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-placeholder:text-muted-foreground data-[size=default]:h-7 data-[size=sm]:h-6 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+        "select w-full items-center justify-between gap-1.5",
+        size === "sm" && "select-sm",
+        "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5",
         className,
       )}
       {...props}
     >
       {children}
-      <ChevronDownIcon className="pointer-events-none size-3.5 text-muted-foreground" />
+      <ChevronDownIcon className="pointer-events-none size-3.5 opacity-60" />
     </ButtonPrimitive>
   );
 }
@@ -123,7 +125,8 @@ function SelectPopover({
       offset={offset}
       crossOffset={crossOffset}
       className={cn(
-        "relative isolate z-50 w-(--trigger-width) min-w-32 origin-(--trigger-anchor-point) overflow-hidden rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-entering:animate-in data-entering:fade-in-0 data-entering:zoom-in-95 data-exiting:animate-out data-exiting:fade-out-0 data-exiting:zoom-out-95 data-[placement=bottom]:slide-in-from-top-2 data-[placement=left]:slide-in-from-right-2 data-[placement=right]:slide-in-from-left-2 data-[placement=top]:slide-in-from-bottom-2 **:data-[slot$=-item]:data-focused:bg-foreground/10",
+        "dropdown-content menu z-50 w-(--trigger-width) min-w-32 overflow-hidden rounded-box bg-base-100 p-1 shadow-md",
+        "**:data-[slot$=-item]:data-focused:bg-base-200",
         className,
       )}
       {...props}
@@ -155,13 +158,13 @@ function SelectInput({ className, ...props }: SearchFieldProps) {
       className={cn("p-1 pb-0", className)}
     >
       <InputGroup>
+        <InputGroupAddon>
+          <SearchIcon className="size-3.5 shrink-0 opacity-50" />
+        </InputGroupAddon>
         <InputGroupInput
           data-slot="select-input"
           className="[&::-webkit-search-cancel-button]:hidden"
         />
-        <InputGroupAddon>
-          <SearchIcon className="size-3.5 shrink-0 opacity-50" />
-        </InputGroupAddon>
       </InputGroup>
     </SearchField>
   );
@@ -171,7 +174,7 @@ function SelectLabel({ className, ...props }: React.ComponentProps<typeof Header
   return (
     <HeaderPrimitive
       data-slot="select-label"
-      className={cn("px-2 py-1.5 text-xs text-muted-foreground", className)}
+      className={cn("px-2 py-1.5 text-xs text-base-content/60", className)}
       {...props}
     />
   );
@@ -187,7 +190,8 @@ function SelectItem({
       data-slot="select-item"
       textValue={typeof children === "string" ? children : undefined}
       className={cn(
-        "relative flex min-h-7 w-full cursor-default items-center gap-2 rounded-md px-2 py-1 text-xs/relaxed outline-hidden select-none focus:bg-accent focus:text-accent-foreground not-data-[variant=destructive]:focus:**:text-accent-foreground data-focused:bg-accent data-focused:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex min-h-8 w-full cursor-default items-center gap-2 rounded-field px-2 py-1 text-sm outline-hidden select-none data-focused:bg-base-200 data-disabled:pointer-events-none data-disabled:opacity-50",
+        "*:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}
@@ -196,7 +200,7 @@ function SelectItem({
         <>
           <span className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">{children}</span>
           <span className="pointer-events-none absolute right-2 flex items-center justify-center">
-            {isSelected ? <CheckIcon className="pointer-events-none" /> : null}
+            {isSelected ? <CheckIcon className="pointer-events-none size-3.5" /> : null}
           </span>
         </>
       ))}
@@ -208,7 +212,7 @@ function SelectSeparator({ className, ...props }: React.ComponentProps<typeof Se
   return (
     <SeparatorPrimitive
       data-slot="select-separator"
-      className={cn("pointer-events-none -mx-1 my-1 h-px bg-border/50", className)}
+      className={cn("pointer-events-none -mx-1 my-1 h-px bg-base-300", className)}
       {...props}
     />
   );
@@ -219,7 +223,7 @@ function SelectEmpty({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="select-empty"
       className={cn(
-        "hidden w-full justify-center py-2 text-center text-xs/relaxed text-muted-foreground group-data-empty/select-list:flex",
+        "hidden w-full justify-center py-2 text-center text-sm text-base-content/60 group-data-empty/select-list:flex",
         className,
       )}
       {...props}
