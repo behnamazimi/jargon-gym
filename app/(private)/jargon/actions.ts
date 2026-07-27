@@ -122,6 +122,7 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
     } else {
       await clearTermKnown(auth.supabase, auth.user.id, termId);
     }
+    revalidatePath("/jargon");
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to update progress.";

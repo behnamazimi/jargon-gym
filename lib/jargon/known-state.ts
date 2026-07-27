@@ -48,12 +48,10 @@ export async function markTermKnownForUser(client: Client, userId: string, termI
   if (error) throw error;
 }
 
-export async function clearTermKnown(client: Client, userId: string, termId: string) {
-  const { error } = await client
-    .from("user_progress")
-    .delete()
-    .eq("user_id", userId)
-    .eq("term_id", termId);
+export async function clearTermKnown(client: Client, _userId: string, termId: string) {
+  const { error } = await client.rpc("my_clear_term_known", {
+    p_term_id: termId,
+  });
 
   if (error) throw error;
 }

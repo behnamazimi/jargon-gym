@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, Upload } from "lucide-react";
+import { BookOpen, Compass, Upload } from "lucide-react";
 import { ProfileMenu } from "@/components/jargon/profile-menu";
 import { LinkButton } from "@/components/ui/button";
 
@@ -18,6 +18,10 @@ export function SiteHeaderNav({ email }: SiteHeaderNavProps) {
       <LinkButton href="/jargon/import" variant="ghost">
         <Upload className="h-4 w-4" />
         <span className="hidden sm:inline">Import</span>
+      </LinkButton>
+      <LinkButton href="/jargon/review" variant="ghost">
+        <BookOpen className="h-4 w-4" strokeWidth={1.5} />
+        <span className="hidden sm:inline">Review</span>
       </LinkButton>
       <LinkButton href="/jargon/browse" variant="ghost">
         <Compass className="h-4 w-4" />

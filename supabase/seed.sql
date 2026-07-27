@@ -70,7 +70,7 @@ begin
   );
 
   update public.users
-  set role = 'admin'
+  set role = 'admin', referral_verified = true
   where id = v_admin_id;
 
   -- Spare single-use codes for signup testing (created by admin)

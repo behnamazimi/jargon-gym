@@ -467,6 +467,10 @@ export type Database = {
     Functions: {
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
+      clear_term_known: {
+        Args: { p_term_id: string; p_user_id: string };
+        Returns: undefined;
+      };
       complete_telegram_link: {
         Args: { p_chat_id: number; p_token_hash: string };
         Returns: string;
@@ -521,6 +525,7 @@ export type Database = {
         Args: { p_term_id: string; p_user_id: string };
         Returns: undefined;
       };
+      my_clear_term_known: { Args: { p_term_id: string }; Returns: undefined };
       my_mark_term_known: { Args: { p_term_id: string }; Returns: undefined };
       my_review_domain_ids: { Args: never; Returns: string[] };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };

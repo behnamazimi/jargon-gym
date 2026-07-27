@@ -27,7 +27,7 @@ export function BackLink({
       className={cn("shrink-0 text-base-content/60 hover:text-base-content", className)}
     >
       <ArrowLeft className="size-3.5" aria-hidden />
-      {label}
+      <span className="hidden sm:inline">{label}</span>
     </LinkButton>
   );
 }

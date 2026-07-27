@@ -22,7 +22,7 @@ export function PageHeader({
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="flex min-w-0 items-start gap-3">
-        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+        <div className="hidden sm:flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
           <Icon className="size-5" aria-hidden />
         </div>
         <div className="min-w-0">
