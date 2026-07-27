@@ -1,4 +1,4 @@
-export const PASSWORD_MIN_LENGTH = 8;
+const PASSWORD_MIN_LENGTH = 8;
 
 type PasswordRequirement = {
   id: string;
@@ -36,10 +36,6 @@ export function evaluatePasswordRequirements(password: string): PasswordRequirem
     label,
     met: test(password),
   }));
-}
-
-export function isPasswordValid(password: string): boolean {
-  return evaluatePasswordRequirements(password).every((requirement) => requirement.met);
 }
 
 export function getPasswordValidationError(password: string): string | null {

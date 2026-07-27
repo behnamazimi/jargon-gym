@@ -136,7 +136,7 @@ export async function fetchQuizTermPool(
   return selectQuizTerms(filtered, questionCount, domainNameById);
 }
 
-export function selectQuizTerms(
+function selectQuizTerms(
   terms: {
     id: string;
     term: string;

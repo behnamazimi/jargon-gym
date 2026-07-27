@@ -11,6 +11,7 @@
     "type-check": "tsc --noEmit",
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
+    "check": "pnpm run lint && pnpm run fmt:check && pnpm run type-check",
     "supabase": "supabase",
     "supabase:start": "supabase start",
     "supabase:stop": "supabase stop",

@@ -53,16 +53,44 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  if (request.nextUrl.searchParams.has("code") && !pathname.startsWith("/auth/callback")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   if (!user && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && (pathname.startsWith("/login") || pathname.startsWith("/signup"))) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/jargon";
-    return NextResponse.redirect(url);
+  if (user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("referral_verified")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const referralVerified = profile?.referral_verified ?? false;
+
+    if (!referralVerified && !pathname.startsWith("/complete-signup")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/complete-signup";
+      return NextResponse.redirect(url);
+    }
+
+    if (referralVerified && pathname.startsWith("/complete-signup")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/jargon";
+      return NextResponse.redirect(url);
+    }
+
+    if (pathname.startsWith("/login") || pathname.startsWith("/signup")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/jargon";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

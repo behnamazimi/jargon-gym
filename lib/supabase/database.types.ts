@@ -406,18 +406,21 @@ export type Database = {
           created_at: string;
           email: string;
           id: string;
+          referral_verified: boolean;
           role: Database["public"]["Enums"]["user_role"];
         };
         Insert: {
           created_at?: string;
           email: string;
           id: string;
+          referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
         };
         Update: {
           created_at?: string;
           email?: string;
           id?: string;
+          referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
         };
         Relationships: [];
@@ -537,6 +540,7 @@ export type Database = {
         }[];
       };
       record_telegram_send: { Args: { p_user_id: string }; Returns: undefined };
+      redeem_referral_code: { Args: { p_code: string }; Returns: undefined };
       set_telegram_all_caught_up: {
         Args: { p_user_id: string };
         Returns: undefined;

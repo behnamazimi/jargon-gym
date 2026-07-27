@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
+import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -13,7 +14,7 @@ export default function LoginForm() {
   const [state, action, pending] = useActionState(login, null);
 
   return (
-    <form action={action} className="flex w-full max-w-sm flex-col gap-4">
+    <div className="flex w-full max-w-sm flex-col gap-4">
       <BackLink
         href={PUBLIC_HOME_PATH}
         label={PUBLIC_HOME_BACK_LABEL}
@@ -21,37 +22,47 @@ export default function LoginForm() {
       />
       <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
 
-      <AuthFormError error={state?.error} />
+      <GoogleSignInButton next="/jargon" />
 
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="login-email">Email</FieldLabel>
-          <Input id="login-email" type="email" name="email" required autoComplete="email" />
-        </Field>
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-base-content/10" />
+        <span className="text-xs text-base-content/60">or continue with email</span>
+        <div className="h-px flex-1 bg-base-content/10" />
+      </div>
 
-        <Field>
-          <div className="flex items-center justify-between">
-            <FieldLabel htmlFor="login-password">Password</FieldLabel>
-            <Link
-              href="/forgot-password"
-              className="text-xs text-base-content/60 underline underline-offset-2"
-            >
-              Forgot password?
-            </Link>
-          </div>
-          <Input
-            id="login-password"
-            type="password"
-            name="password"
-            required
-            autoComplete="current-password"
-          />
-        </Field>
-      </FieldGroup>
+      <form action={action} className="flex flex-col gap-4">
+        <AuthFormError error={state?.error} />
 
-      <Button type="submit" isDisabled={pending} className="mt-2">
-        {pending ? "Logging in…" : "Log in"}
-      </Button>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="login-email">Email</FieldLabel>
+            <Input id="login-email" type="email" name="email" required autoComplete="email" />
+          </Field>
+
+          <Field>
+            <div className="flex items-center justify-between">
+              <FieldLabel htmlFor="login-password">Password</FieldLabel>
+              <Link
+                href="/forgot-password"
+                className="text-xs text-base-content/60 underline underline-offset-2"
+              >
+                Forgot password?
+              </Link>
+            </div>
+            <Input
+              id="login-password"
+              type="password"
+              name="password"
+              required
+              autoComplete="current-password"
+            />
+          </Field>
+        </FieldGroup>
+
+        <Button type="submit" variant="outline" isDisabled={pending} className="mt-2">
+          {pending ? "Logging in…" : "Log in with email"}
+        </Button>
+      </form>
 
       <p className="text-center text-sm text-base-content/60">
         Need an account?{" "}
@@ -59,6 +70,6 @@ export default function LoginForm() {
           Sign up
         </Link>
       </p>
-    </form>
+    </div>
   );
 }

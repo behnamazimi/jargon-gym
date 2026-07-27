@@ -1,7 +1,7 @@
 "use server";
 
-import { headers } from "next/headers";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { getAppOrigin } from "@/lib/auth/app-origin";
 import { createClient } from "@/lib/supabase/server";
 
 export type ForgotPasswordState = { error: string } | { success: true } | null;
@@ -17,7 +17,7 @@ export async function requestPasswordReset(
   }
 
   const supabase = await createClient();
-  const origin = (await headers()).get("origin") ?? "";
+  const origin = await getAppOrigin();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${origin}/auth/callback?next=/reset-password`,

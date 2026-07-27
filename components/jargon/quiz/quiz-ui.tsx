@@ -56,28 +56,6 @@ export function QuizPanelBody({
   return <div className={cn("space-y-6 px-5 py-5 sm:px-6", className)}>{children}</div>;
 }
 
-export function QuizSection({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-3">
-      <div>
-        <h3 className="m-0 text-sm font-semibold">{title}</h3>
-        {description ? (
-          <p className="mt-1 text-sm leading-relaxed text-base-content/60">{description}</p>
-        ) : null}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 export function QuizSetupOption({
   name,
   value,
@@ -120,10 +98,6 @@ export function QuizSetupFooter({ hint, children }: { hint: ReactNode; children:
       {children}
     </div>
   );
-}
-
-export function QuizStatGrid({ children }: { children: ReactNode }) {
-  return <dl className="grid gap-3 sm:grid-cols-2">{children}</dl>;
 }
 
 export function QuizStat({
