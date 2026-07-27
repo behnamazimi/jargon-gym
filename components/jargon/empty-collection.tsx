@@ -14,12 +14,12 @@ export function EmptyCollection() {
             <span className="text-primary">Your collection</span> is empty
           </>
         }
-        description="Import your own jargon as JSON, or browse shared domains from other users and add them to your collection."
+        description="Import your own terms as JSON, or browse collections others have shared and add them to yours."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
           <LinkButton href="/jargon/import">Import jargon</LinkButton>
           <LinkButton href="/jargon/browse" variant="outline">
-            Browse shared domains
+            Browse shared collections
           </LinkButton>
         </div>
       </EmptyState>

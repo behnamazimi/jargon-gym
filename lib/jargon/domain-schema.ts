@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const domainFieldsSchema = z.object({
-  name: z.string().trim().min(1, "Domain name is required"),
+  name: z.string().trim().min(1, "Enter a collection name"),
   description: z.string().nullable().optional(),
 });
 

@@ -50,7 +50,7 @@ export function DomainSidebarDrawer({
         className="w-[min(100%,18rem)] gap-0 p-0 sm:max-w-xs"
       >
         <SheetHeader className="border-b px-4 py-3">
-          <SheetTitle>Domains</SheetTitle>
+          <SheetTitle>Collections</SheetTitle>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col p-3">
           <DomainSidebar

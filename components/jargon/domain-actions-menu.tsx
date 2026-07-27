@@ -47,12 +47,12 @@ type DomainActionsMenuProps = {
 
 function subscriberCountMessage(count: number) {
   if (count === 0) {
-    return "No other users have added this domain to their collection yet.";
+    return "No one else has added this collection yet.";
   }
   if (count === 1) {
-    return "1 other user has added this domain to their collection.";
+    return "1 other person has added this collection.";
   }
-  return `${count} other users have added this domain to their collection.`;
+  return `${count} other people have added this collection.`;
 }
 
 export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
@@ -151,12 +151,12 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
             <>
               <DropdownMenuItem isDisabled={disabled} onAction={() => setEditOpen(true)}>
                 <Pencil className="h-4 w-4" />
-                Edit domain
+                Edit collection
               </DropdownMenuItem>
               {domain.visibility === "private" ? (
                 <DropdownMenuItem isDisabled={disabled} onAction={() => setShareConfirmOpen(true)}>
                   <Share2 className="h-4 w-4" />
-                  Share domain
+                  Share collection
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem
@@ -164,7 +164,7 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
                   onAction={() => setUnshareConfirmOpen(true)}
                 >
                   <Lock className="h-4 w-4" />
-                  Unshare domain
+                  Unshare collection
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -174,7 +174,7 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
                 onAction={() => setDeleteOpen(true)}
               >
                 <Trash2 className="h-4 w-4" />
-                Delete domain
+                Delete collection
               </DropdownMenuItem>
             </>
           ) : (
@@ -200,10 +200,10 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
 
       <AlertDialog isOpen={shareConfirmOpen} onOpenChange={setShareConfirmOpen}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Share domain?</AlertDialogTitle>
+          <AlertDialogTitle>Share collection?</AlertDialogTitle>
           <AlertDialogDescription>
-            &ldquo;{domain.name}&rdquo; will become visible to other users in Browse shared domains.
-            You can unshare it later.
+            &ldquo;{domain.name}&rdquo; will show up in Browse shared collections. You can unshare
+            it anytime.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -214,18 +214,18 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
 
       <AlertDialog isOpen={unshareConfirmOpen} onOpenChange={setUnshareConfirmOpen}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Unshare domain?</AlertDialogTitle>
+          <AlertDialogTitle>Unshare collection?</AlertDialogTitle>
           <AlertDialogDescription>
             {subscriberCountLoading ? (
-              "Checking how many users added this domain…"
+              "Checking who else uses this collection…"
             ) : subscriberCountError ? (
               subscriberCountError
             ) : subscriberCount === null ? (
-              "Unsharing will hide this domain from Browse shared domains."
+              "Unsharing will hide this collection from Browse shared collections."
             ) : (
               <>
                 {subscriberCountMessage(subscriberCount)} Unsharing will hide &ldquo;{domain.name}
-                &rdquo; from Browse shared domains.
+                &rdquo; from Browse shared collections.
               </>
             )}
           </AlertDialogDescription>
@@ -243,9 +243,9 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
 
       <AlertDialog isOpen={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete domain?</AlertDialogTitle>
+          <AlertDialogTitle>Delete collection?</AlertDialogTitle>
           <AlertDialogDescription>
-            Delete &ldquo;{domain.name}&rdquo; and all its terms? This cannot be undone.
+            Delete &ldquo;{domain.name}&rdquo; and all its terms? This can&apos;t be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -28,7 +28,7 @@ export async function createTerm(
   if (error) {
     if (isUniqueViolation(error)) {
       throw new TermMutationError(
-        `A term named "${input.term.trim()}" already exists in this domain.`,
+        `A term named "${input.term.trim()}" already exists in this collection.`,
       );
     }
     throw error;
@@ -45,7 +45,7 @@ export async function updateTerm(client: Client, termId: string, input: TermInpu
   if (error) {
     if (isUniqueViolation(error)) {
       throw new TermMutationError(
-        `A term named "${input.term.trim()}" already exists in this domain.`,
+        `A term named "${input.term.trim()}" already exists in this collection.`,
       );
     }
     throw error;

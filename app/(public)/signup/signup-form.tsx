@@ -7,7 +7,7 @@ import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
 import { signup } from "./actions";
@@ -44,7 +44,7 @@ export default function SignupForm({ defaultReferenceCode = "" }: SignupFormProp
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-base-content/10" />
-        <span className="text-xs text-base-content/60">or continue with email</span>
+        <span className="text-xs text-base-content/60">or sign up with email</span>
         <div className="h-px flex-1 bg-base-content/10" />
       </div>
 
@@ -88,6 +88,9 @@ export default function SignupForm({ defaultReferenceCode = "" }: SignupFormProp
               onChange={(event) => setReferenceCode(normalizeReferralCode(event.target.value))}
               className="uppercase"
             />
+            <FieldDescription>
+              You need a reference code from admin/owner of the app.
+            </FieldDescription>
           </Field>
         </FieldGroup>
 

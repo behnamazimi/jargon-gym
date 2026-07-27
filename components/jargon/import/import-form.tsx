@@ -80,7 +80,7 @@ export function ImportForm({
       step={2}
       icon={Braces}
       title="Paste or upload JSON"
-      description="Import into one of your owned domains, or create a new one from the payload."
+      description="Add terms to a collection you own, or create a new one from the file."
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <ImportToolbarLabel>Templates &amp; tools</ImportToolbarLabel>

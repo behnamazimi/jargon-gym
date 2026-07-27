@@ -90,7 +90,7 @@ export function ReviewCard({
               aria-hidden={revealed}
             >
               <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
-              Tap or swipe up to reveal
+              Tap to reveal
             </div>
           </div>
 

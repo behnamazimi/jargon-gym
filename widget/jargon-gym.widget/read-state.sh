@@ -121,7 +121,7 @@ except SystemExit:
     raise
 except Exception as err:
     emit({
-        "error": str(err) or "Failed to load widget state.",
+        "error": str(err) or "Couldn't load widget state.",
         "terms": [],
         "knownTermIds": [],
         "current": None,

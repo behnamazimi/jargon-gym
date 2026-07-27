@@ -14,7 +14,7 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
   const referenceCode = normalizeReferralCode(formData.get("referenceCode")?.toString());
 
   if (!email || !password || !referenceCode) {
-    return { error: "All fields are required." };
+    return { error: "Fill in every field to continue." };
   }
 
   const passwordError = getPasswordValidationError(password);

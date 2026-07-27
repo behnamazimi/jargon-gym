@@ -14,12 +14,12 @@ const PASSWORD_REQUIREMENT_DEFS: PasswordRequirement[] = [
   },
   {
     id: "letter",
-    label: "Contains a letter",
+    label: "Includes a letter",
     test: (password) => /[a-zA-Z]/.test(password),
   },
   {
     id: "digit",
-    label: "Contains a number",
+    label: "Includes a number",
     test: (password) => /\d/.test(password),
   },
 ];
@@ -44,5 +44,5 @@ export function getPasswordValidationError(password: string): string | null {
     return null;
   }
 
-  return "Password must be at least 8 characters and include a letter and a number.";
+  return "Use at least 8 characters with a letter and a number.";
 }

@@ -28,13 +28,13 @@ function isSupabaseLikeError(err: unknown): err is SupabaseLikeError {
 function postgresCodeHint(code?: string): string | undefined {
   switch (code) {
     case "23505":
-      return "A unique constraint was violated. Check for duplicate term names in the domain.";
+      return "Looks like a duplicate term name in this collection.";
     case "23503":
-      return "A referenced record is missing. Make sure relationship source/target terms exist.";
+      return "A linked term is missing. Make sure relationship source and target terms exist.";
     case "42501":
-      return "You do not have permission to write to this domain.";
+      return "You don't have permission to write to this collection.";
     case "PGRST116":
-      return "The requested row was not found or is not accessible.";
+      return "That record wasn't found or isn't accessible.";
     default:
       return undefined;
   }
@@ -54,8 +54,8 @@ export function formatImportFailure(
     const hint = postgresCodeHint(code) ?? err.hint ?? undefined;
 
     return {
-      title: context?.step ?? "Import failed",
-      message: err.message ?? "The database rejected the import.",
+      title: context?.step ?? "Import didn't work",
+      message: err.message ?? "The database rejected this import.",
       details: details.length > 0 ? details : undefined,
       hint,
       code,
@@ -68,7 +68,7 @@ export function formatImportFailure(
 
   if (err instanceof Error) {
     return {
-      title: context?.step ?? "Import failed",
+      title: context?.step ?? "Import didn't work",
       message: err.message,
       context: {
         term: context?.term,
@@ -78,8 +78,8 @@ export function formatImportFailure(
   }
 
   return {
-    title: context?.step ?? "Import failed",
-    message: "An unexpected error occurred during import.",
+    title: context?.step ?? "Import didn't work",
+    message: "Something unexpected happened during import.",
     context: {
       term: context?.term,
       domain: context?.domain,
@@ -92,8 +92,8 @@ export function jsonSyntaxFailure(message: string): ImportFailure {
   const position = positionMatch ? Number(positionMatch[1]) : undefined;
 
   return {
-    title: "Invalid JSON",
-    message: "The payload is not valid JSON.",
+    title: "Check your JSON",
+    message: "This isn't valid JSON.",
     details: [message],
     hint:
       position !== undefined
@@ -104,15 +104,15 @@ export function jsonSyntaxFailure(message: string): ImportFailure {
 
 export function emptyPayloadFailure(): ImportFailure {
   return {
-    title: "Empty payload",
-    message: "Paste JSON or load an example before validating.",
+    title: "Nothing to import",
+    message: "Paste JSON or load an example first.",
     hint: "Use Load example to insert a starter payload.",
   };
 }
 
 export function validationFailure(issues: ImportValidationIssue[]): ImportFailure {
   return {
-    title: "Validation failed",
+    title: "Fix these issues",
     message:
       issues.length === 1
         ? "Found 1 issue in the payload."

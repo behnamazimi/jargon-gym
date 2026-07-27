@@ -17,7 +17,7 @@ async function getAuthenticatedClient() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return { error: "You must be logged in." as const };
+    return { error: "Log in to continue." as const };
   }
 
   return { supabase, user };
@@ -26,7 +26,7 @@ async function getAuthenticatedClient() {
 export async function getQuizSetupData() {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "You must be logged in." };
+    return { error: "Log in to take a quiz." };
   }
 
   const [settings, collections] = await Promise.all([
@@ -56,14 +56,14 @@ export async function generateQuizAction(input: {
 > {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "You must be logged in." };
+    return { error: "Log in to take a quiz." };
   }
 
   try {
     const credentials = await getDecryptedApiKey(auth.supabase, auth.user.id);
 
     if (!credentials) {
-      return { error: "Configure an LLM provider and API key in Settings before starting a quiz." };
+      return { error: "Add a provider and API key in Settings to generate quizzes." };
     }
 
     const questionCount = Math.floor(input.questionCount);
@@ -84,7 +84,7 @@ export async function generateQuizAction(input: {
     );
 
     if (terms.length === 0) {
-      return { error: "No terms match your selection. Choose a different collection or status." };
+      return { error: "No terms match your selection. Try a different collection or status." };
     }
 
     // `terms` is already shuffled and capped to `questionCount` — only this array reaches the LLM.
@@ -103,7 +103,7 @@ export async function generateQuizAction(input: {
     const message =
       err instanceof Error
         ? err.message
-        : "Failed to generate quiz. Check your API key and try again.";
+        : "Couldn't generate the quiz. Check your API key and try again.";
     return { error: message };
   }
 }
@@ -114,7 +114,7 @@ export async function submitQuizResultsAction(input: {
 }): Promise<{ error?: string; flippedTerms?: { id: string; term: string }[] }> {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "You must be logged in." };
+    return { error: "Log in to take a quiz." };
   }
 
   try {
@@ -152,7 +152,7 @@ export async function submitQuizResultsAction(input: {
 
     return { flippedTerms };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to save quiz results.";
+    const message = err instanceof Error ? err.message : "Couldn't save quiz results. Try again.";
     return { error: message };
   }
 }

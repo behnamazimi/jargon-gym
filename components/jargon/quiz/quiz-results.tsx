@@ -26,8 +26,8 @@ function scoreMessage(score: number, total: number) {
   const ratio = score / total;
   if (ratio === 1) return "Perfect score — nice work.";
   if (ratio >= 0.8) return "Strong round. Keep it up.";
-  if (ratio >= 0.5) return "Solid effort. Review the misses.";
-  return "Good practice — focus on the terms you missed.";
+  if (ratio >= 0.5) return "Solid effort — review the ones you missed.";
+  return "Good practice — keep at the terms that tripped you up.";
 }
 
 export function QuizResults({

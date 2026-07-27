@@ -16,7 +16,7 @@ function isUniqueViolation(error: { code?: string }) {
 }
 
 function duplicateRelationshipMessage() {
-  return "A relationship with the same type already exists between these terms.";
+  return "That relationship already exists between these terms.";
 }
 
 async function createRelationship(
@@ -26,7 +26,7 @@ async function createRelationship(
   input: RelationshipInput,
 ) {
   if (sourceTermId === input.targetTermId) {
-    throw new RelationshipMutationError("A term cannot relate to itself.");
+    throw new RelationshipMutationError("A term can't relate to itself.");
   }
 
   const { error } = await client.from("term_relationships").insert({
@@ -84,7 +84,7 @@ export async function syncTermRelationships(
 
   for (const item of sync.update) {
     if (sourceTermId === item.targetTermId) {
-      throw new RelationshipMutationError("A term cannot relate to itself.");
+      throw new RelationshipMutationError("A term can't relate to itself.");
     }
     await updateRelationship(client, item.id, item);
   }

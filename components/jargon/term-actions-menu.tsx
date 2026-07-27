@@ -74,7 +74,7 @@ export function TermActionsMenu({ term, domainId, domainTerms }: TermActionsMenu
         <AlertDialogHeader>
           <AlertDialogTitle>Delete term?</AlertDialogTitle>
           <AlertDialogDescription>
-            Delete &ldquo;{term.term}&rdquo;? This cannot be undone.
+            Delete &ldquo;{term.term}&rdquo;? This can&apos;t be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         {error ? (

@@ -126,7 +126,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
       {!status.connected ? (
         <SettingsGroup
           title="Connect"
-          description="Generate a one-time link, open it in Telegram, and tap Start. Do not share the link. Links expire after 5 minutes."
+          description="Generate a link, open it in Telegram, and tap Start. Don't share the link — it expires in 5 minutes."
         >
           <Button
             type="button"
@@ -158,7 +158,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
         <>
           <SettingsGroup
             title="Reminders"
-            description="Scheduled sends use rolling intervals from your last reminder."
+            description="Reminders go out on a rolling schedule from your last one."
           >
             <Field className="max-w-xs">
               <FieldLabel htmlFor="telegram-cadence">Cadence</FieldLabel>
@@ -185,7 +185,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
 
           <DangerZone
             title="Disconnect"
-            description="Stop Telegram reminders and unlink this chat. You can reconnect anytime."
+            description="Stop reminders and unlink this chat. You can reconnect anytime."
           >
             <Button
               type="button"

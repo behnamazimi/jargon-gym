@@ -223,7 +223,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     setIsStarting(false);
 
     if ("error" in result) {
-      setErrorMessage(result.error ?? "Failed to start review.");
+      setErrorMessage(result.error ?? "Couldn't start the review. Try again.");
       return;
     }
 
@@ -314,7 +314,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
       <PageHeader
         icon={BookOpen}
         title="Review"
-        description="Flashcard-style recall for terms in your active collections."
+        description="Practice recall with flashcards from your active collections."
       />
 
       {step === "setup" ? (
@@ -324,9 +324,9 @@ export function ReviewPage({ collections }: ReviewPageProps) {
               <QuizCenteredState
                 icon={AlertCircle}
                 title="No active collections"
-                description="Resume a collection on the jargon page before starting a review session."
+                description="Turn on a collection on the collection page before you start reviewing."
               >
-                <LinkButton href="/jargon">Back to jargon</LinkButton>
+                <LinkButton href="/jargon">Back to collection</LinkButton>
               </QuizCenteredState>
             </QuizPanelBody>
           ) : (
@@ -334,7 +334,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
               <QuizPanelHeader
                 icon={BookOpen}
                 title="Set up your review"
-                description="Choose what to review and how many cards to study."
+                description="Pick what to study and how many cards."
               />
               <QuizPanelBody>
                 {savedSession ? (
@@ -371,7 +371,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                       checked={status === "unknown"}
                       onChange={() => setStatus("unknown")}
                       title="Unknown terms"
-                      description="Focus on terms you have not marked as known yet."
+                      description="Terms you haven't marked as known."
                     />
                     <QuizSetupOption
                       name="review-status"
@@ -379,7 +379,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                       checked={status === "known"}
                       onChange={() => setStatus("known")}
                       title="Known terms"
-                      description="Refresh terms you already know."
+                      description="Terms you've already marked as known."
                     />
                   </div>
                 </fieldset>
@@ -450,7 +450,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm leading-none font-medium">Shuffle cards</span>
                     <span className="mt-1.5 block text-xs leading-relaxed text-base-content/60">
-                      Randomize order. Turn off for alphabetical order.
+                      Randomize order. Turn off to go A–Z.
                     </span>
                   </span>
                 </label>
@@ -458,8 +458,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                 {availableTermCount === 0 ? (
                   <Alert variant="destructive">
                     <AlertDescription>
-                      No {status} terms in the selected collection
-                      {selectedCollectionId === "all" ? "s" : ""}. Choose a different option or{" "}
+                      No {status} terms in your selection. Pick another option or{" "}
                       <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
                         activate a collection
                       </LinkButton>
@@ -474,7 +473,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   </Alert>
                 ) : null}
 
-                <QuizSetupFooter hint="End the session anytime with Done — your progress is saved as you go.">
+                <QuizSetupFooter hint="Tap Done anytime — your progress saves automatically.">
                   <Button
                     type="button"
                     onPress={handleStartReview}
@@ -580,7 +579,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
               <kbd className="kbd kbd-xs">1</kbd> {positiveLabel.toLowerCase()} ·{" "}
               <kbd className="kbd kbd-xs">2</kbd> {negativeLabel.toLowerCase()} ·{" "}
               <kbd className="kbd kbd-xs">←</kbd>
-              <kbd className="kbd kbd-xs">→</kbd> navigate
+              <kbd className="kbd kbd-xs">→</kbd>
             </p>
           </div>
 

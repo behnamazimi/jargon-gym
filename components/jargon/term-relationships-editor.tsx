@@ -80,7 +80,7 @@ export function TermRelationshipsEditor({
 
       {targetOptions.length === 0 ? (
         <p className="text-xs text-base-content/60">
-          Add another term to this collection before creating relationships.
+          Add another term first, then you can link them.
         </p>
       ) : null}
 

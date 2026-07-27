@@ -65,10 +65,8 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange}>
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
         <DialogHeader>
-          <DialogTitle>Edit domain</DialogTitle>
-          <DialogDescription>
-            Update the name and description for this collection.
-          </DialogDescription>
+          <DialogTitle>Edit collection</DialogTitle>
+          <DialogDescription>Change the name or description.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">

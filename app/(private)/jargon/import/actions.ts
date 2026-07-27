@@ -21,8 +21,8 @@ export async function validateImportJson(
       ok: false,
       failure: {
         title: "Not signed in",
-        message: "You must be logged in to import jargon.",
-        hint: "Sign in, then return to this page.",
+        message: "Log in to import jargon.",
+        hint: "Sign in, then come back to this page.",
       },
     };
   }
@@ -59,8 +59,8 @@ export async function confirmImport(
       ok: false,
       failure: {
         title: "Not signed in",
-        message: "You must be logged in to import jargon.",
-        hint: "Sign in, then return to this page.",
+        message: "Log in to import jargon.",
+        hint: "Sign in, then come back to this page.",
       },
     };
   }
@@ -75,10 +75,10 @@ export async function confirmImport(
       return {
         ok: false,
         failure: {
-          title: "Confirmation required",
-          message: `${preview.conflictingTerms.length} existing term(s) would be replaced by this import.`,
+          title: "Confirm before importing",
+          message: `This import would overwrite ${preview.conflictingTerms.length} existing term${preview.conflictingTerms.length === 1 ? "" : "s"}.`,
           details: preview.conflictingTerms,
-          hint: "Review the preview and confirm that you want to replace the conflicting terms.",
+          hint: "Check the preview and confirm you want to replace the conflicting terms.",
         },
       };
     }

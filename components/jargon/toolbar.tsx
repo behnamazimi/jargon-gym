@@ -55,9 +55,7 @@ export function Toolbar({
         </div>
         <span className="text-sm tabular-nums text-base-content/60">{visibleCount} shown</span>
       </div>
-      <p className="text-xs text-base-content/60">
-        Tap a term to expand it · the ✓ circle marks it as known
-      </p>
+      <p className="text-xs text-base-content/60">Tap a term to expand · ✓ marks it known</p>
     </div>
   );
 }

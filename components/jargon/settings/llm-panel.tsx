@@ -138,7 +138,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
 
       <SettingsGroup
         title="LLM provider"
-        description="Your API key is encrypted at rest and used only server-side when generating quizzes."
+        description="Your key stays encrypted and is only used to generate quizzes."
       >
         <Field className="max-w-xs">
           <FieldLabel htmlFor="llm-provider">Provider</FieldLabel>
@@ -163,7 +163,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
         {settings && !replacingKey ? (
           <div className="space-y-3 rounded-lg bg-base-200/50 px-4 py-3">
             <p className="m-0 text-sm text-base-content/60">
-              API key configured. Replace it if you need to switch keys.
+              Key saved. Replace it here if you need to switch providers.
             </p>
             <Button type="button" variant="outline" size="sm" onPress={() => setReplacingKey(true)}>
               Replace key
@@ -212,7 +212,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
 
       <SettingsGroup
         title="Quiz progress"
-        description="Choose whether quiz results update your known/unknown term status."
+        description="Decide whether quiz results update your known and unknown terms."
       >
         <Field orientation="horizontal">
           <Checkbox
@@ -222,7 +222,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
             onChange={(checked) => handlePreferenceChange({ markUnknownOnFail: checked })}
           />
           <FieldLabel htmlFor="mark-unknown-on-fail">
-            Mark known terms as unknown when I fail a quiz question
+            Mark terms unknown when I miss a quiz question
           </FieldLabel>
         </Field>
 
@@ -234,12 +234,12 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
             onChange={(checked) => handlePreferenceChange({ markKnownOnPass: checked })}
           />
           <FieldLabel htmlFor="mark-known-on-pass">
-            Mark unknown terms as known when I pass a quiz question
+            Mark terms known when I pass a quiz question
           </FieldLabel>
         </Field>
 
         {!settings ? (
-          <FieldDescription>Save an API key to enable quiz progress settings.</FieldDescription>
+          <FieldDescription>Save an API key first to change these settings.</FieldDescription>
         ) : null}
       </SettingsGroup>
 
@@ -248,7 +248,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
           <SettingsDivider />
           <DangerZone
             title="Remove configuration"
-            description="Clears your stored API key. Quiz generation will stop until you add a new key."
+            description="Removes your saved API key. Quizzes won't work until you add a new one."
           >
             <Button
               type="button"

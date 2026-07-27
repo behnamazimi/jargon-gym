@@ -136,7 +136,7 @@ export async function generateQuizQuestions(input: {
       return await requestQuizFromModel(input);
     } catch {
       if (firstError instanceof Error) throw firstError;
-      throw new Error("Failed to generate quiz. Check your API key and try again.");
+      throw new Error("Couldn't generate the quiz. Check your API key and try again.");
     }
   }
 }

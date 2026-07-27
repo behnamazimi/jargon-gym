@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     await markTermKnownForUser(auth.admin, auth.userId, body.termId);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to mark term as known.";
+    const message = err instanceof Error ? err.message : "Couldn't mark that term as known.";
     if (message.includes("not in review pool")) {
       return NextResponse.json({ error: "Term not in your active review pool." }, { status: 403 });
     }

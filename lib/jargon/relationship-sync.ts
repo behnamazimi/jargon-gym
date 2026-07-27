@@ -61,7 +61,7 @@ export function validateRelationshipDrafts(
     }
 
     if (sourceTermId && draft.relatedTermId === sourceTermId) {
-      return "A term cannot relate to itself.";
+      return "A term can't relate to itself.";
     }
 
     if (!draft.relationshipType.trim()) {

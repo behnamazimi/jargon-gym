@@ -92,7 +92,7 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
         <SetupStep
           step={1}
           title="Install the widget"
-          description="Requires Übersicht on macOS. This command downloads the widget and pre-fills this site's URL in config.json."
+          description="You need Übersicht on macOS. This command downloads the widget and fills in this site's URL."
         >
           <CopyField value={installCommand} />
           <p className="m-0 text-sm text-base-content/60">
@@ -124,7 +124,7 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
         <SetupStep
           step={2}
           title="Create an API token"
-          description="Tokens are shown once. Revoke any token you no longer use."
+          description="You'll only see each token once. Revoke any you're not using."
         >
           <Button
             type="button"
@@ -173,13 +173,13 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
         <SetupStep
           step={3}
           title="Finish setup"
-          description="Reinstall with your token so config.json is updated automatically, then refresh Übersicht."
+          description="Run the install command again with your token, then refresh Übersicht."
           isLast
         >
           {installWithTokenCommand ? (
             <CopyField
               label="Install with token"
-              hint="Run this after generating a token in step 2."
+              hint="Run this after you generate a token in step 2."
               value={installWithTokenCommand}
             />
           ) : (

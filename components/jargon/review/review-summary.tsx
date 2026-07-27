@@ -27,16 +27,16 @@ function summaryDescription(
   retainedCount: number,
   forgotCount: number,
 ) {
-  if (reviewedCount === 0) return "No cards reviewed this session.";
+  if (reviewedCount === 0) return "No cards reviewed this time.";
 
   if (sessionStatus === "known") {
-    if (forgotCount === 0) return "You still know every card you reviewed.";
+    if (forgotCount === 0) return "You remembered every one — nice.";
     if (forgotCount === reviewedCount) return "Worth another pass — these need more practice.";
     return `${forgotCount} term${forgotCount === 1 ? "" : "s"} moved back to unknown.`;
   }
 
-  if (retainedCount === reviewedCount) return "You knew every card you reviewed — great work.";
-  return "Keep reviewing the terms you're still learning.";
+  if (retainedCount === reviewedCount) return "You got every one — great work.";
+  return "Keep going on the terms you're still learning.";
 }
 
 export function ReviewSummary({

@@ -162,8 +162,8 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
             <QuizPanelBody>
               <QuizCenteredState
                 icon={Settings}
-                title="LLM not configured"
-                description="Add a provider and API key in Settings before starting a quiz."
+                title="Quiz provider not set up"
+                description="Add a provider and API key in Settings to generate quizzes."
               >
                 <LinkButton href="/jargon/settings">Go to Settings</LinkButton>
               </QuizCenteredState>
@@ -173,7 +173,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
               <QuizCenteredState
                 icon={AlertCircle}
                 title="No active collections"
-                description="Resume a collection on the jargon page before taking a quiz."
+                description="Turn on a collection on the collection page before you take a quiz."
               >
                 <BackToJargonLink />
               </QuizCenteredState>
@@ -183,7 +183,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
               <QuizPanelHeader
                 icon={Sparkles}
                 title="Set up your quiz"
-                description="Choose what to review and which collection to pull from."
+                description="Pick what to study and which collection to pull from."
               />
               <QuizPanelBody>
                 <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
@@ -195,7 +195,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                       checked={status === "unknown"}
                       onChange={() => setStatus("unknown")}
                       title="Unknown terms"
-                      description="Reinforce terms you have not marked as known yet."
+                      description="Terms you haven't marked as known."
                     />
                     <QuizSetupOption
                       name="quiz-status"
@@ -203,7 +203,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                       checked={status === "known"}
                       onChange={() => setStatus("known")}
                       title="Known terms"
-                      description="Stress-test terms you already know."
+                      description="Test yourself on terms you already know."
                     />
                   </div>
                 </fieldset>
@@ -267,16 +267,13 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                 {availableTermCount === 0 ? (
                   <Alert variant="destructive">
                     <AlertDescription>
-                      No {status} terms in the selected collection
-                      {selectedCollectionId === "all" ? "s" : ""}. Choose a different option.
+                      No {status} terms in your selection. Pick another option.
                     </AlertDescription>
                   </Alert>
                 ) : null}
 
                 <QuizSetupFooter
-                  hint={
-                    <>Prepared by {providerLabel ?? "your LLM provider"} — may take a moment.</>
-                  }
+                  hint={<>Uses {providerLabel ?? "your LLM provider"} — this may take a moment.</>}
                 >
                   <Button
                     type="button"
@@ -299,7 +296,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
             <QuizCenteredState
               icon={Loader2}
               title="Building your quiz"
-              description={`${activeProviderLabel ?? "Your LLM provider"} is writing ${questionCount} question${questionCount === 1 ? "" : "s"}. This usually takes a few seconds.`}
+              description={`Writing ${questionCount} question${questionCount === 1 ? "" : "s"}… This usually takes a few seconds.`}
             />
           </QuizPanelBody>
         </QuizPanel>
@@ -338,12 +335,14 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
         <QuizPanel>
           <QuizPanelHeader
             icon={AlertCircle}
-            title="Something went wrong"
-            description="The quiz could not be completed."
+            title="Quiz didn't finish"
+            description="Something interrupted the quiz."
           />
           <QuizPanelBody className="space-y-4">
             <Alert variant="destructive">
-              <AlertDescription>{errorMessage ?? "Something went wrong."}</AlertDescription>
+              <AlertDescription>
+                {errorMessage ?? "Couldn't complete the quiz. Try again."}
+              </AlertDescription>
             </Alert>
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" onPress={resetQuizState}>

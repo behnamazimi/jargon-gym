@@ -15,7 +15,7 @@ export async function resetPassword(
   const confirmPassword = formData.get("confirmPassword")?.toString() ?? "";
 
   if (!password || !confirmPassword) {
-    return { error: "Both fields are required." };
+    return { error: "Enter a new password in both fields." };
   }
 
   const passwordError = getPasswordValidationError(password);
@@ -24,7 +24,7 @@ export async function resetPassword(
   }
 
   if (password !== confirmPassword) {
-    return { error: "Passwords do not match." };
+    return { error: "Passwords don't match." };
   }
 
   const supabase = await createClient();
@@ -34,7 +34,7 @@ export async function resetPassword(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { error: "Your reset link has expired. Please request a new one." };
+    return { error: "That reset link expired. Request a new one from the login page." };
   }
 
   const { error } = await supabase.auth.updateUser({ password });

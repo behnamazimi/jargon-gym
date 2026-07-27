@@ -26,7 +26,7 @@ async function getAuthenticatedUser() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return { error: "You must be logged in." as const };
+    return { error: "Log in to continue." as const };
   }
 
   return { supabase, user };
@@ -46,7 +46,7 @@ export async function generateWidgetTokenAction(): Promise<{
     revalidatePath("/jargon/settings");
     return result;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to generate token.";
+    const message = err instanceof Error ? err.message : "Couldn't generate a token. Try again.";
     return { error: message };
   }
 }
@@ -61,7 +61,7 @@ export async function revokeWidgetTokenAction(tokenId: string): Promise<{ error?
     revalidatePath("/jargon/settings");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to revoke token.";
+    const message = err instanceof Error ? err.message : "Couldn't revoke that token. Try again.";
     return { error: message };
   }
 }
@@ -87,7 +87,8 @@ export async function generateTelegramLinkAction(): Promise<{
     revalidatePath("/jargon/settings");
     return { deepLink: result.deepLink };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to generate Telegram link.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't generate a Telegram link. Try again.";
     return { error: message };
   }
 }
@@ -102,7 +103,7 @@ export async function disconnectTelegramAction(): Promise<{ error?: string }> {
     revalidatePath("/jargon/settings");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to disconnect Telegram.";
+    const message = err instanceof Error ? err.message : "Couldn't disconnect Telegram. Try again.";
     return { error: message };
   }
 }
@@ -118,7 +119,8 @@ export async function updateTelegramCadenceAction(
     revalidatePath("/jargon/settings");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update cadence.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't update reminder cadence. Try again.";
     return { error: message };
   }
 }
@@ -136,7 +138,7 @@ export async function saveLlmSettingsAction(input: {
     revalidatePath("/jargon/quiz");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to save LLM settings.";
+    const message = err instanceof Error ? err.message : "Couldn't save quiz settings. Try again.";
     return { error: message };
   }
 }
@@ -151,7 +153,8 @@ export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
     revalidatePath("/jargon/quiz");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to clear LLM settings.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't remove quiz settings. Try again.";
     return { error: message };
   }
 }
@@ -168,7 +171,8 @@ export async function updateQuizPreferencesAction(input: {
     revalidatePath("/jargon/settings");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update quiz preferences.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't save quiz preferences. Try again.";
     return { error: message };
   }
 }

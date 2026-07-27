@@ -55,7 +55,7 @@ export function ImportPageClient() {
       <PageHeader
         icon={Upload}
         title="Import jargon"
-        description="Paste JSON to create or merge into one of your owned domains."
+        description="Paste or upload JSON to add terms to a collection."
       />
 
       <ImportLlmPrompt />

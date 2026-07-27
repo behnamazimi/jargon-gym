@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const termFieldsSchema = z.object({
-  term: z.string().trim().min(1, "Term is required"),
-  category: z.string().trim().min(1, "Category is required"),
-  definition: z.string().trim().min(1, "Definition is required"),
+  term: z.string().trim().min(1, "Enter a term"),
+  category: z.string().trim().min(1, "Enter a category"),
+  definition: z.string().trim().min(1, "Enter a definition"),
   example: z.string().nullable().optional(),
   discussion: z.string().nullable().optional(),
   controversy: z.string().nullable().optional(),

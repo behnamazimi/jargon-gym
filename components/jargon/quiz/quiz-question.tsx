@@ -146,7 +146,7 @@ export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionVie
 
   const feedbackDetail =
     !passed && question.type === "multiple_choice" && correctOptionLabels.length > 0
-      ? `Correct answer${correctOptionLabels.length > 1 ? "s" : ""}: ${correctOptionLabels.join("; ")}`
+      ? `The answer: ${correctOptionLabels.join("; ")}`
       : !passed && question.type === "true_false"
         ? `The statement is ${question.correctAnswer ? "true" : "false"}.`
         : undefined;

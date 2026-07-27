@@ -205,11 +205,11 @@ export async function updateOwnedDomain(
   if (domainError) throw domainError;
 
   if (!domain) {
-    throw new DomainMutationError("Domain not found.");
+    throw new DomainMutationError("Collection not found.");
   }
 
   if (domain.owner_id !== userId) {
-    throw new DomainMutationError("You do not own this domain.");
+    throw new DomainMutationError("You don't own this collection.");
   }
 
   const row = domainInputToUpdateRow(input);
@@ -226,7 +226,7 @@ export async function updateOwnedDomain(
     if (existingError) throw existingError;
 
     if (existing) {
-      throw new DomainMutationError(`You already have a domain named "${row.name}".`);
+      throw new DomainMutationError(`You already have a collection named "${row.name}".`);
     }
   }
 

@@ -19,7 +19,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
   if (!user) {
     return (
       <PageCenter>
-        <p className="text-sm text-base-content/60">You must be logged in to view jargon.</p>
+        <p className="text-sm text-base-content/60">Log in to view your collection.</p>
       </PageCenter>
     );
   }
@@ -38,7 +38,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
     });
     return <JargonPage initialData={data} initialTermId={termId} />;
   } catch (err) {
-    if (err instanceof JargonDataError && err.message.includes("No jargon domains")) {
+    if (err instanceof JargonDataError && err.message.includes("don't have any collections")) {
       return <EmptyCollection />;
     }
 
@@ -47,7 +47,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
         ? err.message
         : err instanceof Error
           ? err.message
-          : "Something went wrong while loading jargon terms.";
+          : "Couldn't load your collection. Refresh the page or try again.";
 
     return (
       <PageCenter className="gap-3">

@@ -37,7 +37,7 @@ export async function loadJargonPageData(
     const { reviewDomainIds, collectionRows } = await resolveReviewDomainIds(client, userId);
 
     if (collectionRows.length === 0) {
-      throw new JargonDataError("No jargon domains in your collection yet.");
+      throw new JargonDataError("You don't have any collections yet.");
     }
 
     const activeSet = new Set(reviewDomainIds);
@@ -81,6 +81,6 @@ export async function loadJargonPageData(
       activeDomainIds: reviewDomainIds,
     };
   } catch (err) {
-    throw toJargonDataError(err, "Something went wrong while loading jargon terms.");
+    throw toJargonDataError(err, "Couldn't load your collection. Refresh the page or try again.");
   }
 }

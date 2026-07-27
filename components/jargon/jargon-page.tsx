@@ -66,7 +66,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
 
     const term = terms.find((t) => t.id === initialTermId);
     if (!term) {
-      setTermLinkNotice("That term is not in this collection.");
+      setTermLinkNotice("That term isn't in this collection.");
       return;
     }
 

@@ -11,7 +11,7 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   const password = formData.get("password")?.toString() ?? "";
 
   if (!email || !password) {
-    return { error: "Email and password are required." };
+    return { error: "Enter your email and password." };
   }
 
   const supabase = await createClient();

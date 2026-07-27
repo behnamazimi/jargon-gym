@@ -17,7 +17,7 @@ export function PasswordRequirements({ password, visible = true }: PasswordRequi
   const results = evaluatePasswordRequirements(password);
 
   return (
-    <ul className="flex flex-col gap-1" aria-live="polite" aria-label="Password requirements">
+    <ul className="flex flex-col gap-1" aria-live="polite" aria-label="What your password needs">
       {results.map((requirement) => (
         <li
           key={requirement.id}

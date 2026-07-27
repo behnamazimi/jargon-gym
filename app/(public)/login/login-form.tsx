@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useActionState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
@@ -10,8 +11,13 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { login } from "./actions";
 
+const OAUTH_FAILED_ERROR = "Google sign-in didn't work. Try again or use your email instead.";
+
 export default function LoginForm() {
+  const searchParams = useSearchParams();
+  const oauthError = searchParams.get("error") === "oauth-failed" ? OAUTH_FAILED_ERROR : null;
   const [state, action, pending] = useActionState(login, null);
+  const error = state?.error ?? oauthError;
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-4">
@@ -26,12 +32,12 @@ export default function LoginForm() {
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-base-content/10" />
-        <span className="text-xs text-base-content/60">or continue with email</span>
+        <span className="text-xs text-base-content/60">or log in with email</span>
         <div className="h-px flex-1 bg-base-content/10" />
       </div>
 
       <form action={action} className="flex flex-col gap-4">
-        <AuthFormError error={state?.error} />
+        <AuthFormError error={error} />
 
         <FieldGroup>
           <Field>

@@ -15,7 +15,7 @@ async function getAuthenticatedClient() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return { error: "You must be logged in." as const };
+    return { error: "Log in to continue." as const };
   }
 
   return { supabase, user };
@@ -24,7 +24,7 @@ async function getAuthenticatedClient() {
 export async function getReviewSetupData() {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "You must be logged in." };
+    return { error: "Log in to review terms." };
   }
 
   const collections = await listQuizableCollections(auth.supabase, auth.user.id);
@@ -35,7 +35,7 @@ export async function getReviewSetupData() {
 export async function startReviewAction(setup: ReviewSetup) {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "You must be logged in." };
+    return { error: "Log in to review terms." };
   }
 
   try {
@@ -58,12 +58,12 @@ export async function startReviewAction(setup: ReviewSetup) {
     );
 
     if (cards.length === 0) {
-      return { error: "No terms match your selection. Choose a different collection or status." };
+      return { error: "No terms match your selection. Try a different collection or status." };
     }
 
     return { cards };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to start review session.";
+    const message = err instanceof Error ? err.message : "Couldn't start the review. Try again.";
     return { error: message };
   }
 }
@@ -71,7 +71,7 @@ export async function startReviewAction(setup: ReviewSetup) {
 export async function rateReviewTermAction(termId: string, known: boolean) {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "You must be logged in." };
+    return { error: "Log in to review terms." };
   }
 
   try {
@@ -85,7 +85,7 @@ export async function rateReviewTermAction(termId: string, known: boolean) {
 
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to save your rating.";
+    const message = err instanceof Error ? err.message : "Couldn't save your rating. Try again.";
     return { error: message };
   }
 }

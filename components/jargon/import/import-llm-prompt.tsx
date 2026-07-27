@@ -33,7 +33,7 @@ export function ImportLlmPrompt() {
       collapseLabel="Hide prompt"
     >
       <Field>
-        <FieldLabel htmlFor="import-llm-domain">Your domain</FieldLabel>
+        <FieldLabel htmlFor="import-llm-domain">Your collection</FieldLabel>
         <Input
           id="import-llm-domain"
           type="text"

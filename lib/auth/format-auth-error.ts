@@ -12,11 +12,12 @@ type AuthLikeError = {
   weak_password?: { reasons?: string[] };
 };
 
-const GENERIC_ERROR = "Something went wrong. Please try again.";
-const INVALID_LOGIN = "Invalid email or password.";
-const INVALID_REFERRAL = "Invalid or already used reference code.";
-const RESET_FAILED = "Unable to reset your password. Request a new reset link and try again.";
-const PASSWORD_FAILED = getPasswordValidationError("") ?? "Password does not meet requirements.";
+const GENERIC_ERROR = "We couldn't complete that. Try again in a moment.";
+const INVALID_LOGIN = "That email or password doesn't look right.";
+const INVALID_REFERRAL = "That reference code isn't valid or was already used.";
+const RESET_FAILED = "Couldn't reset your password. Request a new reset link and try again.";
+const PASSWORD_FAILED =
+  getPasswordValidationError("") ?? "Your password doesn't meet the requirements below.";
 
 function isGarbageMessage(message: string): boolean {
   const trimmed = message.trim();

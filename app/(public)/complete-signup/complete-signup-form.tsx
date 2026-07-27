@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { redeemReferralCode } from "./actions";
 
@@ -23,7 +23,7 @@ export default function CompleteSignupForm({
     <form action={action} className="flex w-full max-w-sm flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">Complete sign up</h1>
       <p className="text-sm text-base-content/60">
-        Enter your reference code to finish creating your account.
+        Almost there — enter your reference code to finish setting up your account.
       </p>
 
       <AuthFormError error={error} context="signup" />
@@ -42,6 +42,9 @@ export default function CompleteSignupForm({
             defaultValue={defaultReferenceCode}
             className="uppercase"
           />
+          <FieldDescription>
+            You need a reference code from admin/owner of the app.
+          </FieldDescription>
         </Field>
       </FieldGroup>
 

@@ -23,8 +23,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jargon Gym — Personal jargon review helper",
-  description: "A simple web app for reviewing industry jargon on your own. Personal use only.",
+  title: "Jargon Gym",
+  description: "Private jargon review app. Log in or sign up with a reference code.",
 };
 
 export default async function RootLayout({

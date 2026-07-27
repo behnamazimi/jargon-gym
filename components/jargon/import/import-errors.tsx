@@ -18,7 +18,7 @@ export function ImportFailurePanel({ failure }: ImportFailurePanelProps) {
           <dl className="mt-3 grid gap-1.5 rounded-lg bg-error/5 px-3 py-2.5 ring-1 ring-error/15">
             {failure.context.domain ? (
               <div className="flex gap-2 text-sm">
-                <dt className="text-base-content/60">Domain</dt>
+                <dt className="text-base-content/60">Collection</dt>
                 <dd className="font-medium">{failure.context.domain}</dd>
               </div>
             ) : null}
@@ -32,7 +32,7 @@ export function ImportFailurePanel({ failure }: ImportFailurePanelProps) {
         ) : null}
 
         {failure.code ? (
-          <p className="mt-2 font-mono text-xs opacity-80">Code: {failure.code}</p>
+          <p className="mt-2 font-mono text-xs opacity-80">Error code: {failure.code}</p>
         ) : null}
 
         {failure.details && failure.details.length > 0 ? (

@@ -61,8 +61,8 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
     <PageShell innerClassName="landing-enter">
       <PageHeader
         icon={Compass}
-        title="Browse shared domains"
-        description="Add a shared domain to your collection to study it alongside your own imports."
+        title="Browse shared collections"
+        description="Find collections others have shared and add them to yours."
       />
 
       {error ? (
@@ -75,14 +75,13 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
         <div className="shadow-surface rounded-2xl border border-dashed border-base-300/80 bg-base-100 px-6 py-14 text-center">
           <p className="text-sm text-base-content/60">Nothing shared yet.</p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-base-content/60">
-            Domains appear here when other users share them. You can add any you find to your
-            collection.
+            When someone shares a collection, it'll show up here. Add any you find to yours.
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           <section
-            aria-label="Filter shared domains"
+            aria-label="Filter shared collections"
             className="shadow-surface space-y-3 rounded-2xl bg-base-100 p-4"
           >
             <div className="relative">
@@ -96,7 +95,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder="Search by name or description…"
-                aria-label="Search shared domains"
+                aria-label="Search shared collections"
                 className="rounded-lg py-2.5 pr-10 pl-9 text-sm"
               />
               {searchQuery ? (
@@ -119,7 +118,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
                   size="sm"
                   isSelected={collectionFilter === "all"}
                   onChange={() => setCollectionFilter("all")}
-                  aria-label="Show all shared domains"
+                  aria-label="Show all shared collections"
                   className={filterChipClassName(collectionFilter === "all")}
                 >
                   All{" "}
@@ -136,7 +135,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
                   size="sm"
                   isSelected={collectionFilter === "available"}
                   onChange={() => setCollectionFilter("available")}
-                  aria-label="Show domains not in your collection"
+                  aria-label="Show collections not in yours"
                   className={filterChipClassName(collectionFilter === "available")}
                 >
                   Available{" "}
@@ -153,7 +152,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
                   size="sm"
                   isSelected={collectionFilter === "in-collection"}
                   onChange={() => setCollectionFilter("in-collection")}
-                  aria-label="Show domains in your collection"
+                  aria-label="Show collections you've added"
                   className={filterChipClassName(collectionFilter === "in-collection")}
                 >
                   In collection{" "}
@@ -175,10 +174,10 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
 
           {filteredDomains.length === 0 ? (
             <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
-              <p className="text-sm text-base-content/60">No domains match your filters.</p>
+              <p className="text-sm text-base-content/60">No collections match your filters.</p>
               {hasActiveFilters ? (
                 <p className="mt-1 text-xs text-base-content/60">
-                  Try clearing search or switching to a different filter.
+                  Clear your search or try a different filter.
                 </p>
               ) : null}
             </div>

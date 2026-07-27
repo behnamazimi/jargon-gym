@@ -13,7 +13,7 @@ export async function requestPasswordReset(
   const email = formData.get("email")?.toString().trim() ?? "";
 
   if (!email) {
-    return { error: "Email is required." };
+    return { error: "Enter your email." };
   }
 
   const supabase = await createClient();

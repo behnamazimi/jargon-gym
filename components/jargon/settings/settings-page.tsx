@@ -27,14 +27,14 @@ export function SettingsPage({
       <PageHeader
         icon={Settings2}
         title="Settings"
-        description="Connect review channels and configure quiz generation for your jargon collections."
+        description="Connect Telegram, widgets, and quiz generation."
       />
 
       <div className="space-y-6">
         <SettingsCard
           icon={Sparkles}
           title="Quiz"
-          description="Connect an LLM provider to generate quizzes from your jargon collections."
+          description="Connect an LLM provider to generate quizzes from your collections."
         >
           <LlmPanel initialSettings={initialLlmSettings} />
         </SettingsCard>

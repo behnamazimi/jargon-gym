@@ -56,7 +56,7 @@ export function readJsonFile(
       ok: false,
       failure: {
         title: "Could not read file",
-        message: `Failed to read "${file.name}".`,
+        message: `Couldn't read "${file.name}". Try another file or paste the JSON manually.`,
       },
     }),
   );

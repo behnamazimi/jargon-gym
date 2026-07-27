@@ -32,7 +32,7 @@ async function getAuthenticatedClient() {
   } = await supabase.auth.getUser();
 
   if (error || !user) {
-    return { error: "You must be logged in." as const };
+    return { error: "Log in to continue." as const };
   }
 
   return { supabase, user };
@@ -70,7 +70,7 @@ export async function createTerm(
     revalidatePath("/jargon");
     return { termId: created.id };
   } catch (err) {
-    return { error: termMutationErrorMessage(err, "Failed to create term.") };
+    return { error: termMutationErrorMessage(err, "Couldn't add that term. Try again.") };
   }
 }
 
@@ -95,7 +95,7 @@ export async function updateTerm(
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    return { error: termMutationErrorMessage(err, "Failed to update term.") };
+    return { error: termMutationErrorMessage(err, "Couldn't save that term. Try again.") };
   }
 }
 
@@ -108,7 +108,7 @@ export async function deleteTerm(termId: string): Promise<{ error?: string }> {
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    return { error: termMutationErrorMessage(err, "Failed to delete term.") };
+    return { error: termMutationErrorMessage(err, "Couldn't delete that term. Try again.") };
   }
 }
 
@@ -125,7 +125,7 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update progress.";
+    const message = err instanceof Error ? err.message : "Couldn't update that term. Try again.";
     return { error: message };
   }
 }
@@ -139,7 +139,7 @@ export async function addToCollection(domainId: string): Promise<{ error?: strin
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to add domain to collection.";
+    const message = err instanceof Error ? err.message : "Couldn't add that collection. Try again.";
     return { error: message };
   }
 }
@@ -153,7 +153,8 @@ export async function removeFromCollection(domainId: string): Promise<{ error?: 
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to remove domain from collection.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't remove that collection. Try again.";
     return { error: message };
   }
 }
@@ -170,7 +171,8 @@ export async function toggleActiveForReview(
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to update active review status.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't update review status. Try again.";
     return { error: message };
   }
 }
@@ -184,7 +186,8 @@ export async function shareDomain(domainId: string): Promise<{ error?: string }>
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to share domain.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't share that collection. Try again.";
     return { error: message };
   }
 }
@@ -198,7 +201,8 @@ export async function unshareDomain(domainId: string): Promise<{ error?: string 
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to unshare domain.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't unshare that collection. Try again.";
     return { error: message };
   }
 }
@@ -220,18 +224,18 @@ export async function getDomainSubscriberCount(
   }
 
   if (!domain) {
-    return { error: "Domain not found." };
+    return { error: "Collection not found." };
   }
 
   if (domain.owner_id !== auth.user.id) {
-    return { error: "You do not own this domain." };
+    return { error: "You don't own this collection." };
   }
 
   try {
     const count = await countDomainCollectionSubscribers(auth.supabase, domainId, auth.user.id);
     return { count };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load subscriber count.";
+    const message = err instanceof Error ? err.message : "Couldn't load subscriber count.";
     return { error: message };
   }
 }
@@ -257,7 +261,7 @@ export async function updateOwnedDomain(
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    return { error: domainMutationErrorMessage(err, "Failed to update domain.") };
+    return { error: domainMutationErrorMessage(err, "Couldn't save that collection. Try again.") };
   }
 }
 
@@ -270,7 +274,8 @@ export async function deleteOwnedDomain(domainId: string): Promise<{ error?: str
     revalidatePath("/jargon");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to delete domain.";
+    const message =
+      err instanceof Error ? err.message : "Couldn't delete that collection. Try again.";
     return { error: message };
   }
 }

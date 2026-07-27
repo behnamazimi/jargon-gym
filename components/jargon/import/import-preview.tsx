@@ -39,13 +39,13 @@ export function ImportPreviewPanel({
       title="Review & import"
       description={
         preview.isMerge
-          ? `Merge ${pluralize(preview.termCount, "term")} into your existing "${preview.domain}" domain.`
-          : `Create a new "${preview.domain}" domain with ${pluralize(preview.termCount, "term")}.`
+          ? `Merge ${pluralize(preview.termCount, "term")} into your existing "${preview.domain}" collection.`
+          : `Create a new "${preview.domain}" collection with ${pluralize(preview.termCount, "term")}.`
       }
     >
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={preview.isMerge ? "secondary" : "default"}>
-          {preview.isMerge ? "Merge into existing" : "Create new domain"}
+          {preview.isMerge ? "Merge into existing" : "Create new collection"}
         </Badge>
         <span className="text-sm font-medium">{preview.domain}</span>
       </div>
@@ -65,8 +65,8 @@ export function ImportPreviewPanel({
 
       {hasConflicts ? (
         <DangerZone
-          title={`${pluralize(conflictCount, "existing term", "existing terms")} will be replaced`}
-          description="These names already exist in this domain. Importing will overwrite their definitions and other fields with the imported data."
+          title={`This will overwrite ${pluralize(conflictCount, "term")} you already have`}
+          description="These names already exist in this collection. Importing replaces their definitions and other fields."
         >
           <ul className="list-disc space-y-1 pl-5 text-sm">
             {preview.conflictingTerms.map((term) => (
@@ -91,9 +91,7 @@ export function ImportPreviewPanel({
         <Alert>
           <CheckCircle2 className="size-4" strokeWidth={1.5} />
           <AlertTitle>Ready to import</AlertTitle>
-          <AlertDescription>
-            No conflicts found. You can confirm the import whenever you are ready.
-          </AlertDescription>
+          <AlertDescription>No conflicts — you're good to import.</AlertDescription>
         </Alert>
       )}
 

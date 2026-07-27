@@ -11,7 +11,7 @@ export default async function JargonReviewPage() {
   if (!user) {
     return (
       <div className="flex min-h-full items-center justify-center px-4 py-12">
-        <p className="text-sm text-base-content/60">You must be logged in to review terms.</p>
+        <p className="text-sm text-base-content/60">Log in to review terms.</p>
       </div>
     );
   }

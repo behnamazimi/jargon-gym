@@ -142,8 +142,8 @@ export function TermFormDialog({
           <DialogTitle>{mode === "create" ? "Add term" : "Edit term"}</DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Add a single term to this collection. You can link it to other terms below."
-              : "Update this term and manage its relationships with other terms in the collection."}
+              ? "Add a term to this collection. Link it to others below if you like."
+              : "Update this term and its links to other terms."}
           </DialogDescription>
         </DialogHeader>
 

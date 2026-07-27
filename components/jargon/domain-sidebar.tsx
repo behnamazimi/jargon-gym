@@ -123,7 +123,7 @@ export function DomainSidebar({
   if (domains.length === 0) return null;
 
   return (
-    <nav aria-label="Domains" className={cn("flex min-h-0 flex-col gap-2 p-1", className)}>
+    <nav aria-label="Collections" className={cn("flex min-h-0 flex-col gap-2 p-1", className)}>
       <div className="relative shrink-0">
         <Search
           className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-base-content/60"
@@ -134,8 +134,8 @@ export function DomainSidebar({
           type="search"
           value={filterQuery}
           onChange={(event) => setFilterQuery(event.target.value)}
-          placeholder="Filter domains…"
-          aria-label="Filter domains"
+          placeholder="Search collections…"
+          aria-label="Search collections"
           className="rounded-lg py-2 pr-8 pl-8 text-sm"
         />
         {filterQuery ? (
@@ -154,7 +154,7 @@ export function DomainSidebar({
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
         {filteredDomains.length === 0 ? (
-          <p className="px-2 text-sm text-base-content/60">No domains match your filter.</p>
+          <p className="px-2 text-sm text-base-content/60">No collections match your search.</p>
         ) : (
           <>
             <DomainSidebarSection
@@ -180,7 +180,7 @@ export function DomainSidebar({
         onPress={onDomainSelect}
       >
         <Plus className="size-4" aria-hidden strokeWidth={1.5} />
-        Add domain
+        Add collection
       </LinkButton>
     </nav>
   );
