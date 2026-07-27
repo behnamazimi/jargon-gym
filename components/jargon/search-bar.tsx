@@ -32,7 +32,7 @@ export function SearchBar({ value, onChange, onClear, inputRef }: SearchBarProps
             ? "Search terms or definitions…"
             : "Search terms or definitions…  (press / to focus)"
         }
-        className="rounded-xl px-3.5 py-2.5 pr-10 text-sm"
+        className="rounded-lg px-3.5 py-2.5 pr-10 text-sm"
       />
       {value ? (
         <TooltipTrigger>
@@ -44,7 +44,7 @@ export function SearchBar({ value, onChange, onClear, inputRef }: SearchBarProps
             onPress={onClear}
             aria-label="Clear search"
           >
-            <X className="size-3.5" aria-hidden />
+            <X className="size-3.5" aria-hidden strokeWidth={1.5} />
           </Button>
           <Tooltip>Clear search</Tooltip>
         </TooltipTrigger>

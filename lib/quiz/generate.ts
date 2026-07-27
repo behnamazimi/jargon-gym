@@ -123,6 +123,7 @@ async function requestQuizFromModel(input: {
   return normalizeQuizQuestions(object, input.terms);
 }
 
+/** Generate questions for the given terms. Callers must pass the final sampled set only. */
 export async function generateQuizQuestions(input: {
   provider: LlmProvider;
   apiKey: string;

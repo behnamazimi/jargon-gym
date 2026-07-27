@@ -10,8 +10,8 @@ import {
   AlertBanner,
   CopyField,
   HighlightPanel,
-  SettingsDivider,
   SetupStep,
+  TokenRow,
 } from "@/components/jargon/settings/ui";
 import { Button } from "@/components/ui/button";
 import type { WidgetTokenRow } from "@/lib/widget/types";
@@ -85,17 +85,17 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <>
       {error ? <AlertBanner message={error} /> : null}
 
-      <ol className="m-0 list-none space-y-8 p-0">
+      <ol className="m-0 list-none space-y-0 p-0">
         <SetupStep
           step={1}
           title="Install the widget"
           description="Requires Übersicht on macOS. This command downloads the widget and pre-fills this site's URL in config.json."
         >
           <CopyField value={installCommand} />
-          <p className="text-sm text-base-content/60">
+          <p className="m-0 text-sm text-base-content/60">
             Get{" "}
             <a
               href="https://tracesof.net/uebersicht/"
@@ -114,7 +114,10 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
               download the zip
             </a>{" "}
             and unzip into{" "}
-            <code className="text-xs">~/Library/Application Support/Übersicht/widgets/</code>.
+            <code className="rounded-md bg-base-200 px-1.5 py-0.5 text-xs">
+              ~/Library/Application Support/Übersicht/widgets/
+            </code>
+            .
           </p>
         </SetupStep>
 
@@ -139,35 +142,31 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
           ) : null}
 
           {tokens.length > 0 ? (
-            <ul className="m-0 list-none space-y-0 p-0">
-              {tokens.map((token, index) => (
+            <ul className="m-0 list-none space-y-2 p-0">
+              {tokens.map((token) => (
                 <li key={token.id}>
-                  {index > 0 ? <SettingsDivider /> : null}
-                  <div className="flex items-center justify-between gap-3 py-3">
-                    <div className="min-w-0">
-                      <p className="m-0 text-sm font-medium">{token.label}</p>
-                      <p className="mt-0.5 text-xs text-base-content/60">
-                        Created {formatDate(token.created_at)} · Last used{" "}
-                        {formatDate(token.last_used_at)}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onPress={() => handleRevoke(token.id)}
-                      isDisabled={busyId === token.id}
-                      className="shrink-0"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Revoke
-                    </Button>
-                  </div>
+                  <TokenRow
+                    label={token.label}
+                    meta={`Created ${formatDate(token.created_at)} · Last used ${formatDate(token.last_used_at)}`}
+                    action={
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onPress={() => handleRevoke(token.id)}
+                        isDisabled={busyId === token.id}
+                        className="shrink-0"
+                      >
+                        <Trash2 className="size-3.5" />
+                        Revoke
+                      </Button>
+                    }
+                  />
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-base-content/60">No active tokens yet.</p>
+            <p className="m-0 text-sm text-base-content/60">No active tokens yet.</p>
           )}
         </SetupStep>
 
@@ -175,6 +174,7 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
           step={3}
           title="Finish setup"
           description="Reinstall with your token so config.json is updated automatically, then refresh Übersicht."
+          isLast
         >
           {installWithTokenCommand ? (
             <CopyField
@@ -183,12 +183,12 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
               value={installWithTokenCommand}
             />
           ) : (
-            <p className="text-sm text-base-content/60">
+            <p className="m-0 text-sm text-base-content/60">
               Generate a token in step 2 to get the one-command install script.
             </p>
           )}
         </SetupStep>
       </ol>
-    </div>
+    </>
   );
 }

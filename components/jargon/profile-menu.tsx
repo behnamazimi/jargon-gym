@@ -41,11 +41,11 @@ export function ProfileMenu({ email }: ProfileMenuProps) {
     <DropdownMenuTrigger>
       <Button
         variant="ghost"
-        className="btn-circle text-[12px] font-semibold text-primary bg-primary/15 hover:bg-primary/25"
+        className="btn-circle text-xs font-semibold text-primary bg-primary/15 hover:bg-primary/25"
         aria-label="Account menu"
       >
         <Avatar>
-          <AvatarFallback className="bg-transparent text-[12px] font-semibold text-primary">
+          <AvatarFallback className="bg-transparent text-xs font-semibold text-primary">
             {initials}
           </AvatarFallback>
         </Avatar>
@@ -53,15 +53,15 @@ export function ProfileMenu({ email }: ProfileMenuProps) {
       <DropdownMenu className="min-w-[220px]">
         <DropdownMenuLabel className="flex items-start gap-2.5 px-3 py-2.5 font-normal">
           <Avatar>
-            <AvatarFallback className="text-[12px] font-semibold text-primary">
+            <AvatarFallback className="text-xs font-semibold text-primary">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="m-0 text-[12px] font-medium uppercase tracking-wide text-base-content/60">
+            <p className="m-0 text-xs font-medium uppercase tracking-wide text-base-content/60">
               Signed in as
             </p>
-            <p className="mt-0.5 truncate text-[13px] font-medium text-base-content">{email}</p>
+            <p className="mt-0.5 truncate text-sm font-medium text-base-content">{email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

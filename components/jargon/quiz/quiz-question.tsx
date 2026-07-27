@@ -1,12 +1,16 @@
 "use client";
 
+import { Circle, CircleDot } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, XCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { cn } from "@/lib/utils";
+import {
+  QuizActionBar,
+  QuizChoice,
+  QuizFeedback,
+  QuizKeyboardHint,
+  QuizPanel,
+  QuizPanelBody,
+} from "@/components/jargon/quiz/quiz-ui";
 import type { QuizQuestion } from "@/lib/quiz/types";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/types";
 
@@ -17,12 +21,37 @@ type QuizQuestionViewProps = {
   onAnswer: (passed: boolean) => void;
 };
 
-export function QuizQuestionView({
-  question,
-  termLabel: _termLabel,
-  isLast,
-  onAnswer,
-}: QuizQuestionViewProps) {
+function getMcqChoiceState(
+  optionId: string,
+  selectedOptionIds: string[],
+  correctOptionIds: string[],
+  submitted: boolean,
+): "default" | "selected" | "correct" | "incorrect" {
+  const isSelected = selectedOptionIds.includes(optionId);
+  const isCorrect = correctOptionIds.includes(optionId);
+
+  if (submitted && isCorrect) return "correct";
+  if (submitted && isSelected && !isCorrect) return "incorrect";
+  if (!submitted && isSelected) return "selected";
+  return "default";
+}
+
+function getTrueFalseChoiceState(
+  value: boolean,
+  trueFalseAnswer: boolean | null,
+  correctAnswer: boolean,
+  submitted: boolean,
+): "default" | "selected" | "correct" | "incorrect" {
+  const isSelected = trueFalseAnswer === value;
+  const isCorrect = correctAnswer === value;
+
+  if (submitted && isCorrect) return "correct";
+  if (submitted && isSelected && !isCorrect) return "incorrect";
+  if (!submitted && isSelected) return "selected";
+  return "default";
+}
+
+export function QuizQuestionView({ question, termLabel, isLast, onAnswer }: QuizQuestionViewProps) {
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -115,110 +144,100 @@ export function QuizQuestionView({
           .map((option) => option.text)
       : [];
 
+  const feedbackDetail =
+    !passed && question.type === "multiple_choice" && correctOptionLabels.length > 0
+      ? `Correct answer${correctOptionLabels.length > 1 ? "s" : ""}: ${correctOptionLabels.join("; ")}`
+      : !passed && question.type === "true_false"
+        ? `The statement is ${question.correctAnswer ? "true" : "false"}.`
+        : undefined;
+
   return (
-    <Card className="space-y-5 p-5 ring-base-content/5 sm:p-6">
-      <div className="space-y-2">
-        <p className="m-0 text-[12px] font-medium uppercase tracking-wide text-base-content/60">
-          {question.type === "multiple_choice" ? "Multiple choice" : "True or false"}
-        </p>
-        <h2 className="m-0 text-[16px] font-semibold leading-snug">{question.prompt}</h2>
-      </div>
+    <QuizPanel>
+      <QuizPanelBody className="space-y-5">
+        <div className="space-y-3">
+          <h2 className="m-0 text-lg font-semibold leading-snug">{question.prompt}</h2>
+        </div>
 
-      {question.type === "multiple_choice" ? (
-        <div className="flex w-full max-w-[465px] flex-col gap-2">
-          {question.options.map((option) => {
-            const isSelected = selectedOptionIds.includes(option.id);
-            const isCorrect = question.correctOptionIds.includes(option.id);
+        {question.type === "multiple_choice" ? (
+          <div className="flex flex-col gap-2">
+            {question.options.map((option) => {
+              const choiceState = getMcqChoiceState(
+                option.id,
+                selectedOptionIds,
+                question.correctOptionIds,
+                submitted,
+              );
+              const isSelected = selectedOptionIds.includes(option.id);
 
-            return (
-              <label
-                key={option.id}
-                className={cn(
-                  "flex w-full cursor-pointer items-start gap-3 rounded-lg border px-3 py-3 text-[13px] transition-colors",
-                  submitted && isCorrect && "border-primary/40 bg-primary/10",
-                  submitted && isSelected && !isCorrect && "border-error/40 bg-error/10",
-                  !submitted && isSelected && "border-primary/30 bg-primary/5",
-                  submitted && "cursor-default",
-                )}
-              >
-                <Checkbox
-                  isSelected={isSelected}
-                  isDisabled={submitted}
-                  onChange={() => selectOption(option.id)}
-                  className="mt-0.5 rounded-full"
+              return (
+                <QuizChoice
+                  key={option.id}
+                  label={option.text}
+                  state={choiceState}
+                  disabled={submitted}
+                  onSelect={() => selectOption(option.id)}
+                  marker={
+                    isSelected ? (
+                      <CircleDot className="size-4 text-primary" aria-hidden strokeWidth={1.5} />
+                    ) : (
+                      <Circle
+                        className="size-4 text-base-content/30"
+                        aria-hidden
+                        strokeWidth={1.5}
+                      />
+                    )
+                  }
                 />
-                <span>{option.text}</span>
-              </label>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex w-full max-w-[465px] flex-col gap-2">
-          {[true, false].map((value) => {
-            const isSelected = trueFalseAnswer === value;
-            const isCorrect = question.correctAnswer === value;
-
-            return (
-              <Button
+              );
+            })}
+          </div>
+        ) : (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[true, false].map((value) => (
+              <QuizChoice
                 key={String(value)}
-                type="button"
-                variant="outline"
-                onPress={() => !submitted && setTrueFalseAnswer(value)}
-                isDisabled={submitted}
-                className={cn(
-                  "w-full",
-                  submitted && isCorrect && "border-primary/40 bg-primary/10 text-base-content",
-                  submitted && isSelected && !isCorrect && "border-error/40 bg-error/10 text-error",
-                  !submitted && isSelected && "border-primary/30 bg-primary/5",
+                label={value ? "True" : "False"}
+                state={getTrueFalseChoiceState(
+                  value,
+                  trueFalseAnswer,
+                  question.correctAnswer,
+                  submitted,
                 )}
-              >
-                {value ? "True" : "False"}
-              </Button>
-            );
-          })}
-        </div>
-      )}
+                disabled={submitted}
+                onSelect={() => !submitted && setTrueFalseAnswer(value)}
+              />
+            ))}
+          </div>
+        )}
 
-      {submitted ? (
-        <Alert variant={passed ? "default" : "destructive"}>
-          {passed ? (
-            <CheckCircle2 className="size-4 shrink-0" aria-hidden />
-          ) : (
-            <XCircle className="size-4 shrink-0" aria-hidden />
-          )}
-          <AlertDescription className="space-y-1">
-            <p className="m-0 font-medium">{passed ? "Correct!" : "Not quite."}</p>
-            {!passed && question.type === "multiple_choice" && correctOptionLabels.length > 0 ? (
-              <p className="m-0 text-[12px]">
-                Correct answer{correctOptionLabels.length > 1 ? "s" : ""}:{" "}
-                {correctOptionLabels.join("; ")}
-              </p>
-            ) : null}
-            {!passed && question.type === "true_false" ? (
-              <p className="m-0 text-[12px]">
-                The statement is {question.correctAnswer ? "true" : "false"}.
-              </p>
-            ) : null}
-          </AlertDescription>
-        </Alert>
-      ) : null}
+        {submitted ? (
+          <QuizFeedback
+            passed={passed}
+            title={passed ? "Correct!" : "Not quite."}
+            detail={feedbackDetail}
+          />
+        ) : null}
 
-      <div className="flex items-center justify-between gap-3">
-        <p className="m-0 text-[12px] text-base-content/60">
-          {submitted ? "Press Enter for next" : "Press Enter to check"}
-        </p>
-        <div className="flex gap-2">
+        <QuizActionBar
+          hint={
+            submitted ? (
+              <QuizKeyboardHint action={isLast ? "see results" : "continue"} />
+            ) : (
+              <QuizKeyboardHint action="check" />
+            )
+          }
+        >
           {!submitted ? (
             <Button type="button" onPress={submitAnswer} isDisabled={!canSubmit}>
               Check answer
             </Button>
           ) : (
             <Button type="button" onPress={advanceAnswer}>
-              {isLast ? "See results" : "Next"}
+              {isLast ? "See results" : "Next question"}
             </Button>
           )}
-        </div>
-      </div>
-    </Card>
+        </QuizActionBar>
+      </QuizPanelBody>
+    </QuizPanel>
   );
 }

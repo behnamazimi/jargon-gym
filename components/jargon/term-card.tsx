@@ -1,10 +1,9 @@
 "use client";
 
-import { AlertTriangle, ChevronRight, Search } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { AlertTriangle, ChevronRight, ExternalLink } from "lucide-react";
+import { useEffect, useRef, type ReactNode } from "react";
 import type { Term } from "@/lib/jargon/types";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -21,6 +20,48 @@ type TermCardProps = {
   onToggleKnown: () => void;
 };
 
+function TermDetailSection({
+  label,
+  children,
+  variant = "default",
+}: {
+  label: string;
+  children: ReactNode;
+  variant?: "default" | "callout" | "debated";
+}) {
+  if (variant === "debated") {
+    return (
+      <div className="flex gap-2.5 rounded-lg bg-primary/5 p-3 ring-1 ring-primary/20">
+        <AlertTriangle
+          className="mt-0.5 size-4 shrink-0 text-primary"
+          aria-hidden
+          strokeWidth={1.5}
+        />
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-primary uppercase">{label}</p>
+          <div className="mt-1 text-sm leading-relaxed text-base-content/60">{children}</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (variant === "callout") {
+    return (
+      <div className="rounded-lg bg-base-200/50 p-3">
+        <p className="text-xs font-semibold tracking-wide text-primary uppercase">{label}</p>
+        <div className="mt-1 text-sm leading-relaxed text-base-content/60">{children}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-xs font-semibold tracking-wide text-base-content/60 uppercase">{label}</p>
+      <div className="mt-1 text-sm leading-relaxed text-base-content/60">{children}</div>
+    </div>
+  );
+}
+
 export function TermCard({
   term,
   known,
@@ -36,7 +77,7 @@ export function TermCard({
 
   useEffect(() => {
     if (!open) return;
-    cardRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    cardRef.current?.scrollIntoView({ block: "nearest" });
   }, [open]);
 
   return (
@@ -49,21 +90,19 @@ export function TermCard({
         className={cn(known && !open && "opacity-70")}
         data-term={term.term}
       >
-        <Card
+        <article
           className={cn(
-            "gap-0 p-0 overflow-hidden transition-all duration-200",
-            open
-              ? "ring-primary/30 shadow-md"
-              : "ring-base-content/5 hover:shadow-sm hover:ring-base-content/10",
+            "overflow-hidden rounded-xl bg-base-100",
+            open ? "shadow-surface-raised" : "shadow-surface",
           )}
         >
           <div
             className={cn(
-              "flex items-stretch gap-3 px-3 py-1 transition-colors",
-              open && "border-b border-primary/15 bg-primary/5",
+              "flex items-stretch gap-2 px-2 py-1",
+              open && "border-b border-base-300/60 bg-primary/[0.04]",
             )}
           >
-            <div className="flex shrink-0 items-center">
+            <div className="flex shrink-0 items-center ps-1">
               <Checkbox
                 isSelected={known}
                 onChange={onToggleKnown}
@@ -74,7 +113,7 @@ export function TermCard({
                 )}
               />
             </div>
-            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-md border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <span
                 className={cn(
                   "font-heading text-base font-semibold tracking-tight",
@@ -86,70 +125,48 @@ export function TermCard({
                 {term.term}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
-                <Badge variant="outline" className="font-normal text-secondary">
+                <Badge variant="outline" className="font-normal">
                   {term.category}
                 </Badge>
                 <ChevronRight
-                  className={cn(
-                    "size-4 text-base-content/60 transition-transform duration-200",
-                    open && "rotate-90 text-primary",
-                  )}
+                  className={cn("size-4 text-base-content/60", open && "rotate-90 text-primary")}
                   aria-hidden
+                  strokeWidth={1.5}
                 />
               </span>
             </CollapsibleTrigger>
             {isOwner ? (
-              <div className="flex shrink-0 items-center">
+              <div className="flex shrink-0 items-center pe-1">
                 <TermActionsMenu term={term} domainId={domainId} domainTerms={domainTerms} />
               </div>
             ) : null}
           </div>
           <CollapsibleContent>
-            <div className="px-4 pt-4 pb-5">
+            <div className="space-y-4 px-4 pt-4 pb-5">
               <p className="text-base leading-relaxed font-medium">{term.definition}</p>
 
-              {!!term.example && (
-                <div className="mt-4 rounded-lg border border-base-300/60 bg-base-200/40 p-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                    Example
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-base-content/60">
-                    {term.example}
-                  </p>
-                </div>
-              )}
+              {term.example ? (
+                <TermDetailSection label="Example" variant="callout">
+                  {term.example}
+                </TermDetailSection>
+              ) : null}
 
-              {!!term.discussion && (
-                <div className="mt-3">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-base-content/60">
-                    In practice
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-base-content/60">
-                    {term.discussion}
-                  </p>
-                </div>
-              )}
+              {term.discussion ? (
+                <TermDetailSection label="In practice">{term.discussion}</TermDetailSection>
+              ) : null}
 
-              {term.controversy && (
-                <div className="mt-3 flex gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
-                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">
-                      Debated
-                    </p>
-                    <p className="mt-1 text-sm leading-relaxed text-base-content/60">
-                      {term.controversy}
-                    </p>
-                  </div>
-                </div>
-              )}
+              {term.controversy ? (
+                <TermDetailSection label="Debated" variant="debated">
+                  {term.controversy}
+                </TermDetailSection>
+              ) : null}
 
-              {term.relationships.length > 0 && (
-                <ul className="mt-3 space-y-2">
+              {term.relationships.length > 0 ? (
+                <ul className="space-y-2">
                   {term.relationships.map((relationship) => (
                     <li
                       key={`${relationship.id}-${relationship.direction}`}
-                      className="rounded-lg border border-dashed border-base-300 bg-base-200/30 px-3 py-2.5"
+                      className="rounded-lg border border-dashed border-base-300/80 bg-base-200/30 px-3 py-2.5"
                     >
                       <p className="text-sm text-base-content/60">
                         <span className="italic">{relationship.relationshipType}</span>{" "}
@@ -165,20 +182,20 @@ export function TermCard({
                     </li>
                   ))}
                 </ul>
-              )}
+              ) : null}
 
               <a
-                className="mt-4 inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
                 href={searchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Search className="size-3.5" aria-hidden />
+                <ExternalLink className="size-3.5" aria-hidden strokeWidth={1.5} />
                 Search &ldquo;{term.term}&rdquo; on Google
               </a>
             </div>
           </CollapsibleContent>
-        </Card>
+        </article>
       </Collapsible>
     </div>
   );

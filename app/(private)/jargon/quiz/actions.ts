@@ -6,7 +6,7 @@ import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
 import { getDecryptedApiKey, getUserLlmSettings } from "@/lib/llm/settings";
 import { LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
-import { fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
+import { MAX_QUIZ_TERMS, fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
 import type { QuizAnswer, QuizQuestion, QuizTerm, QuizTermStatus } from "@/lib/quiz/types";
 
 async function getAuthenticatedClient() {
@@ -45,6 +45,7 @@ export async function getQuizSetupData() {
 export async function generateQuizAction(input: {
   domainIds: string[] | "all";
   status: QuizTermStatus;
+  questionCount: number;
 }): Promise<
   | { error: string }
   | {
@@ -65,17 +66,28 @@ export async function generateQuizAction(input: {
       return { error: "Configure an LLM provider and API key in Settings before starting a quiz." };
     }
 
+    const questionCount = Math.floor(input.questionCount);
+    if (!Number.isFinite(questionCount) || questionCount < 1) {
+      return { error: "Choose at least one question." };
+    }
+
+    if (questionCount > MAX_QUIZ_TERMS) {
+      return { error: `Quizzes are limited to ${MAX_QUIZ_TERMS} questions.` };
+    }
+
     const terms = await fetchQuizTermPool(
       auth.supabase,
       auth.user.id,
       input.domainIds,
       input.status,
+      questionCount,
     );
 
     if (terms.length === 0) {
       return { error: "No terms match your selection. Choose a different collection or status." };
     }
 
+    // `terms` is already shuffled and capped to `questionCount` — only this array reaches the LLM.
     const questions = await generateQuizQuestions({
       provider: credentials.provider,
       apiKey: credentials.apiKey,

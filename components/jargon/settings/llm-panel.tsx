@@ -9,6 +9,7 @@ import {
 } from "@/app/(private)/jargon/settings/actions";
 import {
   AlertBanner,
+  DangerZone,
   SettingsDivider,
   SettingsGroup,
   StatusPill,
@@ -118,16 +119,18 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
     });
   }
 
+  const providerLabel = settings
+    ? LLM_PROVIDER_OPTIONS.find((option) => option.value === settings.provider)?.label
+    : null;
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
+    <>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <StatusPill variant={settings ? "connected" : "disconnected"} />
         {settings ? (
-          <span className="text-xs text-base-content/60">
-            {LLM_PROVIDER_OPTIONS.find((option) => option.value === settings.provider)?.label} ·
-            ••••
-            {settings.apiKeyLast4}
-          </span>
+          <p className="m-0 text-xs text-base-content/60">
+            {providerLabel} · ••••{settings.apiKeyLast4}
+          </p>
         ) : null}
       </div>
 
@@ -158,7 +161,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
         </Field>
 
         {settings && !replacingKey ? (
-          <div className="space-y-3">
+          <div className="space-y-3 rounded-lg bg-base-200/50 px-4 py-3">
             <p className="m-0 text-sm text-base-content/60">
               API key configured. Replace it if you need to switch keys.
             </p>
@@ -243,19 +246,23 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
       {settings ? (
         <>
           <SettingsDivider />
-          <SettingsGroup title="Remove configuration">
+          <DangerZone
+            title="Remove configuration"
+            description="Clears your stored API key. Quiz generation will stop until you add a new key."
+          >
             <Button
               type="button"
               variant="destructive"
+              size="sm"
               onPress={handleClear}
               isDisabled={isClearing}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 className="size-3.5" />
               {isClearing ? "Removing…" : "Remove API key"}
             </Button>
-          </SettingsGroup>
+          </DangerZone>
         </>
       ) : null}
-    </div>
+    </>
   );
 }

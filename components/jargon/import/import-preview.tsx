@@ -1,9 +1,11 @@
-import { AlertTriangle } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { ImportCard, ImportCategoryBadges, ImportStat } from "@/components/jargon/import/import-ui";
+import { DangerZone } from "@/components/jargon/settings/ui";
 import type { ImportPreview } from "@/lib/jargon/import/types";
 import { pluralize } from "@/lib/utils";
 
@@ -31,75 +33,73 @@ export function ImportPreviewPanel({
     : "Confirm import";
 
   return (
-    <Card className="ring-base-content/5">
-      <CardContent>
-        <h2 className="font-heading text-base font-semibold">Preview</h2>
-        <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <div>
-            <dt className="text-base-content/60">Domain</dt>
-            <dd className="font-medium">{preview.domain}</dd>
-          </div>
-          <div>
-            <dt className="text-base-content/60">Mode</dt>
-            <dd className="font-medium">
-              {preview.isMerge ? "Merge into existing" : "Create new"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-base-content/60">Terms</dt>
-            <dd className="font-medium">{preview.termCount}</dd>
-          </div>
-          <div>
-            <dt className="text-base-content/60">Relationships</dt>
-            <dd className="font-medium">{preview.relationshipCount}</dd>
-          </div>
-        </dl>
-        <p className="mt-3 text-sm text-base-content/60">
-          Categories: {preview.categories.join(", ")}
-        </p>
+    <ImportCard
+      step={3}
+      icon={CheckCircle2}
+      title="Review & import"
+      description={
+        preview.isMerge
+          ? `Merge ${pluralize(preview.termCount, "term")} into your existing "${preview.domain}" domain.`
+          : `Create a new "${preview.domain}" domain with ${pluralize(preview.termCount, "term")}.`
+      }
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant={preview.isMerge ? "secondary" : "default"}>
+          {preview.isMerge ? "Merge into existing" : "Create new domain"}
+        </Badge>
+        <span className="text-sm font-medium">{preview.domain}</span>
+      </div>
 
-        {hasConflicts ? (
-          <Alert className="mt-4">
-            <AlertTriangle className="size-4" />
-            <AlertTitle>
-              {pluralize(conflictCount, "existing term", "existing terms")} will be replaced
-            </AlertTitle>
-            <AlertDescription className="space-y-3">
-              <p>
-                These names already exist in &ldquo;{preview.domain}&rdquo;. Importing will
-                overwrite their definitions and other fields with the imported data.
-              </p>
-              <ul className="list-disc space-y-1 pl-5">
-                {preview.conflictingTerms.map((term) => (
-                  <li key={term}>{term}</li>
-                ))}
-              </ul>
-              <Field orientation="horizontal" className="items-start gap-2">
-                <Checkbox
-                  id="confirm-replace-terms"
-                  isSelected={confirmReplace}
-                  onChange={onConfirmReplaceChange}
-                />
-                <FieldLabel
-                  htmlFor="confirm-replace-terms"
-                  className="text-sm font-normal leading-relaxed"
-                >
-                  Replace {pluralize(conflictCount, "term")} with the imported data
-                </FieldLabel>
-              </Field>
-            </AlertDescription>
-          </Alert>
-        ) : null}
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <ImportStat label="Terms" value={preview.termCount} variant="primary" />
+        <ImportStat label="Relationships" value={preview.relationshipCount} />
+        <ImportStat label="Categories" value={preview.categories.length} />
+      </dl>
 
-        <Button
-          type="button"
-          onPress={onImport}
-          isDisabled={isImporting || !canImport}
-          className="mt-4"
+      {preview.categories.length > 0 ? (
+        <div className="space-y-2">
+          <p className="m-0 text-xs font-medium text-base-content/60">Categories</p>
+          <ImportCategoryBadges categories={preview.categories} />
+        </div>
+      ) : null}
+
+      {hasConflicts ? (
+        <DangerZone
+          title={`${pluralize(conflictCount, "existing term", "existing terms")} will be replaced`}
+          description="These names already exist in this domain. Importing will overwrite their definitions and other fields with the imported data."
         >
-          {isImporting ? "Importing…" : confirmLabel}
-        </Button>
-      </CardContent>
-    </Card>
+          <ul className="list-disc space-y-1 pl-5 text-sm">
+            {preview.conflictingTerms.map((term) => (
+              <li key={term}>{term}</li>
+            ))}
+          </ul>
+          <Field orientation="horizontal" className="items-start gap-2">
+            <Checkbox
+              id="confirm-replace-terms"
+              isSelected={confirmReplace}
+              onChange={onConfirmReplaceChange}
+            />
+            <FieldLabel
+              htmlFor="confirm-replace-terms"
+              className="text-sm font-normal leading-relaxed"
+            >
+              Replace {pluralize(conflictCount, "term")} with the imported data
+            </FieldLabel>
+          </Field>
+        </DangerZone>
+      ) : (
+        <Alert>
+          <CheckCircle2 className="size-4" strokeWidth={1.5} />
+          <AlertTitle>Ready to import</AlertTitle>
+          <AlertDescription>
+            No conflicts found. You can confirm the import whenever you are ready.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      <Button type="button" onPress={onImport} isDisabled={isImporting || !canImport}>
+        {isImporting ? "Importing…" : confirmLabel}
+      </Button>
+    </ImportCard>
   );
 }

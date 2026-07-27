@@ -20,7 +20,7 @@ export async function SiteHeader() {
       <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
         <Link
           href={user ? "/jargon" : "/"}
-          className="text-[17px] font-bold tracking-tight no-underline"
+          className="text-lg font-bold tracking-tight no-underline"
         >
           <span className="text-primary">Jargon Gym</span>
         </Link>

@@ -24,12 +24,17 @@ export function TermList({
 }: TermListProps) {
   if (terms.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-base-content/60">No terms match your filters.</p>
+      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
+        <p className="text-sm text-base-content/60">No terms match your filters.</p>
+        <p className="mt-1 text-xs text-base-content/60">
+          Try clearing search or category filters, or turn off &ldquo;Hide terms I know&rdquo;.
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       {terms.map((term) => (
         <TermCard
           key={term.id}

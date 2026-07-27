@@ -30,7 +30,7 @@ function DomainSidebarSection({
 
   return (
     <div className="space-y-1">
-      <p className="px-2 text-[0.625rem] font-semibold tracking-wider text-base-content/60 uppercase">
+      <p className="px-2 text-xs font-semibold tracking-wider text-base-content/60 uppercase">
         {label}
       </p>
       <ul className="space-y-0.5">
@@ -67,6 +67,7 @@ function DomainSidebarSection({
                     <PauseCircle
                       className="ml-auto size-3.5 shrink-0 opacity-50"
                       aria-label="Paused"
+                      strokeWidth={1.5}
                     />
                   ) : null}
                 </span>
@@ -122,11 +123,12 @@ export function DomainSidebar({
   if (domains.length === 0) return null;
 
   return (
-    <nav aria-label="Domains" className={cn("flex min-h-0 flex-col gap-3", className)}>
+    <nav aria-label="Domains" className={cn("flex min-h-0 flex-col gap-2 p-1", className)}>
       <div className="relative shrink-0">
         <Search
           className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-base-content/60"
           aria-hidden
+          strokeWidth={1.5}
         />
         <Input
           type="search"
@@ -134,7 +136,7 @@ export function DomainSidebar({
           onChange={(event) => setFilterQuery(event.target.value)}
           placeholder="Filter domains…"
           aria-label="Filter domains"
-          className="rounded-xl py-2 pr-8 pl-8 text-sm"
+          className="rounded-lg py-2 pr-8 pl-8 text-sm"
         />
         {filterQuery ? (
           <Button
@@ -145,7 +147,7 @@ export function DomainSidebar({
             onPress={() => setFilterQuery("")}
             aria-label="Clear filter"
           >
-            <X className="size-3.5" aria-hidden />
+            <X className="size-3.5" aria-hidden strokeWidth={1.5} />
           </Button>
         ) : null}
       </div>
@@ -177,7 +179,7 @@ export function DomainSidebar({
         className="w-full shrink-0 justify-start gap-2 border-dashed"
         onPress={onDomainSelect}
       >
-        <Plus className="size-4" aria-hidden />
+        <Plus className="size-4" aria-hidden strokeWidth={1.5} />
         Add domain
       </LinkButton>
     </nav>

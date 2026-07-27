@@ -1,8 +1,15 @@
 "use client";
 
+import { Braces, FileUp } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  ImportCard,
+  ImportToolbar,
+  ImportToolbarLabel,
+} from "@/components/jargon/import/import-ui";
 import { formatImportJson, readJsonFile } from "@/lib/jargon/import/json-helpers";
 import {
   IMPORT_MINIMAL_PAYLOAD,
@@ -10,6 +17,7 @@ import {
   stringifyImportPayload,
 } from "@/lib/jargon/import/sample-payload";
 import type { ImportFailure } from "@/lib/jargon/import/types";
+import { cn } from "@/lib/utils";
 
 type ImportFormProps = {
   value: string;
@@ -28,6 +36,7 @@ export function ImportForm({
 }: ImportFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lineCount = value.trim() ? value.split("\n").length : 0;
+  const hasContent = value.trim().length > 0;
 
   function applyTemplate(template: "sample" | "minimal") {
     const payload = template === "sample" ? IMPORT_SAMPLE_PAYLOAD : IMPORT_MINIMAL_PAYLOAD;
@@ -67,29 +76,33 @@ export function ImportForm({
   }
 
   return (
-    <div className="space-y-3">
+    <ImportCard
+      step={2}
+      icon={Braces}
+      title="Paste or upload JSON"
+      description="Import into one of your owned domains, or create a new one from the payload."
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <label className="block text-[13px] font-medium text-base-content" htmlFor="import-json">
-          JSON payload
-        </label>
-        <span className="text-[12px] text-base-content/60">
-          {value.trim() ? `${lineCount} lines` : "No content yet"}
+        <ImportToolbarLabel>Templates &amp; tools</ImportToolbarLabel>
+        <span className="text-xs tabular-nums text-base-content/60">
+          {hasContent ? `${lineCount} lines` : "No content yet"}
         </span>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <ImportToolbar>
         <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("sample")}>
           Load example
         </Button>
         <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("minimal")}>
           Load minimal
         </Button>
+        <Separator orientation="vertical" className="hidden h-6 sm:block" />
         <Button
           type="button"
           variant="outline"
           size="sm"
           onPress={handleFormat}
-          isDisabled={!value.trim()}
+          isDisabled={!hasContent}
         >
           Format JSON
         </Button>
@@ -99,6 +112,7 @@ export function ImportForm({
           size="sm"
           onPress={() => fileInputRef.current?.click()}
         >
+          <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
           Upload .json
         </Button>
         <Button
@@ -106,7 +120,7 @@ export function ImportForm({
           variant="outline"
           size="sm"
           onPress={handleClear}
-          isDisabled={!value.trim()}
+          isDisabled={!hasContent}
         >
           Clear
         </Button>
@@ -117,32 +131,33 @@ export function ImportForm({
           className="hidden"
           onChange={handleFileChange}
         />
+      </ImportToolbar>
+
+      <div className="shadow-surface rounded-xl p-1">
+        <Textarea
+          id="import-json"
+          value={value}
+          onChange={(event) => {
+            onChange(event.target.value);
+            onFailure?.(null);
+          }}
+          placeholder={`{\n  "domain": "Software Engineering",\n  "terms": [\n    {\n      "term": "Coupling",\n      "category": "Architecture",\n      "definition": "..."\n    }\n  ],\n  "relationships": [\n    {\n      "source": "Coupling",\n      "target": "Cohesion",\n      "relationship_type": "often confused with"\n    }\n  ]\n}`}
+          spellCheck={false}
+          className={cn(
+            "min-h-[320px] resize-y border-0 bg-base-100 font-mono text-sm leading-5 shadow-none ring-1 ring-base-content/[0.06] focus-visible:ring-2 dark:ring-base-100/[0.06]",
+            "rounded-lg",
+          )}
+        />
       </div>
-
-      <Textarea
-        id="import-json"
-        value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-          onFailure?.(null);
-        }}
-        placeholder={`{\n  "domain": "Software Engineering",\n  "terms": [\n    {\n      "term": "Coupling",\n      "category": "Architecture",\n      "definition": "..."\n    }\n  ],\n  "relationships": [\n    {\n      "source": "Coupling",\n      "target": "Cohesion",\n      "relationship_type": "often confused with"\n    }\n  ]\n}`}
-        spellCheck={false}
-        className="min-h-[320px] font-mono text-[13px] leading-5"
-      />
-
-      <p className="text-[12px] text-base-content/60">
-        Use the LLM prompt above to generate JSON, or Load example to start from a template.
-      </p>
 
       <Button
         type="button"
         onPress={onValidate}
-        isDisabled={isValidating || value.trim().length === 0}
-        className="text-[13px]"
+        isDisabled={isValidating || !hasContent}
+        className="w-full sm:w-auto"
       >
         {isValidating ? "Validating…" : "Validate & preview"}
       </Button>
-    </div>
+    </ImportCard>
   );
 }

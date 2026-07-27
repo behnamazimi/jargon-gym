@@ -51,23 +51,21 @@ export function ImportPageClient() {
   }
 
   return (
-    <PageShell>
+    <PageShell innerClassName="landing-enter space-y-6">
       <PageHeader
         icon={Upload}
         title="Import jargon"
         description="Paste JSON to create or merge into one of your owned domains."
       />
 
-      <div className="space-y-4">
-        <ImportLlmPrompt />
-        <ImportForm
-          value={raw}
-          onChange={setRaw}
-          onValidate={handleValidate}
-          isValidating={isValidating}
-          onFailure={setFailure}
-        />
-      </div>
+      <ImportLlmPrompt />
+      <ImportForm
+        value={raw}
+        onChange={setRaw}
+        onValidate={handleValidate}
+        isValidating={isValidating}
+        onFailure={setFailure}
+      />
 
       {failure ? <ImportFailurePanel failure={failure} /> : null}
 

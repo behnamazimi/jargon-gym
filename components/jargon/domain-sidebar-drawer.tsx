@@ -32,7 +32,7 @@ export function DomainSidebarDrawer({
         aria-expanded={open}
         onPress={() => setOpen(true)}
         className={cn(
-          "h-auto w-full justify-between gap-2 rounded-xl px-3 py-2.5 text-left md:hidden",
+          "shadow-surface h-auto w-full justify-between gap-2 rounded-xl px-3 py-2.5 text-left md:hidden",
           className,
         )}
       >

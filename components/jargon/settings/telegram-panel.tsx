@@ -10,12 +10,13 @@ import {
 import {
   AlertBanner,
   CopyField,
+  DangerZone,
   HighlightPanel,
   SettingsDivider,
   SettingsGroup,
   StatusPill,
 } from "@/components/jargon/settings/ui";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -112,11 +113,11 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
   const linkedSince = status.linkedAt ? formatDate(status.linkedAt) : null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2">
+    <>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <StatusPill variant={telegramStatusVariant(status)} />
         {status.connected && linkedSince ? (
-          <span className="text-xs text-base-content/60">Linked {linkedSince}</span>
+          <p className="m-0 text-xs text-base-content/60">Linked {linkedSince}</p>
         ) : null}
       </div>
 
@@ -139,22 +140,22 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
           {deepLink ? (
             <HighlightPanel label="Open in Telegram">
               <CopyField value={deepLink} />
-              <a
+              <LinkButton
                 href={deepLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
+                variant="link"
+                size="sm"
+                className="h-auto gap-1.5 p-0 text-sm"
               >
                 Open bot
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
+                <ExternalLink className="size-3.5" />
+              </LinkButton>
             </HighlightPanel>
           ) : null}
         </SettingsGroup>
       ) : (
         <>
-          <SettingsDivider />
-
           <SettingsGroup
             title="Reminders"
             description="Scheduled sends use rolling intervals from your last reminder."
@@ -182,22 +183,23 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
 
           <SettingsDivider />
 
-          <SettingsGroup title="Disconnect">
-            <p className="text-sm text-base-content/60">
-              Stop Telegram reminders and unlink this chat. You can reconnect anytime.
-            </p>
+          <DangerZone
+            title="Disconnect"
+            description="Stop Telegram reminders and unlink this chat. You can reconnect anytime."
+          >
             <Button
               type="button"
               variant="destructive"
+              size="sm"
               onPress={handleDisconnect}
               isDisabled={isDisconnecting}
             >
-              <Unlink className="h-3.5 w-3.5" />
+              <Unlink className="size-3.5" />
               {isDisconnecting ? "Disconnecting…" : "Disconnect Telegram"}
             </Button>
-          </SettingsGroup>
+          </DangerZone>
         </>
       )}
-    </div>
+    </>
   );
 }

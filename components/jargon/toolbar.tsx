@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 type ToolbarProps = {
   hideKnown: boolean;
@@ -27,7 +28,8 @@ export function Toolbar({
   visibleCount,
 }: ToolbarProps) {
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-3">
+      <Separator />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
           <Field orientation="horizontal" className="w-auto items-center gap-1.5">
@@ -41,7 +43,7 @@ export function Toolbar({
             onChange={(value) => onSortChange(value as SortMode)}
             aria-label="Sort terms"
           >
-            <SelectTrigger size="sm" className="text-xs">
+            <SelectTrigger size="sm" className="rounded-lg text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -51,7 +53,7 @@ export function Toolbar({
             </SelectContent>
           </Select>
         </div>
-        <span className="text-sm text-base-content/60">{visibleCount} shown</span>
+        <span className="text-sm tabular-nums text-base-content/60">{visibleCount} shown</span>
       </div>
       <p className="text-xs text-base-content/60">
         Tap a term to expand it · the ✓ circle marks it as known

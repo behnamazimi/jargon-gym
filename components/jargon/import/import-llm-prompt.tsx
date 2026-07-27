@@ -1,15 +1,15 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { CopyIconSwap } from "@/components/jargon/settings/ui";
+import { ImportCard, ImportCodePanel } from "@/components/jargon/import/import-ui";
 import { buildImportLlmPrompt } from "@/lib/jargon/import/llm-prompt";
 
 export function ImportLlmPrompt() {
-  const [open, setOpen] = useState(false);
   const [domain, setDomain] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -22,61 +22,38 @@ export function ImportLlmPrompt() {
   }
 
   return (
-    <Collapsible
-      isExpanded={open}
-      onExpandedChange={setOpen}
-      className="rounded-lg bg-base-100 text-base-content ring-1 ring-base-content/10"
+    <ImportCard
+      step={1}
+      icon={Sparkles}
+      title="Generate with an LLM"
+      description="Optional — copy a prompt into ChatGPT, Claude, or another LLM, then paste the JSON in step 2."
+      collapsible
+      defaultExpanded={false}
+      expandLabel="Show prompt"
+      collapseLabel="Hide prompt"
     >
-      <CollapsibleTrigger className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium">
-        <span>LLM prompt</span>
-        <span className="text-base-content/60">{open ? "Hide" : "Show"}</span>
-      </CollapsibleTrigger>
+      <Field>
+        <FieldLabel htmlFor="import-llm-domain">Your domain</FieldLabel>
+        <Input
+          id="import-llm-domain"
+          type="text"
+          value={domain}
+          onChange={(event) => setDomain(event.target.value)}
+          placeholder="e.g. Product Management, DevOps, Finance"
+          className="text-sm"
+        />
+      </Field>
 
-      <CollapsibleContent>
-        <div className="space-y-3 border-t border-base-300 px-4 py-4">
-          <p className="m-0 text-sm leading-relaxed text-base-content/60">
-            Copy this prompt into ChatGPT, Claude, or another LLM. Paste the JSON it returns into
-            the box below.
-          </p>
-
-          <Field>
-            <FieldLabel htmlFor="import-llm-domain">Your domain</FieldLabel>
-            <Input
-              id="import-llm-domain"
-              type="text"
-              value={domain}
-              onChange={(event) => setDomain(event.target.value)}
-              placeholder="e.g. Product Management, DevOps, Finance"
-              className="text-sm"
-            />
-          </Field>
-
-          <div className="relative">
-            <pre className="max-h-[320px] overflow-auto rounded-lg border border-base-300 bg-base-100 p-3 text-xs leading-5 whitespace-pre-wrap text-base-content">
-              {prompt}
-            </pre>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onPress={handleCopy}
-              className="absolute top-2 right-2 text-xs"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-primary" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy prompt
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+      <ImportCodePanel
+        actions={
+          <Button type="button" variant="outline" size="sm" onPress={handleCopy}>
+            <CopyIconSwap copied={copied} />
+            {copied ? "Copied" : "Copy prompt"}
+          </Button>
+        }
+      >
+        {prompt}
+      </ImportCodePanel>
+    </ImportCard>
   );
 }

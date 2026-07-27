@@ -1,10 +1,10 @@
 "use client";
 
-import { Settings2 } from "lucide-react";
+import { LayoutDashboard, MessageCircle, Settings2, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
 import { LlmPanel } from "@/components/jargon/settings/llm-panel";
-import { SettingsPanel, SettingsSection } from "@/components/jargon/settings/ui";
+import { SettingsCard } from "@/components/jargon/settings/ui";
 import { TelegramPanel } from "@/components/jargon/settings/telegram-panel";
 import { WidgetPanel } from "@/components/jargon/settings/widget-panel";
 import type { UserLlmSettings } from "@/lib/llm/types";
@@ -27,36 +27,33 @@ export function SettingsPage({
       <PageHeader
         icon={Settings2}
         title="Settings"
-        description="Connect review channels to your live jargon collection."
+        description="Connect review channels and configure quiz generation for your jargon collections."
       />
 
-      <div className="space-y-10">
-        <SettingsSection
+      <div className="space-y-6">
+        <SettingsCard
+          icon={Sparkles}
           title="Quiz"
           description="Connect an LLM provider to generate quizzes from your jargon collections."
         >
-          <SettingsPanel>
-            <LlmPanel initialSettings={initialLlmSettings} />
-          </SettingsPanel>
-        </SettingsSection>
+          <LlmPanel initialSettings={initialLlmSettings} />
+        </SettingsCard>
 
-        <SettingsSection
+        <SettingsCard
+          icon={MessageCircle}
           title="Telegram"
           description="Get terms in Telegram, mark them known, or type /next anytime."
         >
-          <SettingsPanel>
-            <TelegramPanel initialStatus={initialTelegramStatus} />
-          </SettingsPanel>
-        </SettingsSection>
+          <TelegramPanel initialStatus={initialTelegramStatus} />
+        </SettingsCard>
 
-        <SettingsSection
+        <SettingsCard
+          icon={LayoutDashboard}
           title="Desktop widget"
           description="Show live terms on your Mac with the Übersicht widget."
         >
-          <SettingsPanel>
-            <WidgetPanel initialTokens={initialTokens} />
-          </SettingsPanel>
-        </SettingsSection>
+          <WidgetPanel initialTokens={initialTokens} />
+        </SettingsCard>
       </div>
     </PageShell>
   );

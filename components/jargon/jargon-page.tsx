@@ -2,18 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { JargonPageData } from "@/lib/jargon/types";
-import { Card, CardContent } from "@/components/ui/card";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { PageShell } from "@/components/page-container";
-import { CategoryChips } from "./category-chips";
 import { DomainSidebar } from "./domain-sidebar";
 import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
-import { Header } from "./header";
+import { JargonDomainHeader } from "./jargon-domain-header";
+import { JargonFilters } from "./jargon-filters";
 import { QuizFab } from "./quiz-fab";
-import { SearchBar } from "./search-bar";
-import { TermList } from "./term-list";
 import { TermFormDialog } from "./term-form-dialog";
-import { Toolbar } from "./toolbar";
+import { TermList } from "./term-list";
 
 type JargonPageProps = {
   initialData: JargonPageData;
@@ -94,7 +91,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
   return (
     <>
       <PageShell>
-        <div className="flex flex-col gap-5 md:flex-row md:items-start">
+        <div className="flex flex-col gap-6 md:flex-row md:items-start">
           <DomainSidebarDrawer
             domains={domainsWithLiveCounts}
             currentDomain={domainWithLiveCount}
@@ -102,7 +99,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
           />
 
           <aside className="hidden md:flex md:w-68 md:shrink-0">
-            <div className="sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-xl border border-base-300 bg-base-100/80 p-3 ring-base-content/5 backdrop-blur-sm">
+            <div className="shadow-surface sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-2xl bg-base-100 p-2">
               <DomainSidebar
                 domains={domainsWithLiveCounts}
                 currentDomainId={domain.id}
@@ -111,8 +108,8 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
             </div>
           </aside>
 
-          <div className="min-w-0 flex-1 space-y-5">
-            <Header
+          <div className="min-w-0 flex-1 space-y-4">
+            <JargonDomainHeader
               domain={domainWithLiveCount}
               domains={domainsWithLiveCounts}
               categoryCount={categories.length}
@@ -120,30 +117,22 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
               onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
             />
 
-            <Card className="gap-0 p-0 ring-base-content/5">
-              <CardContent className="space-y-3 px-4 py-3">
-                <SearchBar
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  onClear={clearSearch}
-                  inputRef={searchInputRef}
-                />
-                <CategoryChips
-                  categories={categories}
-                  counts={categoryCounts}
-                  totalCount={terms.length}
-                  activeCategories={activeCategories}
-                  onToggle={toggleCategory}
-                />
-                <Toolbar
-                  hideKnown={hideKnown}
-                  onHideKnownChange={setHideKnown}
-                  sortMode={sortMode}
-                  onSortChange={setSortMode}
-                  visibleCount={filteredTerms.length}
-                />
-              </CardContent>
-            </Card>
+            <JargonFilters
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onSearchClear={clearSearch}
+              searchInputRef={searchInputRef}
+              categories={categories}
+              categoryCounts={categoryCounts}
+              totalCount={terms.length}
+              activeCategories={activeCategories}
+              onToggleCategory={toggleCategory}
+              hideKnown={hideKnown}
+              onHideKnownChange={setHideKnown}
+              sortMode={sortMode}
+              onSortChange={setSortMode}
+              visibleCount={filteredTerms.length}
+            />
 
             {termLinkNotice ? (
               <p className="text-sm text-base-content/60">{termLinkNotice}</p>

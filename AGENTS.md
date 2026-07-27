@@ -7,4 +7,4 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # UI components
 
-Use shadcn/ui primitives from `@/components/ui/*` (React Aria base, `aria-nova` style) for buttons, menus, tabs, form controls, and other interactive UI. Add missing components with `pnpm dlx shadcn@latest add <name>`. Omit color classes when body or component defaults suffice; see `.cursor/rules/shadcn-ui.mdc`.
+Use DaisyUI components.

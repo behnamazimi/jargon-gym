@@ -13,10 +13,10 @@ type CategoryChipsProps = {
 
 function chipClassName(selected: boolean) {
   return cn(
-    "h-7 min-h-7 px-3 py-0 text-xs font-normal",
+    "h-7 min-h-7 rounded-lg px-3 py-0 text-xs font-normal",
     selected
-      ? "border border-primary bg-transparent text-primary hover:bg-primary/10 hover:text-primary aria-pressed:border-primary aria-pressed:bg-transparent aria-pressed:text-primary data-[state=on]:border-primary data-[state=on]:bg-transparent data-[state=on]:text-primary data-selected:border-primary data-selected:bg-transparent data-selected:text-primary"
-      : "border border-base-300 text-base-content hover:border-secondary/80 hover:bg-secondary/10",
+      ? "border-primary bg-primary/10 text-primary hover:bg-primary/15 aria-pressed:border-primary aria-pressed:bg-primary/10 aria-pressed:text-primary data-[state=on]:border-primary data-[state=on]:bg-primary/10 data-[state=on]:text-primary data-selected:border-primary data-selected:bg-primary/10 data-selected:text-primary"
+      : "border-base-300/80 text-base-content hover:bg-base-200/60",
   );
 }
 
@@ -39,7 +39,7 @@ export function CategoryChips({
         className={chipClassName(allSelected)}
       >
         All{" "}
-        <span className={cn("text-xs opacity-55", allSelected && "text-primary opacity-80")}>
+        <span className={cn("tabular-nums opacity-55", allSelected && "text-primary opacity-80")}>
           {totalCount}
         </span>
       </Toggle>
@@ -56,7 +56,7 @@ export function CategoryChips({
             className={chipClassName(selected)}
           >
             {category}{" "}
-            <span className={cn("text-xs opacity-55", selected && "text-primary opacity-80")}>
+            <span className={cn("tabular-nums opacity-55", selected && "text-primary opacity-80")}>
               {counts[category] ?? 0}
             </span>
           </Toggle>

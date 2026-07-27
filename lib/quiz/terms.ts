@@ -5,7 +5,12 @@ import type { QuizableCollection, QuizTerm, QuizTermStatus } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-export const MAX_QUIZ_TERMS = 15;
+export const MAX_QUIZ_TERMS = 30;
+
+export function getMaxQuizQuestionCount(availableTermCount: number): number {
+  if (availableTermCount <= 0) return 0;
+  return Math.min(availableTermCount, MAX_QUIZ_TERMS);
+}
 
 function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
@@ -82,6 +87,7 @@ export async function fetchQuizTermPool(
   userId: string,
   domainIds: string[] | "all",
   status: QuizTermStatus,
+  questionCount: number,
 ): Promise<QuizTerm[]> {
   const { reviewDomainIds } = await resolveReviewDomainIds(client, userId);
 
@@ -126,8 +132,25 @@ export async function fetchQuizTermPool(
     status === "known" ? knownIds.has(term.id) : !knownIds.has(term.id),
   );
 
-  const sampled = shuffle(filtered).slice(0, MAX_QUIZ_TERMS);
+  // `filtered` is the full cross-collection pool when domainIds is "all".
+  return selectQuizTerms(filtered, questionCount, domainNameById);
+}
 
+export function selectQuizTerms(
+  terms: {
+    id: string;
+    term: string;
+    definition: string;
+    example: string | null;
+    domain_id: string;
+  }[],
+  questionCount: number,
+  domainNameById: Map<string, string>,
+): QuizTerm[] {
+  if (terms.length === 0) return [];
+
+  const limit = Math.min(Math.max(1, Math.floor(questionCount)), terms.length);
+  const sampled = shuffle(terms).slice(0, limit);
   return sampled.map((term) => ({
     id: term.id,
     term: term.term,

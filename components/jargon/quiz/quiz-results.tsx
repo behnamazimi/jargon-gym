@@ -1,11 +1,16 @@
 "use client";
 
-import { RotateCcw } from "lucide-react";
+import { type CSSProperties } from "react";
+import { RotateCcw, Trophy } from "lucide-react";
 import { BackLink } from "@/components/jargon/back-link";
-import { Badge } from "@/components/ui/badge";
+import {
+  QuizActionBar,
+  QuizPanel,
+  QuizPanelBody,
+  QuizPanelHeader,
+  QuizTermList,
+} from "@/components/jargon/quiz/quiz-ui";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import type { QuizTermStatus } from "@/lib/quiz/types";
 
 type QuizResultsProps = {
@@ -36,46 +41,54 @@ export function QuizResults({
   const flippedLabel = quizStatus === "known" ? "Marked as unknown" : "Marked as known";
 
   return (
-    <Card className="space-y-6 p-5 ring-base-content/5 sm:p-6">
-      <div className="space-y-3 text-center">
-        <Badge variant={percent >= 80 ? "default" : "secondary"} className="text-[11px]">
-          {percent}% correct
-        </Badge>
-        <div>
-          <h2 className="m-0 text-[22px] font-semibold tracking-tight">
-            {score}/{total}
-          </h2>
-          <p className="mt-1 text-[13px] text-base-content/60">{scoreMessage(score, total)}</p>
+    <QuizPanel>
+      <QuizPanelHeader
+        icon={Trophy}
+        title="Quiz complete"
+        description={scoreMessage(score, total)}
+      />
+      <QuizPanelBody className="space-y-6">
+        <div className="flex flex-col items-center gap-4 py-2 text-center sm:flex-row sm:gap-8 sm:text-left">
+          <div
+            className="radial-progress text-primary"
+            style={
+              {
+                "--value": percent,
+                "--size": "5.5rem",
+                "--thickness": "4px",
+              } as CSSProperties
+            }
+            role="progressbar"
+            aria-valuenow={percent}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${percent}% correct`}
+          >
+            <span className="text-base font-semibold tabular-nums">{percent}%</span>
+          </div>
+          <div>
+            <p className="m-0 text-3xl font-bold tabular-nums tracking-tight">
+              {score}
+              <span className="text-lg font-semibold text-base-content/40">/{total}</span>
+            </p>
+            <p className="mt-1 mb-0 text-sm text-base-content/60">questions answered correctly</p>
+          </div>
         </div>
-      </div>
 
-      <Separator />
+        <QuizTermList
+          title={flippedLabel}
+          terms={flippedTerms}
+          emptyMessage="No term status changes this round."
+        />
 
-      {flippedTerms.length > 0 ? (
-        <div className="space-y-2">
-          <p className="m-0 text-[13px] font-medium">{flippedLabel}</p>
-          <ul className="m-0 space-y-1.5">
-            {flippedTerms.map((term) => (
-              <li
-                key={term.id}
-                className="rounded-md border px-3 py-2 text-[13px] text-base-content/60"
-              >
-                {term.term}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <p className="m-0 text-[13px] text-base-content/60">No term status changes this round.</p>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        <Button type="button" onPress={onQuizAgain}>
-          <RotateCcw className="size-3.5" />
-          Quiz again
-        </Button>
-        <BackLink variant="outline" />
-      </div>
-    </Card>
+        <QuizActionBar>
+          <Button type="button" onPress={onQuizAgain}>
+            <RotateCcw className="size-3.5" aria-hidden strokeWidth={1.5} />
+            Quiz again
+          </Button>
+          <BackLink variant="outline" />
+        </QuizActionBar>
+      </QuizPanelBody>
+    </QuizPanel>
   );
 }

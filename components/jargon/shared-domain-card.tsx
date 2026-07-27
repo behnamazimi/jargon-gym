@@ -1,0 +1,83 @@
+"use client";
+
+import { BookmarkMinus, CheckCircle2, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { SharedDomain } from "@/lib/jargon/types";
+import { cn, pluralize } from "@/lib/utils";
+
+type SharedDomainCardProps = {
+  domain: SharedDomain;
+  busy: boolean;
+  onAdd: () => void;
+  onRemove: () => void;
+};
+
+export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomainCardProps) {
+  return (
+    <article
+      className={cn(
+        "shadow-surface flex flex-col gap-4 rounded-xl bg-base-100 p-4 transition-shadow duration-150 sm:flex-row sm:items-center sm:justify-between",
+        "hover:shadow-surface-hover",
+        domain.inCollection && "bg-primary/[0.03]",
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <div
+          className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-base-200/70 text-xl leading-none"
+          aria-hidden
+        >
+          {domain.icon || "📚"}
+        </div>
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="font-heading truncate text-base font-semibold tracking-tight">
+              {domain.name}
+            </h2>
+            {domain.inCollection ? (
+              <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary">
+                <CheckCircle2 className="size-3" aria-hidden strokeWidth={1.5} />
+                In collection
+              </Badge>
+            ) : null}
+          </div>
+          {domain.description ? (
+            <p className="line-clamp-2 text-sm leading-relaxed text-base-content/60">
+              {domain.description}
+            </p>
+          ) : null}
+          <p className="text-xs tabular-nums text-base-content/60">
+            {pluralize(domain.termCount, "term")}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2 sm:ps-2">
+        {domain.inCollection ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onPress={onRemove}
+            isDisabled={busy}
+            className="w-full gap-1.5 transition-transform active:scale-[0.96] sm:w-auto"
+          >
+            <BookmarkMinus className="size-4" aria-hidden strokeWidth={1.5} />
+            {busy ? "Removing…" : "Remove"}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            onPress={onAdd}
+            isDisabled={busy}
+            className="w-full gap-1.5 transition-transform active:scale-[0.96] sm:w-auto"
+          >
+            <Plus className="size-4" aria-hidden strokeWidth={1.5} />
+            {busy ? "Adding…" : "Add to collection"}
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+}
