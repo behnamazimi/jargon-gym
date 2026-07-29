@@ -18,7 +18,9 @@
     "supabase:status": "supabase status",
     "supabase:reset": "supabase db reset",
     "supabase:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
-    "widget:zip": "WIDGET_PRODUCTION_URL=https://jargon-gym.vercel.app scripts/widget-zip.sh"
+    "widget:zip": "WIDGET_PRODUCTION_URL=https://jargon-gym.vercel.app scripts/widget-zip.sh",
+    "widget:install": "JARGON_WIDGET_TOKEN=aM5hpFZdq699yoEnYiPuSCB_UNSPLwjeTgn8DSdhtxw JARGON_BASE_URL=https://jargon-gym.vercel.app scripts/widget-install.sh",
+    "widget:link": "scripts/widget-link.sh"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.21",

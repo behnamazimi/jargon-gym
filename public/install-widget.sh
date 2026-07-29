@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Production URL is baked in by scripts/widget-zip.sh (see BAKED_BASE_URL below).
-BAKED_BASE_URL="http://localhost:3000"
+BAKED_BASE_URL="https://jargon-gym.vercel.app"
 if [[ -n "${JARGON_BASE_URL:-}" ]]; then
   BASE_URL="$JARGON_BASE_URL"
 elif [[ "$BAKED_BASE_URL" != "__JARGON_BASE_URL__" ]]; then
