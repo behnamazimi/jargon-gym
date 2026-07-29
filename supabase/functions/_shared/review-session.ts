@@ -1,12 +1,17 @@
 import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import type { TermRow } from "./telegram-api.ts";
+import { domainIdsForRpc, type QuizDomainSelection } from "./quiz-setup.ts";
 import { fetchTermById } from "./term-service.ts";
 
 export type ReviewStatus = "known" | "unknown";
 
+export const MAX_TELEGRAM_QUIZ_TERMS = 30;
+export const DEFAULT_TELEGRAM_QUIZ_COUNT = 5;
+
 export interface ReviewSession {
   userId: string;
   status: ReviewStatus;
+  domainId: QuizDomainSelection;
   termIds: string[];
   currentIndex: number;
   correctCount: number;
@@ -15,13 +20,13 @@ export interface ReviewSession {
 
 type StoredQuizSession = {
   status: ReviewStatus;
+  domainId: QuizDomainSelection;
   termIds: string[];
   currentIndex: number;
   correctCount: number;
   startedAt: number;
 };
 
-// Session auto-expires after 30 minutes
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
 function isStoredSession(value: unknown): value is StoredQuizSession {
@@ -30,6 +35,7 @@ function isStoredSession(value: unknown): value is StoredQuizSession {
   const session = value as StoredQuizSession;
   return (
     (session.status === "known" || session.status === "unknown") &&
+    (session.domainId === "all" || typeof session.domainId === "string") &&
     Array.isArray(session.termIds) &&
     session.termIds.every((id) => typeof id === "string") &&
     typeof session.currentIndex === "number" &&
@@ -75,20 +81,21 @@ async function saveStoredSession(
   if (error) throw error;
 }
 
-/**
- * Fetch terms for the quiz session based on status
- */
 async function fetchTermIdsByStatus(
   supabase: SupabaseClient,
   userId: string,
   status: ReviewStatus,
+  domainId: QuizDomainSelection,
   limit: number,
 ): Promise<string[]> {
+  const domainIds = domainIdsForRpc(domainId);
+
   const { data, error } = await supabase.rpc(
     status === "unknown" ? "pick_multiple_unknown_terms" : "pick_multiple_known_terms",
     {
       p_user_id: userId,
       p_limit: limit,
+      p_domain_ids: domainIds,
     },
   );
 
@@ -104,21 +111,49 @@ async function fetchTermIdsByStatus(
   return (data as Array<{ id: string }>).map((row) => String(row.id));
 }
 
-/**
- * Create a new quiz session and persist it
- */
+export async function countTermsForQuiz(
+  supabase: SupabaseClient,
+  userId: string,
+  status: ReviewStatus,
+  domainId: QuizDomainSelection,
+): Promise<number> {
+  const domainIds = domainIdsForRpc(domainId);
+
+  const { data, error } = await supabase.rpc(
+    status === "unknown" ? "count_unknown_terms" : "count_known_terms",
+    {
+      p_user_id: userId,
+      p_domain_ids: domainIds,
+    },
+  );
+
+  if (error) {
+    console.error("Error counting terms:", error);
+    throw error;
+  }
+
+  return Number(data ?? 0);
+}
+
+export function getMaxQuizQuestionCount(availableTermCount: number): number {
+  if (availableTermCount <= 0) return 0;
+  return Math.min(availableTermCount, MAX_TELEGRAM_QUIZ_TERMS);
+}
+
 export async function createSession(
   supabase: SupabaseClient,
   chatId: number,
   userId: string,
   status: ReviewStatus,
+  domainId: QuizDomainSelection,
   count: number,
 ): Promise<ReviewSession> {
-  const termIds = await fetchTermIdsByStatus(supabase, userId, status, count);
+  const termIds = await fetchTermIdsByStatus(supabase, userId, status, domainId, count);
 
   const session: ReviewSession = {
     userId,
     status,
+    domainId,
     termIds,
     currentIndex: 0,
     correctCount: 0,
@@ -128,6 +163,7 @@ export async function createSession(
   if (termIds.length > 0) {
     await saveStoredSession(supabase, chatId, {
       status: session.status,
+      domainId: session.domainId,
       termIds: session.termIds,
       currentIndex: session.currentIndex,
       correctCount: session.correctCount,
@@ -138,9 +174,6 @@ export async function createSession(
   return session;
 }
 
-/**
- * Get an active session from the database
- */
 export async function getSession(
   supabase: SupabaseClient,
   chatId: number,
@@ -160,6 +193,7 @@ export async function getSession(
   return {
     userId,
     status: session.status,
+    domainId: session.domainId,
     termIds: session.termIds,
     currentIndex: session.currentIndex,
     correctCount: session.correctCount,
@@ -167,9 +201,6 @@ export async function getSession(
   };
 }
 
-/**
- * Update session after answering a question
- */
 export async function updateSession(
   supabase: SupabaseClient,
   chatId: number,
@@ -184,6 +215,7 @@ export async function updateSession(
 
   await saveStoredSession(supabase, chatId, {
     status: updated.status,
+    domainId: updated.domainId,
     termIds: updated.termIds,
     currentIndex: updated.currentIndex,
     correctCount: updated.correctCount,
@@ -193,9 +225,6 @@ export async function updateSession(
   return updated;
 }
 
-/**
- * Delete a session (cleanup after completion)
- */
 export async function deleteSession(supabase: SupabaseClient, chatId: number): Promise<void> {
   const { error } = await supabase
     .from("telegram_links")
@@ -208,16 +237,10 @@ export async function deleteSession(supabase: SupabaseClient, chatId: number): P
   if (error) throw error;
 }
 
-/**
- * Check if session has more questions
- */
 export function hasMoreQuestions(session: ReviewSession): boolean {
   return session.currentIndex < session.termIds.length;
 }
 
-/**
- * Get current term from session
- */
 export async function getCurrentTerm(
   supabase: SupabaseClient,
   session: ReviewSession,
@@ -228,4 +251,19 @@ export async function getCurrentTerm(
 
   const termId = session.termIds[session.currentIndex];
   return fetchTermById(supabase, session.userId, termId);
+}
+
+export async function clearTermKnown(
+  supabase: SupabaseClient,
+  userId: string,
+  termId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("clear_term_known", {
+    p_user_id: userId,
+    p_term_id: termId,
+  });
+
+  if (error) {
+    console.error("Error clearing term known status:", error);
+  }
 }

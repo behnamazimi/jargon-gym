@@ -1,4 +1,10 @@
+import type { SupabaseClient } from "npm:@supabase/supabase-js@2";
 import { getAppBaseUrl, getTelegramBotToken } from "./env.ts";
+import {
+  editTrackedMessageText,
+  hasInlineKeyboard,
+  sendTrackedMessage,
+} from "./inline-keyboard-tracker.ts";
 
 export type TermRelationshipRow = {
   direction: "outgoing" | "incoming";
@@ -156,18 +162,30 @@ export async function telegramApi<T>(method: string, body: Record<string, unknow
   return payload.result as T;
 }
 
+type TelegramMessage = {
+  message_id: number;
+};
+
 export async function sendMessage(
   chatId: number,
   text: string,
   replyMarkup?: Record<string, unknown>,
-) {
-  return telegramApi("sendMessage", {
-    chat_id: chatId,
-    text,
-    parse_mode: "HTML",
-    reply_markup: replyMarkup,
-    link_preview_options: { is_disabled: true },
-  });
+  supabase?: SupabaseClient,
+): Promise<TelegramMessage> {
+  const send = () =>
+    telegramApi<TelegramMessage>("sendMessage", {
+      chat_id: chatId,
+      text,
+      parse_mode: "HTML",
+      reply_markup: replyMarkup,
+      link_preview_options: { is_disabled: true },
+    });
+
+  if (supabase && replyMarkup && hasInlineKeyboard(replyMarkup)) {
+    return sendTrackedMessage(supabase, chatId, send);
+  }
+
+  return send();
 }
 
 export async function answerCallbackQuery(callbackQueryId: string, text?: string) {
@@ -182,14 +200,30 @@ export async function editMessageText(
   messageId: number,
   text: string,
   replyMarkup?: Record<string, unknown>,
-) {
-  return telegramApi("editMessageText", {
+  supabase?: SupabaseClient,
+): Promise<TelegramMessage> {
+  const edit = () =>
+    telegramApi<TelegramMessage>("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: "HTML",
+      link_preview_options: { is_disabled: true },
+      reply_markup: replyMarkup,
+    });
+
+  if (supabase) {
+    return editTrackedMessageText(supabase, chatId, messageId, replyMarkup, edit);
+  }
+
+  return edit();
+}
+
+export async function removeInlineKeyboard(chatId: number, messageId: number) {
+  return telegramApi("editMessageReplyMarkup", {
     chat_id: chatId,
     message_id: messageId,
-    text,
-    parse_mode: "HTML",
-    link_preview_options: { is_disabled: true },
-    reply_markup: replyMarkup,
+    reply_markup: { inline_keyboard: [] },
   });
 }
 
@@ -240,7 +274,67 @@ export function formatStatsMessage(stats: CollectionStatsRow[]): string {
   return message;
 }
 
-// Review session message formatting
+// Quiz setup wizard keyboards
+
+export function buildQuizStatusKeyboard() {
+  return {
+    inline_keyboard: [
+      [
+        { text: "Unknown terms", callback_data: "quizsetup:status:unknown" },
+        { text: "Known terms", callback_data: "quizsetup:status:known" },
+      ],
+    ],
+  };
+}
+
+export function buildQuizCollectionKeyboard(
+  collections: Array<{ id: string; name: string; count: number }>,
+  allCount: number,
+) {
+  const rows: Array<Array<{ text: string; callback_data: string }>> = [
+    [{ text: `All collections (${allCount})`, callback_data: "quizsetup:domain:all" }],
+  ];
+
+  for (let i = 0; i < collections.length; i += 2) {
+    const row = [
+      {
+        text: `${collections[i].name} (${collections[i].count})`,
+        callback_data: `quizsetup:domain:${collections[i].id}`,
+      },
+    ];
+    if (i + 1 < collections.length) {
+      row.push({
+        text: `${collections[i + 1].name} (${collections[i + 1].count})`,
+        callback_data: `quizsetup:domain:${collections[i + 1].id}`,
+      });
+    }
+    rows.push(row);
+  }
+
+  return { inline_keyboard: rows };
+}
+
+export function buildQuizCountKeyboard(maxCount: number) {
+  const presets = [5, 10, 15, 20, 30].filter((value) => value <= maxCount);
+  const uniquePresets = [...new Set(presets)];
+
+  const rows: Array<Array<{ text: string; callback_data: string }>> = [];
+  for (let i = 0; i < uniquePresets.length; i += 3) {
+    const row = uniquePresets.slice(i, i + 3).map((value) => ({
+      text: String(value),
+      callback_data: `quizsetup:count:${value}`,
+    }));
+    rows.push(row);
+  }
+
+  if (maxCount > 0) {
+    rows.push([{ text: `All (${maxCount})`, callback_data: "quizsetup:count:all" }]);
+  }
+
+  return { inline_keyboard: rows };
+}
+
+// Quiz session message formatting
 
 interface QuizOption {
   id: string;
@@ -255,6 +349,31 @@ export function formatReviewQuestion(
   let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
   message += `${escapeHtml(term.definition)}\n\n`;
   message += `<i>Category: ${escapeHtml(term.category)}</i> · ${escapeHtml(term.domain_name)}`;
+  return message;
+}
+
+export function formatReviewQuestionWithAnswer(
+  term: TermRow,
+  questionIndex: number,
+  totalQuestions: number,
+  selectedTerm: string,
+  isCorrect: boolean,
+  currentScore: number,
+  markedUnknown = false,
+): string {
+  let message = formatReviewQuestion(term, questionIndex, totalQuestions);
+  message += `\n\n<b>Your answer:</b> ${escapeHtml(selectedTerm)}`;
+
+  if (isCorrect) {
+    message += `\n\n✅ <b>Correct!</b>`;
+  } else {
+    message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeHtml(term.term)}</b>`;
+    if (markedUnknown) {
+      message += "\n<i>Marked as unknown.</i>";
+    }
+  }
+
+  message += `\n\nScore: ${currentScore}/${totalQuestions}`;
   return message;
 }
 
@@ -278,21 +397,6 @@ export function buildReviewKeyboard(options: QuizOption[], sessionIndex: number)
   }
 
   return { inline_keyboard: rows };
-}
-
-export function formatReviewResult(
-  isCorrect: boolean,
-  correctTerm: string,
-  selectedTerm: string,
-  currentScore: number,
-  totalQuestions: number,
-): string {
-  let message = isCorrect
-    ? `✅ <b>Correct!</b>`
-    : `❌ <b>Wrong.</b> The correct answer was: <b>${escapeHtml(correctTerm)}</b>`;
-
-  message += `\n\nScore: ${currentScore}/${totalQuestions}`;
-  return message;
 }
 
 export function formatReviewSummary(

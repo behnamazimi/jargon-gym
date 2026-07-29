@@ -2,7 +2,11 @@
 
 import { AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { generateQuizAction, submitQuizResultsAction } from "@/app/(private)/jargon/quiz/actions";
+import {
+  generateQuizAction,
+  recordQuizAnswerAction,
+  submitQuizResultsAction,
+} from "@/app/(private)/jargon/quiz/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
 import { QuizProgress } from "@/components/jargon/quiz/quiz-progress";
@@ -207,6 +211,11 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
 
   async function handleQuestionAnswer(passed: boolean) {
     const question = questions[currentIndex];
+
+    if (!passed) {
+      await recordQuizAnswerAction({ termId: question.termId, passed: false });
+    }
+
     const nextAnswers = [...answers, { termId: question.termId, passed }];
     setAnswers(nextAnswers);
 

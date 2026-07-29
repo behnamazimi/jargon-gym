@@ -5,21 +5,20 @@ export const WELCOME_MESSAGE =
   "You're connected to Jargon Gym. Use /next anytime for a term to review. Scheduled reminders follow your cadence setting in the app.";
 
 export const HELP_MESSAGE =
-  "Commands:\n/next — send a random term to review\n/quiz [known|unknown] [n] — start a quiz session\n/stat — show your collection statistics";
+  "Commands:\n/next — send a random term to review\n/quiz — start a quiz (guided setup)\n/stat — show your collection statistics";
 
 export const CAUGHT_UP_MESSAGE =
   "You're all caught up — no unknown terms left in your active review domains. Import more or turn domains back on in the app.";
 
 export const MARKED_KNOWN_SUFFIX = "\n\n✓ Marked as known";
 
-// Telegram quiz session messages
 export const QUIZ_HELP_MESSAGE =
-  "Usage: /quiz [known|unknown] [n]\n\n" +
+  "Usage: /quiz [known|unknown] [all|<collection>] [count|all]\n\n" +
   "Examples:\n" +
-  "/quiz — 5 unknown terms (default)\n" +
-  "/quiz known — 5 known terms\n" +
-  "/quiz unknown 10 — 10 unknown terms\n" +
-  "/quiz known all — all known terms";
+  "/quiz — guided setup\n" +
+  "/quiz unknown — pick collection and count\n" +
+  "/quiz known all 10 — 10 known terms from all collections\n" +
+  "/quiz unknown all — choose how many unknown terms";
 
 export const NO_UNKNOWN_TERMS_MESSAGE =
   "You have no unknown terms in your review pool. Try /quiz known to quiz yourself on terms you've already learned!";

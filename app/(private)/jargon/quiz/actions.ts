@@ -128,6 +128,29 @@ export async function generateQuizAction(input: {
   }
 }
 
+export async function recordQuizAnswerAction(input: {
+  termId: string;
+  passed: boolean;
+}): Promise<{ error?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to take a quiz." };
+  }
+
+  if (input.passed) {
+    return {};
+  }
+
+  try {
+    await clearTermKnown(auth.supabase, auth.user.id, input.termId);
+    revalidatePath("/jargon");
+    return {};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't update term progress.";
+    return { error: message };
+  }
+}
+
 export async function submitQuizResultsAction(input: {
   status: QuizTermStatus;
   answers: QuizAnswer[];
@@ -139,22 +162,24 @@ export async function submitQuizResultsAction(input: {
 
   try {
     const settings = await getUserLlmSettings(auth.supabase, auth.user.id);
-    const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
     const markKnownOnPass = settings?.markKnownOnPass ?? false;
 
-    const flippedTermIds: string[] = [];
+    const flippedTermIdSet = new Set<string>();
 
     for (const answer of input.answers) {
-      if (input.status === "known" && !answer.passed && markUnknownOnFail) {
+      if (!answer.passed) {
         await clearTermKnown(auth.supabase, auth.user.id, answer.termId);
-        flippedTermIds.push(answer.termId);
+        flippedTermIdSet.add(answer.termId);
+        continue;
       }
 
-      if (input.status === "unknown" && answer.passed && markKnownOnPass) {
+      if (input.status === "unknown" && markKnownOnPass) {
         await markTermKnown(auth.supabase, answer.termId);
-        flippedTermIds.push(answer.termId);
+        flippedTermIdSet.add(answer.termId);
       }
     }
+
+    const flippedTermIds = [...flippedTermIdSet];
 
     let flippedTerms: { id: string; term: string }[] = [];
 

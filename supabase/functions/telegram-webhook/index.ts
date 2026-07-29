@@ -4,6 +4,7 @@ import {
   MARKED_KNOWN_SUFFIX,
   WELCOME_MESSAGE,
 } from "../_shared/constants.ts";
+import { dismissInlineKeyboard } from "../_shared/inline-keyboard-tracker.ts";
 import { getWebhookSecret } from "../_shared/env.ts";
 import { createServiceClient } from "../_shared/supabase-admin.ts";
 import {
@@ -22,10 +23,10 @@ import {
   sendTermOrCaughtUp,
 } from "../_shared/term-service.ts";
 import {
+  handleQuizCommand,
+  handleQuizSetupCallback,
+  handleQuizSetupText,
   handleReviewAnswer,
-  parseReviewCommand,
-  resolveReviewCount,
-  startReviewSession,
 } from "../_shared/review-service.ts";
 
 type TelegramUpdate = {
@@ -131,19 +132,7 @@ async function handleQuiz(chatId: number, text: string) {
     return;
   }
 
-  // Parse command parameters
-  const { status, count, error } = parseReviewCommand(text);
-
-  if (error) {
-    await sendMessage(chatId, error);
-    return;
-  }
-
-  // Resolve "all" to actual count
-  const actualCount = await resolveReviewCount(supabase, userId, status, count);
-
-  // Start the quiz session
-  await startReviewSession(supabase, chatId, userId, status, actualCount);
+  await handleQuizCommand(supabase, chatId, userId, text);
 }
 
 async function handleCallback(callback: NonNullable<TelegramUpdate["callback_query"]>) {
@@ -157,11 +146,21 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
   }
 
   const supabase = createServiceClient();
+
+  await dismissInlineKeyboard(supabase, chatId, messageId);
+
   const userId = await resolveUserIdByChatId(supabase, chatId);
 
   if (!userId) {
     await answerCallbackQuery(callback.id, "Connect in Jargon Gym settings first.");
     await sendMessage(chatId, CONNECT_MESSAGE);
+    return;
+  }
+
+  // Handle quiz setup wizard callbacks
+  if (data.startsWith("quizsetup:")) {
+    await answerCallbackQuery(callback.id);
+    await handleQuizSetupCallback(supabase, chatId, userId, data);
     return;
   }
 
@@ -195,7 +194,7 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
       ? `${formatMaskedTermMessage(term)}${MARKED_KNOWN_SUFFIX}`
       : `${callback.message?.text ?? ""}${MARKED_KNOWN_SUFFIX}`;
 
-    await editMessageText(chatId, messageId, updatedText, { inline_keyboard: [] });
+    await editMessageText(chatId, messageId, updatedText, { inline_keyboard: [] }, supabase);
     await answerCallbackQuery(callback.id, "Marked as known.");
     return;
   }
@@ -250,7 +249,10 @@ Deno.serve(async (request) => {
       const supabase = createServiceClient();
       const userId = await resolveUserIdByChatId(supabase, chatId);
       if (userId) {
-        await sendMessage(chatId, HELP_MESSAGE);
+        const handledSetup = await handleQuizSetupText(supabase, chatId, userId, text);
+        if (!handledSetup) {
+          await sendMessage(chatId, HELP_MESSAGE);
+        }
       } else {
         await sendMessage(chatId, CONNECT_MESSAGE);
       }

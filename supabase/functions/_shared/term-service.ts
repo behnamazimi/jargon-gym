@@ -96,7 +96,7 @@ export async function sendTermCard(supabase: SupabaseClient, userId: string, cha
     return { kind: "caught_up" as const };
   }
 
-  await sendMessage(chatId, formatTermMessage(term), buildInlineKeyboard(term));
+  await sendMessage(chatId, formatTermMessage(term), buildInlineKeyboard(term), supabase);
   return { kind: "term" as const, term };
 }
 
