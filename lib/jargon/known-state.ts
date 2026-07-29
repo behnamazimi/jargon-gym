@@ -85,3 +85,25 @@ export async function resolveReviewDomainIdsForUser(client: Client, userId: stri
 
   return { reviewDomainIds, collectionRows };
 }
+
+export async function resetDomainProgress(client: Client, userId: string, domainId: string) {
+  // Get all term IDs for this domain
+  const { data: terms, error: termsError } = await client
+    .from("terms")
+    .select("id")
+    .eq("domain_id", domainId);
+
+  if (termsError) throw termsError;
+  if (terms.length === 0) return;
+
+  const termIds = terms.map((t) => t.id);
+
+  // Delete all user_progress rows for these terms
+  const { error } = await client
+    .from("user_progress")
+    .delete()
+    .eq("user_id", userId)
+    .in("term_id", termIds);
+
+  if (error) throw error;
+}

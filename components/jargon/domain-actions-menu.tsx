@@ -8,6 +8,7 @@ import {
   Link2,
   Lock,
   Pencil,
+  RotateCcw,
   Settings,
   Pause,
   Play,
@@ -61,6 +62,7 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [shareConfirmOpen, setShareConfirmOpen] = useState(false);
   const [unshareConfirmOpen, setUnshareConfirmOpen] = useState(false);
+  const [resetProgressOpen, setResetProgressOpen] = useState(false);
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
   const [subscriberCountLoading, setSubscriberCountLoading] = useState(false);
   const [subscriberCountError, setSubscriberCountError] = useState<string | null>(null);
@@ -73,6 +75,7 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
     unshareDomain,
     deleteOwnedDomain,
     removeFromCollection,
+    resetProgress,
   } = useCollectionActions();
 
   const disabled = isBusy && busyId === domain.id;
@@ -90,6 +93,11 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
   function handleConfirmUnshare() {
     unshareDomain(domain.id);
     setUnshareConfirmOpen(false);
+  }
+
+  function handleConfirmResetProgress() {
+    resetProgress(domain.id);
+    setResetProgressOpen(false);
   }
 
   useEffect(() => {
@@ -145,6 +153,15 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
               <Play className="h-4 w-4" />
             )}
             {domain.isActiveForReview ? "Pause review" : "Resume review"}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            variant="destructive"
+            isDisabled={disabled || domain.knownCount === 0}
+            onAction={() => setResetProgressOpen(true)}
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset progress
           </DropdownMenuItem>
 
           {domain.source === "owned" ? (
@@ -252,6 +269,23 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onPress={handleConfirmDelete}>
             Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialog>
+
+      <AlertDialog isOpen={resetProgressOpen} onOpenChange={setResetProgressOpen}>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Reset progress?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Reset all progress for &ldquo;{domain.name}&rdquo;? This will mark all{" "}
+            {domain.knownCount} {domain.knownCount === 1 ? "term" : "terms"} as unknown. This
+            can&apos;t be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction variant="destructive" onPress={handleConfirmResetProgress}>
+            Reset progress
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialog>

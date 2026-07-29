@@ -173,3 +173,104 @@ export async function resolveUserIdByChatId(
   if (error) throw error;
   return data?.user_id ?? null;
 }
+
+export type CollectionStats = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  knownCount: number;
+  totalCount: number;
+  percentage: number;
+};
+
+export async function fetchCollectionStats(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<CollectionStats[]> {
+  // Get all review domains for the user
+  const { data: domainIds, error: domainError } = await supabase.rpc("telegram_review_domain_ids", {
+    p_user_id: userId,
+  });
+
+  if (domainError) throw domainError;
+
+  const ids = (domainIds as string[]) ?? [];
+  if (ids.length === 0) return [];
+
+  // Get all active domain IDs
+  const { data: activeDomains, error: activeError } = await supabase
+    .from("user_active_domains")
+    .select("domain_id")
+    .eq("user_id", userId);
+
+  if (activeError) throw activeError;
+
+  const activeSet = new Set((activeDomains ?? []).map((d: { domain_id: string }) => d.domain_id));
+
+  // Fetch domain names and term counts
+  const { data: domains, error: domainsError } = await supabase
+    .from("domains")
+    .select("id, name")
+    .in("id", ids);
+
+  if (domainsError) throw domainsError;
+
+  // Get term counts per domain
+  const { data: termCounts, error: termsError } = await supabase
+    .from("terms")
+    .select("domain_id")
+    .in("domain_id", ids);
+
+  if (termsError) throw termsError;
+
+  // Get known term counts per domain
+  const { data: knownTerms, error: knownError } = await supabase
+    .from("user_progress")
+    .select("term_id, terms!inner(domain_id)")
+    .eq("user_id", userId)
+    .eq("is_known", true)
+    .in("terms.domain_id", ids);
+
+  if (knownError) throw knownError;
+
+  // Count terms per domain
+  const termCountMap = new Map<string, number>();
+  (termCounts ?? []).forEach((term: { domain_id: string }) => {
+    const count = termCountMap.get(term.domain_id) ?? 0;
+    termCountMap.set(term.domain_id, count + 1);
+  });
+
+  // Count known terms per domain
+  const knownCountMap = new Map<string, number>();
+  (knownTerms ?? []).forEach((row: { terms: { domain_id: string } }) => {
+    const domainId = (row.terms as unknown as { domain_id: string }).domain_id;
+    const count = knownCountMap.get(domainId) ?? 0;
+    knownCountMap.set(domainId, count + 1);
+  });
+
+  // Build stats array
+  const stats: CollectionStats[] = (domains ?? []).map((domain: { id: string; name: string }) => {
+    const totalCount = termCountMap.get(domain.id) ?? 0;
+    const knownCount = knownCountMap.get(domain.id) ?? 0;
+    const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
+
+    return {
+      id: domain.id,
+      name: domain.name,
+      isActive: activeSet.has(domain.id),
+      knownCount,
+      totalCount,
+      percentage,
+    };
+  });
+
+  // Sort: active first, then by name
+  stats.sort((a, b) => {
+    if (a.isActive !== b.isActive) {
+      return a.isActive ? -1 : 1;
+    }
+    return a.name.localeCompare(b.name);
+  });
+
+  return stats;
+}

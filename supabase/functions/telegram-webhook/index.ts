@@ -10,10 +10,12 @@ import {
   answerCallbackQuery,
   editMessageText,
   formatMaskedTermMessage,
+  formatStatsMessage,
   sendMessage,
 } from "../_shared/telegram-api.ts";
 import { hashLinkToken } from "../_shared/token.ts";
 import {
+  fetchCollectionStats,
   fetchTermById,
   resolveUserIdByChatId,
   sendTermCard,
@@ -48,6 +50,10 @@ function parseStartToken(text: string): string | null {
 
 function isNextCommand(text: string): boolean {
   return /^\/next(?:@\w+)?$/i.test(text.trim());
+}
+
+function isStatCommand(text: string): boolean {
+  return /^\/stat(?:s)?(?:@\w+)?$/i.test(text.trim());
 }
 
 async function handleStart(chatId: number, token: string | null) {
@@ -90,6 +96,20 @@ async function handleNext(chatId: number) {
   }
 
   await sendTermOrCaughtUp(supabase, userId, chatId);
+}
+
+async function handleStat(chatId: number) {
+  const supabase = createServiceClient();
+  const userId = await resolveUserIdByChatId(supabase, chatId);
+
+  if (!userId) {
+    await sendMessage(chatId, CONNECT_MESSAGE);
+    return;
+  }
+
+  const stats = await fetchCollectionStats(supabase, userId);
+  const message = formatStatsMessage(stats);
+  await sendMessage(chatId, message);
 }
 
 async function handleCallback(callback: NonNullable<TelegramUpdate["callback_query"]>) {
@@ -175,6 +195,8 @@ Deno.serve(async (request) => {
       await handleStart(chatId, parseStartToken(text));
     } else if (isNextCommand(text)) {
       await handleNext(chatId);
+    } else if (isStatCommand(text)) {
+      await handleStat(chatId);
     } else {
       const supabase = createServiceClient();
       const userId = await resolveUserIdByChatId(supabase, chatId);

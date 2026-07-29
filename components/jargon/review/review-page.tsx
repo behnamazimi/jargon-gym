@@ -73,6 +73,8 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const [status, setStatus] = useState<QuizTermStatus>("unknown");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>("all");
   const [cardCount, setCardCount] = useState(DEFAULT_CARD_COUNT);
+  const [cardCountInput, setCardCountInput] = useState(String(DEFAULT_CARD_COUNT));
+  const [cardCountError, setCardCountError] = useState<string | null>(null);
   const [shuffle, setShuffle] = useState(true);
   const [cards, setCards] = useState<ReviewTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -104,7 +106,10 @@ export function ReviewPage({ collections }: ReviewPageProps) {
         Math.max(DEFAULT_CARD_COUNT, 1),
         getMaxReviewCardCount(availableTermCount),
       );
-      return Math.min(current, next) || next;
+      const newCount = Math.min(current, next) || next;
+      setCardCountInput(String(newCount));
+      setCardCountError(null);
+      return newCount;
     });
   }, [availableTermCount, status, selectedCollectionId]);
 
@@ -419,24 +424,40 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   <FieldLabel htmlFor="review-card-count">Cards in this session</FieldLabel>
                   <Input
                     id="review-card-count"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min={1}
-                    max={maxCardCount}
-                    value={String(cardCount)}
+                    value={cardCountInput}
                     onChange={(event) => {
-                      const parsed = Number.parseInt(event.target.value, 10);
-                      if (Number.isNaN(parsed)) return;
-                      setCardCount(Math.min(Math.max(1, parsed), maxCardCount || 1));
+                      const value = event.target.value;
+                      setCardCountInput(value);
+
+                      if (value === "") {
+                        setCardCountError(null);
+                        return;
+                      }
+
+                      const parsed = Number.parseInt(value, 10);
+                      if (Number.isNaN(parsed) || parsed < 1 || parsed > maxCardCount) {
+                        setCardCountError(`Please enter a number between 1 and ${maxCardCount}`);
+                      } else {
+                        setCardCount(parsed);
+                        setCardCountError(null);
+                      }
                     }}
                     disabled={availableTermCount === 0}
                     className="max-w-[8rem] tabular-nums"
                   />
                   <FieldDescription>
-                    Choose 1–{maxCardCount || 1}
-                    {availableTermCount > MAX_REVIEW_TERMS
-                      ? ` (${MAX_REVIEW_TERMS} max per session).`
-                      : "."}
+                    {cardCountError ? (
+                      <span className="text-error">{cardCountError}</span>
+                    ) : (
+                      <>
+                        Choose 1–{maxCardCount || 1}
+                        {availableTermCount > MAX_REVIEW_TERMS
+                          ? ` (${MAX_REVIEW_TERMS} max per session).`
+                          : "."}
+                      </>
+                    )}
                   </FieldDescription>
                 </Field>
 
@@ -477,7 +498,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   <Button
                     type="button"
                     onPress={handleStartReview}
-                    isDisabled={availableTermCount === 0 || isStarting}
+                    isDisabled={availableTermCount === 0 || isStarting || cardCountError !== null}
                     className="w-full max-w-md"
                   >
                     {isStarting ? "Starting…" : "Start review"}

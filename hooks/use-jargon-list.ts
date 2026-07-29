@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { setTermKnown } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
 import type { JargonPageData, SortMode } from "@/lib/jargon/types";
@@ -16,6 +16,11 @@ export function useJargonList(initialData: JargonPageData) {
   const [knownTerms, setKnownTerms] = useState<Set<string>>(
     () => new Set(initialData.knownTermIds),
   );
+
+  // Sync knownTerms when initialData changes (e.g., after router.refresh())
+  useEffect(() => {
+    setKnownTerms(new Set(initialData.knownTermIds));
+  }, [initialData.knownTermIds]);
 
   const categories = useMemo(() => getCategories(terms), [terms]);
   const categoryCounts = useMemo(() => getCategoryCounts(terms), [terms]);

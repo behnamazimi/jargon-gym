@@ -12,7 +12,7 @@ import {
   updateOwnedDomain as updateOwnedDomainRecord,
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
-import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
+import { clearTermKnown, markTermKnown, resetDomainProgress } from "@/lib/jargon/known-state";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
@@ -276,6 +276,20 @@ export async function deleteOwnedDomain(domainId: string): Promise<{ error?: str
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Couldn't delete that collection. Try again.";
+    return { error: message };
+  }
+}
+
+export async function resetCollectionProgress(domainId: string): Promise<{ error?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await resetDomainProgress(auth.supabase, auth.user.id, domainId);
+    revalidatePath("/jargon");
+    return {};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't reset progress. Try again.";
     return { error: message };
   }
 }

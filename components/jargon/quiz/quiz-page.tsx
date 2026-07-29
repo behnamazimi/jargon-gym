@@ -36,6 +36,12 @@ import type {
   QuizTerm,
   QuizTermStatus,
 } from "@/lib/quiz/types";
+import {
+  clearQuizSession,
+  loadQuizSession,
+  saveQuizSession,
+  type QuizSessionState,
+} from "@/lib/quiz/session-storage";
 
 type QuizStep = "picker" | "generating" | "playing" | "results" | "error";
 
@@ -67,10 +73,14 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   const [flippedTerms, setFlippedTerms] = useState<{ id: string; term: string }[]>([]);
   const [resultsScore, setResultsScore] = useState<{ score: number; total: number } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activeProviderLabel, setActiveProviderLabel] = useState(providerLabel);
   const [questionCount, setQuestionCount] = useState(1);
+  const [questionCountInput, setQuestionCountInput] = useState("1");
+  const [questionCountError, setQuestionCountError] = useState<string | null>(null);
+  const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
+  const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
 
-  const domainIds = selectedCollectionId === "all" ? "all" : [selectedCollectionId];
+  const domainIds: "all" | string[] =
+    selectedCollectionId === "all" ? "all" : [selectedCollectionId];
 
   const availableTermCount = useMemo(
     () => countTermsForSelection(collections, domainIds, status),
@@ -80,15 +90,67 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   const maxQuestionCount = getMaxQuizQuestionCount(availableTermCount);
 
   useEffect(() => {
+    setSavedSession(loadQuizSession());
+  }, []);
+
+  useEffect(() => {
     if (availableTermCount === 0) return;
-    setQuestionCount(getMaxQuizQuestionCount(availableTermCount));
+    const newMax = getMaxQuizQuestionCount(availableTermCount);
+    setQuestionCount(newMax);
+    setQuestionCountInput(String(newMax));
+    setQuestionCountError(null);
   }, [availableTermCount, status, selectedCollectionId]);
+
+  useEffect(() => {
+    if (step !== "playing" || questions.length === 0) return;
+
+    const currentSetup = {
+      domainIds,
+      status,
+      questionCount: questions.length,
+    };
+
+    saveQuizSession({
+      setup: currentSetup,
+      questions,
+      terms,
+      currentIndex,
+      answers,
+      startedAt: sessionStartedAt,
+    });
+  }, [step, questions, terms, currentIndex, answers, domainIds, status, sessionStartedAt]);
 
   const termById = useMemo(() => new Map(terms.map((term) => [term.id, term])), [terms]);
 
   const correctSoFar = answers.filter((answer) => answer.passed).length;
 
+  function handleResumeSession() {
+    if (!savedSession) return;
+
+    setStatus(savedSession.setup.status);
+    setSelectedCollectionId(
+      savedSession.setup.domainIds === "all" ? "all" : savedSession.setup.domainIds[0],
+    );
+    setQuestionCount(savedSession.setup.questionCount);
+    setQuestionCountInput(String(savedSession.setup.questionCount));
+    setQuestions(savedSession.questions);
+    setTerms(savedSession.terms);
+    setCurrentIndex(savedSession.currentIndex);
+    setAnswers(savedSession.answers);
+    setSessionStartedAt(savedSession.startedAt);
+    setErrorMessage(null);
+    setSavedSession(null);
+    setStep("playing");
+  }
+
+  function handleDiscardSession() {
+    clearQuizSession();
+    setSavedSession(null);
+  }
+
   function resetQuizState() {
+    clearQuizSession();
+    setSavedSession(null);
     setQuestions([]);
     setTerms([]);
     setCurrentIndex(0);
@@ -97,11 +159,15 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     setResultsScore(null);
     setErrorMessage(null);
     setStep("picker");
+    setSessionStartedAt(new Date().toISOString());
   }
 
   async function handleStartQuiz() {
+    clearQuizSession();
+    setSavedSession(null);
     setErrorMessage(null);
     setStep("generating");
+    setSessionStartedAt(new Date().toISOString());
 
     const result = await generateQuizAction({ domainIds, status, questionCount });
 
@@ -113,7 +179,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
 
     setQuestions(result.questions);
     setTerms(result.terms);
-    setActiveProviderLabel(result.providerLabel);
     setCurrentIndex(0);
     setAnswers([]);
     setStep("playing");
@@ -142,6 +207,8 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
       score: nextAnswers.filter((answer) => answer.passed).length,
       total: questions.length,
     });
+    clearQuizSession();
+    setSavedSession(null);
     setStep("results");
   }
 
@@ -186,6 +253,31 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                 description="Pick what to study and which collection to pull from."
               />
               <QuizPanelBody>
+                {savedSession ? (
+                  <Alert>
+                    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <span>
+                        You have a quiz in progress — question{" "}
+                        <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
+                        <span className="tabular-nums">{savedSession.questions.length}</span>.
+                      </span>
+                      <span className="flex flex-wrap gap-2">
+                        <Button type="button" size="sm" onPress={handleResumeSession}>
+                          Resume
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onPress={handleDiscardSession}
+                        >
+                          Start new
+                        </Button>
+                      </span>
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+
                 <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
                   <legend className="text-sm font-medium leading-none mb-2">What to quiz</legend>
                   <div className="flex flex-col gap-3">
@@ -243,24 +335,42 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                   <FieldLabel htmlFor="quiz-question-count">Questions in this quiz</FieldLabel>
                   <Input
                     id="quiz-question-count"
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min={1}
-                    max={maxQuestionCount}
-                    value={String(questionCount)}
+                    value={questionCountInput}
                     onChange={(event) => {
-                      const parsed = Number.parseInt(event.target.value, 10);
-                      if (Number.isNaN(parsed)) return;
-                      setQuestionCount(Math.min(Math.max(1, parsed), maxQuestionCount));
+                      const value = event.target.value;
+                      setQuestionCountInput(value);
+
+                      if (value === "") {
+                        setQuestionCountError(null);
+                        return;
+                      }
+
+                      const parsed = Number.parseInt(value, 10);
+                      if (Number.isNaN(parsed) || parsed < 1 || parsed > maxQuestionCount) {
+                        setQuestionCountError(
+                          `Please enter a number between 1 and ${maxQuestionCount}`,
+                        );
+                      } else {
+                        setQuestionCount(parsed);
+                        setQuestionCountError(null);
+                      }
                     }}
                     disabled={availableTermCount === 0}
                     className="max-w-[8rem] tabular-nums"
                   />
                   <FieldDescription>
-                    Choose 1–{maxQuestionCount || 1}
-                    {availableTermCount > MAX_QUIZ_TERMS
-                      ? ` (${MAX_QUIZ_TERMS} max per quiz).`
-                      : "."}
+                    {questionCountError ? (
+                      <span className="text-error">{questionCountError}</span>
+                    ) : (
+                      <>
+                        Choose 1–{maxQuestionCount || 1}
+                        {availableTermCount > MAX_QUIZ_TERMS
+                          ? ` (${MAX_QUIZ_TERMS} max per quiz).`
+                          : "."}
+                      </>
+                    )}
                   </FieldDescription>
                 </Field>
 
@@ -278,7 +388,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                   <Button
                     type="button"
                     onPress={handleStartQuiz}
-                    isDisabled={availableTermCount === 0}
+                    isDisabled={availableTermCount === 0 || questionCountError !== null}
                     className="w-full max-w-md"
                   >
                     Start quiz

@@ -192,3 +192,50 @@ export async function editMessageText(
     reply_markup: replyMarkup,
   });
 }
+
+export type CollectionStatsRow = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  knownCount: number;
+  totalCount: number;
+  percentage: number;
+};
+
+function formatProgressBar(percentage: number, width: number = 10): string {
+  const filled = Math.round((percentage / 100) * width);
+  const empty = width - filled;
+  return "█".repeat(filled) + "░".repeat(empty);
+}
+
+export function formatStatsMessage(stats: CollectionStatsRow[]): string {
+  if (stats.length === 0) {
+    return "You have no collections in your review pool. Add some in the app!";
+  }
+
+  const activeCollections = stats.filter((s) => s.isActive);
+  const pausedCollections = stats.filter((s) => !s.isActive);
+
+  let message = `<b>📊 Your Collection Stats</b>\n\n`;
+  message += `<b>Total collections:</b> ${stats.length}\n`;
+  message += `<b>Active:</b> ${activeCollections.length} · <b>Paused:</b> ${pausedCollections.length}\n`;
+
+  if (activeCollections.length > 0) {
+    message += `\n<b>🟢 Active Collections</b>\n`;
+    for (const collection of activeCollections) {
+      const bar = formatProgressBar(collection.percentage);
+      message += `\n<b>${escapeHtml(collection.name)}</b>\n`;
+      message += `${bar} ${collection.knownCount}/${collection.totalCount} · ${collection.percentage}%\n`;
+    }
+  }
+
+  if (pausedCollections.length > 0) {
+    message += `\n<b>⏸️ Paused Collections</b>\n`;
+    for (const collection of pausedCollections) {
+      message += `\n<b>${escapeHtml(collection.name)}</b>\n`;
+      message += `${collection.knownCount}/${collection.totalCount} known · ${collection.percentage}%\n`;
+    }
+  }
+
+  return message;
+}

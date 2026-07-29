@@ -6,6 +6,7 @@ import {
   addToCollection,
   deleteOwnedDomain,
   removeFromCollection,
+  resetCollectionProgress,
   shareDomain,
   toggleActiveForReview,
   updateOwnedDomain,
@@ -59,5 +60,7 @@ export function useCollectionActions() {
       run(() => removeFromCollection(domainId), { busyKey: domainId, onSuccess }),
     addToCollection: (domainId: string) =>
       run(() => addToCollection(domainId), { busyKey: domainId }),
+    resetProgress: (domainId: string, onSuccess?: () => void) =>
+      run(() => resetCollectionProgress(domainId), { busyKey: domainId, onSuccess }),
   };
 }
