@@ -25,10 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LLM_PROVIDER_OPTIONS, type LlmProvider, type UserLlmSettings } from "@/lib/llm/types";
+import { LLM_PROVIDER_OPTIONS, type LlmProvider, type UserSettings } from "@/lib/llm/types";
 
 type LlmPanelProps = {
-  initialSettings: UserLlmSettings | null;
+  initialSettings: UserSettings | null;
 };
 
 export function LlmPanel({ initialSettings }: LlmPanelProps) {

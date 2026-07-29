@@ -38,14 +38,23 @@ async function getLastKeyboardMessageId(
   supabase: SupabaseClient,
   chatId: number,
 ): Promise<number | null> {
-  const { data, error } = await supabase
-    .from("telegram_links")
-    .select("last_keyboard_message_id")
-    .eq("chat_id", chatId)
-    .maybeSingle();
+  try {
+    const { data, error } = await supabase
+      .from("telegram_links")
+      .select("last_keyboard_message_id")
+      .eq("chat_id", chatId)
+      .maybeSingle();
 
-  if (error) throw error;
-  return data?.last_keyboard_message_id ?? null;
+    if (error) {
+      console.error("Failed to read last keyboard message id:", error);
+      return null;
+    }
+
+    return data?.last_keyboard_message_id ?? null;
+  } catch (error) {
+    console.error("Failed to read last keyboard message id:", error);
+    return null;
+  }
 }
 
 async function setLastKeyboardMessageId(
@@ -53,15 +62,21 @@ async function setLastKeyboardMessageId(
   chatId: number,
   messageId: number | null,
 ): Promise<void> {
-  const { error } = await supabase
-    .from("telegram_links")
-    .update({
-      last_keyboard_message_id: messageId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("chat_id", chatId);
+  try {
+    const { error } = await supabase
+      .from("telegram_links")
+      .update({
+        last_keyboard_message_id: messageId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("chat_id", chatId);
 
-  if (error) throw error;
+    if (error) {
+      console.error("Failed to store last keyboard message id:", error);
+    }
+  } catch (error) {
+    console.error("Failed to store last keyboard message id:", error);
+  }
 }
 
 /** Remove the previously tracked inline keyboard in this chat, if any. */

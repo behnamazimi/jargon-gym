@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
-import { getDecryptedApiKey, getUserLlmSettings } from "@/lib/llm/settings";
+import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
 import { LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
@@ -37,7 +37,7 @@ export async function getQuizSetupData() {
   }
 
   const [settings, collections] = await Promise.all([
-    getUserLlmSettings(auth.supabase, auth.user.id),
+    getUserSettings(auth.supabase, auth.user.id),
     listQuizableCollections(auth.supabase, auth.user.id),
   ]);
 
@@ -142,6 +142,13 @@ export async function recordQuizAnswerAction(input: {
   }
 
   try {
+    const settings = await getUserSettings(auth.supabase, auth.user.id);
+    const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
+
+    if (!markUnknownOnFail) {
+      return {};
+    }
+
     await clearTermKnown(auth.supabase, auth.user.id, input.termId);
     revalidatePath("/jargon");
     return {};
@@ -161,15 +168,18 @@ export async function submitQuizResultsAction(input: {
   }
 
   try {
-    const settings = await getUserLlmSettings(auth.supabase, auth.user.id);
+    const settings = await getUserSettings(auth.supabase, auth.user.id);
+    const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
     const markKnownOnPass = settings?.markKnownOnPass ?? false;
 
     const flippedTermIdSet = new Set<string>();
 
     for (const answer of input.answers) {
       if (!answer.passed) {
-        await clearTermKnown(auth.supabase, auth.user.id, answer.termId);
-        flippedTermIdSet.add(answer.termId);
+        if (markUnknownOnFail) {
+          await clearTermKnown(auth.supabase, auth.user.id, answer.termId);
+          flippedTermIdSet.add(answer.termId);
+        }
         continue;
       }
 

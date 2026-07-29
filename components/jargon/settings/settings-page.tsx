@@ -7,20 +7,20 @@ import { LlmPanel } from "@/components/jargon/settings/llm-panel";
 import { SettingsCard } from "@/components/jargon/settings/ui";
 import { TelegramPanel } from "@/components/jargon/settings/telegram-panel";
 import { WidgetPanel } from "@/components/jargon/settings/widget-panel";
-import type { UserLlmSettings } from "@/lib/llm/types";
+import type { UserSettings } from "@/lib/llm/types";
 import type { TelegramLinkStatus } from "@/lib/telegram/types";
 import type { WidgetTokenRow } from "@/lib/widget/types";
 
 type SettingsPageProps = {
   initialTokens: WidgetTokenRow[];
   initialTelegramStatus: TelegramLinkStatus;
-  initialLlmSettings: UserLlmSettings | null;
+  initialUserSettings: UserSettings | null;
 };
 
 export function SettingsPage({
   initialTokens,
   initialTelegramStatus,
-  initialLlmSettings,
+  initialUserSettings,
 }: SettingsPageProps) {
   return (
     <PageShell innerClassName="space-y-8">
@@ -36,7 +36,7 @@ export function SettingsPage({
           title="Quiz"
           description="Connect an LLM provider to generate quizzes from your collections."
         >
-          <LlmPanel initialSettings={initialLlmSettings} />
+          <LlmPanel initialSettings={initialUserSettings} />
         </SettingsCard>
 
         <SettingsCard

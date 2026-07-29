@@ -267,3 +267,18 @@ export async function clearTermKnown(
     console.error("Error clearing term known status:", error);
   }
 }
+
+export async function markTermKnown(
+  supabase: SupabaseClient,
+  userId: string,
+  termId: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("mark_term_known", {
+    p_user_id: userId,
+    p_term_id: termId,
+  });
+
+  if (error) {
+    console.error("Error marking term known:", error);
+  }
+}

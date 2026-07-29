@@ -327,7 +327,7 @@ export type Database = {
           },
         ];
       };
-      user_llm_settings: {
+      user_settings: {
         Row: {
           api_key_encrypted: string;
           api_key_last4: string;

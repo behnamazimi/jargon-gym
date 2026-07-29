@@ -1,5 +1,5 @@
 import { SettingsPage } from "@/components/jargon/settings/settings-page";
-import { getUserLlmSettings } from "@/lib/llm/settings";
+import { getUserSettings } from "@/lib/llm/settings";
 import { getTelegramLinkStatus } from "@/lib/telegram/links";
 import { createClient } from "@/lib/supabase/server";
 import { listWidgetTokens } from "@/lib/widget/tokens";
@@ -18,17 +18,17 @@ export default async function JargonSettingsPage() {
     );
   }
 
-  const [tokens, telegramStatus, llmSettings] = await Promise.all([
+  const [tokens, telegramStatus, userSettings] = await Promise.all([
     listWidgetTokens(supabase, user.id),
     getTelegramLinkStatus(supabase, user.id),
-    getUserLlmSettings(supabase, user.id),
+    getUserSettings(supabase, user.id),
   ]);
 
   return (
     <SettingsPage
       initialTokens={tokens}
       initialTelegramStatus={telegramStatus}
-      initialLlmSettings={llmSettings}
+      initialUserSettings={userSettings}
     />
   );
 }

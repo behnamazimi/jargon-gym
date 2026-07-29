@@ -35,6 +35,7 @@ export async function fetchUnknownTermCount(
 ): Promise<number> {
   const { data, error } = await supabase.rpc("count_unknown_terms", {
     p_user_id: userId,
+    p_domain_ids: null,
   });
 
   if (error) throw error;
@@ -46,7 +47,7 @@ function mapTermRow(row: Record<string, unknown>): TermRow {
     id: String(row.id),
     term: String(row.term),
     category: String(row.category),
-    definition: String(row.definition),
+    definition: row.definition == null ? "" : String(row.definition),
     example: (row.example as string | null) ?? null,
     discussion: (row.discussion as string | null) ?? null,
     controversy: (row.controversy as string | null) ?? null,
@@ -62,8 +63,10 @@ export async function pickRandomUnknownTerm(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<TermRow | null> {
-  const { data, error } = await supabase.rpc("pick_random_unknown_term", {
+  const { data, error } = await supabase.rpc("pick_multiple_unknown_terms", {
     p_user_id: userId,
+    p_limit: 1,
+    p_domain_ids: null,
   });
 
   if (error) throw error;

@@ -1,6 +1,6 @@
 export type LlmProvider = "google" | "anthropic";
 
-export type UserLlmSettings = {
+export type UserSettings = {
   provider: LlmProvider;
   apiKeyLast4: string;
   markUnknownOnFail: boolean;

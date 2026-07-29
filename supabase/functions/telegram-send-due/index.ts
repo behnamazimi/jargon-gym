@@ -1,4 +1,5 @@
 import { getCronSecret } from "../_shared/env.ts";
+import { runWithTyping } from "../_shared/telegram-api.ts";
 import { createServiceClient } from "../_shared/supabase-admin.ts";
 import { sendTermOrCaughtUp } from "../_shared/term-service.ts";
 
@@ -41,12 +42,14 @@ Deno.serve(async (request) => {
         continue;
       }
 
-      const result = await sendTermOrCaughtUp(supabase, userId, chatId, {
-        recordSend: true,
-        skipIfAlreadyCaughtUp: true,
-        allCaughtUpAt: linkRow.all_caught_up_at,
-        persistCaughtUpFlag: true,
-      });
+      const result = await runWithTyping(chatId, () =>
+        sendTermOrCaughtUp(supabase, userId, chatId, {
+          recordSend: true,
+          skipIfAlreadyCaughtUp: true,
+          allCaughtUpAt: linkRow.all_caught_up_at,
+          persistCaughtUpFlag: true,
+        }),
+      );
 
       if (result.kind === "term") sent += 1;
       else if (result.kind === "caught_up") caughtUp += 1;

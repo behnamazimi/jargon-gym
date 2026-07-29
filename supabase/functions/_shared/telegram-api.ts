@@ -69,7 +69,7 @@ function buildTermHeader(term: TermRow): string {
 }
 
 function buildTermDetails(term: TermRow): string {
-  let details = escapeHtml(term.definition.trim());
+  let details = escapeHtml((term.definition ?? "").trim());
 
   details += formatQuotedSection("Example", term.example ?? "");
   details += formatQuotedSection("In practice", term.discussion ?? "");
@@ -132,18 +132,27 @@ export function formatMaskedTermMessage(term: TermRow): string {
 }
 
 export function buildInlineKeyboard(term: TermRow) {
+  const rows: Array<
+    Array<{ text: string; callback_data: string } | { text: string; url: string }>
+  > = [
+    [
+      { text: "Mark known", callback_data: `known:${term.id}` },
+      { text: "Skip", callback_data: `skip:${term.id}` },
+    ],
+  ];
+
   const base = getAppBaseUrl();
   const webUrl = `${base}/jargon?domain=${encodeURIComponent(term.domain_id)}&termId=${encodeURIComponent(term.id)}`;
 
-  return {
-    inline_keyboard: [
-      [
-        { text: "Mark known", callback_data: `known:${term.id}` },
-        { text: "Skip", callback_data: `skip:${term.id}` },
-      ],
-      [{ text: "Open in web", url: webUrl }],
-    ],
-  };
+  try {
+    if (new URL(webUrl).protocol === "https:") {
+      rows.push([{ text: "Open in web", url: webUrl }]);
+    }
+  } catch {
+    // Skip the web button when APP_BASE_URL is missing or invalid for Telegram.
+  }
+
+  return { inline_keyboard: rows };
 }
 
 export async function telegramApi<T>(method: string, body: Record<string, unknown>): Promise<T> {
@@ -161,10 +170,6 @@ export async function telegramApi<T>(method: string, body: Record<string, unknow
 
   return payload.result as T;
 }
-
-type TelegramMessage = {
-  message_id: number;
-};
 
 export async function sendMessage(
   chatId: number,
@@ -193,6 +198,46 @@ export async function answerCallbackQuery(callbackQueryId: string, text?: string
     callback_query_id: callbackQueryId,
     text,
   });
+}
+
+export async function sendTypingAction(chatId: number): Promise<void> {
+  try {
+    await telegramApi("sendChatAction", {
+      chat_id: chatId,
+      action: "typing",
+    });
+  } catch (error) {
+    console.error("Failed to send typing action:", error);
+  }
+}
+
+const TYPING_REFRESH_MS = 4000;
+
+/** Keep the typing indicator on while async bot work runs (refreshes every ~4s). */
+export async function runWithTyping<T>(chatId: number, fn: () => Promise<T>): Promise<T> {
+  await sendTypingAction(chatId);
+
+  const interval = setInterval(() => {
+    sendTypingAction(chatId).catch((error) => {
+      console.error("Failed to refresh typing action:", error);
+    });
+  }, TYPING_REFRESH_MS);
+
+  try {
+    return await fn();
+  } finally {
+    clearInterval(interval);
+  }
+}
+
+function pause(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Show the typing indicator, then wait before sending the next message. */
+export async function pauseWithTyping(chatId: number, ms: number): Promise<void> {
+  await sendTypingAction(chatId);
+  await pause(ms);
 }
 
 export async function editMessageText(
@@ -334,6 +379,25 @@ export function buildQuizCountKeyboard(maxCount: number) {
   return { inline_keyboard: rows };
 }
 
+export function formatQuizSetupStatusPrompt(): string {
+  return "<b>What to quiz?</b>\n\nChoose unknown terms you're learning, or known terms to review.";
+}
+
+export function formatQuizSetupCollectionPrompt(): string {
+  return "<b>Which collection?</b>\n\nNumbers show available terms for your selection.";
+}
+
+export function formatQuizSetupCountPrompt(maxCount: number, defaultCount: number): string {
+  return (
+    `<b>How many questions?</b>\n\n` +
+    `Reply with a number from 1 to ${maxCount}, tap a button, or send nothing for ${defaultCount}.`
+  );
+}
+
+export function formatSetupPromptWithAnswer(prompt: string, choice: string): string {
+  return `${prompt}\n\n<b>Your choice:</b> ${escapeHtml(choice)}`;
+}
+
 // Quiz session message formatting
 
 interface QuizOption {
@@ -360,12 +424,16 @@ export function formatReviewQuestionWithAnswer(
   isCorrect: boolean,
   currentScore: number,
   markedUnknown = false,
+  markedKnown = false,
 ): string {
   let message = formatReviewQuestion(term, questionIndex, totalQuestions);
   message += `\n\n<b>Your answer:</b> ${escapeHtml(selectedTerm)}`;
 
   if (isCorrect) {
     message += `\n\n✅ <b>Correct!</b>`;
+    if (markedKnown) {
+      message += "\n<i>Marked as known.</i>";
+    }
   } else {
     message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeHtml(term.term)}</b>`;
     if (markedUnknown) {

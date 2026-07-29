@@ -9,6 +9,8 @@ export interface QuizSetupState {
   step: QuizSetupStep;
   status?: ReviewStatus;
   domainId?: QuizDomainSelection;
+  /** Message id of the current setup prompt (for editing after text/button replies). */
+  promptMessageId?: number;
   startedAt: number;
 }
 

@@ -4,9 +4,14 @@ import {
   buildQuizCountKeyboard,
   buildQuizStatusKeyboard,
   buildReviewKeyboard,
+  formatQuizSetupCollectionPrompt,
+  formatQuizSetupCountPrompt,
+  formatQuizSetupStatusPrompt,
   formatReviewQuestion,
   formatReviewQuestionWithAnswer,
   formatReviewSummary,
+  formatSetupPromptWithAnswer,
+  pauseWithTyping,
   sendMessage,
   editMessageText,
 } from "./telegram-api.ts";
@@ -31,10 +36,12 @@ import {
   getMaxQuizQuestionCount,
   getSession,
   hasMoreQuestions,
+  markTermKnown,
   updateSession,
   type ReviewStatus,
 } from "./review-session.ts";
 import { selectDistractors } from "./distractor-service.ts";
+import { getUserQuizPreferences } from "./quiz-preferences.ts";
 import { fetchCollectionStats } from "./term-service.ts";
 
 export type ParsedQuizCommand = {
@@ -86,37 +93,47 @@ async function startQuizSetup(
   const startedAt = Date.now();
 
   if (!parsed.status) {
-    await saveQuizSetup(supabase, chatId, { step: "status", startedAt });
-    await sendStatusQuestion(supabase, chatId);
+    const setup = { step: "status" as const, startedAt };
+    await saveQuizSetup(supabase, chatId, setup);
+    await sendStatusQuestion(supabase, chatId, setup);
     return;
   }
 
   if (!parsed.domainId) {
-    await saveQuizSetup(supabase, chatId, {
-      step: "collection",
+    const setup = {
+      step: "collection" as const,
       status: parsed.status,
       startedAt,
-    });
-    await sendCollectionQuestion(supabase, chatId, userId, parsed.status);
+    };
+    await saveQuizSetup(supabase, chatId, setup);
+    await sendCollectionQuestion(supabase, chatId, userId, parsed.status, setup);
     return;
   }
 
-  await saveQuizSetup(supabase, chatId, {
-    step: "count",
+  const setup = {
+    step: "count" as const,
     status: parsed.status,
     domainId: parsed.domainId,
     startedAt,
-  });
-  await sendCountQuestion(supabase, chatId, userId, parsed.status, parsed.domainId);
+  };
+  await saveQuizSetup(supabase, chatId, setup);
+  await sendCountQuestion(supabase, chatId, userId, parsed.status, parsed.domainId, setup);
 }
 
-async function sendStatusQuestion(supabase: SupabaseClient, chatId: number): Promise<void> {
-  await sendMessage(
+async function sendStatusQuestion(
+  supabase: SupabaseClient,
+  chatId: number,
+  setup: Awaited<ReturnType<typeof loadQuizSetup>>,
+): Promise<void> {
+  if (!setup) return;
+
+  const message = await sendMessage(
     chatId,
-    "<b>What to quiz?</b>\n\nChoose unknown terms you're learning, or known terms to review.",
+    formatQuizSetupStatusPrompt(),
     buildQuizStatusKeyboard(),
     supabase,
   );
+  await saveQuizSetup(supabase, chatId, { ...setup, promptMessageId: message.message_id });
 }
 
 async function sendCollectionQuestion(
@@ -124,6 +141,7 @@ async function sendCollectionQuestion(
   chatId: number,
   userId: string,
   status: ReviewStatus,
+  setup: NonNullable<Awaited<ReturnType<typeof loadQuizSetup>>>,
 ): Promise<void> {
   const stats = await fetchCollectionStats(supabase, userId);
   const activeCollections = stats.filter((collection) => collection.isActive);
@@ -146,12 +164,14 @@ async function sendCollectionQuestion(
 
   const allCount = collections.reduce((total, collection) => total + collection.count, 0);
 
-  await sendMessage(
+  const message = await sendMessage(
     chatId,
-    "<b>Which collection?</b>\n\nNumbers show available terms for your selection.",
+    formatQuizSetupCollectionPrompt(),
     buildQuizCollectionKeyboard(collections, allCount),
     supabase,
   );
+
+  await saveQuizSetup(supabase, chatId, { ...setup, promptMessageId: message.message_id });
 }
 
 async function sendCountQuestion(
@@ -160,6 +180,7 @@ async function sendCountQuestion(
   userId: string,
   status: ReviewStatus,
   domainId: QuizDomainSelection,
+  setup: NonNullable<Awaited<ReturnType<typeof loadQuizSetup>>>,
 ): Promise<void> {
   const available = await countTermsForQuiz(supabase, userId, status, domainId);
   const maxCount = getMaxQuizQuestionCount(available);
@@ -173,11 +194,53 @@ async function sendCountQuestion(
 
   const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
 
-  await sendMessage(
+  const message = await sendMessage(
     chatId,
-    `<b>How many questions?</b>\n\n` +
-      `Reply with a number from 1 to ${maxCount}, tap a button, or send nothing for ${defaultCount}.`,
+    formatQuizSetupCountPrompt(maxCount, defaultCount),
     buildQuizCountKeyboard(maxCount),
+    supabase,
+  );
+
+  await saveQuizSetup(supabase, chatId, { ...setup, promptMessageId: message.message_id });
+}
+
+async function formatDomainChoiceLabel(
+  supabase: SupabaseClient,
+  userId: string,
+  status: ReviewStatus,
+  domainId: QuizDomainSelection,
+): Promise<string> {
+  const stats = await fetchCollectionStats(supabase, userId);
+  const activeCollections = stats.filter((collection) => collection.isActive);
+
+  if (domainId === "all") {
+    const allCount = activeCollections.reduce(
+      (total, collection) =>
+        total +
+        (status === "known"
+          ? collection.knownCount
+          : collection.totalCount - collection.knownCount),
+      0,
+    );
+    return `All collections (${allCount})`;
+  }
+
+  const collection = activeCollections.find((item) => item.id === domainId);
+  return collection?.name ?? "Selected collection";
+}
+
+async function confirmSetupChoice(
+  supabase: SupabaseClient,
+  chatId: number,
+  messageId: number,
+  prompt: string,
+  choice: string,
+): Promise<void> {
+  await editMessageText(
+    chatId,
+    messageId,
+    formatSetupPromptWithAnswer(prompt, choice),
+    { inline_keyboard: [] },
     supabase,
   );
 }
@@ -187,6 +250,7 @@ export async function handleQuizSetupCallback(
   chatId: number,
   userId: string,
   data: string,
+  messageId: number,
 ): Promise<void> {
   const parts = data.slice("quizsetup:".length).split(":");
   const action = parts[0];
@@ -195,12 +259,21 @@ export async function handleQuizSetupCallback(
     const status = parts[1] as ReviewStatus;
     if (status !== "known" && status !== "unknown") return;
 
-    await saveQuizSetup(supabase, chatId, {
-      step: "collection",
+    await confirmSetupChoice(
+      supabase,
+      chatId,
+      messageId,
+      formatQuizSetupStatusPrompt(),
+      status === "unknown" ? "Unknown terms" : "Known terms",
+    );
+
+    const collectionSetup = {
+      step: "collection" as const,
       status,
       startedAt: Date.now(),
-    });
-    await sendCollectionQuestion(supabase, chatId, userId, status);
+    };
+    await saveQuizSetup(supabase, chatId, collectionSetup);
+    await sendCollectionQuestion(supabase, chatId, userId, status, collectionSetup);
     return;
   }
 
@@ -213,13 +286,23 @@ export async function handleQuizSetupCallback(
 
     if (domainId !== "all" && !UUID_RE.test(domainId)) return;
 
-    await saveQuizSetup(supabase, chatId, {
-      step: "count",
+    const domainLabel = await formatDomainChoiceLabel(supabase, userId, setup.status, domainId);
+    await confirmSetupChoice(
+      supabase,
+      chatId,
+      messageId,
+      formatQuizSetupCollectionPrompt(),
+      domainLabel,
+    );
+
+    const countSetup = {
+      step: "count" as const,
       status: setup.status,
       domainId,
       startedAt: Date.now(),
-    });
-    await sendCountQuestion(supabase, chatId, userId, setup.status, domainId);
+    };
+    await saveQuizSetup(supabase, chatId, countSetup);
+    await sendCountQuestion(supabase, chatId, userId, setup.status, domainId, countSetup);
     return;
   }
 
@@ -236,6 +319,20 @@ export async function handleQuizSetupCallback(
       count = parseInt(countToken, 10);
       if (isNaN(count) || count < 1) return;
     }
+
+    const available = await countTermsForQuiz(supabase, userId, setup.status, setup.domainId);
+    const maxCount = getMaxQuizQuestionCount(available);
+    const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
+    const countLabel =
+      countToken === "all" ? `All (${count})` : `${count} question${count === 1 ? "" : "s"}`;
+
+    await confirmSetupChoice(
+      supabase,
+      chatId,
+      messageId,
+      formatQuizSetupCountPrompt(maxCount, defaultCount),
+      countLabel,
+    );
 
     await clearQuizSetup(supabase, chatId);
     await startReviewSession(supabase, chatId, userId, setup.status, setup.domainId, count);
@@ -282,6 +379,27 @@ export async function handleQuizSetupText(
     }
 
     count = parsed;
+  }
+
+  const available = await countTermsForQuiz(supabase, userId, setup.status, setup.domainId);
+  const maxCount = getMaxQuizQuestionCount(available);
+  const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
+
+  if (setup.promptMessageId) {
+    const countLabel =
+      trimmed === ""
+        ? `${defaultCount} (default)`
+        : trimmed.toLowerCase() === "all"
+          ? `All (${count})`
+          : `${count} question${count === 1 ? "" : "s"}`;
+
+    await confirmSetupChoice(
+      supabase,
+      chatId,
+      setup.promptMessageId,
+      formatQuizSetupCountPrompt(maxCount, defaultCount),
+      countLabel,
+    );
   }
 
   await clearQuizSetup(supabase, chatId);
@@ -359,6 +477,7 @@ export async function handleReviewAnswer(
   }
 
   const isCorrect = selectedTermId === currentTerm.id;
+  const preferences = await getUserQuizPreferences(supabase, session.userId);
 
   const { data: selectedTermData } = await supabase
     .from("terms")
@@ -368,8 +487,17 @@ export async function handleReviewAnswer(
 
   const selectedTermName = selectedTermData?.term ?? "Unknown";
 
-  if (!isCorrect) {
+  let markedUnknown = false;
+  let markedKnown = false;
+
+  if (!isCorrect && preferences.markUnknownOnFail) {
     await clearTermKnown(supabase, session.userId, currentTerm.id);
+    markedUnknown = true;
+  }
+
+  if (isCorrect && session.status === "unknown" && preferences.markKnownOnPass) {
+    await markTermKnown(supabase, session.userId, currentTerm.id);
+    markedKnown = true;
   }
 
   const updatedSession = await updateSession(supabase, chatId, session, isCorrect);
@@ -381,16 +509,17 @@ export async function handleReviewAnswer(
     selectedTermName,
     isCorrect,
     updatedSession.correctCount,
-    !isCorrect,
+    markedUnknown,
+    markedKnown,
   );
 
   await editMessageText(chatId, messageId, resultMessage, { inline_keyboard: [] }, supabase);
 
   if (hasMoreQuestions(updatedSession)) {
-    await delay(1500);
+    await pauseWithTyping(chatId, 1500);
     await sendNextReviewQuestion(supabase, chatId);
   } else {
-    await delay(1000);
+    await pauseWithTyping(chatId, 1000);
     await sendReviewSummary(supabase, chatId);
   }
 }
@@ -405,10 +534,6 @@ export async function sendReviewSummary(supabase: SupabaseClient, chatId: number
 
   await sendMessage(chatId, message);
   await deleteSession(supabase, chatId);
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export function parseQuizCommand(text: string): ParsedQuizCommand {

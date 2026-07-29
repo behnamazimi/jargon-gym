@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { decryptApiKey, encryptApiKey, maskApiKeyLast4 } from "./encryption";
-import type { LlmProvider, UserLlmSettings } from "./types";
+import type { LlmProvider, UserSettings } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -10,7 +10,7 @@ function mapRow(row: {
   api_key_last4: string;
   mark_unknown_on_fail: boolean;
   mark_known_on_pass: boolean;
-}): UserLlmSettings {
+}): UserSettings {
   return {
     provider: row.provider as LlmProvider,
     apiKeyLast4: row.api_key_last4,
@@ -19,12 +19,12 @@ function mapRow(row: {
   };
 }
 
-export async function getUserLlmSettings(
+export async function getUserSettings(
   client: Client,
   userId: string,
-): Promise<UserLlmSettings | null> {
+): Promise<UserSettings | null> {
   const { data, error } = await client
-    .from("user_llm_settings")
+    .from("user_settings")
     .select("provider, api_key_last4, mark_unknown_on_fail, mark_known_on_pass")
     .eq("user_id", userId)
     .maybeSingle();
@@ -40,7 +40,7 @@ export async function getDecryptedApiKey(
   userId: string,
 ): Promise<{ provider: LlmProvider; apiKey: string } | null> {
   const { data, error } = await client
-    .from("user_llm_settings")
+    .from("user_settings")
     .select("provider, api_key_encrypted")
     .eq("user_id", userId)
     .maybeSingle();
@@ -54,7 +54,7 @@ export async function getDecryptedApiKey(
   };
 }
 
-export async function saveUserLlmSettings(
+export async function saveLlmSettings(
   client: Client,
   userId: string,
   input: { provider: LlmProvider; apiKey: string },
@@ -64,7 +64,7 @@ export async function saveUserLlmSettings(
     throw new Error("API key is required.");
   }
 
-  const { error } = await client.from("user_llm_settings").upsert(
+  const { error } = await client.from("user_settings").upsert(
     {
       user_id: userId,
       provider: input.provider,
@@ -84,7 +84,7 @@ export async function updateQuizPreferences(
   input: { markUnknownOnFail: boolean; markKnownOnPass: boolean },
 ) {
   const { error } = await client
-    .from("user_llm_settings")
+    .from("user_settings")
     .update({
       mark_unknown_on_fail: input.markUnknownOnFail,
       mark_known_on_pass: input.markKnownOnPass,
@@ -95,8 +95,8 @@ export async function updateQuizPreferences(
   if (error) throw error;
 }
 
-export async function clearUserLlmSettings(client: Client, userId: string) {
-  const { error } = await client.from("user_llm_settings").delete().eq("user_id", userId);
+export async function clearLlmSettings(client: Client, userId: string) {
+  const { error } = await client.from("user_settings").delete().eq("user_id", userId);
 
   if (error) throw error;
 }

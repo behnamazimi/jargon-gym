@@ -3,11 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import {
-  clearUserLlmSettings,
-  saveUserLlmSettings,
-  updateQuizPreferences,
-} from "@/lib/llm/settings";
+import { clearLlmSettings, saveLlmSettings, updateQuizPreferences } from "@/lib/llm/settings";
 import type { LlmProvider } from "@/lib/llm/types";
 import {
   createOrRefreshTelegramLink,
@@ -133,7 +129,7 @@ export async function saveLlmSettingsAction(input: {
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await saveUserLlmSettings(auth.supabase, auth.user.id, input);
+    await saveLlmSettings(auth.supabase, auth.user.id, input);
     revalidatePath("/jargon/settings");
     revalidatePath("/jargon/quiz");
     return {};
@@ -148,7 +144,7 @@ export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await clearUserLlmSettings(auth.supabase, auth.user.id);
+    await clearLlmSettings(auth.supabase, auth.user.id);
     revalidatePath("/jargon/settings");
     revalidatePath("/jargon/quiz");
     return {};
