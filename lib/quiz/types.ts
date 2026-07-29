@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export type QuizTermStatus = "known" | "unknown";
 
+export type QuizQuestionStyle = "ai" | "simple";
+
 export type QuizTerm = {
   id: string;
   term: string;

@@ -1,9 +1,16 @@
-import type { QuizAnswer, QuizQuestion, QuizTerm, QuizTermStatus } from "./types";
+import type {
+  QuizAnswer,
+  QuizQuestion,
+  QuizQuestionStyle,
+  QuizTerm,
+  QuizTermStatus,
+} from "./types";
 
 export type QuizSetup = {
   domainIds: string[] | "all";
   status: QuizTermStatus;
   questionCount: number;
+  questionStyle: QuizQuestionStyle;
 };
 
 export type QuizSessionState = {

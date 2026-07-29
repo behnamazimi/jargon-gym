@@ -6,8 +6,15 @@ import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
 import { getDecryptedApiKey, getUserLlmSettings } from "@/lib/llm/settings";
 import { LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
+import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { MAX_QUIZ_TERMS, fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
-import type { QuizAnswer, QuizQuestion, QuizTerm, QuizTermStatus } from "@/lib/quiz/types";
+import type {
+  QuizAnswer,
+  QuizQuestion,
+  QuizQuestionStyle,
+  QuizTerm,
+  QuizTermStatus,
+} from "@/lib/quiz/types";
 
 async function getAuthenticatedClient() {
   const supabase = await createClient();
@@ -46,6 +53,7 @@ export async function generateQuizAction(input: {
   domainIds: string[] | "all";
   status: QuizTermStatus;
   questionCount: number;
+  questionStyle: QuizQuestionStyle;
 }): Promise<
   | { error: string }
   | {
@@ -60,12 +68,6 @@ export async function generateQuizAction(input: {
   }
 
   try {
-    const credentials = await getDecryptedApiKey(auth.supabase, auth.user.id);
-
-    if (!credentials) {
-      return { error: "Add a provider and API key in Settings to generate quizzes." };
-    }
-
     const questionCount = Math.floor(input.questionCount);
     if (!Number.isFinite(questionCount) || questionCount < 1) {
       return { error: "Choose at least one question." };
@@ -87,17 +89,35 @@ export async function generateQuizAction(input: {
       return { error: "No terms match your selection. Try a different collection or status." };
     }
 
-    // `terms` is already shuffled and capped to `questionCount` — only this array reaches the LLM.
-    const questions = await generateQuizQuestions({
-      provider: credentials.provider,
-      apiKey: credentials.apiKey,
-      terms,
-    });
+    let questions: QuizQuestion[];
+    let providerLabel: string;
+
+    // Route to appropriate generator based on questionStyle
+    if (input.questionStyle === "simple") {
+      // Simple mode: use database terms directly, no AI needed
+      questions = await generateSimpleQuiz(terms);
+      providerLabel = "Simple (Definition → Term)";
+    } else {
+      // AI mode: use LLM to generate questions
+      const credentials = await getDecryptedApiKey(auth.supabase, auth.user.id);
+
+      if (!credentials) {
+        return { error: "Add a provider and API key in Settings to generate AI quizzes." };
+      }
+
+      questions = await generateQuizQuestions({
+        provider: credentials.provider,
+        apiKey: credentials.apiKey,
+        terms,
+      });
+
+      providerLabel = LLM_PROVIDER_LABELS[credentials.provider];
+    }
 
     return {
       questions,
       terms,
-      providerLabel: LLM_PROVIDER_LABELS[credentials.provider],
+      providerLabel,
     };
   } catch (err) {
     const message =

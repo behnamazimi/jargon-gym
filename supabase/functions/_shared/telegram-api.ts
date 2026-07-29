@@ -239,3 +239,83 @@ export function formatStatsMessage(stats: CollectionStatsRow[]): string {
 
   return message;
 }
+
+// Review session message formatting
+
+interface QuizOption {
+  id: string;
+  term: string;
+}
+
+export function formatReviewQuestion(
+  term: TermRow,
+  currentIndex: number,
+  totalQuestions: number,
+): string {
+  let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
+  message += `${escapeHtml(term.definition)}\n\n`;
+  message += `<i>Category: ${escapeHtml(term.category)}</i> · ${escapeHtml(term.domain_name)}`;
+  return message;
+}
+
+export function buildReviewKeyboard(options: QuizOption[], sessionIndex: number) {
+  // Build inline keyboard with 2 buttons per row for 4 options
+  const rows: Array<Array<{ text: string; callback_data: string }>> = [];
+
+  for (let i = 0; i < options.length; i += 2) {
+    const row = [];
+    row.push({
+      text: options[i].term,
+      callback_data: `quiz:${sessionIndex}:${options[i].id}`,
+    });
+    if (i + 1 < options.length) {
+      row.push({
+        text: options[i + 1].term,
+        callback_data: `quiz:${sessionIndex}:${options[i + 1].id}`,
+      });
+    }
+    rows.push(row);
+  }
+
+  return { inline_keyboard: rows };
+}
+
+export function formatReviewResult(
+  isCorrect: boolean,
+  correctTerm: string,
+  selectedTerm: string,
+  currentScore: number,
+  totalQuestions: number,
+): string {
+  let message = isCorrect
+    ? `✅ <b>Correct!</b>`
+    : `❌ <b>Wrong.</b> The correct answer was: <b>${escapeHtml(correctTerm)}</b>`;
+
+  message += `\n\nScore: ${currentScore}/${totalQuestions}`;
+  return message;
+}
+
+export function formatReviewSummary(
+  score: number,
+  total: number,
+  status: "known" | "unknown",
+): string {
+  const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
+
+  let message = `📊 <b>Quiz Complete!</b>\n\n`;
+  message += `Score: ${score}/${total} (${percentage}%)\n`;
+  message += `Status: ${status} terms\n\n`;
+
+  // Add encouragement based on score
+  if (percentage === 100) {
+    message += "🎉 Perfect score! Excellent work!";
+  } else if (percentage >= 80) {
+    message += "🌟 Great job! You know these terms well!";
+  } else if (percentage >= 60) {
+    message += "👍 Good effort! Keep practicing!";
+  } else {
+    message += "💪 Keep studying! You'll improve with practice!";
+  }
+
+  return message;
+}

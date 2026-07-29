@@ -21,6 +21,12 @@ import {
   sendTermCard,
   sendTermOrCaughtUp,
 } from "../_shared/term-service.ts";
+import {
+  handleReviewAnswer,
+  parseReviewCommand,
+  resolveReviewCount,
+  startReviewSession,
+} from "../_shared/review-service.ts";
 
 type TelegramUpdate = {
   message?: {
@@ -54,6 +60,10 @@ function isNextCommand(text: string): boolean {
 
 function isStatCommand(text: string): boolean {
   return /^\/stat(?:s)?(?:@\w+)?$/i.test(text.trim());
+}
+
+function isQuizCommand(text: string): boolean {
+  return /^\/quiz(?:@\w+)?(?:\s+.*)?$/i.test(text.trim());
 }
 
 async function handleStart(chatId: number, token: string | null) {
@@ -112,6 +122,30 @@ async function handleStat(chatId: number) {
   await sendMessage(chatId, message);
 }
 
+async function handleQuiz(chatId: number, text: string) {
+  const supabase = createServiceClient();
+  const userId = await resolveUserIdByChatId(supabase, chatId);
+
+  if (!userId) {
+    await sendMessage(chatId, CONNECT_MESSAGE);
+    return;
+  }
+
+  // Parse command parameters
+  const { status, count, error } = parseReviewCommand(text);
+
+  if (error) {
+    await sendMessage(chatId, error);
+    return;
+  }
+
+  // Resolve "all" to actual count
+  const actualCount = await resolveReviewCount(supabase, userId, status, count);
+
+  // Start the quiz session
+  await startReviewSession(supabase, chatId, userId, status, actualCount);
+}
+
 async function handleCallback(callback: NonNullable<TelegramUpdate["callback_query"]>) {
   const chatId = callback.message?.chat.id;
   const messageId = callback.message?.message_id;
@@ -129,6 +163,19 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
     await answerCallbackQuery(callback.id, "Connect in Jargon Gym settings first.");
     await sendMessage(chatId, CONNECT_MESSAGE);
     return;
+  }
+
+  // Handle quiz session callbacks
+  if (data.startsWith("quiz:")) {
+    const parts = data.slice("quiz:".length).split(":");
+    if (parts.length === 2) {
+      const sessionIndex = parseInt(parts[0], 10);
+      const selectedTermId = parts[1];
+
+      await answerCallbackQuery(callback.id);
+      await handleReviewAnswer(supabase, chatId, messageId, sessionIndex, selectedTermId);
+      return;
+    }
   }
 
   if (data.startsWith("known:")) {
@@ -197,6 +244,8 @@ Deno.serve(async (request) => {
       await handleNext(chatId);
     } else if (isStatCommand(text)) {
       await handleStat(chatId);
+    } else if (isQuizCommand(text)) {
+      await handleQuiz(chatId, text);
     } else {
       const supabase = createServiceClient();
       const userId = await resolveUserIdByChatId(supabase, chatId);
