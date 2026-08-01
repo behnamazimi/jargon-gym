@@ -4,7 +4,6 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { resolveReviewDomainIds } from "@/lib/jargon/known-state";
 import { attachRelationshipsToTerms, mapTerm } from "@/lib/jargon/mappers";
 import { fetchTermRelationshipsForTerms } from "@/lib/jargon/terms";
 import type { ReviewTerm } from "@/lib/review/types";
@@ -31,64 +30,25 @@ async function loadUserPreset(client: Client, userId: string): Promise<ReviewPre
 
 async function fetchCandidates(
   client: Client,
-  userId: string,
+  _userId: string,
   scope: ReviewScope,
   status: "known" | "unknown",
 ): Promise<ReviewCandidate[]> {
-  const { reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+  const { data, error } = await client.rpc("my_get_review_candidates", {
+    p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
+    p_status: status,
+  });
 
-  const scopedDomainIds =
-    scope.domainIds === "all"
-      ? reviewDomainIds
-      : scope.domainIds.filter((domainId) => reviewDomainIds.includes(domainId));
+  if (error) throw error;
 
-  if (scopedDomainIds.length === 0) return [];
-
-  const { data: termRows, error: termsError } = await client
-    .from("terms")
-    .select("id, domain_id, created_at")
-    .in("domain_id", scopedDomainIds);
-
-  if (termsError) throw termsError;
-  if (termRows.length === 0) return [];
-
-  const termIds = termRows.map((term) => term.id);
-
-  const [{ data: progress, error: progressError }, { data: reviewStates, error: reviewError }] =
-    await Promise.all([
-      client
-        .from("user_progress")
-        .select("term_id")
-        .eq("user_id", userId)
-        .eq("is_known", true)
-        .in("term_id", termIds),
-      client
-        .from("review_state")
-        .select("term_id, seen_count, last_seen_at, last_outcome")
-        .eq("user_id", userId)
-        .in("term_id", termIds),
-    ]);
-
-  if (progressError) throw progressError;
-  if (reviewError) throw reviewError;
-
-  const knownIds = new Set(progress.map((row) => row.term_id));
-  const stateByTermId = new Map(reviewStates.map((row) => [row.term_id, row]));
-
-  return termRows
-    .filter((term) => (status === "known" ? knownIds.has(term.id) : !knownIds.has(term.id)))
-    .map((term) => {
-      const reviewState = stateByTermId.get(term.id);
-
-      return {
-        termId: term.id,
-        domainId: term.domain_id,
-        createdAt: new Date(term.created_at),
-        seenCount: reviewState?.seen_count ?? 0,
-        lastSeenAt: reviewState?.last_seen_at ? new Date(reviewState.last_seen_at) : null,
-        lastOutcome: (reviewState?.last_outcome as ReviewOutcome | null) ?? "unseen",
-      };
-    });
+  return (data ?? []).map((row) => ({
+    termId: row.term_id,
+    domainId: row.domain_id,
+    createdAt: new Date(row.created_at),
+    seenCount: row.seen_count,
+    lastSeenAt: row.last_seen_at ? new Date(row.last_seen_at) : null,
+    lastOutcome: row.last_outcome as ReviewOutcome,
+  }));
 }
 
 export async function pickReviewTerms(

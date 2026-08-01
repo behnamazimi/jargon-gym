@@ -55,7 +55,6 @@ export async function fetchKnownTermIdsForDomains(
     .from("user_progress")
     .select("term_id")
     .eq("user_id", userId)
-    .eq("is_known", true)
     .in("term_id", termIds);
 
   if (error) throw error;
@@ -121,7 +120,7 @@ export async function clearTermKnown(
 }
 
 async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
-  const { data, error } = await client.rpc("telegram_review_domain_ids", {
+  const { data, error } = await client.rpc("review_domain_ids", {
     p_user_id: userId,
   });
 
@@ -150,22 +149,10 @@ export async function resolveReviewDomainIdsForUser(client: Client, userId: stri
   return { reviewDomainIds, collectionRows };
 }
 
-export async function resetDomainProgress(client: Client, userId: string, domainId: string) {
-  const { data: terms, error: termsError } = await client
-    .from("terms")
-    .select("id")
-    .eq("domain_id", domainId);
+export async function resetDomainProgress(client: Client, _userId: string, domainId: string) {
+  const { error } = await client.rpc("my_reset_domain_progress", {
+    p_domain_id: domainId,
+  });
 
-  if (termsError) throw termsError;
-  if (terms.length === 0) return;
-
-  const termIds = terms.map((t) => t.id);
-
-  const [{ error: progressError }, { error: reviewError }] = await Promise.all([
-    client.from("user_progress").delete().eq("user_id", userId).in("term_id", termIds),
-    client.from("review_state").delete().eq("user_id", userId).in("term_id", termIds),
-  ]);
-
-  if (progressError) throw progressError;
-  if (reviewError) throw reviewError;
+  if (error) throw error;
 }

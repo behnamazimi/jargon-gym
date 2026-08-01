@@ -33,13 +33,9 @@ export async function fetchUnknownTermCount(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<number> {
-  const { data, error } = await supabase.rpc("count_unknown_terms", {
-    p_user_id: userId,
-    p_domain_ids: null,
-  });
-
-  if (error) throw error;
-  return Number(data ?? 0);
+  const { getReviewPoolStats } = await import("./smart-queue-service.ts");
+  const stats = await getReviewPoolStats(supabase, userId, { domainIds: "all" }, "unknown");
+  return stats.total;
 }
 
 function mapTermRow(row: Record<string, unknown>): TermRow {
@@ -67,9 +63,6 @@ export async function pickNextUnknownTerm(
   const terms = await pickReviewTerms(supabase, userId, { domainIds: "all" }, "unknown", 1);
   return terms[0] ?? null;
 }
-
-/** @deprecated Use pickNextUnknownTerm */
-export const pickRandomUnknownTerm = pickNextUnknownTerm;
 
 export async function fetchTermById(
   supabase: SupabaseClient,
@@ -202,7 +195,7 @@ export async function fetchCollectionStats(
   userId: string,
 ): Promise<CollectionStats[]> {
   // Get all review domains for the user
-  const { data: domainIds, error: domainError } = await supabase.rpc("telegram_review_domain_ids", {
+  const { data: domainIds, error: domainError } = await supabase.rpc("review_domain_ids", {
     p_user_id: userId,
   });
 
@@ -237,12 +230,11 @@ export async function fetchCollectionStats(
 
   if (termsError) throw termsError;
 
-  // Get known term counts per domain
+  // Get known term counts per domain (row presence = known)
   const { data: knownTerms, error: knownError } = await supabase
     .from("user_progress")
     .select("term_id, terms!inner(domain_id)")
     .eq("user_id", userId)
-    .eq("is_known", true)
     .in("terms.domain_id", ids);
 
   if (knownError) throw knownError;

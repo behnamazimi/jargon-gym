@@ -18,10 +18,10 @@ function isUniqueViolation(error: { code?: string }) {
 export async function createTerm(
   client: Client,
   domainId: string,
-  ownerId: string,
+  _ownerId: string,
   input: TermInput,
 ) {
-  const row = termInputToRow(input, domainId, ownerId);
+  const row = termInputToRow(input, domainId);
 
   const { data, error } = await client.from("terms").insert(row).select("id").single();
 

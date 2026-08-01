@@ -82,7 +82,6 @@ export async function executeImport(
       discussion: item.discussion?.trim() || null,
       controversy: item.controversy?.trim() || null,
       domain_id: domain.id,
-      created_by: ownerId,
     };
 
     if (existingTerm) {
@@ -139,7 +138,6 @@ export async function executeImport(
       target_term_id: targetId,
       relationship_type: rel.relationship_type.trim(),
       description: rel.description?.trim() ?? "",
-      created_by: ownerId,
     });
 
     if (error) {

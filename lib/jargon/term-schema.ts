@@ -22,7 +22,7 @@ export function parseTermInput(
   return { ok: true, data: result.data };
 }
 
-export function termInputToRow(input: TermInput, domainId: string, createdBy: string) {
+export function termInputToRow(input: TermInput, domainId: string) {
   return {
     term: input.term.trim(),
     category: input.category.trim(),
@@ -31,7 +31,6 @@ export function termInputToRow(input: TermInput, domainId: string, createdBy: st
     discussion: input.discussion?.trim() || null,
     controversy: input.controversy?.trim() || null,
     domain_id: domainId,
-    created_by: createdBy,
   };
 }
 

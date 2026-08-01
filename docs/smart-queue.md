@@ -150,4 +150,4 @@ If you’re changing behavior, ask: **is this a scoring change** (edit `lib/smar
 
 - No forced due dates or daily quotas
 - Not Anki / SM-2 (no ease factor, no intervals)
-- Random `pick_multiple_*` SQL RPCs still exist in the DB but are deprecated — app code shouldn’t call them
+- Candidate loading uses `get_review_candidates` / `my_get_review_candidates`; deprecated random `pick_multiple_*` RPCs have been removed

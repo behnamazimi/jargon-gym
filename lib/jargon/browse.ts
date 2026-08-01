@@ -7,7 +7,7 @@ export async function fetchSharedDomainsBrowse(client: Client, userId: string) {
   const [sharedResult, collectionResult] = await Promise.all([
     client
       .from("domains")
-      .select("id, name, icon_url, description, owner_id, terms(count)")
+      .select("id, name, description, owner_id, terms(count)")
       .eq("visibility", "shared")
       .neq("owner_id", userId)
       .order("name"),
@@ -22,7 +22,7 @@ export async function fetchSharedDomainsBrowse(client: Client, userId: string) {
   return sharedResult.data.map((row) => ({
     id: row.id,
     name: row.name,
-    icon: row.icon_url ?? "",
+    icon: "",
     description: row.description ?? "",
     ownerId: row.owner_id,
     termCount: row.terms[0]?.count ?? 0,

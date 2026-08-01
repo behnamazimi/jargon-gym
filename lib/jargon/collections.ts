@@ -15,7 +15,6 @@ export class DomainMutationError extends Error {
 export type CollectionDomainRow = {
   id: string;
   name: string;
-  icon_url: string | null;
   description: string | null;
   visibility: DomainVisibility;
   owner_id: string;
@@ -27,7 +26,7 @@ export type CollectionDomainRow = {
 async function fetchOwnedDomains(client: Client, userId: string) {
   const { data, error } = await client
     .from("domains")
-    .select("id, name, icon_url, description, visibility, owner_id")
+    .select("id, name, description, visibility, owner_id")
     .eq("owner_id", userId)
     .order("name");
 
@@ -38,7 +37,7 @@ async function fetchOwnedDomains(client: Client, userId: string) {
 async function fetchAddedDomains(client: Client, userId: string) {
   const { data, error } = await client
     .from("user_collection_domains")
-    .select("domain_id, domains(id, name, icon_url, description, visibility, owner_id)")
+    .select("domain_id, domains(id, name, description, visibility, owner_id)")
     .eq("user_id", userId);
 
   if (error) throw error;
@@ -79,7 +78,6 @@ async function fetchDomainStats(client: Client, domainIds: string[], userId: str
     .from("user_progress")
     .select("term_id")
     .eq("user_id", userId)
-    .eq("is_known", true)
     .in("term_id", termIds);
 
   if (progressError) throw progressError;
@@ -263,7 +261,7 @@ export async function createOrGetOwnedDomain(
 ) {
   const { data: existing, error: selectError } = await client
     .from("domains")
-    .select("id, name, icon_url, description, visibility, owner_id")
+    .select("id, name, description, visibility, owner_id")
     .eq("owner_id", ownerId)
     .ilike("name", name)
     .maybeSingle();
@@ -278,7 +276,7 @@ export async function createOrGetOwnedDomain(
         .from("domains")
         .update({ description: normalizedDescription })
         .eq("id", existing.id)
-        .select("id, name, icon_url, description, visibility, owner_id")
+        .select("id, name, description, visibility, owner_id")
         .single();
 
       if (error) throw error;
@@ -296,7 +294,7 @@ export async function createOrGetOwnedDomain(
       visibility: "private",
       description: normalizedDescription,
     })
-    .select("id, name, icon_url, description, visibility, owner_id")
+    .select("id, name, description, visibility, owner_id")
     .single();
 
   if (error) throw error;

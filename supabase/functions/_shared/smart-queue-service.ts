@@ -51,78 +51,33 @@ async function fetchCandidates(
   scope: ReviewScope,
   status: "known" | "unknown",
 ): Promise<ReviewCandidate[]> {
-  const { data: reviewDomainIds, error: domainError } = await client.rpc(
-    "telegram_review_domain_ids",
-    { p_user_id: userId },
-  );
+  const domainIds = scope.domainIds === "all" ? null : scope.domainIds;
 
-  if (domainError) throw domainError;
+  const { data, error } = await client.rpc("get_review_candidates", {
+    p_user_id: userId,
+    p_domain_ids: domainIds,
+    p_status: status,
+  });
 
-  const allReviewDomains = (reviewDomainIds as string[]) ?? [];
+  if (error) throw error;
 
-  const scopedDomainIds =
-    scope.domainIds === "all"
-      ? allReviewDomains
-      : scope.domainIds.filter((domainId) => allReviewDomains.includes(domainId));
-
-  if (scopedDomainIds.length === 0) return [];
-
-  const { data: termRows, error: termsError } = await client
-    .from("terms")
-    .select("id, domain_id, created_at")
-    .in("domain_id", scopedDomainIds);
-
-  if (termsError) throw termsError;
-  if (!termRows || termRows.length === 0) return [];
-
-  const termIds = termRows.map((term: { id: string }) => term.id);
-
-  const [{ data: progress, error: progressError }, { data: reviewStates, error: reviewError }] =
-    await Promise.all([
-      client
-        .from("user_progress")
-        .select("term_id")
-        .eq("user_id", userId)
-        .eq("is_known", true)
-        .in("term_id", termIds),
-      client
-        .from("review_state")
-        .select("term_id, seen_count, last_seen_at, last_outcome")
-        .eq("user_id", userId)
-        .in("term_id", termIds),
-    ]);
-
-  if (progressError) throw progressError;
-  if (reviewError) throw reviewError;
-
-  const knownIds = new Set((progress ?? []).map((row: { term_id: string }) => row.term_id));
-  const stateByTermId = new Map(
-    (reviewStates ?? []).map(
-      (row: {
-        term_id: string;
-        seen_count: number;
-        last_seen_at: string | null;
-        last_outcome: string;
-      }) => [row.term_id, row],
-    ),
-  );
-
-  return termRows
-    .filter((term: { id: string }) =>
-      status === "known" ? knownIds.has(term.id) : !knownIds.has(term.id),
-    )
-    .map((term: { id: string; domain_id: string; created_at: string }) => {
-      const state = stateByTermId.get(term.id);
-
-      return {
-        termId: term.id,
-        domainId: term.domain_id,
-        createdAt: new Date(term.created_at),
-        seenCount: state?.seen_count ?? 0,
-        lastSeenAt: state?.last_seen_at ? new Date(state.last_seen_at) : null,
-        lastOutcome: (state?.last_outcome as ReviewOutcome | null) ?? "unseen",
-      };
-    });
+  return (
+    (data as Array<{
+      term_id: string;
+      domain_id: string;
+      created_at: string;
+      seen_count: number;
+      last_seen_at: string | null;
+      last_outcome: string;
+    }> | null) ?? []
+  ).map((row) => ({
+    termId: row.term_id,
+    domainId: row.domain_id,
+    createdAt: new Date(row.created_at),
+    seenCount: row.seen_count,
+    lastSeenAt: row.last_seen_at ? new Date(row.last_seen_at) : null,
+    lastOutcome: row.last_outcome as ReviewOutcome,
+  }));
 }
 
 export async function pickReviewTerms(

@@ -49,7 +49,6 @@ export async function listQuizableCollections(
       .from("user_progress")
       .select("term_id")
       .eq("user_id", userId)
-      .eq("is_known", true)
       .in(
         "term_id",
         terms.map((term) => term.id),

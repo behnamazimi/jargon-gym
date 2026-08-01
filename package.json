@@ -46,7 +46,7 @@
     "@types/react-dom": "^19",
     "daisyui": "^5.7.4",
     "knip": "^6.29.0",
-    "supabase": "^2.109.1",
+    "supabase": "^2.111.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

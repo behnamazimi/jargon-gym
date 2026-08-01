@@ -19,12 +19,7 @@ function duplicateRelationshipMessage() {
   return "That relationship already exists between these terms.";
 }
 
-async function createRelationship(
-  client: Client,
-  ownerId: string,
-  sourceTermId: string,
-  input: RelationshipInput,
-) {
+async function createRelationship(client: Client, sourceTermId: string, input: RelationshipInput) {
   if (sourceTermId === input.targetTermId) {
     throw new RelationshipMutationError("A term can't relate to itself.");
   }
@@ -34,7 +29,6 @@ async function createRelationship(
     target_term_id: input.targetTermId,
     relationship_type: input.relationshipType.trim(),
     description: input.description?.trim() ?? "",
-    created_by: ownerId,
   });
 
   if (error) {
@@ -74,7 +68,7 @@ async function deleteRelationship(client: Client, relationshipId: string) {
 
 export async function syncTermRelationships(
   client: Client,
-  ownerId: string,
+  _ownerId: string,
   sourceTermId: string,
   sync: RelationshipSyncPayload,
 ) {
@@ -90,6 +84,6 @@ export async function syncTermRelationships(
   }
 
   for (const item of sync.create) {
-    await createRelationship(client, ownerId, sourceTermId, item);
+    await createRelationship(client, sourceTermId, item);
   }
 }

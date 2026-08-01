@@ -32,7 +32,6 @@ export type Database = {
         Row: {
           created_at: string;
           description: string | null;
-          icon_url: string | null;
           id: string;
           name: string;
           owner_id: string;
@@ -41,7 +40,6 @@ export type Database = {
         Insert: {
           created_at?: string;
           description?: string | null;
-          icon_url?: string | null;
           id?: string;
           name: string;
           owner_id: string;
@@ -50,7 +48,6 @@ export type Database = {
         Update: {
           created_at?: string;
           description?: string | null;
-          icon_url?: string | null;
           id?: string;
           name?: string;
           owner_id?: string;
@@ -58,7 +55,7 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "domains_created_by_fkey";
+            foreignKeyName: "domains_owner_id_fkey";
             columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "users";
@@ -113,21 +110,21 @@ export type Database = {
       };
       review_state: {
         Row: {
-          last_outcome: string;
+          last_outcome: Database["public"]["Enums"]["review_outcome"];
           last_seen_at: string | null;
           seen_count: number;
           term_id: string;
           user_id: string;
         };
         Insert: {
-          last_outcome?: string;
+          last_outcome?: Database["public"]["Enums"]["review_outcome"];
           last_seen_at?: string | null;
           seen_count?: number;
           term_id: string;
           user_id: string;
         };
         Update: {
-          last_outcome?: string;
+          last_outcome?: Database["public"]["Enums"]["review_outcome"];
           last_seen_at?: string | null;
           seen_count?: number;
           term_id?: string;
@@ -209,7 +206,6 @@ export type Database = {
       term_relationships: {
         Row: {
           created_at: string;
-          created_by: string | null;
           description: string;
           id: string;
           relationship_type: string;
@@ -218,7 +214,6 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
-          created_by?: string | null;
           description: string;
           id?: string;
           relationship_type: string;
@@ -227,7 +222,6 @@ export type Database = {
         };
         Update: {
           created_at?: string;
-          created_by?: string | null;
           description?: string;
           id?: string;
           relationship_type?: string;
@@ -235,13 +229,6 @@ export type Database = {
           target_term_id?: string;
         };
         Relationships: [
-          {
-            foreignKeyName: "term_relationships_created_by_fkey";
-            columns: ["created_by"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
           {
             foreignKeyName: "term_relationships_source_term_id_fkey";
             columns: ["source_term_id"];
@@ -263,7 +250,6 @@ export type Database = {
           category: string;
           controversy: string | null;
           created_at: string;
-          created_by: string | null;
           definition: string;
           discussion: string | null;
           domain_id: string;
@@ -275,7 +261,6 @@ export type Database = {
           category: string;
           controversy?: string | null;
           created_at?: string;
-          created_by?: string | null;
           definition: string;
           discussion?: string | null;
           domain_id: string;
@@ -287,7 +272,6 @@ export type Database = {
           category?: string;
           controversy?: string | null;
           created_at?: string;
-          created_by?: string | null;
           definition?: string;
           discussion?: string | null;
           domain_id?: string;
@@ -296,13 +280,6 @@ export type Database = {
           term?: string;
         };
         Relationships: [
-          {
-            foreignKeyName: "terms_created_by_fkey";
-            columns: ["created_by"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
           {
             foreignKeyName: "terms_domain_id_fkey";
             columns: ["domain_id"];
@@ -344,17 +321,14 @@ export type Database = {
       };
       user_collection_domains: {
         Row: {
-          added_at: string;
           domain_id: string;
           user_id: string;
         };
         Insert: {
-          added_at?: string;
           domain_id: string;
           user_id: string;
         };
         Update: {
-          added_at?: string;
           domain_id?: string;
           user_id?: string;
         };
@@ -377,17 +351,14 @@ export type Database = {
       };
       user_progress: {
         Row: {
-          is_known: boolean;
           term_id: string;
           user_id: string;
         };
         Insert: {
-          is_known?: boolean;
           term_id: string;
           user_id: string;
         };
         Update: {
-          is_known?: boolean;
           term_id?: string;
           user_id?: string;
         };
@@ -416,7 +387,7 @@ export type Database = {
           mark_known_on_pass: boolean;
           mark_unknown_on_fail: boolean;
           provider: string | null;
-          review_preset: string;
+          review_preset: Database["public"]["Enums"]["review_preset"];
           updated_at: string;
           user_id: string;
         };
@@ -427,7 +398,7 @@ export type Database = {
           mark_known_on_pass?: boolean;
           mark_unknown_on_fail?: boolean;
           provider?: string | null;
-          review_preset?: string;
+          review_preset?: Database["public"]["Enums"]["review_preset"];
           updated_at?: string;
           user_id: string;
         };
@@ -438,13 +409,13 @@ export type Database = {
           mark_known_on_pass?: boolean;
           mark_unknown_on_fail?: boolean;
           provider?: string | null;
-          review_preset?: string;
+          review_preset?: Database["public"]["Enums"]["review_preset"];
           updated_at?: string;
           user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "user_llm_settings_user_id_fkey";
+            foreignKeyName: "user_settings_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: true;
             referencedRelation: "users";
@@ -526,18 +497,6 @@ export type Database = {
         Args: { p_chat_id: number; p_token_hash: string };
         Returns: string;
       };
-      count_known_terms:
-        | { Args: { p_user_id: string }; Returns: number }
-        | {
-            Args: { p_domain_ids?: string[]; p_user_id: string };
-            Returns: number;
-          };
-      count_unknown_terms:
-        | { Args: { p_user_id: string }; Returns: number }
-        | {
-            Args: { p_domain_ids?: string[]; p_user_id: string };
-            Returns: number;
-          };
       create_referral_code: {
         Args: { p_code?: string };
         Returns: {
@@ -555,6 +514,17 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      get_review_candidates: {
+        Args: { p_domain_ids?: string[]; p_status?: string; p_user_id: string };
+        Returns: {
+          created_at: string;
+          domain_id: string;
+          last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_seen_at: string;
+          seen_count: number;
+          term_id: string;
+        }[];
       };
       get_term_card: {
         Args: { p_term_id: string; p_user_id: string };
@@ -588,6 +558,17 @@ export type Database = {
         Returns: undefined;
       };
       my_clear_term_known: { Args: { p_term_id: string }; Returns: undefined };
+      my_get_review_candidates: {
+        Args: { p_domain_ids?: string[]; p_status?: string };
+        Returns: {
+          created_at: string;
+          domain_id: string;
+          last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_seen_at: string;
+          seen_count: number;
+          term_id: string;
+        }[];
+      };
       my_mark_term_known: { Args: { p_term_id: string }; Returns: undefined };
       my_record_review_outcome: {
         Args: {
@@ -597,53 +578,12 @@ export type Database = {
         };
         Returns: undefined;
       };
+      my_reset_domain_progress: {
+        Args: { p_domain_id: string };
+        Returns: undefined;
+      };
       my_review_domain_ids: { Args: never; Returns: string[] };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
-      pick_multiple_known_terms: {
-        Args: { p_domain_ids?: string[]; p_limit: number; p_user_id: string };
-        Returns: {
-          category: string;
-          controversy: string;
-          definition: string;
-          discussion: string;
-          domain_id: string;
-          domain_name: string;
-          example: string;
-          id: string;
-          relationships: Json;
-          term: string;
-        }[];
-      };
-      pick_multiple_unknown_terms: {
-        Args: { p_domain_ids?: string[]; p_limit: number; p_user_id: string };
-        Returns: {
-          category: string;
-          controversy: string;
-          definition: string;
-          discussion: string;
-          domain_id: string;
-          domain_name: string;
-          example: string;
-          id: string;
-          relationships: Json;
-          term: string;
-        }[];
-      };
-      pick_random_unknown_term: {
-        Args: { p_user_id: string };
-        Returns: {
-          category: string;
-          controversy: string;
-          definition: string;
-          discussion: string;
-          domain_id: string;
-          domain_name: string;
-          example: string;
-          id: string;
-          relationships: Json;
-          term: string;
-        }[];
-      };
       record_review_outcome: {
         Args: {
           p_increment_seen?: boolean;
@@ -655,13 +595,14 @@ export type Database = {
       };
       record_telegram_send: { Args: { p_user_id: string }; Returns: undefined };
       redeem_referral_code: { Args: { p_code: string }; Returns: undefined };
+      reset_domain_progress: {
+        Args: { p_domain_id: string; p_user_id: string };
+        Returns: undefined;
+      };
+      review_domain_ids: { Args: { p_user_id: string }; Returns: string[] };
       set_telegram_all_caught_up: {
         Args: { p_user_id: string };
         Returns: undefined;
-      };
-      telegram_review_domain_ids: {
-        Args: { p_user_id: string };
-        Returns: string[];
       };
       update_telegram_cadence: {
         Args: { p_cadence: Database["public"]["Enums"]["telegram_cadence"] };
@@ -670,6 +611,8 @@ export type Database = {
     };
     Enums: {
       domain_visibility: "private" | "shared";
+      review_outcome: "unseen" | "shown" | "learning" | "solid" | "skipped" | "verified" | "forgot";
+      review_preset: "balanced" | "learn_new" | "drill_weak";
       telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
     };
@@ -801,6 +744,8 @@ export const Constants = {
   public: {
     Enums: {
       domain_visibility: ["private", "shared"],
+      review_outcome: ["unseen", "shown", "learning", "solid", "skipped", "verified", "forgot"],
+      review_preset: ["balanced", "learn_new", "drill_weak"],
       telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],
     },

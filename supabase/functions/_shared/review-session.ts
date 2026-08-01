@@ -107,21 +107,11 @@ export async function countTermsForQuiz(
   domainId: QuizDomainSelection,
 ): Promise<number> {
   const domainIds = domainIdsForRpc(domainId);
-
-  const { data, error } = await supabase.rpc(
-    status === "unknown" ? "count_unknown_terms" : "count_known_terms",
-    {
-      p_user_id: userId,
-      p_domain_ids: domainIds,
-    },
-  );
-
-  if (error) {
-    console.error("Error counting terms:", error);
-    throw error;
-  }
-
-  return Number(data ?? 0);
+  const { getReviewPoolStats } = await import("./smart-queue-service.ts");
+  const scope =
+    domainIds === null || domainIds.length === 0 ? ({ domainIds: "all" } as const) : { domainIds };
+  const stats = await getReviewPoolStats(supabase, userId, scope, status);
+  return stats.total;
 }
 
 export function getMaxQuizQuestionCount(availableTermCount: number): number {
