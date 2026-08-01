@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import type { PoolStats } from "./types";
+import type { PickContext, PickMeta, PoolStats } from "./types";
 import { pickTerms } from "./pick";
 import { computePoolStats } from "./stats";
 import {
@@ -17,6 +17,11 @@ import { hydrateTermCardsForUser, hydrateTermsAsTermCards } from "./hydrate";
 export type { ReviewScope } from "./repository";
 export { fetchTermCardForUser } from "./hydrate";
 
+type PickReviewResult = {
+  cards: TermCard[];
+  pickMeta: PickMeta[];
+};
+
 type Client = SupabaseClient<Database>;
 
 export async function pickReviewTerms(
@@ -25,21 +30,30 @@ export async function pickReviewTerms(
   scope: ReviewScope,
   status: "known" | "unknown",
   limit: number,
-): Promise<TermCard[]> {
+  context: PickContext = "default",
+): Promise<PickReviewResult> {
   const [candidates, preset] = await Promise.all([
     fetchCandidates(client, userId, scope, status),
     loadUserPreset(client, userId),
   ]);
 
-  if (candidates.length === 0) return [];
+  if (candidates.length === 0) return { cards: [], pickMeta: [] };
 
-  const scored = pickTerms(candidates, preset, limit);
-  if (scored.length === 0) return [];
+  const scored = pickTerms(candidates, preset, limit, context);
+  if (scored.length === 0) return { cards: [], pickMeta: [] };
 
-  return hydrateTermsAsTermCards(
+  const pickMeta: PickMeta[] = scored.map((s) => ({
+    termId: s.termId,
+    score: s.score,
+    reasons: s.reasons,
+  }));
+
+  const cards = await hydrateTermsAsTermCards(
     client,
     scored.map((s) => s.termId),
   );
+
+  return { cards, pickMeta };
 }
 
 /** Service-role pick: hydrate via get_term_card. */
@@ -49,22 +63,31 @@ export async function pickReviewTermsForUser(
   scope: ReviewScope,
   status: "known" | "unknown",
   limit: number,
-): Promise<TermCard[]> {
+  context: PickContext = "default",
+): Promise<PickReviewResult> {
   const [candidates, preset] = await Promise.all([
     fetchCandidatesForUser(client, userId, scope, status),
     loadUserPreset(client, userId),
   ]);
 
-  if (candidates.length === 0) return [];
+  if (candidates.length === 0) return { cards: [], pickMeta: [] };
 
-  const scored = pickTerms(candidates, preset, limit);
-  if (scored.length === 0) return [];
+  const scored = pickTerms(candidates, preset, limit, context);
+  if (scored.length === 0) return { cards: [], pickMeta: [] };
 
-  return hydrateTermCardsForUser(
+  const pickMeta: PickMeta[] = scored.map((s) => ({
+    termId: s.termId,
+    score: s.score,
+    reasons: s.reasons,
+  }));
+
+  const cards = await hydrateTermCardsForUser(
     client,
     userId,
     scored.map((s) => s.termId),
   );
+
+  return { cards, pickMeta };
 }
 
 export async function getReviewPoolStats(

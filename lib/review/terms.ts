@@ -20,13 +20,16 @@ export async function fetchReviewTermPool(
   status: ReviewTermStatus,
   cardCount: number,
 ): Promise<ReviewTerm[]> {
-  const cards = await fetchStudyTermPool(
+  const { cards, pickMeta } = await fetchStudyTermPool(
     client,
     userId,
     { domainIds },
     status,
     cardCount,
     "session",
+    "default",
   );
-  return cards.map(toReviewTerm);
+
+  const reasonsById = new Map(pickMeta.map((m) => [m.termId, m.reasons]));
+  return cards.map((card) => toReviewTerm(card, reasonsById.get(card.id)));
 }

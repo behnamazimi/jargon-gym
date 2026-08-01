@@ -33,15 +33,18 @@ export async function fetchQuizTermPool(
   status: QuizTermStatus,
   questionCount: number,
 ): Promise<QuizTerm[]> {
-  const cards = await fetchStudyTermPool(
+  const { cards, pickMeta } = await fetchStudyTermPool(
     client,
     userId,
     { domainIds },
     status,
     questionCount,
     "session",
+    "quiz",
   );
-  return cards.map(toQuizTerm);
+
+  const reasonsById = new Map(pickMeta.map((m) => [m.termId, m.reasons]));
+  return cards.map((card) => toQuizTerm(card, reasonsById.get(card.id)));
 }
 
 export function countTermsForSelection(

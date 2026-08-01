@@ -177,15 +177,16 @@ export async function createSession(
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<ReviewSession> {
-  const terms = await fetchStudyTermPool(
+  const { cards } = await fetchStudyTermPool(
     client,
     userId,
     { domainIds: domainIdsForScope(domainId) },
     status,
     count,
     "admin",
+    "quiz",
   );
-  const termIds = terms.map((t) => t.id);
+  const termIds = cards.map((t) => t.id);
 
   const session: ReviewSession = {
     userId,

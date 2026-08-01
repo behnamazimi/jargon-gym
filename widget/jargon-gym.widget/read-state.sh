@@ -104,10 +104,6 @@ try:
         idx = (hash_int(interval_bucket) + rotation_offset) % len(unknown)
         current = unknown[idx]
 
-    if local_state.get("lastIntervalBucket") != interval_bucket:
-        local_state["lastIntervalBucket"] = interval_bucket
-        state_path.write_text(json.dumps(local_state, indent=2))
-
     emit({
         "terms": terms,
         "knownTermIds": list(known_ids),

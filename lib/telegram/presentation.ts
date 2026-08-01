@@ -96,7 +96,7 @@ export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
     [
       { text: "Mark known", callback_data: `known:${term.id}` },
-      { text: "Skip", callback_data: `skip:${term.id}` },
+      { text: "Next", callback_data: `next:${term.id}` },
     ],
   ];
 

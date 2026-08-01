@@ -4,11 +4,13 @@ import { AlertCircle, Loader2, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   generateQuizAction,
+  previewQuizQueueAction,
   recordQuizAnswerAction,
   submitQuizResultsAction,
 } from "@/app/(private)/jargon/quiz/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
+import { QueuePreview, type QueuePreviewItem } from "@/components/jargon/pick-reason-badges";
 import { QuizProgress } from "@/components/jargon/quiz/quiz-progress";
 import { QuizQuestionView } from "@/components/jargon/quiz/quiz-question";
 import { QuizResults } from "@/components/jargon/quiz/quiz-results";
@@ -85,6 +87,8 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   const [questionCountError, setQuestionCountError] = useState<string | null>(null);
   const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
+  const [queuePreview, setQueuePreview] = useState<QueuePreviewItem[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const domainIds: "all" | string[] =
     selectedCollectionId === "all" ? "all" : [selectedCollectionId];
@@ -107,6 +111,30 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     setQuestionCountInput(String(newMax));
     setQuestionCountError(null);
   }, [availableTermCount, status, selectedCollectionId]);
+
+  useEffect(() => {
+    if (step !== "picker" || availableTermCount === 0 || questionCountError !== null) {
+      setQueuePreview([]);
+      return;
+    }
+
+    let cancelled = false;
+    setPreviewLoading(true);
+
+    void previewQuizQueueAction({ domainIds, status, questionCount }).then((result) => {
+      if (cancelled) return;
+      setPreviewLoading(false);
+      if ("preview" in result && result.preview) {
+        setQueuePreview(result.preview);
+      } else {
+        setQueuePreview([]);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [domainIds, status, questionCount, step, availableTermCount, questionCountError]);
 
   useEffect(() => {
     if (step !== "playing" || questions.length === 0) return;
@@ -459,6 +487,10 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                   </FieldDescription>
                 </Field>
 
+                {availableTermCount > 0 && questionCountError === null ? (
+                  <QueuePreview items={queuePreview} loading={previewLoading} />
+                ) : null}
+
                 {availableTermCount === 0 ? (
                   <Alert variant="destructive">
                     <AlertDescription>
@@ -520,6 +552,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
             key={`${questions[currentIndex].termId}-${currentIndex}`}
             question={questions[currentIndex]}
             termLabel={termById.get(questions[currentIndex].termId)?.term ?? "Term"}
+            pickReasons={termById.get(questions[currentIndex].termId)?.pickReasons}
             isLast={currentIndex + 1 === questions.length}
             onAnswer={handleQuestionAnswer}
           />

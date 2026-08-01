@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { applyMarkKnown, applySkip } from "@/lib/jargon/review-outcome";
+import { applyMarkKnown } from "@/lib/jargon/review-outcome";
 import {
   deliverNextTerm,
   fetchTermCardForUser,
@@ -74,7 +74,8 @@ export async function handleKnownCallback(
   ];
 }
 
-export async function handleSkipCallback(
+/** Inline "Next": rotate to another term without writing an outcome on the current one. */
+export async function handleNextCallback(
   client: Client,
   userId: string,
   chatId: number,
@@ -83,15 +84,9 @@ export async function handleSkipCallback(
 ): Promise<TelegramAction[]> {
   const actions: TelegramAction[] = [];
 
-  try {
-    await applySkip(client, userId, termId, "admin");
-  } catch (err) {
-    console.error("Failed to record skipped outcome", { userId, termId, err });
-  }
-
   const term = await fetchTermCardForUser(client, userId, termId);
   if (term) {
-    actions.push(edit(chatId, messageId, `${formatTermMessage(term)}\n\n<b>Your action:</b> Skip`));
+    actions.push(edit(chatId, messageId, `${formatTermMessage(term)}\n\n<b>Your action:</b> Next`));
   }
 
   const next = await deliverNextTerm(client, userId);

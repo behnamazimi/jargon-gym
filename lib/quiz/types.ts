@@ -1,3 +1,4 @@
+import type { PickReason } from "@/lib/smart-queue";
 import type { StudyCollection, TermPoolStatus } from "@/lib/study";
 
 /** @deprecated Prefer TermPoolStatus from @/lib/study */
@@ -11,6 +12,7 @@ export type QuizTerm = {
   definition: string;
   example: string | null;
   domainName: string;
+  pickReasons?: PickReason[];
 };
 
 export type QuizMcqQuestion = {

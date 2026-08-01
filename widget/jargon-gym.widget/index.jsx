@@ -13,6 +13,19 @@ export const command = READ_STATE_CMD;
 // Poll every 5 minutes so changes in the web app (e.g. unmark known) show up.
 export const refreshFrequency = 5 * 60 * 1000;
 
+export const initialState = { output: "", error: null };
+
+// Required for click-driven dispatch (refresh / mark known / next) to update the UI.
+export const updateState = (event, previousState) => {
+  if (event.error) {
+    return { ...previousState, error: event.error };
+  }
+  if (event.output !== undefined) {
+    return { output: event.output, error: null };
+  }
+  return previousState;
+};
+
 export const className = `
   top: 40px;
   left: 40px;
@@ -167,52 +180,59 @@ const openApp = (appBaseUrl, current) => {
   run(`open ${escapeShellArg(url)}`);
 };
 
-const refreshState = (dispatch) => {
-  run(READ_STATE_CMD).then((output) => dispatch({ output, error: null }));
+/** Re-fetch widget state only — never records shown / increments seen. */
+const refreshState = (dispatch, widgetDir = null) => {
+  const cmd = widgetDir ? escapeShellArg(widgetDir + "/read-state.sh") : READ_STATE_CMD;
+  run(cmd)
+    .then((output) => dispatch({ output }))
+    .catch((err) => dispatch({ error: err }));
 };
 
 const markKnown = (termId, widgetDir, dispatch) => {
   if (!widgetDir || !termId) return;
-  run(`${escapeShellArg(widgetDir + "/mark-known.sh")} ${escapeShellArg(termId)}`).then(() =>
-    refreshState(dispatch),
-  );
+  run(`${escapeShellArg(widgetDir + "/mark-known.sh")} ${escapeShellArg(termId)}`)
+    .then(() => refreshState(dispatch, widgetDir))
+    .catch((err) => dispatch({ error: err }));
 };
 
-const rotateTerm = (widgetDir, dispatch) => {
-  if (!widgetDir) return;
-  run(escapeShellArg(widgetDir + "/rotate-term.sh")).then(() => refreshState(dispatch));
+const rotateTerm = (termId, widgetDir, dispatch) => {
+  if (!widgetDir || !termId) return;
+  run(`${escapeShellArg(widgetDir + "/rotate-term.sh")} ${escapeShellArg(termId)}`)
+    .then(() => refreshState(dispatch, widgetDir))
+    .catch((err) => dispatch({ error: err }));
 };
 
-const RefreshButton = ({ dispatch, title = "Refresh terms" }) => (
+const RefreshButton = ({ dispatch, widgetDir = null, title = "Refresh terms" }) => (
   <button
     className="refresh-btn"
     title={title}
     onClick={(e) => {
       e.stopPropagation();
-      refreshState(dispatch);
+      refreshState(dispatch, widgetDir);
     }}
   >
     ↻
   </button>
 );
 
-const LabelBar = ({ title, dispatch, trailing = null }) => (
+const LabelBar = ({ title, dispatch, widgetDir = null, trailing = null }) => (
   <div className="label">
     <span>{title}</span>
     <span className="label-right">
       {trailing}
-      <RefreshButton dispatch={dispatch} />
+      <RefreshButton dispatch={dispatch} widgetDir={widgetDir} />
     </span>
   </div>
 );
 
 export const render = ({ output, error }, dispatch) => {
   if (error) {
+    const message = typeof error === "string" ? error : error?.message || String(error);
     return (
       <div onClick={() => openApp("http://localhost:3000", null)}>
         <LabelBar title="💡 Jargon" dispatch={dispatch} />
         <div className="def">Couldn&apos;t read terms — click to open the app anyway.</div>
-        <code>{error.message}</code>
+        <code>{message}</code>
       </div>
     );
   }
@@ -230,7 +250,7 @@ export const render = ({ output, error }, dispatch) => {
   if (apiError) {
     return (
       <div onClick={() => openApp(appBaseUrl, null)}>
-        <LabelBar title="💡 Jargon" dispatch={dispatch} />
+        <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="def">{apiError}</div>
       </div>
     );
@@ -239,7 +259,7 @@ export const render = ({ output, error }, dispatch) => {
   if (!terms.length) {
     return (
       <div onClick={() => openApp(appBaseUrl, null)}>
-        <LabelBar title="💡 Jargon" dispatch={dispatch} />
+        <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="def">No terms found — click to open the app.</div>
       </div>
     );
@@ -248,7 +268,7 @@ export const render = ({ output, error }, dispatch) => {
   if (!current) {
     return (
       <div onClick={() => openApp(appBaseUrl, null)}>
-        <LabelBar title="💡 Jargon" dispatch={dispatch} />
+        <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="done">
           🎉 You&apos;ve marked all {totalCount} terms known in this widget. Click to review in the
           app.
@@ -262,6 +282,7 @@ export const render = ({ output, error }, dispatch) => {
       <LabelBar
         title="💡 Term to review"
         dispatch={dispatch}
+        widgetDir={widgetDir}
         trailing={
           <span>
             {knownCount}/{totalCount}
@@ -285,7 +306,7 @@ export const render = ({ output, error }, dispatch) => {
           title="Show another term"
           onClick={(e) => {
             e.stopPropagation();
-            rotateTerm(widgetDir, dispatch);
+            rotateTerm(current.id, widgetDir, dispatch);
           }}
         >
           → Next

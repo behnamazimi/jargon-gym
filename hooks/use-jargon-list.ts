@@ -48,6 +48,12 @@ export function useJargonList(initialData: JargonPageData) {
     });
   }, []);
 
+  const recordShownOnce = useCallback((termId: string) => {
+    if (countedShownRef.current.has(termId)) return;
+    countedShownRef.current.add(termId);
+    void recordTermShownAction(termId);
+  }, []);
+
   const toggleOpen = useCallback(
     (termId: string) => {
       const wasOpen = openTerms.has(termId);
@@ -59,13 +65,9 @@ export function useJargonList(initialData: JargonPageData) {
         return next;
       });
 
-      // Collapse after reading counts as a smart-queue sighting (once per visit).
-      if (wasOpen && !countedShownRef.current.has(termId)) {
-        countedShownRef.current.add(termId);
-        void recordTermShownAction(termId);
-      }
+      if (!wasOpen) recordShownOnce(termId);
     },
-    [openTerms],
+    [openTerms, recordShownOnce],
   );
 
   const toggleKnown = useCallback(
@@ -95,14 +97,18 @@ export function useJargonList(initialData: JargonPageData) {
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 
-  const focusTerm = useCallback((termId: string, termName: string) => {
-    setSearchQuery(termName);
-    setOpenTerms((prev) => {
-      const next = new Set(prev);
-      next.add(termId);
-      return next;
-    });
-  }, []);
+  const focusTerm = useCallback(
+    (termId: string, termName: string) => {
+      setSearchQuery(termName);
+      setOpenTerms((prev) => {
+        const next = new Set(prev);
+        next.add(termId);
+        return next;
+      });
+      recordShownOnce(termId);
+    },
+    [recordShownOnce],
+  );
 
   return {
     domain: initialData.domain,

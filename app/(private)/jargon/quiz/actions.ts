@@ -35,6 +35,52 @@ export async function getQuizSetupData() {
   };
 }
 
+/** Preview the next quiz batch without generating questions. */
+export async function previewQuizQueueAction(input: {
+  domainIds: string[] | "all";
+  status: QuizTermStatus;
+  questionCount: number;
+}) {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to take a quiz." };
+  }
+
+  try {
+    const questionCount = Math.floor(input.questionCount);
+    if (!Number.isFinite(questionCount) || questionCount < 1) {
+      return { error: "Choose at least one question." };
+    }
+
+    if (questionCount > MAX_QUIZ_TERMS) {
+      return { error: `Quizzes are limited to ${MAX_QUIZ_TERMS} questions.` };
+    }
+
+    const terms = await fetchQuizTermPool(
+      auth.supabase,
+      auth.user.id,
+      input.domainIds,
+      input.status,
+      questionCount,
+    );
+
+    if (terms.length === 0) {
+      return { error: "No terms match your selection. Try a different collection or status." };
+    }
+
+    return {
+      preview: terms.map((term) => ({
+        id: term.id,
+        term: term.term,
+        pickReasons: term.pickReasons,
+      })),
+    };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't load queue preview.";
+    return { error: message };
+  }
+}
+
 export async function generateQuizAction(input: {
   domainIds: string[] | "all";
   status: QuizTermStatus;

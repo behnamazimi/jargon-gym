@@ -28,7 +28,7 @@ export type DeliverOptions = {
 export type DeliverResult =
   | { kind: "term"; term: TermCard }
   | { kind: "caughtUp" }
-  | { kind: "skipped" };
+  | { kind: "silenced" };
 
 async function clearCaughtUpFlag(client: Client, userId: string) {
   await client
@@ -44,7 +44,7 @@ async function maybePersistCaughtUp(
   options?: DeliverOptions,
 ): Promise<DeliverResult> {
   if (options?.skipIfAlreadyCaughtUp && options?.allCaughtUpAt) {
-    return { kind: "skipped" };
+    return { kind: "silenced" };
   }
 
   if (options?.persistCaughtUpFlag) {
@@ -78,8 +78,14 @@ export async function deliverNextTerm(
 
   await clearCaughtUpFlag(client, userId);
 
-  const terms = await pickReviewTermsForUser(client, userId, { domainIds: "all" }, "unknown", 1);
-  const term = terms[0];
+  const { cards } = await pickReviewTermsForUser(
+    client,
+    userId,
+    { domainIds: "all" },
+    "unknown",
+    1,
+  );
+  const term = cards[0];
 
   if (!term) {
     const result = await maybePersistCaughtUp(client, userId, options);

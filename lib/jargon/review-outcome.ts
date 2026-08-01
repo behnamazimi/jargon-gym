@@ -1,11 +1,11 @@
 /**
  * Shared review/quiz outcome rules for web + Telegram.
  * Sole writer of review_state outcomes — surfaces must not call outcome RPCs directly.
- * @see docs/smart-queue.md — "How surfaces couple in"
+ * @see docs/smart-queue.md — "Surfaces"
  *
  * incrementSeen semantics (preserve intentionally):
- * - applyTermShown / list toggle mark-known → increment
- * - applyMarkKnown (Telegram) / applySkip → no increment
+ * - applyTermShown / applyKnownToggle mark-known → increment
+ * - applyMarkKnown (Telegram after delivery) → no increment
  * - applyReviewRating after reveal → no second increment when alreadyCountedSeen
  */
 
@@ -138,7 +138,7 @@ export async function applyReviewRating(
 }
 
 /**
- * Jargon-page / widget known toggle.
+ * Jargon-page / widget known toggle (list checkbox + desktop widget).
  * Mark known → solid (+increment). Mark unknown → forgot (no increment).
  */
 export async function applyKnownToggle(
@@ -175,14 +175,4 @@ export async function applyMarkKnown(
 ): Promise<void> {
   await flipKnown(client, mode, userId, termId, true);
   await writeOutcome(client, mode, userId, termId, "solid", false);
-}
-
-/** Telegram /next Skip: skipped outcome, no seen increment. */
-export async function applySkip(
-  client: Client,
-  userId: string,
-  termId: string,
-  mode: AuthMode = "admin",
-): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "skipped", false);
 }

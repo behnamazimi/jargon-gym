@@ -3,6 +3,7 @@
 import { Eye } from "lucide-react";
 import { useRef } from "react";
 import type { ReviewTerm } from "@/lib/review/types";
+import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ReviewTermContent } from "./review-term-content";
@@ -80,6 +81,11 @@ export function ReviewCard({
                 {term.term}
               </h2>
               <p className="m-0 text-xs text-base-content/50">{term.domainName}</p>
+              <PickReasonBadges
+                reasons={term.pickReasons}
+                mode="compact"
+                className="justify-center"
+              />
             </div>
 
             <div
@@ -109,6 +115,7 @@ export function ReviewCard({
                   {term.category}
                 </Badge>
               </div>
+              <PickReasonBadges reasons={term.pickReasons} mode="compact" className="mt-2" />
             </div>
             <div
               className="flex-1 overflow-y-auto px-4 py-4"

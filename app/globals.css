@@ -232,4 +232,21 @@
       filter: none;
     }
   }
+
+  .content-page-body :where(ul:not([class]), ol:not([class])) {
+    list-style-position: outside;
+    padding-inline-start: 1.25rem;
+  }
+
+  .content-page-body :where(ul:not([class])) {
+    list-style-type: disc;
+  }
+
+  .content-page-body :where(ol:not([class])) {
+    list-style-type: decimal;
+  }
+
+  .content-page-body :where(ul:not([class]) > li + li, ol:not([class]) > li + li) {
+    margin-block-start: 0.5rem;
+  }
 }

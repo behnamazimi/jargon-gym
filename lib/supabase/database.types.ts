@@ -611,7 +611,7 @@ export type Database = {
     };
     Enums: {
       domain_visibility: "private" | "shared";
-      review_outcome: "unseen" | "shown" | "learning" | "solid" | "skipped" | "verified" | "forgot";
+      review_outcome: "unseen" | "shown" | "learning" | "solid" | "verified" | "forgot";
       review_preset: "balanced" | "learn_new" | "drill_weak";
       telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
@@ -744,7 +744,7 @@ export const Constants = {
   public: {
     Enums: {
       domain_visibility: ["private", "shared"],
-      review_outcome: ["unseen", "shown", "learning", "solid", "skipped", "verified", "forgot"],
+      review_outcome: ["unseen", "shown", "learning", "solid", "verified", "forgot"],
       review_preset: ["balanced", "learn_new", "drill_weak"],
       telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],

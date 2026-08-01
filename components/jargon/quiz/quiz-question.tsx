@@ -11,12 +11,15 @@ import {
   QuizPanel,
   QuizPanelBody,
 } from "@/components/jargon/quiz/quiz-ui";
+import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
 import type { QuizQuestion } from "@/lib/quiz/types";
+import type { PickReason } from "@/lib/smart-queue";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
 
 type QuizQuestionViewProps = {
   question: QuizQuestion;
   termLabel: string;
+  pickReasons?: PickReason[];
   isLast: boolean;
   onAnswer: (passed: boolean) => void;
 };
@@ -51,7 +54,12 @@ function getTrueFalseChoiceState(
   return "default";
 }
 
-export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionViewProps) {
+export function QuizQuestionView({
+  question,
+  pickReasons,
+  isLast,
+  onAnswer,
+}: QuizQuestionViewProps) {
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
@@ -155,6 +163,7 @@ export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionVie
     <QuizPanel>
       <QuizPanelBody className="space-y-5">
         <div className="space-y-3">
+          <PickReasonBadges reasons={pickReasons} mode="compact" />
           <h2 className="m-0 text-lg font-semibold leading-snug">{question.prompt}</h2>
         </div>
 

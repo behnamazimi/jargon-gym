@@ -20,8 +20,8 @@ import { CONNECT_MESSAGE, HELP_MESSAGE } from "./copy";
 import {
   handleKnownCallback,
   handleNext,
+  handleNextCallback,
   handleSendDue,
-  handleSkipCallback,
 } from "./delivery-flow";
 import {
   handleQuizCommand,
@@ -99,9 +99,9 @@ async function handleCallback(
     );
   }
 
-  if (data.startsWith("skip:")) {
-    const termId = data.slice("skip:".length);
-    actions.push(...(await handleSkipCallback(client, userId, chatId, messageId, termId)));
+  if (data.startsWith("next:")) {
+    const termId = data.slice("next:".length);
+    actions.push(...(await handleNextCallback(client, userId, chatId, messageId, termId)));
     return actions;
   }
 

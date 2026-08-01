@@ -28,11 +28,13 @@ import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { recordTermShownAction } from "@/app/(private)/jargon/actions";
 import {
   getReviewPoolStatsAction,
+  previewReviewQueueAction,
   rateReviewTermAction,
   startReviewAction,
 } from "@/app/(private)/jargon/review/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
+import { QueuePreview, type QueuePreviewItem } from "@/components/jargon/pick-reason-badges";
 import { ReviewCard } from "@/components/jargon/review/review-card";
 import { ReviewProgress } from "@/components/jargon/review/review-progress";
 import { ReviewSummary } from "@/components/jargon/review/review-summary";
@@ -97,6 +99,8 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   } | null>(null);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [shownTermIds, setShownTermIds] = useState<string[]>([]);
+  const [queuePreview, setQueuePreview] = useState<QueuePreviewItem[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const domainIds = useMemo(
     (): string[] | "all" => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
@@ -144,6 +148,30 @@ export function ReviewPage({ collections }: ReviewPageProps) {
       cancelled = true;
     };
   }, [domainIds, status, step, statsRefreshKey]);
+
+  useEffect(() => {
+    if (step !== "setup" || availableTermCount === 0 || cardCountError !== null) {
+      setQueuePreview([]);
+      return;
+    }
+
+    let cancelled = false;
+    setPreviewLoading(true);
+
+    void previewReviewQueueAction({ domainIds, status, cardCount }).then((result) => {
+      if (cancelled) return;
+      setPreviewLoading(false);
+      if ("preview" in result && result.preview) {
+        setQueuePreview(result.preview);
+      } else {
+        setQueuePreview([]);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [domainIds, status, cardCount, step, availableTermCount, cardCountError, statsRefreshKey]);
 
   const currentSetup = useMemo(
     (): ReviewSetup => ({
@@ -519,6 +547,10 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                     </span>
                     {poolStats.allSeenOnce ? " · all seen once" : null}
                   </div>
+                ) : null}
+
+                {availableTermCount > 0 && cardCountError === null ? (
+                  <QueuePreview items={queuePreview} loading={previewLoading} />
                 ) : null}
 
                 {availableTermCount === 0 ? (

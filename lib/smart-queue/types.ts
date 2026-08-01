@@ -1,16 +1,21 @@
 /** Smart queue types — pure data structures, no runtime imports.
  */
 
-export type ReviewOutcome =
-  | "unseen"
-  | "shown"
-  | "learning"
-  | "solid"
-  | "skipped"
-  | "verified"
-  | "forgot";
+export type ReviewOutcome = "unseen" | "shown" | "learning" | "solid" | "verified" | "forgot";
 
 export type ReviewPreset = "balanced" | "learn_new" | "drill_weak";
+
+/** Session context for pick weight overrides (does not change saved preset). */
+export type PickContext = "default" | "quiz";
+
+export type PickReason =
+  | "unseen"
+  | "new"
+  | "learning"
+  | "forgot"
+  | "shown_stuck"
+  | "stale"
+  | "solid_cooldown";
 
 export type ReviewCandidate = {
   termId: string;
@@ -26,6 +31,8 @@ export type ScoreWeights = {
   learningBoost: number;
   forgotBoost: number;
   newTermBoost: number;
+  shownWithoutSolidBoost: number;
+  solidCooldownPenalty: number;
   seenCountPenalty: number;
   stalenessBoostPerHour: number;
   stalenessCapHours: number;
@@ -43,4 +50,11 @@ export type PoolStats = {
 
 export type ScoredCandidate = ReviewCandidate & {
   score: number;
+  reasons: PickReason[];
+};
+
+export type PickMeta = {
+  termId: string;
+  score: number;
+  reasons: PickReason[];
 };

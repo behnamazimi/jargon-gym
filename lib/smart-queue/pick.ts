@@ -1,26 +1,31 @@
 /** Term selection from scored candidates.
  */
 
-import type { ReviewCandidate, ReviewPreset, ScoredCandidate } from "./types";
-import { computeScore } from "./score";
-import { getPresetWeights } from "./presets";
+import type { PickContext, ReviewCandidate, ReviewPreset, ScoredCandidate } from "./types";
+import { scoreCandidate } from "./score";
+import { getContextWeights } from "./presets";
 
 export function pickTerms(
   candidates: ReviewCandidate[],
   preset: ReviewPreset,
   limit: number,
+  context: PickContext = "default",
 ): ScoredCandidate[] {
   if (candidates.length === 0 || limit <= 0) {
     return [];
   }
 
-  const weights = getPresetWeights(preset);
+  const weights = getContextWeights(preset, context);
   const now = new Date();
 
-  const scored: ScoredCandidate[] = candidates.map((candidate) => ({
-    ...candidate,
-    score: computeScore(candidate, weights, now),
-  }));
+  const scored: ScoredCandidate[] = candidates.map((candidate) => {
+    const { score, reasons } = scoreCandidate(candidate, weights, now);
+    return {
+      ...candidate,
+      score,
+      reasons,
+    };
+  });
 
   // Sort by score desc, tie-break by term ID for stability
   scored.sort((a, b) => {
