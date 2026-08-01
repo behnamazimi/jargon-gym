@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import type { Database } from "@/lib/supabase/database.types";
 
 function isPublicPath(pathname: string) {
@@ -61,7 +62,10 @@ export async function updateSession(request: NextRequest) {
 
   if (!user && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
+    const next = requestPathWithSearch(pathname, request.nextUrl.search);
     url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("next", next);
     return NextResponse.redirect(url);
   }
 
@@ -76,20 +80,21 @@ export async function updateSession(request: NextRequest) {
 
     if (!referralVerified && !pathname.startsWith("/complete-signup")) {
       const url = request.nextUrl.clone();
+      const next = requestPathWithSearch(pathname, request.nextUrl.search);
       url.pathname = "/complete-signup";
+      url.search = "";
+      url.searchParams.set("next", next);
       return NextResponse.redirect(url);
     }
 
     if (referralVerified && pathname.startsWith("/complete-signup")) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/jargon";
-      return NextResponse.redirect(url);
+      const nextPath = safeNextPath(request.nextUrl.searchParams.get("next"));
+      return NextResponse.redirect(new URL(nextPath, request.url));
     }
 
     if (pathname.startsWith("/login") || pathname.startsWith("/signup")) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/jargon";
-      return NextResponse.redirect(url);
+      const nextPath = safeNextPath(request.nextUrl.searchParams.get("next"));
+      return NextResponse.redirect(new URL(nextPath, request.url));
     }
   }
 

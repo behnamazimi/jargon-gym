@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
         });
 
         if (redeemError) {
-          const params = new URLSearchParams({ ref, error: "invalid-code" });
+          const params = new URLSearchParams({ ref, error: "invalid-code", next });
           return NextResponse.redirect(`${origin}/complete-signup?${params.toString()}`);
         }
       }

@@ -5,22 +5,27 @@ import { AuthFormError } from "@/components/auth/auth-form-error";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { safeNextPath } from "@/lib/auth/safe-next-path";
 import { redeemReferralCode } from "./actions";
 
 type CompleteSignupFormProps = {
   defaultReferenceCode?: string;
   initialError?: string | null;
+  next?: string;
 };
 
 export default function CompleteSignupForm({
   defaultReferenceCode = "",
   initialError = null,
+  next: rawNext,
 }: CompleteSignupFormProps) {
+  const next = safeNextPath(rawNext ?? null);
   const [state, action, pending] = useActionState(redeemReferralCode, null);
   const error = state?.error ?? initialError;
 
   return (
     <form action={action} className="flex w-full max-w-sm flex-col gap-4">
+      <input type="hidden" name="next" value={next} />
       <h1 className="text-2xl font-semibold tracking-tight">Complete sign up</h1>
       <p className="text-sm text-base-content/60">
         Almost there — enter your reference code to finish setting up your account.

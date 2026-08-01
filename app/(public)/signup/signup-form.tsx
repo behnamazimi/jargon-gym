@@ -10,13 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
+import { appendNextParam, safeNextPath } from "@/lib/auth/safe-next-path";
 import { signup } from "./actions";
 
 type SignupFormProps = {
   defaultReferenceCode?: string;
+  next?: string;
 };
 
-export default function SignupForm({ defaultReferenceCode = "" }: SignupFormProps) {
+export default function SignupForm({ defaultReferenceCode = "", next: rawNext }: SignupFormProps) {
+  const next = safeNextPath(rawNext ?? null);
   const [state, action, pending] = useActionState(signup, null);
   const [password, setPassword] = useState("");
   const [passwordTouched, setPasswordTouched] = useState(false);
@@ -40,7 +43,7 @@ export default function SignupForm({ defaultReferenceCode = "" }: SignupFormProp
       />
       <h1 className="text-2xl font-semibold tracking-tight">Sign up</h1>
 
-      <GoogleSignInButton next="/complete-signup" referenceCode={referenceCode} />
+      <GoogleSignInButton next={next} referenceCode={referenceCode} />
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-base-content/10" />
@@ -49,6 +52,7 @@ export default function SignupForm({ defaultReferenceCode = "" }: SignupFormProp
       </div>
 
       <form action={action} className="flex flex-col gap-4">
+        <input type="hidden" name="next" value={next} />
         <AuthFormError error={state?.error} context="signup" />
 
         <FieldGroup>
@@ -101,7 +105,7 @@ export default function SignupForm({ defaultReferenceCode = "" }: SignupFormProp
 
       <p className="text-center text-sm text-base-content/60">
         Already have an account?{" "}
-        <Link href="/login" className="underline underline-offset-2">
+        <Link href={appendNextParam("/login", rawNext)} className="underline underline-offset-2">
           Log in
         </Link>
       </p>

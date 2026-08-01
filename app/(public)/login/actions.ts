@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { formatLoginError } from "@/lib/auth/format-auth-error";
+import { safeNextPath } from "@/lib/auth/safe-next-path";
 import { createClient } from "@/lib/supabase/server";
 
 export type LoginState = { error: string } | null;
@@ -21,5 +22,6 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     return { error: formatLoginError(error) };
   }
 
-  redirect("/jargon");
+  const next = safeNextPath(formData.get("next")?.toString() ?? null);
+  redirect(next);
 }

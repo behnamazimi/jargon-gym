@@ -9,12 +9,15 @@ import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { appendNextParam, safeNextPath } from "@/lib/auth/safe-next-path";
 import { login } from "./actions";
 
 const OAUTH_FAILED_ERROR = "Google sign-in didn't work. Try again or use your email instead.";
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
+  const rawNext = searchParams.get("next");
+  const next = safeNextPath(rawNext);
   const oauthError = searchParams.get("error") === "oauth-failed" ? OAUTH_FAILED_ERROR : null;
   const [state, action, pending] = useActionState(login, null);
   const error = state?.error ?? oauthError;
@@ -28,7 +31,7 @@ export default function LoginForm() {
       />
       <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
 
-      <GoogleSignInButton next="/jargon" />
+      <GoogleSignInButton next={next} />
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-base-content/10" />
@@ -37,6 +40,7 @@ export default function LoginForm() {
       </div>
 
       <form action={action} className="flex flex-col gap-4">
+        <input type="hidden" name="next" value={next} />
         <AuthFormError error={error} />
 
         <FieldGroup>
@@ -72,7 +76,7 @@ export default function LoginForm() {
 
       <p className="text-center text-sm text-base-content/60">
         Need an account?{" "}
-        <Link href="/signup" className="underline underline-offset-2">
+        <Link href={appendNextParam("/signup", rawNext)} className="underline underline-offset-2">
           Sign up
         </Link>
       </p>

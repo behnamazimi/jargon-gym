@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { formatSignupError } from "@/lib/auth/format-auth-error";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
+import { safeNextPath } from "@/lib/auth/safe-next-path";
 import { createClient } from "@/lib/supabase/server";
 
 export type CompleteSignupState = { error: string } | null;
@@ -26,5 +27,6 @@ export async function redeemReferralCode(
     return { error: formatSignupError(error) };
   }
 
-  redirect("/jargon");
+  const next = safeNextPath(formData.get("next")?.toString() ?? null);
+  redirect(next);
 }
