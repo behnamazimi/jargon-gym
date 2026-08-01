@@ -6,6 +6,8 @@ import { listQuizableCollections } from "@/lib/quiz/terms";
 import { MAX_REVIEW_TERMS, fetchReviewTermPool } from "@/lib/review/terms";
 import type { ReviewSetup } from "@/lib/review/types";
 import { createClient } from "@/lib/supabase/server";
+import { getReviewPoolStats, recordReviewOutcome } from "@/lib/smart-queue/service";
+import type { ReviewOutcome } from "@/lib/smart-queue";
 
 async function getAuthenticatedClient() {
   const supabase = await createClient();
@@ -32,6 +34,24 @@ export async function getReviewSetupData() {
   return { collections };
 }
 
+export async function getReviewPoolStatsAction(
+  domainIds: string[] | "all",
+  status: "known" | "unknown",
+) {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to review terms." };
+  }
+
+  try {
+    const poolStats = await getReviewPoolStats(auth.supabase, auth.user.id, { domainIds }, status);
+    return { poolStats };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't load pool stats.";
+    return { error: message };
+  }
+}
+
 export async function startReviewAction(setup: ReviewSetup) {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
@@ -54,7 +74,6 @@ export async function startReviewAction(setup: ReviewSetup) {
       setup.domainIds,
       setup.status,
       cardCount,
-      setup.shuffle,
     );
 
     if (cards.length === 0) {
@@ -68,23 +87,43 @@ export async function startReviewAction(setup: ReviewSetup) {
   }
 }
 
-export async function rateReviewTermAction(termId: string, known: boolean) {
+export async function rateReviewTermAction(
+  termId: string,
+  known: boolean,
+  sessionStatus: "known" | "unknown",
+  options: { alreadyCountedSeen?: boolean } = {},
+) {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }
 
   try {
-    if (known) {
-      await markTermKnown(auth.supabase, termId);
+    const incrementSeen = !options.alreadyCountedSeen;
+    let outcome: ReviewOutcome;
+
+    if (sessionStatus === "unknown") {
+      outcome = known ? "solid" : "learning";
     } else {
-      await clearTermKnown(auth.supabase, auth.user.id, termId);
+      outcome = known ? "verified" : "forgot";
+    }
+
+    if (sessionStatus === "unknown" && known) {
+      await recordReviewOutcome(auth.supabase, termId, outcome, incrementSeen);
+      await markTermKnown(auth.supabase, termId, { recordQueue: false });
+    } else if (sessionStatus === "known" && !known) {
+      await recordReviewOutcome(auth.supabase, termId, outcome, incrementSeen);
+      await clearTermKnown(auth.supabase, auth.user.id, termId, { recordQueue: false });
+    } else {
+      await recordReviewOutcome(auth.supabase, termId, outcome, incrementSeen);
     }
 
     revalidatePath("/jargon");
+    revalidatePath("/jargon/review");
 
     return {};
   } catch (err) {
+    console.error("rateReviewTermAction failed", { termId, known, sessionStatus, err });
     const message = err instanceof Error ? err.message : "Couldn't save your rating. Try again.";
     return { error: message };
   }

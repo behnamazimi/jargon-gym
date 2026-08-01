@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
 import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
-import { LLM_PROVIDER_LABELS } from "@/lib/llm/types";
+import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { MAX_QUIZ_TERMS, fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
@@ -15,6 +15,8 @@ import type {
   QuizTerm,
   QuizTermStatus,
 } from "@/lib/quiz/types";
+import { recordReviewOutcome } from "@/lib/smart-queue/service";
+import type { ReviewOutcome } from "@/lib/smart-queue";
 
 async function getAuthenticatedClient() {
   const supabase = await createClient();
@@ -42,9 +44,9 @@ export async function getQuizSetupData() {
   ]);
 
   return {
-    llmConfigured: settings !== null,
+    llmConfigured: hasLlmConfigured(settings),
     provider: settings?.provider ?? null,
-    providerLabel: settings ? LLM_PROVIDER_LABELS[settings.provider] : null,
+    providerLabel: settings?.provider ? LLM_PROVIDER_LABELS[settings.provider] : null,
     collections,
   };
 }
@@ -92,13 +94,10 @@ export async function generateQuizAction(input: {
     let questions: QuizQuestion[];
     let providerLabel: string;
 
-    // Route to appropriate generator based on questionStyle
     if (input.questionStyle === "simple") {
-      // Simple mode: use database terms directly, no AI needed
       questions = await generateSimpleQuiz(terms);
       providerLabel = "Simple (Definition → Term)";
     } else {
-      // AI mode: use LLM to generate questions
       const credentials = await getDecryptedApiKey(auth.supabase, auth.user.id);
 
       if (!credentials) {
@@ -128,40 +127,12 @@ export async function generateQuizAction(input: {
   }
 }
 
+/** Record outcome + apply quiz prefs for a single answer (mirrors Telegram per-answer). */
 export async function recordQuizAnswerAction(input: {
   termId: string;
   passed: boolean;
-}): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
-  if ("error" in auth) {
-    return { error: "Log in to take a quiz." };
-  }
-
-  if (input.passed) {
-    return {};
-  }
-
-  try {
-    const settings = await getUserSettings(auth.supabase, auth.user.id);
-    const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
-
-    if (!markUnknownOnFail) {
-      return {};
-    }
-
-    await clearTermKnown(auth.supabase, auth.user.id, input.termId);
-    revalidatePath("/jargon");
-    return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't update term progress.";
-    return { error: message };
-  }
-}
-
-export async function submitQuizResultsAction(input: {
   status: QuizTermStatus;
-  answers: QuizAnswer[];
-}): Promise<{ error?: string; flippedTerms?: { id: string; term: string }[] }> {
+}): Promise<{ error?: string; flipped?: boolean }> {
   const auth = await getAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
@@ -172,25 +143,49 @@ export async function submitQuizResultsAction(input: {
     const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
     const markKnownOnPass = settings?.markKnownOnPass ?? false;
 
-    const flippedTermIdSet = new Set<string>();
-
-    for (const answer of input.answers) {
-      if (!answer.passed) {
-        if (markUnknownOnFail) {
-          await clearTermKnown(auth.supabase, auth.user.id, answer.termId);
-          flippedTermIdSet.add(answer.termId);
-        }
-        continue;
-      }
-
-      if (input.status === "unknown" && markKnownOnPass) {
-        await markTermKnown(auth.supabase, answer.termId);
-        flippedTermIdSet.add(answer.termId);
-      }
+    let outcome: ReviewOutcome;
+    if (input.status === "unknown") {
+      outcome = input.passed ? "solid" : "learning";
+    } else {
+      outcome = input.passed ? "verified" : "forgot";
     }
 
-    const flippedTermIds = [...flippedTermIdSet];
+    await recordReviewOutcome(auth.supabase, input.termId, outcome, true);
 
+    let flipped = false;
+
+    if (!input.passed && markUnknownOnFail) {
+      await clearTermKnown(auth.supabase, auth.user.id, input.termId, { recordQueue: false });
+      flipped = true;
+    } else if (input.passed && input.status === "unknown" && markKnownOnPass) {
+      await markTermKnown(auth.supabase, input.termId, { recordQueue: false });
+      flipped = true;
+    }
+
+    if (flipped) {
+      revalidatePath("/jargon");
+    }
+
+    return { flipped };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't update term progress.";
+    return { error: message };
+  }
+}
+
+/** Finalize quiz: build flipped-terms summary. Mutations already happened per answer. */
+export async function submitQuizResultsAction(input: {
+  status: QuizTermStatus;
+  answers: QuizAnswer[];
+  flippedTermIds: string[];
+}): Promise<{ error?: string; flippedTerms?: { id: string; term: string }[] }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to take a quiz." };
+  }
+
+  try {
+    const flippedTermIds = [...new Set(input.flippedTermIds)];
     let flippedTerms: { id: string; term: string }[] = [];
 
     if (flippedTermIds.length > 0) {

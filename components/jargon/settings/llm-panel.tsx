@@ -16,7 +16,7 @@ import {
 } from "@/components/jargon/settings/ui";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -25,7 +25,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LLM_PROVIDER_OPTIONS, type LlmProvider, type UserSettings } from "@/lib/llm/types";
+import {
+  hasLlmConfigured,
+  LLM_PROVIDER_OPTIONS,
+  type LlmProvider,
+  type UserSettings,
+} from "@/lib/llm/types";
 
 type LlmPanelProps = {
   initialSettings: UserSettings | null;
@@ -35,7 +40,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [provider, setProvider] = useState<LlmProvider>(initialSettings?.provider ?? "google");
   const [apiKey, setApiKey] = useState("");
-  const [replacingKey, setReplacingKey] = useState(!initialSettings);
+  const [replacingKey, setReplacingKey] = useState(!hasLlmConfigured(initialSettings));
   const [markUnknownOnFail, setMarkUnknownOnFail] = useState(
     initialSettings?.markUnknownOnFail ?? true,
   );
@@ -63,6 +68,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
       apiKeyLast4: last4,
       markUnknownOnFail,
       markKnownOnPass,
+      reviewPreset: settings?.reviewPreset ?? "balanced",
     });
     setApiKey("");
     setReplacingKey(false);
@@ -80,7 +86,15 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
       return;
     }
 
-    setSettings(null);
+    setSettings(
+      settings
+        ? {
+            ...settings,
+            provider: null,
+            apiKeyLast4: null,
+          }
+        : null,
+    );
     setReplacingKey(true);
     setApiKey("");
   }
@@ -89,8 +103,8 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
     markUnknownOnFail?: boolean;
     markKnownOnPass?: boolean;
   }) {
-    if (!settings) return;
-
+    const previousUnknown = markUnknownOnFail;
+    const previousKnown = markKnownOnPass;
     const nextMarkUnknownOnFail = next.markUnknownOnFail ?? markUnknownOnFail;
     const nextMarkKnownOnPass = next.markKnownOnPass ?? markKnownOnPass;
 
@@ -107,29 +121,32 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
 
     if (result.error) {
       setError(result.error);
-      setMarkUnknownOnFail(settings.markUnknownOnFail);
-      setMarkKnownOnPass(settings.markKnownOnPass);
+      setMarkUnknownOnFail(previousUnknown);
+      setMarkKnownOnPass(previousKnown);
       return;
     }
 
     setSettings({
-      ...settings,
+      provider: settings?.provider ?? null,
+      apiKeyLast4: settings?.apiKeyLast4 ?? null,
       markUnknownOnFail: nextMarkUnknownOnFail,
       markKnownOnPass: nextMarkKnownOnPass,
+      reviewPreset: settings?.reviewPreset ?? "balanced",
     });
   }
 
-  const providerLabel = settings
+  const llmConfigured = hasLlmConfigured(settings);
+  const providerLabel = settings?.provider
     ? LLM_PROVIDER_OPTIONS.find((option) => option.value === settings.provider)?.label
     : null;
 
   return (
     <>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <StatusPill variant={settings ? "connected" : "disconnected"} />
-        {settings ? (
+        <StatusPill variant={llmConfigured ? "connected" : "disconnected"} />
+        {llmConfigured ? (
           <p className="m-0 text-xs text-base-content/60">
-            {providerLabel} · ••••{settings.apiKeyLast4}
+            {providerLabel} · ••••{settings?.apiKeyLast4}
           </p>
         ) : null}
       </div>
@@ -160,7 +177,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
           </Select>
         </Field>
 
-        {settings && !replacingKey ? (
+        {llmConfigured && !replacingKey ? (
           <div className="space-y-3 rounded-lg bg-base-200/50 px-4 py-3">
             <p className="m-0 text-sm text-base-content/60">
               Key saved. Replace it here if you need to switch providers.
@@ -188,9 +205,9 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
                 isDisabled={isSaving || !apiKey.trim()}
                 className="text-sm"
               >
-                {isSaving ? "Saving…" : settings ? "Save new key" : "Save key"}
+                {isSaving ? "Saving…" : llmConfigured ? "Save new key" : "Save key"}
               </Button>
-              {settings && replacingKey ? (
+              {llmConfigured && replacingKey ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -212,13 +229,13 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
 
       <SettingsGroup
         title="Quiz progress"
-        description="Decide whether quiz results update your known and unknown terms."
+        description="Quiz only — flashcard review always updates known/unknown when you rate a card."
       >
         <Field orientation="horizontal">
           <Checkbox
             id="mark-unknown-on-fail"
             isSelected={markUnknownOnFail}
-            isDisabled={!settings || isSavingPrefs}
+            isDisabled={isSavingPrefs}
             onChange={(checked) => handlePreferenceChange({ markUnknownOnFail: checked })}
           />
           <FieldLabel htmlFor="mark-unknown-on-fail">
@@ -230,20 +247,16 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
           <Checkbox
             id="mark-known-on-pass"
             isSelected={markKnownOnPass}
-            isDisabled={!settings || isSavingPrefs}
+            isDisabled={isSavingPrefs}
             onChange={(checked) => handlePreferenceChange({ markKnownOnPass: checked })}
           />
           <FieldLabel htmlFor="mark-known-on-pass">
             Mark terms known when I pass a quiz question
           </FieldLabel>
         </Field>
-
-        {!settings ? (
-          <FieldDescription>Save an API key first to change these settings.</FieldDescription>
-        ) : null}
       </SettingsGroup>
 
-      {settings ? (
+      {llmConfigured ? (
         <>
           <SettingsDivider />
           <DangerZone

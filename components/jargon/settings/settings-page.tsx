@@ -1,12 +1,14 @@
 "use client";
 
-import { LayoutDashboard, MessageCircle, Settings2, Sparkles } from "lucide-react";
+import { BookOpen, LayoutDashboard, MessageCircle, Settings2, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
 import { LlmPanel } from "@/components/jargon/settings/llm-panel";
+import { ReviewPresetPanel } from "@/components/jargon/settings/review-preset-panel";
 import { SettingsCard } from "@/components/jargon/settings/ui";
 import { TelegramPanel } from "@/components/jargon/settings/telegram-panel";
 import { WidgetPanel } from "@/components/jargon/settings/widget-panel";
+import { updateReviewPresetAction } from "@/app/(private)/jargon/settings/actions";
 import type { UserSettings } from "@/lib/llm/types";
 import type { TelegramLinkStatus } from "@/lib/telegram/types";
 import type { WidgetTokenRow } from "@/lib/widget/types";
@@ -31,6 +33,17 @@ export function SettingsPage({
       />
 
       <div className="space-y-6">
+        <SettingsCard
+          icon={BookOpen}
+          title="Review"
+          description="Smart queue preset for Telegram /next, web review, and quizzes."
+        >
+          <ReviewPresetPanel
+            initialPreset={initialUserSettings?.reviewPreset ?? "balanced"}
+            onSave={updateReviewPresetAction}
+          />
+        </SettingsCard>
+
         <SettingsCard
           icon={Sparkles}
           title="Quiz"

@@ -88,27 +88,16 @@ async function fetchTermIdsByStatus(
   domainId: QuizDomainSelection,
   limit: number,
 ): Promise<string[]> {
-  const domainIds = domainIdsForRpc(domainId);
-
-  const { data, error } = await supabase.rpc(
-    status === "unknown" ? "pick_multiple_unknown_terms" : "pick_multiple_known_terms",
-    {
-      p_user_id: userId,
-      p_limit: limit,
-      p_domain_ids: domainIds,
-    },
+  const { pickReviewTerms } = await import("./smart-queue-service.ts");
+  const scopeDomainIds = domainId === "all" ? "all" : [domainId];
+  const terms = await pickReviewTerms(
+    supabase,
+    userId,
+    { domainIds: scopeDomainIds },
+    status,
+    limit,
   );
-
-  if (error) {
-    console.error(`Error fetching ${status} terms:`, error);
-    throw error;
-  }
-
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  return (data as Array<{ id: string }>).map((row) => String(row.id));
+  return terms.map((term) => term.id);
 }
 
 export async function countTermsForQuiz(

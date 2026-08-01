@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { setTermKnown } from "@/app/(private)/jargon/actions";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { recordTermShownAction, setTermKnown } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
 import type { JargonPageData, SortMode } from "@/lib/jargon/types";
 
@@ -16,6 +16,7 @@ export function useJargonList(initialData: JargonPageData) {
   const [knownTerms, setKnownTerms] = useState<Set<string>>(
     () => new Set(initialData.knownTermIds),
   );
+  const countedShownRef = useRef(new Set<string>());
 
   // Sync knownTerms when initialData changes (e.g., after router.refresh())
   useEffect(() => {
@@ -47,14 +48,25 @@ export function useJargonList(initialData: JargonPageData) {
     });
   }, []);
 
-  const toggleOpen = useCallback((termId: string) => {
-    setOpenTerms((prev) => {
-      const next = new Set(prev);
-      if (next.has(termId)) next.delete(termId);
-      else next.add(termId);
-      return next;
-    });
-  }, []);
+  const toggleOpen = useCallback(
+    (termId: string) => {
+      const wasOpen = openTerms.has(termId);
+
+      setOpenTerms((prev) => {
+        const next = new Set(prev);
+        if (wasOpen) next.delete(termId);
+        else next.add(termId);
+        return next;
+      });
+
+      // Collapse after reading counts as a smart-queue sighting (once per visit).
+      if (wasOpen && !countedShownRef.current.has(termId)) {
+        countedShownRef.current.add(termId);
+        void recordTermShownAction(termId);
+      }
+    },
+    [openTerms],
+  );
 
   const toggleKnown = useCallback(
     async (termId: string) => {

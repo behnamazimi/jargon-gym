@@ -279,6 +279,9 @@ export type CollectionStatsRow = {
   knownCount: number;
   totalCount: number;
   percentage: number;
+  unknownUnseen: number;
+  unknownSeen: number;
+  unknownStale: number;
 };
 
 function formatProgressBar(percentage: number, width: number = 10): string {
@@ -295,21 +298,22 @@ export function formatStatsMessage(stats: CollectionStatsRow[]): string {
   const activeCollections = stats.filter((s) => s.isActive);
   const pausedCollections = stats.filter((s) => !s.isActive);
 
-  let message = `<b>📊 Your Collection Stats</b>\n\n`;
+  let message = `<b>Your Collection Stats</b>\n\n`;
   message += `<b>Total collections:</b> ${stats.length}\n`;
   message += `<b>Active:</b> ${activeCollections.length} · <b>Paused:</b> ${pausedCollections.length}\n`;
 
   if (activeCollections.length > 0) {
-    message += `\n<b>🟢 Active Collections</b>\n`;
+    message += `\n<b>Active Collections</b>\n`;
     for (const collection of activeCollections) {
       const bar = formatProgressBar(collection.percentage);
       message += `\n<b>${escapeHtml(collection.name)}</b>\n`;
-      message += `${bar} ${collection.knownCount}/${collection.totalCount} · ${collection.percentage}%\n`;
+      message += `${bar} ${collection.knownCount}/${collection.totalCount} known · ${collection.percentage}%\n`;
+      message += `Queue: ${collection.unknownUnseen} unseen · ${collection.unknownSeen} seen · ${collection.unknownStale} stale\n`;
     }
   }
 
   if (pausedCollections.length > 0) {
-    message += `\n<b>⏸️ Paused Collections</b>\n`;
+    message += `\n<b>Paused Collections</b>\n`;
     for (const collection of pausedCollections) {
       message += `\n<b>${escapeHtml(collection.name)}</b>\n`;
       message += `${collection.knownCount}/${collection.totalCount} known · ${collection.percentage}%\n`;

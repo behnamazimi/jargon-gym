@@ -226,6 +226,14 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
         return;
       }
 
+      // Record "solid" outcome (update only, seen already incremented on delivery)
+      try {
+        const { recordReviewOutcome } = await import("../_shared/smart-queue-service.ts");
+        await recordReviewOutcome(supabase, userId, termId, "solid", false);
+      } catch (err) {
+        console.error("Failed to record solid outcome after mark known", { userId, termId, err });
+      }
+
       const term = await fetchTermById(supabase, userId, termId);
       const updatedText = term
         ? `${formatMaskedTermMessage(term)}\n\n<b>Your action:</b> Mark known${MARKED_KNOWN_SUFFIX}`
@@ -238,6 +246,15 @@ async function handleCallback(callback: NonNullable<TelegramUpdate["callback_que
 
     if (data.startsWith("skip:")) {
       const termId = data.slice("skip:".length);
+
+      // Record "skipped" outcome (update only, seen already incremented on delivery)
+      try {
+        const { recordReviewOutcome } = await import("../_shared/smart-queue-service.ts");
+        await recordReviewOutcome(supabase, userId, termId, "skipped", false);
+      } catch (err) {
+        console.error("Failed to record skipped outcome", { userId, termId, err });
+      }
+
       const term = await fetchTermById(supabase, userId, termId);
 
       if (term) {

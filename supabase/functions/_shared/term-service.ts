@@ -59,21 +59,17 @@ function mapTermRow(row: Record<string, unknown>): TermRow {
   };
 }
 
-export async function pickRandomUnknownTerm(
+export async function pickNextUnknownTerm(
   supabase: SupabaseClient,
   userId: string,
 ): Promise<TermRow | null> {
-  const { data, error } = await supabase.rpc("pick_multiple_unknown_terms", {
-    p_user_id: userId,
-    p_limit: 1,
-    p_domain_ids: null,
-  });
-
-  if (error) throw error;
-
-  const row = (data?.[0] as Record<string, unknown> | undefined) ?? null;
-  return row ? mapTermRow(row) : null;
+  const { pickReviewTerms } = await import("./smart-queue-service.ts");
+  const terms = await pickReviewTerms(supabase, userId, { domainIds: "all" }, "unknown", 1);
+  return terms[0] ?? null;
 }
+
+/** @deprecated Use pickNextUnknownTerm */
+export const pickRandomUnknownTerm = pickNextUnknownTerm;
 
 export async function fetchTermById(
   supabase: SupabaseClient,
@@ -94,9 +90,21 @@ export async function fetchTermById(
 export async function sendTermCard(supabase: SupabaseClient, userId: string, chatId: number) {
   await clearCaughtUpFlag(supabase, userId);
 
-  const term = await pickRandomUnknownTerm(supabase, userId);
+  const term = await pickNextUnknownTerm(supabase, userId);
   if (!term) {
     return { kind: "caught_up" as const };
+  }
+
+  // Record delivery as "shown" (distinct from explicit Skip)
+  try {
+    const { recordReviewOutcome } = await import("./smart-queue-service.ts");
+    await recordReviewOutcome(supabase, userId, term.id, "shown", true);
+  } catch (err) {
+    console.error("Failed to record review outcome on /next delivery", {
+      userId,
+      termId: term.id,
+      err,
+    });
   }
 
   await sendMessage(chatId, formatTermMessage(term), buildInlineKeyboard(term), supabase);
@@ -184,6 +192,9 @@ export type CollectionStats = {
   knownCount: number;
   totalCount: number;
   percentage: number;
+  unknownUnseen: number;
+  unknownSeen: number;
+  unknownStale: number;
 };
 
 export async function fetchCollectionStats(
@@ -251,11 +262,15 @@ export async function fetchCollectionStats(
     knownCountMap.set(domainId, count + 1);
   });
 
+  const { getReviewPoolStatsByDomain } = await import("./smart-queue-service.ts");
+  const unknownStatsByDomain = await getReviewPoolStatsByDomain(supabase, userId, "unknown");
+
   // Build stats array
   const stats: CollectionStats[] = (domains ?? []).map((domain: { id: string; name: string }) => {
     const totalCount = termCountMap.get(domain.id) ?? 0;
     const knownCount = knownCountMap.get(domain.id) ?? 0;
     const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
+    const queueStats = unknownStatsByDomain.get(domain.id);
 
     return {
       id: domain.id,
@@ -264,6 +279,9 @@ export async function fetchCollectionStats(
       knownCount,
       totalCount,
       percentage,
+      unknownUnseen: queueStats?.unseen ?? 0,
+      unknownSeen: queueStats?.seen ?? 0,
+      unknownStale: queueStats?.stale ?? 0,
     };
   });
 

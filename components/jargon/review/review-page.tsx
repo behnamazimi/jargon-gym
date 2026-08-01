@@ -25,7 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { rateReviewTermAction, startReviewAction } from "@/app/(private)/jargon/review/actions";
+import { recordTermShownAction } from "@/app/(private)/jargon/actions";
+import {
+  getReviewPoolStatsAction,
+  rateReviewTermAction,
+  startReviewAction,
+} from "@/app/(private)/jargon/review/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
 import { ReviewCard } from "@/components/jargon/review/review-card";
@@ -75,7 +80,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const [cardCount, setCardCount] = useState(DEFAULT_CARD_COUNT);
   const [cardCountInput, setCardCountInput] = useState(String(DEFAULT_CARD_COUNT));
   const [cardCountError, setCardCountError] = useState<string | null>(null);
-  const [shuffle, setShuffle] = useState(true);
   const [cards, setCards] = useState<ReviewTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [ratings, setRatings] = useState<ReviewRating[]>([]);
@@ -85,8 +89,20 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const [isRating, setIsRating] = useState(false);
   const [savedSession, setSavedSession] = useState<ReviewSessionState | null>(null);
   const [sessionStatus, setSessionStatus] = useState<QuizTermStatus>("unknown");
+  const [poolStats, setPoolStats] = useState<{
+    unseen: number;
+    seen: number;
+    stale: number;
+    total: number;
+    allSeenOnce: boolean;
+  } | null>(null);
+  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+  const [shownTermIds, setShownTermIds] = useState<string[]>([]);
 
-  const domainIds = selectedCollectionId === "all" ? "all" : [selectedCollectionId];
+  const domainIds = useMemo(
+    (): string[] | "all" => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
+    [selectedCollectionId],
+  );
 
   const availableTermCount = useMemo(
     () => countTermsForSelection(collections, domainIds, status),
@@ -113,14 +129,30 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     });
   }, [availableTermCount, status, selectedCollectionId]);
 
+  useEffect(() => {
+    if (step !== "setup") return;
+
+    let cancelled = false;
+
+    void getReviewPoolStatsAction(domainIds, status).then((result) => {
+      if (cancelled) return;
+      if ("poolStats" in result && result.poolStats) {
+        setPoolStats(result.poolStats);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [domainIds, status, step, statsRefreshKey]);
+
   const currentSetup = useMemo(
     (): ReviewSetup => ({
       domainIds,
       status,
       cardCount,
-      shuffle,
     }),
-    [domainIds, status, cardCount, shuffle],
+    [domainIds, status, cardCount],
   );
 
   const currentCard = cards[currentIndex];
@@ -181,8 +213,10 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     setCurrentIndex(0);
     setRatings([]);
     setRevealedTermIds([]);
+    setShownTermIds([]);
     setErrorMessage(null);
     setSavedSession(loadReviewSession());
+    setStatsRefreshKey((key) => key + 1);
   }
 
   function finishSession(finalRatings: ReviewRating[]) {
@@ -200,11 +234,11 @@ export function ReviewPage({ collections }: ReviewPageProps) {
       savedSession.setup.domainIds === "all" ? "all" : savedSession.setup.domainIds[0],
     );
     setCardCount(savedSession.setup.cardCount);
-    setShuffle(savedSession.setup.shuffle);
     setCards(savedSession.cards);
     setCurrentIndex(savedSession.currentIndex);
     setRatings(savedSession.ratings);
     setRevealedTermIds(savedSession.revealedTermIds);
+    setShownTermIds(savedSession.revealedTermIds);
     setSessionStartedAt(savedSession.startedAt);
     setSessionStatus(savedSession.setup.status);
     setErrorMessage(null);
@@ -239,6 +273,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     setCurrentIndex(0);
     setRatings([]);
     setRevealedTermIds([]);
+    setShownTermIds([]);
     setStep("playing");
 
     persistSession({
@@ -254,6 +289,15 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   function handleReveal() {
     if (!currentCard || currentRevealed) return;
     setRevealedTermIds((ids) => [...ids, currentCard.id]);
+
+    if (!shownTermIds.includes(currentCard.id)) {
+      setShownTermIds((ids) => [...ids, currentCard.id]);
+      void recordTermShownAction(currentCard.id).then((result) => {
+        if (result.error) {
+          setErrorMessage(result.error);
+        }
+      });
+    }
   }
 
   function handlePrevious() {
@@ -267,22 +311,24 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   async function handleRate(retained: boolean) {
     if (!currentCard || !currentRevealed || isRating) return;
 
-    const shouldMarkKnown = sessionStatus === "unknown" && retained;
-    const shouldClearKnown = sessionStatus === "known" && !retained;
+    const alreadyRated = ratings.some((rating) => rating.termId === currentCard.id);
+    const alreadyCountedSeen = shownTermIds.includes(currentCard.id) || alreadyRated;
 
-    if (shouldMarkKnown || shouldClearKnown) {
-      setIsRating(true);
-      const result = await rateReviewTermAction(currentCard.id, shouldMarkKnown);
-      setIsRating(false);
+    setIsRating(true);
+    const result = await rateReviewTermAction(currentCard.id, retained, sessionStatus, {
+      alreadyCountedSeen,
+    });
+    setIsRating(false);
 
-      if (result.error) {
-        setErrorMessage(result.error);
-        return;
-      }
+    if (result.error) {
+      setErrorMessage(result.error);
+      return;
     }
 
     const nextRatings = upsertRating(ratings, currentCard.id, retained);
     setRatings(nextRatings);
+
+    if (alreadyRated) return;
 
     if (currentIndex + 1 < cards.length) {
       setCurrentIndex((index) => index + 1);
@@ -461,20 +507,20 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   </FieldDescription>
                 </Field>
 
-                <label className="flex max-w-md cursor-pointer items-start gap-3 py-1">
-                  <input
-                    type="checkbox"
-                    checked={shuffle}
-                    onChange={(event) => setShuffle(event.target.checked)}
-                    className="checkbox checkbox-primary checkbox-sm mt-0.5 shrink-0"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm leading-none font-medium">Shuffle cards</span>
-                    <span className="mt-1.5 block text-xs leading-relaxed text-base-content/60">
-                      Randomize order. Turn off to go A–Z.
+                {poolStats ? (
+                  <div className="text-sm text-base-content/70">
+                    <span className="font-medium">{poolStats.unseen} unseen</span>
+                    {" · "}
+                    <span className="font-medium">{poolStats.seen} seen</span>
+                    {" · "}
+                    <span className="font-medium">{poolStats.stale} stale</span>
+                    {" · "}
+                    <span className="font-medium">
+                      {poolStats.seen}/{poolStats.total} covered
                     </span>
-                  </span>
-                </label>
+                    {poolStats.allSeenOnce ? " · all seen once" : null}
+                  </div>
+                ) : null}
 
                 {availableTermCount === 0 ? (
                   <Alert variant="destructive">

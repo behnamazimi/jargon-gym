@@ -19,10 +19,15 @@ export function loadReviewSession(): ReviewSessionState | null {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
 
-    const parsed = JSON.parse(raw) as ReviewSessionState;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const parsed = JSON.parse(raw) as any;
     if (!parsed.cards?.length || !parsed.setup) return null;
 
-    return parsed;
+    // Drop legacy shuffle / sortMode fields from older sessions.
+    delete parsed.setup.shuffle;
+    delete parsed.setup.sortMode;
+
+    return parsed as ReviewSessionState;
   } catch {
     return null;
   }

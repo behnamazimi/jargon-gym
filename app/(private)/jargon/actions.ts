@@ -22,6 +22,7 @@ import {
   TermMutationError,
   updateTerm as updateTermRecord,
 } from "@/lib/jargon/terms";
+import { recordReviewOutcome } from "@/lib/smart-queue/service";
 import { revalidatePath } from "next/cache";
 
 async function getAuthenticatedClient() {
@@ -126,6 +127,21 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't update that term. Try again.";
+    return { error: message };
+  }
+}
+
+/** Count a jargon-page / review reveal as a smart-queue sighting. */
+export async function recordTermShownAction(termId: string): Promise<{ error?: string }> {
+  const auth = await getAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await recordReviewOutcome(auth.supabase, termId, "shown", true);
+    return {};
+  } catch (err) {
+    console.error("recordTermShownAction failed", { termId, err });
+    const message = err instanceof Error ? err.message : "Couldn't record that you saw this term.";
     return { error: message };
   }
 }

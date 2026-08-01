@@ -111,16 +111,58 @@ export type Database = {
           },
         ];
       };
+      review_state: {
+        Row: {
+          last_outcome: string;
+          last_seen_at: string | null;
+          seen_count: number;
+          term_id: string;
+          user_id: string;
+        };
+        Insert: {
+          last_outcome?: string;
+          last_seen_at?: string | null;
+          seen_count?: number;
+          term_id: string;
+          user_id: string;
+        };
+        Update: {
+          last_outcome?: string;
+          last_seen_at?: string | null;
+          seen_count?: number;
+          term_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "review_state_term_id_fkey";
+            columns: ["term_id"];
+            isOneToOne: false;
+            referencedRelation: "terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "review_state_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       telegram_links: {
         Row: {
           all_caught_up_at: string | null;
           cadence: Database["public"]["Enums"]["telegram_cadence"];
           chat_id: number | null;
           created_at: string;
+          last_keyboard_message_id: number | null;
           last_sent_at: string | null;
           link_token_expires_at: string | null;
           link_token_hash: string | null;
           linked_at: string | null;
+          quiz_session: Json | null;
+          quiz_setup: Json | null;
           updated_at: string;
           user_id: string;
         };
@@ -129,10 +171,13 @@ export type Database = {
           cadence?: Database["public"]["Enums"]["telegram_cadence"];
           chat_id?: number | null;
           created_at?: string;
+          last_keyboard_message_id?: number | null;
           last_sent_at?: string | null;
           link_token_expires_at?: string | null;
           link_token_hash?: string | null;
           linked_at?: string | null;
+          quiz_session?: Json | null;
+          quiz_setup?: Json | null;
           updated_at?: string;
           user_id: string;
         };
@@ -141,10 +186,13 @@ export type Database = {
           cadence?: Database["public"]["Enums"]["telegram_cadence"];
           chat_id?: number | null;
           created_at?: string;
+          last_keyboard_message_id?: number | null;
           last_sent_at?: string | null;
           link_token_expires_at?: string | null;
           link_token_hash?: string | null;
           linked_at?: string | null;
+          quiz_session?: Json | null;
+          quiz_setup?: Json | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -327,47 +375,6 @@ export type Database = {
           },
         ];
       };
-      user_settings: {
-        Row: {
-          api_key_encrypted: string;
-          api_key_last4: string;
-          created_at: string;
-          mark_known_on_pass: boolean;
-          mark_unknown_on_fail: boolean;
-          provider: string;
-          updated_at: string;
-          user_id: string;
-        };
-        Insert: {
-          api_key_encrypted: string;
-          api_key_last4: string;
-          created_at?: string;
-          mark_known_on_pass?: boolean;
-          mark_unknown_on_fail?: boolean;
-          provider: string;
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          api_key_encrypted?: string;
-          api_key_last4?: string;
-          created_at?: string;
-          mark_known_on_pass?: boolean;
-          mark_unknown_on_fail?: boolean;
-          provider?: string;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_llm_settings_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: true;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       user_progress: {
         Row: {
           is_known: boolean;
@@ -396,6 +403,50 @@ export type Database = {
             foreignKeyName: "user_progress_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_settings: {
+        Row: {
+          api_key_encrypted: string | null;
+          api_key_last4: string | null;
+          created_at: string;
+          mark_known_on_pass: boolean;
+          mark_unknown_on_fail: boolean;
+          provider: string | null;
+          review_preset: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          api_key_encrypted?: string | null;
+          api_key_last4?: string | null;
+          created_at?: string;
+          mark_known_on_pass?: boolean;
+          mark_unknown_on_fail?: boolean;
+          provider?: string | null;
+          review_preset?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          api_key_encrypted?: string | null;
+          api_key_last4?: string | null;
+          created_at?: string;
+          mark_known_on_pass?: boolean;
+          mark_unknown_on_fail?: boolean;
+          provider?: string | null;
+          review_preset?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_llm_settings_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
             referencedRelation: "users";
             referencedColumns: ["id"];
           },
@@ -475,7 +526,18 @@ export type Database = {
         Args: { p_chat_id: number; p_token_hash: string };
         Returns: string;
       };
-      count_unknown_terms: { Args: { p_user_id: string }; Returns: number };
+      count_known_terms:
+        | { Args: { p_user_id: string }; Returns: number }
+        | {
+            Args: { p_domain_ids?: string[]; p_user_id: string };
+            Returns: number;
+          };
+      count_unknown_terms:
+        | { Args: { p_user_id: string }; Returns: number }
+        | {
+            Args: { p_domain_ids?: string[]; p_user_id: string };
+            Returns: number;
+          };
       create_referral_code: {
         Args: { p_code?: string };
         Returns: {
@@ -527,8 +589,46 @@ export type Database = {
       };
       my_clear_term_known: { Args: { p_term_id: string }; Returns: undefined };
       my_mark_term_known: { Args: { p_term_id: string }; Returns: undefined };
+      my_record_review_outcome: {
+        Args: {
+          p_increment_seen?: boolean;
+          p_outcome: string;
+          p_term_id: string;
+        };
+        Returns: undefined;
+      };
       my_review_domain_ids: { Args: never; Returns: string[] };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
+      pick_multiple_known_terms: {
+        Args: { p_domain_ids?: string[]; p_limit: number; p_user_id: string };
+        Returns: {
+          category: string;
+          controversy: string;
+          definition: string;
+          discussion: string;
+          domain_id: string;
+          domain_name: string;
+          example: string;
+          id: string;
+          relationships: Json;
+          term: string;
+        }[];
+      };
+      pick_multiple_unknown_terms: {
+        Args: { p_domain_ids?: string[]; p_limit: number; p_user_id: string };
+        Returns: {
+          category: string;
+          controversy: string;
+          definition: string;
+          discussion: string;
+          domain_id: string;
+          domain_name: string;
+          example: string;
+          id: string;
+          relationships: Json;
+          term: string;
+        }[];
+      };
       pick_random_unknown_term: {
         Args: { p_user_id: string };
         Returns: {
@@ -543,6 +643,15 @@ export type Database = {
           relationships: Json;
           term: string;
         }[];
+      };
+      record_review_outcome: {
+        Args: {
+          p_increment_seen?: boolean;
+          p_outcome: string;
+          p_term_id: string;
+          p_user_id: string;
+        };
+        Returns: undefined;
       };
       record_telegram_send: { Args: { p_user_id: string }; Returns: undefined };
       redeem_referral_code: { Args: { p_code: string }; Returns: undefined };

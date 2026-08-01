@@ -12,15 +12,6 @@ export function getMaxQuizQuestionCount(availableTermCount: number): number {
   return Math.min(availableTermCount, MAX_QUIZ_TERMS);
 }
 
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
 export async function listQuizableCollections(
   client: Client,
   userId: string,
@@ -89,74 +80,16 @@ export async function fetchQuizTermPool(
   status: QuizTermStatus,
   questionCount: number,
 ): Promise<QuizTerm[]> {
-  const { reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+  // Use smart queue for quiz term selection
+  const { pickReviewTerms } = await import("@/lib/smart-queue/service");
+  const terms = await pickReviewTerms(client, userId, { domainIds }, status, questionCount);
 
-  const scopedDomainIds =
-    domainIds === "all"
-      ? reviewDomainIds
-      : domainIds.filter((domainId) => reviewDomainIds.includes(domainId));
-
-  if (scopedDomainIds.length === 0) return [];
-
-  const { data: domains, error: domainsError } = await client
-    .from("domains")
-    .select("id, name")
-    .in("id", scopedDomainIds);
-
-  if (domainsError) throw domainsError;
-
-  const domainNameById = new Map(domains.map((domain) => [domain.id, domain.name]));
-
-  const { data: terms, error: termsError } = await client
-    .from("terms")
-    .select("id, term, definition, example, domain_id")
-    .in("domain_id", scopedDomainIds);
-
-  if (termsError) throw termsError;
-  if (terms.length === 0) return [];
-
-  const termIds = terms.map((term) => term.id);
-
-  const { data: progress, error: progressError } = await client
-    .from("user_progress")
-    .select("term_id")
-    .eq("user_id", userId)
-    .eq("is_known", true)
-    .in("term_id", termIds);
-
-  if (progressError) throw progressError;
-
-  const knownIds = new Set(progress.map((row) => row.term_id));
-
-  const filtered = terms.filter((term) =>
-    status === "known" ? knownIds.has(term.id) : !knownIds.has(term.id),
-  );
-
-  // `filtered` is the full cross-collection pool when domainIds is "all".
-  return selectQuizTerms(filtered, questionCount, domainNameById);
-}
-
-function selectQuizTerms(
-  terms: {
-    id: string;
-    term: string;
-    definition: string;
-    example: string | null;
-    domain_id: string;
-  }[],
-  questionCount: number,
-  domainNameById: Map<string, string>,
-): QuizTerm[] {
-  if (terms.length === 0) return [];
-
-  const limit = Math.min(Math.max(1, Math.floor(questionCount)), terms.length);
-  const sampled = shuffle(terms).slice(0, limit);
-  return sampled.map((term) => ({
+  return terms.map((term) => ({
     id: term.id,
     term: term.term,
     definition: term.definition,
     example: term.example,
-    domainName: domainNameById.get(term.domain_id) ?? "Unknown",
+    domainName: term.domainName,
   }));
 }
 

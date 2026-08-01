@@ -15,7 +15,6 @@ export type ReviewSetup = {
   domainIds: string[] | "all";
   status: ReviewTermStatus;
   cardCount: number;
-  shuffle: boolean;
 };
 
 export type ReviewSessionState = {

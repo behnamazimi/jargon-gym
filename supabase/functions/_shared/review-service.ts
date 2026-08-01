@@ -500,6 +500,24 @@ export async function handleReviewAnswer(
     markedKnown = true;
   }
 
+  // Record review outcome
+  try {
+    const { recordReviewOutcome } = await import("./smart-queue-service.ts");
+    let outcome: "learning" | "solid" | "verified" | "forgot";
+    if (session.status === "unknown") {
+      outcome = isCorrect ? "solid" : "learning";
+    } else {
+      outcome = isCorrect ? "verified" : "forgot";
+    }
+    await recordReviewOutcome(supabase, session.userId, currentTerm.id, outcome, true);
+  } catch (err) {
+    console.error("Failed to record quiz review outcome", {
+      userId: session.userId,
+      termId: currentTerm.id,
+      err,
+    });
+  }
+
   const updatedSession = await updateSession(supabase, chatId, session, isCorrect);
 
   const resultMessage = formatReviewQuestionWithAnswer(

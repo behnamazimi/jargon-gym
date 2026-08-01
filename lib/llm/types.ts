@@ -1,10 +1,13 @@
+import type { ReviewPreset } from "@/lib/smart-queue";
+
 export type LlmProvider = "google" | "anthropic";
 
 export type UserSettings = {
-  provider: LlmProvider;
-  apiKeyLast4: string;
+  provider: LlmProvider | null;
+  apiKeyLast4: string | null;
   markUnknownOnFail: boolean;
   markKnownOnPass: boolean;
+  reviewPreset: ReviewPreset;
 };
 
 export const LLM_PROVIDER_LABELS: Record<LlmProvider, string> = {
@@ -16,3 +19,7 @@ export const LLM_PROVIDER_OPTIONS: { value: LlmProvider; label: string }[] = [
   { value: "google", label: "Google" },
   { value: "anthropic", label: "Anthropic" },
 ];
+
+export function hasLlmConfigured(settings: UserSettings | null): boolean {
+  return Boolean(settings?.provider && settings.apiKeyLast4);
+}
