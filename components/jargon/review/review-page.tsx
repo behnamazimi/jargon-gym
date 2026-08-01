@@ -43,23 +43,22 @@ import {
   saveReviewSession,
 } from "@/lib/review/session-storage";
 import type { ReviewRating, ReviewSessionState, ReviewSetup, ReviewTerm } from "@/lib/review/types";
-import { countTermsForSelection } from "@/lib/quiz/terms";
-import type { QuizableCollection, QuizTermStatus } from "@/lib/quiz/types";
+import { countTermsForSelection, type StudyCollection, type TermPoolStatus } from "@/lib/study";
 import { cn } from "@/lib/utils";
 
 type ReviewStep = "setup" | "playing" | "summary";
 
 type ReviewPageProps = {
-  collections: QuizableCollection[];
+  collections: StudyCollection[];
 };
 
 const DEFAULT_CARD_COUNT = 10;
 
-function termCountForCollection(collection: QuizableCollection, status: QuizTermStatus) {
+function termCountForCollection(collection: StudyCollection, status: TermPoolStatus) {
   return status === "known" ? collection.knownCount : collection.unknownCount;
 }
 
-function allCollectionsTermCount(collections: QuizableCollection[], status: QuizTermStatus) {
+function allCollectionsTermCount(collections: StudyCollection[], status: TermPoolStatus) {
   return collections.reduce(
     (total, collection) => total + termCountForCollection(collection, status),
     0,
@@ -75,7 +74,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
 
   const [step, setStep] = useState<ReviewStep>("setup");
-  const [status, setStatus] = useState<QuizTermStatus>("unknown");
+  const [status, setStatus] = useState<TermPoolStatus>("unknown");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>("all");
   const [cardCount, setCardCount] = useState(DEFAULT_CARD_COUNT);
   const [cardCountInput, setCardCountInput] = useState(String(DEFAULT_CARD_COUNT));
@@ -88,7 +87,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const [isStarting, setIsStarting] = useState(false);
   const [isRating, setIsRating] = useState(false);
   const [savedSession, setSavedSession] = useState<ReviewSessionState | null>(null);
-  const [sessionStatus, setSessionStatus] = useState<QuizTermStatus>("unknown");
+  const [sessionStatus, setSessionStatus] = useState<TermPoolStatus>("unknown");
   const [poolStats, setPoolStats] = useState<{
     unseen: number;
     seen: number;

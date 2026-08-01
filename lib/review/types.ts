@@ -1,6 +1,8 @@
 import type { Term } from "@/lib/jargon/types";
+import type { TermPoolStatus } from "@/lib/study";
 
-export type ReviewTermStatus = "known" | "unknown";
+/** @deprecated Prefer TermPoolStatus from @/lib/study */
+export type ReviewTermStatus = TermPoolStatus;
 
 export type ReviewTerm = Term & {
   domainName: string;

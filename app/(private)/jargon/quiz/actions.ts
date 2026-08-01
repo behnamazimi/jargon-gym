@@ -14,24 +14,10 @@ import type {
   QuizTerm,
   QuizTermStatus,
 } from "@/lib/quiz/types";
-import { createClient } from "@/lib/supabase/server";
-
-async function getAuthenticatedClient() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return { error: "Log in to continue." as const };
-  }
-
-  return { supabase, user };
-}
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 
 export async function getQuizSetupData() {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
   }
@@ -62,7 +48,7 @@ export async function generateQuizAction(input: {
       providerLabel: string;
     }
 > {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
   }
@@ -93,7 +79,7 @@ export async function generateQuizAction(input: {
     let providerLabel: string;
 
     if (input.questionStyle === "simple") {
-      questions = await generateSimpleQuiz(terms);
+      questions = await generateSimpleQuiz(terms, auth.supabase);
       providerLabel = "Simple (Definition → Term)";
     } else {
       const credentials = await getDecryptedApiKey(auth.supabase, auth.user.id);
@@ -131,7 +117,7 @@ export async function recordQuizAnswerAction(input: {
   passed: boolean;
   status: QuizTermStatus;
 }): Promise<{ error?: string; flipped?: boolean }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
   }
@@ -161,7 +147,7 @@ export async function submitQuizResultsAction(input: {
   answers: QuizAnswer[];
   flippedTermIds: string[];
 }): Promise<{ error?: string; flippedTerms?: { id: string; term: string }[] }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
   }

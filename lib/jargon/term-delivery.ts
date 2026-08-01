@@ -6,12 +6,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
+import { applyTermShown } from "@/lib/jargon/review-outcome";
 import {
   getReviewPoolStatsForUser,
   pickReviewTermsForUser,
-  recordReviewOutcomeForUser,
   fetchTermCardForUser,
-} from "@/lib/smart-queue/service";
+} from "@/lib/smart-queue";
 
 type Client = SupabaseClient<Database>;
 
@@ -88,7 +88,7 @@ export async function deliverNextTerm(
   }
 
   try {
-    await recordReviewOutcomeForUser(client, userId, term.id, "shown", true);
+    await applyTermShown(client, userId, term.id, "admin");
   } catch (err) {
     console.error("Failed to record review outcome on term delivery", {
       userId,

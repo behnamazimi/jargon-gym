@@ -12,7 +12,7 @@ import {
   QuizPanelBody,
 } from "@/components/jargon/quiz/quiz-ui";
 import type { QuizQuestion } from "@/lib/quiz/types";
-import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/types";
+import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
 
 type QuizQuestionViewProps = {
   question: QuizQuestion;

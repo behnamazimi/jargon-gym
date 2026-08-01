@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { getReviewPoolStatsByDomainForUser } from "@/lib/smart-queue/service";
+import { getReviewPoolStatsByDomainForUser } from "@/lib/smart-queue";
 
 type Client = SupabaseClient<Database>;
 

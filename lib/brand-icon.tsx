@@ -7,7 +7,6 @@ export const BRAND_ICON = {
   letterSpacing: "-0.04em",
   borderRadius: 4,
   jFontSize: 18,
-  emojiFontSize: 14,
   jFontWeight: 900,
   jStroke: 0.8,
 } as const;
@@ -19,31 +18,24 @@ export const BRAND_ICON_BOX_SIZES = {
 
 export const APPLE_ICON_SIZE = 180;
 
-export function scaleBrandIcon(boxSize: number) {
+function scaleBrandIcon(boxSize: number) {
   const scale = boxSize / BRAND_ICON.box;
 
   return {
     box: boxSize,
     borderRadius: BRAND_ICON.borderRadius * scale,
     jFontSize: BRAND_ICON.jFontSize * scale,
-    emojiFontSize: BRAND_ICON.emojiFontSize * scale,
     jStroke: BRAND_ICON.jStroke * scale,
   };
 }
 
 type BrandIconGlyphsProps = {
   jFontSize: number;
-  emojiFontSize: number;
   jStroke: number;
   strokeColor: string;
 };
 
-export function BrandIconGlyphs({
-  jFontSize,
-  emojiFontSize,
-  jStroke,
-  strokeColor,
-}: BrandIconGlyphsProps) {
+export function BrandIconGlyphs({ jFontSize, jStroke, strokeColor }: BrandIconGlyphsProps) {
   return (
     <>
       <span
@@ -64,7 +56,6 @@ export function BrandIconGlyphs({
 export function brandIconBaseGlyphsProps(strokeColor = "currentColor") {
   return {
     jFontSize: BRAND_ICON.jFontSize,
-    emojiFontSize: BRAND_ICON.emojiFontSize,
     jStroke: BRAND_ICON.jStroke,
     strokeColor,
   };
@@ -94,7 +85,6 @@ export function BrandIconImage({ boxSize, fill = false }: BrandIconImageProps) {
     >
       <BrandIconGlyphs
         jFontSize={scaled.jFontSize}
-        emojiFontSize={scaled.emojiFontSize}
         jStroke={scaled.jStroke}
         strokeColor={BRAND_ICON.color}
       />

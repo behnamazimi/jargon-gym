@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
   addDomainToCollection,
   countDomainCollectionSubscribers,
@@ -12,7 +12,8 @@ import {
   updateOwnedDomain as updateOwnedDomainRecord,
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
-import { clearTermKnown, markTermKnown, resetDomainProgress } from "@/lib/jargon/known-state";
+import { resetDomainProgress } from "@/lib/jargon/known-state";
+import { applyKnownToggle, applyTermShown } from "@/lib/jargon/review-outcome";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
@@ -22,22 +23,7 @@ import {
   TermMutationError,
   updateTerm as updateTermRecord,
 } from "@/lib/jargon/terms";
-import { recordReviewOutcome } from "@/lib/smart-queue/service";
 import { revalidatePath } from "next/cache";
-
-async function getAuthenticatedClient() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return { error: "Log in to continue." as const };
-  }
-
-  return { supabase, user };
-}
 
 function termMutationErrorMessage(err: unknown, fallback: string) {
   if (err instanceof TermMutationError || err instanceof RelationshipMutationError)
@@ -51,7 +37,7 @@ export async function createTerm(
   input: TermInput,
   relationshipSync?: Pick<RelationshipSyncPayload, "create">,
 ): Promise<{ error?: string; termId?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   const parsed = parseTermInput(input);
@@ -80,7 +66,7 @@ export async function updateTerm(
   input: TermInput,
   relationshipSync?: RelationshipSyncPayload,
 ): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   const parsed = parseTermInput(input);
@@ -101,7 +87,7 @@ export async function updateTerm(
 }
 
 export async function deleteTerm(termId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -114,15 +100,11 @@ export async function deleteTerm(termId: string): Promise<{ error?: string }> {
 }
 
 export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    if (isKnown) {
-      await markTermKnown(auth.supabase, termId);
-    } else {
-      await clearTermKnown(auth.supabase, auth.user.id, termId);
-    }
+    await applyKnownToggle(auth.supabase, auth.user.id, termId, isKnown, "session");
     revalidatePath("/jargon");
     return {};
   } catch (err) {
@@ -133,11 +115,11 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
 
 /** Count a jargon-page / review reveal as a smart-queue sighting. */
 export async function recordTermShownAction(termId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await recordReviewOutcome(auth.supabase, termId, "shown", true);
+    await applyTermShown(auth.supabase, auth.user.id, termId, "session");
     return {};
   } catch (err) {
     console.error("recordTermShownAction failed", { termId, err });
@@ -147,7 +129,7 @@ export async function recordTermShownAction(termId: string): Promise<{ error?: s
 }
 
 export async function addToCollection(domainId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -161,7 +143,7 @@ export async function addToCollection(domainId: string): Promise<{ error?: strin
 }
 
 export async function removeFromCollection(domainId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -179,7 +161,7 @@ export async function toggleActiveForReview(
   domainId: string,
   active: boolean,
 ): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -194,7 +176,7 @@ export async function toggleActiveForReview(
 }
 
 export async function shareDomain(domainId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -209,7 +191,7 @@ export async function shareDomain(domainId: string): Promise<{ error?: string }>
 }
 
 export async function unshareDomain(domainId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -226,7 +208,7 @@ export async function unshareDomain(domainId: string): Promise<{ error?: string 
 export async function getDomainSubscriberCount(
   domainId: string,
 ): Promise<{ count?: number; error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   const { data: domain, error: domainError } = await auth.supabase
@@ -266,7 +248,7 @@ export async function updateOwnedDomain(
   domainId: string,
   input: DomainInput,
 ): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   const parsed = parseDomainInput(input);
@@ -282,7 +264,7 @@ export async function updateOwnedDomain(
 }
 
 export async function deleteOwnedDomain(domainId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -297,7 +279,7 @@ export async function deleteOwnedDomain(domainId: string): Promise<{ error?: str
 }
 
 export async function resetCollectionProgress(domainId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {

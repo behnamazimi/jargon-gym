@@ -1,39 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { ReviewOutcome } from "@/lib/smart-queue";
 import { fetchUserCollection } from "./collections";
 
 type Client = SupabaseClient<Database>;
-
-async function recordQueueOutcome(
-  client: Client,
-  termId: string,
-  outcome: ReviewOutcome,
-  incrementSeen: boolean,
-) {
-  const { error } = await client.rpc("my_record_review_outcome", {
-    p_term_id: termId,
-    p_outcome: outcome,
-    p_increment_seen: incrementSeen,
-  });
-  if (error) throw error;
-}
-
-async function recordQueueOutcomeForUser(
-  client: Client,
-  userId: string,
-  termId: string,
-  outcome: ReviewOutcome,
-  incrementSeen: boolean,
-) {
-  const { error } = await client.rpc("record_review_outcome", {
-    p_user_id: userId,
-    p_term_id: termId,
-    p_outcome: outcome,
-    p_increment_seen: incrementSeen,
-  });
-  if (error) throw error;
-}
 
 export async function fetchKnownTermIdsForDomains(
   client: Client,
@@ -61,86 +30,42 @@ export async function fetchKnownTermIdsForDomains(
   return data.map((row) => row.term_id);
 }
 
-type QueueRecordOptions = {
-  /** When false, skip writing review_state (caller already recorded). Default true. */
-  recordQueue?: boolean;
-  /** Only used when recordQueue is true. Default true. */
-  incrementSeen?: boolean;
-};
-
-export async function markTermKnown(
-  client: Client,
-  termId: string,
-  options: QueueRecordOptions = {},
-) {
+/** Flip user_progress only — queue outcomes go through review-outcome. */
+export async function markTermKnown(client: Client, termId: string) {
   const { error } = await client.rpc("my_mark_term_known", {
     p_term_id: termId,
   });
 
   if (error) throw error;
-
-  if (options.recordQueue !== false) {
-    await recordQueueOutcome(client, termId, "solid", options.incrementSeen ?? true);
-  }
 }
 
-export async function markTermKnownForUser(
-  client: Client,
-  userId: string,
-  termId: string,
-  options: QueueRecordOptions = {},
-) {
+/** Flip user_progress only — queue outcomes go through review-outcome. */
+export async function markTermKnownForUser(client: Client, userId: string, termId: string) {
   const { error } = await client.rpc("mark_term_known", {
     p_user_id: userId,
     p_term_id: termId,
   });
 
   if (error) throw error;
-
-  if (options.recordQueue !== false) {
-    await recordQueueOutcomeForUser(client, userId, termId, "solid", options.incrementSeen ?? true);
-  }
 }
 
-export async function clearTermKnown(
-  client: Client,
-  _userId: string,
-  termId: string,
-  options: QueueRecordOptions = {},
-) {
+/** Flip user_progress only — queue outcomes go through review-outcome. */
+export async function clearTermKnown(client: Client, _userId: string, termId: string) {
   const { error } = await client.rpc("my_clear_term_known", {
     p_term_id: termId,
   });
 
   if (error) throw error;
-
-  if (options.recordQueue !== false) {
-    await recordQueueOutcome(client, termId, "forgot", options.incrementSeen ?? false);
-  }
 }
 
-export async function clearTermKnownForUser(
-  client: Client,
-  userId: string,
-  termId: string,
-  options: QueueRecordOptions = {},
-) {
+/** Flip user_progress only — queue outcomes go through review-outcome. */
+export async function clearTermKnownForUser(client: Client, userId: string, termId: string) {
   const { error } = await client.rpc("clear_term_known", {
     p_user_id: userId,
     p_term_id: termId,
   });
 
   if (error) throw error;
-
-  if (options.recordQueue !== false) {
-    await recordQueueOutcomeForUser(
-      client,
-      userId,
-      termId,
-      "forgot",
-      options.incrementSeen ?? false,
-    );
-  }
 }
 
 async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {

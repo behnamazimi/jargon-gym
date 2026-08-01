@@ -1,6 +1,12 @@
 /**
  * Shared review/quiz outcome rules for web + Telegram.
+ * Sole writer of review_state outcomes — surfaces must not call outcome RPCs directly.
  * @see docs/smart-queue.md — "How surfaces couple in"
+ *
+ * incrementSeen semantics (preserve intentionally):
+ * - applyTermShown / list toggle mark-known → increment
+ * - applyMarkKnown (Telegram) / applySkip → no increment
+ * - applyReviewRating after reveal → no second increment when alreadyCountedSeen
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -13,7 +19,7 @@ import {
 } from "@/lib/jargon/known-state";
 import { getUserSettings } from "@/lib/llm/settings";
 import type { ReviewOutcome } from "@/lib/smart-queue";
-import { recordReviewOutcome, recordReviewOutcomeForUser } from "@/lib/smart-queue/service";
+import { recordReviewOutcome, recordReviewOutcomeForUser } from "@/lib/smart-queue/repository";
 
 type Client = SupabaseClient<Database>;
 
@@ -56,14 +62,14 @@ async function flipKnown(
 ) {
   if (toKnown) {
     if (mode === "session") {
-      await markTermKnown(client, termId, { recordQueue: false });
+      await markTermKnown(client, termId);
     } else {
-      await markTermKnownForUser(client, userId, termId, { recordQueue: false });
+      await markTermKnownForUser(client, userId, termId);
     }
   } else if (mode === "session") {
-    await clearTermKnown(client, userId, termId, { recordQueue: false });
+    await clearTermKnown(client, userId, termId);
   } else {
-    await clearTermKnownForUser(client, userId, termId, { recordQueue: false });
+    await clearTermKnownForUser(client, userId, termId);
   }
 }
 
@@ -131,6 +137,35 @@ export async function applyReviewRating(
   return { outcome };
 }
 
+/**
+ * Jargon-page / widget known toggle.
+ * Mark known → solid (+increment). Mark unknown → forgot (no increment).
+ */
+export async function applyKnownToggle(
+  client: Client,
+  userId: string,
+  termId: string,
+  isKnown: boolean,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await flipKnown(client, mode, userId, termId, isKnown);
+  if (isKnown) {
+    await writeOutcome(client, mode, userId, termId, "solid", true);
+  } else {
+    await writeOutcome(client, mode, userId, termId, "forgot", false);
+  }
+}
+
+/** Delivery / reveal: shown (+increment). */
+export async function applyTermShown(
+  client: Client,
+  userId: string,
+  termId: string,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await writeOutcome(client, mode, userId, termId, "shown", true);
+}
+
 /** Telegram /next "Mark known": mark + solid outcome, no seen increment. */
 export async function applyMarkKnown(
   client: Client,
@@ -138,11 +173,7 @@ export async function applyMarkKnown(
   termId: string,
   mode: AuthMode = "admin",
 ): Promise<void> {
-  if (mode === "session") {
-    await markTermKnown(client, termId, { recordQueue: false });
-  } else {
-    await markTermKnownForUser(client, userId, termId, { recordQueue: false });
-  }
+  await flipKnown(client, mode, userId, termId, true);
   await writeOutcome(client, mode, userId, termId, "solid", false);
 }
 

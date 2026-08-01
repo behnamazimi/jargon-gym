@@ -1,0 +1,1 @@
+export const DEFAULT_TELEGRAM_QUIZ_COUNT = 5;

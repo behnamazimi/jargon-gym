@@ -16,13 +16,16 @@ Every term in your active collections has a little history: how often you’ve s
 
 One shared core in Next.js. Supabase Edge Telegram functions are thin proxies that call internal API routes; they do **not** own scoring or outcomes.
 
-| Role                                   | Location                                                                             |
-| -------------------------------------- | ------------------------------------------------------------------------------------ |
-| Pure scoring / pick / stats            | [`lib/smart-queue/`](../lib/smart-queue/)                                            |
-| DB adapter (session user)              | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts) — `my_*` RPCs          |
-| DB adapter (admin / Telegram / widget) | same file — `*ForUser` helpers via `get_review_candidates` / `record_review_outcome` |
-| Outcome + known-state coupling         | [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts)                    |
-| Telegram bot orchestration             | [`lib/telegram/flows.ts`](../lib/telegram/flows.ts) via `/api/internal/telegram/*`   |
+| Role                                 | Location                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Study term pool + collections        | [`lib/study/`](../lib/study/)                                                                    |
+| Pure scoring / pick / stats          | [`lib/smart-queue/`](../lib/smart-queue/) (`pick`, `score`, `presets`, `stats`)                  |
+| Smart-queue RPC repository           | [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)                              |
+| Smart-queue TermCard hydrate         | [`lib/smart-queue/hydrate.ts`](../lib/smart-queue/hydrate.ts)                                    |
+| Smart-queue compose (pick + hydrate) | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts) — session + `*ForUser` admin paths |
+| Outcome facade (sole outcome writer) | [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts)                                |
+| Known-state (progress flip only)     | [`lib/jargon/known-state.ts`](../lib/jargon/known-state.ts)                                      |
+| Telegram bot router                  | [`lib/telegram/flows.ts`](../lib/telegram/flows.ts) → `quiz-flow` / `delivery-flow` / `commands` |
 
 History is stored in Postgres:
 
@@ -30,7 +33,7 @@ History is stored in Postgres:
 - `user_progress` — still just binary known / unknown
 - `user_settings.review_preset` — which weight pack to use
 
-Writes go through `record_review_outcome` / `my_record_review_outcome`.
+Outcome writes go through `review-outcome` only (which calls `record_review_outcome` / `my_record_review_outcome` internally).
 
 ---
 
@@ -82,7 +85,7 @@ Important RPC detail: **`p_increment_seen = true`** bumps `seen_count` and `last
 
 ## How surfaces couple in
 
-All smart picks go through the adapter (`pickReviewTerms` / `recordReviewOutcome`). Surfaces differ in _when_ they record, not in the scoring math.
+All smart picks go through the adapter (`pickReviewTerms`). **Outcome writes go only through [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts)** — no surface (actions, widget, Telegram, delivery) may call `recordReviewOutcome` / outcome RPCs directly. Surfaces differ in _when_ they record, not in the scoring math.
 
 ### Telegram `/next` (and cadence pushes)
 
@@ -132,7 +135,8 @@ Per-collection known% plus unknown-pool queue stats (unseen / seen / stale).
                     └───────────┬─────────────┘
                                 │
                     ┌───────────▼─────────────┐
-                    │  lib/smart-queue        │  ← single pure + adapter core
+                    │  lib/study (pool seam)  │
+                    │  lib/smart-queue layers │
                     │  lib/jargon/review-outcome
                     └───────────┬─────────────┘
                                 │
@@ -141,10 +145,10 @@ Per-collection known% plus unknown-pool queue stats (unseen / seen / stale).
    Telegram (Edge→Next)   Web review / quiz      Jargon collapse
    /next + cadence        + list / widget        (shown only)
           │                     │
-          └──────────► record_review_outcome ◄──┘
+          └──────────► review-outcome only ◄────┘
 ```
 
-If you’re changing behavior, ask: **is this a scoring change** (edit `lib/smart-queue`) or **a surface coupling change** (when that UI calls pick / record / `review-outcome`)?
+If you’re changing behavior, ask: **is this a scoring change** (edit `lib/smart-queue`), **a pool/selection change** (`lib/study`), or **a surface coupling change** (when that UI calls pick / `review-outcome`)?
 
 ---
 

@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { createClient } from "@/lib/supabase/server";
 import { selectDistractors } from "./distractors";
 import type { QuizQuestion, QuizTerm } from "./types";
 
@@ -12,13 +11,12 @@ type Client = SupabaseClient<Database>;
  */
 export async function generateSimpleQuiz(
   terms: QuizTerm[],
-  client?: Client,
+  client: Client,
 ): Promise<QuizQuestion[]> {
-  const supabase = client ?? (await createClient());
   const questions: QuizQuestion[] = [];
 
   for (const term of terms) {
-    const distractors = await selectDistractors(supabase, term.id, terms, 3);
+    const distractors = await selectDistractors(client, term.id, terms, 3);
 
     const correctOption = { id: term.id, text: term.term };
     const distractorOptions = distractors.map((d) => ({ id: d.id, text: d.term }));

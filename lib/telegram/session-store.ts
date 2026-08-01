@@ -1,20 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
-import {
-  getReviewPoolStatsForUser,
-  pickReviewTermsForUser,
-  fetchTermCardForUser,
-} from "@/lib/smart-queue/service";
 import type { TermCard } from "@/lib/jargon/term-card";
+import { fetchStudyTermPool, getMaxStudyCount, type TermPoolStatus } from "@/lib/study";
+import { getReviewPoolStatsForUser, fetchTermCardForUser } from "@/lib/smart-queue";
+import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
 
 type Client = SupabaseClient<Database>;
 
-export type ReviewStatus = "known" | "unknown";
+export type ReviewStatus = TermPoolStatus;
 export type QuizDomainSelection = "all" | string;
 type QuizSetupStep = "status" | "collection" | "count";
 
-const MAX_TELEGRAM_QUIZ_TERMS = 30;
-export const DEFAULT_TELEGRAM_QUIZ_COUNT = 5;
+export { DEFAULT_TELEGRAM_QUIZ_COUNT };
 
 export type QuizSetupState = {
   step: QuizSetupStep;
@@ -169,8 +166,7 @@ export async function countTermsForQuiz(
 }
 
 export function getMaxQuizQuestionCount(availableTermCount: number): number {
-  if (availableTermCount <= 0) return 0;
-  return Math.min(availableTermCount, MAX_TELEGRAM_QUIZ_TERMS);
+  return getMaxStudyCount(availableTermCount);
 }
 
 export async function createSession(
@@ -181,12 +177,13 @@ export async function createSession(
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<ReviewSession> {
-  const terms = await pickReviewTermsForUser(
+  const terms = await fetchStudyTermPool(
     client,
     userId,
     { domainIds: domainIdsForScope(domainId) },
     status,
     count,
+    "admin",
   );
   const termIds = terms.map((t) => t.id);
 

@@ -1,14 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchStudyTermPool, getMaxStudyCount, MAX_STUDY_TERMS } from "@/lib/study";
+import { toReviewTerm } from "./mappers";
 import type { ReviewTerm, ReviewTermStatus } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-export const MAX_REVIEW_TERMS = 30;
+/** @deprecated Prefer MAX_STUDY_TERMS from @/lib/study */
+export const MAX_REVIEW_TERMS = MAX_STUDY_TERMS;
 
 export function getMaxReviewCardCount(availableTermCount: number): number {
-  if (availableTermCount <= 0) return 0;
-  return Math.min(availableTermCount, MAX_REVIEW_TERMS);
+  return getMaxStudyCount(availableTermCount);
 }
 
 export async function fetchReviewTermPool(
@@ -18,6 +20,13 @@ export async function fetchReviewTermPool(
   status: ReviewTermStatus,
   cardCount: number,
 ): Promise<ReviewTerm[]> {
-  const { pickReviewTerms } = await import("@/lib/smart-queue/service");
-  return pickReviewTerms(client, userId, { domainIds }, status, cardCount);
+  const cards = await fetchStudyTermPool(
+    client,
+    userId,
+    { domainIds },
+    status,
+    cardCount,
+    "session",
+  );
+  return cards.map(toReviewTerm);
 }

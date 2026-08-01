@@ -2,33 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 import { applyReviewRating } from "@/lib/jargon/review-outcome";
-import { listQuizableCollections } from "@/lib/quiz/terms";
 import { MAX_REVIEW_TERMS, fetchReviewTermPool } from "@/lib/review/terms";
 import type { ReviewSetup } from "@/lib/review/types";
-import { createClient } from "@/lib/supabase/server";
-import { getReviewPoolStats } from "@/lib/smart-queue/service";
-
-async function getAuthenticatedClient() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return { error: "Log in to continue." as const };
-  }
-
-  return { supabase, user };
-}
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { listStudyCollections } from "@/lib/study";
+import { getReviewPoolStats } from "@/lib/smart-queue";
 
 export async function getReviewSetupData() {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }
 
-  const collections = await listQuizableCollections(auth.supabase, auth.user.id);
+  const collections = await listStudyCollections(auth.supabase, auth.user.id);
 
   return { collections };
 }
@@ -37,7 +23,7 @@ export async function getReviewPoolStatsAction(
   domainIds: string[] | "all",
   status: "known" | "unknown",
 ) {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }
@@ -52,7 +38,7 @@ export async function getReviewPoolStatsAction(
 }
 
 export async function startReviewAction(setup: ReviewSetup) {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }
@@ -92,7 +78,7 @@ export async function rateReviewTermAction(
   sessionStatus: "known" | "unknown",
   options: { alreadyCountedSeen?: boolean } = {},
 ) {
-  const auth = await getAuthenticatedClient();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }

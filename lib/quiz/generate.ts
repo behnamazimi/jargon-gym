@@ -2,12 +2,9 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import type { LlmProvider } from "@/lib/llm/types";
-import {
-  buildQuizGenerationSchema,
-  normalizeQuizQuestions,
-  type QuizQuestion,
-  type QuizTerm,
-} from "./types";
+import { normalizeQuizQuestions } from "./normalize";
+import { buildQuizGenerationSchema } from "./schema";
+import type { QuizQuestion, QuizTerm } from "./types";
 
 const MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
   google: "gemini-2.5-flash",

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { markTermKnownForUser } from "@/lib/jargon/known-state";
+import { applyKnownToggle } from "@/lib/jargon/review-outcome";
 import { authenticateWidgetRequest } from "@/lib/widget/auth-request";
 
 const bodySchema = z.object({
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await markTermKnownForUser(auth.admin, auth.userId, body.termId);
+    await applyKnownToggle(auth.admin, auth.userId, body.termId, true, "admin");
     return NextResponse.json({ ok: true });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't mark that term as known.";
