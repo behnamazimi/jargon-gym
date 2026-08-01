@@ -25,7 +25,3 @@ export const NO_UNKNOWN_TERMS_MESSAGE =
 
 export const NO_KNOWN_TERMS_MESSAGE =
   "You haven't marked any terms as known yet. Try /quiz unknown to start learning!";
-
-export const REVIEW_CORRECT_PREFIX = "✅ Correct!";
-export const REVIEW_INCORRECT_PREFIX = "❌ Wrong.";
-export const REVIEW_SCORE_TEMPLATE = "Score: {current}/{total}";

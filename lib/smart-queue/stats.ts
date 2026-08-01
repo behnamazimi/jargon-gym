@@ -1,5 +1,4 @@
 /** Pool statistics computation.
- *  KEEP IN SYNC with supabase/functions/_shared/smart-queue/stats.ts
  */
 
 import type { ReviewCandidate, PoolStats } from "./types";

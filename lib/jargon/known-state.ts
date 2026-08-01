@@ -119,6 +119,30 @@ export async function clearTermKnown(
   }
 }
 
+export async function clearTermKnownForUser(
+  client: Client,
+  userId: string,
+  termId: string,
+  options: QueueRecordOptions = {},
+) {
+  const { error } = await client.rpc("clear_term_known", {
+    p_user_id: userId,
+    p_term_id: termId,
+  });
+
+  if (error) throw error;
+
+  if (options.recordQueue !== false) {
+    await recordQueueOutcomeForUser(
+      client,
+      userId,
+      termId,
+      "forgot",
+      options.incrementSeen ?? false,
+    );
+  }
+}
+
 async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
   const { data, error } = await client.rpc("review_domain_ids", {
     p_user_id: userId,

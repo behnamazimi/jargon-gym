@@ -23,3 +23,9 @@ export function getCronSecret(): string {
   if (!secret) throw new Error("Missing TELEGRAM_CRON_SECRET.");
   return secret;
 }
+
+export function getInternalSecret(): string {
+  const secret = Deno.env.get("TELEGRAM_INTERNAL_SECRET");
+  if (!secret) throw new Error("Missing TELEGRAM_INTERNAL_SECRET.");
+  return secret;
+}

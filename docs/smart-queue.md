@@ -14,14 +14,15 @@ Every term in your active collections has a little history: how often you’ve s
 
 ## Where the code lives
 
-Next and Deno can’t share modules at deploy time, so the **pure algorithm is duplicated on purpose**:
+One shared core in Next.js. Supabase Edge Telegram functions are thin proxies that call internal API routes; they do **not** own scoring or outcomes.
 
-| Role                                          | Next.js                                                       | Telegram / Edge                                                                                             |
-| --------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Pure scoring / pick / stats                   | [`lib/smart-queue/`](../lib/smart-queue/)                     | [`supabase/functions/_shared/smart-queue/`](../supabase/functions/_shared/smart-queue/)                     |
-| DB adapter (load candidates, record outcomes) | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts) | [`supabase/functions/_shared/smart-queue-service.ts`](../supabase/functions/_shared/smart-queue-service.ts) |
-
-Keep the pure folders in sync (same pattern as the Telegram link-token contract). Change weights or scoring in both places.
+| Role                                   | Location                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------ |
+| Pure scoring / pick / stats            | [`lib/smart-queue/`](../lib/smart-queue/)                                            |
+| DB adapter (session user)              | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts) — `my_*` RPCs          |
+| DB adapter (admin / Telegram / widget) | same file — `*ForUser` helpers via `get_review_candidates` / `record_review_outcome` |
+| Outcome + known-state coupling         | [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts)                    |
+| Telegram bot orchestration             | [`lib/telegram/flows.ts`](../lib/telegram/flows.ts) via `/api/internal/telegram/*`   |
 
 History is stored in Postgres:
 
@@ -55,7 +56,7 @@ Settings → Review. Same preset feeds every smart pick surface.
 | `learn_new`  | Stronger unseen / new-term weights |
 | `drill_weak` | Stronger learning / forgot weights |
 
-Numbers live in `presets.ts` on both stacks.
+Numbers live in [`lib/smart-queue/presets.ts`](../lib/smart-queue/presets.ts).
 
 ### Soft cycle
 
@@ -131,18 +132,19 @@ Per-collection known% plus unknown-pool queue stats (unseen / seen / stale).
                     └───────────┬─────────────┘
                                 │
                     ┌───────────▼─────────────┐
-                    │  pickTerms / score      │  ← pure, duplicated Next ↔ Deno
+                    │  lib/smart-queue        │  ← single pure + adapter core
+                    │  lib/jargon/review-outcome
                     └───────────┬─────────────┘
                                 │
           ┌─────────────────────┼─────────────────────┐
           ▼                     ▼                     ▼
-   Telegram /next         Web review / quiz      Jargon collapse
-   + cadence              + list / widget        (shown only)
+   Telegram (Edge→Next)   Web review / quiz      Jargon collapse
+   /next + cadence        + list / widget        (shown only)
           │                     │
           └──────────► record_review_outcome ◄──┘
 ```
 
-If you’re changing behavior, ask: **is this a scoring change** (edit `lib/smart-queue` _and_ the Deno mirror) or **a surface coupling change** (when that UI calls pick / record)?
+If you’re changing behavior, ask: **is this a scoring change** (edit `lib/smart-queue`) or **a surface coupling change** (when that UI calls pick / record / `review-outcome`)?
 
 ---
 

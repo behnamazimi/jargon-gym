@@ -1,5 +1,4 @@
 /** Smart queue types — pure data structures, no runtime imports.
- *  KEEP IN SYNC with supabase/functions/_shared/smart-queue/types.ts
  */
 
 export type ReviewOutcome =

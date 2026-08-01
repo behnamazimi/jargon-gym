@@ -1,5 +1,4 @@
 /** Scoring weight presets for different review strategies.
- *  KEEP IN SYNC with supabase/functions/_shared/smart-queue/presets.ts
  */
 
 import type { ReviewPreset, ScoreWeights } from "./types";

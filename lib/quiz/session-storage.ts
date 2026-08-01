@@ -6,7 +6,7 @@ import type {
   QuizTermStatus,
 } from "./types";
 
-export type QuizSetup = {
+type QuizSetup = {
   domainIds: string[] | "all";
   status: QuizTermStatus;
   questionCount: number;

@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
+import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
 import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
 import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
@@ -15,8 +14,7 @@ import type {
   QuizTerm,
   QuizTermStatus,
 } from "@/lib/quiz/types";
-import { recordReviewOutcome } from "@/lib/smart-queue/service";
-import type { ReviewOutcome } from "@/lib/smart-queue";
+import { createClient } from "@/lib/supabase/server";
 
 async function getAuthenticatedClient() {
   const supabase = await createClient();
@@ -127,7 +125,7 @@ export async function generateQuizAction(input: {
   }
 }
 
-/** Record outcome + apply quiz prefs for a single answer (mirrors Telegram per-answer). */
+/** Record outcome + apply quiz prefs for a single answer. */
 export async function recordQuizAnswerAction(input: {
   termId: string;
   passed: boolean;
@@ -139,28 +137,12 @@ export async function recordQuizAnswerAction(input: {
   }
 
   try {
-    const settings = await getUserSettings(auth.supabase, auth.user.id);
-    const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
-    const markKnownOnPass = settings?.markKnownOnPass ?? false;
-
-    let outcome: ReviewOutcome;
-    if (input.status === "unknown") {
-      outcome = input.passed ? "solid" : "learning";
-    } else {
-      outcome = input.passed ? "verified" : "forgot";
-    }
-
-    await recordReviewOutcome(auth.supabase, input.termId, outcome, true);
-
-    let flipped = false;
-
-    if (!input.passed && markUnknownOnFail) {
-      await clearTermKnown(auth.supabase, auth.user.id, input.termId, { recordQueue: false });
-      flipped = true;
-    } else if (input.passed && input.status === "unknown" && markKnownOnPass) {
-      await markTermKnown(auth.supabase, input.termId, { recordQueue: false });
-      flipped = true;
-    }
+    const { flipped } = await applyQuizAnswer(auth.supabase, auth.user.id, {
+      termId: input.termId,
+      passed: input.passed,
+      status: input.status,
+      mode: "session",
+    });
 
     if (flipped) {
       revalidatePath("/jargon");

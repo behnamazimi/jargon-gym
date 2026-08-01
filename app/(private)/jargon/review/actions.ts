@@ -1,13 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { clearTermKnown, markTermKnown } from "@/lib/jargon/known-state";
+import { applyReviewRating } from "@/lib/jargon/review-outcome";
 import { listQuizableCollections } from "@/lib/quiz/terms";
 import { MAX_REVIEW_TERMS, fetchReviewTermPool } from "@/lib/review/terms";
 import type { ReviewSetup } from "@/lib/review/types";
 import { createClient } from "@/lib/supabase/server";
-import { getReviewPoolStats, recordReviewOutcome } from "@/lib/smart-queue/service";
-import type { ReviewOutcome } from "@/lib/smart-queue";
+import { getReviewPoolStats } from "@/lib/smart-queue/service";
 
 async function getAuthenticatedClient() {
   const supabase = await createClient();
@@ -99,24 +98,13 @@ export async function rateReviewTermAction(
   }
 
   try {
-    const incrementSeen = !options.alreadyCountedSeen;
-    let outcome: ReviewOutcome;
-
-    if (sessionStatus === "unknown") {
-      outcome = known ? "solid" : "learning";
-    } else {
-      outcome = known ? "verified" : "forgot";
-    }
-
-    if (sessionStatus === "unknown" && known) {
-      await recordReviewOutcome(auth.supabase, termId, outcome, incrementSeen);
-      await markTermKnown(auth.supabase, termId, { recordQueue: false });
-    } else if (sessionStatus === "known" && !known) {
-      await recordReviewOutcome(auth.supabase, termId, outcome, incrementSeen);
-      await clearTermKnown(auth.supabase, auth.user.id, termId, { recordQueue: false });
-    } else {
-      await recordReviewOutcome(auth.supabase, termId, outcome, incrementSeen);
-    }
+    await applyReviewRating(auth.supabase, auth.user.id, {
+      termId,
+      known,
+      sessionStatus,
+      alreadyCountedSeen: options.alreadyCountedSeen,
+      mode: "session",
+    });
 
     revalidatePath("/jargon");
     revalidatePath("/jargon/review");

@@ -6,7 +6,13 @@ export function createAdminClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
+    const missing = [
+      !url ? "NEXT_PUBLIC_SUPABASE_URL" : null,
+      !key ? "SUPABASE_SERVICE_ROLE_KEY" : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    throw new Error(`Missing ${missing}.`);
   }
 
   return createClient<Database>(url, key, {

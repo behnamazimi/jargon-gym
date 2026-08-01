@@ -1,5 +1,4 @@
 /** Pure scoring function for smart queue algorithm.
- *  KEEP IN SYNC with supabase/functions/_shared/smart-queue/score.ts
  */
 
 import type { ReviewCandidate, ScoreWeights } from "./types";

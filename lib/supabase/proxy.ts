@@ -13,7 +13,9 @@ function isPublicPath(pathname: string) {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/downloads/") ||
-    pathname.startsWith("/api/widget")
+    pathname.startsWith("/api/widget") ||
+    // Bearer-secret auth in route handlers (Edge → Next Telegram proxy)
+    pathname.startsWith("/api/internal/telegram")
   );
 }
 

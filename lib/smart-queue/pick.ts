@@ -1,5 +1,4 @@
 /** Term selection from scored candidates.
- *  KEEP IN SYNC with supabase/functions/_shared/smart-queue/pick.ts
  */
 
 import type { ReviewCandidate, ReviewPreset, ScoredCandidate } from "./types";

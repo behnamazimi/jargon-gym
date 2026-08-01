@@ -18,6 +18,32 @@ function hashLinkToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/** Complete a pending Telegram link from the bot `/start` deep link. */
+export async function completeTelegramLink(
+  client: Client,
+  chatId: number,
+  token: string,
+): Promise<{ ok: true; userId: string } | { ok: false; reason: "invalid" | "already_linked" }> {
+  const tokenHash = hashLinkToken(token);
+  const { data: userId, error } = await client.rpc("complete_telegram_link", {
+    p_token_hash: tokenHash,
+    p_chat_id: chatId,
+  });
+
+  if (error) {
+    if (error.message.includes("already linked")) {
+      return { ok: false, reason: "already_linked" };
+    }
+    return { ok: false, reason: "invalid" };
+  }
+
+  if (!userId) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  return { ok: true, userId };
+}
+
 function buildTelegramDeepLink(token: string): string {
   const username = process.env.TELEGRAM_BOT_USERNAME?.replace(/^@/, "");
   if (!username) {

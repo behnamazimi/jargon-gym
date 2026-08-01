@@ -1,9 +1,6 @@
 /** Canonical spec for Telegram deep-link token hashing.
- *  Node adapter: lib/telegram/links.ts
- *  Deno adapter: supabase/functions/_shared/token.ts
+ *  Adapter: lib/telegram/links.ts (completeTelegramLink)
  *  Consumer: SQL complete_telegram_link(p_token_hash, ...)
- *
- *  Keep in sync with supabase/functions/_shared/link-token-contract.ts
  */
 export const TELEGRAM_LINK_TOKEN_CONTRACT = {
   tokenBytes: 32,

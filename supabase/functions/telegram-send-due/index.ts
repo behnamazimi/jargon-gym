@@ -1,7 +1,10 @@
-import { getCronSecret } from "../_shared/env.ts";
-import { runWithTyping } from "../_shared/telegram-api.ts";
+/**
+ * Thin cron proxy: verify auth → forward to Next.js → execute Telegram actions.
+ */
+
+import { getAppBaseUrl, getCronSecret, getInternalSecret } from "../_shared/env.ts";
 import { createServiceClient } from "../_shared/supabase-admin.ts";
-import { sendTermOrCaughtUp } from "../_shared/term-service.ts";
+import { executeTelegramActions, type TelegramAction } from "../_shared/telegram-api.ts";
 
 function verifyCronAuth(request: Request) {
   const header = request.headers.get("authorization");
@@ -19,45 +22,38 @@ Deno.serve(async (request) => {
   }
 
   try {
-    const supabase = createServiceClient();
-    const { data: dueUsers, error } = await supabase.rpc("list_due_telegram_users");
+    const base = getAppBaseUrl();
+    const response = await fetch(`${base}/api/internal/telegram/send-due`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getInternalSecret()}`,
+      },
+      body: JSON.stringify({}),
+    });
 
-    if (error) throw error;
-
-    let sent = 0;
-    let caughtUp = 0;
-
-    for (const row of dueUsers ?? []) {
-      const userId = row.user_id as string;
-      const chatId = Number(row.chat_id);
-
-      const { data: linkRow, error: linkError } = await supabase
-        .from("telegram_links")
-        .select("all_caught_up_at")
-        .eq("user_id", userId)
-        .single();
-
-      if (linkError) {
-        console.error("Failed to load telegram link:", linkError);
-        continue;
-      }
-
-      const result = await runWithTyping(chatId, () =>
-        sendTermOrCaughtUp(supabase, userId, chatId, {
-          recordSend: true,
-          skipIfAlreadyCaughtUp: true,
-          allCaughtUpAt: linkRow.all_caught_up_at,
-          persistCaughtUpFlag: true,
-        }),
-      );
-
-      if (result.kind === "term") sent += 1;
-      else if (result.kind === "caught_up") caughtUp += 1;
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Next send-due failed (${response.status}): ${body}`);
     }
 
-    return new Response(JSON.stringify({ ok: true, sent, caughtUp }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    const json = (await response.json()) as {
+      actions?: TelegramAction[];
+      sent?: number;
+      caughtUp?: number;
+    };
+
+    const supabase = createServiceClient();
+    await executeTelegramActions(json.actions ?? [], supabase);
+
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        sent: json.sent ?? 0,
+        caughtUp: json.caughtUp ?? 0,
+      }),
+      { headers: { "Content-Type": "application/json" } },
+    );
   } catch (error) {
     console.error("telegram-send-due error:", error);
     return new Response(JSON.stringify({ error: "Internal error" }), {
