@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { SiteHeaderNav } from "@/components/site-header-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -20,9 +21,11 @@ export async function SiteHeader() {
       <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
         <Link
           href={user ? "/jargon" : "/"}
-          className="text-lg font-bold tracking-tight no-underline"
+          className="flex items-center gap-2 text-lg font-bold tracking-tight no-underline"
+          aria-label="Jargon Gym"
         >
-          <span className="text-primary">Jargon Gym</span>
+          <BrandIcon className="sm:hidden" />
+          <span className="hidden text-primary sm:inline">Jargon Gym</span>
         </Link>
 
         <nav className="flex items-center gap-1">

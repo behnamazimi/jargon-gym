@@ -6,6 +6,8 @@ import type { Database } from "@/lib/supabase/database.types";
 function isPublicPath(pathname: string) {
   return (
     pathname === "/" ||
+    pathname === "/icon" ||
+    pathname === "/apple-icon" ||
     pathname === "/install-widget.sh" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
