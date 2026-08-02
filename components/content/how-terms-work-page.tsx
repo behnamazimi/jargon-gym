@@ -1,4 +1,5 @@
 import { BookOpen } from "lucide-react";
+import Link from "next/link";
 import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
 import {
   ContentPageBulletList,
@@ -8,9 +9,10 @@ import {
   ContentPageSection,
   ContentPageShell,
   ContentPageTitledBulletList,
+  contentPageLinkClass,
 } from "@/components/content";
 
-type TermFieldsGuidePageProps = {
+type HowTermsWorkPageProps = {
   isLoggedIn?: boolean;
 };
 
@@ -33,7 +35,7 @@ const TERM_FIELDS = [
   },
   {
     title: "In practice",
-    body: "Optional. Tradeoffs, team conventions, when you'd reach for it, usage nuance that isn't obvious from the definition. Common misuse fits here too, not in Debated.",
+    body: "Optional. Tradeoffs, team conventions, when you'd reach for it, usage nuance that isn't obvious from the definition. Common misuse fits here too, as does a caution about overuse, not in Debated.",
   },
   {
     title: "Debated",
@@ -52,7 +54,7 @@ const OPTIONAL_FIELD_TRIGGERS = [
   },
   {
     title: "In practice",
-    body: "There's a tradeoff, convention, or \"when you'd reach for it\" that the definition and example don't cover.",
+    body: "There's a tradeoff, convention, or \"when you'd reach for it\" that the definition and example don't cover for me.",
   },
   {
     title: "Debated",
@@ -64,7 +66,7 @@ const OPTIONAL_FIELD_TRIGGERS = [
   },
 ] as const;
 
-export function TermFieldsGuidePage({ isLoggedIn = false }: TermFieldsGuidePageProps) {
+export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) {
   return (
     <ContentPageShell>
       <ContentPageIntro>
@@ -75,6 +77,12 @@ export function TermFieldsGuidePage({ isLoggedIn = false }: TermFieldsGuidePageP
           backHref={isLoggedIn ? JARGON_HOME_PATH : PUBLIC_HOME_PATH}
           backLabel={isLoggedIn ? "Back to collection" : "Back to home"}
         />
+
+        <p className="m-0 mb-4 text-sm leading-relaxed text-base-content/80">
+          This is for anyone who wants to understand how content is structured in the app, or who
+          plans to add terms of their own. You can import a JSON list, paste output from an LLM
+          prompt I prepared for generating a field&apos;s jargon, or add terms one at a time.
+        </p>
 
         <ContentPageSection title="Why not just a definition">
           <p className="m-0">
@@ -105,7 +113,8 @@ export function TermFieldsGuidePage({ isLoggedIn = false }: TermFieldsGuidePageP
         <ContentPageSection title="What goes in a term">
           <p className="m-0">
             Every term needs a name, category, and definition, the minimum before it&apos;s worth
-            keeping.
+            keeping. I import lists or add terms one at a time into collections. This structure is
+            the main thing that separates it from a one-line flashcard.
           </p>
           <ContentPageTitledBulletList items={TERM_FIELDS} />
         </ContentPageSection>
@@ -118,11 +127,30 @@ export function TermFieldsGuidePage({ isLoggedIn = false }: TermFieldsGuidePageP
           <ContentPageTitledBulletList items={OPTIONAL_FIELD_TRIGGERS} />
         </ContentPageSection>
 
+        <ContentPageSection title="Known and unknown">
+          <p className="m-0">
+            Every term is either something I{" "}
+            <strong className="font-medium text-base-content">already know</strong> or something
+            I&apos;m <strong className="font-medium text-base-content">still learning</strong>. That
+            split is the term&apos;s state, not a queue setting. I kept mixing known and unknown
+            terms in one deck and wasted time on words I didn&apos;t need, so the two never mix now.
+          </p>
+          <p className="m-0">
+            Mark a term known or unknown anywhere, in review, a quiz, the collection list, Telegram,
+            or the desktop widget, and it moves between states. I wanted that to follow the term
+            everywhere. Review and quizzes always draw from one pool or the other.{" "}
+            <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
+              How the smart queue works
+            </Link>{" "}
+            covers how the queue ranks terms inside each pool.
+          </p>
+        </ContentPageSection>
+
         <ContentPageSection title="When a term is done">
           <p className="m-0">
-            Done means I could use the word correctly in conversation tomorrow, not that every
-            optional field is filled. I revisit terms when I encounter them in the wild and realize
-            something is missing.
+            Done means I could use the word correctly in conversation, not that every optional field
+            is filled. I revisit terms when I encounter them in the wild and realize something is
+            missing.
           </p>
         </ContentPageSection>
 

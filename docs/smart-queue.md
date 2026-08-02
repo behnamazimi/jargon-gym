@@ -1,14 +1,18 @@
 # Smart review queue
 
-How Jargon Gym chooses the next term. Telegram `/next`, web review, quizzes,
-the desktop widget, and passive delivery all use the same picker.
+How Jargon Gym chooses the next term. Web review, collection browse, Telegram
+`/next` and scheduled delivery, quizzes, and the desktop widget all use the
+same picker and ranking.
 
 This is **not** Anki. There are no due dates, no intervals, and nothing nags
 you to study. You open the app when you want; the queue ranks terms in your
-active pool and returns the highest-scoring ones.
+active pool from history — what you've neglected or still can't use — not from
+a fixed schedule or future review dates.
 
-For a user-facing explanation (pools, badges, presets), see
-[How the review queue works](/smart-queue) on the deployed app.
+For the user-facing guide (surfaces, badges, presets), see
+[How the smart queue works](/how-smart-queue-works) on the deployed app. For
+what **known** and **unknown** mean, see
+[How terms are built](/how-terms-work).
 
 ---
 
@@ -23,11 +27,14 @@ penalty if you just marked something solid. Highest score wins.
 
 **Known vs unknown is a separate gate.** You always pick from one pool or the
 other: a row in `user_progress` means known; no row means unknown. Scoring
-only ranks inside the pool you chose.
+only ranks inside the pool you chose. Mark a term known or unknown anywhere —
+review, a quiz, the collection list, Telegram, or the desktop widget — and it
+moves between pools; review and quizzes always draw from one pool or the
+other.
 
 Once every term in a pool has been seen at least once, the unseen boost has
 nothing left to apply. From then on, ranking is mostly staleness and struggle
-signals — the **soft cycle**.
+signals — the **soft cycle**, with no everyday reset button.
 
 ```
   active collections + known/unknown filter
@@ -76,6 +83,29 @@ not own the scoring math.
 
 ---
 
+## What the queue prioritizes
+
+These are the user-facing signals (badges on review cards, quiz questions, and
+the queue preview). A term can show more than one at a time. **Forgot** ranks
+above **still learning**.
+
+| Signal         | User-facing label        | Effect                                                                     |
+| -------------- | ------------------------ | -------------------------------------------------------------------------- |
+| Never seen     | Never seen               | Rises to the top until every term in the pool has been seen at least once  |
+| Still learning | Still learning           | Boost — marked still learning, or wrong on a quiz                          |
+| Forgot         | Forgot                   | Larger boost — marked forgot or cleared as known                           |
+| Shown stuck    | Seen 3+ times, not solid | Moderate boost — opened without marking known                              |
+| New term       | Recently added           | Moderate boost — created within the last few days                          |
+| Staleness      | Not seen recently        | Climbs when you skip a day; caps at about a week                           |
+| Solid cooldown | Recently marked solid    | **Lowers** priority for ~3 days after marking known or answering correctly |
+
+That cooldown is the only scheduled behavior. Nothing else gets a future review
+date.
+
+Implementation detail: scoring math, weights, and tie-breaking are below.
+
+---
+
 ## Scoring
 
 Each candidate gets a score from additive signals and penalties. Multiple
@@ -113,13 +143,14 @@ uses a 72-hour creation window.
 
 ### Presets
 
-Settings → Review. One preset applies to every surface.
+**Settings → Review.** One preset applies to every surface: web review,
+Telegram `/next`, quizzes, and scheduled delivery.
 
-| Preset       | Character                                      |
-| ------------ | ---------------------------------------------- |
-| `balanced`   | Default mix                                    |
-| `learn_new`  | Favors unseen and recently added terms         |
-| `drill_weak` | Favors learning, forgot, and shown-stuck terms |
+| Preset (UI label) | ID (`review_preset`) | Character                                          |
+| ----------------- | -------------------- | -------------------------------------------------- |
+| Balanced          | `balanced`           | Default mix of new, struggling, and stale terms    |
+| Learn new first   | `learn_new`          | Prioritize unseen terms and recently added content |
+| Drill weak spots  | `drill_weak`         | Focus on terms you're struggling with or forgot    |
 
 Weight values (same file):
 
@@ -173,14 +204,14 @@ starts the cycle over.
 
 ## Outcomes
 
-| Outcome    | Meaning                                          |
-| ---------- | ------------------------------------------------ |
-| `unseen`   | Default when no review row exists yet            |
-| `shown`    | Delivered, revealed, or read on the jargon page  |
-| `learning` | Still learning, or wrong on an unknown-pool quiz |
-| `solid`    | Got it, or marked known                          |
-| `verified` | Still know it (known-pool refresh)               |
-| `forgot`   | Forgot it, or cleared known                      |
+| Outcome    | Meaning                                                 |
+| ---------- | ------------------------------------------------------- |
+| `unseen`   | Default when no review row exists yet                   |
+| `shown`    | Delivered, revealed, or read on the web collection page |
+| `learning` | Still learning, or wrong on an unknown-pool quiz        |
+| `solid`    | Got it, or marked known                                 |
+| `verified` | Still know it (known-pool refresh)                      |
+| `forgot`   | Forgot it, or cleared known                             |
 
 ### `last_seen_at` semantics
 
@@ -198,37 +229,40 @@ from this timestamp.
 
 ## Surfaces
 
-All picks return `{ cards, pickMeta }` from `fetchStudyTermPool` or
-`pickReviewTerms*`. Surfaces differ in **when** they record outcomes, not in
-the scoring formula.
-
-### Telegram `/next` and cadence pushes
-
-- Pick one unknown term (`default` context).
-- On send → `shown` (increment).
-- Delivering the next term does not write an extra outcome for the previous
-  one.
-- Mark known → known flip + `solid` **without** incrementing seen count
-  (`last_seen_at` still updates).
+Same ranking everywhere. What changes is **when** something counts as a
+sighting. All picks return `{ cards, pickMeta }` from `fetchStudyTermPool` or
+`pickReviewTerms*`. Surfaces differ in outcome timing, not in the scoring
+formula.
 
 ### Web review
 
-- User chooses known or unknown pool, then receives a batch (`default`
-  context).
-- Setup shows pool stats and a queue preview.
-- First reveal → `shown` (increment).
-- Rating writes the outcome without a second increment when
-  `alreadyCountedSeen` is set.
-- Cards show pick-reason badges.
+- Focused study session: pick a known or unknown pool, work through a ranked
+  batch, mark terms as you go (`default` context).
+- Setup shows pool stats and a queue preview; each card shows why it was
+  picked.
+- First reveal → `shown` (increment). Rating writes the outcome without a
+  second increment when `alreadyCountedSeen` is set.
 - Got it / Forgot it always flip known state; quiz prefs do not apply here.
 
-### Jargon page
+### Web collection
 
-- Opening a term card → `shown` once per visit.
+- Browse and look up terms in your collections. Opening a term card → `shown`
+  once per visit. Good for reference, not a substitute for review.
+
+### Telegram bot
+
+- Get terms on a schedule, or pull one on demand with `/next`. Same ranking as
+  web review; one unknown term at a time (`default` context).
+- On send → `shown` (increment). Delivering the next term does not write an
+  extra outcome for the previous one.
+- Mark known or still learning from inline buttons. Mark known → known flip +
+  `solid` **without** incrementing seen count (`last_seen_at` still updates).
 
 ### Quizzes (web + Telegram)
 
-- Same picker with `quiz` context (stronger weak-signal bias).
+- Same preset and pool rules as review, with one extra tilt: weak-signal weights
+  (`learning`, `forgot`, `shown_stuck`) are multiplied by **1.5×** via
+  `PickContext: "quiz"` without changing the saved preset.
 - Web setup shows the queue preview; questions show badges.
 - Each answer records an outcome (always increments seen count).
 - Known flips follow Settings → Quiz prefs (`markUnknownOnFail`,
@@ -236,8 +270,11 @@ the scoring formula.
 
 ### Desktop widget
 
-- Passive rotation does **not** count as seen.
-- Next → `shown` for the term you are leaving.
+- Terms rotate on screen in the background. Passive rotation does **not** count
+  as a sighting.
+- **Next** → `shown` for the term you are leaving (increment).
+- Click to open the term in the web app → `shown` on the collection page for
+  that visit.
 - Mark known → known flip + `solid` (increment).
 
 ### List checkbox
@@ -297,8 +334,8 @@ review_state + preset + PickContext
             |
    +--------+--------+--------+
    |        |        |        |
-Telegram  Web review/quiz   Widget + jargon page
- /next    + list checkbox   (shown on Next only)
+Telegram  Web review/quiz   Widget + web collection
+ /next    + list checkbox   (shown on Next or open)
    |        |        |
    +--------+--- review-outcome only ---+
 ```
@@ -307,13 +344,16 @@ Telegram  Web review/quiz   Widget + jargon page
 
 ## What this is not
 
-- No daily quotas or forced due dates
-- Not SM-2, ease factors, or scheduled intervals
-- Not a spaced-repetition scheduler — it is a priority queue over your active
-  pool
+This ranks what's in the active pool when you show up — on purpose, no
+scheduled future reviews.
+
+- Not Anki — no fixed schedule, intervals, or "cards due today"
+- Not a notification system — study when you want
+- Not random — every pick comes from your history in that pool
 
 ## Next steps
 
-- User-facing guide: [How the review queue works](/smart-queue)
+- User-facing guides: [How the smart queue works](/how-smart-queue-works),
+  [How terms are built](/how-terms-work)
 - Telegram integration: [Telegram bot setup](supabase/telegram-setup.md)
 - Project overview and local setup: [README](../README.md)

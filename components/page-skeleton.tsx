@@ -7,9 +7,7 @@ function SkeletonBar({ className }: { className: string }) {
 
 export function PageSkeleton() {
   return (
-    <PageShell innerClassName="space-y-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading page</span>
-
+    <PageShell innerClassName="space-y-6" aria-busy="true" aria-label="Loading">
       <div className="flex flex-col gap-4">
         <SkeletonBar className="h-20 max-w-full" />
       </div>

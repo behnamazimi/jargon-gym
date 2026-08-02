@@ -84,7 +84,7 @@ export function TermCard({
                 {term.term}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
-                <Badge variant="outline" className="font-normal">
+                <Badge variant="outline" className="badge-sm font-normal">
                   {term.category}
                 </Badge>
                 <ChevronRight

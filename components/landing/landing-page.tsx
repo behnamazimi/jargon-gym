@@ -1,13 +1,22 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Mail } from "lucide-react";
+import Link from "next/link";
 import { pageContainerClass } from "@/components/page-container";
+import { contentPageLinkClass } from "@/components/content";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 const INVITE_REQUEST_EMAIL = "bhnmzm@gmail.com";
 const INVITE_REQUEST_MAILTO = `mailto:${INVITE_REQUEST_EMAIL}?subject=${encodeURIComponent("Jargon Gym invitation request")}&body=${encodeURIComponent("Hi,\n\nI'd like to try Jargon Gym. Could you send me an invitation code so I can sign up?\n\nThanks")}`;
 
-export function LandingPage() {
+export async function LandingPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0">
@@ -21,44 +30,113 @@ export function LandingPage() {
         )}
       >
         <div className="landing-enter mx-auto w-full max-w-2xl">
-          <Badge variant="outline" className="badge-sm font-medium tracking-wide uppercase">
-            Invite only
+          <Badge variant="outline" className="badge-sm font-medium tracking-wide">
+            Private app, need an invitation
           </Badge>
 
-          <h1 className="mt-5 m-0 max-w-[20ch] text-balance sm:text-5xl sm:leading-[1.12]">
-            A private place to learn industry terms.
+          <h1 className="mt-5 m-0 max-w-[22ch] text-balance sm:text-5xl sm:leading-[1.12]">
+            What Jargon Gym is
           </h1>
 
           <p className="mt-5 m-0 max-w-[48ch] text-lg leading-relaxed text-base-content/85">
-            Jargon Gym isn&apos;t public — you&apos;re here because someone shared this link with
-            you. Import term lists, mark what you know, review with flashcards, and quiz yourself
-            when you want a check-in.
+            I built this for myself after years of picking up jargon I couldn&apos;t actually use.
+            Import term lists, mark what you know, review when you feel like it, quiz when you want
+            a check-in. It&apos;s invite-only, you&apos;re here because someone shared this link
+            with you.
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <LinkButton
-              href="/login"
-              size="lg"
-              className="group gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96]"
-            >
-              Log in
-              <ArrowRight
-                aria-hidden
-                className="size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5"
-                strokeWidth={2}
-              />
-            </LinkButton>
+          <div className="mt-8 space-y-3 text-base leading-relaxed text-base-content/85">
+            <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
+              What&apos;s in it
+            </h2>
+            <ul className="m-0 max-w-[48ch] list-disc space-y-2 ps-5 text-base-content/80">
+              <li>
+                Add your own collection or start with existing ones, software engineering, finance,
+                psychology, and more
+              </li>
+              <li>
+                Terms with more than a definition, example, how it&apos;s used, where people
+                disagree. See{" "}
+                <Link href="/how-terms-work" className={contentPageLinkClass}>
+                  how terms are built
+                </Link>
+              </li>
+              <li>
+                A review queue that ranks what you&apos;ve neglected or still can&apos;t use, no due
+                dates. See{" "}
+                <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
+                  how that works
+                </Link>
+              </li>
+              <li>Quizzes when you want a real check, not a daily streak to protect</li>
+              <li>
+                Terms show up where you already are, in this web app, in a Telegram bot, and on your
+                desktop in in a widget. Same ranking everywhere.
+              </li>
+            </ul>
           </div>
 
-          <div className="mt-4 max-w-[48ch] rounded-2xl bg-base-100 px-4 py-3.5 ring-1 ring-base-content/5">
-            <p className="m-0 text-sm leading-relaxed text-base-content/80">
-              You need an invitation code to sign up.{" "}
-              <a href={INVITE_REQUEST_MAILTO} className="underline underline-offset-2">
-                Email us to request one
-              </a>
-              .
-            </p>
-          </div>
+          <p className="mt-6 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+            When reviewing, the queue shows what&apos;s been neglected or stayed shaky, from your
+            history, not a schedule. I go through a ranked batch, mark what I know, and come back
+            when I feel like it.
+          </p>
+
+          <p className="mt-4 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+            Known and unknown stay in separate pools so I&apos;m not wasting time on words I already
+            have.
+          </p>
+
+          <p className="mt-4 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+            I tried Anki and other due-based review tools and kept falling off. Overdue cards pile
+            up, the daily guilt kicks in, and none of it fit how I actually wanted to learn. So no
+            due dates, no reset button. And not a glossary either, terms here are built to be used,
+            not just looked up.
+          </p>
+
+          {user ? (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <LinkButton
+                href="/jargon"
+                size="lg"
+                className="group gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96]"
+              >
+                See your collection
+                <ArrowRight
+                  aria-hidden
+                  className="size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5"
+                  strokeWidth={2}
+                />
+              </LinkButton>
+            </div>
+          ) : (
+            <Alert className="alert alert-soft mt-8 max-w-[48ch]">
+              <Mail aria-hidden className="size-10 shrink-0" />
+              <AlertDescription>
+                You need an invitation code to sign up.{" "}
+                <a href={INVITE_REQUEST_MAILTO} className="underline underline-offset-2">
+                  Email me to request one
+                </a>{" "}
+                or{" "}
+                <Link href="/login" className="underline underline-offset-2">
+                  log in
+                </Link>{" "}
+                with your existing account.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <p className="mt-6 m-0 max-w-[48ch] text-sm leading-relaxed text-base-content/70">
+            If you want to know more before signing up:{" "}
+            <Link href="/how-terms-work" className={contentPageLinkClass}>
+              How terms are built
+            </Link>{" "}
+            and{" "}
+            <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
+              How the smart queue works
+            </Link>
+            .
+          </p>
         </div>
       </div>
     </section>

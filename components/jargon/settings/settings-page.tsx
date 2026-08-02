@@ -1,6 +1,7 @@
 "use client";
 
 import { BookOpen, LayoutDashboard, MessageCircle, Settings2, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
 import { LlmPanel } from "@/components/jargon/settings/llm-panel";
@@ -36,7 +37,18 @@ export function SettingsPage({
         <SettingsCard
           icon={BookOpen}
           title="Review"
-          description="Smart queue preset for Telegram /next, web review, and quizzes."
+          description={
+            <>
+              Smart queue preset for Telegram /next, web review, and quizzes.{" "}
+              <Link
+                href="/how-smart-queue-works"
+                className="underline underline-offset-2 transition-colors hover:text-base-content"
+              >
+                Read more about how the smart queue works
+              </Link>
+              .
+            </>
+          }
         >
           <ReviewPresetPanel
             initialPreset={initialUserSettings?.reviewPreset ?? "balanced"}

@@ -1,20 +1,31 @@
 # Jargon Gym
 
-A private Next.js app for learning industry jargon. Import term lists into
-collections, mark what you already know, review with flashcards, and quiz
-yourself when you want a check-in. Study surfaces share one smart review queue
-— not random shuffle, and not spaced repetition with due dates.
+A private, invite-only app for learning industry jargon you can
+actually use — not just recognize. Import term lists into collections (or start
+with built-in ones), mark what you already know, review a ranked queue when you
+feel like it, and quiz when you want a check-in. No due dates, no daily
+streaks.
 
-The app is invite-only. See the landing page for how to request access.
+Terms go beyond one-line definitions: optional example, in-practice notes,
+debated angles, and links to related terms. Known and unknown terms stay in
+separate pools so review never mixes words you already have with ones you're
+still learning.
+
+The same smart review queue powers every surface — web review, collection
+browse, Telegram bot, and macOS desktop widget — not random shuffle, and not
+spaced repetition with future review dates.
+
+See the landing page for how to request an invitation.
 
 ## Documentation
 
-- [Smart review queue](docs/smart-queue.md) — how term picking, scoring, and
-  outcomes work across web, Telegram, and the desktop widget
+- [Smart review queue](docs/smart-queue.md) — scoring, outcomes, and how picking
+  works across surfaces (companion to `/how-smart-queue-works`)
 - [Telegram bot setup](docs/supabase/telegram-setup.md) — webhook, secrets, and
   Edge Function deployment
-- User-facing guide at `/smart-queue` when the app is running (linked from the
-  site footer)
+- User-facing guides at `/how-terms-work` (term structure, known/unknown pools)
+  and `/how-smart-queue-works` (ranking, badges, presets) when the app is
+  running — linked from the landing page and site footer
 
 ## Prerequisites
 

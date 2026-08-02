@@ -20,7 +20,7 @@ export function SettingsCard({
 }: {
   icon: LucideIcon;
   title: string;
-  description?: string;
+  description?: ReactNode;
   status?: ReactNode;
   children: ReactNode;
   className?: string;
