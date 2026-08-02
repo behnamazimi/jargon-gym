@@ -14,11 +14,11 @@ JSON structure:
   "terms": [
     {
       "term": "Term name",
-      "category": "Grouping label for filters, e.g. Architecture",
-      "definition": "Clear explanation in plain language",
-      "example": "Optional — concrete usage example",
-      "discussion": "Optional — extra context or nuance",
-      "controversy": "Optional — note if the term is debated"
+      "category": "Browse label for filters only — e.g. Architecture, Testing",
+      "definition": "What the term means, in plain language — meaning only",
+      "example": "Optional — concrete scene or natural sentence; omit if definition alone is enough to use the word",
+      "discussion": "Optional — in practice: tradeoffs, conventions, when you'd reach for it, common misuse",
+      "controversy": "Optional — debated: only when practitioners genuinely disagree on meaning or scope"
     }
   ],
   "relationships": [
@@ -33,8 +33,14 @@ JSON structure:
 
 Field rules:
 - "term", "category", and "definition" are the only required fields per term.
-- "example", "discussion", and "controversy" are all optional. Omit each one individually whenever it wouldn't add real value — don't feel obligated to fill in every field for every term. Most terms should NOT have a controversy field; only genuinely debated terms should.
-- The "relationships" array as a whole is optional, and so is having a relationship for any given term. Only add a relationship when there's a real, useful connection worth pointing out (confusion risk, dependency, hierarchy, etc.) — most terms won't need one, and that's expected, not a gap to fill.
+- "category" is a browse label, not a learning field — pick whatever helps filter the list later.
+- "definition" is meaning only: what the term IS. Do not put when to use it, how people disagree, how it differs from a related term, or application nuance in the definition — those belong in other fields.
+- "example", "discussion", and "controversy" are all optional. Omit each one individually when it wouldn't add real value — empty optional fields mean "not needed", not "TODO". Do not fill every field on every term.
+- Add "example" when the definition alone wouldn't let someone use the word in conversation. Use a concrete scene (where it applies in real work) or a natural sentence (the word used in speech) — whichever makes the term click; one is enough.
+- Add "discussion" (in practice) for tradeoffs, team conventions, when you'd reach for the word, or common misuse — usage nuance that isn't obvious from the definition and example. Do not restate the definition.
+- Add "controversy" (debated) only when practitioners genuinely disagree on meaning or scope — not loose usage, not a caution about overuse. Most terms should NOT have this field.
+- The "relationships" array as a whole is optional. Add a relationship when two terms have any real connection worth naming — often confused with, depends on, builds on, opposite of, prerequisite for, etc. Most terms won't need one, and that's expected.
+- A term is complete when someone could use the word correctly in conversation — not when every optional field is filled.
 
 Tone:
 - Write like a sharp senior practitioner explaining a term to a smart colleague over Slack — not like a textbook, a dictionary, or a corporate blog post.
@@ -44,8 +50,8 @@ Tone:
 - Don't explain jargon with more jargon. If you need a plainer everyday comparison to make the idea click, use one.
 - Be direct and slightly opinionated — say what's actually true in practice, including the annoying caveat, instead of staying neutral.
 - Keep sentences short and concrete. If a definition needs two clauses, split it — don't chain qualifiers into one long sentence.
-- Ground examples in one concrete, realistic scenario a practitioner would recognize — no toy abstractions ("Object A" and "Object B").
-- When you do include discussion, make it actionable nuance or a common misuse — not filler restating the definition.
+- Ground examples in one concrete, realistic scenario a practitioner would recognize — no toy abstractions ("Object A" and "Object B"). A natural sentence showing the word in speech is also fine when that's what makes the term click.
+- When you do include discussion, make it actionable nuance, a tradeoff, or a common misuse — not filler restating the definition.
 
 Rules:
 - Include up to 100 must known jargons for "${domain}" — 100 is the ceiling, not a target. Only include terms a newcomer absolutely must know to follow a conversation in this field. Stick to core, high-frequency terms that come up constantly in real work.

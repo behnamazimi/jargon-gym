@@ -21,27 +21,46 @@ const TERM_FIELDS = [
   },
   {
     title: "Category",
-    body: "A label so the list doesn't turn into one blob, Architecture, Testing, whatever helps you find things later.",
+    body: "A browse label so the list doesn't turn into one blob, Architecture, Testing, whatever helps you find things later. Not a learning field.",
   },
   {
     title: "Definition",
-    body: "What it means, in plain language. Required. If you can't say it simply, you probably don't have it yet.",
+    body: "What the term means, in plain language. Required. Meaning only, not when to use it, not how people disagree, not how it differs from a related term. If you can't say it simply, you probably don't have it yet.",
   },
   {
     title: "Example",
-    body: "Optional. One sentence or situation where you've actually seen it. This is what made terms stick for me, more than the definition alone.",
+    body: "Optional. Add when the definition alone wouldn't let you use the word. A concrete scene (where you've seen it apply) or a natural sentence (the word used in speech), whichever makes it click.",
   },
   {
     title: "In practice",
-    body: "Optional. How people use it day to day, when you'd reach for it, what tradeoff it implies, what it doesn't cover.",
+    body: "Optional. Tradeoffs, team conventions, when you'd reach for it, usage nuance that isn't obvious from the definition. Common misuse fits here too, not in Debated.",
   },
   {
     title: "Debated",
-    body: "Optional. Some terms everyone throws around but nobody agrees on. Worth noting before you sound too sure.",
+    body: "Optional and rare. Only when practitioners genuinely disagree on meaning or scope, not loose usage, not a caution about overuse.",
   },
   {
     title: "Relationships",
-    body: 'Optional links to other terms, often confused with, builds on, opposite of. "Often confused with" is the one used most. You can add a line on how they differ.',
+    body: "Optional links to other terms in the collection, often confused with, depends on, builds on, opposite of, or any real connection worth pointing out. Add a line on how they differ when it helps.",
+  },
+] as const;
+
+const OPTIONAL_FIELD_TRIGGERS = [
+  {
+    title: "Example",
+    body: "The definition is solid but I still couldn't use the word in conversation from it alone.",
+  },
+  {
+    title: "In practice",
+    body: "There's a tradeoff, convention, or \"when you'd reach for it\" that the definition and example don't cover.",
+  },
+  {
+    title: "Debated",
+    body: "People in the field actually disagree on what this term means or how far it extends.",
+  },
+  {
+    title: "Relationships",
+    body: "This term connects to another one in a way worth naming, confusion, dependency, contrast, or otherwise.",
   },
 ] as const;
 
@@ -69,9 +88,15 @@ export function TermFieldsGuidePage({ isLoggedIn = false }: TermFieldsGuidePageP
             in a way that actually held.
           </p>
           <p className="m-0">
-            What I kept wanting, for almost every term: an example, how people actually talk about
-            it, where they disagree, and what it gets mixed up with. So I split those into separate
-            fields instead of cramming everything into the definition.
+            Two problems kept showing up: shallow understanding (I could repeat a definition but not
+            apply the word) and mixing terms up (coupling vs cohesion, that kind of thing). What I
+            kept wanting was an example, how people actually use it, where they disagree, and how it
+            connects to nearby terms, so I split those into separate fields instead of cramming
+            everything into the definition.
+          </p>
+          <p className="m-0">
+            A term is &ldquo;known&rdquo; when I could define it, use it correctly, and spot misuse
+            or nuance, not just recognize it on a slide.
           </p>
         </ContentPageSection>
       </ContentPageIntro>
@@ -80,17 +105,34 @@ export function TermFieldsGuidePage({ isLoggedIn = false }: TermFieldsGuidePageP
         <ContentPageSection title="What goes in a term">
           <p className="m-0">
             Every term needs a name, category, and definition, the minimum before it&apos;s worth
-            keeping. I only add the rest when it actually helped me understand the word.
+            keeping.
           </p>
           <ContentPageTitledBulletList items={TERM_FIELDS} />
+        </ContentPageSection>
+
+        <ContentPageSection title="When to add optional fields">
+          <p className="m-0">
+            Empty optional fields mean &ldquo;not needed,&rdquo; not &ldquo;TODO.&rdquo; I add a
+            field only when it would have helped me understand or use the word.
+          </p>
+          <ContentPageTitledBulletList items={OPTIONAL_FIELD_TRIGGERS} />
+        </ContentPageSection>
+
+        <ContentPageSection title="When a term is done">
+          <p className="m-0">
+            Done means I could use the word correctly in conversation tomorrow, not that every
+            optional field is filled. I revisit terms when I encounter them in the wild and realize
+            something is missing.
+          </p>
         </ContentPageSection>
 
         <ContentPageSection title="What this is not">
           <ContentPageBulletList
             items={[
               <>Not a wiki article, a few focused lines beat a long write-up</>,
-              <>Not a strict taxonomy, categories are just browse labels</>,
+              <>Not a strict taxonomy, categories are browse labels, not a learning hierarchy</>,
               <>Not every field on every term, leave optional ones empty</>,
+              <>Not complete when all fields are full, complete when the use test passes</>,
             ]}
           />
         </ContentPageSection>
