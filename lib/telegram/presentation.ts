@@ -92,16 +92,13 @@ export function formatMaskedTermMessage(term: TermCard): string {
   return `${header}\n\n<tg-spoiler>${trimmedDetails}${searchLink}</tg-spoiler>`;
 }
 
-export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
-  const rows: InlineKeyboardMarkup["inline_keyboard"] = [
-    [
-      { text: "Mark known", callback_data: `known:${term.id}` },
-      { text: "Next", callback_data: `next:${term.id}` },
-    ],
-  ];
-
+function appendOpenInWebRow(
+  rows: InlineKeyboardMarkup["inline_keyboard"],
+  domainId: string,
+  termId: string,
+): void {
   const base = getAppBaseUrl();
-  const webUrl = `${base}/jargon?domain=${encodeURIComponent(term.domainId)}&termId=${encodeURIComponent(term.id)}`;
+  const webUrl = `${base}/jargon?domain=${encodeURIComponent(domainId)}&termId=${encodeURIComponent(termId)}`;
   try {
     if (base && new URL(webUrl).protocol === "https:") {
       rows.push([{ text: "Open in web", url: webUrl }]);
@@ -109,7 +106,30 @@ export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   } catch {
     // skip invalid APP_BASE_URL
   }
+}
 
+export function buildTermInlineKeyboard(
+  term: TermCard,
+  options?: { includeMarkKnown?: boolean },
+): InlineKeyboardMarkup {
+  const includeMarkKnown = options?.includeMarkKnown ?? true;
+  const actionRow: InlineKeyboardMarkup["inline_keyboard"][number] = [];
+
+  if (includeMarkKnown) {
+    actionRow.push({ text: "Mark known", callback_data: `known:${term.id}` });
+  }
+  actionRow.push({ text: "Next", callback_data: `next:${term.id}` });
+
+  const rows: InlineKeyboardMarkup["inline_keyboard"] = [actionRow];
+  appendOpenInWebRow(rows, term.domainId, term.id);
+  return { inline_keyboard: rows };
+}
+
+export function buildNextKeyboard(termId: string, domainId?: string): InlineKeyboardMarkup {
+  const rows: InlineKeyboardMarkup["inline_keyboard"] = [
+    [{ text: "Next", callback_data: `next:${termId}` }],
+  ];
+  if (domainId) appendOpenInWebRow(rows, domainId, termId);
   return { inline_keyboard: rows };
 }
 

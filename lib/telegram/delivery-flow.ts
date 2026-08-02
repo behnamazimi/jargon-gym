@@ -9,6 +9,7 @@ import {
 import type { TelegramAction } from "./actions";
 import { CAUGHT_UP_MESSAGE, CONNECT_MESSAGE, MARKED_KNOWN_SUFFIX } from "./copy";
 import {
+  buildNextKeyboard,
   buildTermInlineKeyboard,
   formatMaskedTermMessage,
   formatTermMessage,
@@ -67,10 +68,13 @@ export async function handleKnownCallback(
   const updatedText = term
     ? `${formatMaskedTermMessage(term)}\n\n<b>Your action:</b> Mark known${MARKED_KNOWN_SUFFIX}`
     : `${messageText ?? ""}\n\n<b>Your action:</b> Mark known${MARKED_KNOWN_SUFFIX}`;
+  const replyMarkup = term
+    ? buildTermInlineKeyboard(term, { includeMarkKnown: false })
+    : buildNextKeyboard(termId);
 
   return [
     { type: "answerCallbackQuery", callbackQueryId: callbackId, text: "Marked as known." },
-    edit(chatId, messageId, updatedText),
+    edit(chatId, messageId, updatedText, replyMarkup),
   ];
 }
 
