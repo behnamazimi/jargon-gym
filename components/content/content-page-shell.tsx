@@ -115,7 +115,7 @@ export function ContentPageTitledBulletList({
       {items.map((item) => (
         <li key={item.title}>
           <strong className="font-medium text-base-content">{item.title}</strong>
-          {" — "}
+          {": "}
           <span className="text-base-content/70">{item.body}</span>
         </li>
       ))}

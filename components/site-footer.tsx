@@ -7,7 +7,16 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-base-300 bg-base-100">
       <div className={cn(pageContainerClass, "flex flex-col items-center gap-3 py-5")}>
-        <nav aria-label="Footer">
+        <nav
+          aria-label="Footer"
+          className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1"
+        >
+          <Link
+            href="/term-structure"
+            className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
+          >
+            How terms are built
+          </Link>
           <Link
             href="/smart-queue"
             className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
