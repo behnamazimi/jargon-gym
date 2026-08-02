@@ -112,6 +112,7 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
             <JargonDomainHeader
               domain={domainWithLiveCount}
               domains={domainsWithLiveCounts}
+              terms={terms}
               categoryCount={categories.length}
               isOwner={isOwner}
               onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}

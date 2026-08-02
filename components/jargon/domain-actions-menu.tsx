@@ -3,6 +3,7 @@
 import {
   BookmarkMinus,
   BookOpen,
+  Download,
   FolderOpen,
   Globe,
   Link2,
@@ -37,13 +38,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
-import type { Domain } from "@/lib/jargon/types";
+import type { Domain, Term } from "@/lib/jargon/types";
 import { cn, pluralize } from "@/lib/utils";
+import { DomainExportDialog } from "./domain-export-dialog";
 import { DomainFormDialog } from "./domain-form-dialog";
 
 type DomainActionsMenuProps = {
   domain: Domain;
   domains: Domain[];
+  terms: Term[];
 };
 
 function subscriberCountMessage(count: number) {
@@ -56,10 +59,11 @@ function subscriberCountMessage(count: number) {
   return `${count} other people have added this collection.`;
 }
 
-export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
+export function DomainActionsMenu({ domain, domains, terms }: DomainActionsMenuProps) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [shareConfirmOpen, setShareConfirmOpen] = useState(false);
   const [unshareConfirmOpen, setUnshareConfirmOpen] = useState(false);
   const [resetProgressOpen, setResetProgressOpen] = useState(false);
@@ -164,6 +168,11 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
             Reset progress
           </DropdownMenuItem>
 
+          <DropdownMenuItem isDisabled={disabled} onAction={() => setExportOpen(true)}>
+            <Download className="h-4 w-4" />
+            Export JSON
+          </DropdownMenuItem>
+
           {domain.source === "owned" ? (
             <>
               <DropdownMenuItem isDisabled={disabled} onAction={() => setEditOpen(true)}>
@@ -214,6 +223,13 @@ export function DomainActionsMenu({ domain, domains }: DomainActionsMenuProps) {
       {domain.source === "owned" ? (
         <DomainFormDialog domain={domain} isOpen={editOpen} onOpenChange={setEditOpen} />
       ) : null}
+
+      <DomainExportDialog
+        domain={domain}
+        terms={terms}
+        isOpen={exportOpen}
+        onOpenChange={setExportOpen}
+      />
 
       <AlertDialog isOpen={shareConfirmOpen} onOpenChange={setShareConfirmOpen}>
         <AlertDialogHeader>

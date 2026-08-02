@@ -2,12 +2,13 @@
 
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Domain } from "@/lib/jargon/types";
+import type { Domain, Term } from "@/lib/jargon/types";
 import { DomainActionsMenu, DomainMeta } from "./domain-actions-menu";
 
 type JargonDomainHeaderProps = {
   domain: Domain;
   domains: Domain[];
+  terms: Term[];
   categoryCount: number;
   isOwner?: boolean;
   onAddTerm?: () => void;
@@ -16,6 +17,7 @@ type JargonDomainHeaderProps = {
 export function JargonDomainHeader({
   domain,
   domains,
+  terms,
   categoryCount,
   isOwner = false,
   onAddTerm,
@@ -50,7 +52,7 @@ export function JargonDomainHeader({
               <Plus className="size-5" strokeWidth={1.5} />
             </Button>
           ) : null}
-          <DomainActionsMenu domain={domain} domains={domains} />
+          <DomainActionsMenu domain={domain} domains={domains} terms={terms} />
         </div>
       </div>
 
