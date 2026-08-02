@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye } from "lucide-react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { ReviewTerm } from "@/lib/review/types";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +29,11 @@ export function ReviewCard({
   swipeEnabled,
 }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [term.id]);
 
   const swipe = useReviewSwipe(cardRef, {
     onReveal,
@@ -107,21 +112,21 @@ export function ReviewCard({
             )}
           >
             <div className="border-b border-base-300/60 bg-primary/[0.04] px-4 py-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-heading m-0 text-lg font-semibold tracking-tight">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-heading m-0 min-w-0 text-lg font-semibold tracking-tight">
                   {term.term}
                 </h2>
-                <Badge variant="outline" className="font-normal">
+                <Badge variant="outline" className="badge-sm shrink-0 font-normal">
                   {term.category}
                 </Badge>
               </div>
-              <PickReasonBadges reasons={term.pickReasons} mode="compact" className="mt-2" />
             </div>
             <div
+              ref={scrollRef}
               className="flex-1 overflow-y-auto px-4 py-4"
               onClick={(event) => event.stopPropagation()}
             >
-              <ReviewTermContent term={term} />
+              <ReviewTermContent key={term.id} term={term} />
             </div>
           </div>
         </div>

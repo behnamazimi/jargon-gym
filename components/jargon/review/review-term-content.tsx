@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { AlertTriangle, ChevronRight } from "lucide-react";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TermDetailSection } from "@/components/jargon/term-detail-section";
@@ -27,9 +27,7 @@ export function ReviewTermContent({ term, className }: ReviewTermContentProps) {
             <ChevronRight className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="pt-3">
-              <TermDetailSection label="In practice">{term.discussion}</TermDetailSection>
-            </div>
+            <p className="pt-3 text-sm leading-relaxed text-base-content/60">{term.discussion}</p>
           </CollapsibleContent>
         </Collapsible>
       ) : null}
@@ -41,10 +39,13 @@ export function ReviewTermContent({ term, className }: ReviewTermContentProps) {
             <ChevronRight className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
           </CollapsibleTrigger>
           <CollapsibleContent>
-            <div className="pt-3">
-              <TermDetailSection label="Debated" variant="debated">
-                {term.controversy}
-              </TermDetailSection>
+            <div className="mt-3 flex gap-2.5 rounded-lg bg-primary/5 p-3 ring-1 ring-primary/20">
+              <AlertTriangle
+                className="mt-0.5 size-4 shrink-0 text-primary"
+                aria-hidden
+                strokeWidth={1.5}
+              />
+              <p className="text-sm leading-relaxed text-base-content/60">{term.controversy}</p>
             </div>
           </CollapsibleContent>
         </Collapsible>
