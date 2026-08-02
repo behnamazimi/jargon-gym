@@ -108,29 +108,21 @@ function appendOpenInWebRow(
   }
 }
 
-export function buildTermInlineKeyboard(
-  term: TermCard,
-  options?: { includeMarkKnown?: boolean },
-): InlineKeyboardMarkup {
-  const includeMarkKnown = options?.includeMarkKnown ?? true;
-  const actionRow: InlineKeyboardMarkup["inline_keyboard"][number] = [];
-
-  if (includeMarkKnown) {
-    actionRow.push({ text: "Mark known", callback_data: `known:${term.id}` });
-  }
-  actionRow.push({ text: "Next", callback_data: `next:${term.id}` });
-
-  const rows: InlineKeyboardMarkup["inline_keyboard"] = [actionRow];
+export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
+  const rows: InlineKeyboardMarkup["inline_keyboard"] = [
+    [
+      { text: "Mark known", callback_data: `known:${term.id}` },
+      { text: "Next", callback_data: `next:${term.id}` },
+    ],
+  ];
   appendOpenInWebRow(rows, term.domainId, term.id);
   return { inline_keyboard: rows };
 }
 
-export function buildNextKeyboard(termId: string, domainId?: string): InlineKeyboardMarkup {
-  const rows: InlineKeyboardMarkup["inline_keyboard"] = [
-    [{ text: "Next", callback_data: `next:${termId}` }],
-  ];
-  if (domainId) appendOpenInWebRow(rows, domainId, termId);
-  return { inline_keyboard: rows };
+export function buildNextKeyboard(termId: string): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [[{ text: "Next", callback_data: `next:${termId}` }]],
+  };
 }
 
 function formatProgressBar(percentage: number, width: number = 10): string {
@@ -139,34 +131,31 @@ function formatProgressBar(percentage: number, width: number = 10): string {
   return "█".repeat(filled) + "░".repeat(empty);
 }
 
+function formatCollectionProgressLine(collection: CollectionStats): string {
+  const bar = formatProgressBar(collection.percentage);
+  return `${bar} ${collection.knownCount}/${collection.totalCount} known (${collection.percentage}%)`;
+}
+
 export function formatStatsMessage(stats: CollectionStats[]): string {
   if (stats.length === 0) {
-    return "You have no collections in your review pool. Add some in the app!";
+    return "You don't have any collections yet. Create or add one in the app to get started.";
   }
 
   const activeCollections = stats.filter((s) => s.isActive);
   const pausedCollections = stats.filter((s) => !s.isActive);
 
-  let message = `<b>Your Collection Stats</b>\n\n`;
-  message += `<b>Total collections:</b> ${stats.length}\n`;
-  message += `<b>Active:</b> ${activeCollections.length} · <b>Paused:</b> ${pausedCollections.length}\n`;
+  let message = `<b>📊 Your collections</b>\n\n`;
+  message += `${activeCollections.length} active · ${pausedCollections.length} paused`;
 
   if (activeCollections.length > 0) {
-    message += `\n<b>Active Collections</b>\n`;
+    message += `\n\n<b>Active:</b>`;
     for (const collection of activeCollections) {
-      const bar = formatProgressBar(collection.percentage);
-      message += `\n<b>${escapeHtml(collection.name)}</b>\n`;
-      message += `${bar} ${collection.knownCount}/${collection.totalCount} known · ${collection.percentage}%\n`;
-      message += `Queue: ${collection.unknownUnseen} unseen · ${collection.unknownSeen} seen · ${collection.unknownStale} stale\n`;
+      message += `\n\n<b>${escapeHtml(collection.name)}</b>\n`;
+      message += `${formatCollectionProgressLine(collection)}\n`;
+      message += `Queue: ${collection.unknownUnseen} unseen · ${collection.unknownSeen} seen · ${collection.unknownStale} stale`;
     }
-  }
-
-  if (pausedCollections.length > 0) {
-    message += `\n<b>Paused Collections</b>\n`;
-    for (const collection of pausedCollections) {
-      message += `\n<b>${escapeHtml(collection.name)}</b>\n`;
-      message += `${collection.knownCount}/${collection.totalCount} known · ${collection.percentage}%\n`;
-    }
+  } else if (pausedCollections.length > 0) {
+    message += `\n\n<i>All collections are paused. Turn one on in the app to start reviewing.</i>`;
   }
 
   return message;
