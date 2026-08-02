@@ -58,4 +58,5 @@ export type ImportResult = {
   termsCreated: number;
   termsUpdated: number;
   relationshipsCreated: number;
+  relationshipsUpdated: number;
 };

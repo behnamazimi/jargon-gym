@@ -8,6 +8,7 @@ import {
   jsonSyntaxFailure,
   validationFailure,
 } from "./errors";
+import { normalizeRelationshipKey } from "./relationship-key";
 import type { ImportFailure, ImportPreview, ImportValidationIssue } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -81,10 +82,21 @@ export function parseImportJson(
   }
 
   const relationshipIssues: ImportValidationIssue[] = [];
+  const relationshipKeys = new Set<string>();
 
   for (const [index, rel] of (result.data.relationships ?? []).entries()) {
     const sourceKey = rel.source.trim().toLowerCase();
     const targetKey = rel.target.trim().toLowerCase();
+    const relationshipKey = normalizeRelationshipKey(rel.source, rel.target, rel.relationship_type);
+
+    if (relationshipKeys.has(relationshipKey)) {
+      relationshipIssues.push({
+        path: `relationships[${index}]`,
+        message: `Duplicate relationship "${rel.source}" → "${rel.target}" (${rel.relationship_type}) in import`,
+        expected: "unique source, target, and relationship type within this import",
+      });
+    }
+    relationshipKeys.add(relationshipKey);
 
     if (!termKeys.has(sourceKey)) {
       relationshipIssues.push({

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { createOrGetOwnedDomain } from "@/lib/jargon/collections";
 import { formatImportFailure, ImportExecutionError } from "./errors";
+import { normalizeRelationshipKey } from "./relationship-key";
 import type { ImportPayload, ImportResult } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -16,6 +17,10 @@ function throwStepError(
   context?: { term?: string; domain?: string },
 ): never {
   throw new ImportExecutionError(formatImportFailure(err, { step, ...context }));
+}
+
+function isUniqueViolation(error: { code?: string }) {
+  return error.code === "23505";
 }
 
 export async function executeImport(
@@ -108,6 +113,8 @@ export async function executeImport(
   }
 
   let relationshipsCreated = 0;
+  let relationshipsUpdated = 0;
+  const importedRelationshipKeys = new Set<string>();
 
   for (const rel of payload.relationships ?? []) {
     const sourceId = termIdByKey.get(normalizeTermKey(rel.source));
@@ -116,12 +123,19 @@ export async function executeImport(
     if (!sourceId || !targetId) continue;
     if (sourceId === targetId) continue;
 
+    const relationshipKey = normalizeRelationshipKey(rel.source, rel.target, rel.relationship_type);
+    if (importedRelationshipKeys.has(relationshipKey)) continue;
+    importedRelationshipKeys.add(relationshipKey);
+
+    const relationshipType = rel.relationship_type.trim();
+    const description = rel.description?.trim() ?? "";
+
     const { data: existingRel, error: existingRelError } = await client
       .from("term_relationships")
-      .select("id")
+      .select("id, description")
       .eq("source_term_id", sourceId)
       .eq("target_term_id", targetId)
-      .eq("relationship_type", rel.relationship_type)
+      .ilike("relationship_type", relationshipType)
       .maybeSingle();
 
     if (existingRelError) {
@@ -131,16 +145,36 @@ export async function executeImport(
       });
     }
 
-    if (existingRel) continue;
+    if (existingRel) {
+      if (existingRel.description !== description) {
+        const { error } = await client
+          .from("term_relationships")
+          .update({ description })
+          .eq("id", existingRel.id);
+
+        if (error) {
+          throwStepError(error, "Could not update relationship", {
+            term: `${rel.source} → ${rel.target}`,
+            domain: payload.domain,
+          });
+        }
+
+        relationshipsUpdated += 1;
+      }
+
+      continue;
+    }
 
     const { error } = await client.from("term_relationships").insert({
       source_term_id: sourceId,
       target_term_id: targetId,
-      relationship_type: rel.relationship_type.trim(),
-      description: rel.description?.trim() ?? "",
+      relationship_type: relationshipType,
+      description,
     });
 
     if (error) {
+      if (isUniqueViolation(error)) continue;
+
       throwStepError(error, "Could not create relationship", {
         term: `${rel.source} → ${rel.target}`,
         domain: payload.domain,
@@ -170,5 +204,6 @@ export async function executeImport(
     termsCreated,
     termsUpdated: options.isMerge || hadExisting ? termsUpdated : 0,
     relationshipsCreated,
+    relationshipsUpdated,
   };
 }
