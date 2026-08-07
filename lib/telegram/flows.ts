@@ -13,6 +13,7 @@ import {
   handleStat,
   isQuizCommand,
   isReadCommand,
+  isReviewCommand,
   isStatCommand,
   parseStartToken,
 } from "./commands";
@@ -29,6 +30,13 @@ import {
   handleQuizSetupText,
   handleReviewAnswer,
 } from "./quiz-flow";
+import {
+  handleReviewCommand,
+  handleReviewRate,
+  handleReviewReveal,
+  handleReviewSetupCallback,
+  handleReviewSetupText,
+} from "./review-flow";
 import { send } from "./transport";
 
 type Client = SupabaseClient<Database>;
@@ -71,6 +79,32 @@ async function handleCallback(
 
   if (data.startsWith("quizsetup:")) {
     actions.push(...(await handleQuizSetupCallback(client, chatId, userId, data, messageId)));
+    return actions;
+  }
+
+  if (data.startsWith("reviewsetup:")) {
+    actions.push(...(await handleReviewSetupCallback(client, chatId, userId, data, messageId)));
+    return actions;
+  }
+
+  if (data.startsWith("review:reveal:")) {
+    const sessionIndex = parseInt(data.slice("review:reveal:".length), 10);
+    if (!isNaN(sessionIndex)) {
+      actions.push(...(await handleReviewReveal(client, chatId, messageId, sessionIndex)));
+    }
+    return actions;
+  }
+
+  if (data.startsWith("review:rate:")) {
+    const parts = data.slice("review:rate:".length).split(":");
+    if (parts.length === 2 && (parts[1] === "yes" || parts[1] === "no")) {
+      const sessionIndex = parseInt(parts[0], 10);
+      if (!isNaN(sessionIndex)) {
+        actions.push(
+          ...(await handleReviewRate(client, chatId, messageId, sessionIndex, parts[1] === "yes")),
+        );
+      }
+    }
     return actions;
   }
 
@@ -137,12 +171,20 @@ export async function handleTelegramUpdate(
     if (!userId) return [send(chatId, CONNECT_MESSAGE)];
     return handleQuizCommand(client, chatId, userId, trimmed);
   }
+  if (isReviewCommand(trimmed)) {
+    const userId = await resolveUserIdByChatId(client, chatId);
+    if (!userId) return [send(chatId, CONNECT_MESSAGE)];
+    return handleReviewCommand(client, chatId, userId, trimmed);
+  }
 
   const userId = await resolveUserIdByChatId(client, chatId);
   if (!userId) return [send(chatId, CONNECT_MESSAGE)];
 
   const setupResult = await handleQuizSetupText(client, chatId, userId, trimmed);
   if (setupResult.handled) return setupResult.actions;
+
+  const reviewSetupResult = await handleReviewSetupText(client, chatId, userId, trimmed);
+  if (reviewSetupResult.handled) return reviewSetupResult.actions;
 
   return [send(chatId, HELP_MESSAGE)];
 }

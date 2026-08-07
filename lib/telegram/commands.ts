@@ -27,6 +27,10 @@ export function isQuizCommand(text: string): boolean {
   return /^\/quiz(?:@\w+)?(?:\s+.*)?$/i.test(text.trim());
 }
 
+export function isReviewCommand(text: string): boolean {
+  return /^\/review(?:@\w+)?(?:\s+.*)?$/i.test(text.trim());
+}
+
 export async function handleStart(
   client: Client,
   chatId: number,

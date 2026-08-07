@@ -110,10 +110,7 @@ function appendOpenInWebRow(
 
 export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
-    [
-      { text: "Mark known", callback_data: `known:${term.id}` },
-      { text: "Read next", callback_data: `read:${term.id}` },
-    ],
+    [{ text: "Read next", callback_data: `read:${term.id}` }],
   ];
   appendOpenInWebRow(rows, term.domainId, term.id);
   return { inline_keyboard: rows };
@@ -161,36 +158,38 @@ export function formatStatsMessage(stats: CollectionStats[]): string {
   return message;
 }
 
-export function buildQuizStatusKeyboard(): InlineKeyboardMarkup {
+/** Shared status/collection/count wizard keyboards for /quiz and /review, keyed by callback prefix. */
+function buildSetupStatusKeyboard(prefix: string): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
       [
-        { text: "Unknown terms", callback_data: "quizsetup:status:unknown" },
-        { text: "Known terms", callback_data: "quizsetup:status:known" },
+        { text: "Unknown terms", callback_data: `${prefix}:status:unknown` },
+        { text: "Known terms", callback_data: `${prefix}:status:known` },
       ],
     ],
   };
 }
 
-export function buildQuizCollectionKeyboard(
+function buildSetupCollectionKeyboard(
+  prefix: string,
   collections: Array<{ id: string; name: string; count: number }>,
   allCount: number,
 ): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
-    [{ text: `All collections (${allCount})`, callback_data: "quizsetup:domain:all" }],
+    [{ text: `All collections (${allCount})`, callback_data: `${prefix}:domain:all` }],
   ];
 
   for (let i = 0; i < collections.length; i += 2) {
     const row: InlineKeyboardMarkup["inline_keyboard"][number] = [
       {
         text: `${collections[i].name} (${collections[i].count})`,
-        callback_data: `quizsetup:domain:${collections[i].id}`,
+        callback_data: `${prefix}:domain:${collections[i].id}`,
       },
     ];
     if (i + 1 < collections.length) {
       row.push({
         text: `${collections[i + 1].name} (${collections[i + 1].count})`,
-        callback_data: `quizsetup:domain:${collections[i + 1].id}`,
+        callback_data: `${prefix}:domain:${collections[i + 1].id}`,
       });
     }
     rows.push(row);
@@ -199,7 +198,7 @@ export function buildQuizCollectionKeyboard(
   return { inline_keyboard: rows };
 }
 
-export function buildQuizCountKeyboard(maxCount: number): InlineKeyboardMarkup {
+function buildSetupCountKeyboard(prefix: string, maxCount: number): InlineKeyboardMarkup {
   const presets = [5, 10, 15, 20, 30].filter((value) => value <= maxCount);
   const uniquePresets = [...new Set(presets)];
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [];
@@ -208,16 +207,46 @@ export function buildQuizCountKeyboard(maxCount: number): InlineKeyboardMarkup {
     rows.push(
       uniquePresets.slice(i, i + 3).map((value) => ({
         text: String(value),
-        callback_data: `quizsetup:count:${value}`,
+        callback_data: `${prefix}:count:${value}`,
       })),
     );
   }
 
   if (maxCount > 0) {
-    rows.push([{ text: `All (${maxCount})`, callback_data: "quizsetup:count:all" }]);
+    rows.push([{ text: `All (${maxCount})`, callback_data: `${prefix}:count:all` }]);
   }
 
   return { inline_keyboard: rows };
+}
+
+export function buildQuizStatusKeyboard(): InlineKeyboardMarkup {
+  return buildSetupStatusKeyboard("quizsetup");
+}
+
+export function buildQuizCollectionKeyboard(
+  collections: Array<{ id: string; name: string; count: number }>,
+  allCount: number,
+): InlineKeyboardMarkup {
+  return buildSetupCollectionKeyboard("quizsetup", collections, allCount);
+}
+
+export function buildQuizCountKeyboard(maxCount: number): InlineKeyboardMarkup {
+  return buildSetupCountKeyboard("quizsetup", maxCount);
+}
+
+export function buildReviewSetupStatusKeyboard(): InlineKeyboardMarkup {
+  return buildSetupStatusKeyboard("reviewsetup");
+}
+
+export function buildReviewSetupCollectionKeyboard(
+  collections: Array<{ id: string; name: string; count: number }>,
+  allCount: number,
+): InlineKeyboardMarkup {
+  return buildSetupCollectionKeyboard("reviewsetup", collections, allCount);
+}
+
+export function buildReviewSetupCountKeyboard(maxCount: number): InlineKeyboardMarkup {
+  return buildSetupCountKeyboard("reviewsetup", maxCount);
 }
 
 export function formatQuizSetupStatusPrompt(): string {
@@ -237,6 +266,113 @@ export function formatQuizSetupCountPrompt(maxCount: number, defaultCount: numbe
 
 export function formatSetupPromptWithAnswer(prompt: string, choice: string): string {
   return `${prompt}\n\n<b>Your choice:</b> ${escapeHtml(choice)}`;
+}
+
+export function formatReviewSetupStatusPrompt(): string {
+  return "<b>What to review?</b>\n\nChoose unknown terms you're learning, or known terms to refresh.";
+}
+
+export function formatReviewSetupCollectionPrompt(): string {
+  return "<b>Which collection?</b>\n\nNumbers show available terms for your selection.";
+}
+
+export function formatReviewSetupCountPrompt(maxCount: number, defaultCount: number): string {
+  return (
+    `<b>How many cards?</b>\n\n` +
+    `Reply with a number from 1 to ${maxCount}, tap a button, or send nothing for ${defaultCount}.`
+  );
+}
+
+function buildReviewCardHeader(term: TermCard, currentIndex: number, totalTerms: number): string {
+  let message = `<b>Review ${currentIndex + 1}/${totalTerms}</b>\n\n`;
+  message += `<b>${escapeHtml(term.term)}</b>\n`;
+  message += `<i>${escapeHtml(term.category)}</i> · ${escapeHtml(term.domainName)}`;
+  return message;
+}
+
+/** Masked card: term/category/collection only, hinting the user to recall before revealing. */
+export function formatReviewPrompt(
+  term: TermCard,
+  currentIndex: number,
+  totalTerms: number,
+): string {
+  const header = buildReviewCardHeader(term, currentIndex, totalTerms);
+  return `${header}\n\n<i>Try to recall it before revealing.</i>`;
+}
+
+/** Revealed card: full term content appended in place of the recall hint. */
+export function formatReviewRevealed(
+  term: TermCard,
+  currentIndex: number,
+  totalTerms: number,
+): string {
+  const header = buildReviewCardHeader(term, currentIndex, totalTerms);
+  return `${header}\n\n${buildTermDetails(term)}`;
+}
+
+/** Revealed card + the recorded rating, shown briefly before advancing. */
+export function formatReviewRated(
+  term: TermCard,
+  currentIndex: number,
+  totalTerms: number,
+  status: "known" | "unknown",
+  known: boolean,
+): string {
+  const message = formatReviewRevealed(term, currentIndex, totalTerms);
+  const label = known
+    ? status === "known"
+      ? "Still know it"
+      : "Had it"
+    : status === "known"
+      ? "Forgot it"
+      : "Didn't have it";
+  const icon = known ? "✅" : "❌";
+  return `${message}\n\n<b>Your answer:</b> ${icon} ${label}`;
+}
+
+export function buildReviewRevealKeyboard(sessionIndex: number): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [[{ text: "Reveal", callback_data: `review:reveal:${sessionIndex}` }]],
+  };
+}
+
+export function buildReviewRateKeyboard(
+  sessionIndex: number,
+  status: "known" | "unknown",
+): InlineKeyboardMarkup {
+  const [yesLabel, noLabel] =
+    status === "known" ? ["Still know it", "Forgot it"] : ["Had it", "Didn't have it"];
+  return {
+    inline_keyboard: [
+      [
+        { text: yesLabel, callback_data: `review:rate:${sessionIndex}:yes` },
+        { text: noLabel, callback_data: `review:rate:${sessionIndex}:no` },
+      ],
+    ],
+  };
+}
+
+export function formatReviewSessionSummary(
+  status: "known" | "unknown",
+  total: number,
+  positiveCount: number,
+): string {
+  const negativeCount = total - positiveCount;
+  const positiveLabel = status === "known" ? "Still know it" : "Had it";
+  const negativeLabel = status === "known" ? "Forgot it" : "Didn't have it";
+  const percentage = total > 0 ? Math.round((positiveCount / total) * 100) : 0;
+
+  let message = `📊 <b>Review complete</b>\n\n`;
+  message += `Cards reviewed: ${total}\n`;
+  message += `${positiveLabel}: ${positiveCount}\n`;
+  message += `${negativeLabel}: ${negativeCount}\n\n`;
+
+  if (percentage === 100) message += "🎉 You got every one — great work!";
+  else if (percentage >= 80) message += "🌟 Great recall on these terms!";
+  else if (percentage >= 60) message += "👍 Good effort — keep practicing!";
+  else message += "💪 Worth another pass on these.";
+
+  return message;
 }
 
 export function formatReviewQuestion(

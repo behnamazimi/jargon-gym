@@ -1,95 +1,12 @@
-import type { QuizDomainSelection, ReviewStatus } from "./session-store";
+import { parseStatusDomainCountArgs, UUID_RE, type ParsedStatusDomainCount } from "./command-parse";
 import { QUIZ_HELP_MESSAGE } from "./copy";
 
-export type ParsedQuizCommand = {
-  status?: ReviewStatus;
-  domainId?: QuizDomainSelection;
-  count?: number | "all";
-  complete: boolean;
-  error: string | null;
-};
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export type ParsedQuizCommand = ParsedStatusDomainCount;
 
 export function parseQuizCommand(text: string): ParsedQuizCommand {
   const match = text.match(/^\/quiz(?:@\w+)?(?:\s+(.+))?$/i);
   const argsText = match?.[1]?.trim() ?? "";
-
-  if (!argsText) {
-    return { complete: false, error: null };
-  }
-
-  const args = argsText.split(/\s+/);
-  const firstArg = args[0].toLowerCase();
-
-  if (/^\d+$/.test(firstArg)) {
-    const count = parseInt(firstArg, 10);
-    if (isNaN(count) || count < 1) {
-      return { complete: false, error: "Invalid count." };
-    }
-    return {
-      status: "unknown",
-      domainId: "all",
-      count,
-      complete: true,
-      error: null,
-    };
-  }
-
-  if (firstArg === "all" && args.length === 1) {
-    return {
-      status: "unknown",
-      domainId: "all",
-      count: "all",
-      complete: true,
-      error: null,
-    };
-  }
-
-  if (firstArg !== "known" && firstArg !== "unknown") {
-    return { complete: false, error: QUIZ_HELP_MESSAGE };
-  }
-
-  const status = firstArg as ReviewStatus;
-
-  if (args.length === 1) {
-    return { status, complete: false, error: null };
-  }
-
-  const secondArg = args[1];
-  const secondLower = secondArg.toLowerCase();
-  let domainId: QuizDomainSelection;
-  let countArgIndex = 2;
-
-  if (secondLower === "all") {
-    domainId = "all";
-  } else if (UUID_RE.test(secondArg)) {
-    domainId = secondArg;
-  } else if (/^\d+$/.test(secondArg)) {
-    const count = parseInt(secondArg, 10);
-    if (isNaN(count) || count < 1) {
-      return { status, domainId: "all", complete: false, error: "Invalid count." };
-    }
-    return { status, domainId: "all", count, complete: true, error: null };
-  } else {
-    return { complete: false, error: QUIZ_HELP_MESSAGE };
-  }
-
-  if (args.length <= countArgIndex) {
-    return { status, domainId, complete: false, error: null };
-  }
-
-  const countArg = args[countArgIndex].toLowerCase();
-  if (countArg === "all") {
-    return { status, domainId, count: "all", complete: true, error: null };
-  }
-
-  const count = parseInt(countArg, 10);
-  if (isNaN(count) || count < 1) {
-    return { status, domainId, complete: false, error: "Invalid count." };
-  }
-
-  return { status, domainId, count, complete: true, error: null };
+  return parseStatusDomainCountArgs(argsText, QUIZ_HELP_MESSAGE);
 }
 
 export { UUID_RE };
