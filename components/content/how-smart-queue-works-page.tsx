@@ -26,7 +26,7 @@ const PRIORITY_RAISES = [
   },
   {
     title: "Still learning",
-    body: "You marked it still learning, or got it wrong on a quiz.",
+    body: "You marked it \"Didn't have it\" in review, or got it wrong on a quiz.",
   },
   {
     title: "Forgot",

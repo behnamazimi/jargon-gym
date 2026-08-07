@@ -370,8 +370,8 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   }
 
   const isKnownRefresh = sessionStatus === "known";
-  const positiveLabel = isKnownRefresh ? "Still know it" : "Got it";
-  const negativeLabel = isKnownRefresh ? "Forgot it" : "Still learning";
+  const positiveLabel = isKnownRefresh ? "Still know it" : "Had it";
+  const negativeLabel = isKnownRefresh ? "Forgot it" : "Didn't have it";
 
   useReviewKeyboard({
     onReveal: handleReveal,

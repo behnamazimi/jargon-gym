@@ -104,7 +104,7 @@ above **still learning**.
 | Signal         | User-facing label        | Effect                                                                     |
 | -------------- | ------------------------ | -------------------------------------------------------------------------- |
 | Never seen     | Never seen               | Rises to the top until every term in the pool has been seen at least once  |
-| Still learning | Still learning           | Boost — marked still learning, or wrong on a quiz                          |
+| Still learning | Still learning           | Boost — marked "Didn't have it" in review, or wrong on a quiz              |
 | Forgot         | Forgot                   | Larger boost — marked forgot or cleared as known                           |
 | Shown stuck    | Seen 3+ times, not solid | Moderate boost — opened without marking known                              |
 | New term       | Recently added           | Moderate boost — created within the last few days                          |
@@ -235,8 +235,8 @@ starts the cycle over.
 | ---------- | ------------------------------------------------------- |
 | `unseen`   | Default when no review row exists yet                   |
 | `shown`    | Delivered, revealed, or read on the web collection page |
-| `learning` | Still learning, or wrong on an unknown-pool quiz        |
-| `solid`    | Got it, or marked known                                 |
+| `learning` | Didn't have it (unknown-pool review), or wrong on a quiz |
+| `solid`    | Had it (unknown-pool review), or marked known           |
 | `verified` | Still know it (known-pool refresh)                      |
 | `forgot`   | Forgot it, or cleared known                             |
 
@@ -270,7 +270,9 @@ only share the outcome-recording half of the pipeline.
   picked.
 - First reveal → `shown` (increment). Rating writes the outcome without a
   second increment when `alreadyCountedSeen` is set.
-- Got it / Forgot it always flip known state; quiz prefs do not apply here.
+- Rating always flips known state (Had it / Didn't have it in the unknown
+  pool, Still know it / Forgot it in the known pool); quiz prefs do not
+  apply here.
 
 ### Web collection
 
