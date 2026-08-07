@@ -26,7 +26,7 @@ const PRIORITY_RAISES = [
   },
   {
     title: "Still learning",
-    body: "You marked it still learning, or got it wrong on a quiz.",
+    body: "You marked it \"Didn't have it\" in review, or got it wrong on a quiz.",
   },
   {
     title: "Forgot",
@@ -79,7 +79,7 @@ const SURFACES = [
   },
   {
     title: "Telegram bot",
-    body: "Get terms delivered on a schedule, or pull one on demand with /next. Uses the same ranking as web review, one unknown term at a time. Mark known or still learning from inline buttons.",
+    body: "Get terms delivered on a schedule, or pull one on demand with /read. Uses the same ranking as web review, one unknown term at a time. Mark known or still learning from inline buttons.",
   },
   {
     title: "Desktop widget",
@@ -169,7 +169,7 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             <strong className="font-medium text-base-content">Settings → Review</strong>. I added
             presets because sometimes I want to drill weak spots, sometimes to clear never-seen
             terms first. Pick one, the same preset applies everywhere: web review, Telegram{" "}
-            <code className="rounded-md bg-base-200 px-1.5 py-0.5 font-mono text-xs">/next</code>,
+            <code className="rounded-md bg-base-200 px-1.5 py-0.5 font-mono text-xs">/read</code>,
             quizzes, and delivery.
           </p>
           <ContentPageTitledBulletList

@@ -9,7 +9,7 @@ import {
 import type { TelegramAction } from "./actions";
 import { CAUGHT_UP_MESSAGE, CONNECT_MESSAGE, MARKED_KNOWN_SUFFIX } from "./copy";
 import {
-  buildNextKeyboard,
+  buildReadKeyboard,
   buildTermInlineKeyboard,
   formatMaskedTermMessage,
   formatTermMessage,
@@ -19,7 +19,7 @@ import { edit, send } from "./transport";
 
 type Client = SupabaseClient<Database>;
 
-export async function handleNext(client: Client, chatId: number): Promise<TelegramAction[]> {
+export async function handleRead(client: Client, chatId: number): Promise<TelegramAction[]> {
   const userId = await resolveUserIdByChatId(client, chatId);
   if (!userId) return [send(chatId, CONNECT_MESSAGE)];
 
@@ -38,7 +38,7 @@ export async function handleNext(client: Client, chatId: number): Promise<Telegr
     return [];
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
-    console.error("handleNext error:", detail, error);
+    console.error("handleRead error:", detail, error);
     return [send(chatId, "Could not send a term right now. Try again in a moment.")];
   }
 }
@@ -68,7 +68,7 @@ export async function handleKnownCallback(
   const updatedText = term
     ? `${formatMaskedTermMessage(term)}\n\n<b>Your action:</b> Mark known${MARKED_KNOWN_SUFFIX}`
     : `${messageText ?? ""}\n\n<b>Your action:</b> Mark known${MARKED_KNOWN_SUFFIX}`;
-  const replyMarkup = buildNextKeyboard(termId);
+  const replyMarkup = buildReadKeyboard(termId);
 
   return [
     { type: "answerCallbackQuery", callbackQueryId: callbackId, text: "Marked as known." },
@@ -76,8 +76,8 @@ export async function handleKnownCallback(
   ];
 }
 
-/** Inline "Next": rotate to another term without writing an outcome on the current one. */
-export async function handleNextCallback(
+/** Inline "Read": rotate to another term without writing an outcome on the current one. */
+export async function handleReadCallback(
   client: Client,
   userId: string,
   chatId: number,
@@ -88,7 +88,7 @@ export async function handleNextCallback(
 
   const term = await fetchTermCardForUser(client, userId, termId);
   if (term) {
-    actions.push(edit(chatId, messageId, `${formatTermMessage(term)}\n\n<b>Your action:</b> Next`));
+    actions.push(edit(chatId, messageId, `${formatTermMessage(term)}\n\n<b>Your action:</b> Read`));
   }
 
   const next = await deliverNextTerm(client, userId);

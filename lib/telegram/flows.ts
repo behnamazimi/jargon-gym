@@ -11,16 +11,16 @@ import type { TelegramAction } from "./actions";
 import {
   handleStart,
   handleStat,
-  isNextCommand,
   isQuizCommand,
+  isReadCommand,
   isStatCommand,
   parseStartToken,
 } from "./commands";
 import { CONNECT_MESSAGE, HELP_MESSAGE } from "./copy";
 import {
   handleKnownCallback,
-  handleNext,
-  handleNextCallback,
+  handleRead,
+  handleReadCallback,
   handleSendDue,
 } from "./delivery-flow";
 import {
@@ -99,9 +99,9 @@ async function handleCallback(
     );
   }
 
-  if (data.startsWith("next:")) {
-    const termId = data.slice("next:".length);
-    actions.push(...(await handleNextCallback(client, userId, chatId, messageId, termId)));
+  if (data.startsWith("read:")) {
+    const termId = data.slice("read:".length);
+    actions.push(...(await handleReadCallback(client, userId, chatId, messageId, termId)));
     return actions;
   }
 
@@ -126,8 +126,8 @@ export async function handleTelegramUpdate(
   if (trimmed.startsWith("/start")) {
     return handleStart(client, chatId, parseStartToken(trimmed));
   }
-  if (isNextCommand(trimmed)) {
-    return handleNext(client, chatId);
+  if (isReadCommand(trimmed)) {
+    return handleRead(client, chatId);
   }
   if (isStatCommand(trimmed)) {
     return handleStat(client, chatId);

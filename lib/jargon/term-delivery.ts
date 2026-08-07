@@ -1,5 +1,5 @@
 /**
- * Term delivery for Telegram /next and cadence pushes.
+ * Term delivery for Telegram /read and cadence pushes.
  * Returns presentation-neutral DTOs — channel adapters render them.
  */
 

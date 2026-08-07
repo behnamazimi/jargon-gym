@@ -166,7 +166,7 @@ export async function applyTermShown(
   await writeOutcome(client, mode, userId, termId, "shown", true);
 }
 
-/** Telegram /next "Mark known": mark + solid outcome, no seen increment. */
+/** Telegram /read "Mark known": mark + solid outcome, no seen increment. */
 export async function applyMarkKnown(
   client: Client,
   userId: string,

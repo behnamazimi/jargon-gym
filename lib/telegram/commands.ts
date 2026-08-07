@@ -15,8 +15,8 @@ export function parseStartToken(text: string): string | null {
   return match?.[1]?.trim() ?? null;
 }
 
-export function isNextCommand(text: string): boolean {
-  return /^\/next(?:@\w+)?$/i.test(text.trim());
+export function isReadCommand(text: string): boolean {
+  return /^\/read(?:@\w+)?$/i.test(text.trim());
 }
 
 export function isStatCommand(text: string): boolean {
