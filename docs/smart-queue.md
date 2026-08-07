@@ -114,6 +114,9 @@ above **still learning**.
 That cooldown is the only scheduled behavior. Nothing else gets a future review
 date.
 
+Terms that trigger none of the above show **Recently reviewed** instead — a
+label, not a ranking effect. It just means nothing stands out yet.
+
 Implementation detail: scoring math, weights, and tie-breaking are below.
 
 ---
@@ -200,6 +203,14 @@ queue previews.
 | `shown_stuck`    | Seen 3+ times, still `shown`        | Seen 3+ times, not solid |
 | `stale`          | Not touched in 24h+                 | Not seen recently        |
 | `solid_cooldown` | Marked solid within cooldown window | Recently marked solid    |
+| `steady`         | No other signal fired               | Recently reviewed        |
+
+`steady` is a fallback, not a scoring signal — it carries no weight. It fires
+when a seen term has nothing else to flag: reviewed within the last 24h (so
+not `stale`), not a new term, and its last outcome was `shown` (fewer than
+`SHOWN_WITHOUT_SOLID_MIN_SEEN` sightings), `solid` outside the cooldown
+window, or `verified`. Without it these candidates would return an empty
+`reasons` list and render no badge at all in the queue preview.
 
 Labels live in [`lib/smart-queue/reasons.ts`](../lib/smart-queue/reasons.ts).
 Review and quiz setup show a collapsible queue preview; cards and questions

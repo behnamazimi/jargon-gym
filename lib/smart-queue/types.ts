@@ -15,7 +15,8 @@ export type PickReason =
   | "forgot"
   | "shown_stuck"
   | "stale"
-  | "solid_cooldown";
+  | "solid_cooldown"
+  | "steady";
 
 export type ReviewCandidate = {
   termId: string;
