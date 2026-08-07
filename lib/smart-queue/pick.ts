@@ -5,6 +5,25 @@ import type { PickContext, ReviewCandidate, ReviewPreset, ScoredCandidate } from
 import { scoreCandidate } from "./score";
 import { getContextWeights } from "./presets";
 
+/** Fisher-Yates shuffle of arr[start..end] (inclusive), in place. */
+function shuffleRange<T>(arr: T[], start: number, end: number): void {
+  for (let i = end; i > start; i--) {
+    const j = start + Math.floor(Math.random() * (i - start + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+/** Randomize order within each contiguous run of equal-score candidates. */
+function shuffleTies(scored: ScoredCandidate[]): void {
+  let start = 0;
+  for (let i = 1; i <= scored.length; i++) {
+    if (i === scored.length || scored[i].score !== scored[start].score) {
+      shuffleRange(scored, start, i - 1);
+      start = i;
+    }
+  }
+}
+
 export function pickTerms(
   candidates: ReviewCandidate[],
   preset: ReviewPreset,
@@ -27,13 +46,9 @@ export function pickTerms(
     };
   });
 
-  // Sort by score desc, tie-break by term ID for stability
-  scored.sort((a, b) => {
-    if (b.score !== a.score) {
-      return b.score - a.score;
-    }
-    return a.termId.localeCompare(b.termId);
-  });
+  // Sort by score desc; same-score candidates are shuffled, not tie-broken by ID
+  scored.sort((a, b) => b.score - a.score);
+  shuffleTies(scored);
 
   return scored.slice(0, limit);
 }

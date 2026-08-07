@@ -135,7 +135,8 @@ badges.
 | **Seen count**     | Every prior sighting                                                     | Gentle sink (`seen_count × penalty`)                                                                 |
 | **Staleness**      | Time since `last_seen_at`                                                | Rises linearly, capped at 7 days. Terms seen but missing a timestamp are treated as maximally stale. |
 
-Ties break on `term_id` (ascending) for stable ordering.
+Same-score candidates are shuffled, not tie-broken by `term_id` — so which
+term wins a tie varies pick to pick instead of always favoring the same ID.
 
 Implementation: [`lib/smart-queue/score.ts`](../lib/smart-queue/score.ts) →
 [`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts).
