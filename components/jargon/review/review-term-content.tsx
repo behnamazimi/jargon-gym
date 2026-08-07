@@ -21,7 +21,7 @@ export function ReviewTermContent({ term, className }: ReviewTermContentProps) {
       ) : null}
 
       {term.discussion ? (
-        <Collapsible>
+        <Collapsible defaultExpanded>
           <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border-none bg-base-200/40 px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-base-content/60 uppercase outline-none focus-visible:ring-2 focus-visible:ring-primary">
             In practice
             <ChevronRight className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
@@ -33,7 +33,7 @@ export function ReviewTermContent({ term, className }: ReviewTermContentProps) {
       ) : null}
 
       {term.controversy ? (
-        <Collapsible>
+        <Collapsible defaultExpanded>
           <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border-none bg-base-200/40 px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-base-content/60 uppercase outline-none focus-visible:ring-2 focus-visible:ring-primary">
             Debated
             <ChevronRight className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
@@ -52,7 +52,7 @@ export function ReviewTermContent({ term, className }: ReviewTermContentProps) {
       ) : null}
 
       {term.relationships.length > 0 ? (
-        <Collapsible>
+        <Collapsible defaultExpanded>
           <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border-none bg-base-200/40 px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-base-content/60 uppercase outline-none focus-visible:ring-2 focus-visible:ring-primary">
             Relationships ({term.relationships.length})
             <ChevronRight className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />

@@ -50,7 +50,7 @@ export function ReviewCard({
       onTouchEnd={swipe.onTouchEnd}
     >
       <div
-        className={cn("relative mx-auto min-h-[22rem] w-full", !revealed && "cursor-pointer")}
+        className={cn("relative mx-auto min-h-[24.2rem] w-full", !revealed && "cursor-pointer")}
         role={revealed ? undefined : "button"}
         tabIndex={revealed ? undefined : 0}
         onClick={() => {
@@ -67,7 +67,7 @@ export function ReviewCard({
       >
         <div
           className={cn(
-            "relative min-h-[22rem] w-full [transform-style:preserve-3d]",
+            "relative min-h-[24.2rem] w-full [transform-style:preserve-3d]",
             !reduceMotion && "transition-transform duration-300 ease-out",
             revealed && "[transform:rotateY(180deg)]",
           )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Upload } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -65,6 +65,10 @@ export function ProfileMenu({ email }: ProfileMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem href="/jargon/import">
+          <Upload className="h-4 w-4" />
+          Import
+        </DropdownMenuItem>
         <DropdownMenuItem href="/jargon/settings">
           <Settings className="h-4 w-4" />
           Settings
