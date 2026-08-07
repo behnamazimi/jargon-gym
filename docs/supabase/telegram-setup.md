@@ -106,7 +106,7 @@ Point Edge `APP_BASE_URL` at your Next tunnel. To test send-due manually, POST t
 After deploy, verify:
 
 1. Settings → Generate Telegram link → `/start` welcomes
-2. `/read` delivers a term; Mark known / Skip work
+2. `/read` delivers a term; Mark known / Read next buttons work
 3. `/stat` shows collection stats
 4. `/quiz` guided setup + answer flow + summary
 5. Cadence cron (`telegram-send-due`) sends or caught-up

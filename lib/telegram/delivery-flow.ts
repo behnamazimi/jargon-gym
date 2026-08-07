@@ -76,7 +76,7 @@ export async function handleKnownCallback(
   ];
 }
 
-/** Inline "Read": rotate to another term without writing an outcome on the current one. */
+/** Inline "Read next": rotate to another term without writing an outcome on the current one. */
 export async function handleReadCallback(
   client: Client,
   userId: string,
@@ -88,7 +88,9 @@ export async function handleReadCallback(
 
   const term = await fetchTermCardForUser(client, userId, termId);
   if (term) {
-    actions.push(edit(chatId, messageId, `${formatTermMessage(term)}\n\n<b>Your action:</b> Read`));
+    actions.push(
+      edit(chatId, messageId, `${formatTermMessage(term)}\n\n<b>Your action:</b> Read next`),
+    );
   }
 
   const next = await deliverNextTerm(client, userId);
