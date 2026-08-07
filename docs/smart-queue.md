@@ -208,8 +208,11 @@ queue previews.
 `steady` is a fallback, not a scoring signal — it carries no weight. It fires
 when a seen term has nothing else to flag: reviewed within the last 24h (so
 not `stale`), not a new term, and its last outcome was `shown` (fewer than
-`SHOWN_WITHOUT_SOLID_MIN_SEEN` sightings), `solid` outside the cooldown
-window, or `verified`. Without it these candidates would return an empty
+`SHOWN_WITHOUT_SOLID_MIN_SEEN` sightings) or `verified`. `solid` can't land
+here — `solid_cooldown` reads the same `last_seen_at` staleness uses, and
+`STALE_REASON_THRESHOLD_HOURS` (24) is well inside `SOLID_COOLDOWN_HOURS`
+(72), so a `solid` outcome recent enough to dodge `stale` always still
+trips the cooldown. Without `steady` these candidates would return an empty
 `reasons` list and render no badge at all in the queue preview.
 
 Labels live in [`lib/smart-queue/reasons.ts`](../lib/smart-queue/reasons.ts).
