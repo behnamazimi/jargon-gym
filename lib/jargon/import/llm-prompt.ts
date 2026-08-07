@@ -25,7 +25,7 @@ JSON structure:
     {
       "source": "Term name A",
       "target": "Term name B",
-      "relationship_type": "often confused with",
+      "relationship_type": "prerequisite of",
       "description": "Optional — explanation of the link"
     }
   ]
@@ -39,7 +39,7 @@ Field rules:
 - Add "example" when the definition alone wouldn't let someone use the word in conversation. Use a concrete scene (where it applies in real work) or a natural sentence (the word used in speech) — whichever makes the term click; one is enough.
 - Add "discussion" (in practice) for tradeoffs, team conventions, when you'd reach for the word, or common misuse — usage nuance that isn't obvious from the definition and example. Do not restate the definition.
 - Add "controversy" (debated) only when practitioners genuinely disagree on meaning or scope — not loose usage, not a caution about overuse. Most terms should NOT have this field.
-- The "relationships" array as a whole is optional. Add a relationship when two terms have any real connection worth naming — often confused with, depends on, builds on, opposite of, prerequisite for, etc. Most terms won't need one, and that's expected.
+- The "relationships" array as a whole is optional. Add a relationship when two terms have any real connection worth naming — prerequisite of, subtype of, contrasts with, synonym of, depends on, builds on, often confused with, etc. Most terms won't need one, and that's expected.
 - A term is complete when someone could use the word correctly in conversation — not when every optional field is filled.
 
 Tone:
@@ -58,7 +58,7 @@ Rules:
 - Skip niche, rarely-used, obscure, or "nice to know" terms, even if they're technically part of the domain. If you're unsure whether a term is common enough, leave it out. It's fine — good, even — to return fewer than 100 terms if that's all the domain's must-know vocabulary; never pad the list with weaker terms just to approach the cap.
 - Term names must be unique within the import.
 - Include up to 100 relationships. source and target must match term names exactly.
-- relationship_type should read naturally in a sentence, e.g. "often confused with", "depends on", "prerequisite for".
+- relationship_type should read naturally in a sentence, e.g. "prerequisite of", "subtype of", "contrasts with", "synonym of", "depends on", "often confused with". Don't default to "often confused with" for every pair — pick whichever type actually describes the connection.
 - Write for someone learning the field, not for experts skimming acronyms.
 
 Example (different domain, valid format):
