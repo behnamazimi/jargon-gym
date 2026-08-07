@@ -160,6 +160,8 @@ export type Database = {
           linked_at: string | null;
           quiz_session: Json | null;
           quiz_setup: Json | null;
+          review_session: Json | null;
+          review_setup: Json | null;
           updated_at: string;
           user_id: string;
         };
@@ -175,6 +177,8 @@ export type Database = {
           linked_at?: string | null;
           quiz_session?: Json | null;
           quiz_setup?: Json | null;
+          review_session?: Json | null;
+          review_setup?: Json | null;
           updated_at?: string;
           user_id: string;
         };
@@ -190,6 +194,8 @@ export type Database = {
           linked_at?: string | null;
           quiz_session?: Json | null;
           quiz_setup?: Json | null;
+          review_session?: Json | null;
+          review_setup?: Json | null;
           updated_at?: string;
           user_id?: string;
         };
