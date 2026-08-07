@@ -39,7 +39,7 @@ export function SettingsPage({
           title="Review"
           description={
             <>
-              Smart queue preset for Telegram /next, web review, and quizzes.{" "}
+              Smart queue preset for Telegram /read, web review, and quizzes.{" "}
               <Link
                 href="/how-smart-queue-works"
                 className="underline underline-offset-2 transition-colors hover:text-base-content"
@@ -67,7 +67,7 @@ export function SettingsPage({
         <SettingsCard
           icon={MessageCircle}
           title="Telegram"
-          description="Get terms in Telegram, mark them known, or type /next anytime."
+          description="Get terms in Telegram, mark them known, or type /read anytime."
         >
           <TelegramPanel initialStatus={initialTelegramStatus} />
         </SettingsCard>

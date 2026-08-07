@@ -83,7 +83,7 @@ Create the cron job in the Supabase Dashboard — no SQL or Vault required.
 
 Use the **History** tab on the job to confirm runs succeed after saving.
 
-**Optional:** On-demand review works without cron (`/next` in Telegram). Scheduled reminders only run after this job is active.
+**Optional:** On-demand review works without cron (`/read` in Telegram). Scheduled reminders only run after this job is active.
 
 **Advanced (SQL + Vault):** If you prefer a SQL-defined job with secrets in Vault, see [`supabase/telegram-cron-setup.sql`](../telegram-cron-setup.sql). Vault lives under **Project Settings → Configuration → Vault**.
 
@@ -106,7 +106,7 @@ Point Edge `APP_BASE_URL` at your Next tunnel. To test send-due manually, POST t
 After deploy, verify:
 
 1. Settings → Generate Telegram link → `/start` welcomes
-2. `/next` delivers a term; Mark known / Skip work
+2. `/read` delivers a term; Mark known / Skip work
 3. `/stat` shows collection stats
 4. `/quiz` guided setup + answer flow + summary
 5. Cadence cron (`telegram-send-due`) sends or caught-up
@@ -116,6 +116,6 @@ After deploy, verify:
 
 1. User opens **Settings** in Jargon Gym → **Generate Telegram link**.
 2. User taps the link → Telegram opens the bot → **Start**.
-3. User runs `/next` or waits for scheduled reminders based on cadence.
+3. User runs `/read` or waits for scheduled reminders based on cadence.
 
 Disconnect clears the link in settings; the bot replies with connect instructions for unlinked chats.

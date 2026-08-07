@@ -112,16 +112,16 @@ export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
     [
       { text: "Mark known", callback_data: `known:${term.id}` },
-      { text: "Next", callback_data: `next:${term.id}` },
+      { text: "Read", callback_data: `read:${term.id}` },
     ],
   ];
   appendOpenInWebRow(rows, term.domainId, term.id);
   return { inline_keyboard: rows };
 }
 
-export function buildNextKeyboard(termId: string): InlineKeyboardMarkup {
+export function buildReadKeyboard(termId: string): InlineKeyboardMarkup {
   return {
-    inline_keyboard: [[{ text: "Next", callback_data: `next:${termId}` }]],
+    inline_keyboard: [[{ text: "Read", callback_data: `read:${termId}` }]],
   };
 }
 

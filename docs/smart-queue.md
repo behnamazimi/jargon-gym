@@ -1,6 +1,6 @@
 # Smart review queue
 
-How Jargon Gym chooses the next term. Web review, Telegram `/next` and
+How Jargon Gym chooses the next term. Web review, Telegram `/read` and
 scheduled delivery, and quizzes all pick through the same scoring pipeline.
 The web collection page and the desktop widget don't pick from it — they
 select terms their own way and only share the outcome-recording half; see
@@ -58,7 +58,7 @@ signals — the **soft cycle**, with no everyday reset button.
 ```
 
 This is the path for surfaces that pick from the queue: web review, Telegram
-`/next` + scheduled delivery, and quizzes. The web collection page and the
+`/read` + scheduled delivery, and quizzes. The web collection page and the
 desktop widget don't fetch candidates or score anything — see
 [Surfaces](#surfaces) for what they do instead.
 
@@ -66,7 +66,7 @@ desktop widget don't fetch candidates or score anything — see
 
 ## Pipeline
 
-Surfaces that pick from the queue — web review, Telegram `/next` + scheduled
+Surfaces that pick from the queue — web review, Telegram `/read` + scheduled
 delivery, and quizzes — go through the same path:
 
 1. **Scope** — which collections (`lib/study/`) and which pool (`known` or
@@ -160,7 +160,7 @@ uses a 72-hour creation window.
 ### Presets
 
 **Settings → Review.** One preset applies to every surface: web review,
-Telegram `/next`, quizzes, and scheduled delivery.
+Telegram `/read`, quizzes, and scheduled delivery.
 
 | Preset (UI label) | ID (`review_preset`) | Character                                          |
 | ----------------- | -------------------- | -------------------------------------------------- |
@@ -187,7 +187,7 @@ Weight values (same file):
 Picks accept a `PickContext`: `"default"` or `"quiz"`. Quizzes multiply the
 weak-signal weights (`learningBoost`, `forgotBoost`, `shownWithoutSolidBoost`)
 by **1.5×** without changing the user's saved preset. Review, Telegram
-`/next`, and passive delivery use `"default"`.
+`/read`, and passive delivery use `"default"`.
 
 ### Pick reasons
 
@@ -283,7 +283,7 @@ only share the outcome-recording half of the pipeline.
 
 ### Telegram bot
 
-- Get terms on a schedule, or pull one on demand with `/next`. Same ranking as
+- Get terms on a schedule, or pull one on demand with `/read`. Same ranking as
   web review; one unknown term at a time (`default` context).
 - On send → `shown` (increment). Delivering the next term does not write an
   extra outcome for the previous one.
@@ -371,7 +371,7 @@ review-outcome**?
                   (pick)          (score)             (record)
                     ^                                    ^
                     |                                    |
-       Telegram /next + delivery,               Widget, web collection,
+       Telegram /read + delivery,                Widget, web collection,
        web review, quizzes                      list checkbox
        (pick, then record)                      (record only — own selection)
                     |                                    |
