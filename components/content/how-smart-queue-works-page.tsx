@@ -75,7 +75,7 @@ const SURFACES = [
   },
   {
     title: "Web collection",
-    body: "Browse and look up terms in your collections. Opening a term card counts as one sighting for that visit. Good for reference, not a substitute for review.",
+    body: "Browse and look up terms in your collections, sorted the way you pick in the toolbar, not by the queue's ranking. Opening a term card counts as one sighting for that visit. Good for reference, not a substitute for review.",
   },
   {
     title: "Telegram bot",
@@ -83,7 +83,7 @@ const SURFACES = [
   },
   {
     title: "Desktop widget",
-    body: "Terms rotate on your screen in the background. Rotation alone does not count as a sighting. Tap Next when you want one recorded, or open the term to read it properly.",
+    body: "Terms cycle on your screen on a timer, picked from what's still unknown, not from the queue's ranking. Rotation alone does not count as a sighting. Tap Next when you want one recorded, or open the term to read it properly.",
   },
 ] as const;
 
@@ -131,10 +131,11 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
       <ContentPageMain>
         <ContentPageSection title="Surfaces">
           <p className="m-0">
-            You can study the same queue in different places: focused review in the web app, browse
-            your collection when you just need a lookup, message a Telegram bot for one term on
-            demand, or let a desktop widget rotate terms in the background. Same ranking everywhere.
-            What changes is when something counts as a sighting.
+            You can study in different places: focused review in the web app, browse your
+            collection when you just need a lookup, message a Telegram bot for one term on
+            demand, or let a desktop widget rotate terms in the background. Review, Telegram, and
+            quizzes share the same ranking. Collection browsing and the widget pick terms their
+            own way, not from the queue, they just log what you&apos;ve seen.
           </p>
           <ContentPageTitledBulletList items={SURFACES} />
         </ContentPageSection>

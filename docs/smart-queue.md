@@ -1,8 +1,10 @@
 # Smart review queue
 
-How Jargon Gym chooses the next term. Web review, collection browse, Telegram
-`/next` and scheduled delivery, quizzes, and the desktop widget all use the
-same picker and ranking.
+How Jargon Gym chooses the next term. Web review, Telegram `/next` and
+scheduled delivery, and quizzes all pick through the same scoring pipeline.
+The web collection page and the desktop widget don't pick from it — they
+select terms their own way and only share the outcome-recording half; see
+[Surfaces](#surfaces).
 
 This is **not** Anki. There are no due dates, no intervals, and nothing nags
 you to study. You open the app when you want; the queue ranks terms in your
@@ -55,11 +57,17 @@ signals — the **soft cycle**, with no everyday reset button.
    surface shows term → review-outcome writes state
 ```
 
+This is the path for surfaces that pick from the queue: web review, Telegram
+`/next` + scheduled delivery, and quizzes. The web collection page and the
+desktop widget don't fetch candidates or score anything — see
+[Surfaces](#surfaces) for what they do instead.
+
 ---
 
 ## Pipeline
 
-All surfaces pick through the same path:
+Surfaces that pick from the queue — web review, Telegram `/next` + scheduled
+delivery, and quizzes — go through the same path:
 
 1. **Scope** — which collections (`lib/study/`) and which pool (`known` or
    `unknown`).
@@ -69,6 +77,10 @@ All surfaces pick through the same path:
 4. **Hydrate** — term IDs become `TermCard`s for the UI.
 5. **Record** — when the user interacts, `lib/jargon/review-outcome.ts`
    writes outcomes. Surfaces must not call outcome RPCs directly.
+
+The web collection page and the desktop widget skip steps 1–4: they pick
+terms their own way (sort order / local rotation) and only touch step 5,
+`review-outcome.ts`, to record `shown` and known-flip outcomes.
 
 Entry points:
 
@@ -229,10 +241,11 @@ from this timestamp.
 
 ## Surfaces
 
-Same ranking everywhere. What changes is **when** something counts as a
-sighting. All picks return `{ cards, pickMeta }` from `fetchStudyTermPool` or
-`pickReviewTerms*`. Surfaces differ in outcome timing, not in the scoring
-formula.
+Web review, Telegram, and quizzes share one ranking — all picks return
+`{ cards, pickMeta }` from `fetchStudyTermPool` or `pickReviewTerms*`, and
+differ only in outcome timing, not in the scoring formula. The web
+collection page and desktop widget pick terms their own way (below) and
+only share the outcome-recording half of the pipeline.
 
 ### Web review
 
@@ -246,7 +259,9 @@ formula.
 
 ### Web collection
 
-- Browse and look up terms in your collections. Opening a term card → `shown`
+- No smart-queue pick here. Terms are sorted the way you choose in the
+  toolbar — default / A–Z / unknown-first (`SortMode` in
+  `lib/jargon/filter-terms.ts`) — not by score. Opening a term card → `shown`
   once per visit. Good for reference, not a substitute for review.
 
 ### Telegram bot
@@ -270,6 +285,11 @@ formula.
 
 ### Desktop widget
 
+- No smart-queue pick here either. `/api/widget/state` hands back the raw
+  unknown-term list; `read-state.sh` on the desktop side chooses which one to
+  show via a deterministic hash of the current time bucket plus a local
+  rotation counter (`widget/jargon-gym.widget/read-state.sh`). No score, no
+  `seen_count`, no staleness — the smart-queue picker is never called.
 - Terms rotate on screen in the background. Passive rotation does **not** count
   as a sighting.
 - **Next** → `shown` for the term you are leaving (increment).
@@ -327,17 +347,18 @@ selection** (`lib/study`), or **when a surface calls pick /
 review-outcome**?
 
 ```
-review_state + preset + PickContext
-            |
-            v
-   lib/study  ->  lib/smart-queue  ->  review-outcome
-            |
-   +--------+--------+--------+
-   |        |        |        |
-Telegram  Web review/quiz   Widget + web collection
- /next    + list checkbox   (shown on Next or open)
-   |        |        |
-   +--------+--- review-outcome only ---+
+                     review_state + preset + PickContext
+                                  |
+                                  v
+                 lib/study  ->  lib/smart-queue  ->  review-outcome
+                  (pick)          (score)             (record)
+                    ^                                    ^
+                    |                                    |
+       Telegram /next + delivery,               Widget, web collection,
+       web review, quizzes                      list checkbox
+       (pick, then record)                      (record only — own selection)
+                    |                                    |
+                    +--------------- review-outcome ----+
 ```
 
 ---
