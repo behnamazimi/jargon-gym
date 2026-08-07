@@ -38,7 +38,6 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://your-domain.com";
   const installScriptUrl = `${origin}/install-widget.sh`;
-  const installCommand = `curl -fsSL ${installScriptUrl} | JARGON_BASE_URL=${shellQuote(origin)} bash`;
   const installWithTokenCommand = newToken
     ? `curl -fsSL ${installScriptUrl} | JARGON_BASE_URL=${shellQuote(origin)} JARGON_WIDGET_TOKEN=${shellQuote(newToken)} bash`
     : null;
@@ -91,32 +90,28 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
       <ol className="m-0 list-none space-y-0 p-0">
         <SetupStep
           step={1}
-          title="Install the widget"
-          description="You need Übersicht on macOS. This command downloads the widget and fills in this site's URL."
+          title="Install Übersicht"
+          description="The widget runs on Übersicht, a macOS app for desktop widgets. Install it first."
         >
-          <CopyField value={installCommand} />
           <p className="m-0 text-sm text-base-content/60">
-            Get{" "}
+            Get it from the{" "}
             <a
               href="https://tracesof.net/uebersicht/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              Übersicht
+              official site
             </a>{" "}
-            first, or{" "}
+            or install it with Homebrew via its{" "}
             <a
-              href="/downloads/jargon-gym.widget.zip"
-              download
+              href="https://formulae.brew.sh/cask/ubersicht"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              download the zip
-            </a>{" "}
-            and unzip into{" "}
-            <code className="rounded-md bg-base-200 px-1.5 py-0.5 text-xs">
-              ~/Library/Application Support/Übersicht/widgets/
-            </code>
+              cask page
+            </a>
             .
           </p>
         </SetupStep>
@@ -172,8 +167,8 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
 
         <SetupStep
           step={3}
-          title="Finish setup"
-          description="Run the install command again with your token, then refresh Übersicht."
+          title="Install the widget"
+          description="This command downloads the widget and fills in this site's URL and your token. Refresh Übersicht afterward."
           isLast
         >
           {installWithTokenCommand ? (
@@ -187,6 +182,21 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
               Generate a token in step 2 to get the one-command install script.
             </p>
           )}
+          <p className="m-0 text-sm text-base-content/60">
+            Or{" "}
+            <a
+              href="/downloads/jargon-gym.widget.zip"
+              download
+              className="text-primary hover:underline"
+            >
+              download the zip
+            </a>{" "}
+            and unzip into{" "}
+            <code className="rounded-md bg-base-200 px-1.5 py-0.5 text-xs">
+              ~/Library/Application Support/Übersicht/widgets/
+            </code>
+            .
+          </p>
         </SetupStep>
       </ol>
     </>
