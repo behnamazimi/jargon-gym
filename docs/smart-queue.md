@@ -114,6 +114,9 @@ above **still learning**.
 That cooldown is the only scheduled behavior. Nothing else gets a future review
 date.
 
+Terms that trigger none of the above show **Recently reviewed** instead — a
+label, not a ranking effect. It just means nothing stands out yet.
+
 Implementation detail: scoring math, weights, and tie-breaking are below.
 
 ---
@@ -135,7 +138,8 @@ badges.
 | **Seen count**     | Every prior sighting                                                     | Gentle sink (`seen_count × penalty`)                                                                 |
 | **Staleness**      | Time since `last_seen_at`                                                | Rises linearly, capped at 7 days. Terms seen but missing a timestamp are treated as maximally stale. |
 
-Ties break on `term_id` (ascending) for stable ordering.
+Same-score candidates are shuffled, not tie-broken by `term_id` — so which
+term wins a tie varies pick to pick instead of always favoring the same ID.
 
 Implementation: [`lib/smart-queue/score.ts`](../lib/smart-queue/score.ts) →
 [`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts).
@@ -199,6 +203,17 @@ queue previews.
 | `shown_stuck`    | Seen 3+ times, still `shown`        | Seen 3+ times, not solid |
 | `stale`          | Not touched in 24h+                 | Not seen recently        |
 | `solid_cooldown` | Marked solid within cooldown window | Recently marked solid    |
+| `steady`         | No other signal fired               | Recently reviewed        |
+
+`steady` is a fallback, not a scoring signal — it carries no weight. It fires
+when a seen term has nothing else to flag: reviewed within the last 24h (so
+not `stale`), not a new term, and its last outcome was `shown` (fewer than
+`SHOWN_WITHOUT_SOLID_MIN_SEEN` sightings) or `verified`. `solid` can't land
+here — `solid_cooldown` reads the same `last_seen_at` staleness uses, and
+`STALE_REASON_THRESHOLD_HOURS` (24) is well inside `SOLID_COOLDOWN_HOURS`
+(72), so a `solid` outcome recent enough to dodge `stale` always still
+trips the cooldown. Without `steady` these candidates would return an empty
+`reasons` list and render no badge at all in the queue preview.
 
 Labels live in [`lib/smart-queue/reasons.ts`](../lib/smart-queue/reasons.ts).
 Review and quiz setup show a collapsible queue preview; cards and questions

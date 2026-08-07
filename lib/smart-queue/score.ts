@@ -78,6 +78,12 @@ function evaluateCandidate(
     reasons.push("stale");
   }
 
+  // No signal fired — seen recently with nothing notable to flag. Surface that
+  // explicitly instead of leaving the term with an unexplained empty badge list.
+  if (reasons.length === 0) {
+    reasons.push("steady");
+  }
+
   return { score, reasons };
 }
 

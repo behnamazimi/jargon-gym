@@ -18,6 +18,7 @@ const REASON_BADGE_CLASS: Record<PickReason, string> = {
   shown_stuck: "badge-soft badge-info",
   stale: "badge-soft badge-neutral",
   solid_cooldown: "badge-ghost",
+  steady: "badge-ghost",
 };
 
 export function PickReasonBadges({ reasons, mode = "compact", className }: PickReasonBadgesProps) {
