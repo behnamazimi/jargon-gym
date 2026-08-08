@@ -12,7 +12,10 @@ export function computePoolStats(candidates: ReviewCandidate[]): PoolStats {
   let stale = 0;
 
   for (const candidate of candidates) {
-    if (candidate.seenCount === 0) {
+    // "unseen" here mirrors score.ts's never-read boost trigger — deliberate
+    // exposure only, not raw seen_count — so allSeenOnce stays in sync with
+    // when that boost actually stops applying.
+    if (candidate.readCount === 0 && candidate.reviewRevealCount === 0) {
       unseen++;
       continue;
     }

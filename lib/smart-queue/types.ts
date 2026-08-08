@@ -71,12 +71,13 @@ export type ScoreWeights = {
 };
 
 export type PoolStats = {
+  /** Never Read or Revealed (read_count === 0 && review_reveal_count === 0) — matches score.ts's never-read boost. */
   unseen: number;
-  /** Terms with seen_count > 0 (includes fresh + stale). */
+  /** Terms with read_count > 0 or review_reveal_count > 0 (includes fresh + stale). */
   seen: number;
   stale: number;
   total: number;
-  /** True when every term in the scoped pool has been seen at least once. */
+  /** True when every term in the scoped pool has been Read or Revealed at least once. */
   allSeenOnce: boolean;
 };
 

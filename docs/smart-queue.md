@@ -64,9 +64,9 @@ other.
 Once every term in a pool has been Read or Revealed at least once, the
 never-read boost has nothing left to apply. From then on, ranking is mostly
 staleness and struggle signals — the **soft cycle**, with no everyday reset
-button. Pool stats (`allSeenOnce`) still track raw `seen_count`, a looser
-proxy — a pool can report `allSeenOnce: true` while terms that were only ever
-seen incidentally still carry the never-read boost.
+button. Pool stats (`allSeenOnce`) track the same thing — read/reveal
+exposure, not raw `seen_count` — so they stay in sync with when the boost
+actually stops applying.
 
 ```
   active collections + known/unknown filter
@@ -275,8 +275,8 @@ show one or two badges.
 There is no "reset the deck" button for everyday use. When every term in a
 pool has been Read or Revealed at least once, the never-read boost stops
 applying and ranking shifts to staleness and struggle. Pool stats expose
-`allSeenOnce`, but that field tracks raw `seen_count` — a looser, incidental
-proxy that can read `true` while never-read terms still carry the boost.
+this as `allSeenOnce` (`lib/smart-queue/stats.ts`), computed from the same
+`read_count`/`review_reveal_count` check as the boost, so it can't diverge.
 Resetting a collection's progress clears both `review_state` and
 `user_progress` and starts the cycle over.
 
