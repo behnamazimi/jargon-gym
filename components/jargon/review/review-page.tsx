@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import { recordTermShownAction } from "@/app/(private)/jargon/actions";
+import { recordReviewRevealAction } from "@/app/(private)/jargon/actions";
 import {
   getReviewPoolStatsAction,
   previewReviewQueueAction,
@@ -319,7 +319,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
 
     if (!shownTermIds.includes(currentCard.id)) {
       setShownTermIds((ids) => [...ids, currentCard.id]);
-      void recordTermShownAction(currentCard.id).then((result) => {
+      void recordReviewRevealAction(currentCard.id).then((result) => {
         if (result.error) {
           setErrorMessage(result.error);
         }

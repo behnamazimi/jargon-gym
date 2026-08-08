@@ -1,14 +1,14 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { applyTermShown } from "@/lib/jargon/review-outcome";
+import { applyTermRead } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { getReviewPoolStats, pickReviewTerms } from "@/lib/smart-queue";
 
 type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };
 
-/** Web equivalent of Telegram /read: pull one unknown term, record it as shown. */
+/** Web equivalent of Telegram /read: pull one unknown term, record it as read. */
 export async function getNextReadTermAction(): Promise<NextReadTermResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
@@ -38,7 +38,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
       return { caughtUp: true };
     }
 
-    await applyTermShown(auth.supabase, auth.user.id, card.id, "session");
+    await applyTermRead(auth.supabase, auth.user.id, card.id, "read_cta", "session");
 
     return { term: toReviewTerm(card) };
   } catch (err) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recordTermShownAction, setTermKnown } from "@/app/(private)/jargon/actions";
+import { recordTermSeenAction, setTermKnown } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
 import type { JargonPageData, SortMode } from "@/lib/jargon/types";
 
@@ -51,7 +51,7 @@ export function useJargonList(initialData: JargonPageData) {
   const recordShownOnce = useCallback((termId: string) => {
     if (countedShownRef.current.has(termId)) return;
     countedShownRef.current.add(termId);
-    void recordTermShownAction(termId);
+    void recordTermSeenAction(termId);
   }, []);
 
   const toggleOpen = useCallback(

@@ -4,7 +4,7 @@
  * @see docs/smart-queue.md — "Surfaces"
  *
  * incrementSeen semantics (preserve intentionally):
- * - applyTermShown / applyKnownToggle mark-known → increment
+ * - applyTermSeen / applyTermRead / applyKnownToggle mark-known → increment
  * - applyMarkKnown (Telegram after delivery) → no increment
  * - applyReviewRating after reveal → no second increment when alreadyCountedSeen
  */
@@ -18,7 +18,7 @@ import {
   markTermKnownForUser,
 } from "@/lib/jargon/known-state";
 import { getUserSettings } from "@/lib/llm/settings";
-import type { ReviewOutcome } from "@/lib/smart-queue";
+import type { ReviewOutcome, ReviewShownOrigin } from "@/lib/smart-queue";
 import { recordReviewOutcome, recordReviewOutcomeForUser } from "@/lib/smart-queue/repository";
 
 type Client = SupabaseClient<Database>;
@@ -45,11 +45,12 @@ async function writeOutcome(
   termId: string,
   outcome: ReviewOutcome,
   incrementSeen: boolean,
+  shownOrigin?: ReviewShownOrigin,
 ) {
   if (mode === "session") {
-    await recordReviewOutcome(client, termId, outcome, incrementSeen);
+    await recordReviewOutcome(client, termId, outcome, incrementSeen, shownOrigin);
   } else {
-    await recordReviewOutcomeForUser(client, userId, termId, outcome, incrementSeen);
+    await recordReviewOutcomeForUser(client, userId, termId, outcome, incrementSeen, shownOrigin);
   }
 }
 
@@ -156,14 +157,25 @@ export async function applyKnownToggle(
   }
 }
 
-/** Delivery / reveal: shown (+increment). */
-export async function applyTermShown(
+/** Jargon-page browse: lightest tier, incidental exposure (+increment). */
+export async function applyTermSeen(
   client: Client,
   userId: string,
   termId: string,
   mode: AuthMode = "session",
 ): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "shown", true);
+  await writeOutcome(client, mode, userId, termId, "seen", true, "browse");
+}
+
+/** Read CTA, widget "Next", or Review reveal: deliberate but untested (+increment). */
+export async function applyTermRead(
+  client: Client,
+  userId: string,
+  termId: string,
+  origin: Exclude<ReviewShownOrigin, "browse">,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await writeOutcome(client, mode, userId, termId, "read", true, origin);
 }
 
 /** Telegram /read "Mark known": mark + solid outcome, no seen increment. */

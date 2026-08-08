@@ -1,30 +1,10 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5";
   };
   public: {
     Tables: {
@@ -110,22 +90,40 @@ export type Database = {
       };
       review_state: {
         Row: {
+          fail_streak: number;
           last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string | null;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string | null;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count: number;
+          recalled_count: number;
           seen_count: number;
           term_id: string;
           user_id: string;
         };
         Insert: {
+          fail_streak?: number;
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at?: string | null;
+          last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
+          last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count?: number;
+          recalled_count?: number;
           seen_count?: number;
           term_id: string;
           user_id: string;
         };
         Update: {
+          fail_streak?: number;
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at?: string | null;
+          last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
+          last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count?: number;
+          recalled_count?: number;
           seen_count?: number;
           term_id?: string;
           user_id?: string;
@@ -532,8 +530,14 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
+          fail_streak: number;
           last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"];
           last_seen_at: string;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"];
+          read_count: number;
+          recalled_count: number;
           seen_count: number;
           term_id: string;
         }[];
@@ -577,8 +581,14 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
+          fail_streak: number;
           last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"];
           last_seen_at: string;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"];
+          read_count: number;
+          recalled_count: number;
           seen_count: number;
           term_id: string;
         }[];
@@ -588,6 +598,7 @@ export type Database = {
         Args: {
           p_increment_seen?: boolean;
           p_outcome: string;
+          p_shown_origin?: string;
           p_term_id: string;
         };
         Returns: undefined;
@@ -602,6 +613,7 @@ export type Database = {
         Args: {
           p_increment_seen?: boolean;
           p_outcome: string;
+          p_shown_origin?: string;
           p_term_id: string;
           p_user_id: string;
         };
@@ -625,8 +637,9 @@ export type Database = {
     };
     Enums: {
       domain_visibility: "private" | "shared";
-      review_outcome: "unseen" | "shown" | "learning" | "solid" | "verified" | "forgot";
+      review_outcome: "unseen" | "seen" | "read" | "learning" | "solid" | "verified" | "forgot";
       review_preset: "balanced" | "learn_new" | "drill_weak";
+      review_shown_origin: "browse" | "read_cta" | "widget" | "review_reveal";
       telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
     };
@@ -752,14 +765,12 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       domain_visibility: ["private", "shared"],
-      review_outcome: ["unseen", "shown", "learning", "solid", "verified", "forgot"],
+      review_outcome: ["unseen", "seen", "read", "learning", "solid", "verified", "forgot"],
       review_preset: ["balanced", "learn_new", "drill_weak"],
+      review_shown_origin: ["browse", "read_cta", "widget", "review_reveal"],
       telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],
     },
