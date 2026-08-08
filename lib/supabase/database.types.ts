@@ -111,21 +111,36 @@ export type Database = {
       review_state: {
         Row: {
           last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string | null;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string | null;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count: number;
+          recalled_count: number;
           seen_count: number;
           term_id: string;
           user_id: string;
         };
         Insert: {
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at?: string | null;
+          last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
+          last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count?: number;
+          recalled_count?: number;
           seen_count?: number;
           term_id: string;
           user_id: string;
         };
         Update: {
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at?: string | null;
+          last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
+          last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count?: number;
+          recalled_count?: number;
           seen_count?: number;
           term_id?: string;
           user_id?: string;
@@ -533,7 +548,12 @@ export type Database = {
           created_at: string;
           domain_id: string;
           last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string | null;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count: number;
+          recalled_count: number;
           seen_count: number;
           term_id: string;
         }[];
@@ -578,7 +598,12 @@ export type Database = {
           created_at: string;
           domain_id: string;
           last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string | null;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+          read_count: number;
+          recalled_count: number;
           seen_count: number;
           term_id: string;
         }[];
@@ -588,6 +613,7 @@ export type Database = {
         Args: {
           p_increment_seen?: boolean;
           p_outcome: string;
+          p_shown_origin?: string;
           p_term_id: string;
         };
         Returns: undefined;
@@ -602,6 +628,7 @@ export type Database = {
         Args: {
           p_increment_seen?: boolean;
           p_outcome: string;
+          p_shown_origin?: string;
           p_term_id: string;
           p_user_id: string;
         };
@@ -625,8 +652,9 @@ export type Database = {
     };
     Enums: {
       domain_visibility: "private" | "shared";
-      review_outcome: "unseen" | "shown" | "learning" | "solid" | "verified" | "forgot";
+      review_outcome: "unseen" | "seen" | "read" | "learning" | "solid" | "verified" | "forgot";
       review_preset: "balanced" | "learn_new" | "drill_weak";
+      review_shown_origin: "browse" | "read_cta" | "widget" | "review_reveal";
       telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
     };
@@ -758,8 +786,9 @@ export const Constants = {
   public: {
     Enums: {
       domain_visibility: ["private", "shared"],
-      review_outcome: ["unseen", "shown", "learning", "solid", "verified", "forgot"],
+      review_outcome: ["unseen", "seen", "read", "learning", "solid", "verified", "forgot"],
       review_preset: ["balanced", "learn_new", "drill_weak"],
+      review_shown_origin: ["browse", "read_cta", "widget", "review_reveal"],
       telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],
     },

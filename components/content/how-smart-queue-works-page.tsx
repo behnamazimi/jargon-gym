@@ -11,7 +11,7 @@ import {
   ContentPageTitledBulletList,
   contentPageLinkClass,
 } from "@/components/content";
-import { SHOWN_WITHOUT_SOLID_MIN_SEEN, SOLID_COOLDOWN_HOURS } from "@/lib/smart-queue";
+import { NEVER_RECALLED_MIN_SEEN, SOLID_COOLDOWN_HOURS } from "@/lib/smart-queue";
 
 type HowSmartQueueWorksPageProps = {
   isLoggedIn?: boolean;
@@ -26,15 +26,19 @@ const PRIORITY_RAISES = [
   },
   {
     title: "Still learning",
-    body: "You marked it \"Didn't have it\" in review, or got it wrong on a quiz.",
+    body: 'You marked it "Didn\'t have it" in review, or got it wrong on a quiz.',
   },
   {
     title: "Forgot",
     body: "You marked it forgot or cleared it as known, ranked above still-learning terms.",
   },
   {
-    title: `Seen ${SHOWN_WITHOUT_SOLID_MIN_SEEN}+ times, not solid`,
-    body: "Opened without marking it known, seeing it often doesn't mean you've learned it.",
+    title: `Seen or read ${NEVER_RECALLED_MIN_SEEN}+ times, never tested`,
+    body: "Glanced at or read through several times but never actually tested yourself on it, seeing it often doesn't mean you've learned it.",
+  },
+  {
+    title: "Left mid-review",
+    body: "Revealed in a review session but never rated, more specific than just rereading.",
   },
   {
     title: "Recently added",
@@ -117,9 +121,10 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             what&apos;s neglected or still shaky, in an order that makes sense right now.
           </p>
           <p className="m-0">
-            So I built a queue that ranks from history, never seen, forgot, seen a lot without
-            marking known, not future review dates. No daily goals or reminders either. Study when
-            you want; the queue picks the best next terms from whichever pool you chose. See{" "}
+            So I built a queue that ranks from history, never seen, forgot, read or glanced at a lot
+            without ever actually testing yourself, not future review dates. No daily goals or
+            reminders either. Study when you want; the queue picks the best next terms from
+            whichever pool you chose. See{" "}
             <Link href="/how-terms-work" className={contentPageLinkClass}>
               How terms are built
             </Link>{" "}
@@ -131,11 +136,11 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
       <ContentPageMain>
         <ContentPageSection title="Surfaces">
           <p className="m-0">
-            You can study in different places: focused review in the web app, browse your
-            collection when you just need a lookup, message a Telegram bot for one term on
-            demand, or let a desktop widget rotate terms in the background. Review, Telegram, and
-            quizzes share the same ranking. Collection browsing and the widget pick terms their
-            own way, not from the queue, they just log what you&apos;ve seen.
+            You can study in different places: focused review in the web app, browse your collection
+            when you just need a lookup, message a Telegram bot for one term on demand, or let a
+            desktop widget rotate terms in the background. Review, Telegram, and quizzes share the
+            same ranking. Collection browsing and the widget pick terms their own way, not from the
+            queue, they just log what you&apos;ve seen.
           </p>
           <ContentPageTitledBulletList items={SURFACES} />
         </ContentPageSection>
@@ -190,8 +195,8 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
         <ContentPageSection title="Quizzes">
           <p className="m-0">
             Quizzes use the same preset and pool rules as review, with one extra tilt I added:
-            struggling signals rank higher, still learning, forgot, or seen many times without
-            marking known. Setup shows a preview; questions show badges.
+            struggling signals rank higher, still learning, forgot, or seen/read many times without
+            ever being tested. Setup shows a preview; questions show badges.
           </p>
         </ContentPageSection>
 

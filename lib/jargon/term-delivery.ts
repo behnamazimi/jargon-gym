@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import { applyTermShown } from "@/lib/jargon/review-outcome";
+import { applyTermRead } from "@/lib/jargon/review-outcome";
 import {
   getReviewPoolStatsForUser,
   pickReviewTermsForUser,
@@ -60,7 +60,7 @@ async function maybeRecordSend(client: Client, userId: string, options?: Deliver
   }
 }
 
-/** Pick next unknown term, record shown, clear caught-up flag. */
+/** Pick next unknown term, record read, clear caught-up flag. */
 export async function deliverNextTerm(
   client: Client,
   userId: string,
@@ -93,7 +93,7 @@ export async function deliverNextTerm(
     return result;
   }
 
-  await applyTermShown(client, userId, term.id, "admin");
+  await applyTermRead(client, userId, term.id, "read_cta", "admin");
   await maybeRecordSend(client, userId, options);
   return { kind: "term", term };
 }

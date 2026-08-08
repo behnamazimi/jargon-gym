@@ -1,6 +1,6 @@
 /** Human-readable labels for pick reasons (UI). */
 
-import { SHOWN_WITHOUT_SOLID_MIN_SEEN } from "./presets";
+import { NEVER_RECALLED_MIN_SEEN } from "./presets";
 import type { PickReason } from "./types";
 
 const LABELS: Record<PickReason, string> = {
@@ -8,7 +8,8 @@ const LABELS: Record<PickReason, string> = {
   new: "Recently added",
   learning: "Still learning",
   forgot: "Forgot",
-  shown_stuck: `Seen ${SHOWN_WITHOUT_SOLID_MIN_SEEN}+ times, not solid`,
+  never_recalled: `Seen/read ${NEVER_RECALLED_MIN_SEEN}+ times, never recalled`,
+  abandoned_review: "Left mid-review",
   stale: "Not seen recently",
   solid_cooldown: "Recently marked solid",
   steady: "Recently reviewed",

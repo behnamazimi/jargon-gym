@@ -13,7 +13,7 @@ import {
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
 import { resetDomainProgress } from "@/lib/jargon/known-state";
-import { applyKnownToggle, applyTermShown } from "@/lib/jargon/review-outcome";
+import { applyKnownToggle, applyTermRead, applyTermSeen } from "@/lib/jargon/review-outcome";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
@@ -113,16 +113,31 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
   }
 }
 
-/** Count a jargon-page / review reveal as a smart-queue sighting. */
-export async function recordTermShownAction(termId: string): Promise<{ error?: string }> {
+/** Jargon-page card open: incidental exposure (Seen tier). */
+export async function recordTermSeenAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await applyTermShown(auth.supabase, auth.user.id, termId, "session");
+    await applyTermSeen(auth.supabase, auth.user.id, termId, "session");
     return {};
   } catch (err) {
-    console.error("recordTermShownAction failed", { termId, err });
+    console.error("recordTermSeenAction failed", { termId, err });
+    const message = err instanceof Error ? err.message : "Couldn't record that you saw this term.";
+    return { error: message };
+  }
+}
+
+/** Review card reveal: deliberate but untested exposure (Read tier). */
+export async function recordReviewRevealAction(termId: string): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await applyTermRead(auth.supabase, auth.user.id, termId, "review_reveal", "session");
+    return {};
+  } catch (err) {
+    console.error("recordReviewRevealAction failed", { termId, err });
     const message = err instanceof Error ? err.message : "Couldn't record that you saw this term.";
     return { error: message };
   }

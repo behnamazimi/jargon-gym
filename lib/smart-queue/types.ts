@@ -1,7 +1,20 @@
 /** Smart queue types — pure data structures, no runtime imports.
  */
 
-export type ReviewOutcome = "unseen" | "shown" | "learning" | "solid" | "verified" | "forgot";
+/** unseen: never shown. seen/read: light exposure tiers (see ReviewShownOrigin).
+ *  learning/solid/verified/forgot: "recalled" — an actual tested judgment.
+ */
+export type ReviewOutcome =
+  | "unseen"
+  | "seen"
+  | "read"
+  | "learning"
+  | "solid"
+  | "verified"
+  | "forgot";
+
+/** Where a seen/read write came from — drives the abandoned_review reason. */
+export type ReviewShownOrigin = "browse" | "read_cta" | "widget" | "review_reveal";
 
 export type ReviewPreset = "balanced" | "learn_new" | "drill_weak";
 
@@ -13,7 +26,8 @@ export type PickReason =
   | "new"
   | "learning"
   | "forgot"
-  | "shown_stuck"
+  | "never_recalled"
+  | "abandoned_review"
   | "stale"
   | "solid_cooldown"
   | "steady";
@@ -25,6 +39,12 @@ export type ReviewCandidate = {
   seenCount: number;
   lastSeenAt: Date | null;
   lastOutcome: ReviewOutcome;
+  readCount: number;
+  recalledCount: number;
+  /** null until the term has ever been recalled; then one of learning/solid/verified/forgot. */
+  lastRecalledOutcome: ReviewOutcome | null;
+  lastRecalledAt: Date | null;
+  lastShownOrigin: ReviewShownOrigin | null;
 };
 
 export type ScoreWeights = {
@@ -32,10 +52,16 @@ export type ScoreWeights = {
   learningBoost: number;
   forgotBoost: number;
   newTermBoost: number;
-  shownWithoutSolidBoost: number;
+  neverRecalledBoost: number;
+  abandonedReviewBoost: number;
   solidCooldownPenalty: number;
   seenCountPenalty: number;
-  stalenessBoostPerHour: number;
+  /** Staleness rate once a term has been recalled at least once — the dominant rate. */
+  recalledStalenessBoostPerHour: number;
+  /** Staleness rate for terms whose last exposure was a deliberate Read (never recalled). */
+  readStalenessBoostPerHour: number;
+  /** Staleness rate for terms whose last exposure was incidental Seen (never recalled). */
+  seenStalenessBoostPerHour: number;
   stalenessCapHours: number;
 };
 
