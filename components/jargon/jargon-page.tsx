@@ -14,14 +14,11 @@ import { TermList } from "./term-list";
 
 type JargonPageProps = {
   initialData: JargonPageData;
-  initialTermId?: string;
 };
 
-export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
-  const [termLinkNotice, setTermLinkNotice] = useState<string | null>(null);
+export function JargonPage({ initialData }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const deepLinkApplied = useRef(false);
 
   const {
     domain,
@@ -42,7 +39,6 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
     toggleOpen,
     toggleKnown,
     clearSearch,
-    focusTerm,
   } = useJargonList(initialData);
 
   const domainWithLiveCount = useMemo(
@@ -59,19 +55,6 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
       ),
     [initialData.domains, domain.id, knownTerms.size],
   );
-
-  useEffect(() => {
-    if (!initialTermId || deepLinkApplied.current) return;
-    deepLinkApplied.current = true;
-
-    const term = terms.find((t) => t.id === initialTermId);
-    if (!term) {
-      setTermLinkNotice("That term isn't in this collection.");
-      return;
-    }
-
-    focusTerm(term.id, term.term);
-  }, [initialTermId, terms, focusTerm]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -134,10 +117,6 @@ export function JargonPage({ initialData, initialTermId }: JargonPageProps) {
               onSortChange={setSortMode}
               visibleCount={filteredTerms.length}
             />
-
-            {termLinkNotice ? (
-              <p className="text-sm text-base-content/60">{termLinkNotice}</p>
-            ) : null}
 
             <TermList
               terms={filteredTerms}

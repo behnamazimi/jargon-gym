@@ -97,19 +97,6 @@ export function useJargonList(initialData: JargonPageData) {
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 
-  const focusTerm = useCallback(
-    (termId: string, termName: string) => {
-      setSearchQuery(termName);
-      setOpenTerms((prev) => {
-        const next = new Set(prev);
-        next.add(termId);
-        return next;
-      });
-      recordReadOnce(termId);
-    },
-    [recordReadOnce],
-  );
-
   return {
     domain: initialData.domain,
     domains: initialData.domains,
@@ -130,6 +117,5 @@ export function useJargonList(initialData: JargonPageData) {
     toggleOpen,
     toggleKnown,
     clearSearch,
-    focusTerm,
   };
 }

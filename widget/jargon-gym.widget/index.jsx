@@ -175,7 +175,7 @@ function escapeShellArg(value) {
 const openApp = (appBaseUrl, current) => {
   const base = appBaseUrl.replace(/\/$/, "");
   const url = current
-    ? `${base}/jargon?domain=${encodeURIComponent(current.domainId)}&termId=${encodeURIComponent(current.id)}`
+    ? `${base}/jargon/read?termId=${encodeURIComponent(current.id)}`
     : `${base}/jargon`;
   run(`open ${escapeShellArg(url)}`);
 };
@@ -314,7 +314,7 @@ export const render = ({ output, error }, dispatch) => {
       </div>
       <div className="hint-row">
         <span className="hint" onClick={() => openApp(appBaseUrl, current)}>
-          Click term to open the glossary →
+          Click term to open in the app →
         </span>
       </div>
     </div>

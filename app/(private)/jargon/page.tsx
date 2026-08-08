@@ -1,13 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
-import { fetchDomainIdForTerm } from "@/lib/jargon/terms";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string; termId?: string }>;
+  searchParams: Promise<{ domain?: string }>;
 };
 
 export default async function JargonListPage({ searchParams }: PageProps) {
@@ -24,19 +23,14 @@ export default async function JargonListPage({ searchParams }: PageProps) {
     );
   }
 
-  const { domain: domainParam, termId } = await searchParams;
-  let selectedDomainId = domainParam;
-
-  if (termId && !selectedDomainId) {
-    selectedDomainId = (await fetchDomainIdForTerm(supabase, termId)) ?? undefined;
-  }
+  const { domain: selectedDomainId } = await searchParams;
 
   try {
     const data = await loadJargonPageData(supabase, {
       userId: user.id,
       selectedDomainId,
     });
-    return <JargonPage initialData={data} initialTermId={termId} />;
+    return <JargonPage initialData={data} />;
   } catch (err) {
     if (err instanceof JargonDataError && err.message.includes("don't have any collections")) {
       return <EmptyCollection />;
