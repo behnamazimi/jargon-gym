@@ -37,8 +37,12 @@ const PRIORITY_RAISES = [
     body: "Failed it more than once in a row, climbs higher the longer that streak runs, so genuinely stuck terms rank above a single slip.",
   },
   {
-    title: `Seen or read ${NEVER_RECALLED_MIN_SEEN}+ times, never tested`,
-    body: "Glanced at or read through several times but never actually tested yourself on it, seeing it often doesn't mean you've learned it.",
+    title: `Read ${NEVER_RECALLED_MIN_SEEN}+ times, never tested`,
+    body: "Opened it on purpose (Read, the desktop widget, or a review reveal) several times but never actually tested yourself on it, reading it often doesn't mean you've learned it.",
+  },
+  {
+    title: `Browsed ${NEVER_RECALLED_MIN_SEEN}+ times, never read`,
+    body: "Only ever glanced at while browsing the collection, never once opened on purpose or tested. A smaller nudge than the one above, since you never actually committed to reading it.",
   },
   {
     title: "Left mid-review",
@@ -50,7 +54,7 @@ const PRIORITY_RAISES = [
   },
   {
     title: "Not seen recently",
-    body: "Skip a day and a term starts climbing again. Wait longer and it climbs higher, up to about a week.",
+    body: "Only applies once you've actually tested yourself on a term. Skip a while after that and it starts climbing again, up to about a week. Terms you've never tested don't get this nudge — only the two signals above account for those.",
   },
 ] as const;
 
@@ -199,8 +203,8 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
         <ContentPageSection title="Quizzes">
           <p className="m-0">
             Quizzes use the same preset and pool rules as review, with one extra tilt I added:
-            struggling signals rank higher, still learning, forgot, or seen/read many times without
-            ever being tested. Setup shows a preview; questions show badges.
+            struggling signals rank higher, still learning, forgot, or read or browsed many times
+            without ever being tested. Setup shows a preview; questions show badges.
           </p>
         </ContentPageSection>
 
