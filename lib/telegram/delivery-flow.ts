@@ -7,7 +7,12 @@ import {
   resolveUserIdByChatId,
 } from "@/lib/jargon/term-delivery";
 import type { TelegramAction } from "./actions";
-import { CAUGHT_UP_MESSAGE, CONNECT_MESSAGE, MARKED_KNOWN_SUFFIX } from "./copy";
+import {
+  CAUGHT_UP_MESSAGE,
+  CONNECT_MESSAGE,
+  MARKED_KNOWN_SUFFIX,
+  READ_NEXT_FAILED_MESSAGE,
+} from "./copy";
 import {
   buildReadKeyboard,
   buildTermInlineKeyboard,
@@ -104,7 +109,7 @@ export async function handleReadCallback(
     }
   } catch (error) {
     console.error("handleReadCallback: failed to deliver next term", { userId, error });
-    actions.push(send(chatId, "Could not load the next term. Try /read again in a moment."));
+    actions.push(send(chatId, READ_NEXT_FAILED_MESSAGE));
   }
 
   return actions;

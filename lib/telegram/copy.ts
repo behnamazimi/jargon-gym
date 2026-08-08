@@ -10,6 +10,11 @@ export const HELP_MESSAGE =
 export const CAUGHT_UP_MESSAGE =
   "You're all caught up — no unknown terms left in your active review domains. Import more or turn domains back on in the app.";
 
+export const READ_NEXT_FAILED_MESSAGE =
+  "Could not load the next term. Try /read again in a moment.";
+
+export const REVIEW_REVEAL_FAILED_SUFFIX = "\n\n<i>Couldn't reveal that term — try again.</i>";
+
 export const MARKED_KNOWN_SUFFIX = "\n\n✓ Marked as known";
 
 export const QUIZ_HELP_MESSAGE =

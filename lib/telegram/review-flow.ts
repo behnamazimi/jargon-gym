@@ -5,7 +5,11 @@ import { applyReviewRating, applyTermShown } from "@/lib/jargon/review-outcome";
 import { getMaxStudyCount } from "@/lib/study";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";
-import { NO_KNOWN_REVIEW_TERMS_MESSAGE, NO_UNKNOWN_REVIEW_TERMS_MESSAGE } from "./copy";
+import {
+  NO_KNOWN_REVIEW_TERMS_MESSAGE,
+  NO_UNKNOWN_REVIEW_TERMS_MESSAGE,
+  REVIEW_REVEAL_FAILED_SUFFIX,
+} from "./copy";
 import {
   buildReviewRateKeyboard,
   buildReviewRevealKeyboard,
@@ -507,7 +511,7 @@ export async function handleReviewReveal(
       edit(
         chatId,
         messageId,
-        `${formatReviewPrompt(currentTerm, session.currentIndex, session.termIds.length)}\n\n<i>Couldn't reveal that term — try again.</i>`,
+        `${formatReviewPrompt(currentTerm, session.currentIndex, session.termIds.length)}${REVIEW_REVEAL_FAILED_SUFFIX}`,
         buildReviewRevealKeyboard(session.currentIndex),
       ),
     ];
