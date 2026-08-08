@@ -1,11 +1,8 @@
 "use client";
 
-import { AlertCircle, ArrowRight, Check, PartyPopper, Zap } from "lucide-react";
+import { AlertCircle, ArrowRight, ExternalLink, PartyPopper, Zap } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import {
-  getNextReadTermAction,
-  markReadTermKnownAction,
-} from "@/app/(private)/jargon/read/actions";
+import { getNextReadTermAction } from "@/app/(private)/jargon/read/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import {
   QuizActionBar,
@@ -13,7 +10,7 @@ import {
   QuizPanel,
   QuizPanelBody,
 } from "@/components/jargon/quiz/quiz-ui";
-import { ReviewTermContent } from "@/components/jargon/review/review-term-content";
+import { TermDetailSection } from "@/components/jargon/term-detail-section";
 import { PageShell } from "@/components/page-container";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +23,6 @@ export function ReadPage() {
   const [status, setStatus] = useState<ReadStatus>("loading");
   const [term, setTerm] = useState<ReviewTerm | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [markedKnown, setMarkedKnown] = useState(false);
-  const [isMarking, setIsMarking] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
 
   const fetchNext = useCallback(async () => {
@@ -51,7 +46,6 @@ export function ReadPage() {
     }
 
     setTerm(result.term);
-    setMarkedKnown(false);
     setStatus("ready");
   }, []);
 
@@ -59,20 +53,9 @@ export function ReadPage() {
     void fetchNext();
   }, [fetchNext]);
 
-  async function handleMarkKnown() {
-    if (!term || isMarking || markedKnown) return;
-
-    setIsMarking(true);
-    const result = await markReadTermKnownAction(term.id);
-    setIsMarking(false);
-
-    if (result.error) {
-      setErrorMessage(result.error);
-      return;
-    }
-
-    setMarkedKnown(true);
-  }
+  const searchUrl = term
+    ? `https://www.google.com/search?q=${encodeURIComponent(`${term.term} definition`)}`
+    : "";
 
   return (
     <PageShell innerClassName="space-y-8">
@@ -128,29 +111,59 @@ export function ReadPage() {
                 </Badge>
               </div>
             </div>
-            <QuizPanelBody>
-              <ReviewTermContent term={term} />
-            </QuizPanelBody>
-            <QuizActionBar
-              hint={markedKnown ? "Marked as known." : "Mark it known once you've got it down."}
-            >
-              <Button
-                type="button"
-                variant="outline"
-                onPress={() => void handleMarkKnown()}
-                isDisabled={isMarking || markedKnown}
+            <QuizPanelBody className="space-y-4">
+              <p className="text-base leading-relaxed font-medium">{term.definition}</p>
+
+              {term.example ? (
+                <TermDetailSection label="Example" variant="callout">
+                  {term.example}
+                </TermDetailSection>
+              ) : null}
+
+              {term.discussion ? (
+                <TermDetailSection label="In practice">{term.discussion}</TermDetailSection>
+              ) : null}
+
+              {term.controversy ? (
+                <TermDetailSection label="Debated" variant="debated">
+                  {term.controversy}
+                </TermDetailSection>
+              ) : null}
+
+              {term.relationships.length > 0 ? (
+                <ul className="space-y-2">
+                  {term.relationships.map((relationship) => (
+                    <li
+                      key={`${relationship.id}-${relationship.direction}`}
+                      className="rounded-lg border border-dashed border-base-300/80 bg-base-200/30 px-3 py-2.5"
+                    >
+                      <p className="text-sm text-base-content/60">
+                        <span className="italic">{relationship.relationshipType}</span>{" "}
+                        <span className="font-semibold text-primary">
+                          {relationship.relatedTermName}
+                        </span>
+                      </p>
+                      {relationship.description ? (
+                        <p className="mt-1 text-xs leading-relaxed text-base-content/80">
+                          {relationship.description}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              <a
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
+                href={searchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {markedKnown ? (
-                  <>
-                    <Check className="size-4" aria-hidden strokeWidth={1.5} />
-                    Known
-                  </>
-                ) : isMarking ? (
-                  "Marking…"
-                ) : (
-                  "Mark known"
-                )}
-              </Button>
+                <ExternalLink className="size-3.5" aria-hidden strokeWidth={1.5} />
+                Search &ldquo;{term.term}&rdquo; on Google
+              </a>
+            </QuizPanelBody>
+            <QuizActionBar>
               <Button type="button" onPress={() => void fetchNext()} isDisabled={isAdvancing}>
                 {isAdvancing ? "Loading…" : "Next term"}
                 <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />

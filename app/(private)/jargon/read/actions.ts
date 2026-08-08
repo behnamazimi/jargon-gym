@@ -1,8 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { applyMarkKnown, applyTermShown } from "@/lib/jargon/review-outcome";
+import { applyTermShown } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { getReviewPoolStats, pickReviewTerms } from "@/lib/smart-queue";
@@ -44,21 +43,6 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
     return { term: toReviewTerm(card) };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load the next term. Try again.";
-    return { error: message };
-  }
-}
-
-export async function markReadTermKnownAction(termId: string): Promise<{ error?: string }> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    await applyMarkKnown(auth.supabase, auth.user.id, termId, "session");
-    revalidatePath("/jargon");
-    return {};
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Couldn't mark that term known. Try again.";
     return { error: message };
   }
 }
