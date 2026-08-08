@@ -23,18 +23,21 @@ what **known** and **unknown** mean, see
 Every term in your active collections carries a small history, split into
 three tiers of increasing weight:
 
-- **Seen** — incidental exposure (opening a term card while browsing the
-  jargon page).
+- **Seen** — incidental exposure: the widget's "Next" CTA, a term appearing
+  as a quiz question, or the known/unknown toggle on a jargon-page term card.
+  None of these are a deliberate "go read this" action — the widget rotates
+  terms in the background, a quiz question just puts a term in front of you,
+  and the toggle is a self-report, not something you opened to read.
 - **Read** — deliberate but untested exposure, one outcome value (`read`)
-  tracked as two disjoint counters: `read_count` (Read CTA "Next term", web +
-  Telegram, or widget "Next") and `review_reveal_count` (a Review card's
-  reveal-before-rating step, web + Telegram). Same tier, same weight in the
-  formula — the split exists so scoring can tell "left mid-review" apart from
-  ordinary rereading (see Abandoned review, below), not to rank one above the
-  other.
+  tracked as two disjoint counters: `read_count` (the Read command/page, web +
+  Telegram, or opening a term card on the jargon page) and
+  `review_reveal_count` (a Review card's reveal-before-rating step, web +
+  Telegram). Same tier, same weight in the formula — the split exists so
+  scoring can tell "left mid-review" apart from ordinary rereading (see
+  Abandoned review, below), not to rank one above the other.
 - **Recalled** — an actual tested judgment (`learning` / `solid` / `verified`
-  / `forgot`, from Review ratings, quiz answers, or a manual known/unknown
-  declaration).
+  / `forgot`, from Review ratings, quiz answers, or the widget's "Mark known"
+  button).
 
 The picker scores each candidate from that history plus a few nudges — unseen
 terms, struggling terms, terms seen or read many times but never actually
@@ -125,18 +128,18 @@ These are the user-facing signals (badges on review cards, quiz questions, and
 the queue preview). A term can show more than one at a time. **Forgot** ranks
 above **still learning**.
 
-| Signal           | User-facing label                  | Effect                                                                                                     |
-| ---------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Never seen       | Never seen                         | Rises to the top until every term in the pool has been seen at least once                                  |
-| Still learning   | Still learning                     | Boost — marked "Didn't have it" in review, or wrong on a quiz                                              |
-| Forgot           | Forgot                             | Larger boost — marked forgot or cleared as known                                                           |
-| Repeat fail      | Repeatedly forgotten               | Extra boost on top of Still learning/Forgot, scales with consecutive fails (2+ in a row), caps after 5     |
-| Never recalled   | Seen/read 3+ times, never recalled | Moderate boost — opened it deliberately (Read, widget, or a Review reveal) 3+ times, never actually tested |
-| Browse only      | Browsed 3+ times, never read       | Smaller boost — every sighting was incidental jargon-page browsing, never once opened on purpose           |
-| Abandoned review | Left mid-review                    | Moderate boost — the last thing that happened was an unrated Review reveal                                 |
-| New term         | Recently added                     | Moderate boost — created within the last few days                                                          |
-| Staleness        | Not seen recently                  | Climbs when you skip a day; caps at about a week. Only applies once a term has been recalled at least once |
-| Solid cooldown   | Recently marked solid              | **Lowers** priority for ~3 days after marking known or answering correctly                                 |
+| Signal           | User-facing label                  | Effect                                                                                                       |
+| ---------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Never seen       | Never seen                         | Rises to the top until every term in the pool has been seen at least once                                    |
+| Still learning   | Still learning                     | Boost — marked "Didn't have it" in review, or wrong on a quiz                                                |
+| Forgot           | Forgot                             | Larger boost — marked forgot or cleared as known                                                             |
+| Repeat fail      | Repeatedly forgotten               | Extra boost on top of Still learning/Forgot, scales with consecutive fails (2+ in a row), caps after 5       |
+| Never recalled   | Seen/read 3+ times, never recalled | Moderate boost — opened it deliberately (Read, or a Review reveal) 3+ times, never actually tested           |
+| Browse only      | Browsed 3+ times, never read       | Smaller boost — every sighting was passive (widget rotation, a quiz appearance, or the known/unknown toggle) |
+| Abandoned review | Left mid-review                    | Moderate boost — the last thing that happened was an unrated Review reveal                                   |
+| New term         | Recently added                     | Moderate boost — created within the last few days                                                            |
+| Staleness        | Not seen recently                  | Climbs when you skip a day; caps at about a week. Only applies once a term has been recalled at least once   |
+| Solid cooldown   | Recently marked solid              | **Lowers** priority for ~3 days after marking known or answering correctly                                   |
 
 That cooldown is the only scheduled behavior. Nothing else gets a future review
 date.
@@ -161,8 +164,8 @@ badges.
 | **Learning**         | Last _recalled_ outcome is `learning`                                                                            | Boost — survives later Seen/Read writes                                                                                                                                                                                                                                                     |
 | **Forgot**           | Last _recalled_ outcome is `forgot`                                                                              | Larger boost than learning — survives later Seen/Read writes                                                                                                                                                                                                                                |
 | **Fail streak**      | `fail_streak >= 2`                                                                                               | Additional boost on top of Learning/Forgot, `min(fail_streak, FAIL_STREAK_CAP) × failStreakBoostPerRepeat`. `fail_streak` increments on every `learning`/`forgot` and resets to 0 on `solid`/`verified`, so it always tracks the _current_ run of consecutive fails, not lifetime failures. |
-| **Never recalled**   | `recalled_count === 0`, `seen_count >= NEVER_RECALLED_MIN_SEEN`, `read_count > 0 \|\| review_reveal_count > 0`   | Moderate boost — opened deliberately (Read/widget, or a Review reveal) at least once, still never tested                                                                                                                                                                                    |
-| **Browse only**      | `recalled_count === 0`, `seen_count >= NEVER_RECALLED_MIN_SEEN`, `read_count === 0 && review_reveal_count === 0` | Smaller boost — every sighting was incidental jargon-page browsing, never once opened deliberately. Weaker signal than **Never recalled** on purpose.                                                                                                                                       |
+| **Never recalled**   | `recalled_count === 0`, `seen_count >= NEVER_RECALLED_MIN_SEEN`, `read_count > 0 \|\| review_reveal_count > 0`   | Moderate boost — opened deliberately (Read, or a Review reveal) at least once, still never tested                                                                                                                                                                                           |
+| **Browse only**      | `recalled_count === 0`, `seen_count >= NEVER_RECALLED_MIN_SEEN`, `read_count === 0 && review_reveal_count === 0` | Smaller boost — every sighting was passive (widget rotation, a quiz appearance, or the known/unknown toggle), never once opened deliberately. Weaker signal than **Never recalled** on purpose.                                                                                             |
 | **Abandoned review** | `last_outcome === 'read'` and `last_review_reveal_at` exactly equals `last_seen_at`                              | Moderate boost — the most recent event of any kind was a Review reveal that's never been rated or superseded by a later read, distinct from generic never-recalled rereading                                                                                                                |
 | **New term**         | Created within the last 72 hours                                                                                 | Moderate boost                                                                                                                                                                                                                                                                              |
 | **Seen count**       | Every prior sighting, any tier                                                                                   | Gentle sink (`seen_count × penalty`)                                                                                                                                                                                                                                                        |
@@ -273,15 +276,15 @@ starts the cycle over.
 
 ## Outcomes
 
-| Outcome    | Tier     | Meaning                                                  |
-| ---------- | -------- | -------------------------------------------------------- |
-| `unseen`   | —        | Default when no review row exists yet                    |
-| `seen`     | Seen     | Opened a term card while browsing (jargon page)          |
-| `read`     | Read     | Read CTA "Next term", widget "Next", or a Review reveal  |
-| `learning` | Recalled | Didn't have it (unknown-pool review), or wrong on a quiz |
-| `solid`    | Recalled | Had it (unknown-pool review), or marked known            |
-| `verified` | Recalled | Still know it (known-pool refresh)                       |
-| `forgot`   | Recalled | Forgot it, or cleared known                              |
+| Outcome    | Tier     | Meaning                                                                        |
+| ---------- | -------- | ------------------------------------------------------------------------------ |
+| `unseen`   | —        | Default when no review row exists yet                                          |
+| `seen`     | Seen     | Widget "Next", a quiz question's term, or the jargon-page known/unknown toggle |
+| `read`     | Read     | Read command/page, a jargon-page card open, or a Review reveal                 |
+| `learning` | Recalled | Didn't have it (unknown-pool review), or wrong on a quiz                       |
+| `solid`    | Recalled | Had it (unknown-pool review), or the widget's "Mark known"                     |
+| `verified` | Recalled | Still know it (known-pool refresh)                                             |
+| `forgot`   | Recalled | Forgot it, or cleared known via the widget                                     |
 
 `learning`/`solid`/`verified`/`forgot` are collectively "Recalled" — an actual
 tested judgment, as opposed to the light `seen`/`read` exposure tiers.
@@ -342,10 +345,14 @@ only share the outcome-recording half of the pipeline.
 
 - No smart-queue pick here. Terms are sorted the way you choose in the
   toolbar — default / A–Z / unknown-first (`SortMode` in
-  `lib/jargon/filter-terms.ts`) — not by score. Opening a term card → `seen`
-  (increment), once per visit. The lightest tier — this is incidental
-  exposure, not a deliberate study action. Good for reference, not a
-  substitute for review.
+  `lib/jargon/filter-terms.ts`) — not by score. Opening a term card → `read`,
+  `read_count` +1 (increment), once per visit — you deliberately opened that
+  term to look at it, even though browsing itself isn't a study action.
+  Good for reference, not a substitute for review.
+- The known/unknown toggle on a term card → `seen` (increment) either
+  direction, plus the `user_progress` flip. It's a self-report, not a tested
+  recall — it doesn't touch `recalled_count`, `last_recalled_outcome`, or
+  `fail_streak`.
 
 ### Telegram bot
 
@@ -363,7 +370,10 @@ only share the outcome-recording half of the pipeline.
   are multiplied by **1.5×** via `PickContext: "quiz"` without changing the
   saved preset.
 - Web setup shows the queue preview; questions show badges.
-- Each answer records an outcome (always increments seen count).
+- A question's term appearing on screen → `seen` (increment) — the term just
+  showed up, it hasn't been tested yet. Answering it then records the
+  Recalled outcome **without** a second increment, since the appearance
+  already counted the sighting.
 - Known flips follow Settings → Quiz prefs (`markUnknownOnFail`,
   `markKnownOnPass`).
 
@@ -376,17 +386,12 @@ only share the outcome-recording half of the pipeline.
   `seen_count`, no staleness — the smart-queue picker is never called.
 - Terms rotate on screen in the background. Passive rotation does **not** count
   as a sighting.
-- **Next** → `read`, `read_count` +1, for the term you are leaving (increment) —
-  a deliberate dismiss-and-advance, same tier and same counter as the Read CTA.
-- Click to open the term in the web app → `seen`, on the collection page for
-  that visit.
-- Mark known → known flip + `solid` (increment) — Recalled tier, not a
-  seen/read write.
-
-### List checkbox
-
-- Flips `user_progress` and writes `solid` / `forgot` so the queue does not
-  treat the term as brand new.
+- **Next** → `seen` (increment), for the term you are leaving — the widget put
+  it in front of you, it doesn't know whether you actually read it.
+- Click to open the term in the web app → `read`, `read_count` +1, on the
+  collection page for that visit (see Web collection, above).
+- Mark known → known flip + `solid` (increment) — Recalled tier, unlike the
+  jargon-page toggle above, which records Seen instead.
 
 ### `/stat`
 

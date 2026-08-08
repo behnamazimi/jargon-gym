@@ -13,7 +13,11 @@ import {
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
 import { resetDomainProgress } from "@/lib/jargon/known-state";
-import { applyKnownToggle, applyReviewReveal, applyTermSeen } from "@/lib/jargon/review-outcome";
+import {
+  applyKnownToggleSeen,
+  applyReviewReveal,
+  applyTermRead,
+} from "@/lib/jargon/review-outcome";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
@@ -104,7 +108,7 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await applyKnownToggle(auth.supabase, auth.user.id, termId, isKnown, "session");
+    await applyKnownToggleSeen(auth.supabase, auth.user.id, termId, isKnown, "session");
     revalidatePath("/jargon");
     return {};
   } catch (err) {
@@ -113,16 +117,16 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
   }
 }
 
-/** Jargon-page card open: incidental exposure (Seen tier). */
-export async function recordTermSeenAction(termId: string): Promise<{ error?: string }> {
+/** Jargon-page card open: deliberate exposure (Read tier). */
+export async function recordTermReadAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await applyTermSeen(auth.supabase, auth.user.id, termId, "session");
+    await applyTermRead(auth.supabase, auth.user.id, termId, "session");
     return {};
   } catch (err) {
-    console.error("recordTermSeenAction failed", { termId, err });
+    console.error("recordTermReadAction failed", { termId, err });
     const message = err instanceof Error ? err.message : "Couldn't record that you saw this term.";
     return { error: message };
   }
