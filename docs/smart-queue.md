@@ -220,7 +220,7 @@ Weight values (same file):
 | `abandonedReviewBoost`     | 45       | 35        | 55         |
 | `failStreakBoostPerRepeat` | 15       | 10        | 25         |
 | `solidCooldownPenalty`     | 120      | 120       | 120        |
-| `seenCountPenalty`         | 10       | 15        | 8          |
+| `seenCountPenalty`         | 1        | 1         | 1          |
 | `stalenessBoostPerHour`    | 0.5      | 0.3       | 0.7        |
 | `stalenessCapHours`        | 168      | 168       | 168        |
 
