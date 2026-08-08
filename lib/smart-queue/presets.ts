@@ -25,7 +25,7 @@ const BALANCED_WEIGHTS: ScoreWeights = {
   abandonedReviewBoost: 45,
   failStreakBoostPerRepeat: 15,
   solidCooldownPenalty: 120,
-  seenCountPenalty: 10,
+  seenCountPenalty: 1,
   stalenessBoostPerHour: 0.5,
   stalenessCapHours: 168, // 7 days
 };
@@ -40,7 +40,7 @@ const LEARN_NEW_WEIGHTS: ScoreWeights = {
   abandonedReviewBoost: 35,
   failStreakBoostPerRepeat: 10,
   solidCooldownPenalty: 120,
-  seenCountPenalty: 15,
+  seenCountPenalty: 1,
   stalenessBoostPerHour: 0.3,
   stalenessCapHours: 168,
 };
@@ -55,7 +55,7 @@ const DRILL_WEAK_WEIGHTS: ScoreWeights = {
   abandonedReviewBoost: 55,
   failStreakBoostPerRepeat: 25,
   solidCooldownPenalty: 120,
-  seenCountPenalty: 8,
+  seenCountPenalty: 1,
   stalenessBoostPerHour: 0.7,
   stalenessCapHours: 168,
 };

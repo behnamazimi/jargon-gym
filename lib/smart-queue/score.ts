@@ -123,10 +123,14 @@ function evaluateCandidate(
     }
   }
 
-  // No signal fired — seen recently with nothing notable to flag. Surface that
-  // explicitly instead of leaving the term with an unexplained empty badge list.
+  // No signal fired. Split the fallback by recall status so a term that's
+  // genuinely been tested recently ("steady"/Recently reviewed) isn't
+  // conflated with one that's only ever been Read/Revealed once or twice —
+  // deliberate exposure below the never_recalled threshold, never tested —
+  // which reads "Recently read" instead. Surfaced explicitly either way
+  // instead of leaving the term with an unexplained empty badge list.
   if (reasons.length === 0) {
-    reasons.push("steady");
+    reasons.push(candidate.recalledCount > 0 ? "steady" : "recently_read");
   }
 
   return { score, reasons };

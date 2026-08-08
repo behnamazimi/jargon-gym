@@ -147,8 +147,10 @@ above **still learning**.
 That cooldown is the only scheduled behavior. Nothing else gets a future review
 date.
 
-Terms that trigger none of the above show **Recently reviewed** instead — a
-label, not a ranking effect. It just means nothing stands out yet.
+Terms that trigger none of the above show a fallback label instead — not a
+ranking effect, just means nothing stands out yet. **Recently reviewed** if
+the term has actually been recalled (tested) recently; **Recently read** if
+it's only ever been Read/Revealed once or twice, never tested.
 
 Implementation detail: scoring math, weights, and tie-breaking are below.
 
@@ -218,7 +220,7 @@ Weight values (same file):
 | `abandonedReviewBoost`     | 45       | 35        | 55         |
 | `failStreakBoostPerRepeat` | 15       | 10        | 25         |
 | `solidCooldownPenalty`     | 120      | 120       | 120        |
-| `seenCountPenalty`         | 10       | 15        | 8          |
+| `seenCountPenalty`         | 1        | 1         | 1          |
 | `stalenessBoostPerHour`    | 0.5      | 0.3       | 0.7        |
 | `stalenessCapHours`        | 168      | 168       | 168        |
 
@@ -247,24 +249,31 @@ queue previews.
 | `abandoned_review` | `last_outcome === 'read'` and `last_review_reveal_at === last_seen_at`                        | Left mid-review                    |
 | `stale`            | `recalled_count > 0` and not recalled in 24h+                                                 | Not seen recently                  |
 | `solid_cooldown`   | Last recalled solid within cooldown window                                                    | Recently marked solid              |
-| `steady`           | No other signal fired                                                                         | Recently reviewed                  |
+| `recently_read`    | No other signal fired, `recalled_count === 0`                                                 | Recently read                      |
+| `steady`           | No other signal fired, `recalled_count > 0`                                                   | Recently reviewed                  |
 
-`steady` is a fallback, not a scoring signal — it carries no weight. It fires
-in two cases: (1) the term has never been recalled and hasn't cleared either
-`never_recalled` (deliberate `read_count + review_reveal_count >=
-NEVER_RECALLED_MIN_SEEN`) or `browse_only` (zero deliberate exposure but
-`seen_count >= NEVER_RECALLED_MIN_SEEN`) — including a term with some
-deliberate exposure that hasn't reached 3 yet, which qualifies for neither —
-and staleness never applies pre-recall, so there's nothing left to flag; or
-(2) it has been recalled, that recall is
-recent enough to dodge `stale`, and the outcome doesn't carry its own boost
-(`verified`, or `solid` outside its cooldown window). `solid` can't land
-here inside the cooldown window — `solid_cooldown` reads the same
-`last_recalled_at` that staleness uses, and `STALE_REASON_THRESHOLD_HOURS`
-(24) is well inside `SOLID_COOLDOWN_HOURS` (72), so a `solid` outcome recent
-enough to dodge `stale` always still trips the cooldown. Without `steady`
-these candidates would return an empty `reasons` list and render no badge at
-all in the queue preview.
+`recently_read` and `steady` are both fallbacks, not scoring signals — neither
+carries weight. Without one of them, a candidate that clears none of the
+boosts above would return an empty `reasons` list and render no badge at all
+in the queue preview. Which one fires is keyed on `recalled_count` so the two
+don't get conflated — `steady` ("Recently reviewed") implies an actual test
+happened; a term that's merely been Read/Revealed a couple of times is not
+"reviewed" yet.
+
+`recently_read` fires when the term has never been recalled and hasn't
+cleared either `never_recalled` (deliberate `read_count + review_reveal_count
+>= NEVER_RECALLED_MIN_SEEN`) or `browse_only` (zero deliberate exposure but
+`seen_count >= NEVER_RECALLED_MIN_SEEN`) — typically a term with 1 or 2
+deliberate reads/reveals, short of the never_recalled threshold. Staleness
+never applies pre-recall, so there's nothing else left to flag.
+
+`steady` fires when the term has been recalled, that recall is recent enough
+to dodge `stale`, and the outcome doesn't carry its own boost (`verified`, or
+`solid` outside its cooldown window). `solid` can't land here inside the
+cooldown window — `solid_cooldown` reads the same `last_recalled_at` that
+staleness uses, and `STALE_REASON_THRESHOLD_HOURS` (24) is well inside
+`SOLID_COOLDOWN_HOURS` (72), so a `solid` outcome recent enough to dodge
+`stale` always still trips the cooldown.
 
 Labels live in [`lib/smart-queue/reasons.ts`](../lib/smart-queue/reasons.ts).
 Review and quiz setup show a collapsible queue preview; cards and questions

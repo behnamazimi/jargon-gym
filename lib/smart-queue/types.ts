@@ -29,6 +29,7 @@ export type PickReason =
   | "abandoned_review"
   | "stale"
   | "solid_cooldown"
+  | "recently_read"
   | "steady";
 
 export type ReviewCandidate = {
