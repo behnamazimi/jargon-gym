@@ -38,20 +38,6 @@ function mapRatingToOutcome(sessionStatus: TermPoolStatus, known: boolean): Revi
 
 type AuthMode = "session" | "admin";
 
-/**
- * Retry a single-shot write once before giving up. Mitigates transient
- * failures (deadlock/serialization errors, connection blips) so callers that
- * deliver content before recording it (Telegram delivery, /review reveal)
- * don't end up showing a term whose "shown" write silently never landed.
- */
-async function retryOnce<T>(fn: () => Promise<T>): Promise<T> {
-  try {
-    return await fn();
-  } catch {
-    return await fn();
-  }
-}
-
 async function writeOutcome(
   client: Client,
   mode: AuthMode,
@@ -170,19 +156,14 @@ export async function applyKnownToggle(
   }
 }
 
-/**
- * Delivery / reveal: shown (+increment). Retried once — callers on this path
- * (Telegram delivery, /review reveal) show content to the user right after
- * this write, so a lost write here would desync seen_count/last_outcome
- * without anyone noticing.
- */
+/** Delivery / reveal: shown (+increment). */
 export async function applyTermShown(
   client: Client,
   userId: string,
   termId: string,
   mode: AuthMode = "session",
 ): Promise<void> {
-  await retryOnce(() => writeOutcome(client, mode, userId, termId, "shown", true));
+  await writeOutcome(client, mode, userId, termId, "shown", true);
 }
 
 /** Telegram /read "Mark known": mark + solid outcome, no seen increment. */
