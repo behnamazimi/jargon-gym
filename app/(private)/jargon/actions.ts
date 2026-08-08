@@ -13,7 +13,7 @@ import {
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
 import { resetDomainProgress } from "@/lib/jargon/known-state";
-import { applyKnownToggle, applyTermRead, applyTermSeen } from "@/lib/jargon/review-outcome";
+import { applyKnownToggle, applyReviewReveal, applyTermSeen } from "@/lib/jargon/review-outcome";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
@@ -128,13 +128,13 @@ export async function recordTermSeenAction(termId: string): Promise<{ error?: st
   }
 }
 
-/** Review card reveal: deliberate but untested exposure (Read tier). */
+/** Review card reveal: its own counter, disjoint from Read's. */
 export async function recordReviewRevealAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await applyTermRead(auth.supabase, auth.user.id, termId, "review_reveal", "session");
+    await applyReviewReveal(auth.supabase, auth.user.id, termId, "session");
     return {};
   } catch (err) {
     console.error("recordReviewRevealAction failed", { termId, err });

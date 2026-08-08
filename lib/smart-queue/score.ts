@@ -62,13 +62,14 @@ function evaluateCandidate(
   }
 
   // Never recalled despite repeated light exposure. Split by whether any of
-  // that exposure was a deliberate Read: readCount > 0 means the user opened
-  // it on purpose at least once and still never tested it (never_recalled,
-  // full boost); readCount === 0 means every sighting was incidental jargon-
-  // page browsing (browse_only, smaller boost) — a weaker signal than having
-  // actually opened it.
+  // that exposure was deliberate — Read CTA/widget, or a Review reveal —
+  // versus purely incidental browsing. Deliberate exposure (readCount or
+  // reviewRevealCount > 0) means the user opened it on purpose at least once
+  // and still never tested it (never_recalled, full boost); zero of either
+  // means every sighting was incidental jargon-page browsing (browse_only,
+  // smaller boost) — a weaker signal than having actually opened it.
   if (candidate.recalledCount === 0 && candidate.seenCount >= NEVER_RECALLED_MIN_SEEN) {
-    if (candidate.readCount > 0) {
+    if (candidate.readCount > 0 || candidate.reviewRevealCount > 0) {
       score += weights.neverRecalledBoost;
       reasons.push("never_recalled");
     } else {
@@ -77,10 +78,18 @@ function evaluateCandidate(
     }
   }
 
-  // Abandoned mid-review: the most recent exposure is an unrated Review reveal
-  // (app closed, session expired). Distinct from never_recalled — this is a
-  // specific interrupted test, not generic rereading.
-  if (candidate.lastOutcome === "read" && candidate.lastShownOrigin === "review_reveal") {
+  // Abandoned mid-review: the most recent exposure of any kind was a Review
+  // reveal that was never rated (app closed, session expired) — the reveal
+  // timestamp exactly matches the last-touched timestamp, meaning nothing
+  // (a later plain read, or a rating) has happened since. Distinct from
+  // never_recalled — this is a specific interrupted test, not generic
+  // rereading.
+  if (
+    candidate.lastOutcome === "read" &&
+    candidate.lastReviewRevealAt &&
+    candidate.lastSeenAt &&
+    candidate.lastReviewRevealAt.getTime() === candidate.lastSeenAt.getTime()
+  ) {
     score += weights.abandonedReviewBoost;
     reasons.push("abandoned_review");
   }

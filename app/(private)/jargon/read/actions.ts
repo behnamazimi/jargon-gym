@@ -38,7 +38,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
       return { caughtUp: true };
     }
 
-    await applyTermRead(auth.supabase, auth.user.id, card.id, "read_cta", "session");
+    await applyTermRead(auth.supabase, auth.user.id, card.id, "session");
 
     return { term: toReviewTerm(card) };
   } catch (err) {

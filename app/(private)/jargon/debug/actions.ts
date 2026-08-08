@@ -7,7 +7,6 @@ import {
   type PickReason,
   type ReviewOutcome,
   type ReviewPreset,
-  type ReviewShownOrigin,
 } from "@/lib/smart-queue";
 import { listStudyCollections, type TermPoolStatus } from "@/lib/study";
 
@@ -33,12 +32,13 @@ export type DebugScoredRow = {
   reasons: PickReason[];
   seenCount: number;
   readCount: number;
+  reviewRevealCount: number;
   recalledCount: number;
   lastOutcome: ReviewOutcome;
   lastSeenAt: string | null;
   lastRecalledOutcome: ReviewOutcome | null;
   lastRecalledAt: string | null;
-  lastShownOrigin: ReviewShownOrigin | null;
+  lastReviewRevealAt: string | null;
   failStreak: number;
 };
 
@@ -85,12 +85,15 @@ export async function listDebugScoredTermsAction(
       reasons: candidate.reasons,
       seenCount: candidate.seenCount,
       readCount: candidate.readCount,
+      reviewRevealCount: candidate.reviewRevealCount,
       recalledCount: candidate.recalledCount,
       lastOutcome: candidate.lastOutcome,
       lastSeenAt: candidate.lastSeenAt ? candidate.lastSeenAt.toISOString() : null,
       lastRecalledOutcome: candidate.lastRecalledOutcome,
       lastRecalledAt: candidate.lastRecalledAt ? candidate.lastRecalledAt.toISOString() : null,
-      lastShownOrigin: candidate.lastShownOrigin,
+      lastReviewRevealAt: candidate.lastReviewRevealAt
+        ? candidate.lastReviewRevealAt.toISOString()
+        : null,
       failStreak: candidate.failStreak,
     }));
 

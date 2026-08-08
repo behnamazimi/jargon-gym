@@ -93,7 +93,7 @@ export async function deliverNextTerm(
     return result;
   }
 
-  await applyTermRead(client, userId, term.id, "read_cta", "admin");
+  await applyTermRead(client, userId, term.id, "admin");
   await maybeRecordSend(client, userId, options);
   return { kind: "term", term };
 }
