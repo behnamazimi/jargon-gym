@@ -1,8 +1,8 @@
 "use client";
 
 import { AlertCircle, ArrowRight, ExternalLink, PartyPopper, Zap } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { getNextReadTermAction } from "@/app/(private)/jargon/read/actions";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { getNextReadTermAction, getReadTermByIdAction } from "@/app/(private)/jargon/read/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import {
   QuizActionBar,
@@ -19,17 +19,30 @@ import type { ReviewTerm } from "@/lib/review/types";
 
 type ReadStatus = "loading" | "ready" | "caughtUp" | "error";
 
-export function ReadPage() {
+type ReadPageProps = {
+  /** Deep-linked term id from a Telegram "Open in web" link, widget click, or direct link. */
+  initialTermId?: string;
+  /** True only when the source (Telegram) already recorded this exposure as read. */
+  initialTermAlreadyRead?: boolean;
+};
+
+export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: ReadPageProps) {
   const [status, setStatus] = useState<ReadStatus>("loading");
   const [term, setTerm] = useState<ReviewTerm | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isAdvancing, setIsAdvancing] = useState(false);
+  const deepLinkTermId = useRef(initialTermId);
 
   const fetchNext = useCallback(async () => {
     setIsAdvancing(true);
     setErrorMessage(null);
 
-    const result = await getNextReadTermAction();
+    const termId = deepLinkTermId.current;
+    deepLinkTermId.current = undefined;
+
+    const result = termId
+      ? await getReadTermByIdAction(termId, initialTermAlreadyRead)
+      : await getNextReadTermAction();
 
     setIsAdvancing(false);
 
@@ -47,7 +60,7 @@ export function ReadPage() {
 
     setTerm(result.term);
     setStatus("ready");
-  }, []);
+  }, [initialTermAlreadyRead]);
 
   useEffect(() => {
     void fetchNext();

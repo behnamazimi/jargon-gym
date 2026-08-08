@@ -94,13 +94,10 @@ export function formatMaskedTermMessage(term: TermCard): string {
   return `${header}\n\n<tg-spoiler>${trimmedDetails}${searchLink}</tg-spoiler>`;
 }
 
-function appendOpenInWebRow(
-  rows: InlineKeyboardMarkup["inline_keyboard"],
-  domainId: string,
-  termId: string,
-): void {
+function appendOpenInWebRow(rows: InlineKeyboardMarkup["inline_keyboard"], termId: string): void {
   const base = getAppBaseUrl();
-  const webUrl = `${base}/jargon?domain=${encodeURIComponent(domainId)}&termId=${encodeURIComponent(termId)}`;
+  // Telegram already recorded this term as read when it delivered the message.
+  const webUrl = `${base}/jargon/read?termId=${encodeURIComponent(termId)}&alreadyRead=true`;
   try {
     if (base && new URL(webUrl).protocol === "https:") {
       rows.push([{ text: "Open in web", url: webUrl }]);
@@ -114,7 +111,7 @@ export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
     [{ text: "Read next", callback_data: `read:${term.id}` }],
   ];
-  appendOpenInWebRow(rows, term.domainId, term.id);
+  appendOpenInWebRow(rows, term.id);
   return { inline_keyboard: rows };
 }
 

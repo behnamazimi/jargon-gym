@@ -81,14 +81,3 @@ export async function fetchTermRelationshipsForTerms(client: Client, termIds: st
   if (error) throw error;
   return data;
 }
-
-export async function fetchDomainIdForTerm(client: Client, termId: string) {
-  const { data, error } = await client
-    .from("terms")
-    .select("domain_id")
-    .eq("id", termId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data?.domain_id ?? null;
-}

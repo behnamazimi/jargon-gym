@@ -1,7 +1,11 @@
 import { ReadPage } from "@/components/jargon/read/read-page";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function JargonReadPage() {
+type PageProps = {
+  searchParams: Promise<{ termId?: string; alreadyRead?: string }>;
+};
+
+export default async function JargonReadPage({ searchParams }: PageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -15,5 +19,6 @@ export default async function JargonReadPage() {
     );
   }
 
-  return <ReadPage />;
+  const { termId, alreadyRead } = await searchParams;
+  return <ReadPage initialTermId={termId} initialTermAlreadyRead={alreadyRead === "true"} />;
 }
