@@ -14,6 +14,7 @@ const LABELS: Record<PickReason, string> = {
   abandoned_review: "Left mid-review",
   stale: "Not seen recently",
   solid_cooldown: "Recently marked solid",
+  recently_read: "Recently read",
   steady: "Recently reviewed",
 };
 
