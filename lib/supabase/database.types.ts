@@ -1,30 +1,10 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5";
   };
   public: {
     Tables: {
@@ -110,12 +90,12 @@ export type Database = {
       };
       review_state: {
         Row: {
+          fail_streak: number;
           last_outcome: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at: string | null;
           last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string | null;
           last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
-          fail_streak: number;
           read_count: number;
           recalled_count: number;
           seen_count: number;
@@ -123,12 +103,12 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          fail_streak?: number;
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at?: string | null;
           last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
           last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
-          fail_streak?: number;
           read_count?: number;
           recalled_count?: number;
           seen_count?: number;
@@ -136,12 +116,12 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          fail_streak?: number;
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at?: string | null;
           last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
           last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
-          fail_streak?: number;
           read_count?: number;
           recalled_count?: number;
           seen_count?: number;
@@ -550,12 +530,12 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
-          last_outcome: Database["public"]["Enums"]["review_outcome"];
-          last_recalled_at: string | null;
-          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
-          last_seen_at: string;
-          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
           fail_streak: number;
+          last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_seen_at: string;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"];
           read_count: number;
           recalled_count: number;
           seen_count: number;
@@ -601,12 +581,12 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
-          last_outcome: Database["public"]["Enums"]["review_outcome"];
-          last_recalled_at: string | null;
-          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
-          last_seen_at: string;
-          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
           fail_streak: number;
+          last_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_recalled_at: string;
+          last_recalled_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_seen_at: string;
+          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"];
           read_count: number;
           recalled_count: number;
           seen_count: number;
@@ -785,9 +765,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       domain_visibility: ["private", "shared"],
