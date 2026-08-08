@@ -16,10 +16,12 @@ export type {
 
 export { formatPickReason } from "./reasons";
 export { SOLID_COOLDOWN_HOURS, NEVER_RECALLED_MIN_SEEN } from "./presets";
+export { loadUserPreset } from "./repository";
 
 export {
   pickReviewTerms,
   pickReviewTermsForUser,
+  listScoredCandidates,
   getReviewPoolStats,
   getReviewPoolStatsForUser,
   getReviewPoolStatsByDomainForUser,

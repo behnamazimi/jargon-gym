@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import type { PickContext, PickMeta, PoolStats } from "./types";
+import type { PickContext, PickMeta, PoolStats, ReviewPreset, ScoredCandidate } from "./types";
 import { pickTerms } from "./pick";
 import { computePoolStats } from "./stats";
 import {
@@ -88,6 +88,19 @@ export async function pickReviewTermsForUser(
   );
 
   return { cards, pickMeta };
+}
+
+/** Every candidate in the pool, scored and sorted — no slicing. Debug/inspection only. */
+export async function listScoredCandidates(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+  status: "known" | "unknown",
+  preset: ReviewPreset,
+): Promise<ScoredCandidate[]> {
+  const candidates = await fetchCandidates(client, userId, scope, status);
+  if (candidates.length === 0) return [];
+  return pickTerms(candidates, preset, candidates.length);
 }
 
 export async function getReviewPoolStats(
