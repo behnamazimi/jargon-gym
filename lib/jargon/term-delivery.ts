@@ -93,16 +93,7 @@ export async function deliverNextTerm(
     return result;
   }
 
-  try {
-    await applyTermShown(client, userId, term.id, "admin");
-  } catch (err) {
-    console.error("Failed to record review outcome on term delivery", {
-      userId,
-      termId: term.id,
-      err,
-    });
-  }
-
+  await applyTermShown(client, userId, term.id, "admin");
   await maybeRecordSend(client, userId, options);
   return { kind: "term", term };
 }

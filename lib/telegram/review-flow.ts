@@ -5,7 +5,11 @@ import { applyReviewRating, applyTermShown } from "@/lib/jargon/review-outcome";
 import { getMaxStudyCount } from "@/lib/study";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";
-import { NO_KNOWN_REVIEW_TERMS_MESSAGE, NO_UNKNOWN_REVIEW_TERMS_MESSAGE } from "./copy";
+import {
+  NO_KNOWN_REVIEW_TERMS_MESSAGE,
+  NO_UNKNOWN_REVIEW_TERMS_MESSAGE,
+  REVIEW_REVEAL_FAILED_SUFFIX,
+} from "./copy";
 import {
   buildReviewRateKeyboard,
   buildReviewRevealKeyboard,
@@ -496,12 +500,21 @@ export async function handleReviewReveal(
 
   try {
     await applyTermShown(client, session.userId, currentTerm.id, "admin");
-  } catch (err) {
-    console.error("Failed to record review outcome on reveal", {
+  } catch (error) {
+    console.error("handleReviewReveal: failed to record shown outcome", {
       userId: session.userId,
       termId: currentTerm.id,
-      err,
+      error,
     });
+    // Session state is untouched (still not revealed) so the same Reveal button can be retried.
+    return [
+      edit(
+        chatId,
+        messageId,
+        `${formatReviewPrompt(currentTerm, session.currentIndex, session.termIds.length)}${REVIEW_REVEAL_FAILED_SUFFIX}`,
+        buildReviewRevealKeyboard(session.currentIndex),
+      ),
+    ];
   }
 
   const updatedSession = await markReviewRevealed(client, chatId, session);

@@ -7,7 +7,12 @@ import {
   resolveUserIdByChatId,
 } from "@/lib/jargon/term-delivery";
 import type { TelegramAction } from "./actions";
-import { CAUGHT_UP_MESSAGE, CONNECT_MESSAGE, MARKED_KNOWN_SUFFIX } from "./copy";
+import {
+  CAUGHT_UP_MESSAGE,
+  CONNECT_MESSAGE,
+  MARKED_KNOWN_SUFFIX,
+  READ_NEXT_FAILED_MESSAGE,
+} from "./copy";
 import {
   buildReadKeyboard,
   buildTermInlineKeyboard,
@@ -93,13 +98,18 @@ export async function handleReadCallback(
     );
   }
 
-  const next = await deliverNextTerm(client, userId);
-  if (next.kind === "term") {
-    actions.push(
-      send(chatId, formatTermMessage(next.term), buildTermInlineKeyboard(next.term), true),
-    );
-  } else if (next.kind === "caughtUp") {
-    actions.push(send(chatId, CAUGHT_UP_MESSAGE));
+  try {
+    const next = await deliverNextTerm(client, userId);
+    if (next.kind === "term") {
+      actions.push(
+        send(chatId, formatTermMessage(next.term), buildTermInlineKeyboard(next.term), true),
+      );
+    } else if (next.kind === "caughtUp") {
+      actions.push(send(chatId, CAUGHT_UP_MESSAGE));
+    }
+  } catch (error) {
+    console.error("handleReadCallback: failed to deliver next term", { userId, error });
+    actions.push(send(chatId, READ_NEXT_FAILED_MESSAGE));
   }
 
   return actions;
@@ -135,21 +145,25 @@ export async function handleSendDue(client: Client): Promise<{
 
     actions.push({ type: "typing", chatId });
 
-    const result = await deliverNextTerm(client, userId, {
-      recordSend: true,
-      skipIfAlreadyCaughtUp: true,
-      allCaughtUpAt: linkRow.all_caught_up_at,
-      persistCaughtUpFlag: true,
-    });
+    try {
+      const result = await deliverNextTerm(client, userId, {
+        recordSend: true,
+        skipIfAlreadyCaughtUp: true,
+        allCaughtUpAt: linkRow.all_caught_up_at,
+        persistCaughtUpFlag: true,
+      });
 
-    if (result.kind === "term") {
-      sent += 1;
-      actions.push(
-        send(chatId, formatTermMessage(result.term), buildTermInlineKeyboard(result.term), true),
-      );
-    } else if (result.kind === "caughtUp") {
-      caughtUp += 1;
-      actions.push(send(chatId, CAUGHT_UP_MESSAGE));
+      if (result.kind === "term") {
+        sent += 1;
+        actions.push(
+          send(chatId, formatTermMessage(result.term), buildTermInlineKeyboard(result.term), true),
+        );
+      } else if (result.kind === "caughtUp") {
+        caughtUp += 1;
+        actions.push(send(chatId, CAUGHT_UP_MESSAGE));
+      }
+    } catch (error) {
+      console.error("handleSendDue: failed to deliver term for user", { userId, error });
     }
   }
 
