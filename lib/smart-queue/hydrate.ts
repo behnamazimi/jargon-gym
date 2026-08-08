@@ -31,7 +31,9 @@ function mapTermCardRow(row: {
   category: string;
   definition: string | null;
   example: string | null;
+  mental_model: string | null;
   discussion: string | null;
+  anti_example: string | null;
   controversy: string | null;
   domain_id: string;
   domain_name: string;
@@ -43,7 +45,9 @@ function mapTermCardRow(row: {
     category: row.category,
     definition: row.definition ?? "",
     example: row.example,
+    mentalModel: row.mental_model,
     discussion: row.discussion,
+    antiExample: row.anti_example,
     controversy: row.controversy,
     domainId: row.domain_id,
     domainName: row.domain_name,
@@ -112,7 +116,9 @@ export async function hydrateTermsAsTermCards(
       category: term.category,
       definition: term.definition,
       example: term.example || null,
+      mentalModel: term.mentalModel || null,
       discussion: term.discussion || null,
+      antiExample: term.antiExample || null,
       controversy: term.controversy ?? null,
       domainId: domainId ?? "",
       domainName: domainId ? (domainNameById.get(domainId) ?? "Unknown") : "Unknown",

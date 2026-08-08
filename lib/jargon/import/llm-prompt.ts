@@ -17,7 +17,9 @@ JSON structure:
       "category": "Browse label for filters only — e.g. Architecture, Testing",
       "definition": "What the term means, in plain language — meaning only",
       "example": "Optional — concrete scene or natural sentence; omit if definition alone is enough to use the word",
+      "mental_model": "Optional — a comparison or analogy that makes the term click; omit if the definition is already intuitive",
       "discussion": "Optional — in practice: tradeoffs, conventions, when you'd reach for it, common misuse",
+      "anti_example": "Optional — a near-miss: something that looks like this term but isn't, only when there's real risk of confusing the two",
       "controversy": "Optional — debated: only when practitioners genuinely disagree on meaning or scope"
     }
   ],
@@ -35,9 +37,11 @@ Field rules:
 - "term", "category", and "definition" are the only required fields per term.
 - "category" is a browse label, not a learning field — pick whatever helps filter the list later.
 - "definition" is meaning only: what the term IS. Do not put when to use it, how people disagree, how it differs from a related term, or application nuance in the definition — those belong in other fields.
-- "example", "discussion", and "controversy" are all optional. Omit each one individually when it wouldn't add real value — empty optional fields mean "not needed", not "TODO". Do not fill every field on every term.
+- "example", "mental_model", "discussion", "anti_example", and "controversy" are all optional. Omit each one individually when it wouldn't add real value — empty optional fields mean "not needed", not "TODO". Do not fill every field on every term.
 - Add "example" when the definition alone wouldn't let someone use the word in conversation. Use a concrete scene (where it applies in real work) or a natural sentence (the word used in speech) — whichever makes the term click; one is enough.
+- Add "mental_model" when a comparison or analogy would make the term click faster than the definition alone — a memorable "think of it like X" framing. Skip it when the definition is already intuitive on its own.
 - Add "discussion" (in practice) for tradeoffs, team conventions, when you'd reach for the word, or common misuse — usage nuance that isn't obvious from the definition and example. Do not restate the definition.
+- Add "anti_example" only when there's a real near-miss — something people commonly mistake for this term or confuse it with — worth naming to sharpen the boundary. Skip it when there's no genuine risk of confusion.
 - Add "controversy" (debated) only when practitioners genuinely disagree on meaning or scope — not loose usage, not a caution about overuse. Most terms should NOT have this field.
 - The "relationships" array as a whole is optional. Add a relationship when two terms have any real connection worth naming — prerequisite of, subtype of, contrasts with, synonym of, depends on, builds on, often confused with, etc. Most terms won't need one, and that's expected.
 - A term is complete when someone could use the word correctly in conversation — not when every optional field is filled.

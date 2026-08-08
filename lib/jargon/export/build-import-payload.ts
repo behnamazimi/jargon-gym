@@ -11,7 +11,9 @@ export function buildImportPayloadFromCollection(domain: Domain, terms: Term[]):
     domain: domain.name,
     terms: terms.map((term) => {
       const example = optionalText(term.example);
+      const mentalModel = optionalText(term.mentalModel);
       const discussion = optionalText(term.discussion);
+      const antiExample = optionalText(term.antiExample);
       const controversy = optionalText(term.controversy);
 
       return {
@@ -19,7 +21,9 @@ export function buildImportPayloadFromCollection(domain: Domain, terms: Term[]):
         category: term.category,
         definition: term.definition,
         ...(example ? { example } : {}),
+        ...(mentalModel ? { mental_model: mentalModel } : {}),
         ...(discussion ? { discussion } : {}),
+        ...(antiExample ? { anti_example: antiExample } : {}),
         ...(controversy ? { controversy } : {}),
       };
     }),

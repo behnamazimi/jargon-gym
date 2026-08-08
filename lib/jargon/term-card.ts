@@ -13,7 +13,9 @@ export type TermCard = {
   category: string;
   definition: string;
   example: string | null;
+  mentalModel: string | null;
   discussion: string | null;
+  antiExample: string | null;
   controversy: string | null;
   domainId: string;
   domainName: string;

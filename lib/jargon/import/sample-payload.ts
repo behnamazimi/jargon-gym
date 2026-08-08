@@ -11,6 +11,8 @@ export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
         "The degree to which one component depends on another's internals — the tighter the coupling, the more a change on one side risks breaking the other.",
       example:
         "Billing code that directly reads fields from the user-profile table breaks if that table changes.",
+      mental_model:
+        "Think of it like two people sharing a single house key — convenient until one of them changes the lock.",
       discussion:
         "Teams usually reduce coupling by communicating through a stable API or event contract instead of reaching into another service's internal data model directly.",
     },
@@ -21,6 +23,8 @@ export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
         "How tightly a module's responsibilities relate to one single purpose, rather than being a grab-bag of unrelated tasks.",
       example:
         "A module that only sends emails is more cohesive than one that also handles payments.",
+      anti_example:
+        "A 'utils' file that handles date formatting, API calls, and validation isn't cohesive — those are unrelated concerns bundled together.",
     },
   ],
   relationships: [

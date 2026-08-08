@@ -120,8 +120,20 @@ export function ReadPage() {
                 </TermDetailSection>
               ) : null}
 
+              {term.mentalModel ? (
+                <TermDetailSection label="Mental model" variant="callout">
+                  {term.mentalModel}
+                </TermDetailSection>
+              ) : null}
+
               {term.discussion ? (
                 <TermDetailSection label="In practice">{term.discussion}</TermDetailSection>
+              ) : null}
+
+              {term.antiExample ? (
+                <TermDetailSection label="Anti-example" variant="debated">
+                  {term.antiExample}
+                </TermDetailSection>
               ) : null}
 
               {term.controversy ? (

@@ -40,7 +40,9 @@ export function mapTerm(row: TermRow): Term {
     category: row.category,
     definition: row.definition,
     example: row.example ?? "",
+    mentalModel: row.mental_model ?? undefined,
     discussion: row.discussion ?? "",
+    antiExample: row.anti_example ?? undefined,
     controversy: row.controversy ?? undefined,
     relationships: [],
   };

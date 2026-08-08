@@ -3,7 +3,9 @@ type ImportTerm = {
   category: string;
   definition: string;
   example?: string | null;
+  mental_model?: string | null;
   discussion?: string | null;
+  anti_example?: string | null;
   controversy?: string | null;
 };
 

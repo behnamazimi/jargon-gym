@@ -84,7 +84,9 @@ export async function executeImport(
       category: item.category.trim(),
       definition: item.definition.trim(),
       example: item.example?.trim() || null,
+      mental_model: item.mental_model?.trim() || null,
       discussion: item.discussion?.trim() || null,
+      anti_example: item.anti_example?.trim() || null,
       controversy: item.controversy?.trim() || null,
       domain_id: domain.id,
     };
