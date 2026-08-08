@@ -20,11 +20,13 @@ import type { ReviewTerm } from "@/lib/review/types";
 type ReadStatus = "loading" | "ready" | "caughtUp" | "error";
 
 type ReadPageProps = {
-  /** Deep-linked term id from a Telegram "Open in web" link or widget click. */
+  /** Deep-linked term id from a Telegram "Open in web" link, widget click, or direct link. */
   initialTermId?: string;
+  /** True only when the source (Telegram) already recorded this exposure as read. */
+  initialTermAlreadyRead?: boolean;
 };
 
-export function ReadPage({ initialTermId }: ReadPageProps) {
+export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: ReadPageProps) {
   const [status, setStatus] = useState<ReadStatus>("loading");
   const [term, setTerm] = useState<ReviewTerm | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -38,7 +40,9 @@ export function ReadPage({ initialTermId }: ReadPageProps) {
     const termId = deepLinkTermId.current;
     deepLinkTermId.current = undefined;
 
-    const result = termId ? await getReadTermByIdAction(termId) : await getNextReadTermAction();
+    const result = termId
+      ? await getReadTermByIdAction(termId, initialTermAlreadyRead)
+      : await getNextReadTermAction();
 
     setIsAdvancing(false);
 
@@ -56,7 +60,7 @@ export function ReadPage({ initialTermId }: ReadPageProps) {
 
     setTerm(result.term);
     setStatus("ready");
-  }, []);
+  }, [initialTermAlreadyRead]);
 
   useEffect(() => {
     void fetchNext();

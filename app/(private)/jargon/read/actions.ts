@@ -8,8 +8,19 @@ import { fetchTermCardForUser, getReviewPoolStats, pickReviewTerms } from "@/lib
 
 type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };
 
-/** Deep-link entry: open one specific term (from a Telegram/widget link) without touching the queue. */
-export async function getReadTermByIdAction(termId: string): Promise<NextReadTermResult> {
+/**
+ * Deep-link entry: open one specific term (from Telegram, the widget, or a
+ * direct link) without touching the queue.
+ *
+ * `alreadyRead` covers Telegram's "Open in web" link, where the term was
+ * already recorded as read when the bot delivered it. Every other source
+ * (widget click, a bare link) hasn't recorded that exposure yet, so it's
+ * counted here.
+ */
+export async function getReadTermByIdAction(
+  termId: string,
+  alreadyRead: boolean,
+): Promise<NextReadTermResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
@@ -17,6 +28,10 @@ export async function getReadTermByIdAction(termId: string): Promise<NextReadTer
     const card = await fetchTermCardForUser(auth.supabase, auth.user.id, termId);
     if (!card) {
       return { error: "That term isn't in your collection." };
+    }
+
+    if (!alreadyRead) {
+      await applyTermRead(auth.supabase, auth.user.id, card.id, "session");
     }
 
     return { term: toReviewTerm(card) };

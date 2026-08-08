@@ -96,7 +96,8 @@ export function formatMaskedTermMessage(term: TermCard): string {
 
 function appendOpenInWebRow(rows: InlineKeyboardMarkup["inline_keyboard"], termId: string): void {
   const base = getAppBaseUrl();
-  const webUrl = `${base}/jargon/read?termId=${encodeURIComponent(termId)}`;
+  // Telegram already recorded this term as read when it delivered the message.
+  const webUrl = `${base}/jargon/read?termId=${encodeURIComponent(termId)}&alreadyRead=true`;
   try {
     if (base && new URL(webUrl).protocol === "https:") {
       rows.push([{ text: "Open in web", url: webUrl }]);
