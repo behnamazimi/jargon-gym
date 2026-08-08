@@ -22,7 +22,7 @@ const PRESET_OPTIONS: Array<{
   {
     id: "learn_new",
     label: "Learn new first",
-    description: "Prioritize unseen terms and recently added content.",
+    description: "Prioritize never-read terms and recently added content.",
   },
   {
     id: "drill_weak",
