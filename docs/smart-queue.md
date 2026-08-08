@@ -430,6 +430,16 @@ switcher never touches `user_settings`. Built on
 `listScoredCandidates`, which is `pickTerms` with `limit` set to every
 candidate instead of a top-N slice.
 
+Rows written before the `smart_queue_v3_signals` migration can show `last
+read` with `read_count`/`review_reveal_count` both 0 — that migration
+converted the old flat `shown` outcome to `read` as a safe over-estimate
+(it couldn't tell which surface wrote it) but left the split counters at
+their default, since there was no way to know the historical split. The
+debug page flags these as `(legacy, uncounted)` rather than silently
+implying a live inconsistency; scoring is unaffected, since nothing reads
+`last_outcome` directly except `abandoned_review`, which also requires
+`last_review_reveal_at` to be set — never true for these rows.
+
 ---
 
 ## Data model

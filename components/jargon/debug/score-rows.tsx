@@ -38,8 +38,11 @@ export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
           <p className="m-0 text-xs leading-relaxed text-base-content/50">
             seen {row.seenCount} · read {row.readCount} · review reveal {row.reviewRevealCount} ·
             recalled {row.recalledCount} · last{" "}
-            <span className="font-medium">{row.lastOutcome}</span> ·{" "}
-            {formatRelative(row.lastSeenAt)}
+            <span className="font-medium">{row.lastOutcome}</span>
+            {row.lastOutcome === "read" && row.readCount === 0 && row.reviewRevealCount === 0 ? (
+              <span className="italic"> (legacy, uncounted)</span>
+            ) : null}{" "}
+            · {formatRelative(row.lastSeenAt)}
             {row.lastReviewRevealAt ? (
               <> · last reveal {formatRelative(row.lastReviewRevealAt)}</>
             ) : null}
