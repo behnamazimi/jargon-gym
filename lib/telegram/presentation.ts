@@ -47,7 +47,9 @@ function buildTermHeader(term: TermCard): string {
 function buildTermDetails(term: TermCard): string {
   let details = escapeHtml((term.definition ?? "").trim());
   details += formatQuotedSection("Example", term.example ?? "");
+  details += formatQuotedSection("Mental model", term.mentalModel ?? "");
   details += formatQuotedSection("In practice", term.discussion ?? "");
+  details += formatQuotedSection("Anti-example", term.antiExample ?? "");
   details += formatQuotedSection("Debated", term.controversy ?? "");
   details += formatRelationships(term.relationships ?? []);
   return details;

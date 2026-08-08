@@ -253,6 +253,7 @@ export type Database = {
       };
       terms: {
         Row: {
+          anti_example: string | null;
           category: string;
           controversy: string | null;
           created_at: string;
@@ -261,9 +262,11 @@ export type Database = {
           domain_id: string;
           example: string | null;
           id: string;
+          mental_model: string | null;
           term: string;
         };
         Insert: {
+          anti_example?: string | null;
           category: string;
           controversy?: string | null;
           created_at?: string;
@@ -272,9 +275,11 @@ export type Database = {
           domain_id: string;
           example?: string | null;
           id?: string;
+          mental_model?: string | null;
           term: string;
         };
         Update: {
+          anti_example?: string | null;
           category?: string;
           controversy?: string | null;
           created_at?: string;
@@ -283,6 +288,7 @@ export type Database = {
           domain_id?: string;
           example?: string | null;
           id?: string;
+          mental_model?: string | null;
           term?: string;
         };
         Relationships: [
@@ -535,6 +541,7 @@ export type Database = {
       get_term_card: {
         Args: { p_term_id: string; p_user_id: string };
         Returns: {
+          anti_example: string;
           category: string;
           controversy: string;
           definition: string;
@@ -543,6 +550,7 @@ export type Database = {
           domain_name: string;
           example: string;
           id: string;
+          mental_model: string;
           relationships: Json;
           term: string;
         }[];

@@ -6,10 +6,10 @@ with built-in ones), mark what you already know, review a ranked queue when you
 feel like it, and quiz when you want a check-in. No due dates, no daily
 streaks.
 
-Terms go beyond one-line definitions: optional example, in-practice notes,
-debated angles, and links to related terms. Known and unknown terms stay in
-separate pools so review never mixes words you already have with ones you're
-still learning.
+Terms go beyond one-line definitions: optional example, mental model,
+in-practice notes, anti-example, debated angles, and links to related terms.
+Known and unknown terms stay in separate pools so review never mixes words
+you already have with ones you're still learning.
 
 The same smart review queue powers every surface — web review, collection
 browse, Telegram bot, and macOS desktop widget — not random shuffle, and not

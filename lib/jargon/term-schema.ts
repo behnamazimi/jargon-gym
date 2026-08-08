@@ -5,7 +5,9 @@ export const termFieldsSchema = z.object({
   category: z.string().trim().min(1, "Enter a category"),
   definition: z.string().trim().min(1, "Enter a definition"),
   example: z.string().nullable().optional(),
+  mental_model: z.string().nullable().optional(),
   discussion: z.string().nullable().optional(),
+  anti_example: z.string().nullable().optional(),
   controversy: z.string().nullable().optional(),
 });
 
@@ -28,7 +30,9 @@ export function termInputToRow(input: TermInput, domainId: string) {
     category: input.category.trim(),
     definition: input.definition.trim(),
     example: input.example?.trim() || null,
+    mental_model: input.mental_model?.trim() || null,
     discussion: input.discussion?.trim() || null,
+    anti_example: input.anti_example?.trim() || null,
     controversy: input.controversy?.trim() || null,
     domain_id: domainId,
   };
@@ -40,7 +44,9 @@ export function termInputToUpdateRow(input: TermInput) {
     category: input.category.trim(),
     definition: input.definition.trim(),
     example: input.example?.trim() || null,
+    mental_model: input.mental_model?.trim() || null,
     discussion: input.discussion?.trim() || null,
+    anti_example: input.anti_example?.trim() || null,
     controversy: input.controversy?.trim() || null,
   };
 }

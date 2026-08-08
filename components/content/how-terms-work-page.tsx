@@ -34,8 +34,16 @@ const TERM_FIELDS = [
     body: "Optional. Add when the definition alone wouldn't let you use the word. A concrete scene (where you've seen it apply) or a natural sentence (the word used in speech), whichever makes it click.",
   },
   {
+    title: "Mental model",
+    body: "Optional. A comparison or analogy, a way to think about the term rather than what it does. Add it when it would make the term click faster than the definition alone.",
+  },
+  {
     title: "In practice",
     body: "Optional. Tradeoffs, team conventions, when you'd reach for it, usage nuance that isn't obvious from the definition. Common misuse fits here too, as does a caution about overuse, not in Debated.",
+  },
+  {
+    title: "Anti-example",
+    body: "Optional and rare. A near-miss, something that looks like this term but isn't, so you can tell them apart. Only when there's a real risk of confusing the two.",
   },
   {
     title: "Debated",
@@ -53,8 +61,16 @@ const OPTIONAL_FIELD_TRIGGERS = [
     body: "The definition is solid but I still couldn't use the word in conversation from it alone.",
   },
   {
+    title: "Mental model",
+    body: "A comparison or analogy would make this click faster than the definition alone.",
+  },
+  {
     title: "In practice",
     body: "There's a tradeoff, convention, or \"when you'd reach for it\" that the definition and example don't cover for me.",
+  },
+  {
+    title: "Anti-example",
+    body: "There's something people commonly mistake for this term, and naming the difference would help.",
   },
   {
     title: "Debated",

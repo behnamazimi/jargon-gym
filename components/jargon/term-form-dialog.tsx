@@ -39,7 +39,9 @@ const emptyForm: TermInput = {
   category: "",
   definition: "",
   example: "",
+  mental_model: "",
   discussion: "",
+  anti_example: "",
   controversy: "",
 };
 
@@ -49,7 +51,9 @@ function termToForm(term: Term): TermInput {
     category: term.category,
     definition: term.definition,
     example: term.example || "",
+    mental_model: term.mentalModel || "",
     discussion: term.discussion || "",
+    anti_example: term.antiExample || "",
     controversy: term.controversy || "",
   };
 }
@@ -110,7 +114,9 @@ export function TermFormDialog({
     const payload: TermInput = {
       ...form,
       example: form.example?.trim() ? form.example : null,
+      mental_model: form.mental_model?.trim() ? form.mental_model : null,
       discussion: form.discussion?.trim() ? form.discussion : null,
+      anti_example: form.anti_example?.trim() ? form.anti_example : null,
       controversy: form.controversy?.trim() ? form.controversy : null,
     };
 
@@ -193,11 +199,31 @@ export function TermFormDialog({
           </Field>
 
           <Field>
+            <FieldLabel htmlFor="term-mental-model">Mental model (optional)</FieldLabel>
+            <Textarea
+              id="term-mental-model"
+              value={form.mental_model ?? ""}
+              onChange={(event) => updateField("mental_model", event.target.value)}
+              className="min-h-20"
+            />
+          </Field>
+
+          <Field>
             <FieldLabel htmlFor="term-discussion">In practice (optional)</FieldLabel>
             <Textarea
               id="term-discussion"
               value={form.discussion ?? ""}
               onChange={(event) => updateField("discussion", event.target.value)}
+              className="min-h-20"
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="term-anti-example">Anti-example (optional)</FieldLabel>
+            <Textarea
+              id="term-anti-example"
+              value={form.anti_example ?? ""}
+              onChange={(event) => updateField("anti_example", event.target.value)}
               className="min-h-20"
             />
           </Field>

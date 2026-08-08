@@ -13,7 +13,9 @@ export type Term = {
   category: string;
   definition: string;
   example: string;
+  mentalModel?: string;
   discussion: string;
+  antiExample?: string;
   controversy?: string;
   relationships: TermRelationship[];
 };

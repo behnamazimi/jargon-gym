@@ -20,6 +20,12 @@ export function ReviewTermContent({ term, className }: ReviewTermContentProps) {
         </TermDetailSection>
       ) : null}
 
+      {term.mentalModel ? (
+        <TermDetailSection label="Mental model" variant="callout">
+          {term.mentalModel}
+        </TermDetailSection>
+      ) : null}
+
       {term.discussion ? (
         <Collapsible defaultExpanded>
           <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border-none bg-base-200/40 px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-base-content/60 uppercase outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -28,6 +34,25 @@ export function ReviewTermContent({ term, className }: ReviewTermContentProps) {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <p className="pt-3 text-sm leading-relaxed text-base-content/60">{term.discussion}</p>
+          </CollapsibleContent>
+        </Collapsible>
+      ) : null}
+
+      {term.antiExample ? (
+        <Collapsible defaultExpanded>
+          <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg border-none bg-base-200/40 px-3 py-2.5 text-left text-xs font-semibold tracking-wide text-base-content/60 uppercase outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            Anti-example
+            <ChevronRight className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-3 flex gap-2.5 rounded-lg bg-primary/5 p-3 ring-1 ring-primary/20">
+              <AlertTriangle
+                className="mt-0.5 size-4 shrink-0 text-primary"
+                aria-hidden
+                strokeWidth={1.5}
+              />
+              <p className="text-sm leading-relaxed text-base-content/60">{term.antiExample}</p>
+            </div>
           </CollapsibleContent>
         </Collapsible>
       ) : null}
