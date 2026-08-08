@@ -9,7 +9,7 @@ const LABELS: Record<PickReason, string> = {
   learning: "Still learning",
   forgot: "Forgot",
   repeat_fail: "Repeatedly forgotten",
-  never_recalled: `Seen/read ${NEVER_RECALLED_MIN_SEEN}+ times, never recalled`,
+  never_recalled: `Read ${NEVER_RECALLED_MIN_SEEN}+ times, never recalled`,
   browse_only: `Browsed ${NEVER_RECALLED_MIN_SEEN}+ times, never read`,
   abandoned_review: "Left mid-review",
   stale: "Not seen recently",

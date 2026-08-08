@@ -61,18 +61,18 @@ function evaluateCandidate(
     reasons.push("repeat_fail");
   }
 
-  // Never recalled despite repeated light exposure. Split by whether any of
-  // that exposure was deliberate — Read CTA/widget, or a Review reveal —
-  // versus purely incidental browsing. Deliberate exposure (readCount or
-  // reviewRevealCount > 0) means the user opened it on purpose at least once
-  // and still never tested it (never_recalled, full boost); zero of either
-  // means every sighting was incidental jargon-page browsing (browse_only,
-  // smaller boost) — a weaker signal than having actually opened it.
-  if (candidate.recalledCount === 0 && candidate.seenCount >= NEVER_RECALLED_MIN_SEEN) {
-    if (candidate.readCount > 0 || candidate.reviewRevealCount > 0) {
+  // Never recalled despite repeated light exposure. The never_recalled
+  // threshold counts only deliberate exposure (readCount + reviewRevealCount)
+  // — incidental Seen-tier sightings (widget rotation, quiz appearances, the
+  // known/unknown toggle) don't pad this count. browse_only is the fallback
+  // for terms with zero deliberate exposure, gated on seenCount instead since
+  // it's purely incidental sightings by definition there.
+  if (candidate.recalledCount === 0) {
+    const deliberateCount = candidate.readCount + candidate.reviewRevealCount;
+    if (deliberateCount >= NEVER_RECALLED_MIN_SEEN) {
       score += weights.neverRecalledBoost;
       reasons.push("never_recalled");
-    } else {
+    } else if (deliberateCount === 0 && candidate.seenCount >= NEVER_RECALLED_MIN_SEEN) {
       score += weights.browseOnlyBoost;
       reasons.push("browse_only");
     }
