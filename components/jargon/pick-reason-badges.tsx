@@ -15,6 +15,7 @@ const REASON_BADGE_CLASS: Record<PickReason, string> = {
   new: "badge-soft badge-primary",
   learning: "badge-soft badge-warning",
   forgot: "badge-soft badge-error",
+  repeat_fail: "badge-soft badge-error",
   never_recalled: "badge-soft badge-info",
   abandoned_review: "badge-soft badge-info",
   stale: "badge-soft badge-neutral",

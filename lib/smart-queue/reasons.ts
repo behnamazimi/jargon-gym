@@ -8,6 +8,7 @@ const LABELS: Record<PickReason, string> = {
   new: "Recently added",
   learning: "Still learning",
   forgot: "Forgot",
+  repeat_fail: "Repeatedly forgotten",
   never_recalled: `Seen/read ${NEVER_RECALLED_MIN_SEEN}+ times, never recalled`,
   abandoned_review: "Left mid-review",
   stale: "Not seen recently",

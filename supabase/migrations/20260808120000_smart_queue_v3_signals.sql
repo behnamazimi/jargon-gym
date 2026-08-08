@@ -9,6 +9,9 @@
 -- Tiers: seen (incidental, e.g. jargon-page browse) < read (deliberate but
 -- untested, e.g. Read CTA / widget Next / Review reveal) < recalled
 -- (learning/solid/verified/forgot — an actual tested judgment).
+--
+-- fail_streak counts consecutive learning/forgot outcomes so scoring can tell
+-- "failed once" apart from "genuinely stuck" — it resets to 0 on a pass.
 
 create type public.review_shown_origin as enum ('browse', 'read_cta', 'widget', 'review_reveal');
 
@@ -53,7 +56,8 @@ alter table public.review_state
   add column last_recalled_outcome public.review_outcome
     check (last_recalled_outcome is null or last_recalled_outcome in ('learning', 'solid', 'verified', 'forgot')),
   add column last_recalled_at timestamptz,
-  add column last_shown_origin public.review_shown_origin;
+  add column last_shown_origin public.review_shown_origin,
+  add column fail_streak int not null default 0 check (fail_streak >= 0);
 
 comment on column public.review_state.read_count is
   'Count of Read-tier writes (deliberate, untested exposure) — subset of seen_count.';
@@ -65,18 +69,25 @@ comment on column public.review_state.last_recalled_at is
   'Timestamp of last_recalled_outcome.';
 comment on column public.review_state.last_shown_origin is
   'Origin of the last seen/read write: browse, read_cta, widget, or review_reveal.';
+comment on column public.review_state.fail_streak is
+  'Consecutive learning/forgot outcomes since the last solid/verified. Resets to 0 on a pass; unaffected by seen/read writes.';
 
 -- 3. Backfill from the only history we have: the current aggregate row.
 -- Rows with a real judgment get their recalled fields seeded as a lower bound
 -- (we know it happened at least once, not how many times). read_count and
 -- last_shown_origin stay at their defaults for pre-existing rows — we have no
 -- way to know the historical split, and guessing would be worse than admitting
--- we don't know.
+-- we don't know. Same lower-bound reasoning for fail_streak: we only know the
+-- current outcome is a fail, not how many preceded it, so it seeds to 1.
 update public.review_state
 set recalled_count = 1,
     last_recalled_outcome = last_outcome,
     last_recalled_at = last_seen_at
 where last_outcome in ('learning', 'solid', 'verified', 'forgot');
+
+update public.review_state
+set fail_streak = 1
+where last_outcome in ('learning', 'forgot');
 
 -- 4. record_review_outcome / my_record_review_outcome: thread shown_origin through,
 -- keep the new columns in sync alongside the existing seen_count/last_outcome writes.
@@ -131,7 +142,8 @@ begin
 
   insert into public.review_state (
     user_id, term_id, seen_count, last_seen_at, last_outcome,
-    read_count, recalled_count, last_recalled_outcome, last_recalled_at, last_shown_origin
+    read_count, recalled_count, last_recalled_outcome, last_recalled_at, last_shown_origin,
+    fail_streak
   )
   values (
     p_user_id,
@@ -143,7 +155,8 @@ begin
     case when v_is_recalled then 1 else 0 end,
     case when v_is_recalled then v_outcome else null end,
     case when v_is_recalled then now() else null end,
-    v_origin
+    v_origin,
+    case when v_outcome in ('learning', 'forgot') then 1 else 0 end
   )
   on conflict (user_id, term_id) do update
   set
@@ -168,6 +181,11 @@ begin
     last_shown_origin = case
       when v_is_light then v_origin
       else public.review_state.last_shown_origin
+    end,
+    fail_streak = case
+      when v_outcome in ('learning', 'forgot') then public.review_state.fail_streak + 1
+      when v_outcome in ('solid', 'verified') then 0
+      else public.review_state.fail_streak
     end;
 end;
 $$;
@@ -218,7 +236,8 @@ returns table (
   recalled_count int,
   last_recalled_outcome public.review_outcome,
   last_recalled_at timestamptz,
-  last_shown_origin public.review_shown_origin
+  last_shown_origin public.review_shown_origin,
+  fail_streak int
 )
 language plpgsql
 stable
@@ -255,7 +274,8 @@ begin
     coalesce(rs.recalled_count, 0)::int,
     rs.last_recalled_outcome,
     rs.last_recalled_at,
-    rs.last_shown_origin
+    rs.last_shown_origin,
+    coalesce(rs.fail_streak, 0)::int
   from public.terms t
   left join public.review_state rs
     on rs.term_id = t.id
@@ -293,7 +313,8 @@ returns table (
   recalled_count int,
   last_recalled_outcome public.review_outcome,
   last_recalled_at timestamptz,
-  last_shown_origin public.review_shown_origin
+  last_shown_origin public.review_shown_origin,
+  fail_streak int
 )
 language plpgsql
 stable
@@ -317,7 +338,8 @@ begin
     c.recalled_count,
     c.last_recalled_outcome,
     c.last_recalled_at,
-    c.last_shown_origin
+    c.last_shown_origin,
+    c.fail_streak
   from public.get_review_candidates(auth.uid(), p_domain_ids, p_status) as c;
 end;
 $$;

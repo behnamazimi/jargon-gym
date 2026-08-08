@@ -1,7 +1,7 @@
 /** Pure scoring function for smart queue algorithm.
  */
 
-import { NEVER_RECALLED_MIN_SEEN, SOLID_COOLDOWN_HOURS } from "./presets";
+import { FAIL_STREAK_CAP, NEVER_RECALLED_MIN_SEEN, SOLID_COOLDOWN_HOURS } from "./presets";
 import type { PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
 const NEW_TERM_THRESHOLD_HOURS = 72; // Terms created within 72h get new-term boost
@@ -50,6 +50,15 @@ function evaluateCandidate(
       reasons.push("forgot");
       break;
     // "solid" is handled by the cooldown above; "verified" stays inert.
+  }
+
+  // Fail streak: scales the learning/forgot boost by how many consecutive
+  // fails preceded it, so "failed once" ranks below "genuinely stuck".
+  // failStreak is only nonzero when lastRecalledOutcome is learning/forgot,
+  // so this always stacks on top of one of the boosts above.
+  if (candidate.failStreak >= 2) {
+    score += Math.min(candidate.failStreak, FAIL_STREAK_CAP) * weights.failStreakBoostPerRepeat;
+    reasons.push("repeat_fail");
   }
 
   // Never recalled despite repeated light exposure — replaces the old

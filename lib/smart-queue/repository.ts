@@ -34,6 +34,7 @@ function mapCandidateRows(
     last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
     last_recalled_at: string | null;
     last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+    fail_streak: number;
   }>,
 ): ReviewCandidate[] {
   return data.map((row) => ({
@@ -48,6 +49,7 @@ function mapCandidateRows(
     lastRecalledOutcome: row.last_recalled_outcome as ReviewOutcome | null,
     lastRecalledAt: row.last_recalled_at ? new Date(row.last_recalled_at) : null,
     lastShownOrigin: row.last_shown_origin as ReviewShownOrigin | null,
+    failStreak: row.fail_streak,
   }));
 }
 

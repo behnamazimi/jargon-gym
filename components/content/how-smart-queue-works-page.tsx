@@ -33,6 +33,10 @@ const PRIORITY_RAISES = [
     body: "You marked it forgot or cleared it as known, ranked above still-learning terms.",
   },
   {
+    title: "Repeatedly forgotten",
+    body: "Failed it more than once in a row, climbs higher the longer that streak runs, so genuinely stuck terms rank above a single slip.",
+  },
+  {
     title: `Seen or read ${NEVER_RECALLED_MIN_SEEN}+ times, never tested`,
     body: "Glanced at or read through several times but never actually tested yourself on it, seeing it often doesn't mean you've learned it.",
   },

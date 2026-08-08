@@ -9,7 +9,10 @@ export const SOLID_COOLDOWN_HOURS = 72;
 /** Minimum seen_count, with zero recalls, before the never-recalled boost applies. */
 export const NEVER_RECALLED_MIN_SEEN = 3;
 
-/** Quiz context multiplier for weak-signal weights (learning / forgot / never_recalled / abandoned_review). */
+/** Cap on how many consecutive fails count toward the fail-streak boost. */
+export const FAIL_STREAK_CAP = 5;
+
+/** Quiz context multiplier for weak-signal weights (learning / forgot / never_recalled / abandoned_review / fail streak). */
 const QUIZ_WEAK_MULTIPLIER = 1.5;
 
 const BALANCED_WEIGHTS: ScoreWeights = {
@@ -19,6 +22,7 @@ const BALANCED_WEIGHTS: ScoreWeights = {
   newTermBoost: 30,
   neverRecalledBoost: 30,
   abandonedReviewBoost: 45,
+  failStreakBoostPerRepeat: 15,
   solidCooldownPenalty: 120,
   seenCountPenalty: 10,
   recalledStalenessBoostPerHour: 0.5,
@@ -34,6 +38,7 @@ const LEARN_NEW_WEIGHTS: ScoreWeights = {
   newTermBoost: 60,
   neverRecalledBoost: 25,
   abandonedReviewBoost: 35,
+  failStreakBoostPerRepeat: 10,
   solidCooldownPenalty: 120,
   seenCountPenalty: 15,
   recalledStalenessBoostPerHour: 0.3,
@@ -49,6 +54,7 @@ const DRILL_WEAK_WEIGHTS: ScoreWeights = {
   newTermBoost: 20,
   neverRecalledBoost: 40,
   abandonedReviewBoost: 55,
+  failStreakBoostPerRepeat: 25,
   solidCooldownPenalty: 120,
   seenCountPenalty: 8,
   recalledStalenessBoostPerHour: 0.7,
@@ -81,5 +87,6 @@ export function getContextWeights(preset: ReviewPreset, context: PickContext): S
     forgotBoost: base.forgotBoost * QUIZ_WEAK_MULTIPLIER,
     neverRecalledBoost: base.neverRecalledBoost * QUIZ_WEAK_MULTIPLIER,
     abandonedReviewBoost: base.abandonedReviewBoost * QUIZ_WEAK_MULTIPLIER,
+    failStreakBoostPerRepeat: base.failStreakBoostPerRepeat * QUIZ_WEAK_MULTIPLIER,
   };
 }

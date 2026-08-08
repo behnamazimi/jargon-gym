@@ -115,6 +115,7 @@ export type Database = {
           last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string | null;
           last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+          fail_streak: number;
           read_count: number;
           recalled_count: number;
           seen_count: number;
@@ -127,6 +128,7 @@ export type Database = {
           last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
           last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
+          fail_streak?: number;
           read_count?: number;
           recalled_count?: number;
           seen_count?: number;
@@ -139,6 +141,7 @@ export type Database = {
           last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at?: string | null;
           last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
+          fail_streak?: number;
           read_count?: number;
           recalled_count?: number;
           seen_count?: number;
@@ -552,6 +555,7 @@ export type Database = {
           last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string;
           last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+          fail_streak: number;
           read_count: number;
           recalled_count: number;
           seen_count: number;
@@ -602,6 +606,7 @@ export type Database = {
           last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
           last_seen_at: string;
           last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+          fail_streak: number;
           read_count: number;
           recalled_count: number;
           seen_count: number;

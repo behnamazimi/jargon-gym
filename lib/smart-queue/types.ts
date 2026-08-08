@@ -26,6 +26,7 @@ export type PickReason =
   | "new"
   | "learning"
   | "forgot"
+  | "repeat_fail"
   | "never_recalled"
   | "abandoned_review"
   | "stale"
@@ -45,6 +46,8 @@ export type ReviewCandidate = {
   lastRecalledOutcome: ReviewOutcome | null;
   lastRecalledAt: Date | null;
   lastShownOrigin: ReviewShownOrigin | null;
+  /** Consecutive learning/forgot outcomes since the last solid/verified. */
+  failStreak: number;
 };
 
 export type ScoreWeights = {
@@ -54,6 +57,8 @@ export type ScoreWeights = {
   newTermBoost: number;
   neverRecalledBoost: number;
   abandonedReviewBoost: number;
+  /** Extra boost per consecutive fail, capped at FAIL_STREAK_CAP. */
+  failStreakBoostPerRepeat: number;
   solidCooldownPenalty: number;
   seenCountPenalty: number;
   /** Staleness rate once a term has been recalled at least once — the dominant rate. */
