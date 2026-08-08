@@ -39,11 +39,11 @@ three tiers of increasing weight:
   / `forgot`, from Review ratings, quiz answers, or the widget's "Mark known"
   button).
 
-The picker scores each candidate from that history plus a few nudges — unseen
-terms, struggling terms, terms seen or read many times but never actually
-tested, brand-new additions — and a penalty if you just marked something
-solid. **Recalled outcomes dominate ranking**: they're stored separately from
-the last Seen/Read event, so opening a term on the jargon page can never
+The picker scores each candidate from that history plus a few nudges —
+never-read terms, struggling terms, terms seen or read many times but never
+actually tested, brand-new additions — and a penalty if you just marked
+something solid. **Recalled outcomes dominate ranking**: they're stored
+separately from the last Seen/Read event, so opening a term on the jargon page can never
 silently erase a `learning`/`forgot` signal or cancel a solid cooldown.
 A term that fails Review or a quiz repeatedly in a row also ranks higher than
 one that only failed once — see `fail_streak` below. Highest score wins.
@@ -61,9 +61,12 @@ review, a quiz, the collection list, Telegram, or the desktop widget — and it
 moves between pools; review and quizzes always draw from one pool or the
 other.
 
-Once every term in a pool has been seen at least once, the unseen boost has
-nothing left to apply. From then on, ranking is mostly staleness and struggle
-signals — the **soft cycle**, with no everyday reset button.
+Once every term in a pool has been Read or Revealed at least once, the
+never-read boost has nothing left to apply. From then on, ranking is mostly
+staleness and struggle signals — the **soft cycle**, with no everyday reset
+button. Pool stats (`allSeenOnce`) track the same thing — read/reveal
+exposure, not raw `seen_count` — so they stay in sync with when the boost
+actually stops applying.
 
 ```
   active collections + known/unknown filter
@@ -130,7 +133,7 @@ above **still learning**.
 
 | Signal           | User-facing label                  | Effect                                                                                                       |
 | ---------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Never seen       | Never seen                         | Rises to the top until every term in the pool has been seen at least once                                    |
+| Never read       | Never read                         | Rises to the top until every term in the pool has been Read or Revealed at least once                        |
 | Still learning   | Still learning                     | Boost — marked "Didn't have it" in review, or wrong on a quiz                                                |
 | Forgot           | Forgot                             | Larger boost — marked forgot or cleared as known                                                             |
 | Repeat fail      | Repeatedly forgotten               | Extra boost on top of Still learning/Forgot, scales with consecutive fails (2+ in a row), caps after 5       |
@@ -160,7 +163,7 @@ badges.
 | Signal               | Condition                                                                                                        | Effect                                                                                                                                                                                                                                                                                      |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Solid cooldown**   | Last _recalled_ outcome is `solid` and within `SOLID_COOLDOWN_HOURS`                                             | Large penalty, reads `last_recalled_at` so a later Seen/Read write can't cancel it early. `verified` is intentionally excluded so known-pool refresh still works.                                                                                                                           |
-| **Unseen**           | `seen_count === 0`                                                                                               | Large boost. Disappears once every term in the pool has been seen at least once.                                                                                                                                                                                                            |
+| **Never read**       | `read_count === 0 && review_reveal_count === 0`                                                                  | Large boost. Disappears once a term has been Read or Revealed at least once — incidental Seen-tier sightings don't clear it.                                                                                                                                                                |
 | **Learning**         | Last _recalled_ outcome is `learning`                                                                            | Boost — survives later Seen/Read writes                                                                                                                                                                                                                                                     |
 | **Forgot**           | Last _recalled_ outcome is `forgot`                                                                              | Larger boost than learning — survives later Seen/Read writes                                                                                                                                                                                                                                |
 | **Fail streak**      | `fail_streak >= 2`                                                                                               | Additional boost on top of Learning/Forgot, `min(fail_streak, FAIL_STREAK_CAP) × failStreakBoostPerRepeat`. `fail_streak` increments on every `learning`/`forgot` and resets to 0 on `solid`/`verified`, so it always tracks the _current_ run of consecutive fails, not lifetime failures. |
@@ -199,7 +202,7 @@ Telegram `/read`, quizzes, and scheduled delivery.
 | Preset (UI label) | ID (`review_preset`) | Character                                          |
 | ----------------- | -------------------- | -------------------------------------------------- |
 | Balanced          | `balanced`           | Default mix of new, struggling, and stale terms    |
-| Learn new first   | `learn_new`          | Prioritize unseen terms and recently added content |
+| Learn new first   | `learn_new`          | Prioritize never-read terms and recently added content |
 | Drill weak spots  | `drill_weak`         | Focus on terms you're struggling with or forgot    |
 
 Weight values (same file):
@@ -234,7 +237,7 @@ queue previews.
 
 | Reason             | When it fires                                                                                 | UI label                           |
 | ------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `unseen`           | Never counted as seen                                                                         | Never seen                         |
+| `unseen`           | `read_count === 0 && review_reveal_count === 0`                                               | Never read                         |
 | `new`              | Term created within ~72h                                                                      | Recently added                     |
 | `learning`         | Last _recalled_ outcome is `learning`                                                         | Still learning                     |
 | `forgot`           | Last _recalled_ outcome is `forgot`                                                           | Forgot                             |
@@ -270,10 +273,12 @@ show one or two badges.
 ### Soft cycle
 
 There is no "reset the deck" button for everyday use. When every term in a
-pool has `seen_count > 0`, unseen boosts stop applying and ranking shifts to
-staleness and struggle. Pool stats expose this as `allSeenOnce`. Resetting a
-collection's progress clears both `review_state` and `user_progress` and
-starts the cycle over.
+pool has been Read or Revealed at least once, the never-read boost stops
+applying and ranking shifts to staleness and struggle. Pool stats expose
+this as `allSeenOnce` (`lib/smart-queue/stats.ts`), computed from the same
+`read_count`/`review_reveal_count` check as the boost, so it can't diverge.
+Resetting a collection's progress clears both `review_state` and
+`user_progress` and starts the cycle over.
 
 ---
 

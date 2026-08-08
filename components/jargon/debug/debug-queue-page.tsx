@@ -43,7 +43,7 @@ const PRESET_OPTIONS: Array<{ value: ReviewPreset; title: string; description: s
   {
     value: "learn_new",
     title: "Learn new first",
-    description: "Prioritize unseen terms and recently added content.",
+    description: "Prioritize never-read terms and recently added content.",
   },
   {
     value: "drill_weak",

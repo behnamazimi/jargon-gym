@@ -21,8 +21,8 @@ const SOLID_COOLDOWN_DAYS = Math.round(SOLID_COOLDOWN_HOURS / 24);
 
 const PRIORITY_RAISES = [
   {
-    title: "Never seen",
-    body: "Rises to the top until you've seen every term in the pool at least once.",
+    title: "Never read",
+    body: "Rises to the top until you've actually opened or revealed every term in the pool at least once. Just seeing it go by, the widget, a quiz question, the known/unknown toggle, doesn't clear this.",
   },
   {
     title: "Still learning",
@@ -72,7 +72,7 @@ const PRESET_OPTIONS = [
   },
   {
     label: "Learn new first",
-    description: "Prioritize unseen terms and recently added content.",
+    description: "Prioritize never-read terms and recently added content.",
   },
   {
     label: "Drill weak spots",

@@ -151,7 +151,7 @@ export function formatStatsMessage(stats: CollectionStats[]): string {
     for (const collection of activeCollections) {
       message += `\n\n<b>${escapeHtml(collection.name)}</b>\n`;
       message += `${formatCollectionProgressLine(collection)}\n`;
-      message += `Queue: ${collection.unknownUnseen} unseen · ${collection.unknownSeen} seen · ${collection.unknownStale} stale`;
+      message += `Queue: ${collection.unknownUnseen} never read · ${collection.unknownSeen} read · ${collection.unknownStale} stale`;
     }
   } else if (pausedCollections.length > 0) {
     message += `\n\n<i>All collections are paused. Turn one on in the app to start reviewing.</i>`;

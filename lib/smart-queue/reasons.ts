@@ -4,7 +4,7 @@ import { NEVER_RECALLED_MIN_SEEN } from "./presets";
 import type { PickReason } from "./types";
 
 const LABELS: Record<PickReason, string> = {
-  unseen: "Never seen",
+  unseen: "Never read",
   new: "Recently added",
   learning: "Still learning",
   forgot: "Forgot",

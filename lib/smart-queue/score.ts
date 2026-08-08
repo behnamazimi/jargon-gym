@@ -31,9 +31,12 @@ function evaluateCandidate(
     }
   }
 
-  // Unseen boost (soft cycle: after every term has been seen once, only
-  // staleness / outcome / penalty remain — there are no unseen candidates left).
-  if (candidate.seenCount === 0) {
+  // Never-read boost (soft cycle: once every term has been Read or Revealed
+  // at least once, only staleness / outcome / penalty remain). Keyed on
+  // deliberate exposure, not seenCount — a term glanced at via widget
+  // rotation, a quiz appearance, or the known/unknown toggle still counts as
+  // never read until it's actually opened or revealed.
+  if (candidate.readCount === 0 && candidate.reviewRevealCount === 0) {
     score += weights.unseenBoost;
     reasons.push("unseen");
   }
