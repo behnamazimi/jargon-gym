@@ -17,6 +17,7 @@ const REASON_BADGE_CLASS: Record<PickReason, string> = {
   forgot: "badge-soft badge-error",
   repeat_fail: "badge-soft badge-error",
   never_recalled: "badge-soft badge-info",
+  browse_only: "badge-soft badge-neutral",
   abandoned_review: "badge-soft badge-info",
   stale: "badge-soft badge-neutral",
   solid_cooldown: "badge-ghost",

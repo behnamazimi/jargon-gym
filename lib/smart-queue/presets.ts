@@ -6,13 +6,13 @@ import type { PickContext, ReviewPreset, ScoreWeights } from "./types";
 /** Hours after a solid outcome during which active picks heavily deprioritize the term. */
 export const SOLID_COOLDOWN_HOURS = 72;
 
-/** Minimum seen_count, with zero recalls, before the never-recalled boost applies. */
+/** Minimum seen_count, with zero recalls, before the never-recalled/browse-only boost applies. */
 export const NEVER_RECALLED_MIN_SEEN = 3;
 
 /** Cap on how many consecutive fails count toward the fail-streak boost. */
 export const FAIL_STREAK_CAP = 5;
 
-/** Quiz context multiplier for weak-signal weights (learning / forgot / never_recalled / abandoned_review / fail streak). */
+/** Quiz context multiplier for weak-signal weights (learning / forgot / never_recalled / browse_only / abandoned_review / fail streak). */
 const QUIZ_WEAK_MULTIPLIER = 1.5;
 
 const BALANCED_WEIGHTS: ScoreWeights = {
@@ -21,13 +21,12 @@ const BALANCED_WEIGHTS: ScoreWeights = {
   forgotBoost: 80,
   newTermBoost: 30,
   neverRecalledBoost: 30,
+  browseOnlyBoost: 15,
   abandonedReviewBoost: 45,
   failStreakBoostPerRepeat: 15,
   solidCooldownPenalty: 120,
   seenCountPenalty: 10,
-  recalledStalenessBoostPerHour: 0.5,
-  readStalenessBoostPerHour: 0.25,
-  seenStalenessBoostPerHour: 0.15,
+  stalenessBoostPerHour: 0.5,
   stalenessCapHours: 168, // 7 days
 };
 
@@ -37,13 +36,12 @@ const LEARN_NEW_WEIGHTS: ScoreWeights = {
   forgotBoost: 70,
   newTermBoost: 60,
   neverRecalledBoost: 25,
+  browseOnlyBoost: 12,
   abandonedReviewBoost: 35,
   failStreakBoostPerRepeat: 10,
   solidCooldownPenalty: 120,
   seenCountPenalty: 15,
-  recalledStalenessBoostPerHour: 0.3,
-  readStalenessBoostPerHour: 0.15,
-  seenStalenessBoostPerHour: 0.09,
+  stalenessBoostPerHour: 0.3,
   stalenessCapHours: 168,
 };
 
@@ -53,13 +51,12 @@ const DRILL_WEAK_WEIGHTS: ScoreWeights = {
   forgotBoost: 120,
   newTermBoost: 20,
   neverRecalledBoost: 40,
+  browseOnlyBoost: 20,
   abandonedReviewBoost: 55,
   failStreakBoostPerRepeat: 25,
   solidCooldownPenalty: 120,
   seenCountPenalty: 8,
-  recalledStalenessBoostPerHour: 0.7,
-  readStalenessBoostPerHour: 0.35,
-  seenStalenessBoostPerHour: 0.21,
+  stalenessBoostPerHour: 0.7,
   stalenessCapHours: 168,
 };
 
@@ -86,6 +83,7 @@ export function getContextWeights(preset: ReviewPreset, context: PickContext): S
     learningBoost: base.learningBoost * QUIZ_WEAK_MULTIPLIER,
     forgotBoost: base.forgotBoost * QUIZ_WEAK_MULTIPLIER,
     neverRecalledBoost: base.neverRecalledBoost * QUIZ_WEAK_MULTIPLIER,
+    browseOnlyBoost: base.browseOnlyBoost * QUIZ_WEAK_MULTIPLIER,
     abandonedReviewBoost: base.abandonedReviewBoost * QUIZ_WEAK_MULTIPLIER,
     failStreakBoostPerRepeat: base.failStreakBoostPerRepeat * QUIZ_WEAK_MULTIPLIER,
   };

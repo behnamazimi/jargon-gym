@@ -28,6 +28,7 @@ export type PickReason =
   | "forgot"
   | "repeat_fail"
   | "never_recalled"
+  | "browse_only"
   | "abandoned_review"
   | "stale"
   | "solid_cooldown"
@@ -56,17 +57,15 @@ export type ScoreWeights = {
   forgotBoost: number;
   newTermBoost: number;
   neverRecalledBoost: number;
+  /** Smaller variant of neverRecalledBoost for terms with zero deliberate Read exposure. */
+  browseOnlyBoost: number;
   abandonedReviewBoost: number;
   /** Extra boost per consecutive fail, capped at FAIL_STREAK_CAP. */
   failStreakBoostPerRepeat: number;
   solidCooldownPenalty: number;
   seenCountPenalty: number;
-  /** Staleness rate once a term has been recalled at least once — the dominant rate. */
-  recalledStalenessBoostPerHour: number;
-  /** Staleness rate for terms whose last exposure was a deliberate Read (never recalled). */
-  readStalenessBoostPerHour: number;
-  /** Staleness rate for terms whose last exposure was incidental Seen (never recalled). */
-  seenStalenessBoostPerHour: number;
+  /** Staleness only ever applies once a term has been recalled at least once. */
+  stalenessBoostPerHour: number;
   stalenessCapHours: number;
 };
 

@@ -61,12 +61,20 @@ function evaluateCandidate(
     reasons.push("repeat_fail");
   }
 
-  // Never recalled despite repeated light exposure — replaces the old
-  // "shown_stuck": fires regardless of whether the exposure was Seen or Read,
-  // the point is the user has never once been asked to prove recall.
+  // Never recalled despite repeated light exposure. Split by whether any of
+  // that exposure was a deliberate Read: readCount > 0 means the user opened
+  // it on purpose at least once and still never tested it (never_recalled,
+  // full boost); readCount === 0 means every sighting was incidental jargon-
+  // page browsing (browse_only, smaller boost) — a weaker signal than having
+  // actually opened it.
   if (candidate.recalledCount === 0 && candidate.seenCount >= NEVER_RECALLED_MIN_SEEN) {
-    score += weights.neverRecalledBoost;
-    reasons.push("never_recalled");
+    if (candidate.readCount > 0) {
+      score += weights.neverRecalledBoost;
+      reasons.push("never_recalled");
+    } else {
+      score += weights.browseOnlyBoost;
+      reasons.push("browse_only");
+    }
   }
 
   // Abandoned mid-review: the most recent exposure is an unrated Review reveal
@@ -87,34 +95,20 @@ function evaluateCandidate(
   // Seen count penalty — dampens heavily-exposed terms regardless of tier.
   score -= candidate.seenCount * weights.seenCountPenalty;
 
-  // Tiered staleness: once a term has ever been recalled, staleness anchors to
-  // that real test at the highest rate — this is what makes tested recall
-  // dominate ranking over passive exposure. Terms never recalled fall back to
-  // Seen/Read staleness at smaller rates, with Read (deliberate) above Seen
-  // (incidental) — the two tiers never collapse into one bucket.
+  // Staleness only ever applies once a term has been recalled at least once,
+  // anchored to that real test. Never-recalled terms get no time-based pull —
+  // only seenCountPenalty and never_recalled/browse_only account for their
+  // light exposure. Without this gate, a term glanced at once and never
+  // touched again would keep drifting back up on the clock alone, even though
+  // nothing about "being seen" is itself worth re-surfacing for.
   if (candidate.recalledCount > 0 && candidate.lastRecalledAt) {
     const hoursSinceRecalled =
       (now.getTime() - candidate.lastRecalledAt.getTime()) / (1000 * 60 * 60);
     const cappedHours = Math.min(hoursSinceRecalled, weights.stalenessCapHours);
-    score += cappedHours * weights.recalledStalenessBoostPerHour;
+    score += cappedHours * weights.stalenessBoostPerHour;
     if (hoursSinceRecalled >= STALE_REASON_THRESHOLD_HOURS) {
       reasons.push("stale");
     }
-  } else if (candidate.lastSeenAt) {
-    const hoursSinceLastSeen = (now.getTime() - candidate.lastSeenAt.getTime()) / (1000 * 60 * 60);
-    const cappedHours = Math.min(hoursSinceLastSeen, weights.stalenessCapHours);
-    const perHour =
-      candidate.lastOutcome === "read"
-        ? weights.readStalenessBoostPerHour
-        : weights.seenStalenessBoostPerHour;
-    score += cappedHours * perHour;
-    if (hoursSinceLastSeen >= STALE_REASON_THRESHOLD_HOURS) {
-      reasons.push("stale");
-    }
-  } else if (candidate.seenCount > 0) {
-    // Seen but no timestamp → treat as maximally stale
-    score += weights.stalenessCapHours * weights.seenStalenessBoostPerHour;
-    reasons.push("stale");
   }
 
   // No signal fired — seen recently with nothing notable to flag. Surface that
