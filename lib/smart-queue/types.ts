@@ -39,7 +39,7 @@ export type ReviewCandidate = {
   seenCount: number;
   lastSeenAt: Date | null;
   lastOutcome: ReviewOutcome;
-  /** Deliberate Read-tier exposure: Read CTA (web + Telegram) or widget "Next". */
+  /** Deliberate Read-tier exposure: the Read command/page (web + Telegram) or opening a term card on the jargon page. */
   readCount: number;
   /** Review-reveal exposure — disjoint from readCount, its own counter. */
   reviewRevealCount: number;

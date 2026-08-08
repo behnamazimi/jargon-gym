@@ -129,8 +129,8 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             what&apos;s neglected or still shaky, in an order that makes sense right now.
           </p>
           <p className="m-0">
-            So I built a queue that ranks from history, never seen, forgot, read or glanced at a lot
-            without ever actually testing yourself, not future review dates. No daily goals or
+            So I built a queue that ranks from history, never opened, forgot, or read/glanced at a
+            lot without ever actually testing yourself, not future review dates. No daily goals or
             reminders either. Study when you want; the queue picks the best next terms from
             whichever pool you chose. See{" "}
             <Link href="/how-terms-work" className={contentPageLinkClass}>
@@ -169,9 +169,9 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             term can have more than one at a time. If none of them apply, it shows{" "}
             <strong className="font-medium text-base-content">Recently reviewed</strong> when
             I&apos;ve actually tested myself on it recently, or{" "}
-            <strong className="font-medium text-base-content">Recently read</strong> when
-            I&apos;ve only opened or revealed it once or twice without testing myself yet.
-            Nothing&apos;s wrong either way, that term just doesn&apos;t stand out yet.
+            <strong className="font-medium text-base-content">Recently read</strong> when I&apos;ve
+            only opened or revealed it once or twice without testing myself yet. Nothing&apos;s
+            wrong either way, that term just doesn&apos;t stand out yet.
           </p>
           <p className="m-0 text-base-content/70">
             Once I&apos;ve actually read every term in a pool at least once, never-read stops
@@ -184,7 +184,7 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           <p className="m-0">
             Once you&apos;re in, you can tune this under{" "}
             <strong className="font-medium text-base-content">Settings → Review</strong>. I added
-            presets because sometimes I want to drill weak spots, sometimes to clear never-seen
+            presets because sometimes I want to drill weak spots, sometimes to clear never-read
             terms first. Pick one, the same preset applies everywhere: web review, Telegram{" "}
             <code className="rounded-md bg-base-200 px-1.5 py-0.5 font-mono text-xs">/read</code>,
             quizzes, and delivery.
