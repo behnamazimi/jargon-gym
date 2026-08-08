@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recordTermSeenAction, setTermKnown } from "@/app/(private)/jargon/actions";
+import { recordTermReadAction, setTermKnown } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
 import type { JargonPageData, SortMode } from "@/lib/jargon/types";
 
@@ -48,10 +48,10 @@ export function useJargonList(initialData: JargonPageData) {
     });
   }, []);
 
-  const recordShownOnce = useCallback((termId: string) => {
+  const recordReadOnce = useCallback((termId: string) => {
     if (countedShownRef.current.has(termId)) return;
     countedShownRef.current.add(termId);
-    void recordTermSeenAction(termId);
+    void recordTermReadAction(termId);
   }, []);
 
   const toggleOpen = useCallback(
@@ -65,9 +65,9 @@ export function useJargonList(initialData: JargonPageData) {
         return next;
       });
 
-      if (!wasOpen) recordShownOnce(termId);
+      if (!wasOpen) recordReadOnce(termId);
     },
-    [openTerms, recordShownOnce],
+    [openTerms, recordReadOnce],
   );
 
   const toggleKnown = useCallback(
@@ -105,9 +105,9 @@ export function useJargonList(initialData: JargonPageData) {
         next.add(termId);
         return next;
       });
-      recordShownOnce(termId);
+      recordReadOnce(termId);
     },
-    [recordShownOnce],
+    [recordReadOnce],
   );
 
   return {

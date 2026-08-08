@@ -94,10 +94,11 @@ export type Database = {
           last_outcome: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at: string | null;
           last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
+          last_review_reveal_at: string | null;
           last_seen_at: string | null;
-          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
           read_count: number;
           recalled_count: number;
+          review_reveal_count: number;
           seen_count: number;
           term_id: string;
           user_id: string;
@@ -107,10 +108,11 @@ export type Database = {
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at?: string | null;
           last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
+          last_review_reveal_at?: string | null;
           last_seen_at?: string | null;
-          last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
           read_count?: number;
           recalled_count?: number;
+          review_reveal_count?: number;
           seen_count?: number;
           term_id: string;
           user_id: string;
@@ -120,10 +122,11 @@ export type Database = {
           last_outcome?: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at?: string | null;
           last_recalled_outcome?: Database["public"]["Enums"]["review_outcome"] | null;
+          last_review_reveal_at?: string | null;
           last_seen_at?: string | null;
-          last_shown_origin?: Database["public"]["Enums"]["review_shown_origin"] | null;
           read_count?: number;
           recalled_count?: number;
+          review_reveal_count?: number;
           seen_count?: number;
           term_id?: string;
           user_id?: string;
@@ -534,10 +537,11 @@ export type Database = {
           last_outcome: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at: string;
           last_recalled_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_review_reveal_at: string;
           last_seen_at: string;
-          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"];
           read_count: number;
           recalled_count: number;
+          review_reveal_count: number;
           seen_count: number;
           term_id: string;
         }[];
@@ -585,10 +589,11 @@ export type Database = {
           last_outcome: Database["public"]["Enums"]["review_outcome"];
           last_recalled_at: string;
           last_recalled_outcome: Database["public"]["Enums"]["review_outcome"];
+          last_review_reveal_at: string;
           last_seen_at: string;
-          last_shown_origin: Database["public"]["Enums"]["review_shown_origin"];
           read_count: number;
           recalled_count: number;
+          review_reveal_count: number;
           seen_count: number;
           term_id: string;
         }[];
@@ -597,8 +602,8 @@ export type Database = {
       my_record_review_outcome: {
         Args: {
           p_increment_seen?: boolean;
+          p_is_review_reveal?: boolean;
           p_outcome: string;
-          p_shown_origin?: string;
           p_term_id: string;
         };
         Returns: undefined;
@@ -612,8 +617,8 @@ export type Database = {
       record_review_outcome: {
         Args: {
           p_increment_seen?: boolean;
+          p_is_review_reveal?: boolean;
           p_outcome: string;
-          p_shown_origin?: string;
           p_term_id: string;
           p_user_id: string;
         };
@@ -639,7 +644,6 @@ export type Database = {
       domain_visibility: "private" | "shared";
       review_outcome: "unseen" | "seen" | "read" | "learning" | "solid" | "verified" | "forgot";
       review_preset: "balanced" | "learn_new" | "drill_weak";
-      review_shown_origin: "browse" | "read_cta" | "widget" | "review_reveal";
       telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
     };
@@ -770,7 +774,6 @@ export const Constants = {
       domain_visibility: ["private", "shared"],
       review_outcome: ["unseen", "seen", "read", "learning", "solid", "verified", "forgot"],
       review_preset: ["balanced", "learn_new", "drill_weak"],
-      review_shown_origin: ["browse", "read_cta", "widget", "review_reveal"],
       telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],
     },

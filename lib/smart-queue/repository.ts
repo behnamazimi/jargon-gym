@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { ReviewCandidate, ReviewOutcome, ReviewPreset, ReviewShownOrigin } from "./types";
+import type { ReviewCandidate, ReviewOutcome, ReviewPreset } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -30,10 +30,11 @@ function mapCandidateRows(
     last_seen_at: string | null;
     last_outcome: Database["public"]["Enums"]["review_outcome"];
     read_count: number;
+    review_reveal_count: number;
     recalled_count: number;
     last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
     last_recalled_at: string | null;
-    last_shown_origin: Database["public"]["Enums"]["review_shown_origin"] | null;
+    last_review_reveal_at: string | null;
     fail_streak: number;
   }>,
 ): ReviewCandidate[] {
@@ -45,10 +46,11 @@ function mapCandidateRows(
     lastSeenAt: row.last_seen_at ? new Date(row.last_seen_at) : null,
     lastOutcome: row.last_outcome as ReviewOutcome,
     readCount: row.read_count,
+    reviewRevealCount: row.review_reveal_count,
     recalledCount: row.recalled_count,
     lastRecalledOutcome: row.last_recalled_outcome as ReviewOutcome | null,
     lastRecalledAt: row.last_recalled_at ? new Date(row.last_recalled_at) : null,
-    lastShownOrigin: row.last_shown_origin as ReviewShownOrigin | null,
+    lastReviewRevealAt: row.last_review_reveal_at ? new Date(row.last_review_reveal_at) : null,
     failStreak: row.fail_streak,
   }));
 }
@@ -85,39 +87,39 @@ export async function fetchCandidatesForUser(
   return mapCandidateRows(data ?? []);
 }
 
-/** Internal — only review-outcome should call these. shownOrigin is required for seen/read outcomes. */
+/** Internal — only review-outcome should call these. isReviewReveal only matters for outcome="read". */
 export async function recordReviewOutcome(
   client: Client,
   termId: string,
   outcome: ReviewOutcome,
   incrementSeen = true,
-  shownOrigin?: ReviewShownOrigin,
+  isReviewReveal = false,
 ): Promise<void> {
   const { error } = await client.rpc("my_record_review_outcome", {
     p_term_id: termId,
     p_outcome: outcome,
     p_increment_seen: incrementSeen,
-    p_shown_origin: shownOrigin,
+    p_is_review_reveal: isReviewReveal,
   });
 
   if (error) throw error;
 }
 
-/** Internal — only review-outcome should call these. shownOrigin is required for seen/read outcomes. */
+/** Internal — only review-outcome should call these. isReviewReveal only matters for outcome="read". */
 export async function recordReviewOutcomeForUser(
   client: Client,
   userId: string,
   termId: string,
   outcome: ReviewOutcome,
   incrementSeen = true,
-  shownOrigin?: ReviewShownOrigin,
+  isReviewReveal = false,
 ): Promise<void> {
   const { error } = await client.rpc("record_review_outcome", {
     p_user_id: userId,
     p_term_id: termId,
     p_outcome: outcome,
     p_increment_seen: incrementSeen,
-    p_shown_origin: shownOrigin,
+    p_is_review_reveal: isReviewReveal,
   });
 
   if (error) throw error;

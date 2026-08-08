@@ -1,11 +1,12 @@
 "use client";
 
 import { AlertCircle, Loader2, Sparkles } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   generateQuizAction,
   previewQuizQueueAction,
   recordQuizAnswerAction,
+  recordQuizTermSeenAction,
   submitQuizResultsAction,
 } from "@/app/(private)/jargon/quiz/actions";
 import { PageHeader } from "@/components/jargon/page-header";
@@ -89,6 +90,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
   const [queuePreview, setQueuePreview] = useState<QueuePreviewItem[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
+  const countedSeenRef = useRef(new Set<string>());
 
   const domainIds: "all" | string[] =
     selectedCollectionId === "all" ? "all" : [selectedCollectionId];
@@ -137,6 +139,17 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   }, [domainIds, status, questionCount, step, availableTermCount, questionCountError]);
 
   useEffect(() => {
+    if (step !== "playing") return;
+    const question = questions[currentIndex];
+    if (!question) return;
+
+    const key = `${question.termId}-${currentIndex}`;
+    if (countedSeenRef.current.has(key)) return;
+    countedSeenRef.current.add(key);
+    void recordQuizTermSeenAction(question.termId);
+  }, [step, questions, currentIndex]);
+
+  useEffect(() => {
     if (step !== "playing" || questions.length === 0) return;
 
     const currentSetup = {
@@ -173,6 +186,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   function handleResumeSession() {
     if (!savedSession) return;
 
+    countedSeenRef.current.clear();
     setStatus(savedSession.setup.status);
     setQuestionStyle(savedSession.setup.questionStyle ?? "ai");
     setSelectedCollectionId(
@@ -198,6 +212,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   function resetQuizState() {
     clearQuizSession();
     setSavedSession(null);
+    countedSeenRef.current.clear();
     setQuestions([]);
     setTerms([]);
     setCurrentIndex(0);
@@ -218,6 +233,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
 
     clearQuizSession();
     setSavedSession(null);
+    countedSeenRef.current.clear();
     setErrorMessage(null);
     setStep("generating");
     setSessionStartedAt(new Date().toISOString());

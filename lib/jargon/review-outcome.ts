@@ -4,9 +4,17 @@
  * @see docs/smart-queue.md — "Surfaces"
  *
  * incrementSeen semantics (preserve intentionally):
- * - applyTermSeen / applyTermRead / applyKnownToggle mark-known → increment
+ * - applyTermSeen / applyTermRead / applyReviewReveal / applyKnownToggleSeen → increment
+ * - applyKnownToggle (widget mark-known) mark-known → increment, mark-unknown → no increment
  * - applyMarkKnown (Telegram after delivery) → no increment
  * - applyReviewRating after reveal → no second increment when alreadyCountedSeen
+ * - applyQuizAnswer never increments — the term-appear write (applyTermSeen)
+ *   already counted this sighting before the answer came in
+ *
+ * applyTermRead vs applyReviewReveal both write outcome "read" but route to
+ * disjoint counters (read_count vs review_reveal_count) — "read is read" as
+ * an outcome value, but Review's reveal is tracked separately since it's the
+ * leading edge of an actual test, not generic exposure.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -18,7 +26,7 @@ import {
   markTermKnownForUser,
 } from "@/lib/jargon/known-state";
 import { getUserSettings } from "@/lib/llm/settings";
-import type { ReviewOutcome, ReviewShownOrigin } from "@/lib/smart-queue";
+import type { ReviewOutcome } from "@/lib/smart-queue";
 import { recordReviewOutcome, recordReviewOutcomeForUser } from "@/lib/smart-queue/repository";
 
 type Client = SupabaseClient<Database>;
@@ -45,12 +53,19 @@ async function writeOutcome(
   termId: string,
   outcome: ReviewOutcome,
   incrementSeen: boolean,
-  shownOrigin?: ReviewShownOrigin,
+  isReviewReveal = false,
 ) {
   if (mode === "session") {
-    await recordReviewOutcome(client, termId, outcome, incrementSeen, shownOrigin);
+    await recordReviewOutcome(client, termId, outcome, incrementSeen, isReviewReveal);
   } else {
-    await recordReviewOutcomeForUser(client, userId, termId, outcome, incrementSeen, shownOrigin);
+    await recordReviewOutcomeForUser(
+      client,
+      userId,
+      termId,
+      outcome,
+      incrementSeen,
+      isReviewReveal,
+    );
   }
 }
 
@@ -79,7 +94,11 @@ export type QuizAnswerResult = {
   flipped: boolean;
 };
 
-/** Quiz answer: record outcome + optional known flip per quiz prefs. */
+/**
+ * Quiz answer: record outcome + optional known flip per quiz prefs.
+ * No seen increment here — the term-appear write (applyTermSeen) already
+ * counted this sighting when the question was shown, before it was answered.
+ */
 export async function applyQuizAnswer(
   client: Client,
   userId: string,
@@ -96,7 +115,7 @@ export async function applyQuizAnswer(
   const markKnownOnPass = settings?.markKnownOnPass ?? false;
 
   const outcome = mapAnswerToOutcome(input.status, input.passed);
-  await writeOutcome(client, mode, userId, input.termId, outcome, true);
+  await writeOutcome(client, mode, userId, input.termId, outcome, false);
 
   let flipped = false;
 
@@ -139,7 +158,7 @@ export async function applyReviewRating(
 }
 
 /**
- * Jargon-page / widget known toggle (list checkbox + desktop widget).
+ * Desktop widget "Mark known" — a genuine recall self-report from that surface.
  * Mark known → solid (+increment). Mark unknown → forgot (no increment).
  */
 export async function applyKnownToggle(
@@ -157,25 +176,49 @@ export async function applyKnownToggle(
   }
 }
 
-/** Jargon-page browse: lightest tier, incidental exposure (+increment). */
+/**
+ * Jargon-page term-card toggle (known/unknown). Incidental self-report while
+ * browsing, not a tested recall — Seen tier either direction (+increment).
+ */
+export async function applyKnownToggleSeen(
+  client: Client,
+  userId: string,
+  termId: string,
+  isKnown: boolean,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await flipKnown(client, mode, userId, termId, isKnown);
+  await writeOutcome(client, mode, userId, termId, "seen", true);
+}
+
+/** Widget "Next" CTA or a term appearing in a quiz question: incidental exposure (+increment). */
 export async function applyTermSeen(
   client: Client,
   userId: string,
   termId: string,
   mode: AuthMode = "session",
 ): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "seen", true, "browse");
+  await writeOutcome(client, mode, userId, termId, "seen", true);
 }
 
-/** Read CTA, widget "Next", or Review reveal: deliberate but untested (+increment). */
+/** Read command/page (web + Telegram) or a jargon-page card open: deliberate but untested (+increment). */
 export async function applyTermRead(
   client: Client,
   userId: string,
   termId: string,
-  origin: Exclude<ReviewShownOrigin, "browse">,
   mode: AuthMode = "session",
 ): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "read", true, origin);
+  await writeOutcome(client, mode, userId, termId, "read", true, false);
+}
+
+/** Review reveal (web + Telegram): its own counter, disjoint from applyTermRead's. */
+export async function applyReviewReveal(
+  client: Client,
+  userId: string,
+  termId: string,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await writeOutcome(client, mode, userId, termId, "read", true, true);
 }
 
 /** Telegram /read "Mark known": mark + solid outcome, no seen increment. */
