@@ -496,12 +496,21 @@ export async function handleReviewReveal(
 
   try {
     await applyTermShown(client, session.userId, currentTerm.id, "admin");
-  } catch (err) {
-    console.error("Failed to record review outcome on reveal", {
+  } catch (error) {
+    console.error("handleReviewReveal: failed to record shown outcome", {
       userId: session.userId,
       termId: currentTerm.id,
-      err,
+      error,
     });
+    // Session state is untouched (still not revealed) so the same Reveal button can be retried.
+    return [
+      edit(
+        chatId,
+        messageId,
+        `${formatReviewPrompt(currentTerm, session.currentIndex, session.termIds.length)}\n\n<i>Couldn't reveal that term — try again.</i>`,
+        buildReviewRevealKeyboard(session.currentIndex),
+      ),
+    ];
   }
 
   const updatedSession = await markReviewRevealed(client, chatId, session);
