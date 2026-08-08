@@ -6,7 +6,7 @@ import type { PickContext, ReviewPreset, ScoreWeights } from "./types";
 /** Hours after a solid outcome during which active picks heavily deprioritize the term. */
 export const SOLID_COOLDOWN_HOURS = 72;
 
-/** Minimum seen_count, with zero recalls, before the never-recalled/browse-only boost applies. */
+/** Minimum sightings, with zero recalls, before never_recalled (deliberate read_count + review_reveal_count) or browse_only (incidental seen_count) applies. */
 export const NEVER_RECALLED_MIN_SEEN = 3;
 
 /** Cap on how many consecutive fails count toward the fail-streak boost. */

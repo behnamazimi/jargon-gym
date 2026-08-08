@@ -131,18 +131,18 @@ These are the user-facing signals (badges on review cards, quiz questions, and
 the queue preview). A term can show more than one at a time. **Forgot** ranks
 above **still learning**.
 
-| Signal           | User-facing label                  | Effect                                                                                                       |
-| ---------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Never read       | Never read                         | Rises to the top until every term in the pool has been Read or Revealed at least once                        |
-| Still learning   | Still learning                     | Boost — marked "Didn't have it" in review, or wrong on a quiz                                                |
-| Forgot           | Forgot                             | Larger boost — marked forgot or cleared as known                                                             |
-| Repeat fail      | Repeatedly forgotten               | Extra boost on top of Still learning/Forgot, scales with consecutive fails (2+ in a row), caps after 5       |
-| Never recalled   | Read 3+ times, never recalled      | Moderate boost — opened it deliberately (Read, or a Review reveal) 3+ times, never actually tested           |
-| Browse only      | Browsed 3+ times, never read       | Smaller boost — every sighting was passive (widget rotation, a quiz appearance, or the known/unknown toggle) |
-| Abandoned review | Left mid-review                    | Moderate boost — the last thing that happened was an unrated Review reveal                                   |
-| New term         | Recently added                     | Moderate boost — created within the last few days                                                            |
-| Staleness        | Not seen recently                  | Climbs when you skip a day; caps at about a week. Only applies once a term has been recalled at least once   |
-| Solid cooldown   | Recently marked solid              | **Lowers** priority for ~3 days after marking known or answering correctly                                   |
+| Signal           | User-facing label             | Effect                                                                                                       |
+| ---------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Never read       | Never read                    | Rises to the top until every term in the pool has been Read or Revealed at least once                        |
+| Still learning   | Still learning                | Boost — marked "Didn't have it" in review, or wrong on a quiz                                                |
+| Forgot           | Forgot                        | Larger boost — marked forgot or cleared as known                                                             |
+| Repeat fail      | Repeatedly forgotten          | Extra boost on top of Still learning/Forgot, scales with consecutive fails (2+ in a row), caps after 5       |
+| Never recalled   | Read 3+ times, never recalled | Moderate boost — opened it deliberately (Read, or a Review reveal) 3+ times, never actually tested           |
+| Browse only      | Browsed 3+ times, never read  | Smaller boost — every sighting was passive (widget rotation, a quiz appearance, or the known/unknown toggle) |
+| Abandoned review | Left mid-review               | Moderate boost — the last thing that happened was an unrated Review reveal                                   |
+| New term         | Recently added                | Moderate boost — created within the last few days                                                            |
+| Staleness        | Not seen recently             | Climbs when you skip a day; caps at about a week. Only applies once a term has been recalled at least once   |
+| Solid cooldown   | Recently marked solid         | **Lowers** priority for ~3 days after marking known or answering correctly                                   |
 
 That cooldown is the only scheduled behavior. Nothing else gets a future review
 date.
@@ -187,11 +187,11 @@ Implementation: [`lib/smart-queue/score.ts`](../lib/smart-queue/score.ts) →
 Defined in [`lib/smart-queue/presets.ts`](../lib/smart-queue/presets.ts). No
 settings UI for these:
 
-| Constant                  | Default | Purpose                                                                         |
-| ------------------------- | ------- | ------------------------------------------------------------------------------- |
-| `SOLID_COOLDOWN_HOURS`    | 72      | How long recently solid terms stay deprioritized                                |
-| `NEVER_RECALLED_MIN_SEEN` | 3       | Minimum Seen+Read sightings before the never-recalled/browse-only boost applies |
-| `FAIL_STREAK_CAP`         | 5       | Maximum consecutive fails counted toward the fail-streak boost                  |
+| Constant                  | Default | Purpose                                                                                                         |
+| ------------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| `SOLID_COOLDOWN_HOURS`    | 72      | How long recently solid terms stay deprioritized                                                                |
+| `NEVER_RECALLED_MIN_SEEN` | 3       | Minimum sightings before `never_recalled` (deliberate read + reveal) or `browse_only` (incidental seen) applies |
+| `FAIL_STREAK_CAP`         | 5       | Maximum consecutive fails counted toward the fail-streak boost                                                  |
 
 Staleness and "stale" reason labels use a 24-hour threshold. New-term boost
 uses a 72-hour creation window.
@@ -201,11 +201,11 @@ uses a 72-hour creation window.
 **Settings → Review.** One preset applies to every surface: web review,
 Telegram `/read`, quizzes, and scheduled delivery.
 
-| Preset (UI label) | ID (`review_preset`) | Character                                          |
-| ----------------- | -------------------- | -------------------------------------------------- |
-| Balanced          | `balanced`           | Default mix of new, struggling, and stale terms    |
+| Preset (UI label) | ID (`review_preset`) | Character                                              |
+| ----------------- | -------------------- | ------------------------------------------------------ |
+| Balanced          | `balanced`           | Default mix of new, struggling, and stale terms        |
 | Learn new first   | `learn_new`          | Prioritize never-read terms and recently added content |
-| Drill weak spots  | `drill_weak`         | Focus on terms you're struggling with or forgot    |
+| Drill weak spots  | `drill_weak`         | Focus on terms you're struggling with or forgot        |
 
 Weight values (same file):
 
@@ -237,20 +237,20 @@ and passive delivery use `"default"`.
 Each pick includes a `reasons` list — which signals fired — for UI badges and
 queue previews.
 
-| Reason             | When it fires                                                                                 | UI label                           |
-| ------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `unseen`           | `read_count === 0 && review_reveal_count === 0`                                               | Never read                         |
-| `new`              | Term created within ~72h                                                                      | Recently added                     |
-| `learning`         | Last _recalled_ outcome is `learning`                                                         | Still learning                     |
-| `forgot`           | Last _recalled_ outcome is `forgot`                                                           | Forgot                             |
-| `repeat_fail`      | `fail_streak >= 2`                                                                            | Repeatedly forgotten               |
-| `never_recalled`   | `recalled_count === 0`, `read_count + review_reveal_count >= 3`                               | Read 3+ times, never recalled      |
-| `browse_only`      | `recalled_count === 0`, `read_count === 0` and `review_reveal_count === 0`, `seen_count >= 3` | Browsed 3+ times, never read       |
-| `abandoned_review` | `last_outcome === 'read'` and `last_review_reveal_at === last_seen_at`                        | Left mid-review                    |
-| `stale`            | `recalled_count > 0` and not recalled in 24h+                                                 | Not seen recently                  |
-| `solid_cooldown`   | Last recalled solid within cooldown window                                                    | Recently marked solid              |
-| `recently_read`    | No other signal fired, `recalled_count === 0`                                                 | Recently read                      |
-| `steady`           | No other signal fired, `recalled_count > 0`                                                   | Recently reviewed                  |
+| Reason             | When it fires                                                                                 | UI label                      |
+| ------------------ | --------------------------------------------------------------------------------------------- | ----------------------------- |
+| `unseen`           | `read_count === 0 && review_reveal_count === 0`                                               | Never read                    |
+| `new`              | Term created within ~72h                                                                      | Recently added                |
+| `learning`         | Last _recalled_ outcome is `learning`                                                         | Still learning                |
+| `forgot`           | Last _recalled_ outcome is `forgot`                                                           | Forgot                        |
+| `repeat_fail`      | `fail_streak >= 2`                                                                            | Repeatedly forgotten          |
+| `never_recalled`   | `recalled_count === 0`, `read_count + review_reveal_count >= 3`                               | Read 3+ times, never recalled |
+| `browse_only`      | `recalled_count === 0`, `read_count === 0` and `review_reveal_count === 0`, `seen_count >= 3` | Browsed 3+ times, never read  |
+| `abandoned_review` | `last_outcome === 'read'` and `last_review_reveal_at === last_seen_at`                        | Left mid-review               |
+| `stale`            | `recalled_count > 0` and not recalled in 24h+                                                 | Not seen recently             |
+| `solid_cooldown`   | Last recalled solid within cooldown window                                                    | Recently marked solid         |
+| `recently_read`    | No other signal fired, `recalled_count === 0`                                                 | Recently read                 |
+| `steady`           | No other signal fired, `recalled_count > 0`                                                   | Recently reviewed             |
 
 `recently_read` and `steady` are both fallbacks, not scoring signals — neither
 carries weight. Without one of them, a candidate that clears none of the
@@ -261,11 +261,12 @@ happened; a term that's merely been Read/Revealed a couple of times is not
 "reviewed" yet.
 
 `recently_read` fires when the term has never been recalled and hasn't
-cleared either `never_recalled` (deliberate `read_count + review_reveal_count
->= NEVER_RECALLED_MIN_SEEN`) or `browse_only` (zero deliberate exposure but
-`seen_count >= NEVER_RECALLED_MIN_SEEN`) — typically a term with 1 or 2
-deliberate reads/reveals, short of the never_recalled threshold. Staleness
-never applies pre-recall, so there's nothing else left to flag.
+cleared either `never_recalled` (deliberate `read_count + review_reveal_count`
+at least `NEVER_RECALLED_MIN_SEEN`) or `browse_only` (zero deliberate
+exposure but `seen_count` at least `NEVER_RECALLED_MIN_SEEN`) — typically a
+term with 1 or 2 deliberate reads/reveals, short of the never_recalled
+threshold. Staleness never applies pre-recall, so there's nothing else left
+to flag.
 
 `steady` fires when the term has been recalled, that recall is recent enough
 to dodge `stale`, and the outcome doesn't carry its own boost (`verified`, or
@@ -412,7 +413,7 @@ only share the outcome-recording half of the pipeline.
 
 ### `/stat`
 
-- Per-collection known % plus unknown-pool queue stats (unseen / seen /
+- Per-collection known % plus unknown-pool queue stats (never read / read /
   stale).
 
 ---
@@ -430,11 +431,11 @@ switcher never touches `user_settings`. Built on
 `listScoredCandidates`, which is `pickTerms` with `limit` set to every
 candidate instead of a top-N slice.
 
-Rows written before the `smart_queue_v3_signals` migration can show `last
-read` with `read_count`/`review_reveal_count` both 0 — that migration
-converted the old flat `shown` outcome to `read` as a safe over-estimate
-(it couldn't tell which surface wrote it) but left the split counters at
-their default, since there was no way to know the historical split. The
+Rows written before `read_count`/`review_reveal_count` existed can show `last
+read` with both at 0 — an earlier migration converted the old flat `shown`
+outcome to `read` as a safe over-estimate (it couldn't tell which surface
+wrote it) but left the new split counters at their default, since there was
+no way to know the historical split. The
 debug page flags these as `(legacy, uncounted)` rather than silently
 implying a live inconsistency; scoring is unaffected, since nothing reads
 `last_outcome` directly except `abandoned_review`, which also requires
@@ -458,22 +459,20 @@ Candidate RPCs (see
 - `my_get_review_candidates` — session-scoped (RLS)
 - `get_review_candidates` — service role, explicit `userId`
 
-Legacy random `pick_multiple_*` RPCs are removed.
-
 ---
 
 ## Code map
 
-| Concern                              | Location                                                                                                                                                                                                                    |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Study pools / collection scope       | [`lib/study/`](../lib/study/)                                                                                                                                                                                               |
-| Types, scoring, pick, stats, presets | [`lib/smart-queue/`](../lib/smart-queue/)                                                                                                                                                                                   |
-| DB RPCs for candidates / outcomes    | [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)                                                                                                                                                         |
-| Term ID → TermCard hydration         | [`lib/smart-queue/hydrate.ts`](../lib/smart-queue/hydrate.ts)                                                                                                                                                               |
-| Pick + hydrate composition           | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)                                                                                                                                                               |
-| Outcome writes (only entry point)    | [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts) — `applyTermSeen`/`applyTermRead`/`applyReviewReveal` (light tiers), `applyReviewRating`/`applyQuizAnswer`/`applyKnownToggle`/`applyMarkKnown` (Recalled) |
-| Known / unknown flips                | [`lib/jargon/known-state.ts`](../lib/jargon/known-state.ts)                                                                                                                                                                 |
-| Telegram routing                     | [`lib/telegram/flows.ts`](../lib/telegram/flows.ts)                                                                                                                                                                         |
+| Concern                              | Location                                                                                                                                                                                                                                           |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Study pools / collection scope       | [`lib/study/`](../lib/study/)                                                                                                                                                                                                                      |
+| Types, scoring, pick, stats, presets | [`lib/smart-queue/`](../lib/smart-queue/)                                                                                                                                                                                                          |
+| DB RPCs for candidates / outcomes    | [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)                                                                                                                                                                                |
+| Term ID → TermCard hydration         | [`lib/smart-queue/hydrate.ts`](../lib/smart-queue/hydrate.ts)                                                                                                                                                                                      |
+| Pick + hydrate composition           | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)                                                                                                                                                                                      |
+| Outcome writes (only entry point)    | [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts) — `applyTermSeen`/`applyKnownToggleSeen`/`applyTermRead`/`applyReviewReveal` (light tiers), `applyReviewRating`/`applyQuizAnswer`/`applyKnownToggle`/`applyMarkKnown` (Recalled) |
+| Known / unknown flips                | [`lib/jargon/known-state.ts`](../lib/jargon/known-state.ts)                                                                                                                                                                                        |
+| Telegram routing                     | [`lib/telegram/flows.ts`](../lib/telegram/flows.ts)                                                                                                                                                                                                |
 
 When changing behavior, ask: is this **scoring** (`lib/smart-queue`), **pool
 selection** (`lib/study`), or **when a surface calls pick /
