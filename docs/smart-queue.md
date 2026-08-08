@@ -134,7 +134,7 @@ above **still learning**.
 | Still learning   | Still learning                     | Boost — marked "Didn't have it" in review, or wrong on a quiz                                                |
 | Forgot           | Forgot                             | Larger boost — marked forgot or cleared as known                                                             |
 | Repeat fail      | Repeatedly forgotten               | Extra boost on top of Still learning/Forgot, scales with consecutive fails (2+ in a row), caps after 5       |
-| Never recalled   | Seen/read 3+ times, never recalled | Moderate boost — opened it deliberately (Read, or a Review reveal) 3+ times, never actually tested           |
+| Never recalled   | Read 3+ times, never recalled      | Moderate boost — opened it deliberately (Read, or a Review reveal) 3+ times, never actually tested           |
 | Browse only      | Browsed 3+ times, never read       | Smaller boost — every sighting was passive (widget rotation, a quiz appearance, or the known/unknown toggle) |
 | Abandoned review | Left mid-review                    | Moderate boost — the last thing that happened was an unrated Review reveal                                   |
 | New term         | Recently added                     | Moderate boost — created within the last few days                                                            |
@@ -164,8 +164,8 @@ badges.
 | **Learning**         | Last _recalled_ outcome is `learning`                                                                            | Boost — survives later Seen/Read writes                                                                                                                                                                                                                                                     |
 | **Forgot**           | Last _recalled_ outcome is `forgot`                                                                              | Larger boost than learning — survives later Seen/Read writes                                                                                                                                                                                                                                |
 | **Fail streak**      | `fail_streak >= 2`                                                                                               | Additional boost on top of Learning/Forgot, `min(fail_streak, FAIL_STREAK_CAP) × failStreakBoostPerRepeat`. `fail_streak` increments on every `learning`/`forgot` and resets to 0 on `solid`/`verified`, so it always tracks the _current_ run of consecutive fails, not lifetime failures. |
-| **Never recalled**   | `recalled_count === 0`, `seen_count >= NEVER_RECALLED_MIN_SEEN`, `read_count > 0 \|\| review_reveal_count > 0`   | Moderate boost — opened deliberately (Read, or a Review reveal) at least once, still never tested                                                                                                                                                                                           |
-| **Browse only**      | `recalled_count === 0`, `seen_count >= NEVER_RECALLED_MIN_SEEN`, `read_count === 0 && review_reveal_count === 0` | Smaller boost — every sighting was passive (widget rotation, a quiz appearance, or the known/unknown toggle), never once opened deliberately. Weaker signal than **Never recalled** on purpose.                                                                                             |
+| **Never recalled**   | `recalled_count === 0`, `(read_count + review_reveal_count) >= NEVER_RECALLED_MIN_SEEN`                          | Moderate boost — opened deliberately (Read, or a Review reveal) at least 3 times, still never tested. Incidental Seen-tier sightings don't count toward this threshold.                                                                                                                     |
+| **Browse only**      | `recalled_count === 0`, `read_count === 0 && review_reveal_count === 0`, `seen_count >= NEVER_RECALLED_MIN_SEEN` | Smaller boost — every sighting was passive (widget rotation, a quiz appearance, or the known/unknown toggle), never once opened deliberately. Weaker signal than **Never recalled** on purpose.                                                                                             |
 | **Abandoned review** | `last_outcome === 'read'` and `last_review_reveal_at` exactly equals `last_seen_at`                              | Moderate boost — the most recent event of any kind was a Review reveal that's never been rated or superseded by a later read, distinct from generic never-recalled rereading                                                                                                                |
 | **New term**         | Created within the last 72 hours                                                                                 | Moderate boost                                                                                                                                                                                                                                                                              |
 | **Seen count**       | Every prior sighting, any tier                                                                                   | Gentle sink (`seen_count × penalty`)                                                                                                                                                                                                                                                        |
@@ -239,18 +239,21 @@ queue previews.
 | `learning`         | Last _recalled_ outcome is `learning`                                                         | Still learning                     |
 | `forgot`           | Last _recalled_ outcome is `forgot`                                                           | Forgot                             |
 | `repeat_fail`      | `fail_streak >= 2`                                                                            | Repeatedly forgotten               |
-| `never_recalled`   | `seen_count >= 3`, `recalled_count === 0`, `read_count > 0` or `review_reveal_count > 0`      | Seen/read 3+ times, never recalled |
-| `browse_only`      | `seen_count >= 3`, `recalled_count === 0`, `read_count === 0` and `review_reveal_count === 0` | Browsed 3+ times, never read       |
+| `never_recalled`   | `recalled_count === 0`, `read_count + review_reveal_count >= 3`                               | Read 3+ times, never recalled      |
+| `browse_only`      | `recalled_count === 0`, `read_count === 0` and `review_reveal_count === 0`, `seen_count >= 3` | Browsed 3+ times, never read       |
 | `abandoned_review` | `last_outcome === 'read'` and `last_review_reveal_at === last_seen_at`                        | Left mid-review                    |
 | `stale`            | `recalled_count > 0` and not recalled in 24h+                                                 | Not seen recently                  |
 | `solid_cooldown`   | Last recalled solid within cooldown window                                                    | Recently marked solid              |
 | `steady`           | No other signal fired                                                                         | Recently reviewed                  |
 
 `steady` is a fallback, not a scoring signal — it carries no weight. It fires
-in two cases: (1) the term has never been recalled and hasn't reached the
-`NEVER_RECALLED_MIN_SEEN` threshold yet — too lightly seen for
-`never_recalled`/`browse_only`, and staleness never applies pre-recall, so
-there's nothing left to flag; or (2) it has been recalled, that recall is
+in two cases: (1) the term has never been recalled and hasn't cleared either
+`never_recalled` (deliberate `read_count + review_reveal_count >=
+NEVER_RECALLED_MIN_SEEN`) or `browse_only` (zero deliberate exposure but
+`seen_count >= NEVER_RECALLED_MIN_SEEN`) — including a term with some
+deliberate exposure that hasn't reached 3 yet, which qualifies for neither —
+and staleness never applies pre-recall, so there's nothing left to flag; or
+(2) it has been recalled, that recall is
 recent enough to dodge `stale`, and the outcome doesn't carry its own boost
 (`verified`, or `solid` outside its cooldown window). `solid` can't land
 here inside the cooldown window — `solid_cooldown` reads the same

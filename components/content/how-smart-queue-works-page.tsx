@@ -38,7 +38,7 @@ const PRIORITY_RAISES = [
   },
   {
     title: `Read ${NEVER_RECALLED_MIN_SEEN}+ times, never tested`,
-    body: "Opened it on purpose (Read, the desktop widget, or a review reveal) several times but never actually tested yourself on it, reading it often doesn't mean you've learned it.",
+    body: "Opened it on purpose (Read, or a review reveal) several times but never actually tested yourself on it, reading it often doesn't mean you've learned it. Just glancing at it while it rotated past doesn't count toward this.",
   },
   {
     title: `Browsed ${NEVER_RECALLED_MIN_SEEN}+ times, never read`,
