@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
-import { applyReviewRating, applyTermRead } from "@/lib/jargon/review-outcome";
+import { applyReviewRating, applyReviewReveal } from "@/lib/jargon/review-outcome";
 import { getMaxStudyCount } from "@/lib/study";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";
@@ -499,7 +499,7 @@ export async function handleReviewReveal(
   if (!currentTerm) return [];
 
   try {
-    await applyTermRead(client, session.userId, currentTerm.id, "review_reveal", "admin");
+    await applyReviewReveal(client, session.userId, currentTerm.id, "admin");
   } catch (error) {
     console.error("handleReviewReveal: failed to record shown outcome", {
       userId: session.userId,

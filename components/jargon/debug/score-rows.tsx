@@ -36,10 +36,13 @@ export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
           <PickReasonBadges reasons={row.reasons} mode="full" />
 
           <p className="m-0 text-xs leading-relaxed text-base-content/50">
-            seen {row.seenCount} · read {row.readCount} · recalled {row.recalledCount} · last{" "}
-            <span className="font-medium">{row.lastOutcome}</span>
-            {row.lastShownOrigin ? ` (${row.lastShownOrigin})` : ""} ·{" "}
+            seen {row.seenCount} · read {row.readCount} · review reveal {row.reviewRevealCount} ·
+            recalled {row.recalledCount} · last{" "}
+            <span className="font-medium">{row.lastOutcome}</span> ·{" "}
             {formatRelative(row.lastSeenAt)}
+            {row.lastReviewRevealAt ? (
+              <> · last reveal {formatRelative(row.lastReviewRevealAt)}</>
+            ) : null}
             {row.lastRecalledOutcome ? (
               <>
                 {" "}

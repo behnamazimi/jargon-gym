@@ -4,9 +4,14 @@
  * @see docs/smart-queue.md — "Surfaces"
  *
  * incrementSeen semantics (preserve intentionally):
- * - applyTermSeen / applyTermRead / applyKnownToggle mark-known → increment
+ * - applyTermSeen / applyTermRead / applyReviewReveal / applyKnownToggle mark-known → increment
  * - applyMarkKnown (Telegram after delivery) → no increment
  * - applyReviewRating after reveal → no second increment when alreadyCountedSeen
+ *
+ * applyTermRead vs applyReviewReveal both write outcome "read" but route to
+ * disjoint counters (read_count vs review_reveal_count) — "read is read" as
+ * an outcome value, but Review's reveal is tracked separately since it's the
+ * leading edge of an actual test, not generic exposure.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -18,7 +23,7 @@ import {
   markTermKnownForUser,
 } from "@/lib/jargon/known-state";
 import { getUserSettings } from "@/lib/llm/settings";
-import type { ReviewOutcome, ReviewShownOrigin } from "@/lib/smart-queue";
+import type { ReviewOutcome } from "@/lib/smart-queue";
 import { recordReviewOutcome, recordReviewOutcomeForUser } from "@/lib/smart-queue/repository";
 
 type Client = SupabaseClient<Database>;
@@ -45,12 +50,19 @@ async function writeOutcome(
   termId: string,
   outcome: ReviewOutcome,
   incrementSeen: boolean,
-  shownOrigin?: ReviewShownOrigin,
+  isReviewReveal = false,
 ) {
   if (mode === "session") {
-    await recordReviewOutcome(client, termId, outcome, incrementSeen, shownOrigin);
+    await recordReviewOutcome(client, termId, outcome, incrementSeen, isReviewReveal);
   } else {
-    await recordReviewOutcomeForUser(client, userId, termId, outcome, incrementSeen, shownOrigin);
+    await recordReviewOutcomeForUser(
+      client,
+      userId,
+      termId,
+      outcome,
+      incrementSeen,
+      isReviewReveal,
+    );
   }
 }
 
@@ -164,18 +176,27 @@ export async function applyTermSeen(
   termId: string,
   mode: AuthMode = "session",
 ): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "seen", true, "browse");
+  await writeOutcome(client, mode, userId, termId, "seen", true);
 }
 
-/** Read CTA, widget "Next", or Review reveal: deliberate but untested (+increment). */
+/** Read CTA (web + Telegram) or widget "Next": deliberate but untested (+increment). */
 export async function applyTermRead(
   client: Client,
   userId: string,
   termId: string,
-  origin: Exclude<ReviewShownOrigin, "browse">,
   mode: AuthMode = "session",
 ): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "read", true, origin);
+  await writeOutcome(client, mode, userId, termId, "read", true, false);
+}
+
+/** Review reveal (web + Telegram): its own counter, disjoint from applyTermRead's. */
+export async function applyReviewReveal(
+  client: Client,
+  userId: string,
+  termId: string,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await writeOutcome(client, mode, userId, termId, "read", true, true);
 }
 
 /** Telegram /read "Mark known": mark + solid outcome, no seen increment. */

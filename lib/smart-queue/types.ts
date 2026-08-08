@@ -1,7 +1,7 @@
 /** Smart queue types — pure data structures, no runtime imports.
  */
 
-/** unseen: never shown. seen/read: light exposure tiers (see ReviewShownOrigin).
+/** unseen: never shown. seen/read: light exposure tiers.
  *  learning/solid/verified/forgot: "recalled" — an actual tested judgment.
  */
 export type ReviewOutcome =
@@ -12,9 +12,6 @@ export type ReviewOutcome =
   | "solid"
   | "verified"
   | "forgot";
-
-/** Where a seen/read write came from — drives the abandoned_review reason. */
-export type ReviewShownOrigin = "browse" | "read_cta" | "widget" | "review_reveal";
 
 export type ReviewPreset = "balanced" | "learn_new" | "drill_weak";
 
@@ -41,12 +38,16 @@ export type ReviewCandidate = {
   seenCount: number;
   lastSeenAt: Date | null;
   lastOutcome: ReviewOutcome;
+  /** Deliberate Read-tier exposure: Read CTA (web + Telegram) or widget "Next". */
   readCount: number;
+  /** Review-reveal exposure — disjoint from readCount, its own counter. */
+  reviewRevealCount: number;
   recalledCount: number;
   /** null until the term has ever been recalled; then one of learning/solid/verified/forgot. */
   lastRecalledOutcome: ReviewOutcome | null;
   lastRecalledAt: Date | null;
-  lastShownOrigin: ReviewShownOrigin | null;
+  /** Timestamp of the last review-reveal write, independent of what happened since. */
+  lastReviewRevealAt: Date | null;
   /** Consecutive learning/forgot outcomes since the last solid/verified. */
   failStreak: number;
 };
