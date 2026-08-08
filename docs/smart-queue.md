@@ -383,6 +383,21 @@ only share the outcome-recording half of the pipeline.
 
 ---
 
+## Debug page
+
+`/jargon/debug` lists every candidate in the chosen pool — known or unknown,
+one collection or all active ones, any preset — with its live score, `reasons`
+badges, and the raw `review_state` fields behind them (seen/read/recalled
+counts, last outcome, last recalled outcome, fail streak). No term content,
+just the scoring internals, sorted exactly like a real pick would be. It's a
+debugging view, not a study surface: it doesn't write outcomes and the preset
+switcher never touches `user_settings`. Built on
+[`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)'s
+`listScoredCandidates`, which is `pickTerms` with `limit` set to every
+candidate instead of a top-N slice.
+
+---
+
 ## Data model
 
 Postgres tables:
