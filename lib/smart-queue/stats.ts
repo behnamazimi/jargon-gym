@@ -19,10 +19,7 @@ function ownCountAndLastActivity(
   }
 }
 
-export function computePoolStats(
-  candidates: ReviewCandidate[],
-  context: PickContext,
-): PoolStats {
+export function computePoolStats(candidates: ReviewCandidate[], context: PickContext): PoolStats {
   const now = new Date();
   let unseen = 0;
   let seen = 0;

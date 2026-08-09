@@ -10,10 +10,10 @@ import {
 import {
   AlertBanner,
   CopyField,
-  DangerZone,
   HighlightPanel,
-  SettingsDivider,
-  SettingsGroup,
+  SettingsPanel,
+  SettingsRow,
+  SettingsStack,
   StatusPill,
 } from "@/components/jargon/settings/ui";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -113,54 +113,56 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
   const linkedSince = status.linkedAt ? formatDate(status.linkedAt) : null;
 
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <StatusPill variant={telegramStatusVariant(status)} />
-        {status.connected && linkedSince ? (
-          <p className="m-0 text-xs text-base-content/60">Linked {linkedSince}</p>
-        ) : null}
-      </div>
-
+    <SettingsPanel
+      id="telegram"
+      title="Telegram settings"
+      description="Get terms in Telegram, mark them known, or type /read anytime."
+      status={<StatusPill variant={telegramStatusVariant(status)} />}
+    >
       {error ? <AlertBanner message={error} /> : null}
 
-      {!status.connected ? (
-        <SettingsGroup
-          title="Connect"
-          description="Generate a link, open it in Telegram, and tap Start. Don't share the link — it expires in 5 minutes."
-        >
-          <Button
-            type="button"
-            onPress={handleGenerateLink}
-            isDisabled={isGenerating}
-            className="text-sm"
+      <SettingsStack>
+        {!status.connected ? (
+          <SettingsRow
+            title="Connect"
+            description="Generate a link, open it in Telegram, and tap Start. Don't share the link — it expires in 5 minutes."
           >
-            {isGenerating ? "Generating…" : "Generate Telegram link"}
-          </Button>
+            <Button
+              type="button"
+              onPress={handleGenerateLink}
+              isDisabled={isGenerating}
+              className="text-sm"
+            >
+              {isGenerating ? "Generating…" : "Generate Telegram link"}
+            </Button>
 
-          {deepLink ? (
-            <HighlightPanel label="Open in Telegram">
-              <CopyField value={deepLink} />
-              <LinkButton
-                href={deepLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="link"
-                size="sm"
-                className="h-auto gap-1.5 p-0 text-sm"
-              >
-                Open bot
-                <ExternalLink className="size-3.5" />
-              </LinkButton>
-            </HighlightPanel>
-          ) : null}
-        </SettingsGroup>
-      ) : (
-        <>
-          <SettingsGroup
+            {deepLink ? (
+              <HighlightPanel label="Open in Telegram">
+                <CopyField value={deepLink} />
+                <LinkButton
+                  href={deepLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="link"
+                  size="sm"
+                  className="h-auto gap-1.5 p-0 text-sm"
+                >
+                  Open bot
+                  <ExternalLink className="size-3.5" strokeWidth={1.5} />
+                </LinkButton>
+              </HighlightPanel>
+            ) : null}
+          </SettingsRow>
+        ) : (
+          <SettingsRow
             title="Reminders"
-            description="Reminders go out on a rolling schedule from your last one."
+            description={
+              linkedSince
+                ? `Linked ${linkedSince}. Reminders go out on a rolling schedule from your last one.`
+                : "Reminders go out on a rolling schedule from your last one."
+            }
           >
-            <Field className="max-w-xs">
+            <Field>
               <FieldLabel htmlFor="telegram-cadence">Cadence</FieldLabel>
               <Select
                 selectedKey={status.cadence}
@@ -179,27 +181,28 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
                 </SelectContent>
               </Select>
             </Field>
-          </SettingsGroup>
+          </SettingsRow>
+        )}
 
-          <SettingsDivider />
-
-          <DangerZone
+        {status.connected ? (
+          <SettingsRow
             title="Disconnect"
             description="Stop reminders and unlink this chat. You can reconnect anytime."
           >
             <Button
               type="button"
-              variant="destructive"
+              variant="outline"
               size="sm"
               onPress={handleDisconnect}
               isDisabled={isDisconnecting}
+              className="text-error hover:bg-error/10"
             >
-              <Unlink className="size-3.5" />
+              <Unlink className="size-3.5" strokeWidth={1.5} />
               {isDisconnecting ? "Disconnecting…" : "Disconnect Telegram"}
             </Button>
-          </DangerZone>
-        </>
-      )}
-    </>
+          </SettingsRow>
+        ) : null}
+      </SettingsStack>
+    </SettingsPanel>
   );
 }

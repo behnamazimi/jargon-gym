@@ -50,7 +50,7 @@ only its own kind of evidence.
 
 **Fails still cross over, passes don't (directional propagation).** A miss
 can't happen by lucky guessing — passing can. So a fail in either activity
-is trustworthy enough to bump the *other* two: failing a quiz nudges Read
+is trustworthy enough to bump the _other_ two: failing a quiz nudges Read
 and Review; failing Review nudges Read and Quiz. Passing never nudges
 anything outside its own activity. This is tracked with two fields on
 `review_state`: `last_fail_at` and `last_fail_source` (`'review'` |
@@ -98,11 +98,11 @@ widget don't fetch candidates or score anything — see
 `PickContext` is `"read" | "review" | "quiz"` — which activity's fields a
 pick scores against:
 
-| Context | Own count | Own streak | Own last-activity timestamp |
-| --- | --- | --- | --- |
-| `read` | `read_count` | *(none — no pass/fail concept)* | `last_read_at` |
-| `review` | `review_recall_count` | `review_streak` | `last_review_recall_at` |
-| `quiz` | `quiz_test_count` | `quiz_streak` | `last_quiz_tested_at` |
+| Context  | Own count             | Own streak                      | Own last-activity timestamp |
+| -------- | --------------------- | ------------------------------- | --------------------------- |
+| `read`   | `read_count`          | _(none — no pass/fail concept)_ | `last_read_at`              |
+| `review` | `review_recall_count` | `review_streak`                 | `last_review_recall_at`     |
+| `quiz`   | `quiz_test_count`     | `quiz_streak`                   | `last_quiz_tested_at`       |
 
 The same scoring formula runs for all three; only which fields it reads
 change. Staleness, mastered-cooldown, and struggling all read the context's
@@ -131,7 +131,7 @@ record Read/Test outcomes and known-flips.
 Entry points:
 
 | Layer                                                             | Role                                                    |
-| ------------------------------------------------------------------| -------------------------------------------------------- |
+| ----------------------------------------------------------------- | ------------------------------------------------------- |
 | [`lib/study/pool.ts`](../lib/study/pool.ts)                       | Thin wrapper most surfaces call                         |
 | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)     | `pickReviewTerms`, `pickReviewTermsForUser`, pool stats |
 | [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts) | Sole writer of review events                            |
@@ -147,16 +147,16 @@ Each candidate gets a score from additive signals and penalties, scoped to
 the pick's `PickContext`. Multiple signals can fire on the same term; all
 applicable reasons are returned for UI badges.
 
-| Signal | Condition | Effect |
-| --- | --- | --- |
-| **Mastered cooldown** | This context's own streak > 0 and its last-activity timestamp is within `SOLID_COOLDOWN_HOURS` | Large penalty. Independent per context — a Quiz pass never cools down Review. |
-| **Never engaged** | This context's own count is 0 | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0. |
-| **Struggling** | This context's own streak < 0 | Boost scaled by `min(|streak|, FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula. |
-| **Engaged but untested** | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0 | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity. |
-| **Abandoned review** | `pending_reveal === true` | Moderate boost. `review` context only — the leading edge of an unrated reveal. |
-| **Cross-activity fail** | `last_fail_at` is set | In `read` context: always boosts (either source). In `review`/`quiz` context: boosts only if `last_fail_source` is the *other* activity — a term's own activity already reflects its own fail via the struggling signal. |
-| **New term** | Created within the last 72 hours | Moderate boost, all contexts. |
-| **Staleness** | Time since this context's own last-activity timestamp, only when its own count > 0 | Rises linearly, capped at 7 days. Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those. |
+| Signal                   | Condition                                                                                      | Effect                                                                                                                                                                                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mastered cooldown**    | This context's own streak > 0 and its last-activity timestamp is within `SOLID_COOLDOWN_HOURS` | Large penalty. Independent per context — a Quiz pass never cools down Review.                                                                                                                                            |
+| **Never engaged**        | This context's own count is 0                                                                  | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0.                                                                                                                             |
+| **Struggling**           | This context's own streak < 0                                                                  | Boost scaled by `min(                                                                                                                                                                                                    | streak | , FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula. |
+| **Engaged but untested** | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                       | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                 |
+| **Abandoned review**     | `pending_reveal === true`                                                                      | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                           |
+| **Cross-activity fail**  | `last_fail_at` is set                                                                          | In `read` context: always boosts (either source). In `review`/`quiz` context: boosts only if `last_fail_source` is the _other_ activity — a term's own activity already reflects its own fail via the struggling signal. |
+| **New term**             | Created within the last 72 hours                                                               | Moderate boost, all contexts.                                                                                                                                                                                            |
+| **Staleness**            | Time since this context's own last-activity timestamp, only when its own count > 0             | Rises linearly, capped at 7 days. Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                               |
 
 Same-score candidates keep their incoming order from the candidate fetch —
 no shuffle, no explicit tie-break by `term_id`.
@@ -173,24 +173,24 @@ whole tunable dimension (12 weights × 3 presets + a context multiplier) for
 one person who can just edit the constants directly. There is no settings
 UI for these:
 
-| Constant             | Default | Purpose                                                                |
-| --------------------- | ------- | ----------------------------------------------------------------------- |
-| `unseenBoost`          | 100     | Never-engaged boost                                                    |
-| `strugglingBoostPerStreak` | 40  | Per point of `\|streak\|` when struggling, capped at `FAIL_STREAK_CAP` |
-| `masteredCooldownPenalty` | 120  | Mastered-cooldown penalty                                              |
-| `engagedButUntestedBoost` | 30   | Read several times, never tested (this activity)                       |
-| `abandonedReviewBoost`  | 45     | Left mid-review                                                        |
-| `newTermBoost`          | 30     | Recently added                                                         |
-| `stalenessBoostPerHour` | 0.5    | Per hour since last tested, this activity                              |
-| `stalenessCapHours`     | 168     | Staleness cap (7 days)                                                 |
-| `crossFailReadBoost`    | 20      | Read-context boost when either activity most recently failed           |
-| `crossFailOtherTestBoost` | 25   | Test-context boost when the *other* test activity most recently failed |
+| Constant                   | Default | Purpose                                                                |
+| -------------------------- | ------- | ---------------------------------------------------------------------- |
+| `unseenBoost`              | 100     | Never-engaged boost                                                    |
+| `strugglingBoostPerStreak` | 40      | Per point of `\|streak\|` when struggling, capped at `FAIL_STREAK_CAP` |
+| `masteredCooldownPenalty`  | 120     | Mastered-cooldown penalty                                              |
+| `engagedButUntestedBoost`  | 30      | Read several times, never tested (this activity)                       |
+| `abandonedReviewBoost`     | 45      | Left mid-review                                                        |
+| `newTermBoost`             | 30      | Recently added                                                         |
+| `stalenessBoostPerHour`    | 0.5     | Per hour since last tested, this activity                              |
+| `stalenessCapHours`        | 168     | Staleness cap (7 days)                                                 |
+| `crossFailReadBoost`       | 20      | Read-context boost when either activity most recently failed           |
+| `crossFailOtherTestBoost`  | 25      | Test-context boost when the _other_ test activity most recently failed |
 
-| Constant                  | Default | Purpose                                                                                                         |
-| ------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `SOLID_COOLDOWN_HOURS`    | 72      | How long a recent pass stays deprioritized, per activity                                                        |
-| `ENGAGED_MIN_COUNT`       | 3       | Minimum reads before `engaged_untested` applies                                                                 |
-| `FAIL_STREAK_CAP`         | 5       | Maximum consecutive fails counted toward the struggling boost                                                   |
+| Constant               | Default | Purpose                                                       |
+| ---------------------- | ------- | ------------------------------------------------------------- |
+| `SOLID_COOLDOWN_HOURS` | 72      | How long a recent pass stays deprioritized, per activity      |
+| `ENGAGED_MIN_COUNT`    | 3       | Minimum reads before `engaged_untested` applies               |
+| `FAIL_STREAK_CAP`      | 5       | Maximum consecutive fails counted toward the struggling boost |
 
 Staleness and "stale" reason labels use a 24-hour threshold. New-term boost
 uses a 72-hour creation window.
@@ -200,18 +200,18 @@ uses a 72-hour creation window.
 Each pick includes a `reasons` list — which signals fired — for UI badges
 and queue previews.
 
-| Reason             | When it fires                                                                                 | UI label (`read` / `review` / `quiz`)                       |
-| ------------------ | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `unseen`           | This context's own count is 0                                                                    | Never read / Never reviewed / Never quizzed                    |
-| `new`              | Term created within ~72h                                                                         | Recently added                                                 |
-| `struggling`       | This context's own streak < 0                                                                    | Struggling                                                     |
-| `repeat_fail`      | Struggling and `\|streak\| >= 2`                                                                 | Repeatedly missed                                               |
-| `engaged_untested` | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)    | Read 3+ times, not tested                                       |
-| `abandoned_review` | `pending_reveal === true` (`review` only)                                                        | Left mid-review                                                 |
-| `stale`            | This context's own count > 0 and not tested in 24h+                                              | Not read recently / Not reviewed recently / Not quizzed recently |
-| `mastered_cooldown`| This context's own streak > 0, within cooldown window                                            | Recently mastered                                               |
-| `cross_fail`       | `last_fail_at` set and (read context, or `last_fail_source` is the other activity)               | Missed elsewhere recently                                       |
-| `steady`           | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case) | Recently read / Recently reviewed / Recently quizzed             |
+| Reason              | When it fires                                                                                                    | UI label (`read` / `review` / `quiz`)                            |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `unseen`            | This context's own count is 0                                                                                    | Never read / Never reviewed / Never quizzed                      |
+| `new`               | Term created within ~72h                                                                                         | Recently added                                                   |
+| `struggling`        | This context's own streak < 0                                                                                    | Struggling                                                       |
+| `repeat_fail`       | Struggling and `\|streak\| >= 2`                                                                                 | Repeatedly missed                                                |
+| `engaged_untested`  | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)                     | Read 3+ times, not tested                                        |
+| `abandoned_review`  | `pending_reveal === true` (`review` only)                                                                        | Left mid-review                                                  |
+| `stale`             | This context's own count > 0 and not tested in 24h+                                                              | Not read recently / Not reviewed recently / Not quizzed recently |
+| `mastered_cooldown` | This context's own streak > 0, within cooldown window                                                            | Recently mastered                                                |
+| `cross_fail`        | `last_fail_at` set and (read context, or `last_fail_source` is the other activity)                               | Missed elsewhere recently                                        |
+| `steady`            | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case) | Recently read / Recently reviewed / Recently quizzed             |
 
 `unseen`, `stale`, and `steady` share one label per activity —
 `formatPickReason(reason, context)` in
@@ -240,14 +240,14 @@ to the same `PickContext`. Resetting a collection's progress clears both
 
 ## Events
 
-| Event | Effect |
-| --- | --- |
-| `read` | `read_count += 1`, `last_read_at = now()`, clears `last_fail_at`/`last_fail_source` |
-| `reveal` | `pending_reveal = true` |
+| Event         | Effect                                                                                                                                         |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `read`        | `read_count += 1`, `last_read_at = now()`, clears `last_fail_at`/`last_fail_source`                                                            |
+| `reveal`      | `pending_reveal = true`                                                                                                                        |
 | `review_pass` | `review_recall_count += 1`, `last_review_recall_at = now()`, `review_streak` moves toward positive, `pending_reveal = false`, clears fail flag |
-| `review_fail` | Same counters, `review_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'review'` |
-| `quiz_pass` | `quiz_test_count += 1`, `last_quiz_tested_at = now()`, `quiz_streak` moves toward positive, clears fail flag |
-| `quiz_fail` | Same counters, `quiz_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'quiz'` |
+| `review_fail` | Same counters, `review_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'review'`                                        |
+| `quiz_pass`   | `quiz_test_count += 1`, `last_quiz_tested_at = now()`, `quiz_streak` moves toward positive, clears fail flag                                   |
+| `quiz_fail`   | Same counters, `quiz_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'quiz'`                                            |
 
 Streak update rule: a pass resets a negative streak to `+1` (or increments
 a positive one); a fail resets a positive streak to `-1` (or decrements a
@@ -347,10 +347,10 @@ candidate instead of a top-N slice.
 
 Postgres tables:
 
-| Table                         | Role                                                                                                                                                                                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `review_state`                | `read_count`, `last_read_at`; `review_recall_count`, `last_review_recall_at`, `review_streak`; `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`; `pending_reveal`; `last_fail_at`, `last_fail_source` — all per user + term |
-| `user_progress`               | Row present → known; absent → unknown                                                                                                                                                                                                                    |
+| Table           | Role                                                                                                                                                                                                                               |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `review_state`  | `read_count`, `last_read_at`; `review_recall_count`, `last_review_recall_at`, `review_streak`; `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`; `pending_reveal`; `last_fail_at`, `last_fail_source` — all per user + term |
+| `user_progress` | Row present → known; absent → unknown                                                                                                                                                                                              |
 
 Candidate RPCs (see
 [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)):
@@ -368,16 +368,16 @@ Event RPC:
 
 ## Code map
 
-| Concern                              | Location                                                                                                                                                                                                                                           |
-| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Study pools / collection scope       | [`lib/study/`](../lib/study/)                                                                                                                                                                                                                      |
-| Types, scoring, pick, stats, weights | [`lib/smart-queue/`](../lib/smart-queue/)                                                                                                                                                                                                          |
-| DB RPCs for candidates / events      | [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)                                                                                                                                                                                |
-| Term ID → TermCard hydration         | [`lib/smart-queue/hydrate.ts`](../lib/smart-queue/hydrate.ts)                                                                                                                                                                                      |
-| Pick + hydrate composition           | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)                                                                                                                                                                                      |
+| Concern                              | Location                                                                                                                                                                                                                     |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Study pools / collection scope       | [`lib/study/`](../lib/study/)                                                                                                                                                                                                |
+| Types, scoring, pick, stats, weights | [`lib/smart-queue/`](../lib/smart-queue/)                                                                                                                                                                                    |
+| DB RPCs for candidates / events      | [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)                                                                                                                                                          |
+| Term ID → TermCard hydration         | [`lib/smart-queue/hydrate.ts`](../lib/smart-queue/hydrate.ts)                                                                                                                                                                |
+| Pick + hydrate composition           | [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)                                                                                                                                                                |
 | Event writes (only entry point)      | [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts) — `recordRead`/`recordReveal`/`recordTest`, plus `applyQuizAnswer`/`applyReviewRating`/`applyKnownToggle`/`setKnownStatus` composing those with pool flips |
-| Known / unknown flips                | [`lib/jargon/known-state.ts`](../lib/jargon/known-state.ts)                                                                                                                                                                                        |
-| Telegram routing                     | [`lib/telegram/flows.ts`](../lib/telegram/flows.ts)                                                                                                                                                                                                |
+| Known / unknown flips                | [`lib/jargon/known-state.ts`](../lib/jargon/known-state.ts)                                                                                                                                                                  |
+| Telegram routing                     | [`lib/telegram/flows.ts`](../lib/telegram/flows.ts)                                                                                                                                                                          |
 
 When changing behavior, ask: is this **scoring** (`lib/smart-queue`), **pool
 selection** (`lib/study`), or **when a surface calls pick /

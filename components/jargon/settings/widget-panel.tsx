@@ -10,10 +10,13 @@ import {
   AlertBanner,
   CopyField,
   HighlightPanel,
+  SettingsPanel,
   SetupStep,
   TokenRow,
 } from "@/components/jargon/settings/ui";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { WidgetTokenRow } from "@/lib/widget/types";
 
 type WidgetPanelProps = {
@@ -83,8 +86,28 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
     setTokens((prev) => prev.filter((t) => t.id !== tokenId));
   }
 
+  const hasTokens = tokens.length > 0;
+
   return (
-    <>
+    <SettingsPanel
+      id="widget"
+      title="Desktop Widget Setup"
+      description="Show live terms on your Mac with the Übersicht widget."
+      status={
+        <Badge variant="outline" className="gap-1.5 text-xs font-medium">
+          <span
+            className={cn(
+              "size-1.5 shrink-0 rounded-full",
+              hasTokens ? "bg-success" : "bg-base-content/30",
+            )}
+            aria-hidden
+          />
+          {hasTokens
+            ? `${tokens.length} active ${tokens.length === 1 ? "token" : "tokens"}`
+            : "No tokens"}
+        </Badge>
+      }
+    >
       {error ? <AlertBanner message={error} /> : null}
 
       <ol className="m-0 list-none space-y-0 p-0">
@@ -136,7 +159,7 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
             </HighlightPanel>
           ) : null}
 
-          {tokens.length > 0 ? (
+          {hasTokens ? (
             <ul className="m-0 list-none space-y-2 p-0">
               {tokens.map((token) => (
                 <li key={token.id}>
@@ -146,13 +169,13 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
                     action={
                       <Button
                         type="button"
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
                         onPress={() => handleRevoke(token.id)}
                         isDisabled={busyId === token.id}
-                        className="shrink-0"
+                        className="shrink-0 text-error hover:bg-error/10"
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-3.5" strokeWidth={1.5} />
                         Revoke
                       </Button>
                     }
@@ -161,7 +184,9 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
               ))}
             </ul>
           ) : (
-            <p className="m-0 text-sm text-base-content/60">No active tokens yet.</p>
+            <p className="m-0 text-sm text-base-content/60">
+              Generate a token to unlock the one-command install in step 3.
+            </p>
           )}
         </SetupStep>
 
@@ -199,6 +224,6 @@ export function WidgetPanel({ initialTokens }: WidgetPanelProps) {
           </p>
         </SetupStep>
       </ol>
-    </>
+    </SettingsPanel>
   );
 }

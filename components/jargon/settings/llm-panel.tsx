@@ -9,15 +9,15 @@ import {
 } from "@/app/(private)/jargon/settings/actions";
 import {
   AlertBanner,
-  DangerZone,
-  SettingsDivider,
-  SettingsGroup,
+  SettingsPanel,
+  SettingsRow,
+  SettingsStack,
   StatusPill,
 } from "@/components/jargon/settings/ui";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -139,141 +139,139 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
     : null;
 
   return (
-    <>
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <StatusPill variant={llmConfigured ? "connected" : "disconnected"} />
-        {llmConfigured ? (
-          <p className="m-0 text-xs text-base-content/60">
-            {providerLabel} · ••••{settings?.apiKeyLast4}
-          </p>
-        ) : null}
-      </div>
-
+    <SettingsPanel
+      id="quiz"
+      title="Quiz settings"
+      description="Connect an LLM provider to generate quizzes from your collections."
+      status={<StatusPill variant={llmConfigured ? "connected" : "disconnected"} />}
+    >
       {error ? <AlertBanner message={error} /> : null}
 
-      <SettingsGroup
-        title="LLM provider"
-        description="Your key stays encrypted and is only used to generate quizzes."
-      >
-        <Field className="max-w-xs">
-          <FieldLabel htmlFor="llm-provider">Provider</FieldLabel>
-          <Select
-            selectedKey={provider}
-            onSelectionChange={(key) => setProvider(key as LlmProvider)}
-            isDisabled={isSaving}
-          >
-            <SelectTrigger id="llm-provider" className="text-sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {LLM_PROVIDER_OPTIONS.map((option) => (
-                <SelectItem key={option.value} id={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-
-        {llmConfigured && !replacingKey ? (
-          <div className="space-y-3 rounded-lg bg-base-200/50 px-4 py-3">
-            <p className="m-0 text-sm text-base-content/60">
-              Key saved. Replace it here if you need to switch providers.
-            </p>
-            <Button type="button" variant="outline" size="sm" onPress={() => setReplacingKey(true)}>
-              Replace key
-            </Button>
-          </div>
-        ) : (
+      <SettingsStack>
+        <SettingsRow
+          title="LLM provider"
+          description={
+            llmConfigured
+              ? `${providerLabel} key ending in ${settings?.apiKeyLast4}. Keys stay encrypted and are only used for quiz generation.`
+              : "Your key stays encrypted and is only used to generate quizzes."
+          }
+        >
           <Field>
-            <FieldLabel htmlFor="llm-api-key">API key</FieldLabel>
-            <Input
-              id="llm-api-key"
-              type="password"
-              value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
-              placeholder="Paste your API key"
-              className="text-sm"
-              autoComplete="off"
-            />
-            <div className="flex flex-wrap gap-2 pt-1">
+            <FieldLabel htmlFor="llm-provider">Provider</FieldLabel>
+            <Select
+              selectedKey={provider}
+              onSelectionChange={(key) => setProvider(key as LlmProvider)}
+              isDisabled={isSaving}
+            >
+              <SelectTrigger id="llm-provider" className="text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LLM_PROVIDER_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} id={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          {llmConfigured && !replacingKey ? (
+            <div className="space-y-2">
+              <p className="m-0 text-sm text-base-content/60">Key saved.</p>
               <Button
                 type="button"
-                onPress={handleSaveKey}
-                isDisabled={isSaving || !apiKey.trim()}
-                className="text-sm"
+                variant="outline"
+                size="sm"
+                onPress={() => setReplacingKey(true)}
               >
-                {isSaving ? "Saving…" : llmConfigured ? "Save new key" : "Save key"}
+                Replace key
               </Button>
-              {llmConfigured && replacingKey ? (
+            </div>
+          ) : (
+            <Field>
+              <FieldLabel htmlFor="llm-api-key">API key</FieldLabel>
+              <Input
+                id="llm-api-key"
+                type="password"
+                value={apiKey}
+                onChange={(event) => setApiKey(event.target.value)}
+                placeholder="Paste your API key"
+                className="text-sm"
+                autoComplete="off"
+              />
+              <div className="flex flex-wrap gap-2 pt-1">
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="sm"
-                  onPress={() => {
-                    setReplacingKey(false);
-                    setApiKey("");
-                  }}
+                  onPress={handleSaveKey}
+                  isDisabled={isSaving || !apiKey.trim()}
+                  className="text-sm"
                 >
-                  Cancel
+                  {isSaving ? "Saving…" : llmConfigured ? "Save new key" : "Save key"}
                 </Button>
-              ) : null}
-            </div>
-          </Field>
-        )}
-      </SettingsGroup>
+                {llmConfigured && replacingKey ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onPress={() => {
+                      setReplacingKey(false);
+                      setApiKey("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                ) : null}
+              </div>
+            </Field>
+          )}
+        </SettingsRow>
 
-      <SettingsDivider />
+        <SettingsRow title="Quiz progress" description="Quiz only.">
+          <label className="label cursor-pointer justify-start gap-3 px-0">
+            <Switch
+              id="mark-unknown-on-fail"
+              checked={markUnknownOnFail}
+              disabled={isSavingPrefs}
+              onCheckedChange={(checked) => handlePreferenceChange({ markUnknownOnFail: checked })}
+            />
+            <span className="text-sm text-base-content">
+              Mark terms unknown when I miss a question
+            </span>
+          </label>
 
-      <SettingsGroup
-        title="Quiz progress"
-        description="Quiz only — flashcard review always updates known/unknown when you rate a card."
-      >
-        <Field orientation="horizontal">
-          <Checkbox
-            id="mark-unknown-on-fail"
-            isSelected={markUnknownOnFail}
-            isDisabled={isSavingPrefs}
-            onChange={(checked) => handlePreferenceChange({ markUnknownOnFail: checked })}
-          />
-          <FieldLabel htmlFor="mark-unknown-on-fail">
-            Mark terms unknown when I miss a quiz question
-          </FieldLabel>
-        </Field>
+          <label className="label cursor-pointer justify-start gap-3 px-0">
+            <Switch
+              id="mark-known-on-pass"
+              checked={markKnownOnPass}
+              disabled={isSavingPrefs}
+              onCheckedChange={(checked) => handlePreferenceChange({ markKnownOnPass: checked })}
+            />
+            <span className="text-sm text-base-content">
+              Mark terms known when I pass a question
+            </span>
+          </label>
+        </SettingsRow>
 
-        <Field orientation="horizontal">
-          <Checkbox
-            id="mark-known-on-pass"
-            isSelected={markKnownOnPass}
-            isDisabled={isSavingPrefs}
-            onChange={(checked) => handlePreferenceChange({ markKnownOnPass: checked })}
-          />
-          <FieldLabel htmlFor="mark-known-on-pass">
-            Mark terms known when I pass a quiz question
-          </FieldLabel>
-        </Field>
-      </SettingsGroup>
-
-      {llmConfigured ? (
-        <>
-          <SettingsDivider />
-          <DangerZone
+        {llmConfigured ? (
+          <SettingsRow
             title="Remove configuration"
             description="Removes your saved API key. Quizzes won't work until you add a new one."
           >
             <Button
               type="button"
-              variant="destructive"
+              variant="outline"
               size="sm"
               onPress={handleClear}
               isDisabled={isClearing}
+              className="text-error hover:bg-error/10"
             >
-              <Trash2 className="size-3.5" />
+              <Trash2 className="size-3.5" strokeWidth={1.5} />
               {isClearing ? "Removing…" : "Remove API key"}
             </Button>
-          </DangerZone>
-        </>
-      ) : null}
-    </>
+          </SettingsRow>
+        ) : null}
+      </SettingsStack>
+    </SettingsPanel>
   );
 }

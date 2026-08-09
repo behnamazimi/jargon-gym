@@ -38,9 +38,9 @@ export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: 
 
           <p className="m-0 text-xs leading-relaxed text-base-content/50">
             read {row.readCount} ({formatRelative(row.lastReadAt)}) · review recall{" "}
-            {row.reviewRecallCount} (streak {row.reviewStreak}, {formatRelative(row.lastReviewRecallAt)})
-            · quiz {row.quizTestCount} (streak {row.quizStreak},{" "}
-            {formatRelative(row.lastQuizTestedAt)})
+            {row.reviewRecallCount} (streak {row.reviewStreak},{" "}
+            {formatRelative(row.lastReviewRecallAt)}) · quiz {row.quizTestCount} (streak{" "}
+            {row.quizStreak}, {formatRelative(row.lastQuizTestedAt)})
             {row.pendingReveal ? " · pending reveal" : ""}
             {row.lastFailAt ? (
               <>

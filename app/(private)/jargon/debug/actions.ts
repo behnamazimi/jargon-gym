@@ -1,7 +1,12 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { listScoredCandidates, type FailSource, type PickContext, type PickReason } from "@/lib/smart-queue";
+import {
+  listScoredCandidates,
+  type FailSource,
+  type PickContext,
+  type PickReason,
+} from "@/lib/smart-queue";
 import { listStudyCollections, type TermPoolStatus } from "@/lib/study";
 
 export async function getDebugSetupData() {
@@ -83,7 +88,9 @@ export async function listDebugScoredTermsAction(
         : null,
       reviewStreak: candidate.reviewStreak,
       quizTestCount: candidate.quizTestCount,
-      lastQuizTestedAt: candidate.lastQuizTestedAt ? candidate.lastQuizTestedAt.toISOString() : null,
+      lastQuizTestedAt: candidate.lastQuizTestedAt
+        ? candidate.lastQuizTestedAt.toISOString()
+        : null,
       quizStreak: candidate.quizStreak,
       pendingReveal: candidate.pendingReveal,
       lastFailAt: candidate.lastFailAt ? candidate.lastFailAt.toISOString() : null,

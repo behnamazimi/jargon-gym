@@ -126,8 +126,7 @@ function evaluateCandidate(
 
   // Staleness — only once this context has some activity to measure from.
   if (fields.ownCount > 0 && fields.lastActivityAt) {
-    const hoursSinceActivity =
-      (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
+    const hoursSinceActivity = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
     const cappedHours = Math.min(hoursSinceActivity, weights.stalenessCapHours);
     score += cappedHours * weights.stalenessBoostPerHour;
     if (hoursSinceActivity >= STALE_REASON_THRESHOLD_HOURS) {

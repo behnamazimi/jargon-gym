@@ -121,13 +121,13 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
       <ContentPageMain>
         <ContentPageSection title="Three separate rankings">
           <p className="m-0">
-            Read, Review, and Quiz each keep their own history and their own ranking, they don&apos;t
-            share one queue. Review recall (did you actually remember it, self-graded, no
-            distractors) and a quiz answer (did you recognize it among a few options) aren&apos;t the
-            same kind of evidence, a quiz has a guess floor a review reveal doesn&apos;t, so treating
-            them as one signal let a lucky guess quiet a term that still needed real practice. Now
-            each activity ranks on its own record, missing in one still nudges the others (see
-            below), but acing one only cools that one down.
+            Read, Review, and Quiz each keep their own history and their own ranking, they
+            don&apos;t share one queue. Review recall (did you actually remember it, self-graded, no
+            distractors) and a quiz answer (did you recognize it among a few options) aren&apos;t
+            the same kind of evidence, a quiz has a guess floor a review reveal doesn&apos;t, so
+            treating them as one signal let a lucky guess quiet a term that still needed real
+            practice. Now each activity ranks on its own record, missing in one still nudges the
+            others (see below), but acing one only cools that one down.
           </p>
         </ContentPageSection>
 
@@ -158,8 +158,9 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             Review cards, quiz questions, and the queue preview label terms with these badges. A
             term can have more than one at a time. If none of them apply, it shows{" "}
             <strong className="font-medium text-base-content">Recently reviewed</strong> (or{" "}
-            <strong className="font-medium text-base-content">Recently quizzed</strong>) — you&apos;ve
-            tested yourself on it and nothing else stands out yet. Nothing&apos;s wrong either way.
+            <strong className="font-medium text-base-content">Recently quizzed</strong>) —
+            you&apos;ve tested yourself on it and nothing else stands out yet. Nothing&apos;s wrong
+            either way.
           </p>
           <p className="m-0 text-base-content/70">
             Once you&apos;ve read (or tested) every term in a pool at least once, the never-read
@@ -170,9 +171,9 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
 
         <ContentPageSection title="Quizzes">
           <p className="m-0">
-            Quizzes rank against their own history, not Review&apos;s, missing on a quiz still nudges
-            Read and Review since a miss is trustworthy evidence either way, but a quiz streak only
-            cools down future quizzes. Setup shows a preview; questions show badges.
+            Quizzes rank against their own history, not Review&apos;s, missing on a quiz still
+            nudges Read and Review since a miss is trustworthy evidence either way, but a quiz
+            streak only cools down future quizzes. Setup shows a preview; questions show badges.
           </p>
         </ContentPageSection>
 
