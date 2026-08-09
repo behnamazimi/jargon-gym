@@ -15,40 +15,9 @@ export WIDGET_DIR TERM_ID
 import json
 import os
 import pathlib
-import sys
-import urllib.error
-import urllib.request
 
 widget_dir = pathlib.Path(os.environ["WIDGET_DIR"])
-term_id = os.environ["TERM_ID"]
-config_path = widget_dir / "config.json"
 state_path = widget_dir / "state.json"
-
-config = json.loads(config_path.read_text())
-api_token = config["apiToken"]
-api_base = config["apiBaseUrl"].rstrip("/")
-
-req = urllib.request.Request(
-    f"{api_base}/api/widget/record-shown",
-    data=json.dumps({"termId": term_id}).encode(),
-    headers={
-        "Authorization": f"Bearer {api_token}",
-        "Content-Type": "application/json",
-    },
-    method="POST",
-)
-
-try:
-    with urllib.request.urlopen(req):
-        pass
-except urllib.error.HTTPError as err:
-    body = err.read().decode()
-    try:
-        message = json.loads(body).get("error") or f"API error ({err.code})"
-    except json.JSONDecodeError:
-        message = f"API error ({err.code})"
-    sys.stderr.write(message + "\n")
-    raise SystemExit(1)
 
 try:
     state = json.loads(state_path.read_text())

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { resolveReviewDomainIdsForUser } from "@/lib/jargon/known-state";
-import { getReviewPoolStatsByDomainForUser } from "@/lib/smart-queue";
+import { getReviewPoolStatsByDomainForUser, type PickContext } from "@/lib/smart-queue";
 
 type Client = SupabaseClient<Database>;
 
@@ -20,13 +20,19 @@ export type CollectionStats = {
 export async function fetchCollectionStats(
   client: Client,
   userId: string,
+  context: PickContext = "read",
 ): Promise<CollectionStats[]> {
   const { collectionRows, reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
 
   if (collectionRows.length === 0) return [];
 
   const activeSet = new Set(reviewDomainIds);
-  const unknownStatsByDomain = await getReviewPoolStatsByDomainForUser(client, userId, "unknown");
+  const unknownStatsByDomain = await getReviewPoolStatsByDomainForUser(
+    client,
+    userId,
+    "unknown",
+    context,
+  );
 
   const stats: CollectionStats[] = collectionRows.map((row) => {
     const totalCount = row.termCount;

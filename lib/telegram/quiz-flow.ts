@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
-import { applyQuizAnswer, applyTermSeen } from "@/lib/jargon/review-outcome";
+import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
 import { selectDistractorsFromDomain } from "@/lib/quiz/distractors";
 import type { TelegramAction } from "./actions";
 import { NO_KNOWN_TERMS_MESSAGE, NO_UNKNOWN_TERMS_MESSAGE } from "./copy";
@@ -64,8 +64,6 @@ async function buildNextQuestionActions(client: Client, chatId: number): Promise
   if (!currentTerm) {
     return buildReviewSummaryActions(client, chatId);
   }
-
-  await applyTermSeen(client, session.userId, currentTerm.id, "admin");
 
   const distractors = await selectDistractorsFromDomain(
     client,
@@ -158,7 +156,7 @@ async function sendCollectionQuestion(
   status: ReviewStatus,
   _setup: QuizSetupState,
 ): Promise<TelegramAction[]> {
-  const stats = await fetchCollectionStats(client, userId);
+  const stats = await fetchCollectionStats(client, userId, "quiz");
   const activeCollections = stats.filter((collection) => collection.isActive);
 
   if (activeCollections.length === 0) {
@@ -223,7 +221,7 @@ async function formatDomainChoiceLabel(
   status: ReviewStatus,
   domainId: QuizDomainSelection,
 ): Promise<string> {
-  const stats = await fetchCollectionStats(client, userId);
+  const stats = await fetchCollectionStats(client, userId, "quiz");
   const activeCollections = stats.filter((collection) => collection.isActive);
 
   if (domainId === "all") {

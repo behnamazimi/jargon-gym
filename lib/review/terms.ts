@@ -27,7 +27,7 @@ export async function fetchReviewTermPool(
     status,
     cardCount,
     "session",
-    "default",
+    "review",
   );
 
   const reasonsById = new Map(pickMeta.map((m) => [m.termId, m.reasons]));

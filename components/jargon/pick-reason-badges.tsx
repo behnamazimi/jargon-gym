@@ -13,15 +13,14 @@ type PickReasonBadgesProps = {
 const REASON_BADGE_CLASS: Record<PickReason, string> = {
   unseen: "badge-soft badge-primary",
   new: "badge-soft badge-primary",
-  learning: "badge-soft badge-warning",
-  forgot: "badge-soft badge-error",
+  struggling: "badge-soft badge-warning",
   repeat_fail: "badge-soft badge-error",
-  never_recalled: "badge-soft badge-info",
-  browse_only: "badge-soft badge-neutral",
+  engaged_untested: "badge-soft badge-info",
   abandoned_review: "badge-soft badge-info",
   stale: "badge-soft badge-neutral",
-  solid_cooldown: "badge-ghost",
-  recently_read: "badge-ghost",
+  mastered_cooldown: "badge-ghost",
+  cross_fail: "badge-soft badge-warning",
+  recently_engaged: "badge-ghost",
   steady: "badge-ghost",
 };
 

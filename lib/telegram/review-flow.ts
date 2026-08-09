@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
-import { applyReviewRating, applyReviewReveal } from "@/lib/jargon/review-outcome";
+import { applyReviewRating, recordReveal } from "@/lib/jargon/review-outcome";
 import { getMaxStudyCount } from "@/lib/study";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";
@@ -159,7 +159,7 @@ async function sendReviewCollectionQuestion(
   userId: string,
   status: ReviewStatus,
 ): Promise<TelegramAction[]> {
-  const stats = await fetchCollectionStats(client, userId);
+  const stats = await fetchCollectionStats(client, userId, "review");
   const activeCollections = stats.filter((collection) => collection.isActive);
 
   if (activeCollections.length === 0) {
@@ -224,7 +224,7 @@ async function formatReviewDomainChoiceLabel(
   status: ReviewStatus,
   domainId: QuizDomainSelection,
 ): Promise<string> {
-  const stats = await fetchCollectionStats(client, userId);
+  const stats = await fetchCollectionStats(client, userId, "review");
   const activeCollections = stats.filter((collection) => collection.isActive);
 
   if (domainId === "all") {
@@ -499,7 +499,7 @@ export async function handleReviewReveal(
   if (!currentTerm) return [];
 
   try {
-    await applyReviewReveal(client, session.userId, currentTerm.id, "admin");
+    await recordReveal(client, session.userId, currentTerm.id, "admin");
   } catch (error) {
     console.error("handleReviewReveal: failed to record shown outcome", {
       userId: session.userId,
@@ -553,7 +553,6 @@ export async function handleReviewRate(
     termId: currentTerm.id,
     known,
     sessionStatus: session.status,
-    alreadyCountedSeen: true,
     mode: "admin",
   });
 

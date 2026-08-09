@@ -1,7 +1,7 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { applyTermRead } from "@/lib/jargon/review-outcome";
+import { recordRead } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser, getReviewPoolStats, pickReviewTerms } from "@/lib/smart-queue";
@@ -31,7 +31,7 @@ export async function getReadTermByIdAction(
     }
 
     if (!alreadyRead) {
-      await applyTermRead(auth.supabase, auth.user.id, card.id, "session");
+      await recordRead(auth.supabase, auth.user.id, card.id, "session");
     }
 
     return { term: toReviewTerm(card) };
@@ -52,6 +52,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
       auth.user.id,
       { domainIds: "all" },
       "unknown",
+      "read",
     );
 
     if (stats.total === 0) {
@@ -64,6 +65,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
       { domainIds: "all" },
       "unknown",
       1,
+      "read",
     );
     const card = cards[0];
 
@@ -71,7 +73,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
       return { caughtUp: true };
     }
 
-    await applyTermRead(auth.supabase, auth.user.id, card.id, "session");
+    await recordRead(auth.supabase, auth.user.id, card.id, "session");
 
     return { term: toReviewTerm(card) };
   } catch (err) {

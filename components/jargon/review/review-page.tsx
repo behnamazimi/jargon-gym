@@ -339,12 +339,9 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     if (!currentCard || !currentRevealed || isRating) return;
 
     const alreadyRated = ratings.some((rating) => rating.termId === currentCard.id);
-    const alreadyCountedSeen = shownTermIds.includes(currentCard.id) || alreadyRated;
 
     setIsRating(true);
-    const result = await rateReviewTermAction(currentCard.id, retained, sessionStatus, {
-      alreadyCountedSeen,
-    });
+    const result = await rateReviewTermAction(currentCard.id, retained, sessionStatus);
     setIsRating(false);
 
     if (result.error) {

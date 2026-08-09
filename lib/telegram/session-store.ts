@@ -161,6 +161,7 @@ export async function countTermsForQuiz(
     userId,
     { domainIds: domainIdsForScope(domainId) },
     status,
+    "quiz",
   );
   return stats.total;
 }
@@ -403,6 +404,7 @@ export async function countTermsForReview(
     userId,
     { domainIds: domainIdsForScope(domainId) },
     status,
+    "review",
   );
   return stats.total;
 }
@@ -422,7 +424,7 @@ export async function createReviewSession(
     status,
     count,
     "admin",
-    "default",
+    "review",
   );
   const termIds = cards.map((t) => t.id);
 

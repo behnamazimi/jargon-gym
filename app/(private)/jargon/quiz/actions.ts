@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { applyQuizAnswer, applyTermSeen } from "@/lib/jargon/review-outcome";
+import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
 import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
 import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
@@ -153,22 +153,6 @@ export async function generateQuizAction(input: {
       err instanceof Error
         ? err.message
         : "Couldn't generate the quiz. Check your API key and try again.";
-    return { error: message };
-  }
-}
-
-/** A question's term appeared on screen: incidental exposure (Seen tier). */
-export async function recordQuizTermSeenAction(termId: string): Promise<{ error?: string }> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) {
-    return { error: "Log in to take a quiz." };
-  }
-
-  try {
-    await applyTermSeen(auth.supabase, auth.user.id, termId, "session");
-    return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't record that you saw this term.";
     return { error: message };
   }
 }

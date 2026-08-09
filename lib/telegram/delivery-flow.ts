@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { applyMarkKnown } from "@/lib/jargon/review-outcome";
+import { applyKnownToggle } from "@/lib/jargon/review-outcome";
 import {
   deliverNextTerm,
   fetchTermCardForUser,
@@ -58,7 +58,7 @@ export async function handleKnownCallback(
   messageText?: string,
 ): Promise<TelegramAction[]> {
   try {
-    await applyMarkKnown(client, userId, termId, "admin");
+    await applyKnownToggle(client, userId, termId, true, "admin");
   } catch {
     return [
       {

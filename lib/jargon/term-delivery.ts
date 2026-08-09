@@ -6,7 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import { applyTermRead } from "@/lib/jargon/review-outcome";
+import { recordRead } from "@/lib/jargon/review-outcome";
 import {
   getReviewPoolStatsForUser,
   pickReviewTermsForUser,
@@ -66,7 +66,13 @@ export async function deliverNextTerm(
   userId: string,
   options?: DeliverOptions,
 ): Promise<DeliverResult> {
-  const stats = await getReviewPoolStatsForUser(client, userId, { domainIds: "all" }, "unknown");
+  const stats = await getReviewPoolStatsForUser(
+    client,
+    userId,
+    { domainIds: "all" },
+    "unknown",
+    "read",
+  );
 
   if (stats.total === 0) {
     const result = await maybePersistCaughtUp(client, userId, options);
@@ -84,6 +90,7 @@ export async function deliverNextTerm(
     { domainIds: "all" },
     "unknown",
     1,
+    "read",
   );
   const term = cards[0];
 
@@ -93,7 +100,7 @@ export async function deliverNextTerm(
     return result;
   }
 
-  await applyTermRead(client, userId, term.id, "admin");
+  await recordRead(client, userId, term.id, "admin");
   await maybeRecordSend(client, userId, options);
   return { kind: "term", term };
 }

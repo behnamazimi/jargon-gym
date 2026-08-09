@@ -13,11 +13,7 @@ import {
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
 import { resetDomainProgress } from "@/lib/jargon/known-state";
-import {
-  applyKnownToggleSeen,
-  applyReviewReveal,
-  applyTermRead,
-} from "@/lib/jargon/review-outcome";
+import { recordReveal, recordRead, setKnownStatus } from "@/lib/jargon/review-outcome";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
@@ -108,7 +104,7 @@ export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ 
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await applyKnownToggleSeen(auth.supabase, auth.user.id, termId, isKnown, "session");
+    await setKnownStatus(auth.supabase, auth.user.id, termId, isKnown, "session");
     revalidatePath("/jargon");
     return {};
   } catch (err) {
@@ -123,7 +119,7 @@ export async function recordTermReadAction(termId: string): Promise<{ error?: st
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await applyTermRead(auth.supabase, auth.user.id, termId, "session");
+    await recordRead(auth.supabase, auth.user.id, termId, "session");
     return {};
   } catch (err) {
     console.error("recordTermReadAction failed", { termId, err });
@@ -132,13 +128,13 @@ export async function recordTermReadAction(termId: string): Promise<{ error?: st
   }
 }
 
-/** Review card reveal: its own counter, disjoint from Read's. */
+/** Review card reveal: marks pending_reveal, cleared by the rating that follows. */
 export async function recordReviewRevealAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await applyReviewReveal(auth.supabase, auth.user.id, termId, "session");
+    await recordReveal(auth.supabase, auth.user.id, termId, "session");
     return {};
   } catch (err) {
     console.error("recordReviewRevealAction failed", { termId, err });

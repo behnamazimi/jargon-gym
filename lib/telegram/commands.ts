@@ -56,6 +56,6 @@ export async function handleStat(client: Client, chatId: number): Promise<Telegr
   const userId = await resolveUserIdByChatId(client, chatId);
   if (!userId) return [send(chatId, CONNECT_MESSAGE)];
 
-  const stats = await fetchCollectionStats(client, userId);
+  const stats = await fetchCollectionStats(client, userId, "read");
   return [send(chatId, formatStatsMessage(stats))];
 }

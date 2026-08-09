@@ -31,7 +31,13 @@ export async function getReviewPoolStatsAction(
   }
 
   try {
-    const poolStats = await getReviewPoolStats(auth.supabase, auth.user.id, { domainIds }, status);
+    const poolStats = await getReviewPoolStats(
+      auth.supabase,
+      auth.user.id,
+      { domainIds },
+      status,
+      "review",
+    );
     return { poolStats };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load pool stats.";
@@ -117,7 +123,6 @@ export async function rateReviewTermAction(
   termId: string,
   known: boolean,
   sessionStatus: "known" | "unknown",
-  options: { alreadyCountedSeen?: boolean } = {},
 ) {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
@@ -129,7 +134,6 @@ export async function rateReviewTermAction(
       termId,
       known,
       sessionStatus,
-      alreadyCountedSeen: options.alreadyCountedSeen,
       mode: "session",
     });
 

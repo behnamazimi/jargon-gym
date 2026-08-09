@@ -18,7 +18,7 @@ export async function fetchStudyTermPool(
   status: TermPoolStatus,
   limit: number,
   mode: StudyAuthMode = "session",
-  context: PickContext = "default",
+  context: PickContext = "read",
 ): Promise<StudyTermPoolResult> {
   if (mode === "admin") {
     const { pickReviewTermsForUser } = await import("@/lib/smart-queue");
