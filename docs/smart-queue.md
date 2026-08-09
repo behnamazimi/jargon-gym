@@ -158,8 +158,9 @@ applicable reasons are returned for UI badges.
 | **New term**             | Created within the last 72 hours                                                               | Moderate boost, all contexts.                                                                                                                                                                                                                                                                                                                                                       |
 | **Staleness**            | Time since this context's own last-activity timestamp, only when its own count > 0             | Rises linearly, capped at 7 days. Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                                                                                                                                                                                          |
 
-Same-score candidates keep their incoming order from the candidate fetch —
-no shuffle, no explicit tie-break by `term_id`.
+Same-score candidates are shuffled each pick (Fisher–Yates via
+`es-toolkit`'s `shuffle`, then a stable score-desc sort) so ties don't
+always surface in candidate-fetch order.
 
 Implementation: [`lib/smart-queue/score.ts`](../lib/smart-queue/score.ts) →
 [`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts).

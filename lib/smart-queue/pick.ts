@@ -1,6 +1,7 @@
 /** Term selection from scored candidates.
  */
 
+import { shuffle } from "es-toolkit";
 import type { PickContext, ReviewCandidate, ScoredCandidate } from "./types";
 import { scoreCandidate } from "./score";
 import { WEIGHTS } from "./weights";
@@ -25,9 +26,10 @@ export function pickTerms(
     };
   });
 
-  // Sort by score desc; same-score candidates keep their incoming (organic) order —
-  // Array.prototype.sort is stable, so no explicit tie-break needed.
-  scored.sort((a, b) => b.score - a.score);
+  // Shuffle first, then stable-sort by score desc so equal scores surface in a
+  // fresh random order each pick instead of the candidate-fetch order.
+  const ordered = shuffle(scored);
+  ordered.sort((a, b) => b.score - a.score);
 
-  return scored.slice(0, limit);
+  return ordered.slice(0, limit);
 }
