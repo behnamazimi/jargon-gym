@@ -28,7 +28,6 @@ export type PickReason =
   | "stale"
   | "mastered_cooldown"
   | "cross_fail"
-  | "recently_engaged"
   | "steady";
 
 export type ReviewCandidate = {

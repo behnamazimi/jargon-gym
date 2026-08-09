@@ -9,7 +9,7 @@ if [[ -z "$TERM_ID" ]]; then
   exit 1
 fi
 
-export WIDGET_DIR TERM_ID
+export WIDGET_DIR
 
 /usr/bin/python3 - <<'PY'
 import json

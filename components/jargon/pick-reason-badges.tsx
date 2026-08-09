@@ -22,7 +22,6 @@ const REASON_BADGE_CLASS: Record<PickReason, string> = {
   stale: "badge-soft badge-neutral",
   mastered_cooldown: "badge-ghost",
   cross_fail: "badge-soft badge-warning",
-  recently_engaged: "badge-ghost",
   steady: "badge-ghost",
 };
 

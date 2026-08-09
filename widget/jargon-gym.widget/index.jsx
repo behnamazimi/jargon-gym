@@ -180,7 +180,7 @@ const openApp = (appBaseUrl, current) => {
   run(`open ${escapeShellArg(url)}`);
 };
 
-/** Re-fetch widget state only — never records shown / increments seen. */
+/** Re-fetch widget state only — never records anything. */
 const refreshState = (dispatch, widgetDir = null) => {
   const cmd = widgetDir ? escapeShellArg(widgetDir + "/read-state.sh") : READ_STATE_CMD;
   run(cmd)

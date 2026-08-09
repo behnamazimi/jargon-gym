@@ -157,11 +157,9 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           <p className="m-0 text-base-content/70">
             Review cards, quiz questions, and the queue preview label terms with these badges. A
             term can have more than one at a time. If none of them apply, it shows{" "}
-            <strong className="font-medium text-base-content">Recently reviewed</strong> when
-            you&apos;ve actually tested yourself on it recently, or{" "}
-            <strong className="font-medium text-base-content">Recently read</strong> when
-            you&apos;ve only read it once or twice without testing yourself yet. Nothing&apos;s wrong
-            either way, that term just doesn&apos;t stand out yet.
+            <strong className="font-medium text-base-content">Recently reviewed</strong> (or{" "}
+            <strong className="font-medium text-base-content">Recently quizzed</strong>) — you&apos;ve
+            tested yourself on it and nothing else stands out yet. Nothing&apos;s wrong either way.
           </p>
           <p className="m-0 text-base-content/70">
             Once you&apos;ve read (or tested) every term in a pool at least once, the never-read

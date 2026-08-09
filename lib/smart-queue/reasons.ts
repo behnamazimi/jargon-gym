@@ -19,7 +19,6 @@ const STATIC_LABELS: Partial<Record<PickReason, string>> = {
   abandoned_review: "Left mid-review",
   mastered_cooldown: "Recently mastered",
   cross_fail: "Missed elsewhere recently",
-  recently_engaged: "Recently read",
 };
 
 export function formatPickReason(reason: PickReason, context: PickContext): string {

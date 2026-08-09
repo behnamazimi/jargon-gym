@@ -200,22 +200,27 @@ uses a 72-hour creation window.
 Each pick includes a `reasons` list — which signals fired — for UI badges
 and queue previews.
 
-| Reason             | When it fires                                                                                 | UI label                       |
-| ------------------ | ----------------------------------------------------------------------------------------------- | ------------------------------- |
-| `unseen`           | This context's own count is 0                                                                    | Never read                      |
-| `new`              | Term created within ~72h                                                                         | Recently added                  |
-| `struggling`       | This context's own streak < 0                                                                    | Struggling                      |
-| `repeat_fail`      | Struggling and `\|streak\| >= 2`                                                                 | Repeatedly missed               |
-| `engaged_untested` | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)    | Read 3+ times, not tested       |
-| `abandoned_review` | `pending_reveal === true` (`review` only)                                                        | Left mid-review                 |
-| `stale`            | This context's own count > 0 and not tested in 24h+                                              | Not seen recently                |
-| `mastered_cooldown`| This context's own streak > 0, within cooldown window                                            | Recently mastered               |
-| `cross_fail`       | `last_fail_at` set and (read context, or `last_fail_source` is the other activity)               | Missed elsewhere recently        |
-| `recently_engaged` | No other signal fired, this context's own test count is 0                                        | Recently read                    |
-| `steady`           | No other signal fired, this context's own test count > 0                                         | Recently reviewed                |
+| Reason             | When it fires                                                                                 | UI label (`read` / `review` / `quiz`)                       |
+| ------------------ | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `unseen`           | This context's own count is 0                                                                    | Never read / Never reviewed / Never quizzed                    |
+| `new`              | Term created within ~72h                                                                         | Recently added                                                 |
+| `struggling`       | This context's own streak < 0                                                                    | Struggling                                                     |
+| `repeat_fail`      | Struggling and `\|streak\| >= 2`                                                                 | Repeatedly missed                                               |
+| `engaged_untested` | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)    | Read 3+ times, not tested                                       |
+| `abandoned_review` | `pending_reveal === true` (`review` only)                                                        | Left mid-review                                                 |
+| `stale`            | This context's own count > 0 and not tested in 24h+                                              | Not read recently / Not reviewed recently / Not quizzed recently |
+| `mastered_cooldown`| This context's own streak > 0, within cooldown window                                            | Recently mastered                                               |
+| `cross_fail`       | `last_fail_at` set and (read context, or `last_fail_source` is the other activity)               | Missed elsewhere recently                                       |
+| `steady`           | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case) | Recently read / Recently reviewed / Recently quizzed             |
 
-`recently_engaged` and `steady` are both fallbacks, not scoring signals —
-neither carries weight.
+`unseen`, `stale`, and `steady` share one label per activity —
+`formatPickReason(reason, context)` in
+[`lib/smart-queue/reasons.ts`](../lib/smart-queue/reasons.ts) varies the
+wording so a term read twice but never review-tested shows "Never
+reviewed," not "Never read." `steady` is the only fallback reason — it's
+not a scoring signal, carries no weight, and only fires once a term has
+any activity in that context (unseen already claims the zero case
+unconditionally).
 
 Labels live in [`lib/smart-queue/reasons.ts`](../lib/smart-queue/reasons.ts).
 Review and quiz setup show a collapsible queue preview; cards and questions

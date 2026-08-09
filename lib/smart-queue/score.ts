@@ -135,11 +135,11 @@ function evaluateCandidate(
     }
   }
 
-  // No signal fired — fallback, split by whether this context has ever had
-  // real activity so "steady" (tested/reviewed recently) isn't conflated
-  // with "recently_engaged" (read a couple times, nothing more).
+  // No signal fired — fallback. Only reachable when ownCount > 0: unseen
+  // already covers ownCount === 0 unconditionally above, so there's nothing
+  // left to distinguish here once a term has any activity in this context.
   if (reasons.length === 0) {
-    reasons.push(fields.ownCount > 0 ? "steady" : "recently_engaged");
+    reasons.push("steady");
   }
 
   return { score, reasons };

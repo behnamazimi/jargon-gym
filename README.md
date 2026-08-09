@@ -11,9 +11,10 @@ in-practice notes, anti-example, debated angles, and links to related terms.
 Known and unknown terms stay in separate pools so review never mixes words
 you already have with ones you're still learning.
 
-The same smart review queue powers every surface — web review, collection
-browse, Telegram bot, and macOS desktop widget — not random shuffle, and not
-spaced repetition with future review dates.
+The same smart-queue ranking powers Read, Review, and Quiz across every
+surface — web, Telegram bot, and macOS desktop widget — not random shuffle,
+and not spaced repetition with future review dates. Collection browse and
+the widget pick their own way and don't use the ranking.
 
 See the landing page for how to request an invitation.
 
@@ -24,8 +25,8 @@ See the landing page for how to request an invitation.
 - [Telegram bot setup](docs/supabase/telegram-setup.md) — webhook, secrets, and
   Edge Function deployment
 - User-facing guides at `/how-terms-work` (term structure, known/unknown pools)
-  and `/how-smart-queue-works` (ranking, badges, presets) when the app is
-  running — linked from the landing page and site footer
+  and `/how-smart-queue-works` (ranking, badges) when the app is running —
+  linked from the landing page and site footer
 
 ## Prerequisites
 

@@ -501,7 +501,7 @@ export async function handleReviewReveal(
   try {
     await recordReveal(client, session.userId, currentTerm.id, "admin");
   } catch (error) {
-    console.error("handleReviewReveal: failed to record shown outcome", {
+    console.error("handleReviewReveal: failed to record reveal event", {
       userId: session.userId,
       termId: currentTerm.id,
       error,
