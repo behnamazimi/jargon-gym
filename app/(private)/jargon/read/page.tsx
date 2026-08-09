@@ -1,3 +1,4 @@
+import { getNextReadTermAction, getReadTermByIdAction } from "@/app/(private)/jargon/read/actions";
 import { ReadPage } from "@/components/jargon/read/read-page";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,5 +21,9 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
   }
 
   const { termId, alreadyRead } = await searchParams;
-  return <ReadPage initialTermId={termId} initialTermAlreadyRead={alreadyRead === "true"} />;
+  const initialResult = termId
+    ? await getReadTermByIdAction(termId, alreadyRead === "true")
+    : await getNextReadTermAction();
+
+  return <ReadPage initialResult={initialResult} />;
 }

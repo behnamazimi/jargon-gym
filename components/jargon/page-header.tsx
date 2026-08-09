@@ -23,7 +23,7 @@ export function PageHeader({
     <div className="flex items-start justify-between gap-3">
       <div className="flex min-w-0 items-start gap-3">
         <div className="hidden sm:flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
-          <Icon className="size-5" aria-hidden />
+          <Icon className="size-5" aria-hidden strokeWidth={1.5} />
         </div>
         <div className="min-w-0">
           <h1 className="font-heading text-2xl font-bold tracking-tight text-base-content">

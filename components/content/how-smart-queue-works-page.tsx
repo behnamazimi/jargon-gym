@@ -19,48 +19,62 @@ type HowSmartQueueWorksPageProps = {
 
 const SOLID_COOLDOWN_DAYS = Math.round(SOLID_COOLDOWN_HOURS / 24);
 
-const PRIORITY_RAISES = [
+const ANY_ACTIVITY = [
   {
-    title: "Never read / never tested",
-    body: "Rises to the top until every term in the pool has been read (for the Read queue) or tested at least once (for Review or Quiz). Each of the three keeps its own count, so being tested in one doesn't clear this for the other.",
-  },
-  {
-    title: "Struggling",
-    body: "You missed it, in review or in a quiz. Climbs the more times you've missed it in a row, so genuinely stuck terms rank above a single slip. Review and Quiz track this independently.",
-  },
-  {
-    title: `Read ${ENGAGED_MIN_COUNT}+ times, not tested`,
-    body: "You've opened it on purpose several times but never actually tested yourself, reading it often doesn't mean you've learned it.",
-  },
-  {
-    title: "Left mid-review",
-    body: "Revealed in a review session but never rated.",
+    title: "Never engaged here",
+    body: "Rises until every term in the pool has been touched in that activity, Never read on Read, Never reviewed on Review, Never quizzed on Quiz. Being tested in one doesn't clear this for the others.",
   },
   {
     title: "Missed elsewhere recently",
-    body: "Failing a quiz nudges Read and Review for that term; failing Review nudges Read and Quiz. A miss is trustworthy evidence you don't know it wherever it showed up, but acing one doesn't quiet the others, quizzes are guessable, so a pass there isn't proof the way a miss is.",
+    body: "Failing a quiz nudges Read and Review; failing Review nudges Read and Quiz. A miss is trustworthy evidence you don't know it wherever it showed up, but acing one doesn't quiet the others, quizzes are guessable, so a pass there isn't proof the way a miss is.",
   },
   {
     title: "Recently added",
     body: "Terms added in the last few days get a nudge so they don't sink to the bottom.",
   },
   {
-    title: "Not tested recently",
-    body: "Only applies once you've actually tested yourself on a term, in that same activity. Skip a while after that and it starts climbing again, up to about a week. Terms you've never tested don't get this nudge.",
+    title: "Not active here recently",
+    body: "Once a term has history in that activity, skipping it for a while makes it climb again, up to about a week. Labels match the activity: Not read recently, Not reviewed recently, or Not quizzed recently. Terms with no history there don't get this, they already have Never engaged.",
+  },
+] as const;
+
+const REVIEW_AND_QUIZ = [
+  {
+    title: "Struggling",
+    body: "You missed it in that activity. Climbs the more times you've missed it in a row, so genuinely stuck terms rank above a single slip. After two misses in a row it also shows as Repeatedly missed. Review and Quiz track this independently, Read has no pass/fail of its own.",
+  },
+  {
+    title: `Read ${ENGAGED_MIN_COUNT}+ times, not tested`,
+    body: "You've opened it on purpose several times but never actually tested yourself in this activity, reading it often doesn't mean you've learned it.",
+  },
+] as const;
+
+const REVIEW_ONLY = [
+  {
+    title: "Left mid-review",
+    body: "Revealed in a review session but never rated.",
   },
 ] as const;
 
 const PRIORITY_LOWERS = [
   {
     title: "Recently mastered",
-    body: `Passed recently, in that same activity, sits out for roughly ${SOLID_COOLDOWN_DAYS} days while the queue works on other terms. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz, they're scored independently.`,
+    body: `Passed recently in that same activity, sits out for roughly ${SOLID_COOLDOWN_DAYS} days while the queue works on other terms. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz. Review and Quiz only, Read has nothing to master.`,
   },
 ] as const;
 
 const SURFACES = [
   {
+    title: "Web Read",
+    body: "One term at a time from the Read ranking, the same ranking Telegram /read and scheduled delivery use. Showing it counts as a read.",
+  },
+  {
     title: "Web review",
     body: "A focused study session. Pick a known or unknown pool, work through a ranked batch, and mark terms as you go. Setup shows a preview; each card shows why it was picked.",
+  },
+  {
+    title: "Web quiz",
+    body: "Multiple-choice against its own Quiz ranking, not Review's. Setup shows a preview; questions show badges. Missing still nudges the other activities; a quiz streak only cools future quizzes.",
   },
   {
     title: "Web collection",
@@ -68,7 +82,7 @@ const SURFACES = [
   },
   {
     title: "Telegram bot",
-    body: "Get terms delivered on a schedule, or pull one on demand with /read. Uses the same Read ranking as the web Read page. Review and quizzes work the same way over Telegram too, each with their own ranking.",
+    body: "Same three activities as the web: /read (and scheduled delivery) from the Read ranking, /review from the Review ranking, /quiz from the Quiz ranking. Each matches its web counterpart.",
   },
   {
     title: "Desktop widget",
@@ -89,7 +103,7 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
         />
 
         <p className="m-0 mb-4 text-sm leading-relaxed text-base-content/80">
-          This explains how the review ranking works, what the badges mean, and where the queue
+          Why I built it this way, how Read, Review, and Quiz stay separate, and where the queue
           shows up. Useful if you&apos;re curious before signing up, or once you&apos;re in and want
           to understand why certain terms keep surfacing.
         </p>
@@ -102,14 +116,14 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           </p>
           <p className="m-0">
             The backlog of &ldquo;due&rdquo; cards didn&apos;t help either. I&apos;d skip a week,
-            come back to hundreds of reds, and quit. What I wanted was simpler: open review and see
-            what&apos;s neglected or still shaky, in an order that makes sense right now.
+            come back to hundreds of reds, and quit. What I wanted was simpler: open a study surface
+            and see what&apos;s neglected or still shaky, in an order that makes sense right now.
           </p>
           <p className="m-0">
-            So I built a queue that ranks from history, never read, never tested, missed, or read a
-            lot without ever actually testing yourself, not future review dates. No daily goals or
-            reminders either. Study when you want; the queue picks the best next terms from
-            whichever pool you chose. See{" "}
+            So I built a queue that ranks from history, never engaged, missed, or read a lot without
+            ever actually testing yourself, not future review dates. No daily goals or reminders
+            either. Study when you want; the queue picks the best next terms from whichever pool and
+            activity you chose. See{" "}
             <Link href="/how-terms-work" className={contentPageLinkClass}>
               How terms are built
             </Link>{" "}
@@ -122,59 +136,71 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
         <ContentPageSection title="Three separate rankings">
           <p className="m-0">
             Read, Review, and Quiz each keep their own history and their own ranking, they
-            don&apos;t share one queue. Review recall (did you actually remember it, self-graded, no
-            distractors) and a quiz answer (did you recognize it among a few options) aren&apos;t
-            the same kind of evidence, a quiz has a guess floor a review reveal doesn&apos;t, so
-            treating them as one signal let a lucky guess quiet a term that still needed real
-            practice. Now each activity ranks on its own record, missing in one still nudges the
-            others (see below), but acing one only cools that one down.
+            don&apos;t share one queue.
+          </p>
+          <ContentPageTitledBulletList
+            items={[
+              {
+                title: "Read",
+                body: "Deliberate exposure without a test, the Read page, Telegram /read, scheduled delivery, or opening a term card. No pass/fail, just whether you've looked at it and how long ago.",
+              },
+              {
+                title: "Review",
+                body: "Self-graded recall, you reveal the answer and say whether you had it. No distractors, so a pass is stronger evidence than recognizing an option.",
+              },
+              {
+                title: "Quiz",
+                body: "Recognition among options. Useful practice, but there's a guess floor, so a lucky pass shouldn't quiet a term that still needs real recall.",
+              },
+            ]}
+          />
+          <p className="m-0">
+            Treating Review and Quiz as one signal let a lucky guess cool down a term that had never
+            actually been recalled unprompted. Now each activity ranks on its own record. Missing in
+            one still nudges the others; acing one only cools that one down.
+          </p>
+        </ContentPageSection>
+
+        <ContentPageSection title="What the queue prioritizes">
+          <p className="m-0">
+            Each term carries a history per activity. The queue uses that to decide what comes next
+            within the pool and activity you&apos;re in. Review cards, quiz questions, and the queue
+            preview label terms with these badges. A term can have more than one at a time. If none
+            of them apply, it shows{" "}
+            <strong className="font-medium text-base-content">Recently read</strong>,{" "}
+            <strong className="font-medium text-base-content">Recently reviewed</strong>, or{" "}
+            <strong className="font-medium text-base-content">Recently quizzed</strong>, you&apos;ve
+            engaged with it here and nothing else stands out yet.
+          </p>
+
+          <p className="m-0 font-medium text-base-content">Any activity</p>
+          <ContentPageTitledBulletList items={ANY_ACTIVITY} />
+
+          <p className="m-0 font-medium text-base-content">Review and Quiz only</p>
+          <ContentPageTitledBulletList items={REVIEW_AND_QUIZ} />
+
+          <p className="m-0 font-medium text-base-content">Review only</p>
+          <ContentPageTitledBulletList items={REVIEW_ONLY} />
+
+          <p className="m-0 text-base-content/70">One signal lowers priority instead:</p>
+          <ContentPageTitledBulletList items={PRIORITY_LOWERS} />
+
+          <p className="m-0 text-base-content/70">
+            That cooldown is the only scheduled behavior. Nothing else gets a future review date.
+            Once every term in a pool has been engaged in that activity at least once, the
+            never-engaged signal stops applying there. After that, neglected and weak terms rise, a
+            gentle cycle with no reset button.
           </p>
         </ContentPageSection>
 
         <ContentPageSection title="Surfaces">
           <p className="m-0">
-            You can study in different places: focused review in the web app, browse your collection
-            when you just need a lookup, message a Telegram bot for one term on demand, or let a
-            desktop widget rotate terms in the background. Web review, Telegram, and quizzes each
-            pick from their own ranking. Collection browsing and the widget pick terms their own
-            way, not from a queue, they just log what you&apos;ve read or tested.
+            Web and Telegram each have Read, Review, and Quiz, and each picks from that
+            activity&apos;s ranking. Collection browsing and the desktop widget pick terms their own
+            way, not from a queue, they just log what you&apos;ve read (or, on the widget, when you
+            mark something known).
           </p>
           <ContentPageTitledBulletList items={SURFACES} />
-        </ContentPageSection>
-
-        <ContentPageSection title="What the queue prioritizes">
-          <p className="m-0">
-            Each term carries a history per activity: how often you&apos;ve read it, when you last
-            tested it, how that test went. The queue uses that to decide what comes next within the
-            pool and activity you&apos;re in.
-          </p>
-          <ContentPageTitledBulletList items={PRIORITY_RAISES} />
-          <p className="m-0 text-base-content/70">One signal lowers priority instead:</p>
-          <ContentPageTitledBulletList items={PRIORITY_LOWERS} />
-          <p className="m-0 text-base-content/70">
-            That cooldown is the only scheduled behavior. Nothing else gets a future review date.
-          </p>
-          <p className="m-0 text-base-content/70">
-            Review cards, quiz questions, and the queue preview label terms with these badges. A
-            term can have more than one at a time. If none of them apply, it shows{" "}
-            <strong className="font-medium text-base-content">Recently reviewed</strong> (or{" "}
-            <strong className="font-medium text-base-content">Recently quizzed</strong>) —
-            you&apos;ve tested yourself on it and nothing else stands out yet. Nothing&apos;s wrong
-            either way.
-          </p>
-          <p className="m-0 text-base-content/70">
-            Once you&apos;ve read (or tested) every term in a pool at least once, the never-read
-            signal stops applying for that activity. After that, neglected and weak terms rise, a
-            gentle cycle with no reset button.
-          </p>
-        </ContentPageSection>
-
-        <ContentPageSection title="Quizzes">
-          <p className="m-0">
-            Quizzes rank against their own history, not Review&apos;s, missing on a quiz still
-            nudges Read and Review since a miss is trustworthy evidence either way, but a quiz
-            streak only cools down future quizzes. Setup shows a preview; questions show badges.
-          </p>
         </ContentPageSection>
 
         <ContentPageSection title="What this is not">
@@ -195,10 +221,14 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           <ContentPageSection title="Next steps">
             <p className="m-0">
               Try{" "}
+              <Link href="/jargon/read" className={contentPageLinkClass}>
+                Read
+              </Link>
+              ,{" "}
               <Link href="/jargon/review" className={contentPageLinkClass}>
                 review
-              </Link>{" "}
-              or a{" "}
+              </Link>
+              , or a{" "}
               <Link href="/jargon/quiz" className={contentPageLinkClass}>
                 quiz
               </Link>

@@ -6,7 +6,7 @@ import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser, getReviewPoolStats, pickReviewTerms } from "@/lib/smart-queue";
 
-type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };
+export type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };
 
 /**
  * Deep-link entry: open one specific term (from Telegram, the widget, or a

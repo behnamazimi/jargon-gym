@@ -1,8 +1,11 @@
 "use client";
 
 import { AlertCircle, ArrowRight, ExternalLink, PartyPopper, Zap } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { getNextReadTermAction, getReadTermByIdAction } from "@/app/(private)/jargon/read/actions";
+import { useCallback, useState } from "react";
+import {
+  getNextReadTermAction,
+  type NextReadTermResult,
+} from "@/app/(private)/jargon/read/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import {
   QuizActionBar,
@@ -17,32 +20,29 @@ import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import type { ReviewTerm } from "@/lib/review/types";
 
-type ReadStatus = "loading" | "ready" | "caughtUp" | "error";
+type ReadStatus = "ready" | "caughtUp" | "error";
+
+function statusFromResult(result: NextReadTermResult): ReadStatus {
+  if (result.error) return "error";
+  if (result.caughtUp || !result.term) return "caughtUp";
+  return "ready";
+}
 
 type ReadPageProps = {
-  /** Deep-linked term id from a Telegram "Open in web" link, widget click, or direct link. */
-  initialTermId?: string;
-  /** True only when the source (Telegram) already recorded this exposure as read. */
-  initialTermAlreadyRead?: boolean;
+  initialResult: NextReadTermResult;
 };
 
-export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: ReadPageProps) {
-  const [status, setStatus] = useState<ReadStatus>("loading");
-  const [term, setTerm] = useState<ReviewTerm | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+export function ReadPage({ initialResult }: ReadPageProps) {
+  const [status, setStatus] = useState<ReadStatus>(() => statusFromResult(initialResult));
+  const [term, setTerm] = useState<ReviewTerm | null>(initialResult.term ?? null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(initialResult.error ?? null);
   const [isAdvancing, setIsAdvancing] = useState(false);
-  const deepLinkTermId = useRef(initialTermId);
 
   const fetchNext = useCallback(async () => {
     setIsAdvancing(true);
     setErrorMessage(null);
 
-    const termId = deepLinkTermId.current;
-    deepLinkTermId.current = undefined;
-
-    const result = termId
-      ? await getReadTermByIdAction(termId, initialTermAlreadyRead)
-      : await getNextReadTermAction();
+    const result = await getNextReadTermAction();
 
     setIsAdvancing(false);
 
@@ -60,11 +60,7 @@ export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: Read
 
     setTerm(result.term);
     setStatus("ready");
-  }, [initialTermAlreadyRead]);
-
-  useEffect(() => {
-    void fetchNext();
-  }, [fetchNext]);
+  }, []);
 
   const searchUrl = term
     ? `https://www.google.com/search?q=${encodeURIComponent(`${term.term} definition`)}`
@@ -79,17 +75,6 @@ export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: Read
       />
 
       <div className="mx-auto w-full max-w-lg space-y-4">
-        {status === "loading" ? (
-          <QuizPanel>
-            <QuizPanelBody className="animate-pulse">
-              <div className="skeleton h-6 w-1/3 bg-base-200" />
-              <div className="skeleton h-8 w-2/3 bg-base-200" />
-              <div className="skeleton h-24 w-full bg-base-200" />
-              <div className="skeleton h-10 w-full bg-base-200" />
-            </QuizPanelBody>
-          </QuizPanel>
-        ) : null}
-
         {status === "caughtUp" ? (
           <QuizPanel>
             <QuizPanelBody>
@@ -99,8 +84,17 @@ export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: Read
                 description="No unknown terms left in your active collections. Import more terms or turn a collection back on to keep reading."
               >
                 <div className="flex flex-wrap justify-center gap-2">
-                  <LinkButton href="/jargon">Back to collection</LinkButton>
-                  <Button variant="outline" onPress={() => void fetchNext()}>
+                  <LinkButton
+                    href="/jargon"
+                    className="transition-transform duration-150 ease-out active:scale-[0.96]"
+                  >
+                    Back to collection
+                  </LinkButton>
+                  <Button
+                    variant="outline"
+                    onPress={() => void fetchNext()}
+                    className="transition-transform duration-150 ease-out active:scale-[0.96]"
+                  >
                     Check again
                   </Button>
                 </div>
@@ -179,7 +173,7 @@ export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: Read
               ) : null}
 
               <a
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline transition-opacity duration-150 ease-out hover:underline"
                 href={searchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -187,13 +181,19 @@ export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: Read
                 <ExternalLink className="size-3.5" aria-hidden strokeWidth={1.5} />
                 Search &ldquo;{term.term}&rdquo; on Google
               </a>
+
+              <QuizActionBar>
+                <Button
+                  type="button"
+                  onPress={() => void fetchNext()}
+                  isDisabled={isAdvancing}
+                  className="ps-4 pe-3.5 transition-transform duration-150 ease-out active:scale-[0.96]"
+                >
+                  {isAdvancing ? "Loading…" : "Next term"}
+                  <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
+                </Button>
+              </QuizActionBar>
             </QuizPanelBody>
-            <QuizActionBar>
-              <Button type="button" onPress={() => void fetchNext()} isDisabled={isAdvancing}>
-                {isAdvancing ? "Loading…" : "Next term"}
-                <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
-              </Button>
-            </QuizActionBar>
           </QuizPanel>
         ) : null}
 
@@ -202,14 +202,15 @@ export function ReadPage({ initialTermId, initialTermAlreadyRead = false }: Read
             <AlertCircle className="size-4" aria-hidden strokeWidth={1.5} />
             <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <span>{errorMessage ?? "Couldn't load the next term. Try again."}</span>
-              <Button type="button" size="sm" onPress={() => void fetchNext()}>
+              <Button
+                type="button"
+                size="sm"
+                onPress={() => void fetchNext()}
+                className="transition-transform duration-150 ease-out active:scale-[0.96]"
+              >
                 Try again
               </Button>
             </AlertDescription>
-          </Alert>
-        ) : errorMessage && status === "ready" ? (
-          <Alert variant="destructive">
-            <AlertDescription>{errorMessage}</AlertDescription>
           </Alert>
         ) : null}
       </div>

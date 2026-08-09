@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata: Metadata = {
   title: "How the smart queue works",
   description:
-    "Why I rank terms from history instead of scheduling reviews, surfaces, presets, and how quizzes fit in.",
+    "Why I rank terms from history instead of scheduling reviews, how Read, Review, and Quiz stay separate, and where the queue shows up.",
 };
 
 export default async function HowSmartQueueWorksRoute() {
