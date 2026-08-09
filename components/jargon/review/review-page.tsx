@@ -568,12 +568,12 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   </Alert>
                 ) : null}
 
-                <QuizSetupFooter hint="Tap Done anytime — your progress saves automatically.">
+                <QuizSetupFooter>
                   <Button
                     type="button"
                     onPress={handleStartReview}
                     isDisabled={availableTermCount === 0 || isStarting || cardCountError !== null}
-                    className="w-full max-w-md"
+                    className="w-full"
                   >
                     {isStarting ? "Starting…" : "Start review"}
                   </Button>

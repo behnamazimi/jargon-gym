@@ -98,7 +98,7 @@ export default function SignupForm({ defaultReferenceCode = "", next: rawNext }:
           </Field>
         </FieldGroup>
 
-        <Button type="submit" variant="outline" isDisabled={pending} className="mt-2">
+        <Button type="submit" isDisabled={pending} className="mt-2 w-full">
           {pending ? "Creating account…" : "Sign up with email"}
         </Button>
       </form>

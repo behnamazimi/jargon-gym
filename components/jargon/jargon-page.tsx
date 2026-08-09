@@ -8,7 +8,6 @@ import { DomainSidebar } from "./domain-sidebar";
 import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
-import { QuizFab } from "./quiz-fab";
 import { TermFormDialog } from "./term-form-dialog";
 import { TermList } from "./term-list";
 
@@ -140,7 +139,6 @@ export function JargonPage({ initialData }: JargonPageProps) {
           onOpenChange={setAddTermOpen}
         />
       ) : null}
-      <QuizFab />
     </>
   );
 }

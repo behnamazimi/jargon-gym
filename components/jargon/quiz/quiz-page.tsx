@@ -514,7 +514,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                     isDisabled={
                       availableTermCount === 0 || questionCountError !== null || aiRequiresSetup
                     }
-                    className="w-full max-w-md"
+                    className="w-full"
                   >
                     Start quiz
                   </Button>

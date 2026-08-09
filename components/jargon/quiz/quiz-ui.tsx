@@ -91,11 +91,11 @@ export function QuizSetupOption({
   );
 }
 
-export function QuizSetupFooter({ hint, children }: { hint: ReactNode; children: ReactNode }) {
+export function QuizSetupFooter({ hint, children }: { hint?: ReactNode; children: ReactNode }) {
   return (
-    <div className="space-y-3 border-t border-base-300/60 pt-6">
-      <p className="m-0 text-xs leading-relaxed text-base-content/60">{hint}</p>
-      {children}
+    <div className="flex flex-col gap-3 border-t border-base-300/60 pt-6">
+      {hint ? <p className="m-0 text-xs leading-relaxed text-base-content/60">{hint}</p> : null}
+      <div className="w-full">{children}</div>
     </div>
   );
 }

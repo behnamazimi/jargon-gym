@@ -36,7 +36,7 @@ export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: 
 
           <PickReasonBadges reasons={row.reasons} context={context} mode="full" />
 
-          <p className="m-0 text-xs leading-relaxed text-base-content/50">
+          <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
             read {row.readCount} ({formatRelative(row.lastReadAt)}) · review recall{" "}
             {row.reviewRecallCount} (streak {row.reviewStreak},{" "}
             {formatRelative(row.lastReviewRecallAt)}) · quiz {row.quizTestCount} (streak{" "}

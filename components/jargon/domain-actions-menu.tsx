@@ -2,11 +2,7 @@
 
 import {
   BookmarkMinus,
-  BookOpen,
   Download,
-  FolderOpen,
-  Globe,
-  Link2,
   Lock,
   Pencil,
   RotateCcw,
@@ -28,7 +24,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -39,7 +34,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import type { Domain, Term } from "@/lib/jargon/types";
-import { cn, pluralize } from "@/lib/utils";
+import { pluralize } from "@/lib/utils";
 import { DomainExportDialog } from "./domain-export-dialog";
 import { DomainFormDialog } from "./domain-form-dialog";
 
@@ -315,51 +310,19 @@ export function DomainActionsMenu({ domain, domains, terms }: DomainActionsMenuP
   );
 }
 
-function StatusBadge({
-  icon: Icon,
-  label,
-  variant,
-}: {
-  icon: typeof Globe;
-  label: string;
-  variant: "private" | "shared" | "added" | "active" | "paused";
-}) {
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "gap-1 font-medium",
-        variant === "private" && "border-base-300 bg-base-200/50 text-base-content/60",
-        variant === "shared" && "border-primary/30 bg-primary/10 text-primary",
-        variant === "added" && "border-base-300 bg-secondary text-secondary-content",
-        variant === "active" && "border-primary/40 bg-primary/15 text-primary",
-        variant === "paused" && "border-base-300 bg-base-200 text-base-content/60",
-      )}
-    >
-      <Icon className="size-3" aria-hidden />
-      {label}
-    </Badge>
-  );
-}
-
-function StatItem({ icon: Icon, label }: { icon: typeof FolderOpen; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1 text-xs text-base-content/60">
-      <Icon className="size-3.5 shrink-0 opacity-60" aria-hidden />
-      {label}
-    </span>
-  );
-}
-
 export function DomainMeta({ domain, categoryCount }: { domain: Domain; categoryCount: number }) {
-  const visibilityVariant =
-    domain.source === "owned" ? (domain.visibility === "shared" ? "shared" : "private") : "added";
+  const parts: string[] = [];
 
-  const VisibilityIcon =
-    domain.source === "owned" ? (domain.visibility === "shared" ? Globe : Lock) : Link2;
+  if (domain.source === "owned") {
+    if (domain.visibility === "shared") parts.push("Shared");
+  } else {
+    parts.push("Added");
+  }
 
-  const visibilityLabel =
-    domain.source === "owned" ? (domain.visibility === "shared" ? "Shared" : "Private") : "Added";
+  if (!domain.isActiveForReview) parts.push("Paused");
+
+  parts.push(pluralize(domain.termCount, "term"));
+  parts.push(pluralize(categoryCount, "category", "categories"));
 
   return (
     <div className="min-w-0 flex-1 space-y-2">
@@ -368,20 +331,7 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
           {domain.description}
         </p>
       ) : null}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <StatusBadge icon={VisibilityIcon} label={visibilityLabel} variant={visibilityVariant} />
-          <StatusBadge
-            icon={domain.isActiveForReview ? Play : Pause}
-            label={domain.isActiveForReview ? "Active" : "Paused"}
-            variant={domain.isActiveForReview ? "active" : "paused"}
-          />
-        </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <StatItem icon={FolderOpen} label={pluralize(domain.termCount, "term")} />
-          <StatItem icon={BookOpen} label={pluralize(categoryCount, "category", "categories")} />
-        </div>
-      </div>
+      <p className="m-0 text-xs text-base-content/60">{parts.join(" · ")}</p>
     </div>
   );
 }

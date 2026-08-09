@@ -69,7 +69,7 @@ export default function LoginForm() {
           </Field>
         </FieldGroup>
 
-        <Button type="submit" variant="outline" isDisabled={pending} className="mt-2">
+        <Button type="submit" isDisabled={pending} className="mt-2 w-full">
           {pending ? "Logging in…" : "Log in with email"}
         </Button>
       </form>

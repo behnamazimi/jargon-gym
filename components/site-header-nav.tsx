@@ -1,6 +1,7 @@
 "use client";
 
-import { BookOpen, Compass, Zap } from "lucide-react";
+import { BookOpen, Compass, Sparkles, Zap } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { ProfileMenu } from "@/components/jargon/profile-menu";
 import { LinkButton } from "@/components/ui/button";
 
@@ -8,8 +9,21 @@ type SiteHeaderNavProps = {
   email: string | null;
 };
 
+const AUTH_ROUTES = new Set([
+  "/login",
+  "/signup",
+  "/forgot-password",
+  "/reset-password",
+  "/complete-signup",
+]);
+
 export function SiteHeaderNav({ email }: SiteHeaderNavProps) {
+  const pathname = usePathname();
+
   if (!email) {
+    if (AUTH_ROUTES.has(pathname)) {
+      return null;
+    }
     return <LinkButton href="/login">Log in</LinkButton>;
   }
 
@@ -22,6 +36,10 @@ export function SiteHeaderNav({ email }: SiteHeaderNavProps) {
       <LinkButton href="/jargon/review" variant="ghost">
         <BookOpen className="h-4 w-4" strokeWidth={1.5} />
         <span className="hidden sm:inline">Review</span>
+      </LinkButton>
+      <LinkButton href="/jargon/quiz" variant="ghost">
+        <Sparkles className="h-4 w-4" strokeWidth={1.5} />
+        <span className="hidden sm:inline">Quiz</span>
       </LinkButton>
       <LinkButton href="/jargon/browse" variant="ghost">
         <Compass className="h-4 w-4" />
