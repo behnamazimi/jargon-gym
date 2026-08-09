@@ -154,7 +154,7 @@ applicable reasons are returned for UI badges.
 | **Struggling**           | This context's own streak < 0                                                                  | Boost scaled by `min(                                                                                                                                                                                                    | streak | , FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula. |
 | **Engaged but untested** | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                       | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                 |
 | **Abandoned review**     | `pending_reveal === true`                                                                      | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                           |
-| **Cross-activity fail**  | `last_fail_at` is set                                                                          | In `read` context: always boosts (either source). In `review`/`quiz` context: boosts only if `last_fail_source` is the _other_ activity — a term's own activity already reflects its own fail via the struggling signal. |
+| **Cross-activity fail**  | `last_fail_at` is set                                                                          | In `read` context: always boosts (either source). In `review`/`quiz` context: boosts only if `last_fail_source` is the _other_ activity — a term's own activity already reflects its own fail via the struggling signal. Scaled by `min(\|source activity's streak\|, FAIL_STREAK_CAP)`, same as struggling — a term missed 4 times running pushes harder than one slipped on once. |
 | **New term**             | Created within the last 72 hours                                                               | Moderate boost, all contexts.                                                                                                                                                                                            |
 | **Staleness**            | Time since this context's own last-activity timestamp, only when its own count > 0             | Rises linearly, capped at 7 days. Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                               |
 
@@ -183,8 +183,8 @@ UI for these:
 | `newTermBoost`             | 30      | Recently added                                                         |
 | `stalenessBoostPerHour`    | 0.5     | Per hour since last tested, this activity                              |
 | `stalenessCapHours`        | 168     | Staleness cap (7 days)                                                 |
-| `crossFailReadBoost`       | 20      | Read-context boost when either activity most recently failed           |
-| `crossFailOtherTestBoost`  | 25      | Test-context boost when the _other_ test activity most recently failed |
+| `crossFailReadBoostPerRepeat`      | 20      | Per repeat, Read-context boost when either activity most recently failed          |
+| `crossFailOtherTestBoostPerRepeat` | 25      | Per repeat, test-context boost when the _other_ test activity most recently failed |
 
 | Constant               | Default | Purpose                                                       |
 | ---------------------- | ------- | ------------------------------------------------------------- |

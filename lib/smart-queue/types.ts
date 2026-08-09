@@ -64,10 +64,10 @@ export type ScoreWeights = {
   newTermBoost: number;
   stalenessBoostPerHour: number;
   stalenessCapHours: number;
-  /** Boosts Read priority when either activity most recently failed. */
-  crossFailReadBoost: number;
-  /** Boosts a test context's priority when the OTHER test activity most recently failed. */
-  crossFailOtherTestBoost: number;
+  /** Per point of |source activity's streak| when Read is boosted by a fail elsewhere, capped at FAIL_STREAK_CAP. */
+  crossFailReadBoostPerRepeat: number;
+  /** Per point of |source activity's streak| when the OTHER test context is boosted, capped at FAIL_STREAK_CAP. */
+  crossFailOtherTestBoostPerRepeat: number;
 };
 
 export type PoolStats = {

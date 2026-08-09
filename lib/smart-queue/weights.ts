@@ -26,6 +26,6 @@ export const WEIGHTS: ScoreWeights = {
   newTermBoost: 30,
   stalenessBoostPerHour: 0.5,
   stalenessCapHours: 168, // 7 days
-  crossFailReadBoost: 20,
-  crossFailOtherTestBoost: 25,
+  crossFailReadBoostPerRepeat: 20,
+  crossFailOtherTestBoostPerRepeat: 25,
 };

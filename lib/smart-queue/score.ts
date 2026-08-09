@@ -27,6 +27,11 @@ type ContextFields = {
   otherActivity: FailSource | null;
 };
 
+/** The named activity's own streak, regardless of which context is currently scoring. */
+function streakForActivity(candidate: ReviewCandidate, activity: FailSource): number {
+  return activity === "review" ? candidate.reviewStreak : candidate.quizStreak;
+}
+
 function fieldsForContext(candidate: ReviewCandidate, context: PickContext): ContextFields {
   switch (context) {
     case "read":
@@ -106,14 +111,26 @@ function evaluateCandidate(
   // happen by lucky guessing, a pass can — see docs/smart-queue.md). Read
   // gets nudged by a fail from either activity; a test context gets nudged
   // only when the OTHER activity most recently failed (its own streak
-  // already covers a fail from itself).
-  if (candidate.lastFailAt) {
-    if (context === "read") {
-      score += weights.crossFailReadBoost;
-      reasons.push("cross_fail");
-    } else if (candidate.lastFailSource === fields.otherActivity) {
-      score += weights.crossFailOtherTestBoost;
-      reasons.push("cross_fail");
+  // already covers a fail from itself). Scaled by the source activity's own
+  // streak magnitude, same as struggling, so a term missed 4 times running
+  // pushes Read much harder than one slipped on once — guard against
+  // "repeat_fail" already having been pushed by the struggling block above.
+  if (candidate.lastFailAt && candidate.lastFailSource) {
+    const appliesHere = context === "read" || candidate.lastFailSource === fields.otherActivity;
+
+    if (appliesHere) {
+      const sourceStreak = streakForActivity(candidate, candidate.lastFailSource);
+      const repeats = Math.min(-sourceStreak, FAIL_STREAK_CAP);
+
+      if (repeats > 0) {
+        const perRepeat =
+          context === "read" ? weights.crossFailReadBoostPerRepeat : weights.crossFailOtherTestBoostPerRepeat;
+        score += repeats * perRepeat;
+        reasons.push("cross_fail");
+        if (repeats >= 2 && !reasons.includes("repeat_fail")) {
+          reasons.push("repeat_fail");
+        }
+      }
     }
   }
 
