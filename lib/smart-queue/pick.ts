@@ -1,9 +1,9 @@
 /** Term selection from scored candidates.
  */
 
-import type { PickContext, ReviewCandidate, ReviewPreset, ScoredCandidate } from "./types";
+import type { PickContext, ReviewCandidate, ScoredCandidate } from "./types";
 import { scoreCandidate } from "./score";
-import { getContextWeights } from "./presets";
+import { WEIGHTS } from "./weights";
 
 /** Fisher-Yates shuffle of arr[start..end] (inclusive), in place. */
 function shuffleRange<T>(arr: T[], start: number, end: number): void {
@@ -26,19 +26,17 @@ function shuffleTies(scored: ScoredCandidate[]): void {
 
 export function pickTerms(
   candidates: ReviewCandidate[],
-  preset: ReviewPreset,
   limit: number,
-  context: PickContext = "default",
+  context: PickContext,
 ): ScoredCandidate[] {
   if (candidates.length === 0 || limit <= 0) {
     return [];
   }
 
-  const weights = getContextWeights(preset, context);
   const now = new Date();
 
   const scored: ScoredCandidate[] = candidates.map((candidate) => {
-    const { score, reasons } = scoreCandidate(candidate, weights, now);
+    const { score, reasons } = scoreCandidate(candidate, WEIGHTS, context, now);
     return {
       ...candidate,
       score,

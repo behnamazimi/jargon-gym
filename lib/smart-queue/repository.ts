@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { ReviewCandidate, ReviewOutcome, ReviewPreset } from "./types";
+import type { FailSource, ReviewCandidate, ReviewEvent } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -10,48 +10,39 @@ export type ReviewScope = {
   domainIds: string[] | "all";
 };
 
-export async function loadUserPreset(client: Client, userId: string): Promise<ReviewPreset> {
-  const { data, error } = await client
-    .from("user_settings")
-    .select("review_preset")
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return (data?.review_preset as ReviewPreset | null) ?? "balanced";
-}
-
 function mapCandidateRows(
   data: Array<{
     term_id: string;
     domain_id: string;
     created_at: string;
-    seen_count: number;
-    last_seen_at: string | null;
-    last_outcome: Database["public"]["Enums"]["review_outcome"];
     read_count: number;
-    review_reveal_count: number;
-    recalled_count: number;
-    last_recalled_outcome: Database["public"]["Enums"]["review_outcome"] | null;
-    last_recalled_at: string | null;
-    last_review_reveal_at: string | null;
-    fail_streak: number;
+    last_read_at: string | null;
+    review_recall_count: number;
+    last_review_recall_at: string | null;
+    review_streak: number;
+    quiz_test_count: number;
+    last_quiz_tested_at: string | null;
+    quiz_streak: number;
+    pending_reveal: boolean;
+    last_fail_at: string | null;
+    last_fail_source: Database["public"]["Enums"]["review_fail_source"] | null;
   }>,
 ): ReviewCandidate[] {
   return data.map((row) => ({
     termId: row.term_id,
     domainId: row.domain_id,
     createdAt: new Date(row.created_at),
-    seenCount: row.seen_count,
-    lastSeenAt: row.last_seen_at ? new Date(row.last_seen_at) : null,
-    lastOutcome: row.last_outcome as ReviewOutcome,
     readCount: row.read_count,
-    reviewRevealCount: row.review_reveal_count,
-    recalledCount: row.recalled_count,
-    lastRecalledOutcome: row.last_recalled_outcome as ReviewOutcome | null,
-    lastRecalledAt: row.last_recalled_at ? new Date(row.last_recalled_at) : null,
-    lastReviewRevealAt: row.last_review_reveal_at ? new Date(row.last_review_reveal_at) : null,
-    failStreak: row.fail_streak,
+    lastReadAt: row.last_read_at ? new Date(row.last_read_at) : null,
+    reviewRecallCount: row.review_recall_count,
+    lastReviewRecallAt: row.last_review_recall_at ? new Date(row.last_review_recall_at) : null,
+    reviewStreak: row.review_streak,
+    quizTestCount: row.quiz_test_count,
+    lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
+    quizStreak: row.quiz_streak,
+    pendingReveal: row.pending_reveal,
+    lastFailAt: row.last_fail_at ? new Date(row.last_fail_at) : null,
+    lastFailSource: row.last_fail_source as FailSource | null,
   }));
 }
 
@@ -87,39 +78,31 @@ export async function fetchCandidatesForUser(
   return mapCandidateRows(data ?? []);
 }
 
-/** Internal — only review-outcome should call these. isReviewReveal only matters for outcome="read". */
-export async function recordReviewOutcome(
+/** Internal — only review-outcome should call these. */
+export async function recordReviewEvent(
   client: Client,
   termId: string,
-  outcome: ReviewOutcome,
-  incrementSeen = true,
-  isReviewReveal = false,
+  event: ReviewEvent,
 ): Promise<void> {
-  const { error } = await client.rpc("my_record_review_outcome", {
+  const { error } = await client.rpc("my_record_review_event", {
     p_term_id: termId,
-    p_outcome: outcome,
-    p_increment_seen: incrementSeen,
-    p_is_review_reveal: isReviewReveal,
+    p_event: event,
   });
 
   if (error) throw error;
 }
 
-/** Internal — only review-outcome should call these. isReviewReveal only matters for outcome="read". */
-export async function recordReviewOutcomeForUser(
+/** Internal — only review-outcome should call these. */
+export async function recordReviewEventForUser(
   client: Client,
   userId: string,
   termId: string,
-  outcome: ReviewOutcome,
-  incrementSeen = true,
-  isReviewReveal = false,
+  event: ReviewEvent,
 ): Promise<void> {
-  const { error } = await client.rpc("record_review_outcome", {
+  const { error } = await client.rpc("record_review_event", {
     p_user_id: userId,
     p_term_id: termId,
-    p_outcome: outcome,
-    p_increment_seen: incrementSeen,
-    p_is_review_reveal: isReviewReveal,
+    p_event: event,
   });
 
   if (error) throw error;

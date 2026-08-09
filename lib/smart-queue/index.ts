@@ -5,11 +5,10 @@
  *  Human overview: docs/smart-queue.md
  */
 
-export type { ReviewOutcome, ReviewPreset, PickContext, PickReason, PickMeta } from "./types";
+export type { ReviewEvent, PickContext, PickReason, PickMeta, FailSource } from "./types";
 
 export { formatPickReason } from "./reasons";
-export { SOLID_COOLDOWN_HOURS, NEVER_RECALLED_MIN_SEEN } from "./presets";
-export { loadUserPreset } from "./repository";
+export { SOLID_COOLDOWN_HOURS, ENGAGED_MIN_COUNT } from "./weights";
 
 export {
   pickReviewTerms,

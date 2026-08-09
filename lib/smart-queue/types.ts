@@ -1,84 +1,82 @@
 /** Smart queue types — pure data structures, no runtime imports.
  */
 
-/** unseen: never shown. seen/read: light exposure tiers.
- *  learning/solid/verified/forgot: "recalled" — an actual tested judgment.
- */
-export type ReviewOutcome =
-  | "unseen"
-  | "seen"
+/** The six writes recordRead/recordReveal/recordTest can make. */
+export type ReviewEvent =
   | "read"
-  | "learning"
-  | "solid"
-  | "verified"
-  | "forgot";
+  | "reveal"
+  | "review_pass"
+  | "review_fail"
+  | "quiz_pass"
+  | "quiz_fail";
 
-export type ReviewPreset = "balanced" | "learn_new" | "drill_weak";
+/** Which activity's history a pick is scored against. Read has no pass/fail
+ *  concept of its own — it just ranks by read exposure + cross-activity fail
+ *  propagation — while Review and Quiz each read their own independent
+ *  streak/count/timestamp fields. */
+export type PickContext = "read" | "review" | "quiz";
 
-/** Session context for pick weight overrides (does not change saved preset). */
-export type PickContext = "default" | "quiz";
+export type FailSource = "review" | "quiz";
 
 export type PickReason =
   | "unseen"
   | "new"
-  | "learning"
-  | "forgot"
+  | "struggling"
   | "repeat_fail"
-  | "never_recalled"
-  | "browse_only"
+  | "engaged_untested"
   | "abandoned_review"
   | "stale"
-  | "solid_cooldown"
-  | "recently_read"
+  | "mastered_cooldown"
+  | "cross_fail"
+  | "recently_engaged"
   | "steady";
 
 export type ReviewCandidate = {
   termId: string;
   domainId: string;
   createdAt: Date;
-  seenCount: number;
-  lastSeenAt: Date | null;
-  lastOutcome: ReviewOutcome;
-  /** Deliberate Read-tier exposure: the Read command/page (web + Telegram) or opening a term card on the jargon page. */
+  /** Read tier: Read page/command, /read, jargon card open. */
   readCount: number;
-  /** Review-reveal exposure — disjoint from readCount, its own counter. */
-  reviewRevealCount: number;
-  recalledCount: number;
-  /** null until the term has ever been recalled; then one of learning/solid/verified/forgot. */
-  lastRecalledOutcome: ReviewOutcome | null;
-  lastRecalledAt: Date | null;
-  /** Timestamp of the last review-reveal write, independent of what happened since. */
-  lastReviewRevealAt: Date | null;
-  /** Consecutive learning/forgot outcomes since the last solid/verified. */
-  failStreak: number;
+  lastReadAt: Date | null;
+  /** Review's own test history — independent of quiz. */
+  reviewRecallCount: number;
+  lastReviewRecallAt: Date | null;
+  /** Signed: positive = consecutive passes, negative = consecutive fails, 0 = never tested. */
+  reviewStreak: number;
+  /** Quiz's own test history — independent of review. */
+  quizTestCount: number;
+  lastQuizTestedAt: Date | null;
+  quizStreak: number;
+  /** Review-only: revealed, not yet rated. */
+  pendingReveal: boolean;
+  /** Most recent fail from either activity, for cross-activity propagation. */
+  lastFailAt: Date | null;
+  lastFailSource: FailSource | null;
 };
 
 export type ScoreWeights = {
   unseenBoost: number;
-  learningBoost: number;
-  forgotBoost: number;
-  newTermBoost: number;
-  neverRecalledBoost: number;
-  /** Smaller variant of neverRecalledBoost for terms with zero deliberate Read exposure. */
-  browseOnlyBoost: number;
+  /** Per point of |streak| when struggling (streak < 0), capped at FAIL_STREAK_CAP. */
+  strugglingBoostPerStreak: number;
+  masteredCooldownPenalty: number;
+  /** Read count >= ENGAGED_MIN_COUNT but this context's own test count is 0. */
+  engagedButUntestedBoost: number;
   abandonedReviewBoost: number;
-  /** Extra boost per consecutive fail, capped at FAIL_STREAK_CAP. */
-  failStreakBoostPerRepeat: number;
-  solidCooldownPenalty: number;
-  seenCountPenalty: number;
-  /** Staleness only ever applies once a term has been recalled at least once. */
+  newTermBoost: number;
   stalenessBoostPerHour: number;
   stalenessCapHours: number;
+  /** Boosts Read priority when either activity most recently failed. */
+  crossFailReadBoost: number;
+  /** Boosts a test context's priority when the OTHER test activity most recently failed. */
+  crossFailOtherTestBoost: number;
 };
 
 export type PoolStats = {
-  /** Never Read or Revealed (read_count === 0 && review_reveal_count === 0) — matches score.ts's never-read boost. */
+  /** Never engaged in this context (readCount === 0 for "read", own test count === 0 for "review"/"quiz"). */
   unseen: number;
-  /** Terms with read_count > 0 or review_reveal_count > 0 (includes fresh + stale). */
   seen: number;
   stale: number;
   total: number;
-  /** True when every term in the scoped pool has been Read or Revealed at least once. */
   allSeenOnce: boolean;
 };
 

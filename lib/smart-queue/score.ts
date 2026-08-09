@@ -1,10 +1,14 @@
 /** Pure scoring function for smart queue algorithm.
+ *
+ *  One formula, three field-bindings. `context` selects which count/streak/
+ *  timestamp fields the signals read — Read has no pass/fail concept of its
+ *  own, Review and Quiz each read their own independent streak.
  */
 
-import { FAIL_STREAK_CAP, NEVER_RECALLED_MIN_SEEN, SOLID_COOLDOWN_HOURS } from "./presets";
-import type { PickReason, ReviewCandidate, ScoreWeights } from "./types";
+import { ENGAGED_MIN_COUNT, FAIL_STREAK_CAP, SOLID_COOLDOWN_HOURS } from "./weights";
+import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
-const NEW_TERM_THRESHOLD_HOURS = 72; // Terms created within 72h get new-term boost
+const NEW_TERM_THRESHOLD_HOURS = 72;
 const STALE_REASON_THRESHOLD_HOURS = 24;
 
 type ScoreBreakdown = {
@@ -12,125 +16,130 @@ type ScoreBreakdown = {
   reasons: PickReason[];
 };
 
+type ContextFields = {
+  /** This context's own test/exposure count — Read's is readCount, Review/Quiz are their own test counts. */
+  ownCount: number;
+  /** Timestamp staleness is measured from, only when ownCount > 0. */
+  lastActivityAt: Date | null;
+  /** Signed streak for this context — null for "read", which has no pass/fail concept. */
+  streak: number | null;
+  /** The OTHER test activity's failure source name, for cross-fail gating. */
+  otherActivity: FailSource | null;
+};
+
+function fieldsForContext(candidate: ReviewCandidate, context: PickContext): ContextFields {
+  switch (context) {
+    case "read":
+      return {
+        ownCount: candidate.readCount,
+        lastActivityAt: candidate.lastReadAt,
+        streak: null,
+        otherActivity: null,
+      };
+    case "review":
+      return {
+        ownCount: candidate.reviewRecallCount,
+        lastActivityAt: candidate.lastReviewRecallAt,
+        streak: candidate.reviewStreak,
+        otherActivity: "quiz",
+      };
+    case "quiz":
+      return {
+        ownCount: candidate.quizTestCount,
+        lastActivityAt: candidate.lastQuizTestedAt,
+        streak: candidate.quizStreak,
+        otherActivity: "review",
+      };
+  }
+}
+
 function evaluateCandidate(
   candidate: ReviewCandidate,
   weights: ScoreWeights,
+  context: PickContext,
   now: Date,
 ): ScoreBreakdown {
   let score = 0;
   const reasons: PickReason[] = [];
 
-  // Solid cooldown: keyed off the last RECALLED outcome, not last_outcome — so a
-  // later Seen/Read exposure (e.g. opening the term on the jargon page) can't
-  // silently cancel it. Verified is intentionally excluded.
-  if (candidate.lastRecalledOutcome === "solid" && candidate.lastRecalledAt) {
-    const hoursSinceSolid = (now.getTime() - candidate.lastRecalledAt.getTime()) / (1000 * 60 * 60);
-    if (hoursSinceSolid < SOLID_COOLDOWN_HOURS) {
-      score -= weights.solidCooldownPenalty;
-      reasons.push("solid_cooldown");
+  const fields = fieldsForContext(candidate, context);
+
+  // Mastered cooldown: streak > 0 and recent. Independent per context — an
+  // acing streak in Quiz never suppresses Review, and vice versa.
+  if (fields.streak !== null && fields.streak > 0 && fields.lastActivityAt) {
+    const hoursSincePass = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
+    if (hoursSincePass < SOLID_COOLDOWN_HOURS) {
+      score -= weights.masteredCooldownPenalty;
+      reasons.push("mastered_cooldown");
     }
   }
 
-  // Never-read boost (soft cycle: once every term has been Read or Revealed
-  // at least once, only staleness / outcome / penalty remain). Keyed on
-  // deliberate exposure, not seenCount — a term glanced at via widget
-  // rotation, a quiz appearance, or the known/unknown toggle still counts as
-  // never read until it's actually opened or revealed.
-  if (candidate.readCount === 0 && candidate.reviewRevealCount === 0) {
+  // Never engaged in this context.
+  if (fields.ownCount === 0) {
     score += weights.unseenBoost;
     reasons.push("unseen");
   }
 
-  // Recalled-outcome boosts — the dominant signal. Reads lastRecalledOutcome
-  // rather than lastOutcome so a later Seen/Read write never erases it.
-  switch (candidate.lastRecalledOutcome) {
-    case "learning":
-      score += weights.learningBoost;
-      reasons.push("learning");
-      break;
-    case "forgot":
-      score += weights.forgotBoost;
-      reasons.push("forgot");
-      break;
-    // "solid" is handled by the cooldown above; "verified" stays inert.
-  }
-
-  // Fail streak: scales the learning/forgot boost by how many consecutive
-  // fails preceded it, so "failed once" ranks below "genuinely stuck".
-  // failStreak is only nonzero when lastRecalledOutcome is learning/forgot,
-  // so this always stacks on top of one of the boosts above.
-  if (candidate.failStreak >= 2) {
-    score += Math.min(candidate.failStreak, FAIL_STREAK_CAP) * weights.failStreakBoostPerRepeat;
-    reasons.push("repeat_fail");
-  }
-
-  // Never recalled despite repeated light exposure. The never_recalled
-  // threshold counts only deliberate exposure (readCount + reviewRevealCount)
-  // — incidental Seen-tier sightings (widget rotation, quiz appearances, the
-  // known/unknown toggle) don't pad this count. browse_only is the fallback
-  // for terms with zero deliberate exposure, gated on seenCount instead since
-  // it's purely incidental sightings by definition there.
-  if (candidate.recalledCount === 0) {
-    const deliberateCount = candidate.readCount + candidate.reviewRevealCount;
-    if (deliberateCount >= NEVER_RECALLED_MIN_SEEN) {
-      score += weights.neverRecalledBoost;
-      reasons.push("never_recalled");
-    } else if (deliberateCount === 0 && candidate.seenCount >= NEVER_RECALLED_MIN_SEEN) {
-      score += weights.browseOnlyBoost;
-      reasons.push("browse_only");
+  // Struggling: negative streak, magnitude-scaled.
+  if (fields.streak !== null && fields.streak < 0) {
+    const repeats = Math.min(-fields.streak, FAIL_STREAK_CAP);
+    score += repeats * weights.strugglingBoostPerStreak;
+    reasons.push("struggling");
+    if (repeats >= 2) {
+      reasons.push("repeat_fail");
     }
   }
 
-  // Abandoned mid-review: the most recent exposure of any kind was a Review
-  // reveal that was never rated (app closed, session expired) — the reveal
-  // timestamp exactly matches the last-touched timestamp, meaning nothing
-  // (a later plain read, or a rating) has happened since. Distinct from
-  // never_recalled — this is a specific interrupted test, not generic
-  // rereading.
-  if (
-    candidate.lastOutcome === "read" &&
-    candidate.lastReviewRevealAt &&
-    candidate.lastSeenAt &&
-    candidate.lastReviewRevealAt.getTime() === candidate.lastSeenAt.getTime()
-  ) {
+  // Engaged (read) but never tested in this context — Review/Quiz only.
+  if (context !== "read" && fields.streak === 0 && candidate.readCount >= ENGAGED_MIN_COUNT) {
+    score += weights.engagedButUntestedBoost;
+    reasons.push("engaged_untested");
+  }
+
+  // Abandoned mid-review — Review context only.
+  if (context === "review" && candidate.pendingReveal) {
     score += weights.abandonedReviewBoost;
     reasons.push("abandoned_review");
   }
 
-  // New term boost (created recently)
+  // Cross-activity fail propagation: only fails cross over (a fail can't
+  // happen by lucky guessing, a pass can — see docs/smart-queue.md). Read
+  // gets nudged by a fail from either activity; a test context gets nudged
+  // only when the OTHER activity most recently failed (its own streak
+  // already covers a fail from itself).
+  if (candidate.lastFailAt) {
+    if (context === "read") {
+      score += weights.crossFailReadBoost;
+      reasons.push("cross_fail");
+    } else if (candidate.lastFailSource === fields.otherActivity) {
+      score += weights.crossFailOtherTestBoost;
+      reasons.push("cross_fail");
+    }
+  }
+
+  // New term boost.
   const ageHours = (now.getTime() - candidate.createdAt.getTime()) / (1000 * 60 * 60);
   if (ageHours < NEW_TERM_THRESHOLD_HOURS) {
     score += weights.newTermBoost;
     reasons.push("new");
   }
 
-  // Seen count penalty — dampens heavily-exposed terms regardless of tier.
-  score -= candidate.seenCount * weights.seenCountPenalty;
-
-  // Staleness only ever applies once a term has been recalled at least once,
-  // anchored to that real test. Never-recalled terms get no time-based pull —
-  // only seenCountPenalty and never_recalled/browse_only account for their
-  // light exposure. Without this gate, a term glanced at once and never
-  // touched again would keep drifting back up on the clock alone, even though
-  // nothing about "being seen" is itself worth re-surfacing for.
-  if (candidate.recalledCount > 0 && candidate.lastRecalledAt) {
-    const hoursSinceRecalled =
-      (now.getTime() - candidate.lastRecalledAt.getTime()) / (1000 * 60 * 60);
-    const cappedHours = Math.min(hoursSinceRecalled, weights.stalenessCapHours);
+  // Staleness — only once this context has some activity to measure from.
+  if (fields.ownCount > 0 && fields.lastActivityAt) {
+    const hoursSinceActivity =
+      (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
+    const cappedHours = Math.min(hoursSinceActivity, weights.stalenessCapHours);
     score += cappedHours * weights.stalenessBoostPerHour;
-    if (hoursSinceRecalled >= STALE_REASON_THRESHOLD_HOURS) {
+    if (hoursSinceActivity >= STALE_REASON_THRESHOLD_HOURS) {
       reasons.push("stale");
     }
   }
 
-  // No signal fired. Split the fallback by recall status so a term that's
-  // genuinely been tested recently ("steady"/Recently reviewed) isn't
-  // conflated with one that's only ever been Read/Revealed once or twice —
-  // deliberate exposure below the never_recalled threshold, never tested —
-  // which reads "Recently read" instead. Surfaced explicitly either way
-  // instead of leaving the term with an unexplained empty badge list.
+  // No signal fired — fallback, split by whether this context has ever had
+  // real activity so "steady" (tested/reviewed recently) isn't conflated
+  // with "recently_engaged" (read a couple times, nothing more).
   if (reasons.length === 0) {
-    reasons.push(candidate.recalledCount > 0 ? "steady" : "recently_read");
+    reasons.push(fields.ownCount > 0 ? "steady" : "recently_engaged");
   }
 
   return { score, reasons };
@@ -140,7 +149,8 @@ function evaluateCandidate(
 export function scoreCandidate(
   candidate: ReviewCandidate,
   weights: ScoreWeights,
+  context: PickContext,
   now: Date,
 ): ScoreBreakdown {
-  return evaluateCandidate(candidate, weights, now);
+  return evaluateCandidate(candidate, weights, context, now);
 }

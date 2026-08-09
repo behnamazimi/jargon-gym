@@ -1,31 +1,49 @@
 /** Pool statistics computation.
  */
 
-import type { ReviewCandidate, PoolStats } from "./types";
+import type { PickContext, ReviewCandidate, PoolStats } from "./types";
 
 const STALE_THRESHOLD_HOURS = 24;
 
-export function computePoolStats(candidates: ReviewCandidate[]): PoolStats {
+function ownCountAndLastActivity(
+  candidate: ReviewCandidate,
+  context: PickContext,
+): { count: number; lastActivityAt: Date | null } {
+  switch (context) {
+    case "read":
+      return { count: candidate.readCount, lastActivityAt: candidate.lastReadAt };
+    case "review":
+      return { count: candidate.reviewRecallCount, lastActivityAt: candidate.lastReviewRecallAt };
+    case "quiz":
+      return { count: candidate.quizTestCount, lastActivityAt: candidate.lastQuizTestedAt };
+  }
+}
+
+export function computePoolStats(
+  candidates: ReviewCandidate[],
+  context: PickContext,
+): PoolStats {
   const now = new Date();
   let unseen = 0;
   let seen = 0;
   let stale = 0;
 
   for (const candidate of candidates) {
-    // "unseen" here mirrors score.ts's never-read boost trigger — deliberate
-    // exposure only, not raw seen_count — so allSeenOnce stays in sync with
-    // when that boost actually stops applying.
-    if (candidate.readCount === 0 && candidate.reviewRevealCount === 0) {
+    // Mirrors score.ts's unseen signal for this context — deliberate
+    // exposure only — so allSeenOnce stays in sync with when that boost
+    // actually stops applying.
+    const { count, lastActivityAt } = ownCountAndLastActivity(candidate, context);
+
+    if (count === 0) {
       unseen++;
       continue;
     }
 
     seen++;
 
-    if (candidate.lastSeenAt) {
-      const hoursSinceLastSeen =
-        (now.getTime() - candidate.lastSeenAt.getTime()) / (1000 * 60 * 60);
-      if (hoursSinceLastSeen >= STALE_THRESHOLD_HOURS) {
+    if (lastActivityAt) {
+      const hoursSinceActivity = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60);
+      if (hoursSinceActivity >= STALE_THRESHOLD_HOURS) {
         stale++;
       }
     } else {

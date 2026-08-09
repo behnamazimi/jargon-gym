@@ -1,20 +1,19 @@
 /** Human-readable labels for pick reasons (UI). */
 
-import { NEVER_RECALLED_MIN_SEEN } from "./presets";
+import { ENGAGED_MIN_COUNT } from "./weights";
 import type { PickReason } from "./types";
 
 const LABELS: Record<PickReason, string> = {
   unseen: "Never read",
   new: "Recently added",
-  learning: "Still learning",
-  forgot: "Forgot",
-  repeat_fail: "Repeatedly forgotten",
-  never_recalled: `Read ${NEVER_RECALLED_MIN_SEEN}+ times, never recalled`,
-  browse_only: `Browsed ${NEVER_RECALLED_MIN_SEEN}+ times, never read`,
+  struggling: "Struggling",
+  repeat_fail: "Repeatedly missed",
+  engaged_untested: `Read ${ENGAGED_MIN_COUNT}+ times, not tested`,
   abandoned_review: "Left mid-review",
   stale: "Not seen recently",
-  solid_cooldown: "Recently marked solid",
-  recently_read: "Recently read",
+  mastered_cooldown: "Recently mastered",
+  cross_fail: "Missed elsewhere recently",
+  recently_engaged: "Recently read",
   steady: "Recently reviewed",
 };
 
