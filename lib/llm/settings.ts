@@ -10,14 +10,12 @@ function mapRow(row: {
   api_key_last4: string | null;
   mark_unknown_on_fail: boolean;
   mark_known_on_pass: boolean;
-  review_preset: string;
 }): UserSettings {
   return {
     provider: (row.provider as LlmProvider | null) ?? null,
     apiKeyLast4: row.api_key_last4,
     markUnknownOnFail: row.mark_unknown_on_fail,
     markKnownOnPass: row.mark_known_on_pass,
-    reviewPreset: row.review_preset as UserSettings["reviewPreset"],
   };
 }
 
@@ -27,7 +25,7 @@ export async function getUserSettings(
 ): Promise<UserSettings | null> {
   const { data, error } = await client
     .from("user_settings")
-    .select("provider, api_key_last4, mark_unknown_on_fail, mark_known_on_pass, review_preset")
+    .select("provider, api_key_last4, mark_unknown_on_fail, mark_known_on_pass")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -90,23 +88,6 @@ export async function updateQuizPreferences(
       user_id: userId,
       mark_unknown_on_fail: input.markUnknownOnFail,
       mark_known_on_pass: input.markKnownOnPass,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
-
-  if (error) throw error;
-}
-
-export async function updateReviewPreset(
-  client: Client,
-  userId: string,
-  preset: UserSettings["reviewPreset"],
-) {
-  const { error } = await client.from("user_settings").upsert(
-    {
-      user_id: userId,
-      review_preset: preset,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },

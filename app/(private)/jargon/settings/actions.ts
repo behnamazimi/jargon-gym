@@ -172,20 +172,3 @@ export async function updateQuizPreferencesAction(input: {
     return { error: message };
   }
 }
-
-export async function updateReviewPresetAction(
-  preset: "balanced" | "learn_new" | "drill_weak",
-): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedUser();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    const { updateReviewPreset } = await import("@/lib/llm/settings");
-    await updateReviewPreset(auth.supabase, auth.user.id, preset);
-    revalidatePath("/jargon/settings");
-    return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't update review preset.";
-    return { error: message };
-  }
-}

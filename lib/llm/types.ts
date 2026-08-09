@@ -1,5 +1,3 @@
-import type { ReviewPreset } from "@/lib/smart-queue";
-
 export type LlmProvider = "google" | "anthropic";
 
 export type UserSettings = {
@@ -7,7 +5,6 @@ export type UserSettings = {
   apiKeyLast4: string | null;
   markUnknownOnFail: boolean;
   markKnownOnPass: boolean;
-  reviewPreset: ReviewPreset;
 };
 
 export const LLM_PROVIDER_LABELS: Record<LlmProvider, string> = {

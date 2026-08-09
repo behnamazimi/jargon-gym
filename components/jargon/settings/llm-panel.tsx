@@ -68,7 +68,6 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
       apiKeyLast4: last4,
       markUnknownOnFail,
       markKnownOnPass,
-      reviewPreset: settings?.reviewPreset ?? "balanced",
     });
     setApiKey("");
     setReplacingKey(false);
@@ -131,7 +130,6 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
       apiKeyLast4: settings?.apiKeyLast4 ?? null,
       markUnknownOnFail: nextMarkUnknownOnFail,
       markKnownOnPass: nextMarkKnownOnPass,
-      reviewPreset: settings?.reviewPreset ?? "balanced",
     });
   }
 
