@@ -163,7 +163,7 @@ export function QuizQuestionView({
     <QuizPanel>
       <QuizPanelBody className="space-y-5">
         <div className="space-y-3">
-          <PickReasonBadges reasons={pickReasons} mode="compact" />
+          <PickReasonBadges reasons={pickReasons} context="quiz" mode="compact" />
           <h2 className="m-0 text-lg font-semibold leading-snug">{question.prompt}</h2>
         </div>
 

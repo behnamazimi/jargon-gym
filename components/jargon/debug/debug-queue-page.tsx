@@ -192,7 +192,7 @@ export function DebugQueuePage({ collections }: DebugQueuePageProps) {
               ) : loading ? (
                 <p className="m-0 text-sm text-base-content/60">Loading…</p>
               ) : (
-                <ScoreRows rows={rows} />
+                <ScoreRows rows={rows} context={context} />
               )}
             </QuizPanelBody>
           </QuizPanel>

@@ -547,7 +547,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                 ) : null}
 
                 {availableTermCount > 0 && cardCountError === null ? (
-                  <QueuePreview items={queuePreview} loading={previewLoading} />
+                  <QueuePreview items={queuePreview} context="review" loading={previewLoading} />
                 ) : null}
 
                 {availableTermCount === 0 ? (

@@ -2,6 +2,7 @@
 
 import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
+import type { PickContext } from "@/lib/smart-queue";
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "never";
@@ -11,7 +12,7 @@ function formatRelative(iso: string | null): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
-export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
+export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: PickContext }) {
   if (rows.length === 0) {
     return <p className="m-0 text-sm text-base-content/60">No terms match this selection.</p>;
   }
@@ -33,7 +34,7 @@ export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
             </span>
           </div>
 
-          <PickReasonBadges reasons={row.reasons} mode="full" />
+          <PickReasonBadges reasons={row.reasons} context={context} mode="full" />
 
           <p className="m-0 text-xs leading-relaxed text-base-content/50">
             read {row.readCount} ({formatRelative(row.lastReadAt)}) · review recall{" "}

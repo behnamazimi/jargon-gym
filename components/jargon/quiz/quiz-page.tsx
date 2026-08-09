@@ -488,7 +488,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                 </Field>
 
                 {availableTermCount > 0 && questionCountError === null ? (
-                  <QueuePreview items={queuePreview} loading={previewLoading} />
+                  <QueuePreview items={queuePreview} context="quiz" loading={previewLoading} />
                 ) : null}
 
                 {availableTermCount === 0 ? (

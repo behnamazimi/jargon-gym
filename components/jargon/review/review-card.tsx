@@ -88,6 +88,7 @@ export function ReviewCard({
               <p className="m-0 text-xs text-base-content/50">{term.domainName}</p>
               <PickReasonBadges
                 reasons={term.pickReasons}
+                context="review"
                 mode="compact"
                 className="justify-center"
               />

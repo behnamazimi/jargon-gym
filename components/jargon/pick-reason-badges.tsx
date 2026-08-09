@@ -1,10 +1,12 @@
 "use client";
 
-import { formatPickReason, type PickReason } from "@/lib/smart-queue";
+import { formatPickReason, type PickContext, type PickReason } from "@/lib/smart-queue";
 import { cn } from "@/lib/utils";
 
 type PickReasonBadgesProps = {
   reasons: PickReason[] | undefined;
+  /** Which activity these reasons were scored against — some labels (unseen/stale/steady) vary by it. */
+  context: PickContext;
   /** Compact: top 1–2 reasons (card/question). Full: all reasons. */
   mode?: "compact" | "full";
   className?: string;
@@ -24,7 +26,12 @@ const REASON_BADGE_CLASS: Record<PickReason, string> = {
   steady: "badge-ghost",
 };
 
-export function PickReasonBadges({ reasons, mode = "compact", className }: PickReasonBadgesProps) {
+export function PickReasonBadges({
+  reasons,
+  context,
+  mode = "compact",
+  className,
+}: PickReasonBadgesProps) {
   if (!reasons || reasons.length === 0) return null;
 
   const shown = mode === "compact" ? reasons.slice(0, 2) : reasons;
@@ -33,7 +40,7 @@ export function PickReasonBadges({ reasons, mode = "compact", className }: PickR
     <div className={cn("flex flex-wrap gap-1.5", className)} aria-label="Why this term was picked">
       {shown.map((reason) => (
         <span key={reason} className={cn("badge badge-sm font-normal", REASON_BADGE_CLASS[reason])}>
-          {formatPickReason(reason)}
+          {formatPickReason(reason, context)}
         </span>
       ))}
     </div>
@@ -48,6 +55,7 @@ export type QueuePreviewItem = {
 
 type QueuePreviewProps = {
   items: QueuePreviewItem[];
+  context: PickContext;
   loading?: boolean;
   emptyMessage?: string;
 };
@@ -55,6 +63,7 @@ type QueuePreviewProps = {
 /** Collapsible setup preview of the next queue batch. */
 export function QueuePreview({
   items,
+  context,
   loading = false,
   emptyMessage = "No terms match this selection.",
 }: QueuePreviewProps) {
@@ -85,7 +94,12 @@ export function QueuePreview({
                   <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
                   <span className="text-sm font-medium text-base-content">{item.term}</span>
                 </div>
-                <PickReasonBadges reasons={item.pickReasons} mode="full" className="pl-5" />
+                <PickReasonBadges
+                  reasons={item.pickReasons}
+                  context={context}
+                  mode="full"
+                  className="pl-5"
+                />
               </li>
             ))}
           </ul>
