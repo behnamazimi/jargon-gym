@@ -10,8 +10,13 @@ import { ImportPreviewPanel } from "@/components/jargon/import/import-preview";
 import { ImportLlmPrompt } from "@/components/jargon/import/import-llm-prompt";
 import { PageHeader } from "@/components/jargon/page-header";
 import { PageShell } from "@/components/page-container";
+import type { OwnedCollectionForImport } from "@/lib/jargon/import/owned-collections";
 
-export function ImportPageClient() {
+type ImportPageClientProps = {
+  collections: OwnedCollectionForImport[];
+};
+
+export function ImportPageClient({ collections }: ImportPageClientProps) {
   const [raw, setRaw] = useState("");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [failure, setFailure] = useState<ImportFailure | null>(null);
@@ -58,7 +63,7 @@ export function ImportPageClient() {
         description="Paste or upload JSON to add terms to a collection."
       />
 
-      <ImportLlmPrompt />
+      <ImportLlmPrompt collections={collections} />
       <ImportForm
         value={raw}
         onChange={setRaw}

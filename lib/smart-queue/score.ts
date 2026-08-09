@@ -124,7 +124,9 @@ function evaluateCandidate(
 
       if (repeats > 0) {
         const perRepeat =
-          context === "read" ? weights.crossFailReadBoostPerRepeat : weights.crossFailOtherTestBoostPerRepeat;
+          context === "read"
+            ? weights.crossFailReadBoostPerRepeat
+            : weights.crossFailOtherTestBoostPerRepeat;
         score += repeats * perRepeat;
         reasons.push("cross_fail");
         if (repeats >= 2 && !reasons.includes("repeat_fail")) {

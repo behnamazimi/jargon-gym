@@ -1,59 +1,225 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { CopyIconSwap } from "@/components/jargon/settings/ui";
-import { ImportCard, ImportCodePanel } from "@/components/jargon/import/import-ui";
-import { buildImportLlmPrompt } from "@/lib/jargon/import/llm-prompt";
+import { ImportCard } from "@/components/jargon/import/import-ui";
+import type { OwnedCollectionForImport } from "@/lib/jargon/import/owned-collections";
 
-export function ImportLlmPrompt() {
-  const [domain, setDomain] = useState("");
+const INSTALL_COMMAND =
+  "npx skills add https://github.com/behnamazimi/skills --skill jargon-gym-generator";
+
+const NEW_COLLECTION_KEY = "new";
+const DEFAULT_COUNT = 100;
+const MIN_COUNT = 1;
+const MAX_COUNT = 100;
+
+function buildRunCommand(domain: string, countRaw: string, excludeRaw: string) {
+  const domainPart = domain.trim() || "[domain]";
+
+  const trimmedCount = countRaw.trim();
+  const parsedCount = Number.parseInt(trimmedCount, 10);
+  const count =
+    trimmedCount === ""
+      ? DEFAULT_COUNT
+      : Number.isFinite(parsedCount) && parsedCount >= MIN_COUNT && parsedCount <= MAX_COUNT
+        ? parsedCount
+        : DEFAULT_COUNT;
+
+  const excludeTerms = excludeRaw
+    .split(",")
+    .map((term) => term.trim())
+    .filter(Boolean);
+
+  const parts = [domainPart, String(count)];
+  if (excludeTerms.length > 0) {
+    parts.push(`exclude: ${excludeTerms.join(", ")}`);
+  }
+
+  return `/jargon-gym-generator ${parts.join(" | ")}`;
+}
+
+function CopyCommand({
+  label,
+  hint,
+  value,
+  prefix,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  prefix?: string;
+  children?: ReactNode;
+}) {
   const [copied, setCopied] = useState(false);
 
-  const prompt = useMemo(() => buildImportLlmPrompt(domain.trim() || "YOUR DOMAIN"), [domain]);
-
   async function handleCopy() {
-    await navigator.clipboard.writeText(prompt);
+    await navigator.clipboard.writeText(value);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-0.5">
+        <p className="m-0 text-sm font-medium">{label}</p>
+        {hint ? <p className="m-0 text-xs leading-relaxed text-base-content/60">{hint}</p> : null}
+      </div>
+
+      {children}
+
+      <div className="shadow-surface rounded-xl bg-base-200/30 p-1">
+        <div className="flex items-stretch gap-2 rounded-lg bg-base-100 p-1.5 ring-1 ring-base-content/[0.06] dark:ring-base-100/[0.06]">
+          <pre className="m-0 min-w-0 flex-1 overflow-x-auto px-2.5 py-2 font-mono text-xs leading-5 whitespace-pre-wrap text-base-content">
+            {prefix ? (
+              <span className="select-none text-base-content/40" aria-hidden>
+                {prefix}{" "}
+              </span>
+            ) : null}
+            {value}
+          </pre>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onPress={handleCopy}
+            className="shrink-0 self-center transition-transform duration-150 ease-out active:scale-[0.96]"
+          >
+            <CopyIconSwap copied={copied} />
+            {copied ? "Copied" : "Copy"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionForImport[] }) {
+  const [selectedCollectionId, setSelectedCollectionId] = useState(NEW_COLLECTION_KEY);
+  const [domain, setDomain] = useState("");
+  const [count, setCount] = useState("");
+  const [exclude, setExclude] = useState("");
+
+  const runCommand = buildRunCommand(domain, count, exclude);
+
+  function handleCollectionChange(key: string) {
+    setSelectedCollectionId(key);
+
+    if (key === NEW_COLLECTION_KEY) {
+      setDomain("");
+      setExclude("");
+      return;
+    }
+
+    const collection = collections.find((item) => item.id === key);
+    if (!collection) return;
+
+    setDomain(collection.name);
+    setExclude(collection.terms.join(", "));
   }
 
   return (
     <ImportCard
       step={1}
       icon={Sparkles}
-      title="Generate with an LLM"
-      description="Optional — copy a prompt into ChatGPT, Claude, or another LLM, then paste the JSON in step 2."
+      title="Generate with a skill"
+      description="Optional — install the glossary skill once, generate JSON for your domain, then paste it in step 2."
       collapsible
       defaultExpanded={false}
-      expandLabel="Show prompt"
-      collapseLabel="Hide prompt"
+      expandLabel="Show commands"
+      collapseLabel="Hide commands"
     >
-      <Field>
-        <FieldLabel htmlFor="import-llm-domain">Your collection</FieldLabel>
-        <Input
-          id="import-llm-domain"
-          type="text"
-          value={domain}
-          onChange={(event) => setDomain(event.target.value)}
-          placeholder="e.g. Product Management, DevOps, Finance"
-          className="text-sm"
+      <div className="space-y-5">
+        <CopyCommand
+          label="1. Install the skill"
+          hint="Run once in your terminal to add it to your skills collection."
+          value={INSTALL_COMMAND}
+          prefix="$"
         />
-      </Field>
 
-      <ImportCodePanel
-        actions={
-          <Button type="button" variant="outline" size="sm" onPress={handleCopy}>
-            <CopyIconSwap copied={copied} />
-            {copied ? "Copied" : "Copy prompt"}
-          </Button>
-        }
-      >
-        {prompt}
-      </ImportCodePanel>
+        <CopyCommand
+          label="2. Build your generate command"
+          hint="Fill in the fields, copy the command, and run it in Cursor or Claude. Pick an existing collection to autofill its name and terms to exclude."
+          value={runCommand}
+        >
+          <div className="space-y-3">
+            {collections.length > 0 ? (
+              <Field>
+                <FieldLabel htmlFor="import-skill-collection">Add to collection</FieldLabel>
+                <Select
+                  selectedKey={selectedCollectionId}
+                  onSelectionChange={(key) => handleCollectionChange(String(key))}
+                  className="w-full"
+                >
+                  <SelectTrigger id="import-skill-collection" className="w-full text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem id={NEW_COLLECTION_KEY}>New collection</SelectItem>
+                    {collections.map((collection) => (
+                      <SelectItem key={collection.id} id={collection.id}>
+                        {collection.name}
+                        {collection.terms.length > 0 ? ` (${collection.terms.length})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+            ) : null}
+
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_5.5rem]">
+              <Field>
+                <FieldLabel htmlFor="import-skill-domain">Collection name</FieldLabel>
+                <Input
+                  id="import-skill-domain"
+                  type="text"
+                  value={domain}
+                  onChange={(event) => setDomain(event.target.value)}
+                  placeholder="e.g. Product Management"
+                  className="text-sm"
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="import-skill-count">Count</FieldLabel>
+                <Input
+                  id="import-skill-count"
+                  type="text"
+                  inputMode="numeric"
+                  value={count}
+                  onChange={(event) => setCount(event.target.value)}
+                  placeholder={String(DEFAULT_COUNT)}
+                  className="text-sm tabular-nums"
+                />
+              </Field>
+            </div>
+
+            <Field>
+              <FieldLabel htmlFor="import-skill-exclude">Exclude terms</FieldLabel>
+              <Textarea
+                id="import-skill-exclude"
+                value={exclude}
+                onChange={(event) => setExclude(event.target.value)}
+                placeholder="e.g. Agile, Scrum, OKR"
+                rows={1}
+                className="min-h-8 text-sm"
+              />
+            </Field>
+          </div>
+        </CopyCommand>
+      </div>
     </ImportCard>
   );
 }
