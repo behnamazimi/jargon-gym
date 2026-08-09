@@ -1,20 +1,18 @@
 /**
  * Shared review/quiz outcome rules for web + Telegram.
- * Sole writer of review_state outcomes — surfaces must not call outcome RPCs directly.
+ * Sole writer of review_state events — surfaces must not call the event RPCs directly.
  * @see docs/smart-queue.md — "Surfaces"
  *
- * incrementSeen semantics (preserve intentionally):
- * - applyTermSeen / applyTermRead / applyReviewReveal / applyKnownToggleSeen → increment
- * - applyKnownToggle (widget mark-known) mark-known → increment, mark-unknown → no increment
- * - applyMarkKnown (Telegram after delivery) → no increment
- * - applyReviewRating after reveal → no second increment when alreadyCountedSeen
- * - applyQuizAnswer never increments — the term-appear write (applyTermSeen)
- *   already counted this sighting before the answer came in
+ * Three writes, one per event shape:
+ * - recordRead — Read page/command, jargon-page card open. Pure exposure.
+ * - recordReveal — Review flashcard reveal. Marks pending_reveal, no test yet.
+ * - recordTest — Review rating or quiz answer. The only writer of pass/fail
+ *   history, scoped to whichever `activity` it's called with.
  *
- * applyTermRead vs applyReviewReveal both write outcome "read" but route to
- * disjoint counters (read_count vs review_reveal_count) — "read is read" as
- * an outcome value, but Review's reveal is tracked separately since it's the
- * leading edge of an actual test, not generic exposure.
+ * Pool flips (known/unknown) are a separate, explicit call at each call
+ * site — recordTest's only job is writing the test event. Review rating
+ * always flips; quiz answers flip per Settings → Quiz prefs
+ * (markUnknownOnFail/markKnownOnPass), same as before.
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -26,46 +24,25 @@ import {
   markTermKnownForUser,
 } from "@/lib/jargon/known-state";
 import { getUserSettings } from "@/lib/llm/settings";
-import type { ReviewOutcome } from "@/lib/smart-queue";
-import { recordReviewOutcome, recordReviewOutcomeForUser } from "@/lib/smart-queue/repository";
+import type { ReviewEvent } from "@/lib/smart-queue";
+import { recordReviewEvent, recordReviewEventForUser } from "@/lib/smart-queue/repository";
 
 type Client = SupabaseClient<Database>;
 
 export type TermPoolStatus = "known" | "unknown";
+export type AuthMode = "session" | "admin";
 
-function mapAnswerToOutcome(status: TermPoolStatus, passed: boolean): ReviewOutcome {
-  if (status === "unknown") {
-    return passed ? "solid" : "learning";
-  }
-  return passed ? "verified" : "forgot";
-}
-
-function mapRatingToOutcome(sessionStatus: TermPoolStatus, known: boolean): ReviewOutcome {
-  return mapAnswerToOutcome(sessionStatus, known);
-}
-
-type AuthMode = "session" | "admin";
-
-async function writeOutcome(
+async function writeEvent(
   client: Client,
   mode: AuthMode,
   userId: string,
   termId: string,
-  outcome: ReviewOutcome,
-  incrementSeen: boolean,
-  isReviewReveal = false,
+  event: ReviewEvent,
 ) {
   if (mode === "session") {
-    await recordReviewOutcome(client, termId, outcome, incrementSeen, isReviewReveal);
+    await recordReviewEvent(client, termId, event);
   } else {
-    await recordReviewOutcomeForUser(
-      client,
-      userId,
-      termId,
-      outcome,
-      incrementSeen,
-      isReviewReveal,
-    );
+    await recordReviewEventForUser(client, userId, termId, event);
   }
 }
 
@@ -89,16 +66,61 @@ async function flipKnown(
   }
 }
 
+/** Read page/command, `/read`, or opening a term card on the jargon page: deliberate but untested exposure. */
+export async function recordRead(
+  client: Client,
+  userId: string,
+  termId: string,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await writeEvent(client, mode, userId, termId, "read");
+}
+
+/** Review flashcard reveal: marks pending_reveal, cleared by the rating that follows. */
+export async function recordReveal(
+  client: Client,
+  userId: string,
+  termId: string,
+  mode: AuthMode = "session",
+): Promise<void> {
+  await writeEvent(client, mode, userId, termId, "reveal");
+}
+
+export type RecordTestResult = {
+  event: ReviewEvent;
+};
+
+/** Review rating or quiz answer — the only writer of pass/fail history, scoped by `activity`. */
+export async function recordTest(
+  client: Client,
+  userId: string,
+  input: {
+    termId: string;
+    activity: "review" | "quiz";
+    passed: boolean;
+    mode?: AuthMode;
+  },
+): Promise<RecordTestResult> {
+  const mode = input.mode ?? "session";
+  const event: ReviewEvent =
+    input.activity === "review"
+      ? input.passed
+        ? "review_pass"
+        : "review_fail"
+      : input.passed
+        ? "quiz_pass"
+        : "quiz_fail";
+
+  await writeEvent(client, mode, userId, input.termId, event);
+  return { event };
+}
+
 export type QuizAnswerResult = {
-  outcome: ReviewOutcome;
+  passed: boolean;
   flipped: boolean;
 };
 
-/**
- * Quiz answer: record outcome + optional known flip per quiz prefs.
- * No seen increment here — the term-appear write (applyTermSeen) already
- * counted this sighting when the question was shown, before it was answered.
- */
+/** Quiz answer: record the test + optional known flip per Settings → Quiz prefs. */
 export async function applyQuizAnswer(
   client: Client,
   userId: string,
@@ -114,8 +136,12 @@ export async function applyQuizAnswer(
   const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
   const markKnownOnPass = settings?.markKnownOnPass ?? false;
 
-  const outcome = mapAnswerToOutcome(input.status, input.passed);
-  await writeOutcome(client, mode, userId, input.termId, outcome, false);
+  await recordTest(client, userId, {
+    termId: input.termId,
+    activity: "quiz",
+    passed: input.passed,
+    mode,
+  });
 
   let flipped = false;
 
@@ -127,7 +153,7 @@ export async function applyQuizAnswer(
     flipped = true;
   }
 
-  return { outcome, flipped };
+  return { passed: input.passed, flipped };
 }
 
 /** Flashcard review rating: always flip known/unknown when rating changes state. */
@@ -138,15 +164,17 @@ export async function applyReviewRating(
     termId: string;
     known: boolean;
     sessionStatus: TermPoolStatus;
-    alreadyCountedSeen?: boolean;
     mode?: AuthMode;
   },
-): Promise<{ outcome: ReviewOutcome }> {
+): Promise<{ passed: boolean }> {
   const mode = input.mode ?? "session";
-  const incrementSeen = !input.alreadyCountedSeen;
-  const outcome = mapRatingToOutcome(input.sessionStatus, input.known);
 
-  await writeOutcome(client, mode, userId, input.termId, outcome, incrementSeen);
+  await recordTest(client, userId, {
+    termId: input.termId,
+    activity: "review",
+    passed: input.known,
+    mode,
+  });
 
   if (input.sessionStatus === "unknown" && input.known) {
     await flipKnown(client, mode, userId, input.termId, true);
@@ -154,12 +182,12 @@ export async function applyReviewRating(
     await flipKnown(client, mode, userId, input.termId, false);
   }
 
-  return { outcome };
+  return { passed: input.known };
 }
 
 /**
- * Desktop widget "Mark known" — a genuine recall self-report from that surface.
- * Mark known → solid (+increment). Mark unknown → forgot (no increment).
+ * Widget "Mark known" / Telegram "Mark known": a self-graded Review pass —
+ * you're confirming you know it, which is a judgment, not passive exposure.
  */
 export async function applyKnownToggle(
   client: Client,
@@ -169,18 +197,14 @@ export async function applyKnownToggle(
   mode: AuthMode = "session",
 ): Promise<void> {
   await flipKnown(client, mode, userId, termId, isKnown);
-  if (isKnown) {
-    await writeOutcome(client, mode, userId, termId, "solid", true);
-  } else {
-    await writeOutcome(client, mode, userId, termId, "forgot", false);
-  }
+  await recordTest(client, userId, { termId, activity: "review", passed: isKnown, mode });
 }
 
 /**
  * Jargon-page term-card toggle (known/unknown). Incidental self-report while
- * browsing, not a tested recall — Seen tier either direction (+increment).
+ * browsing, not a tested recall — pool flip only, no review_state write.
  */
-export async function applyKnownToggleSeen(
+export async function setKnownStatus(
   client: Client,
   userId: string,
   termId: string,
@@ -188,46 +212,4 @@ export async function applyKnownToggleSeen(
   mode: AuthMode = "session",
 ): Promise<void> {
   await flipKnown(client, mode, userId, termId, isKnown);
-  await writeOutcome(client, mode, userId, termId, "seen", true);
-}
-
-/** Widget "Next" CTA or a term appearing in a quiz question: incidental exposure (+increment). */
-export async function applyTermSeen(
-  client: Client,
-  userId: string,
-  termId: string,
-  mode: AuthMode = "session",
-): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "seen", true);
-}
-
-/** Read command/page (web + Telegram) or a jargon-page card open: deliberate but untested (+increment). */
-export async function applyTermRead(
-  client: Client,
-  userId: string,
-  termId: string,
-  mode: AuthMode = "session",
-): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "read", true, false);
-}
-
-/** Review reveal (web + Telegram): its own counter, disjoint from applyTermRead's. */
-export async function applyReviewReveal(
-  client: Client,
-  userId: string,
-  termId: string,
-  mode: AuthMode = "session",
-): Promise<void> {
-  await writeOutcome(client, mode, userId, termId, "read", true, true);
-}
-
-/** Telegram /read "Mark known": mark + solid outcome, no seen increment. */
-export async function applyMarkKnown(
-  client: Client,
-  userId: string,
-  termId: string,
-  mode: AuthMode = "admin",
-): Promise<void> {
-  await flipKnown(client, mode, userId, termId, true);
-  await writeOutcome(client, mode, userId, termId, "solid", false);
 }
