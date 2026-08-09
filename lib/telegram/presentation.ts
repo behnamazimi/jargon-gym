@@ -52,10 +52,10 @@ function buildTermHeader(term: TermCard): string {
 
 function buildTermDetails(term: TermCard): string {
   let details = escapeHtml((term.definition ?? "").trim());
-  details += formatPlainSection("💡", "Think of it as", term.mentalModel ?? "");
   details += formatQuotedSection("📌", "Example", term.example ?? "");
-  details += formatPlainSection("⚠️", "Not the same as", term.antiExample ?? "");
+  details += formatPlainSection("💡", "Mental model", term.mentalModel ?? "");
   details += formatPlainSection("🛠", "In practice", term.discussion ?? "");
+  details += formatPlainSection("⚠️", "Anti-example", term.antiExample ?? "");
   details += formatQuotedSection("⚡", "Debated", term.controversy ?? "");
   details += formatRelationships(term.relationships ?? []);
   return details;
