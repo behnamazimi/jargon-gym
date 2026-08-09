@@ -533,16 +533,16 @@ export function ReviewPage({ collections }: ReviewPageProps) {
 
                 {poolStats ? (
                   <div className="text-sm text-base-content/70">
-                    <span className="font-medium">{poolStats.unseen} never read</span>
+                    <span className="font-medium">{poolStats.unseen} never reviewed</span>
                     {" · "}
-                    <span className="font-medium">{poolStats.seen} read</span>
+                    <span className="font-medium">{poolStats.seen} reviewed</span>
                     {" · "}
                     <span className="font-medium">{poolStats.stale} stale</span>
                     {" · "}
                     <span className="font-medium">
                       {poolStats.seen}/{poolStats.total} covered
                     </span>
-                    {poolStats.allSeenOnce ? " · all read once" : null}
+                    {poolStats.allSeenOnce ? " · all reviewed once" : null}
                   </div>
                 ) : null}
 
