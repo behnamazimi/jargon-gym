@@ -1,13 +1,7 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import {
-  listScoredCandidates,
-  loadUserPreset,
-  type PickReason,
-  type ReviewOutcome,
-  type ReviewPreset,
-} from "@/lib/smart-queue";
+import { listScoredCandidates, type FailSource, type PickContext, type PickReason } from "@/lib/smart-queue";
 import { listStudyCollections, type TermPoolStatus } from "@/lib/study";
 
 export async function getDebugSetupData() {
@@ -16,12 +10,9 @@ export async function getDebugSetupData() {
     return { error: "Log in to view this." };
   }
 
-  const [collections, defaultPreset] = await Promise.all([
-    listStudyCollections(auth.supabase, auth.user.id),
-    loadUserPreset(auth.supabase, auth.user.id),
-  ]);
+  const collections = await listStudyCollections(auth.supabase, auth.user.id);
 
-  return { collections, defaultPreset };
+  return { collections };
 }
 
 export type DebugScoredRow = {
@@ -30,22 +21,23 @@ export type DebugScoredRow = {
   domainId: string;
   score: number;
   reasons: PickReason[];
-  seenCount: number;
   readCount: number;
-  reviewRevealCount: number;
-  recalledCount: number;
-  lastOutcome: ReviewOutcome;
-  lastSeenAt: string | null;
-  lastRecalledOutcome: ReviewOutcome | null;
-  lastRecalledAt: string | null;
-  lastReviewRevealAt: string | null;
-  failStreak: number;
+  lastReadAt: string | null;
+  reviewRecallCount: number;
+  lastReviewRecallAt: string | null;
+  reviewStreak: number;
+  quizTestCount: number;
+  lastQuizTestedAt: string | null;
+  quizStreak: number;
+  pendingReveal: boolean;
+  lastFailAt: string | null;
+  lastFailSource: FailSource | null;
 };
 
 export async function listDebugScoredTermsAction(
   domainIds: string[] | "all",
   status: TermPoolStatus,
-  preset: ReviewPreset,
+  context: PickContext,
 ): Promise<{ rows?: DebugScoredRow[]; error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
@@ -58,7 +50,7 @@ export async function listDebugScoredTermsAction(
       auth.user.id,
       { domainIds },
       status,
-      preset,
+      context,
     );
 
     if (scored.length === 0) {
@@ -83,18 +75,19 @@ export async function listDebugScoredTermsAction(
       domainId: candidate.domainId,
       score: candidate.score,
       reasons: candidate.reasons,
-      seenCount: candidate.seenCount,
       readCount: candidate.readCount,
-      reviewRevealCount: candidate.reviewRevealCount,
-      recalledCount: candidate.recalledCount,
-      lastOutcome: candidate.lastOutcome,
-      lastSeenAt: candidate.lastSeenAt ? candidate.lastSeenAt.toISOString() : null,
-      lastRecalledOutcome: candidate.lastRecalledOutcome,
-      lastRecalledAt: candidate.lastRecalledAt ? candidate.lastRecalledAt.toISOString() : null,
-      lastReviewRevealAt: candidate.lastReviewRevealAt
-        ? candidate.lastReviewRevealAt.toISOString()
+      lastReadAt: candidate.lastReadAt ? candidate.lastReadAt.toISOString() : null,
+      reviewRecallCount: candidate.reviewRecallCount,
+      lastReviewRecallAt: candidate.lastReviewRecallAt
+        ? candidate.lastReviewRecallAt.toISOString()
         : null,
-      failStreak: candidate.failStreak,
+      reviewStreak: candidate.reviewStreak,
+      quizTestCount: candidate.quizTestCount,
+      lastQuizTestedAt: candidate.lastQuizTestedAt ? candidate.lastQuizTestedAt.toISOString() : null,
+      quizStreak: candidate.quizStreak,
+      pendingReveal: candidate.pendingReveal,
+      lastFailAt: candidate.lastFailAt ? candidate.lastFailAt.toISOString() : null,
+      lastFailSource: candidate.lastFailSource,
     }));
 
     return { rows };

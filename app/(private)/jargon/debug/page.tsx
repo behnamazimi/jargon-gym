@@ -26,5 +26,5 @@ export default async function JargonDebugPage() {
     );
   }
 
-  return <DebugQueuePage collections={setup.collections} defaultPreset={setup.defaultPreset} />;
+  return <DebugQueuePage collections={setup.collections} />;
 }

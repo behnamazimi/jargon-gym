@@ -36,24 +36,17 @@ export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
           <PickReasonBadges reasons={row.reasons} mode="full" />
 
           <p className="m-0 text-xs leading-relaxed text-base-content/50">
-            seen {row.seenCount} · read {row.readCount} · review reveal {row.reviewRevealCount} ·
-            recalled {row.recalledCount} · last{" "}
-            <span className="font-medium">{row.lastOutcome}</span>
-            {row.lastOutcome === "read" && row.readCount === 0 && row.reviewRevealCount === 0 ? (
-              <span className="italic"> (legacy, uncounted)</span>
-            ) : null}{" "}
-            · {formatRelative(row.lastSeenAt)}
-            {row.lastReviewRevealAt ? (
-              <> · last reveal {formatRelative(row.lastReviewRevealAt)}</>
-            ) : null}
-            {row.lastRecalledOutcome ? (
+            read {row.readCount} ({formatRelative(row.lastReadAt)}) · review recall{" "}
+            {row.reviewRecallCount} (streak {row.reviewStreak}, {formatRelative(row.lastReviewRecallAt)})
+            · quiz {row.quizTestCount} (streak {row.quizStreak},{" "}
+            {formatRelative(row.lastQuizTestedAt)})
+            {row.pendingReveal ? " · pending reveal" : ""}
+            {row.lastFailAt ? (
               <>
                 {" "}
-                · recalled <span className="font-medium">{row.lastRecalledOutcome}</span> ·{" "}
-                {formatRelative(row.lastRecalledAt)}
+                · last fail: {row.lastFailSource} ({formatRelative(row.lastFailAt)})
               </>
             ) : null}
-            {row.failStreak > 0 ? ` · fail streak ${row.failStreak}` : ""}
           </p>
         </li>
       ))}

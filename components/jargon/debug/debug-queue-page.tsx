@@ -26,36 +26,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { ReviewPreset } from "@/lib/smart-queue";
+import type { PickContext } from "@/lib/smart-queue";
 import type { StudyCollection, TermPoolStatus } from "@/lib/study";
 
 type DebugQueuePageProps = {
   collections: StudyCollection[];
-  defaultPreset: ReviewPreset;
 };
 
-const PRESET_OPTIONS: Array<{ value: ReviewPreset; title: string; description: string }> = [
+const CONTEXT_OPTIONS: Array<{ value: PickContext; title: string; description: string }> = [
   {
-    value: "balanced",
-    title: "Balanced",
-    description: "Default mix of new, struggling, and stale terms.",
+    value: "read",
+    title: "Read",
+    description: "Read page/command priority — no pass/fail concept, just read exposure.",
   },
   {
-    value: "learn_new",
-    title: "Learn new first",
-    description: "Prioritize never-read terms and recently added content.",
+    value: "review",
+    title: "Review",
+    description: "Flashcard review priority — scored against review_streak.",
   },
   {
-    value: "drill_weak",
-    title: "Drill weak spots",
-    description: "Focus on terms you're struggling with or forgot.",
+    value: "quiz",
+    title: "Quiz",
+    description: "Quiz priority — scored against quiz_streak, independent of Review.",
   },
 ];
 
-export function DebugQueuePage({ collections, defaultPreset }: DebugQueuePageProps) {
+export function DebugQueuePage({ collections }: DebugQueuePageProps) {
   const [status, setStatus] = useState<TermPoolStatus>("unknown");
   const [selectedCollectionId, setSelectedCollectionId] = useState("all");
-  const [preset, setPreset] = useState<ReviewPreset>(defaultPreset);
+  const [context, setContext] = useState<PickContext>("review");
   const [rows, setRows] = useState<DebugScoredRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -71,7 +70,7 @@ export function DebugQueuePage({ collections, defaultPreset }: DebugQueuePagePro
     let cancelled = false;
     setLoading(true);
 
-    void listDebugScoredTermsAction(domainIds, status, preset).then((result) => {
+    void listDebugScoredTermsAction(domainIds, status, context).then((result) => {
       if (cancelled) return;
       setLoading(false);
 
@@ -87,7 +86,7 @@ export function DebugQueuePage({ collections, defaultPreset }: DebugQueuePagePro
     return () => {
       cancelled = true;
     };
-  }, [domainIds, status, preset, collections.length]);
+  }, [domainIds, status, context, collections.length]);
 
   return (
     <PageShell innerClassName="space-y-8">
@@ -115,7 +114,7 @@ export function DebugQueuePage({ collections, defaultPreset }: DebugQueuePagePro
             <QuizPanelHeader
               icon={Bug}
               title="Filters"
-              description="Nothing here saves anywhere — switch presets freely to compare rankings."
+              description="Nothing here saves anywhere — switch context freely to compare rankings."
             />
             <QuizPanelBody>
               <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
@@ -161,15 +160,15 @@ export function DebugQueuePage({ collections, defaultPreset }: DebugQueuePagePro
               </Field>
 
               <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-                <legend className="mb-2 text-sm leading-none font-medium">Preset</legend>
+                <legend className="mb-2 text-sm leading-none font-medium">Context</legend>
                 <div className="flex flex-col gap-3">
-                  {PRESET_OPTIONS.map((option) => (
+                  {CONTEXT_OPTIONS.map((option) => (
                     <QuizSetupOption
                       key={option.value}
-                      name="debug-preset"
+                      name="debug-context"
                       value={option.value}
-                      checked={preset === option.value}
-                      onChange={() => setPreset(option.value)}
+                      checked={context === option.value}
+                      onChange={() => setContext(option.value)}
                       title={option.title}
                       description={option.description}
                     />
