@@ -4,9 +4,9 @@ import { Eye } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { ReviewTerm } from "@/lib/review/types";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
+import { TermBody } from "@/components/jargon/term-body";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { ReviewTermContent } from "./review-term-content";
 import { useReviewSwipe } from "./use-review-swipe";
 
 type ReviewCardProps = {
@@ -127,7 +127,7 @@ export function ReviewCard({
               className="flex-1 overflow-y-auto px-4 py-4"
               onClick={(event) => event.stopPropagation()}
             >
-              <ReviewTermContent key={term.id} term={term} />
+              <TermBody key={term.id} term={term} />
             </div>
           </div>
         </div>

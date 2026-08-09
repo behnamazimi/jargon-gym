@@ -1,14 +1,14 @@
 "use client";
 
-import { ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { TermDetailSection } from "./term-detail-section";
 import { TermActionsMenu } from "./term-actions-menu";
+import { TermBody } from "./term-body";
 
 type TermCardProps = {
   term: Term;
@@ -32,7 +32,6 @@ export function TermCard({
   onToggleKnown,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(term.term + " definition")}`;
 
   useEffect(() => {
     if (!open) return;
@@ -101,70 +100,7 @@ export function TermCard({
             ) : null}
           </div>
           <CollapsibleContent>
-            <div className="space-y-4 px-4 pt-4 pb-5">
-              <p className="text-base leading-relaxed font-medium">{term.definition}</p>
-
-              {term.example ? (
-                <TermDetailSection label="Example" variant="callout">
-                  {term.example}
-                </TermDetailSection>
-              ) : null}
-
-              {term.mentalModel ? (
-                <TermDetailSection label="Mental model" variant="callout">
-                  {term.mentalModel}
-                </TermDetailSection>
-              ) : null}
-
-              {term.discussion ? (
-                <TermDetailSection label="In practice">{term.discussion}</TermDetailSection>
-              ) : null}
-
-              {term.antiExample ? (
-                <TermDetailSection label="Anti-example" variant="debated">
-                  {term.antiExample}
-                </TermDetailSection>
-              ) : null}
-
-              {term.controversy ? (
-                <TermDetailSection label="Debated" variant="debated">
-                  {term.controversy}
-                </TermDetailSection>
-              ) : null}
-
-              {term.relationships.length > 0 ? (
-                <ul className="space-y-2">
-                  {term.relationships.map((relationship) => (
-                    <li
-                      key={`${relationship.id}-${relationship.direction}`}
-                      className="rounded-lg border border-dashed border-base-300/80 bg-base-200/30 px-3 py-2.5"
-                    >
-                      <p className="text-sm text-base-content/60">
-                        <span className="italic">{relationship.relationshipType}</span>{" "}
-                        <span className="font-semibold text-primary">
-                          {relationship.relatedTermName}
-                        </span>
-                      </p>
-                      {relationship.description ? (
-                        <p className="mt-1 text-xs leading-relaxed text-base-content/80">
-                          {relationship.description}
-                        </p>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-
-              <a
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
-                href={searchUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="size-3.5" aria-hidden strokeWidth={1.5} />
-                Search &ldquo;{term.term}&rdquo; on Google
-              </a>
-            </div>
+            <TermBody term={term} className="px-4 pt-4 pb-5" />
           </CollapsibleContent>
         </article>
       </Collapsible>
