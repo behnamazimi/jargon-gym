@@ -202,6 +202,14 @@ const rotateTerm = (termId, widgetDir, dispatch) => {
     .catch((err) => dispatch({ error: err }));
 };
 
+/** Open the current term in the app, then advance the widget (same as Next). */
+const openAppAndRotate = (appBaseUrl, current, widgetDir, dispatch) => {
+  openApp(appBaseUrl, current);
+  if (current?.id) {
+    rotateTerm(current.id, widgetDir, dispatch);
+  }
+};
+
 const RefreshButton = ({ dispatch, widgetDir = null, title = "Refresh terms" }) => (
   <button
     className="refresh-btn"
@@ -289,10 +297,16 @@ export const render = ({ output, error }, dispatch) => {
           </span>
         }
       />
-      <div className="term" onClick={() => openApp(appBaseUrl, current)}>
+      <div
+        className="term"
+        onClick={() => openAppAndRotate(appBaseUrl, current, widgetDir, dispatch)}
+      >
         {current.term}
       </div>
-      <div className="def" onClick={() => openApp(appBaseUrl, current)}>
+      <div
+        className="def"
+        onClick={() => openAppAndRotate(appBaseUrl, current, widgetDir, dispatch)}
+      >
         {current.definition}
       </div>
       <div className="actions">
@@ -313,7 +327,10 @@ export const render = ({ output, error }, dispatch) => {
         </button>
       </div>
       <div className="hint-row">
-        <span className="hint" onClick={() => openApp(appBaseUrl, current)}>
+        <span
+          className="hint"
+          onClick={() => openAppAndRotate(appBaseUrl, current, widgetDir, dispatch)}
+        >
           Click term to open in the app →
         </span>
       </div>
