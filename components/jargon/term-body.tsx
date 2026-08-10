@@ -45,24 +45,37 @@ export function TermBody({ term, className, showSearchLink = true }: TermBodyPro
       ) : null}
 
       {term.relationships.length > 0 ? (
-        <ul className="space-y-2">
-          {term.relationships.map((relationship) => (
-            <li
-              key={`${relationship.id}-${relationship.direction}`}
-              className="rounded-lg border border-dashed border-base-300/80 bg-base-200/30 px-3 py-2.5"
-            >
-              <p className="text-sm text-base-content/60">
-                <span className="italic">{relationship.relationshipType}</span>{" "}
-                <span className="font-semibold text-primary">{relationship.relatedTermName}</span>
-              </p>
-              {relationship.description ? (
-                <p className="mt-1 text-xs leading-relaxed text-base-content/80">
-                  {relationship.description}
-                </p>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <section aria-label="Related terms">
+          <p className="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
+            Related
+          </p>
+          <ul className="mt-1.5 list-none space-y-2.5">
+            {term.relationships.map((relationship) => {
+              const description = relationship.description?.trim() ?? "";
+              return (
+                <li
+                  key={`${relationship.id}-${relationship.direction}`}
+                  className="flex gap-2 text-sm leading-snug"
+                >
+                  <span className="shrink-0 text-base-content/40 select-none" aria-hidden>
+                    -
+                  </span>
+                  <div className="min-w-0">
+                    <p>
+                      <span>{relationship.relationshipType}</span>{" "}
+                      <span className="font-semibold">{relationship.relatedTermName}</span>
+                    </p>
+                    {description ? (
+                      <p className="mt-1 max-w-prose leading-relaxed text-base-content/60">
+                        {description}
+                      </p>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       ) : null}
 
       {showSearchLink ? (
