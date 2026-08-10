@@ -21,6 +21,8 @@ const REASON_BADGE_CLASS: Record<PickReason, string> = {
   abandoned_review: "badge-soft badge-info",
   stale: "badge-soft badge-neutral",
   mastered_cooldown: "badge-ghost",
+  recent_read_cooldown: "badge-ghost",
+  recent_fail_cooldown: "badge-ghost",
   cross_fail: "badge-soft badge-warning",
   steady: "badge-ghost",
 };

@@ -5,7 +5,13 @@
  *  own, Review and Quiz each read their own independent streak.
  */
 
-import { ENGAGED_MIN_COUNT, FAIL_STREAK_CAP, SOLID_COOLDOWN_HOURS } from "./weights";
+import { isSameLocalDay } from "./local-day";
+import {
+  ENGAGED_MIN_COUNT,
+  FAIL_STREAK_CAP,
+  QUEUE_TIMEZONE,
+  SOLID_COOLDOWN_HOURS,
+} from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
 const NEW_TERM_THRESHOLD_HOURS = 72;
@@ -79,6 +85,28 @@ function evaluateCandidate(
     }
   }
 
+  // Same-day Read → Review/Quiz sit-out: you just saw the definition.
+  if (
+    context !== "read" &&
+    candidate.lastReadAt &&
+    isSameLocalDay(candidate.lastReadAt, now, QUEUE_TIMEZONE)
+  ) {
+    score -= weights.sameDayCooldownPenalty;
+    reasons.push("recent_read_cooldown");
+  }
+
+  // Same-day fail → Read sit-out (Review and Quiz fails share this rule).
+  // Replaces the old Read cross_fail boost — don't re-expose a miss via Read
+  // until tomorrow. Cleared when last_fail_* is cleared (pass or Read).
+  if (
+    context === "read" &&
+    candidate.lastFailAt &&
+    isSameLocalDay(candidate.lastFailAt, now, QUEUE_TIMEZONE)
+  ) {
+    score -= weights.sameDayCooldownPenalty;
+    reasons.push("recent_fail_cooldown");
+  }
+
   // Never engaged in this context.
   if (fields.ownCount === 0) {
     score += weights.unseenBoost;
@@ -107,31 +135,24 @@ function evaluateCandidate(
     reasons.push("abandoned_review");
   }
 
-  // Cross-activity fail propagation: only fails cross over (a fail can't
-  // happen by lucky guessing, a pass can — see docs/smart-queue.md). Read
-  // gets nudged by a fail from either activity; a test context gets nudged
-  // only when the OTHER activity most recently failed (its own streak
-  // already covers a fail from itself). Scaled by the source activity's own
-  // streak magnitude, same as struggling, so a term missed 4 times running
-  // pushes Read much harder than one slipped on once — guard against
-  // "repeat_fail" already having been pushed by the struggling block above.
-  if (candidate.lastFailAt && candidate.lastFailSource) {
-    const appliesHere = context === "read" || candidate.lastFailSource === fields.otherActivity;
+  // Cross-activity fail: Review↔Quiz only. A fail can't happen by lucky
+  // guessing, so the OTHER test activity gets nudged. Read no longer gets a
+  // fail boost — it uses recent_fail_cooldown instead. Scaled by the source
+  // activity's own streak magnitude, same as struggling.
+  if (
+    context !== "read" &&
+    candidate.lastFailAt &&
+    candidate.lastFailSource &&
+    candidate.lastFailSource === fields.otherActivity
+  ) {
+    const sourceStreak = streakForActivity(candidate, candidate.lastFailSource);
+    const repeats = Math.min(-sourceStreak, FAIL_STREAK_CAP);
 
-    if (appliesHere) {
-      const sourceStreak = streakForActivity(candidate, candidate.lastFailSource);
-      const repeats = Math.min(-sourceStreak, FAIL_STREAK_CAP);
-
-      if (repeats > 0) {
-        const perRepeat =
-          context === "read"
-            ? weights.crossFailReadBoostPerRepeat
-            : weights.crossFailOtherTestBoostPerRepeat;
-        score += repeats * perRepeat;
-        reasons.push("cross_fail");
-        if (repeats >= 2 && !reasons.includes("repeat_fail")) {
-          reasons.push("repeat_fail");
-        }
+    if (repeats > 0) {
+      score += repeats * weights.crossFailOtherTestBoostPerRepeat;
+      reasons.push("cross_fail");
+      if (repeats >= 2 && !reasons.includes("repeat_fail")) {
+        reasons.push("repeat_fail");
       }
     }
   }

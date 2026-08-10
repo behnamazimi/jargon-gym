@@ -11,9 +11,9 @@ export type ReviewEvent =
   | "quiz_fail";
 
 /** Which activity's history a pick is scored against. Read has no pass/fail
- *  concept of its own — it just ranks by read exposure + cross-activity fail
- *  propagation — while Review and Quiz each read their own independent
- *  streak/count/timestamp fields. */
+ *  concept of its own — it ranks by read exposure + same-day fail cooldown —
+ *  while Review and Quiz each read their own independent streak/count/
+ *  timestamp fields. */
 export type PickContext = "read" | "review" | "quiz";
 
 export type FailSource = "review" | "quiz";
@@ -27,6 +27,8 @@ export type PickReason =
   | "abandoned_review"
   | "stale"
   | "mastered_cooldown"
+  | "recent_read_cooldown"
+  | "recent_fail_cooldown"
   | "cross_fail"
   | "steady";
 
@@ -58,14 +60,14 @@ export type ScoreWeights = {
   /** Per point of |streak| when struggling (streak < 0), capped at FAIL_STREAK_CAP. */
   strugglingBoostPerStreak: number;
   masteredCooldownPenalty: number;
+  /** Same-day sit-outs: Read→Review/Quiz via last_read_at; fail→Read via last_fail_at. */
+  sameDayCooldownPenalty: number;
   /** Read count >= ENGAGED_MIN_COUNT but this context's own test count is 0. */
   engagedButUntestedBoost: number;
   abandonedReviewBoost: number;
   newTermBoost: number;
   stalenessBoostPerHour: number;
   stalenessCapHours: number;
-  /** Per point of |source activity's streak| when Read is boosted by a fail elsewhere, capped at FAIL_STREAK_CAP. */
-  crossFailReadBoostPerRepeat: number;
   /** Per point of |source activity's streak| when the OTHER test context is boosted, capped at FAIL_STREAK_CAP. */
   crossFailOtherTestBoostPerRepeat: number;
 };

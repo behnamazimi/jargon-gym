@@ -17,15 +17,18 @@ export const ENGAGED_MIN_COUNT = 3;
 /** Hours after a pass during which a context heavily deprioritizes the term. */
 export const SOLID_COOLDOWN_HOURS = 72;
 
+/** IANA timezone for same-day cooldowns (calendar day, not a fixed hour window). */
+export const QUEUE_TIMEZONE = "Europe/Amsterdam";
+
 export const WEIGHTS: ScoreWeights = {
   unseenBoost: 100,
   strugglingBoostPerStreak: 40,
   masteredCooldownPenalty: 120,
+  sameDayCooldownPenalty: 120,
   engagedButUntestedBoost: 30,
   abandonedReviewBoost: 45,
   newTermBoost: 30,
   stalenessBoostPerHour: 0.5,
   stalenessCapHours: 168, // 7 days
-  crossFailReadBoostPerRepeat: 20,
   crossFailOtherTestBoostPerRepeat: 25,
 };

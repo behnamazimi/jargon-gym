@@ -8,7 +8,7 @@
 export type { ReviewEvent, PickContext, PickReason, PickMeta, FailSource } from "./types";
 
 export { formatPickReason } from "./reasons";
-export { SOLID_COOLDOWN_HOURS, ENGAGED_MIN_COUNT } from "./weights";
+export { SOLID_COOLDOWN_HOURS, ENGAGED_MIN_COUNT, QUEUE_TIMEZONE } from "./weights";
 
 export {
   pickReviewTerms,

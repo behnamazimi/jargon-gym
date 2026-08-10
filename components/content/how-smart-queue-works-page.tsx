@@ -26,7 +26,7 @@ const ANY_ACTIVITY = [
   },
   {
     title: "Missed elsewhere recently",
-    body: "Failing a quiz nudges Read and Review; failing Review nudges Read and Quiz. A miss is trustworthy evidence you don't know it wherever it showed up, but acing one doesn't quiet the others, quizzes are guessable, so a pass there isn't proof the way a miss is.",
+    body: "Failing a quiz nudges Review; failing Review nudges Quiz. A miss is trustworthy evidence you don't know it in the other test, but acing one doesn't quiet the others — quizzes are guessable, so a pass there isn't proof the way a miss is. Read sits a same-day miss out instead of boosting it.",
   },
   {
     title: "Recently added",
@@ -61,6 +61,14 @@ const PRIORITY_LOWERS = [
     title: "Recently mastered",
     body: `Passed recently in that same activity, sits out for roughly ${SOLID_COOLDOWN_DAYS} days while the queue works on other terms. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz. Review and Quiz only, Read has nothing to master.`,
   },
+  {
+    title: "Read today — try tomorrow",
+    body: "You read the term earlier today (any surface that counts as a read). Review and Quiz sit it out until tomorrow so you aren't tested on a definition you just saw.",
+  },
+  {
+    title: "Missed today — try tomorrow",
+    body: "You missed it in Review or Quiz earlier today. Read sits it out until tomorrow so you don't reopen the definition right after a miss. Review and Quiz can still pick it (struggling).",
+  },
 ] as const;
 
 const SURFACES = [
@@ -74,7 +82,7 @@ const SURFACES = [
   },
   {
     title: "Web quiz",
-    body: "Multiple-choice against its own Quiz ranking, not Review's. Setup shows a preview; questions show badges. Missing still nudges the other activities; a quiz streak only cools future quizzes.",
+    body: "Multiple-choice against its own Quiz ranking, not Review's. Setup shows a preview; questions show badges. A miss sits Read out until tomorrow (same as Review) and nudges Review; a quiz streak only cools future quizzes.",
   },
   {
     title: "Web collection",
@@ -157,7 +165,8 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           <p className="m-0">
             Treating Review and Quiz as one signal let a lucky guess cool down a term that had never
             actually been recalled unprompted. Now each activity ranks on its own record. Missing in
-            one still nudges the others; acing one only cools that one down.
+            one still nudges the other test; a same-day miss sits Read out until tomorrow. Acing one
+            only cools that one down.
           </p>
         </ContentPageSection>
 
@@ -182,14 +191,15 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           <p className="m-0 font-medium text-base-content">Review only</p>
           <ContentPageTitledBulletList items={REVIEW_ONLY} />
 
-          <p className="m-0 text-base-content/70">One signal lowers priority instead:</p>
+          <p className="m-0 text-base-content/70">These signals lower priority instead:</p>
           <ContentPageTitledBulletList items={PRIORITY_LOWERS} />
 
           <p className="m-0 text-base-content/70">
-            That cooldown is the only scheduled behavior. Nothing else gets a future review date.
-            Once every term in a pool has been engaged in that activity at least once, the
-            never-engaged signal stops applying there. After that, neglected and weak terms rise, a
-            gentle cycle with no reset button.
+            The mastered cooldown (~{SOLID_COOLDOWN_DAYS} days after a pass) and the same-day
+            sit-outs (try tomorrow) are the only time-based quieting. Nothing else gets a future
+            review date. Once every term in a pool has been engaged in that activity at least once,
+            the never-engaged signal stops applying there. After that, neglected and weak terms
+            rise, a gentle cycle with no reset button.
           </p>
         </ContentPageSection>
 
@@ -212,7 +222,10 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             items={[
               <>Not Anki, no fixed schedule, intervals, or &ldquo;cards due today&rdquo;</>,
               <>Not a notification system, I study when I want</>,
-              <>Not random, every pick comes from my history in that pool and activity</>,
+              <>
+                Not pure random, ranking comes from history; equal scores are shuffled across
+                collections
+              </>,
             ]}
           />
         </ContentPageSection>

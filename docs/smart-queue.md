@@ -48,13 +48,17 @@ mastered-cooldown penalty and quiet a term that had never actually been
 recalled unprompted. Splitting them means each activity's ranking reflects
 only its own kind of evidence.
 
-**Fails still cross over, passes don't (directional propagation).** A miss
-can't happen by lucky guessing — passing can. So a fail in either activity
-is trustworthy enough to bump the _other_ two: failing a quiz nudges Read
-and Review; failing Review nudges Read and Quiz. Passing never nudges
-anything outside its own activity. This is tracked with two fields on
-`review_state`: `last_fail_at` and `last_fail_source` (`'review'` |
-`'quiz'`), cleared the moment the term is next Read or passes any test.
+**Fails still cross between Review and Quiz; Read sits a miss out until
+tomorrow.** A miss can't happen by lucky guessing — passing can — so a fail
+in Review nudges Quiz and a fail in Quiz nudges Review. Read does **not**
+get a fail boost: a same-day miss (`last_fail_at` still today in
+`QUEUE_TIMEZONE`) applies a large sit-out penalty instead, so you don't
+re-open the definition right after missing it. Symmetrically, a same-day
+Read sits the term out of Review and Quiz until tomorrow — you just saw the
+definition. Passing never nudges anything outside its own activity. Fail
+flags live on `review_state` as `last_fail_at` and `last_fail_source`
+(`'review'` | `'quiz'`), cleared the moment the term is next Read or
+passes any test (which also lifts the fail→Read sit-out).
 
 There is no "Seen" tier anymore. Widget rotation, a quiz question appearing
 before it's answered, and the jargon-page known/unknown toggle don't write
@@ -147,19 +151,23 @@ Each candidate gets a score from additive signals and penalties, scoped to
 the pick's `PickContext`. Multiple signals can fire on the same term; all
 applicable reasons are returned for UI badges.
 
-| Signal                   | Condition                                                                                      | Effect                                                                                                                                                                                                                                                                                                                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Mastered cooldown**    | This context's own streak > 0 and its last-activity timestamp is within `SOLID_COOLDOWN_HOURS` | Large penalty. Independent per context — a Quiz pass never cools down Review.                                                                                                                                                                                                                                                                                                       |
-| **Never engaged**        | This context's own count is 0                                                                  | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0.                                                                                                                                                                                                                                                                                        |
-| **Struggling**           | This context's own streak < 0                                                                  | Boost scaled by `min(                                                                                                                                                                                                                                                                                                                                                               | streak | , FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula. |
-| **Engaged but untested** | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                       | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                                                                                                                                                                            |
-| **Abandoned review**     | `pending_reveal === true`                                                                      | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                                                                                                                                                      |
-| **Cross-activity fail**  | `last_fail_at` is set                                                                          | In `read` context: always boosts (either source). In `review`/`quiz` context: boosts only if `last_fail_source` is the _other_ activity — a term's own activity already reflects its own fail via the struggling signal. Scaled by `min(\|source activity's streak\|, FAIL_STREAK_CAP)`, same as struggling — a term missed 4 times running pushes harder than one slipped on once. |
-| **New term**             | Created within the last 72 hours                                                               | Moderate boost, all contexts.                                                                                                                                                                                                                                                                                                                                                       |
-| **Staleness**            | Time since this context's own last-activity timestamp, only when its own count > 0             | Rises linearly, capped at 7 days. Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                                                                                                                                                                                          |
+| Signal                    | Condition                                                                                      | Effect                                                                                                                                                                                                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mastered cooldown**     | This context's own streak > 0 and its last-activity timestamp is within `SOLID_COOLDOWN_HOURS` | Large penalty. Independent per context — a Quiz pass never cools down Review.                                                                                                                                                                                |
+| **Same-day Read sit-out** | `review`/`quiz` only: `last_read_at` is today in `QUEUE_TIMEZONE`                              | Large penalty (`sameDayCooldownPenalty`). You just saw the definition — try again tomorrow. Dominates struggling/unseen for that day.                                                                                                                        |
+| **Same-day fail sit-out** | `read` only: `last_fail_at` is today in `QUEUE_TIMEZONE`                                       | Large penalty (`sameDayCooldownPenalty`). Review and Quiz misses share this rule. Cleared when `last_fail_*` clears.                                                                                                                                         |
+| **Never engaged**         | This context's own count is 0                                                                  | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0.                                                                                                                                                                 |
+| **Struggling**            | This context's own streak < 0                                                                  | Boost scaled by `min(\|streak\|, FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula.                                                                              |
+| **Engaged but untested**  | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                       | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                                                     |
+| **Abandoned review**      | `pending_reveal === true`                                                                      | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                               |
+| **Cross-activity fail**   | `last_fail_at` is set and `last_fail_source` is the _other_ test activity                      | `review`/`quiz` only. Boosts when the other activity most recently failed — a term's own activity already reflects its own fail via struggling. Scaled by `min(\|source streak\|, FAIL_STREAK_CAP)`. Read uses the same-day fail sit-out instead of a boost. |
+| **New term**              | Created within the last 72 hours                                                               | Moderate boost, all contexts.                                                                                                                                                                                                                                |
+| **Staleness**             | Time since this context's own last-activity timestamp, only when its own count > 0             | Rises linearly, capped at 7 days. Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                                                                   |
 
-Same-score candidates keep candidate-fetch order (stable score-desc sort)
-so debug and live picks agree on the next term.
+Same-score candidates are shuffled freshly each pick (Fisher–Yates within
+each equal-score run after score-desc sort) so ties mix across collections
+instead of keeping Postgres fetch order. Debug and live picks can disagree
+on tie order.
 
 Implementation: [`lib/smart-queue/score.ts`](../lib/smart-queue/score.ts) →
 [`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts).
@@ -178,19 +186,20 @@ UI for these:
 | `unseenBoost`                      | 100     | Never-engaged boost                                                                |
 | `strugglingBoostPerStreak`         | 40      | Per point of `\|streak\|` when struggling, capped at `FAIL_STREAK_CAP`             |
 | `masteredCooldownPenalty`          | 120     | Mastered-cooldown penalty                                                          |
+| `sameDayCooldownPenalty`           | 120     | Same-day Read→Review/Quiz and fail→Read sit-outs                                   |
 | `engagedButUntestedBoost`          | 30      | Read several times, never tested (this activity)                                   |
 | `abandonedReviewBoost`             | 45      | Left mid-review                                                                    |
 | `newTermBoost`                     | 30      | Recently added                                                                     |
 | `stalenessBoostPerHour`            | 0.5     | Per hour since last tested, this activity                                          |
 | `stalenessCapHours`                | 168     | Staleness cap (7 days)                                                             |
-| `crossFailReadBoostPerRepeat`      | 20      | Per repeat, Read-context boost when either activity most recently failed           |
 | `crossFailOtherTestBoostPerRepeat` | 25      | Per repeat, test-context boost when the _other_ test activity most recently failed |
 
-| Constant               | Default | Purpose                                                       |
-| ---------------------- | ------- | ------------------------------------------------------------- |
-| `SOLID_COOLDOWN_HOURS` | 72      | How long a recent pass stays deprioritized, per activity      |
-| `ENGAGED_MIN_COUNT`    | 3       | Minimum reads before `engaged_untested` applies               |
-| `FAIL_STREAK_CAP`      | 5       | Maximum consecutive fails counted toward the struggling boost |
+| Constant               | Default            | Purpose                                                       |
+| ---------------------- | ------------------ | ------------------------------------------------------------- |
+| `SOLID_COOLDOWN_HOURS` | 72                 | How long a recent pass stays deprioritized, per activity      |
+| `QUEUE_TIMEZONE`       | `Europe/Amsterdam` | Calendar day for same-day sit-outs (edit in code if you move) |
+| `ENGAGED_MIN_COUNT`    | 3                  | Minimum reads before `engaged_untested` applies               |
+| `FAIL_STREAK_CAP`      | 5                  | Maximum consecutive fails counted toward the struggling boost |
 
 Staleness and "stale" reason labels use a 24-hour threshold. New-term boost
 uses a 72-hour creation window.
@@ -200,18 +209,20 @@ uses a 72-hour creation window.
 Each pick includes a `reasons` list — which signals fired — for UI badges
 and queue previews.
 
-| Reason              | When it fires                                                                                                    | UI label (`read` / `review` / `quiz`)                            |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `unseen`            | This context's own count is 0                                                                                    | Never read / Never reviewed / Never quizzed                      |
-| `new`               | Term created within ~72h                                                                                         | Recently added                                                   |
-| `struggling`        | This context's own streak < 0                                                                                    | Struggling                                                       |
-| `repeat_fail`       | Struggling and `\|streak\| >= 2`                                                                                 | Repeatedly missed                                                |
-| `engaged_untested`  | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)                     | Read 3+ times, not tested                                        |
-| `abandoned_review`  | `pending_reveal === true` (`review` only)                                                                        | Left mid-review                                                  |
-| `stale`             | This context's own count > 0 and not tested in 24h+                                                              | Not read recently / Not reviewed recently / Not quizzed recently |
-| `mastered_cooldown` | This context's own streak > 0, within cooldown window                                                            | Recently mastered                                                |
-| `cross_fail`        | `last_fail_at` set and (read context, or `last_fail_source` is the other activity)                               | Missed elsewhere recently                                        |
-| `steady`            | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case) | Recently read / Recently reviewed / Recently quizzed             |
+| Reason                 | When it fires                                                                                                    | UI label (`read` / `review` / `quiz`)                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `unseen`               | This context's own count is 0                                                                                    | Never read / Never reviewed / Never quizzed                      |
+| `new`                  | Term created within ~72h                                                                                         | Recently added                                                   |
+| `struggling`           | This context's own streak < 0                                                                                    | Struggling                                                       |
+| `repeat_fail`          | Struggling and `\|streak\| >= 2`                                                                                 | Repeatedly missed                                                |
+| `engaged_untested`     | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)                     | Read 3+ times, not tested                                        |
+| `abandoned_review`     | `pending_reveal === true` (`review` only)                                                                        | Left mid-review                                                  |
+| `stale`                | This context's own count > 0 and not tested in 24h+                                                              | Not read recently / Not reviewed recently / Not quizzed recently |
+| `mastered_cooldown`    | This context's own streak > 0, within cooldown window                                                            | Recently mastered                                                |
+| `recent_read_cooldown` | `review`/`quiz`: `last_read_at` is today in `QUEUE_TIMEZONE`                                                     | Read today — try tomorrow                                        |
+| `recent_fail_cooldown` | `read`: `last_fail_at` is today in `QUEUE_TIMEZONE`                                                              | Missed today — try tomorrow                                      |
+| `cross_fail`           | `review`/`quiz`: `last_fail_at` set and `last_fail_source` is the other activity                                 | Missed elsewhere recently                                        |
+| `steady`               | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case) | Recently read / Recently reviewed / Recently quizzed             |
 
 `unseen`, `stale`, and `steady` share one label per activity —
 `formatPickReason(reason, context)` in
@@ -306,6 +317,8 @@ result, rather than needing a separate "reset to 0" step.
 - A question's term appearing on screen writes nothing now — the old
   Seen-tier write for "question shown" was dropped along with the Seen
   tier. Answering it → `quiz_pass`/`quiz_fail`.
+- A quiz miss sits Read out until tomorrow (same rule as a Review miss) and
+  nudges Review via cross-fail; it does not boost Read.
 - Known flips follow Settings → Quiz prefs (`markUnknownOnFail`,
   `markKnownOnPass`).
 
@@ -407,7 +420,8 @@ scheduled future reviews.
 
 - Not Anki — no fixed schedule, intervals, or "cards due today"
 - Not a notification system — study when you want
-- Not random — every pick comes from your history in that pool and activity
+- Not random overall — ranking comes from history; equal scores are shuffled
+  across collections each pick
 
 ## Next steps
 
