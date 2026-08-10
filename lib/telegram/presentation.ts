@@ -1,5 +1,6 @@
 import type { CollectionStats } from "@/lib/jargon/collection-stats";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
+import { formatPickDebugLine, type PickMeta } from "@/lib/smart-queue";
 import type { InlineKeyboardMarkup } from "./actions";
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
@@ -70,21 +71,28 @@ function appendSearchLink(message: string, termName: string): string {
   return `${message}\n\n<a href="${searchUrl}">Search "${escapeHtml(termName)}" on Google</a>`;
 }
 
+function formatPickDebugFooter(pickMeta: PickMeta): string {
+  return `\n\n<i>${escapeHtml(formatPickDebugLine(pickMeta.score, pickMeta.reasons, "read"))}</i>`;
+}
+
 function trimMessageBody(body: string, reservedLength: number): string {
   const maxBodyLength = TELEGRAM_MESSAGE_LIMIT - reservedLength;
   if (body.length <= maxBodyLength) return body;
   return `${body.slice(0, Math.max(0, maxBodyLength - 1)).trimEnd()}…`;
 }
 
-export function formatTermMessage(term: TermCard): string {
+export function formatTermMessage(term: TermCard, pickMeta?: PickMeta): string {
   const body = buildTermMessageBody(term);
   const searchLink = appendSearchLink("", term.term);
-  const reservedLength = searchLink.length;
+  const debugFooter = pickMeta ? formatPickDebugFooter(pickMeta) : "";
+  const reservedLength = searchLink.length + debugFooter.length;
 
-  if (body.length + reservedLength <= TELEGRAM_MESSAGE_LIMIT) {
-    return appendSearchLink(body, term.term);
-  }
-  return appendSearchLink(trimMessageBody(body, reservedLength), term.term);
+  const trimmed =
+    body.length + reservedLength <= TELEGRAM_MESSAGE_LIMIT
+      ? body
+      : trimMessageBody(body, reservedLength);
+
+  return `${appendSearchLink(trimmed, term.term)}${debugFooter}`;
 }
 
 export function formatMaskedTermMessage(term: TermCard): string {

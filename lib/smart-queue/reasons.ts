@@ -37,3 +37,15 @@ export function formatPickReason(reason: PickReason, context: PickContext): stri
       return STATIC_LABELS[reason] ?? reason;
   }
 }
+
+/** Compact one-liner for debug footers (Read page / Telegram). */
+export function formatPickDebugLine(
+  score: number,
+  reasons: PickReason[],
+  context: PickContext,
+): string {
+  const labels = reasons.map((reason) => formatPickReason(reason, context));
+  return labels.length > 0
+    ? `score ${score.toFixed(1)} · ${labels.join(" · ")}`
+    : `score ${score.toFixed(1)}`;
+}

@@ -59,7 +59,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
       return { caughtUp: true };
     }
 
-    const { cards } = await pickReviewTerms(
+    const { cards, pickMeta } = await pickReviewTerms(
       auth.supabase,
       auth.user.id,
       { domainIds: "all" },
@@ -68,6 +68,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
       "read",
     );
     const card = cards[0];
+    const meta = pickMeta[0];
 
     if (!card) {
       return { caughtUp: true };
@@ -75,7 +76,9 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
 
     await recordRead(auth.supabase, auth.user.id, card.id, "session");
 
-    return { term: toReviewTerm(card) };
+    return {
+      term: toReviewTerm(card, meta?.reasons, meta?.score),
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load the next term. Try again.";
     return { error: message };

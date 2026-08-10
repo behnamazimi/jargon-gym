@@ -11,6 +11,7 @@ import {
   getReviewPoolStatsForUser,
   pickReviewTermsForUser,
   fetchTermCardForUser,
+  type PickMeta,
 } from "@/lib/smart-queue";
 
 type Client = SupabaseClient<Database>;
@@ -26,7 +27,7 @@ export type DeliverOptions = {
 };
 
 export type DeliverResult =
-  | { kind: "term"; term: TermCard }
+  | { kind: "term"; term: TermCard; pickMeta: PickMeta }
   | { kind: "caughtUp" }
   | { kind: "silenced" };
 
@@ -84,7 +85,7 @@ export async function deliverNextTerm(
 
   await clearCaughtUpFlag(client, userId);
 
-  const { cards } = await pickReviewTermsForUser(
+  const { cards, pickMeta } = await pickReviewTermsForUser(
     client,
     userId,
     { domainIds: "all" },
@@ -93,8 +94,9 @@ export async function deliverNextTerm(
     "read",
   );
   const term = cards[0];
+  const meta = pickMeta[0];
 
-  if (!term) {
+  if (!term || !meta) {
     const result = await maybePersistCaughtUp(client, userId, options);
     await maybeRecordSend(client, userId, options);
     return result;
@@ -102,7 +104,7 @@ export async function deliverNextTerm(
 
   await recordRead(client, userId, term.id, "admin");
   await maybeRecordSend(client, userId, options);
-  return { kind: "term", term };
+  return { kind: "term", term, pickMeta: meta };
 }
 
 export async function resolveUserIdByChatId(

@@ -34,7 +34,12 @@ export async function handleRead(client: Client, chatId: number): Promise<Telegr
     const result = await deliverNextTerm(client, userId);
     if (result.kind === "term") {
       return [
-        send(chatId, formatTermMessage(result.term), buildTermInlineKeyboard(result.term), true),
+        send(
+          chatId,
+          formatTermMessage(result.term, result.pickMeta),
+          buildTermInlineKeyboard(result.term),
+          true,
+        ),
       ];
     }
     if (result.kind === "caughtUp") {
@@ -102,7 +107,12 @@ export async function handleReadCallback(
     const next = await deliverNextTerm(client, userId);
     if (next.kind === "term") {
       actions.push(
-        send(chatId, formatTermMessage(next.term), buildTermInlineKeyboard(next.term), true),
+        send(
+          chatId,
+          formatTermMessage(next.term, next.pickMeta),
+          buildTermInlineKeyboard(next.term),
+          true,
+        ),
       );
     } else if (next.kind === "caughtUp") {
       actions.push(send(chatId, CAUGHT_UP_MESSAGE));
@@ -156,7 +166,12 @@ export async function handleSendDue(client: Client): Promise<{
       if (result.kind === "term") {
         sent += 1;
         actions.push(
-          send(chatId, formatTermMessage(result.term), buildTermInlineKeyboard(result.term), true),
+          send(
+            chatId,
+            formatTermMessage(result.term, result.pickMeta),
+            buildTermInlineKeyboard(result.term),
+            true,
+          ),
         );
       } else if (result.kind === "caughtUp") {
         caughtUp += 1;

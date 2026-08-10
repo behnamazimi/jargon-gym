@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, ArrowRight, PartyPopper, Zap } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getNextReadTermAction,
   type NextReadTermResult,
@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/jargon/page-header";
 import {
   QuizActionBar,
   QuizCenteredState,
+  QuizKeyboardHint,
   QuizPanel,
   QuizPanelBody,
 } from "@/components/jargon/quiz/quiz-ui";
@@ -19,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import type { ReviewTerm } from "@/lib/review/types";
+import { formatPickDebugLine } from "@/lib/smart-queue";
 
 type ReadStatus = "ready" | "caughtUp" | "error";
 
@@ -26,6 +28,16 @@ function statusFromResult(result: NextReadTermResult): ReadStatus {
   if (result.error) return "error";
   if (result.caughtUp || !result.term) return "caughtUp";
   return "ready";
+}
+
+function ReadPickDebug({ term }: { term: ReviewTerm }) {
+  if (term.pickScore === undefined || !term.pickReasons) return null;
+
+  return (
+    <p className="m-0 text-xs leading-relaxed text-base-content/40" aria-label="Queue score debug">
+      {formatPickDebugLine(term.pickScore, term.pickReasons, "read")}
+    </p>
+  );
 }
 
 type ReadPageProps = {
@@ -61,6 +73,31 @@ export function ReadPage({ initialResult }: ReadPageProps) {
     setTerm(result.term);
     setStatus("ready");
   }, []);
+
+  useEffect(() => {
+    if (status !== "ready" || isAdvancing) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Enter") return;
+
+      const target = event.target;
+      if (
+        target instanceof HTMLElement &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      void fetchNext();
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [fetchNext, isAdvancing, status]);
 
   return (
     <PageShell innerClassName="space-y-8">
@@ -117,7 +154,7 @@ export function ReadPage({ initialResult }: ReadPageProps) {
             <QuizPanelBody className="space-y-4">
               <TermBody term={term} />
 
-              <QuizActionBar>
+              <QuizActionBar hint={<QuizKeyboardHint action="go to the next term" />}>
                 <Button
                   type="button"
                   onPress={() => void fetchNext()}
@@ -128,6 +165,8 @@ export function ReadPage({ initialResult }: ReadPageProps) {
                   <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
                 </Button>
               </QuizActionBar>
+
+              <ReadPickDebug term={term} />
             </QuizPanelBody>
           </QuizPanel>
         ) : null}

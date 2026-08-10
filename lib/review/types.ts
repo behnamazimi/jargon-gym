@@ -8,6 +8,8 @@ export type ReviewTermStatus = TermPoolStatus;
 export type ReviewTerm = Term & {
   domainName: string;
   pickReasons?: PickReason[];
+  /** Smart-queue score when this term was picked (debug). */
+  pickScore?: number;
 };
 
 export type ReviewRating = {
