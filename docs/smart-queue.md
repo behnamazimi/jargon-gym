@@ -330,10 +330,8 @@ result, rather than needing a separate "reset to 0" step.
   rotation counter. No score, no queue involvement.
 - Terms rotate on screen in the background. Passive rotation writes
   nothing — there's no Seen tier to record it into anymore.
-- Click to open the term in the web app → `read` event, on the collection
-  page for that visit (see Web collection, above).
-- Mark known → known flip + `review_pass` (a self-graded Review pass, same
-  as Telegram's mark-known).
+- Click the term or **Read more** → opens `/jargon/read?termId=…` (records a
+  `read` event there) and advances the widget to the next term.
 
 ### `/stat`
 

@@ -15,7 +15,7 @@ export const refreshFrequency = 5 * 60 * 1000;
 
 export const initialState = { output: "", error: null };
 
-// Required for click-driven dispatch (refresh / mark known / next) to update the UI.
+// Required for click-driven dispatch (refresh / read more / next) to update the UI.
 export const updateState = (event, previousState) => {
   if (event.error) {
     return { ...previousState, error: event.error };
@@ -82,7 +82,7 @@ export const className = `
     padding: 3px 9px;
     border-radius: 999px;
   }
-  .know-btn {
+  .read-more-btn {
     background: rgba(255,255,255,0.2);
     border: none;
     color: #fff;
@@ -92,7 +92,7 @@ export const className = `
     border-radius: 999px;
     cursor: pointer;
   }
-  .know-btn:hover {
+  .read-more-btn:hover {
     background: rgba(255,255,255,0.32);
   }
   .hint-row {
@@ -185,13 +185,6 @@ const refreshState = (dispatch, widgetDir = null) => {
   const cmd = widgetDir ? escapeShellArg(widgetDir + "/read-state.sh") : READ_STATE_CMD;
   run(cmd)
     .then((output) => dispatch({ output }))
-    .catch((err) => dispatch({ error: err }));
-};
-
-const markKnown = (termId, widgetDir, dispatch) => {
-  if (!widgetDir || !termId) return;
-  run(`${escapeShellArg(widgetDir + "/mark-known.sh")} ${escapeShellArg(termId)}`)
-    .then(() => refreshState(dispatch, widgetDir))
     .catch((err) => dispatch({ error: err }));
 };
 
@@ -311,8 +304,15 @@ export const render = ({ output, error }, dispatch) => {
       </div>
       <div className="actions">
         <span className="cat">{current.category}</span>
-        <button className="know-btn" onClick={() => markKnown(current.id, widgetDir, dispatch)}>
-          ✓ Mark known
+        <button
+          className="read-more-btn"
+          title="Open this term on the Read page"
+          onClick={(e) => {
+            e.stopPropagation();
+            openAppAndRotate(appBaseUrl, current, widgetDir, dispatch);
+          }}
+        >
+          Read more
         </button>
 
         <button
@@ -331,7 +331,7 @@ export const render = ({ output, error }, dispatch) => {
           className="hint"
           onClick={() => openAppAndRotate(appBaseUrl, current, widgetDir, dispatch)}
         >
-          Click term to open in the app →
+          Click term to read more →
         </span>
       </div>
     </div>

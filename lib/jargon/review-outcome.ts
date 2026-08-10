@@ -186,7 +186,7 @@ export async function applyReviewRating(
 }
 
 /**
- * Widget "Mark known" / Telegram "Mark known": a self-graded Review pass —
+ * Telegram "Mark known" (and similar surfaces): a self-graded Review pass —
  * you're confirming you know it, which is a judgment, not passive exposure.
  */
 export async function applyKnownToggle(
