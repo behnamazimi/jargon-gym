@@ -7,6 +7,17 @@ export type TermRelationship = {
   relatedTermName: string;
 };
 
+/** Raw relationship row with both term names resolved (for hydrate / browse). */
+export type TermRelationshipLink = {
+  id: string;
+  relationship_type: string;
+  description: string;
+  source_term_id: string;
+  target_term_id: string;
+  source_term_name: string;
+  target_term_name: string;
+};
+
 export type Term = {
   id: string;
   term: string;

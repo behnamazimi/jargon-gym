@@ -17,47 +17,41 @@ function getAppBaseUrl(): string {
   return (process.env.APP_BASE_URL ?? "").replace(/\/$/, "");
 }
 
-function formatPlainSection(emoji: string, label: string, body: string): string {
+function formatInlineSection(emoji: string, label: string, body: string): string {
   const trimmed = body.trim();
   if (!trimmed) return "";
-  return `\n\n${emoji} <b>${escapeHtml(label)}</b>\n${escapeHtml(trimmed)}`;
-}
-
-function formatQuotedSection(emoji: string, label: string, body: string): string {
-  const trimmed = body.trim();
-  if (!trimmed) return "";
-  return `\n\n${emoji} <b>${escapeHtml(label)}</b>\n<blockquote>${escapeHtml(trimmed)}</blockquote>`;
+  return `\n\n${emoji} <b>${escapeHtml(label)}:</b> ${escapeHtml(trimmed)}`;
 }
 
 function formatRelationships(relationships: TermCardRelationship[]): string {
   if (relationships.length === 0) return "";
 
-  let section = `\n\n🔗 <b>Relationships</b>`;
+  let section = "";
   for (const relationship of relationships) {
     const type = escapeHtml(relationship.relationshipType);
     const name = escapeHtml(relationship.relatedTermName);
-    section += `\n→ <i>${type}</i> <b>${name}</b>`;
+    section += `\n\n• ${type} <b>${name}</b>`;
     if (relationship.description?.trim()) {
-      section += `\n${escapeHtml(relationship.description.trim())}`;
+      section += `\n  ${escapeHtml(relationship.description.trim())}`;
     }
   }
-  return section;
+  return `\n${section}`;
 }
 
 function buildTermHeader(term: TermCard): string {
   return (
     `<b>${escapeHtml(term.term)}</b>\n` +
-    `<i>${escapeHtml(term.category)}</i> · ${escapeHtml(term.domainName)}`
+    `${escapeHtml(term.domainName)} · ${escapeHtml(term.category)}`
   );
 }
 
 function buildTermDetails(term: TermCard): string {
   let details = escapeHtml((term.definition ?? "").trim());
-  details += formatQuotedSection("📌", "Example", term.example ?? "");
-  details += formatPlainSection("💡", "Mental model", term.mentalModel ?? "");
-  details += formatPlainSection("🛠", "In practice", term.discussion ?? "");
-  details += formatPlainSection("⚠️", "Anti-example", term.antiExample ?? "");
-  details += formatQuotedSection("⚡", "Debated", term.controversy ?? "");
+  details += formatInlineSection("💡", "Mental model", term.mentalModel ?? "");
+  details += formatInlineSection("📌", "Example", term.example ?? "");
+  details += formatInlineSection("⚠️", "Anti-example", term.antiExample ?? "");
+  details += formatInlineSection("🛠", "In practice", term.discussion ?? "");
+  details += formatInlineSection("⚡", "Debated", term.controversy ?? "");
   details += formatRelationships(term.relationships ?? []);
   return details;
 }

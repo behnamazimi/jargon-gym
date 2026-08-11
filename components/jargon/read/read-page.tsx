@@ -17,7 +17,6 @@ import {
 import { TermBody } from "@/components/jargon/term-body";
 import { PageShell } from "@/components/page-container";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
 import type { ReviewTerm } from "@/lib/review/types";
 import { formatPickDebugLine } from "@/lib/smart-queue";
@@ -107,7 +106,7 @@ export function ReadPage({ initialResult }: ReadPageProps) {
         description="One term at a time from your active collections — the same feed as /read on Telegram."
       />
 
-      <div className="mx-auto w-full max-w-lg space-y-4">
+      <div className="mx-auto w-full max-w-xl space-y-4">
         {status === "caughtUp" ? (
           <QuizPanel>
             <QuizPanelBody>
@@ -138,20 +137,19 @@ export function ReadPage({ initialResult }: ReadPageProps) {
 
         {status === "ready" && term ? (
           <QuizPanel>
-            <div className="border-b border-base-300/60 bg-primary/[0.04] px-5 py-4 sm:px-6">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl">
-                    {term.term}
-                  </h2>
-                  <p className="mt-1 mb-0 text-xs text-base-content/50">{term.domainName}</p>
-                </div>
-                <Badge variant="outline" className="shrink-0 font-normal">
-                  {term.category}
-                </Badge>
-              </div>
-            </div>
-            <QuizPanelBody className="space-y-4">
+            <header className="border-b border-base-300/60 px-5 py-5 sm:px-6">
+              <h2 className="font-heading m-0 text-2xl font-semibold tracking-tight text-base-content sm:text-[1.75rem] sm:leading-tight">
+                {term.term}
+              </h2>
+              <p className="mt-2 mb-0 text-xs tracking-wide text-base-content/50">
+                <span>{term.domainName}</span>
+                <span className="mx-1.5 text-base-content/35" aria-hidden>
+                  ·
+                </span>
+                <span>{term.category}</span>
+              </p>
+            </header>
+            <QuizPanelBody className="space-y-6">
               <TermBody term={term} />
 
               <QuizActionBar hint={<QuizKeyboardHint action="go to the next term" />}>

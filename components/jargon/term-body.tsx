@@ -9,78 +9,77 @@ type TermBodyProps = {
   showSearchLink?: boolean;
 };
 
+function hasText(value: string | undefined): value is string {
+  return Boolean(value?.trim());
+}
+
 export function TermBody({ term, className, showSearchLink = true }: TermBodyProps) {
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${term.term} definition`)}`;
+  const example = hasText(term.example) ? term.example.trim() : null;
+  const mentalModel = hasText(term.mentalModel) ? term.mentalModel.trim() : null;
+  const discussion = hasText(term.discussion) ? term.discussion.trim() : null;
+  const antiExample = hasText(term.antiExample) ? term.antiExample.trim() : null;
+  const controversy = hasText(term.controversy) ? term.controversy.trim() : null;
 
   return (
-    <div className={cn("space-y-4", className)}>
-      <p className="text-base leading-relaxed font-medium">{term.definition}</p>
+    <div className={cn("flex flex-col gap-4", className)}>
+      <p className="m-0 max-w-prose text-base leading-relaxed text-base-content/85">
+        {term.definition}
+      </p>
 
-      {term.example ? (
-        <TermDetailSection label="Example" variant="callout">
-          {term.example}
+      {mentalModel ? (
+        <TermDetailSection emoji="💡" label="Mental model">
+          {mentalModel}
         </TermDetailSection>
       ) : null}
-
-      {term.mentalModel ? (
-        <TermDetailSection label="Mental model" variant="callout">
-          {term.mentalModel}
+      {example ? (
+        <TermDetailSection emoji="📌" label="Example">
+          {example}
         </TermDetailSection>
       ) : null}
-
-      {term.discussion ? (
-        <TermDetailSection label="In practice">{term.discussion}</TermDetailSection>
-      ) : null}
-
-      {term.antiExample ? (
-        <TermDetailSection label="Anti-example" variant="debated">
-          {term.antiExample}
+      {antiExample ? (
+        <TermDetailSection emoji="⚠️" label="Anti-example" variant="anti">
+          {antiExample}
         </TermDetailSection>
       ) : null}
-
-      {term.controversy ? (
-        <TermDetailSection label="Debated" variant="debated">
-          {term.controversy}
+      {discussion ? (
+        <TermDetailSection emoji="🛠" label="In practice">
+          {discussion}
+        </TermDetailSection>
+      ) : null}
+      {controversy ? (
+        <TermDetailSection emoji="⚡" label="Debated" variant="debated">
+          {controversy}
         </TermDetailSection>
       ) : null}
 
       {term.relationships.length > 0 ? (
-        <section aria-label="Related terms">
-          <p className="text-xs font-semibold tracking-wide text-base-content/60 uppercase">
-            Related
-          </p>
-          <ul className="mt-1.5 list-none space-y-2.5">
-            {term.relationships.map((relationship) => {
-              const description = relationship.description?.trim() ?? "";
-              return (
-                <li
-                  key={`${relationship.id}-${relationship.direction}`}
-                  className="flex gap-2 text-sm leading-snug"
-                >
-                  <span className="shrink-0 text-base-content/40 select-none" aria-hidden>
-                    -
+        <ul
+          aria-label="Related terms"
+          className="m-0 mt-2 max-w-prose list-disc space-y-2 ps-5 text-base leading-relaxed text-base-content/85"
+        >
+          {term.relationships.map((relationship) => {
+            const description = relationship.description?.trim() ?? "";
+            return (
+              <li key={`${relationship.id}-${relationship.direction}`}>
+                <span>
+                  {relationship.relationshipType}{" "}
+                  <span className="font-semibold text-base-content">
+                    {relationship.relatedTermName}
                   </span>
-                  <div className="min-w-0">
-                    <p>
-                      <span>{relationship.relationshipType}</span>{" "}
-                      <span className="font-semibold">{relationship.relatedTermName}</span>
-                    </p>
-                    {description ? (
-                      <p className="mt-1 max-w-prose leading-relaxed text-base-content/60">
-                        {description}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+                </span>
+                {description ? (
+                  <span className="mt-1 block text-base-content/65">{description}</span>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
 
       {showSearchLink ? (
         <a
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary no-underline hover:underline"
+          className="inline-flex items-center gap-1.5 text-base text-base-content/55 no-underline transition-colors duration-150 hover:text-base-content hover:underline"
           href={searchUrl}
           target="_blank"
           rel="noopener noreferrer"
