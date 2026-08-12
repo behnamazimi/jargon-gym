@@ -8,6 +8,7 @@ import { pickTerms } from "./pick";
 import { computePoolStats } from "./stats";
 import { fetchCandidates, fetchCandidatesForUser, type ReviewScope } from "./repository";
 import { hydrateTermCardsForUser, hydrateTermsAsTermCards } from "./hydrate";
+import { strengthForCandidate } from "./strength";
 
 export type { ReviewScope } from "./repository";
 export { fetchTermCardForUser } from "./hydrate";
@@ -34,10 +35,12 @@ export async function pickReviewTerms(
   const scored = pickTerms(candidates, limit, context);
   if (scored.length === 0) return { cards: [], pickMeta: [] };
 
+  const now = new Date();
   const pickMeta: PickMeta[] = scored.map((s) => ({
     termId: s.termId,
     score: s.score,
     reasons: s.reasons,
+    strength: strengthForCandidate(s, context, now),
   }));
 
   const cards = await hydrateTermsAsTermCards(
@@ -64,10 +67,12 @@ export async function pickReviewTermsForUser(
   const scored = pickTerms(candidates, limit, context);
   if (scored.length === 0) return { cards: [], pickMeta: [] };
 
+  const now = new Date();
   const pickMeta: PickMeta[] = scored.map((s) => ({
     termId: s.termId,
     score: s.score,
     reasons: s.reasons,
+    strength: strengthForCandidate(s, context, now),
   }));
 
   const cards = await hydrateTermCardsForUser(

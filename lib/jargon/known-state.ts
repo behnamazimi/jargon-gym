@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { computeStrength, FAIL_RATE_MIN_ATTEMPTS, type Strength } from "@/lib/smart-queue";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchUserCollection } from "./collections";
 
@@ -28,6 +29,51 @@ export async function fetchKnownTermIdsForDomains(
 
   if (error) throw error;
   return data.map((row) => row.term_id);
+}
+
+/** Display-only strength per term, computed from Review history. Terms with
+ *  no review_state row (never reviewed) get "weak" (streak 0 → weak). */
+export async function fetchReviewStrengthByTermId(
+  client: Client,
+  termIds: string[],
+  userId: string,
+): Promise<Record<string, Strength>> {
+  if (termIds.length === 0) return {};
+
+  const { data, error } = await client
+    .from("review_state")
+    .select("term_id, review_streak, review_recall_count, review_fail_count, last_review_recall_at")
+    .eq("user_id", userId)
+    .in("term_id", termIds);
+
+  if (error) throw error;
+
+  const now = Date.now();
+  const strengthByTermId: Record<string, Strength> = {};
+
+  for (const row of data) {
+    const failRate =
+      row.review_recall_count < FAIL_RATE_MIN_ATTEMPTS
+        ? 0
+        : row.review_fail_count / row.review_recall_count;
+    const hoursSinceLastActivity = row.last_review_recall_at
+      ? (now - new Date(row.last_review_recall_at).getTime()) / (1000 * 60 * 60)
+      : Infinity;
+
+    strengthByTermId[row.term_id] = computeStrength(
+      row.review_streak,
+      failRate,
+      hoursSinceLastActivity,
+    );
+  }
+
+  for (const termId of termIds) {
+    if (!(termId in strengthByTermId)) {
+      strengthByTermId[termId] = computeStrength(0, 0, Infinity);
+    }
+  }
+
+  return strengthByTermId;
 }
 
 /** Flip user_progress only — queue outcomes go through review-outcome. */

@@ -1,7 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
-import { fetchKnownTermIdsForDomains, resolveReviewDomainIds } from "./known-state";
+import {
+  fetchKnownTermIdsForDomains,
+  fetchReviewStrengthByTermId,
+  resolveReviewDomainIds,
+} from "./known-state";
 import { fetchTermRelationshipsForTerms, fetchTermsByDomain } from "./terms";
 import type { JargonPageData } from "./types";
 
@@ -69,7 +73,10 @@ export async function loadJargonPageData(
 
     const mappedTerms = termRows.map(mapTerm);
     const termIds = mappedTerms.map((term) => term.id);
-    const relationshipRows = await fetchTermRelationshipsForTerms(client, termIds);
+    const [relationshipRows, strengthByTermId] = await Promise.all([
+      fetchTermRelationshipsForTerms(client, termIds),
+      fetchReviewStrengthByTermId(client, termIds, userId),
+    ]);
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
     const termIdSet = new Set(termIds);
 
@@ -79,6 +86,7 @@ export async function loadJargonPageData(
       terms,
       knownTermIds: knownTermIds.filter((id) => termIdSet.has(id)),
       activeDomainIds: reviewDomainIds,
+      strengthByTermId,
     };
   } catch (err) {
     throw toJargonDataError(err, "Couldn't load your collection. Refresh the page or try again.");

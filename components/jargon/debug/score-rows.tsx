@@ -2,6 +2,7 @@
 
 import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
+import { StrengthBadge } from "@/components/jargon/strength-badge";
 import type { PickContext } from "@/lib/smart-queue";
 
 function formatRelative(iso: string | null): string {
@@ -36,11 +37,18 @@ export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: 
 
           <PickReasonBadges reasons={row.reasons} context={context} mode="full" />
 
+          <div className="flex flex-wrap items-center gap-1.5 text-xs text-base-content/50">
+            <span>review</span>
+            <StrengthBadge strength={row.reviewStrength} />
+            <span>quiz</span>
+            <StrengthBadge strength={row.quizStrength} />
+          </div>
+
           <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
             read {row.readCount} ({formatRelative(row.lastReadAt)}) · review recall{" "}
-            {row.reviewRecallCount} (streak {row.reviewStreak},{" "}
+            {row.reviewRecallCount} (streak {row.reviewStreak}, fails {row.reviewFailCount},{" "}
             {formatRelative(row.lastReviewRecallAt)}) · quiz {row.quizTestCount} (streak{" "}
-            {row.quizStreak}, {formatRelative(row.lastQuizTestedAt)})
+            {row.quizStreak}, fails {row.quizFailCount}, {formatRelative(row.lastQuizTestedAt)})
             {row.pendingReveal ? " · pending reveal" : ""}
             {row.lastFailAt ? (
               <>

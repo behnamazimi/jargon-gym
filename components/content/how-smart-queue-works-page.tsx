@@ -11,13 +11,13 @@ import {
   ContentPageTitledBulletList,
   contentPageLinkClass,
 } from "@/components/content";
-import { ENGAGED_MIN_COUNT, SOLID_COOLDOWN_HOURS } from "@/lib/smart-queue";
+import { BASE_COOLDOWN_HOURS, ENGAGED_MIN_COUNT } from "@/lib/smart-queue";
 
 type HowSmartQueueWorksPageProps = {
   isLoggedIn?: boolean;
 };
 
-const SOLID_COOLDOWN_DAYS = Math.round(SOLID_COOLDOWN_HOURS / 24);
+const BASE_COOLDOWN_DAYS = Math.round(BASE_COOLDOWN_HOURS / 24);
 
 const ANY_ACTIVITY = [
   {
@@ -59,7 +59,7 @@ const REVIEW_ONLY = [
 const PRIORITY_LOWERS = [
   {
     title: "Recently mastered",
-    body: `Passed recently in that same activity, sits out for roughly ${SOLID_COOLDOWN_DAYS} days while the queue works on other terms. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz. Review and Quiz only, Read has nothing to master.`,
+    body: `Passed recently in that same activity, sits out while the queue works on other terms. Starts around ${BASE_COOLDOWN_DAYS} day${BASE_COOLDOWN_DAYS === 1 ? "" : "s"} after a first pass and stretches longer with each pass in a row, up to two weeks. A single miss resets it back to the short end. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz. Review and Quiz only, Read has nothing to master.`,
   },
   {
     title: "Read today — try tomorrow",
@@ -195,11 +195,12 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           <ContentPageTitledBulletList items={PRIORITY_LOWERS} />
 
           <p className="m-0 text-base-content/70">
-            The mastered cooldown (~{SOLID_COOLDOWN_DAYS} days after a pass) and the same-day
-            sit-outs (try tomorrow) are the only time-based quieting. Nothing else gets a future
-            review date. Once every term in a pool has been engaged in that activity at least once,
-            the never-engaged signal stops applying there. After that, neglected and weak terms
-            rise, a gentle cycle with no reset button.
+            The mastered cooldown (starting around {BASE_COOLDOWN_DAYS} day
+            {BASE_COOLDOWN_DAYS === 1 ? "" : "s"} after a pass, growing with each pass in a row) and
+            the same-day sit-outs (try tomorrow) are the only time-based quieting. Nothing else gets
+            a future review date. Once every term in a pool has been engaged in that activity at
+            least once, the never-engaged signal stops applying there. After that, neglected and
+            weak terms rise, a gentle cycle with no reset button.
           </p>
         </ContentPageSection>
 

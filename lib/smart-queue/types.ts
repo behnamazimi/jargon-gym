@@ -1,6 +1,8 @@
 /** Smart queue types — pure data structures, no runtime imports.
  */
 
+import type { Strength } from "./strength";
+
 /** The six writes recordRead/recordReveal/recordTest can make. */
 export type ReviewEvent =
   | "read"
@@ -30,6 +32,7 @@ export type PickReason =
   | "recent_read_cooldown"
   | "recent_fail_cooldown"
   | "cross_fail"
+  | "fragile"
   | "steady";
 
 export type ReviewCandidate = {
@@ -53,6 +56,9 @@ export type ReviewCandidate = {
   /** Most recent fail from either activity, for cross-activity propagation. */
   lastFailAt: Date | null;
   lastFailSource: FailSource | null;
+  /** Lifetime fail counts per activity, independent of current streak — drives fragile. */
+  reviewFailCount: number;
+  quizFailCount: number;
 };
 
 export type ScoreWeights = {
@@ -66,10 +72,13 @@ export type ScoreWeights = {
   engagedButUntestedBoost: number;
   abandonedReviewBoost: number;
   newTermBoost: number;
-  stalenessBoostPerHour: number;
+  /** Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap). */
+  stalenessMaxBoost: number;
   stalenessCapHours: number;
   /** Per point of |source activity's streak| when the OTHER test context is boosted, capped at FAIL_STREAK_CAP. */
   crossFailOtherTestBoostPerRepeat: number;
+  /** Boost at 100% lifetime fail rate; scales linearly down to 0. */
+  fragileBoostMax: number;
 };
 
 export type PoolStats = {
@@ -90,4 +99,6 @@ export type PickMeta = {
   termId: string;
   score: number;
   reasons: PickReason[];
+  /** Display-only mastery tier for this candidate's own-context history. Never affects score. */
+  strength?: Strength;
 };

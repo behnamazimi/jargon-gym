@@ -3,9 +3,11 @@
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
   listScoredCandidates,
+  strengthForCandidate,
   type FailSource,
   type PickContext,
   type PickReason,
+  type Strength,
 } from "@/lib/smart-queue";
 import { listStudyCollections, type TermPoolStatus } from "@/lib/study";
 
@@ -37,6 +39,10 @@ export type DebugScoredRow = {
   pendingReveal: boolean;
   lastFailAt: string | null;
   lastFailSource: FailSource | null;
+  reviewFailCount: number;
+  quizFailCount: number;
+  reviewStrength: Strength;
+  quizStrength: Strength;
 };
 
 export async function listDebugScoredTermsAction(
@@ -73,6 +79,7 @@ export async function listDebugScoredTermsAction(
     if (termsError) throw termsError;
 
     const termNameById = new Map(terms.map((term) => [term.id, term.term]));
+    const now = new Date();
 
     const rows: DebugScoredRow[] = scored.map((candidate) => ({
       termId: candidate.termId,
@@ -95,6 +102,10 @@ export async function listDebugScoredTermsAction(
       pendingReveal: candidate.pendingReveal,
       lastFailAt: candidate.lastFailAt ? candidate.lastFailAt.toISOString() : null,
       lastFailSource: candidate.lastFailSource,
+      reviewFailCount: candidate.reviewFailCount,
+      quizFailCount: candidate.quizFailCount,
+      reviewStrength: strengthForCandidate(candidate, "review", now)!,
+      quizStrength: strengthForCandidate(candidate, "quiz", now)!,
     }));
 
     return { rows };

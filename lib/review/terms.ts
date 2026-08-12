@@ -30,6 +30,9 @@ export async function fetchReviewTermPool(
     "review",
   );
 
-  const reasonsById = new Map(pickMeta.map((m) => [m.termId, m.reasons]));
-  return cards.map((card) => toReviewTerm(card, reasonsById.get(card.id)));
+  const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
+  return cards.map((card) => {
+    const meta = metaById.get(card.id);
+    return toReviewTerm(card, meta?.reasons, undefined, meta?.strength);
+  });
 }

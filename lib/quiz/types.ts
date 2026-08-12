@@ -1,4 +1,4 @@
-import type { PickReason } from "@/lib/smart-queue";
+import type { PickReason, Strength } from "@/lib/smart-queue";
 import type { StudyCollection, TermPoolStatus } from "@/lib/study";
 
 /** @deprecated Prefer TermPoolStatus from @/lib/study */
@@ -13,6 +13,8 @@ export type QuizTerm = {
   example: string | null;
   domainName: string;
   pickReasons?: PickReason[];
+  /** Display-only mastery tier for this term in Quiz. Never affects scoring. */
+  strength?: Strength;
 };
 
 export type QuizMcqQuestion = {

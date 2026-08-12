@@ -1,10 +1,30 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5";
+  graphql_public: {
+    Tables: {
+      [_ in never]: never;
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json;
+          operationName?: string;
+          query?: string;
+          variables?: Json;
+        };
+        Returns: Json;
+      };
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
+    };
   };
   public: {
     Tables: {
@@ -92,13 +112,15 @@ export type Database = {
         Row: {
           last_fail_at: string | null;
           last_fail_source: Database["public"]["Enums"]["review_fail_source"] | null;
+          last_quiz_tested_at: string | null;
           last_read_at: string | null;
           last_review_recall_at: string | null;
-          last_quiz_tested_at: string | null;
           pending_reveal: boolean;
+          quiz_fail_count: number;
           quiz_streak: number;
           quiz_test_count: number;
           read_count: number;
+          review_fail_count: number;
           review_recall_count: number;
           review_streak: number;
           term_id: string;
@@ -107,13 +129,15 @@ export type Database = {
         Insert: {
           last_fail_at?: string | null;
           last_fail_source?: Database["public"]["Enums"]["review_fail_source"] | null;
+          last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
-          last_quiz_tested_at?: string | null;
           pending_reveal?: boolean;
+          quiz_fail_count?: number;
           quiz_streak?: number;
           quiz_test_count?: number;
           read_count?: number;
+          review_fail_count?: number;
           review_recall_count?: number;
           review_streak?: number;
           term_id: string;
@@ -122,13 +146,15 @@ export type Database = {
         Update: {
           last_fail_at?: string | null;
           last_fail_source?: Database["public"]["Enums"]["review_fail_source"] | null;
+          last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
-          last_quiz_tested_at?: string | null;
           pending_reveal?: boolean;
+          quiz_fail_count?: number;
           quiz_streak?: number;
           quiz_test_count?: number;
           read_count?: number;
+          review_fail_count?: number;
           review_recall_count?: number;
           review_streak?: number;
           term_id?: string;
@@ -535,13 +561,15 @@ export type Database = {
           domain_id: string;
           last_fail_at: string;
           last_fail_source: Database["public"]["Enums"]["review_fail_source"];
+          last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
-          last_quiz_tested_at: string;
           pending_reveal: boolean;
+          quiz_fail_count: number;
           quiz_streak: number;
           quiz_test_count: number;
           read_count: number;
+          review_fail_count: number;
           review_recall_count: number;
           review_streak: number;
           term_id: string;
@@ -588,13 +616,15 @@ export type Database = {
           domain_id: string;
           last_fail_at: string;
           last_fail_source: Database["public"]["Enums"]["review_fail_source"];
+          last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
-          last_quiz_tested_at: string;
           pending_reveal: boolean;
+          quiz_fail_count: number;
           quiz_streak: number;
           quiz_test_count: number;
           read_count: number;
+          review_fail_count: number;
           review_recall_count: number;
           review_streak: number;
           term_id: string;
@@ -767,6 +797,9 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       domain_visibility: ["private", "shared"],

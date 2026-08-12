@@ -120,6 +120,7 @@ export function JargonPage({ initialData }: JargonPageProps) {
             <TermList
               terms={filteredTerms}
               knownTerms={knownTerms}
+              strengthByTermId={initialData.strengthByTermId}
               openTerms={openTerms}
               isOwner={isOwner}
               domainId={domain.id}

@@ -12,14 +12,16 @@ import {
   QuizPanelBody,
 } from "@/components/jargon/quiz/quiz-ui";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
+import { StrengthBadge } from "@/components/jargon/strength-badge";
 import type { QuizQuestion } from "@/lib/quiz/types";
-import type { PickReason } from "@/lib/smart-queue";
+import type { PickReason, Strength } from "@/lib/smart-queue";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
 
 type QuizQuestionViewProps = {
   question: QuizQuestion;
   termLabel: string;
   pickReasons?: PickReason[];
+  strength?: Strength;
   isLast: boolean;
   onAnswer: (passed: boolean) => void;
 };
@@ -57,6 +59,7 @@ function getTrueFalseChoiceState(
 export function QuizQuestionView({
   question,
   pickReasons,
+  strength,
   isLast,
   onAnswer,
 }: QuizQuestionViewProps) {
@@ -163,7 +166,10 @@ export function QuizQuestionView({
     <QuizPanel>
       <QuizPanelBody className="space-y-5">
         <div className="space-y-3">
-          <PickReasonBadges reasons={pickReasons} context="quiz" mode="compact" />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <StrengthBadge strength={strength} />
+            <PickReasonBadges reasons={pickReasons} context="quiz" mode="compact" />
+          </div>
           <h2 className="m-0 text-lg font-semibold leading-snug">{question.prompt}</h2>
         </div>
 

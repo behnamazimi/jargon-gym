@@ -8,9 +8,11 @@
 import { isSameLocalDay } from "./local-day";
 import {
   ENGAGED_MIN_COUNT,
+  FAIL_RATE_MIN_ATTEMPTS,
   FAIL_STREAK_CAP,
+  masteredCooldownHours,
   QUEUE_TIMEZONE,
-  SOLID_COOLDOWN_HOURS,
+  STALENESS_DECAY_HOURS,
 } from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
@@ -22,7 +24,30 @@ type ScoreBreakdown = {
   reasons: PickReason[];
 };
 
-type ContextFields = {
+/** Lifetime fail-rate boost — independent of the current streak sign, so a
+ *  persistently difficult term keeps some priority even right after a pass
+ *  resets its streak. Cold start: below the minimum attempts, no boost. */
+function fragileBoost(totalTests: number, totalFails: number, fragileBoostMax: number): number {
+  if (totalTests < FAIL_RATE_MIN_ATTEMPTS) return 0;
+  const failRate = totalFails / totalTests;
+  return failRate * fragileBoostMax;
+}
+
+/** Exponential-decay-shaped staleness: front-loads the boost near a term's
+ *  own decay constant (τ) instead of accruing linearly, then flattens out
+ *  approaching the cap. Ceiling matches stalenessMaxBoost regardless of τ. */
+function stalenessBoost(
+  hoursSinceLastActivity: number,
+  decayConstantHours: number,
+  stalenessCapHours: number,
+  stalenessMaxBoost: number,
+): number {
+  const capped = Math.min(hoursSinceLastActivity, stalenessCapHours);
+  const normalized = 1 - Math.exp(-capped / decayConstantHours);
+  return normalized * stalenessMaxBoost;
+}
+
+export type ContextFields = {
   /** This context's own test/exposure count — Read's is readCount, Review/Quiz are their own test counts. */
   ownCount: number;
   /** Timestamp staleness is measured from, only when ownCount > 0. */
@@ -38,7 +63,7 @@ function streakForActivity(candidate: ReviewCandidate, activity: FailSource): nu
   return activity === "review" ? candidate.reviewStreak : candidate.quizStreak;
 }
 
-function fieldsForContext(candidate: ReviewCandidate, context: PickContext): ContextFields {
+export function fieldsForContext(candidate: ReviewCandidate, context: PickContext): ContextFields {
   switch (context) {
     case "read":
       return {
@@ -79,7 +104,7 @@ function evaluateCandidate(
   // acing streak in Quiz never suppresses Review, and vice versa.
   if (fields.streak !== null && fields.streak > 0 && fields.lastActivityAt) {
     const hoursSincePass = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
-    if (hoursSincePass < SOLID_COOLDOWN_HOURS) {
+    if (hoursSincePass < masteredCooldownHours(fields.streak)) {
       score -= weights.masteredCooldownPenalty;
       reasons.push("mastered_cooldown");
     }
@@ -157,6 +182,16 @@ function evaluateCandidate(
     }
   }
 
+  // Lifetime fail-rate — Review/Quiz only, independent of current streak.
+  if (context !== "read") {
+    const totalFails = context === "review" ? candidate.reviewFailCount : candidate.quizFailCount;
+    const boost = fragileBoost(fields.ownCount, totalFails, weights.fragileBoostMax);
+    if (boost > 0) {
+      score += boost;
+      reasons.push("fragile");
+    }
+  }
+
   // New term boost.
   const ageHours = (now.getTime() - candidate.createdAt.getTime()) / (1000 * 60 * 60);
   if (ageHours < NEW_TERM_THRESHOLD_HOURS) {
@@ -167,8 +202,12 @@ function evaluateCandidate(
   // Staleness — only once this context has some activity to measure from.
   if (fields.ownCount > 0 && fields.lastActivityAt) {
     const hoursSinceActivity = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
-    const cappedHours = Math.min(hoursSinceActivity, weights.stalenessCapHours);
-    score += cappedHours * weights.stalenessBoostPerHour;
+    score += stalenessBoost(
+      hoursSinceActivity,
+      STALENESS_DECAY_HOURS[context],
+      weights.stalenessCapHours,
+      weights.stalenessMaxBoost,
+    );
     if (hoursSinceActivity >= STALE_REASON_THRESHOLD_HOURS) {
       reasons.push("stale");
     }

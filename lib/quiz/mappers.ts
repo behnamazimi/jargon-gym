@@ -1,8 +1,12 @@
 import type { TermCard } from "@/lib/jargon/term-card";
-import type { PickReason } from "@/lib/smart-queue";
+import type { PickReason, Strength } from "@/lib/smart-queue";
 import type { QuizTerm } from "./types";
 
-export function toQuizTerm(card: TermCard, pickReasons?: PickReason[]): QuizTerm {
+export function toQuizTerm(
+  card: TermCard,
+  pickReasons?: PickReason[],
+  strength?: Strength,
+): QuizTerm {
   return {
     id: card.id,
     term: card.term,
@@ -10,5 +14,6 @@ export function toQuizTerm(card: TermCard, pickReasons?: PickReason[]): QuizTerm
     example: card.example,
     domainName: card.domainName,
     pickReasons,
+    strength,
   };
 }

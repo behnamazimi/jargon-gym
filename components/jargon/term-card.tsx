@@ -3,16 +3,19 @@
 import { ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
+import type { Strength } from "@/lib/smart-queue";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { StrengthBadge } from "./strength-badge";
 import { TermActionsMenu } from "./term-actions-menu";
 import { TermBody } from "./term-body";
 
 type TermCardProps = {
   term: Term;
   known: boolean;
+  strength?: Strength;
   open: boolean;
   isOwner: boolean;
   domainId: string;
@@ -24,6 +27,7 @@ type TermCardProps = {
 export function TermCard({
   term,
   known,
+  strength,
   open,
   isOwner,
   domainId,
@@ -83,6 +87,7 @@ export function TermCard({
                 {term.term}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
+                <StrengthBadge strength={strength} />
                 <Badge variant="outline" className="badge-sm font-normal">
                   {term.category}
                 </Badge>

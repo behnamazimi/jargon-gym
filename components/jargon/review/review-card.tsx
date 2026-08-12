@@ -4,6 +4,7 @@ import { Eye } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { ReviewTerm } from "@/lib/review/types";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
+import { StrengthBadge } from "@/components/jargon/strength-badge";
 import { TermBody } from "@/components/jargon/term-body";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -86,12 +87,10 @@ export function ReviewCard({
                 {term.term}
               </h2>
               <p className="m-0 text-xs text-base-content/50">{term.domainName}</p>
-              <PickReasonBadges
-                reasons={term.pickReasons}
-                context="review"
-                mode="compact"
-                className="justify-center"
-              />
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                <StrengthBadge strength={term.strength} />
+                <PickReasonBadges reasons={term.pickReasons} context="review" mode="compact" />
+              </div>
             </div>
 
             <div

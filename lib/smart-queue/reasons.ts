@@ -21,6 +21,7 @@ const STATIC_LABELS: Partial<Record<PickReason, string>> = {
   recent_read_cooldown: "Read today — try tomorrow",
   recent_fail_cooldown: "Missed today — try tomorrow",
   cross_fail: "Missed elsewhere recently",
+  fragile: "Historically tricky",
 };
 
 export function formatPickReason(reason: PickReason, context: PickContext): string {

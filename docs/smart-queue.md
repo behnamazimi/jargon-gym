@@ -29,8 +29,14 @@ Every term in your active collections carries state in two shapes:
   the jargon page. `read_count` + `last_read_at`. No pass/fail concept —
   it's just "have you looked at this."
 - **Tested** — an actual judgment, tracked **independently per activity**:
-  - Review: `review_recall_count`, `last_review_recall_at`, `review_streak`
-  - Quiz: `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`
+  - Review: `review_recall_count`, `last_review_recall_at`, `review_streak`, `review_fail_count`
+  - Quiz: `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`, `quiz_fail_count`
+
+`*_fail_count` is a lifetime counter, separate from the current streak — it
+never resets on a pass, so it survives the moment a streak turns positive
+again. It backs the `fragile` signal (see [Scoring](#scoring)) and started
+accumulating only from the migration that added it — no historical
+reconstruction.
 
 `*_streak` is signed: positive = consecutive passes, negative = consecutive
 fails, `0` = never tested in that activity. It replaces what used to be a
@@ -151,18 +157,19 @@ Each candidate gets a score from additive signals and penalties, scoped to
 the pick's `PickContext`. Multiple signals can fire on the same term; all
 applicable reasons are returned for UI badges.
 
-| Signal                    | Condition                                                                                      | Effect                                                                                                                                                                                                                                                       |
-| ------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Mastered cooldown**     | This context's own streak > 0 and its last-activity timestamp is within `SOLID_COOLDOWN_HOURS` | Large penalty. Independent per context — a Quiz pass never cools down Review.                                                                                                                                                                                |
-| **Same-day Read sit-out** | `review`/`quiz` only: `last_read_at` is today in `QUEUE_TIMEZONE`                              | Large penalty (`sameDayCooldownPenalty`). You just saw the definition — try again tomorrow. Dominates struggling/unseen for that day.                                                                                                                        |
-| **Same-day fail sit-out** | `read` only: `last_fail_at` is today in `QUEUE_TIMEZONE`                                       | Large penalty (`sameDayCooldownPenalty`). Review and Quiz misses share this rule. Cleared when `last_fail_*` clears.                                                                                                                                         |
-| **Never engaged**         | This context's own count is 0                                                                  | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0.                                                                                                                                                                 |
-| **Struggling**            | This context's own streak < 0                                                                  | Boost scaled by `min(\|streak\|, FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula.                                                                              |
-| **Engaged but untested**  | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                       | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                                                     |
-| **Abandoned review**      | `pending_reveal === true`                                                                      | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                               |
-| **Cross-activity fail**   | `last_fail_at` is set and `last_fail_source` is the _other_ test activity                      | `review`/`quiz` only. Boosts when the other activity most recently failed — a term's own activity already reflects its own fail via struggling. Scaled by `min(\|source streak\|, FAIL_STREAK_CAP)`. Read uses the same-day fail sit-out instead of a boost. |
-| **New term**              | Created within the last 72 hours                                                               | Moderate boost, all contexts.                                                                                                                                                                                                                                |
-| **Staleness**             | Time since this context's own last-activity timestamp, only when its own count > 0             | Rises linearly, capped at 7 days. Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                                                                   |
+| Signal                           | Condition                                                                                               | Effect                                                                                                                                                                                                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Mastered cooldown**            | This context's own streak > 0 and its last-activity timestamp is within `masteredCooldownHours(streak)` | Large penalty. Independent per context — a Quiz pass never cools down Review. Window scales with streak — see [Streak-scaled cooldown](#streak-scaled-cooldown).                                                                                             |
+| **Same-day Read sit-out**        | `review`/`quiz` only: `last_read_at` is today in `QUEUE_TIMEZONE`                                       | Large penalty (`sameDayCooldownPenalty`). You just saw the definition — try again tomorrow. Dominates struggling/unseen for that day.                                                                                                                        |
+| **Same-day fail sit-out**        | `read` only: `last_fail_at` is today in `QUEUE_TIMEZONE`                                                | Large penalty (`sameDayCooldownPenalty`). Review and Quiz misses share this rule. Cleared when `last_fail_*` clears.                                                                                                                                         |
+| **Never engaged**                | This context's own count is 0                                                                           | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0.                                                                                                                                                                 |
+| **Struggling**                   | This context's own streak < 0                                                                           | Boost scaled by `min(\|streak\|, FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula.                                                                              |
+| **Engaged but untested**         | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                                | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                                                     |
+| **Abandoned review**             | `pending_reveal === true`                                                                               | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                               |
+| **Cross-activity fail**          | `last_fail_at` is set and `last_fail_source` is the _other_ test activity                               | `review`/`quiz` only. Boosts when the other activity most recently failed — a term's own activity already reflects its own fail via struggling. Scaled by `min(\|source streak\|, FAIL_STREAK_CAP)`. Read uses the same-day fail sit-out instead of a boost. |
+| **Fragile (lifetime fail rate)** | `review`/`quiz` only: this context's own attempts `>= FAIL_RATE_MIN_ATTEMPTS`                           | Boost scaled by lifetime fail rate × `fragileBoostMax`. Independent of the _current_ streak sign — see [Lifetime fail rate](#lifetime-fail-rate-fragile).                                                                                                    |
+| **New term**                     | Created within the last 72 hours                                                                        | Moderate boost, all contexts.                                                                                                                                                                                                                                |
+| **Staleness**                    | Time since this context's own last-activity timestamp, only when its own count > 0                      | Decay-shaped, capped at 7 days — see [Decay-shaped staleness](#decay-shaped-staleness). Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                             |
 
 Same-score candidates are shuffled freshly each pick (Fisher–Yates within
 each equal-score run after score-desc sort) so ties mix across collections
@@ -171,6 +178,79 @@ on tie order.
 
 Implementation: [`lib/smart-queue/score.ts`](../lib/smart-queue/score.ts) →
 [`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts).
+
+### Streak-scaled cooldown
+
+The mastered-cooldown window is no longer a flat 72 hours — it scales with
+how many passes in a row a context has:
+
+```ts
+function masteredCooldownHours(streak: number): number {
+  if (streak <= 0) return 0;
+  const hours = BASE_COOLDOWN_HOURS * Math.pow(COOLDOWN_GROWTH_FACTOR, streak - 1);
+  return Math.min(hours, COOLDOWN_CAP_HOURS);
+}
+```
+
+`+1` → `BASE_COOLDOWN_HOURS` (72h, same as before); `+5` → ~277h (~11.5
+days); `+6` and beyond → capped at `COOLDOWN_CAP_HOURS` (336h / 2 weeks).
+Penalty magnitude (`masteredCooldownPenalty`) is unchanged — only the
+window grows. A fail-then-repass resets the streak to `+1`, so the window
+resets back to the short end too — that's intentional, not a bug: a term
+that was just missed hasn't earned a long cooldown yet. Scoped per
+`PickContext` like everything else — a long Quiz streak never lengthens
+Review's cooldown.
+
+### Decay-shaped staleness
+
+Staleness no longer accrues linearly. It follows an exponential-decay
+curve, front-loading the boost near the context's own decay constant (τ)
+and flattening out as it approaches the cap:
+
+```ts
+function stalenessBoost(hoursSinceLastActivity, decayConstantHours, capHours, maxBoost) {
+  const capped = Math.min(hoursSinceLastActivity, capHours);
+  const normalized = 1 - Math.exp(-capped / decayConstantHours);
+  return normalized * maxBoost;
+}
+```
+
+The ceiling (`stalenessMaxBoost`, 84) matches the old linear formula's max
+(`0.5 × 168h`) — only the shape changed, not the cap. τ is per-context
+(`STALENESS_DECAY_HOURS` in `weights.ts`): Quiz stales fastest (24h), Review
+next (36h), Read slowest (48h) — so a quiz you haven't touched in a day
+climbs the queue faster than a definition you haven't re-read in a day.
+Staleness stays **additive** with mastered cooldown, same as before: right
+after a pass, the large negative cooldown penalty still dominates the
+front-loaded staleness boost (e.g. 24h into a Review cooldown with τ=36,
+staleness is only ~+41 against a −120 penalty — net still solidly negative).
+There's no special-casing "zero staleness during cooldown" — the two
+signals just add.
+
+### Lifetime fail rate (`fragile`)
+
+Streak captures the _current_ run, but resets to a clean positive value the
+moment you pass — a term failed 6 times out of the last 10 looks identical
+to a term that's never been missed, right after that one pass. `fragile`
+tracks lifetime fails per activity (`review_fail_count` /
+`quiz_fail_count` on `review_state`, incremented in `record_review_event`)
+independent of the current streak sign:
+
+```ts
+function fragileBoost(totalTests, totalFails, fragileBoostMax) {
+  if (totalTests < FAIL_RATE_MIN_ATTEMPTS) return 0;
+  return (totalFails / totalTests) * fragileBoostMax;
+}
+```
+
+Cold start: below `FAIL_RATE_MIN_ATTEMPTS` (4) own-context attempts, no
+boost — insufficient history isn't evidence of difficulty. At a 100%
+lifetime fail rate the boost caps at `fragileBoostMax` (25), which dents
+but does not cancel a mastered-cooldown penalty (−120) at default weights.
+`review`/`quiz` only — Read has no pass/fail concept, so `fragile` never
+applies there. The counters are backfilled at `0` for pre-existing rows and
+accumulate only going forward; there is no reconstruction of historical
+fail counts from streak or anything else.
 
 ### Weights
 
@@ -190,16 +270,21 @@ UI for these:
 | `engagedButUntestedBoost`          | 30      | Read several times, never tested (this activity)                                   |
 | `abandonedReviewBoost`             | 45      | Left mid-review                                                                    |
 | `newTermBoost`                     | 30      | Recently added                                                                     |
-| `stalenessBoostPerHour`            | 0.5     | Per hour since last tested, this activity                                          |
+| `stalenessMaxBoost`                | 84      | Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap)    |
 | `stalenessCapHours`                | 168     | Staleness cap (7 days)                                                             |
 | `crossFailOtherTestBoostPerRepeat` | 25      | Per repeat, test-context boost when the _other_ test activity most recently failed |
+| `fragileBoostMax`                  | 25      | Boost at 100% lifetime fail rate; scales linearly down to 0                        |
 
-| Constant               | Default            | Purpose                                                       |
-| ---------------------- | ------------------ | ------------------------------------------------------------- |
-| `SOLID_COOLDOWN_HOURS` | 72                 | How long a recent pass stays deprioritized, per activity      |
-| `QUEUE_TIMEZONE`       | `Europe/Amsterdam` | Calendar day for same-day sit-outs (edit in code if you move) |
-| `ENGAGED_MIN_COUNT`    | 3                  | Minimum reads before `engaged_untested` applies               |
-| `FAIL_STREAK_CAP`      | 5                  | Maximum consecutive fails counted toward the struggling boost |
+| Constant                 | Default                              | Purpose                                                                                                        |
+| ------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `BASE_COOLDOWN_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1` (renamed from `SOLID_COOLDOWN_HOURS`)                                  |
+| `COOLDOWN_GROWTH_FACTOR` | 1.4                                  | Per-streak-point multiplier on the cooldown window                                                             |
+| `COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                    |
+| `STALENESS_DECAY_HOURS`  | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the staleness curve — a map next to `WEIGHTS`, not fields on `ScoreWeights` |
+| `FAIL_RATE_MIN_ATTEMPTS` | 4                                    | Minimum own-context attempts before `fragile` applies                                                          |
+| `QUEUE_TIMEZONE`         | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                  |
+| `ENGAGED_MIN_COUNT`      | 3                                    | Minimum reads before `engaged_untested` applies                                                                |
+| `FAIL_STREAK_CAP`        | 5                                    | Maximum consecutive fails counted toward the struggling boost                                                  |
 
 Staleness and "stale" reason labels use a 24-hour threshold. New-term boost
 uses a 72-hour creation window.
@@ -222,6 +307,7 @@ and queue previews.
 | `recent_read_cooldown` | `review`/`quiz`: `last_read_at` is today in `QUEUE_TIMEZONE`                                                     | Read today — try tomorrow                                        |
 | `recent_fail_cooldown` | `read`: `last_fail_at` is today in `QUEUE_TIMEZONE`                                                              | Missed today — try tomorrow                                      |
 | `cross_fail`           | `review`/`quiz`: `last_fail_at` set and `last_fail_source` is the other activity                                 | Missed elsewhere recently                                        |
+| `fragile`              | `review`/`quiz`: own attempts `>= FAIL_RATE_MIN_ATTEMPTS` and lifetime fail rate > 0                             | Historically tricky                                              |
 | `steady`               | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case) | Recently read / Recently reviewed / Recently quizzed             |
 
 `unseen`, `stale`, and `steady` share one label per activity —
@@ -247,6 +333,40 @@ and ranking shifts to staleness and struggle. Pool stats expose this as
 to the same `PickContext`. Resetting a collection's progress clears both
 `review_state` and `user_progress` and starts the cycle over.
 
+### Strength tier (display-only)
+
+A `weak` / `medium` / `strong` mastery badge, shown alongside pick-reason
+badges and on collection term cards. It is purely cosmetic — computed from
+the same `streak` / fail-rate / staleness inputs scoring already reads, but
+**never fed back into the score**. `lib/smart-queue/strength.ts`:
+
+```ts
+function computeStrength(streak, failRate, hoursSinceLastActivity): Strength {
+  if (streak <= 0 || failRate > STRENGTH_WEAK_FAIL_RATE) return "weak";
+  if (
+    streak >= STRENGTH_STRONG_MIN_STREAK &&
+    failRate < STRENGTH_STRONG_MAX_FAIL_RATE &&
+    hoursSinceLastActivity < stalenessCapHours
+  ) {
+    return "strong";
+  }
+  return "medium";
+}
+```
+
+Thresholds: `STRENGTH_WEAK_FAIL_RATE` (0.4), `STRENGTH_STRONG_MIN_STREAK`
+(5), `STRENGTH_STRONG_MAX_FAIL_RATE` (0.15). Below `FAIL_RATE_MIN_ATTEMPTS`
+own-context attempts, callers pass `failRate = 0` — insufficient history
+isn't "historically hard."
+
+Surfaces (v1): collection term cards (from **Review** history —
+`fetchReviewStrengthByTermId` in `lib/jargon/known-state.ts`), Review and
+Quiz pick UI (from that activity's own history, computed alongside
+`pickReasons` in `lib/review/mappers.ts` / `lib/quiz/mappers.ts` via
+`strengthForCandidate`), and the debug page (both Review and Quiz side by
+side). Read has no streak/fail-rate of its own, so it has no strength
+badge. Telegram is out of scope for v1.
+
 ---
 
 ## Events
@@ -256,9 +376,14 @@ to the same `PickContext`. Resetting a collection's progress clears both
 | `read`        | `read_count += 1`, `last_read_at = now()`, clears `last_fail_at`/`last_fail_source`                                                            |
 | `reveal`      | `pending_reveal = true`                                                                                                                        |
 | `review_pass` | `review_recall_count += 1`, `last_review_recall_at = now()`, `review_streak` moves toward positive, `pending_reveal = false`, clears fail flag |
-| `review_fail` | Same counters, `review_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'review'`                                        |
+| `review_fail` | Same counters, `review_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'review'`, `review_fail_count += 1`              |
 | `quiz_pass`   | `quiz_test_count += 1`, `last_quiz_tested_at = now()`, `quiz_streak` moves toward positive, clears fail flag                                   |
-| `quiz_fail`   | Same counters, `quiz_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'quiz'`                                            |
+| `quiz_fail`   | Same counters, `quiz_streak` moves toward negative, sets `last_fail_at`/`last_fail_source = 'quiz'`, `quiz_fail_count += 1`                    |
+
+`review_fail_count` / `quiz_fail_count` are lifetime counters — they never
+decrement and are not cleared by a pass. They back the `fragile` signal
+(see [Lifetime fail rate](#lifetime-fail-rate-fragile)) and were backfilled
+at `0` for rows that existed before that migration.
 
 Streak update rule: a pass resets a negative streak to `+1` (or increments
 a positive one); a fail resets a positive streak to `-1` (or decrements a
@@ -358,10 +483,10 @@ candidate instead of a top-N slice.
 
 Postgres tables:
 
-| Table           | Role                                                                                                                                                                                                                               |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `review_state`  | `read_count`, `last_read_at`; `review_recall_count`, `last_review_recall_at`, `review_streak`; `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`; `pending_reveal`; `last_fail_at`, `last_fail_source` — all per user + term |
-| `user_progress` | Row present → known; absent → unknown                                                                                                                                                                                              |
+| Table           | Role                                                                                                                                                                                                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `review_state`  | `read_count`, `last_read_at`; `review_recall_count`, `last_review_recall_at`, `review_streak`, `review_fail_count`; `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`, `quiz_fail_count`; `pending_reveal`; `last_fail_at`, `last_fail_source` — all per user + term |
+| `user_progress` | Row present → known; absent → unknown                                                                                                                                                                                                                                      |
 
 Candidate RPCs (see
 [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)):

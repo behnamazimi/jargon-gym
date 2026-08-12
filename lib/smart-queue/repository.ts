@@ -26,6 +26,8 @@ function mapCandidateRows(
     pending_reveal: boolean;
     last_fail_at: string | null;
     last_fail_source: Database["public"]["Enums"]["review_fail_source"] | null;
+    review_fail_count: number;
+    quiz_fail_count: number;
   }>,
 ): ReviewCandidate[] {
   return data.map((row) => ({
@@ -43,6 +45,8 @@ function mapCandidateRows(
     pendingReveal: row.pending_reveal,
     lastFailAt: row.last_fail_at ? new Date(row.last_fail_at) : null,
     lastFailSource: row.last_fail_source as FailSource | null,
+    reviewFailCount: row.review_fail_count,
+    quizFailCount: row.quiz_fail_count,
   }));
 }
 

@@ -8,7 +8,14 @@
 export type { ReviewEvent, PickContext, PickReason, PickMeta, FailSource } from "./types";
 
 export { formatPickReason, formatPickDebugLine } from "./reasons";
-export { SOLID_COOLDOWN_HOURS, ENGAGED_MIN_COUNT, QUEUE_TIMEZONE } from "./weights";
+export {
+  BASE_COOLDOWN_HOURS,
+  ENGAGED_MIN_COUNT,
+  FAIL_RATE_MIN_ATTEMPTS,
+  QUEUE_TIMEZONE,
+} from "./weights";
+export type { Strength } from "./strength";
+export { computeStrength, strengthForCandidate } from "./strength";
 
 export {
   pickReviewTerms,

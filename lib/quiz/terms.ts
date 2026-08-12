@@ -43,8 +43,11 @@ export async function fetchQuizTermPool(
     "quiz",
   );
 
-  const reasonsById = new Map(pickMeta.map((m) => [m.termId, m.reasons]));
-  return cards.map((card) => toQuizTerm(card, reasonsById.get(card.id)));
+  const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
+  return cards.map((card) => {
+    const meta = metaById.get(card.id);
+    return toQuizTerm(card, meta?.reasons, meta?.strength);
+  });
 }
 
 export function countTermsForSelection(
