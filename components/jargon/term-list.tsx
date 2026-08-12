@@ -6,6 +6,7 @@ type TermListProps = {
   terms: Term[];
   knownTerms: Set<string>;
   strengthByTermId: Record<string, Strength>;
+  showStrength: boolean;
   openTerms: Set<string>;
   isOwner: boolean;
   domainId: string;
@@ -18,6 +19,7 @@ export function TermList({
   terms,
   knownTerms,
   strengthByTermId,
+  showStrength,
   openTerms,
   isOwner,
   domainId,
@@ -44,6 +46,7 @@ export function TermList({
           term={term}
           known={knownTerms.has(term.id)}
           strength={strengthByTermId[term.id]}
+          showStrength={showStrength}
           open={openTerms.has(term.id)}
           isOwner={isOwner}
           domainId={domainId}

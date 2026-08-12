@@ -16,6 +16,7 @@ type TermCardProps = {
   term: Term;
   known: boolean;
   strength?: Strength;
+  showStrength?: boolean;
   open: boolean;
   isOwner: boolean;
   domainId: string;
@@ -28,6 +29,7 @@ export function TermCard({
   term,
   known,
   strength,
+  showStrength = false,
   open,
   isOwner,
   domainId,
@@ -87,7 +89,7 @@ export function TermCard({
                 {term.term}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
-                <StrengthBadge strength={strength} />
+                {showStrength ? <StrengthBadge strength={strength} /> : null}
                 <Badge variant="outline" className="badge-sm font-normal">
                   {term.category}
                 </Badge>

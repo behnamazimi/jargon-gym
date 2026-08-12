@@ -30,6 +30,8 @@ export function JargonPage({ initialData }: JargonPageProps) {
     activeCategories,
     hideKnown,
     setHideKnown,
+    showStrength,
+    setShowStrength,
     sortMode,
     setSortMode,
     openTerms,
@@ -112,6 +114,8 @@ export function JargonPage({ initialData }: JargonPageProps) {
               onToggleCategory={toggleCategory}
               hideKnown={hideKnown}
               onHideKnownChange={setHideKnown}
+              showStrength={showStrength}
+              onShowStrengthChange={setShowStrength}
               sortMode={sortMode}
               onSortChange={setSortMode}
               visibleCount={filteredTerms.length}
@@ -121,6 +125,7 @@ export function JargonPage({ initialData }: JargonPageProps) {
               terms={filteredTerms}
               knownTerms={knownTerms}
               strengthByTermId={initialData.strengthByTermId}
+              showStrength={showStrength}
               openTerms={openTerms}
               isOwner={isOwner}
               domainId={domain.id}
