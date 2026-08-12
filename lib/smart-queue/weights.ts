@@ -21,8 +21,11 @@ export const FAIL_RATE_MIN_ATTEMPTS = 4;
  *  term — scaled up per streak by masteredCooldownHours below. */
 export const BASE_COOLDOWN_HOURS = 72;
 
-/** Per-streak-point multiplier on the cooldown window. */
-export const COOLDOWN_GROWTH_FACTOR = 1.4;
+/** Per-streak-point multiplier on the cooldown window. SM-2-style ease
+ *  factors (~2.5) would collapse streak 3+ into one bucket given the 2-week
+ *  cap below — 1.6 keeps 5 distinct pre-cap levels while still growing
+ *  faster than the previous 1.4. */
+export const COOLDOWN_GROWTH_FACTOR = 1.6;
 
 /** Cooldown window never exceeds this, however high the streak. */
 export const COOLDOWN_CAP_HOURS = 24 * 14; // 2 weeks
