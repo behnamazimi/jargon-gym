@@ -12,6 +12,8 @@ export {
   BASE_COOLDOWN_HOURS,
   ENGAGED_MIN_COUNT,
   FAIL_RATE_MIN_ATTEMPTS,
+  MIX_ALREADY_TOUCHED_SLOTS,
+  MIX_NEVER_ENGAGED_SLOTS,
   QUEUE_TIMEZONE,
 } from "./weights";
 export type { Strength } from "./strength";

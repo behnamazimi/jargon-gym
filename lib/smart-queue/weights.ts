@@ -56,9 +56,20 @@ export const WEIGHTS: ScoreWeights = {
   sameDayCooldownPenalty: 120,
   engagedButUntestedBoost: 30,
   abandonedReviewBoost: 45,
-  newTermBoost: 30,
   stalenessMaxBoost: 84, // former ceiling: 0.5 * 168h cap
   stalenessCapHours: 168, // 7 days
   crossFailOtherTestBoostPerRepeat: 25,
   fragileBoostMax: 25,
 };
+
+/** Never-engaged slots per mix cycle when both lanes have eligible terms.
+ *  Paired with MIX_ALREADY_TOUCHED_SLOTS. 1:1 (these defaults) alternates
+ *  unread with already-touched. To prefer new terms, raise this one
+ *  (e.g. 2 and 1 → two never-engaged, then one already-touched). To
+ *  protect the rotation more, raise the other (e.g. 1 and 2). If one
+ *  lane empties, the other fills the rest of the pick. */
+export const MIX_NEVER_ENGAGED_SLOTS = 1;
+
+/** Already-touched slots per mix cycle (struggling/stale/steady).
+ *  See MIX_NEVER_ENGAGED_SLOTS for how the pair sets the ratio. */
+export const MIX_ALREADY_TOUCHED_SLOTS = 1;

@@ -87,7 +87,10 @@ widget — and it moves between pools.
    score each candidate (weights + PickContext)
               |
               v
-      sort by score, take top N
+      sort by score (ties shuffled)
+              |
+              v
+   mix lanes: never-engaged <-> already-touched, take top N
               |
               v
         hydrate TermCards + pickMeta
@@ -168,13 +171,16 @@ applicable reasons are returned for UI badges.
 | **Abandoned review**             | `pending_reveal === true`                                                                               | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                               |
 | **Cross-activity fail**          | `last_fail_at` is set and `last_fail_source` is the _other_ test activity                               | `review`/`quiz` only. Boosts when the other activity most recently failed — a term's own activity already reflects its own fail via struggling. Scaled by `min(\|source streak\|, FAIL_STREAK_CAP)`. Read uses the same-day fail sit-out instead of a boost. |
 | **Fragile (lifetime fail rate)** | `review`/`quiz` only: this context's own attempts `>= FAIL_RATE_MIN_ATTEMPTS`                           | Boost scaled by lifetime fail rate × `fragileBoostMax`. Independent of the _current_ streak sign — see [Lifetime fail rate](#lifetime-fail-rate-fragile).                                                                                                    |
-| **New term**                     | Created within the last 72 hours                                                                        | Moderate boost, all contexts.                                                                                                                                                                                                                                |
 | **Staleness**                    | Time since this context's own last-activity timestamp, only when its own count > 0                      | Decay-shaped, capped at 7 days — see [Decay-shaped staleness](#decay-shaped-staleness). Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                             |
 
 Same-score candidates are shuffled freshly each pick (Fisher–Yates within
 each equal-score run after score-desc sort) so ties mix across collections
 instead of keeping Postgres fetch order. Debug and live picks can disagree
 on tie order.
+
+Scoring ranks candidates; it does not decide pick order on its own — see
+[Lane mix](#lane-mix) for the step that runs after it. `created_at` stays on
+the candidate but scoring no longer reads it — there's no new-term boost.
 
 Implementation: [`lib/smart-queue/score.ts`](../lib/smart-queue/score.ts) →
 [`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts).
@@ -269,25 +275,25 @@ UI for these:
 | `sameDayCooldownPenalty`           | 120     | Same-day Read→Review/Quiz and fail→Read sit-outs                                   |
 | `engagedButUntestedBoost`          | 30      | Read several times, never tested (this activity)                                   |
 | `abandonedReviewBoost`             | 45      | Left mid-review                                                                    |
-| `newTermBoost`                     | 30      | Recently added                                                                     |
 | `stalenessMaxBoost`                | 84      | Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap)    |
 | `stalenessCapHours`                | 168     | Staleness cap (7 days)                                                             |
 | `crossFailOtherTestBoostPerRepeat` | 25      | Per repeat, test-context boost when the _other_ test activity most recently failed |
 | `fragileBoostMax`                  | 25      | Boost at 100% lifetime fail rate; scales linearly down to 0                        |
 
-| Constant                 | Default                              | Purpose                                                                                                        |
-| ------------------------ | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `BASE_COOLDOWN_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1` (renamed from `SOLID_COOLDOWN_HOURS`)                                  |
-| `COOLDOWN_GROWTH_FACTOR` | 1.4                                  | Per-streak-point multiplier on the cooldown window                                                             |
-| `COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                    |
-| `STALENESS_DECAY_HOURS`  | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the staleness curve — a map next to `WEIGHTS`, not fields on `ScoreWeights` |
-| `FAIL_RATE_MIN_ATTEMPTS` | 4                                    | Minimum own-context attempts before `fragile` applies                                                          |
-| `QUEUE_TIMEZONE`         | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                  |
-| `ENGAGED_MIN_COUNT`      | 3                                    | Minimum reads before `engaged_untested` applies                                                                |
-| `FAIL_STREAK_CAP`        | 5                                    | Maximum consecutive fails counted toward the struggling boost                                                  |
+| Constant                    | Default                              | Purpose                                                                                                        |
+| --------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `BASE_COOLDOWN_HOURS`       | 72                                   | Mastered-cooldown window at streak `+1` (renamed from `SOLID_COOLDOWN_HOURS`)                                  |
+| `COOLDOWN_GROWTH_FACTOR`    | 1.4                                  | Per-streak-point multiplier on the cooldown window                                                             |
+| `COOLDOWN_CAP_HOURS`        | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                    |
+| `STALENESS_DECAY_HOURS`     | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the staleness curve — a map next to `WEIGHTS`, not fields on `ScoreWeights` |
+| `FAIL_RATE_MIN_ATTEMPTS`    | 4                                    | Minimum own-context attempts before `fragile` applies                                                          |
+| `QUEUE_TIMEZONE`            | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                  |
+| `ENGAGED_MIN_COUNT`         | 3                                    | Minimum reads before `engaged_untested` applies                                                                |
+| `FAIL_STREAK_CAP`           | 5                                    | Maximum consecutive fails counted toward the struggling boost                                                  |
+| `MIX_NEVER_ENGAGED_SLOTS`   | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                  |
+| `MIX_ALREADY_TOUCHED_SLOTS` | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                |
 
-Staleness and "stale" reason labels use a 24-hour threshold. New-term boost
-uses a 72-hour creation window.
+Staleness and "stale" reason labels use a 24-hour threshold.
 
 ### Pick reasons
 
@@ -297,7 +303,6 @@ and queue previews.
 | Reason                 | When it fires                                                                                                    | UI label (`read` / `review` / `quiz`)                            |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `unseen`               | This context's own count is 0                                                                                    | Never read / Never reviewed / Never quizzed                      |
-| `new`                  | Term created within ~72h                                                                                         | Recently added                                                   |
 | `struggling`           | This context's own streak < 0                                                                                    | Struggling                                                       |
 | `repeat_fail`          | Struggling and `\|streak\| >= 2`                                                                                 | Repeatedly missed                                                |
 | `engaged_untested`     | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)                     | Read 3+ times, not tested                                        |
@@ -323,13 +328,48 @@ Labels live in [`lib/smart-queue/reasons.ts`](../lib/smart-queue/reasons.ts).
 Review and quiz setup show a collapsible queue preview; cards and questions
 show one or two badges.
 
+### Lane mix
+
+Scoring ranks candidates within a lane; `pickTerms`
+([`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts)) then splits the
+score-desc list into two lanes and zips them, so a fresh dump of terms
+can't occupy every pick until the pool is exhausted:
+
+- **Never-engaged** — this context's own count is 0.
+- **Already-touched** — this context's own count is > 0 (struggling, stale,
+  mastered, steady all live here; the existing score still orders _within_
+  this lane).
+
+The zip cycles `MIX_NEVER_ENGAGED_SLOTS` never-engaged picks then
+`MIX_ALREADY_TOUCHED_SLOTS` already-touched picks (both default to 1 — a
+straight alternation). Once one lane's eligible terms run out, the cycle
+keeps contributing 0 from it each pass, so the other lane fills the rest of
+the pick alone.
+
+A term sits out of a mix slot — but still appears in debug, appended after
+the eligible zip — when `mastered_cooldown`, `recent_read_cooldown`, or
+`recent_fail_cooldown` fired, or (read context only) it was already read
+today. A same-day Review/Quiz miss stays eligible: there's no mastered
+cooldown to sit it out, and a struggling term should still be able to
+surface.
+
+Which lane starts a cycle isn't persisted — `limit=1` calls (Read, Telegram
+`/read`, scheduled delivery) reconstruct it each time from today's
+own-context engagements, starting with whichever lane is behind on its
+slot ratio (tie starts never-engaged). See the doc comment on
+`startingLane` in `pick.ts` for the exact reconstruction. Review/Quiz
+batches (`limit` up to 30) get a true mix-ratio list from a single zip.
+
 ### Soft cycle
 
 There is no "reset the deck" button for everyday use. When every term in a
 pool has been engaged with at least once (Read, for the `read` context; or
 tested once, for `review`/`quiz`), the never-engaged boost stops applying
 and ranking shifts to staleness and struggle. Pool stats expose this as
-`allSeenOnce` (`lib/smart-queue/stats.ts`), computed the same way and scoped
+`allSeenOnce` (`lib/smart-queue/stats.ts`, unchanged by lane mixing) — a
+stat, not a claim that unseen terms strictly lead until then; the mix
+already interleaves already-touched terms in throughout. Computed the same
+way and scoped
 to the same `PickContext`. Resetting a collection's progress clears both
 `review_state` and `user_progress` and starts the cycle over.
 

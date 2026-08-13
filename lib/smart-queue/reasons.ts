@@ -12,7 +12,6 @@ const VERB: Record<PickContext, string> = {
 };
 
 const STATIC_LABELS: Partial<Record<PickReason, string>> = {
-  new: "Recently added",
   struggling: "Struggling",
   repeat_fail: "Repeatedly missed",
   engaged_untested: `Read ${ENGAGED_MIN_COUNT}+ times, not tested`,

@@ -11,7 +11,12 @@ import {
   ContentPageTitledBulletList,
   contentPageLinkClass,
 } from "@/components/content";
-import { BASE_COOLDOWN_HOURS, ENGAGED_MIN_COUNT } from "@/lib/smart-queue";
+import {
+  BASE_COOLDOWN_HOURS,
+  ENGAGED_MIN_COUNT,
+  MIX_ALREADY_TOUCHED_SLOTS,
+  MIX_NEVER_ENGAGED_SLOTS,
+} from "@/lib/smart-queue";
 
 type HowSmartQueueWorksPageProps = {
   isLoggedIn?: boolean;
@@ -22,15 +27,11 @@ const BASE_COOLDOWN_DAYS = Math.round(BASE_COOLDOWN_HOURS / 24);
 const ANY_ACTIVITY = [
   {
     title: "Never engaged here",
-    body: "Rises until every term in the pool has been touched in that activity, Never read on Read, Never reviewed on Review, Never quizzed on Quiz. Being tested in one doesn't clear this for the others.",
+    body: `Never read on Read, never reviewed on Review, never quizzed on Quiz. These take about ${MIX_NEVER_ENGAGED_SLOTS} in every ${MIX_NEVER_ENGAGED_SLOTS + MIX_ALREADY_TOUCHED_SLOTS} picks, mixed in with terms you've already touched, rather than clearing the whole pool first. Being tested in one doesn't clear this for the others.`,
   },
   {
     title: "Missed elsewhere recently",
     body: "Failing a quiz nudges Review; failing Review nudges Quiz. A miss is trustworthy evidence you don't know it in the other test, but acing one doesn't quiet the others — quizzes are guessable, so a pass there isn't proof the way a miss is. Read sits a same-day miss out instead of boosting it.",
-  },
-  {
-    title: "Recently added",
-    body: "Terms added in the last few days get a nudge so they don't sink to the bottom.",
   },
   {
     title: "Not active here recently",
@@ -198,9 +199,12 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             The mastered cooldown (starting around {BASE_COOLDOWN_DAYS} day
             {BASE_COOLDOWN_DAYS === 1 ? "" : "s"} after a pass, growing with each pass in a row) and
             the same-day sit-outs (try tomorrow) are the only time-based quieting. Nothing else gets
-            a future review date. Once every term in a pool has been engaged in that activity at
-            least once, the never-engaged signal stops applying there. After that, neglected and
-            weak terms rise, a gentle cycle with no reset button.
+            a future review date. When both never-engaged and already-touched terms exist, picks
+            alternate {MIX_NEVER_ENGAGED_SLOTS} never-engaged to {MIX_ALREADY_TOUCHED_SLOTS}{" "}
+            already-touched — about as often as terms you've already touched, not always first. A
+            term sitting out a cooldown skips its turn. Once one side runs out, the other runs
+            alone: after every term in a pool has been engaged in that activity at least once,
+            neglected and weak terms rise on their own, a gentle cycle with no reset button.
           </p>
         </ContentPageSection>
 

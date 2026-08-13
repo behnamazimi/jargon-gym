@@ -14,7 +14,6 @@ type PickReasonBadgesProps = {
 
 const REASON_BADGE_CLASS: Record<PickReason, string> = {
   unseen: "badge-soft badge-primary",
-  new: "badge-soft badge-primary",
   struggling: "badge-soft badge-warning",
   repeat_fail: "badge-soft badge-error",
   engaged_untested: "badge-soft badge-info",

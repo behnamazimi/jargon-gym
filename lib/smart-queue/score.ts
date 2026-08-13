@@ -16,7 +16,6 @@ import {
 } from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
-const NEW_TERM_THRESHOLD_HOURS = 72;
 const STALE_REASON_THRESHOLD_HOURS = 24;
 
 type ScoreBreakdown = {
@@ -190,13 +189,6 @@ function evaluateCandidate(
       score += boost;
       reasons.push("fragile");
     }
-  }
-
-  // New term boost.
-  const ageHours = (now.getTime() - candidate.createdAt.getTime()) / (1000 * 60 * 60);
-  if (ageHours < NEW_TERM_THRESHOLD_HOURS) {
-    score += weights.newTermBoost;
-    reasons.push("new");
   }
 
   // Staleness — only once this context has some activity to measure from.

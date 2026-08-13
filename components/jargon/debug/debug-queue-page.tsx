@@ -182,7 +182,7 @@ export function DebugQueuePage({ collections }: DebugQueuePageProps) {
             <QuizPanelHeader
               icon={Bug}
               title={loading ? "Loading…" : `${rows.length} term${rows.length === 1 ? "" : "s"}`}
-              description="Sorted by score, highest first — exactly what the queue would pick next."
+              description="Never-engaged and already-touched terms interleaved, exactly what the queue would pick next — scores shown per row, but the list isn't pure score-desc."
             />
             <QuizPanelBody>
               {errorMessage ? (

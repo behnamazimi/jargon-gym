@@ -22,7 +22,6 @@ export type FailSource = "review" | "quiz";
 
 export type PickReason =
   | "unseen"
-  | "new"
   | "struggling"
   | "repeat_fail"
   | "engaged_untested"
@@ -71,7 +70,6 @@ export type ScoreWeights = {
   /** Read count >= ENGAGED_MIN_COUNT but this context's own test count is 0. */
   engagedButUntestedBoost: number;
   abandonedReviewBoost: number;
-  newTermBoost: number;
   /** Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap). */
   stalenessMaxBoost: number;
   stalenessCapHours: number;
