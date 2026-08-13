@@ -26,7 +26,7 @@ export function PageHeader({
           <Icon className="size-5" aria-hidden strokeWidth={1.5} />
         </div>
         <div className="min-w-0">
-          <h1 className="font-heading text-2xl font-bold tracking-tight text-base-content">
+          <h1 className="font-heading text-xl font-bold tracking-tight text-base-content">
             {title}
           </h1>
           {description ? <p className="mt-1 text-sm text-base-content/60">{description}</p> : null}

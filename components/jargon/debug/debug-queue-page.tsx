@@ -12,12 +12,10 @@ import {
   QuizCenteredState,
   QuizPanel,
   QuizPanelBody,
-  QuizPanelHeader,
   QuizSetupOption,
 } from "@/components/jargon/quiz/quiz-ui";
 import { PageShell } from "@/components/page-container";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { LinkButton } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -33,7 +31,11 @@ type DebugQueuePageProps = {
   collections: StudyCollection[];
 };
 
-const CONTEXT_OPTIONS: Array<{ value: PickContext; title: string; description: string }> = [
+const CONTEXT_OPTIONS: Array<{
+  value: PickContext;
+  title: string;
+  description: string;
+}> = [
   {
     value: "read",
     title: "Read",
@@ -103,19 +105,12 @@ export function DebugQueuePage({ collections }: DebugQueuePageProps) {
               icon={AlertCircle}
               title="No active collections"
               description="Turn on a collection on the collection page to see its terms here."
-            >
-              <LinkButton href="/jargon">Back to collection</LinkButton>
-            </QuizCenteredState>
+            />
           </QuizPanelBody>
         </QuizPanel>
       ) : (
         <>
           <QuizPanel>
-            <QuizPanelHeader
-              icon={Bug}
-              title="Filters"
-              description="Nothing here saves anywhere — switch context freely to compare rankings."
-            />
             <QuizPanelBody>
               <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
                 <legend className="mb-2 text-sm leading-none font-medium">Pool</legend>
@@ -179,11 +174,6 @@ export function DebugQueuePage({ collections }: DebugQueuePageProps) {
           </QuizPanel>
 
           <QuizPanel>
-            <QuizPanelHeader
-              icon={Bug}
-              title={loading ? "Loading…" : `${rows.length} term${rows.length === 1 ? "" : "s"}`}
-              description="Never-engaged and already-touched terms interleaved, exactly what the queue would pick next — scores shown per row, but the list isn't pure score-desc."
-            />
             <QuizPanelBody>
               {errorMessage ? (
                 <Alert variant="destructive">

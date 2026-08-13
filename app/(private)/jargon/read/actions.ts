@@ -4,11 +4,8 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
-import {
-  fetchTermCardForUser,
-  getReviewPoolStatsForUser,
-  pickReviewTermsForUser,
-} from "@/lib/smart-queue";
+import { fetchTermCardForUser } from "@/lib/smart-queue/hydrate";
+import { getReviewPoolStatsForUser, pickReviewTermsForUser } from "@/lib/smart-queue/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };

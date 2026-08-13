@@ -46,6 +46,17 @@ export function QuizPanelHeader({
   );
 }
 
+export function QuizPanelLabel({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="mb-5 space-y-1">
+      <p className="m-0 text-sm font-semibold text-base-content/80">{title}</p>
+      {description ? (
+        <p className="m-0 text-xs leading-relaxed text-base-content/50">{description}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function QuizPanelBody({
   children,
   className,
@@ -220,12 +231,12 @@ export function QuizCenteredState({
   children?: ReactNode;
 }) {
   return (
-    <div className="mx-auto flex max-w-sm flex-col items-center gap-4 py-2 text-center">
-      <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <Icon className="size-6" aria-hidden strokeWidth={1.5} />
+    <div className="mx-auto flex max-w-sm flex-col items-center gap-3 py-2 text-center">
+      <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Icon className="size-5" aria-hidden strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
-        <h2 className="m-0 text-base font-semibold">{title}</h2>
+        <h2 className="m-0 text-sm font-semibold text-base-content/80">{title}</h2>
         {description ? (
           <p className="m-0 text-sm leading-relaxed text-base-content/60">{description}</p>
         ) : null}

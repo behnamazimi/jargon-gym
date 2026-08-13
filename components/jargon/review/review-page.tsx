@@ -8,7 +8,7 @@ import {
   QuizKeyboardHint,
   QuizPanel,
   QuizPanelBody,
-  QuizPanelHeader,
+  QuizPanelLabel,
   QuizSetupFooter,
   QuizSetupOption,
   QuizStat,
@@ -400,186 +400,181 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                 icon={AlertCircle}
                 title="No active collections"
                 description="Turn on a collection on the collection page before you start reviewing."
-              >
-                <LinkButton href="/jargon">Back to collection</LinkButton>
-              </QuizCenteredState>
+              />
             </QuizPanelBody>
           ) : (
-            <>
-              <QuizPanelHeader
-                icon={BookOpen}
+            <QuizPanelBody>
+              <QuizPanelLabel
                 title="Set up your review"
                 description="Pick what to study and how many cards."
               />
-              <QuizPanelBody>
-                {savedSession ? (
-                  <Alert>
-                    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <span>
-                        You have an in-progress session — card{" "}
-                        <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
-                        <span className="tabular-nums">{savedSession.cards.length}</span>.
-                      </span>
-                      <span className="flex flex-wrap gap-2">
-                        <Button type="button" size="sm" onPress={handleResumeSession}>
-                          Resume
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onPress={handleDiscardSession}
-                        >
-                          Start new
-                        </Button>
-                      </span>
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
-
-                <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
-                  <legend className="mb-2 text-sm leading-none font-medium">What to review</legend>
-                  <div className="flex flex-col gap-3">
-                    <QuizSetupOption
-                      name="review-status"
-                      value="unknown"
-                      checked={status === "unknown"}
-                      onChange={() => setStatus("unknown")}
-                      title="Unknown terms"
-                      description="Terms you haven't marked as known."
-                    />
-                    <QuizSetupOption
-                      name="review-status"
-                      value="known"
-                      checked={status === "known"}
-                      onChange={() => setStatus("known")}
-                      title="Known terms"
-                      description="Terms you've already marked as known."
-                    />
-                  </div>
-                </fieldset>
-
-                <Field className="max-w-md">
-                  <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
-                  <Select
-                    selectedKey={selectedCollectionId}
-                    onSelectionChange={(key) => setSelectedCollectionId(String(key))}
-                  >
-                    <SelectTrigger id="review-collection" className="text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem id="all">
-                        All active collections ({allCollectionsTermCount(collections, status)})
-                      </SelectItem>
-                      {collections.map((collection) => (
-                        <SelectItem key={collection.id} id={collection.id}>
-                          {collection.name} ({termCountForCollection(collection, status)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <QuizStat
-                  label="Terms available"
-                  value={
-                    availableTermCount === 0
-                      ? "None"
-                      : `${availableTermCount} term${availableTermCount === 1 ? "" : "s"}`
-                  }
-                />
-
-                <Field className="max-w-md">
-                  <FieldLabel htmlFor="review-card-count">Cards in this session</FieldLabel>
-                  <Input
-                    id="review-card-count"
-                    type="text"
-                    inputMode="numeric"
-                    value={cardCountInput}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setCardCountInput(value);
-
-                      if (value === "") {
-                        setCardCountError(null);
-                        return;
-                      }
-
-                      const parsed = Number.parseInt(value, 10);
-                      if (Number.isNaN(parsed) || parsed < 1 || parsed > maxCardCount) {
-                        setCardCountError(`Please enter a number between 1 and ${maxCardCount}`);
-                      } else {
-                        setCardCount(parsed);
-                        setCardCountError(null);
-                      }
-                    }}
-                    disabled={availableTermCount === 0}
-                    className="max-w-[8rem] tabular-nums"
-                  />
-                  <FieldDescription>
-                    {cardCountError ? (
-                      <span className="text-error">{cardCountError}</span>
-                    ) : (
-                      <>
-                        Choose 1–{maxCardCount || 1}
-                        {availableTermCount > MAX_REVIEW_TERMS
-                          ? ` (${MAX_REVIEW_TERMS} max per session).`
-                          : "."}
-                      </>
-                    )}
-                  </FieldDescription>
-                </Field>
-
-                {poolStats ? (
-                  <div className="text-sm text-base-content/70">
-                    <span className="font-medium">{poolStats.unseen} never reviewed</span>
-                    {" · "}
-                    <span className="font-medium">{poolStats.seen} reviewed</span>
-                    {" · "}
-                    <span className="font-medium">{poolStats.stale} stale</span>
-                    {" · "}
-                    <span className="font-medium">
-                      {poolStats.seen}/{poolStats.total} covered
+              {savedSession ? (
+                <Alert>
+                  <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span>
+                      You have an in-progress session — card{" "}
+                      <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
+                      <span className="tabular-nums">{savedSession.cards.length}</span>.
                     </span>
-                    {poolStats.allSeenOnce ? " · all reviewed once" : null}
-                  </div>
-                ) : null}
+                    <span className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" onPress={handleResumeSession}>
+                        Resume
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onPress={handleDiscardSession}
+                      >
+                        Start new
+                      </Button>
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              ) : null}
 
-                {availableTermCount > 0 && cardCountError === null ? (
-                  <QueuePreview items={queuePreview} context="review" loading={previewLoading} />
-                ) : null}
+              <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
+                <legend className="mb-2 text-sm leading-none font-medium">What to review</legend>
+                <div className="flex flex-col gap-3">
+                  <QuizSetupOption
+                    name="review-status"
+                    value="unknown"
+                    checked={status === "unknown"}
+                    onChange={() => setStatus("unknown")}
+                    title="Unknown terms"
+                    description="Terms you haven't marked as known."
+                  />
+                  <QuizSetupOption
+                    name="review-status"
+                    value="known"
+                    checked={status === "known"}
+                    onChange={() => setStatus("known")}
+                    title="Known terms"
+                    description="Terms you've already marked as known."
+                  />
+                </div>
+              </fieldset>
 
-                {availableTermCount === 0 ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>
-                      No {status} terms in your selection. Pick another option or{" "}
-                      <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
-                        activate a collection
-                      </LinkButton>
-                      .
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
+              <Field className="max-w-md">
+                <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
+                <Select
+                  selectedKey={selectedCollectionId}
+                  onSelectionChange={(key) => setSelectedCollectionId(String(key))}
+                >
+                  <SelectTrigger id="review-collection" className="text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem id="all">
+                      All active collections ({allCollectionsTermCount(collections, status)})
+                    </SelectItem>
+                    {collections.map((collection) => (
+                      <SelectItem key={collection.id} id={collection.id}>
+                        {collection.name} ({termCountForCollection(collection, status)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
 
-                {errorMessage ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>{errorMessage}</AlertDescription>
-                  </Alert>
-                ) : null}
+              <QuizStat
+                label="Terms available"
+                value={
+                  availableTermCount === 0
+                    ? "None"
+                    : `${availableTermCount} term${availableTermCount === 1 ? "" : "s"}`
+                }
+              />
 
-                <QuizSetupFooter>
-                  <Button
-                    type="button"
-                    onPress={handleStartReview}
-                    isDisabled={availableTermCount === 0 || isStarting || cardCountError !== null}
-                    className="w-full"
-                  >
-                    {isStarting ? "Starting…" : "Start review"}
-                  </Button>
-                </QuizSetupFooter>
-              </QuizPanelBody>
-            </>
+              <Field className="max-w-md">
+                <FieldLabel htmlFor="review-card-count">Cards in this session</FieldLabel>
+                <Input
+                  id="review-card-count"
+                  type="text"
+                  inputMode="numeric"
+                  value={cardCountInput}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setCardCountInput(value);
+
+                    if (value === "") {
+                      setCardCountError(null);
+                      return;
+                    }
+
+                    const parsed = Number.parseInt(value, 10);
+                    if (Number.isNaN(parsed) || parsed < 1 || parsed > maxCardCount) {
+                      setCardCountError(`Please enter a number between 1 and ${maxCardCount}`);
+                    } else {
+                      setCardCount(parsed);
+                      setCardCountError(null);
+                    }
+                  }}
+                  disabled={availableTermCount === 0}
+                  className="max-w-[8rem] tabular-nums"
+                />
+                <FieldDescription>
+                  {cardCountError ? (
+                    <span className="text-error">{cardCountError}</span>
+                  ) : (
+                    <>
+                      Choose 1–{maxCardCount || 1}
+                      {availableTermCount > MAX_REVIEW_TERMS
+                        ? ` (${MAX_REVIEW_TERMS} max per session).`
+                        : "."}
+                    </>
+                  )}
+                </FieldDescription>
+              </Field>
+
+              {poolStats ? (
+                <div className="text-sm text-base-content/70">
+                  <span className="font-medium">{poolStats.unseen} never reviewed</span>
+                  {" · "}
+                  <span className="font-medium">{poolStats.seen} reviewed</span>
+                  {" · "}
+                  <span className="font-medium">{poolStats.stale} stale</span>
+                  {" · "}
+                  <span className="font-medium">
+                    {poolStats.seen}/{poolStats.total} covered
+                  </span>
+                  {poolStats.allSeenOnce ? " · all reviewed once" : null}
+                </div>
+              ) : null}
+
+              {availableTermCount > 0 && cardCountError === null ? (
+                <QueuePreview items={queuePreview} context="review" loading={previewLoading} />
+              ) : null}
+
+              {availableTermCount === 0 ? (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    No {status} terms in your selection. Pick another option or{" "}
+                    <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
+                      activate a collection
+                    </LinkButton>
+                    .
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              {errorMessage ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <QuizSetupFooter>
+                <Button
+                  type="button"
+                  onPress={handleStartReview}
+                  isDisabled={availableTermCount === 0 || isStarting || cardCountError !== null}
+                  className="w-full"
+                >
+                  {isStarting ? "Starting…" : "Start review"}
+                </Button>
+              </QuizSetupFooter>
+            </QuizPanelBody>
           )}
         </QuizPanel>
       ) : null}

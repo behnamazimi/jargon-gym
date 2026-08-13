@@ -19,6 +19,7 @@ import {
   QuizPanel,
   QuizPanelBody,
   QuizPanelHeader,
+  QuizPanelLabel,
   QuizSetupFooter,
   QuizSetupOption,
   QuizStat,
@@ -80,7 +81,10 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   const [answers, setAnswers] = useState<QuizAnswer[]>([]);
   const [flippedTerms, setFlippedTerms] = useState<{ id: string; term: string }[]>([]);
   const [flippedTermIds, setFlippedTermIds] = useState<string[]>([]);
-  const [resultsScore, setResultsScore] = useState<{ score: number; total: number } | null>(null);
+  const [resultsScore, setResultsScore] = useState<{
+    score: number;
+    total: number;
+  } | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState(1);
   const [questionCountInput, setQuestionCountInput] = useState("1");
@@ -222,7 +226,12 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     setStep("generating");
     setSessionStartedAt(new Date().toISOString());
 
-    const result = await generateQuizAction({ domainIds, status, questionCount, questionStyle });
+    const result = await generateQuizAction({
+      domainIds,
+      status,
+      questionCount,
+      questionStyle,
+    });
 
     if ("error" in result) {
       setErrorMessage(result.error);
@@ -309,218 +318,213 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                 icon={AlertCircle}
                 title="No active collections"
                 description="Turn on a collection on the collection page before you take a quiz."
-              >
-                <BackToJargonLink />
-              </QuizCenteredState>
+              />
             </QuizPanelBody>
           ) : (
-            <>
-              <QuizPanelHeader
-                icon={Sparkles}
+            <QuizPanelBody>
+              <QuizPanelLabel
                 title="Set up your quiz"
                 description="Pick what to study and which collection to pull from."
               />
-              <QuizPanelBody>
-                {savedSession ? (
-                  <Alert>
-                    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <span>
-                        You have a quiz in progress — question{" "}
-                        <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
-                        <span className="tabular-nums">{savedSession.questions.length}</span>.
-                      </span>
-                      <span className="flex flex-wrap gap-2">
-                        <Button type="button" size="sm" onPress={handleResumeSession}>
-                          Resume
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onPress={handleDiscardSession}
-                        >
-                          Start new
-                        </Button>
-                      </span>
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
+              {savedSession ? (
+                <Alert>
+                  <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span>
+                      You have a quiz in progress — question{" "}
+                      <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
+                      <span className="tabular-nums">{savedSession.questions.length}</span>.
+                    </span>
+                    <span className="flex flex-wrap gap-2">
+                      <Button type="button" size="sm" onPress={handleResumeSession}>
+                        Resume
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onPress={handleDiscardSession}
+                      >
+                        Start new
+                      </Button>
+                    </span>
+                  </AlertDescription>
+                </Alert>
+              ) : null}
 
-                <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
-                  <legend className="text-sm font-medium leading-none mb-2">What to quiz</legend>
-                  <div className="flex flex-col gap-3">
-                    <QuizSetupOption
-                      name="quiz-status"
-                      value="unknown"
-                      checked={status === "unknown"}
-                      onChange={() => setStatus("unknown")}
-                      title="Unknown terms"
-                      description="Terms you haven't marked as known."
-                    />
-                    <QuizSetupOption
-                      name="quiz-status"
-                      value="known"
-                      checked={status === "known"}
-                      onChange={() => setStatus("known")}
-                      title="Known terms"
-                      description="Test yourself on terms you already know."
-                    />
-                  </div>
-                </fieldset>
-
-                <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
-                  <legend className="text-sm font-medium leading-none mb-2">Question style</legend>
-                  <div className="flex flex-col gap-3">
-                    <QuizSetupOption
-                      name="quiz-style"
-                      value="simple"
-                      checked={questionStyle === "simple"}
-                      onChange={() => {
-                        setQuestionStyle("simple");
-                        setErrorMessage(null);
-                      }}
-                      title="Simple (definition → term)"
-                      description="See the definition and pick the correct term."
-                    />
-                    <QuizSetupOption
-                      name="quiz-style"
-                      value="ai"
-                      checked={questionStyle === "ai"}
-                      onChange={() => setQuestionStyle("ai")}
-                      title="AI generated (scenarios)"
-                      description="Comprehension-based questions generated by AI."
-                    />
-                  </div>
-                </fieldset>
-
-                {aiRequiresSetup ? (
-                  <Alert variant="destructive" className="max-w-md">
-                    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <span>
-                        AI quizzes need a provider and API key in Settings. Choose simple mode, or
-                        set up an LLM provider.
-                      </span>
-                      <LinkButton href="/jargon/settings" size="sm" variant="outline">
-                        Go to Settings
-                      </LinkButton>
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
-
-                {errorMessage && step === "picker" ? (
-                  <Alert variant="destructive" className="max-w-md">
-                    <AlertDescription>{errorMessage}</AlertDescription>
-                  </Alert>
-                ) : null}
-
-                <Field className="max-w-md">
-                  <FieldLabel htmlFor="quiz-collection">Collection</FieldLabel>
-                  <Select
-                    selectedKey={selectedCollectionId}
-                    onSelectionChange={(key) => setSelectedCollectionId(String(key))}
-                  >
-                    <SelectTrigger id="quiz-collection" className="text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem id="all">
-                        All active collections ({allCollectionsTermCount(collections, status)})
-                      </SelectItem>
-                      {collections.map((collection) => (
-                        <SelectItem key={collection.id} id={collection.id}>
-                          {collection.name} ({termCountForCollection(collection, status)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <QuizStat
-                  label="Terms available"
-                  value={
-                    availableTermCount === 0
-                      ? "None"
-                      : `${availableTermCount} term${availableTermCount === 1 ? "" : "s"}`
-                  }
-                />
-
-                <Field className="max-w-md">
-                  <FieldLabel htmlFor="quiz-question-count">Questions in this quiz</FieldLabel>
-                  <Input
-                    id="quiz-question-count"
-                    type="text"
-                    inputMode="numeric"
-                    value={questionCountInput}
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setQuestionCountInput(value);
-
-                      if (value === "") {
-                        setQuestionCountError(null);
-                        return;
-                      }
-
-                      const parsed = Number.parseInt(value, 10);
-                      if (Number.isNaN(parsed) || parsed < 1 || parsed > maxQuestionCount) {
-                        setQuestionCountError(
-                          `Please enter a number between 1 and ${maxQuestionCount}`,
-                        );
-                      } else {
-                        setQuestionCount(parsed);
-                        setQuestionCountError(null);
-                      }
-                    }}
-                    disabled={availableTermCount === 0}
-                    className="max-w-[8rem] tabular-nums"
+              <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
+                <legend className="text-sm font-medium leading-none mb-2">What to quiz</legend>
+                <div className="flex flex-col gap-3">
+                  <QuizSetupOption
+                    name="quiz-status"
+                    value="unknown"
+                    checked={status === "unknown"}
+                    onChange={() => setStatus("unknown")}
+                    title="Unknown terms"
+                    description="Terms you haven't marked as known."
                   />
-                  <FieldDescription>
-                    {questionCountError ? (
-                      <span className="text-error">{questionCountError}</span>
-                    ) : (
-                      <>
-                        Choose 1–{maxQuestionCount || 1}
-                        {availableTermCount > MAX_QUIZ_TERMS
-                          ? ` (${MAX_QUIZ_TERMS} max per quiz).`
-                          : "."}
-                      </>
-                    )}
-                  </FieldDescription>
-                </Field>
+                  <QuizSetupOption
+                    name="quiz-status"
+                    value="known"
+                    checked={status === "known"}
+                    onChange={() => setStatus("known")}
+                    title="Known terms"
+                    description="Test yourself on terms you already know."
+                  />
+                </div>
+              </fieldset>
 
-                {availableTermCount > 0 && questionCountError === null ? (
-                  <QueuePreview items={queuePreview} context="quiz" loading={previewLoading} />
-                ) : null}
+              <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
+                <legend className="text-sm font-medium leading-none mb-2">Question style</legend>
+                <div className="flex flex-col gap-3">
+                  <QuizSetupOption
+                    name="quiz-style"
+                    value="simple"
+                    checked={questionStyle === "simple"}
+                    onChange={() => {
+                      setQuestionStyle("simple");
+                      setErrorMessage(null);
+                    }}
+                    title="Simple (definition → term)"
+                    description="See the definition and pick the correct term."
+                  />
+                  <QuizSetupOption
+                    name="quiz-style"
+                    value="ai"
+                    checked={questionStyle === "ai"}
+                    onChange={() => setQuestionStyle("ai")}
+                    title="AI generated (scenarios)"
+                    description="Comprehension-based questions generated by AI."
+                  />
+                </div>
+              </fieldset>
 
-                {availableTermCount === 0 ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>
-                      No {status} terms in your selection. Pick another option.
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
+              {aiRequiresSetup ? (
+                <Alert variant="destructive" className="max-w-md">
+                  <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span>
+                      AI quizzes need a provider and API key in Settings. Choose simple mode, or set
+                      up an LLM provider.
+                    </span>
+                    <LinkButton href="/jargon/settings" size="sm" variant="outline">
+                      Go to Settings
+                    </LinkButton>
+                  </AlertDescription>
+                </Alert>
+              ) : null}
 
-                <QuizSetupFooter
-                  hint={
-                    questionStyle === "simple" ? (
-                      <>Uses terms from your collections — no AI needed.</>
-                    ) : (
-                      <>Uses {providerLabel ?? "your LLM provider"} — this may take a moment.</>
-                    )
-                  }
+              {errorMessage && step === "picker" ? (
+                <Alert variant="destructive" className="max-w-md">
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <Field className="max-w-md">
+                <FieldLabel htmlFor="quiz-collection">Collection</FieldLabel>
+                <Select
+                  selectedKey={selectedCollectionId}
+                  onSelectionChange={(key) => setSelectedCollectionId(String(key))}
                 >
-                  <Button
-                    type="button"
-                    onPress={handleStartQuiz}
-                    isDisabled={
-                      availableTermCount === 0 || questionCountError !== null || aiRequiresSetup
+                  <SelectTrigger id="quiz-collection" className="text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem id="all">
+                      All active collections ({allCollectionsTermCount(collections, status)})
+                    </SelectItem>
+                    {collections.map((collection) => (
+                      <SelectItem key={collection.id} id={collection.id}>
+                        {collection.name} ({termCountForCollection(collection, status)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <QuizStat
+                label="Terms available"
+                value={
+                  availableTermCount === 0
+                    ? "None"
+                    : `${availableTermCount} term${availableTermCount === 1 ? "" : "s"}`
+                }
+              />
+
+              <Field className="max-w-md">
+                <FieldLabel htmlFor="quiz-question-count">Questions in this quiz</FieldLabel>
+                <Input
+                  id="quiz-question-count"
+                  type="text"
+                  inputMode="numeric"
+                  value={questionCountInput}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setQuestionCountInput(value);
+
+                    if (value === "") {
+                      setQuestionCountError(null);
+                      return;
                     }
-                    className="w-full"
-                  >
-                    Start quiz
-                  </Button>
-                </QuizSetupFooter>
-              </QuizPanelBody>
-            </>
+
+                    const parsed = Number.parseInt(value, 10);
+                    if (Number.isNaN(parsed) || parsed < 1 || parsed > maxQuestionCount) {
+                      setQuestionCountError(
+                        `Please enter a number between 1 and ${maxQuestionCount}`,
+                      );
+                    } else {
+                      setQuestionCount(parsed);
+                      setQuestionCountError(null);
+                    }
+                  }}
+                  disabled={availableTermCount === 0}
+                  className="max-w-[8rem] tabular-nums"
+                />
+                <FieldDescription>
+                  {questionCountError ? (
+                    <span className="text-error">{questionCountError}</span>
+                  ) : (
+                    <>
+                      Choose 1–{maxQuestionCount || 1}
+                      {availableTermCount > MAX_QUIZ_TERMS
+                        ? ` (${MAX_QUIZ_TERMS} max per quiz).`
+                        : "."}
+                    </>
+                  )}
+                </FieldDescription>
+              </Field>
+
+              {availableTermCount > 0 && questionCountError === null ? (
+                <QueuePreview items={queuePreview} context="quiz" loading={previewLoading} />
+              ) : null}
+
+              {availableTermCount === 0 ? (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    No {status} terms in your selection. Pick another option.
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              <QuizSetupFooter
+                hint={
+                  questionStyle === "simple" ? (
+                    <>Uses terms from your collections — no AI needed.</>
+                  ) : (
+                    <>Uses {providerLabel ?? "your LLM provider"} — this may take a moment.</>
+                  )
+                }
+              >
+                <Button
+                  type="button"
+                  onPress={handleStartQuiz}
+                  isDisabled={
+                    availableTermCount === 0 || questionCountError !== null || aiRequiresSetup
+                  }
+                  className="w-full"
+                >
+                  Start quiz
+                </Button>
+              </QuizSetupFooter>
+            </QuizPanelBody>
           )}
         </QuizPanel>
       ) : null}
@@ -598,8 +602,4 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
       ) : null}
     </PageShell>
   );
-}
-
-function BackToJargonLink() {
-  return <LinkButton href="/jargon">Back to jargon</LinkButton>;
 }
