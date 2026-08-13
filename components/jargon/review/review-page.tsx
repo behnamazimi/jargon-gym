@@ -1,8 +1,10 @@
 "use client";
 
-import { AlertCircle, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { MAX_REVIEW_TERMS, getMaxReviewCardCount } from "@/lib/review/terms";
+import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
+import { MAX_STUDY_TERMS, type StudyCollection, type TermPoolStatus } from "@/lib/study/types";
+import { QuizSetupOption } from "@/components/jargon/quiz/quiz-controls";
 import {
   QuizCenteredState,
   QuizKeyboardHint,
@@ -10,7 +12,6 @@ import {
   QuizPanelBody,
   QuizPanelLabel,
   QuizSetupFooter,
-  QuizSetupOption,
   QuizStat,
 } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -32,8 +33,6 @@ import {
   rateReviewTermAction,
   startReviewAction,
 } from "@/app/(private)/jargon/review/actions";
-import { PageHeader } from "@/components/jargon/page-header";
-import { PageShell } from "@/components/page-container";
 import { QueuePreview, type QueuePreviewItem } from "@/components/jargon/pick-reason-badges";
 import { ReviewCard } from "@/components/jargon/review/review-card";
 import { ReviewProgress } from "@/components/jargon/review/review-progress";
@@ -45,7 +44,6 @@ import {
   saveReviewSession,
 } from "@/lib/review/session-storage";
 import type { ReviewRating, ReviewSessionState, ReviewSetup, ReviewTerm } from "@/lib/review/types";
-import { countTermsForSelection, type StudyCollection, type TermPoolStatus } from "@/lib/study";
 import { cn } from "@/lib/utils";
 
 type ReviewStep = "setup" | "playing" | "summary";
@@ -86,7 +84,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const [ratings, setRatings] = useState<ReviewRating[]>([]);
   const [revealedTermIds, setRevealedTermIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isStarting, setIsStarting] = useState(false);
+  const [isStarting, startReview] = useTransition();
   const [isRating, setIsRating] = useState(false);
   const [savedSession, setSavedSession] = useState<ReviewSessionState | null>(null);
   const [sessionStatus, setSessionStatus] = useState<TermPoolStatus>("unknown");
@@ -112,7 +110,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     [collections, domainIds, status],
   );
 
-  const maxCardCount = getMaxReviewCardCount(availableTermCount);
+  const maxCardCount = getMaxStudyCount(availableTermCount);
 
   useEffect(() => {
     setSavedSession(loadReviewSession());
@@ -121,10 +119,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   useEffect(() => {
     if (availableTermCount === 0) return;
     setCardCount((current) => {
-      const next = Math.min(
-        Math.max(DEFAULT_CARD_COUNT, 1),
-        getMaxReviewCardCount(availableTermCount),
-      );
+      const next = Math.min(Math.max(DEFAULT_CARD_COUNT, 1), getMaxStudyCount(availableTermCount));
       const newCount = Math.min(current, next) || next;
       setCardCountInput(String(newCount));
       setCardCountError(null);
@@ -277,39 +272,37 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     setSavedSession(null);
   }
 
-  async function handleStartReview() {
+  function handleStartReview() {
     setErrorMessage(null);
-    setIsStarting(true);
-
     clearReviewSession();
     setSavedSession(null);
 
-    const result = await startReviewAction(currentSetup);
+    startReview(async () => {
+      const result = await startReviewAction(currentSetup);
 
-    setIsStarting(false);
+      if ("error" in result) {
+        setErrorMessage(result.error ?? "Couldn't start the review. Try again.");
+        return;
+      }
 
-    if ("error" in result) {
-      setErrorMessage(result.error ?? "Couldn't start the review. Try again.");
-      return;
-    }
+      const startedAt = new Date().toISOString();
+      setSessionStartedAt(startedAt);
+      setSessionStatus(currentSetup.status);
+      setCards(result.cards);
+      setCurrentIndex(0);
+      setRatings([]);
+      setRevealedTermIds([]);
+      setShownTermIds([]);
+      setStep("playing");
 
-    const startedAt = new Date().toISOString();
-    setSessionStartedAt(startedAt);
-    setSessionStatus(currentSetup.status);
-    setCards(result.cards);
-    setCurrentIndex(0);
-    setRatings([]);
-    setRevealedTermIds([]);
-    setShownTermIds([]);
-    setStep("playing");
-
-    persistSession({
-      setup: currentSetup,
-      cards: result.cards,
-      currentIndex: 0,
-      ratings: [],
-      revealedTermIds: [],
-      startedAt,
+      persistSession({
+        setup: currentSetup,
+        cards: result.cards,
+        currentIndex: 0,
+        ratings: [],
+        revealedTermIds: [],
+        startedAt,
+      });
     });
   }
 
@@ -385,13 +378,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const forgotCount = ratings.length - retainedCount;
 
   return (
-    <PageShell innerClassName="space-y-8">
-      <PageHeader
-        icon={BookOpen}
-        title="Review"
-        description="Practice recall with flashcards from your active collections."
-      />
-
+    <>
       {step === "setup" ? (
         <QuizPanel>
           {collections.length === 0 ? (
@@ -519,8 +506,8 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   ) : (
                     <>
                       Choose 1–{maxCardCount || 1}
-                      {availableTermCount > MAX_REVIEW_TERMS
-                        ? ` (${MAX_REVIEW_TERMS} max per session).`
+                      {availableTermCount > MAX_STUDY_TERMS
+                        ? ` (${MAX_STUDY_TERMS} max per session).`
                         : "."}
                     </>
                   )}
@@ -692,6 +679,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
           />
         </div>
       ) : null}
-    </PageShell>
+    </>
   );
 }

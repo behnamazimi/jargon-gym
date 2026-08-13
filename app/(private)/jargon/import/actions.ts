@@ -1,34 +1,29 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { executeImport } from "@/lib/jargon/import/execute-import";
 import { formatImportFailure, ImportExecutionError } from "@/lib/jargon/import/errors";
 import { buildImportPreview, parseImportJson } from "@/lib/jargon/import/validate-import";
 import type { ImportFailure, ImportPreview, ImportResult } from "@/lib/jargon/import/types";
+import { getSessionUser } from "@/lib/auth/require-session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+
+const NOT_SIGNED_IN_FAILURE: ImportFailure = {
+  title: "Not signed in",
+  message: "Log in to import jargon.",
+  hint: "Sign in, then come back to this page.",
+};
 
 export async function validateImportJson(
   raw: string,
 ): Promise<{ ok: true; preview: ImportPreview } | { ok: false; failure: ImportFailure }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return {
-      ok: false,
-      failure: {
-        title: "Not signed in",
-        message: "Log in to import jargon.",
-        hint: "Sign in, then come back to this page.",
-      },
-    };
-  }
-
   const parsed = parseImportJson(raw);
   if (!parsed.ok) return parsed;
+
+  const { supabase, user } = await getSessionUser();
+  if (!user) {
+    return { ok: false, failure: NOT_SIGNED_IN_FAILURE };
+  }
 
   try {
     const preview = await buildImportPreview(supabase, user.id, parsed.data);
@@ -49,24 +44,13 @@ export async function confirmImport(
   raw: string,
   confirmReplace = false,
 ): Promise<{ ok: true; result: ImportResult } | { ok: false; failure: ImportFailure }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return {
-      ok: false,
-      failure: {
-        title: "Not signed in",
-        message: "Log in to import jargon.",
-        hint: "Sign in, then come back to this page.",
-      },
-    };
-  }
-
   const parsed = parseImportJson(raw);
   if (!parsed.ok) return parsed;
+
+  const { supabase, user } = await getSessionUser();
+  if (!user) {
+    return { ok: false, failure: NOT_SIGNED_IN_FAILURE };
+  }
 
   try {
     const preview = await buildImportPreview(supabase, user.id, parsed.data);

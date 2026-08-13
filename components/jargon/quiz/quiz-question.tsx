@@ -3,9 +3,9 @@
 import { Circle, CircleDot } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { QuizChoice } from "@/components/jargon/quiz/quiz-controls";
 import {
   QuizActionBar,
-  QuizChoice,
   QuizFeedback,
   QuizKeyboardHint,
   QuizPanel,
@@ -14,7 +14,8 @@ import {
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
 import { StrengthBadge } from "@/components/jargon/strength-badge";
 import type { QuizQuestion } from "@/lib/quiz/types";
-import type { PickReason, Strength } from "@/lib/smart-queue";
+import type { PickReason } from "@/lib/smart-queue/types";
+import type { Strength } from "@/lib/smart-queue/strength";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
 
 type QuizQuestionViewProps = {

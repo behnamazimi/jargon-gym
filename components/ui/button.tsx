@@ -1,11 +1,10 @@
 "use client";
 
 import type * as React from "react";
+import NextLink from "next/link";
 import {
   Button as ButtonPrimitive,
-  Link as LinkPrimitive,
   type ButtonProps as ButtonPrimitiveProps,
-  type LinkProps as LinkPrimitiveProps,
 } from "react-aria-components";
 
 import { cn } from "@/lib/utils";
@@ -67,25 +66,37 @@ function Button({
   );
 }
 
+function isAppHref(href: string) {
+  return href.startsWith("/") && !href.startsWith("//");
+}
+
 function LinkButton({
   className,
   variant = "default",
   size = "default",
+  href,
+  onPress,
   ...props
-}: Omit<LinkPrimitiveProps, "className"> & {
+}: Omit<React.ComponentProps<typeof NextLink>, "href" | "className"> & {
+  href: string;
   variant?: ButtonVariant;
   size?: ButtonSize;
   className?: string;
+  onPress?: () => void;
 }) {
-  return (
-    <LinkPrimitive
-      data-slot="button"
-      data-variant={variant}
-      data-size={size}
-      className={buttonClassName(variant, size, className)}
-      {...props}
-    />
-  );
+  const shared = {
+    "data-slot": "button" as const,
+    "data-variant": variant,
+    "data-size": size,
+    className: buttonClassName(variant, size, className),
+    onClick: onPress,
+  };
+
+  if (isAppHref(href)) {
+    return <NextLink href={href} {...shared} {...props} />;
+  }
+
+  return <a href={href} {...shared} {...props} />;
 }
 
 export { Button, LinkButton };

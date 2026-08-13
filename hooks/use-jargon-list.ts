@@ -18,6 +18,10 @@ export function useJargonList(initialData: JargonPageData) {
     () => new Set(initialData.knownTermIds),
   );
   const countedShownRef = useRef(new Set<string>());
+  const openTermsRef = useRef(openTerms);
+  const knownTermsRef = useRef(knownTerms);
+  openTermsRef.current = openTerms;
+  knownTermsRef.current = knownTerms;
 
   // Sync knownTerms when initialData changes (e.g., after router.refresh())
   useEffect(() => {
@@ -57,7 +61,7 @@ export function useJargonList(initialData: JargonPageData) {
 
   const toggleOpen = useCallback(
     (termId: string) => {
-      const wasOpen = openTerms.has(termId);
+      const wasOpen = openTermsRef.current.has(termId);
 
       setOpenTerms((prev) => {
         const next = new Set(prev);
@@ -68,33 +72,30 @@ export function useJargonList(initialData: JargonPageData) {
 
       if (!wasOpen) recordReadOnce(termId);
     },
-    [openTerms, recordReadOnce],
+    [recordReadOnce],
   );
 
-  const toggleKnown = useCallback(
-    async (termId: string) => {
-      const wasKnown = knownTerms.has(termId);
-      const nextIsKnown = !wasKnown;
+  const toggleKnown = useCallback(async (termId: string) => {
+    const wasKnown = knownTermsRef.current.has(termId);
+    const nextIsKnown = !wasKnown;
 
+    setKnownTerms((prev) => {
+      const next = new Set(prev);
+      if (wasKnown) next.delete(termId);
+      else next.add(termId);
+      return next;
+    });
+
+    const result = await setTermKnown(termId, nextIsKnown);
+    if (result.error) {
       setKnownTerms((prev) => {
         const next = new Set(prev);
-        if (wasKnown) next.delete(termId);
-        else next.add(termId);
+        if (wasKnown) next.add(termId);
+        else next.delete(termId);
         return next;
       });
-
-      const result = await setTermKnown(termId, nextIsKnown);
-      if (result.error) {
-        setKnownTerms((prev) => {
-          const next = new Set(prev);
-          if (wasKnown) next.add(termId);
-          else next.delete(termId);
-          return next;
-        });
-      }
-    },
-    [knownTerms],
-  );
+    }
+  }, []);
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { HowTermsWorkPage } from "@/components/content/how-terms-work-page";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth/require-session";
 
 export const metadata: Metadata = {
   title: "How terms are built",
@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HowTermsWorkRoute() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   return <HowTermsWorkPage isLoggedIn={!!user} />;
 }

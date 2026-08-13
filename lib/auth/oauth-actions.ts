@@ -9,8 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function signInWithGoogle(formData: FormData) {
   const next = safeNextPath(formData.get("next")?.toString() ?? null, "/complete-signup");
   const ref = normalizeReferralCode(formData.get("ref")?.toString());
-  const origin = await getAppOrigin();
-  const supabase = await createClient();
+  const [origin, supabase] = await Promise.all([getAppOrigin(), createClient()]);
 
   const params = new URLSearchParams({ next });
   if (ref) {

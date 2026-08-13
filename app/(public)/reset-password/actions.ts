@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { getPasswordValidationError } from "@/lib/auth/password-policy";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth/require-session";
 
 export type ResetPasswordState = { error: string } | null;
 
@@ -27,11 +27,7 @@ export async function resetPassword(
     return { error: "Passwords don't match." };
   }
 
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { supabase, user } = await getSessionUser();
 
   if (!user) {
     return { error: "That reset link expired. Request a new one from the login page." };

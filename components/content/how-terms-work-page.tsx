@@ -10,11 +10,7 @@ import {
   ContentPageShell,
   ContentPageTitledBulletList,
   contentPageLinkClass,
-} from "@/components/content";
-
-type HowTermsWorkPageProps = {
-  isLoggedIn?: boolean;
-};
+} from "@/components/content/content-page-shell";
 
 const TERM_FIELDS = [
   {
@@ -81,6 +77,10 @@ const OPTIONAL_FIELD_TRIGGERS = [
     body: "This term connects to another one in a way worth naming, confusion, dependency, contrast, or otherwise.",
   },
 ] as const;
+
+type HowTermsWorkPageProps = {
+  isLoggedIn?: boolean;
+};
 
 export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) {
   return (

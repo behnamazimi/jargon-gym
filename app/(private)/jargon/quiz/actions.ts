@@ -109,7 +109,7 @@ export async function generateQuizAction(input: {
       return { error: `Quizzes are limited to ${MAX_QUIZ_TERMS} questions.` };
     }
 
-    const terms = await fetchQuizTermPool(
+    const termsPromise = fetchQuizTermPool(
       auth.supabase,
       auth.user.id,
       input.domainIds,
@@ -117,18 +117,27 @@ export async function generateQuizAction(input: {
       questionCount,
     );
 
-    if (terms.length === 0) {
-      return { error: "No terms match your selection. Try a different collection or status." };
-    }
-
     let questions: QuizQuestion[];
     let providerLabel: string;
+    let terms: QuizTerm[];
 
     if (input.questionStyle === "simple") {
+      terms = await termsPromise;
+      if (terms.length === 0) {
+        return { error: "No terms match your selection. Try a different collection or status." };
+      }
       questions = await generateSimpleQuiz(terms, auth.supabase);
       providerLabel = "Simple (Definition → Term)";
     } else {
-      const credentials = await getDecryptedApiKey(auth.supabase, auth.user.id);
+      let credentials;
+      [terms, credentials] = await Promise.all([
+        termsPromise,
+        getDecryptedApiKey(auth.supabase, auth.user.id),
+      ]);
+
+      if (terms.length === 0) {
+        return { error: "No terms match your selection. Try a different collection or status." };
+      }
 
       if (!credentials) {
         return { error: "Add a provider and API key in Settings to generate AI quizzes." };

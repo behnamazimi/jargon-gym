@@ -1,8 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { clearLlmSettings, saveLlmSettings, updateQuizPreferences } from "@/lib/llm/settings";
 import type { LlmProvider } from "@/lib/llm/types";
 import {
@@ -14,26 +14,12 @@ import {
 import type { TelegramCadence } from "@/lib/telegram/types";
 import { createWidgetToken, revokeWidgetToken } from "@/lib/widget/tokens";
 
-async function getAuthenticatedUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    return { error: "Log in to continue." as const };
-  }
-
-  return { supabase, user };
-}
-
 export async function generateWidgetTokenAction(): Promise<{
   error?: string;
   token?: string;
   id?: string;
 }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -48,7 +34,7 @@ export async function generateWidgetTokenAction(): Promise<{
 }
 
 export async function revokeWidgetTokenAction(tokenId: string): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -66,7 +52,7 @@ export async function generateTelegramLinkAction(): Promise<{
   error?: string;
   deepLink?: string;
 }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -90,7 +76,7 @@ export async function generateTelegramLinkAction(): Promise<{
 }
 
 export async function disconnectTelegramAction(): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -107,7 +93,7 @@ export async function disconnectTelegramAction(): Promise<{ error?: string }> {
 export async function updateTelegramCadenceAction(
   cadence: TelegramCadence,
 ): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -125,7 +111,7 @@ export async function saveLlmSettingsAction(input: {
   provider: LlmProvider;
   apiKey: string;
 }): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -140,7 +126,7 @@ export async function saveLlmSettingsAction(input: {
 }
 
 export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
@@ -159,7 +145,7 @@ export async function updateQuizPreferencesAction(input: {
   markUnknownOnFail: boolean;
   markKnownOnPass: boolean;
 }): Promise<{ error?: string }> {
-  const auth = await getAuthenticatedUser();
+  const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {

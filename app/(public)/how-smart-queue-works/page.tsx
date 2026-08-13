@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { HowSmartQueueWorksPage } from "@/components/content/how-smart-queue-works-page";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth/require-session";
 
 export const metadata: Metadata = {
   title: "How the smart queue works",
@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HowSmartQueueWorksRoute() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user } = await getSessionUser();
 
   return <HowSmartQueueWorksPage isLoggedIn={!!user} />;
 }

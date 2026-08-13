@@ -1,36 +1,20 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { BookOpen, Sparkles, Zap } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
-import { SiteHeaderNav } from "@/components/site-header-nav";
+import { ProfileMenu } from "@/components/jargon/profile-menu";
+import { LoggedOutHeaderNav } from "@/components/site-header-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { createClient } from "@/lib/supabase/server";
-import { DARK_THEME, THEME_COOKIE_NAME } from "@/lib/theme";
+import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { cn } from "@/lib/utils";
 
-export async function SiteHeader() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  const cookieStore = await cookies();
-  const isDark = cookieStore.get(THEME_COOKIE_NAME)?.value === DARK_THEME;
-
-  let isAdmin = false;
-  if (user) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-    isAdmin = profile?.role === "admin";
-  }
-
+function SiteHeaderChrome({ homeHref, children }: { homeHref: string; children: ReactNode }) {
   return (
     <header className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm">
       <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
         <Link
-          href={user ? "/jargon" : "/"}
+          href={homeHref}
           className="flex items-center gap-2 text-lg font-bold tracking-tight no-underline"
           aria-label="Jargon Gym"
         >
@@ -38,11 +22,46 @@ export async function SiteHeader() {
           <span className="hidden text-primary sm:inline">Jargon Gym</span>
         </Link>
 
-        <nav className="flex items-center gap-1">
-          <ThemeToggle initialIsDark={isDark} />
-          <SiteHeaderNav email={user?.email ?? null} isAdmin={isAdmin} />
-        </nav>
+        <nav className="flex items-center gap-1">{children}</nav>
       </div>
     </header>
+  );
+}
+
+function HeaderStudyLink({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: typeof Sparkles;
+  label: string;
+}) {
+  return (
+    <Link href={href} className="btn btn-ghost">
+      <Icon className="h-4 w-4" strokeWidth={1.5} />
+      <span className="hidden sm:inline">{label}</span>
+    </Link>
+  );
+}
+
+export async function SiteHeader({ initialIsDark }: { initialIsDark: boolean }) {
+  const { user } = await getSessionUser();
+  const isAdmin = user ? await getUserIsAdmin(user.id) : false;
+
+  return (
+    <SiteHeaderChrome homeHref={user ? "/jargon" : "/"}>
+      <ThemeToggle initialIsDark={initialIsDark} />
+      {user ? (
+        <>
+          <HeaderStudyLink href="/jargon/quiz" icon={Sparkles} label="Quiz" />
+          <HeaderStudyLink href="/jargon/review" icon={BookOpen} label="Review" />
+          <HeaderStudyLink href="/jargon/read" icon={Zap} label="Read" />
+          <ProfileMenu email={user.email ?? "Account"} isAdmin={isAdmin} />
+        </>
+      ) : (
+        <LoggedOutHeaderNav />
+      )}
+    </SiteHeaderChrome>
   );
 }

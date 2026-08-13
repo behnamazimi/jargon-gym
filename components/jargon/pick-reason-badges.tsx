@@ -1,6 +1,5 @@
-"use client";
-
-import { formatPickReason, type PickContext, type PickReason } from "@/lib/smart-queue";
+import { formatPickReason } from "@/lib/smart-queue/reasons";
+import type { PickContext, PickReason } from "@/lib/smart-queue/types";
 import { cn } from "@/lib/utils";
 
 type PickReasonBadgesProps = {

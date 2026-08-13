@@ -7,8 +7,8 @@ import { MAX_REVIEW_TERMS, fetchReviewTermPool } from "@/lib/review/terms";
 import type { ReviewSetup } from "@/lib/review/types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import type { Database } from "@/lib/supabase/database.types";
-import { listStudyCollections } from "@/lib/study";
-import { getReviewPoolStats } from "@/lib/smart-queue";
+import { listStudyCollections } from "@/lib/study/collections";
+import { getReviewPoolStats } from "@/lib/smart-queue/service";
 
 export async function getReviewSetupData() {
   const auth = await requireAuthenticatedClient();

@@ -51,7 +51,7 @@ export default async function RootLayout({
       )}
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
-        <SiteHeader />
+        <SiteHeader initialIsDark={theme === DARK_THEME} />
         <main className="flex flex-1 flex-col">{children}</main>
         <SiteFooter />
       </body>

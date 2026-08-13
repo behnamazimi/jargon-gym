@@ -20,3 +20,20 @@ export function PageSkeleton() {
     </PageShell>
   );
 }
+
+export function PanelSkeleton() {
+  return (
+    <div
+      className="shadow-surface overflow-hidden rounded-2xl bg-base-100 ring-1 ring-base-content/5"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <div className="space-y-3 px-5 py-5 sm:px-6">
+        <SkeletonBar className="h-4 w-40" />
+        <SkeletonBar className="h-16 w-full" />
+        <SkeletonBar className="h-16 w-full" />
+        <SkeletonBar className="mt-4 h-10 w-full max-w-md" />
+      </div>
+    </div>
+  );
+}

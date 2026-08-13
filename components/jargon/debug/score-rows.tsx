@@ -1,9 +1,7 @@
-"use client";
-
 import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
 import { StrengthBadge } from "@/components/jargon/strength-badge";
-import type { PickContext } from "@/lib/smart-queue";
+import type { PickContext } from "@/lib/smart-queue/types";
 
 function formatRelative(iso: string | null): string {
   if (!iso) return "never";

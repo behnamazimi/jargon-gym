@@ -1,34 +1,45 @@
-import { SettingsPage } from "@/components/jargon/settings/settings-page";
+import { LlmPanel } from "@/components/jargon/settings/llm-panel";
+import { SettingsTabs, type SettingsTabId } from "@/components/jargon/settings/settings-tabs";
+import { TelegramPanel } from "@/components/jargon/settings/telegram-panel";
+import { WidgetPanel } from "@/components/jargon/settings/widget-panel";
+import { getSessionUser } from "@/lib/auth/require-session";
 import { getUserSettings } from "@/lib/llm/settings";
 import { getTelegramLinkStatus } from "@/lib/telegram/links";
-import { createClient } from "@/lib/supabase/server";
 import { listWidgetTokens } from "@/lib/widget/tokens";
 
-export default async function JargonSettingsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+type PageProps = {
+  searchParams: Promise<{ tab?: string }>;
+};
 
-  if (!user) {
-    return (
-      <div className="flex min-h-full items-center justify-center px-4 py-12">
-        <p className="text-sm text-base-content/60">Log in to view settings.</p>
-      </div>
-    );
-  }
+function parseTab(value: string | undefined): SettingsTabId {
+  if (value === "telegram" || value === "widget" || value === "quiz") return value;
+  return "quiz";
+}
 
-  const [tokens, telegramStatus, userSettings] = await Promise.all([
-    listWidgetTokens(supabase, user.id),
-    getTelegramLinkStatus(supabase, user.id),
-    getUserSettings(supabase, user.id),
+export default async function JargonSettingsPage({ searchParams }: PageProps) {
+  const [{ tab: tabParam }, { supabase, user }] = await Promise.all([
+    searchParams,
+    getSessionUser(),
   ]);
 
+  if (!user) {
+    return <p className="text-sm text-base-content/60">Log in to view settings.</p>;
+  }
+
+  const tab = parseTab(tabParam);
+
   return (
-    <SettingsPage
-      initialTokens={tokens}
-      initialTelegramStatus={telegramStatus}
-      initialUserSettings={userSettings}
-    />
+    <>
+      <SettingsTabs value={tab} />
+      {tab === "quiz" ? (
+        <LlmPanel initialSettings={await getUserSettings(supabase, user.id)} />
+      ) : null}
+      {tab === "telegram" ? (
+        <TelegramPanel initialStatus={await getTelegramLinkStatus(supabase, user.id)} />
+      ) : null}
+      {tab === "widget" ? (
+        <WidgetPanel initialTokens={await listWidgetTokens(supabase, user.id)} />
+      ) : null}
+    </>
   );
 }

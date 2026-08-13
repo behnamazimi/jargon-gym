@@ -5,7 +5,7 @@ import { recordRead } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser } from "@/lib/smart-queue/hydrate";
-import { getReviewPoolStatsForUser, pickReviewTermsForUser } from "@/lib/smart-queue/service";
+import { pickReviewTermsForUser } from "@/lib/smart-queue/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };
@@ -57,19 +57,6 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
 
   try {
     const admin = createAdminClient();
-
-    const stats = await getReviewPoolStatsForUser(
-      admin,
-      auth.user.id,
-      { domainIds: "all" },
-      "unknown",
-      "read",
-    );
-
-    if (stats.total === 0) {
-      return { caughtUp: true };
-    }
-
     const { cards, pickMeta } = await pickReviewTermsForUser(
       admin,
       auth.user.id,

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   generateQuizAction,
@@ -8,12 +8,11 @@ import {
   recordQuizAnswerAction,
   submitQuizResultsAction,
 } from "@/app/(private)/jargon/quiz/actions";
-import { PageHeader } from "@/components/jargon/page-header";
-import { PageShell } from "@/components/page-container";
 import { QueuePreview, type QueuePreviewItem } from "@/components/jargon/pick-reason-badges";
 import { QuizProgress } from "@/components/jargon/quiz/quiz-progress";
 import { QuizQuestionView } from "@/components/jargon/quiz/quiz-question";
 import { QuizResults } from "@/components/jargon/quiz/quiz-results";
+import { QuizSetupOption } from "@/components/jargon/quiz/quiz-controls";
 import {
   QuizCenteredState,
   QuizPanel,
@@ -21,7 +20,6 @@ import {
   QuizPanelHeader,
   QuizPanelLabel,
   QuizSetupFooter,
-  QuizSetupOption,
   QuizStat,
 } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -35,7 +33,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MAX_QUIZ_TERMS, countTermsForSelection, getMaxQuizQuestionCount } from "@/lib/quiz/terms";
+import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
+import { MAX_STUDY_TERMS } from "@/lib/study/types";
 import type {
   QuizableCollection,
   QuizAnswer,
@@ -94,15 +93,17 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   const [queuePreview, setQueuePreview] = useState<QueuePreviewItem[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
 
-  const domainIds: "all" | string[] =
-    selectedCollectionId === "all" ? "all" : [selectedCollectionId];
+  const domainIds = useMemo(
+    (): "all" | string[] => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
+    [selectedCollectionId],
+  );
 
   const availableTermCount = useMemo(
     () => countTermsForSelection(collections, domainIds, status),
     [collections, domainIds, status],
   );
 
-  const maxQuestionCount = getMaxQuizQuestionCount(availableTermCount);
+  const maxQuestionCount = getMaxStudyCount(availableTermCount);
 
   useEffect(() => {
     setSavedSession(loadQuizSession());
@@ -110,7 +111,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
 
   useEffect(() => {
     if (availableTermCount === 0) return;
-    const newMax = getMaxQuizQuestionCount(availableTermCount);
+    const newMax = getMaxStudyCount(availableTermCount);
     setQuestionCount(newMax);
     setQuestionCountInput(String(newMax));
     setQuestionCountError(null);
@@ -303,13 +304,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   const aiRequiresSetup = questionStyle === "ai" && !llmConfigured;
 
   return (
-    <PageShell innerClassName="space-y-8">
-      <PageHeader
-        icon={Sparkles}
-        title="Quiz"
-        description="Test yourself on terms from your active collections."
-      />
-
+    <>
       {step === "picker" ? (
         <QuizPanel>
           {collections.length === 0 ? (
@@ -484,8 +479,8 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                   ) : (
                     <>
                       Choose 1–{maxQuestionCount || 1}
-                      {availableTermCount > MAX_QUIZ_TERMS
-                        ? ` (${MAX_QUIZ_TERMS} max per quiz).`
+                      {availableTermCount > MAX_STUDY_TERMS
+                        ? ` (${MAX_STUDY_TERMS} max per quiz).`
                         : "."}
                     </>
                   )}
@@ -600,6 +595,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
           </QuizPanelBody>
         </QuizPanel>
       ) : null}
-    </PageShell>
+    </>
   );
 }

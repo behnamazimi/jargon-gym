@@ -3,7 +3,7 @@
 import { ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
-import type { Strength } from "@/lib/smart-queue";
+import type { Strength } from "@/lib/smart-queue/strength";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

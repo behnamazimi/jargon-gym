@@ -1,15 +1,11 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import {
-  listScoredCandidates,
-  strengthForCandidate,
-  type FailSource,
-  type PickContext,
-  type PickReason,
-  type Strength,
-} from "@/lib/smart-queue";
-import { listStudyCollections, type TermPoolStatus } from "@/lib/study";
+import { listScoredCandidates } from "@/lib/smart-queue/service";
+import { strengthForCandidate, type Strength } from "@/lib/smart-queue/strength";
+import type { FailSource, PickContext, PickReason } from "@/lib/smart-queue/types";
+import { listStudyCollections } from "@/lib/study/collections";
+import type { TermPoolStatus } from "@/lib/study/types";
 
 export async function getDebugSetupData() {
   const auth = await requireAuthenticatedClient();

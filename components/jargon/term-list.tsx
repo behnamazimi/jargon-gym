@@ -1,5 +1,5 @@
 import type { Term } from "@/lib/jargon/types";
-import type { Strength } from "@/lib/smart-queue";
+import type { Strength } from "@/lib/smart-queue/strength";
 import { TermCard } from "./term-card";
 
 type TermListProps = {
@@ -41,19 +41,20 @@ export function TermList({
   return (
     <div className="flex flex-col gap-2">
       {terms.map((term) => (
-        <TermCard
-          key={term.id}
-          term={term}
-          known={knownTerms.has(term.id)}
-          strength={strengthByTermId[term.id]}
-          showStrength={showStrength}
-          open={openTerms.has(term.id)}
-          isOwner={isOwner}
-          domainId={domainId}
-          domainTerms={domainTerms}
-          onToggleOpen={() => onToggleOpen(term.id)}
-          onToggleKnown={() => onToggleKnown(term.id)}
-        />
+        <div key={term.id} className="content-visibility-auto [contain-intrinsic-size:auto_4.5rem]">
+          <TermCard
+            term={term}
+            known={knownTerms.has(term.id)}
+            strength={strengthByTermId[term.id]}
+            showStrength={showStrength}
+            open={openTerms.has(term.id)}
+            isOwner={isOwner}
+            domainId={domainId}
+            domainTerms={domainTerms}
+            onToggleOpen={() => onToggleOpen(term.id)}
+            onToggleKnown={() => onToggleKnown(term.id)}
+          />
+        </div>
       ))}
     </div>
   );

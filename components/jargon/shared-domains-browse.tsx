@@ -1,14 +1,12 @@
 "use client";
 
-import { Compass, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Toggle } from "@/components/ui/toggle";
-import { PageHeader } from "@/components/jargon/page-header";
 import { SharedDomainCard } from "@/components/jargon/shared-domain-card";
-import { PageShell } from "@/components/page-container";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import type { SharedDomain } from "@/lib/jargon/types";
 import { cn } from "@/lib/utils";
@@ -58,13 +56,7 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
   const hasActiveFilters = searchQuery.trim().length > 0 || collectionFilter !== "all";
 
   return (
-    <PageShell innerClassName="landing-enter">
-      <PageHeader
-        icon={Compass}
-        title="Browse shared collections"
-        description="Find collections others have shared and add them to yours."
-      />
-
+    <>
       {error ? (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
@@ -197,6 +189,6 @@ export function SharedDomainsBrowse({ domains }: SharedDomainsBrowseProps) {
           )}
         </div>
       )}
-    </PageShell>
+    </>
   );
 }

@@ -1,34 +1,20 @@
-"use client";
-
-import { AlertCircle, Bug } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import {
-  listDebugScoredTermsAction,
-  type DebugScoredRow,
-} from "@/app/(private)/jargon/debug/actions";
+import Link from "next/link";
+import { AlertCircle } from "lucide-react";
+import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
-import { PageHeader } from "@/components/jargon/page-header";
-import {
-  QuizCenteredState,
-  QuizPanel,
-  QuizPanelBody,
-  QuizSetupOption,
-} from "@/components/jargon/quiz/quiz-ui";
-import { PageShell } from "@/components/page-container";
+import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Field, FieldLabel } from "@/components/ui/field";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import type { PickContext } from "@/lib/smart-queue";
-import type { StudyCollection, TermPoolStatus } from "@/lib/study";
+import type { PickContext } from "@/lib/smart-queue/types";
+import type { StudyCollection, TermPoolStatus } from "@/lib/study/types";
+import { cn } from "@/lib/utils";
 
 type DebugQueuePageProps = {
   collections: StudyCollection[];
+  status: TermPoolStatus;
+  context: PickContext;
+  domainId: string;
+  rows: DebugScoredRow[];
+  errorMessage: string | null;
 };
 
 const CONTEXT_OPTIONS: Array<{
@@ -53,141 +39,152 @@ const CONTEXT_OPTIONS: Array<{
   },
 ];
 
-export function DebugQueuePage({ collections }: DebugQueuePageProps) {
-  const [status, setStatus] = useState<TermPoolStatus>("unknown");
-  const [selectedCollectionId, setSelectedCollectionId] = useState("all");
-  const [context, setContext] = useState<PickContext>("review");
-  const [rows, setRows] = useState<DebugScoredRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+function debugQueueHref({
+  status,
+  context,
+  domainId,
+}: {
+  status: TermPoolStatus;
+  context: PickContext;
+  domainId: string;
+}) {
+  const params = new URLSearchParams();
+  if (status !== "unknown") params.set("status", status);
+  if (context !== "review") params.set("context", context);
+  if (domainId !== "all") params.set("domain", domainId);
+  const query = params.toString();
+  return query ? `/jargon/debug?${query}` : "/jargon/debug";
+}
 
-  const domainIds = useMemo(
-    (): string[] | "all" => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
-    [selectedCollectionId],
+function DebugFilterLink({
+  href,
+  selected,
+  title,
+  description,
+}: {
+  href: string;
+  selected: boolean;
+  title: string;
+  description: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-start gap-3 py-1 no-underline"
+      aria-current={selected ? "true" : undefined}
+    >
+      <span
+        className={cn(
+          "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border",
+          selected ? "border-primary" : "border-base-content/40",
+        )}
+        aria-hidden
+      >
+        {selected ? <span className="size-2 rounded-full bg-primary" /> : null}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm leading-none font-medium">{title}</span>
+        <span className="mt-1.5 block text-xs leading-relaxed text-base-content/60">
+          {description}
+        </span>
+      </span>
+    </Link>
   );
+}
 
-  useEffect(() => {
-    if (collections.length === 0) return;
-
-    let cancelled = false;
-    setLoading(true);
-
-    void listDebugScoredTermsAction(domainIds, status, context).then((result) => {
-      if (cancelled) return;
-      setLoading(false);
-
-      if (result.error) {
-        setErrorMessage(result.error);
-        setRows([]);
-      } else {
-        setErrorMessage(null);
-        setRows(result.rows ?? []);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [domainIds, status, context, collections.length]);
+export function DebugQueuePage({
+  collections,
+  status,
+  context,
+  domainId,
+  rows,
+  errorMessage,
+}: DebugQueuePageProps) {
+  if (collections.length === 0) {
+    return (
+      <QuizPanel>
+        <QuizPanelBody>
+          <QuizCenteredState
+            icon={AlertCircle}
+            title="No active collections"
+            description="Turn on a collection on the collection page to see its terms here."
+          />
+        </QuizPanelBody>
+      </QuizPanel>
+    );
+  }
 
   return (
-    <PageShell innerClassName="space-y-8">
-      <PageHeader
-        icon={Bug}
-        title="Queue debug"
-        description="Every term's smart-queue score and signals — for debugging the ranking, not for studying."
-      />
+    <>
+      <QuizPanel>
+        <QuizPanelBody>
+          <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+            <legend className="mb-2 text-sm leading-none font-medium">Pool</legend>
+            <div className="flex flex-col gap-3">
+              <DebugFilterLink
+                href={debugQueueHref({ status: "unknown", context, domainId })}
+                selected={status === "unknown"}
+                title="Unknown terms"
+                description="Terms you haven't marked as known."
+              />
+              <DebugFilterLink
+                href={debugQueueHref({ status: "known", context, domainId })}
+                selected={status === "known"}
+                title="Known terms"
+                description="Terms you've already marked as known."
+              />
+            </div>
+          </fieldset>
 
-      {collections.length === 0 ? (
-        <QuizPanel>
-          <QuizPanelBody>
-            <QuizCenteredState
-              icon={AlertCircle}
-              title="No active collections"
-              description="Turn on a collection on the collection page to see its terms here."
-            />
-          </QuizPanelBody>
-        </QuizPanel>
-      ) : (
-        <>
-          <QuizPanel>
-            <QuizPanelBody>
-              <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-                <legend className="mb-2 text-sm leading-none font-medium">Pool</legend>
-                <div className="flex flex-col gap-3">
-                  <QuizSetupOption
-                    name="debug-status"
-                    value="unknown"
-                    checked={status === "unknown"}
-                    onChange={() => setStatus("unknown")}
-                    title="Unknown terms"
-                    description="Terms you haven't marked as known."
-                  />
-                  <QuizSetupOption
-                    name="debug-status"
-                    value="known"
-                    checked={status === "known"}
-                    onChange={() => setStatus("known")}
-                    title="Known terms"
-                    description="Terms you've already marked as known."
-                  />
-                </div>
-              </fieldset>
+          <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+            <legend className="mb-2 text-sm leading-none font-medium">Collection</legend>
+            <div className="flex max-h-64 flex-col gap-3 overflow-y-auto">
+              <DebugFilterLink
+                href={debugQueueHref({ status, context, domainId: "all" })}
+                selected={domainId === "all"}
+                title="All active collections"
+                description="Score every term in collections that are turned on."
+              />
+              {collections.map((collection) => (
+                <DebugFilterLink
+                  key={collection.id}
+                  href={debugQueueHref({ status, context, domainId: collection.id })}
+                  selected={domainId === collection.id}
+                  title={collection.name}
+                  description={`${collection.unknownCount} unknown · ${collection.knownCount} known`}
+                />
+              ))}
+            </div>
+          </fieldset>
 
-              <Field className="max-w-md">
-                <FieldLabel htmlFor="debug-collection">Collection</FieldLabel>
-                <Select
-                  selectedKey={selectedCollectionId}
-                  onSelectionChange={(key) => setSelectedCollectionId(String(key))}
-                >
-                  <SelectTrigger id="debug-collection" className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem id="all">All active collections</SelectItem>
-                    {collections.map((collection) => (
-                      <SelectItem key={collection.id} id={collection.id}>
-                        {collection.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
+          <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+            <legend className="mb-2 text-sm leading-none font-medium">Context</legend>
+            <div className="flex flex-col gap-3">
+              {CONTEXT_OPTIONS.map((option) => (
+                <DebugFilterLink
+                  key={option.value}
+                  href={debugQueueHref({ status, context: option.value, domainId })}
+                  selected={context === option.value}
+                  title={option.title}
+                  description={option.description}
+                />
+              ))}
+            </div>
+          </fieldset>
+        </QuizPanelBody>
+      </QuizPanel>
 
-              <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-                <legend className="mb-2 text-sm leading-none font-medium">Context</legend>
-                <div className="flex flex-col gap-3">
-                  {CONTEXT_OPTIONS.map((option) => (
-                    <QuizSetupOption
-                      key={option.value}
-                      name="debug-context"
-                      value={option.value}
-                      checked={context === option.value}
-                      onChange={() => setContext(option.value)}
-                      title={option.title}
-                      description={option.description}
-                    />
-                  ))}
-                </div>
-              </fieldset>
-            </QuizPanelBody>
-          </QuizPanel>
-
-          <QuizPanel>
-            <QuizPanelBody>
-              {errorMessage ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              ) : loading ? (
-                <p className="m-0 text-sm text-base-content/60">Loading…</p>
-              ) : (
-                <ScoreRows rows={rows} context={context} />
-              )}
-            </QuizPanelBody>
-          </QuizPanel>
-        </>
-      )}
-    </PageShell>
+      <QuizPanel>
+        <QuizPanelBody>
+          {errorMessage ? (
+            <Alert variant="destructive">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          ) : (
+            <ScoreRows rows={rows} context={context} />
+          )}
+        </QuizPanelBody>
+      </QuizPanel>
+    </>
   );
 }

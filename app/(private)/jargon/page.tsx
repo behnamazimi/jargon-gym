@@ -1,19 +1,19 @@
-import { createClient } from "@/lib/supabase/server";
 import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
+import { getSessionUser } from "@/lib/auth/require-session";
 
 type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };
 
 export default async function JargonListPage({ searchParams }: PageProps) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [{ user, supabase }, { domain: selectedDomainId }] = await Promise.all([
+    getSessionUser(),
+    searchParams,
+  ]);
 
   if (!user) {
     return (
@@ -22,8 +22,6 @@ export default async function JargonListPage({ searchParams }: PageProps) {
       </PageCenter>
     );
   }
-
-  const { domain: selectedDomainId } = await searchParams;
 
   try {
     const data = await loadJargonPageData(supabase, {

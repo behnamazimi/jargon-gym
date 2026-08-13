@@ -10,17 +10,13 @@ import {
   ContentPageShell,
   ContentPageTitledBulletList,
   contentPageLinkClass,
-} from "@/components/content";
+} from "@/components/content/content-page-shell";
 import {
   BASE_COOLDOWN_HOURS,
   ENGAGED_MIN_COUNT,
   MIX_ALREADY_TOUCHED_SLOTS,
   MIX_NEVER_ENGAGED_SLOTS,
-} from "@/lib/smart-queue";
-
-type HowSmartQueueWorksPageProps = {
-  isLoggedIn?: boolean;
-};
+} from "@/lib/smart-queue/weights";
 
 const BASE_COOLDOWN_DAYS = Math.round(BASE_COOLDOWN_HOURS / 24);
 
@@ -98,6 +94,10 @@ const SURFACES = [
     body: "Terms cycle on your screen on a timer, picked from what's still unknown, not from the queue's ranking. Rotation alone does not count toward anything. Open a term (or tap Read more) to read it on the Read page.",
   },
 ] as const;
+
+type HowSmartQueueWorksPageProps = {
+  isLoggedIn?: boolean;
+};
 
 export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWorksPageProps) {
   return (

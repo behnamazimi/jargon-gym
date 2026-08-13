@@ -6,57 +6,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import type { SettingsTabId } from "@/components/jargon/settings/settings-tabs";
 import { cn } from "@/lib/utils";
 
-export type SettingsTabId = "quiz" | "telegram" | "widget";
-
-export type SettingsTab = {
-  id: SettingsTabId;
-  label: string;
-};
-
-export const SETTINGS_TABS: readonly SettingsTab[] = [
-  { id: "quiz", label: "Quiz" },
-  { id: "telegram", label: "Telegram" },
-  { id: "widget", label: "Widget setup" },
-] as const;
-
-export function SettingsTabs({
-  value,
-  onChange,
-  tabs = SETTINGS_TABS,
-}: {
-  value: SettingsTabId;
-  onChange: (id: SettingsTabId) => void;
-  tabs?: readonly SettingsTab[];
-}) {
-  return (
-    <div
-      role="tablist"
-      aria-label="Settings sections"
-      className="tabs tabs-box tabs-sm w-full flex-nowrap overflow-x-auto bg-base-100 p-1 ring-1 ring-base-content/10"
-    >
-      {tabs.map((tab) => {
-        const selected = value === tab.id;
-        return (
-          <button
-            key={tab.id}
-            type="button"
-            role="tab"
-            id={`settings-tab-${tab.id}`}
-            aria-selected={selected}
-            aria-controls={`settings-panel-${tab.id}`}
-            tabIndex={selected ? 0 : -1}
-            className={cn("tab grow sm:grow-0", selected && "tab-active")}
-            onClick={() => onChange(tab.id)}
-          >
-            {tab.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
+export type { SettingsTabId };
 
 export function SettingsPanel({
   id,

@@ -1,4 +1,4 @@
-import type { Strength } from "@/lib/smart-queue";
+import type { Strength } from "@/lib/smart-queue/strength";
 import { cn } from "@/lib/utils";
 
 const STRENGTH_LABEL: Record<Strength, string> = {

@@ -1,22 +1,18 @@
 import { ArrowRight, Mail } from "lucide-react";
 import Link from "next/link";
 import { pageContainerClass } from "@/components/page-container";
-import { contentPageLinkClass } from "@/components/content";
+import { contentPageLinkClass } from "@/components/content/content-page-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { getSessionUser } from "@/lib/auth/require-session";
 import { cn } from "@/lib/utils";
 
 const INVITE_REQUEST_EMAIL = "bhnmzm@gmail.com";
 const INVITE_REQUEST_MAILTO = `mailto:${INVITE_REQUEST_EMAIL}?subject=${encodeURIComponent("Jargon Gym invitation request")}&body=${encodeURIComponent("Hi,\n\nI'd like to try Jargon Gym. Could you send me an invitation code so I can sign up?\n\nThanks")}`;
 
 export async function LandingPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { user } = await getSessionUser();
   return (
     <section className="relative flex flex-1 flex-col overflow-hidden">
       <div aria-hidden className="pointer-events-none absolute inset-0">
