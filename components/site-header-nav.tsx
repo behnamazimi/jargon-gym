@@ -7,6 +7,7 @@ import { LinkButton } from "@/components/ui/button";
 
 type SiteHeaderNavProps = {
   email: string | null;
+  isAdmin?: boolean;
 };
 
 const AUTH_ROUTES = new Set([
@@ -17,7 +18,7 @@ const AUTH_ROUTES = new Set([
   "/complete-signup",
 ]);
 
-export function SiteHeaderNav({ email }: SiteHeaderNavProps) {
+export function SiteHeaderNav({ email, isAdmin = false }: SiteHeaderNavProps) {
   const pathname = usePathname();
 
   if (!email) {
@@ -45,7 +46,7 @@ export function SiteHeaderNav({ email }: SiteHeaderNavProps) {
         <Compass className="h-4 w-4" />
         <span className="hidden sm:inline">Browse</span>
       </LinkButton>
-      <ProfileMenu email={email} />
+      <ProfileMenu email={email} isAdmin={isAdmin} />
     </>
   );
 }

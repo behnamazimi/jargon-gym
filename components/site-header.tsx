@@ -16,6 +16,16 @@ export async function SiteHeader() {
   const cookieStore = await cookies();
   const isDark = cookieStore.get(THEME_COOKIE_NAME)?.value === DARK_THEME;
 
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    isAdmin = profile?.role === "admin";
+  }
+
   return (
     <header className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm">
       <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
@@ -30,7 +40,7 @@ export async function SiteHeader() {
 
         <nav className="flex items-center gap-1">
           <ThemeToggle initialIsDark={isDark} />
-          <SiteHeaderNav email={user?.email ?? null} />
+          <SiteHeaderNav email={user?.email ?? null} isAdmin={isAdmin} />
         </nav>
       </div>
     </header>

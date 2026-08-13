@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings, Upload } from "lucide-react";
+import { Bug, LogOut, Settings, Upload } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -15,6 +15,7 @@ import {
 
 type ProfileMenuProps = {
   email: string;
+  isAdmin?: boolean;
 };
 
 function getInitials(email: string) {
@@ -28,7 +29,7 @@ function getInitials(email: string) {
   return local.slice(0, 2).toUpperCase();
 }
 
-export function ProfileMenu({ email }: ProfileMenuProps) {
+export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
   const [isBusy, setIsBusy] = useState(false);
   const initials = getInitials(email);
 
@@ -73,6 +74,12 @@ export function ProfileMenu({ email }: ProfileMenuProps) {
           <Settings className="h-4 w-4" />
           Settings
         </DropdownMenuItem>
+        {isAdmin ? (
+          <DropdownMenuItem href="/jargon/debug">
+            <Bug className="h-4 w-4" />
+            Queue debug
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>
           <LogOut className="h-4 w-4" />
           {isBusy ? "Signing out…" : "Log out"}
