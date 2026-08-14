@@ -85,6 +85,10 @@ export type PoolStats = {
   unseen: number;
   seen: number;
   stale: number;
+  /** seen - stale: engaged and not yet stale. */
+  recent: number;
+  /** Own-context streak < 0. Always 0 for "read", which has no streak. */
+  struggling: number;
   total: number;
   allSeenOnce: boolean;
 };

@@ -5,7 +5,15 @@
  *  Human overview: docs/smart-queue.md
  */
 
-export type { ReviewEvent, PickContext, PickReason, PickMeta, FailSource } from "./types";
+export type {
+  ReviewEvent,
+  PickContext,
+  PickReason,
+  PickMeta,
+  FailSource,
+  PoolStats,
+  ReviewCandidate,
+} from "./types";
 
 export { formatPickReason, formatPickDebugLine } from "./reasons";
 export {
@@ -26,5 +34,7 @@ export {
   getReviewPoolStats,
   getReviewPoolStatsForUser,
   getReviewPoolStatsByDomainForUser,
+  fetchActiveReviewCandidatesForUser,
   fetchTermCardForUser,
 } from "./service";
+export { computePoolStats } from "./stats";

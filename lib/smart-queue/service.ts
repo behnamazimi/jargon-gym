@@ -144,6 +144,15 @@ export async function getReviewPoolStatsForUser(
   return computePoolStats(candidates, context);
 }
 
+/** Every active-collection candidate for status, unsorted — callers group/aggregate themselves. */
+export async function fetchActiveReviewCandidatesForUser(
+  client: Client,
+  userId: string,
+  status: "known" | "unknown",
+): Promise<import("./types").ReviewCandidate[]> {
+  return fetchCandidatesForUser(client, userId, { domainIds: "all" }, status);
+}
+
 export async function getReviewPoolStatsByDomainForUser(
   client: Client,
   userId: string,

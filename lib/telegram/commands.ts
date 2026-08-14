@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
+import { fetchTelegramStats } from "@/lib/jargon/collection-stats";
 import { resolveUserIdByChatId } from "@/lib/jargon/term-delivery";
 import type { TelegramAction } from "./actions";
 import { CONNECT_MESSAGE, WELCOME_MESSAGE } from "./copy";
@@ -56,6 +56,6 @@ export async function handleStat(client: Client, chatId: number): Promise<Telegr
   const userId = await resolveUserIdByChatId(client, chatId);
   if (!userId) return [send(chatId, CONNECT_MESSAGE)];
 
-  const stats = await fetchCollectionStats(client, userId, "read");
+  const stats = await fetchTelegramStats(client, userId);
   return [send(chatId, formatStatsMessage(stats))];
 }

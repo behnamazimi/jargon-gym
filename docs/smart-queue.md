@@ -519,8 +519,22 @@ result, rather than needing a separate "reset to 0" step.
 
 ### `/stat`
 
-- Per-collection known % plus Read-context queue stats (never read / read /
-  stale).
+- A glance, not a study surface: `N active · M paused`, then a three-line
+  rollup, then one block per active collection.
+- Rollup: `Read` sums the unknown pool's `read`-context never/stale across
+  all active collections (equal to the sum of the per-collection
+  footnotes below); `Review`/`Quiz` `never` comes from that same unknown
+  pool in their own context, while `struggling` (own-context streak < 0)
+  is summed across **both** the unknown and known pools. A bucket at zero
+  is omitted from its line; an all-zero line reads `none waiting`.
+- Per collection: the existing known% bar, then an unknown-Read footnote
+  partitioned into `never` / `recent` / `stale` (own `read`-context
+  unseen/recent/stale) — always all three, even at zero, so the numbers
+  add up to the footnote's total. Collections sort by unknown stale desc,
+  then never desc, then name.
+- Built on [`fetchTelegramStats`](../lib/jargon/collection-stats.ts), kept
+  separate from `fetchCollectionStats` (used by quiz/review setup) so
+  setup doesn't pay for a second known-pool fetch it doesn't need.
 
 ---
 

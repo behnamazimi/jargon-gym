@@ -8,14 +8,22 @@ const STALE_THRESHOLD_HOURS = 24;
 function ownCountAndLastActivity(
   candidate: ReviewCandidate,
   context: PickContext,
-): { count: number; lastActivityAt: Date | null } {
+): { count: number; lastActivityAt: Date | null; streak: number } {
   switch (context) {
     case "read":
-      return { count: candidate.readCount, lastActivityAt: candidate.lastReadAt };
+      return { count: candidate.readCount, lastActivityAt: candidate.lastReadAt, streak: 0 };
     case "review":
-      return { count: candidate.reviewRecallCount, lastActivityAt: candidate.lastReviewRecallAt };
+      return {
+        count: candidate.reviewRecallCount,
+        lastActivityAt: candidate.lastReviewRecallAt,
+        streak: candidate.reviewStreak,
+      };
     case "quiz":
-      return { count: candidate.quizTestCount, lastActivityAt: candidate.lastQuizTestedAt };
+      return {
+        count: candidate.quizTestCount,
+        lastActivityAt: candidate.lastQuizTestedAt,
+        streak: candidate.quizStreak,
+      };
   }
 }
 
@@ -24,12 +32,13 @@ export function computePoolStats(candidates: ReviewCandidate[], context: PickCon
   let unseen = 0;
   let seen = 0;
   let stale = 0;
+  let struggling = 0;
 
   for (const candidate of candidates) {
     // Mirrors score.ts's unseen signal for this context — deliberate
     // exposure only — so allSeenOnce stays in sync with when that boost
     // actually stops applying.
-    const { count, lastActivityAt } = ownCountAndLastActivity(candidate, context);
+    const { count, lastActivityAt, streak } = ownCountAndLastActivity(candidate, context);
 
     if (count === 0) {
       unseen++;
@@ -37,6 +46,8 @@ export function computePoolStats(candidates: ReviewCandidate[], context: PickCon
     }
 
     seen++;
+
+    if (streak < 0) struggling++;
 
     if (lastActivityAt) {
       const hoursSinceActivity = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60);
@@ -52,6 +63,8 @@ export function computePoolStats(candidates: ReviewCandidate[], context: PickCon
     unseen,
     seen,
     stale,
+    recent: seen - stale,
+    struggling,
     total: candidates.length,
     allSeenOnce: candidates.length > 0 && unseen === 0,
   };

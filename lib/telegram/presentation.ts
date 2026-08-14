@@ -1,4 +1,4 @@
-import type { CollectionStats } from "@/lib/jargon/collection-stats";
+import type { TelegramCollectionStats, TelegramStatsSnapshot } from "@/lib/jargon/collection-stats";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
 import { formatPickDebugLine, type PickMeta } from "@/lib/smart-queue";
 import type { InlineKeyboardMarkup } from "./actions";
@@ -135,30 +135,52 @@ function formatProgressBar(percentage: number, width: number = 10): string {
   return "█".repeat(filled) + "░".repeat(empty);
 }
 
-function formatCollectionProgressLine(collection: CollectionStats): string {
+function formatCollectionProgressLine(collection: TelegramCollectionStats): string {
   const bar = formatProgressBar(collection.percentage);
   return `${bar} ${collection.knownCount}/${collection.totalCount} known (${collection.percentage}%)`;
 }
 
-export function formatStatsMessage(stats: CollectionStats[]): string {
-  if (stats.length === 0) {
+function formatUnknownFootnote(collection: TelegramCollectionStats): string {
+  const total = collection.unknownNever + collection.unknownRecent + collection.unknownStale;
+  return `${total} unknown: ${collection.unknownNever} never · ${collection.unknownRecent} recent · ${collection.unknownStale} stale`;
+}
+
+/** Renders `<label> <count> <word> · ...`, omitting zero buckets, or
+ *  `<label> none waiting` when every bucket is zero. */
+function formatRollupLine(label: string, buckets: Array<[word: string, count: number]>): string {
+  const nonZero = buckets.filter(([, count]) => count > 0);
+  if (nonZero.length === 0) return `${label} none waiting`;
+  return `${label} ${nonZero.map(([word, count]) => `${count} ${word}`).join(" · ")}`;
+}
+
+export function formatStatsMessage(stats: TelegramStatsSnapshot): string {
+  if (stats.activeCount === 0 && stats.pausedCount === 0) {
     return "You don't have any collections yet. Create or add one in the app to get started.";
   }
 
-  const activeCollections = stats.filter((s) => s.isActive);
-  const pausedCollections = stats.filter((s) => !s.isActive);
-
   let message = `<b>📊 Your collections</b>\n\n`;
-  message += `${activeCollections.length} active · ${pausedCollections.length} paused`;
+  message += `${stats.activeCount} active · ${stats.pausedCount} paused`;
 
-  if (activeCollections.length > 0) {
-    message += `\n\n<b>Active:</b>`;
-    for (const collection of activeCollections) {
+  if (stats.activeCollections.length > 0) {
+    message += `\n\n${formatRollupLine("Read", [
+      ["never", stats.rollup.read.never],
+      ["stale", stats.rollup.read.stale],
+    ])}`;
+    message += `\n${formatRollupLine("Review", [
+      ["never", stats.rollup.review.never],
+      ["struggling", stats.rollup.review.struggling],
+    ])}`;
+    message += `\n${formatRollupLine("Quiz", [
+      ["never", stats.rollup.quiz.never],
+      ["struggling", stats.rollup.quiz.struggling],
+    ])}`;
+
+    for (const collection of stats.activeCollections) {
       message += `\n\n<b>${escapeHtml(collection.name)}</b>\n`;
       message += `${formatCollectionProgressLine(collection)}\n`;
-      message += `Queue: ${collection.unknownUnseen} never read · ${collection.unknownSeen} read · ${collection.unknownStale} stale`;
+      message += formatUnknownFootnote(collection);
     }
-  } else if (pausedCollections.length > 0) {
+  } else if (stats.pausedCount > 0) {
     message += `\n\n<i>All collections are paused. Turn one on in the app to start reviewing.</i>`;
   }
 
