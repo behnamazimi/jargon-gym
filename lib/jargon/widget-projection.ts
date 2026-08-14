@@ -1,51 +1,52 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { pickReviewTermsForUser } from "@/lib/smart-queue/service";
 import type { WidgetStateResponse, WidgetTerm } from "@/lib/widget/types";
-import { fetchKnownTermIdsForDomains, resolveReviewDomainIdsForUser } from "./known-state";
+import { resolveReviewDomainIdsForUser } from "./known-state";
 
 type Client = SupabaseClient<Database>;
 
+export const WIDGET_READ_BATCH_SIZE = 10;
+
+/** Peeks up to WIDGET_READ_BATCH_SIZE unknown Read terms — never records a read. */
 export async function fetchWidgetState(
   client: Client,
   userId: string,
+  excludeTermIds: string[] = [],
 ): Promise<WidgetStateResponse> {
-  const { reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
+  const { reviewDomainIds, collectionRows } = await resolveReviewDomainIdsForUser(client, userId);
 
   if (reviewDomainIds.length === 0) {
-    return {
-      terms: [],
-      knownTermIds: [],
-      activeDomainIds: [],
-      totalCount: 0,
-      knownCount: 0,
-    };
+    return { terms: [], totalCount: 0, knownCount: 0 };
   }
 
-  const { data: termRows, error: termsError } = await client
-    .from("terms")
-    .select("id, term, category, definition, domain_id, domains(name)")
-    .in("domain_id", reviewDomainIds)
-    .order("term");
+  const { cards } = await pickReviewTermsForUser(
+    client,
+    userId,
+    { domainIds: reviewDomainIds },
+    "unknown",
+    WIDGET_READ_BATCH_SIZE,
+    "read",
+    excludeTermIds,
+  );
 
-  if (termsError) throw termsError;
-
-  const terms: WidgetTerm[] = termRows.map((row) => ({
-    id: row.id,
-    term: row.term,
-    category: row.category,
-    definition: row.definition,
-    domainId: row.domain_id,
-    domainName: row.domains?.name ?? "Jargon",
+  const terms: WidgetTerm[] = cards.map((card) => ({
+    id: card.id,
+    term: card.term,
+    category: card.category,
+    definition: card.definition,
+    domainId: card.domainId,
+    domainName: card.domainName,
   }));
 
-  const knownTermIds = await fetchKnownTermIdsForDomains(client, reviewDomainIds, userId);
-  const knownSet = new Set(knownTermIds);
+  const activeSet = new Set(reviewDomainIds);
+  let totalCount = 0;
+  let knownCount = 0;
+  for (const row of collectionRows) {
+    if (!activeSet.has(row.id)) continue;
+    totalCount += row.termCount;
+    knownCount += row.knownCount;
+  }
 
-  return {
-    terms,
-    knownTermIds,
-    activeDomainIds: reviewDomainIds,
-    totalCount: terms.length,
-    knownCount: terms.filter((t) => knownSet.has(t.id)).length,
-  };
+  return { terms, totalCount, knownCount };
 }

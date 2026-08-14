@@ -4,9 +4,10 @@ How Jargon Gym chooses the next term. Read (web + Telegram `/read` +
 scheduled delivery), Review (web + Telegram flashcards), and Quiz (web +
 Telegram) each pick through the same scoring formula, but against their own
 independent history — see [Three independent histories](#three-independent-histories).
-The web collection page and the desktop widget don't pick from any queue —
-they select terms their own way and only share the outcome-recording half;
-see [Surfaces](#surfaces).
+The web collection page doesn't pick from any queue — it lists terms its own
+way and only shares the outcome-recording half. The desktop widget peeks the
+same Read ranking as everyone else but doesn't record anything itself — see
+[Surfaces](#surfaces).
 
 This is **not** Anki. There are no due dates, no intervals, and nothing nags
 you to study. You open the app when you want; the queue ranks terms in your
@@ -100,9 +101,9 @@ widget — and it moves between pools.
 ```
 
 This is the path for surfaces that pick from a queue: web Read/Review, the
-Telegram equivalents, and quizzes. The web collection page and the desktop
-widget don't fetch candidates or score anything — see
-[Surfaces](#surfaces) for what they do instead.
+Telegram equivalents, quizzes, and the desktop widget's peek. The web
+collection page doesn't fetch candidates or score anything — see
+[Surfaces](#surfaces) for what it does instead.
 
 ---
 
@@ -137,9 +138,10 @@ and vice versa.
 5. **Record** — when the user interacts, `lib/jargon/review-outcome.ts`
    writes events. Surfaces must not call the event RPC directly.
 
-The web collection page and the desktop widget skip steps 1–4: they pick
-terms their own way (sort order / local rotation) and only touch step 5 to
-record Read/Test outcomes and known-flips.
+The web collection page skips steps 1–4: it lists terms its own way (sort
+order) and only touches step 5 to record known-flips. The desktop widget
+runs steps 1–4 to peek a batch of terms — it never reaches step 5 on its
+own; only opening a term on the Read page records anything.
 
 Entry points:
 
@@ -489,12 +491,15 @@ result, rather than needing a separate "reset to 0" step.
 
 ### Desktop widget
 
-- No smart-queue pick here either. `/api/widget/state` hands back the raw
-  unknown-term list; `read-state.sh` on the desktop side chooses which one
-  to show via a deterministic hash of the current time bucket plus a local
-  rotation counter. No score, no queue involvement.
-- Terms rotate on screen in the background. Passive rotation writes
-  nothing — there's no Seen tier to record it into anymore.
+- `/api/widget/state` **peeks** — same Read scoring/mix as everyone else, up
+  to 10 unknown terms, `recordRead` is never called. `read-state.sh` stores
+  that batch locally (`state.json`: `remaining` / `staged` / `batchIds`) and
+  walks it term by term.
+- Local walk: serve `remaining[0]`, no API call, until only one term is left
+  and nothing is staged — then prefetch the next batch with
+  `exclude=<batchIds>` so it can't repeat the batch just finished. Refresh
+  (↻) clears the pool and peeks a fresh top 10 (`--reset`).
+- Rotating locally writes nothing — there's no Seen tier to record it into.
 - Click the term or **Read more** → opens `/jargon/read?termId=…` (records a
   `read` event there) and advances the widget to the next term.
 
@@ -567,9 +572,10 @@ review-outcome**?
                   (pick)          (score)             (record)
                     ^                                    ^
                     |                                    |
-       Telegram /read + delivery,                Widget, web collection,
-       web Read/Review, quizzes                  list checkbox
-       (pick, then record)                      (record only — own selection)
+   Telegram /read + delivery, web Read/Review,    Web collection list
+   quizzes, widget peek (pick, then record —      checkbox (record only —
+   widget itself never records; opening the       own selection, no pick)
+   term on the Read page does)
                     |                                    |
                     +--------------- review-outcome ----+
 ```

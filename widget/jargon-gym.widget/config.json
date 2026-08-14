@@ -1,6 +1,5 @@
 {
   "apiToken": "AMj5OQhIb5jrualNSXZJ3VMnfRG0744stq7SnngGRf4",
   "appBaseUrl": "http://localhost:3000",
-  "apiBaseUrl": "http://localhost:3000",
-  "rotationIntervalMinutes": 60
+  "apiBaseUrl": "http://localhost:3000"
 }

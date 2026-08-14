@@ -13,8 +13,8 @@ you already have with ones you're still learning.
 
 The same smart-queue ranking powers Read, Review, and Quiz across every
 surface — web, Telegram bot, and macOS desktop widget — not random shuffle,
-and not spaced repetition with future review dates. Collection browse and
-the widget pick their own way and don't use the ranking.
+and not spaced repetition with future review dates. Collection browse picks
+its own way and doesn't use the ranking.
 
 See the landing page for how to request an invitation.
 

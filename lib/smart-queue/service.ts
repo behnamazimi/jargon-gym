@@ -59,8 +59,14 @@ export async function pickReviewTermsForUser(
   status: "known" | "unknown",
   limit: number,
   context: PickContext,
+  excludeTermIds?: string[],
 ): Promise<PickReviewResult> {
-  const candidates = await fetchCandidatesForUser(client, userId, scope, status);
+  let candidates = await fetchCandidatesForUser(client, userId, scope, status);
+
+  if (excludeTermIds && excludeTermIds.length > 0) {
+    const excludeSet = new Set(excludeTermIds);
+    candidates = candidates.filter((c) => !excludeSet.has(c.termId));
+  }
 
   if (candidates.length === 0) return { cards: [], pickMeta: [] };
 

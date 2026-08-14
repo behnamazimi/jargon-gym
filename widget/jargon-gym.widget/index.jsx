@@ -6,7 +6,7 @@ const READ_STATE_CMD =
   'for d in "$HOME/Library/Application Support/Übersicht/widgets/"*/; do ' +
   '[ -f "${d}read-state.sh" ] && [ -f "${d}config.json" ] && exec "${d}read-state.sh"; ' +
   "done; " +
-  'echo \'{"error":"Widget scripts not found","terms":[],"knownTermIds":[],"current":null,"appBaseUrl":"http://localhost:3000","totalCount":0,"knownCount":0}\'; exit 1';
+  'echo \'{"error":"Widget scripts not found","current":null,"appBaseUrl":"http://localhost:3000","totalCount":0,"knownCount":0}\'; exit 1';
 
 export const command = READ_STATE_CMD;
 
@@ -145,19 +145,15 @@ function parseState(output) {
   try {
     const data = JSON.parse(output || "{}");
     return {
-      terms: data.terms || [],
-      knownTermIds: data.knownTermIds || [],
       current: data.current || null,
       widgetDir: data.widgetDir || null,
       appBaseUrl: data.appBaseUrl || "http://localhost:3000",
-      totalCount: data.totalCount ?? (data.terms || []).length,
-      knownCount: data.knownCount ?? (data.knownTermIds || []).length,
+      totalCount: data.totalCount ?? 0,
+      knownCount: data.knownCount ?? 0,
       error: data.error || null,
     };
   } catch {
     return {
-      terms: [],
-      knownTermIds: [],
       current: null,
       widgetDir: null,
       appBaseUrl: "http://localhost:3000",
@@ -180,9 +176,12 @@ const openApp = (appBaseUrl, current) => {
   run(`open ${escapeShellArg(url)}`);
 };
 
-/** Re-fetch widget state only — never records anything. */
-const refreshState = (dispatch, widgetDir = null) => {
-  const cmd = widgetDir ? escapeShellArg(widgetDir + "/read-state.sh") : READ_STATE_CMD;
+/** Re-fetch widget state only — never records anything. `reset` clears the
+ *  local pool and peeks a fresh top 10 (wired to the ↻ button). */
+const refreshState = (dispatch, widgetDir = null, reset = false) => {
+  const cmd = widgetDir
+    ? `${escapeShellArg(widgetDir + "/read-state.sh")}${reset ? " --reset" : ""}`
+    : READ_STATE_CMD;
   run(cmd)
     .then((output) => dispatch({ output }))
     .catch((err) => dispatch({ error: err }));
@@ -209,7 +208,7 @@ const RefreshButton = ({ dispatch, widgetDir = null, title = "Refresh terms" }) 
     title={title}
     onClick={(e) => {
       e.stopPropagation();
-      refreshState(dispatch, widgetDir);
+      refreshState(dispatch, widgetDir, true);
     }}
   >
     ↻
@@ -239,7 +238,6 @@ export const render = ({ output, error }, dispatch) => {
   }
 
   const {
-    terms,
     knownCount,
     totalCount,
     current,
@@ -257,7 +255,7 @@ export const render = ({ output, error }, dispatch) => {
     );
   }
 
-  if (!terms.length) {
+  if (totalCount === 0) {
     return (
       <div onClick={() => openApp(appBaseUrl, null)}>
         <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />

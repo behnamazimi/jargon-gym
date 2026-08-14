@@ -91,7 +91,7 @@ const SURFACES = [
   },
   {
     title: "Desktop widget",
-    body: "Terms cycle on your screen on a timer, picked from what's still unknown, not from the queue's ranking. Rotation alone does not count toward anything. Open a term (or tap Read more) to read it on the Read page.",
+    body: "Terms cycle on your screen, peeked from the same Read ranking as everyone else. Rotating through them alone does not count toward anything. Open a term (or tap Read more) to read it on the Read page.",
   },
 ] as const;
 
@@ -211,8 +211,9 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
         <ContentPageSection title="Surfaces">
           <p className="m-0">
             Web and Telegram each have Read, Review, and Quiz, and each picks from that
-            activity&apos;s ranking. Collection browsing and the desktop widget pick terms their own
-            way, not from a queue — they just log what you&apos;ve read when you open a term.
+            activity&apos;s ranking. The desktop widget peeks that same Read ranking but
+            doesn&apos;t log anything on its own — only collection browsing picks terms its own way,
+            outside the queue.
           </p>
           <ContentPageTitledBulletList items={SURFACES} />
         </ContentPageSection>

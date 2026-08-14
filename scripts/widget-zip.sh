@@ -52,12 +52,12 @@ path = pathlib.Path("$TMP/jargon-gym.widget/config.json")
 if path.exists():
     data = json.loads(path.read_text())
 else:
-    data = {"apiToken": "", "rotationIntervalMinutes": 60}
+    data = {"apiToken": ""}
 
 data["apiToken"] = ""
 data["appBaseUrl"] = "$PRODUCTION_URL"
 data["apiBaseUrl"] = "$PRODUCTION_URL"
-data.setdefault("rotationIntervalMinutes", 60)
+data.pop("rotationIntervalMinutes", None)
 path.write_text(json.dumps(data, indent=2) + "\n")
 PY
 
