@@ -16,10 +16,19 @@ import {
 } from "./weights";
 import type { PickContext, ReviewCandidate, ScoredCandidate } from "./types";
 
+export type PickTermsOptions = {
+  /** Debug only: keep own-activity fail sit-outs (Review/Quiz) in the returned
+   *  list, appended after eligible terms like other sat-out reasons. Live
+   *  picks default to false so a short eligible pool can't leak a same-day
+   *  miss back into the batch. */
+  includeOwnFailSitOut?: boolean;
+};
+
 export function pickTerms(
   candidates: ReviewCandidate[],
   limit: number,
   context: PickContext,
+  options: PickTermsOptions = {},
 ): ScoredCandidate[] {
   if (candidates.length === 0 || limit <= 0) {
     return [];
@@ -41,7 +50,7 @@ export function pickTerms(
   scored.sort((a, b) => b.score - a.score);
   shuffleEqualScoreRuns(scored);
 
-  const mixed = mixLanes(scored, context, now);
+  const mixed = mixLanes(scored, context, now, options.includeOwnFailSitOut ?? false);
 
   return mixed.slice(0, limit);
 }
@@ -71,9 +80,9 @@ function shuffleRange(arr: ScoredCandidate[], start: number, end: number): void 
 type Lane = "never_engaged" | "already_touched";
 
 /** A term sits out of a mix slot when a cooldown fired, or — read context
- *  only — it was already read today. Review/Quiz misses today stay
- *  eligible: there's no mastered cooldown to sit them out, and struggling
- *  terms should still be able to surface the same day. */
+ *  only — it was already read today. This includes a Review/Quiz own-fail
+ *  sit-out (`recent_fail_cooldown` in a non-read context): that same
+ *  activity hard-sits the term out for the rest of the day. */
 function isEligibleForMix(candidate: ScoredCandidate, context: PickContext, now: Date): boolean {
   if (
     candidate.reasons.includes("mastered_cooldown") ||
@@ -95,14 +104,26 @@ function isEligibleForMix(candidate: ScoredCandidate, context: PickContext, now:
 /** Splits into never-engaged / already-touched lanes and zips them by the
  *  MIX_* slot ratio. Ineligible (sat-out) terms are appended at the end,
  *  still score-ordered, so debug keeps listing every candidate while live
- *  `limit` slices will almost never reach them. */
-function mixLanes(scored: ScoredCandidate[], context: PickContext, now: Date): ScoredCandidate[] {
+ *  `limit` slices will almost never reach them — except a Review/Quiz
+ *  own-fail sit-out, which `includeOwnFailSitOut` can drop entirely instead
+ *  of appending, so a short eligible pool can't leak it into a live batch. */
+function mixLanes(
+  scored: ScoredCandidate[],
+  context: PickContext,
+  now: Date,
+  includeOwnFailSitOut: boolean,
+): ScoredCandidate[] {
   const neverEngaged: ScoredCandidate[] = [];
   const alreadyTouched: ScoredCandidate[] = [];
   const ineligible: ScoredCandidate[] = [];
 
   for (const candidate of scored) {
     if (!isEligibleForMix(candidate, context, now)) {
+      const isOwnFailSitOut =
+        context !== "read" && candidate.reasons.includes("recent_fail_cooldown");
+      if (isOwnFailSitOut && !includeOwnFailSitOut) {
+        continue;
+      }
       ineligible.push(candidate);
       continue;
     }

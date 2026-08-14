@@ -65,7 +65,8 @@ export type ScoreWeights = {
   /** Per point of |streak| when struggling (streak < 0), capped at FAIL_STREAK_CAP. */
   strugglingBoostPerStreak: number;
   masteredCooldownPenalty: number;
-  /** Same-day sit-outs: Read→Review/Quiz via last_read_at; fail→Read via last_fail_at. */
+  /** Same-day sit-outs: Read→Review/Quiz via last_read_at; fail→Read via last_fail_at;
+   *  own-activity fail via that context's own streak/last-activity. */
   sameDayCooldownPenalty: number;
   /** Read count >= ENGAGED_MIN_COUNT but this context's own test count is 0. */
   engagedButUntestedBoost: number;

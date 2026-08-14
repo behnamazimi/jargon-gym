@@ -17,8 +17,8 @@ const STATIC_LABELS: Partial<Record<PickReason, string>> = {
   engaged_untested: `Read ${ENGAGED_MIN_COUNT}+ times, not tested`,
   abandoned_review: "Left mid-review",
   mastered_cooldown: "Recently mastered",
-  recent_read_cooldown: "Read today — try tomorrow",
-  recent_fail_cooldown: "Missed today — try tomorrow",
+  recent_read_cooldown: "Read today",
+  recent_fail_cooldown: "Missed today",
   cross_fail: "Missed elsewhere recently",
   fragile: "Historically tricky",
 };

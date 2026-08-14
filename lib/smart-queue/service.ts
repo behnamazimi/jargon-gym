@@ -100,7 +100,7 @@ export async function listScoredCandidates(
 ): Promise<ScoredCandidate[]> {
   const candidates = await fetchCandidates(client, userId, scope, status);
   if (candidates.length === 0) return [];
-  return pickTerms(candidates, candidates.length, context);
+  return pickTerms(candidates, candidates.length, context, { includeOwnFailSitOut: true });
 }
 
 export async function getReviewPoolStats(

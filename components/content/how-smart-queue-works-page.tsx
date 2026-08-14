@@ -59,12 +59,12 @@ const PRIORITY_LOWERS = [
     body: `Passed recently in that same activity, sits out while the queue works on other terms. Starts around ${BASE_COOLDOWN_DAYS} day${BASE_COOLDOWN_DAYS === 1 ? "" : "s"} after a first pass and stretches longer with each pass in a row, up to two weeks. A single miss resets it back to the short end. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz. Review and Quiz only, Read has nothing to master.`,
   },
   {
-    title: "Read today — try tomorrow",
+    title: "Read today",
     body: "You read the term earlier today (any surface that counts as a read). Review and Quiz sit it out until tomorrow so you aren't tested on a definition you just saw.",
   },
   {
-    title: "Missed today — try tomorrow",
-    body: "You missed it in Review or Quiz earlier today. Read sits it out until tomorrow so you don't reopen the definition right after a miss. Review and Quiz can still pick it (struggling).",
+    title: "Missed today",
+    body: "You missed it in Review or Quiz earlier today. Read sits it out until tomorrow so you don't reopen the definition right after a miss, and the activity you missed in sits that same term out for the rest of the day too, a Review miss sits Review out, a Quiz miss sits Quiz out. The other test activity can still pick it.",
   },
 ] as const;
 
@@ -79,7 +79,7 @@ const SURFACES = [
   },
   {
     title: "Web quiz",
-    body: "Multiple-choice against its own Quiz ranking, not Review's. Setup shows a preview; questions show badges. A miss sits Read out until tomorrow (same as Review) and nudges Review; a quiz streak only cools future quizzes.",
+    body: "Multiple-choice against its own Quiz ranking, not Review's. Setup shows a preview; questions show badges. A miss sits that Quiz and Read out until tomorrow (same as Review) and nudges Review; a quiz streak only cools future quizzes.",
   },
   {
     title: "Web collection",

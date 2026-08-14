@@ -131,6 +131,22 @@ function evaluateCandidate(
     reasons.push("recent_fail_cooldown");
   }
 
+  // Same-day own-fail sit-out (Review and Quiz each sit out their own miss,
+  // independent of the fail→Read rule above). Keyed off this context's own
+  // streak/last-activity, not last_fail_at — a Read or a pass in the other
+  // activity must not lift it. Cross-fail to the other test activity still
+  // fires below; struggling still fires too, for debug ranking.
+  if (
+    context !== "read" &&
+    fields.streak !== null &&
+    fields.streak < 0 &&
+    fields.lastActivityAt &&
+    isSameLocalDay(fields.lastActivityAt, now, QUEUE_TIMEZONE)
+  ) {
+    score -= weights.sameDayCooldownPenalty;
+    reasons.push("recent_fail_cooldown");
+  }
+
   // Never engaged in this context.
   if (fields.ownCount === 0) {
     score += weights.unseenBoost;
