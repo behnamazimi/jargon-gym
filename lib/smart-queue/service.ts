@@ -144,13 +144,23 @@ export async function getReviewPoolStatsForUser(
   return computePoolStats(candidates, context);
 }
 
-/** Every active-collection candidate for status, unsorted — callers group/aggregate themselves. */
+/** Every active-collection candidate for status, unsorted — callers group/aggregate themselves.
+ *  Service-role: explicit userId, no RLS session required (Telegram). */
 export async function fetchActiveReviewCandidatesForUser(
   client: Client,
   userId: string,
   status: "known" | "unknown",
 ): Promise<import("./types").ReviewCandidate[]> {
   return fetchCandidatesForUser(client, userId, { domainIds: "all" }, status);
+}
+
+/** Session-scoped counterpart of {@link fetchActiveReviewCandidatesForUser} — RLS via `auth.uid()` (web). */
+export async function fetchActiveReviewCandidates(
+  client: Client,
+  userId: string,
+  status: "known" | "unknown",
+): Promise<import("./types").ReviewCandidate[]> {
+  return fetchCandidates(client, userId, { domainIds: "all" }, status);
 }
 
 export async function getReviewPoolStatsByDomainForUser(

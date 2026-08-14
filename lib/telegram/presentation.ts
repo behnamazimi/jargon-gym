@@ -1,4 +1,4 @@
-import type { TelegramCollectionStats, TelegramStatsSnapshot } from "@/lib/jargon/collection-stats";
+import type { CollectionStatBreakdown, StatsSnapshot } from "@/lib/jargon/collection-stats";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
 import { formatPickDebugLine, type PickMeta } from "@/lib/smart-queue";
 import type { InlineKeyboardMarkup } from "./actions";
@@ -135,12 +135,12 @@ function formatProgressBar(percentage: number, width: number = 10): string {
   return "█".repeat(filled) + "░".repeat(empty);
 }
 
-function formatCollectionProgressLine(collection: TelegramCollectionStats): string {
+function formatCollectionProgressLine(collection: CollectionStatBreakdown): string {
   const bar = formatProgressBar(collection.percentage);
   return `${bar} ${collection.knownCount}/${collection.totalCount} known (${collection.percentage}%)`;
 }
 
-function formatUnknownFootnote(collection: TelegramCollectionStats): string {
+function formatUnknownFootnote(collection: CollectionStatBreakdown): string {
   const total = collection.unknownNever + collection.unknownRecent + collection.unknownStale;
   return `${total} unknown: ${collection.unknownNever} never · ${collection.unknownRecent} recent · ${collection.unknownStale} stale`;
 }
@@ -153,7 +153,7 @@ function formatRollupLine(label: string, buckets: Array<[word: string, count: nu
   return `${label} ${nonZero.map(([word, count]) => `${count} ${word}`).join(" · ")}`;
 }
 
-export function formatStatsMessage(stats: TelegramStatsSnapshot): string {
+export function formatStatsMessage(stats: StatsSnapshot): string {
   if (stats.activeCount === 0 && stats.pausedCount === 0) {
     return "You don't have any collections yet. Create or add one in the app to get started.";
   }

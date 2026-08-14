@@ -35,6 +35,7 @@ export {
   getReviewPoolStatsForUser,
   getReviewPoolStatsByDomainForUser,
   fetchActiveReviewCandidatesForUser,
+  fetchActiveReviewCandidates,
   fetchTermCardForUser,
 } from "./service";
 export { computePoolStats } from "./stats";

@@ -1,13 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { resolveReviewDomainIdsForUser } from "@/lib/jargon/known-state";
+import { resolveReviewDomainIds, resolveReviewDomainIdsForUser } from "@/lib/jargon/known-state";
 import {
   computePoolStats,
+  fetchActiveReviewCandidates,
   fetchActiveReviewCandidatesForUser,
   getReviewPoolStatsByDomainForUser,
   type PickContext,
   type ReviewCandidate,
 } from "@/lib/smart-queue";
+import type { CollectionDomainRow } from "./collections";
 
 type Client = SupabaseClient<Database>;
 
@@ -69,7 +71,7 @@ export async function fetchCollectionStats(
   return stats;
 }
 
-export type TelegramCollectionStats = {
+export type CollectionStatBreakdown = {
   id: string;
   name: string;
   knownCount: number;
@@ -80,7 +82,9 @@ export type TelegramCollectionStats = {
   unknownStale: number;
 };
 
-export type TelegramStatsSnapshot = {
+/** `/stat` (Telegram) and the web Stats page share this shape: a rollup
+ *  across active collections plus a per-collection unknown-Read partition. */
+export type StatsSnapshot = {
   activeCount: number;
   pausedCount: number;
   rollup: {
@@ -88,7 +92,7 @@ export type TelegramStatsSnapshot = {
     review: { never: number; struggling: number };
     quiz: { never: number; struggling: number };
   };
-  activeCollections: TelegramCollectionStats[];
+  activeCollections: CollectionStatBreakdown[];
 };
 
 function groupCandidatesByDomain(candidates: ReviewCandidate[]): Map<string, ReviewCandidate[]> {
@@ -101,7 +105,7 @@ function groupCandidatesByDomain(candidates: ReviewCandidate[]): Map<string, Rev
   return byDomain;
 }
 
-const EMPTY_TELEGRAM_STATS: TelegramStatsSnapshot = {
+const EMPTY_STATS_SNAPSHOT: StatsSnapshot = {
   activeCount: 0,
   pausedCount: 0,
   rollup: {
@@ -112,28 +116,22 @@ const EMPTY_TELEGRAM_STATS: TelegramStatsSnapshot = {
   activeCollections: [],
 };
 
-/** Telegram `/stat` snapshot: a rollup across active collections plus a
- *  per-collection unknown-Read partition. Two candidate fetches (unknown +
- *  known), both already scoped to active collections by `domainIds: "all"`. */
-export async function fetchTelegramStats(
-  client: Client,
-  userId: string,
-): Promise<TelegramStatsSnapshot> {
-  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
-  if (collectionRows.length === 0) return EMPTY_TELEGRAM_STATS;
-
+/** Pure aggregation shared by the Telegram and web snapshot fetchers below —
+ *  two candidate fetches (unknown + known), both already scoped to active
+ *  collections by `domainIds: "all"`. */
+function buildStatsSnapshot(
+  collectionRows: CollectionDomainRow[],
+  reviewDomainIds: string[],
+  unknownCandidates: ReviewCandidate[],
+  knownCandidates: ReviewCandidate[],
+): StatsSnapshot {
   const activeSet = new Set(reviewDomainIds);
   const activeRows = collectionRows.filter((row) => activeSet.has(row.id));
   const pausedCount = collectionRows.length - activeRows.length;
 
   if (activeRows.length === 0) {
-    return { ...EMPTY_TELEGRAM_STATS, pausedCount };
+    return { ...EMPTY_STATS_SNAPSHOT, pausedCount };
   }
-
-  const [unknownCandidates, knownCandidates] = await Promise.all([
-    fetchActiveReviewCandidatesForUser(client, userId, "unknown"),
-    fetchActiveReviewCandidatesForUser(client, userId, "known"),
-  ]);
 
   const unknownByDomain = groupCandidatesByDomain(unknownCandidates);
   const readPool = computePoolStats(unknownCandidates, "read");
@@ -142,7 +140,7 @@ export async function fetchTelegramStats(
   const reviewKnownPool = computePoolStats(knownCandidates, "review");
   const quizKnownPool = computePoolStats(knownCandidates, "quiz");
 
-  const activeCollections: TelegramCollectionStats[] = activeRows.map((row) => {
+  const activeCollections: CollectionStatBreakdown[] = activeRows.map((row) => {
     const totalCount = row.termCount;
     const knownCount = row.knownCount;
     const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
@@ -182,4 +180,30 @@ export async function fetchTelegramStats(
     },
     activeCollections,
   };
+}
+
+/** Telegram `/stat`: service-role client, explicit userId (no RLS session). */
+export async function fetchTelegramStats(client: Client, userId: string): Promise<StatsSnapshot> {
+  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
+  if (collectionRows.length === 0) return EMPTY_STATS_SNAPSHOT;
+
+  const [unknownCandidates, knownCandidates] = await Promise.all([
+    fetchActiveReviewCandidatesForUser(client, userId, "unknown"),
+    fetchActiveReviewCandidatesForUser(client, userId, "known"),
+  ]);
+
+  return buildStatsSnapshot(collectionRows, reviewDomainIds, unknownCandidates, knownCandidates);
+}
+
+/** Web `/jargon/stat`: session-scoped client, RLS via `auth.uid()`. */
+export async function fetchStatsSnapshot(client: Client, userId: string): Promise<StatsSnapshot> {
+  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+  if (collectionRows.length === 0) return EMPTY_STATS_SNAPSHOT;
+
+  const [unknownCandidates, knownCandidates] = await Promise.all([
+    fetchActiveReviewCandidates(client, userId, "unknown"),
+    fetchActiveReviewCandidates(client, userId, "known"),
+  ]);
+
+  return buildStatsSnapshot(collectionRows, reviewDomainIds, unknownCandidates, knownCandidates);
 }
