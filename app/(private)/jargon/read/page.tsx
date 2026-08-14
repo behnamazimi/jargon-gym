@@ -1,19 +1,42 @@
-import { getNextReadTermAction, getReadTermByIdAction } from "@/app/(private)/jargon/read/actions";
+import {
+  getNextReadTermAction,
+  getReadSetupData,
+  getReadTermByIdAction,
+} from "@/app/(private)/jargon/read/actions";
 import { ReadPage } from "@/components/jargon/read/read-page";
+import type { StudyCollection } from "@/lib/study/types";
 
 type PageProps = {
-  searchParams: Promise<{ termId?: string; alreadyRead?: string }>;
+  searchParams: Promise<{ termId?: string; alreadyRead?: string; domain?: string }>;
 };
 
+function resolveReadCollectionId(
+  domainParam: string | undefined,
+  collections: StudyCollection[],
+): string {
+  if (domainParam && collections.some((collection) => collection.id === domainParam)) {
+    return domainParam;
+  }
+  return "all";
+}
+
 export default async function JargonReadPage({ searchParams }: PageProps) {
-  const { termId, alreadyRead } = await searchParams;
-  const initialResult = termId
-    ? await getReadTermByIdAction(termId, alreadyRead === "true")
-    : await getNextReadTermAction();
+  const [params, setup] = await Promise.all([searchParams, getReadSetupData()]);
+
+  if ("error" in setup) {
+    return <p className="text-sm text-base-content/60">Log in to read terms.</p>;
+  }
+
+  const domainId = resolveReadCollectionId(params.domain, setup.collections);
+  const initialResult = params.termId
+    ? await getReadTermByIdAction(params.termId, params.alreadyRead === "true")
+    : await getNextReadTermAction(domainId);
 
   if (initialResult.error === "Log in to continue.") {
     return <p className="text-sm text-base-content/60">Log in to read terms.</p>;
   }
 
-  return <ReadPage initialResult={initialResult} />;
+  return (
+    <ReadPage initialResult={initialResult} collections={setup.collections} domainId={domainId} />
+  );
 }

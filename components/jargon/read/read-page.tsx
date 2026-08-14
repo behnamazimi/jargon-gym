@@ -16,8 +16,18 @@ import {
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ReviewTerm } from "@/lib/review/types";
 import { formatPickDebugLine } from "@/lib/smart-queue/reasons";
+import { countTermsForSelection } from "@/lib/study/count";
+import type { StudyCollection } from "@/lib/study/types";
 
 const PRESS_CLASS = "transition-transform duration-150 ease-out active:scale-[0.96]";
 
@@ -36,6 +46,44 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior });
 }
 
+function allUnknownCount(collections: StudyCollection[]) {
+  return countTermsForSelection(collections, "all", "unknown");
+}
+
+function replaceReadDomainInUrl(domainId: string) {
+  const url = new URL(window.location.href);
+  if (domainId === "all") {
+    url.searchParams.delete("domain");
+  } else {
+    url.searchParams.set("domain", domainId);
+  }
+  url.searchParams.delete("termId");
+  url.searchParams.delete("alreadyRead");
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function stripInvalidDomainParam(resolvedDomainId: string) {
+  const url = new URL(window.location.href);
+  const param = url.searchParams.get("domain");
+  if (!param) return;
+  if (resolvedDomainId !== "all" && param === resolvedDomainId) return;
+
+  url.searchParams.delete("domain");
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function isTypingTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  return (
+    target.tagName === "INPUT" ||
+    target.tagName === "TEXTAREA" ||
+    target.tagName === "SELECT" ||
+    target.isContentEditable ||
+    target.closest("[data-slot='select']") !== null ||
+    target.closest("[role='listbox']") !== null
+  );
+}
+
 function ReadPickDebug({ term }: { term: ReviewTerm }) {
   if (term.pickScore === undefined || !term.pickReasons) return null;
 
@@ -47,9 +95,11 @@ function ReadPickDebug({ term }: { term: ReviewTerm }) {
 }
 
 function ReadCaughtUp({
+  description,
   onCheckAgain,
   isPending,
 }: {
+  description: string;
   onCheckAgain: () => void;
   isPending: boolean;
 }) {
@@ -59,7 +109,7 @@ function ReadCaughtUp({
         <QuizCenteredState
           icon={PartyPopper}
           title="You're all caught up"
-          description="No unknown terms left in your active collections. Import more terms or turn a collection back on to keep reading."
+          description={description}
         >
           <Button
             variant="outline"
@@ -163,6 +213,73 @@ function ReadErrorAlert({
   );
 }
 
+function ReadCollectionSelect({
+  collections,
+  selectedCollectionId,
+  isDisabled,
+  onChange,
+}: {
+  collections: StudyCollection[];
+  selectedCollectionId: string;
+  isDisabled: boolean;
+  onChange: (domainId: string) => void;
+}) {
+  return (
+    <Field>
+      <FieldLabel htmlFor="read-collection">Collection</FieldLabel>
+      <Select
+        className="w-full"
+        selectedKey={selectedCollectionId}
+        onSelectionChange={(key) => {
+          if (key == null) return;
+          onChange(String(key));
+        }}
+        isDisabled={isDisabled}
+      >
+        <SelectTrigger id="read-collection" className="text-sm">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem id="all">All active collections ({allUnknownCount(collections)})</SelectItem>
+          {collections.map((collection) => (
+            <SelectItem key={collection.id} id={collection.id}>
+              {collection.name} ({collection.unknownCount})
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Field>
+  );
+}
+
+function collectionName(domainId: string, collections: StudyCollection[]) {
+  return collections.find((collection) => collection.id === domainId)?.name;
+}
+
+function caughtUpDescription(
+  domainId: string,
+  lastPickedDomainId: string,
+  collections: StudyCollection[],
+) {
+  if (domainId !== lastPickedDomainId) {
+    const name = collectionName(domainId, collections);
+    return name
+      ? `Collection changed. Check again to read from ${name}.`
+      : "Collection changed. Check again to read from your active collections.";
+  }
+
+  if (domainId === "all") {
+    return "No unknown terms left in your active collections. Import more terms or turn a collection back on to keep reading.";
+  }
+
+  const name = collectionName(domainId, collections);
+  if (!name) {
+    return "No unknown terms left in this collection. Pick another collection to keep reading.";
+  }
+
+  return `No unknown terms left in ${name}. Pick another collection to keep reading.`;
+}
+
 type NavState = {
   term: ReviewTerm | null;
   history: ReviewTerm[];
@@ -173,7 +290,8 @@ type NavAction =
   | { type: "fetched"; term: ReviewTerm }
   | { type: "redo" }
   | { type: "back" }
-  | { type: "clear" };
+  | { type: "clear" }
+  | { type: "dropRedo" };
 
 function navReducer(state: NavState, action: NavAction): NavState {
   switch (action.type) {
@@ -197,6 +315,8 @@ function navReducer(state: NavState, action: NavAction): NavState {
     }
     case "clear":
       return { ...state, term: null };
+    case "dropRedo":
+      return { ...state, future: [] };
     default:
       return state;
   }
@@ -204,9 +324,12 @@ function navReducer(state: NavState, action: NavAction): NavState {
 
 type ReadPageProps = {
   initialResult: NextReadTermResult;
+  collections: StudyCollection[];
+  domainId: string;
 };
 
-export function ReadPage({ initialResult }: ReadPageProps) {
+export function ReadPage({ initialResult, collections, domainId }: ReadPageProps) {
+  const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
   const [status, setStatus] = useState<ReadStatus>(() => statusFromResult(initialResult));
   const [nav, dispatch] = useReducer(navReducer, {
     term: initialResult.term ?? null,
@@ -214,14 +337,21 @@ export function ReadPage({ initialResult }: ReadPageProps) {
     future: [],
   });
   const { term, history } = nav;
+  const [lastPickedDomainId, setLastPickedDomainId] = useState(domainId);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialResult.error ?? null);
   const [isPending, startTransition] = useTransition();
   const navRef = useRef(nav);
   const statusRef = useRef(status);
+  const selectedCollectionIdRef = useRef(selectedCollectionId);
   const fetchingRef = useRef(false);
 
   navRef.current = nav;
   statusRef.current = status;
+  selectedCollectionIdRef.current = selectedCollectionId;
+
+  useEffect(() => {
+    stripInvalidDomainParam(domainId);
+  }, [domainId]);
 
   const fetchNext = useCallback(() => {
     if (navRef.current.future.length > 0) {
@@ -234,11 +364,17 @@ export function ReadPage({ initialResult }: ReadPageProps) {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
 
+    const requestedDomainId = selectedCollectionIdRef.current;
+
     startTransition(async () => {
       setErrorMessage(null);
 
       try {
-        const result = await getNextReadTermAction();
+        const result = await getNextReadTermAction(requestedDomainId);
+
+        if (selectedCollectionIdRef.current !== requestedDomainId) return;
+
+        setLastPickedDomainId(requestedDomainId);
 
         if (result.error) {
           setStatus("error");
@@ -267,21 +403,19 @@ export function ReadPage({ initialResult }: ReadPageProps) {
     scrollToTop();
   }, []);
 
+  const handleCollectionChange = useCallback((nextDomainId: string) => {
+    if (nextDomainId === selectedCollectionIdRef.current) return;
+
+    setSelectedCollectionId(nextDomainId);
+    dispatch({ type: "dropRedo" });
+    replaceReadDomainInUrl(nextDomainId);
+  }, []);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== "Enter") return;
       if (statusRef.current !== "ready" || fetchingRef.current) return;
-
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
+      if (isTypingTarget(event.target)) return;
 
       event.preventDefault();
       fetchNext();
@@ -293,8 +427,21 @@ export function ReadPage({ initialResult }: ReadPageProps) {
 
   return (
     <>
+      {collections.length > 0 ? (
+        <ReadCollectionSelect
+          collections={collections}
+          selectedCollectionId={selectedCollectionId}
+          isDisabled={isPending}
+          onChange={handleCollectionChange}
+        />
+      ) : null}
+
       {status === "caughtUp" ? (
-        <ReadCaughtUp onCheckAgain={fetchNext} isPending={isPending} />
+        <ReadCaughtUp
+          description={caughtUpDescription(selectedCollectionId, lastPickedDomainId, collections)}
+          onCheckAgain={fetchNext}
+          isPending={isPending}
+        />
       ) : null}
 
       {status === "ready" && term !== null ? (

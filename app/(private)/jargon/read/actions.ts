@@ -7,8 +7,23 @@ import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser } from "@/lib/smart-queue/hydrate";
 import { pickReviewTermsForUser } from "@/lib/smart-queue/service";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { listStudyCollections } from "@/lib/study/collections";
 
 export type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };
+
+export async function getReadSetupData() {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to continue." as const };
+  }
+
+  const collections = await listStudyCollections(auth.supabase, auth.user.id);
+  return { collections };
+}
+
+function domainIdsForRead(domainId: string | undefined): string[] | "all" {
+  return domainId && domainId !== "all" ? [domainId] : "all";
+}
 
 /**
  * Deep-link entry: open one specific term (from Telegram, the widget, or a
@@ -50,8 +65,12 @@ export async function getReadTermByIdAction(
 /**
  * Web equivalent of Telegram /read: pull one unknown term, record it as read.
  * Hydrates via get_term_card (same RPC Telegram uses) so relationships match.
+ *
+ * `domainId` is a Read-page filter on top of the active pool. `"all"` (default)
+ * matches Telegram /read. The RPC already intersects with collections that are
+ * turned on, so an unknown id just yields an empty pick.
  */
-export async function getNextReadTermAction(): Promise<NextReadTermResult> {
+export async function getNextReadTermAction(domainId: string = "all"): Promise<NextReadTermResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
@@ -60,7 +79,7 @@ export async function getNextReadTermAction(): Promise<NextReadTermResult> {
     const { cards, pickMeta } = await pickReviewTermsForUser(
       admin,
       auth.user.id,
-      { domainIds: "all" },
+      { domainIds: domainIdsForRead(domainId) },
       "unknown",
       1,
       "read",

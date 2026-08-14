@@ -8,7 +8,7 @@ export default function ReadLayout({ children }: { children: React.ReactNode }) 
       <PageHeader
         icon={Zap}
         title="Read"
-        description="One term at a time from your active collections — the same feed as /read on Telegram."
+        description="One term at a time from your active collections. All matches /read on Telegram; pick one collection to stay in that context."
       />
       <div className="mx-auto w-full max-w-xl space-y-4">{children}</div>
     </PageShell>
