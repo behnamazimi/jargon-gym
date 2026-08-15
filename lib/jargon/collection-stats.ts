@@ -211,9 +211,8 @@ export type PausedCollectionSummary = {
 };
 
 /** Adds diagnostic (mastery/accuracy), momentum (today), and coverage
- *  (whole-library known%, including paused collections) on top of the
- *  Telegram-shared `StatsSnapshot` — web page only, richer than a Telegram
- *  message needs to be. */
+ *  (known% across active collections only) on top of the Telegram-shared
+ *  `StatsSnapshot` — web page only, richer than a Telegram message needs to be. */
 export type WebStatsSnapshot = StatsSnapshot & {
   coverage: { known: number; total: number; percentage: number };
   today: { read: number; review: number; quiz: number };
@@ -334,7 +333,7 @@ export async function fetchStatsSnapshot(
 
   return {
     ...base,
-    coverage: computeCoverage(collectionRows),
+    coverage: computeCoverage(collectionRows.filter((row) => activeSet.has(row.id))),
     today: {
       read: countActivityToday(unknownCandidates, "read", now),
       review: countActivityToday(combined, "review", now),
