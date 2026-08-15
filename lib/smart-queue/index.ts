@@ -39,3 +39,4 @@ export {
   fetchTermCardForUser,
 } from "./service";
 export { computePoolStats } from "./stats";
+export { isSameLocalDay } from "./local-day";

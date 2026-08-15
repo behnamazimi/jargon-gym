@@ -6,6 +6,9 @@ import {
   fetchActiveReviewCandidates,
   fetchActiveReviewCandidatesForUser,
   getReviewPoolStatsByDomainForUser,
+  isSameLocalDay,
+  QUEUE_TIMEZONE,
+  strengthForCandidate,
   type PickContext,
   type ReviewCandidate,
 } from "@/lib/smart-queue";
@@ -195,15 +198,156 @@ export async function fetchTelegramStats(client: Client, userId: string): Promis
   return buildStatsSnapshot(collectionRows, reviewDomainIds, unknownCandidates, knownCandidates);
 }
 
-/** Web `/jargon/stat`: session-scoped client, RLS via `auth.uid()`. */
-export async function fetchStatsSnapshot(client: Client, userId: string): Promise<StatsSnapshot> {
+export type MasteryTiers = { weak: number; medium: number; strong: number };
+
+export type AccuracySummary = { passed: number; attempted: number; percentage: number };
+
+export type PausedCollectionSummary = {
+  id: string;
+  name: string;
+  knownCount: number;
+  totalCount: number;
+  percentage: number;
+};
+
+/** Adds diagnostic (mastery/accuracy), momentum (today), and coverage
+ *  (whole-library known%, including paused collections) on top of the
+ *  Telegram-shared `StatsSnapshot` — web page only, richer than a Telegram
+ *  message needs to be. */
+export type WebStatsSnapshot = StatsSnapshot & {
+  coverage: { known: number; total: number; percentage: number };
+  today: { read: number; review: number; quiz: number };
+  mastery: { review: MasteryTiers; quiz: MasteryTiers };
+  accuracy: { review: AccuracySummary; quiz: AccuracySummary };
+  pausedCollections: PausedCollectionSummary[];
+};
+
+function computeCoverage(collectionRows: CollectionDomainRow[]) {
+  const known = collectionRows.reduce((sum, row) => sum + row.knownCount, 0);
+  const total = collectionRows.reduce((sum, row) => sum + row.termCount, 0);
+  return { known, total, percentage: total > 0 ? Math.round((known / total) * 100) : 0 };
+}
+
+function lastActivityAtForContext(candidate: ReviewCandidate, context: PickContext): Date | null {
+  switch (context) {
+    case "read":
+      return candidate.lastReadAt;
+    case "review":
+      return candidate.lastReviewRecallAt;
+    case "quiz":
+      return candidate.lastQuizTestedAt;
+  }
+}
+
+function countActivityToday(
+  candidates: ReviewCandidate[],
+  context: PickContext,
+  now: Date,
+): number {
+  return candidates.filter((candidate) => {
+    const lastActivityAt = lastActivityAtForContext(candidate, context);
+    return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, QUEUE_TIMEZONE);
+  }).length;
+}
+
+function tallyMastery(
+  candidates: ReviewCandidate[],
+  context: "review" | "quiz",
+  now: Date,
+): MasteryTiers {
+  const tiers: MasteryTiers = { weak: 0, medium: 0, strong: 0 };
+  for (const candidate of candidates) {
+    const strength = strengthForCandidate(candidate, context, now);
+    if (strength) tiers[strength]++;
+  }
+  return tiers;
+}
+
+function summarizeAccuracy(
+  candidates: ReviewCandidate[],
+  context: "review" | "quiz",
+): AccuracySummary {
+  let attempted = 0;
+  let failed = 0;
+  for (const candidate of candidates) {
+    attempted += context === "review" ? candidate.reviewRecallCount : candidate.quizTestCount;
+    failed += context === "review" ? candidate.reviewFailCount : candidate.quizFailCount;
+  }
+  const passed = attempted - failed;
+  return {
+    passed,
+    attempted,
+    percentage: attempted > 0 ? Math.round((passed / attempted) * 100) : 0,
+  };
+}
+
+function toPausedCollectionSummary(row: CollectionDomainRow): PausedCollectionSummary {
+  const totalCount = row.termCount;
+  const knownCount = row.knownCount;
+  const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
+  return { id: row.id, name: row.name, knownCount, totalCount, percentage };
+}
+
+const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
+  ...EMPTY_STATS_SNAPSHOT,
+  coverage: { known: 0, total: 0, percentage: 0 },
+  today: { read: 0, review: 0, quiz: 0 },
+  mastery: {
+    review: { weak: 0, medium: 0, strong: 0 },
+    quiz: { weak: 0, medium: 0, strong: 0 },
+  },
+  accuracy: {
+    review: { passed: 0, attempted: 0, percentage: 0 },
+    quiz: { passed: 0, attempted: 0, percentage: 0 },
+  },
+  pausedCollections: [],
+};
+
+/** Web `/jargon/stat`: session-scoped client, RLS via `auth.uid()`. Layers
+ *  diagnostic/momentum/coverage numbers on top of the shared snapshot —
+ *  Telegram's `fetchTelegramStats` is untouched by this. */
+export async function fetchStatsSnapshot(
+  client: Client,
+  userId: string,
+): Promise<WebStatsSnapshot> {
   const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
-  if (collectionRows.length === 0) return EMPTY_STATS_SNAPSHOT;
+  if (collectionRows.length === 0) return EMPTY_WEB_STATS_SNAPSHOT;
 
   const [unknownCandidates, knownCandidates] = await Promise.all([
     fetchActiveReviewCandidates(client, userId, "unknown"),
     fetchActiveReviewCandidates(client, userId, "known"),
   ]);
 
-  return buildStatsSnapshot(collectionRows, reviewDomainIds, unknownCandidates, knownCandidates);
+  const base = buildStatsSnapshot(
+    collectionRows,
+    reviewDomainIds,
+    unknownCandidates,
+    knownCandidates,
+  );
+  const now = new Date();
+  const combined = [...unknownCandidates, ...knownCandidates];
+  const activeSet = new Set(reviewDomainIds);
+  const pausedCollections = collectionRows
+    .filter((row) => !activeSet.has(row.id))
+    .map(toPausedCollectionSummary)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return {
+    ...base,
+    coverage: computeCoverage(collectionRows),
+    today: {
+      read: countActivityToday(unknownCandidates, "read", now),
+      review: countActivityToday(combined, "review", now),
+      quiz: countActivityToday(combined, "quiz", now),
+    },
+    mastery: {
+      review: tallyMastery(combined, "review", now),
+      quiz: tallyMastery(combined, "quiz", now),
+    },
+    accuracy: {
+      review: summarizeAccuracy(combined, "review"),
+      quiz: summarizeAccuracy(combined, "quiz"),
+    },
+    pausedCollections,
+  };
 }
