@@ -9,6 +9,18 @@ const BUCKET_LABEL: Record<OverallStrength, string> = {
   strong: "Strong",
 };
 
+/** `unverified` covers two different situations: a term that's been read
+ *  but never tested (score > 0, driven by the Read nudge) vs. one with
+ *  zero activity of any kind (score 0) — "no activity" reads more
+ *  accurately than "not yet tested" when there's nothing to even hint at
+ *  yet, not just no test. */
+function bucketLabel(bucket: OverallStrength, score: number | undefined): string {
+  if (bucket === "unverified" && (score === undefined || score <= 0)) {
+    return "No activity";
+  }
+  return BUCKET_LABEL[bucket];
+}
+
 /** unverified gets its own neutral color, never weak/medium/strong's
  *  red/yellow/green — that's what keeps "never tested" visually distinct
  *  from "tested and struggling" now that both buckets fill bars the same
@@ -38,10 +50,9 @@ type OverallStrengthBarsProps = {
  *  and struggling," not a separate rendering path. Hover/focus reveals the
  *  label (and score, when nonzero) as a tooltip. */
 export function OverallStrengthBars({ bars, bucket, score, className }: OverallStrengthBarsProps) {
+  const resolvedLabel = bucketLabel(bucket, score);
   const label =
-    score !== undefined && score > 0
-      ? `${BUCKET_LABEL[bucket]} (${score}/100)`
-      : BUCKET_LABEL[bucket];
+    score !== undefined && score > 0 ? `${resolvedLabel} (${score}/100)` : resolvedLabel;
 
   return (
     <TooltipTrigger delay={150}>

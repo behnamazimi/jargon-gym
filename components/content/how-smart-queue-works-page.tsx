@@ -87,7 +87,7 @@ const STRENGTH_ITEMS = [
   },
   {
     title: "Not yet tested is its own thing",
-    body: "A term you've only read, or just marked known, shows as not yet tested rather than weak. Weak means you tried and it didn't go well; not yet tested means there's nothing to judge yet.",
+    body: "A term you've only read, or just marked known, shows as not yet tested rather than weak — weak means you tried and it didn't go well, not yet tested means there's nothing to judge yet. A term with zero activity of any kind, not even a read, shows as no activity instead.",
   },
 ] as const;
 
