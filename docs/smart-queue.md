@@ -532,32 +532,48 @@ calls the other or feeds the ranking score.
   proportional floor (`OVERALL_STALENESS_MULTIPLIER_FLOOR`) keeps a real
   pass from ever fully decaying to indistinguishable-from-untested.
 
-| Constant                             | Default                | Purpose                                                                       |
-| ------------------------------------ | ---------------------- | ----------------------------------------------------------------------------- |
-| `OVERALL_WEIGHTS`                    | `{review: 2, quiz: 1}` | Composite blend weights                                                       |
-| `OVERALL_READ_NUDGE_MAX`             | 10                     | Cap on the Read tie-break nudge                                               |
-| `OVERALL_READ_NUDGE_PER_READ`        | 2                      | Scales with `sqrt(readCount)`, diminishing returns                            |
-| `OVERALL_STALENESS_TAU_BASE_HOURS`   | 96 (4 days)            | τ at a near-zero pre-decay score                                              |
-| `OVERALL_STALENESS_TAU_CAP_HOURS`    | 480 (20 days)          | τ at a near-100 pre-decay score                                               |
-| `OVERALL_STALENESS_MULTIPLIER_FLOOR` | 0.2                    | Floor on the decay multiplier itself (proportional, not absolute)             |
-| `OVERALL_BUCKET_MEDIUM_MIN_SCORE`    | 55                     | Score at/above which a tested term is `medium` instead of `weak`              |
-| `OVERALL_BUCKET_STRONG_MIN_SCORE`    | 75                     | Score at/above which a tested term is `strong` instead of `medium`            |
-| `OVERALL_BAR_SCORE_THRESHOLDS`       | `[35, 55, 75, 95]`     | Score needed for each extra bar past the first (`scoreToBars` in strength.ts) |
+| Constant                                  | Default                | Purpose                                                                                                  |
+| ----------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `OVERALL_WEIGHTS`                         | `{review: 2, quiz: 1}` | Composite blend weights                                                                                  |
+| `OVERALL_READ_NUDGE_MAX`                  | 20                     | Cap on the Read-driven contribution (tie-break for tested terms, the entire score for `unverified` ones) |
+| `OVERALL_READ_NUDGE_PER_READ`             | 4                      | Scales with `sqrt(readCount)`, diminishing returns                                                       |
+| `OVERALL_STALENESS_TAU_BASE_HOURS`        | 96 (4 days)            | τ at a near-zero pre-decay score                                                                         |
+| `OVERALL_STALENESS_TAU_CAP_HOURS`         | 480 (20 days)          | τ at a near-100 pre-decay score                                                                          |
+| `OVERALL_STALENESS_MULTIPLIER_FLOOR`      | 0.2                    | Floor on the decay multiplier itself (proportional, not absolute)                                        |
+| `OVERALL_BUCKET_MEDIUM_MIN_SCORE`         | 55                     | Score at/above which a tested term is `medium` instead of `weak`                                         |
+| `OVERALL_BUCKET_STRONG_MIN_SCORE`         | 75                     | Score at/above which a tested term is `strong` instead of `medium`                                       |
+| `OVERALL_BAR_SCORE_THRESHOLDS`            | `[35, 55, 75, 95]`     | Score needed for each extra bar past the first, tested scores (0-100 range)                              |
+| `OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS` | `[5, 10]`              | Same, but for `unverified`'s own much lower range — see below                                            |
 
 Bucket assignment (`scoreToBucket` in `lib/smart-queue/strength.ts`) reads
 straight off the score against the two `OVERALL_BUCKET_*_MIN_SCORE`
 constants above — edit those two directly to change what score counts as
 which tier, though `computeOverallStrength` overrides the result to
 `unverified` whenever there's no Review/Quiz history, regardless of score.
+
 Bar count (`bars`, the 0-5 the UI renders as signal-strength bars, via
-`scoreToBars`) is a separate, finer-grained breakdown off
-`OVERALL_BAR_SCORE_THRESHOLDS` — any score above `0` shows at least 1 bar,
-one more per threshold cleared, `0` shows none — kept independent of the
+`scoreToBars`) is a separate, finer-grained breakdown, independent of the
 bucket cutoffs so the visual granularity and the weak/medium/strong label
-can be tuned separately. `OverallStrengthBars` fills `unverified`'s bars
-the same way as every other bucket, just in its own neutral gray instead of
-red/yellow/green — that color, not a separate rendering path, is what
-keeps "never tested" from being mistaken for "tested and struggling."
+can be tuned separately — but it isn't one scale for every term. Tested
+scores (0-100 range) use `OVERALL_BAR_SCORE_THRESHOLDS`. `unverified`
+scores never exceed `OVERALL_READ_NUDGE_MAX` (they're driven entirely by
+the Read nudge, capped low), so sharing the tested scale would pin every
+unverified term at 1 bar forever — its first threshold (35) is out of
+reach. `unverified` uses `OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS` instead,
+sized to that lower range, so read count _and_ recency can actually move
+the bar count: a term read several times today shows more bars than the
+same term read the same number of times a week ago, and staleness alone
+can visibly drop it. That threshold array also has only 2 entries (vs. 4
+for tested scores), which caps `unverified` at 3 bars max, however fresh
+or heavily read — exposure alone should never look as "full" as a
+genuinely tested term, even before noticing the color. Any score above `0`
+shows at least 1 bar on either scale; a genuine `0` (never read, never
+tested) shows none.
+
+`OverallStrengthBars` fills `unverified`'s bars the same way as every
+other bucket, just in its own neutral gray instead of red/yellow/green —
+that color, not a separate rendering path, is what keeps "never tested"
+from being mistaken for "tested and struggling."
 
 Surfaces: collection term cards (`OverallStrengthBars` in
 `components/jargon/overall-strength-bars.tsx`, fetched via

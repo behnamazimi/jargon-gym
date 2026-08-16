@@ -17,6 +17,7 @@ import {
   OVERALL_STALENESS_MULTIPLIER_FLOOR,
   OVERALL_STALENESS_TAU_BASE_HOURS,
   OVERALL_STALENESS_TAU_CAP_HOURS,
+  OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS,
   OVERALL_WEIGHTS,
   RANKING_WEIGHTS,
 } from "./weights";
@@ -121,13 +122,16 @@ function stalenessMultiplier(hoursSinceLastActivity: number, decayConstantHours:
   );
 }
 
-/** Bar count for the 5-bar UI, from OVERALL_BAR_SCORE_THRESHOLDS — any
- *  score above 0 shows at least 1 bar; one more per threshold cleared. A
- *  genuine 0 (no evidence of any kind — never read, never tested) shows 0. */
-function scoreToBars(score: number): number {
+/** Bar count for the 5-bar UI, from the given threshold set — any score
+ *  above 0 shows at least 1 bar; one more per threshold cleared. A genuine
+ *  0 (no evidence of any kind — never read, never tested) shows 0. Tested
+ *  scores use OVERALL_BAR_SCORE_THRESHOLDS (0-100 range, up to 5 bars);
+ *  `unverified` uses OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS instead (its
+ *  own much lower range, capped at 3 bars) — see that constant for why. */
+function scoreToBars(score: number, thresholds: readonly number[]): number {
   if (score <= 0) return 0;
   let bars = 1;
-  for (const threshold of OVERALL_BAR_SCORE_THRESHOLDS) {
+  for (const threshold of thresholds) {
     if (score >= threshold) bars += 1;
   }
   return bars;
@@ -194,7 +198,10 @@ export function computeOverallStrength(
   const rawScore = Math.max(0, Math.min(100, Math.round(decayed)));
   const score = !isUnverified && rawScore === 0 ? 1 : rawScore;
 
-  const bars = scoreToBars(score);
+  const bars = scoreToBars(
+    score,
+    isUnverified ? OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS : OVERALL_BAR_SCORE_THRESHOLDS,
+  );
   const bucket: OverallStrength = isUnverified ? "unverified" : scoreToBucket(score);
 
   return { score, bucket, bars };

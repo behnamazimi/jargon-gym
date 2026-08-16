@@ -165,3 +165,14 @@ export const OVERALL_BUCKET_STRONG_MIN_SCORE = 75;
  *  strong cutoffs above (bar count drives the visual, not the bucket
  *  label). */
 export const OVERALL_BAR_SCORE_THRESHOLDS = [35, 55, 75, 95] as const;
+
+/** Score thresholds for `unverified`'s own bar scale — read-only scores
+ *  never exceed OVERALL_READ_NUDGE_MAX (20), far below the tested scale's
+ *  first threshold (35), so sharing OVERALL_BAR_SCORE_THRESHOLDS would
+ *  pin every unverified term at 1 bar forever regardless of read count or
+ *  staleness. This scale is sized to that 0-20 range instead, so exposure
+ *  and recency can actually move the bar count. Only 2 entries (vs. 4 for
+ *  tested scores) deliberately caps unverified at 3 bars max — exposure
+ *  alone should never look as "full" as a genuinely tested term, even
+ *  before noticing the bucket's gray color. */
+export const OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS = [5, 10] as const;
