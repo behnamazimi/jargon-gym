@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { listPublicDomains } from "@/lib/jargon/public/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { createPublicClient } from "@/lib/supabase/public";
 
@@ -11,7 +12,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/`, changeFrequency: "monthly", priority: 1 },
     { url: `${baseUrl}/how-terms-work`, changeFrequency: "yearly", priority: 0.5 },
     { url: `${baseUrl}/how-smart-queue-works`, changeFrequency: "yearly", priority: 0.5 },
+    { url: `${baseUrl}/t`, changeFrequency: "weekly", priority: 0.8 },
   ];
+
+  const domains = await listPublicDomains();
+  const domainRoutes: MetadataRoute.Sitemap = domains.map((domain) => ({
+    url: `${baseUrl}/t/${domain.slug}`,
+    lastModified: domain.updatedAt,
+    changeFrequency: "weekly",
+    priority: 0.7,
+  }));
 
   const supabase = createPublicClient();
   const { data: terms, error } = await supabase
@@ -27,8 +37,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/t/${row.domains.slug}/${row.slug}`,
       lastModified: row.updated_at,
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.6,
     }));
 
-  return [...staticRoutes, ...termRoutes];
+  return [...staticRoutes, ...domainRoutes, ...termRoutes];
 }

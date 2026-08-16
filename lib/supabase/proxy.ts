@@ -11,6 +11,7 @@ function isPublicPath(pathname: string) {
     pathname === "/install-widget.sh" ||
     pathname === "/sitemap.xml" ||
     pathname === "/robots.txt" ||
+    pathname === "/t" ||
     pathname.startsWith("/t/") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||

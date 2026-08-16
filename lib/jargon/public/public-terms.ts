@@ -33,6 +33,80 @@ export type PublicDomain = {
   updatedAt: string;
 };
 
+export type PublicDomainSummary = PublicDomain & { termCount: number };
+
+export async function listPublicDomains(): Promise<PublicDomainSummary[]> {
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from("domains")
+    .select("id, slug, name, description, updated_at, terms(count)")
+    .eq("is_public", true)
+    .not("slug", "is", null)
+    .order("name");
+
+  if (error) throw error;
+
+  return (data ?? []).map((domain) => ({
+    id: domain.id,
+    slug: domain.slug!,
+    name: domain.name,
+    description: domain.description ?? "",
+    updatedAt: domain.updated_at,
+    termCount: domain.terms?.[0]?.count ?? 0,
+  }));
+}
+
+export type PublicTermSummary = {
+  slug: string;
+  term: string;
+  category: string;
+  definition: string;
+};
+
+export type PublicDomainPage = {
+  domain: PublicDomain;
+  terms: PublicTermSummary[];
+};
+
+export async function getPublicDomainPage(domainSlug: string): Promise<PublicDomainPage | null> {
+  const supabase = createPublicClient();
+
+  const { data: domainRow, error: domainError } = await supabase
+    .from("domains")
+    .select("id, slug, name, description, updated_at")
+    .eq("slug", domainSlug)
+    .eq("is_public", true)
+    .maybeSingle();
+
+  if (domainError) throw domainError;
+  if (!domainRow) return null;
+
+  const { data: termRows, error: termsError } = await supabase
+    .from("terms")
+    .select("slug, term, category, definition")
+    .eq("domain_id", domainRow.id)
+    .not("slug", "is", null)
+    .order("term");
+  if (termsError) throw termsError;
+
+  return {
+    domain: {
+      id: domainRow.id,
+      slug: domainRow.slug!,
+      name: domainRow.name,
+      description: domainRow.description ?? "",
+      updatedAt: domainRow.updated_at,
+    },
+    terms: (termRows ?? []).map((row) => ({
+      slug: row.slug!,
+      term: row.term,
+      category: row.category,
+      definition: row.definition,
+    })),
+  };
+}
+
 export type PublicTermPage = {
   domain: PublicDomain;
   term: ReturnType<typeof mapTerm> & { slug: string; updatedAt: string };

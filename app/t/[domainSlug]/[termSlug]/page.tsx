@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TermBody } from "@/components/jargon/term-body";
 import { getPublicTermPage, listPublicTermPaths } from "@/lib/jargon/public/public-terms";
@@ -49,6 +50,12 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-10">
+      <Link
+        href={`/t/${domain.slug}`}
+        className="text-sm text-base-content/55 no-underline hover:text-base-content hover:underline"
+      >
+        ← {domain.name}
+      </Link>
       <p className="text-sm font-medium tracking-wide text-base-content/55 uppercase">
         {domain.name} · {term.category}
       </p>
