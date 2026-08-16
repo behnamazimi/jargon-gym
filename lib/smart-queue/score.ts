@@ -7,12 +7,12 @@
 
 import { isSameLocalDay } from "./local-day";
 import {
-  ENGAGED_MIN_COUNT,
+  ENGAGED_MIN_READ_COUNT,
   FAIL_RATE_MIN_ATTEMPTS,
-  FAIL_STREAK_CAP,
   masteredCooldownHours,
   QUEUE_TIMEZONE,
-  STALENESS_DECAY_HOURS,
+  RANKING_STALENESS_DECAY_HOURS,
+  STREAK_BOOST_CAP,
 } from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
@@ -157,7 +157,7 @@ function evaluateCandidate(
 
   // Struggling: negative streak, magnitude-scaled.
   if (fields.streak !== null && fields.streak < 0) {
-    const repeats = Math.min(-fields.streak, FAIL_STREAK_CAP);
+    const repeats = Math.min(-fields.streak, STREAK_BOOST_CAP);
     score += repeats * weights.strugglingBoostPerStreak;
     reasons.push("struggling");
     if (repeats >= 2) {
@@ -166,7 +166,7 @@ function evaluateCandidate(
   }
 
   // Engaged (read) but never tested in this context — Review/Quiz only.
-  if (context !== "read" && fields.streak === 0 && candidate.readCount >= ENGAGED_MIN_COUNT) {
+  if (context !== "read" && fields.streak === 0 && candidate.readCount >= ENGAGED_MIN_READ_COUNT) {
     score += weights.engagedButUntestedBoost;
     reasons.push("engaged_untested");
   }
@@ -191,7 +191,7 @@ function evaluateCandidate(
     candidate.lastFailSource === fields.otherActivity
   ) {
     const sourceStreak = streakForActivity(candidate, candidate.lastFailSource);
-    const repeats = Math.min(-sourceStreak, FAIL_STREAK_CAP);
+    const repeats = Math.min(-sourceStreak, STREAK_BOOST_CAP);
 
     if (repeats > 0) {
       score += repeats * weights.crossFailOtherTestBoostPerRepeat;
@@ -217,7 +217,7 @@ function evaluateCandidate(
     const hoursSinceActivity = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
     score += stalenessBoost(
       hoursSinceActivity,
-      STALENESS_DECAY_HOURS[context],
+      RANKING_STALENESS_DECAY_HOURS[context],
       weights.stalenessCapHours,
       weights.stalenessMaxBoost,
     );

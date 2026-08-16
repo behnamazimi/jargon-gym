@@ -64,19 +64,19 @@ export type ReviewCandidate = {
 
 export type ScoreWeights = {
   unseenBoost: number;
-  /** Per point of |streak| when struggling (streak < 0), capped at FAIL_STREAK_CAP. */
+  /** Per point of |streak| when struggling (streak < 0), capped at STREAK_BOOST_CAP. */
   strugglingBoostPerStreak: number;
   masteredCooldownPenalty: number;
   /** Same-day sit-outs: Read→Review/Quiz via last_read_at; fail→Read via last_fail_at;
    *  own-activity fail via that context's own streak/last-activity. */
   sameDayCooldownPenalty: number;
-  /** Read count >= ENGAGED_MIN_COUNT but this context's own test count is 0. */
+  /** Read count >= ENGAGED_MIN_READ_COUNT but this context's own test count is 0. */
   engagedButUntestedBoost: number;
   abandonedReviewBoost: number;
   /** Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap). */
   stalenessMaxBoost: number;
   stalenessCapHours: number;
-  /** Per point of |source activity's streak| when the OTHER test context is boosted, capped at FAIL_STREAK_CAP. */
+  /** Per point of |source activity's streak| when the OTHER test context is boosted, capped at STREAK_BOOST_CAP. */
   crossFailOtherTestBoostPerRepeat: number;
   /** Boost at 100% lifetime fail rate; scales linearly down to 0. */
   fragileBoostMax: number;

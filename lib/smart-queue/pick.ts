@@ -13,7 +13,7 @@ import {
   MIX_ALREADY_TOUCHED_SLOTS,
   MIX_NEVER_ENGAGED_SLOTS,
   QUEUE_TIMEZONE,
-  WEIGHTS,
+  RANKING_WEIGHTS,
 } from "./weights";
 import type { PickContext, ReviewCandidate, ScoredCandidate } from "./types";
 
@@ -38,7 +38,7 @@ export function pickTerms(
   const now = new Date();
 
   const scored: ScoredCandidate[] = candidates.map((candidate) => {
-    const { score, reasons } = scoreCandidate(candidate, WEIGHTS, context, now);
+    const { score, reasons } = scoreCandidate(candidate, RANKING_WEIGHTS, context, now);
     return {
       ...candidate,
       score,
@@ -136,7 +136,7 @@ export function pickQuizTerms(
   const now = new Date();
 
   const scored: ScoredCandidate[] = candidates.map((candidate) => {
-    const { score, reasons } = scoreCandidate(candidate, WEIGHTS, "quiz", now);
+    const { score, reasons } = scoreCandidate(candidate, RANKING_WEIGHTS, "quiz", now);
     return { ...candidate, score, reasons };
   });
 

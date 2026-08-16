@@ -19,9 +19,9 @@ export { formatPickReason, formatPickDebugLine, formatQuizTier } from "./reasons
 export type { QuizTier } from "./pick";
 export { quizTierOf } from "./pick";
 export {
-  BASE_COOLDOWN_HOURS,
-  ENGAGED_MIN_COUNT,
+  ENGAGED_MIN_READ_COUNT,
   FAIL_RATE_MIN_ATTEMPTS,
+  MASTERED_COOLDOWN_BASE_HOURS,
   MIX_ALREADY_TOUCHED_SLOTS,
   MIX_NEVER_ENGAGED_SLOTS,
   OVERALL_READ_NUDGE_MAX,

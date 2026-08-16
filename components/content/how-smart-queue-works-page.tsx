@@ -12,13 +12,13 @@ import {
   contentPageLinkClass,
 } from "@/components/content/content-page-shell";
 import {
-  BASE_COOLDOWN_HOURS,
-  ENGAGED_MIN_COUNT,
+  ENGAGED_MIN_READ_COUNT,
+  MASTERED_COOLDOWN_BASE_HOURS,
   MIX_ALREADY_TOUCHED_SLOTS,
   MIX_NEVER_ENGAGED_SLOTS,
 } from "@/lib/smart-queue/weights";
 
-const BASE_COOLDOWN_DAYS = Math.round(BASE_COOLDOWN_HOURS / 24);
+const BASE_COOLDOWN_DAYS = Math.round(MASTERED_COOLDOWN_BASE_HOURS / 24);
 
 const ANY_ACTIVITY = [
   {
@@ -41,7 +41,7 @@ const REVIEW_AND_QUIZ = [
     body: "You missed it in that activity. Climbs the more times you've missed it in a row, so genuinely stuck terms rank above a single slip. After two misses in a row it also shows as Repeatedly missed. Review and Quiz track this independently, Read has no pass/fail of its own.",
   },
   {
-    title: `Read ${ENGAGED_MIN_COUNT}+ times, not tested`,
+    title: `Read ${ENGAGED_MIN_READ_COUNT}+ times, not tested`,
     body: "You've opened it on purpose several times but never actually tested yourself in this activity, reading it often doesn't mean you've learned it.",
   },
 ] as const;

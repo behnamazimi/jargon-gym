@@ -15,7 +15,7 @@ import {
   OVERALL_STALENESS_TAU_BASE_HOURS,
   OVERALL_STALENESS_TAU_CAP_HOURS,
   OVERALL_WEIGHTS,
-  WEIGHTS,
+  RANKING_WEIGHTS,
 } from "./weights";
 
 export type Strength = "weak" | "medium" | "strong";
@@ -33,7 +33,7 @@ export function computeStrength(
   if (
     streak >= STRENGTH_STRONG_MIN_STREAK &&
     failRate < STRENGTH_STRONG_MAX_FAIL_RATE &&
-    hoursSinceLastActivity < WEIGHTS.stalenessCapHours
+    hoursSinceLastActivity < RANKING_WEIGHTS.stalenessCapHours
   ) {
     return "strong";
   }
