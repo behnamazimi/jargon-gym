@@ -248,8 +248,8 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           <ContentPageTitledBulletList items={STRENGTH_ITEMS} />
           <p className="m-0 text-base-content/70">
             It rolls up Read exposure too, as a small tie-breaker, never enough on its own to move
-            the score far. You&apos;ll see the bars next to each term in your collection, and totals
-            rolled up on the stats page.
+            the score far. You&apos;ll see the bars next to each term in your collection, totals
+            rolled up on the stats page, and every term at once on the Mastery page.
           </p>
         </ContentPageSection>
 
