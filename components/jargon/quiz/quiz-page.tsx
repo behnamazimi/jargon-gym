@@ -523,8 +523,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
             key={`${questions[currentIndex].termId}-${currentIndex}`}
             question={questions[currentIndex]}
             termLabel={termById.get(questions[currentIndex].termId)?.term ?? "Term"}
-            pickReasons={termById.get(questions[currentIndex].termId)?.pickReasons}
-            strength={termById.get(questions[currentIndex].termId)?.strength}
             isLast={currentIndex + 1 === questions.length}
             onAnswer={handleQuestionAnswer}
           />

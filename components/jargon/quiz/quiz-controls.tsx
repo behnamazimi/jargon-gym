@@ -66,14 +66,14 @@ export function QuizChoice({
       disabled={disabled}
       onClick={onSelect}
       className={cn(
-        "flex w-full items-start gap-3 rounded-xl px-4 py-3.5 text-left text-sm",
+        "flex w-full items-start gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm",
         CHOICE_STATE_CLASS[state],
         disabled && "cursor-default",
         !disabled && "cursor-pointer",
       )}
     >
       {marker ? <span className="mt-0.5 shrink-0">{marker}</span> : null}
-      <span className="min-w-0 flex-1 leading-relaxed">{label}</span>
+      <span className="min-w-0 flex-1 leading-snug">{label}</span>
     </button>
   );
 }

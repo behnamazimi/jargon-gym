@@ -11,6 +11,7 @@ export type QuizTerm = {
   term: string;
   definition: string;
   example: string | null;
+  domainId: string;
   domainName: string;
   pickReasons?: PickReason[];
   /** Display-only mastery tier for this term in Quiz. Never affects scoring. */

@@ -11,18 +11,12 @@ import {
   QuizPanel,
   QuizPanelBody,
 } from "@/components/jargon/quiz/quiz-ui";
-import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
-import { StrengthBadge } from "@/components/jargon/strength-badge";
 import type { QuizQuestion } from "@/lib/quiz/types";
-import type { PickReason } from "@/lib/smart-queue/types";
-import type { Strength } from "@/lib/smart-queue/strength";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
 
 type QuizQuestionViewProps = {
   question: QuizQuestion;
   termLabel: string;
-  pickReasons?: PickReason[];
-  strength?: Strength;
   isLast: boolean;
   onAnswer: (passed: boolean) => void;
 };
@@ -57,16 +51,11 @@ function getTrueFalseChoiceState(
   return "default";
 }
 
-export function QuizQuestionView({
-  question,
-  pickReasons,
-  strength,
-  isLast,
-  onAnswer,
-}: QuizQuestionViewProps) {
+export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionViewProps) {
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [canAdvance, setCanAdvance] = useState(false);
   const [passed, setPassed] = useState(false);
   const gradedPassedRef = useRef(false);
 
@@ -76,6 +65,7 @@ export function QuizQuestionView({
   const stateRef = useRef({
     submitted,
     canSubmit,
+    canAdvance,
     question,
     selectedOptionIds,
     trueFalseAnswer,
@@ -85,11 +75,17 @@ export function QuizQuestionView({
   stateRef.current = {
     submitted,
     canSubmit,
+    canAdvance,
     question,
     selectedOptionIds,
     trueFalseAnswer,
     onAnswer,
   };
+
+  // A real double-click delivers two click events in quick succession. Without this
+  // delay, the first click submits and the second immediately lands on the button's
+  // new "Next question" position, skipping the feedback entirely.
+  const ADVANCE_LOCKOUT_MS = 350;
 
   function submitAnswer() {
     const state = stateRef.current;
@@ -103,10 +99,14 @@ export function QuizQuestionView({
     gradedPassedRef.current = result;
     setPassed(result);
     setSubmitted(true);
+    setCanAdvance(false);
+    setTimeout(() => setCanAdvance(true), ADVANCE_LOCKOUT_MS);
   }
 
   function advanceAnswer() {
-    stateRef.current.onAnswer(gradedPassedRef.current);
+    const state = stateRef.current;
+    if (!state.submitted || !state.canAdvance) return;
+    state.onAnswer(gradedPassedRef.current);
   }
 
   function selectOption(optionId: string) {
@@ -128,21 +128,15 @@ export function QuizQuestionView({
 
         event.preventDefault();
         event.stopPropagation();
-
-        const result =
-          state.question.type === "multiple_choice"
-            ? gradeMcqAnswer(state.question, state.selectedOptionIds)
-            : gradeTrueFalseAnswer(state.question, state.trueFalseAnswer ?? false);
-
-        gradedPassedRef.current = result;
-        setPassed(result);
-        setSubmitted(true);
+        submitAnswer();
         return;
       }
 
+      if (!state.canAdvance) return;
+
       event.preventDefault();
       event.stopPropagation();
-      state.onAnswer(gradedPassedRef.current);
+      advanceAnswer();
     }
 
     window.addEventListener("keydown", onKeyDown, true);
@@ -166,16 +160,10 @@ export function QuizQuestionView({
   return (
     <QuizPanel>
       <QuizPanelBody className="space-y-5">
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <StrengthBadge strength={strength} />
-            <PickReasonBadges reasons={pickReasons} context="quiz" mode="compact" />
-          </div>
-          <h2 className="m-0 text-lg font-semibold leading-snug">{question.prompt}</h2>
-        </div>
+        <h2 className="m-0 text-sm font-semibold leading-snug">{question.prompt}</h2>
 
         {question.type === "multiple_choice" ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2.5 pt-1.5">
             {question.options.map((option) => {
               const choiceState = getMcqChoiceState(
                 option.id,
@@ -208,7 +196,7 @@ export function QuizQuestionView({
             })}
           </div>
         ) : (
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2.5 pt-1.5 sm:grid-cols-2">
             {[true, false].map((value) => (
               <QuizChoice
                 key={String(value)}
@@ -226,33 +214,28 @@ export function QuizQuestionView({
           </div>
         )}
 
-        {submitted ? (
-          <QuizFeedback
-            passed={passed}
-            title={passed ? "Correct!" : "Not quite."}
-            detail={feedbackDetail}
-          />
-        ) : null}
-
-        <QuizActionBar
-          hint={
-            submitted ? (
-              <QuizKeyboardHint action={isLast ? "see results" : "continue"} />
-            ) : (
-              <QuizKeyboardHint action="check" />
-            )
-          }
-        >
+        <QuizActionBar hint={!submitted ? <QuizKeyboardHint action="check" /> : undefined}>
           {!submitted ? (
             <Button type="button" onPress={submitAnswer} isDisabled={!canSubmit}>
               Check answer
             </Button>
           ) : (
-            <Button type="button" onPress={advanceAnswer}>
+            <Button type="button" onPress={advanceAnswer} isDisabled={!canAdvance}>
               {isLast ? "See results" : "Next question"}
             </Button>
           )}
         </QuizActionBar>
+
+        {submitted ? (
+          <div className="space-y-2">
+            {!passed ? (
+              <QuizFeedback passed={passed} title="Not quite." detail={feedbackDetail} />
+            ) : null}
+            <p className="m-0 text-xs text-base-content/60">
+              <QuizKeyboardHint action={isLast ? "see results" : "continue"} />
+            </p>
+          </div>
+        ) : null}
       </QuizPanelBody>
     </QuizPanel>
   );
