@@ -1,12 +1,11 @@
 "use client";
 
-import { Circle, CircleDot } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { RadioGroup } from "react-aria-components";
 import { Button } from "@/components/ui/button";
-import { QuizChoice } from "@/components/jargon/quiz/quiz-controls";
+import { QuizChoice, type QuizChoiceResult } from "@/components/jargon/quiz/quiz-controls";
 import {
   QuizActionBar,
-  QuizFeedback,
   QuizKeyboardHint,
   QuizPanel,
   QuizPanelBody,
@@ -17,46 +16,50 @@ import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
 type QuizQuestionViewProps = {
   question: QuizQuestion;
   termLabel: string;
+  current: number;
+  total: number;
+  correct: number;
   isLast: boolean;
   onAnswer: (passed: boolean) => void;
 };
 
-function getMcqChoiceState(
+function getMcqResult(
   optionId: string,
   selectedOptionIds: string[],
   correctOptionIds: string[],
   submitted: boolean,
-): "default" | "selected" | "correct" | "incorrect" {
-  const isSelected = selectedOptionIds.includes(optionId);
-  const isCorrect = correctOptionIds.includes(optionId);
-
-  if (submitted && isCorrect) return "correct";
-  if (submitted && isSelected && !isCorrect) return "incorrect";
-  if (!submitted && isSelected) return "selected";
+): QuizChoiceResult {
+  if (!submitted) return "default";
+  if (correctOptionIds.includes(optionId)) return "correct";
+  if (selectedOptionIds.includes(optionId)) return "incorrect";
   return "default";
 }
 
-function getTrueFalseChoiceState(
+function getTrueFalseResult(
   value: boolean,
   trueFalseAnswer: boolean | null,
   correctAnswer: boolean,
   submitted: boolean,
-): "default" | "selected" | "correct" | "incorrect" {
-  const isSelected = trueFalseAnswer === value;
-  const isCorrect = correctAnswer === value;
-
-  if (submitted && isCorrect) return "correct";
-  if (submitted && isSelected && !isCorrect) return "incorrect";
-  if (!submitted && isSelected) return "selected";
+): QuizChoiceResult {
+  if (!submitted) return "default";
+  if (correctAnswer === value) return "correct";
+  if (trueFalseAnswer === value) return "incorrect";
   return "default";
 }
 
-export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionViewProps) {
+export function QuizQuestionView({
+  question,
+  current,
+  total,
+  correct,
+  isLast,
+  onAnswer,
+}: QuizQuestionViewProps) {
+  const progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
   const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [canAdvance, setCanAdvance] = useState(false);
-  const [passed, setPassed] = useState(false);
   const gradedPassedRef = useRef(false);
 
   const canSubmit =
@@ -97,7 +100,6 @@ export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionVie
         : gradeTrueFalseAnswer(state.question, state.trueFalseAnswer ?? false);
 
     gradedPassedRef.current = result;
-    setPassed(result);
     setSubmitted(true);
     setCanAdvance(false);
     setTimeout(() => setCanAdvance(true), ADVANCE_LOCKOUT_MS);
@@ -143,99 +145,84 @@ export function QuizQuestionView({ question, isLast, onAnswer }: QuizQuestionVie
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, []);
 
-  const correctOptionLabels =
-    question.type === "multiple_choice"
-      ? question.options
-          .filter((option) => question.correctOptionIds.includes(option.id))
-          .map((option) => option.text)
-      : [];
-
-  const feedbackDetail =
-    !passed && question.type === "multiple_choice" && correctOptionLabels.length > 0
-      ? `The answer: ${correctOptionLabels.join("; ")}`
-      : !passed && question.type === "true_false"
-        ? `The statement is ${question.correctAnswer ? "true" : "false"}.`
-        : undefined;
-
   return (
-    <QuizPanel>
+    <QuizPanel className="quiz-feedback-enter">
       <QuizPanelBody className="space-y-5">
-        <h2 className="m-0 text-sm font-semibold leading-snug">{question.prompt}</h2>
+        <h2 className="m-0 text-base font-semibold leading-snug">
+          <span className="text-base-content/50">
+            Q {current}/{total}:
+          </span>{" "}
+          {question.prompt}
+        </h2>
 
         {question.type === "multiple_choice" ? (
-          <div className="flex flex-col gap-2.5 pt-1.5">
-            {question.options.map((option) => {
-              const choiceState = getMcqChoiceState(
-                option.id,
-                selectedOptionIds,
-                question.correctOptionIds,
-                submitted,
-              );
-              const isSelected = selectedOptionIds.includes(option.id);
-
-              return (
-                <QuizChoice
-                  key={option.id}
-                  label={option.text}
-                  state={choiceState}
-                  disabled={submitted}
-                  onSelect={() => selectOption(option.id)}
-                  marker={
-                    isSelected ? (
-                      <CircleDot className="size-4 text-primary" aria-hidden strokeWidth={1.5} />
-                    ) : (
-                      <Circle
-                        className="size-4 text-base-content/30"
-                        aria-hidden
-                        strokeWidth={1.5}
-                      />
-                    )
-                  }
-                />
-              );
-            })}
-          </div>
+          <RadioGroup
+            aria-label="Answer choices"
+            value={selectedOptionIds[0] ?? ""}
+            onChange={selectOption}
+            isDisabled={submitted}
+            className="flex flex-col gap-2.5 pt-3"
+          >
+            {question.options.map((option) => (
+              <QuizChoice
+                key={option.id}
+                value={option.id}
+                label={option.text}
+                result={getMcqResult(
+                  option.id,
+                  selectedOptionIds,
+                  question.correctOptionIds,
+                  submitted,
+                )}
+              />
+            ))}
+          </RadioGroup>
         ) : (
-          <div className="grid gap-2.5 pt-1.5 sm:grid-cols-2">
+          <RadioGroup
+            aria-label="Answer choices"
+            value={trueFalseAnswer === null ? "" : String(trueFalseAnswer)}
+            onChange={(value) => setTrueFalseAnswer(value === "true")}
+            isDisabled={submitted}
+            className="grid gap-2.5 pt-3 sm:grid-cols-2"
+          >
             {[true, false].map((value) => (
               <QuizChoice
                 key={String(value)}
+                value={String(value)}
                 label={value ? "True" : "False"}
-                state={getTrueFalseChoiceState(
+                result={getTrueFalseResult(
                   value,
                   trueFalseAnswer,
                   question.correctAnswer,
                   submitted,
                 )}
-                disabled={submitted}
-                onSelect={() => !submitted && setTrueFalseAnswer(value)}
               />
             ))}
-          </div>
+          </RadioGroup>
         )}
 
-        <QuizActionBar hint={!submitted ? <QuizKeyboardHint action="check" /> : undefined}>
-          {!submitted ? (
-            <Button type="button" onPress={submitAnswer} isDisabled={!canSubmit}>
-              Check answer
-            </Button>
-          ) : (
-            <Button type="button" onPress={advanceAnswer} isDisabled={!canAdvance}>
-              {isLast ? "See results" : "Next question"}
-            </Button>
-          )}
-        </QuizActionBar>
-
-        {submitted ? (
-          <div className="space-y-2">
-            {!passed ? (
-              <QuizFeedback passed={passed} title="Not quite." detail={feedbackDetail} />
-            ) : null}
-            <p className="m-0 text-xs text-base-content/60">
-              <QuizKeyboardHint action={isLast ? "see results" : "continue"} />
-            </p>
-          </div>
-        ) : null}
+        <div className="space-y-1.5">
+          <QuizActionBar
+            hint={
+              <span className="tabular-nums">
+                {correct} correct · {progressPercent}%
+              </span>
+            }
+          >
+            {!submitted ? (
+              <Button type="button" onPress={submitAnswer} isDisabled={!canSubmit}>
+                Check answer
+              </Button>
+            ) : (
+              <Button type="button" onPress={advanceAnswer} isDisabled={!canAdvance}>
+                {isLast ? "See results" : "Next question"}
+              </Button>
+            )}
+          </QuizActionBar>
+          <p className="m-0 text-right text-xs text-base-content/60">
+            <QuizKeyboardHint action={!submitted ? "check" : isLast ? "see results" : "continue"} />
+          </p>
+        </div>
       </QuizPanelBody>
     </QuizPanel>
   );

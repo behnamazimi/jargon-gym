@@ -9,7 +9,6 @@ import {
   submitQuizResultsAction,
 } from "@/app/(private)/jargon/quiz/actions";
 import { QueuePreview, type QueuePreviewItem } from "@/components/jargon/pick-reason-badges";
-import { QuizProgress } from "@/components/jargon/quiz/quiz-progress";
 import { QuizQuestionView } from "@/components/jargon/quiz/quiz-question";
 import { QuizResults } from "@/components/jargon/quiz/quiz-results";
 import { QuizSetupOption } from "@/components/jargon/quiz/quiz-controls";
@@ -514,15 +513,13 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
 
       {step === "playing" && questions[currentIndex] ? (
         <div className="mx-auto w-full max-w-2xl space-y-4">
-          <QuizProgress
-            current={currentIndex + 1}
-            total={questions.length}
-            correct={correctSoFar}
-          />
           <QuizQuestionView
             key={`${questions[currentIndex].termId}-${currentIndex}`}
             question={questions[currentIndex]}
             termLabel={termById.get(questions[currentIndex].termId)?.term ?? "Term"}
+            current={currentIndex + 1}
+            total={questions.length}
+            correct={correctSoFar}
             isLast={currentIndex + 1 === questions.length}
             onAnswer={handleQuestionAnswer}
           />

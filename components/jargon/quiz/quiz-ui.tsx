@@ -98,33 +98,6 @@ export function QuizStat({
   );
 }
 
-export function QuizFeedback({
-  passed,
-  title,
-  detail,
-}: {
-  passed: boolean;
-  title: string;
-  detail?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl px-4 py-3.5 ring-1",
-        passed ? "bg-success/10 ring-success/25" : "bg-error/10 ring-error/25",
-      )}
-      role="status"
-    >
-      <p className={cn("m-0 text-sm font-semibold", passed ? "text-success" : "text-error")}>
-        {title}
-      </p>
-      {detail ? (
-        <p className="mt-1 mb-0 text-xs leading-relaxed text-base-content/70">{detail}</p>
-      ) : null}
-    </div>
-  );
-}
-
 export function QuizActionBar({ hint, children }: { hint?: ReactNode; children: ReactNode }) {
   return (
     <div className="flex flex-col-reverse gap-3 border-t border-base-300/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
