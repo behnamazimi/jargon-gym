@@ -528,8 +528,8 @@ calls the other or feeds the ranking score.
 | Constant                             | Default                | Purpose                                                                       |
 | ------------------------------------ | ---------------------- | ----------------------------------------------------------------------------- |
 | `OVERALL_WEIGHTS`                    | `{review: 2, quiz: 1}` | Composite blend weights                                                       |
-| `OVERALL_READ_NUDGE_MAX`             | 6                      | Cap on the Read tie-break nudge                                               |
-| `OVERALL_READ_NUDGE_PER_READ`        | 1.5                    | Scales with `sqrt(readCount)`, diminishing returns                            |
+| `OVERALL_READ_NUDGE_MAX`             | 10                     | Cap on the Read tie-break nudge                                               |
+| `OVERALL_READ_NUDGE_PER_READ`        | 2                      | Scales with `sqrt(readCount)`, diminishing returns                            |
 | `OVERALL_STALENESS_TAU_BASE_HOURS`   | 96 (4 days)            | τ at a near-zero pre-decay score                                              |
 | `OVERALL_STALENESS_TAU_CAP_HOURS`    | 480 (20 days)          | τ at a near-100 pre-decay score                                               |
 | `OVERALL_STALENESS_MULTIPLIER_FLOOR` | 0.2                    | Floor on the decay multiplier itself (proportional, not absolute)             |

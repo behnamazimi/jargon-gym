@@ -144,9 +144,10 @@ export const OVERALL_STALENESS_MULTIPLIER_FLOOR = 0.2;
 
 /** Read-nudge shape: diminishing returns (scales by sqrt(readCount), see
  *  strength.ts), capped well under the smallest bucket gap (15-20 points)
- *  so it can never alone cross a boundary. */
-export const OVERALL_READ_NUDGE_MAX = 6;
-export const OVERALL_READ_NUDGE_PER_READ = 1.5;
+ *  so it can never alone cross a boundary. Bumped up from 6/1.5 — Read
+ *  exposure was barely moving the score even at double-digit read counts. */
+export const OVERALL_READ_NUDGE_MAX = 10;
+export const OVERALL_READ_NUDGE_PER_READ = 2;
 
 /** Score (0-100) at/above which a tested term counts as `medium` instead of
  *  `weak`. Below this is `weak`. `unverified` bypasses both cutoffs
