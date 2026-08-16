@@ -178,21 +178,6 @@ export async function applyReviewRating(
 }
 
 /**
- * Telegram "Mark known" (and similar surfaces): a self-graded Review pass —
- * you're confirming you know it, which is a judgment, not passive exposure.
- */
-export async function applyKnownToggle(
-  client: Client,
-  userId: string,
-  termId: string,
-  isKnown: boolean,
-  mode: AuthMode = "session",
-): Promise<void> {
-  await flipKnown(client, mode, userId, termId, isKnown);
-  await recordTest(client, userId, { termId, activity: "review", passed: isKnown, mode });
-}
-
-/**
  * Jargon-page term-card toggle (known/unknown). Incidental self-report while
  * browsing, not a tested recall — pool flip only, no review_state write.
  */

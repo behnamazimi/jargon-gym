@@ -18,12 +18,7 @@ import {
   parseStartToken,
 } from "./commands";
 import { CONNECT_MESSAGE, HELP_MESSAGE } from "./copy";
-import {
-  handleKnownCallback,
-  handleRead,
-  handleReadCallback,
-  handleSendDue,
-} from "./delivery-flow";
+import { handleRead, handleReadCallback, handleSendDue } from "./delivery-flow";
 import {
   handleQuizCommand,
   handleQuizSetupCallback,
@@ -118,19 +113,6 @@ async function handleCallback(
       );
       return actions;
     }
-  }
-
-  if (data.startsWith("known:")) {
-    const termId = data.slice("known:".length);
-    return handleKnownCallback(
-      client,
-      userId,
-      chatId,
-      messageId,
-      callbackId,
-      termId,
-      callback.messageText,
-    );
   }
 
   if (data.startsWith("read:")) {

@@ -1,24 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { applyKnownToggle } from "@/lib/jargon/review-outcome";
 import {
   deliverNextTerm,
   fetchTermCardForUser,
   resolveUserIdByChatId,
 } from "@/lib/jargon/term-delivery";
 import type { TelegramAction } from "./actions";
-import {
-  CAUGHT_UP_MESSAGE,
-  CONNECT_MESSAGE,
-  MARKED_KNOWN_SUFFIX,
-  READ_NEXT_FAILED_MESSAGE,
-} from "./copy";
-import {
-  buildReadKeyboard,
-  buildTermInlineKeyboard,
-  formatMaskedTermMessage,
-  formatTermMessage,
-} from "./presentation";
+import { CAUGHT_UP_MESSAGE, CONNECT_MESSAGE, READ_NEXT_FAILED_MESSAGE } from "./copy";
+import { buildTermInlineKeyboard, formatTermMessage } from "./presentation";
 import { clearTelegramInteractionState } from "./session-store";
 import { edit, send } from "./transport";
 
@@ -51,39 +40,6 @@ export async function handleRead(client: Client, chatId: number): Promise<Telegr
     console.error("handleRead error:", detail, error);
     return [send(chatId, "Could not send a term right now. Try again in a moment.")];
   }
-}
-
-export async function handleKnownCallback(
-  client: Client,
-  userId: string,
-  chatId: number,
-  messageId: number,
-  callbackId: string,
-  termId: string,
-  messageText?: string,
-): Promise<TelegramAction[]> {
-  try {
-    await applyKnownToggle(client, userId, termId, true, "admin");
-  } catch {
-    return [
-      {
-        type: "answerCallbackQuery",
-        callbackQueryId: callbackId,
-        text: "Could not mark that term.",
-      },
-    ];
-  }
-
-  const term = await fetchTermCardForUser(client, userId, termId);
-  const updatedText = term
-    ? `${formatMaskedTermMessage(term)}\n\n<b>Your action:</b> Mark known${MARKED_KNOWN_SUFFIX}`
-    : `${messageText ?? ""}\n\n<b>Your action:</b> Mark known${MARKED_KNOWN_SUFFIX}`;
-  const replyMarkup = buildReadKeyboard(termId);
-
-  return [
-    { type: "answerCallbackQuery", callbackQueryId: callbackId, text: "Marked as known." },
-    edit(chatId, messageId, updatedText, replyMarkup),
-  ];
 }
 
 /** Inline "Read next": rotate to another term without writing an outcome on the current one. */

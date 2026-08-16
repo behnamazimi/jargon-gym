@@ -89,19 +89,6 @@ export function formatTermMessage(term: TermCard, pickMeta?: PickMeta): string {
   return `${appendSearchLink(trimmed, term.term)}${debugFooter}`;
 }
 
-export function formatMaskedTermMessage(term: TermCard): string {
-  const header = buildTermHeader(term);
-  const details = buildTermDetails(term);
-  const searchLink = appendSearchLink("", term.term);
-  const spoilerOverhead = "<tg-spoiler></tg-spoiler>".length;
-  const reservedLength = header.length + "\n\n".length + spoilerOverhead + searchLink.length;
-  const trimmedDetails =
-    details.length + reservedLength <= TELEGRAM_MESSAGE_LIMIT
-      ? details
-      : trimMessageBody(details, reservedLength);
-  return `${header}\n\n<tg-spoiler>${trimmedDetails}${searchLink}</tg-spoiler>`;
-}
-
 function appendOpenInWebRow(rows: InlineKeyboardMarkup["inline_keyboard"], termId: string): void {
   const base = getAppBaseUrl();
   // Telegram already recorded this term as read when it delivered the message.
@@ -121,12 +108,6 @@ export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   ];
   appendOpenInWebRow(rows, term.id);
   return { inline_keyboard: rows };
-}
-
-export function buildReadKeyboard(termId: string): InlineKeyboardMarkup {
-  return {
-    inline_keyboard: [[{ text: "Read next", callback_data: `read:${termId}` }]],
-  };
 }
 
 function formatProgressBar(percentage: number, width: number = 10): string {
