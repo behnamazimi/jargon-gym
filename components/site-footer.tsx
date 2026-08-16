@@ -21,7 +21,7 @@ export function SiteFooter() {
             href="/how-smart-queue-works"
             className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
           >
-            How the smart queue works
+            How the Smart Queue works
           </Link>
         </nav>
         <p className="m-0 flex items-center justify-center gap-1.5 text-center text-xs leading-relaxed text-base-content/60">

@@ -20,7 +20,7 @@ active pool from history — what you've neglected or still can't use — not
 from a fixed schedule or future review dates.
 
 For the user-facing guide (surfaces, badges), see
-[How the smart queue works](/how-smart-queue-works) on the deployed app. For
+[How the Smart Queue works](/how-smart-queue-works) on the deployed app. For
 what **known** and **unknown** mean, see
 [How terms are built](/how-terms-work).
 
@@ -821,7 +821,7 @@ scheduled future reviews.
 
 ## Next steps
 
-- User-facing guides: [How the smart queue works](/how-smart-queue-works),
+- User-facing guides: [How the Smart Queue works](/how-smart-queue-works),
   [How terms are built](/how-terms-work)
 - Telegram integration: [Telegram bot setup](supabase/telegram-setup.md)
 - Project overview and local setup: [README](../README.md)

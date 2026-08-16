@@ -129,7 +129,7 @@ export async function LandingPage() {
             </Link>{" "}
             and{" "}
             <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
-              How the smart queue works
+              How the Smart Queue works
             </Link>
             .
           </p>

@@ -156,7 +156,7 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
             or the desktop widget, and it moves between states. I wanted that to follow the term
             everywhere. Review and quizzes always draw from one pool or the other.{" "}
             <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
-              How the smart queue works
+              How the Smart Queue works
             </Link>{" "}
             covers how the queue ranks terms inside each pool.
           </p>
