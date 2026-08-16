@@ -3,6 +3,7 @@ import Link from "next/link";
 import { listPublicDomains } from "@/lib/jargon/public/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 
+export const dynamic = "force-static";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
