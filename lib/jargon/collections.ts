@@ -249,6 +249,19 @@ export async function countDomainCollectionSubscribers(
 }
 
 export async function deleteDomain(client: Client, domainId: string) {
+  const { data: domain, error: fetchError } = await client
+    .from("domains")
+    .select("is_builtin, is_public")
+    .eq("id", domainId)
+    .single();
+  if (fetchError) throw fetchError;
+
+  if (domain.is_builtin || domain.is_public) {
+    throw new Error(
+      "This collection is marked built-in and can't be deleted. Unmark it in admin first.",
+    );
+  }
+
   const { error } = await client.from("domains").delete().eq("id", domainId);
   if (error) throw error;
 }

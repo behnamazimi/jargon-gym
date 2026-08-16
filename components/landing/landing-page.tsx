@@ -22,7 +22,7 @@ export async function LandingPage() {
       <div
         className={cn(
           pageContainerClass,
-          "relative flex flex-1 flex-col justify-center py-16 sm:py-24 lg:py-28",
+          "relative flex flex-1 flex-col justify-center py-8 sm:py-16 lg:py-20",
         )}
       >
         <div className="landing-enter mx-auto w-full max-w-2xl">
