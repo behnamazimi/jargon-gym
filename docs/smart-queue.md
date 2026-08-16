@@ -476,11 +476,11 @@ isn't "historically hard."
 
 Surfaces: Review and Quiz pick UI only (from that activity's own history,
 computed alongside `pickReasons` in `lib/review/mappers.ts` /
-`lib/quiz/mappers.ts` via `strengthForCandidate`), plus the `queue` view of
-the debug page. Read has no streak/fail-rate of its own, so it has no
-strength badge. Collection term cards and the stats page used to read this
-too (Review-only), before the blended score below replaced them there —
-see [Overall strength](#overall-strength-display-only).
+`lib/quiz/mappers.ts` via `strengthForCandidate`), plus the debug page. Read
+has no streak/fail-rate of its own, so it has no strength badge. Collection
+term cards and the stats page used to read this too (Review-only), before
+the blended score below replaced them there — see
+[Overall strength](#overall-strength-display-only).
 
 ### Overall strength (display-only)
 
@@ -525,28 +525,50 @@ calls the other or feeds the ranking score.
   proportional floor (`OVERALL_STALENESS_MULTIPLIER_FLOOR`) keeps a real
   pass from ever fully decaying to indistinguishable-from-untested.
 
-| Constant                             | Default                | Purpose                                                           |
-| ------------------------------------ | ---------------------- | ----------------------------------------------------------------- |
-| `OVERALL_WEIGHTS`                    | `{review: 2, quiz: 1}` | Composite blend weights                                           |
-| `OVERALL_READ_NUDGE_MAX`             | 6                      | Cap on the Read tie-break nudge                                   |
-| `OVERALL_READ_NUDGE_PER_READ`        | 1.5                    | Scales with `sqrt(readCount)`, diminishing returns                |
-| `OVERALL_STALENESS_TAU_BASE_HOURS`   | 96 (4 days)            | τ at a near-zero pre-decay score                                  |
-| `OVERALL_STALENESS_TAU_CAP_HOURS`    | 480 (20 days)          | τ at a near-100 pre-decay score                                   |
-| `OVERALL_STALENESS_MULTIPLIER_FLOOR` | 0.2                    | Floor on the decay multiplier itself (proportional, not absolute) |
+| Constant                             | Default                | Purpose                                                                       |
+| ------------------------------------ | ---------------------- | ----------------------------------------------------------------------------- |
+| `OVERALL_WEIGHTS`                    | `{review: 2, quiz: 1}` | Composite blend weights                                                       |
+| `OVERALL_READ_NUDGE_MAX`             | 6                      | Cap on the Read tie-break nudge                                               |
+| `OVERALL_READ_NUDGE_PER_READ`        | 1.5                    | Scales with `sqrt(readCount)`, diminishing returns                            |
+| `OVERALL_STALENESS_TAU_BASE_HOURS`   | 96 (4 days)            | τ at a near-zero pre-decay score                                              |
+| `OVERALL_STALENESS_TAU_CAP_HOURS`    | 480 (20 days)          | τ at a near-100 pre-decay score                                               |
+| `OVERALL_STALENESS_MULTIPLIER_FLOOR` | 0.2                    | Floor on the decay multiplier itself (proportional, not absolute)             |
+| `OVERALL_BUCKET_MEDIUM_MIN_SCORE`    | 55                     | Score at/above which a tested term is `medium` instead of `weak`              |
+| `OVERALL_BUCKET_STRONG_MIN_SCORE`    | 75                     | Score at/above which a tested term is `strong` instead of `medium`            |
+| `OVERALL_BAR_SCORE_THRESHOLDS`       | `[35, 55, 75, 95]`     | Score needed for each extra bar past the first (`scoreToBars` in strength.ts) |
 
-Bucket/bar mapping (`bars` is the 0-5 count the UI renders as signal-strength
-bars): score `> 0` → 1 bar, `≥ 35` → 2, `≥ 55` → 3, `≥ 75` → 4, `≥ 95` → 5.
-Bars 1–2 → `weak`, 3 → `medium`, 4–5 → `strong`. `unverified` renders as
-outlined/empty bars — visually distinct from a filled `weak` bar, so "never
-tested" can't be mistaken for "tested and struggling."
+Bucket assignment (`scoreToBucket` in `lib/smart-queue/strength.ts`) reads
+straight off the score against the two `OVERALL_BUCKET_*_MIN_SCORE`
+constants above — edit those two directly to change what score counts as
+which tier. Bar count (`bars`, the 0-5 the UI renders as signal-strength
+bars, via `scoreToBars`) is a separate, finer-grained breakdown off
+`OVERALL_BAR_SCORE_THRESHOLDS` — a tested score always shows at least 1
+bar, one more per threshold cleared — kept independent of the bucket
+cutoffs so the visual granularity and the weak/medium/strong label can be
+tuned separately. `unverified` bypasses both entirely (see
+`computeOverallStrength`). `unverified` renders as outlined/empty bars —
+visually distinct from a filled `weak` bar, so "never tested" can't be
+mistaken for "tested and struggling."
 
 Surfaces: collection term cards (`OverallStrengthBars` in
 `components/jargon/overall-strength-bars.tsx`, fetched via
 `fetchOverallStrengthByTermId` in `lib/jargon/known-state.ts`, gated by the
 "Show strength tags" toggle), the stats page's "Overall" mastery row
 (`{unverified, weak, medium, strong}` counts, alongside the existing
-per-context Review/Quiz rows), and the debug page's `strength` view (see
-[Debug page](#debug-page)).
+per-context Review/Quiz rows), and the dedicated
+[Mastery overview](#mastery-overview) page.
+
+### Mastery overview
+
+`/jargon/mastery` — every term across every collection (active and paused),
+one row each, sorted strongest first. `lib/jargon/mastery.ts`'s
+`loadMasteryOverview` reuses `fetchOverallStrengthByTermId` (the same fetch
+collection cards use) across all domains at once instead of one selected
+domain, plus `fetchTermsByDomains`/`fetchKnownTermIdsForDomains` for the
+term/known metadata each row shows. Filters are client-side over the full
+fetched set — a search box, a collection dropdown, and bucket chips
+(`unverified`/`weak`/`medium`/`strong`) — no server round-trip per filter
+change. Linked from the profile menu.
 
 ---
 
@@ -683,34 +705,24 @@ result, rather than needing a separate "reset to 0" step.
 
 ## Debug page
 
-`/jargon/debug` has two views, chosen first (`view=queue` default, or
-`view=strength`), then a Collection filter — Context and Pool only apply to
-the `queue` view. No term content beyond the name, just the scoring
-internals. It's a debugging view, not a study surface: it doesn't write
+`/jargon/debug` lists every candidate in the chosen pool, one collection or
+all active ones, any `PickContext` (read/review/quiz) — with its live
+score, `reasons` badges, and the raw `review_state` fields behind them. No
+term content, just the scoring internals, sorted exactly like a real pick
+would be. It's a debugging view, not a study surface: it doesn't write
 events.
 
-**`queue` view** — every candidate in the chosen pool, one collection or
-all active ones, any `PickContext` (read/review/quiz), with its live score,
-`reasons` badges, and the raw `review_state` fields behind them, sorted
-exactly like a real pick would be. Read/Review are built on
+Read/Review are built on
 [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)'s
 `listScoredCandidates`, which is `pickTerms` with `limit` set to every
 candidate instead of a top-N slice; the Pool filter (known/unknown) applies
 normally. **Quiz is locked to the known pool** — selecting the Quiz context
 forces `status=known` regardless of the URL, and scoring goes through
 `listScoredQuizCandidates` (`pickQuizTerms` with every candidate, tiers and
-same-day sit-outs both included) instead of `listScoredCandidates`. Rows no
-longer show a per-context Review/Quiz strength badge — that moved to the
-`strength` view below, which is scoped to the score itself rather than one
-pick.
-
-**`strength` view** — every term's [overall strength](#overall-strength-display-only)
-score in the chosen collection(s), context- and pool-agnostic (both known
-and unknown combined, via `fetchReviewCandidatesInScope` in
-`lib/smart-queue/service.ts`), sorted by score descending. This is the same
-`computeOverallStrength` collection cards and the stats page use — the
-debug view exists to see the blend/decay math behind a specific term's
-number, not to inspect ranking internals.
+same-day sit-outs both included) instead of `listScoredCandidates`. Rows
+don't show a per-context Review/Quiz strength badge — see
+[Mastery overview](#mastery-overview) for where the blended score lives
+instead.
 
 ---
 

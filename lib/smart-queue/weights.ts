@@ -147,3 +147,20 @@ export const OVERALL_STALENESS_MULTIPLIER_FLOOR = 0.2;
  *  so it can never alone cross a boundary. */
 export const OVERALL_READ_NUDGE_MAX = 6;
 export const OVERALL_READ_NUDGE_PER_READ = 1.5;
+
+/** Score (0-100) at/above which a tested term counts as `medium` instead of
+ *  `weak`. Below this is `weak`. `unverified` bypasses both cutoffs
+ *  entirely (see computeOverallStrength) — these only apply once a term
+ *  has been tested at least once. Edit these two directly to change what
+ *  score counts as which tier. */
+export const OVERALL_BUCKET_MEDIUM_MIN_SCORE = 55;
+/** Score (0-100) at/above which a tested term counts as `strong` instead of
+ *  `medium`. */
+export const OVERALL_BUCKET_STRONG_MIN_SCORE = 75;
+
+/** Score (0-100) thresholds for the 5-bar UI indicator — a tested score
+ *  always shows at least 1 bar; each entry here is the minimum score for
+ *  one more bar. Finer-grained than, and independent of, the weak/medium/
+ *  strong cutoffs above (bar count drives the visual, not the bucket
+ *  label). */
+export const OVERALL_BAR_SCORE_THRESHOLDS = [35, 55, 75, 95] as const;

@@ -9,6 +9,9 @@ import { fieldsForContext } from "./score";
 import type { PickContext, ReviewCandidate } from "./types";
 import {
   FAIL_RATE_MIN_ATTEMPTS,
+  OVERALL_BAR_SCORE_THRESHOLDS,
+  OVERALL_BUCKET_MEDIUM_MIN_SCORE,
+  OVERALL_BUCKET_STRONG_MIN_SCORE,
   OVERALL_READ_NUDGE_MAX,
   OVERALL_READ_NUDGE_PER_READ,
   OVERALL_STALENESS_MULTIPLIER_FLOOR,
@@ -118,6 +121,26 @@ function stalenessMultiplier(hoursSinceLastActivity: number, decayConstantHours:
   );
 }
 
+/** Bar count for the 5-bar UI, from OVERALL_BAR_SCORE_THRESHOLDS — a tested
+ *  score always shows at least 1 bar; one more per threshold cleared. */
+function scoreToBars(score: number): number {
+  let bars = 1;
+  for (const threshold of OVERALL_BAR_SCORE_THRESHOLDS) {
+    if (score >= threshold) bars += 1;
+  }
+  return bars;
+}
+
+/** Bucket for a tested score, from OVERALL_BUCKET_MEDIUM_MIN_SCORE /
+ *  OVERALL_BUCKET_STRONG_MIN_SCORE — computed directly off the score, not
+ *  off bar count, so the bucket cutoffs and the bar-display granularity
+ *  can be tuned independently. */
+function scoreToBucket(score: number): OverallStrength {
+  if (score >= OVERALL_BUCKET_STRONG_MIN_SCORE) return "strong";
+  if (score >= OVERALL_BUCKET_MEDIUM_MIN_SCORE) return "medium";
+  return "weak";
+}
+
 /** Blended Review+Quiz mastery with a small Read tie-break and staleness
  *  decay, for surfaces that show one badge per term with no activity
  *  context (collection cards, stats). Zero Review AND zero Quiz history is
@@ -164,17 +187,8 @@ export function computeOverallStrength(
   const score = Math.max(0, Math.min(100, Math.round(decayed)));
   const flooredScore = score === 0 ? 1 : score;
 
-  const bars =
-    flooredScore >= 95
-      ? 5
-      : flooredScore >= 75
-        ? 4
-        : flooredScore >= 55
-          ? 3
-          : flooredScore >= 35
-            ? 2
-            : 1;
-  const bucket: OverallStrength = bars <= 2 ? "weak" : bars === 3 ? "medium" : "strong";
+  const bars = scoreToBars(flooredScore);
+  const bucket = scoreToBucket(flooredScore);
 
   return { score: flooredScore, bucket, bars };
 }
