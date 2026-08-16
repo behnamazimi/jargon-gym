@@ -1,6 +1,6 @@
 "use client";
 
-import { Bug, Compass, LogOut, Settings, Signal, Upload } from "lucide-react";
+import { Bug, Compass, LogOut, Settings, Signal, SquareLibrary, Upload } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { AppRouterProvider } from "@/components/app-router-provider";
@@ -89,6 +89,12 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
             <DropdownMenuItem href="/jargon/debug">
               <Bug className="h-4 w-4" />
               Queue debug
+            </DropdownMenuItem>
+          ) : null}
+          {isAdmin ? (
+            <DropdownMenuItem href="/admin/collections">
+              <SquareLibrary className="h-4 w-4" />
+              Collections
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>

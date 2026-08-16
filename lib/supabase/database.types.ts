@@ -33,24 +33,36 @@ export type Database = {
           created_at: string;
           description: string | null;
           id: string;
+          is_builtin: boolean;
+          is_public: boolean;
           name: string;
           owner_id: string;
+          slug: string | null;
+          updated_at: string;
           visibility: Database["public"]["Enums"]["domain_visibility"];
         };
         Insert: {
           created_at?: string;
           description?: string | null;
           id?: string;
+          is_builtin?: boolean;
+          is_public?: boolean;
           name: string;
           owner_id: string;
+          slug?: string | null;
+          updated_at?: string;
           visibility?: Database["public"]["Enums"]["domain_visibility"];
         };
         Update: {
           created_at?: string;
           description?: string | null;
           id?: string;
+          is_builtin?: boolean;
+          is_public?: boolean;
           name?: string;
           owner_id?: string;
+          slug?: string | null;
+          updated_at?: string;
           visibility?: Database["public"]["Enums"]["domain_visibility"];
         };
         Relationships: [
@@ -293,7 +305,9 @@ export type Database = {
           example: string | null;
           id: string;
           mental_model: string | null;
+          slug: string | null;
           term: string;
+          updated_at: string;
         };
         Insert: {
           anti_example?: string | null;
@@ -306,7 +320,9 @@ export type Database = {
           example?: string | null;
           id?: string;
           mental_model?: string | null;
+          slug?: string | null;
           term: string;
+          updated_at?: string;
         };
         Update: {
           anti_example?: string | null;
@@ -319,7 +335,9 @@ export type Database = {
           example?: string | null;
           id?: string;
           mental_model?: string | null;
+          slug?: string | null;
           term?: string;
+          updated_at?: string;
         };
         Relationships: [
           {

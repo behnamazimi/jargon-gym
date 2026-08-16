@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 import type { Term } from "@/lib/jargon/types";
 import { cn } from "@/lib/utils";
 import { TermDetailSection } from "./term-detail-section";
@@ -7,13 +8,19 @@ type TermBodyProps = {
   term: Term;
   className?: string;
   showSearchLink?: boolean;
+  getRelationshipHref?: (relatedTermId: string) => string | undefined;
 };
 
 function hasText(value: string | undefined): value is string {
   return Boolean(value?.trim());
 }
 
-export function TermBody({ term, className, showSearchLink = true }: TermBodyProps) {
+export function TermBody({
+  term,
+  className,
+  showSearchLink = true,
+  getRelationshipHref,
+}: TermBodyProps) {
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${term.term} definition`)}`;
   const example = hasText(term.example) ? term.example.trim() : null;
   const mentalModel = hasText(term.mentalModel) ? term.mentalModel.trim() : null;
@@ -60,13 +67,23 @@ export function TermBody({ term, className, showSearchLink = true }: TermBodyPro
         >
           {term.relationships.map((relationship) => {
             const description = relationship.description?.trim() ?? "";
+            const href = getRelationshipHref?.(relationship.relatedTermId);
             return (
               <li key={`${relationship.id}-${relationship.direction}`}>
                 <span>
                   {relationship.relationshipType}{" "}
-                  <span className="font-semibold text-base-content">
-                    {relationship.relatedTermName}
-                  </span>
+                  {href ? (
+                    <Link
+                      href={href}
+                      className="font-semibold text-base-content underline decoration-base-content/30 underline-offset-2 hover:decoration-base-content"
+                    >
+                      {relationship.relatedTermName}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-base-content">
+                      {relationship.relatedTermName}
+                    </span>
+                  )}
                 </span>
                 {description ? (
                   <span className="mt-1 block text-base-content/65">{description}</span>

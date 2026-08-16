@@ -9,6 +9,9 @@ function isPublicPath(pathname: string) {
     pathname === "/icon" ||
     pathname === "/apple-icon" ||
     pathname === "/install-widget.sh" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/robots.txt" ||
+    pathname.startsWith("/t/") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
