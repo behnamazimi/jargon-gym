@@ -1,5 +1,6 @@
 import type { MasteryRow as MasteryRowData } from "@/lib/jargon/mastery";
 import { OverallStrengthBars } from "@/components/jargon/overall-strength-bars";
+import { CircleCheckBig } from "lucide-react";
 
 type MasteryRowProps = {
   row: MasteryRowData;
@@ -12,8 +13,8 @@ export function MasteryRow({ row }: MasteryRowProps) {
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="truncate text-sm font-medium text-base-content">{row.term}</span>
           {row.known ? (
-            <span className="text-xs text-base-content/40" aria-hidden>
-              ✓
+            <span className="text-xs text-success" aria-hidden title="Known">
+              <CircleCheckBig className="size-3.5" aria-hidden />
             </span>
           ) : null}
         </div>

@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/jargon/empty-state";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/auth/require-session";
+import { fetchStatsSnapshot } from "@/lib/jargon/collection-stats";
 import { loadMasteryOverview } from "@/lib/jargon/mastery";
 
 export default async function JargonMasteryPage() {
@@ -17,9 +18,12 @@ export default async function JargonMasteryPage() {
     );
   }
 
-  const { rows, collections } = await loadMasteryOverview(supabase, user.id);
+  const [{ rows, collections }, stats] = await Promise.all([
+    loadMasteryOverview(supabase, user.id),
+    fetchStatsSnapshot(supabase, user.id),
+  ]);
 
-  if (collections.length === 0) {
+  if (stats.activeCount === 0 && stats.pausedCount === 0) {
     return (
       <EmptyState
         icon={Signal}
@@ -36,5 +40,5 @@ export default async function JargonMasteryPage() {
     );
   }
 
-  return <MasteryPage rows={rows} collections={collections} />;
+  return <MasteryPage rows={rows} collections={collections} stats={stats} />;
 }

@@ -152,9 +152,11 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
             terms in one deck and wasted time on words I didn&apos;t need, so the two never mix now.
           </p>
           <p className="m-0">
-            Mark a term known or unknown anywhere, in review, a quiz, the collection list, Telegram,
-            or the desktop widget, and it moves between states. I wanted that to follow the term
-            everywhere. Review and quizzes always draw from one pool or the other.{" "}
+            Mark a term known or unknown anywhere, in review, the collection list, Telegram, or the
+            desktop widget, and it moves between states. I wanted that to follow the term
+            everywhere. Review always draws from whichever pool you pick; Quiz only ever draws from
+            the known pool, since it&apos;s a check on terms you&apos;ve already marked known, not a
+            way to learn new ones, a miss there sends the term back to unknown automatically.{" "}
             <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
               How the Smart Queue works
             </Link>{" "}

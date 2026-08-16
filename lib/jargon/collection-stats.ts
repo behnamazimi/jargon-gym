@@ -85,8 +85,9 @@ export type CollectionStatBreakdown = {
   unknownStale: number;
 };
 
-/** `/stat` (Telegram) and the web Stats page share this shape: a rollup
- *  across active collections plus a per-collection unknown-Read partition. */
+/** `/stat` (Telegram) and the web Mastery page's overview share this shape:
+ *  a rollup across active collections plus a per-collection unknown-Read
+ *  partition. */
 export type StatsSnapshot = {
   activeCount: number;
   pausedCount: number;
@@ -302,7 +303,7 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   pausedCollections: [],
 };
 
-/** Web `/jargon/stat`: session-scoped client, RLS via `auth.uid()`. Layers
+/** Web `/jargon/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
  *  diagnostic/momentum/coverage numbers on top of the shared snapshot —
  *  Telegram's `fetchTelegramStats` is untouched by this. */
 export async function fetchStatsSnapshot(

@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bug, Compass, LogOut, Settings, Signal, Upload } from "lucide-react";
+import { Bug, Compass, LogOut, Settings, Signal, Upload } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { AppRouterProvider } from "@/components/app-router-provider";
@@ -75,10 +75,6 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
           <DropdownMenuItem href="/jargon/import">
             <Upload className="h-4 w-4" />
             Import
-          </DropdownMenuItem>
-          <DropdownMenuItem href="/jargon/stat">
-            <BarChart3 className="h-4 w-4" />
-            Stats
           </DropdownMenuItem>
           <DropdownMenuItem href="/jargon/mastery">
             <Signal className="h-4 w-4" />

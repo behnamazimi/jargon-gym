@@ -67,7 +67,7 @@ export async function LandingPage() {
               <li>Quizzes when you want a real check, not a daily streak to protect</li>
               <li>
                 Terms show up where you already are, in this web app, in a Telegram bot, and on your
-                desktop in in a widget. Same ranking everywhere.
+                desktop in a widget. Same ranking everywhere.
               </li>
             </ul>
           </div>

@@ -720,11 +720,6 @@ result, rather than needing a separate "reset to 0" step.
 - Built on [`fetchTelegramStats`](../lib/jargon/collection-stats.ts), kept
   separate from `fetchCollectionStats` (used by quiz/review setup) so
   setup doesn't pay for a second known-pool fetch it doesn't need.
-- The web stats page (`/jargon/stat`) layers extra sections on top of this
-  same rollup via `fetchStatsSnapshot` — diagnostic/accuracy, momentum, and
-  coverage — but stays scoped to the per-context Review/Quiz mastery rows;
-  the blended overall-strength breakdown lives on the dedicated
-  [Mastery overview](#mastery-overview) page instead.
 
 ---
 
