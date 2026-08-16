@@ -207,6 +207,28 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
           </p>
         </ContentPageSection>
 
+        <ContentPageSection title="Does a bigger list mean more staleness?">
+          <p className="m-0">
+            Short answer: not really. Fading only depends on how long it&apos;s been since you
+            touched that specific term, not on how many other terms you&apos;ve added. Growing
+            your collection doesn&apos;t make any individual term decay faster.
+          </p>
+          <p className="m-0">
+            What can happen is dilution: more terms competing for the same study time means
+            each one gets touched less often, and a term that&apos;s touched less often fades
+            more. The queue is built to fight that automatically, every session spends its
+            slots on whichever terms have gone quietest or are shakiest first, so a big
+            collection doesn&apos;t get studied evenly, it gets studied where it actually needs
+            it. And the more you&apos;ve proven a term, the slower its score fades, so
+            long-mastered terms can sit untouched for weeks without dropping much.
+          </p>
+          <p className="m-0 text-base-content/70">
+            The one thing that does matter is showing up. A session or two most days keeps a
+            hundred-plus term collection comfortably ahead of fading; long gaps are what
+            actually drain scores, not list size.
+          </p>
+        </ContentPageSection>
+
         <ContentPageSection title="Where you'll see it">
           <p className="m-0">
             Web and Telegram each have Read, Review, and Quiz, and each picks from that
