@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { resolveReviewDomainIds, resolveReviewDomainIdsForUser } from "@/lib/jargon/known-state";
 import {
+  computeOverallStrength,
   computePoolStats,
   fetchActiveReviewCandidates,
   fetchActiveReviewCandidatesForUser,
@@ -200,6 +201,13 @@ export async function fetchTelegramStats(client: Client, userId: string): Promis
 
 export type MasteryTiers = { weak: number; medium: number; strong: number };
 
+export type OverallMasteryTiers = {
+  unverified: number;
+  weak: number;
+  medium: number;
+  strong: number;
+};
+
 export type AccuracySummary = { passed: number; attempted: number; percentage: number };
 
 export type PausedCollectionSummary = {
@@ -216,7 +224,7 @@ export type PausedCollectionSummary = {
 export type WebStatsSnapshot = StatsSnapshot & {
   coverage: { known: number; total: number; percentage: number };
   today: { read: number; review: number; quiz: number };
-  mastery: { review: MasteryTiers; quiz: MasteryTiers };
+  mastery: { review: MasteryTiers; quiz: MasteryTiers; overall: OverallMasteryTiers };
   accuracy: { review: AccuracySummary; quiz: AccuracySummary };
   pausedCollections: PausedCollectionSummary[];
 };
@@ -262,6 +270,15 @@ function tallyMastery(
   return tiers;
 }
 
+function tallyOverallMastery(candidates: ReviewCandidate[], now: Date): OverallMasteryTiers {
+  const tiers: OverallMasteryTiers = { unverified: 0, weak: 0, medium: 0, strong: 0 };
+  for (const candidate of candidates) {
+    const { bucket } = computeOverallStrength(candidate, now);
+    tiers[bucket]++;
+  }
+  return tiers;
+}
+
 function summarizeAccuracy(
   candidates: ReviewCandidate[],
   context: "review" | "quiz",
@@ -294,6 +311,7 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   mastery: {
     review: { weak: 0, medium: 0, strong: 0 },
     quiz: { weak: 0, medium: 0, strong: 0 },
+    overall: { unverified: 0, weak: 0, medium: 0, strong: 0 },
   },
   accuracy: {
     review: { passed: 0, attempted: 0, percentage: 0 },
@@ -343,6 +361,7 @@ export async function fetchStatsSnapshot(
     mastery: {
       review: tallyMastery(combined, "review", now),
       quiz: tallyMastery(knownCandidates, "quiz", now),
+      overall: tallyOverallMastery(combined, now),
     },
     accuracy: {
       review: summarizeAccuracy(combined, "review"),

@@ -8,6 +8,7 @@ import {
   type AccuracySummary,
   type CollectionStatBreakdown,
   type MasteryTiers,
+  type OverallMasteryTiers,
   type PausedCollectionSummary,
 } from "@/lib/jargon/collection-stats";
 
@@ -63,6 +64,20 @@ function MasteryRow({
       </div>
       <p className="text-xs text-base-content/50">
         {tiers.weak} weak · {tiers.medium} medium · {tiers.strong} strong
+      </p>
+    </div>
+  );
+}
+
+function OverallMasteryRow({ tiers }: { tiers: OverallMasteryTiers }) {
+  return (
+    <div className="space-y-1 py-2 text-sm">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-medium text-base-content">Overall</span>
+      </div>
+      <p className="text-xs text-base-content/50">
+        {tiers.unverified} unverified · {tiers.weak} weak · {tiers.medium} medium · {tiers.strong}{" "}
+        strong
       </p>
     </div>
   );
@@ -190,6 +205,7 @@ export default async function StatPage() {
               accuracy={stats.accuracy.review}
             />
             <MasteryRow label="Quiz" tiers={stats.mastery.quiz} accuracy={stats.accuracy.quiz} />
+            <OverallMasteryRow tiers={stats.mastery.overall} />
           </div>
         </div>
       ) : null}

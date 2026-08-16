@@ -73,3 +73,36 @@ export const MIX_NEVER_ENGAGED_SLOTS = 1;
 /** Already-touched slots per mix cycle (struggling/stale/steady).
  *  See MIX_NEVER_ENGAGED_SLOTS for how the pair sets the ratio. */
 export const MIX_ALREADY_TOUCHED_SLOTS = 1;
+
+/** Overall-strength composite weights (review weighted higher — quiz has a
+ *  50% guess floor, review does not; see docs/smart-queue.md). Display-only,
+ *  glance-surface score — first-pass constants, tune later via the debug
+ *  footer, not analytically. */
+export const OVERALL_WEIGHTS = { review: 2, quiz: 1 };
+
+/** Decay constant (τ, hours) for the overall-strength staleness multiplier,
+ *  measured from the most recent activity across read/review/quiz. Separate
+ *  from STALENESS_DECAY_HOURS (per-PickContext, feeds the ranking score —
+ *  this one is display-only).
+ *
+ *  τ is evidence-scaled, not flat: it interpolates between these two bounds
+ *  by how strong the pre-decay blended score is (see
+ *  overallStalenessDecayHours in strength.ts) — a single old pass fades
+ *  fast, a well-proven term stays trusted for weeks. A flat τ made every
+ *  term decay at the same rate regardless of how much evidence backed it,
+ *  which crushed a real pass down to the same near-zero score a barely-
+ *  tested term would get at the same staleness. */
+export const OVERALL_STALENESS_TAU_BASE_HOURS = 96; // 4 days — weak/near-zero evidence
+export const OVERALL_STALENESS_TAU_CAP_HOURS = 480; // 20 days — near-100 evidence
+
+/** Floor on the staleness multiplier itself (proportional, not an absolute
+ *  score floor) — a real tested pass never fully decays to "indistinguishable
+ *  from untested," but weak evidence still ends up much lower than strong
+ *  evidence once both hit the floor. */
+export const OVERALL_STALENESS_MULTIPLIER_FLOOR = 0.2;
+
+/** Read-nudge shape for overall strength: diminishing returns, capped well
+ *  under the smallest bucket gap (15-20 points) so it can never alone cross
+ *  a boundary. */
+export const OVERALL_READ_NUDGE_MAX = 6;
+export const OVERALL_READ_NUDGE_PER_READ = 1.5; // via sqrt(readCount), see strength.ts

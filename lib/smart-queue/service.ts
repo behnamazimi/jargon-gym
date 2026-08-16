@@ -254,6 +254,17 @@ export async function fetchActiveReviewCandidates(
   return fetchCandidates(client, userId, { domainIds: "all" }, status);
 }
 
+/** Every candidate for an explicit domain scope, either pool, unscored —
+ *  callers group/aggregate/score themselves. Debug/inspection only. */
+export async function fetchReviewCandidatesInScope(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+  status: "known" | "unknown",
+): Promise<import("./types").ReviewCandidate[]> {
+  return fetchCandidates(client, userId, scope, status);
+}
+
 export async function getReviewPoolStatsByDomainForUser(
   client: Client,
   userId: string,

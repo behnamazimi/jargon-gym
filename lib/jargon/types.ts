@@ -1,4 +1,4 @@
-import type { Strength } from "@/lib/smart-queue";
+import type { OverallStrengthRow } from "./known-state";
 
 export type TermRelationship = {
   id: string;
@@ -53,8 +53,8 @@ export type JargonPageData = {
   terms: Term[];
   knownTermIds: string[];
   activeDomainIds: string[];
-  /** Display-only mastery tier per term, from review history. Never affects scoring. */
-  strengthByTermId: Record<string, Strength>;
+  /** Display-only overall mastery per term, blended across Read/Review/Quiz. Never affects scoring. */
+  overallStrengthByTermId: Record<string, OverallStrengthRow>;
 };
 
 export type SortMode = "default" | "az" | "unknown";

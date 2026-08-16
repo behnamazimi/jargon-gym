@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { computeStrength, FAIL_RATE_MIN_ATTEMPTS, type Strength } from "@/lib/smart-queue";
+import {
+  computeOverallStrength,
+  type OverallStrength,
+  type ReviewCandidate,
+} from "@/lib/smart-queue";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchUserCollection } from "./collections";
 
@@ -31,49 +35,77 @@ export async function fetchKnownTermIdsForDomains(
   return data.map((row) => row.term_id);
 }
 
-/** Display-only strength per term, computed from Review history. Terms with
- *  no review_state row (never reviewed) get "weak" (streak 0 → weak). */
-export async function fetchReviewStrengthByTermId(
+export type OverallStrengthRow = {
+  termId: string;
+  score: number;
+  bucket: OverallStrength;
+  bars: number;
+};
+
+/** Display-only overall mastery per term, blended across Read/Review/Quiz —
+ *  see computeOverallStrength. Two queries (review_state + user_progress),
+ *  merged in TS, mirroring the shape the RPC-fed ReviewCandidate normally
+ *  has — deliberately NOT reusing the known/unknown RPCs here, since those
+ *  are scoped to active review domains only and this must also work for a
+ *  paused domain the collection page is still allowed to display. */
+export async function fetchOverallStrengthByTermId(
   client: Client,
   termIds: string[],
   userId: string,
-): Promise<Record<string, Strength>> {
+): Promise<Record<string, OverallStrengthRow>> {
   if (termIds.length === 0) return {};
 
-  const { data, error } = await client
-    .from("review_state")
-    .select("term_id, review_streak, review_recall_count, review_fail_count, last_review_recall_at")
-    .eq("user_id", userId)
-    .in("term_id", termIds);
+  const [{ data: reviewRows, error: reviewError }, { data: progressRows, error: progressError }] =
+    await Promise.all([
+      client
+        .from("review_state")
+        .select(
+          "term_id, read_count, last_read_at, review_recall_count, last_review_recall_at, review_streak, review_fail_count, quiz_test_count, last_quiz_tested_at, quiz_streak, quiz_fail_count",
+        )
+        .eq("user_id", userId)
+        .in("term_id", termIds),
+      client
+        .from("user_progress")
+        .select("term_id, known_at")
+        .eq("user_id", userId)
+        .in("term_id", termIds),
+    ]);
 
-  if (error) throw error;
+  if (reviewError) throw reviewError;
+  if (progressError) throw progressError;
 
-  const now = Date.now();
-  const strengthByTermId: Record<string, Strength> = {};
-
-  for (const row of data) {
-    const failRate =
-      row.review_recall_count < FAIL_RATE_MIN_ATTEMPTS
-        ? 0
-        : row.review_fail_count / row.review_recall_count;
-    const hoursSinceLastActivity = row.last_review_recall_at
-      ? (now - new Date(row.last_review_recall_at).getTime()) / (1000 * 60 * 60)
-      : Infinity;
-
-    strengthByTermId[row.term_id] = computeStrength(
-      row.review_streak,
-      failRate,
-      hoursSinceLastActivity,
-    );
-  }
+  const knownAtByTermId = new Map(progressRows.map((r) => [r.term_id, r.known_at]));
+  const reviewByTermId = new Map(reviewRows.map((r) => [r.term_id, r]));
+  const now = new Date();
+  const result: Record<string, OverallStrengthRow> = {};
 
   for (const termId of termIds) {
-    if (!(termId in strengthByTermId)) {
-      strengthByTermId[termId] = computeStrength(0, 0, Infinity);
-    }
+    const rs = reviewByTermId.get(termId);
+    const knownAt = knownAtByTermId.get(termId);
+    const candidate: ReviewCandidate = {
+      termId,
+      domainId: "",
+      createdAt: new Date(0),
+      readCount: rs?.read_count ?? 0,
+      lastReadAt: rs?.last_read_at ? new Date(rs.last_read_at) : null,
+      reviewRecallCount: rs?.review_recall_count ?? 0,
+      lastReviewRecallAt: rs?.last_review_recall_at ? new Date(rs.last_review_recall_at) : null,
+      reviewStreak: rs?.review_streak ?? 0,
+      quizTestCount: rs?.quiz_test_count ?? 0,
+      lastQuizTestedAt: rs?.last_quiz_tested_at ? new Date(rs.last_quiz_tested_at) : null,
+      quizStreak: rs?.quiz_streak ?? 0,
+      pendingReveal: false,
+      lastFailAt: null,
+      lastFailSource: null,
+      reviewFailCount: rs?.review_fail_count ?? 0,
+      quizFailCount: rs?.quiz_fail_count ?? 0,
+      knownAt: knownAt ? new Date(knownAt) : null,
+    };
+    const { score, bucket, bars } = computeOverallStrength(candidate, now);
+    result[termId] = { termId, score, bucket, bars };
   }
 
-  return strengthByTermId;
+  return result;
 }
 
 /** Flip user_progress only — queue outcomes go through review-outcome. */

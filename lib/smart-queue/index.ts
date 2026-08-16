@@ -24,10 +24,16 @@ export {
   FAIL_RATE_MIN_ATTEMPTS,
   MIX_ALREADY_TOUCHED_SLOTS,
   MIX_NEVER_ENGAGED_SLOTS,
+  OVERALL_READ_NUDGE_MAX,
+  OVERALL_READ_NUDGE_PER_READ,
+  OVERALL_STALENESS_MULTIPLIER_FLOOR,
+  OVERALL_STALENESS_TAU_BASE_HOURS,
+  OVERALL_STALENESS_TAU_CAP_HOURS,
+  OVERALL_WEIGHTS,
   QUEUE_TIMEZONE,
 } from "./weights";
-export type { Strength } from "./strength";
-export { computeStrength, strengthForCandidate } from "./strength";
+export type { Strength, OverallStrength, OverallStrengthResult } from "./strength";
+export { computeStrength, strengthForCandidate, computeOverallStrength } from "./strength";
 
 export {
   pickReviewTerms,

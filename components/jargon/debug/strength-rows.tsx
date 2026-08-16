@@ -1,9 +1,8 @@
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
-import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
-import type { PickContext } from "@/lib/smart-queue/types";
+import type { DebugStrengthRow } from "@/app/(private)/jargon/debug/actions";
+import { OverallStrengthBars } from "@/components/jargon/overall-strength-bars";
 import { formatReadDetail, formatRelative, formatTestDetail } from "./format";
 
-export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: PickContext }) {
+export function StrengthRows({ rows }: { rows: DebugStrengthRow[] }) {
   if (rows.length === 0) {
     return <p className="m-0 text-sm text-base-content/60">No terms match this selection.</p>;
   }
@@ -20,14 +19,14 @@ export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: 
               <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
               <span className="truncate text-sm font-medium text-base-content">{row.term}</span>
             </div>
-            <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
-              {row.score.toFixed(1)}
+            <span className="flex shrink-0 items-center gap-2">
+              <OverallStrengthBars bars={row.bars} bucket={row.bucket} score={row.score} />
+              <span className="text-sm font-semibold tabular-nums text-primary">{row.score}</span>
             </span>
           </div>
 
-          <PickReasonBadges reasons={row.reasons} context={context} mode="full" />
-
           <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
+            {row.knownAt ? `known (${formatRelative(row.knownAt)})` : "unknown"} ·{" "}
             {formatReadDetail(row.readCount, row.lastReadAt)} ·{" "}
             {formatTestDetail(
               "review recall",
@@ -44,13 +43,6 @@ export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: 
               row.quizFailCount,
               row.lastQuizTestedAt,
             )}
-            {row.pendingReveal ? " · pending reveal" : ""}
-            {row.lastFailAt ? (
-              <>
-                {" "}
-                · last fail: {row.lastFailSource} ({formatRelative(row.lastFailAt)})
-              </>
-            ) : null}
           </p>
         </li>
       ))}

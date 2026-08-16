@@ -2,20 +2,20 @@
 
 import { ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
+import type { OverallStrengthRow } from "@/lib/jargon/known-state";
 import type { Term } from "@/lib/jargon/types";
-import type { Strength } from "@/lib/smart-queue/strength";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { StrengthBadge } from "./strength-badge";
+import { OverallStrengthBars } from "./overall-strength-bars";
 import { TermActionsMenu } from "./term-actions-menu";
 import { TermBody } from "./term-body";
 
 type TermCardProps = {
   term: Term;
   known: boolean;
-  strength?: Strength;
+  overallStrength?: OverallStrengthRow;
   showStrength?: boolean;
   open: boolean;
   isOwner: boolean;
@@ -28,7 +28,7 @@ type TermCardProps = {
 export function TermCard({
   term,
   known,
-  strength,
+  overallStrength,
   showStrength = false,
   open,
   isOwner,
@@ -89,7 +89,13 @@ export function TermCard({
                 {term.term}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
-                {showStrength ? <StrengthBadge strength={strength} /> : null}
+                {showStrength && overallStrength ? (
+                  <OverallStrengthBars
+                    bars={overallStrength.bars}
+                    bucket={overallStrength.bucket}
+                    score={overallStrength.score}
+                  />
+                ) : null}
                 <Badge variant="outline" className="badge-sm font-normal">
                   {term.category}
                 </Badge>

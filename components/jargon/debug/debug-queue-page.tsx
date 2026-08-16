@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugScoredRow, DebugStrengthRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugView } from "@/app/(private)/jargon/debug/page";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
+import { StrengthRows } from "@/components/jargon/debug/strength-rows";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { PickContext } from "@/lib/smart-queue/types";
@@ -10,12 +12,27 @@ import { cn } from "@/lib/utils";
 
 type DebugQueuePageProps = {
   collections: StudyCollection[];
+  view: DebugView;
   status: TermPoolStatus;
   context: PickContext;
   domainId: string;
   rows: DebugScoredRow[];
+  strengthRows: DebugStrengthRow[];
   errorMessage: string | null;
 };
+
+const VIEW_OPTIONS: Array<{ value: DebugView; title: string; description: string }> = [
+  {
+    value: "strength",
+    title: "Strength",
+    description: "Blended overall mastery per term — same score shown on collection cards.",
+  },
+  {
+    value: "queue",
+    title: "Smart-queue scoring",
+    description: "Ranked pick order for one context — score, reasons, per-activity streaks.",
+  },
+];
 
 const CONTEXT_OPTIONS: Array<{
   value: PickContext;
@@ -40,17 +57,22 @@ const CONTEXT_OPTIONS: Array<{
 ];
 
 function debugQueueHref({
+  view,
   status,
   context,
   domainId,
 }: {
+  view: DebugView;
   status: TermPoolStatus;
   context: PickContext;
   domainId: string;
 }) {
   const params = new URLSearchParams();
-  if (status !== "unknown") params.set("status", status);
-  if (context !== "review") params.set("context", context);
+  if (view !== "queue") params.set("view", view);
+  if (view === "queue") {
+    if (status !== "unknown") params.set("status", status);
+    if (context !== "review") params.set("context", context);
+  }
   if (domainId !== "all") params.set("domain", domainId);
   const query = params.toString();
   return query ? `/jargon/debug?${query}` : "/jargon/debug";
@@ -94,10 +116,12 @@ function DebugFilterLink({
 
 export function DebugQueuePage({
   collections,
+  view,
   status,
   context,
   domainId,
   rows,
+  strengthRows,
   errorMessage,
 }: DebugQueuePageProps) {
   if (collections.length === 0) {
@@ -119,26 +143,17 @@ export function DebugQueuePage({
       <QuizPanel>
         <QuizPanelBody>
           <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-            <legend className="mb-2 text-sm leading-none font-medium">Pool</legend>
+            <legend className="mb-2 text-sm leading-none font-medium">View</legend>
             <div className="flex flex-col gap-3">
-              {context === "quiz" ? (
-                <p className="m-0 text-xs text-base-content/60">
-                  Quiz is known-pool only — unknown terms aren&apos;t inspectable here.
-                </p>
-              ) : (
+              {VIEW_OPTIONS.map((option) => (
                 <DebugFilterLink
-                  href={debugQueueHref({ status: "unknown", context, domainId })}
-                  selected={status === "unknown"}
-                  title="Unknown terms"
-                  description="Terms you haven't marked as known."
+                  key={option.value}
+                  href={debugQueueHref({ view: option.value, status, context, domainId })}
+                  selected={view === option.value}
+                  title={option.title}
+                  description={option.description}
                 />
-              )}
-              <DebugFilterLink
-                href={debugQueueHref({ status: "known", context, domainId })}
-                selected={status === "known"}
-                title="Known terms"
-                description="Terms you've already marked as known."
-              />
+              ))}
             </div>
           </fieldset>
 
@@ -146,7 +161,7 @@ export function DebugQueuePage({
             <legend className="mb-2 text-sm leading-none font-medium">Collection</legend>
             <div className="flex max-h-64 flex-col gap-3 overflow-y-auto">
               <DebugFilterLink
-                href={debugQueueHref({ status, context, domainId: "all" })}
+                href={debugQueueHref({ view, status, context, domainId: "all" })}
                 selected={domainId === "all"}
                 title="All active collections"
                 description="Score every term in collections that are turned on."
@@ -154,7 +169,7 @@ export function DebugQueuePage({
               {collections.map((collection) => (
                 <DebugFilterLink
                   key={collection.id}
-                  href={debugQueueHref({ status, context, domainId: collection.id })}
+                  href={debugQueueHref({ view, status, context, domainId: collection.id })}
                   selected={domainId === collection.id}
                   title={collection.name}
                   description={`${collection.unknownCount} unknown · ${collection.knownCount} known`}
@@ -163,20 +178,48 @@ export function DebugQueuePage({
             </div>
           </fieldset>
 
-          <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-            <legend className="mb-2 text-sm leading-none font-medium">Context</legend>
-            <div className="flex flex-col gap-3">
-              {CONTEXT_OPTIONS.map((option) => (
-                <DebugFilterLink
-                  key={option.value}
-                  href={debugQueueHref({ status, context: option.value, domainId })}
-                  selected={context === option.value}
-                  title={option.title}
-                  description={option.description}
-                />
-              ))}
-            </div>
-          </fieldset>
+          {view === "queue" ? (
+            <>
+              <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+                <legend className="mb-2 text-sm leading-none font-medium">Context</legend>
+                <div className="flex flex-col gap-3">
+                  {CONTEXT_OPTIONS.map((option) => (
+                    <DebugFilterLink
+                      key={option.value}
+                      href={debugQueueHref({ view, status, context: option.value, domainId })}
+                      selected={context === option.value}
+                      title={option.title}
+                      description={option.description}
+                    />
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+                <legend className="mb-2 text-sm leading-none font-medium">Pool</legend>
+                <div className="flex flex-col gap-3">
+                  {context === "quiz" ? (
+                    <p className="m-0 text-xs text-base-content/60">
+                      Quiz is known-pool only — unknown terms aren&apos;t inspectable here.
+                    </p>
+                  ) : (
+                    <DebugFilterLink
+                      href={debugQueueHref({ view, status: "unknown", context, domainId })}
+                      selected={status === "unknown"}
+                      title="Unknown terms"
+                      description="Terms you haven't marked as known."
+                    />
+                  )}
+                  <DebugFilterLink
+                    href={debugQueueHref({ view, status: "known", context, domainId })}
+                    selected={status === "known"}
+                    title="Known terms"
+                    description="Terms you've already marked as known."
+                  />
+                </div>
+              </fieldset>
+            </>
+          ) : null}
         </QuizPanelBody>
       </QuizPanel>
 
@@ -186,6 +229,8 @@ export function DebugQueuePage({
             <Alert variant="destructive">
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
+          ) : view === "strength" ? (
+            <StrengthRows rows={strengthRows} />
           ) : (
             <ScoreRows rows={rows} context={context} />
           )}

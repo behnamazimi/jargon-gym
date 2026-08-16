@@ -1,11 +1,11 @@
+import type { OverallStrengthRow } from "@/lib/jargon/known-state";
 import type { Term } from "@/lib/jargon/types";
-import type { Strength } from "@/lib/smart-queue/strength";
 import { TermCard } from "./term-card";
 
 type TermListProps = {
   terms: Term[];
   knownTerms: Set<string>;
-  strengthByTermId: Record<string, Strength>;
+  overallStrengthByTermId: Record<string, OverallStrengthRow>;
   showStrength: boolean;
   openTerms: Set<string>;
   isOwner: boolean;
@@ -18,7 +18,7 @@ type TermListProps = {
 export function TermList({
   terms,
   knownTerms,
-  strengthByTermId,
+  overallStrengthByTermId,
   showStrength,
   openTerms,
   isOwner,
@@ -45,7 +45,7 @@ export function TermList({
           <TermCard
             term={term}
             known={knownTerms.has(term.id)}
-            strength={strengthByTermId[term.id]}
+            overallStrength={overallStrengthByTermId[term.id]}
             showStrength={showStrength}
             open={openTerms.has(term.id)}
             isOwner={isOwner}
