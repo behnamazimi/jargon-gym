@@ -1,7 +1,7 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { listScoredCandidates } from "@/lib/smart-queue/service";
+import { listScoredCandidates, listScoredQuizCandidates } from "@/lib/smart-queue/service";
 import { strengthForCandidate, type Strength } from "@/lib/smart-queue/strength";
 import type { FailSource, PickContext, PickReason } from "@/lib/smart-queue/types";
 import { listStudyCollections } from "@/lib/study/collections";
@@ -52,13 +52,10 @@ export async function listDebugScoredTermsAction(
   }
 
   try {
-    const scored = await listScoredCandidates(
-      auth.supabase,
-      auth.user.id,
-      { domainIds },
-      status,
-      context,
-    );
+    const scored =
+      context === "quiz"
+        ? await listScoredQuizCandidates(auth.supabase, auth.user.id, { domainIds })
+        : await listScoredCandidates(auth.supabase, auth.user.id, { domainIds }, status, context);
 
     if (scored.length === 0) {
       return { rows: [] };

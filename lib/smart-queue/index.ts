@@ -15,7 +15,9 @@ export type {
   ReviewCandidate,
 } from "./types";
 
-export { formatPickReason, formatPickDebugLine } from "./reasons";
+export { formatPickReason, formatPickDebugLine, formatQuizTier } from "./reasons";
+export type { QuizTier } from "./pick";
+export { quizTierOf } from "./pick";
 export {
   BASE_COOLDOWN_HOURS,
   ENGAGED_MIN_COUNT,
@@ -31,6 +33,10 @@ export {
   pickReviewTerms,
   pickReviewTermsForUser,
   listScoredCandidates,
+  pickQuizTermCards,
+  pickQuizTermCardsForUser,
+  listScoredQuizCandidates,
+  listScoredQuizCandidatesForUser,
   getReviewPoolStats,
   getReviewPoolStatsForUser,
   getReviewPoolStatsByDomainForUser,

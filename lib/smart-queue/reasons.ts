@@ -1,6 +1,7 @@
 /** Human-readable labels for pick reasons (UI). */
 
 import { ENGAGED_MIN_COUNT } from "./weights";
+import type { QuizTier } from "./pick";
 import type { PickContext, PickReason } from "./types";
 
 /** Past-participle wording per activity, for reasons whose meaning depends on which
@@ -36,6 +37,17 @@ export function formatPickReason(reason: PickReason, context: PickContext): stri
     default:
       return STATIC_LABELS[reason] ?? reason;
   }
+}
+
+const QUIZ_TIER_LABELS: Record<QuizTier, string> = {
+  never_quizzed: "Never quizzed",
+  not_quizzed_recently: "Not quizzed recently",
+  recently_mastered: "Recently mastered",
+};
+
+/** Label for grouping the Quiz setup preview by hard tier. */
+export function formatQuizTier(tier: QuizTier): string {
+  return QUIZ_TIER_LABELS[tier];
 }
 
 /** Compact one-liner for debug footers (Read page / Telegram). */

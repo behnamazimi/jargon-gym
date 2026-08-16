@@ -393,14 +393,17 @@ export type Database = {
       };
       user_progress: {
         Row: {
+          known_at: string;
           term_id: string;
           user_id: string;
         };
         Insert: {
+          known_at?: string;
           term_id: string;
           user_id: string;
         };
         Update: {
+          known_at?: string;
           term_id?: string;
           user_id?: string;
         };
@@ -426,8 +429,6 @@ export type Database = {
           api_key_encrypted: string | null;
           api_key_last4: string | null;
           created_at: string;
-          mark_known_on_pass: boolean;
-          mark_unknown_on_fail: boolean;
           provider: string | null;
           updated_at: string;
           user_id: string;
@@ -436,8 +437,6 @@ export type Database = {
           api_key_encrypted?: string | null;
           api_key_last4?: string | null;
           created_at?: string;
-          mark_known_on_pass?: boolean;
-          mark_unknown_on_fail?: boolean;
           provider?: string | null;
           updated_at?: string;
           user_id: string;
@@ -446,8 +445,6 @@ export type Database = {
           api_key_encrypted?: string | null;
           api_key_last4?: string | null;
           created_at?: string;
-          mark_known_on_pass?: boolean;
-          mark_unknown_on_fail?: boolean;
           provider?: string | null;
           updated_at?: string;
           user_id?: string;
@@ -559,6 +556,7 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
+          known_at: string;
           last_fail_at: string;
           last_fail_source: Database["public"]["Enums"]["review_fail_source"];
           last_quiz_tested_at: string;
@@ -614,6 +612,7 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
+          known_at: string;
           last_fail_at: string;
           last_fail_source: Database["public"]["Enums"]["review_fail_source"];
           last_quiz_tested_at: string;

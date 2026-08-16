@@ -119,12 +119,14 @@ function evaluateCandidate(
     reasons.push("recent_read_cooldown");
   }
 
-  // Same-day fail → Read sit-out (Review and Quiz fails share this rule).
-  // Replaces the old Read cross_fail boost — don't re-expose a miss via Read
-  // until tomorrow. Cleared when last_fail_* is cleared (pass or Read).
+  // Same-day fail → Read sit-out, Review-sourced fails only. A Quiz miss no
+  // longer sits Read out — Quiz is a check on the known pool, not a way to
+  // learn, so re-exposing the definition via Read the same day is fine.
+  // Cleared when last_fail_* is cleared (pass or Read).
   if (
     context === "read" &&
     candidate.lastFailAt &&
+    candidate.lastFailSource === "review" &&
     isSameLocalDay(candidate.lastFailAt, now, QUEUE_TIMEZONE)
   ) {
     score -= weights.sameDayCooldownPenalty;
@@ -175,12 +177,15 @@ function evaluateCandidate(
     reasons.push("abandoned_review");
   }
 
-  // Cross-activity fail: Review↔Quiz only. A fail can't happen by lucky
-  // guessing, so the OTHER test activity gets nudged. Read no longer gets a
-  // fail boost — it uses recent_fail_cooldown instead. Scaled by the source
-  // activity's own streak magnitude, same as struggling.
+  // Cross-activity fail: Quiz→Review only. A fail can't happen by lucky
+  // guessing, so the OTHER test activity gets nudged — but Review misses no
+  // longer boost Quiz (Quiz ranks its own known pool by hard tiers, not this
+  // score). Read no longer gets a fail boost — it uses recent_fail_cooldown
+  // instead. Scaled by the source activity's own streak magnitude, same as
+  // struggling.
   if (
     context !== "read" &&
+    !(context === "quiz" && candidate.lastFailSource === "review") &&
     candidate.lastFailAt &&
     candidate.lastFailSource &&
     candidate.lastFailSource === fields.otherActivity

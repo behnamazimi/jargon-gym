@@ -18,18 +18,19 @@ export const REVIEW_REVEAL_FAILED_SUFFIX = "\n\n<i>Couldn't reveal that term —
 export const MARKED_KNOWN_SUFFIX = "\n\n✓ Marked as known";
 
 export const QUIZ_HELP_MESSAGE =
-  "Usage: /quiz [known|unknown] [all|<collection>] [count|all]\n\n" +
+  "Usage: /quiz [all|<collection>] [count|all]\n\n" +
+  "Quiz checks terms you've already marked known — mark terms known in " +
+  "Review or on the collection page first.\n\n" +
   "Examples:\n" +
   "/quiz — guided setup\n" +
-  "/quiz unknown — pick collection and count\n" +
-  "/quiz known all 10 — 10 known terms from all collections\n" +
-  "/quiz unknown all — choose how many unknown terms";
+  "/quiz all 10 — 10 known terms from all collections\n" +
+  "/quiz all — choose how many known terms";
 
-export const NO_UNKNOWN_TERMS_MESSAGE =
-  "You have no unknown terms in your review pool. Try /quiz known to quiz yourself on terms you've already learned!";
+export const NO_KNOWN_TERMS_FOR_QUIZ_MESSAGE =
+  "You haven't marked any terms as known yet. Mark some known in Review or on the collection page, then try /quiz.";
 
-export const NO_KNOWN_TERMS_MESSAGE =
-  "You haven't marked any terms as known yet. Try /quiz unknown to start learning!";
+export const NOTHING_ELIGIBLE_FOR_QUIZ_MESSAGE =
+  "Nothing eligible today (read or missed). Try tomorrow or mark more known.";
 
 export const REVIEW_HELP_MESSAGE =
   "Usage: /review [known|unknown] [all|<collection>] [count|all]\n\n" +

@@ -58,6 +58,8 @@ export type ReviewCandidate = {
   /** Lifetime fail counts per activity, independent of current streak — drives fragile. */
   reviewFailCount: number;
   quizFailCount: number;
+  /** When this term was marked known — null for unknown-pool candidates. Drives Quiz tier-1 ordering. */
+  knownAt: Date | null;
 };
 
 export type ScoreWeights = {

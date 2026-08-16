@@ -121,12 +121,18 @@ export function DebugQueuePage({
           <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
             <legend className="mb-2 text-sm leading-none font-medium">Pool</legend>
             <div className="flex flex-col gap-3">
-              <DebugFilterLink
-                href={debugQueueHref({ status: "unknown", context, domainId })}
-                selected={status === "unknown"}
-                title="Unknown terms"
-                description="Terms you haven't marked as known."
-              />
+              {context === "quiz" ? (
+                <p className="m-0 text-xs text-base-content/60">
+                  Quiz is known-pool only — unknown terms aren&apos;t inspectable here.
+                </p>
+              ) : (
+                <DebugFilterLink
+                  href={debugQueueHref({ status: "unknown", context, domainId })}
+                  selected={status === "unknown"}
+                  title="Unknown terms"
+                  description="Terms you haven't marked as known."
+                />
+              )}
               <DebugFilterLink
                 href={debugQueueHref({ status: "known", context, domainId })}
                 selected={status === "known"}

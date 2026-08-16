@@ -3,8 +3,6 @@ export type LlmProvider = "google" | "anthropic";
 export type UserSettings = {
   provider: LlmProvider | null;
   apiKeyLast4: string | null;
-  markUnknownOnFail: boolean;
-  markKnownOnPass: boolean;
 };
 
 export const LLM_PROVIDER_LABELS: Record<LlmProvider, string> = {

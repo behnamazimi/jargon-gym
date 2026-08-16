@@ -60,13 +60,62 @@ type QueuePreviewProps = {
   emptyMessage?: string;
 };
 
-/** Collapsible setup preview of the next queue batch. */
+/** Quiz's hard tiers, derived from the same reasons pickQuizTerms tags
+ *  candidates with — mirrors quizTierOf in lib/smart-queue/pick.ts. */
+type QuizTierGroup = "Never quizzed" | "Not quizzed recently" | "Recently mastered";
+
+function quizTierGroupOf(item: QueuePreviewItem): QuizTierGroup {
+  if (item.pickReasons?.includes("unseen")) return "Never quizzed";
+  if (item.pickReasons?.includes("mastered_cooldown")) return "Recently mastered";
+  return "Not quizzed recently";
+}
+
+const QUIZ_TIER_ORDER: QuizTierGroup[] = [
+  "Never quizzed",
+  "Not quizzed recently",
+  "Recently mastered",
+];
+
+function QueuePreviewList({ items, context }: { items: QueuePreviewItem[]; context: PickContext }) {
+  return (
+    <ul className="m-0 list-none space-y-2.5 p-0">
+      {items.map((item, index) => (
+        <li
+          key={item.id}
+          className="flex flex-col gap-1 border-b border-base-300/60 pb-2.5 last:border-0 last:pb-0"
+        >
+          <div className="flex items-baseline gap-2">
+            <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
+            <span className="text-sm font-medium text-base-content">{item.term}</span>
+          </div>
+          <PickReasonBadges
+            reasons={item.pickReasons}
+            context={context}
+            mode="full"
+            className="pl-5"
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Collapsible setup preview of the next queue batch. Quiz groups by its
+ *  three hard tiers; Review/Read stay a flat score-ordered list. */
 export function QueuePreview({
   items,
   context,
   loading = false,
   emptyMessage = "No terms match this selection.",
 }: QueuePreviewProps) {
+  const grouped =
+    context === "quiz"
+      ? QUIZ_TIER_ORDER.map((tier) => ({
+          tier,
+          items: items.filter((item) => quizTierGroupOf(item) === tier),
+        })).filter((group) => group.items.length > 0)
+      : null;
+
   return (
     <div className="collapse collapse-arrow rounded-lg border border-base-300 bg-base-100">
       <input type="checkbox" defaultChecked={false} aria-label="Toggle queue preview" />
@@ -78,31 +127,22 @@ export function QueuePreview({
           </span>
         ) : null}
       </div>
-      <div className="collapse-content px-4 pb-3">
+      <div className="collapse-content space-y-4 px-4 pb-3">
         {loading ? (
           <p className="m-0 text-sm text-base-content/60">Loading preview…</p>
         ) : items.length === 0 ? (
           <p className="m-0 text-sm text-base-content/60">{emptyMessage}</p>
+        ) : grouped ? (
+          grouped.map((group) => (
+            <div key={group.tier}>
+              <p className="m-0 mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/50">
+                {group.tier}
+              </p>
+              <QueuePreviewList items={group.items} context={context} />
+            </div>
+          ))
         ) : (
-          <ul className="m-0 list-none space-y-2.5 p-0">
-            {items.map((item, index) => (
-              <li
-                key={item.id}
-                className="flex flex-col gap-1 border-b border-base-300/60 pb-2.5 last:border-0 last:pb-0"
-              >
-                <div className="flex items-baseline gap-2">
-                  <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
-                  <span className="text-sm font-medium text-base-content">{item.term}</span>
-                </div>
-                <PickReasonBadges
-                  reasons={item.pickReasons}
-                  context={context}
-                  mode="full"
-                  className="pl-5"
-                />
-              </li>
-            ))}
-          </ul>
+          <QueuePreviewList items={items} context={context} />
         )}
       </div>
     </div>

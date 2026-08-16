@@ -7,13 +7,7 @@ import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { MAX_QUIZ_TERMS, fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
-import type {
-  QuizAnswer,
-  QuizQuestion,
-  QuizQuestionStyle,
-  QuizTerm,
-  QuizTermStatus,
-} from "@/lib/quiz/types";
+import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 
 export async function getQuizSetupData() {
@@ -35,10 +29,12 @@ export async function getQuizSetupData() {
   };
 }
 
+const NOTHING_ELIGIBLE_ERROR =
+  "Nothing eligible today (read or missed). Try tomorrow or mark more known.";
+
 /** Preview the next quiz batch without generating questions. */
 export async function previewQuizQueueAction(input: {
   domainIds: string[] | "all";
-  status: QuizTermStatus;
   questionCount: number;
 }) {
   const auth = await requireAuthenticatedClient();
@@ -60,12 +56,11 @@ export async function previewQuizQueueAction(input: {
       auth.supabase,
       auth.user.id,
       input.domainIds,
-      input.status,
       questionCount,
     );
 
     if (terms.length === 0) {
-      return { error: "No terms match your selection. Try a different collection or status." };
+      return { error: NOTHING_ELIGIBLE_ERROR };
     }
 
     return {
@@ -83,7 +78,6 @@ export async function previewQuizQueueAction(input: {
 
 export async function generateQuizAction(input: {
   domainIds: string[] | "all";
-  status: QuizTermStatus;
   questionCount: number;
   questionStyle: QuizQuestionStyle;
 }): Promise<
@@ -113,7 +107,6 @@ export async function generateQuizAction(input: {
       auth.supabase,
       auth.user.id,
       input.domainIds,
-      input.status,
       questionCount,
     );
 
@@ -124,7 +117,7 @@ export async function generateQuizAction(input: {
     if (input.questionStyle === "simple") {
       terms = await termsPromise;
       if (terms.length === 0) {
-        return { error: "No terms match your selection. Try a different collection or status." };
+        return { error: NOTHING_ELIGIBLE_ERROR };
       }
       questions = await generateSimpleQuiz(terms, auth.supabase);
       providerLabel = "Simple (Definition → Term)";
@@ -136,7 +129,7 @@ export async function generateQuizAction(input: {
       ]);
 
       if (terms.length === 0) {
-        return { error: "No terms match your selection. Try a different collection or status." };
+        return { error: NOTHING_ELIGIBLE_ERROR };
       }
 
       if (!credentials) {
@@ -166,11 +159,10 @@ export async function generateQuizAction(input: {
   }
 }
 
-/** Record outcome + apply quiz prefs for a single answer. */
+/** Record outcome for a single answer: a miss always flips the term back to unknown. */
 export async function recordQuizAnswerAction(input: {
   termId: string;
   passed: boolean;
-  status: QuizTermStatus;
 }): Promise<{ error?: string; flipped?: boolean }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
@@ -181,7 +173,6 @@ export async function recordQuizAnswerAction(input: {
     const { flipped } = await applyQuizAnswer(auth.supabase, auth.user.id, {
       termId: input.termId,
       passed: input.passed,
-      status: input.status,
       mode: "session",
     });
 
@@ -198,7 +189,6 @@ export async function recordQuizAnswerAction(input: {
 
 /** Finalize quiz: build flipped-terms summary. Mutations already happened per answer. */
 export async function submitQuizResultsAction(input: {
-  status: QuizTermStatus;
   answers: QuizAnswer[];
   flippedTermIds: string[];
 }): Promise<{ error?: string; flippedTerms?: { id: string; term: string }[] }> {

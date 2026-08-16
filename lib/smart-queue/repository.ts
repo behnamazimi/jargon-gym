@@ -28,6 +28,7 @@ function mapCandidateRows(
     last_fail_source: Database["public"]["Enums"]["review_fail_source"] | null;
     review_fail_count: number;
     quiz_fail_count: number;
+    known_at: string | null;
   }>,
 ): ReviewCandidate[] {
   return data.map((row) => ({
@@ -47,6 +48,7 @@ function mapCandidateRows(
     lastFailSource: row.last_fail_source as FailSource | null,
     reviewFailCount: row.review_fail_count,
     quizFailCount: row.quiz_fail_count,
+    knownAt: row.known_at ? new Date(row.known_at) : null,
   }));
 }
 

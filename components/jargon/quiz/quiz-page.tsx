@@ -33,15 +33,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
+import { getMaxStudyCount } from "@/lib/study/count";
 import { MAX_STUDY_TERMS } from "@/lib/study/types";
+import { countTermsForSelection } from "@/lib/quiz/terms";
 import type {
   QuizableCollection,
   QuizAnswer,
   QuizQuestion,
   QuizQuestionStyle,
   QuizTerm,
-  QuizTermStatus,
 } from "@/lib/quiz/types";
 import {
   clearQuizSession,
@@ -49,6 +49,9 @@ import {
   saveQuizSession,
   type QuizSessionState,
 } from "@/lib/quiz/session-storage";
+
+const NOTHING_ELIGIBLE_MESSAGE =
+  "Nothing eligible today (read or missed). Try tomorrow or mark more known.";
 
 type QuizStep = "picker" | "generating" | "playing" | "results" | "error";
 
@@ -58,20 +61,12 @@ type QuizPageProps = {
   collections: QuizableCollection[];
 };
 
-function termCountForCollection(collection: QuizableCollection, status: QuizTermStatus) {
-  return status === "known" ? collection.knownCount : collection.unknownCount;
-}
-
-function allCollectionsTermCount(collections: QuizableCollection[], status: QuizTermStatus) {
-  return collections.reduce(
-    (total, collection) => total + termCountForCollection(collection, status),
-    0,
-  );
+function allCollectionsTermCount(collections: QuizableCollection[]) {
+  return collections.reduce((total, collection) => total + collection.knownCount, 0);
 }
 
 export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPageProps) {
   const [step, setStep] = useState<QuizStep>("picker");
-  const [status, setStatus] = useState<QuizTermStatus>("unknown");
   const [questionStyle, setQuestionStyle] = useState<QuizQuestionStyle>("simple");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>("all");
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -99,8 +94,8 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   );
 
   const availableTermCount = useMemo(
-    () => countTermsForSelection(collections, domainIds, status),
-    [collections, domainIds, status],
+    () => countTermsForSelection(collections, domainIds),
+    [collections, domainIds],
   );
 
   const maxQuestionCount = getMaxStudyCount(availableTermCount);
@@ -115,7 +110,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     setQuestionCount(newMax);
     setQuestionCountInput(String(newMax));
     setQuestionCountError(null);
-  }, [availableTermCount, status, selectedCollectionId]);
+  }, [availableTermCount, selectedCollectionId]);
 
   useEffect(() => {
     if (step !== "picker" || availableTermCount === 0 || questionCountError !== null) {
@@ -126,7 +121,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     let cancelled = false;
     setPreviewLoading(true);
 
-    void previewQuizQueueAction({ domainIds, status, questionCount }).then((result) => {
+    void previewQuizQueueAction({ domainIds, questionCount }).then((result) => {
       if (cancelled) return;
       setPreviewLoading(false);
       if ("preview" in result && result.preview) {
@@ -139,14 +134,13 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     return () => {
       cancelled = true;
     };
-  }, [domainIds, status, questionCount, step, availableTermCount, questionCountError]);
+  }, [domainIds, questionCount, step, availableTermCount, questionCountError]);
 
   useEffect(() => {
     if (step !== "playing" || questions.length === 0) return;
 
     const currentSetup = {
       domainIds,
-      status,
       questionCount: questions.length,
       questionStyle,
     };
@@ -159,17 +153,7 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
       answers,
       startedAt: sessionStartedAt,
     });
-  }, [
-    step,
-    questions,
-    terms,
-    currentIndex,
-    answers,
-    domainIds,
-    status,
-    questionStyle,
-    sessionStartedAt,
-  ]);
+  }, [step, questions, terms, currentIndex, answers, domainIds, questionStyle, sessionStartedAt]);
 
   const termById = useMemo(() => new Map(terms.map((term) => [term.id, term])), [terms]);
 
@@ -178,7 +162,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
   function handleResumeSession() {
     if (!savedSession) return;
 
-    setStatus(savedSession.setup.status);
     setQuestionStyle(savedSession.setup.questionStyle ?? "ai");
     setSelectedCollectionId(
       savedSession.setup.domainIds === "all" ? "all" : savedSession.setup.domainIds[0],
@@ -229,7 +212,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
 
     const result = await generateQuizAction({
       domainIds,
-      status,
       questionCount,
       questionStyle,
     });
@@ -255,7 +237,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     const answerResult = await recordQuizAnswerAction({
       termId: question.termId,
       passed,
-      status,
     });
 
     if (answerResult.error) {
@@ -278,7 +259,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
     }
 
     const result = await submitQuizResultsAction({
-      status,
       answers: nextAnswers,
       flippedTermIds: nextFlippedIds,
     });
@@ -315,11 +295,19 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                 description="Turn on a collection on the collection page before you take a quiz."
               />
             </QuizPanelBody>
+          ) : availableTermCount === 0 && !savedSession ? (
+            <QuizPanelBody>
+              <QuizCenteredState
+                icon={AlertCircle}
+                title="No known terms yet"
+                description="Quiz only checks terms you've marked known. Mark some known in Review or on the collection page, then come back."
+              />
+            </QuizPanelBody>
           ) : (
             <QuizPanelBody>
               <QuizPanelLabel
                 title="Set up your quiz"
-                description="Pick what to study and which collection to pull from."
+                description="Pick which collection to pull from — Quiz checks terms you've already marked known."
               />
               {savedSession ? (
                 <Alert>
@@ -345,28 +333,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                   </AlertDescription>
                 </Alert>
               ) : null}
-
-              <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
-                <legend className="text-sm font-medium leading-none mb-2">What to quiz</legend>
-                <div className="flex flex-col gap-3">
-                  <QuizSetupOption
-                    name="quiz-status"
-                    value="unknown"
-                    checked={status === "unknown"}
-                    onChange={() => setStatus("unknown")}
-                    title="Unknown terms"
-                    description="Terms you haven't marked as known."
-                  />
-                  <QuizSetupOption
-                    name="quiz-status"
-                    value="known"
-                    checked={status === "known"}
-                    onChange={() => setStatus("known")}
-                    title="Known terms"
-                    description="Test yourself on terms you already know."
-                  />
-                </div>
-              </fieldset>
 
               <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
                 <legend className="text-sm font-medium leading-none mb-2">Question style</legend>
@@ -424,11 +390,11 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem id="all">
-                      All active collections ({allCollectionsTermCount(collections, status)})
+                      All active collections ({allCollectionsTermCount(collections)})
                     </SelectItem>
                     {collections.map((collection) => (
                       <SelectItem key={collection.id} id={collection.id}>
-                        {collection.name} ({termCountForCollection(collection, status)})
+                        {collection.name} ({collection.knownCount})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -488,13 +454,19 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
               </Field>
 
               {availableTermCount > 0 && questionCountError === null ? (
-                <QueuePreview items={queuePreview} context="quiz" loading={previewLoading} />
+                <QueuePreview
+                  items={queuePreview}
+                  context="quiz"
+                  loading={previewLoading}
+                  emptyMessage={NOTHING_ELIGIBLE_MESSAGE}
+                />
               ) : null}
 
               {availableTermCount === 0 ? (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    No {status} terms in your selection. Pick another option.
+                    No known terms in this collection. Mark some known in Review or on the
+                    collection page.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -564,7 +536,6 @@ export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPage
           <QuizResults
             score={score}
             total={resultsTotal}
-            quizStatus={status}
             flippedTerms={flippedTerms}
             onQuizAgain={resetQuizState}
           />

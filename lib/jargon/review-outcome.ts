@@ -11,8 +11,8 @@
  *
  * Pool flips (known/unknown) are a separate, explicit call at each call
  * site — recordTest's only job is writing the test event. Review rating
- * always flips; quiz answers flip per Settings → Quiz prefs
- * (markUnknownOnFail/markKnownOnPass), same as before.
+ * always flips. Quiz is known-pool only: a miss always flips to unknown, a
+ * pass never flips (Quiz checks the known pool, it isn't a way to learn).
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -23,7 +23,6 @@ import {
   markTermKnown,
   markTermKnownForUser,
 } from "@/lib/jargon/known-state";
-import { getUserSettings } from "@/lib/llm/settings";
 import type { ReviewEvent } from "@/lib/smart-queue";
 import { recordReviewEvent, recordReviewEventForUser } from "@/lib/smart-queue/repository";
 
@@ -120,21 +119,19 @@ export type QuizAnswerResult = {
   flipped: boolean;
 };
 
-/** Quiz answer: record the test + optional known flip per Settings → Quiz prefs. */
+/** Quiz answer: record the test, then a miss always flips the term back to
+ *  unknown. A pass never flips — Quiz only checks the known pool, it's never
+ *  how a term becomes known. */
 export async function applyQuizAnswer(
   client: Client,
   userId: string,
   input: {
     termId: string;
     passed: boolean;
-    status: TermPoolStatus;
     mode?: AuthMode;
   },
 ): Promise<QuizAnswerResult> {
   const mode = input.mode ?? "session";
-  const settings = await getUserSettings(client, userId);
-  const markUnknownOnFail = settings?.markUnknownOnFail ?? true;
-  const markKnownOnPass = settings?.markKnownOnPass ?? false;
 
   await recordTest(client, userId, {
     termId: input.termId,
@@ -143,17 +140,12 @@ export async function applyQuizAnswer(
     mode,
   });
 
-  let flipped = false;
-
-  if (!input.passed && markUnknownOnFail) {
+  if (!input.passed) {
     await flipKnown(client, mode, userId, input.termId, false);
-    flipped = true;
-  } else if (input.passed && input.status === "unknown" && markKnownOnPass) {
-    await flipKnown(client, mode, userId, input.termId, true);
-    flipped = true;
+    return { passed: false, flipped: true };
   }
 
-  return { passed: input.passed, flipped };
+  return { passed: true, flipped: false };
 }
 
 /** Flashcard review rating: always flip known/unknown when rating changes state. */

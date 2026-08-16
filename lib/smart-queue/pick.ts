@@ -9,6 +9,7 @@
 import { isSameLocalDay } from "./local-day";
 import { fieldsForContext, scoreCandidate } from "./score";
 import {
+  masteredCooldownHours,
   MIX_ALREADY_TOUCHED_SLOTS,
   MIX_NEVER_ENGAGED_SLOTS,
   QUEUE_TIMEZONE,
@@ -75,6 +76,107 @@ function shuffleRange(arr: ScoredCandidate[], start: number, end: number): void 
     arr[i] = arr[j]!;
     arr[j] = tmp;
   }
+}
+
+/** Fisher–Yates within each contiguous equal-key run (already key-sorted). */
+function shuffleEqualKeyRuns(
+  scored: ScoredCandidate[],
+  keyOf: (c: ScoredCandidate) => number,
+): void {
+  let i = 0;
+  while (i < scored.length) {
+    let j = i + 1;
+    while (j < scored.length && keyOf(scored[j]!) === keyOf(scored[i]!)) {
+      j++;
+    }
+    shuffleRange(scored, i, j);
+    i = j;
+  }
+}
+
+/** Mastered-cooldown expiry (ms epoch): when this term's tier-3 window ends. */
+function masteredCooldownExpiryMs(candidate: ScoredCandidate): number {
+  const lastActivity = candidate.lastQuizTestedAt?.getTime() ?? 0;
+  return lastActivity + masteredCooldownHours(candidate.quizStreak) * 60 * 60 * 1000;
+}
+
+export type QuizTier = "never_quizzed" | "not_quizzed_recently" | "recently_mastered";
+
+/** Which hard tier a scored Quiz candidate belongs to — for grouping the
+ *  setup preview (spec: "Preview grouped by the three tiers"). Mirrors the
+ *  tier split inside {@link pickQuizTerms}. */
+export function quizTierOf(candidate: ScoredCandidate): QuizTier {
+  if (candidate.quizTestCount === 0) return "never_quizzed";
+  if (candidate.reasons.includes("mastered_cooldown")) return "recently_mastered";
+  return "not_quizzed_recently";
+}
+
+export type PickQuizTermsOptions = {
+  /** Debug only: append same-day sit-outs (read-today, own-fail) after the
+   *  three tiers instead of dropping them, mirroring pickTerms's debug mode. */
+  includeSitOuts?: boolean;
+};
+
+/** Quiz's dedicated pick path: known pool only, hard priority tiers instead
+ *  of a score mix. Never quizzed (oldest known_at first) always precedes
+ *  stale/remastered (score-ordered, no Review→Quiz cross-fail), which always
+ *  precedes recently mastered (soonest cooldown expiry first) — no 1:1 mix
+ *  like Review/Read. Same-day sit-outs (read today, own miss today) are
+ *  dropped from live picks entirely, not just deprioritized; mastered_cooldown
+ *  is not a sit-out here — it defines tier 3 membership instead. */
+export function pickQuizTerms(
+  candidates: ReviewCandidate[],
+  limit: number,
+  options: PickQuizTermsOptions = {},
+): ScoredCandidate[] {
+  if (candidates.length === 0 || limit <= 0) {
+    return [];
+  }
+
+  const now = new Date();
+
+  const scored: ScoredCandidate[] = candidates.map((candidate) => {
+    const { score, reasons } = scoreCandidate(candidate, WEIGHTS, "quiz", now);
+    return { ...candidate, score, reasons };
+  });
+
+  const eligible: ScoredCandidate[] = [];
+  const sitOut: ScoredCandidate[] = [];
+
+  for (const candidate of scored) {
+    const isSitOut =
+      candidate.reasons.includes("recent_read_cooldown") ||
+      candidate.reasons.includes("recent_fail_cooldown");
+    (isSitOut ? sitOut : eligible).push(candidate);
+  }
+
+  const tier1: ScoredCandidate[] = [];
+  const tier2: ScoredCandidate[] = [];
+  const tier3: ScoredCandidate[] = [];
+
+  for (const candidate of eligible) {
+    if (candidate.quizTestCount === 0) {
+      tier1.push(candidate);
+    } else if (candidate.reasons.includes("mastered_cooldown")) {
+      tier3.push(candidate);
+    } else {
+      tier2.push(candidate);
+    }
+  }
+
+  tier1.sort((a, b) => (a.knownAt?.getTime() ?? 0) - (b.knownAt?.getTime() ?? 0));
+  shuffleEqualKeyRuns(tier1, (c) => c.knownAt?.getTime() ?? 0);
+
+  tier2.sort((a, b) => b.score - a.score);
+  shuffleEqualScoreRuns(tier2);
+
+  tier3.sort((a, b) => masteredCooldownExpiryMs(a) - masteredCooldownExpiryMs(b));
+  shuffleEqualKeyRuns(tier3, masteredCooldownExpiryMs);
+
+  const ordered = [...tier1, ...tier2, ...tier3];
+  const withSitOuts = options.includeSitOuts ? [...ordered, ...sitOut] : ordered;
+
+  return withSitOuts.slice(0, limit);
 }
 
 type Lane = "never_engaged" | "already_touched";

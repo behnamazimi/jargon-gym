@@ -5,7 +5,6 @@ import { useState } from "react";
 import {
   clearLlmSettingsAction,
   saveLlmSettingsAction,
-  updateQuizPreferencesAction,
 } from "@/app/(private)/jargon/settings/actions";
 import {
   AlertBanner,
@@ -17,7 +16,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -41,14 +39,9 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
   const [provider, setProvider] = useState<LlmProvider>(initialSettings?.provider ?? "google");
   const [apiKey, setApiKey] = useState("");
   const [replacingKey, setReplacingKey] = useState(!hasLlmConfigured(initialSettings));
-  const [markUnknownOnFail, setMarkUnknownOnFail] = useState(
-    initialSettings?.markUnknownOnFail ?? true,
-  );
-  const [markKnownOnPass, setMarkKnownOnPass] = useState(initialSettings?.markKnownOnPass ?? false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
 
   async function handleSaveKey() {
     setError(null);
@@ -63,12 +56,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
     }
 
     const last4 = apiKey.trim().slice(-4);
-    setSettings({
-      provider,
-      apiKeyLast4: last4,
-      markUnknownOnFail,
-      markKnownOnPass,
-    });
+    setSettings({ provider, apiKeyLast4: last4 });
     setApiKey("");
     setReplacingKey(false);
   }
@@ -96,41 +84,6 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
     );
     setReplacingKey(true);
     setApiKey("");
-  }
-
-  async function handlePreferenceChange(next: {
-    markUnknownOnFail?: boolean;
-    markKnownOnPass?: boolean;
-  }) {
-    const previousUnknown = markUnknownOnFail;
-    const previousKnown = markKnownOnPass;
-    const nextMarkUnknownOnFail = next.markUnknownOnFail ?? markUnknownOnFail;
-    const nextMarkKnownOnPass = next.markKnownOnPass ?? markKnownOnPass;
-
-    setMarkUnknownOnFail(nextMarkUnknownOnFail);
-    setMarkKnownOnPass(nextMarkKnownOnPass);
-    setError(null);
-    setIsSavingPrefs(true);
-
-    const result = await updateQuizPreferencesAction({
-      markUnknownOnFail: nextMarkUnknownOnFail,
-      markKnownOnPass: nextMarkKnownOnPass,
-    });
-    setIsSavingPrefs(false);
-
-    if (result.error) {
-      setError(result.error);
-      setMarkUnknownOnFail(previousUnknown);
-      setMarkKnownOnPass(previousKnown);
-      return;
-    }
-
-    setSettings({
-      provider: settings?.provider ?? null,
-      apiKeyLast4: settings?.apiKeyLast4 ?? null,
-      markUnknownOnFail: nextMarkUnknownOnFail,
-      markKnownOnPass: nextMarkKnownOnPass,
-    });
   }
 
   const llmConfigured = hasLlmConfigured(settings);
@@ -225,32 +178,6 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
               </div>
             </Field>
           )}
-        </SettingsRow>
-
-        <SettingsRow title="Quiz progress" description="Quiz only.">
-          <label className="label cursor-pointer justify-start gap-3 px-0">
-            <Switch
-              id="mark-unknown-on-fail"
-              checked={markUnknownOnFail}
-              disabled={isSavingPrefs}
-              onCheckedChange={(checked) => handlePreferenceChange({ markUnknownOnFail: checked })}
-            />
-            <span className="text-sm text-base-content">
-              Mark terms unknown when I miss a question
-            </span>
-          </label>
-
-          <label className="label cursor-pointer justify-start gap-3 px-0">
-            <Switch
-              id="mark-known-on-pass"
-              checked={markKnownOnPass}
-              disabled={isSavingPrefs}
-              onCheckedChange={(checked) => handlePreferenceChange({ markKnownOnPass: checked })}
-            />
-            <span className="text-sm text-base-content">
-              Mark terms known when I pass a question
-            </span>
-          </label>
         </SettingsRow>
 
         {llmConfigured ? (

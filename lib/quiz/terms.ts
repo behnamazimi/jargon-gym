@@ -2,13 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
   countTermsForSelection as countStudyTermsForSelection,
-  fetchStudyTermPool,
+  fetchQuizTermPool as fetchStudyQuizTermPool,
   getMaxStudyCount,
   listStudyCollections,
   MAX_STUDY_TERMS,
 } from "@/lib/study";
 import { toQuizTerm } from "./mappers";
-import type { QuizableCollection, QuizTerm, QuizTermStatus } from "./types";
+import type { QuizableCollection, QuizTerm } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -30,17 +30,13 @@ export async function fetchQuizTermPool(
   client: Client,
   userId: string,
   domainIds: string[] | "all",
-  status: QuizTermStatus,
   questionCount: number,
 ): Promise<QuizTerm[]> {
-  const { cards, pickMeta } = await fetchStudyTermPool(
+  const { cards, pickMeta } = await fetchStudyQuizTermPool(
     client,
     userId,
     { domainIds },
-    status,
     questionCount,
-    "session",
-    "quiz",
   );
 
   const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
@@ -53,7 +49,6 @@ export async function fetchQuizTermPool(
 export function countTermsForSelection(
   collections: QuizableCollection[],
   domainIds: string[] | "all",
-  status: QuizTermStatus,
 ): number {
-  return countStudyTermsForSelection(collections, domainIds, status);
+  return countStudyTermsForSelection(collections, domainIds, "known");
 }

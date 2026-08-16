@@ -27,8 +27,9 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
     return <p className="text-sm text-base-content/60">{setup.error}</p>;
   }
 
-  const status = parseStatus(statusParam);
   const context = parseContext(contextParam);
+  // Quiz debug is locked to the known pool — Quiz never inspects unknown terms.
+  const status = context === "quiz" ? "known" : parseStatus(statusParam);
   const domainId =
     domainParam && setup.collections.some((collection) => collection.id === domainParam)
       ? domainParam

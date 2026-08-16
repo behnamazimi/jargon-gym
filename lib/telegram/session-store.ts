@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import { fetchStudyTermPool, getMaxStudyCount, type TermPoolStatus } from "@/lib/study";
+import {
+  fetchQuizTermPool,
+  fetchStudyTermPool,
+  getMaxStudyCount,
+  type TermPoolStatus,
+} from "@/lib/study";
 import { getReviewPoolStatsForUser, fetchTermCardForUser } from "@/lib/smart-queue";
 import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
 
@@ -178,14 +183,12 @@ export async function createSession(
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<ReviewSession> {
-  const { cards } = await fetchStudyTermPool(
+  const { cards } = await fetchQuizTermPool(
     client,
     userId,
     { domainIds: domainIdsForScope(domainId) },
-    status,
     count,
     "admin",
-    "quiz",
   );
   const termIds = cards.map((t) => t.id);
 

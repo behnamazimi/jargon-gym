@@ -1,9 +1,12 @@
 # Smart review queue
 
 How Jargon Gym chooses the next term. Read (web + Telegram `/read` +
-scheduled delivery), Review (web + Telegram flashcards), and Quiz (web +
-Telegram) each pick through the same scoring formula, but against their own
-independent history — see [Three independent histories](#three-independent-histories).
+scheduled delivery) and Review (web + Telegram flashcards) pick through the
+same scoring formula, against their own independent history — see
+[Three independent histories](#three-independent-histories). Quiz (web +
+Telegram) is different: it's **known-pool only** — a check on terms you've
+already marked known, never a way to learn unknown ones — and ranks with
+hard priority tiers instead of the score mix; see [Quiz ranking](#quiz-ranking-hard-tiers).
 The web collection page doesn't pick from any queue — it lists terms its own
 way and only shares the outcome-recording half. The desktop widget peeks the
 same Read ranking as everyone else but doesn't record anything itself — see
@@ -55,35 +58,44 @@ mastered-cooldown penalty and quiet a term that had never actually been
 recalled unprompted. Splitting them means each activity's ranking reflects
 only its own kind of evidence.
 
-**Fails still cross between Review and Quiz; Read and the missed activity
-itself both sit out until tomorrow.** A miss can't happen by lucky
-guessing — passing can — so a fail in Review nudges Quiz and a fail in Quiz
-nudges Review. Read does **not** get a fail boost: a same-day miss
-(`last_fail_at` still today in `QUEUE_TIMEZONE`) applies a large sit-out
-penalty instead, so you don't re-open the definition right after missing
-it. The activity you missed in also hard-sits the same term out for the
-rest of the day — a Review miss sits Review out, a Quiz miss sits Quiz out —
-keyed off that context's own `*_streak` (negative) and own last-activity
-timestamp, **not** `last_fail_at`, so a Read or a pass in the other
-activity doesn't lift it early. Symmetrically, a same-day Read sits the
-term out of Review and Quiz until tomorrow — you just saw the definition.
-Passing never nudges anything outside its own activity. Fail flags live on
-`review_state` as `last_fail_at` and `last_fail_source` (`'review'` |
-`'quiz'`), cleared the moment the term is next Read or passes any test
-(which also lifts the fail→Read sit-out; the own-activity sit-out lifts
-naturally once that activity's own streak/last-activity roll into the next
-calendar day).
+**Fails cross one direction only: Quiz → Review. Read sits out only on a
+Review miss.** A miss can't happen by lucky guessing — passing can — so a
+fail in Quiz still nudges Review's score. The reverse used to hold too, but
+now that Quiz only checks the known pool it doesn't need Review's misses to
+tell it what to prioritize — its own hard tiers do that instead — so a
+Review fail no longer boosts Quiz (`cross_fail` is one-directional). Read
+does **not** get a fail boost from either activity: a same-day **Review**
+miss (`last_fail_at` today in `QUEUE_TIMEZONE` **and** `last_fail_source ===
+'review'`) applies a large sit-out penalty instead, so you don't re-open the
+definition right after missing it in Review. A same-day Quiz miss does
+**not** sit Read out — Quiz isn't how you learn a term, so re-exposing the
+definition the same day is fine. The activity you missed in also hard-sits
+the same term out for the rest of the day — a Review miss sits Review out, a
+Quiz miss sits Quiz out — keyed off that context's own `*_streak` (negative)
+and own last-activity timestamp, **not** `last_fail_at`, so a Read or a pass
+in the other activity doesn't lift it early. Symmetrically, a same-day Read
+sits the term out of Review and Quiz until tomorrow — you just saw the
+definition. Passing never nudges anything outside its own activity. Fail
+flags live on `review_state` as `last_fail_at` and `last_fail_source`
+(`'review'` | `'quiz'`), cleared the moment the term is next Read or passes
+any test (which also lifts the fail→Read sit-out; the own-activity sit-out
+lifts naturally once that activity's own streak/last-activity roll into the
+next calendar day).
 
 There is no "Seen" tier anymore. Widget rotation, a quiz question appearing
 before it's answered, and the jargon-page known/unknown toggle don't write
 to `review_state` at all — they're either pure local UI state or a pool flip
 with no scoring implication. Only Read and Tested events feed the queue.
 
-**Known vs unknown is a separate gate.** You always pick from one pool or
-the other: a row in `user_progress` means known; no row means unknown.
-Scoring only ranks inside the pool you chose. Mark a term known or unknown
-anywhere — review, a quiz, the collection list, Telegram, or the desktop
-widget — and it moves between pools.
+**Known vs unknown is a separate gate.** Read and Review always pick from
+one pool or the other: a row in `user_progress` means known; no row means
+unknown. Scoring only ranks inside the pool you chose. Mark a term known or
+unknown anywhere — review, the collection list, Telegram, or the desktop
+widget — and it moves between pools. **Quiz has no pool choice** — it only
+ever picks from the known pool, since it exists to check what you already
+marked known, not to teach unknown terms. `user_progress.known_at` records
+when a term entered the known pool, backfilled from that term's last Review
+pass (or `now()` if there wasn't one) — Quiz's tier 1 sorts by it.
 
 ```
   active collections + known/unknown filter
@@ -152,11 +164,11 @@ own; only opening a term on the Read page records anything.
 
 Entry points:
 
-| Layer                                                             | Role                                                    |
-| ----------------------------------------------------------------- | ------------------------------------------------------- |
-| [`lib/study/pool.ts`](../lib/study/pool.ts)                       | Thin wrapper most surfaces call                         |
-| [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)     | `pickReviewTerms`, `pickReviewTermsForUser`, pool stats |
-| [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts) | Sole writer of review events                            |
+| Layer                                                             | Role                                                                                                                        |
+| ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| [`lib/study/pool.ts`](../lib/study/pool.ts)                       | Thin wrapper most surfaces call                                                                                             |
+| [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)     | `pickReviewTerms`/`pickReviewTermsForUser` (Read/Review), `pickQuizTermCards`/`pickQuizTermCardsForUser` (Quiz), pool stats |
+| [`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts) | Sole writer of review events                                                                                                |
 
 Telegram Edge Functions are thin proxies into internal API routes — they do
 not own the scoring math.
@@ -169,19 +181,19 @@ Each candidate gets a score from additive signals and penalties, scoped to
 the pick's `PickContext`. Multiple signals can fire on the same term; all
 applicable reasons are returned for UI badges.
 
-| Signal                           | Condition                                                                                               | Effect                                                                                                                                                                                                                                                                                                 |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Mastered cooldown**            | This context's own streak > 0 and its last-activity timestamp is within `masteredCooldownHours(streak)` | Large penalty. Independent per context — a Quiz pass never cools down Review. Window scales with streak — see [Streak-scaled cooldown](#streak-scaled-cooldown).                                                                                                                                       |
-| **Same-day Read sit-out**        | `review`/`quiz` only: `last_read_at` is today in `QUEUE_TIMEZONE`                                       | Large penalty (`sameDayCooldownPenalty`). You just saw the definition — try again tomorrow. Dominates struggling/unseen for that day.                                                                                                                                                                  |
-| **Same-day fail→Read sit-out**   | `read` only: `last_fail_at` is today in `QUEUE_TIMEZONE`                                                | Large penalty (`sameDayCooldownPenalty`). Review and Quiz misses share this rule. Cleared when `last_fail_*` clears.                                                                                                                                                                                   |
-| **Same-day own-fail sit-out**    | `review`/`quiz` only: this context's own streak `< 0` and its own last-activity timestamp is today      | Large penalty (`sameDayCooldownPenalty`), same `recent_fail_cooldown` reason. A Review miss sits Review out; a Quiz miss sits Quiz out. Keyed off own streak/timestamp, not `last_fail_at` — a Read or an other-activity pass doesn't lift it. Live picks never include these; debug still lists them. |
-| **Never engaged**                | This context's own count is 0                                                                           | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0.                                                                                                                                                                                                           |
-| **Struggling**                   | This context's own streak < 0                                                                           | Boost scaled by `min(\|streak\|, FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula.                                                                                                                        |
-| **Engaged but untested**         | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                                | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                                                                                               |
-| **Abandoned review**             | `pending_reveal === true`                                                                               | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                                                                         |
-| **Cross-activity fail**          | `last_fail_at` is set and `last_fail_source` is the _other_ test activity                               | `review`/`quiz` only. Boosts when the other activity most recently failed — a term's own activity already reflects its own fail via struggling. Scaled by `min(\|source streak\|, FAIL_STREAK_CAP)`. Read uses the same-day fail sit-out instead of a boost.                                           |
-| **Fragile (lifetime fail rate)** | `review`/`quiz` only: this context's own attempts `>= FAIL_RATE_MIN_ATTEMPTS`                           | Boost scaled by lifetime fail rate × `fragileBoostMax`. Independent of the _current_ streak sign — see [Lifetime fail rate](#lifetime-fail-rate-fragile).                                                                                                                                              |
-| **Staleness**                    | Time since this context's own last-activity timestamp, only when its own count > 0                      | Decay-shaped, capped at 7 days — see [Decay-shaped staleness](#decay-shaped-staleness). Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                                                       |
+| Signal                           | Condition                                                                                               | Effect                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Mastered cooldown**            | This context's own streak > 0 and its last-activity timestamp is within `masteredCooldownHours(streak)` | Large penalty. Independent per context — a Quiz pass never cools down Review. Window scales with streak — see [Streak-scaled cooldown](#streak-scaled-cooldown).                                                                                                                                                                |
+| **Same-day Read sit-out**        | `review`/`quiz` only: `last_read_at` is today in `QUEUE_TIMEZONE`                                       | Large penalty (`sameDayCooldownPenalty`). You just saw the definition — try again tomorrow. Dominates struggling/unseen for that day.                                                                                                                                                                                           |
+| **Same-day fail→Read sit-out**   | `read` only: `last_fail_at` is today in `QUEUE_TIMEZONE`                                                | Large penalty (`sameDayCooldownPenalty`). Review and Quiz misses share this rule. Cleared when `last_fail_*` clears.                                                                                                                                                                                                            |
+| **Same-day own-fail sit-out**    | `review`/`quiz` only: this context's own streak `< 0` and its own last-activity timestamp is today      | Large penalty (`sameDayCooldownPenalty`), same `recent_fail_cooldown` reason. A Review miss sits Review out; a Quiz miss sits Quiz out. Keyed off own streak/timestamp, not `last_fail_at` — a Read or an other-activity pass doesn't lift it. Live picks never include these; debug still lists them.                          |
+| **Never engaged**                | This context's own count is 0                                                                           | Large boost. `read` context: `read_count === 0`. `review`/`quiz`: their own test count is 0.                                                                                                                                                                                                                                    |
+| **Struggling**                   | This context's own streak < 0                                                                           | Boost scaled by `min(\|streak\|, FAIL_STREAK_CAP) × strugglingBoostPerStreak`. Replaces the old separate learning/forgot/repeat_fail signals with one magnitude-scaled formula.                                                                                                                                                 |
+| **Engaged but untested**         | `read_count >= ENGAGED_MIN_COUNT` and this context's own test count is 0                                | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                                                                                                                        |
+| **Abandoned review**             | `pending_reveal === true`                                                                               | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                                                                                                  |
+| **Cross-activity fail**          | `review` only: `last_fail_at` is set and `last_fail_source === 'quiz'`                                  | One-directional: a Quiz miss still boosts Review. A Review miss no longer boosts Quiz — Quiz's own hard tiers (see [Quiz ranking](#quiz-ranking-hard-tiers)) replace the score mix, so it doesn't need this nudge. Scaled by `min(\|source streak\|, FAIL_STREAK_CAP)`. Read uses the same-day fail sit-out instead of a boost. |
+| **Fragile (lifetime fail rate)** | `review`/`quiz` only: this context's own attempts `>= FAIL_RATE_MIN_ATTEMPTS`                           | Boost scaled by lifetime fail rate × `fragileBoostMax`. Independent of the _current_ streak sign — see [Lifetime fail rate](#lifetime-fail-rate-fragile).                                                                                                                                                                       |
+| **Staleness**                    | Time since this context's own last-activity timestamp, only when its own count > 0                      | Decay-shaped, capped at 7 days — see [Decay-shaped staleness](#decay-shaped-staleness). Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                                                                                |
 
 Same-score candidates are shuffled freshly each pick (Fisher–Yates within
 each equal-score run after score-desc sort) so ties mix across collections
@@ -310,20 +322,20 @@ Staleness and "stale" reason labels use a 24-hour threshold.
 Each pick includes a `reasons` list — which signals fired — for UI badges
 and queue previews.
 
-| Reason                 | When it fires                                                                                                    | UI label (`read` / `review` / `quiz`)                            |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `unseen`               | This context's own count is 0                                                                                    | Never read / Never reviewed / Never quizzed                      |
-| `struggling`           | This context's own streak < 0                                                                                    | Struggling                                                       |
-| `repeat_fail`          | Struggling and `\|streak\| >= 2`                                                                                 | Repeatedly missed                                                |
-| `engaged_untested`     | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)                     | Read 3+ times, not tested                                        |
-| `abandoned_review`     | `pending_reveal === true` (`review` only)                                                                        | Left mid-review                                                  |
-| `stale`                | This context's own count > 0 and not tested in 24h+                                                              | Not read recently / Not reviewed recently / Not quizzed recently |
-| `mastered_cooldown`    | This context's own streak > 0, within cooldown window                                                            | Recently mastered                                                |
-| `recent_read_cooldown` | `review`/`quiz`: `last_read_at` is today in `QUEUE_TIMEZONE`                                                     | Read today                                                       |
-| `recent_fail_cooldown` | `read`: `last_fail_at` is today; `review`/`quiz`: that context's own streak `< 0` and own last-activity is today | Missed today                                                     |
-| `cross_fail`           | `review`/`quiz`: `last_fail_at` set and `last_fail_source` is the other activity                                 | Missed elsewhere recently                                        |
-| `fragile`              | `review`/`quiz`: own attempts `>= FAIL_RATE_MIN_ATTEMPTS` and lifetime fail rate > 0                             | Historically tricky                                              |
-| `steady`               | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case) | Recently read / Recently reviewed / Recently quizzed             |
+| Reason                 | When it fires                                                                                                                                        | UI label (`read` / `review` / `quiz`)                            |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `unseen`               | This context's own count is 0                                                                                                                        | Never read / Never reviewed / Never quizzed                      |
+| `struggling`           | This context's own streak < 0                                                                                                                        | Struggling                                                       |
+| `repeat_fail`          | Struggling and `\|streak\| >= 2`                                                                                                                     | Repeatedly missed                                                |
+| `engaged_untested`     | `read_count >= ENGAGED_MIN_COUNT`, this context's own test count is 0 (`review`/`quiz` only)                                                         | Read 3+ times, not tested                                        |
+| `abandoned_review`     | `pending_reveal === true` (`review` only)                                                                                                            | Left mid-review                                                  |
+| `stale`                | This context's own count > 0 and not tested in 24h+                                                                                                  | Not read recently / Not reviewed recently / Not quizzed recently |
+| `mastered_cooldown`    | This context's own streak > 0, within cooldown window                                                                                                | Recently mastered                                                |
+| `recent_read_cooldown` | `review`/`quiz`: `last_read_at` is today in `QUEUE_TIMEZONE`                                                                                         | Read today                                                       |
+| `recent_fail_cooldown` | `read`: `last_fail_at` is today and `last_fail_source === 'review'`; `review`/`quiz`: that context's own streak `< 0` and own last-activity is today | Missed today                                                     |
+| `cross_fail`           | `review` only: `last_fail_at` set and `last_fail_source === 'quiz'`                                                                                  | Missed elsewhere recently                                        |
+| `fragile`              | `review`/`quiz`: own attempts `>= FAIL_RATE_MIN_ATTEMPTS` and lifetime fail rate > 0                                                                 | Historically tricky                                              |
+| `steady`               | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case)                                     | Recently read / Recently reviewed / Recently quizzed             |
 
 `unseen`, `stale`, and `steady` share one label per activity —
 `formatPickReason(reason, context)` in
@@ -339,6 +351,9 @@ Review and quiz setup show a collapsible queue preview; cards and questions
 show one or two badges.
 
 ### Lane mix
+
+**Review and Read only** — Quiz replaced this with hard tiers, see
+[Quiz ranking](#quiz-ranking-hard-tiers).
 
 Scoring ranks candidates within a lane; `pickTerms`
 ([`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts)) then splits the
@@ -375,6 +390,43 @@ own-context engagements, starting with whichever lane is behind on its
 slot ratio (tie starts never-engaged). See the doc comment on
 `startingLane` in `pick.ts` for the exact reconstruction. Review/Quiz
 batches (`limit` up to 30) get a true mix-ratio list from a single zip.
+
+### Quiz ranking (hard tiers)
+
+Quiz doesn't use scoring's lane mix at all — `pickQuizTerms`
+([`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts)) instead fills
+three hard-ordered tiers, in order, until the batch size is met:
+
+1. **Never quizzed** (`quiz_test_count === 0`) — sorted by `known_at`
+   ascending (oldest known first); ties shuffled.
+2. **Not quizzed recently / remastered** — has quiz history, not in
+   mastered cooldown. Ordered by the same score `evaluateCandidate`
+   produces for the `quiz` context (staleness, struggling, fragile) —
+   just without the Review→Quiz `cross_fail` boost, which is gated off for
+   this context (see [Scoring](#scoring)). A term remastered after a Quiz
+   miss lands here, not tier 1 — quiz history isn't reset on a miss.
+3. **Recently mastered** (`quiz_streak > 0`, inside
+   `masteredCooldownHours(streak)`) — sorted by soonest cooldown expiry
+   first. Unlike Review, `mastered_cooldown` does **not** remove a term
+   from Quiz's live picks — it just pushes it to the back.
+
+Same-day sit-outs (`recent_read_cooldown`, and Quiz's own-fail
+`recent_fail_cooldown`) are dropped from all three tiers for live picks,
+same semantics as the lane mix's `includeOwnFailSitOut`. Debug
+(`listScoredQuizCandidates`) appends them after the three tiers instead of
+dropping them.
+
+A Quiz **pass** never changes the pool — it only writes quiz history
+(`quiz_pass`). A Quiz **miss** always writes `quiz_fail` **and** flips the
+term back to unknown — no Settings toggle decides this anymore; both
+behaviors are hard-coded in `applyQuizAnswer`
+([`lib/jargon/review-outcome.ts`](../lib/jargon/review-outcome.ts)). The
+term then sits out of Quiz for the rest of the day (own-fail sit-out) and,
+once that lifts, reappears in tier 2 — remastering it (a Review rating or
+the collection-page toggle) doesn't erase its quiz streak/history.
+
+The Quiz setup preview groups candidates by these three tiers instead of
+showing one flat list.
 
 ### Soft cycle
 
@@ -494,14 +546,23 @@ result, rather than needing a separate "reset to 0" step.
 
 ### Quizzes (web + Telegram)
 
-- Own `quiz` context ranking, entirely independent of Review's.
+- **Known-pool only.** No Unknown/Known picker — Quiz is a check on terms
+  you've already marked known, never a way to learn unknown ones. Empty
+  known pool → copy pointing to Review or the collection-page toggle.
+  Known pool non-empty but every term sat out today → "Nothing eligible
+  today (read or missed). Try tomorrow or mark more known."
+- Ranked by the three hard tiers, not the score-mix — see
+  [Quiz ranking](#quiz-ranking-hard-tiers). Setup preview groups by tier.
 - A question's term appearing on screen writes nothing now — the old
   Seen-tier write for "question shown" was dropped along with the Seen
   tier. Answering it → `quiz_pass`/`quiz_fail`.
-- A quiz miss sits both Quiz and Read out until tomorrow (same rule as a
-  Review miss) and nudges Review via cross-fail; it does not boost Read.
-- Known flips follow Settings → Quiz prefs (`markUnknownOnFail`,
-  `markKnownOnPass`).
+- **Pass never flips the pool** — it only writes quiz history. **A miss
+  always flips the term to unknown** — no Settings toggle, both directions
+  hard-coded. The term sits out of Quiz for the rest of the day, then
+  reappears in tier 2 once remastered (quiz history/streak untouched).
+- A Quiz miss nudges Review via cross-fail but does **not** sit Read out —
+  only a Review miss does that now. See
+  [Fails cross one direction](#mental-model).
 
 ### Desktop widget
 
@@ -523,10 +584,12 @@ result, rather than needing a separate "reset to 0" step.
   rollup, then one block per active collection.
 - Rollup: `Read` sums the unknown pool's `read`-context never/stale across
   all active collections (equal to the sum of the per-collection
-  footnotes below); `Review`/`Quiz` `never` comes from that same unknown
-  pool in their own context, while `struggling` (own-context streak < 0)
-  is summed across **both** the unknown and known pools. A bucket at zero
-  is omitted from its line; an all-zero line reads `none waiting`.
+  footnotes below); `Review` `never` comes from the unknown pool in its
+  own context, while `struggling` (own-context streak < 0) is summed
+  across **both** the unknown and known pools. `Quiz` is known-pool
+  only — both `never` and `struggling` come from the known pool alone,
+  since that's the only pool Quiz ever picks from. A bucket at zero is
+  omitted from its line; an all-zero line reads `none waiting`.
 - Per collection: the existing known% bar, then an unknown-Read footnote
   partitioned into `never` / `recent` / `stale` (own `read`-context
   unseen/recent/stale) — always all three, even at zero, so the numbers
@@ -540,15 +603,21 @@ result, rather than needing a separate "reset to 0" step.
 
 ## Debug page
 
-`/jargon/debug` lists every candidate in the chosen pool — known or
-unknown, one collection or all active ones, any `PickContext`
-(read/review/quiz) — with its live score, `reasons` badges, and the raw
-`review_state` fields behind them. No term content, just the scoring
-internals, sorted exactly like a real pick would be. It's a debugging view,
-not a study surface: it doesn't write events. Built on
+`/jargon/debug` lists every candidate in the chosen pool, one collection or
+all active ones, any `PickContext` (read/review/quiz) — with its live
+score, `reasons` badges, and the raw `review_state` fields behind them. No
+term content, just the scoring internals, sorted exactly like a real pick
+would be. It's a debugging view, not a study surface: it doesn't write
+events.
+
+Read/Review are built on
 [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)'s
 `listScoredCandidates`, which is `pickTerms` with `limit` set to every
-candidate instead of a top-N slice.
+candidate instead of a top-N slice; the Pool filter (known/unknown) applies
+normally. **Quiz is locked to the known pool** — selecting the Quiz context
+forces `status=known` regardless of the URL, and scoring goes through
+`listScoredQuizCandidates` (`pickQuizTerms` with every candidate, tiers and
+same-day sit-outs both included) instead of `listScoredCandidates`.
 
 ---
 
@@ -559,7 +628,7 @@ Postgres tables:
 | Table           | Role                                                                                                                                                                                                                                                                       |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `review_state`  | `read_count`, `last_read_at`; `review_recall_count`, `last_review_recall_at`, `review_streak`, `review_fail_count`; `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`, `quiz_fail_count`; `pending_reveal`; `last_fail_at`, `last_fail_source` — all per user + term |
-| `user_progress` | Row present → known; absent → unknown                                                                                                                                                                                                                                      |
+| `user_progress` | Row present → known; absent → unknown. `known_at` (set on insert, backfilled from last Review pass else `now()`) drives Quiz tier-1 ordering                                                                                                                               |
 
 Candidate RPCs (see
 [`lib/smart-queue/repository.ts`](../lib/smart-queue/repository.ts)):

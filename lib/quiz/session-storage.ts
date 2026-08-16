@@ -1,14 +1,7 @@
-import type {
-  QuizAnswer,
-  QuizQuestion,
-  QuizQuestionStyle,
-  QuizTerm,
-  QuizTermStatus,
-} from "./types";
+import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "./types";
 
 type QuizSetup = {
   domainIds: string[] | "all";
-  status: QuizTermStatus;
   questionCount: number;
   questionStyle: QuizQuestionStyle;
 };

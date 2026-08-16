@@ -248,10 +248,6 @@ function buildSetupCountKeyboard(prefix: string, maxCount: number): InlineKeyboa
   return { inline_keyboard: rows };
 }
 
-export function buildQuizStatusKeyboard(): InlineKeyboardMarkup {
-  return buildSetupStatusKeyboard("quizsetup");
-}
-
 export function buildQuizCollectionKeyboard(
   collections: Array<{ id: string; name: string; count: number }>,
   allCount: number,
@@ -276,10 +272,6 @@ export function buildReviewSetupCollectionKeyboard(
 
 export function buildReviewSetupCountKeyboard(maxCount: number): InlineKeyboardMarkup {
   return buildSetupCountKeyboard("reviewsetup", maxCount);
-}
-
-export function formatQuizSetupStatusPrompt(): string {
-  return "<b>What to quiz?</b>\n\nChoose unknown terms you're learning, or known terms to review.";
 }
 
 export function formatQuizSetupCollectionPrompt(): string {
@@ -423,14 +415,12 @@ export function formatReviewQuestionWithAnswer(
   isCorrect: boolean,
   currentScore: number,
   markedUnknown = false,
-  markedKnown = false,
 ): string {
   let message = formatReviewQuestion(term, questionIndex, totalQuestions);
   message += `\n\n<b>Your answer:</b> ${escapeHtml(selectedTerm)}`;
 
   if (isCorrect) {
     message += `\n\n✅ <b>Correct!</b>`;
-    if (markedKnown) message += "\n<i>Marked as known.</i>";
   } else {
     message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeHtml(term.term)}</b>`;
     if (markedUnknown) message += "\n<i>Marked as unknown.</i>";
@@ -465,15 +455,10 @@ export function buildReviewKeyboard(
   return { inline_keyboard: rows };
 }
 
-export function formatReviewSummary(
-  score: number,
-  total: number,
-  status: "known" | "unknown",
-): string {
+export function formatReviewSummary(score: number, total: number): string {
   const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
   let message = `📊 <b>Quiz Complete!</b>\n\n`;
-  message += `Score: ${score}/${total} (${percentage}%)\n`;
-  message += `Status: ${status} terms\n\n`;
+  message += `Score: ${score}/${total} (${percentage}%)\n\n`;
 
   if (percentage === 100) message += "🎉 Perfect score! Excellent work!";
   else if (percentage >= 80) message += "🌟 Great job! You know these terms well!";

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { clearLlmSettings, saveLlmSettings, updateQuizPreferences } from "@/lib/llm/settings";
+import { clearLlmSettings, saveLlmSettings } from "@/lib/llm/settings";
 import type { LlmProvider } from "@/lib/llm/types";
 import {
   createOrRefreshTelegramLink,
@@ -137,24 +137,6 @@ export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Couldn't remove quiz settings. Try again.";
-    return { error: message };
-  }
-}
-
-export async function updateQuizPreferencesAction(input: {
-  markUnknownOnFail: boolean;
-  markKnownOnPass: boolean;
-}): Promise<{ error?: string }> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    await updateQuizPreferences(auth.supabase, auth.user.id, input);
-    revalidatePath("/jargon/settings");
-    return {};
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Couldn't save quiz preferences. Try again.";
     return { error: message };
   }
 }

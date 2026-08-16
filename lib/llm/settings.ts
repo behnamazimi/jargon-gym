@@ -5,17 +5,10 @@ import type { LlmProvider, UserSettings } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-function mapRow(row: {
-  provider: string | null;
-  api_key_last4: string | null;
-  mark_unknown_on_fail: boolean;
-  mark_known_on_pass: boolean;
-}): UserSettings {
+function mapRow(row: { provider: string | null; api_key_last4: string | null }): UserSettings {
   return {
     provider: (row.provider as LlmProvider | null) ?? null,
     apiKeyLast4: row.api_key_last4,
-    markUnknownOnFail: row.mark_unknown_on_fail,
-    markKnownOnPass: row.mark_known_on_pass,
   };
 }
 
@@ -25,7 +18,7 @@ export async function getUserSettings(
 ): Promise<UserSettings | null> {
   const { data, error } = await client
     .from("user_settings")
-    .select("provider, api_key_last4, mark_unknown_on_fail, mark_known_on_pass")
+    .select("provider, api_key_last4")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -78,26 +71,8 @@ export async function saveLlmSettings(
   if (error) throw error;
 }
 
-export async function updateQuizPreferences(
-  client: Client,
-  userId: string,
-  input: { markUnknownOnFail: boolean; markKnownOnPass: boolean },
-) {
-  const { error } = await client.from("user_settings").upsert(
-    {
-      user_id: userId,
-      mark_unknown_on_fail: input.markUnknownOnFail,
-      mark_known_on_pass: input.markKnownOnPass,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "user_id" },
-  );
-
-  if (error) throw error;
-}
-
 export async function clearLlmSettings(client: Client, userId: string) {
-  // Keep review/quiz preference row; only clear LLM credentials.
+  // Keep the settings row; only clear LLM credentials.
   const { error } = await client
     .from("user_settings")
     .update({

@@ -139,7 +139,6 @@ function buildStatsSnapshot(
   const unknownByDomain = groupCandidatesByDomain(unknownCandidates);
   const readPool = computePoolStats(unknownCandidates, "read");
   const reviewUnknownPool = computePoolStats(unknownCandidates, "review");
-  const quizUnknownPool = computePoolStats(unknownCandidates, "quiz");
   const reviewKnownPool = computePoolStats(knownCandidates, "review");
   const quizKnownPool = computePoolStats(knownCandidates, "quiz");
 
@@ -176,9 +175,10 @@ function buildStatsSnapshot(
         never: reviewUnknownPool.unseen,
         struggling: reviewUnknownPool.struggling + reviewKnownPool.struggling,
       },
+      // Quiz is known-pool only — never/struggling reflect the known pool alone.
       quiz: {
-        never: quizUnknownPool.unseen,
-        struggling: quizUnknownPool.struggling + quizKnownPool.struggling,
+        never: quizKnownPool.unseen,
+        struggling: quizKnownPool.struggling,
       },
     },
     activeCollections,
@@ -337,15 +337,16 @@ export async function fetchStatsSnapshot(
     today: {
       read: countActivityToday(unknownCandidates, "read", now),
       review: countActivityToday(combined, "review", now),
-      quiz: countActivityToday(combined, "quiz", now),
+      // Quiz is known-pool only.
+      quiz: countActivityToday(knownCandidates, "quiz", now),
     },
     mastery: {
       review: tallyMastery(combined, "review", now),
-      quiz: tallyMastery(combined, "quiz", now),
+      quiz: tallyMastery(knownCandidates, "quiz", now),
     },
     accuracy: {
       review: summarizeAccuracy(combined, "review"),
-      quiz: summarizeAccuracy(combined, "quiz"),
+      quiz: summarizeAccuracy(knownCandidates, "quiz"),
     },
     pausedCollections,
   };

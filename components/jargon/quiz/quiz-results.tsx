@@ -11,12 +11,10 @@ import {
   QuizTermList,
 } from "@/components/jargon/quiz/quiz-ui";
 import { Button } from "@/components/ui/button";
-import type { QuizTermStatus } from "@/lib/quiz/types";
 
 type QuizResultsProps = {
   score: number;
   total: number;
-  quizStatus: QuizTermStatus;
   flippedTerms: { id: string; term: string }[];
   onQuizAgain: () => void;
 };
@@ -30,15 +28,9 @@ function scoreMessage(score: number, total: number) {
   return "Good practice — keep at the terms that tripped you up.";
 }
 
-export function QuizResults({
-  score,
-  total,
-  quizStatus,
-  flippedTerms,
-  onQuizAgain,
-}: QuizResultsProps) {
+export function QuizResults({ score, total, flippedTerms, onQuizAgain }: QuizResultsProps) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
-  const flippedLabel = quizStatus === "known" ? "Marked as unknown" : "Marked as known";
+  const flippedLabel = "Marked as unknown";
 
   return (
     <QuizPanel>

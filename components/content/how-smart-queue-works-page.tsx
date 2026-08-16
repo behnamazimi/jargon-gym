@@ -27,7 +27,7 @@ const ANY_ACTIVITY = [
   },
   {
     title: "Missed elsewhere recently",
-    body: "Failing a quiz nudges Review; failing Review nudges Quiz. A miss is trustworthy evidence you don't know it in the other test, but acing one doesn't quiet the others — quizzes are guessable, so a pass there isn't proof the way a miss is. Read sits a same-day miss out instead of boosting it.",
+    body: "Failing a quiz nudges Review — a miss is trustworthy evidence you don't know it, even though quizzes are guessable and a pass isn't proof the way a miss is. This only runs one way: Review misses don't nudge Quiz, since Quiz has its own fixed order (see below) instead of a score mix. A same-day Review miss sits Read out until tomorrow instead of boosting anything; a Quiz miss does not sit Read out.",
   },
   {
     title: "Not active here recently",
@@ -56,7 +56,7 @@ const REVIEW_ONLY = [
 const PRIORITY_LOWERS = [
   {
     title: "Recently mastered",
-    body: `Passed recently in that same activity, sits out while the queue works on other terms. Starts around ${BASE_COOLDOWN_DAYS} day${BASE_COOLDOWN_DAYS === 1 ? "" : "s"} after a first pass and stretches longer with each pass in a row, up to two weeks. A single miss resets it back to the short end. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz. Review and Quiz only, Read has nothing to master.`,
+    body: `Passed recently in that same activity. In Review it sits out while the queue works on other terms; in Quiz it's the last group to appear, not skipped entirely. Starts around ${BASE_COOLDOWN_DAYS} day${BASE_COOLDOWN_DAYS === 1 ? "" : "s"} after a first pass and stretches longer with each pass in a row, up to two weeks. A single miss resets it back to the short end. Acing a quiz doesn't cool down Review, and acing Review doesn't cool down Quiz. Review and Quiz only, Read has nothing to master.`,
   },
   {
     title: "Read today",
@@ -64,7 +64,7 @@ const PRIORITY_LOWERS = [
   },
   {
     title: "Missed today",
-    body: "You missed it in Review or Quiz earlier today. Read sits it out until tomorrow so you don't reopen the definition right after a miss, and the activity you missed in sits that same term out for the rest of the day too, a Review miss sits Review out, a Quiz miss sits Quiz out. The other test activity can still pick it.",
+    body: "You missed it in Review or Quiz earlier today, so the activity you missed in sits that same term out for the rest of the day, a Review miss sits Review out, a Quiz miss sits Quiz out. A same-day Review miss also sits Read out until tomorrow, so you don't reopen the definition right after missing it there; a Quiz miss doesn't, since Quiz only checks terms you've already learned.",
   },
 ] as const;
 
@@ -79,7 +79,7 @@ const SURFACES = [
   },
   {
     title: "Web quiz",
-    body: "Multiple-choice against its own Quiz ranking, not Review's. Setup shows a preview; questions show badges. A miss sits that Quiz and Read out until tomorrow (same as Review) and nudges Review; a quiz streak only cools future quizzes.",
+    body: "Multiple-choice against your known terms only, in the fixed never-quizzed / not-quizzed-recently / recently-mastered order, not Review's mix. Setup shows a preview grouped by that order; questions show badges. A pass never changes the pool; a miss always sends the term back to unknown, sits that Quiz out until tomorrow, and nudges Review — but doesn't sit Read out.",
   },
   {
     title: "Web collection",
@@ -159,7 +159,7 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
               },
               {
                 title: "Quiz",
-                body: "Recognition among options. Useful practice, but there's a guess floor, so a lucky pass shouldn't quiet a term that still needs real recall.",
+                body: "Recognition among options, and known-terms only, it checks what you've already marked known rather than teaching new ones. There's a guess floor, so a lucky pass shouldn't quiet a term that still needs real recall, and a miss always sends the term back to unknown until you remaster it.",
               },
             ]}
           />
@@ -199,12 +199,19 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             The mastered cooldown (starting around {BASE_COOLDOWN_DAYS} day
             {BASE_COOLDOWN_DAYS === 1 ? "" : "s"} after a pass, growing with each pass in a row) and
             the same-day sit-outs (try tomorrow) are the only time-based quieting. Nothing else gets
-            a future review date. When both never-engaged and already-touched terms exist, picks
-            alternate {MIX_NEVER_ENGAGED_SLOTS} never-engaged to {MIX_ALREADY_TOUCHED_SLOTS}{" "}
-            already-touched — about as often as terms you've already touched, not always first. A
-            term sitting out a cooldown skips its turn. Once one side runs out, the other runs
-            alone: after every term in a pool has been engaged in that activity at least once,
-            neglected and weak terms rise on their own, a gentle cycle with no reset button.
+            a future review date. For Read and Review, when both never-engaged and already-touched
+            terms exist, picks alternate {MIX_NEVER_ENGAGED_SLOTS} never-engaged to{" "}
+            {MIX_ALREADY_TOUCHED_SLOTS} already-touched — about as often as terms you've already
+            touched, not always first. A term sitting out a cooldown skips its turn. Once one side
+            runs out, the other runs alone: after every term in a pool has been engaged in that
+            activity at least once, neglected and weak terms rise on their own, a gentle cycle with
+            no reset button.
+          </p>
+          <p className="m-0 text-base-content/70">
+            Quiz doesn&apos;t alternate like that — it fills in a fixed order instead: never quizzed
+            first (oldest marked known first), then not quizzed recently, then recently mastered
+            last. The setup preview groups terms by these three groups so the order is visible
+            before you start.
           </p>
         </ContentPageSection>
 

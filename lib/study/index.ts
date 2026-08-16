@@ -5,4 +5,4 @@ export { MAX_STUDY_TERMS } from "./types";
 
 export { listStudyCollections } from "./collections";
 export { countTermsForSelection, getMaxStudyCount } from "./count";
-export { fetchStudyTermPool } from "./pool";
+export { fetchStudyTermPool, fetchQuizTermPool } from "./pool";

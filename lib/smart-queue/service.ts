@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
 import type { PickContext, PickMeta, PoolStats, ScoredCandidate } from "./types";
-import { pickTerms } from "./pick";
+import { pickQuizTerms, pickTerms } from "./pick";
 import { computePoolStats } from "./stats";
 import { fetchCandidates, fetchCandidatesForUser, type ReviewScope } from "./repository";
 import { hydrateTermCardsForUser, hydrateTermsAsTermCards } from "./hydrate";
@@ -101,6 +101,97 @@ export async function listScoredCandidates(
   const candidates = await fetchCandidates(client, userId, scope, status);
   if (candidates.length === 0) return [];
   return pickTerms(candidates, candidates.length, context, { includeOwnFailSitOut: true });
+}
+
+/** Quiz's dedicated pick path: known pool only, hard tiers via pickQuizTerms
+ *  instead of pickTerms's score mix. Session-scoped (web). */
+export async function pickQuizTermCards(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+  limit: number,
+): Promise<PickReviewResult> {
+  const candidates = await fetchCandidates(client, userId, scope, "known");
+
+  if (candidates.length === 0) return { cards: [], pickMeta: [] };
+
+  const scored = pickQuizTerms(candidates, limit);
+  if (scored.length === 0) return { cards: [], pickMeta: [] };
+
+  const now = new Date();
+  const pickMeta: PickMeta[] = scored.map((s) => ({
+    termId: s.termId,
+    score: s.score,
+    reasons: s.reasons,
+    strength: strengthForCandidate(s, "quiz", now),
+  }));
+
+  const cards = await hydrateTermsAsTermCards(
+    client,
+    scored.map((s) => s.termId),
+  );
+
+  return { cards, pickMeta };
+}
+
+/** Service-role counterpart of {@link pickQuizTermCards} — explicit userId (Telegram). */
+export async function pickQuizTermCardsForUser(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+  limit: number,
+  excludeTermIds?: string[],
+): Promise<PickReviewResult> {
+  let candidates = await fetchCandidatesForUser(client, userId, scope, "known");
+
+  if (excludeTermIds && excludeTermIds.length > 0) {
+    const excludeSet = new Set(excludeTermIds);
+    candidates = candidates.filter((c) => !excludeSet.has(c.termId));
+  }
+
+  if (candidates.length === 0) return { cards: [], pickMeta: [] };
+
+  const scored = pickQuizTerms(candidates, limit);
+  if (scored.length === 0) return { cards: [], pickMeta: [] };
+
+  const now = new Date();
+  const pickMeta: PickMeta[] = scored.map((s) => ({
+    termId: s.termId,
+    score: s.score,
+    reasons: s.reasons,
+    strength: strengthForCandidate(s, "quiz", now),
+  }));
+
+  const cards = await hydrateTermCardsForUser(
+    client,
+    userId,
+    scored.map((s) => s.termId),
+  );
+
+  return { cards, pickMeta };
+}
+
+/** Every known-pool Quiz candidate, tiered and sorted — no slicing.
+ *  Debug/inspection + setup-preview grouping. */
+export async function listScoredQuizCandidates(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+): Promise<ScoredCandidate[]> {
+  const candidates = await fetchCandidates(client, userId, scope, "known");
+  if (candidates.length === 0) return [];
+  return pickQuizTerms(candidates, candidates.length, { includeSitOuts: true });
+}
+
+/** Service-role counterpart of {@link listScoredQuizCandidates} (Telegram/debug via admin client). */
+export async function listScoredQuizCandidatesForUser(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+): Promise<ScoredCandidate[]> {
+  const candidates = await fetchCandidatesForUser(client, userId, scope, "known");
+  if (candidates.length === 0) return [];
+  return pickQuizTerms(candidates, candidates.length, { includeSitOuts: true });
 }
 
 export async function getReviewPoolStats(
