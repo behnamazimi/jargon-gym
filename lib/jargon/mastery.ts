@@ -33,20 +33,22 @@ export type MasteryOverviewData = {
   collections: MasteryCollectionOption[];
 };
 
-/** Every term across every collection (active and paused — overall
- *  strength is pool/domain-status agnostic) with its blended strength,
- *  for the /jargon/mastery overview. Reuses the same per-term fetch the
- *  collection cards use (fetchOverallStrengthByTermId), just across all
- *  domains at once instead of one selected domain. */
+/** Every term across active collections (paused collections are excluded)
+ *  with its blended strength, for the /jargon/mastery overview. Reuses the
+ *  same per-term fetch the collection cards use
+ *  (fetchOverallStrengthByTermId), just across all active domains at once
+ *  instead of one selected domain. */
 export async function loadMasteryOverview(
   client: Client,
   userId: string,
 ): Promise<MasteryOverviewData> {
-  const { collectionRows } = await resolveReviewDomainIds(client, userId);
-  if (collectionRows.length === 0) return { rows: [], collections: [] };
+  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+  const activeSet = new Set(reviewDomainIds);
+  const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
+  if (activeCollectionRows.length === 0) return { rows: [], collections: [] };
 
-  const domainIds = collectionRows.map((row) => row.id);
-  const domainNameById = new Map(collectionRows.map((row) => [row.id, row.name]));
+  const domainIds = activeCollectionRows.map((row) => row.id);
+  const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
 
   const terms = await fetchTermsByDomains(client, domainIds);
   const termIds = terms.map((term) => term.id);
@@ -72,7 +74,7 @@ export async function loadMasteryOverview(
     };
   });
 
-  const collections: MasteryCollectionOption[] = collectionRows
+  const collections: MasteryCollectionOption[] = activeCollectionRows
     .map((row) => ({ id: row.id, name: row.name, count: row.termCount }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
