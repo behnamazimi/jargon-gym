@@ -493,12 +493,19 @@ because "how strong am I on this term overall" is a different question
 than "how strong am I on it in Review specifically" — and neither function
 calls the other or feeds the ranking score.
 
-- **Unverified is a bypass, not a low score.** Zero Review AND zero Quiz
-  history (regardless of known status or Read exposure) skips the formula
-  entirely and returns `unverified` — "never tested," not "tested and
-  weak." A term tested at least once but that would score `0` (e.g. 100%
-  lifetime fail rate) is floored to `1` instead, so it never renders
-  identically to `unverified`.
+- **Unverified is a label, not a score bypass.** Every term runs through
+  the same formula — a term with zero Review AND zero Quiz history still
+  gets a real score, driven entirely by the Read nudge below (both
+  sub-scores are naturally `0` when untested), so an exposure-only term
+  isn't flattened to an identical "nothing to show" regardless of how many
+  times it's been read. `unverified` is forced whenever there's no
+  Review/Quiz history, independent of that score — it renders in its own
+  neutral color (never weak/medium/strong's red/yellow/green), so "never
+  tested" stays visually distinct from "tested and struggling" no matter
+  what the number underneath is. A term tested at least once but that
+  would score `0` (e.g. 100% lifetime fail rate) is floored to `1` instead,
+  so it never collides with a genuinely untouched (`0` reads, `0` tests)
+  term — that one is allowed to show a real `0`.
 - **Untested counts as `0` in the blend, not excluded from it.** This is
   what stops a strong Review streak alone from reading as fully proven —
   Quiz's `0` sub-score still counts at `OVERALL_WEIGHTS.quiz` weight in the
@@ -540,15 +547,17 @@ calls the other or feeds the ranking score.
 Bucket assignment (`scoreToBucket` in `lib/smart-queue/strength.ts`) reads
 straight off the score against the two `OVERALL_BUCKET_*_MIN_SCORE`
 constants above — edit those two directly to change what score counts as
-which tier. Bar count (`bars`, the 0-5 the UI renders as signal-strength
-bars, via `scoreToBars`) is a separate, finer-grained breakdown off
-`OVERALL_BAR_SCORE_THRESHOLDS` — a tested score always shows at least 1
-bar, one more per threshold cleared — kept independent of the bucket
-cutoffs so the visual granularity and the weak/medium/strong label can be
-tuned separately. `unverified` bypasses both entirely (see
-`computeOverallStrength`). `unverified` renders as outlined/empty bars —
-visually distinct from a filled `weak` bar, so "never tested" can't be
-mistaken for "tested and struggling."
+which tier, though `computeOverallStrength` overrides the result to
+`unverified` whenever there's no Review/Quiz history, regardless of score.
+Bar count (`bars`, the 0-5 the UI renders as signal-strength bars, via
+`scoreToBars`) is a separate, finer-grained breakdown off
+`OVERALL_BAR_SCORE_THRESHOLDS` — any score above `0` shows at least 1 bar,
+one more per threshold cleared, `0` shows none — kept independent of the
+bucket cutoffs so the visual granularity and the weak/medium/strong label
+can be tuned separately. `OverallStrengthBars` fills `unverified`'s bars
+the same way as every other bucket, just in its own neutral gray instead of
+red/yellow/green — that color, not a separate rendering path, is what
+keeps "never tested" from being mistaken for "tested and struggling."
 
 Surfaces: collection term cards (`OverallStrengthBars` in
 `components/jargon/overall-strength-bars.tsx`, fetched via

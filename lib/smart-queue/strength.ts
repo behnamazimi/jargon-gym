@@ -121,9 +121,11 @@ function stalenessMultiplier(hoursSinceLastActivity: number, decayConstantHours:
   );
 }
 
-/** Bar count for the 5-bar UI, from OVERALL_BAR_SCORE_THRESHOLDS — a tested
- *  score always shows at least 1 bar; one more per threshold cleared. */
+/** Bar count for the 5-bar UI, from OVERALL_BAR_SCORE_THRESHOLDS — any
+ *  score above 0 shows at least 1 bar; one more per threshold cleared. A
+ *  genuine 0 (no evidence of any kind — never read, never tested) shows 0. */
 function scoreToBars(score: number): number {
+  if (score <= 0) return 0;
   let bars = 1;
   for (const threshold of OVERALL_BAR_SCORE_THRESHOLDS) {
     if (score >= threshold) bars += 1;
@@ -143,18 +145,23 @@ function scoreToBucket(score: number): OverallStrength {
 
 /** Blended Review+Quiz mastery with a small Read tie-break and staleness
  *  decay, for surfaces that show one badge per term with no activity
- *  context (collection cards, stats). Zero Review AND zero Quiz history is
- *  "unverified" — never tested, not "tested and weak" — regardless of known
- *  status or Read exposure. A term tested at least once but scoring 0 (e.g.
- *  100% fail rate) is floored at 1 so it never collides visually with
- *  unverified. */
+ *  context (collection cards, stats). One formula for every term — a term
+ *  with zero Review AND zero Quiz history still gets a real score, driven
+ *  entirely by the Read nudge (both sub-scores are naturally 0 when
+ *  untested), so exposure-only terms aren't flattened to an identical
+ *  "nothing to show" regardless of how many times they've been read.
+ *  `unverified` is a label, not a score bypass: it's forced whenever there's
+ *  no Review/Quiz history, keeping "never tested" visually distinct (its
+ *  own neutral color, never weak/medium/strong's red/yellow/green) from
+ *  "tested and struggling," no matter what the underlying number is. A term
+ *  tested at least once but scoring 0 (e.g. 100% fail rate) is floored at 1
+ *  so it never collides with a genuinely untouched (0 reads, 0 tests) term
+ *  — that one is allowed to show a real 0. */
 export function computeOverallStrength(
   candidate: ReviewCandidate,
   now: Date,
 ): OverallStrengthResult {
-  if (candidate.reviewRecallCount === 0 && candidate.quizTestCount === 0) {
-    return { score: 0, bucket: "unverified", bars: 0 };
-  }
+  const isUnverified = candidate.reviewRecallCount === 0 && candidate.quizTestCount === 0;
 
   const reviewSub = activitySubScore(
     candidate.reviewRecallCount,
@@ -184,11 +191,11 @@ export function computeOverallStrength(
 
   const decayed =
     nudged * stalenessMultiplier(hoursSinceLastActivity, overallStalenessDecayHours(nudged));
-  const score = Math.max(0, Math.min(100, Math.round(decayed)));
-  const flooredScore = score === 0 ? 1 : score;
+  const rawScore = Math.max(0, Math.min(100, Math.round(decayed)));
+  const score = !isUnverified && rawScore === 0 ? 1 : rawScore;
 
-  const bars = scoreToBars(flooredScore);
-  const bucket = scoreToBucket(flooredScore);
+  const bars = scoreToBars(score);
+  const bucket: OverallStrength = isUnverified ? "unverified" : scoreToBucket(score);
 
-  return { score: flooredScore, bucket, bars };
+  return { score, bucket, bars };
 }

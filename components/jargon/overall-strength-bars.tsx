@@ -9,8 +9,12 @@ const BUCKET_LABEL: Record<OverallStrength, string> = {
   strong: "Strong",
 };
 
+/** unverified gets its own neutral color, never weak/medium/strong's
+ *  red/yellow/green — that's what keeps "never tested" visually distinct
+ *  from "tested and struggling" now that both buckets fill bars the same
+ *  way (see computeOverallStrength). */
 const BUCKET_FILL_CLASS: Record<OverallStrength, string> = {
-  unverified: "",
+  unverified: "bg-base-content/35",
   weak: "bg-error/70",
   medium: "bg-warning/70",
   strong: "bg-success/70",
@@ -26,17 +30,18 @@ type OverallStrengthBarsProps = {
   className?: string;
 };
 
-/** Display-only cross-context mastery indicator — collection cards, stats.
- *  Never feeds back into scoring. `unverified` renders as outlined/gray
- *  bars, distinct from a filled colored bucket, so "never tested" can't be
- *  mistaken for "tested and failing." Hover/focus reveals the label
- *  (and score, when given) as a tooltip. */
+/** Display-only cross-context mastery indicator — collection cards, stats,
+ *  the mastery overview. Never feeds back into scoring. Bar count comes
+ *  straight from the score for every bucket, including `unverified` (which
+ *  can be read-exposure-only, so it isn't flattened to a bare 0) — the
+ *  bucket's color alone is what keeps "never tested" distinct from "tested
+ *  and struggling," not a separate rendering path. Hover/focus reveals the
+ *  label (and score, when nonzero) as a tooltip. */
 export function OverallStrengthBars({ bars, bucket, score, className }: OverallStrengthBarsProps) {
-  const isUnverified = bucket === "unverified";
   const label =
-    isUnverified || score === undefined
-      ? BUCKET_LABEL[bucket]
-      : `${BUCKET_LABEL[bucket]} (${score}/100)`;
+    score !== undefined && score > 0
+      ? `${BUCKET_LABEL[bucket]} (${score}/100)`
+      : BUCKET_LABEL[bucket];
 
   return (
     <TooltipTrigger delay={150}>
@@ -45,18 +50,14 @@ export function OverallStrengthBars({ bars, bucket, score, className }: OverallS
         aria-label={`Overall strength: ${label}`}
       >
         {BAR_HEIGHT_CLASS.map((heightClass, index) => {
-          const filled = !isUnverified && index < bars;
+          const filled = index < bars;
           return (
             <span
               key={index}
               className={cn(
                 "w-1 rounded-sm",
                 heightClass,
-                isUnverified
-                  ? "border border-base-content/30 bg-transparent"
-                  : filled
-                    ? BUCKET_FILL_CLASS[bucket]
-                    : "bg-base-content/10",
+                filled ? BUCKET_FILL_CLASS[bucket] : "bg-base-content/10",
               )}
             />
           );
