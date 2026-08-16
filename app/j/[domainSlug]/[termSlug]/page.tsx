@@ -26,7 +26,7 @@ export async function generateMetadata({
 
   const title = `${data.term.term} — ${data.domain.name} | Jargon Gym`;
   const description = data.term.definition.slice(0, 155);
-  const url = `${getPublicBaseUrl()}/t/${domainSlug}/${termSlug}`;
+  const url = `${getPublicBaseUrl()}/j/${domainSlug}/${termSlug}`;
 
   return {
     title,
@@ -50,14 +50,20 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-10">
-      <Link
-        href={`/t/${domain.slug}`}
-        className="text-sm text-base-content/55 no-underline hover:text-base-content hover:underline"
-      >
-        ← {domain.name}
-      </Link>
       <p className="text-sm font-medium tracking-wide text-base-content/55 uppercase">
-        {domain.name} · {term.category}
+        <Link
+          href={`/j/${domain.slug}`}
+          className="text-base-content/55 underline underline-offset-2 transition-colors hover:text-base-content"
+        >
+          {domain.name}
+        </Link>{" "}
+        ·{" "}
+        <Link
+          href={`/j/${domain.slug}?category=${encodeURIComponent(term.category)}`}
+          className="text-base-content/55 underline underline-offset-2 transition-colors hover:text-base-content"
+        >
+          {term.category}
+        </Link>
       </p>
       <h1 className="text-3xl font-semibold text-base-content">{term.term}</h1>
       <TermBody
@@ -65,7 +71,7 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
         showSearchLink={false}
         getRelationshipHref={(relatedTermId) => {
           const relatedSlug = relatedTermSlugsById.get(relatedTermId);
-          return relatedSlug ? `/t/${domain.slug}/${relatedSlug}` : undefined;
+          return relatedSlug ? `/j/${domain.slug}/${relatedSlug}` : undefined;
         }}
       />
     </div>

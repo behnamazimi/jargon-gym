@@ -105,7 +105,7 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
       <td>
         <input
           type="checkbox"
-          className="toggle toggle-sm"
+          className="toggle toggle-sm toggle-primary"
           checked={isBuiltin}
           disabled={isPending}
           onChange={(event) => handleBuiltinChange(event.target.checked)}

@@ -17,7 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const domains = await listPublicDomains();
   const domainRoutes: MetadataRoute.Sitemap = domains.map((domain) => ({
-    url: `${baseUrl}/t/${domain.slug}`,
+    url: `${baseUrl}/j/${domain.slug}`,
     lastModified: domain.updatedAt,
     changeFrequency: "weekly",
     priority: 0.7,
@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const termRoutes: MetadataRoute.Sitemap = (terms ?? [])
     .filter((row) => row.domains.slug)
     .map((row) => ({
-      url: `${baseUrl}/t/${row.domains.slug}/${row.slug}`,
+      url: `${baseUrl}/j/${row.domains.slug}/${row.slug}`,
       lastModified: row.updated_at,
       changeFrequency: "monthly",
       priority: 0.6,

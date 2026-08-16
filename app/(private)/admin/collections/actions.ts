@@ -67,7 +67,7 @@ export async function setPublic(
   if (error) throw error;
 
   if (slug) {
-    revalidatePath(`/t/${slug}`, "layout");
+    revalidatePath(`/j/${slug}`, "layout");
   }
   revalidatePath("/admin/collections");
   revalidatePath("/sitemap.xml");
