@@ -493,29 +493,6 @@ because "how strong am I on this term overall" is a different question
 than "how strong am I on it in Review specifically" — and neither function
 calls the other or feeds the ranking score.
 
-```ts
-function computeOverallStrength(candidate, now): OverallStrengthResult {
-  if (candidate.reviewRecallCount === 0 && candidate.quizTestCount === 0) {
-    return { score: 0, bucket: "unverified", bars: 0 };
-  }
-
-  const reviewSub = activitySubScore(reviewRecallCount, reviewStreak, reviewFailCount);
-  const quizSub = activitySubScore(quizTestCount, quizStreak, quizFailCount); // 0 if never tested
-
-  const { review: wReview, quiz: wQuiz } = OVERALL_WEIGHTS;
-  const blended = (wReview * reviewSub + wQuiz * quizSub) / (wReview + wQuiz);
-  const nudged = blended + readNudge(readCount); // small, capped
-
-  const τ =
-    OVERALL_STALENESS_TAU_BASE_HOURS +
-    (OVERALL_STALENESS_TAU_CAP_HOURS - OVERALL_STALENESS_TAU_BASE_HOURS) * (nudged / 100);
-  const decay = Math.max(OVERALL_STALENESS_MULTIPLIER_FLOOR, Math.exp(-hoursSinceLastActivity / τ));
-
-  const score = Math.round(nudged * decay);
-  return { score: score === 0 ? 1 : score, bucket, bars }; // floored at 1 once tested
-}
-```
-
 - **Unverified is a bypass, not a low score.** Zero Review AND zero Quiz
   history (regardless of known status or Read exposure) skips the formula
   entirely and returns `unverified` — "never tested," not "tested and
