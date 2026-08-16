@@ -16,9 +16,13 @@ import {
   MASTERED_COOLDOWN_BASE_HOURS,
   MIX_ALREADY_TOUCHED_SLOTS,
   MIX_NEVER_ENGAGED_SLOTS,
+  OVERALL_STALENESS_TAU_BASE_HOURS,
+  OVERALL_STALENESS_TAU_CAP_HOURS,
 } from "@/lib/smart-queue/weights";
 
 const BASE_COOLDOWN_DAYS = Math.round(MASTERED_COOLDOWN_BASE_HOURS / 24);
+const STRENGTH_FADE_START_DAYS = Math.round(OVERALL_STALENESS_TAU_BASE_HOURS / 24);
+const STRENGTH_FADE_PROVEN_DAYS = Math.round(OVERALL_STALENESS_TAU_CAP_HOURS / 24);
 
 const ANY_ACTIVITY = [
   {
@@ -65,6 +69,25 @@ const PRIORITY_LOWERS = [
   {
     title: "Missed today",
     body: "You missed it in Review or Quiz earlier today, so the activity you missed in sits that same term out for the rest of the day, a Review miss sits Review out, a Quiz miss sits Quiz out. A same-day Review miss also sits Read out until tomorrow, so you don't reopen the definition right after missing it there; a Quiz miss doesn't, since Quiz only checks terms you've already learned.",
+  },
+] as const;
+
+const STRENGTH_ITEMS = [
+  {
+    title: "Review counts more than Quiz",
+    body: "A Review pass is stronger evidence than a Quiz pass — Quiz is multiple-choice, so guessing can carry you through it, not through Review. Review pulls more weight in the blend.",
+  },
+  {
+    title: "Untested counts as zero, not skipped",
+    body: "Ace Review but never take a Quiz on a term, and the score doesn't pretend Quiz doesn't exist — the missing check counts as zero evidence, not as \"not applicable.\" That's what keeps a Review-only streak from reading as fully proven.",
+  },
+  {
+    title: "Fades if you stop touching it",
+    body: `No activity in Read, Review, or Quiz for a while, and the score drifts down. A single old pass starts fading within about ${STRENGTH_FADE_START_DAYS} days; a term you've proven repeatedly can go untouched for around ${STRENGTH_FADE_PROVEN_DAYS} days before it visibly fades — proof should stick around longer than a lucky guess.`,
+  },
+  {
+    title: "Not yet tested is its own thing",
+    body: "A term you've only read, or just marked known, shows as not yet tested rather than weak. Weak means you tried and it didn't go well; not yet tested means there's nothing to judge yet.",
   },
 ] as const;
 
@@ -212,6 +235,21 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             first (oldest marked known first), then not quizzed recently, then recently mastered
             last. The setup preview groups terms by these three groups so the order is visible
             before you start.
+          </p>
+        </ContentPageSection>
+
+        <ContentPageSection title="Strength score">
+          <p className="m-0">
+            Collection cards also show a strength score — a bar indicator for how well you actually
+            know a term. It&apos;s separate from the ranking above: the queue decides what to study
+            next, the strength score is a glance at where you already stand. It never feeds back
+            into the ranking either way.
+          </p>
+          <ContentPageTitledBulletList items={STRENGTH_ITEMS} />
+          <p className="m-0 text-base-content/70">
+            It rolls up Read exposure too, as a small tie-breaker, never enough on its own to move
+            the score far. You&apos;ll see the bars next to each term in your collection, and totals
+            rolled up on the stats page.
           </p>
         </ContentPageSection>
 
