@@ -562,10 +562,10 @@ keeps "never tested" from being mistaken for "tested and struggling."
 Surfaces: collection term cards (`OverallStrengthBars` in
 `components/jargon/overall-strength-bars.tsx`, fetched via
 `fetchOverallStrengthByTermId` in `lib/jargon/known-state.ts`, gated by the
-"Show strength tags" toggle), the stats page's "Overall" mastery row
-(`{unverified, weak, medium, strong}` counts, alongside the existing
-per-context Review/Quiz rows), and the dedicated
-[Mastery overview](#mastery-overview) page.
+"Show strength tags" toggle) and the dedicated
+[Mastery overview](#mastery-overview) page. The stats page used to have its
+own "Overall" mastery row too, before the dedicated page made it redundant
+— it now only shows the per-context Review/Quiz rows.
 
 ### Mastery overview
 
@@ -705,10 +705,10 @@ result, rather than needing a separate "reset to 0" step.
   separate from `fetchCollectionStats` (used by quiz/review setup) so
   setup doesn't pay for a second known-pool fetch it doesn't need.
 - The web stats page (`/jargon/stat`) layers extra sections on top of this
-  same rollup via `fetchStatsSnapshot` — including an "Overall" mastery row
-  (`{unverified, weak, medium, strong}` counts) using
-  [overall strength](#overall-strength-display-only), alongside the
-  existing per-context Review/Quiz mastery rows.
+  same rollup via `fetchStatsSnapshot` — diagnostic/accuracy, momentum, and
+  coverage — but stays scoped to the per-context Review/Quiz mastery rows;
+  the blended overall-strength breakdown lives on the dedicated
+  [Mastery overview](#mastery-overview) page instead.
 
 ---
 
