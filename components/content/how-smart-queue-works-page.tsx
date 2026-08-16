@@ -197,35 +197,15 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             you&apos;ve read it. Skip Quiz entirely and that missing history counts against the
             score rather than being ignored, so a Review-only streak can&apos;t look fully proven.
             Go quiet on a term for long enough and the score fades, tested or not — old proof
-            matters less than fresh proof.
+            matters less than fresh proof. That fade is per term, not per collection, so adding
+            more terms doesn&apos;t make an existing one fade faster; the queue just leans harder
+            toward whichever ones have gone quiet, same as it always did.
           </p>
           <p className="m-0 text-base-content/70">
             A term you&apos;ve only read, or just marked known, shows as not yet tested rather than
             weak — there&apos;s nothing to judge yet, not a bad result. Zero activity of any kind
             shows as no activity instead. You&apos;ll see the bars on each term, rolled up in your
             stats, and listed out on the Mastery page.
-          </p>
-        </ContentPageSection>
-
-        <ContentPageSection title="Does a bigger list mean more staleness?">
-          <p className="m-0">
-            Short answer: not really. Fading only depends on how long it&apos;s been since you
-            touched that specific term, not on how many other terms you&apos;ve added. Growing
-            your collection doesn&apos;t make any individual term decay faster.
-          </p>
-          <p className="m-0">
-            What can happen is dilution: more terms competing for the same study time means
-            each one gets touched less often, and a term that&apos;s touched less often fades
-            more. The queue is built to fight that automatically, every session spends its
-            slots on whichever terms have gone quietest or are shakiest first, so a big
-            collection doesn&apos;t get studied evenly, it gets studied where it actually needs
-            it. And the more you&apos;ve proven a term, the slower its score fades, so
-            long-mastered terms can sit untouched for weeks without dropping much.
-          </p>
-          <p className="m-0 text-base-content/70">
-            The one thing that does matter is showing up. A session or two most days keeps a
-            hundred-plus term collection comfortably ahead of fading; long gaps are what
-            actually drain scores, not list size.
           </p>
         </ContentPageSection>
 
