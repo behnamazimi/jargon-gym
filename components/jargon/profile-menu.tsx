@@ -68,14 +68,6 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem href="/jargon/stat">
-            <BarChart3 className="h-4 w-4" />
-            Stats
-          </DropdownMenuItem>
-          <DropdownMenuItem href="/jargon/mastery">
-            <Signal className="h-4 w-4" />
-            Mastery
-          </DropdownMenuItem>
           <DropdownMenuItem href="/jargon/browse">
             <Compass className="h-4 w-4" />
             Browse
@@ -84,6 +76,15 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
             <Upload className="h-4 w-4" />
             Import
           </DropdownMenuItem>
+          <DropdownMenuItem href="/jargon/stat">
+            <BarChart3 className="h-4 w-4" />
+            Stats
+          </DropdownMenuItem>
+          <DropdownMenuItem href="/jargon/mastery">
+            <Signal className="h-4 w-4" />
+            Mastery
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem href="/jargon/settings">
             <Settings className="h-4 w-4" />
             Settings
