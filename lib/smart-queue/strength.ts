@@ -17,7 +17,8 @@ import {
   OVERALL_STALENESS_MULTIPLIER_FLOOR,
   OVERALL_STALENESS_TAU_BASE_HOURS,
   OVERALL_STALENESS_TAU_CAP_HOURS,
-  OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS,
+  OVERALL_UNTESTED_READ_CEILING,
+  OVERALL_UNTESTED_READ_LOG_K,
   OVERALL_WEIGHTS,
   RANKING_WEIGHTS,
 } from "./weights";
@@ -86,11 +87,23 @@ function activitySubScore(count: number, streak: number, failCount: number): num
   return (0.6 * streakComponent + 0.4 * failComponent) * 100;
 }
 
-/** Small, capped, diminishing-returns nudge from Read exposure — enough to
- *  break a tie, never enough to cross a bucket boundary alone. */
-function readNudge(readCount: number): number {
+/** Nudge from Read exposure — shape depends on whether the term has any
+ *  test evidence. With test evidence, this is a small, capped tie-break on
+ *  top of the blended test score (sqrt diminishing returns, never enough to
+ *  cross a bucket boundary alone). With zero test evidence, reads are the
+ *  *only* signal, so they get a separate, higher, logarithmic ceiling
+ *  instead — see OVERALL_UNTESTED_READ_CEILING/_LOG_K in weights.ts for why
+ *  a flat 20-point cap made heavy readers indistinguishable from casual
+ *  ones. */
+function readNudge(readCount: number, hasTestEvidence: boolean): number {
   if (readCount <= 0) return 0;
-  return Math.min(OVERALL_READ_NUDGE_MAX, OVERALL_READ_NUDGE_PER_READ * Math.sqrt(readCount));
+  if (hasTestEvidence) {
+    return Math.min(OVERALL_READ_NUDGE_MAX, OVERALL_READ_NUDGE_PER_READ * Math.sqrt(readCount));
+  }
+  return Math.min(
+    OVERALL_UNTESTED_READ_CEILING,
+    OVERALL_UNTESTED_READ_LOG_K * Math.log(1 + readCount),
+  );
 }
 
 /** Evidence-scaled decay constant (τ): interpolates linearly between
@@ -122,16 +135,15 @@ function stalenessMultiplier(hoursSinceLastActivity: number, decayConstantHours:
   );
 }
 
-/** Bar count for the 5-bar UI, from the given threshold set — any score
- *  above 0 shows at least 1 bar; one more per threshold cleared. A genuine
- *  0 (no evidence of any kind — never read, never tested) shows 0. Tested
- *  scores use OVERALL_BAR_SCORE_THRESHOLDS (0-100 range, up to 5 bars);
- *  `unverified` uses OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS instead (its
- *  own much lower range, capped at 3 bars) — see that constant for why. */
-function scoreToBars(score: number, thresholds: readonly number[]): number {
+/** Bar count for the 5-bar UI, from OVERALL_BAR_SCORE_THRESHOLDS — the same
+ *  scale for every term regardless of bucket, so bar count is always
+ *  comparable across terms. Any score above 0 shows at least 1 bar; one
+ *  more per threshold cleared. A genuine 0 (no evidence of any kind — never
+ *  read, never tested) shows 0. */
+function scoreToBars(score: number): number {
   if (score <= 0) return 0;
   let bars = 1;
-  for (const threshold of thresholds) {
+  for (const threshold of OVERALL_BAR_SCORE_THRESHOLDS) {
     if (score >= threshold) bars += 1;
   }
   return bars;
@@ -180,7 +192,7 @@ export function computeOverallStrength(
 
   const { review: wReview, quiz: wQuiz } = OVERALL_WEIGHTS;
   const blended = (wReview * reviewSub + wQuiz * quizSub) / (wReview + wQuiz);
-  const nudged = Math.min(100, blended + readNudge(candidate.readCount));
+  const nudged = Math.min(100, blended + readNudge(candidate.readCount, !isUnverified));
 
   const lastActivityAt = [
     candidate.lastReadAt,
@@ -198,10 +210,7 @@ export function computeOverallStrength(
   const rawScore = Math.max(0, Math.min(100, Math.round(decayed)));
   const score = !isUnverified && rawScore === 0 ? 1 : rawScore;
 
-  const bars = scoreToBars(
-    score,
-    isUnverified ? OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS : OVERALL_BAR_SCORE_THRESHOLDS,
-  );
+  const bars = scoreToBars(score);
   const bucket: OverallStrength = isUnverified ? "unverified" : scoreToBucket(score);
 
   return { score, bucket, bars };

@@ -40,10 +40,18 @@ function bucketChipClass(selected: boolean) {
   );
 }
 
-/** Strongest first. */
+/** Strongest first — bucket rank, then score within a bucket. */
+const BUCKET_RANK: Record<OverallStrength, number> = {
+  strong: 3,
+  medium: 2,
+  weak: 1,
+  unverified: 0,
+};
+
 function sortRows(rows: MasteryRowData[]): MasteryRowData[] {
   return [...rows].sort((a, b) => {
-    if (a.bars !== b.bars) return b.bars - a.bars;
+    const bucketDiff = BUCKET_RANK[b.bucket] - BUCKET_RANK[a.bucket];
+    if (bucketDiff !== 0) return bucketDiff;
     if (a.score !== b.score) return b.score - a.score;
     return a.term.localeCompare(b.term);
   });

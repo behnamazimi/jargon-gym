@@ -156,9 +156,27 @@ export const OVERALL_STALENESS_MULTIPLIER_FLOOR = 0.2;
 /** Read-nudge shape: diminishing returns (scales by sqrt(readCount), see
  *  strength.ts), capped well under the smallest bucket gap (15-20 points)
  *  so it can never alone cross a boundary. Bumped up from 6/1.5 — Read
- *  exposure was barely moving the score even at double-digit read counts. */
+ *  exposure was barely moving the score even at double-digit read counts.
+ *  Applies only as a tie-break on top of a real test-based blended score
+ *  (candidate has been reviewed/quizzed at least once) — see
+ *  OVERALL_UNTESTED_READ_CEILING/_LOG_K below for the separate, higher
+ *  ceiling used when there's no test evidence at all. */
 export const OVERALL_READ_NUDGE_MAX = 20;
 export const OVERALL_READ_NUDGE_PER_READ = 4;
+
+/** Read-only ceiling for terms with zero test evidence (never reviewed or
+ *  quizzed) — distinct from OVERALL_READ_NUDGE_MAX above, which is a small
+ *  tie-break added on top of a real test score. Here, reads are the *only*
+ *  signal, so capping at 20 made heavy readers (15+ reads) look identical
+ *  to someone who skimmed a term twice. Kept clearly below
+ *  OVERALL_BUCKET_MEDIUM_MIN_SCORE (55) so reading alone can never look as
+ *  trustworthy as a tested pass — the isUnverified bucket stays pinned
+ *  regardless, but the number itself should still move meaningfully with
+ *  exposure. Logarithmic, not sqrt: climbs fast for the first few reads,
+ *  flattens hard after — 19 * ln(1 + 10) ≈ 46, asymptoting to the 50
+ *  ceiling by ~15-20 reads. */
+export const OVERALL_UNTESTED_READ_CEILING = 50;
+export const OVERALL_UNTESTED_READ_LOG_K = 19;
 
 // --- Bucket labels (weak / medium / strong) ----------------------------------
 
@@ -174,20 +192,13 @@ export const OVERALL_BUCKET_STRONG_MIN_SCORE = 75;
 
 // --- Bar thresholds (5-bar UI indicator) -------------------------------------
 
-/** Score (0-100) thresholds for the 5-bar UI indicator — a tested score
- *  always shows at least 1 bar; each entry here is the minimum score for
- *  one more bar. Finer-grained than, and independent of, the weak/medium/
- *  strong cutoffs above (bar count drives the visual, not the bucket
- *  label). */
+/** Score (0-100) thresholds for the 5-bar UI indicator, shared by every
+ *  term regardless of bucket — a scored term always shows at least 1 bar;
+ *  each entry here is the minimum score for one more bar. Finer-grained
+ *  than, and independent of, the weak/medium/strong cutoffs above (bar
+ *  count drives the visual, not the bucket label). One scale for every
+ *  term means bar count is always comparable across terms — an unverified
+ *  term (capped at OVERALL_READ_NUDGE_MAX = 20, well below the first
+ *  threshold) tops out at 1 bar, never competing visually with a
+ *  genuinely tested term. */
 export const OVERALL_BAR_SCORE_THRESHOLDS = [35, 55, 75, 95] as const;
-
-/** Score thresholds for `unverified`'s own bar scale — read-only scores
- *  never exceed OVERALL_READ_NUDGE_MAX (20), far below the tested scale's
- *  first threshold (35), so sharing OVERALL_BAR_SCORE_THRESHOLDS would
- *  pin every unverified term at 1 bar forever regardless of read count or
- *  staleness. This scale is sized to that 0-20 range instead, so exposure
- *  and recency can actually move the bar count. Only 2 entries (vs. 4 for
- *  tested scores) deliberately caps unverified at 3 bars max — exposure
- *  alone should never look as "full" as a genuinely tested term, even
- *  before noticing the bucket's gray color. */
-export const OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS = [5, 10] as const;
