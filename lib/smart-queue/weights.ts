@@ -44,14 +44,18 @@ export const STREAK_BOOST_CAP = 5;
 
 /** Mastered-cooldown window: how long a context sits out after a pass,
  *  scaled by streak via masteredCooldownHours() below. */
-export const MASTERED_COOLDOWN_BASE_HOURS = 72;
-/** Per-streak-point multiplier on the cooldown window. SM-2-style ease
- *  factors (~2.5) would collapse streak 3+ into one bucket given the 2-week
- *  cap below — 1.6 keeps 5 distinct pre-cap levels while still growing
- *  faster than the previous 1.4. */
-export const MASTERED_COOLDOWN_GROWTH_FACTOR = 1.6;
-/** Cooldown window never exceeds this, however high the streak. */
-export const MASTERED_COOLDOWN_CAP_HOURS = 24 * 14; // 2 weeks
+export const MASTERED_COOLDOWN = {
+  /** Window at streak 1. */
+  baseHours: 72,
+  /** Per-streak-point multiplier on the cooldown window. SM-2-style ease
+   *  factors (~2.5) would collapse streak 3+ into one bucket given the
+   *  2-week cap below — 1.6 gives 4 distinct pre-cap levels (streaks 1-4;
+   *  streak 5 already exceeds the cap at 471.9h) while still growing faster
+   *  than the previous 1.4. */
+  growthFactor: 1.6,
+  /** Cooldown window never exceeds this, however high the streak. */
+  capHours: 24 * 14, // 2 weeks
+};
 
 /** Streak-scaled cooldown window: +1 → base; longer streaks earn a longer
  *  window, capped. Resets to the short end after a fail-then-repass. Distinct
@@ -60,9 +64,8 @@ export const MASTERED_COOLDOWN_CAP_HOURS = 24 * 14; // 2 weeks
  *  not "same day." */
 export function masteredCooldownHours(streak: number): number {
   if (streak <= 0) return 0;
-  const hours =
-    MASTERED_COOLDOWN_BASE_HOURS * Math.pow(MASTERED_COOLDOWN_GROWTH_FACTOR, streak - 1);
-  return Math.min(hours, MASTERED_COOLDOWN_CAP_HOURS);
+  const hours = MASTERED_COOLDOWN.baseHours * Math.pow(MASTERED_COOLDOWN.growthFactor, streak - 1);
+  return Math.min(hours, MASTERED_COOLDOWN.capHours);
 }
 
 // --- Staleness -------------------------------------------------------------
@@ -94,7 +97,7 @@ export const STALE_REASON_THRESHOLD_HOURS = 24;
 /** The ranking formula's point values — see ScoreWeights in types.ts for
  *  what each field gates. Consumed by score.ts's scoreCandidate via
  *  pick.ts only — the display-only strength surfaces in strength.ts use
- *  their own evidence-scaled staleness decay (OVERALL_STALENESS_* below),
+ *  their own evidence-scaled staleness decay (OVERALL_STALENESS below),
  *  not this ranking formula. */
 export const RANKING_WEIGHTS: ScoreWeights = {
   unseenBoost: 100,
@@ -111,18 +114,17 @@ export const RANKING_WEIGHTS: ScoreWeights = {
 
 // --- Lane mix (pick.ts, post-score interleaving) ----------------------------
 
-/** Never-engaged slots per mix cycle when both lanes have eligible terms.
- *  Paired with MIX_ALREADY_TOUCHED_SLOTS — this is lane interleaving in
- *  pick.ts, not part of the score formula itself. 1:1 (these defaults)
- *  alternates unread with already-touched. To prefer new terms, raise this
- *  one (e.g. 2 and 1 → two never-engaged, then one already-touched). To
- *  protect the rotation more, raise the other (e.g. 1 and 2). If one lane
- *  empties, the other fills the rest of the pick. */
-export const MIX_NEVER_ENGAGED_SLOTS = 1;
-
-/** Already-touched slots per mix cycle (struggling/stale/steady).
- *  See MIX_NEVER_ENGAGED_SLOTS above for how the pair sets the ratio. */
-export const MIX_ALREADY_TOUCHED_SLOTS = 1;
+/** Lane interleaving in pick.ts (post-score, not part of the score formula
+ *  itself). 1:1 (these defaults) alternates unread with already-touched. To
+ *  prefer new terms, raise neverEngaged (e.g. 2/1 → two never-engaged, then
+ *  one already-touched). To protect the rotation more, raise alreadyTouched
+ *  (e.g. 1/2). If one lane empties, the other fills the rest of the pick. */
+export const MIX_SLOTS = {
+  /** Never-engaged slots per mix cycle when both lanes have eligible terms. */
+  neverEngaged: 1,
+  /** Already-touched slots per mix cycle (struggling/stale/steady). */
+  alreadyTouched: 1,
+};
 
 // ============================================================================
 // 3. Strength — display-only glance score (strength.ts's
@@ -133,43 +135,44 @@ export const MIX_ALREADY_TOUCHED_SLOTS = 1;
 
 // --- Blending ----------------------------------------------------------------
 
-/** Composite weights blending Review + Quiz sub-scores — Review weighted
- *  higher since Quiz has a 50% guess floor and Review does not (see
- *  docs/smart-queue.md). */
-export const OVERALL_WEIGHTS = { review: 2, quiz: 1 };
+export const OVERALL_BLEND = {
+  /** Composite weights blending Review + Quiz sub-scores — Review weighted
+   *  higher since Quiz has a 50% guess floor and Review does not (see
+   *  docs/smart-queue.md). */
+  weights: { review: 2, quiz: 1 },
+  /** Consecutive successes for full streak credit in activitySubScore
+   *  (strength.ts) — the streak component of an activity's sub-score maxes
+   *  out once `streak` reaches this. Lower = badges/scores react to a hot
+   *  streak faster. Independent of STREAK_BOOST_CAP in section 2 (ranking) —
+   *  currently a different value (3 here vs. 5 there) and not a shared
+   *  concept; don't assume changing one affects the other. */
+  streakMaxCredit: 3,
+  /** Streak's share of activitySubScore's blend; fail-rate confidence
+   *  (OVERALL_FAIL_RATE_PRIOR below) always gets the remainder (1 - this),
+   *  so the two shares can never be edited out of sync with each other.
+   *  Raise to make an incomplete streak matter more relative to a clean
+   *  fail-rate; lower to make fail-rate dominate. */
+  streakWeight: 0.6,
+};
 
-/** Consecutive successes for full streak credit in activitySubScore
- *  (strength.ts) — the streak component of an activity's sub-score maxes
- *  out once `streak` reaches this. Lower = badges/scores react to a hot
- *  streak faster. Independent of STREAK_BOOST_CAP in section 2 (ranking) —
- *  same current value by coincidence, not a shared concept; don't assume
- *  changing one affects the other. */
-export const OVERALL_STREAK_MAX_CREDIT = 3;
-
-/** Streak's share of activitySubScore's blend; fail-rate confidence
- *  (OVERALL_FAIL_RATE_PRIOR_* below) always gets the remainder
- *  (1 - this), so the two shares can never be edited out of sync with each
- *  other. Raise to make an incomplete streak matter more relative to a
- *  clean fail-rate; lower to make fail-rate dominate. */
-export const OVERALL_STREAK_WEIGHT = 0.6;
-
-/** Laplace-smoothing "virtual attempts" blended into every real fail-rate
- *  observation in activitySubScore — replaces a hard cliff-edge exemption
- *  (below N real attempts, presume 0% fail rate; at/above, trust the raw
- *  rate) with continuous confidence that grows smoothly as real attempts
- *  accumulate. Without this, a streak of 2 with 0 fails reads as *equally*
- *  proven as a streak of 200 with 0 fails — both get the maximum fail-rate
- *  credit, since the cliff has no concept of "proven, but only barely."
- *  Higher = more real attempts needed before a streak's fail-rate is fully
- *  trusted (a short perfect streak reads as less proven); lower = small
- *  samples get trusted sooner. */
-export const OVERALL_FAIL_RATE_PRIOR_STRENGTH = 4;
-
-/** The assumed fail rate before any real evidence exists — 0.5 is a
- *  neutral "coin flip" prior. Lower = give unproven terms the benefit of
- *  the doubt faster (fewer real successes needed to look good); higher =
- *  presume unproven terms are risky until shown otherwise. */
-export const OVERALL_FAIL_RATE_PRIOR_RATE = 0.5;
+export const OVERALL_FAIL_RATE_PRIOR = {
+  /** Laplace-smoothing "virtual attempts" blended into every real fail-rate
+   *  observation in activitySubScore — replaces a hard cliff-edge exemption
+   *  (below N real attempts, presume 0% fail rate; at/above, trust the raw
+   *  rate) with continuous confidence that grows smoothly as real attempts
+   *  accumulate. Without this, a streak of 2 with 0 fails reads as *equally*
+   *  proven as a streak of 200 with 0 fails — both get the maximum fail-rate
+   *  credit, since the cliff has no concept of "proven, but only barely."
+   *  Higher = more real attempts needed before a streak's fail-rate is fully
+   *  trusted (a short perfect streak reads as less proven); lower = small
+   *  samples get trusted sooner. */
+  strength: 4,
+  /** The assumed fail rate before any real evidence exists — 0.5 is a
+   *  neutral "coin flip" prior. Lower = give unproven terms the benefit of
+   *  the doubt faster (fewer real successes needed to look good); higher =
+   *  presume unproven terms are risky until shown otherwise. */
+  rate: 0.5,
+};
 
 // --- Staleness decay -----------------------------------------------------
 
@@ -182,61 +185,73 @@ export const OVERALL_FAIL_RATE_PRIOR_RATE = 0.5;
  *  trusted for weeks. A flat τ made every term decay at the same rate
  *  regardless of evidence, crushing a real pass to the same near-zero score
  *  a barely-tested term would get at the same staleness. */
-export const OVERALL_STALENESS_TAU_BASE_HOURS = 96; // 4 days — weak/near-zero evidence
-export const OVERALL_STALENESS_TAU_CAP_HOURS = 480; // 20 days — near-100 evidence
+export const OVERALL_STALENESS = {
+  tauBaseHours: 96, // 4 days — weak/near-zero evidence
+  tauCapHours: 480, // 20 days — near-100 evidence
 
-/** Evidence-scaled floor on the staleness multiplier itself (proportional,
- *  not an absolute score floor) — same interpolation shape as the τ pair
- *  above, keyed off the same pre-decay `nudged` score (overallStalenessFloor
- *  in strength.ts). Near-zero evidence still floors close to 0 (correctly
- *  stays `weak` no matter what), but a genuinely maxed term (nudged=100)
- *  floors at exactly the `strong` cutoff (OVERALL_BUCKET_STRONG_MIN_SCORE =
- *  75) and stays `strong` indefinitely — a flat floor (the previous design)
- *  crushed a perfect pass to the same 20%-of-pre-decay score a barely-tested
- *  term would get, which is exactly backwards: the whole point of the floor
- *  is that strong evidence should decay less, not decay to the same
- *  proportion as weak evidence. */
-export const OVERALL_STALENESS_FLOOR_BASE = 0.1; // weak/near-zero evidence
-export const OVERALL_STALENESS_FLOOR_CAP = 0.75; // near-100 evidence
+  /** Evidence-scaled floor on the staleness multiplier itself (proportional,
+   *  not an absolute score floor) — same interpolation shape as the τ pair
+   *  above, keyed off the same pre-decay `nudged` score (overallStalenessFloor
+   *  in strength.ts). Near-zero evidence still floors close to 0 (correctly
+   *  stays `weak` no matter what), but a genuinely maxed term (nudged=100)
+   *  floors at exactly the `strong` cutoff (OVERALL_BUCKETS.strongMinScore =
+   *  75) and stays `strong` indefinitely — a flat floor (the previous design)
+   *  crushed a perfect pass to the same 20%-of-pre-decay score a barely-tested
+   *  term would get, which is exactly backwards: the whole point of the floor
+   *  is that strong evidence should decay less, not decay to the same
+   *  proportion as weak evidence. */
+  floorBase: 0.1, // weak/near-zero evidence
+  floorCap: 0.75, // near-100 evidence
+};
 
 // --- Read nudge (untested exposure) ------------------------------------------
 
 /** Read-nudge shape: diminishing returns (scales by sqrt(readCount), see
- *  strength.ts), capped well under the smallest bucket gap (15-20 points)
- *  so it can never alone cross a boundary. Bumped up from 6/1.5 — Read
- *  exposure was barely moving the score even at double-digit read counts.
- *  Applies only as a tie-break on top of a real test-based blended score
- *  (candidate has been reviewed/quizzed at least once) — see
- *  OVERALL_UNTESTED_READ_CEILING/_LOG_K below for the separate, higher
- *  ceiling used when there's no test evidence at all. */
-export const OVERALL_READ_NUDGE_MAX = 20;
-export const OVERALL_READ_NUDGE_PER_READ = 4;
+ *  strength.ts). `max` (20) equals the gap between the medium/strong bucket
+ *  cutoffs (OVERALL_BUCKETS below), so reading alone *can* carry a weak but
+ *  close tested term into `medium` on its own (e.g. a blend of 40 plus 25+
+ *  reads reaches 60) — it just can never cross two boundaries at once (never
+ *  reaches `strong` unassisted). Bumped up from 6/1.5 — Read exposure was
+ *  barely moving the score even at double-digit read counts. Applies only
+ *  as a tie-break on top of a real test-based blended score (candidate has
+ *  been reviewed/quizzed at least once) — see OVERALL_UNTESTED_READ below
+ *  for the separate, higher ceiling used when there's no test evidence at
+ *  all. */
+export const OVERALL_READ_NUDGE = {
+  max: 20,
+  perRead: 4,
+};
 
-/** Read-only ceiling for terms with zero test evidence (never reviewed or
- *  quizzed) — distinct from OVERALL_READ_NUDGE_MAX above, which is a small
- *  tie-break added on top of a real test score. Here, reads are the *only*
- *  signal, so capping at 20 made heavy readers (15+ reads) look identical
- *  to someone who skimmed a term twice. Kept clearly below
- *  OVERALL_BUCKET_MEDIUM_MIN_SCORE (55) so reading alone can never look as
- *  trustworthy as a tested pass — the isUnverified bucket stays pinned
- *  regardless, but the number itself should still move meaningfully with
- *  exposure. Logarithmic, not sqrt: climbs fast for the first few reads,
- *  flattens hard after — 19 * ln(1 + 10) ≈ 46, asymptoting to the 50
- *  ceiling by ~15-20 reads. */
-export const OVERALL_UNTESTED_READ_CEILING = 50;
-export const OVERALL_UNTESTED_READ_LOG_K = 19;
+export const OVERALL_UNTESTED_READ = {
+  /** Read-only ceiling for terms with zero test evidence (never reviewed or
+   *  quizzed) — distinct from OVERALL_READ_NUDGE.max above, which is a
+   *  small tie-break added on top of a real test score. Here, reads are the
+   *  *only* signal, so capping at 20 made heavy readers (15+ reads) look
+   *  identical to someone who skimmed a term twice. Kept clearly below
+   *  OVERALL_BUCKETS.mediumMinScore (55) so reading alone can never look as
+   *  trustworthy as a tested pass — the isUnverified bucket stays pinned
+   *  regardless, but the number itself should still move meaningfully with
+   *  exposure. */
+  ceiling: 50,
+  /** Logarithmic, not sqrt: climbs fast for the first few reads, flattens
+   *  hard after — 19 * ln(1 + 10) ≈ 46, asymptoting to the 50 ceiling by
+   *  ~15-20 reads. */
+  logK: 19,
+};
 
 // --- Bucket labels (weak / medium / strong) ----------------------------------
 
-/** Score (0-100) at/above which a tested term counts as `medium` instead of
- *  `weak`. Below this is `weak`. `unverified` bypasses both cutoffs
- *  entirely (see computeOverallStrength) — these only apply once a term
- *  has been tested at least once. Edit these two directly to change what
- *  score counts as which tier. */
-export const OVERALL_BUCKET_MEDIUM_MIN_SCORE = 55;
-/** Score (0-100) at/above which a tested term counts as `strong` instead of
- *  `medium`. */
-export const OVERALL_BUCKET_STRONG_MIN_SCORE = 75;
+export const OVERALL_BUCKETS = {
+  /** Score (0-100) at/above which a tested term counts as `medium` instead
+   *  of `weak`. Below this is `weak`. `unverified` bypasses both cutoffs
+   *  entirely (see computeOverallStrength) — these only apply once a term
+   *  has been tested at least once. Edit these two directly to change what
+   *  score counts as which tier. */
+  mediumMinScore: 55,
+  /** Score (0-100) at/above which a tested term counts as `strong` instead
+   *  of `medium`. */
+  strongMinScore: 75,
+};
 
 // --- Bar thresholds (5-bar UI indicator) -------------------------------------
 
@@ -246,7 +261,7 @@ export const OVERALL_BUCKET_STRONG_MIN_SCORE = 75;
  *  than, and independent of, the weak/medium/strong cutoffs above (bar
  *  count drives the visual, not the bucket label). One scale for every
  *  term means bar count is always comparable across terms — an unverified
- *  term (capped at OVERALL_UNTESTED_READ_CEILING = 50) can cross the first
+ *  term (capped at OVERALL_UNTESTED_READ.ceiling = 50) can cross the first
  *  couple of thresholds on heavy read exposure alone (up to 2 bars), but
  *  the ceiling keeps it well short of the top bars a genuinely tested term
  *  can reach. */

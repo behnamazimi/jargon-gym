@@ -2,19 +2,12 @@
  *
  *  Scoring ranks within a lane; picking interleaves two lanes — never-
  *  engaged and already-touched — so a fresh dump of terms can't monopolize
- *  every slot in the queue. See MIX_NEVER_ENGAGED_SLOTS / MIX_ALREADY_TOUCHED_SLOTS
- *  in weights.ts for the ratio.
+ *  every slot in the queue. See MIX_SLOTS in weights.ts for the ratio.
  */
 
 import { isSameLocalDay } from "./local-day";
 import { fieldsForContext, scoreCandidate } from "./score";
-import {
-  masteredCooldownHours,
-  MIX_ALREADY_TOUCHED_SLOTS,
-  MIX_NEVER_ENGAGED_SLOTS,
-  QUEUE_TIMEZONE,
-  RANKING_WEIGHTS,
-} from "./weights";
+import { masteredCooldownHours, MIX_SLOTS, QUEUE_TIMEZONE, RANKING_WEIGHTS } from "./weights";
 import type { PickContext, ReviewCandidate, ScoredCandidate } from "./types";
 
 export type PickTermsOptions = {
@@ -261,13 +254,13 @@ function startingLane(scored: ScoredCandidate[], context: PickContext, now: Date
     else if (ownCount > 1) alreadyTouchedPicksToday += 1;
   }
 
-  const neverEngagedCycles = neverEngagedPicksToday / MIX_NEVER_ENGAGED_SLOTS;
-  const alreadyTouchedCycles = alreadyTouchedPicksToday / MIX_ALREADY_TOUCHED_SLOTS;
+  const neverEngagedCycles = neverEngagedPicksToday / MIX_SLOTS.neverEngaged;
+  const alreadyTouchedCycles = alreadyTouchedPicksToday / MIX_SLOTS.alreadyTouched;
 
   return neverEngagedCycles > alreadyTouchedCycles ? "already_touched" : "never_engaged";
 }
 
-/** Interleaves the two lanes by MIX_NEVER_ENGAGED_SLOTS / MIX_ALREADY_TOUCHED_SLOTS,
+/** Interleaves the two lanes by MIX_SLOTS.neverEngaged / .alreadyTouched,
  *  starting with `startLane`. Once a lane empties, each cycle contributes 0
  *  slots from it and the loop keeps draining the other lane alone — same
  *  end result as "the other lane fills the rest." */
@@ -283,12 +276,12 @@ function zipLanes(
   const cycle: Array<{ lane: Lane; slots: number }> =
     startLane === "never_engaged"
       ? [
-          { lane: "never_engaged", slots: MIX_NEVER_ENGAGED_SLOTS },
-          { lane: "already_touched", slots: MIX_ALREADY_TOUCHED_SLOTS },
+          { lane: "never_engaged", slots: MIX_SLOTS.neverEngaged },
+          { lane: "already_touched", slots: MIX_SLOTS.alreadyTouched },
         ]
       : [
-          { lane: "already_touched", slots: MIX_ALREADY_TOUCHED_SLOTS },
-          { lane: "never_engaged", slots: MIX_NEVER_ENGAGED_SLOTS },
+          { lane: "already_touched", slots: MIX_SLOTS.alreadyTouched },
+          { lane: "never_engaged", slots: MIX_SLOTS.neverEngaged },
         ];
 
   while (ne < neverEngaged.length || at < alreadyTouched.length) {
