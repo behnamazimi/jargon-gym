@@ -307,22 +307,24 @@ UI for these. `RANKING_WEIGHTS` fields:
 
 Related ranking constants, alongside `RANKING_WEIGHTS` in the same file
 (see [Overall strength weights](#overall-strength-display-only) below for
-the separate, display-only set):
+the separate, display-only set). Hand-maintained from `weights.ts`'s actual
+exports — update this table in the same commit as any change there:
 
-| Constant                          | Default                              | Purpose                                                                                                                         |
-| --------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `MASTERED_COOLDOWN_BASE_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1`                                                                                         |
-| `MASTERED_COOLDOWN_GROWTH_FACTOR` | 1.6                                  | Per-streak-point multiplier on the cooldown window                                                                              |
-| `MASTERED_COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                                     |
-| `RANKING_STALENESS_DECAY_HOURS`   | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the ranking staleness boost — a map next to `RANKING_WEIGHTS`, not a field on `ScoreWeights` |
-| `FAIL_RATE_MIN_ATTEMPTS`          | 4                                    | Minimum own-context attempts before a lifetime fail-rate is trusted — shared with the strength scores below                     |
-| `QUEUE_TIMEZONE`                  | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                                   |
-| `ENGAGED_MIN_READ_COUNT`          | 3                                    | Minimum reads before `engaged_untested` applies                                                                                 |
-| `STREAK_BOOST_CAP`                | 5                                    | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                   |
-| `MIX_NEVER_ENGAGED_SLOTS`         | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                                   |
-| `MIX_ALREADY_TOUCHED_SLOTS`       | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                                 |
+| Constant                          | Default                              | Purpose                                                                                                                                                   |
+| --------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MASTERED_COOLDOWN_BASE_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1`                                                                                                                   |
+| `MASTERED_COOLDOWN_GROWTH_FACTOR` | 1.6                                  | Per-streak-point multiplier on the cooldown window                                                                                                        |
+| `MASTERED_COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                                                               |
+| `RANKING_STALENESS_DECAY_HOURS`   | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the ranking staleness boost — a map next to `RANKING_WEIGHTS`, not a field on `ScoreWeights`                           |
+| `STALE_REASON_THRESHOLD_HOURS`    | 24                                   | Hours since a context's own last-activity before the `stale` reason/badge attaches — a flat label cutoff, distinct from the per-context decay curve above |
+| `FAIL_RATE_MIN_ATTEMPTS`          | 4                                    | Minimum own-context attempts before a lifetime fail-rate is trusted — shared with the strength scores below                                               |
+| `QUEUE_TIMEZONE`                  | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                                                             |
+| `ENGAGED_MIN_READ_COUNT`          | 3                                    | Minimum reads before `engaged_untested` applies                                                                                                           |
+| `STREAK_BOOST_CAP`                | 5                                    | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                                             |
+| `MIX_NEVER_ENGAGED_SLOTS`         | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                                                             |
+| `MIX_ALREADY_TOUCHED_SLOTS`       | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                                                           |
 
-Staleness and "stale" reason labels use a 24-hour threshold.
+Staleness and "stale" reason labels use `STALE_REASON_THRESHOLD_HOURS` (24 hours).
 
 ### Pick reasons
 
@@ -450,37 +452,37 @@ to the same `PickContext`. Resetting a collection's progress clears both
 
 ### Per-context strength (display-only)
 
-A `weak` / `medium` / `strong` mastery badge, scoped to a single
-`PickContext` (`review` or `quiz`). It is purely cosmetic — computed from
-the same `streak` / fail-rate / staleness inputs scoring already reads, but
-**never fed back into the score**. `lib/smart-queue/strength.ts`:
+An `unverified` / `weak` / `medium` / `strong` mastery badge, scoped to a
+single `PickContext` (`review` or `quiz`). It is purely cosmetic — computed
+from the same `streak` / fail-rate / staleness inputs scoring already reads,
+but **never fed back into the score**.
 
-```ts
-function computeStrength(streak, failRate, hoursSinceLastActivity): Strength {
-  if (streak <= 0 || failRate > STRENGTH_WEAK_FAIL_RATE) return "weak";
-  if (
-    streak >= STRENGTH_STRONG_MIN_STREAK &&
-    failRate < STRENGTH_STRONG_MAX_FAIL_RATE &&
-    hoursSinceLastActivity < stalenessCapHours
-  ) {
-    return "strong";
-  }
-  return "medium";
-}
-```
+There is no separate per-context formula anymore — `strengthForCandidate`
+(`lib/smart-queue/strength.ts`) scopes that context's own
+count/streak/fail-count fields into `activitySubScore` (Laplace-smoothed
+fail rate blended with streak, see [Overall strength](#overall-strength-display-only)
+below), then runs the result through the exact same `scoreFromEvidence`
+pipeline `computeOverallStrength` uses — evidence-scaled staleness decay,
+clamp, tested-but-scored-0 floor, then bucketed against the same
+`OVERALL_BUCKET_MEDIUM_MIN_SCORE` / `OVERALL_BUCKET_STRONG_MIN_SCORE`
+cutoffs. This is deliberate: Review and Quiz's own-context badge and the
+blended overall badge share one vocabulary and one pipeline, so the two can
+never disagree on what "weak"/"medium"/"strong" means. `unverified` fires
+whenever that context's own count is `0`.
 
-Thresholds: `STRENGTH_WEAK_FAIL_RATE` (0.4), `STRENGTH_STRONG_MIN_STREAK`
-(5), `STRENGTH_STRONG_MAX_FAIL_RATE` (0.15). Below `FAIL_RATE_MIN_ATTEMPTS`
-own-context attempts, callers pass `failRate = 0` — insufficient history
-isn't "historically hard."
+The Read nudge folds in too, same as `computeOverallStrength`: the staleness
+clock is `max(this context's own last activity, last read)`, since Read
+exposure now contributes to the score and its own recency should protect
+it — deliberately excluding the _other_ test context's timestamp, so a
+Review badge never decays or refreshes off Quiz activity or vice versa.
 
 Surfaces: Review and Quiz pick UI only (from that activity's own history,
 computed alongside `pickReasons` in `lib/review/mappers.ts` /
 `lib/quiz/mappers.ts` via `strengthForCandidate`), plus the debug page. Read
-has no streak/fail-rate of its own, so it has no strength badge. Collection
-term cards and the stats page used to read this too (Review-only), before
-the blended score below replaced them there — see
-[Overall strength](#overall-strength-display-only).
+has no streak/fail-rate of its own, so `strengthForCandidate` returns
+`undefined` for it. Collection term cards and the stats page used to read
+this too (Review-only), before the blended score below replaced them there —
+see [Overall strength](#overall-strength-display-only).
 
 ### Overall strength (display-only)
 
@@ -511,16 +513,33 @@ calls the other or feeds the ranking score.
   Quiz's `0` sub-score still counts at `OVERALL_WEIGHTS.quiz` weight in the
   average. A naive "weight × count" blend would drop Quiz's weight to zero
   when untested and collapse to Review-only, reintroducing the exact
-  guess-floor masking problem `computeStrength`'s Review/Quiz split (above)
-  exists to prevent. Quiz's weight counts this way even for unknown terms
+  guess-floor masking problem the Review/Quiz split above (per-context
+  strength) exists to prevent. Quiz's weight counts this way even for unknown terms
   — Quiz can only ever run on the known pool, so an unknown term's Quiz
   sub-score is structurally always `0`, capping its ceiling below 100 for
   as long as it stays unknown. Deliberate, not a bug.
 - **Review outweighs Quiz** (`OVERALL_WEIGHTS`) for the same guess-floor
   reason as the per-context split above.
-- **Read only nudges** (`readNudge`, capped at `OVERALL_READ_NUDGE_MAX`) —
-  enough to break a tie between two otherwise-equal scores, never enough to
-  cross a bucket boundary alone.
+- **Read nudge shape depends on test evidence** (`readNudge`). With any
+  Review/Quiz history, it's a small, capped tie-break on top of the blended
+  test score (`OVERALL_READ_NUDGE_PER_READ * sqrt(readCount)`, capped at
+  `OVERALL_READ_NUDGE_MAX` = 20) — enough to break a tie between two
+  otherwise-equal scores, never enough to cross a bucket boundary alone.
+  With **zero** test evidence, reads are the _only_ signal, so they get a
+  separate, higher, logarithmic ceiling instead
+  (`OVERALL_UNTESTED_READ_LOG_K * ln(1 + readCount)`, capped at
+  `OVERALL_UNTESTED_READ_CEILING` = 50, kept below
+  `OVERALL_BUCKET_MEDIUM_MIN_SCORE` so reading alone can never look as
+  trustworthy as a tested pass) — a flat 20-point cap made heavy readers
+  (15+ reads) indistinguishable from someone who skimmed a term twice.
+- **Fail-rate confidence is Laplace-smoothed**, not gated by a hard
+  attempt-count cliff (`activitySubScore`). Real fails/attempts blend with
+  `OVERALL_FAIL_RATE_PRIOR_STRENGTH` "virtual" attempts at
+  `OVERALL_FAIL_RATE_PRIOR_RATE` (a neutral 0.5 "coin flip" prior), so
+  confidence in the rate grows smoothly with real evidence instead of a
+  streak of 2 with 0 fails reading as _equally_ proven as a streak of 200
+  with 0 fails. `OVERALL_STREAK_WEIGHT` sets the streak component's share of
+  the blend; fail-rate confidence always gets the remainder.
 - **Staleness decay is evidence-scaled**, not a flat time constant — τ
   interpolates between `OVERALL_STALENESS_TAU_BASE_HOURS` (weak/near-zero
   pre-decay score) and `OVERALL_STALENESS_TAU_CAP_HOURS` (near-100),
@@ -528,22 +547,37 @@ calls the other or feeds the ranking score.
   (one global clock, not three per-context ones — unlike
   `RANKING_STALENESS_DECAY_HOURS`, which this is otherwise unrelated to). A
   flat τ made a single old pass decay at the same rate as a five-streak
-  term, crushing both to the same near-zero score at the same staleness. A
-  proportional floor (`OVERALL_STALENESS_MULTIPLIER_FLOOR`) keeps a real
-  pass from ever fully decaying to indistinguishable-from-untested.
+  term, crushing both to the same near-zero score at the same staleness.
+  The floor itself is evidence-scaled too, the same way — interpolating
+  between `OVERALL_STALENESS_FLOOR_BASE` and `OVERALL_STALENESS_FLOOR_CAP`
+  by the same pre-decay score — so a genuinely maxed term floors at
+  `OVERALL_STALENESS_FLOOR_CAP` (high enough to protect its `strong` bucket
+  indefinitely) while near-zero evidence still floors close to 0. A flat
+  floor crushed a perfect pass to the same proportion-of-pre-decay score a
+  barely-tested term would get, which is backwards: strong evidence should
+  decay less, not decay to the same proportion as weak evidence.
 
-| Constant                                  | Default                | Purpose                                                                                                  |
-| ----------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `OVERALL_WEIGHTS`                         | `{review: 2, quiz: 1}` | Composite blend weights                                                                                  |
-| `OVERALL_READ_NUDGE_MAX`                  | 20                     | Cap on the Read-driven contribution (tie-break for tested terms, the entire score for `unverified` ones) |
-| `OVERALL_READ_NUDGE_PER_READ`             | 4                      | Scales with `sqrt(readCount)`, diminishing returns                                                       |
-| `OVERALL_STALENESS_TAU_BASE_HOURS`        | 96 (4 days)            | τ at a near-zero pre-decay score                                                                         |
-| `OVERALL_STALENESS_TAU_CAP_HOURS`         | 480 (20 days)          | τ at a near-100 pre-decay score                                                                          |
-| `OVERALL_STALENESS_MULTIPLIER_FLOOR`      | 0.2                    | Floor on the decay multiplier itself (proportional, not absolute)                                        |
-| `OVERALL_BUCKET_MEDIUM_MIN_SCORE`         | 55                     | Score at/above which a tested term is `medium` instead of `weak`                                         |
-| `OVERALL_BUCKET_STRONG_MIN_SCORE`         | 75                     | Score at/above which a tested term is `strong` instead of `medium`                                       |
-| `OVERALL_BAR_SCORE_THRESHOLDS`            | `[35, 55, 75, 95]`     | Score needed for each extra bar past the first, tested scores (0-100 range)                              |
-| `OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS` | `[5, 10]`              | Same, but for `unverified`'s own much lower range — see below                                            |
+Hand-maintained from `weights.ts`'s actual exports — update this table in
+the same commit as any change there:
+
+| Constant                           | Default                | Purpose                                                                                                  |
+| ---------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `OVERALL_WEIGHTS`                  | `{review: 2, quiz: 1}` | Composite blend weights                                                                                  |
+| `OVERALL_STREAK_MAX_CREDIT`        | 3                      | Consecutive successes for full streak credit in `activitySubScore` — lower reacts to a hot streak faster |
+| `OVERALL_STREAK_WEIGHT`            | 0.6                    | Streak's share of `activitySubScore`'s blend; fail-rate confidence gets the remainder                    |
+| `OVERALL_FAIL_RATE_PRIOR_STRENGTH` | 4                      | Laplace-smoothing "virtual attempts" blended into every real fail-rate observation                       |
+| `OVERALL_FAIL_RATE_PRIOR_RATE`     | 0.5                    | Assumed fail rate before any real evidence exists (neutral prior)                                        |
+| `OVERALL_READ_NUDGE_MAX`           | 20                     | Cap on the Read-driven tie-break, tested terms only                                                      |
+| `OVERALL_READ_NUDGE_PER_READ`      | 4                      | Scales with `sqrt(readCount)`, diminishing returns (tested terms)                                        |
+| `OVERALL_UNTESTED_READ_CEILING`    | 50                     | Separate, higher cap for terms with zero test evidence — reads are the only signal there                 |
+| `OVERALL_UNTESTED_READ_LOG_K`      | 19                     | Log scale for the zero-test-evidence read score — climbs fast, flattens hard after a few reads           |
+| `OVERALL_STALENESS_TAU_BASE_HOURS` | 96 (4 days)            | τ at a near-zero pre-decay score                                                                         |
+| `OVERALL_STALENESS_TAU_CAP_HOURS`  | 480 (20 days)          | τ at a near-100 pre-decay score                                                                          |
+| `OVERALL_STALENESS_FLOOR_BASE`     | 0.1                    | Decay-multiplier floor at a near-zero pre-decay score                                                    |
+| `OVERALL_STALENESS_FLOOR_CAP`      | 0.75                   | Decay-multiplier floor at a near-100 pre-decay score (matches `OVERALL_BUCKET_STRONG_MIN_SCORE`)         |
+| `OVERALL_BUCKET_MEDIUM_MIN_SCORE`  | 55                     | Score at/above which a tested term is `medium` instead of `weak`                                         |
+| `OVERALL_BUCKET_STRONG_MIN_SCORE`  | 75                     | Score at/above which a tested term is `strong` instead of `medium`                                       |
+| `OVERALL_BAR_SCORE_THRESHOLDS`     | `[35, 55, 75, 95]`     | Score needed for each extra bar past the first — one shared scale for every term, tested or `unverified` |
 
 Bucket assignment (`scoreToBucket` in `lib/smart-queue/strength.ts`) reads
 straight off the score against the two `OVERALL_BUCKET_*_MIN_SCORE`
@@ -554,21 +588,16 @@ which tier, though `computeOverallStrength` overrides the result to
 Bar count (`bars`, the 0-5 the UI renders as signal-strength bars, via
 `scoreToBars`) is a separate, finer-grained breakdown, independent of the
 bucket cutoffs so the visual granularity and the weak/medium/strong label
-can be tuned separately — but it isn't one scale for every term. Tested
-scores (0-100 range) use `OVERALL_BAR_SCORE_THRESHOLDS`. `unverified`
-scores never exceed `OVERALL_READ_NUDGE_MAX` (they're driven entirely by
-the Read nudge, capped low), so sharing the tested scale would pin every
-unverified term at 1 bar forever — its first threshold (35) is out of
-reach. `unverified` uses `OVERALL_UNVERIFIED_BAR_SCORE_THRESHOLDS` instead,
-sized to that lower range, so read count _and_ recency can actually move
-the bar count: a term read several times today shows more bars than the
-same term read the same number of times a week ago, and staleness alone
-can visibly drop it. That threshold array also has only 2 entries (vs. 4
-for tested scores), which caps `unverified` at 3 bars max, however fresh
-or heavily read — exposure alone should never look as "full" as a
-genuinely tested term, even before noticing the color. Any score above `0`
-shows at least 1 bar on either scale; a genuine `0` (never read, never
-tested) shows none.
+can be tuned separately. It's **one shared scale for every term** —
+`OVERALL_BAR_SCORE_THRESHOLDS` — rather than a second scale for
+`unverified`; that scale doesn't need its own thresholds because
+`OVERALL_UNTESTED_READ_CEILING` (50) already keeps `unverified` scores well
+short of the top bars: an unverified term can cross the first threshold
+(35) on heavy read exposure alone (1 extra bar) but never the second (55),
+so it caps around 2 bars however fresh or heavily read — exposure alone
+should never look as "full" as a genuinely tested term, even before
+noticing the color. Any score above `0` shows at least 1 bar; a genuine `0`
+(never read, never tested) shows none.
 
 `OverallStrengthBars` fills `unverified`'s bars the same way as every
 other bucket, just in its own neutral gray instead of red/yellow/green —

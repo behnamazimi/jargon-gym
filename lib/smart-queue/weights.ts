@@ -83,6 +83,12 @@ export const RANKING_STALENESS_DECAY_HOURS: Record<PickContext, number> = {
   quiz: 24,
 };
 
+/** Hours since a context's own last-activity timestamp before score.ts attaches the
+ *  `stale` reason (UI badge). Distinct from RANKING_STALENESS_DECAY_HOURS above — that
+ *  controls how fast the staleness *score* climbs per context; this is a flat label
+ *  cutoff shared by all three contexts. */
+export const STALE_REASON_THRESHOLD_HOURS = 24;
+
 // --- Formula point values ---------------------------------------------------
 
 /** The ranking formula's point values — see ScoreWeights in types.ts for

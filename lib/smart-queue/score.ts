@@ -12,11 +12,10 @@ import {
   masteredCooldownHours,
   QUEUE_TIMEZONE,
   RANKING_STALENESS_DECAY_HOURS,
+  STALE_REASON_THRESHOLD_HOURS,
   STREAK_BOOST_CAP,
 } from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
-
-const STALE_REASON_THRESHOLD_HOURS = 24;
 
 type ScoreBreakdown = {
   score: number;
@@ -166,7 +165,11 @@ function evaluateCandidate(
   }
 
   // Engaged (read) but never tested in this context — Review/Quiz only.
-  if (context !== "read" && fields.streak === 0 && candidate.readCount >= ENGAGED_MIN_READ_COUNT) {
+  if (
+    context !== "read" &&
+    fields.ownCount === 0 &&
+    candidate.readCount >= ENGAGED_MIN_READ_COUNT
+  ) {
     score += weights.engagedButUntestedBoost;
     reasons.push("engaged_untested");
   }
