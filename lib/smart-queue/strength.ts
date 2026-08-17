@@ -3,24 +3,29 @@
  *  routes through scoreFromEvidence below — one formula, no duplicated
  *  scoring logic.
  *
- *  Callers with insufficient own-context history (< FAIL_RATE_MIN_ATTEMPTS
- *  attempts) must pass failRate = 0 — lack of history isn't "historically
- *  hard".
+ *  Fail-rate confidence is Laplace-smoothed (see activitySubScore) rather
+ *  than gated by a hard attempt-count threshold — a small sample is
+ *  partially trusted, growing smoothly toward full trust as real attempts
+ *  accumulate, instead of snapping between "presumed 0% fail rate" and
+ *  "raw observed rate" at one cutoff.
  */
 
 import { fieldsForContext } from "./score";
 import type { PickContext, ReviewCandidate } from "./types";
 import {
-  FAIL_RATE_MIN_ATTEMPTS,
   OVERALL_BAR_SCORE_THRESHOLDS,
   OVERALL_BUCKET_MEDIUM_MIN_SCORE,
   OVERALL_BUCKET_STRONG_MIN_SCORE,
+  OVERALL_FAIL_RATE_PRIOR_RATE,
+  OVERALL_FAIL_RATE_PRIOR_STRENGTH,
   OVERALL_READ_NUDGE_MAX,
   OVERALL_READ_NUDGE_PER_READ,
   OVERALL_STALENESS_FLOOR_BASE,
   OVERALL_STALENESS_FLOOR_CAP,
   OVERALL_STALENESS_TAU_BASE_HOURS,
   OVERALL_STALENESS_TAU_CAP_HOURS,
+  OVERALL_STREAK_MAX_CREDIT,
+  OVERALL_STREAK_WEIGHT,
   OVERALL_UNTESTED_READ_CEILING,
   OVERALL_UNTESTED_READ_LOG_K,
   OVERALL_WEIGHTS,
@@ -42,13 +47,27 @@ export type OverallStrengthResult = {
 /** 0-100 sub-score for one test activity (review or quiz). 0 when never
  *  tested in that activity — the mechanism that prevents a strong Review
  *  streak alone from masking a never-quiz-tested term: untested counts at
- *  full weight in the blend below, not excluded from it. */
+ *  full weight in the blend below, not excluded from it.
+ *
+ *  Fail-rate uses Laplace/Bayesian smoothing instead of a raw ratio: real
+ *  fails/attempts are blended with OVERALL_FAIL_RATE_PRIOR_STRENGTH
+ *  "virtual" attempts at OVERALL_FAIL_RATE_PRIOR_RATE, so confidence in
+ *  the rate grows smoothly with real evidence instead of a small sample
+ *  being read as fully proven the moment it happens to be perfect (2
+ *  clean reviews would otherwise score identically to 200 on this half). */
 function activitySubScore(count: number, streak: number, failCount: number): number {
   if (count === 0) return 0;
-  const failRate = count < FAIL_RATE_MIN_ATTEMPTS ? 0 : failCount / count;
-  const streakComponent = Math.min(Math.max(streak, 0), 5) / 5;
-  const failComponent = 1 - Math.min(failRate, 1);
-  return (0.6 * streakComponent + 0.4 * failComponent) * 100;
+
+  const priorFails = OVERALL_FAIL_RATE_PRIOR_STRENGTH * OVERALL_FAIL_RATE_PRIOR_RATE;
+  const smoothedFailRate = (failCount + priorFails) / (count + OVERALL_FAIL_RATE_PRIOR_STRENGTH);
+  const failComponent = 1 - Math.min(smoothedFailRate, 1);
+
+  const streakComponent =
+    Math.min(Math.max(streak, 0), OVERALL_STREAK_MAX_CREDIT) / OVERALL_STREAK_MAX_CREDIT;
+
+  return (
+    (OVERALL_STREAK_WEIGHT * streakComponent + (1 - OVERALL_STREAK_WEIGHT) * failComponent) * 100
+  );
 }
 
 /** Nudge from Read exposure — shape depends on whether the term has any

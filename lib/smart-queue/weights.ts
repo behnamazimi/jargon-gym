@@ -132,6 +132,39 @@ export const MIX_ALREADY_TOUCHED_SLOTS = 1;
  *  docs/smart-queue.md). */
 export const OVERALL_WEIGHTS = { review: 2, quiz: 1 };
 
+/** Consecutive successes for full streak credit in activitySubScore
+ *  (strength.ts) — the streak component of an activity's sub-score maxes
+ *  out once `streak` reaches this. Lower = badges/scores react to a hot
+ *  streak faster. Independent of STREAK_BOOST_CAP in section 2 (ranking) —
+ *  same current value by coincidence, not a shared concept; don't assume
+ *  changing one affects the other. */
+export const OVERALL_STREAK_MAX_CREDIT = 3;
+
+/** Streak's share of activitySubScore's blend; fail-rate confidence
+ *  (OVERALL_FAIL_RATE_PRIOR_* below) always gets the remainder
+ *  (1 - this), so the two shares can never be edited out of sync with each
+ *  other. Raise to make an incomplete streak matter more relative to a
+ *  clean fail-rate; lower to make fail-rate dominate. */
+export const OVERALL_STREAK_WEIGHT = 0.6;
+
+/** Laplace-smoothing "virtual attempts" blended into every real fail-rate
+ *  observation in activitySubScore — replaces a hard cliff-edge exemption
+ *  (below N real attempts, presume 0% fail rate; at/above, trust the raw
+ *  rate) with continuous confidence that grows smoothly as real attempts
+ *  accumulate. Without this, a streak of 2 with 0 fails reads as *equally*
+ *  proven as a streak of 200 with 0 fails — both get the maximum fail-rate
+ *  credit, since the cliff has no concept of "proven, but only barely."
+ *  Higher = more real attempts needed before a streak's fail-rate is fully
+ *  trusted (a short perfect streak reads as less proven); lower = small
+ *  samples get trusted sooner. */
+export const OVERALL_FAIL_RATE_PRIOR_STRENGTH = 4;
+
+/** The assumed fail rate before any real evidence exists — 0.5 is a
+ *  neutral "coin flip" prior. Lower = give unproven terms the benefit of
+ *  the doubt faster (fewer real successes needed to look good); higher =
+ *  presume unproven terms are risky until shown otherwise. */
+export const OVERALL_FAIL_RATE_PRIOR_RATE = 0.5;
+
 // --- Staleness decay -----------------------------------------------------
 
 /** Evidence-scaled staleness decay (τ, hours), measured from the most
