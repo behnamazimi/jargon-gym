@@ -1,6 +1,6 @@
 /** Local calendar-day helpers for same-day cooldowns.
  *
- *  Scoring runs on the server; "local" means QUEUE_TIMEZONE, not the
+ *  Scoring runs on the server; "local" means RANKING.timezone, not the
  *  request's browser offset.
  */
 

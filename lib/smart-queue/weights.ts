@@ -1,268 +1,115 @@
-/** Scoring weights — single fixed set, no presets.
+/** Scoring weights — single fixed set, no presets. Edit these constants
+ *  directly to change the feel.
  *
- *  Presets existed to let a user pick a "mode" without touching code. This
- *  app has one user who *is* the code, so one well-tuned set replaces the
- *  three (balanced/learn_new/drill_weak) — edit these constants directly if
- *  the feel ever needs to change.
- *
- *  Three independent systems live in this file. A constant only affects its
- *  own system unless its comment says otherwise:
- *    1. Shared      — read by more than one system below.
- *    2. Ranking     — picks/orders what shows up next in Read/Review/Quiz
- *                     (score.ts, pick.ts).
- *    3. Strength    — display-only glance score on collection cards and the
- *                     stats page (strength.ts). Never affects ranking.
+ *  Two independent systems, two objects:
+ *    RANKING  — picks/orders what shows up next in Read/Review/Quiz
+ *               (score.ts, pick.ts).
+ *    STRENGTH — display-only glance score on collection cards and the
+ *               stats page (strength.ts). Never affects ranking.
  */
 
 import type { PickContext, ScoreWeights } from "./types";
 
-// ============================================================================
-// 1. Shared
-// ============================================================================
+export const RANKING = {
+  // IANA timezone same-day logic (sit-outs, daily mix counts) is measured against.
+  timezone: "Europe/Amsterdam",
 
-/** Minimum attempts before a lifetime fail-rate is trusted at all, below
- *  which it reads as 0 rather than a noisy small-sample rate. Shared by
- *  ranking's fragile boost and both strength calculations — bump this once,
- *  it tightens the bar everywhere fail-rate is trusted. */
-export const FAIL_RATE_MIN_ATTEMPTS = 4;
+  // Minimum lifetime attempts before the fragile boost trusts the fail rate. Below this, no boost.
+  failRateMinAttempts: 4,
 
-/** IANA timezone all same-day logic is measured against (calendar day, not
- *  a fixed hour window). Used by ranking's same-day sit-outs and the mix
- *  lane's daily counts. */
-export const QUEUE_TIMEZONE = "Europe/Amsterdam";
+  // Cap on |streak| for any boost that scales per point of it (struggling, cross-fail).
+  streakBoostCap: 5,
 
-// ============================================================================
-// 2. Ranking — score.ts's formula, pick.ts's lane mix
-// ============================================================================
+  // How long a term hides after a good streak, in hours. Higher growthFactor = cooldown grows faster per streak point; capHours is the ceiling no matter how long the streak.
+  masteredCooldown: {
+    baseHours: 72,
+    growthFactor: 1.6,
+    capHours: 24 * 14, // 2 weeks
+  },
 
-// --- Streak & mastery cooldown -------------------------------------------
+  // Read count before an untested term counts as "engaged but untested" (earns formula.engagedButUntestedBoost).
+  engagedMinReadCount: 3,
 
-/** Cap on |streak| magnitude wherever a boost scales per point of it — both
- *  the struggling boost (own negative streak) and the cross-fail boost
- *  (other activity's negative streak) use this same cap. */
-export const STREAK_BOOST_CAP = 5;
+  // Hours for the staleness boost to mostly ramp up, per context. Lower = that context's boost climbs faster.
+  stalenessDecayHours: {
+    read: 48,
+    review: 36,
+    quiz: 24,
+  } satisfies Record<PickContext, number>,
 
-/** Mastered-cooldown window: how long a context sits out after a pass,
- *  scaled by streak via masteredCooldownHours() below. */
-export const MASTERED_COOLDOWN = {
-  /** Window at streak 1. */
-  baseHours: 72,
-  /** Per-streak-point multiplier on the cooldown window. SM-2-style ease
-   *  factors (~2.5) would collapse streak 3+ into one bucket given the
-   *  2-week cap below — 1.6 gives 4 distinct pre-cap levels (streaks 1-4;
-   *  streak 5 already exceeds the cap at 471.9h) while still growing faster
-   *  than the previous 1.4. */
-  growthFactor: 1.6,
-  /** Cooldown window never exceeds this, however high the streak. */
-  capHours: 24 * 14, // 2 weeks
+  // Hours since last activity before score.ts shows the "stale" badge. Same cutoff for all three contexts.
+  staleReasonThresholdHours: 24,
+
+  // The ranking formula's point values — see ScoreWeights in types.ts for what each field gates.
+  formula: {
+    unseenBoost: 100,
+    strugglingBoostPerStreak: 40,
+    masteredCooldownPenalty: 120,
+    sameDayCooldownPenalty: 120,
+    engagedButUntestedBoost: 30,
+    abandonedReviewBoost: 45,
+    stalenessMaxBoost: 84,
+    stalenessCapHours: 168, // 7 days
+    crossFailOtherTestBoostPerRepeat: 25,
+    fragileBoostMax: 25,
+  } satisfies ScoreWeights,
+
+  // How pick.ts interleaves never-engaged vs. already-touched terms. 1:1 alternates; raise neverEngaged to favor new terms, raise alreadyTouched to protect the rotation.
+  mixSlots: {
+    neverEngaged: 1,
+    alreadyTouched: 1,
+  },
 };
 
 /** Streak-scaled cooldown window: +1 → base; longer streaks earn a longer
- *  window, capped. Resets to the short end after a fail-then-repass. Distinct
- *  from RANKING_WEIGHTS.sameDayCooldownPenalty below (a flat same-day-only
- *  penalty, not a growing window) — "mastered" here means "recently aced,"
- *  not "same day." */
+ *  window, capped at RANKING.masteredCooldown.capHours. */
 export function masteredCooldownHours(streak: number): number {
   if (streak <= 0) return 0;
-  const hours = MASTERED_COOLDOWN.baseHours * Math.pow(MASTERED_COOLDOWN.growthFactor, streak - 1);
-  return Math.min(hours, MASTERED_COOLDOWN.capHours);
+  const { baseHours, growthFactor, capHours } = RANKING.masteredCooldown;
+  const hours = baseHours * Math.pow(growthFactor, streak - 1);
+  return Math.min(hours, capHours);
 }
 
-// --- Staleness -------------------------------------------------------------
+export const STRENGTH = {
+  // How Review + Quiz sub-scores blend into one score, and how much a streak counts toward it. weights.review > weights.quiz because Quiz is guessable (50% floor) and Review isn't. streakMaxCredit is the streak length for full credit; streakWeight is streak's share of the blend (fail-rate gets the rest).
+  blend: {
+    weights: { review: 2, quiz: 1 },
+    streakMaxCredit: 3,
+    streakWeight: 0.6,
+  },
 
-/** Read count (with zero test count) before a term counts as
- *  "engaged but untested" and earns RANKING_WEIGHTS.engagedButUntestedBoost. */
-export const ENGAGED_MIN_READ_COUNT = 3;
+  // Assumed fail rate before any real evidence, blended in as `strength` virtual attempts. Higher strength = need more real attempts before trusting a streak's fail rate.
+  failRatePrior: {
+    strength: 4,
+    rate: 0.5,
+  },
 
-/** Per-context decay constant (τ, hours) for the ranking staleness boost —
- *  smaller means the boost front-loads faster. Quiz stales fastest, Read
- *  slowest. Feeds RANKING_WEIGHTS.stalenessMaxBoost/stalenessCapHours below.
- *  Unrelated to the OVERALL_STALENESS_* trio in section 3 — that one decays
- *  a display score, this one boosts ranking priority, and they run on
- *  different clocks for different reasons. */
-export const RANKING_STALENESS_DECAY_HOURS: Record<PickContext, number> = {
-  read: 48,
-  review: 36,
-  quiz: 24,
+  // How a term's score fades over time since last activity, scaled by how well-proven it is. tauBaseHours/tauCapHours: decay speed (barely-tested → well-proven). floorBase/floorCap: how low it can fade before stopping.
+  staleness: {
+    tauBaseHours: 96, // 4 days
+    tauCapHours: 480, // 20 days
+    floorBase: 0.1,
+    floorCap: 0.75,
+  },
+
+  // Bonus score from reading a term that's also been tested. max caps it at one bucket-boundary's worth of points — e.g. a weak score of 40 plus 25+ reads (max bonus) can reach 60 (medium), but never jumps two boundaries at once.
+  readNudge: {
+    max: 20,
+    perRead: 4,
+  },
+
+  // Score ceiling for a term that's been read but never tested — reads are the only signal here, so this is a separate, higher cap than readNudge. Logarithmic: fast early, flattens by ~15-20 reads.
+  untestedRead: {
+    ceiling: 50,
+    logK: 19,
+  },
+
+  // Score cutoffs for the weak/medium/strong label. mediumMinScore and above = medium; strongMinScore and above = strong.
+  buckets: {
+    mediumMinScore: 55,
+    strongMinScore: 75,
+  },
+
+  // Score thresholds for the 5-bar UI indicator — one more bar per threshold cleared.
+  barScoreThresholds: [35, 55, 75, 95] as const,
 };
-
-/** Hours since a context's own last-activity timestamp before score.ts attaches the
- *  `stale` reason (UI badge). Distinct from RANKING_STALENESS_DECAY_HOURS above — that
- *  controls how fast the staleness *score* climbs per context; this is a flat label
- *  cutoff shared by all three contexts. */
-export const STALE_REASON_THRESHOLD_HOURS = 24;
-
-// --- Formula point values ---------------------------------------------------
-
-/** The ranking formula's point values — see ScoreWeights in types.ts for
- *  what each field gates. Consumed by score.ts's scoreCandidate via
- *  pick.ts only — the display-only strength surfaces in strength.ts use
- *  their own evidence-scaled staleness decay (OVERALL_STALENESS below),
- *  not this ranking formula. */
-export const RANKING_WEIGHTS: ScoreWeights = {
-  unseenBoost: 100,
-  strugglingBoostPerStreak: 40,
-  masteredCooldownPenalty: 120,
-  sameDayCooldownPenalty: 120,
-  engagedButUntestedBoost: 30,
-  abandonedReviewBoost: 45,
-  stalenessMaxBoost: 84, // former ceiling: 0.5 * 168h cap
-  stalenessCapHours: 168, // 7 days
-  crossFailOtherTestBoostPerRepeat: 25,
-  fragileBoostMax: 25,
-};
-
-// --- Lane mix (pick.ts, post-score interleaving) ----------------------------
-
-/** Lane interleaving in pick.ts (post-score, not part of the score formula
- *  itself). 1:1 (these defaults) alternates unread with already-touched. To
- *  prefer new terms, raise neverEngaged (e.g. 2/1 → two never-engaged, then
- *  one already-touched). To protect the rotation more, raise alreadyTouched
- *  (e.g. 1/2). If one lane empties, the other fills the rest of the pick. */
-export const MIX_SLOTS = {
-  /** Never-engaged slots per mix cycle when both lanes have eligible terms. */
-  neverEngaged: 1,
-  /** Already-touched slots per mix cycle (struggling/stale/steady). */
-  alreadyTouched: 1,
-};
-
-// ============================================================================
-// 3. Strength — display-only glance score (strength.ts's
-//    computeOverallStrength), collection cards + the stats page. Never
-//    feeds the ranking formula above. First-pass constants throughout —
-//    tune later via the debug footer, not analytically.
-// ============================================================================
-
-// --- Blending ----------------------------------------------------------------
-
-export const OVERALL_BLEND = {
-  /** Composite weights blending Review + Quiz sub-scores — Review weighted
-   *  higher since Quiz has a 50% guess floor and Review does not (see
-   *  docs/smart-queue.md). */
-  weights: { review: 2, quiz: 1 },
-  /** Consecutive successes for full streak credit in activitySubScore
-   *  (strength.ts) — the streak component of an activity's sub-score maxes
-   *  out once `streak` reaches this. Lower = badges/scores react to a hot
-   *  streak faster. Independent of STREAK_BOOST_CAP in section 2 (ranking) —
-   *  currently a different value (3 here vs. 5 there) and not a shared
-   *  concept; don't assume changing one affects the other. */
-  streakMaxCredit: 3,
-  /** Streak's share of activitySubScore's blend; fail-rate confidence
-   *  (OVERALL_FAIL_RATE_PRIOR below) always gets the remainder (1 - this),
-   *  so the two shares can never be edited out of sync with each other.
-   *  Raise to make an incomplete streak matter more relative to a clean
-   *  fail-rate; lower to make fail-rate dominate. */
-  streakWeight: 0.6,
-};
-
-export const OVERALL_FAIL_RATE_PRIOR = {
-  /** Laplace-smoothing "virtual attempts" blended into every real fail-rate
-   *  observation in activitySubScore — replaces a hard cliff-edge exemption
-   *  (below N real attempts, presume 0% fail rate; at/above, trust the raw
-   *  rate) with continuous confidence that grows smoothly as real attempts
-   *  accumulate. Without this, a streak of 2 with 0 fails reads as *equally*
-   *  proven as a streak of 200 with 0 fails — both get the maximum fail-rate
-   *  credit, since the cliff has no concept of "proven, but only barely."
-   *  Higher = more real attempts needed before a streak's fail-rate is fully
-   *  trusted (a short perfect streak reads as less proven); lower = small
-   *  samples get trusted sooner. */
-  strength: 4,
-  /** The assumed fail rate before any real evidence exists — 0.5 is a
-   *  neutral "coin flip" prior. Lower = give unproven terms the benefit of
-   *  the doubt faster (fewer real successes needed to look good); higher =
-   *  presume unproven terms are risky until shown otherwise. */
-  rate: 0.5,
-};
-
-// --- Staleness decay -----------------------------------------------------
-
-/** Evidence-scaled staleness decay (τ, hours), measured from the most
- *  recent activity across read/review/quiz — one global clock, not three
- *  per-context ones (see RANKING_STALENESS_DECAY_HOURS in section 2 for why
- *  that's different). τ interpolates between these two bounds by how strong
- *  the pre-decay blended score is (overallStalenessDecayHours in
- *  strength.ts): a single old pass fades fast, a well-proven term stays
- *  trusted for weeks. A flat τ made every term decay at the same rate
- *  regardless of evidence, crushing a real pass to the same near-zero score
- *  a barely-tested term would get at the same staleness. */
-export const OVERALL_STALENESS = {
-  tauBaseHours: 96, // 4 days — weak/near-zero evidence
-  tauCapHours: 480, // 20 days — near-100 evidence
-
-  /** Evidence-scaled floor on the staleness multiplier itself (proportional,
-   *  not an absolute score floor) — same interpolation shape as the τ pair
-   *  above, keyed off the same pre-decay `nudged` score (overallStalenessFloor
-   *  in strength.ts). Near-zero evidence still floors close to 0 (correctly
-   *  stays `weak` no matter what), but a genuinely maxed term (nudged=100)
-   *  floors at exactly the `strong` cutoff (OVERALL_BUCKETS.strongMinScore =
-   *  75) and stays `strong` indefinitely — a flat floor (the previous design)
-   *  crushed a perfect pass to the same 20%-of-pre-decay score a barely-tested
-   *  term would get, which is exactly backwards: the whole point of the floor
-   *  is that strong evidence should decay less, not decay to the same
-   *  proportion as weak evidence. */
-  floorBase: 0.1, // weak/near-zero evidence
-  floorCap: 0.75, // near-100 evidence
-};
-
-// --- Read nudge (untested exposure) ------------------------------------------
-
-/** Read-nudge shape: diminishing returns (scales by sqrt(readCount), see
- *  strength.ts). `max` (20) equals the gap between the medium/strong bucket
- *  cutoffs (OVERALL_BUCKETS below), so reading alone *can* carry a weak but
- *  close tested term into `medium` on its own (e.g. a blend of 40 plus 25+
- *  reads reaches 60) — it just can never cross two boundaries at once (never
- *  reaches `strong` unassisted). Bumped up from 6/1.5 — Read exposure was
- *  barely moving the score even at double-digit read counts. Applies only
- *  as a tie-break on top of a real test-based blended score (candidate has
- *  been reviewed/quizzed at least once) — see OVERALL_UNTESTED_READ below
- *  for the separate, higher ceiling used when there's no test evidence at
- *  all. */
-export const OVERALL_READ_NUDGE = {
-  max: 20,
-  perRead: 4,
-};
-
-export const OVERALL_UNTESTED_READ = {
-  /** Read-only ceiling for terms with zero test evidence (never reviewed or
-   *  quizzed) — distinct from OVERALL_READ_NUDGE.max above, which is a
-   *  small tie-break added on top of a real test score. Here, reads are the
-   *  *only* signal, so capping at 20 made heavy readers (15+ reads) look
-   *  identical to someone who skimmed a term twice. Kept clearly below
-   *  OVERALL_BUCKETS.mediumMinScore (55) so reading alone can never look as
-   *  trustworthy as a tested pass — the isUnverified bucket stays pinned
-   *  regardless, but the number itself should still move meaningfully with
-   *  exposure. */
-  ceiling: 50,
-  /** Logarithmic, not sqrt: climbs fast for the first few reads, flattens
-   *  hard after — 19 * ln(1 + 10) ≈ 46, asymptoting to the 50 ceiling by
-   *  ~15-20 reads. */
-  logK: 19,
-};
-
-// --- Bucket labels (weak / medium / strong) ----------------------------------
-
-export const OVERALL_BUCKETS = {
-  /** Score (0-100) at/above which a tested term counts as `medium` instead
-   *  of `weak`. Below this is `weak`. `unverified` bypasses both cutoffs
-   *  entirely (see computeOverallStrength) — these only apply once a term
-   *  has been tested at least once. Edit these two directly to change what
-   *  score counts as which tier. */
-  mediumMinScore: 55,
-  /** Score (0-100) at/above which a tested term counts as `strong` instead
-   *  of `medium`. */
-  strongMinScore: 75,
-};
-
-// --- Bar thresholds (5-bar UI indicator) -------------------------------------
-
-/** Score (0-100) thresholds for the 5-bar UI indicator, shared by every
- *  term regardless of bucket — a scored term always shows at least 1 bar;
- *  each entry here is the minimum score for one more bar. Finer-grained
- *  than, and independent of, the weak/medium/strong cutoffs above (bar
- *  count drives the visual, not the bucket label). One scale for every
- *  term means bar count is always comparable across terms — an unverified
- *  term (capped at OVERALL_UNTESTED_READ.ceiling = 50) can cross the first
- *  couple of thresholds on heavy read exposure alone (up to 2 bars), but
- *  the ceiling keeps it well short of the top bars a genuinely tested term
- *  can reach. */
-export const OVERALL_BAR_SCORE_THRESHOLDS = [35, 55, 75, 95] as const;

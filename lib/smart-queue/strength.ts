@@ -12,15 +12,7 @@
 
 import { fieldsForContext } from "./score";
 import type { PickContext, ReviewCandidate } from "./types";
-import {
-  OVERALL_BAR_SCORE_THRESHOLDS,
-  OVERALL_BLEND,
-  OVERALL_BUCKETS,
-  OVERALL_FAIL_RATE_PRIOR,
-  OVERALL_READ_NUDGE,
-  OVERALL_STALENESS,
-  OVERALL_UNTESTED_READ,
-} from "./weights";
+import { STRENGTH } from "./weights";
 
 /** Cross-context glance-surface mastery — collection cards, stats page, and
  *  (via strengthForCandidate below) the per-context Review/Quiz session
@@ -41,24 +33,24 @@ export type OverallStrengthResult = {
  *  full weight in the blend below, not excluded from it.
  *
  *  Fail-rate uses Laplace/Bayesian smoothing instead of a raw ratio: real
- *  fails/attempts are blended with OVERALL_FAIL_RATE_PRIOR.strength
- *  "virtual" attempts at OVERALL_FAIL_RATE_PRIOR.rate, so confidence in
+ *  fails/attempts are blended with STRENGTH.failRatePrior.strength
+ *  "virtual" attempts at STRENGTH.failRatePrior.rate, so confidence in
  *  the rate grows smoothly with real evidence instead of a small sample
  *  being read as fully proven the moment it happens to be perfect (2
  *  clean reviews would otherwise score identically to 200 on this half). */
 function activitySubScore(count: number, streak: number, failCount: number): number {
   if (count === 0) return 0;
 
-  const priorFails = OVERALL_FAIL_RATE_PRIOR.strength * OVERALL_FAIL_RATE_PRIOR.rate;
-  const smoothedFailRate = (failCount + priorFails) / (count + OVERALL_FAIL_RATE_PRIOR.strength);
+  const priorFails = STRENGTH.failRatePrior.strength * STRENGTH.failRatePrior.rate;
+  const smoothedFailRate = (failCount + priorFails) / (count + STRENGTH.failRatePrior.strength);
   const failComponent = 1 - Math.min(smoothedFailRate, 1);
 
   const streakComponent =
-    Math.min(Math.max(streak, 0), OVERALL_BLEND.streakMaxCredit) / OVERALL_BLEND.streakMaxCredit;
+    Math.min(Math.max(streak, 0), STRENGTH.blend.streakMaxCredit) / STRENGTH.blend.streakMaxCredit;
 
   return (
-    (OVERALL_BLEND.streakWeight * streakComponent +
-      (1 - OVERALL_BLEND.streakWeight) * failComponent) *
+    (STRENGTH.blend.streakWeight * streakComponent +
+      (1 - STRENGTH.blend.streakWeight) * failComponent) *
     100
   );
 }
@@ -67,25 +59,25 @@ function activitySubScore(count: number, streak: number, failCount: number): num
  *  test evidence. With test evidence, this is a small, capped tie-break on
  *  top of the blended test score (sqrt diminishing returns) — the cap
  *  equals one bucket gap, so it can carry a weak-but-close term into medium
- *  on its own, but never two boundaries at once (see OVERALL_READ_NUDGE in
+ *  on its own, but never two boundaries at once (see STRENGTH.readNudge in
  *  weights.ts). With zero test evidence, reads are the *only* signal, so
  *  they get a separate, higher, logarithmic ceiling instead — see
- *  OVERALL_UNTESTED_READ in weights.ts for why a flat 20-point cap made
+ *  STRENGTH.untestedRead in weights.ts for why a flat 20-point cap made
  *  heavy readers indistinguishable from casual ones. */
 function readNudge(readCount: number, hasTestEvidence: boolean): number {
   if (readCount <= 0) return 0;
   if (hasTestEvidence) {
-    return Math.min(OVERALL_READ_NUDGE.max, OVERALL_READ_NUDGE.perRead * Math.sqrt(readCount));
+    return Math.min(STRENGTH.readNudge.max, STRENGTH.readNudge.perRead * Math.sqrt(readCount));
   }
   return Math.min(
-    OVERALL_UNTESTED_READ.ceiling,
-    OVERALL_UNTESTED_READ.logK * Math.log(1 + readCount),
+    STRENGTH.untestedRead.ceiling,
+    STRENGTH.untestedRead.logK * Math.log(1 + readCount),
   );
 }
 
 /** Evidence-scaled decay constant (τ): interpolates linearly between
- *  OVERALL_STALENESS.tauBaseHours (weak/near-zero pre-decay score) and
- *  OVERALL_STALENESS.tauCapHours (near-100) by how strong the blended
+ *  STRENGTH.staleness.tauBaseHours (weak/near-zero pre-decay score) and
+ *  STRENGTH.staleness.tauCapHours (near-100) by how strong the blended
  *  score already is. Keyed off the blended score itself rather than either
  *  context's own streak — this score already has one global staleness
  *  clock (most-recent-activity-across-all-contexts), not three nested
@@ -93,21 +85,21 @@ function readNudge(readCount: number, hasTestEvidence: boolean): number {
 function overallStalenessDecayHours(nudgedScore: number): number {
   const t = Math.min(1, Math.max(0, nudgedScore / 100));
   return (
-    OVERALL_STALENESS.tauBaseHours +
-    (OVERALL_STALENESS.tauCapHours - OVERALL_STALENESS.tauBaseHours) * t
+    STRENGTH.staleness.tauBaseHours +
+    (STRENGTH.staleness.tauCapHours - STRENGTH.staleness.tauBaseHours) * t
   );
 }
 
 /** Evidence-scaled floor: same interpolation shape as overallStalenessDecayHours
  *  above, keyed off the same pre-decay `nudged` score — near-zero evidence
  *  still floors close to 0, but a genuinely maxed term (nudged=100) floors
- *  at OVERALL_STALENESS.floorCap, high enough to protect its bucket
+ *  at STRENGTH.staleness.floorCap, high enough to protect its bucket
  *  indefinitely (see the constant's comment in weights.ts for the exact
  *  cutoff this is tuned against). */
 function overallStalenessFloor(nudgedScore: number): number {
   const t = Math.min(1, Math.max(0, nudgedScore / 100));
   return (
-    OVERALL_STALENESS.floorBase + (OVERALL_STALENESS.floorCap - OVERALL_STALENESS.floorBase) * t
+    STRENGTH.staleness.floorBase + (STRENGTH.staleness.floorCap - STRENGTH.staleness.floorBase) * t
   );
 }
 
@@ -128,7 +120,7 @@ function stalenessMultiplier(
   return Math.max(floor, Math.exp(-hoursSinceLastActivity / decayConstantHours));
 }
 
-/** Bar count for the 5-bar UI, from OVERALL_BAR_SCORE_THRESHOLDS — the same
+/** Bar count for the 5-bar UI, from STRENGTH.barScoreThresholds — the same
  *  scale for every term regardless of bucket, so bar count is always
  *  comparable across terms. Any score above 0 shows at least 1 bar; one
  *  more per threshold cleared. A genuine 0 (no evidence of any kind — never
@@ -136,19 +128,19 @@ function stalenessMultiplier(
 function scoreToBars(score: number): number {
   if (score <= 0) return 0;
   let bars = 1;
-  for (const threshold of OVERALL_BAR_SCORE_THRESHOLDS) {
+  for (const threshold of STRENGTH.barScoreThresholds) {
     if (score >= threshold) bars += 1;
   }
   return bars;
 }
 
-/** Bucket for a tested score, from OVERALL_BUCKETS.mediumMinScore /
+/** Bucket for a tested score, from STRENGTH.buckets.mediumMinScore /
  *  .strongMinScore — computed directly off the score, not off bar count, so
  *  the bucket cutoffs and the bar-display granularity can be tuned
  *  independently. */
 function scoreToBucket(score: number): OverallStrength {
-  if (score >= OVERALL_BUCKETS.strongMinScore) return "strong";
-  if (score >= OVERALL_BUCKETS.mediumMinScore) return "medium";
+  if (score >= STRENGTH.buckets.strongMinScore) return "strong";
+  if (score >= STRENGTH.buckets.mediumMinScore) return "medium";
   return "weak";
 }
 
@@ -227,7 +219,7 @@ export function computeOverallStrength(
     candidate.quizFailCount,
   );
 
-  const { review: wReview, quiz: wQuiz } = OVERALL_BLEND.weights;
+  const { review: wReview, quiz: wQuiz } = STRENGTH.blend.weights;
   const blended = (wReview * reviewSub + wQuiz * quizSub) / (wReview + wQuiz);
 
   const lastActivityAt = latestOf([

@@ -6,15 +6,7 @@
  */
 
 import { isSameLocalDay } from "./local-day";
-import {
-  ENGAGED_MIN_READ_COUNT,
-  FAIL_RATE_MIN_ATTEMPTS,
-  masteredCooldownHours,
-  QUEUE_TIMEZONE,
-  RANKING_STALENESS_DECAY_HOURS,
-  STALE_REASON_THRESHOLD_HOURS,
-  STREAK_BOOST_CAP,
-} from "./weights";
+import { masteredCooldownHours, RANKING } from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
 type ScoreBreakdown = {
@@ -26,7 +18,7 @@ type ScoreBreakdown = {
  *  persistently difficult term keeps some priority even right after a pass
  *  resets its streak. Cold start: below the minimum attempts, no boost. */
 function fragileBoost(totalTests: number, totalFails: number, fragileBoostMax: number): number {
-  if (totalTests < FAIL_RATE_MIN_ATTEMPTS) return 0;
+  if (totalTests < RANKING.failRateMinAttempts) return 0;
   const failRate = totalFails / totalTests;
   return failRate * fragileBoostMax;
 }
@@ -112,7 +104,7 @@ function evaluateCandidate(
   if (
     context !== "read" &&
     candidate.lastReadAt &&
-    isSameLocalDay(candidate.lastReadAt, now, QUEUE_TIMEZONE)
+    isSameLocalDay(candidate.lastReadAt, now, RANKING.timezone)
   ) {
     score -= weights.sameDayCooldownPenalty;
     reasons.push("recent_read_cooldown");
@@ -126,7 +118,7 @@ function evaluateCandidate(
     context === "read" &&
     candidate.lastFailAt &&
     candidate.lastFailSource === "review" &&
-    isSameLocalDay(candidate.lastFailAt, now, QUEUE_TIMEZONE)
+    isSameLocalDay(candidate.lastFailAt, now, RANKING.timezone)
   ) {
     score -= weights.sameDayCooldownPenalty;
     reasons.push("recent_fail_cooldown");
@@ -142,7 +134,7 @@ function evaluateCandidate(
     fields.streak !== null &&
     fields.streak < 0 &&
     fields.lastActivityAt &&
-    isSameLocalDay(fields.lastActivityAt, now, QUEUE_TIMEZONE)
+    isSameLocalDay(fields.lastActivityAt, now, RANKING.timezone)
   ) {
     score -= weights.sameDayCooldownPenalty;
     reasons.push("recent_fail_cooldown");
@@ -156,7 +148,7 @@ function evaluateCandidate(
 
   // Struggling: negative streak, magnitude-scaled.
   if (fields.streak !== null && fields.streak < 0) {
-    const repeats = Math.min(-fields.streak, STREAK_BOOST_CAP);
+    const repeats = Math.min(-fields.streak, RANKING.streakBoostCap);
     score += repeats * weights.strugglingBoostPerStreak;
     reasons.push("struggling");
     if (repeats >= 2) {
@@ -168,7 +160,7 @@ function evaluateCandidate(
   if (
     context !== "read" &&
     fields.ownCount === 0 &&
-    candidate.readCount >= ENGAGED_MIN_READ_COUNT
+    candidate.readCount >= RANKING.engagedMinReadCount
   ) {
     score += weights.engagedButUntestedBoost;
     reasons.push("engaged_untested");
@@ -194,7 +186,7 @@ function evaluateCandidate(
     candidate.lastFailSource === fields.otherActivity
   ) {
     const sourceStreak = streakForActivity(candidate, candidate.lastFailSource);
-    const repeats = Math.min(-sourceStreak, STREAK_BOOST_CAP);
+    const repeats = Math.min(-sourceStreak, RANKING.streakBoostCap);
 
     if (repeats > 0) {
       score += repeats * weights.crossFailOtherTestBoostPerRepeat;
@@ -220,11 +212,11 @@ function evaluateCandidate(
     const hoursSinceActivity = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
     score += stalenessBoost(
       hoursSinceActivity,
-      RANKING_STALENESS_DECAY_HOURS[context],
+      RANKING.stalenessDecayHours[context],
       weights.stalenessCapHours,
       weights.stalenessMaxBoost,
     );
-    if (hoursSinceActivity >= STALE_REASON_THRESHOLD_HOURS) {
+    if (hoursSinceActivity >= RANKING.staleReasonThresholdHours) {
       reasons.push("stale");
     }
   }

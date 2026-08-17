@@ -2,12 +2,12 @@
  *
  *  Scoring ranks within a lane; picking interleaves two lanes — never-
  *  engaged and already-touched — so a fresh dump of terms can't monopolize
- *  every slot in the queue. See MIX_SLOTS in weights.ts for the ratio.
+ *  every slot in the queue. See RANKING.mixSlots in weights.ts for the ratio.
  */
 
 import { isSameLocalDay } from "./local-day";
 import { fieldsForContext, scoreCandidate } from "./score";
-import { masteredCooldownHours, MIX_SLOTS, QUEUE_TIMEZONE, RANKING_WEIGHTS } from "./weights";
+import { masteredCooldownHours, RANKING } from "./weights";
 import type { PickContext, ReviewCandidate, ScoredCandidate } from "./types";
 
 export type PickTermsOptions = {
@@ -31,7 +31,7 @@ export function pickTerms(
   const now = new Date();
 
   const scored: ScoredCandidate[] = candidates.map((candidate) => {
-    const { score, reasons } = scoreCandidate(candidate, RANKING_WEIGHTS, context, now);
+    const { score, reasons } = scoreCandidate(candidate, RANKING.formula, context, now);
     return {
       ...candidate,
       score,
@@ -129,7 +129,7 @@ export function pickQuizTerms(
   const now = new Date();
 
   const scored: ScoredCandidate[] = candidates.map((candidate) => {
-    const { score, reasons } = scoreCandidate(candidate, RANKING_WEIGHTS, "quiz", now);
+    const { score, reasons } = scoreCandidate(candidate, RANKING.formula, "quiz", now);
     return { ...candidate, score, reasons };
   });
 
@@ -189,7 +189,7 @@ function isEligibleForMix(candidate: ScoredCandidate, context: PickContext, now:
   if (
     context === "read" &&
     candidate.lastReadAt &&
-    isSameLocalDay(candidate.lastReadAt, now, QUEUE_TIMEZONE)
+    isSameLocalDay(candidate.lastReadAt, now, RANKING.timezone)
   ) {
     return false;
   }
@@ -249,18 +249,18 @@ function startingLane(scored: ScoredCandidate[], context: PickContext, now: Date
 
   for (const candidate of scored) {
     const { ownCount, lastActivityAt } = fieldsForContext(candidate, context);
-    if (!lastActivityAt || !isSameLocalDay(lastActivityAt, now, QUEUE_TIMEZONE)) continue;
+    if (!lastActivityAt || !isSameLocalDay(lastActivityAt, now, RANKING.timezone)) continue;
     if (ownCount === 1) neverEngagedPicksToday += 1;
     else if (ownCount > 1) alreadyTouchedPicksToday += 1;
   }
 
-  const neverEngagedCycles = neverEngagedPicksToday / MIX_SLOTS.neverEngaged;
-  const alreadyTouchedCycles = alreadyTouchedPicksToday / MIX_SLOTS.alreadyTouched;
+  const neverEngagedCycles = neverEngagedPicksToday / RANKING.mixSlots.neverEngaged;
+  const alreadyTouchedCycles = alreadyTouchedPicksToday / RANKING.mixSlots.alreadyTouched;
 
   return neverEngagedCycles > alreadyTouchedCycles ? "already_touched" : "never_engaged";
 }
 
-/** Interleaves the two lanes by MIX_SLOTS.neverEngaged / .alreadyTouched,
+/** Interleaves the two lanes by RANKING.mixSlots.neverEngaged / .alreadyTouched,
  *  starting with `startLane`. Once a lane empties, each cycle contributes 0
  *  slots from it and the loop keeps draining the other lane alone — same
  *  end result as "the other lane fills the rest." */
@@ -276,12 +276,12 @@ function zipLanes(
   const cycle: Array<{ lane: Lane; slots: number }> =
     startLane === "never_engaged"
       ? [
-          { lane: "never_engaged", slots: MIX_SLOTS.neverEngaged },
-          { lane: "already_touched", slots: MIX_SLOTS.alreadyTouched },
+          { lane: "never_engaged", slots: RANKING.mixSlots.neverEngaged },
+          { lane: "already_touched", slots: RANKING.mixSlots.alreadyTouched },
         ]
       : [
-          { lane: "already_touched", slots: MIX_SLOTS.alreadyTouched },
-          { lane: "never_engaged", slots: MIX_SLOTS.neverEngaged },
+          { lane: "already_touched", slots: RANKING.mixSlots.alreadyTouched },
+          { lane: "never_engaged", slots: RANKING.mixSlots.neverEngaged },
         ];
 
   while (ne < neverEngaged.length || at < alreadyTouched.length) {

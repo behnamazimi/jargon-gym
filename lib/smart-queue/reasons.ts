@@ -1,6 +1,6 @@
 /** Human-readable labels for pick reasons (UI). */
 
-import { ENGAGED_MIN_READ_COUNT } from "./weights";
+import { RANKING } from "./weights";
 import type { QuizTier } from "./pick";
 import type { PickContext, PickReason } from "./types";
 
@@ -15,7 +15,7 @@ const VERB: Record<PickContext, string> = {
 const STATIC_LABELS: Partial<Record<PickReason, string>> = {
   struggling: "Struggling",
   repeat_fail: "Repeatedly missed",
-  engaged_untested: `Read ${ENGAGED_MIN_READ_COUNT}+ times, not tested`,
+  engaged_untested: `Read ${RANKING.engagedMinReadCount}+ times, not tested`,
   abandoned_review: "Left mid-review",
   mastered_cooldown: "Recently mastered",
   recent_read_cooldown: "Read today",

@@ -11,9 +11,9 @@ import {
   ContentPageTitledBulletList,
   contentPageLinkClass,
 } from "@/components/content/content-page-shell";
-import { MASTERED_COOLDOWN } from "@/lib/smart-queue/weights";
+import { RANKING } from "@/lib/smart-queue/weights";
 
-const MASTERED_COOLDOWN_CAP_WEEKS = Math.round(MASTERED_COOLDOWN.capHours / 24 / 7);
+const MASTERED_COOLDOWN_CAP_WEEKS = Math.round(RANKING.masteredCooldown.capHours / 24 / 7);
 
 const QUEUE_UP = [
   {

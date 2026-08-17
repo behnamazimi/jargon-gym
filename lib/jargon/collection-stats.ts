@@ -7,7 +7,7 @@ import {
   fetchActiveReviewCandidatesForUser,
   getReviewPoolStatsByDomainForUser,
   isSameLocalDay,
-  QUEUE_TIMEZONE,
+  RANKING,
   strengthForCandidate,
   type PickContext,
   type ReviewCandidate,
@@ -246,7 +246,7 @@ function countActivityToday(
 ): number {
   return candidates.filter((candidate) => {
     const lastActivityAt = lastActivityAtForContext(candidate, context);
-    return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, QUEUE_TIMEZONE);
+    return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, RANKING.timezone);
   }).length;
 }
 
