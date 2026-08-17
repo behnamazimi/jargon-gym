@@ -146,11 +146,19 @@ export const OVERALL_WEIGHTS = { review: 2, quiz: 1 };
 export const OVERALL_STALENESS_TAU_BASE_HOURS = 96; // 4 days — weak/near-zero evidence
 export const OVERALL_STALENESS_TAU_CAP_HOURS = 480; // 20 days — near-100 evidence
 
-/** Floor on the staleness multiplier itself (proportional, not an absolute
- *  score floor) — a real tested pass never fully decays to "indistinguishable
- *  from untested," but weak evidence still ends up much lower than strong
- *  evidence once both hit the floor. */
-export const OVERALL_STALENESS_MULTIPLIER_FLOOR = 0.2;
+/** Evidence-scaled floor on the staleness multiplier itself (proportional,
+ *  not an absolute score floor) — same interpolation shape as the τ pair
+ *  above, keyed off the same pre-decay `nudged` score (overallStalenessFloor
+ *  in strength.ts). Near-zero evidence still floors close to 0 (correctly
+ *  stays `weak` no matter what), but a genuinely maxed term (nudged=100)
+ *  floors at exactly the `strong` cutoff (OVERALL_BUCKET_STRONG_MIN_SCORE =
+ *  75) and stays `strong` indefinitely — a flat floor (the previous design)
+ *  crushed a perfect pass to the same 20%-of-pre-decay score a barely-tested
+ *  term would get, which is exactly backwards: the whole point of the floor
+ *  is that strong evidence should decay less, not decay to the same
+ *  proportion as weak evidence. */
+export const OVERALL_STALENESS_FLOOR_BASE = 0.1; // weak/near-zero evidence
+export const OVERALL_STALENESS_FLOOR_CAP = 0.75; // near-100 evidence
 
 // --- Read nudge (untested exposure) ------------------------------------------
 

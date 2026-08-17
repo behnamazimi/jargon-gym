@@ -17,7 +17,8 @@ import {
   OVERALL_BUCKET_STRONG_MIN_SCORE,
   OVERALL_READ_NUDGE_MAX,
   OVERALL_READ_NUDGE_PER_READ,
-  OVERALL_STALENESS_MULTIPLIER_FLOOR,
+  OVERALL_STALENESS_FLOOR_BASE,
+  OVERALL_STALENESS_FLOOR_CAP,
   OVERALL_STALENESS_TAU_BASE_HOURS,
   OVERALL_STALENESS_TAU_CAP_HOURS,
   OVERALL_UNTESTED_READ_CEILING,
@@ -84,18 +85,34 @@ function overallStalenessDecayHours(nudgedScore: number): number {
   );
 }
 
+/** Evidence-scaled floor: same interpolation shape as overallStalenessDecayHours
+ *  above, keyed off the same pre-decay `nudged` score — near-zero evidence
+ *  still floors close to 0, but a genuinely maxed term (nudged=100) floors
+ *  at OVERALL_STALENESS_FLOOR_CAP, high enough to protect its bucket
+ *  indefinitely (see the constant's comment in weights.ts for the exact
+ *  cutoff this is tuned against). */
+function overallStalenessFloor(nudgedScore: number): number {
+  const t = Math.min(1, Math.max(0, nudgedScore / 100));
+  return (
+    OVERALL_STALENESS_FLOOR_BASE + (OVERALL_STALENESS_FLOOR_CAP - OVERALL_STALENESS_FLOOR_BASE) * t
+  );
+}
+
 /** Multiplicative decay toward a floor (not 0) as most-recent-activity-
  *  across-all-contexts ages — same exponential shape as score.ts's
  *  stalenessBoost, inverted (decay toward the floor, not boost toward a
  *  ceiling). The floor keeps a real tested pass from ever fully collapsing
- *  to "indistinguishable from untested," proportionally — weak evidence
- *  still lands lower than strong evidence once both hit it. */
-function stalenessMultiplier(hoursSinceLastActivity: number, decayConstantHours: number): number {
-  if (!Number.isFinite(hoursSinceLastActivity)) return OVERALL_STALENESS_MULTIPLIER_FLOOR;
-  return Math.max(
-    OVERALL_STALENESS_MULTIPLIER_FLOOR,
-    Math.exp(-hoursSinceLastActivity / decayConstantHours),
-  );
+ *  to "indistinguishable from untested," and — since the floor itself is
+ *  evidence-scaled (overallStalenessFloor above) — strong evidence now
+ *  lands meaningfully higher than weak evidence once both hit their floor,
+ *  not just proportionally. */
+function stalenessMultiplier(
+  hoursSinceLastActivity: number,
+  decayConstantHours: number,
+  floor: number,
+): number {
+  if (!Number.isFinite(hoursSinceLastActivity)) return floor;
+  return Math.max(floor, Math.exp(-hoursSinceLastActivity / decayConstantHours));
 }
 
 /** Bar count for the 5-bar UI, from OVERALL_BAR_SCORE_THRESHOLDS — the same
@@ -155,7 +172,12 @@ function scoreFromEvidence(params: {
     : Infinity;
 
   const decayed =
-    nudged * stalenessMultiplier(hoursSinceLastActivity, overallStalenessDecayHours(nudged));
+    nudged *
+    stalenessMultiplier(
+      hoursSinceLastActivity,
+      overallStalenessDecayHours(nudged),
+      overallStalenessFloor(nudged),
+    );
   const rawScore = Math.max(0, Math.min(100, Math.round(decayed)));
 
   return hasTestEvidence && rawScore === 0 ? 1 : rawScore;
