@@ -14,7 +14,7 @@ export const RANKING = {
   // IANA timezone same-day logic (sit-outs, daily mix counts) is measured against.
   timezone: "Europe/Amsterdam",
 
-  // Minimum lifetime attempts before the fragile boost trusts the fail rate. Below this, no boost.
+  // Minimum lifetime tests before a term's fail rate counts toward ranking priority. Below this, no boost — e.g. 4 tests with 2 fails (50%) adds priority; 2 tests with 1 fail (also 50%) doesn't, too little data yet.
   failRateMinAttempts: 4,
 
   // Cap on |streak| for any boost that scales per point of it (struggling, cross-fail).
