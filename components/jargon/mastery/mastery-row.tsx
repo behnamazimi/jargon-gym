@@ -23,7 +23,7 @@ export function MasteryRow({ row }: MasteryRowProps) {
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <OverallStrengthBars bars={row.bars} bucket={row.bucket} score={row.score} />
+        <OverallStrengthBars bars={row.bars} bucket={row.bucket} score={row.score} caption />
       </div>
     </li>
   );

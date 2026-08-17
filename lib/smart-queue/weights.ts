@@ -198,7 +198,8 @@ export const OVERALL_BUCKET_STRONG_MIN_SCORE = 75;
  *  than, and independent of, the weak/medium/strong cutoffs above (bar
  *  count drives the visual, not the bucket label). One scale for every
  *  term means bar count is always comparable across terms — an unverified
- *  term (capped at OVERALL_READ_NUDGE_MAX = 20, well below the first
- *  threshold) tops out at 1 bar, never competing visually with a
- *  genuinely tested term. */
+ *  term (capped at OVERALL_UNTESTED_READ_CEILING = 50) can cross the first
+ *  couple of thresholds on heavy read exposure alone (up to 2 bars), but
+ *  the ceiling keeps it well short of the top bars a genuinely tested term
+ *  can reach. */
 export const OVERALL_BAR_SCORE_THRESHOLDS = [35, 55, 75, 95] as const;
