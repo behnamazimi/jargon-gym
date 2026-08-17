@@ -35,8 +35,8 @@ export {
   OVERALL_WEIGHTS,
   QUEUE_TIMEZONE,
 } from "./weights";
-export type { Strength, OverallStrength, OverallStrengthResult } from "./strength";
-export { computeStrength, strengthForCandidate, computeOverallStrength } from "./strength";
+export type { OverallStrength, OverallStrengthResult } from "./strength";
+export { strengthForCandidate, computeOverallStrength } from "./strength";
 
 export {
   pickReviewTerms,

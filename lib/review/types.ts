@@ -1,5 +1,5 @@
 import type { Term } from "@/lib/jargon/types";
-import type { PickReason, Strength } from "@/lib/smart-queue";
+import type { OverallStrength, PickReason } from "@/lib/smart-queue";
 import type { TermPoolStatus } from "@/lib/study";
 
 /** @deprecated Prefer TermPoolStatus from @/lib/study */
@@ -11,7 +11,7 @@ export type ReviewTerm = Term & {
   /** Smart-queue score when this term was picked (debug). */
   pickScore?: number;
   /** Display-only mastery tier for this term in Review. Never affects scoring. */
-  strength?: Strength;
+  strength?: OverallStrength;
 };
 
 export type ReviewRating = {

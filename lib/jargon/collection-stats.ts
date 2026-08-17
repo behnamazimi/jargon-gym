@@ -258,7 +258,7 @@ function tallyMastery(
   const tiers: MasteryTiers = { weak: 0, medium: 0, strong: 0 };
   for (const candidate of candidates) {
     const strength = strengthForCandidate(candidate, context, now);
-    if (strength) tiers[strength]++;
+    if (strength && strength !== "unverified") tiers[strength]++;
   }
   return tiers;
 }

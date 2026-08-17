@@ -1,20 +1,22 @@
-import type { Strength } from "@/lib/smart-queue/strength";
+import type { OverallStrength } from "@/lib/smart-queue/strength";
 import { cn } from "@/lib/utils";
 
-const STRENGTH_LABEL: Record<Strength, string> = {
+const STRENGTH_LABEL: Record<OverallStrength, string> = {
+  unverified: "Not yet tested",
   weak: "Weak",
   medium: "Medium",
   strong: "Strong",
 };
 
-const STRENGTH_BADGE_CLASS: Record<Strength, string> = {
+const STRENGTH_BADGE_CLASS: Record<OverallStrength, string> = {
+  unverified: "badge-soft badge-neutral",
   weak: "badge-soft badge-error",
   medium: "badge-soft badge-warning",
   strong: "badge-soft badge-success",
 };
 
 type StrengthBadgeProps = {
-  strength: Strength | undefined;
+  strength: OverallStrength | undefined;
   className?: string;
 };
 

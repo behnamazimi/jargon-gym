@@ -87,8 +87,9 @@ export const RANKING_STALENESS_DECAY_HOURS: Record<PickContext, number> = {
 
 /** The ranking formula's point values — see ScoreWeights in types.ts for
  *  what each field gates. Consumed by score.ts's scoreCandidate via
- *  pick.ts; also read once by strength.ts's computeStrength
- *  (stalenessCapHours only, to decide "recent enough to call strong"). */
+ *  pick.ts only — the display-only strength surfaces in strength.ts use
+ *  their own evidence-scaled staleness decay (OVERALL_STALENESS_* below),
+ *  not this ranking formula. */
 export const RANKING_WEIGHTS: ScoreWeights = {
   unseenBoost: 100,
   strugglingBoostPerStreak: 40,

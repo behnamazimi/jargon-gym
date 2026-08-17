@@ -1,7 +1,7 @@
 /** Smart queue types — pure data structures, no runtime imports.
  */
 
-import type { Strength } from "./strength";
+import type { OverallStrength } from "./strength";
 
 /** The six writes recordRead/recordReveal/recordTest can make. */
 export type ReviewEvent =
@@ -105,5 +105,5 @@ export type PickMeta = {
   score: number;
   reasons: PickReason[];
   /** Display-only mastery tier for this candidate's own-context history. Never affects score. */
-  strength?: Strength;
+  strength?: OverallStrength;
 };

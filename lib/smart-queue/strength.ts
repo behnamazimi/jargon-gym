@@ -1,4 +1,7 @@
-/** Display-only mastery tier. Never feeds back into score.ts.
+/** Display-only mastery tier. Never feeds back into score.ts. Every strength
+ *  surface (mastery page, collection cards, the Review/Quiz session badge)
+ *  routes through scoreFromEvidence below — one formula, no duplicated
+ *  scoring logic.
  *
  *  Callers with insufficient own-context history (< FAIL_RATE_MIN_ATTEMPTS
  *  attempts) must pass failRate = 0 — lack of history isn't "historically
@@ -20,53 +23,13 @@ import {
   OVERALL_UNTESTED_READ_CEILING,
   OVERALL_UNTESTED_READ_LOG_K,
   OVERALL_WEIGHTS,
-  RANKING_WEIGHTS,
 } from "./weights";
 
-export type Strength = "weak" | "medium" | "strong";
-
-export const STRENGTH_WEAK_FAIL_RATE = 0.4;
-export const STRENGTH_STRONG_MIN_STREAK = 5;
-export const STRENGTH_STRONG_MAX_FAIL_RATE = 0.15;
-
-export function computeStrength(
-  streak: number,
-  failRate: number,
-  hoursSinceLastActivity: number,
-): Strength {
-  if (streak <= 0 || failRate > STRENGTH_WEAK_FAIL_RATE) return "weak";
-  if (
-    streak >= STRENGTH_STRONG_MIN_STREAK &&
-    failRate < STRENGTH_STRONG_MAX_FAIL_RATE &&
-    hoursSinceLastActivity < RANKING_WEIGHTS.stalenessCapHours
-  ) {
-    return "strong";
-  }
-  return "medium";
-}
-
-/** Strength for a candidate's own-context history — Read has no streak/fail
- *  concept of its own, so it returns undefined there. */
-export function strengthForCandidate(
-  candidate: ReviewCandidate,
-  context: PickContext,
-  now: Date,
-): Strength | undefined {
-  if (context === "read") return undefined;
-
-  const fields = fieldsForContext(candidate, context);
-  const totalFails = context === "review" ? candidate.reviewFailCount : candidate.quizFailCount;
-  const failRate = fields.ownCount < FAIL_RATE_MIN_ATTEMPTS ? 0 : totalFails / fields.ownCount;
-  const hoursSinceLastActivity = fields.lastActivityAt
-    ? (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60)
-    : Infinity;
-
-  return computeStrength(fields.streak ?? 0, failRate, hoursSinceLastActivity);
-}
-
-/** Cross-context glance-surface mastery — collection cards, stats page.
- *  Never feeds back into computeStrength/strengthForCandidate above, which
- *  drive the per-context Review/Quiz pick-UI badges unchanged. */
+/** Cross-context glance-surface mastery — collection cards, stats page, and
+ *  (via strengthForCandidate below) the per-context Review/Quiz session
+ *  badge. One vocabulary, one formula (scoreFromEvidence) for every
+ *  strength surface in the app — see strengthForCandidate for why the
+ *  per-context badge isn't a separate calculation. */
 export type OverallStrength = "unverified" | "weak" | "medium" | "strong";
 
 export type OverallStrengthResult = {
@@ -159,6 +122,45 @@ function scoreToBucket(score: number): OverallStrength {
   return "weak";
 }
 
+/** Latest of a set of nullable timestamps, or null if none exist. Shared by
+ *  every strength surface's staleness clock — each just picks a different
+ *  set of timestamps to feed in (see computeOverallStrength vs.
+ *  strengthForCandidate). */
+function latestOf(dates: Array<Date | null>): Date | null {
+  return dates
+    .filter((d): d is Date => d !== null)
+    .reduce<Date | null>((max, d) => (max === null || d > max ? d : max), null);
+}
+
+/** The single scoring pipeline shared by every strength surface in the app —
+ *  nudge, evidence-scaled staleness decay, clamp, and the
+ *  tested-but-scored-0 floor. Callers differ only in what counts as
+ *  `blended` (pre-nudge test evidence), `hasTestEvidence`, and which
+ *  timestamps feed `lastActivityAt` — everything past that point is
+ *  identical, so it lives here once instead of being reimplemented per
+ *  surface (see strengthForCandidate for why the per-context Review/Quiz
+ *  badge is not a separate formula). */
+function scoreFromEvidence(params: {
+  blended: number;
+  hasTestEvidence: boolean;
+  readCount: number;
+  lastActivityAt: Date | null;
+  now: Date;
+}): number {
+  const { blended, hasTestEvidence, readCount, lastActivityAt, now } = params;
+
+  const nudged = Math.min(100, blended + readNudge(readCount, hasTestEvidence));
+  const hoursSinceLastActivity = lastActivityAt
+    ? (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60)
+    : Infinity;
+
+  const decayed =
+    nudged * stalenessMultiplier(hoursSinceLastActivity, overallStalenessDecayHours(nudged));
+  const rawScore = Math.max(0, Math.min(100, Math.round(decayed)));
+
+  return hasTestEvidence && rawScore === 0 ? 1 : rawScore;
+}
+
 /** Blended Review+Quiz mastery with a small Read tie-break and staleness
  *  decay, for surfaces that show one badge per term with no activity
  *  context (collection cards, stats). One formula for every term — a term
@@ -192,26 +194,60 @@ export function computeOverallStrength(
 
   const { review: wReview, quiz: wQuiz } = OVERALL_WEIGHTS;
   const blended = (wReview * reviewSub + wQuiz * quizSub) / (wReview + wQuiz);
-  const nudged = Math.min(100, blended + readNudge(candidate.readCount, !isUnverified));
 
-  const lastActivityAt = [
+  const lastActivityAt = latestOf([
     candidate.lastReadAt,
     candidate.lastReviewRecallAt,
     candidate.lastQuizTestedAt,
-  ]
-    .filter((d): d is Date => d !== null)
-    .reduce<Date | null>((max, d) => (max === null || d > max ? d : max), null);
-  const hoursSinceLastActivity = lastActivityAt
-    ? (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60)
-    : Infinity;
+  ]);
 
-  const decayed =
-    nudged * stalenessMultiplier(hoursSinceLastActivity, overallStalenessDecayHours(nudged));
-  const rawScore = Math.max(0, Math.min(100, Math.round(decayed)));
-  const score = !isUnverified && rawScore === 0 ? 1 : rawScore;
+  const score = scoreFromEvidence({
+    blended,
+    hasTestEvidence: !isUnverified,
+    readCount: candidate.readCount,
+    lastActivityAt,
+    now,
+  });
 
   const bars = scoreToBars(score);
   const bucket: OverallStrength = isUnverified ? "unverified" : scoreToBucket(score);
 
   return { score, bucket, bars };
+}
+
+/** Strength for a candidate's own-context history (Review or Quiz) — the
+ *  session-badge counterpart to computeOverallStrength above, built from
+ *  the exact same scoreFromEvidence pipeline instead of a separate formula,
+ *  so the two never disagree on what "weak"/"medium"/"strong" means. Scoped
+ *  to one context's own count/streak/fails (never blends Review+Quiz — that
+ *  would defeat the point of a per-context badge), but does fold in the
+ *  Read nudge, same as computeOverallStrength: the staleness clock is
+ *  max(this context's own last activity, last read), since Read points now
+ *  contribute to the score and their own recency should protect them —
+ *  deliberately excluding the OTHER context's timestamp, so a Review badge
+ *  never decays (or refreshes) based on Quiz activity or vice versa. Read
+ *  has no streak/fail concept of its own, so it returns undefined there. */
+export function strengthForCandidate(
+  candidate: ReviewCandidate,
+  context: PickContext,
+  now: Date,
+): OverallStrength | undefined {
+  if (context === "read") return undefined;
+
+  const fields = fieldsForContext(candidate, context);
+  const failCount = context === "review" ? candidate.reviewFailCount : candidate.quizFailCount;
+  const isUnverified = fields.ownCount === 0;
+  const blended = activitySubScore(fields.ownCount, fields.streak ?? 0, failCount);
+
+  const lastActivityAt = latestOf([fields.lastActivityAt, candidate.lastReadAt]);
+
+  const score = scoreFromEvidence({
+    blended,
+    hasTestEvidence: !isUnverified,
+    readCount: candidate.readCount,
+    lastActivityAt,
+    now,
+  });
+
+  return isUnverified ? "unverified" : scoreToBucket(score);
 }

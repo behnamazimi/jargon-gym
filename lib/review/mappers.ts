@@ -1,12 +1,12 @@
 import type { TermCard } from "@/lib/jargon/term-card";
-import type { PickReason, Strength } from "@/lib/smart-queue";
+import type { OverallStrength, PickReason } from "@/lib/smart-queue";
 import type { ReviewTerm } from "./types";
 
 export function toReviewTerm(
   card: TermCard,
   pickReasons?: PickReason[],
   pickScore?: number,
-  strength?: Strength,
+  strength?: OverallStrength,
 ): ReviewTerm {
   return {
     id: card.id,
