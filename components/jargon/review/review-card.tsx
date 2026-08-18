@@ -51,7 +51,10 @@ export function ReviewCard({
       onTouchEnd={swipe.onTouchEnd}
     >
       <div
-        className={cn("relative mx-auto min-h-[29rem] w-full", !revealed && "cursor-pointer")}
+        className={cn(
+          "relative mx-auto min-h-[26rem] w-full sm:min-h-[30rem] lg:min-h-[38rem]",
+          !revealed && "cursor-pointer",
+        )}
         role={revealed ? undefined : "button"}
         tabIndex={revealed ? undefined : 0}
         onClick={() => {
@@ -68,7 +71,7 @@ export function ReviewCard({
       >
         <div
           className={cn(
-            "relative min-h-[29rem] w-full [transform-style:preserve-3d]",
+            "relative min-h-[26rem] w-full [transform-style:preserve-3d] sm:min-h-[30rem] lg:min-h-[38rem]",
             !reduceMotion && "transition-transform duration-300 ease-out",
             revealed && "[transform:rotateY(180deg)]",
           )}
@@ -81,12 +84,12 @@ export function ReviewCard({
           >
             <div className="flex flex-1 flex-col items-center justify-center gap-4 px-2 py-6 text-center">
               <Badge variant="outline" className="font-normal">
-                {term.category}
+                {term.domainName}
               </Badge>
               <h2 className="font-heading m-0 text-2xl font-semibold tracking-tight text-base-content sm:text-3xl">
                 {term.term}
               </h2>
-              <p className="m-0 text-xs text-base-content/50">{term.domainName}</p>
+              <p className="m-0 text-xs text-base-content/50">{term.category}</p>
               <div className="flex flex-wrap items-center justify-center gap-1.5">
                 <StrengthBadge strength={term.strength} />
                 <PickReasonBadges reasons={term.pickReasons} context="review" mode="compact" />

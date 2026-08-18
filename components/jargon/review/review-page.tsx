@@ -534,7 +534,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
       ) : null}
 
       {step === "playing" && currentCard ? (
-        <div className="mx-auto w-full max-w-lg space-y-4">
+        <div className="mx-auto w-full max-w-lg space-y-4 lg:max-w-2xl">
           <div className="flex items-center gap-3">
             <ReviewProgress current={currentIndex + 1} total={cards.length} />
             <Button
