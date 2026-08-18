@@ -139,6 +139,17 @@ export const className = `
     line-height: 1.5;
     cursor: pointer;
   }
+  .update-banner {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.18);
+    font-size: 10px;
+    opacity: 0.75;
+    cursor: pointer;
+  }
+  .update-banner:hover {
+    opacity: 1;
+  }
 `;
 
 function parseState(output) {
@@ -150,6 +161,8 @@ function parseState(output) {
       appBaseUrl: data.appBaseUrl || "http://localhost:3000",
       totalCount: data.totalCount ?? 0,
       knownCount: data.knownCount ?? 0,
+      widgetVersion: data.widgetVersion || null,
+      latestWidgetVersion: data.latestWidgetVersion || null,
       error: data.error || null,
     };
   } catch {
@@ -159,6 +172,8 @@ function parseState(output) {
       appBaseUrl: "http://localhost:3000",
       totalCount: 0,
       knownCount: 0,
+      widgetVersion: null,
+      latestWidgetVersion: null,
       error: "Invalid widget output",
     };
   }
@@ -176,6 +191,11 @@ const openApp = (appBaseUrl, current) => {
   run(`open ${escapeShellArg(url)}`);
 };
 
+const openWidgetSettings = (appBaseUrl) => {
+  const base = appBaseUrl.replace(/\/$/, "");
+  run(`open ${escapeShellArg(`${base}/jargon/settings?tab=widget`)}`);
+};
+
 /** Re-fetch widget state only — never records anything. `reset` clears the
  *  local pool and peeks a fresh top 10 (wired to the ↻ button). */
 const refreshState = (dispatch, widgetDir = null, reset = false) => {
@@ -187,18 +207,26 @@ const refreshState = (dispatch, widgetDir = null, reset = false) => {
     .catch((err) => dispatch({ error: err }));
 };
 
-const rotateTerm = (termId, widgetDir, dispatch) => {
+/** Drops the current term and pulls in a replacement against the live
+ *  queue in one round trip. `record` should be true only when nothing else
+ *  will record this term's read server-side — i.e. the "Next" button,
+ *  where showing the term was a passive read the user just confirmed by
+ *  moving on. The script's own output is a ready-to-render state, same
+ *  shape as READ_STATE_CMD, so it's dispatched directly. */
+const advanceTerm = (termId, widgetDir, dispatch, record = false) => {
   if (!widgetDir || !termId) return;
-  run(`${escapeShellArg(widgetDir + "/rotate-term.sh")} ${escapeShellArg(termId)}`)
-    .then(() => refreshState(dispatch, widgetDir))
+  const args = record ? ` --record` : "";
+  run(`${escapeShellArg(widgetDir + "/advance-term.sh")} ${escapeShellArg(termId)}${args}`)
+    .then((output) => dispatch({ output }))
     .catch((err) => dispatch({ error: err }));
 };
 
-/** Open the current term in the app, then advance the widget (same as Next). */
+/** Open the current term on the Read page, then advance the widget locally.
+ *  The Read page itself records the read, so this must not record again. */
 const openAppAndRotate = (appBaseUrl, current, widgetDir, dispatch) => {
   openApp(appBaseUrl, current);
   if (current?.id) {
-    rotateTerm(current.id, widgetDir, dispatch);
+    advanceTerm(current.id, widgetDir, dispatch, false);
   }
 };
 
@@ -225,6 +253,29 @@ const LabelBar = ({ title, dispatch, widgetDir = null, trailing = null }) => (
   </div>
 );
 
+/** No widgetVersion means a dev symlink install (widget:link) — always
+ *  current by definition, so it never sees the nag. */
+function isWidgetOutdated(widgetVersion, latestWidgetVersion) {
+  return (
+    Boolean(widgetVersion) && Boolean(latestWidgetVersion) && widgetVersion !== latestWidgetVersion
+  );
+}
+
+const UpdateBanner = ({ widgetVersion, latestWidgetVersion, appBaseUrl }) => {
+  if (!isWidgetOutdated(widgetVersion, latestWidgetVersion)) return null;
+  return (
+    <div
+      className="update-banner"
+      onClick={(e) => {
+        e.stopPropagation();
+        openWidgetSettings(appBaseUrl);
+      }}
+    >
+      ⬆️ Widget update available — click to update
+    </div>
+  );
+};
+
 export const render = ({ output, error }, dispatch) => {
   if (error) {
     const message = typeof error === "string" ? error : error?.message || String(error);
@@ -243,6 +294,8 @@ export const render = ({ output, error }, dispatch) => {
     current,
     widgetDir,
     appBaseUrl,
+    widgetVersion,
+    latestWidgetVersion,
     error: apiError,
   } = parseState(output);
 
@@ -251,6 +304,11 @@ export const render = ({ output, error }, dispatch) => {
       <div onClick={() => openApp(appBaseUrl, null)}>
         <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="def">{apiError}</div>
+        <UpdateBanner
+          widgetVersion={widgetVersion}
+          latestWidgetVersion={latestWidgetVersion}
+          appBaseUrl={appBaseUrl}
+        />
       </div>
     );
   }
@@ -260,6 +318,11 @@ export const render = ({ output, error }, dispatch) => {
       <div onClick={() => openApp(appBaseUrl, null)}>
         <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="def">No terms found — click to open the app.</div>
+        <UpdateBanner
+          widgetVersion={widgetVersion}
+          latestWidgetVersion={latestWidgetVersion}
+          appBaseUrl={appBaseUrl}
+        />
       </div>
     );
   }
@@ -272,6 +335,11 @@ export const render = ({ output, error }, dispatch) => {
           🎉 You&apos;ve marked all {totalCount} terms known in this widget. Click to review in the
           app.
         </div>
+        <UpdateBanner
+          widgetVersion={widgetVersion}
+          latestWidgetVersion={latestWidgetVersion}
+          appBaseUrl={appBaseUrl}
+        />
       </div>
     );
   }
@@ -318,7 +386,7 @@ export const render = ({ output, error }, dispatch) => {
           title="Show another term"
           onClick={(e) => {
             e.stopPropagation();
-            rotateTerm(current.id, widgetDir, dispatch);
+            advanceTerm(current.id, widgetDir, dispatch, true);
           }}
         >
           → Next
@@ -332,6 +400,11 @@ export const render = ({ output, error }, dispatch) => {
           Click term to read more →
         </span>
       </div>
+      <UpdateBanner
+        widgetVersion={widgetVersion}
+        latestWidgetVersion={latestWidgetVersion}
+        appBaseUrl={appBaseUrl}
+      />
     </div>
   );
 };

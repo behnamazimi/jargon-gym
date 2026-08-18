@@ -57,60 +57,34 @@ try:
     api_token = config["apiToken"]
     api_base = config["apiBaseUrl"].rstrip("/")
     app_base = (config.get("appBaseUrl") or api_base).rstrip("/")
+    # No "version" field means this is a dev symlink install (widget:link) —
+    # always current by definition, so the update nag never applies to it.
+    widget_version = config.get("version")
 
-    def fetch_state(exclude_ids):
-        query = urllib.parse.urlencode([("exclude", tid) for tid in exclude_ids], doseq=True)
+    def fetch_state():
         url = f"{api_base}/api/widget/state"
-        if query:
-            url = f"{url}?{query}"
         req = urllib.request.Request(url, headers={"Authorization": f"Bearer {api_token}"})
         with urllib.request.urlopen(req) as resp:
             return json.loads(resp.read().decode())
 
-    default_pool = {
-        "remaining": [],
-        "staged": [],
-        "batchIds": [],
-        "knownCount": 0,
-        "totalCount": 0,
-    }
-    pool = default_pool if reset else load_json(state_path, default_pool)
-    pool.setdefault("remaining", [])
-    pool.setdefault("staged", [])
-    pool.setdefault("batchIds", [])
-    pool.setdefault("knownCount", 0)
-    pool.setdefault("totalCount", 0)
+    default_state = {"pool": [], "knownCount": 0, "totalCount": 0, "latestWidgetVersion": None}
+    state = default_state if reset else load_json(state_path, default_state)
+    state.setdefault("pool", [])
+    state.setdefault("knownCount", 0)
+    state.setdefault("totalCount", 0)
+    state.setdefault("latestWidgetVersion", None)
 
-    def fetch_and_replace_batch():
-        api_state = fetch_state([])
-        terms = api_state.get("terms") or []
-        pool["remaining"] = terms
-        pool["batchIds"] = [t["id"] for t in terms]
-        pool["staged"] = []
-        pool["knownCount"] = api_state.get("knownCount", 0)
-        pool["totalCount"] = api_state.get("totalCount", 0)
-
+    # Only hit the network on --reset or when the local pool is empty (first
+    # run, or corrupted state). Every other rotation is handled by
+    # advance-term.sh, which keeps the pool replenished against the live
+    # queue as it drops terms — this is just a cheap re-read of that pool.
     try:
-        if len(pool["remaining"]) == 0:
-            # Initial load, empty pool, or --reset: fetch a fresh top 10.
-            fetch_and_replace_batch()
-        elif len(pool["remaining"]) == 1 and not pool["staged"]:
-            # One term left on screen and nothing staged yet — prefetch the
-            # next batch, excluding the whole batch currently on screen.
-            batch_ids = set(pool["batchIds"])
-            try:
-                api_state = fetch_state(pool["batchIds"])
-                terms = api_state.get("terms") or []
-                # Defense in depth: never stage a term from the batch just finished.
-                pool["staged"] = [t for t in terms if t.get("id") not in batch_ids]
-                pool["knownCount"] = api_state.get("knownCount", pool["knownCount"])
-                pool["totalCount"] = api_state.get("totalCount", pool["totalCount"])
-            except Exception:
-                # Prefetch failed — keep showing the last term rather than
-                # flashing an error or "all known" state.
-                pass
-        # Otherwise (remaining > 1, or remaining == 1 with staged filled):
-        # serve locally, no API call.
+        if reset or not state["pool"]:
+            api_state = fetch_state()
+            state["pool"] = api_state.get("terms") or []
+            state["knownCount"] = api_state.get("knownCount", 0)
+            state["totalCount"] = api_state.get("totalCount", 0)
+            state["latestWidgetVersion"] = api_state.get("latestWidgetVersion")
     except urllib.error.HTTPError as err:
         body = err.read().decode()
         try:
@@ -121,16 +95,18 @@ try:
     except Exception:
         emit(error_payload("fetch failed", app_base), 1)
 
-    state_path.write_text(json.dumps(pool, indent=2))
+    state_path.write_text(json.dumps(state, indent=2))
 
-    current = pool["remaining"][0] if pool["remaining"] else None
+    current = state["pool"][0] if state["pool"] else None
 
     emit({
         "current": current,
         "widgetDir": str(widget_dir),
         "appBaseUrl": app_base,
-        "totalCount": pool.get("totalCount", 0),
-        "knownCount": pool.get("knownCount", 0),
+        "totalCount": state.get("totalCount", 0),
+        "knownCount": state.get("knownCount", 0),
+        "widgetVersion": widget_version,
+        "latestWidgetVersion": state.get("latestWidgetVersion"),
     })
 except SystemExit:
     raise

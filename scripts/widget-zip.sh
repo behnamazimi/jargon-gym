@@ -48,6 +48,9 @@ cp -R "$WIDGET_SRC" "$TMP/jargon-gym.widget"
 import json
 import pathlib
 
+version_path = pathlib.Path("$ROOT/widget/version.json")
+widget_version = json.loads(version_path.read_text())["version"] if version_path.exists() else None
+
 path = pathlib.Path("$TMP/jargon-gym.widget/config.json")
 if path.exists():
     data = json.loads(path.read_text())
@@ -58,6 +61,8 @@ data["apiToken"] = ""
 data["appBaseUrl"] = "$PRODUCTION_URL"
 data["apiBaseUrl"] = "$PRODUCTION_URL"
 data.pop("rotationIntervalMinutes", None)
+if widget_version is not None:
+    data["version"] = widget_version
 path.write_text(json.dumps(data, indent=2) + "\n")
 PY
 

@@ -6,13 +6,14 @@ import { resolveReviewDomainIdsForUser } from "./known-state";
 
 type Client = SupabaseClient<Database>;
 
-export const WIDGET_READ_BATCH_SIZE = 10;
+export const WIDGET_POOL_SIZE = 2;
 
-/** Peeks up to WIDGET_READ_BATCH_SIZE unknown Read terms — never records a read. */
+/** Peeks up to `limit` unknown Read terms — never records a read. */
 export async function fetchWidgetState(
   client: Client,
   userId: string,
   excludeTermIds: string[] = [],
+  limit: number = WIDGET_POOL_SIZE,
 ): Promise<WidgetStateResponse> {
   const { reviewDomainIds, collectionRows } = await resolveReviewDomainIdsForUser(client, userId);
 
@@ -25,7 +26,7 @@ export async function fetchWidgetState(
     userId,
     { domainIds: reviewDomainIds },
     "unknown",
-    WIDGET_READ_BATCH_SIZE,
+    limit,
     "read",
     excludeTermIds,
   );
