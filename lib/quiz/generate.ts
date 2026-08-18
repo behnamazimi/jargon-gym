@@ -99,7 +99,7 @@ async function requestQuizFromModel(input: {
   apiKey: string;
   terms: QuizTerm[];
 }): Promise<QuizQuestion[]> {
-  const schema = buildQuizGenerationSchema();
+  const schema = buildQuizGenerationSchema(input.terms.map((term) => term.id));
   const prompt = buildQuizPrompt(input.terms);
   const model = createModel(input.provider, input.apiKey);
 

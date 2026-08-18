@@ -3,20 +3,14 @@ import type { QuizQuestion, QuizTerm } from "./types";
 
 type RawQuizQuestion = QuizGenerationPayload["questions"][number];
 
-function resolveRawTermId(
-  question: RawQuizQuestion,
-  terms: QuizTerm[],
-  index: number,
-): string | null {
+function resolveRawTermId(question: RawQuizQuestion, termIds: Set<string>): string | null {
   const candidates = [question.termId, question.id].filter(
     (value): value is string => typeof value === "string" && value.length > 0,
   );
 
   for (const candidate of candidates) {
-    if (terms.some((term) => term.id === candidate)) return candidate;
+    if (termIds.has(candidate)) return candidate;
   }
-
-  if (index < terms.length) return terms[index].id;
 
   return null;
 }
@@ -73,22 +67,39 @@ export function normalizeQuizQuestions(
   raw: QuizGenerationPayload,
   terms: QuizTerm[],
 ): QuizQuestion[] {
-  const byTermId = new Map<string, RawQuizQuestion>();
+  const termIds = new Set(terms.map((term) => term.id));
 
-  for (const [index, question] of raw.questions.entries()) {
-    const termId = resolveRawTermId(question, terms, index);
-    if (!termId || byTermId.has(termId)) continue;
-    byTermId.set(termId, question);
+  // Pass 1: strict match — only trust a question's own termId/id when it names
+  // a real term in this pool. A question that fails this never gets guessed
+  // into the wrong term's slot, so one bad LLM response can't cascade
+  // misalignment across the rest of the quiz.
+  const byTermId = new Map<string, RawQuizQuestion>();
+  const unmatchedQuestions: RawQuizQuestion[] = [];
+
+  for (const question of raw.questions) {
+    const termId = resolveRawTermId(question, termIds);
+    if (termId && !byTermId.has(termId)) {
+      byTermId.set(termId, question);
+    } else {
+      unmatchedQuestions.push(question);
+    }
+  }
+
+  // Pass 2: pair whatever's left over positionally, among the leftovers only —
+  // not by absolute index into the original arrays.
+  const unmatchedTermIds = terms.map((term) => term.id).filter((id) => !byTermId.has(id));
+  for (const [index, termId] of unmatchedTermIds.entries()) {
+    const rawQuestion = unmatchedQuestions[index];
+    if (rawQuestion) byTermId.set(termId, rawQuestion);
   }
 
   const normalized: QuizQuestion[] = [];
 
-  for (const [index, term] of terms.entries()) {
-    const rawQuestion = byTermId.get(term.id) ?? raw.questions[index];
+  for (const term of terms) {
+    const rawQuestion = byTermId.get(term.id);
     if (!rawQuestion) continue;
 
-    const termId = resolveRawTermId(rawQuestion, terms, index) ?? term.id;
-    const question = normalizeOneQuestion(rawQuestion, termId);
+    const question = normalizeOneQuestion(rawQuestion, term.id);
     if (question) normalized.push(question);
   }
 
