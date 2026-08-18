@@ -347,7 +347,9 @@ export async function fetchStatsSnapshot(
     },
     accuracy: {
       review: summarizeAccuracy(combined, "review"),
-      quiz: summarizeAccuracy(knownCandidates, "quiz"),
+      // Lifetime accuracy, not gated on current known status — a term that
+      // just flipped to unknown on a miss must still count that miss.
+      quiz: summarizeAccuracy(combined, "quiz"),
     },
     pausedCollections,
   };
