@@ -63,7 +63,10 @@ try:
 
     def fetch_state():
         url = f"{api_base}/api/widget/state"
-        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {api_token}"})
+        headers = {"Authorization": f"Bearer {api_token}"}
+        if widget_version:
+            headers["X-Widget-Version"] = widget_version
+        req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req) as resp:
             return json.loads(resp.read().decode())
 

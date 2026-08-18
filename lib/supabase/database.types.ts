@@ -509,6 +509,7 @@ export type Database = {
           last_used_at: string | null;
           token_hash: string;
           user_id: string;
+          widget_version: string | null;
         };
         Insert: {
           created_at?: string;
@@ -517,6 +518,7 @@ export type Database = {
           last_used_at?: string | null;
           token_hash: string;
           user_id: string;
+          widget_version?: string | null;
         };
         Update: {
           created_at?: string;
@@ -525,6 +527,7 @@ export type Database = {
           last_used_at?: string | null;
           token_hash?: string;
           user_id?: string;
+          widget_version?: string | null;
         };
         Relationships: [
           {

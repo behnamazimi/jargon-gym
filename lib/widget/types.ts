@@ -18,4 +18,5 @@ export type WidgetTokenRow = {
   label: string;
   created_at: string;
   last_used_at: string | null;
+  widget_version: string | null;
 };

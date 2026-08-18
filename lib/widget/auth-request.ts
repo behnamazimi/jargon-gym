@@ -13,8 +13,10 @@ export async function authenticateWidgetRequest(request: Request) {
     };
   }
 
+  const widgetVersion = request.headers.get("x-widget-version")?.trim() || undefined;
+
   const admin = createAdminClient();
-  const userId = await resolveUserFromToken(admin, token);
+  const userId = await resolveUserFromToken(admin, token, widgetVersion);
 
   if (!userId) {
     return {

@@ -177,17 +177,22 @@ export function HighlightPanel({ label, children }: { label: string; children: R
 export function TokenRow({
   label,
   meta,
+  badge,
   action,
 }: {
   label: string;
   meta: string;
+  badge?: ReactNode;
   action: ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-base-300/60 py-3 last:border-b-0 last:pb-0 first:pt-0">
       <div className="min-w-0">
         <p className="m-0 truncate text-sm font-medium">{label}</p>
-        <p className="mt-0.5 text-xs text-base-content/60">{meta}</p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-base-content/60">
+          <span>{meta}</span>
+          {badge}
+        </p>
       </div>
       {action}
     </div>

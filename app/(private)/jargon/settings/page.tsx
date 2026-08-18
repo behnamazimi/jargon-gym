@@ -6,6 +6,7 @@ import { getSessionUser } from "@/lib/auth/require-session";
 import { getUserSettings } from "@/lib/llm/settings";
 import { getTelegramLinkStatus } from "@/lib/telegram/links";
 import { listWidgetTokens } from "@/lib/widget/tokens";
+import { LATEST_WIDGET_VERSION } from "@/lib/widget/version";
 
 type PageProps = {
   searchParams: Promise<{ tab?: string }>;
@@ -38,7 +39,10 @@ export default async function JargonSettingsPage({ searchParams }: PageProps) {
         <TelegramPanel initialStatus={await getTelegramLinkStatus(supabase, user.id)} />
       ) : null}
       {tab === "widget" ? (
-        <WidgetPanel initialTokens={await listWidgetTokens(supabase, user.id)} />
+        <WidgetPanel
+          initialTokens={await listWidgetTokens(supabase, user.id)}
+          latestWidgetVersion={LATEST_WIDGET_VERSION}
+        />
       ) : null}
     </>
   );

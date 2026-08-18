@@ -49,7 +49,7 @@ export async function revokeWidgetToken(client: Client, userId: string, tokenId:
 export async function listWidgetTokens(client: Client, userId: string): Promise<WidgetTokenRow[]> {
   const { data, error } = await client
     .from("widget_tokens")
-    .select("id, label, created_at, last_used_at")
+    .select("id, label, created_at, last_used_at, widget_version")
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -57,9 +57,14 @@ export async function listWidgetTokens(client: Client, userId: string): Promise<
   return data;
 }
 
+/** `widgetVersion` is whatever the calling widget reported on this request
+ *  (via X-Widget-Version) — omitted entirely when absent, so we never
+ *  overwrite a previously known version with null just because one request
+ *  didn't carry the header. */
 export async function resolveUserFromToken(
   client: Client,
   bearerToken: string,
+  widgetVersion?: string,
 ): Promise<string | null> {
   const tokenHash = hashWidgetToken(bearerToken);
 
@@ -72,10 +77,14 @@ export async function resolveUserFromToken(
   if (error) throw error;
   if (!data) return null;
 
-  await client
-    .from("widget_tokens")
-    .update({ last_used_at: new Date().toISOString() })
-    .eq("id", data.id);
+  const update: { last_used_at: string; widget_version?: string } = {
+    last_used_at: new Date().toISOString(),
+  };
+  if (widgetVersion) {
+    update.widget_version = widgetVersion;
+  }
+
+  await client.from("widget_tokens").update(update).eq("id", data.id);
 
   return data.user_id;
 }

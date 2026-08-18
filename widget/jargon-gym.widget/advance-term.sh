@@ -80,6 +80,12 @@ exclude_ids = [t["id"] for t in pool]
 try:
     api_base = config["apiBaseUrl"].rstrip("/")
     api_token = config["apiToken"]
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+        "Content-Type": "application/json",
+    }
+    if widget_version:
+        headers["X-Widget-Version"] = widget_version
     req = urllib.request.Request(
         f"{api_base}/api/widget/advance",
         data=json.dumps({
@@ -87,10 +93,7 @@ try:
             "record": record,
             "excludeIds": exclude_ids,
         }).encode(),
-        headers={
-            "Authorization": f"Bearer {api_token}",
-            "Content-Type": "application/json",
-        },
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=10) as resp:
