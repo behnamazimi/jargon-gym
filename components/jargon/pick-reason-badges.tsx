@@ -51,6 +51,8 @@ export type QueuePreviewItem = {
   id: string;
   term: string;
   pickReasons?: PickReason[];
+  /** Review only: which pool this term came from, shown as a small badge. */
+  originStatus?: "known" | "unknown";
 };
 
 type QueuePreviewProps = {
@@ -87,6 +89,9 @@ function QueuePreviewList({ items, context }: { items: QueuePreviewItem[]; conte
           <div className="flex items-baseline gap-2">
             <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
             <span className="text-sm font-medium text-base-content">{item.term}</span>
+            {item.originStatus ? (
+              <span className="badge badge-ghost badge-sm font-normal">{item.originStatus}</span>
+            ) : null}
           </div>
           <PickReasonBadges
             reasons={item.pickReasons}

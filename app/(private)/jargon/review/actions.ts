@@ -8,7 +8,7 @@ import type { ReviewSetup } from "@/lib/review/types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import type { Database } from "@/lib/supabase/database.types";
 import { listStudyCollections } from "@/lib/study/collections";
-import { getReviewPoolStats } from "@/lib/smart-queue/service";
+import { getMixedReviewPoolStats } from "@/lib/smart-queue/service";
 
 export async function getReviewSetupData() {
   const auth = await requireAuthenticatedClient();
@@ -21,23 +21,14 @@ export async function getReviewSetupData() {
   return { collections };
 }
 
-export async function getReviewPoolStatsAction(
-  domainIds: string[] | "all",
-  status: "known" | "unknown",
-) {
+export async function getReviewPoolStatsAction(domainIds: string[] | "all") {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }
 
   try {
-    const poolStats = await getReviewPoolStats(
-      auth.supabase,
-      auth.user.id,
-      { domainIds },
-      status,
-      "review",
-    );
+    const poolStats = await getMixedReviewPoolStats(auth.supabase, auth.user.id, { domainIds });
     return { poolStats };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load pool stats.";
@@ -59,17 +50,11 @@ async function loadReviewCards(
     return { error: `Review sessions are limited to ${MAX_REVIEW_TERMS} cards.` as const };
   }
 
-  const cards = await fetchReviewTermPool(
-    supabase,
-    userId,
-    setup.domainIds,
-    setup.status,
-    cardCount,
-  );
+  const cards = await fetchReviewTermPool(supabase, userId, setup.domainIds, cardCount);
 
   if (cards.length === 0) {
     return {
-      error: "No terms match your selection. Try a different collection or status." as const,
+      error: "No terms match your selection. Try a different collection." as const,
     };
   }
 
@@ -93,6 +78,7 @@ export async function previewReviewQueueAction(setup: ReviewSetup) {
         id: card.id,
         term: card.term,
         pickReasons: card.pickReasons,
+        originStatus: card.originStatus,
       })),
     };
   } catch (err) {
@@ -122,7 +108,7 @@ export async function startReviewAction(setup: ReviewSetup) {
 export async function rateReviewTermAction(
   termId: string,
   known: boolean,
-  sessionStatus: "known" | "unknown",
+  originStatus: "known" | "unknown",
 ) {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
@@ -133,7 +119,7 @@ export async function rateReviewTermAction(
     await applyReviewRating(auth.supabase, auth.user.id, {
       termId,
       known,
-      sessionStatus,
+      sessionStatus: originStatus,
       mode: "session",
     });
 
@@ -142,7 +128,7 @@ export async function rateReviewTermAction(
 
     return {};
   } catch (err) {
-    console.error("rateReviewTermAction failed", { termId, known, sessionStatus, err });
+    console.error("rateReviewTermAction failed", { termId, known, originStatus, err });
     const message = err instanceof Error ? err.message : "Couldn't save your rating. Try again.";
     return { error: message };
   }

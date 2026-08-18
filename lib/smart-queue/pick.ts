@@ -172,6 +172,85 @@ export function pickQuizTerms(
   return withSitOuts.slice(0, limit);
 }
 
+/** Which pool a candidate came from — derived from `knownAt` rather than
+ *  stored separately, since the repository already populates it correctly
+ *  per-candidate regardless of which status was queried. */
+export function originOf(candidate: ReviewCandidate): "known" | "unknown" {
+  return candidate.knownAt !== null ? "known" : "unknown";
+}
+
+/** Interleaves two pre-sliced lists proportionally to their own lengths —
+ *  not a fixed ratio — so results stay evenly spread even after backfill
+ *  changes the effective known/unknown split for a session. Tracks each
+ *  list's fractional "turn" position and always emits from whichever is
+ *  further behind; once a list empties, the other simply drains alone. */
+function interleaveProportional<T>(a: T[], b: T[]): T[] {
+  const result: T[] = [];
+  let ai = 0;
+  let bi = 0;
+
+  while (ai < a.length || bi < b.length) {
+    const aTurn = a.length === 0 ? Infinity : ai / a.length;
+    const bTurn = b.length === 0 ? Infinity : bi / b.length;
+
+    if (aTurn <= bTurn) {
+      if (ai < a.length) {
+        result.push(a[ai]!);
+        ai++;
+      } else {
+        result.push(b[bi]!);
+        bi++;
+      }
+    } else {
+      if (bi < b.length) {
+        result.push(b[bi]!);
+        bi++;
+      } else {
+        result.push(a[ai]!);
+        ai++;
+      }
+    }
+  }
+
+  return result;
+}
+
+/** Review's mixed-pool pick: ranks the unknown and known pools independently
+ *  (each through the ordinary {@link pickTerms}, so scoring/lane-mix/shuffle
+ *  are fully reused and the two pools never compete on a shared scale), then
+ *  interleaves them evenly at the RANKING.reviewMix ratio. If a pool can't
+ *  fill its quota, the other pool backfills the shortfall so the session
+ *  stays full length whenever any terms exist. Pass `limit = unknown.length
+ *  + known.length` for debug/inspection (nothing sliced, nothing dropped). */
+export function pickMixedReviewTerms(
+  unknown: ReviewCandidate[],
+  known: ReviewCandidate[],
+  limit: number,
+  context: PickContext,
+  options: PickTermsOptions = {},
+): ScoredCandidate[] {
+  if (limit <= 0) return [];
+
+  const { knownSlots, unknownSlots } = RANKING.reviewMix;
+  const totalSlots = knownSlots + unknownSlots;
+
+  let targetKnown = Math.round((limit * knownSlots) / totalSlots);
+  let targetUnknown = limit - targetKnown;
+
+  if (unknown.length < targetUnknown) {
+    targetUnknown = unknown.length;
+    targetKnown = Math.min(known.length, limit - targetUnknown);
+  } else if (known.length < targetKnown) {
+    targetKnown = known.length;
+    targetUnknown = Math.min(unknown.length, limit - targetKnown);
+  }
+
+  const pickedUnknown = pickTerms(unknown, targetUnknown, context, options);
+  const pickedKnown = pickTerms(known, targetKnown, context, options);
+
+  return interleaveProportional(pickedUnknown, pickedKnown);
+}
+
 type Lane = "never_engaged" | "already_touched";
 
 /** A term sits out of a mix slot when a cooldown fired, or — read context

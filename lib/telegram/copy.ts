@@ -31,15 +31,12 @@ export const NOTHING_ELIGIBLE_FOR_QUIZ_MESSAGE =
   "Nothing eligible today (read or missed). Try tomorrow or mark more known.";
 
 export const REVIEW_HELP_MESSAGE =
-  "Usage: /review [known|unknown] [all|<collection>] [count|all]\n\n" +
+  "Usage: /review [all|<collection>] [count|all]\n\n" +
+  "Review blends mostly-unknown terms with some known ones to keep them fresh.\n\n" +
   "Examples:\n" +
   "/review — guided setup\n" +
-  "/review unknown — pick collection and count\n" +
-  "/review known all 10 — 10 known terms from all collections\n" +
-  "/review unknown all — choose how many unknown terms";
+  "/review all 10 — 10 cards from all collections\n" +
+  "/review all — choose how many cards";
 
-export const NO_UNKNOWN_REVIEW_TERMS_MESSAGE =
-  "You have no unknown terms in your review pool. Try /review known to review terms you've already learned!";
-
-export const NO_KNOWN_REVIEW_TERMS_MESSAGE =
-  "You haven't marked any terms as known yet. Try /review unknown to start learning!";
+export const NO_REVIEW_TERMS_MESSAGE =
+  "You have no terms in your review pool. Import more or turn domains back on in the app.";

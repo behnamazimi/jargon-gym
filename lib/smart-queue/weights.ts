@@ -54,10 +54,21 @@ export const RANKING = {
     fragileBoostMax: 25,
   } satisfies ScoreWeights,
 
-  // How pick.ts interleaves never-engaged vs. already-touched terms. 1:1 alternates; raise neverEngaged to favor new terms, raise alreadyTouched to protect the rotation.
+  // How pick.ts interleaves never-engaged vs. already-touched terms.
+  // 1:1 alternates; raise neverEngaged to favor new terms, raise alreadyTouched to protect the rotation.
   mixSlots: {
     neverEngaged: 1,
     alreadyTouched: 1,
+  },
+
+  // How Review blends known + unknown pools by default.
+  // knownSlots:unknownSlots is the target ratio each session rounds toward,
+  // backfilled from the other pool when one runs short — e.g. 2:5 means a
+  // 7-card session aims for 2 known + 5 unknown, and a 10-card session
+  // rounds to 3 known + 7 unknown.
+  reviewMix: {
+    knownSlots: 2,
+    unknownSlots: 5,
   },
 };
 

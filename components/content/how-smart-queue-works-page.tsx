@@ -14,6 +14,8 @@ import {
 import { RANKING } from "@/lib/smart-queue/weights";
 
 const MASTERED_COOLDOWN_CAP_WEEKS = Math.round(RANKING.masteredCooldown.capHours / 24 / 7);
+const REVIEW_MIX_KNOWN_SLOTS = RANKING.reviewMix.knownSlots;
+const REVIEW_MIX_TOTAL_SLOTS = RANKING.reviewMix.knownSlots + RANKING.reviewMix.unknownSlots;
 
 const QUEUE_UP = [
   {
@@ -56,7 +58,7 @@ const SURFACES = [
   },
   {
     title: "Web review",
-    body: "Pick a known or unknown pool and work through a ranked batch, marking terms as you go.",
+    body: "Work through a ranked batch that blends mostly-unknown terms with some known ones for reinforcement, marking terms as you go.",
   },
   {
     title: "Web quiz",
@@ -113,7 +115,7 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             So I built a queue that ranks from history, never engaged, missed, or read a lot without
             ever actually testing yourself, not future review dates. No daily goals or reminders
             either. Study when you want; the queue picks the best next terms for whichever activity
-            you chose, from whichever pool applies to it. See{" "}
+            you chose, from whichever pool, or blend of pools, applies to it. See{" "}
             <Link href="/how-terms-work" className={contentPageLinkClass}>
               How terms are built
             </Link>{" "}
@@ -182,6 +184,11 @@ export function HowSmartQueueWorksPage({ isLoggedIn = false }: HowSmartQueueWork
             rather than clearing one pile before starting the other. Quiz works through unfamiliar
             terms first, then ones you haven&apos;t quizzed in a while, saving newly mastered ones
             for last.
+          </p>
+          <p className="m-0 text-base-content/70">
+            Review also blends a few known terms back in, so what you already know doesn&apos;t
+            quietly rot from disuse, about {REVIEW_MIX_KNOWN_SLOTS} in {REVIEW_MIX_TOTAL_SLOTS}{" "}
+            terms, spread through the session instead of clustered at the start or end.
           </p>
         </ContentPageSection>
 

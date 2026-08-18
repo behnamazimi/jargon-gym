@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchStudyTermPool, getMaxStudyCount, MAX_STUDY_TERMS } from "@/lib/study";
 import { toReviewTerm } from "./mappers";
-import type { ReviewTerm, ReviewTermStatus } from "./types";
+import type { ReviewTerm } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -17,14 +17,12 @@ export async function fetchReviewTermPool(
   client: Client,
   userId: string,
   domainIds: string[] | "all",
-  status: ReviewTermStatus,
   cardCount: number,
 ): Promise<ReviewTerm[]> {
   const { cards, pickMeta } = await fetchStudyTermPool(
     client,
     userId,
     { domainIds },
-    status,
     cardCount,
     "session",
     "review",
@@ -33,6 +31,12 @@ export async function fetchReviewTermPool(
   const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
   return cards.map((card) => {
     const meta = metaById.get(card.id);
-    return toReviewTerm(card, meta?.reasons, undefined, meta?.strength);
+    return toReviewTerm(
+      card,
+      meta?.originStatus ?? "unknown",
+      meta?.reasons,
+      undefined,
+      meta?.strength,
+    );
   });
 }

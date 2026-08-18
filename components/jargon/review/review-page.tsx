@@ -2,9 +2,8 @@
 
 import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
-import { MAX_STUDY_TERMS, type StudyCollection, type TermPoolStatus } from "@/lib/study/types";
-import { QuizSetupOption } from "@/components/jargon/quiz/quiz-controls";
+import { countTermsForMixedSelection, getMaxStudyCount } from "@/lib/study/count";
+import { MAX_STUDY_TERMS, type StudyCollection } from "@/lib/study/types";
 import {
   QuizCenteredState,
   QuizKeyboardHint,
@@ -54,15 +53,12 @@ type ReviewPageProps = {
 
 const DEFAULT_CARD_COUNT = 10;
 
-function termCountForCollection(collection: StudyCollection, status: TermPoolStatus) {
-  return status === "known" ? collection.knownCount : collection.unknownCount;
+function termCountForCollection(collection: StudyCollection) {
+  return collection.knownCount + collection.unknownCount;
 }
 
-function allCollectionsTermCount(collections: StudyCollection[], status: TermPoolStatus) {
-  return collections.reduce(
-    (total, collection) => total + termCountForCollection(collection, status),
-    0,
-  );
+function allCollectionsTermCount(collections: StudyCollection[]) {
+  return collections.reduce((total, collection) => total + termCountForCollection(collection), 0);
 }
 
 function upsertRating(ratings: ReviewRating[], termId: string, known: boolean): ReviewRating[] {
@@ -74,7 +70,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
 
   const [step, setStep] = useState<ReviewStep>("setup");
-  const [status, setStatus] = useState<TermPoolStatus>("unknown");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>("all");
   const [cardCount, setCardCount] = useState(DEFAULT_CARD_COUNT);
   const [cardCountInput, setCardCountInput] = useState(String(DEFAULT_CARD_COUNT));
@@ -87,7 +82,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   const [isStarting, startReview] = useTransition();
   const [isRating, setIsRating] = useState(false);
   const [savedSession, setSavedSession] = useState<ReviewSessionState | null>(null);
-  const [sessionStatus, setSessionStatus] = useState<TermPoolStatus>("unknown");
   const [poolStats, setPoolStats] = useState<{
     unseen: number;
     seen: number;
@@ -106,8 +100,8 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   );
 
   const availableTermCount = useMemo(
-    () => countTermsForSelection(collections, domainIds, status),
-    [collections, domainIds, status],
+    () => countTermsForMixedSelection(collections, domainIds),
+    [collections, domainIds],
   );
 
   const maxCardCount = getMaxStudyCount(availableTermCount);
@@ -125,14 +119,14 @@ export function ReviewPage({ collections }: ReviewPageProps) {
       setCardCountError(null);
       return newCount;
     });
-  }, [availableTermCount, status, selectedCollectionId]);
+  }, [availableTermCount, selectedCollectionId]);
 
   useEffect(() => {
     if (step !== "setup") return;
 
     let cancelled = false;
 
-    void getReviewPoolStatsAction(domainIds, status).then((result) => {
+    void getReviewPoolStatsAction(domainIds).then((result) => {
       if (cancelled) return;
       if ("poolStats" in result && result.poolStats) {
         setPoolStats(result.poolStats);
@@ -142,7 +136,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     return () => {
       cancelled = true;
     };
-  }, [domainIds, status, step, statsRefreshKey]);
+  }, [domainIds, step, statsRefreshKey]);
 
   useEffect(() => {
     if (step !== "setup" || availableTermCount === 0 || cardCountError !== null) {
@@ -153,7 +147,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     let cancelled = false;
     setPreviewLoading(true);
 
-    void previewReviewQueueAction({ domainIds, status, cardCount }).then((result) => {
+    void previewReviewQueueAction({ domainIds, cardCount }).then((result) => {
       if (cancelled) return;
       setPreviewLoading(false);
       if ("preview" in result && result.preview) {
@@ -166,15 +160,14 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     return () => {
       cancelled = true;
     };
-  }, [domainIds, status, cardCount, step, availableTermCount, cardCountError, statsRefreshKey]);
+  }, [domainIds, cardCount, step, availableTermCount, cardCountError, statsRefreshKey]);
 
   const currentSetup = useMemo(
     (): ReviewSetup => ({
       domainIds,
-      status,
       cardCount,
     }),
-    [domainIds, status, cardCount],
+    [domainIds, cardCount],
   );
 
   const currentCard = cards[currentIndex];
@@ -251,7 +244,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
   function handleResumeSession() {
     if (!savedSession) return;
 
-    setStatus(savedSession.setup.status);
     setSelectedCollectionId(
       savedSession.setup.domainIds === "all" ? "all" : savedSession.setup.domainIds[0],
     );
@@ -262,7 +254,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     setRevealedTermIds(savedSession.revealedTermIds);
     setShownTermIds(savedSession.revealedTermIds);
     setSessionStartedAt(savedSession.startedAt);
-    setSessionStatus(savedSession.setup.status);
     setErrorMessage(null);
     setStep("playing");
   }
@@ -287,7 +278,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
 
       const startedAt = new Date().toISOString();
       setSessionStartedAt(startedAt);
-      setSessionStatus(currentSetup.status);
       setCards(result.cards);
       setCurrentIndex(0);
       setRatings([]);
@@ -334,7 +324,7 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     const alreadyRated = ratings.some((rating) => rating.termId === currentCard.id);
 
     setIsRating(true);
-    const result = await rateReviewTermAction(currentCard.id, retained, sessionStatus);
+    const result = await rateReviewTermAction(currentCard.id, retained, currentCard.originStatus);
     setIsRating(false);
 
     if (result.error) {
@@ -359,9 +349,8 @@ export function ReviewPage({ collections }: ReviewPageProps) {
     finishSession(ratings);
   }
 
-  const isKnownRefresh = sessionStatus === "known";
-  const positiveLabel = isKnownRefresh ? "Still know it" : "Had it";
-  const negativeLabel = isKnownRefresh ? "Forgot it" : "Didn't have it";
+  const positiveLabel = "Got it";
+  const negativeLabel = "Missed it";
 
   useReviewKeyboard({
     onReveal: handleReveal,
@@ -420,28 +409,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                 </Alert>
               ) : null}
 
-              <fieldset className="mb-4 flex max-w-md flex-col gap-2 border-0 p-0">
-                <legend className="mb-2 text-sm leading-none font-medium">What to review</legend>
-                <div className="flex flex-col gap-3">
-                  <QuizSetupOption
-                    name="review-status"
-                    value="unknown"
-                    checked={status === "unknown"}
-                    onChange={() => setStatus("unknown")}
-                    title="Unknown terms"
-                    description="Terms you haven't marked as known."
-                  />
-                  <QuizSetupOption
-                    name="review-status"
-                    value="known"
-                    checked={status === "known"}
-                    onChange={() => setStatus("known")}
-                    title="Known terms"
-                    description="Terms you've already marked as known."
-                  />
-                </div>
-              </fieldset>
-
               <Field className="max-w-md">
                 <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
                 <Select
@@ -453,11 +420,11 @@ export function ReviewPage({ collections }: ReviewPageProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem id="all">
-                      All active collections ({allCollectionsTermCount(collections, status)})
+                      All active collections ({allCollectionsTermCount(collections)})
                     </SelectItem>
                     {collections.map((collection) => (
                       <SelectItem key={collection.id} id={collection.id}>
-                        {collection.name} ({termCountForCollection(collection, status)})
+                        {collection.name} ({termCountForCollection(collection)})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -536,9 +503,9 @@ export function ReviewPage({ collections }: ReviewPageProps) {
               {availableTermCount === 0 ? (
                 <Alert variant="destructive">
                   <AlertDescription>
-                    No {status} terms in your selection. Pick another option or{" "}
+                    No terms in your selection. Pick another collection or{" "}
                     <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
-                      activate a collection
+                      activate one
                     </LinkButton>
                     .
                   </AlertDescription>
@@ -672,7 +639,6 @@ export function ReviewPage({ collections }: ReviewPageProps) {
         <div className="mx-auto w-full max-w-2xl">
           <ReviewSummary
             reviewedCount={ratings.length}
-            sessionStatus={sessionStatus}
             retainedCount={retainedCount}
             forgotCount={forgotCount}
             onReviewAgain={resetToSetup}

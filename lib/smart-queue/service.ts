@@ -4,7 +4,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
 import type { PickContext, PickMeta, PoolStats, ScoredCandidate } from "./types";
-import { pickQuizTerms, pickTerms } from "./pick";
+import {
+  originOf,
+  pickMixedReviewTerms as mixReviewCandidates,
+  pickQuizTerms,
+  pickTerms,
+} from "./pick";
 import { computePoolStats } from "./stats";
 import { fetchCandidates, fetchCandidatesForUser, type ReviewScope } from "./repository";
 import { hydrateTermCardsForUser, hydrateTermsAsTermCards } from "./hydrate";
@@ -20,6 +25,8 @@ type PickReviewResult = {
 
 type Client = SupabaseClient<Database>;
 
+/** General single-pool pick — used by Read (always "unknown") and, via the
+ *  Review-only wrappers below, as a building block for the blended pool. */
 export async function pickReviewTerms(
   client: Client,
   userId: string,
@@ -90,6 +97,86 @@ export async function pickReviewTermsForUser(
   return { cards, pickMeta };
 }
 
+/** Review's blended pick: fetches both pools, ranks each independently, and
+ *  interleaves at the RANKING.reviewMix ratio (see pick.ts). No status param
+ *  — Review no longer has a pure-pool mode. */
+export async function pickMixedReviewTerms(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+  limit: number,
+  context: PickContext,
+): Promise<PickReviewResult> {
+  const [unknown, known] = await Promise.all([
+    fetchCandidates(client, userId, scope, "unknown"),
+    fetchCandidates(client, userId, scope, "known"),
+  ]);
+
+  if (unknown.length === 0 && known.length === 0) return { cards: [], pickMeta: [] };
+
+  const scored = mixReviewCandidates(unknown, known, limit, context);
+  if (scored.length === 0) return { cards: [], pickMeta: [] };
+
+  const now = new Date();
+  const pickMeta: PickMeta[] = scored.map((s) => ({
+    termId: s.termId,
+    score: s.score,
+    reasons: s.reasons,
+    strength: strengthForCandidate(s, context, now),
+    originStatus: originOf(s),
+  }));
+
+  const cards = await hydrateTermsAsTermCards(
+    client,
+    scored.map((s) => s.termId),
+  );
+
+  return { cards, pickMeta };
+}
+
+/** Service-role counterpart of {@link pickMixedReviewTerms} (Telegram). */
+export async function pickMixedReviewTermsForUser(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+  limit: number,
+  context: PickContext,
+  excludeTermIds?: string[],
+): Promise<PickReviewResult> {
+  let [unknown, known] = await Promise.all([
+    fetchCandidatesForUser(client, userId, scope, "unknown"),
+    fetchCandidatesForUser(client, userId, scope, "known"),
+  ]);
+
+  if (excludeTermIds && excludeTermIds.length > 0) {
+    const excludeSet = new Set(excludeTermIds);
+    unknown = unknown.filter((c) => !excludeSet.has(c.termId));
+    known = known.filter((c) => !excludeSet.has(c.termId));
+  }
+
+  if (unknown.length === 0 && known.length === 0) return { cards: [], pickMeta: [] };
+
+  const scored = mixReviewCandidates(unknown, known, limit, context);
+  if (scored.length === 0) return { cards: [], pickMeta: [] };
+
+  const now = new Date();
+  const pickMeta: PickMeta[] = scored.map((s) => ({
+    termId: s.termId,
+    score: s.score,
+    reasons: s.reasons,
+    strength: strengthForCandidate(s, context, now),
+    originStatus: originOf(s),
+  }));
+
+  const cards = await hydrateTermCardsForUser(
+    client,
+    userId,
+    scored.map((s) => s.termId),
+  );
+
+  return { cards, pickMeta };
+}
+
 /** Every candidate in the pool, scored and sorted — no slicing. Debug/inspection only. */
 export async function listScoredCandidates(
   client: Client,
@@ -101,6 +188,48 @@ export async function listScoredCandidates(
   const candidates = await fetchCandidates(client, userId, scope, status);
   if (candidates.length === 0) return [];
   return pickTerms(candidates, candidates.length, context, { includeOwnFailSitOut: true });
+}
+
+/** Review's mixed-pool counterpart of {@link listScoredCandidates} — every
+ *  candidate from both pools, scored, tagged with origin, and merged at the
+ *  RANKING.reviewMix ratio — no slicing. Debug/inspection only. */
+export async function listScoredMixedReviewCandidates(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+): Promise<{ rows: ScoredCandidate[]; knownCount: number; unknownCount: number }> {
+  const [unknown, known] = await Promise.all([
+    fetchCandidates(client, userId, scope, "unknown"),
+    fetchCandidates(client, userId, scope, "known"),
+  ]);
+  const total = unknown.length + known.length;
+  if (total === 0) return { rows: [], knownCount: 0, unknownCount: 0 };
+
+  const rows = mixReviewCandidates(unknown, known, total, "review", {
+    includeOwnFailSitOut: true,
+  });
+  const knownCount = rows.filter((r) => originOf(r) === "known").length;
+  return { rows, knownCount, unknownCount: rows.length - knownCount };
+}
+
+/** Service-role counterpart of {@link listScoredMixedReviewCandidates} (Telegram/debug via admin client). */
+export async function listScoredMixedReviewCandidatesForUser(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+): Promise<{ rows: ScoredCandidate[]; knownCount: number; unknownCount: number }> {
+  const [unknown, known] = await Promise.all([
+    fetchCandidatesForUser(client, userId, scope, "unknown"),
+    fetchCandidatesForUser(client, userId, scope, "known"),
+  ]);
+  const total = unknown.length + known.length;
+  if (total === 0) return { rows: [], knownCount: 0, unknownCount: 0 };
+
+  const rows = mixReviewCandidates(unknown, known, total, "review", {
+    includeOwnFailSitOut: true,
+  });
+  const knownCount = rows.filter((r) => originOf(r) === "known").length;
+  return { rows, knownCount, unknownCount: rows.length - knownCount };
 }
 
 /** Quiz's dedicated pick path: known pool only, hard tiers via pickQuizTerms
@@ -233,6 +362,45 @@ export async function getReviewPoolStatsForUser(
 ): Promise<PoolStats> {
   const candidates = await fetchCandidatesForUser(client, userId, scope, status);
   return computePoolStats(candidates, context);
+}
+
+function combinePoolStats(a: PoolStats, b: PoolStats): PoolStats {
+  return {
+    unseen: a.unseen + b.unseen,
+    seen: a.seen + b.seen,
+    stale: a.stale + b.stale,
+    recent: a.recent + b.recent,
+    struggling: a.struggling + b.struggling,
+    total: a.total + b.total,
+    allSeenOnce: a.allSeenOnce && b.allSeenOnce,
+  };
+}
+
+/** Review's mixed-pool counterpart of {@link getReviewPoolStats} — combined
+ *  stats across both pools, since Review no longer inspects one at a time. */
+export async function getMixedReviewPoolStats(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+): Promise<PoolStats> {
+  const [unknownStats, knownStats] = await Promise.all([
+    getReviewPoolStats(client, userId, scope, "unknown", "review"),
+    getReviewPoolStats(client, userId, scope, "known", "review"),
+  ]);
+  return combinePoolStats(unknownStats, knownStats);
+}
+
+/** Service-role counterpart of {@link getMixedReviewPoolStats} (Telegram). */
+export async function getMixedReviewPoolStatsForUser(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+): Promise<PoolStats> {
+  const [unknownStats, knownStats] = await Promise.all([
+    getReviewPoolStatsForUser(client, userId, scope, "unknown", "review"),
+    getReviewPoolStatsForUser(client, userId, scope, "known", "review"),
+  ]);
+  return combinePoolStats(unknownStats, knownStats);
 }
 
 /** Every active-collection candidate for status, unsorted — callers group/aggregate themselves.

@@ -19,6 +19,9 @@ export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: 
             <div className="flex min-w-0 items-baseline gap-2">
               <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
               <span className="truncate text-sm font-medium text-base-content">{row.term}</span>
+              {row.originStatus ? (
+                <span className="badge badge-ghost badge-sm font-normal">{row.originStatus}</span>
+              ) : null}
             </div>
             <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
               {row.score.toFixed(1)}

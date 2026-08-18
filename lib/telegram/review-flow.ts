@@ -5,24 +5,18 @@ import { applyReviewRating, recordReveal } from "@/lib/jargon/review-outcome";
 import { getMaxStudyCount } from "@/lib/study";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";
-import {
-  NO_KNOWN_REVIEW_TERMS_MESSAGE,
-  NO_UNKNOWN_REVIEW_TERMS_MESSAGE,
-  REVIEW_REVEAL_FAILED_SUFFIX,
-} from "./copy";
+import { NO_REVIEW_TERMS_MESSAGE, REVIEW_REVEAL_FAILED_SUFFIX } from "./copy";
 import {
   buildReviewRateKeyboard,
   buildReviewRevealKeyboard,
   buildReviewSetupCollectionKeyboard,
   buildReviewSetupCountKeyboard,
-  buildReviewSetupStatusKeyboard,
   formatReviewPrompt,
   formatReviewRated,
   formatReviewRevealed,
   formatReviewSessionSummary,
   formatReviewSetupCollectionPrompt,
   formatReviewSetupCountPrompt,
-  formatReviewSetupStatusPrompt,
   formatSetupPromptWithAnswer,
 } from "./presentation";
 import { UUID_RE } from "./command-parse";
@@ -42,7 +36,6 @@ import {
   saveReviewSetup,
   type QuizDomainSelection,
   type ReviewSetupState,
-  type ReviewStatus,
 } from "./session-store";
 import { edit, send } from "./transport";
 
@@ -51,11 +44,10 @@ type Client = SupabaseClient<Database>;
 async function resolveReviewCount(
   client: Client,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
   requestedCount: number | "all",
 ): Promise<number> {
-  const available = await countTermsForReview(client, userId, status, domainId);
+  const available = await countTermsForReview(client, userId, domainId);
   const maxCount = getMaxStudyCount(available);
   if (maxCount === 0) return 0;
   if (requestedCount === "all") return maxCount;
@@ -76,7 +68,7 @@ async function buildCurrentCardActions(client: Client, chatId: number): Promise<
   return [
     send(
       chatId,
-      formatReviewPrompt(currentTerm, session.currentIndex, session.termIds.length),
+      formatReviewPrompt(currentTerm, session.currentIndex, session.terms.length),
       buildReviewRevealKeyboard(session.currentIndex),
       true,
     ),
@@ -90,11 +82,7 @@ async function buildReviewSummaryActions(
   const session = await getReviewSession(client, chatId);
   if (!session) return [];
 
-  const message = formatReviewSessionSummary(
-    session.status,
-    session.termIds.length,
-    session.positiveCount,
-  );
+  const message = formatReviewSessionSummary(session.terms.length, session.positiveCount);
   await deleteReviewSession(client, chatId);
   return [send(chatId, message)];
 }
@@ -103,17 +91,14 @@ async function startReviewFlashcardSession(
   client: Client,
   chatId: number,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<TelegramAction[]> {
-  const session = await createReviewSession(client, chatId, userId, status, domainId, count);
+  const session = await createReviewSession(client, chatId, userId, domainId, count);
 
-  if (session.termIds.length === 0) {
-    const message =
-      status === "unknown" ? NO_UNKNOWN_REVIEW_TERMS_MESSAGE : NO_KNOWN_REVIEW_TERMS_MESSAGE;
+  if (session.terms.length === 0) {
     await deleteReviewSession(client, chatId);
-    return [send(chatId, message)];
+    return [send(chatId, NO_REVIEW_TERMS_MESSAGE)];
   }
 
   return buildCurrentCardActions(client, chatId);
@@ -127,37 +112,25 @@ async function startReviewSetup(
 ): Promise<TelegramAction[]> {
   const startedAt = Date.now();
 
-  if (!parsed.status) {
-    const setup: ReviewSetupState = { step: "status", startedAt };
-    await saveReviewSetup(client, chatId, setup);
-    return [send(chatId, formatReviewSetupStatusPrompt(), buildReviewSetupStatusKeyboard(), true)];
-  }
-
   if (!parsed.domainId) {
-    const setup: ReviewSetupState = {
-      step: "collection",
-      status: parsed.status,
-      startedAt,
-    };
+    const setup: ReviewSetupState = { step: "collection", startedAt };
     await saveReviewSetup(client, chatId, setup);
-    return sendReviewCollectionQuestion(client, chatId, userId, parsed.status);
+    return sendReviewCollectionQuestion(client, chatId, userId);
   }
 
   const setup: ReviewSetupState = {
     step: "count",
-    status: parsed.status,
     domainId: parsed.domainId,
     startedAt,
   };
   await saveReviewSetup(client, chatId, setup);
-  return sendReviewCountQuestion(client, chatId, userId, parsed.status, parsed.domainId);
+  return sendReviewCountQuestion(client, chatId, userId, parsed.domainId);
 }
 
 async function sendReviewCollectionQuestion(
   client: Client,
   chatId: number,
   userId: string,
-  status: ReviewStatus,
 ): Promise<TelegramAction[]> {
   const stats = await fetchCollectionStats(client, userId, "review");
   const activeCollections = stats.filter((collection) => collection.isActive);
@@ -175,8 +148,7 @@ async function sendReviewCollectionQuestion(
   const collections = activeCollections.map((collection) => ({
     id: collection.id,
     name: collection.name,
-    count:
-      status === "known" ? collection.knownCount : collection.totalCount - collection.knownCount,
+    count: collection.totalCount,
   }));
   const allCount = collections.reduce((total, collection) => total + collection.count, 0);
 
@@ -194,17 +166,14 @@ async function sendReviewCountQuestion(
   client: Client,
   chatId: number,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
 ): Promise<TelegramAction[]> {
-  const available = await countTermsForReview(client, userId, status, domainId);
+  const available = await countTermsForReview(client, userId, domainId);
   const maxCount = getMaxStudyCount(available);
 
   if (maxCount === 0) {
-    const message =
-      status === "unknown" ? NO_UNKNOWN_REVIEW_TERMS_MESSAGE : NO_KNOWN_REVIEW_TERMS_MESSAGE;
     await clearReviewSetup(client, chatId);
-    return [send(chatId, message)];
+    return [send(chatId, NO_REVIEW_TERMS_MESSAGE)];
   }
 
   const defaultCount = Math.min(DEFAULT_TELEGRAM_REVIEW_COUNT, maxCount);
@@ -221,7 +190,6 @@ async function sendReviewCountQuestion(
 async function formatReviewDomainChoiceLabel(
   client: Client,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
 ): Promise<string> {
   const stats = await fetchCollectionStats(client, userId, "review");
@@ -229,11 +197,7 @@ async function formatReviewDomainChoiceLabel(
 
   if (domainId === "all") {
     const allCount = activeCollections.reduce(
-      (total, collection) =>
-        total +
-        (status === "known"
-          ? collection.knownCount
-          : collection.totalCount - collection.knownCount),
+      (total, collection) => total + collection.totalCount,
       0,
     );
     return `All collections (${allCount})`;
@@ -264,20 +228,12 @@ export async function handleReviewCommand(
   const count = await resolveReviewCount(
     client,
     userId,
-    parsed.status!,
     parsed.domainId!,
     parsed.count ?? DEFAULT_TELEGRAM_REVIEW_COUNT,
   );
 
   await clearReviewSetup(client, chatId);
-  return startReviewFlashcardSession(
-    client,
-    chatId,
-    userId,
-    parsed.status!,
-    parsed.domainId!,
-    count,
-  );
+  return startReviewFlashcardSession(client, chatId, userId, parsed.domainId!, count);
 }
 
 export async function handleReviewSetupCallback(
@@ -291,40 +247,15 @@ export async function handleReviewSetupCallback(
   const action = parts[0];
   const actions: TelegramAction[] = [];
 
-  if (action === "status") {
-    const status = parts[1] as ReviewStatus;
-    if (status !== "known" && status !== "unknown") return actions;
-
-    actions.push(
-      edit(
-        chatId,
-        messageId,
-        formatSetupPromptWithAnswer(
-          formatReviewSetupStatusPrompt(),
-          status === "unknown" ? "Unknown terms" : "Known terms",
-        ),
-      ),
-    );
-
-    const collectionSetup: ReviewSetupState = {
-      step: "collection",
-      status,
-      startedAt: Date.now(),
-    };
-    await saveReviewSetup(client, chatId, collectionSetup);
-    actions.push(...(await sendReviewCollectionQuestion(client, chatId, userId, status)));
-    return actions;
-  }
-
   if (action === "domain") {
     const setup = await loadReviewSetup(client, chatId);
-    if (!setup?.status) return actions;
+    if (!setup) return actions;
 
     const domainToken = parts.slice(1).join(":");
     const domainId: QuizDomainSelection = domainToken === "all" ? "all" : domainToken;
     if (domainId !== "all" && !UUID_RE.test(domainId)) return actions;
 
-    const domainLabel = await formatReviewDomainChoiceLabel(client, userId, setup.status, domainId);
+    const domainLabel = await formatReviewDomainChoiceLabel(client, userId, domainId);
     actions.push(
       edit(
         chatId,
@@ -335,32 +266,29 @@ export async function handleReviewSetupCallback(
 
     const countSetup: ReviewSetupState = {
       step: "count",
-      status: setup.status,
       domainId,
       startedAt: Date.now(),
     };
     await saveReviewSetup(client, chatId, countSetup);
-    actions.push(
-      ...(await sendReviewCountQuestion(client, chatId, userId, setup.status, domainId)),
-    );
+    actions.push(...(await sendReviewCountQuestion(client, chatId, userId, domainId)));
     return actions;
   }
 
   if (action === "count") {
     const setup = await loadReviewSetup(client, chatId);
-    if (!setup?.status || !setup.domainId) return actions;
+    if (!setup?.domainId) return actions;
 
     const countToken = parts[1];
     let count: number;
 
     if (countToken === "all") {
-      count = await resolveReviewCount(client, userId, setup.status, setup.domainId, "all");
+      count = await resolveReviewCount(client, userId, setup.domainId, "all");
     } else {
       count = parseInt(countToken, 10);
       if (isNaN(count) || count < 1) return actions;
     }
 
-    const available = await countTermsForReview(client, userId, setup.status, setup.domainId);
+    const available = await countTermsForReview(client, userId, setup.domainId);
     const maxCount = getMaxStudyCount(available);
     const defaultCount = Math.min(DEFAULT_TELEGRAM_REVIEW_COUNT, maxCount);
     const countLabel =
@@ -379,14 +307,7 @@ export async function handleReviewSetupCallback(
 
     await clearReviewSetup(client, chatId);
     actions.push(
-      ...(await startReviewFlashcardSession(
-        client,
-        chatId,
-        userId,
-        setup.status,
-        setup.domainId,
-        count,
-      )),
+      ...(await startReviewFlashcardSession(client, chatId, userId, setup.domainId, count)),
     );
   }
 
@@ -400,7 +321,7 @@ export async function handleReviewSetupText(
   text: string,
 ): Promise<{ handled: boolean; actions: TelegramAction[] }> {
   const setup = await loadReviewSetup(client, chatId);
-  if (!setup || setup.step !== "count" || !setup.status || !setup.domainId) {
+  if (!setup || setup.step !== "count" || !setup.domainId) {
     return { handled: false, actions: [] };
   }
 
@@ -413,10 +334,10 @@ export async function handleReviewSetupText(
   const actions: TelegramAction[] = [];
 
   if (trimmed === "") {
-    const available = await countTermsForReview(client, userId, setup.status, setup.domainId);
+    const available = await countTermsForReview(client, userId, setup.domainId);
     count = Math.min(DEFAULT_TELEGRAM_REVIEW_COUNT, getMaxStudyCount(available));
   } else if (trimmed.toLowerCase() === "all") {
-    count = await resolveReviewCount(client, userId, setup.status, setup.domainId, "all");
+    count = await resolveReviewCount(client, userId, setup.domainId, "all");
   } else {
     const parsed = parseInt(trimmed, 10);
     if (isNaN(parsed) || parsed < 1) {
@@ -426,9 +347,7 @@ export async function handleReviewSetupText(
       };
     }
 
-    const maxCount = getMaxStudyCount(
-      await countTermsForReview(client, userId, setup.status, setup.domainId),
-    );
+    const maxCount = getMaxStudyCount(await countTermsForReview(client, userId, setup.domainId));
 
     if (parsed > maxCount) {
       return {
@@ -440,7 +359,7 @@ export async function handleReviewSetupText(
     count = parsed;
   }
 
-  const available = await countTermsForReview(client, userId, setup.status, setup.domainId);
+  const available = await countTermsForReview(client, userId, setup.domainId);
   const maxCount = getMaxStudyCount(available);
   const defaultCount = Math.min(DEFAULT_TELEGRAM_REVIEW_COUNT, maxCount);
 
@@ -466,14 +385,7 @@ export async function handleReviewSetupText(
 
   await clearReviewSetup(client, chatId);
   actions.push(
-    ...(await startReviewFlashcardSession(
-      client,
-      chatId,
-      userId,
-      setup.status,
-      setup.domainId,
-      count,
-    )),
+    ...(await startReviewFlashcardSession(client, chatId, userId, setup.domainId, count)),
   );
 
   return { handled: true, actions };
@@ -511,7 +423,7 @@ export async function handleReviewReveal(
       edit(
         chatId,
         messageId,
-        `${formatReviewPrompt(currentTerm, session.currentIndex, session.termIds.length)}${REVIEW_REVEAL_FAILED_SUFFIX}`,
+        `${formatReviewPrompt(currentTerm, session.currentIndex, session.terms.length)}${REVIEW_REVEAL_FAILED_SUFFIX}`,
         buildReviewRevealKeyboard(session.currentIndex),
       ),
     ];
@@ -523,13 +435,13 @@ export async function handleReviewReveal(
     edit(
       chatId,
       messageId,
-      formatReviewRevealed(currentTerm, updatedSession.currentIndex, updatedSession.termIds.length),
-      buildReviewRateKeyboard(updatedSession.currentIndex, updatedSession.status),
+      formatReviewRevealed(currentTerm, updatedSession.currentIndex, updatedSession.terms.length),
+      buildReviewRateKeyboard(updatedSession.currentIndex),
     ),
   ];
 }
 
-/** "Had it / Didn't have it" (or "Still know it / Forgot it"): records rating, advances. */
+/** "Got it / Missed it": records rating, advances. */
 export async function handleReviewRate(
   client: Client,
   chatId: number,
@@ -549,10 +461,12 @@ export async function handleReviewRate(
   const currentTerm = await getCurrentReviewTerm(client, session);
   if (!currentTerm) return [];
 
+  const currentOriginStatus = session.terms[session.currentIndex].status;
+
   await applyReviewRating(client, session.userId, {
     termId: currentTerm.id,
     known,
-    sessionStatus: session.status,
+    sessionStatus: currentOriginStatus,
     mode: "admin",
   });
 
@@ -562,7 +476,7 @@ export async function handleReviewRate(
     edit(
       chatId,
       messageId,
-      formatReviewRated(currentTerm, sessionIndex, session.termIds.length, session.status, known),
+      formatReviewRated(currentTerm, sessionIndex, session.terms.length, known),
     ),
   ];
 

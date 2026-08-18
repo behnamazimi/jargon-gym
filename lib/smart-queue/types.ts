@@ -106,4 +106,7 @@ export type PickMeta = {
   reasons: PickReason[];
   /** Display-only mastery tier for this candidate's own-context history. Never affects score. */
   strength?: OverallStrength;
+  /** Which pool this term was drawn from — only set for Review's mixed pick,
+   *  since that's the only context where a session blends both pools. */
+  originStatus?: "known" | "unknown";
 };

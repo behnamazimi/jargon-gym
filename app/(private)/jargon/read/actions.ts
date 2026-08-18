@@ -55,7 +55,7 @@ export async function getReadTermByIdAction(
       await recordRead(auth.supabase, auth.user.id, card.id, "session");
     }
 
-    return { term: toReviewTerm(card) };
+    return { term: toReviewTerm(card, "unknown") };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load that term. Try again.";
     return { error: message };
@@ -94,7 +94,7 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
     await recordRead(auth.supabase, auth.user.id, card.id, "session");
 
     return {
-      term: toReviewTerm(card, meta?.reasons, meta?.score),
+      term: toReviewTerm(card, "unknown", meta?.reasons, meta?.score),
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load the next term. Try again.";

@@ -12,6 +12,9 @@ export type ReviewTerm = Term & {
   pickScore?: number;
   /** Display-only mastery tier for this term in Review. Never affects scoring. */
   strength?: OverallStrength;
+  /** Which pool this card was drawn from — drives the known/unknown flip
+   *  direction when rated, since a mixed session blends both pools. */
+  originStatus: TermPoolStatus;
 };
 
 export type ReviewRating = {
@@ -21,7 +24,6 @@ export type ReviewRating = {
 
 export type ReviewSetup = {
   domainIds: string[] | "all";
-  status: ReviewTermStatus;
   cardCount: number;
 };
 

@@ -7,7 +7,11 @@ import {
   getMaxStudyCount,
   type TermPoolStatus,
 } from "@/lib/study";
-import { getReviewPoolStatsForUser, fetchTermCardForUser } from "@/lib/smart-queue";
+import {
+  getMixedReviewPoolStatsForUser,
+  getReviewPoolStatsForUser,
+  fetchTermCardForUser,
+} from "@/lib/smart-queue";
 import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
 
 type Client = SupabaseClient<Database>;
@@ -281,13 +285,24 @@ export async function getCurrentTerm(
 
 // --- /review flashcard-style setup wizard + session state ---
 
-export type ReviewSetupState = QuizSetupState;
+export type ReviewSetupStep = "collection" | "count";
+
+export type ReviewSetupState = {
+  step: ReviewSetupStep;
+  domainId?: QuizDomainSelection;
+  promptMessageId?: number;
+  startedAt: number;
+};
+
+/** One drawn term plus which pool it came from — needed per-term now that a
+ *  session blends both pools, since rating a term flips known/unknown in the
+ *  direction that depends on its own origin, not a session-wide value. */
+export type ReviewSessionTerm = { id: string; status: ReviewStatus };
 
 export type TelegramReviewSession = {
   userId: string;
-  status: ReviewStatus;
   domainId: QuizDomainSelection;
-  termIds: string[];
+  terms: ReviewSessionTerm[];
   currentIndex: number;
   revealed: boolean;
   positiveCount: number;
@@ -295,23 +310,37 @@ export type TelegramReviewSession = {
 };
 
 type StoredReviewSession = {
-  status: ReviewStatus;
   domainId: QuizDomainSelection;
-  termIds: string[];
+  terms: ReviewSessionTerm[];
   currentIndex: number;
   revealed: boolean;
   positiveCount: number;
   startedAt: number;
 };
 
+function isReviewSetupState(value: unknown): value is ReviewSetupState {
+  if (!value || typeof value !== "object") return false;
+  const setup = value as ReviewSetupState;
+  return (
+    (setup.step === "collection" || setup.step === "count") &&
+    typeof setup.startedAt === "number" &&
+    (setup.domainId === undefined || setup.domainId === "all" || typeof setup.domainId === "string")
+  );
+}
+
+function isReviewSessionTerm(value: unknown): value is ReviewSessionTerm {
+  if (!value || typeof value !== "object") return false;
+  const term = value as ReviewSessionTerm;
+  return typeof term.id === "string" && (term.status === "known" || term.status === "unknown");
+}
+
 function isStoredReviewSession(value: unknown): value is StoredReviewSession {
   if (!value || typeof value !== "object") return false;
   const session = value as StoredReviewSession;
   return (
-    (session.status === "known" || session.status === "unknown") &&
     (session.domainId === "all" || typeof session.domainId === "string") &&
-    Array.isArray(session.termIds) &&
-    session.termIds.every((id) => typeof id === "string") &&
+    Array.isArray(session.terms) &&
+    session.terms.every(isReviewSessionTerm) &&
     typeof session.currentIndex === "number" &&
     typeof session.revealed === "boolean" &&
     typeof session.positiveCount === "number" &&
@@ -330,7 +359,7 @@ export async function loadReviewSetup(
     .maybeSingle();
 
   if (error) throw error;
-  if (!isQuizSetupState(data?.review_setup)) return null;
+  if (!isReviewSetupState(data?.review_setup)) return null;
 
   if (Date.now() - data.review_setup.startedAt > SETUP_TIMEOUT_MS) {
     await clearReviewSetup(client, chatId);
@@ -399,16 +428,11 @@ export async function deleteReviewSession(client: Client, chatId: number): Promi
 export async function countTermsForReview(
   client: Client,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
 ): Promise<number> {
-  const stats = await getReviewPoolStatsForUser(
-    client,
-    userId,
-    { domainIds: domainIdsForScope(domainId) },
-    status,
-    "review",
-  );
+  const stats = await getMixedReviewPoolStatsForUser(client, userId, {
+    domainIds: domainIdsForScope(domainId),
+  });
   return stats.total;
 }
 
@@ -416,37 +440,37 @@ export async function createReviewSession(
   client: Client,
   chatId: number,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<TelegramReviewSession> {
-  const { cards } = await fetchStudyTermPool(
+  const { cards, pickMeta } = await fetchStudyTermPool(
     client,
     userId,
     { domainIds: domainIdsForScope(domainId) },
-    status,
     count,
     "admin",
     "review",
   );
-  const termIds = cards.map((t) => t.id);
+  const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
+  const terms: ReviewSessionTerm[] = cards.map((card) => ({
+    id: card.id,
+    status: metaById.get(card.id)?.originStatus ?? "unknown",
+  }));
 
   const session: TelegramReviewSession = {
     userId,
-    status,
     domainId,
-    termIds,
+    terms,
     currentIndex: 0,
     revealed: false,
     positiveCount: 0,
     startedAt: Date.now(),
   };
 
-  if (termIds.length > 0) {
+  if (terms.length > 0) {
     await saveStoredReviewSession(client, chatId, {
-      status: session.status,
       domainId: session.domainId,
-      termIds: session.termIds,
+      terms: session.terms,
       currentIndex: session.currentIndex,
       revealed: session.revealed,
       positiveCount: session.positiveCount,
@@ -477,9 +501,8 @@ export async function getReviewSession(
 
   return {
     userId: data.user_id,
-    status: data.review_session.status,
     domainId: data.review_session.domainId,
-    termIds: data.review_session.termIds,
+    terms: data.review_session.terms,
     currentIndex: data.review_session.currentIndex,
     revealed: data.review_session.revealed,
     positiveCount: data.review_session.positiveCount,
@@ -495,9 +518,8 @@ export async function markReviewRevealed(
   const updated: TelegramReviewSession = { ...session, revealed: true };
 
   await saveStoredReviewSession(client, chatId, {
-    status: updated.status,
     domainId: updated.domainId,
-    termIds: updated.termIds,
+    terms: updated.terms,
     currentIndex: updated.currentIndex,
     revealed: updated.revealed,
     positiveCount: updated.positiveCount,
@@ -521,9 +543,8 @@ export async function recordReviewRating(
   };
 
   await saveStoredReviewSession(client, chatId, {
-    status: updated.status,
     domainId: updated.domainId,
-    termIds: updated.termIds,
+    terms: updated.terms,
     currentIndex: updated.currentIndex,
     revealed: updated.revealed,
     positiveCount: updated.positiveCount,
@@ -534,15 +555,15 @@ export async function recordReviewRating(
 }
 
 export function hasMoreReviewTerms(session: TelegramReviewSession): boolean {
-  return session.currentIndex < session.termIds.length;
+  return session.currentIndex < session.terms.length;
 }
 
 export async function getCurrentReviewTerm(
   client: Client,
   session: TelegramReviewSession,
 ): Promise<TermCard | null> {
-  if (session.currentIndex >= session.termIds.length) return null;
-  const termId = session.termIds[session.currentIndex];
+  if (session.currentIndex >= session.terms.length) return null;
+  const termId = session.terms[session.currentIndex].id;
   return fetchTermCardForUser(client, session.userId, termId);
 }
 

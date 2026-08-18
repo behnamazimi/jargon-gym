@@ -168,18 +168,6 @@ export function formatStatsMessage(stats: StatsSnapshot): string {
   return message;
 }
 
-/** Shared status/collection/count wizard keyboards for /quiz and /review, keyed by callback prefix. */
-function buildSetupStatusKeyboard(prefix: string): InlineKeyboardMarkup {
-  return {
-    inline_keyboard: [
-      [
-        { text: "Unknown terms", callback_data: `${prefix}:status:unknown` },
-        { text: "Known terms", callback_data: `${prefix}:status:known` },
-      ],
-    ],
-  };
-}
-
 function buildSetupCollectionKeyboard(
   prefix: string,
   collections: Array<{ id: string; name: string; count: number }>,
@@ -240,10 +228,6 @@ export function buildQuizCountKeyboard(maxCount: number): InlineKeyboardMarkup {
   return buildSetupCountKeyboard("quizsetup", maxCount);
 }
 
-export function buildReviewSetupStatusKeyboard(): InlineKeyboardMarkup {
-  return buildSetupStatusKeyboard("reviewsetup");
-}
-
 export function buildReviewSetupCollectionKeyboard(
   collections: Array<{ id: string; name: string; count: number }>,
   allCount: number,
@@ -268,10 +252,6 @@ export function formatQuizSetupCountPrompt(maxCount: number, defaultCount: numbe
 
 export function formatSetupPromptWithAnswer(prompt: string, choice: string): string {
   return `${prompt}\n\n<b>Your choice:</b> ${escapeHtml(choice)}`;
-}
-
-export function formatReviewSetupStatusPrompt(): string {
-  return "<b>What to review?</b>\n\nChoose unknown terms you're learning, or known terms to refresh.";
 }
 
 export function formatReviewSetupCollectionPrompt(): string {
@@ -312,22 +292,18 @@ export function formatReviewRevealed(
   return `${header}\n\n${buildTermDetails(term)}`;
 }
 
-/** Revealed card + the recorded rating, shown briefly before advancing. */
+/** Revealed card + the recorded rating, shown briefly before advancing.
+ *  Wording is neutral regardless of which pool the term came from, since a
+ *  mixed session blends known and unknown terms — the flip direction still
+ *  applies correctly under the hood via that term's own origin status. */
 export function formatReviewRated(
   term: TermCard,
   currentIndex: number,
   totalTerms: number,
-  status: "known" | "unknown",
   known: boolean,
 ): string {
   const message = formatReviewRevealed(term, currentIndex, totalTerms);
-  const label = known
-    ? status === "known"
-      ? "Still know it"
-      : "Had it"
-    : status === "known"
-      ? "Forgot it"
-      : "Didn't have it";
+  const label = known ? "Got it" : "Missed it";
   const icon = known ? "✅" : "❌";
   return `${message}\n\n<b>Your answer:</b> ${icon} ${label}`;
 }
@@ -338,36 +314,25 @@ export function buildReviewRevealKeyboard(sessionIndex: number): InlineKeyboardM
   };
 }
 
-export function buildReviewRateKeyboard(
-  sessionIndex: number,
-  status: "known" | "unknown",
-): InlineKeyboardMarkup {
-  const [yesLabel, noLabel] =
-    status === "known" ? ["Still know it", "Forgot it"] : ["Had it", "Didn't have it"];
+export function buildReviewRateKeyboard(sessionIndex: number): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
       [
-        { text: yesLabel, callback_data: `review:rate:${sessionIndex}:yes` },
-        { text: noLabel, callback_data: `review:rate:${sessionIndex}:no` },
+        { text: "Got it", callback_data: `review:rate:${sessionIndex}:yes` },
+        { text: "Missed it", callback_data: `review:rate:${sessionIndex}:no` },
       ],
     ],
   };
 }
 
-export function formatReviewSessionSummary(
-  status: "known" | "unknown",
-  total: number,
-  positiveCount: number,
-): string {
+export function formatReviewSessionSummary(total: number, positiveCount: number): string {
   const negativeCount = total - positiveCount;
-  const positiveLabel = status === "known" ? "Still know it" : "Had it";
-  const negativeLabel = status === "known" ? "Forgot it" : "Didn't have it";
   const percentage = total > 0 ? Math.round((positiveCount / total) * 100) : 0;
 
   let message = `📊 <b>Review complete</b>\n\n`;
   message += `Cards reviewed: ${total}\n`;
-  message += `${positiveLabel}: ${positiveCount}\n`;
-  message += `${negativeLabel}: ${negativeCount}\n\n`;
+  message += `Got it: ${positiveCount}\n`;
+  message += `Missed it: ${negativeCount}\n\n`;
 
   if (percentage === 100) message += "🎉 You got every one — great work!";
   else if (percentage >= 80) message += "🌟 Great recall on these terms!";

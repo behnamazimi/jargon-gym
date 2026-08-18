@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugReviewMixInfo, DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import { DebugCollectionSelect } from "@/components/jargon/debug/debug-collection-select";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { PickContext } from "@/lib/smart-queue/types";
-import type { StudyCollection, TermPoolStatus } from "@/lib/study/types";
+import type { StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
 
 type DebugQueuePageProps = {
   collections: StudyCollection[];
-  status: TermPoolStatus;
   context: PickContext;
   domainId: string;
   rows: DebugScoredRow[];
+  mix: DebugReviewMixInfo | null;
   errorMessage: string | null;
 };
 
@@ -25,31 +26,22 @@ const CONTEXT_OPTIONS: Array<{
   {
     value: "read",
     title: "Read",
-    description: "Read page/command priority — no pass/fail concept, just read exposure.",
+    description: "Read page/command priority — unknown pool only, no pass/fail concept.",
   },
   {
     value: "review",
     title: "Review",
-    description: "Flashcard review priority — scored against review_streak.",
+    description: "Flashcard review priority — blends known + unknown pools.",
   },
   {
     value: "quiz",
     title: "Quiz",
-    description: "Quiz priority — scored against quiz_streak, independent of Review.",
+    description: "Quiz priority — known pool only, independent of Review.",
   },
 ];
 
-function debugQueueHref({
-  status,
-  context,
-  domainId,
-}: {
-  status: TermPoolStatus;
-  context: PickContext;
-  domainId: string;
-}) {
+export function debugQueueHref({ context, domainId }: { context: PickContext; domainId: string }) {
   const params = new URLSearchParams();
-  if (status !== "unknown") params.set("status", status);
   if (context !== "review") params.set("context", context);
   if (domainId !== "all") params.set("domain", domainId);
   const query = params.toString();
@@ -94,10 +86,10 @@ function DebugFilterLink({
 
 export function DebugQueuePage({
   collections,
-  status,
   context,
   domainId,
   rows,
+  mix,
   errorMessage,
 }: DebugQueuePageProps) {
   if (collections.length === 0) {
@@ -119,57 +111,12 @@ export function DebugQueuePage({
       <QuizPanel>
         <QuizPanelBody>
           <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-            <legend className="mb-2 text-sm leading-none font-medium">Pool</legend>
-            <div className="flex flex-col gap-3">
-              {context === "quiz" ? (
-                <p className="m-0 text-xs text-base-content/60">
-                  Quiz is known-pool only — unknown terms aren&apos;t inspectable here.
-                </p>
-              ) : (
-                <DebugFilterLink
-                  href={debugQueueHref({ status: "unknown", context, domainId })}
-                  selected={status === "unknown"}
-                  title="Unknown terms"
-                  description="Terms you haven't marked as known."
-                />
-              )}
-              <DebugFilterLink
-                href={debugQueueHref({ status: "known", context, domainId })}
-                selected={status === "known"}
-                title="Known terms"
-                description="Terms you've already marked as known."
-              />
-            </div>
-          </fieldset>
-
-          <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-            <legend className="mb-2 text-sm leading-none font-medium">Collection</legend>
-            <div className="flex max-h-64 flex-col gap-3 overflow-y-auto">
-              <DebugFilterLink
-                href={debugQueueHref({ status, context, domainId: "all" })}
-                selected={domainId === "all"}
-                title="All active collections"
-                description="Score every term in collections that are turned on."
-              />
-              {collections.map((collection) => (
-                <DebugFilterLink
-                  key={collection.id}
-                  href={debugQueueHref({ status, context, domainId: collection.id })}
-                  selected={domainId === collection.id}
-                  title={collection.name}
-                  description={`${collection.unknownCount} unknown · ${collection.knownCount} known`}
-                />
-              ))}
-            </div>
-          </fieldset>
-
-          <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
             <legend className="mb-2 text-sm leading-none font-medium">Context</legend>
             <div className="flex flex-col gap-3">
               {CONTEXT_OPTIONS.map((option) => (
                 <DebugFilterLink
                   key={option.value}
-                  href={debugQueueHref({ status, context: option.value, domainId })}
+                  href={debugQueueHref({ context: option.value, domainId })}
                   selected={context === option.value}
                   title={option.title}
                   description={option.description}
@@ -177,20 +124,39 @@ export function DebugQueuePage({
               ))}
             </div>
           </fieldset>
+
+          <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+            <legend className="mb-2 text-sm leading-none font-medium">Collection</legend>
+            <DebugCollectionSelect
+              collections={collections}
+              domainId={domainId}
+              context={context}
+            />
+          </fieldset>
+
+          {context === "review" ? (
+            <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+              <legend className="mb-2 text-sm leading-none font-medium">Mix</legend>
+              {mix ? (
+                <p className="m-0 text-xs text-base-content/60">
+                  Configured ratio: {mix.knownSlots}:{mix.unknownSlots} known:unknown — this view:{" "}
+                  {mix.knownCount} known / {mix.unknownCount} unknown.
+                </p>
+              ) : (
+                <p className="m-0 text-xs text-base-content/60">No terms in either pool.</p>
+              )}
+            </fieldset>
+          ) : null}
         </QuizPanelBody>
       </QuizPanel>
 
-      <QuizPanel>
-        <QuizPanelBody>
-          {errorMessage ? (
-            <Alert variant="destructive">
-              <AlertDescription>{errorMessage}</AlertDescription>
-            </Alert>
-          ) : (
-            <ScoreRows rows={rows} context={context} />
-          )}
-        </QuizPanelBody>
-      </QuizPanel>
+      {errorMessage ? (
+        <Alert variant="destructive">
+          <AlertDescription>{errorMessage}</AlertDescription>
+        </Alert>
+      ) : (
+        <ScoreRows rows={rows} context={context} />
+      )}
     </>
   );
 }

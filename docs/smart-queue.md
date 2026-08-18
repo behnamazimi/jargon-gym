@@ -310,19 +310,21 @@ Related ranking constants, alongside `RANKING_WEIGHTS` in the same file
 the separate, display-only set). Hand-maintained from `weights.ts`'s actual
 exports — update this table in the same commit as any change there:
 
-| Constant                          | Default                              | Purpose                                                                                                                                                   |
-| --------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MASTERED_COOLDOWN_BASE_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1`                                                                                                                   |
-| `MASTERED_COOLDOWN_GROWTH_FACTOR` | 1.6                                  | Per-streak-point multiplier on the cooldown window                                                                                                        |
-| `MASTERED_COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                                                               |
-| `RANKING_STALENESS_DECAY_HOURS`   | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the ranking staleness boost — a map next to `RANKING_WEIGHTS`, not a field on `ScoreWeights`                           |
-| `STALE_REASON_THRESHOLD_HOURS`    | 24                                   | Hours since a context's own last-activity before the `stale` reason/badge attaches — a flat label cutoff, distinct from the per-context decay curve above |
-| `FAIL_RATE_MIN_ATTEMPTS`          | 4                                    | Minimum own-context attempts before a lifetime fail-rate is trusted — shared with the strength scores below                                               |
-| `QUEUE_TIMEZONE`                  | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                                                             |
-| `ENGAGED_MIN_READ_COUNT`          | 3                                    | Minimum reads before `engaged_untested` applies                                                                                                           |
-| `STREAK_BOOST_CAP`                | 5                                    | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                                             |
-| `MIX_NEVER_ENGAGED_SLOTS`         | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                                                             |
-| `MIX_ALREADY_TOUCHED_SLOTS`       | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                                                           |
+| Constant                          | Default                              | Purpose                                                                                                                                                                                       |
+| --------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MASTERED_COOLDOWN_BASE_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1`                                                                                                                                                       |
+| `MASTERED_COOLDOWN_GROWTH_FACTOR` | 1.6                                  | Per-streak-point multiplier on the cooldown window                                                                                                                                            |
+| `MASTERED_COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                                                                                                   |
+| `RANKING_STALENESS_DECAY_HOURS`   | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the ranking staleness boost — a map next to `RANKING_WEIGHTS`, not a field on `ScoreWeights`                                                               |
+| `STALE_REASON_THRESHOLD_HOURS`    | 24                                   | Hours since a context's own last-activity before the `stale` reason/badge attaches — a flat label cutoff, distinct from the per-context decay curve above                                     |
+| `FAIL_RATE_MIN_ATTEMPTS`          | 4                                    | Minimum own-context attempts before a lifetime fail-rate is trusted — shared with the strength scores below                                                                                   |
+| `QUEUE_TIMEZONE`                  | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                                                                                                 |
+| `ENGAGED_MIN_READ_COUNT`          | 3                                    | Minimum reads before `engaged_untested` applies                                                                                                                                               |
+| `STREAK_BOOST_CAP`                | 5                                    | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                                                                                 |
+| `MIX_NEVER_ENGAGED_SLOTS`         | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                                 |
+| `MIX_ALREADY_TOUCHED_SLOTS`       | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                               |
+| `RANKING.reviewMix.knownSlots`    | 2                                    | Review's known-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix). Written with its current nested path, not the flat naming the rest of this table uses. |
+| `RANKING.reviewMix.unknownSlots`  | 5                                    | Review's unknown-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix)                                                                                       |
 
 Staleness and "stale" reason labels use `STALE_REASON_THRESHOLD_HOURS` (24 hours).
 
@@ -399,6 +401,41 @@ own-context engagements, starting with whichever lane is behind on its
 slot ratio (tie starts never-engaged). See the doc comment on
 `startingLane` in `pick.ts` for the exact reconstruction. Review/Quiz
 batches (`limit` up to 30) get a true mix-ratio list from a single zip.
+
+### Review's known/unknown mix
+
+**Review only.** There's no pure "unknown-only" or "known-only" mode —
+every Review session (web and Telegram `/review`) blends both pools, so
+known terms passively resurface for reinforcement without the user ever
+choosing a mode.
+
+`pickReviewTerms`/`pickReviewTermsForUser`
+([`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)) fetch the
+unknown and known pools independently, then hand them to
+`pickMixedReviewTerms` ([`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts)):
+
+1. Compute target quotas from `RANKING.reviewMix.knownSlots`/`unknownSlots`
+   (default 2:5) — `targetKnown = round(limit * knownSlots / (knownSlots + unknownSlots))`,
+   `targetUnknown = limit - targetKnown`.
+2. If either pool can't fill its quota, the other pool backfills the
+   shortfall so the session stays full length whenever any terms exist.
+3. Each pool is ranked independently through the ordinary `pickTerms` (full
+   scoring + lane mix + shuffle, unchanged) sliced to its quota — the two
+   pools never compete on a shared score.
+4. The two quota-sliced lists are interleaved proportionally
+   (`interleaveProportional`), spreading known terms evenly through the
+   session rather than clustering them.
+
+Each returned term keeps its origin pool (`known` vs `unknown`, derived from
+`knownAt`), because rating a term flips it known/unknown in the direction
+that depends on which pool it came from — `applyReviewRating`'s
+`sessionStatus` argument is per-card now, not per-session. Rating-button
+wording and the end-of-session summary are neutral ("Got it" / "Missed it")
+regardless of a card's origin, to avoid labels appearing to change meaning
+mid-session.
+
+Quiz and Read are unaffected — Quiz never had a status param, and Read stays
+hardcoded to the unknown pool.
 
 ### Quiz ranking (hard tiers)
 
@@ -659,17 +696,20 @@ result, rather than needing a separate "reset to 0" step.
 
 ### Web review
 
-- Focused study session: pick a known or unknown pool, work through a
-  ranked batch (`review` context), mark terms as you go.
-- Setup shows pool stats and a queue preview; each card shows why it was
-  picked.
+- Focused study session: no pool picker — every session blends known and
+  unknown terms at `RANKING.reviewMix`'s ratio (default 2:5), work through a
+  ranked batch (`review` context), mark terms as you go. See
+  [Review's known/unknown mix](#reviews-knownunknown-mix).
+- Setup shows combined pool stats and a queue preview (each row tagged with
+  its origin pool); each card shows why it was picked.
 - Reveal → `reveal` event (`pending_reveal = true`). Rating → `review_pass`
   or `review_fail`, which also clears `pending_reveal`. If a reveal is never
   rated (session abandoned), `pending_reveal` stays `true` — that's what the
   `abandoned_review` reason detects later.
-- Rating always flips known state (Had it / Didn't have it in the unknown
-  pool, Still know it / Forgot it in the known pool); quiz prefs do not
-  apply here.
+- Rating always flips known state, in the direction that depends on that
+  specific card's origin pool (not a session-wide setting, since a session
+  blends both). Button wording is neutral ("Got it" / "Missed it") for every
+  card regardless of origin; quiz prefs do not apply here.
 
 ### Web collection
 
@@ -687,9 +727,11 @@ result, rather than needing a separate "reset to 0" step.
 
 - `/read` and scheduled delivery: same `read` context ranking as the web
   Read page, one unknown term at a time. On send → `read` event.
-- `/review`: same `review` context ranking as web review. Reveal / rate
-  inline buttons write the same `reveal`/`review_pass`/`review_fail`
-  events.
+- `/review`: same mixed-pool `review` context ranking as web review — no
+  known/unknown argument anymore (`/review [all|<collection>] [count|all]`).
+  Reveal / rate inline buttons write the same
+  `reveal`/`review_pass`/`review_fail` events, flipping in the direction
+  each card's own origin pool calls for.
 - `/quiz`: same `quiz` context ranking as web quiz.
 - Mark known from delivery's inline button → known flip + `review_pass`
   (a self-graded Review pass — you're confirming you know it, which is a
@@ -761,15 +803,24 @@ term content, just the scoring internals, sorted exactly like a real pick
 would be. It's a debugging view, not a study surface: it doesn't write
 events.
 
-Read/Review are built on
+Read is built on
 [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)'s
 `listScoredCandidates`, which is `pickTerms` with `limit` set to every
 candidate instead of a top-N slice; the Pool filter (known/unknown) applies
-normally. **Quiz is locked to the known pool** — selecting the Quiz context
-forces `status=known` regardless of the URL, and scoring goes through
-`listScoredQuizCandidates` (`pickQuizTerms` with every candidate, tiers and
-same-day sit-outs both included) instead of `listScoredCandidates`. Rows
-don't show a per-context Review/Quiz strength badge — see
+normally there. **Quiz is locked to the known pool** — selecting the Quiz
+context forces `status=known` regardless of the URL, and scoring goes
+through `listScoredQuizCandidates` (`pickQuizTerms` with every candidate,
+tiers and same-day sit-outs both included) instead of `listScoredCandidates`.
+
+**Review has no Pool filter** — it always shows the mixed view, via
+`listScoredMixedReviewCandidates` (`pickMixedReviewTerms` over every
+candidate from both pools instead of a slice). A "Mix" panel replaces the
+Pool selector, showing the configured `RANKING.reviewMix` ratio and the
+actual known/unknown counts in the current view; each row is tagged with
+its origin pool. See
+[Review's known/unknown mix](#reviews-knownunknown-mix).
+
+Rows don't show a per-context Review/Quiz strength badge — see
 [Mastery overview](#mastery-overview) for where the blended score lives
 instead.
 
