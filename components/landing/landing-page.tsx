@@ -44,8 +44,12 @@ export async function LandingPage() {
             </h2>
             <ul className="m-0 max-w-[48ch] list-disc space-y-2 ps-5 text-base-content/80">
               <li>
-                Add your own collection or start with existing ones, software engineering, finance,
-                psychology, and more
+                Add your own collection, or start with a{" "}
+                <Link href="/j" className={contentPageLinkClass}>
+                  public one
+                </Link>
+                , agentic development, software engineering, standup jargon, and more, browsable
+                with no account
               </li>
               <li>
                 Terms with more than a definition, example, how it&apos;s used, where people
@@ -121,12 +125,16 @@ export async function LandingPage() {
 
           <p className="mt-6 m-0 max-w-[48ch] text-sm leading-relaxed text-base-content/70">
             If you want to know more before signing up:{" "}
+            <Link href="/before-you-sign-up" className={contentPageLinkClass}>
+              Before you sign up
+            </Link>
+            ,{" "}
             <Link href="/how-terms-work" className={contentPageLinkClass}>
-              How terms are built
-            </Link>{" "}
-            and{" "}
+              how terms are built
+            </Link>
+            , and{" "}
             <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
-              How the Smart Queue works
+              how the Smart Queue works
             </Link>
             .
           </p>

@@ -12,6 +12,12 @@ export function SiteFooter() {
           className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1"
         >
           <Link
+            href="/before-you-sign-up"
+            className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
+          >
+            Before you sign up
+          </Link>
+          <Link
             href="/how-terms-work"
             className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
           >
