@@ -501,6 +501,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      waitlist_requests: {
+        Row: {
+          created_at: string;
+          email: string;
+          id: string;
+          invited_at: string | null;
+          invited_by: string | null;
+          normalized_email: string;
+          referral_code_id: string | null;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          id?: string;
+          invited_at?: string | null;
+          invited_by?: string | null;
+          normalized_email: string;
+          referral_code_id?: string | null;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          id?: string;
+          invited_at?: string | null;
+          invited_by?: string | null;
+          normalized_email?: string;
+          referral_code_id?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_requests_invited_by_fkey";
+            columns: ["invited_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "waitlist_requests_referral_code_id_fkey";
+            columns: ["referral_code_id"];
+            isOneToOne: false;
+            referencedRelation: "referral_codes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       widget_tokens: {
         Row: {
           created_at: string;

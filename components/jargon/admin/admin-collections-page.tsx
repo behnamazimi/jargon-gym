@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { setBuiltin, setPublic, updateDomainSlug } from "@/app/(private)/admin/collections/actions";
+import { AdminNav } from "@/components/jargon/admin/admin-nav";
 import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
 
 type AdminCollectionsPageClientProps = {
@@ -11,6 +12,8 @@ type AdminCollectionsPageClientProps = {
 export function AdminCollectionsPageClient({ collections }: AdminCollectionsPageClientProps) {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
+      <AdminNav />
+
       <div>
         <h1 className="text-2xl font-semibold text-base-content">Collections</h1>
         <p className="mt-1 text-base text-base-content/65">

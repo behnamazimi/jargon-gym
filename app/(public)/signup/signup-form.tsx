@@ -109,6 +109,13 @@ export default function SignupForm({ defaultReferenceCode = "", next: rawNext }:
           Log in
         </Link>
       </p>
+
+      <p className="text-center text-sm text-base-content/60">
+        Don&apos;t have a code?{" "}
+        <Link href="/request-access" className="underline underline-offset-2">
+          Request access
+        </Link>
+      </p>
     </div>
   );
 }
