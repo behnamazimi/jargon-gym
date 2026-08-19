@@ -30,8 +30,17 @@ export async function approveWaitlistRequest(requestId: string): Promise<void> {
   if (rpcError) throw rpcError;
   if (!referralCode) throw new Error("Failed to create a referral code.");
 
+  const { data: existingAccount, error: existingAccountError } = await supabase
+    .from("users")
+    .select("id")
+    .ilike("email", request.email)
+    .maybeSingle();
+  if (existingAccountError) throw existingAccountError;
+
   const origin = await getAppOrigin();
-  const signupUrl = `${origin}/signup?ref=${referralCode.code}`;
+  const signupUrl = existingAccount
+    ? `${origin}/complete-signup?ref=${referralCode.code}`
+    : `${origin}/signup?ref=${referralCode.code}&email=${encodeURIComponent(request.email)}`;
 
   await sendInviteEmail({ to: request.email, signupUrl });
 

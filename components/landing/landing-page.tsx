@@ -8,9 +8,6 @@ import { LinkButton } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { cn } from "@/lib/utils";
 
-const INVITE_REQUEST_EMAIL = "bhnmzm@gmail.com";
-const INVITE_REQUEST_MAILTO = `mailto:${INVITE_REQUEST_EMAIL}?subject=${encodeURIComponent("Jargon Gym invitation request")}&body=${encodeURIComponent("Hi,\n\nI'd like to try Jargon Gym. Could you send me an invitation code so I can sign up?\n\nThanks")}`;
-
 export async function LandingPage() {
   const { user } = await getSessionUser();
   return (
@@ -110,9 +107,9 @@ export async function LandingPage() {
               <Mail aria-hidden className="size-10 shrink-0" />
               <AlertDescription>
                 You need an invitation code to sign up.{" "}
-                <a href={INVITE_REQUEST_MAILTO} className="underline underline-offset-2">
-                  Email me to request one
-                </a>{" "}
+                <Link href="/request-access" className="underline underline-offset-2">
+                  Request access
+                </Link>{" "}
                 or{" "}
                 <Link href="/login" className="underline underline-offset-2">
                   log in

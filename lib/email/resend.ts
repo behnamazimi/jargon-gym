@@ -35,7 +35,7 @@ type SendInviteEmailParams = {
 export async function sendInviteEmail({ to, signupUrl }: SendInviteEmailParams): Promise<void> {
   await sendEmail({
     to,
-    subject: "You're invited to Jargon Gym",
+    subject: "Jargon Gym access granted",
     text: `You're in.\n\nJargon Gym is ready for you — use the link below to create your account:\n\n${signupUrl}\n\nSee you inside.`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto;">

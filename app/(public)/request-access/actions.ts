@@ -3,6 +3,7 @@
 import { after } from "next/server";
 import { z } from "zod";
 import { getAppOrigin } from "@/lib/auth/app-origin";
+import { getSessionUser } from "@/lib/auth/require-session";
 import { sendWaitlistRequestNotification } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -20,7 +21,8 @@ export async function requestAccess(
     return { success: true };
   }
 
-  const rawEmail = formData.get("email")?.toString() ?? "";
+  const { user } = await getSessionUser();
+  const rawEmail = user?.email ?? formData.get("email")?.toString() ?? "";
   const parsed = emailSchema.safeParse(rawEmail);
   if (!parsed.success) {
     return { error: "Enter a valid email address." };

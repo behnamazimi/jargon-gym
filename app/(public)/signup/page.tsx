@@ -3,16 +3,21 @@ import { PageCenter } from "@/components/page-container";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
 
 type SignupPageProps = {
-  searchParams: Promise<{ ref?: string; next?: string }>;
+  searchParams: Promise<{ ref?: string; email?: string; next?: string }>;
 };
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
-  const { ref, next } = await searchParams;
+  const { ref, email, next } = await searchParams;
   const defaultReferenceCode = normalizeReferralCode(ref);
+  const defaultEmail = email?.trim() ?? "";
 
   return (
     <PageCenter>
-      <SignupForm defaultReferenceCode={defaultReferenceCode} next={next} />
+      <SignupForm
+        defaultReferenceCode={defaultReferenceCode}
+        defaultEmail={defaultEmail}
+        next={next}
+      />
     </PageCenter>
   );
 }

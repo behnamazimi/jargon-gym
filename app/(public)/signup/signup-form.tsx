@@ -15,12 +15,18 @@ import { signup } from "./actions";
 
 type SignupFormProps = {
   defaultReferenceCode?: string;
+  defaultEmail?: string;
   next?: string;
 };
 
-export default function SignupForm({ defaultReferenceCode = "", next: rawNext }: SignupFormProps) {
+export default function SignupForm({
+  defaultReferenceCode = "",
+  defaultEmail = "",
+  next: rawNext,
+}: SignupFormProps) {
   const next = safeNextPath(rawNext ?? null);
   const [state, action, pending] = useActionState(signup, null);
+  const [email, setEmail] = useState(defaultEmail);
   const [password, setPassword] = useState("");
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [referenceCode, setReferenceCode] = useState(defaultReferenceCode);
@@ -43,7 +49,7 @@ export default function SignupForm({ defaultReferenceCode = "", next: rawNext }:
       />
       <h1 className="text-2xl font-semibold tracking-tight">Sign up</h1>
 
-      <GoogleSignInButton next={next} referenceCode={referenceCode} />
+      <GoogleSignInButton next={next} referenceCode={referenceCode} email={email} />
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-base-content/10" />
@@ -58,7 +64,15 @@ export default function SignupForm({ defaultReferenceCode = "", next: rawNext }:
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="signup-email">Email</FieldLabel>
-            <Input id="signup-email" type="email" name="email" required autoComplete="email" />
+            <Input
+              id="signup-email"
+              type="email"
+              name="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
           </Field>
 
           <Field>

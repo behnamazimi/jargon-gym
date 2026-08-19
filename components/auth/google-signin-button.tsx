@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 type GoogleSignInButtonProps = {
   next?: string;
   referenceCode?: string;
+  email?: string;
   label?: string;
 };
 
@@ -33,6 +34,7 @@ function GoogleMark({ className }: { className?: string }) {
 export function GoogleSignInButton({
   next = "/complete-signup",
   referenceCode,
+  email,
   label = "Continue with Google",
 }: GoogleSignInButtonProps) {
   return (
@@ -41,6 +43,7 @@ export function GoogleSignInButton({
       {referenceCode !== undefined ? (
         <input type="hidden" name="ref" value={referenceCode} />
       ) : null}
+      {email ? <input type="hidden" name="email" value={email} /> : null}
       <Button type="submit" variant="outline" className="w-full">
         <GoogleMark className="size-4 shrink-0" />
         {label}

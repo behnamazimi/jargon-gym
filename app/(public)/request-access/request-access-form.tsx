@@ -4,11 +4,19 @@ import { useActionState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
 import { Button } from "@/components/ui/button";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { requestAccess } from "./actions";
 
-export default function RequestAccessForm() {
+type RequestAccessFormProps = {
+  defaultEmail?: string;
+  emailLocked?: boolean;
+};
+
+export default function RequestAccessForm({
+  defaultEmail = "",
+  emailLocked = false,
+}: RequestAccessFormProps) {
   const [state, action, pending] = useActionState(requestAccess, null);
 
   if (state && "success" in state) {
@@ -59,7 +67,13 @@ export default function RequestAccessForm() {
               name="email"
               required
               autoComplete="email"
+              defaultValue={defaultEmail}
+              readOnly={emailLocked}
+              className={emailLocked ? "opacity-70" : undefined}
             />
+            {emailLocked ? (
+              <FieldDescription>Tied to the account you&apos;re signed in with.</FieldDescription>
+            ) : null}
           </Field>
 
           <div className="hidden" aria-hidden="true">

@@ -89,7 +89,11 @@ export async function updateSession(request: NextRequest) {
 
     const referralVerified = profile?.referral_verified ?? false;
 
-    if (!referralVerified && !pathname.startsWith("/complete-signup")) {
+    if (
+      !referralVerified &&
+      !pathname.startsWith("/complete-signup") &&
+      !pathname.startsWith("/request-access")
+    ) {
       const url = request.nextUrl.clone();
       const next = requestPathWithSearch(pathname, request.nextUrl.search);
       url.pathname = "/complete-signup";

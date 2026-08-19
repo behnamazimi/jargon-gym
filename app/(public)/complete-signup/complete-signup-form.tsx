@@ -1,6 +1,7 @@
 "use client";
 
 import { Mail } from "lucide-react";
+import Link from "next/link";
 import { useActionState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,9 +10,6 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { safeNextPath } from "@/lib/auth/safe-next-path";
 import { redeemReferralCode } from "./actions";
-
-const INVITE_REQUEST_EMAIL = "bhnmzm@gmail.com";
-const INVITE_REQUEST_MAILTO = `mailto:${INVITE_REQUEST_EMAIL}?subject=${encodeURIComponent("Jargon Gym invitation request")}&body=${encodeURIComponent("Hi,\n\nI'd like to try Jargon Gym. Could you send me an invitation code so I can sign up?\n\nThanks")}`;
 
 type CompleteSignupFormProps = {
   defaultReferenceCode?: string;
@@ -40,9 +38,9 @@ export default function CompleteSignupForm({
         <Mail aria-hidden className="size-10 shrink-0" />
         <AlertDescription>
           You need a reference code to finish setting up your account. If you don&apos;t have one,{" "}
-          <a href={INVITE_REQUEST_MAILTO} className="underline underline-offset-2">
-            email me to request one
-          </a>
+          <Link href="/request-access" className="underline underline-offset-2">
+            request access
+          </Link>
           .
         </AlertDescription>
       </Alert>
