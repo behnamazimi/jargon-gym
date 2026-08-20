@@ -25,7 +25,7 @@ export async function listPublicTermPaths(): Promise<PublicTermPath[]> {
   );
 }
 
-export type PublicDomain = {
+type PublicDomain = {
   id: string;
   slug: string;
   name: string;

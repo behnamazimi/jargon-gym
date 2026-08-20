@@ -1,8 +1,5 @@
 import type { OverallStrength, PickReason } from "@/lib/smart-queue";
-import type { StudyCollection, TermPoolStatus } from "@/lib/study";
-
-/** @deprecated Prefer TermPoolStatus from @/lib/study */
-export type QuizTermStatus = TermPoolStatus;
+import type { StudyCollection } from "@/lib/study";
 
 export type QuizQuestionStyle = "ai" | "simple";
 

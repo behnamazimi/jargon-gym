@@ -3,7 +3,6 @@ import type { Database } from "@/lib/supabase/database.types";
 import {
   countTermsForSelection as countStudyTermsForSelection,
   fetchQuizTermPool as fetchStudyQuizTermPool,
-  getMaxStudyCount,
   listStudyCollections,
   MAX_STUDY_TERMS,
 } from "@/lib/study";
@@ -14,10 +13,6 @@ type Client = SupabaseClient<Database>;
 
 /** @deprecated Prefer MAX_STUDY_TERMS from @/lib/study */
 export const MAX_QUIZ_TERMS = MAX_STUDY_TERMS;
-
-export function getMaxQuizQuestionCount(availableTermCount: number): number {
-  return getMaxStudyCount(availableTermCount);
-}
 
 export async function listQuizableCollections(
   client: Client,

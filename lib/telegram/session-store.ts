@@ -285,7 +285,7 @@ export async function getCurrentTerm(
 
 // --- /review flashcard-style setup wizard + session state ---
 
-export type ReviewSetupStep = "collection" | "count";
+type ReviewSetupStep = "collection" | "count";
 
 export type ReviewSetupState = {
   step: ReviewSetupStep;
@@ -297,7 +297,7 @@ export type ReviewSetupState = {
 /** One drawn term plus which pool it came from — needed per-term now that a
  *  session blends both pools, since rating a term flips known/unknown in the
  *  direction that depends on its own origin, not a session-wide value. */
-export type ReviewSessionTerm = { id: string; status: ReviewStatus };
+type ReviewSessionTerm = { id: string; status: ReviewStatus };
 
 export type TelegramReviewSession = {
   userId: string;

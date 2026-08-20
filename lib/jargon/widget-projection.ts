@@ -6,7 +6,7 @@ import { resolveReviewDomainIdsForUser } from "./known-state";
 
 type Client = SupabaseClient<Database>;
 
-export const WIDGET_POOL_SIZE = 2;
+const WIDGET_POOL_SIZE = 2;
 
 /** Peeks up to `limit` unknown Read terms — never records a read. */
 export async function fetchWidgetState(

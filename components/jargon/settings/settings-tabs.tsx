@@ -3,12 +3,12 @@ import { cn } from "@/lib/utils";
 
 export type SettingsTabId = "quiz" | "telegram" | "widget";
 
-export type SettingsTab = {
+type SettingsTab = {
   id: SettingsTabId;
   label: string;
 };
 
-export const SETTINGS_TABS: readonly SettingsTab[] = [
+const SETTINGS_TABS: readonly SettingsTab[] = [
   { id: "quiz", label: "Quiz" },
   { id: "telegram", label: "Telegram" },
   { id: "widget", label: "Widget setup" },

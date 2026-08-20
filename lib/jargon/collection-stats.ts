@@ -199,11 +199,11 @@ export async function fetchTelegramStats(client: Client, userId: string): Promis
   return buildStatsSnapshot(collectionRows, reviewDomainIds, unknownCandidates, knownCandidates);
 }
 
-export type MasteryTiers = { weak: number; medium: number; strong: number };
+type MasteryTiers = { weak: number; medium: number; strong: number };
 
 export type AccuracySummary = { passed: number; attempted: number; percentage: number };
 
-export type PausedCollectionSummary = {
+type PausedCollectionSummary = {
   id: string;
   name: string;
   knownCount: number;

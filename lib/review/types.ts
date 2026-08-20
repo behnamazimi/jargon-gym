@@ -2,9 +2,6 @@ import type { Term } from "@/lib/jargon/types";
 import type { OverallStrength, PickReason } from "@/lib/smart-queue";
 import type { TermPoolStatus } from "@/lib/study";
 
-/** @deprecated Prefer TermPoolStatus from @/lib/study */
-export type ReviewTermStatus = TermPoolStatus;
-
 export type ReviewTerm = Term & {
   domainName: string;
   pickReasons?: PickReason[];

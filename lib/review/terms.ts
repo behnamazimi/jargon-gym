@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchStudyTermPool, getMaxStudyCount, MAX_STUDY_TERMS } from "@/lib/study";
+import { fetchStudyTermPool, MAX_STUDY_TERMS } from "@/lib/study";
 import { toReviewTerm } from "./mappers";
 import type { ReviewTerm } from "./types";
 
@@ -8,10 +8,6 @@ type Client = SupabaseClient<Database>;
 
 /** @deprecated Prefer MAX_STUDY_TERMS from @/lib/study */
 export const MAX_REVIEW_TERMS = MAX_STUDY_TERMS;
-
-export function getMaxReviewCardCount(availableTermCount: number): number {
-  return getMaxStudyCount(availableTermCount);
-}
 
 export async function fetchReviewTermPool(
   client: Client,

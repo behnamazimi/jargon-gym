@@ -9,7 +9,7 @@ export function formatRelative(iso: string | null): string {
 /** Streak is signed: positive = consecutive passes, negative = consecutive
  *  fails, 0 = never tested. Spelled out here instead of a raw signed number
  *  so the sign is not left to the reader to remember. */
-export function formatStreak(streak: number): string {
+function formatStreak(streak: number): string {
   if (streak === 0) return "no streak yet";
   const count = Math.abs(streak);
   if (streak > 0) return `${count} pass${count === 1 ? "" : "es"} in a row`;

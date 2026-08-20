@@ -85,12 +85,12 @@ export async function recordReveal(
   await writeEvent(client, mode, userId, termId, "reveal");
 }
 
-export type RecordTestResult = {
+type RecordTestResult = {
   event: ReviewEvent;
 };
 
 /** Review rating or quiz answer — the only writer of pass/fail history, scoped by `activity`. */
-export async function recordTest(
+async function recordTest(
   client: Client,
   userId: string,
   input: {
