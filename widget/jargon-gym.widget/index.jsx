@@ -23,6 +23,19 @@ export const updateState = (event, previousState) => {
   if (event.output !== undefined) {
     return { output: event.output, error: null };
   }
+  // Optimistic local swap so "Next" shows the already-cached term instantly
+  // instead of waiting on advance-term.sh's round trip. The real dispatch
+  // that follows (from the run() call) reconciles this with server state.
+  if (event.optimisticNext) {
+    try {
+      const data = JSON.parse(previousState.output || "{}");
+      data.current = event.optimisticNext;
+      data.next = null;
+      return { output: JSON.stringify(data), error: null };
+    } catch {
+      return previousState;
+    }
+  }
   return previousState;
 };
 
@@ -157,6 +170,7 @@ function parseState(output) {
     const data = JSON.parse(output || "{}");
     return {
       current: data.current || null,
+      next: data.next || null,
       widgetDir: data.widgetDir || null,
       appBaseUrl: data.appBaseUrl || "http://localhost:3000",
       totalCount: data.totalCount ?? 0,
@@ -212,9 +226,16 @@ const refreshState = (dispatch, widgetDir = null, reset = false) => {
  *  will record this term's read server-side — i.e. the "Next" button,
  *  where showing the term was a passive read the user just confirmed by
  *  moving on. The script's own output is a ready-to-render state, same
- *  shape as READ_STATE_CMD, so it's dispatched directly. */
-const advanceTerm = (termId, widgetDir, dispatch, record = false) => {
+ *  shape as READ_STATE_CMD, so it's dispatched directly.
+ *
+ *  If `next` is already cached from the last read, dispatch it immediately
+ *  so the UI advances without waiting on this round trip; the eventual
+ *  dispatch below reconciles with the authoritative server state. */
+const advanceTerm = (termId, widgetDir, dispatch, record = false, next = null) => {
   if (!widgetDir || !termId) return;
+  if (next) {
+    dispatch({ optimisticNext: next });
+  }
   const args = record ? ` --record` : "";
   run(`${escapeShellArg(widgetDir + "/advance-term.sh")} ${escapeShellArg(termId)}${args}`)
     .then((output) => dispatch({ output }))
@@ -223,10 +244,10 @@ const advanceTerm = (termId, widgetDir, dispatch, record = false) => {
 
 /** Open the current term on the Read page, then advance the widget locally.
  *  The Read page itself records the read, so this must not record again. */
-const openAppAndRotate = (appBaseUrl, current, widgetDir, dispatch) => {
+const openAppAndRotate = (appBaseUrl, current, next, widgetDir, dispatch) => {
   openApp(appBaseUrl, current);
   if (current?.id) {
-    advanceTerm(current.id, widgetDir, dispatch, false);
+    advanceTerm(current.id, widgetDir, dispatch, false, next);
   }
 };
 
@@ -292,6 +313,7 @@ export const render = ({ output, error }, dispatch) => {
     knownCount,
     totalCount,
     current,
+    next,
     widgetDir,
     appBaseUrl,
     widgetVersion,
@@ -358,13 +380,13 @@ export const render = ({ output, error }, dispatch) => {
       />
       <div
         className="term"
-        onClick={() => openAppAndRotate(appBaseUrl, current, widgetDir, dispatch)}
+        onClick={() => openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)}
       >
         {current.term}
       </div>
       <div
         className="def"
-        onClick={() => openAppAndRotate(appBaseUrl, current, widgetDir, dispatch)}
+        onClick={() => openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)}
       >
         {current.definition}
       </div>
@@ -375,7 +397,7 @@ export const render = ({ output, error }, dispatch) => {
           title="Open this term on the Read page"
           onClick={(e) => {
             e.stopPropagation();
-            openAppAndRotate(appBaseUrl, current, widgetDir, dispatch);
+            openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch);
           }}
         >
           Read more
@@ -386,7 +408,7 @@ export const render = ({ output, error }, dispatch) => {
           title="Show another term"
           onClick={(e) => {
             e.stopPropagation();
-            advanceTerm(current.id, widgetDir, dispatch, true);
+            advanceTerm(current.id, widgetDir, dispatch, true, next);
           }}
         >
           → Next
@@ -395,7 +417,7 @@ export const render = ({ output, error }, dispatch) => {
       <div className="hint-row">
         <span
           className="hint"
-          onClick={() => openAppAndRotate(appBaseUrl, current, widgetDir, dispatch)}
+          onClick={() => openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)}
         >
           Click term to read more →
         </span>

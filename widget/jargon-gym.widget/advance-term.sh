@@ -52,8 +52,10 @@ widget_version = (config or {}).get("version")
 
 def current_payload():
     current = state["pool"][0] if state["pool"] else None
+    next_term = state["pool"][1] if len(state["pool"]) > 1 else None
     return {
         "current": current,
+        "next": next_term,
         "widgetDir": str(widget_dir),
         "appBaseUrl": app_base,
         "totalCount": state.get("totalCount", 0),
