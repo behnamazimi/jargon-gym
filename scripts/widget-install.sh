@@ -8,7 +8,7 @@ if [[ -n "${JARGON_BASE_URL:-}" ]]; then
 elif [[ "$BAKED_BASE_URL" != "__JARGON_BASE_URL__" ]]; then
   BASE_URL="$BAKED_BASE_URL"
 else
-  BASE_URL="${1:-http://localhost:3000}"
+  BASE_URL="${1:-https://jargon-gym.vercel.app}"
 fi
 
 if [[ -z "$BASE_URL" ]]; then

@@ -76,14 +76,15 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
   // first-timers land on "install". Either is still one click away.
   const [mode, setMode] = useState<SetupMode>(initialTokens.length > 0 ? "update" : "install");
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://your-domain.com";
+  const origin =
+    typeof window !== "undefined" ? window.location.origin : "https://jargon-gym.vercel.app";
   const installScriptUrl = `${origin}/install-widget.sh`;
   const installWithTokenCommand = newToken
-    ? `curl -fsSL ${installScriptUrl} | JARGON_BASE_URL=${shellQuote(origin)} JARGON_WIDGET_TOKEN=${shellQuote(newToken)} bash`
+    ? `curl -fsSL ${installScriptUrl} | JARGON_WIDGET_TOKEN=${shellQuote(newToken)} bash`
     : null;
   // No token needed — install-widget.sh keeps whatever token is already in
   // config.json, so this just refreshes the widget files in place.
-  const updateCommand = `curl -fsSL ${installScriptUrl} | JARGON_BASE_URL=${shellQuote(origin)} bash`;
+  const updateCommand = `curl -fsSL ${installScriptUrl} | bash`;
 
   async function handleGenerate() {
     setError(null);
