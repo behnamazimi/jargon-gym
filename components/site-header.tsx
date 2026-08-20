@@ -9,20 +9,31 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { cn } from "@/lib/utils";
 
-function SiteHeaderChrome({ homeHref, children }: { homeHref: string; children: ReactNode }) {
+function SiteHeaderChrome({
+  homeHref,
+  leftNav,
+  rightNav,
+}: {
+  homeHref: string;
+  leftNav?: ReactNode;
+  rightNav: ReactNode;
+}) {
   return (
     <header className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm">
       <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
-        <Link
-          href={homeHref}
-          className="flex items-center gap-2 text-lg font-bold tracking-tight no-underline"
-          aria-label="Jargon Gym"
-        >
-          <BrandIcon className="sm:hidden" />
-          <span className="hidden text-primary sm:inline">Jargon Gym</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href={homeHref}
+            className="flex items-center gap-2 text-lg font-bold tracking-tight no-underline"
+            aria-label="Jargon Gym"
+          >
+            <BrandIcon className="sm:hidden" />
+            <span className="hidden text-primary sm:inline">Jargon Gym</span>
+          </Link>
+          {leftNav ? <nav className="flex items-center gap-1">{leftNav}</nav> : null}
+        </div>
 
-        <nav className="flex items-center gap-1">{children}</nav>
+        <nav className="flex items-center gap-1">{rightNav}</nav>
       </div>
     </header>
   );
@@ -50,18 +61,27 @@ export async function SiteHeader({ initialIsDark }: { initialIsDark: boolean }) 
   const isAdmin = user ? await getUserIsAdmin(user.id) : false;
 
   return (
-    <SiteHeaderChrome homeHref={user ? "/jargon" : "/"}>
-      <ThemeToggle initialIsDark={initialIsDark} />
-      {user ? (
+    <SiteHeaderChrome
+      homeHref={user ? "/jargon" : "/"}
+      leftNav={
+        user ? (
+          <>
+            <HeaderStudyLink href="/jargon/read" icon={Zap} label="Read" />
+            <HeaderStudyLink href="/jargon/quiz" icon={Sparkles} label="Quiz" />
+            <HeaderStudyLink href="/jargon/review" icon={BookOpen} label="Review" />
+          </>
+        ) : null
+      }
+      rightNav={
         <>
-          <HeaderStudyLink href="/jargon/quiz" icon={Sparkles} label="Quiz" />
-          <HeaderStudyLink href="/jargon/review" icon={BookOpen} label="Review" />
-          <HeaderStudyLink href="/jargon/read" icon={Zap} label="Read" />
-          <ProfileMenu email={user.email ?? "Account"} isAdmin={isAdmin} />
+          <ThemeToggle initialIsDark={initialIsDark} />
+          {user ? (
+            <ProfileMenu email={user.email ?? "Account"} isAdmin={isAdmin} />
+          ) : (
+            <LoggedOutHeaderNav />
+          )}
         </>
-      ) : (
-        <LoggedOutHeaderNav />
-      )}
-    </SiteHeaderChrome>
+      }
+    />
   );
 }
