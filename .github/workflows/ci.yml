@@ -20,6 +20,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    environment: Preview
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -31,6 +32,8 @@ jobs:
       - run: pnpm run build
         env:
           WIDGET_PRODUCTION_URL: https://jargon-gym.vercel.app
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
 
   test:
     runs-on: ubuntu-latest
