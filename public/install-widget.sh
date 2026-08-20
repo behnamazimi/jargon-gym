@@ -75,6 +75,29 @@ fi
 
 mkdir -p "$WIDGETS_DIR"
 
+# Reinstalling to update: keep the token already in config.json unless the
+# caller explicitly passed a new one, so "update the widget" never requires
+# generating a fresh token.
+if [[ -z "$API_TOKEN" && -f "${INSTALL_DIR}/config.json" ]]; then
+  EXISTING_TOKEN="$(CONFIG_PATH="${INSTALL_DIR}/config.json" /usr/bin/python3 - <<'PY'
+import json
+import os
+import pathlib
+
+path = pathlib.Path(os.environ["CONFIG_PATH"])
+try:
+    data = json.loads(path.read_text())
+except (FileNotFoundError, json.JSONDecodeError):
+    data = {}
+print(data.get("apiToken") or "")
+PY
+)"
+  if [[ -n "$EXISTING_TOKEN" ]]; then
+    API_TOKEN="$EXISTING_TOKEN"
+    echo "Preserving existing API token from previous install."
+  fi
+fi
+
 if [[ -e "$INSTALL_DIR" ]]; then
   echo "Removing existing widget at ${INSTALL_DIR}"
   rm -rf "$INSTALL_DIR"
