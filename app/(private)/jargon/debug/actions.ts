@@ -7,6 +7,7 @@ import {
   listScoredMixedReviewCandidates,
   listScoredQuizCandidates,
 } from "@/lib/smart-queue/service";
+import { buildRotationInsight, type RotationPoolInsight } from "@/lib/smart-queue/rotation-insight";
 import type { FailSource, PickContext, PickReason } from "@/lib/smart-queue/types";
 import { RANKING } from "@/lib/smart-queue/weights";
 import type { Database } from "@/lib/supabase/database.types";
@@ -62,7 +63,12 @@ export type DebugReviewMixInfo = {
 export async function listDebugScoredTermsAction(
   domainIds: string[] | "all",
   context: PickContext,
-): Promise<{ rows?: DebugScoredRow[]; mix?: DebugReviewMixInfo; error?: string }> {
+): Promise<{
+  rows?: DebugScoredRow[];
+  mix?: DebugReviewMixInfo;
+  insight?: RotationPoolInsight[];
+  error?: string;
+}> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to view this." };
@@ -71,7 +77,10 @@ export async function listDebugScoredTermsAction(
   try {
     if (context === "quiz") {
       const scored = await listScoredQuizCandidates(auth.supabase, auth.user.id, { domainIds });
-      return { rows: await hydrateDebugRows(auth.supabase, scored) };
+      return {
+        rows: await hydrateDebugRows(auth.supabase, scored),
+        insight: buildRotationInsight(scored, context),
+      };
     }
 
     if (context === "review") {
@@ -89,6 +98,7 @@ export async function listDebugScoredTermsAction(
           knownCount,
           unknownCount,
         },
+        insight: buildRotationInsight(scored, context),
       };
     }
 
@@ -99,7 +109,10 @@ export async function listDebugScoredTermsAction(
       "unknown",
       context,
     );
-    return { rows: await hydrateDebugRows(auth.supabase, scored) };
+    return {
+      rows: await hydrateDebugRows(auth.supabase, scored),
+      insight: buildRotationInsight(scored, context),
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load scored terms.";
     return { error: message };

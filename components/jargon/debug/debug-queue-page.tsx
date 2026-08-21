@@ -2,9 +2,11 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import type { DebugReviewMixInfo, DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
 import { DebugCollectionSelect } from "@/components/jargon/debug/debug-collection-select";
+import { RotationInsightPanel } from "@/components/jargon/debug/rotation-insight-panel";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { RotationPoolInsight } from "@/lib/smart-queue/rotation-insight";
 import type { PickContext } from "@/lib/smart-queue/types";
 import type { StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
@@ -15,6 +17,7 @@ type DebugQueuePageProps = {
   domainId: string;
   rows: DebugScoredRow[];
   mix: DebugReviewMixInfo | null;
+  insight: RotationPoolInsight[];
   errorMessage: string | null;
 };
 
@@ -90,6 +93,7 @@ export function DebugQueuePage({
   domainId,
   rows,
   mix,
+  insight,
   errorMessage,
 }: DebugQueuePageProps) {
   if (collections.length === 0) {
@@ -155,7 +159,10 @@ export function DebugQueuePage({
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       ) : (
-        <ScoreRows rows={rows} context={context} />
+        <>
+          <RotationInsightPanel pools={insight} />
+          <ScoreRows rows={rows} context={context} />
+        </>
       )}
     </>
   );
