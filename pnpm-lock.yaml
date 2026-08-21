@@ -23,6 +23,9 @@ dependencies:
   clsx:
     specifier: ^2.1.1
     version: 2.1.1
+  entities:
+    specifier: 8.0.0
+    version: 8.0.0
   lucide-react:
     specifier: ^1.26.0
     version: 1.26.0(react@19.2.4)
@@ -1905,6 +1908,11 @@ packages:
       graceful-fs: 4.2.11
       tapable: 2.3.3
     dev: true
+
+  /entities@8.0.0:
+    resolution: {integrity: sha512-zwfzJecQ/Uej6tusMqwAqU/6KL2XaB2VZ2Jg54Je6ahNBGNH6Ek6g3jjNCF0fG9EWQKGZNddNjU5F1ZQn/sBnA==}
+    engines: {node: '>=20.19.0'}
+    dev: false
 
   /es-module-lexer@2.3.2:
     resolution: {integrity: sha512-poHGpORABojJJucnV9KbOavETW8lBVnphkW77ER5/BQ5Fz7oXSoCNek7IH3vR5nRjdsEz926ibFYX8KtLQmdyw==}

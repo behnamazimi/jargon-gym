@@ -1,13 +1,10 @@
+import { encodeXML } from "entities";
 import type { CollectionStatBreakdown, StatsSnapshot } from "@/lib/jargon/collection-stats";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
 import { formatPickDebugLine, type PickMeta } from "@/lib/smart-queue";
 import type { InlineKeyboardMarkup } from "./actions";
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
 
 function buildGoogleSearchUrl(term: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(`${term} definition`)}`;
@@ -20,7 +17,7 @@ function getAppBaseUrl(): string {
 function formatInlineSection(emoji: string, label: string, body: string): string {
   const trimmed = body.trim();
   if (!trimmed) return "";
-  return `\n\n${emoji} <b>${escapeHtml(label)}:</b> ${escapeHtml(trimmed)}`;
+  return `\n\n${emoji} <b>${encodeXML(label)}:</b> ${encodeXML(trimmed)}`;
 }
 
 function formatRelationships(relationships: TermCardRelationship[]): string {
@@ -28,11 +25,11 @@ function formatRelationships(relationships: TermCardRelationship[]): string {
 
   let section = "";
   for (const relationship of relationships) {
-    const type = escapeHtml(relationship.relationshipType);
-    const name = escapeHtml(relationship.relatedTermName);
+    const type = encodeXML(relationship.relationshipType);
+    const name = encodeXML(relationship.relatedTermName);
     section += `\n\n• ${type} <b>${name}</b>`;
     if (relationship.description?.trim()) {
-      section += `\n  ${escapeHtml(relationship.description.trim())}`;
+      section += `\n  ${encodeXML(relationship.description.trim())}`;
     }
   }
   return `\n${section}`;
@@ -40,13 +37,13 @@ function formatRelationships(relationships: TermCardRelationship[]): string {
 
 function buildTermHeader(term: TermCard): string {
   return (
-    `<b>${escapeHtml(term.term)}</b>\n` +
-    `${escapeHtml(term.domainName)} · ${escapeHtml(term.category)}`
+    `<b>${encodeXML(term.term)}</b>\n` +
+    `${encodeXML(term.domainName)} · ${encodeXML(term.category)}`
   );
 }
 
 function buildTermDetails(term: TermCard): string {
-  let details = escapeHtml((term.definition ?? "").trim());
+  let details = encodeXML((term.definition ?? "").trim());
   details += formatInlineSection("💡", "Mental model", term.mentalModel ?? "");
   details += formatInlineSection("📌", "Example", term.example ?? "");
   details += formatInlineSection("⚠️", "Anti-example", term.antiExample ?? "");
@@ -62,11 +59,11 @@ function buildTermMessageBody(term: TermCard): string {
 
 function appendSearchLink(message: string, termName: string): string {
   const searchUrl = buildGoogleSearchUrl(termName);
-  return `${message}\n\n<a href="${searchUrl}">Search "${escapeHtml(termName)}" on Google</a>`;
+  return `${message}\n\n<a href="${searchUrl}">Search "${encodeXML(termName)}" on Google</a>`;
 }
 
 function formatPickDebugFooter(pickMeta: PickMeta): string {
-  return `\n\n<i>${escapeHtml(formatPickDebugLine(pickMeta.score, pickMeta.reasons, "read"))}</i>`;
+  return `\n\n<i>${encodeXML(formatPickDebugLine(pickMeta.score, pickMeta.reasons, "read"))}</i>`;
 }
 
 function trimMessageBody(body: string, reservedLength: number): string {
@@ -157,7 +154,7 @@ export function formatStatsMessage(stats: StatsSnapshot): string {
     ])}`;
 
     for (const collection of stats.activeCollections) {
-      message += `\n\n<b>${escapeHtml(collection.name)}</b>\n`;
+      message += `\n\n<b>${encodeXML(collection.name)}</b>\n`;
       message += `${formatCollectionProgressLine(collection)}\n`;
       message += formatUnknownFootnote(collection);
     }
@@ -251,7 +248,7 @@ export function formatQuizSetupCountPrompt(maxCount: number, defaultCount: numbe
 }
 
 export function formatSetupPromptWithAnswer(prompt: string, choice: string): string {
-  return `${prompt}\n\n<b>Your choice:</b> ${escapeHtml(choice)}`;
+  return `${prompt}\n\n<b>Your choice:</b> ${encodeXML(choice)}`;
 }
 
 export function formatReviewSetupCollectionPrompt(): string {
@@ -267,8 +264,8 @@ export function formatReviewSetupCountPrompt(maxCount: number, defaultCount: num
 
 function buildReviewCardHeader(term: TermCard, currentIndex: number, totalTerms: number): string {
   let message = `<b>Review ${currentIndex + 1}/${totalTerms}</b>\n\n`;
-  message += `<b>${escapeHtml(term.term)}</b>\n`;
-  message += `<i>${escapeHtml(term.category)}</i> · ${escapeHtml(term.domainName)}`;
+  message += `<b>${encodeXML(term.term)}</b>\n`;
+  message += `<i>${encodeXML(term.category)}</i> · ${encodeXML(term.domainName)}`;
   return message;
 }
 
@@ -348,8 +345,8 @@ export function formatReviewQuestion(
   totalQuestions: number,
 ): string {
   let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
-  message += `${escapeHtml(term.definition)}\n\n`;
-  message += `<i>Category: ${escapeHtml(term.category)}</i> · ${escapeHtml(term.domainName)}`;
+  message += `${encodeXML(term.definition)}\n\n`;
+  message += `<i>Category: ${encodeXML(term.category)}</i> · ${encodeXML(term.domainName)}`;
   return message;
 }
 
@@ -363,12 +360,12 @@ export function formatReviewQuestionWithAnswer(
   markedUnknown = false,
 ): string {
   let message = formatReviewQuestion(term, questionIndex, totalQuestions);
-  message += `\n\n<b>Your answer:</b> ${escapeHtml(selectedTerm)}`;
+  message += `\n\n<b>Your answer:</b> ${encodeXML(selectedTerm)}`;
 
   if (isCorrect) {
     message += `\n\n✅ <b>Correct!</b>`;
   } else {
-    message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeHtml(term.term)}</b>`;
+    message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${encodeXML(term.term)}</b>`;
     if (markedUnknown) message += "\n<i>Marked as unknown.</i>";
   }
 
