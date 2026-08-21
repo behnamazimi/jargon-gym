@@ -6,7 +6,7 @@
  */
 
 import { isSameLocalDay } from "./local-day";
-import { masteredCooldownHours, RANKING } from "./weights";
+import { effectiveStalenessDecayHours, masteredCooldownHours, RANKING } from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
 type ScoreBreakdown = {
@@ -208,11 +208,20 @@ function evaluateCandidate(
   }
 
   // Staleness — only once this context has some activity to measure from.
+  // τ is scaled per-candidate for Review/Quiz (streak > 1) by the same
+  // ratio masteredCooldownHours already earns for the cooldown window — a
+  // term that's earned a longer rest also earns a slower staleness climb
+  // once that rest ends. Read has no streak (fields.streak is null there),
+  // so it keeps the flat per-context τ unconditionally.
   if (fields.ownCount > 0 && fields.lastActivityAt) {
     const hoursSinceActivity = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
+    const decayHours =
+      fields.streak !== null
+        ? effectiveStalenessDecayHours(fields.streak, RANKING.stalenessDecayHours[context])
+        : RANKING.stalenessDecayHours[context];
     score += stalenessBoost(
       hoursSinceActivity,
-      RANKING.stalenessDecayHours[context],
+      decayHours,
       weights.stalenessCapHours,
       weights.stalenessMaxBoost,
     );

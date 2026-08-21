@@ -230,13 +230,15 @@ window grows. A fail-then-repass resets the streak to `+1`, so the window
 resets back to the short end too — that's intentional, not a bug: a term
 that was just missed hasn't earned a long cooldown yet. Scoped per
 `PickContext` like everything else — a long Quiz streak never lengthens
-Review's cooldown.
+Review's cooldown. This same window ratio is reused by the staleness
+formula below to scale how fast staleness ramps, not just how long a term
+rests before it starts ramping at all.
 
 ### Decay-shaped staleness
 
 Staleness no longer accrues linearly. It follows an exponential-decay
-curve, front-loading the boost near the context's own decay constant (τ)
-and flattening out as it approaches the cap:
+curve, front-loading the boost near the term's own decay constant (τ) and
+flattening out as it approaches the cap:
 
 ```ts
 function stalenessBoost(hoursSinceLastActivity, decayConstantHours, capHours, maxBoost) {
@@ -247,16 +249,40 @@ function stalenessBoost(hoursSinceLastActivity, decayConstantHours, capHours, ma
 ```
 
 The ceiling (`stalenessMaxBoost`, 84) matches the old linear formula's max
-(`0.5 × 168h`) — only the shape changed, not the cap. τ is per-context
-(`RANKING_STALENESS_DECAY_HOURS` in `weights.ts`): Quiz stales fastest (24h), Review
-next (36h), Read slowest (48h) — so a quiz you haven't touched in a day
-climbs the queue faster than a definition you haven't re-read in a day.
+(`0.5 × 168h`) — only the shape changed, not the cap. τ starts from a flat
+per-context base (`RANKING_STALENESS_DECAY_HOURS` in `weights.ts`): Quiz
+stales fastest (24h), Review next (36h), Read slowest (48h) — so a quiz
+you haven't touched in a day climbs the queue faster than a definition
+you haven't re-read in a day.
+
+For Review and Quiz, that base τ is then scaled per candidate by
+`effectiveStalenessDecayHours(streak, baseDecayHours)` — the same ratio
+`masteredCooldownHours` earns for the cooldown window, reused a second
+time for a second purpose:
+
+```ts
+function effectiveStalenessDecayHours(streak: number, baseDecayHours: number): number {
+  if (streak <= 1) return baseDecayHours;
+  const ratio = masteredCooldownHours(streak) / RANKING.masteredCooldown.baseHours;
+  return baseDecayHours * ratio;
+}
+```
+
+A term at the baseline streak (`+1`) or a struggling one (negative streak)
+keeps the flat base τ — nothing changes for them. Past baseline, the same
+streak that earns a longer cooldown window also earns a slower staleness
+climb once that window ends: a Review term at streak `+5` ramps toward
+"stale" about 4.7× slower than one at streak `+1`, mirroring the 4.7×
+longer cooldown it earned. Read has no streak (`fields.streak` is `null`
+there), so it always uses the flat per-context τ — this only applies to
+Review and Quiz.
+
 Staleness stays **additive** with mastered cooldown, same as before: right
 after a pass, the large negative cooldown penalty still dominates the
-front-loaded staleness boost (e.g. 24h into a Review cooldown with τ=36,
-staleness is only ~+41 against a −120 penalty — net still solidly negative).
-There's no special-casing "zero staleness during cooldown" — the two
-signals just add.
+front-loaded staleness boost (e.g. 24h into a Review cooldown at streak
+`+1`, τ=36, staleness is only ~+41 against a −120 penalty — net still
+solidly negative). There's no special-casing "zero staleness during
+cooldown" — the two signals just add.
 
 ### Lifetime fail rate (`fragile`)
 
@@ -310,21 +336,21 @@ Related ranking constants, alongside `RANKING_WEIGHTS` in the same file
 the separate, display-only set). Hand-maintained from `weights.ts`'s actual
 exports — update this table in the same commit as any change there:
 
-| Constant                          | Default                              | Purpose                                                                                                                                                                                       |
-| --------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `MASTERED_COOLDOWN_BASE_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1`                                                                                                                                                       |
-| `MASTERED_COOLDOWN_GROWTH_FACTOR` | 1.6                                  | Per-streak-point multiplier on the cooldown window                                                                                                                                            |
-| `MASTERED_COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                                                                                                   |
-| `RANKING_STALENESS_DECAY_HOURS`   | `{ read: 48, review: 36, quiz: 24 }` | Per-context decay constant (τ) for the ranking staleness boost — a map next to `RANKING_WEIGHTS`, not a field on `ScoreWeights`                                                               |
-| `STALE_REASON_THRESHOLD_HOURS`    | 24                                   | Hours since a context's own last-activity before the `stale` reason/badge attaches — a flat label cutoff, distinct from the per-context decay curve above                                     |
-| `FAIL_RATE_MIN_ATTEMPTS`          | 4                                    | Minimum own-context attempts before a lifetime fail-rate is trusted — shared with the strength scores below                                                                                   |
-| `QUEUE_TIMEZONE`                  | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                                                                                                 |
-| `ENGAGED_MIN_READ_COUNT`          | 3                                    | Minimum reads before `engaged_untested` applies                                                                                                                                               |
-| `STREAK_BOOST_CAP`                | 5                                    | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                                                                                 |
-| `MIX_NEVER_ENGAGED_SLOTS`         | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                                 |
-| `MIX_ALREADY_TOUCHED_SLOTS`       | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                               |
-| `RANKING.reviewMix.knownSlots`    | 2                                    | Review's known-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix). Written with its current nested path, not the flat naming the rest of this table uses. |
-| `RANKING.reviewMix.unknownSlots`  | 5                                    | Review's unknown-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix)                                                                                       |
+| Constant                          | Default                              | Purpose                                                                                                                                                                                                                                                                                                                            |
+| --------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MASTERED_COOLDOWN_BASE_HOURS`    | 72                                   | Mastered-cooldown window at streak `+1`                                                                                                                                                                                                                                                                                            |
+| `MASTERED_COOLDOWN_GROWTH_FACTOR` | 1.6                                  | Per-streak-point multiplier on the cooldown window                                                                                                                                                                                                                                                                                 |
+| `MASTERED_COOLDOWN_CAP_HOURS`     | 336 (14 days)                        | Cooldown window never exceeds this, however high the streak                                                                                                                                                                                                                                                                        |
+| `RANKING_STALENESS_DECAY_HOURS`   | `{ read: 48, review: 36, quiz: 24 }` | Per-context _base_ decay constant (τ) for the ranking staleness boost — a map next to `RANKING_WEIGHTS`, not a field on `ScoreWeights`. For Review/Quiz at streak `> 1`, `effectiveStalenessDecayHours` scales this up by the same ratio `masteredCooldownHours` earns for the cooldown window; Read always uses this value as-is. |
+| `STALE_REASON_THRESHOLD_HOURS`    | 24                                   | Hours since a context's own last-activity before the `stale` reason/badge attaches — a flat label cutoff, distinct from the per-context decay curve above                                                                                                                                                                          |
+| `FAIL_RATE_MIN_ATTEMPTS`          | 4                                    | Minimum own-context attempts before a lifetime fail-rate is trusted — shared with the strength scores below                                                                                                                                                                                                                        |
+| `QUEUE_TIMEZONE`                  | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                                                                                                                                                                                                                                      |
+| `ENGAGED_MIN_READ_COUNT`          | 3                                    | Minimum reads before `engaged_untested` applies                                                                                                                                                                                                                                                                                    |
+| `STREAK_BOOST_CAP`                | 5                                    | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                                                                                                                                                                                                                      |
+| `MIX_NEVER_ENGAGED_SLOTS`         | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                                                                                                                                                                      |
+| `MIX_ALREADY_TOUCHED_SLOTS`       | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                                                                                                                                                                    |
+| `RANKING.reviewMix.knownSlots`    | 2                                    | Review's known-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix). Written with its current nested path, not the flat naming the rest of this table uses.                                                                                                                                      |
+| `RANKING.reviewMix.unknownSlots`  | 5                                    | Review's unknown-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix)                                                                                                                                                                                                                            |
 
 Staleness and "stale" reason labels use `STALE_REASON_THRESHOLD_HOURS` (24 hours).
 
