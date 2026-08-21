@@ -19,6 +19,7 @@
  */
 
 import { originOf } from "./pick";
+import { fieldsForContext } from "./score";
 import type { PickContext, ScoredCandidate } from "./types";
 import { RANKING } from "./weights";
 
@@ -159,28 +160,8 @@ function buildSuggestions(
   return suggestions;
 }
 
-function toReadItems(candidates: ScoredCandidate[]): PoolItem[] {
-  return candidates.map((c) => ({
-    ownCount: c.readCount,
-    lastActivityAt: c.lastReadAt,
-    streak: null,
-  }));
-}
-
-function toReviewItems(candidates: ScoredCandidate[]): PoolItem[] {
-  return candidates.map((c) => ({
-    ownCount: c.reviewRecallCount,
-    lastActivityAt: c.lastReviewRecallAt,
-    streak: c.reviewStreak,
-  }));
-}
-
-function toQuizItems(candidates: ScoredCandidate[]): PoolItem[] {
-  return candidates.map((c) => ({
-    ownCount: c.quizTestCount,
-    lastActivityAt: c.lastQuizTestedAt,
-    streak: c.quizStreak,
-  }));
+function toPoolItems(candidates: ScoredCandidate[], context: PickContext): PoolItem[] {
+  return candidates.map((c) => fieldsForContext(c, context));
 }
 
 function buildInsight(
@@ -203,7 +184,9 @@ function buildReadRotationInsight(
   unknownCandidates: ScoredCandidate[],
   now: Date,
 ): RotationPoolInsight[] {
-  return [buildInsight(toReadItems(unknownCandidates), "Read queue (unknown pool)", "read", now)];
+  return [
+    buildInsight(toPoolItems(unknownCandidates, "read"), "Read queue (unknown pool)", "read", now),
+  ];
 }
 
 /** Review blends known + unknown — report each pool separately since they
@@ -215,8 +198,8 @@ function buildReviewRotationInsight(
   const unknown = candidates.filter((c) => originOf(c) === "unknown");
   const known = candidates.filter((c) => originOf(c) === "known");
   return [
-    buildInsight(toReviewItems(unknown), "Review — unknown pool", "reviewed", now),
-    buildInsight(toReviewItems(known), "Review — known pool", "reviewed", now),
+    buildInsight(toPoolItems(unknown, "review"), "Review — unknown pool", "reviewed", now),
+    buildInsight(toPoolItems(known, "review"), "Review — known pool", "reviewed", now),
   ];
 }
 
@@ -227,7 +210,7 @@ function buildQuizRotationInsight(
   now: Date,
 ): RotationPoolInsight[] {
   return [
-    buildInsight(toQuizItems(knownCandidates), "Quiz (known pool)", "quizzed", now, {
+    buildInsight(toPoolItems(knownCandidates, "quiz"), "Quiz (known pool)", "quizzed", now, {
       hardBlocking: true,
     }),
   ];
