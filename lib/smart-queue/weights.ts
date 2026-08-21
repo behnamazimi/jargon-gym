@@ -37,9 +37,6 @@ export const RANKING = {
     quiz: 24,
   } satisfies Record<PickContext, number>,
 
-  // Hours since last activity before score.ts shows the "stale" badge. Same cutoff for all three contexts.
-  staleReasonThresholdHours: 24,
-
   // The ranking formula's point values — see ScoreWeights in types.ts for what each field gates.
   formula: {
     unseenBoost: 100,
@@ -92,6 +89,15 @@ export function effectiveStalenessDecayHours(streak: number, baseDecayHours: num
   if (streak <= 1) return baseDecayHours;
   const ratio = masteredCooldownHours(streak) / RANKING.masteredCooldown.baseHours;
   return baseDecayHours * ratio;
+}
+
+/** Hours since last activity before the `stale` badge / pool-stat count
+ *  attaches. Label-only — does not change the staleness score curve.
+ *  Read uses the 7-day cap (daily sit-out lifting is not neglect); Review
+ *  and Quiz use that context's base τ. */
+export function staleReasonThresholdHours(context: PickContext): number {
+  if (context === "read") return RANKING.formula.stalenessCapHours;
+  return RANKING.stalenessDecayHours[context];
 }
 
 export const STRENGTH = {

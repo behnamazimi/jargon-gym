@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { effectiveStalenessDecayHours } from "./weights";
+import { effectiveStalenessDecayHours, RANKING, staleReasonThresholdHours } from "./weights";
 
 describe("effectiveStalenessDecayHours", () => {
   it("keeps today's flat τ at the baseline streak of 1", () => {
@@ -24,5 +24,13 @@ describe("effectiveStalenessDecayHours", () => {
   it("caps at the same streak masteredCooldownHours caps at", () => {
     const base = 36;
     expect(effectiveStalenessDecayHours(5, base)).toBe(effectiveStalenessDecayHours(10, base));
+  });
+});
+
+describe("staleReasonThresholdHours", () => {
+  it("derives Read from the 7-day cap and Review/Quiz from their base τ", () => {
+    expect(staleReasonThresholdHours("read")).toBe(RANKING.formula.stalenessCapHours);
+    expect(staleReasonThresholdHours("review")).toBe(RANKING.stalenessDecayHours.review);
+    expect(staleReasonThresholdHours("quiz")).toBe(RANKING.stalenessDecayHours.quiz);
   });
 });
