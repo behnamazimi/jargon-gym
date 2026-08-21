@@ -1,9 +1,25 @@
+// WHATWG URL treats "\" as "/", so prefix checks alone can't reject
+// protocol-relative escapes like "/\evil.com". Resolve against a sentinel
+// origin and only accept paths that stay on it.
+const BASE = "https://n.invalid";
+
 export function safeNextPath(raw: string | null, fallback = "/jargon"): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) {
+  if (!raw || !raw.startsWith("/")) {
     return fallback;
   }
 
-  return raw;
+  let url: URL;
+  try {
+    url = new URL(raw, BASE);
+  } catch {
+    return fallback;
+  }
+
+  if (url.origin !== BASE) {
+    return fallback;
+  }
+
+  return url.pathname + url.search + url.hash;
 }
 
 export function requestPathWithSearch(pathname: string, search: string): string {
