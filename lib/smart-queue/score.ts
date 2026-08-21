@@ -37,6 +37,25 @@ function stalenessBoost(
   return normalized * stalenessMaxBoost;
 }
 
+/** Second, smaller boost that only activates once a candidate is past the
+ *  base curve's own cap — prevents every candidate neglected 8 days from
+ *  scoring identically to one neglected 800 days. Deliberately not streak-
+ *  scaled (unlike stalenessBoost's decay constant): this is a pure "break
+ *  ties among the already-stale" mechanism, not a proof-of-mastery one, so
+ *  it applies unconditionally across all three contexts including Read.
+ *  tailDecayHours is RANKING.masteredCooldown.capHours reused directly, not
+ *  a new constant — see docs/smart-queue.md. */
+function stalenessTailBoost(
+  hoursSinceLastActivity: number,
+  stalenessCapHours: number,
+  tailDecayHours: number,
+  tailMaxBoost: number,
+): number {
+  const extraHours = Math.max(0, hoursSinceLastActivity - stalenessCapHours);
+  const normalized = 1 - Math.exp(-extraHours / tailDecayHours);
+  return normalized * tailMaxBoost;
+}
+
 export type ContextFields = {
   /** This context's own test/exposure count — Read's is readCount, Review/Quiz are their own test counts. */
   ownCount: number;
@@ -212,7 +231,10 @@ function evaluateCandidate(
   // ratio masteredCooldownHours already earns for the cooldown window — a
   // term that's earned a longer rest also earns a slower staleness climb
   // once that rest ends. Read has no streak (fields.streak is null there),
-  // so it keeps the flat per-context τ unconditionally.
+  // so it keeps the flat per-context τ unconditionally. A second, smaller
+  // boost past the cap (stalenessTailBoost) breaks ties by genuine wait
+  // time once the base curve has flattened out — unconditional across all
+  // three contexts, unlike the τ-scaling above.
   if (fields.ownCount > 0 && fields.lastActivityAt) {
     const hoursSinceActivity = (now.getTime() - fields.lastActivityAt.getTime()) / (1000 * 60 * 60);
     const decayHours =
@@ -224,6 +246,12 @@ function evaluateCandidate(
       decayHours,
       weights.stalenessCapHours,
       weights.stalenessMaxBoost,
+    );
+    score += stalenessTailBoost(
+      hoursSinceActivity,
+      weights.stalenessCapHours,
+      RANKING.masteredCooldown.capHours,
+      weights.stalenessTailMaxBoost,
     );
     if (hoursSinceActivity >= RANKING.staleReasonThresholdHours) {
       reasons.push("stale");

@@ -11,7 +11,11 @@
  *  freshness bound — a first-time touch and a repeat touch both remove a
  *  term from the stale bucket equally. See docs/smart-queue.md's staleness
  *  cap (RANKING.formula.stalenessCapHours) for why 7 days is the relevant
- *  window: past it, ranking stops ordering by age and shuffles instead.
+ *  window: past it, a second, smaller boost (`stalenessTailMaxBoost`) keeps
+ *  separating candidates by genuine wait time out to weeks of neglect — a
+ *  week-stale term and a month-stale term no longer score identically,
+ *  though terms within a similar wait-time band still land close enough to
+ *  shuffle together.
  */
 
 import { originOf } from "./pick";
@@ -27,9 +31,10 @@ export type RotationPoolInsight = {
   neverTouchedCount: number;
   /** poolSize - neverTouchedCount: eligible for the rotation lane. */
   rotationPoolSize: number;
-  /** Own-context activity >= stalenessCapHours (7 days) old — the flattened
-   *  tail where every term scores identically and pick order is shuffled,
-   *  not age-ordered. */
+  /** Own-context activity >= stalenessCapHours (7 days) old — past the base
+   *  curve's cap, where a second, smaller boost still spreads pick order by
+   *  roughly how much longer each term has waited, though terms with close
+   *  wait times still land close enough to shuffle together. */
   staleCapCount: number;
   /** Own-context streak < 0 — always 0 for "read", which has no streak. */
   strugglingCount: number;
@@ -133,11 +138,11 @@ function buildSuggestions(
     const safe = Math.round(stats.safePoolSize);
     const overflow = stats.rotationPoolSize - safe;
     suggestions.push(
-      `${poolLabel} has ${stats.rotationPoolSize} terms in rotation, but the recent pace only keeps about ${safe} of them inside the 7-day staleness window. The other ${overflow} cycle through the flattened tail, where pick order is shuffled rather than oldest-first. Increase daily volume, pause a collection, or narrow the filter to bring this under ~${safe} terms.`,
+      `${poolLabel} has ${stats.rotationPoolSize} terms in rotation, but the recent pace only keeps about ${safe} of them inside the 7-day staleness window. The other ${overflow} cycle through the tail past the 7-day cap, where a smaller boost still favors longer waits but doesn't fully restore oldest-first ordering. Increase daily volume, pause a collection, or narrow the filter to bring this under ~${safe} terms.`,
     );
   } else if (stats.staleCapCount > 0) {
     suggestions.push(
-      `${stats.staleCapCount} term${plural(stats.staleCapCount)} ${stats.staleCapCount === 1 ? "hasn't" : "haven't"} been ${activityVerb} in 7+ days — these rank by random shuffle among themselves, not by how long they've waited.`,
+      `${stats.staleCapCount} term${plural(stats.staleCapCount)} ${stats.staleCapCount === 1 ? "hasn't" : "haven't"} been ${activityVerb} in 7+ days — these still get a small extra nudge the longer they've waited, but it flattens out well before it fully restores oldest-first ordering.`,
     );
   }
 

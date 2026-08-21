@@ -1,0 +1,173 @@
+import { describe, expect, it } from "vitest";
+import { scoreCandidate } from "./score";
+import { RANKING } from "./weights";
+import type { PickContext, ReviewCandidate } from "./types";
+
+const HOUR = 60 * 60 * 1000;
+const CAP_HOURS = RANKING.formula.stalenessCapHours; // 168
+const TAIL_MAX = RANKING.formula.stalenessTailMaxBoost; // 12
+const TAIL_DECAY_HOURS = RANKING.masteredCooldown.capHours; // 336
+
+const now = new Date();
+
+function hoursAgo(hours: number): Date {
+  return new Date(now.getTime() - hours * HOUR);
+}
+
+/** Minimal candidate with every other signal suppressed, so only staleness
+ *  contributes to the score. `ownHours` sets the context's own count/streak/
+ *  last-activity fields (read for "read", review for "review", quiz for
+ *  "quiz") to isolate the staleness block from unseen/struggling/fragile/
+ *  cross_fail/same-day sit-outs. */
+function makeCandidate(context: PickContext, ownHours: number, streak = 1): ReviewCandidate {
+  const base: ReviewCandidate = {
+    termId: "t1",
+    domainId: "d1",
+    createdAt: hoursAgo(10000),
+    readCount: 0,
+    lastReadAt: null,
+    reviewRecallCount: 0,
+    lastReviewRecallAt: null,
+    reviewStreak: 0,
+    quizTestCount: 0,
+    lastQuizTestedAt: null,
+    quizStreak: 0,
+    pendingReveal: false,
+    lastFailAt: null,
+    lastFailSource: null,
+    reviewFailCount: 0,
+    quizFailCount: 0,
+    knownAt: null,
+  };
+
+  if (context === "read") {
+    return { ...base, readCount: 1, lastReadAt: hoursAgo(ownHours) };
+  }
+  if (context === "review") {
+    return {
+      ...base,
+      reviewRecallCount: Math.abs(streak) + 1,
+      lastReviewRecallAt: hoursAgo(ownHours),
+      reviewStreak: streak,
+    };
+  }
+  return {
+    ...base,
+    quizTestCount: Math.abs(streak) + 1,
+    lastQuizTestedAt: hoursAgo(ownHours),
+    quizStreak: streak,
+  };
+}
+
+function baseStalenessAt(ownHours: number, decayHours: number): number {
+  const capped = Math.min(ownHours, CAP_HOURS);
+  return RANKING.formula.stalenessMaxBoost * (1 - Math.exp(-capped / decayHours));
+}
+
+function tailAt(ownHours: number): number {
+  const extra = Math.max(0, ownHours - CAP_HOURS);
+  return TAIL_MAX * (1 - Math.exp(-extra / TAIL_DECAY_HOURS));
+}
+
+describe("staleness tail boost", () => {
+  it("matches today's pre-tail behavior at/below the cap (regression baseline)", () => {
+    const ownHours = 100; // well under the 168h cap
+    const decayHours = RANKING.stalenessDecayHours.review; // streak 1 keeps the flat τ
+    const { score } = scoreCandidate(
+      makeCandidate("review", ownHours),
+      RANKING.formula,
+      "review",
+      now,
+    );
+    expect(score).toBeCloseTo(baseStalenessAt(ownHours, decayHours), 2);
+  });
+
+  it("adds a small positive tail just past the cap", () => {
+    const ownHours = CAP_HOURS + 24; // day 8
+    const decayHours = RANKING.stalenessDecayHours.review;
+    const { score } = scoreCandidate(
+      makeCandidate("review", ownHours),
+      RANKING.formula,
+      "review",
+      now,
+    );
+    const expected = baseStalenessAt(ownHours, decayHours) + tailAt(ownHours);
+    expect(score).toBeCloseTo(expected, 2);
+    expect(expected).toBeCloseTo(84.07, 1);
+  });
+
+  it("never exceeds the tail's own ceiling, even at extreme neglect", () => {
+    // At this scale, 1 - exp(-x) rounds to exactly 1 in floating point, so
+    // the tail saturates at precisely TAIL_MAX rather than staying strictly
+    // below it — the invariant that matters is "never exceeds", not
+    // "never reaches" (mathematically asymptotic, not floating-point exact).
+    const ownHours = CAP_HOURS + 10 * 365 * 24; // 10 years past the cap
+    const decayHours = RANKING.stalenessDecayHours.review;
+    const { score } = scoreCandidate(
+      makeCandidate("review", ownHours),
+      RANKING.formula,
+      "review",
+      now,
+    );
+    const base = baseStalenessAt(ownHours, decayHours);
+    expect(score - base).toBeLessThanOrEqual(TAIL_MAX);
+  });
+
+  it("increases monotonically as neglect grows past the cap — the actual fix", () => {
+    const extraHoursSteps = [0, 24, 168, 336, 672, 1992];
+    const scores = extraHoursSteps.map((extra) => {
+      const { score } = scoreCandidate(
+        makeCandidate("review", CAP_HOURS + extra),
+        RANKING.formula,
+        "review",
+        now,
+      );
+      return score;
+    });
+
+    for (let i = 1; i < scores.length; i++) {
+      expect(scores[i]).toBeGreaterThan(scores[i - 1]!);
+    }
+  });
+
+  it("applies to Read too, even though Read has no streak to scale by", () => {
+    const atCap = scoreCandidate(makeCandidate("read", CAP_HOURS), RANKING.formula, "read", now);
+    const wellPastCap = scoreCandidate(
+      makeCandidate("read", CAP_HOURS + 336),
+      RANKING.formula,
+      "read",
+      now,
+    );
+    expect(wellPastCap.score).toBeGreaterThan(atCap.score);
+  });
+
+  it("stays well under struggling's max boost regardless of context, even at extreme neglect", () => {
+    const ownHours = CAP_HOURS + 50 * 365 * 24; // 50 years past the cap
+    const contexts: PickContext[] = ["read", "review", "quiz"];
+    for (const context of contexts) {
+      const { score } = scoreCandidate(
+        makeCandidate(context, ownHours),
+        RANKING.formula,
+        context,
+        now,
+      );
+      expect(score).toBeLessThan(100);
+    }
+  });
+
+  it("keeps the flat τ for a struggling term's base curve while still adding the tail", () => {
+    const ownHours = CAP_HOURS + 336;
+    const streak = -2;
+    const decayHours = RANKING.stalenessDecayHours.review; // streak <= 1 keeps the flat τ
+    const { score } = scoreCandidate(
+      makeCandidate("review", ownHours, streak),
+      RANKING.formula,
+      "review",
+      now,
+    );
+    const strugglingBoost =
+      Math.min(-streak, RANKING.streakBoostCap) * RANKING.formula.strugglingBoostPerStreak;
+    const expectedStaleness = baseStalenessAt(ownHours, decayHours) + tailAt(ownHours);
+    expect(score).toBeCloseTo(strugglingBoost + expectedStaleness, 2);
+  });
+});

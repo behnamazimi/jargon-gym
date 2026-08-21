@@ -50,6 +50,7 @@ export const RANKING = {
     abandonedReviewBoost: 45,
     stalenessMaxBoost: 84,
     stalenessCapHours: 168, // 7 days
+    stalenessTailMaxBoost: 12, // ~half of fragileBoostMax (25) — deliberately below the weakest real-evidence signal, not hugging it
     crossFailOtherTestBoostPerRepeat: 25,
     fragileBoostMax: 25,
   } satisfies ScoreWeights,
