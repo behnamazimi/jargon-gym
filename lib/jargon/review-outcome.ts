@@ -180,6 +180,7 @@ export async function applyReviewRating(
 /**
  * Jargon-page term-card toggle (known/unknown). Incidental self-report while
  * browsing, not a tested recall — pool flip only, no review_state write.
+ * Allowed for paused collections; pause only drops them from the queues.
  */
 export async function setKnownStatus(
   client: Client,

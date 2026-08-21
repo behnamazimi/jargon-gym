@@ -66,9 +66,12 @@ export async function loadJargonPageData(
       knownCount: selectedRow.knownCount,
     });
 
+    // Known/unknown is stored per term, not per review pool. Fetch for the
+    // selected collection even when it's paused — reviewDomainIds would omit
+    // it and the collection page would paint every known term as unknown.
     const [termRows, knownTermIds] = await Promise.all([
       fetchTermsByDomain(client, selectedRow.id),
-      fetchKnownTermIdsForDomains(client, reviewDomainIds, userId),
+      fetchKnownTermIdsForDomains(client, [selectedRow.id], userId),
     ]);
 
     const mappedTerms = termRows.map(mapTerm);

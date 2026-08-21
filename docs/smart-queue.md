@@ -815,7 +815,9 @@ result, rather than needing a separate "reset to 0" step.
   `read` event. Good for reference, not a substitute for review.
 - The known/unknown toggle on a term card flips the pool only — no
   `review_state` write. It's a self-report while browsing, not a study
-  action.
+  action. Pause doesn't block it: the collection page still lists a
+  paused collection, and you can mark terms known or unknown there.
+  Pause only drops the collection from Read, Review, and Quiz queues.
 - "Show strength tags" toggles the [overall strength](#overall-strength-display-only)
   bars per term — display-only, doesn't affect sort order or pick anything.
 
