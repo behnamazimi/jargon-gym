@@ -18,8 +18,14 @@ function hoursAgo(hours: number): Date {
  *  contributes to the score. `ownHours` sets the context's own count/streak/
  *  last-activity fields (read for "read", review for "review", quiz for
  *  "quiz") to isolate the staleness block from unseen/struggling/fragile/
- *  cross_fail/same-day sit-outs. */
-function makeCandidate(context: PickContext, ownHours: number, streak = 1): ReviewCandidate {
+ *  cross_fail/same-day sit-outs. Optional `reviewRecallHoursAgo` is read-
+ *  context only — omitted leaves `lastReviewRecallAt` null. */
+function makeCandidate(
+  context: PickContext,
+  ownHours: number,
+  streak = 1,
+  reviewRecallHoursAgo?: number,
+): ReviewCandidate {
   const base: ReviewCandidate = {
     termId: "t1",
     domainId: "d1",
@@ -41,7 +47,13 @@ function makeCandidate(context: PickContext, ownHours: number, streak = 1): Revi
   };
 
   if (context === "read") {
-    return { ...base, readCount: 1, lastReadAt: hoursAgo(ownHours) };
+    return {
+      ...base,
+      readCount: 1,
+      lastReadAt: hoursAgo(ownHours),
+      lastReviewRecallAt:
+        reviewRecallHoursAgo !== undefined ? hoursAgo(reviewRecallHoursAgo) : null,
+    };
   }
   if (context === "review") {
     return {
@@ -169,5 +181,48 @@ describe("staleness tail boost", () => {
       Math.min(-streak, RANKING.streakBoostCap) * RANKING.formula.strugglingBoostPerStreak;
     const expectedStaleness = baseStalenessAt(ownHours, decayHours) + tailAt(ownHours);
     expect(score).toBeCloseTo(strugglingBoost + expectedStaleness, 2);
+  });
+});
+
+describe("read staleness borrows review-recall timestamp", () => {
+  const decayHours = RANKING.stalenessDecayHours.read;
+
+  it("old lastReadAt, recent lastReviewRecallAt → low staleness", () => {
+    const { score } = scoreCandidate(
+      makeCandidate("read", 500, 1, 2),
+      RANKING.formula,
+      "read",
+      now,
+    );
+    expect(score).toBeCloseTo(baseStalenessAt(2, decayHours) + tailAt(2), 2);
+  });
+
+  it("no Review history → unaffected (regression baseline)", () => {
+    const ownHours = 300;
+    const { score } = scoreCandidate(makeCandidate("read", ownHours), RANKING.formula, "read", now);
+    expect(score).toBeCloseTo(baseStalenessAt(ownHours, decayHours) + tailAt(ownHours), 2);
+  });
+
+  it("lastReadAt more recent than lastReviewRecallAt → max() picks Read's own timestamp", () => {
+    const { score } = scoreCandidate(
+      makeCandidate("read", 3, 1, 400),
+      RANKING.formula,
+      "read",
+      now,
+    );
+    expect(score).toBeCloseTo(baseStalenessAt(3, decayHours) + tailAt(3), 2);
+  });
+
+  it("readCount === 0 → unseen boost unaffected by Review activity", () => {
+    const candidate: ReviewCandidate = {
+      ...makeCandidate("read", 500),
+      readCount: 0,
+      lastReadAt: null,
+      lastReviewRecallAt: hoursAgo(1),
+    };
+    const { score, reasons } = scoreCandidate(candidate, RANKING.formula, "read", now);
+    expect(reasons).toContain("unseen");
+    expect(reasons).not.toContain("stale");
+    expect(score).toBe(RANKING.formula.unseenBoost);
   });
 });

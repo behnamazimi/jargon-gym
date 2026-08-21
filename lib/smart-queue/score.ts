@@ -72,12 +72,22 @@ function streakForActivity(candidate: ReviewCandidate, activity: FailSource): nu
   return activity === "review" ? candidate.reviewStreak : candidate.quizStreak;
 }
 
+/** Later of two nullable dates, or null if neither exists. 2-argument
+ *  sibling of strength.ts's array-based `latestOf` — kept local (not
+ *  imported) because strength.ts imports `fieldsForContext` from this
+ *  file, so importing back from strength.ts would cycle. */
+function laterOf(a: Date | null, b: Date | null): Date | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a > b ? a : b;
+}
+
 export function fieldsForContext(candidate: ReviewCandidate, context: PickContext): ContextFields {
   switch (context) {
     case "read":
       return {
         ownCount: candidate.readCount,
-        lastActivityAt: candidate.lastReadAt,
+        lastActivityAt: laterOf(candidate.lastReadAt, candidate.lastReviewRecallAt),
         streak: null,
         otherActivity: null,
       };

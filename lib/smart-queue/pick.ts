@@ -379,7 +379,12 @@ function nextLane(
 
   for (const candidate of scored) {
     const { ownCount, lastActivityAt } = fieldsForContext(candidate, context);
-    if (!lastActivityAt || !isSameLocalDay(lastActivityAt, now, RANKING.timezone)) continue;
+    // Read's staleness clock borrows lastReviewRecallAt (see fieldsForContext),
+    // but lane reconstruction is "did you actually Read it today" — same
+    // literal-timestamp rule as isEligibleForMix. A same-day Review must not
+    // count as a Read lane pick.
+    const engagementAt = context === "read" ? candidate.lastReadAt : lastActivityAt;
+    if (!engagementAt || !isSameLocalDay(engagementAt, now, RANKING.timezone)) continue;
     if (ownCount === 1) neverEngagedPicksToday += 1;
     else if (ownCount > 1) alreadyTouchedPicksToday += 1;
   }

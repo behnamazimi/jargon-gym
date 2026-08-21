@@ -133,16 +133,31 @@ collection page doesn't fetch candidates or score anything — see
 `PickContext` is `"read" | "review" | "quiz"` — which activity's fields a
 pick scores against:
 
-| Context  | Own count             | Own streak                      | Own last-activity timestamp |
-| -------- | --------------------- | ------------------------------- | --------------------------- |
-| `read`   | `read_count`          | _(none — no pass/fail concept)_ | `last_read_at`              |
-| `review` | `review_recall_count` | `review_streak`                 | `last_review_recall_at`     |
-| `quiz`   | `quiz_test_count`     | `quiz_streak`                   | `last_quiz_tested_at`       |
+| Context  | Own count             | Own streak                      | Own last-activity timestamp                |
+| -------- | --------------------- | ------------------------------- | ------------------------------------------ |
+| `read`   | `read_count`          | _(none — no pass/fail concept)_ | `max(last_read_at, last_review_recall_at)` |
+| `review` | `review_recall_count` | `review_streak`                 | `last_review_recall_at`                    |
+| `quiz`   | `quiz_test_count`     | `quiz_streak`                   | `last_quiz_tested_at`                      |
 
 The same scoring formula runs for all three; only which fields it reads
 change. Staleness, mastered-cooldown, and struggling all read the context's
 own fields — a Quiz streak never affects a Review pick's mastered-cooldown,
 and vice versa.
+
+Read's staleness clock is the one exception to a purely own-field timestamp:
+it uses `max(last_read_at, last_review_recall_at)`. A rated Review pass or
+fail means you revealed and recalled the definition — genuine exposure, at
+least as deliberate as a plain Read — so Read should not spend a scarce slot
+re-showing a term you just reviewed. This is one-directional, matching the
+file's existing asymmetry (for example, cross-fail is Quiz→Review only):
+Review's own clock does **not** borrow from Read. Only the staleness _ramp_
+is affected, and that ramp only applies when `read_count > 0` — `ownCount`
+and the never-engaged / already-touched lane split stay `read_count`-only,
+so a never-read term is unaffected regardless of Review history. An unrated
+`reveal` alone doesn't update `last_review_recall_at`, so an abandoned
+review isn't credited; that self-corrects once `abandoned_review` pulls the
+card back into Review and it gets rated. Quiz is excluded entirely — it
+never shows the definition, so it has nothing to lend Read's clock.
 
 ---
 
@@ -275,7 +290,9 @@ climb once that window ends: a Review term at streak `+5` ramps toward
 "stale" about 4.7× slower than one at streak `+1`, mirroring the 4.7×
 longer cooldown it earned. Read has no streak (`fields.streak` is `null`
 there), so it always uses the flat per-context τ — this only applies to
-Review and Quiz.
+Review and Quiz. Read's _timestamp_, unlike its τ, is not purely
+`last_read_at` — see [Three independent histories](#three-independent-histories)
+for why it also credits a recent Review recall.
 
 **Past the 7-day cap, a second, smaller boost keeps separating candidates
 by genuine wait time** instead of letting them all tie. `stalenessBoost`'s
