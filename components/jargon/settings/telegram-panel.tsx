@@ -30,15 +30,11 @@ import {
   type TelegramCadence,
   type TelegramLinkStatus,
 } from "@/lib/telegram/types";
+import { formatDateTime } from "@/lib/utils";
 
 type TelegramPanelProps = {
   initialStatus: TelegramLinkStatus;
 };
-
-function formatDate(value: string | null) {
-  if (!value) return null;
-  return new Date(value).toLocaleString();
-}
 
 function telegramStatusVariant(
   status: TelegramLinkStatus,
@@ -110,7 +106,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
     setStatus((prev) => ({ ...prev, cadence: nextCadence }));
   }
 
-  const linkedSince = status.linkedAt ? formatDate(status.linkedAt) : null;
+  const linkedSince = status.linkedAt ? formatDateTime(status.linkedAt) : null;
 
   return (
     <SettingsPanel

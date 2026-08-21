@@ -16,18 +16,13 @@ import {
 } from "@/components/jargon/settings/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, formatDateTime } from "@/lib/utils";
 import type { WidgetTokenRow } from "@/lib/widget/types";
 
 type WidgetPanelProps = {
   initialTokens: WidgetTokenRow[];
   latestWidgetVersion: string;
 };
-
-function formatDate(value: string | null) {
-  if (!value) return "Never";
-  return new Date(value).toLocaleString();
-}
 
 function shellQuote(value: string) {
   return `'${value.replace(/'/g, "'\\''")}'`;
@@ -302,7 +297,7 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
               <li key={token.id}>
                 <TokenRow
                   label={token.label}
-                  meta={`Created ${formatDate(token.created_at)} · Last used ${formatDate(token.last_used_at)}`}
+                  meta={`Created ${formatDateTime(token.created_at, "Never")} · Last used ${formatDateTime(token.last_used_at, "Never")}`}
                   badge={
                     <VersionBadge
                       widgetVersion={token.widget_version}
