@@ -1,7 +1,12 @@
 import { Gauge } from "lucide-react";
 import type { RotationPoolInsight } from "@/lib/smart-queue/rotation-insight";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { QuizPanel, QuizPanelHeader, QuizPanelBody, QuizStat } from "@/components/jargon/quiz/quiz-ui";
+import {
+  QuizPanel,
+  QuizPanelHeader,
+  QuizPanelBody,
+  QuizStat,
+} from "@/components/jargon/quiz/quiz-ui";
 
 function formatRate(rate: number): string {
   return rate >= 1 ? rate.toFixed(1) : rate.toFixed(2);

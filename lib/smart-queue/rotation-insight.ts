@@ -155,7 +155,11 @@ function buildSuggestions(
 }
 
 function toReadItems(candidates: ScoredCandidate[]): PoolItem[] {
-  return candidates.map((c) => ({ ownCount: c.readCount, lastActivityAt: c.lastReadAt, streak: null }));
+  return candidates.map((c) => ({
+    ownCount: c.readCount,
+    lastActivityAt: c.lastReadAt,
+    streak: null,
+  }));
 }
 
 function toReviewItems(candidates: ScoredCandidate[]): PoolItem[] {
@@ -182,11 +186,15 @@ function buildInsight(
   options: { hardBlocking?: boolean } = {},
 ): RotationPoolInsight {
   const stats = poolRotationStats(items, now);
-  return { poolLabel, ...stats, suggestions: buildSuggestions(stats, poolLabel, activityVerb, options) };
+  return {
+    poolLabel,
+    ...stats,
+    suggestions: buildSuggestions(stats, poolLabel, activityVerb, options),
+  };
 }
 
 /** Read is always the unknown pool. */
-export function buildReadRotationInsight(
+function buildReadRotationInsight(
   unknownCandidates: ScoredCandidate[],
   now: Date,
 ): RotationPoolInsight[] {
@@ -195,7 +203,7 @@ export function buildReadRotationInsight(
 
 /** Review blends known + unknown — report each pool separately since they
  *  compete for different slot budgets (RANKING.reviewMix), not a shared one. */
-export function buildReviewRotationInsight(
+function buildReviewRotationInsight(
   candidates: ScoredCandidate[],
   now: Date,
 ): RotationPoolInsight[] {
@@ -209,7 +217,7 @@ export function buildReviewRotationInsight(
 
 /** Quiz is always the known pool, and its never-quizzed tier hard-blocks
  *  the rest (see pickQuizTerms) — flagged via hardBlocking. */
-export function buildQuizRotationInsight(
+function buildQuizRotationInsight(
   knownCandidates: ScoredCandidate[],
   now: Date,
 ): RotationPoolInsight[] {
