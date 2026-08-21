@@ -387,8 +387,7 @@ exports — update this table in the same commit as any change there:
 | `QUEUE_TIMEZONE`                  | `Europe/Amsterdam`                   | Calendar day for same-day sit-outs (edit in code if you move)                                                                                                                                                                                                                                                                      |
 | `ENGAGED_MIN_READ_COUNT`          | 3                                    | Minimum reads before `engaged_untested` applies                                                                                                                                                                                                                                                                                    |
 | `STREAK_BOOST_CAP`                | 5                                    | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                                                                                                                                                                                                                      |
-| `MIX_NEVER_ENGAGED_SLOTS`         | 1                                    | Never-engaged slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                                                                                                                                                                      |
-| `MIX_ALREADY_TOUCHED_SLOTS`       | 1                                    | Already-touched slots per mix cycle — see [Lane mix](#lane-mix)                                                                                                                                                                                                                                                                    |
+| `MIX_MIN_LANE_SHARE`              | 0.1                                  | Minimum share of mix slots either lane (never-engaged / already-touched) is guaranteed against the other's size — see [Lane mix](#lane-mix)                                                                                                                                                                                        |
 | `RANKING.reviewMix.knownSlots`    | 2                                    | Review's known-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix). Written with its current nested path, not the flat naming the rest of this table uses.                                                                                                                                      |
 | `RANKING.reviewMix.unknownSlots`  | 5                                    | Review's unknown-pool target ratio weight — see [Review's known/unknown mix](#reviews-knownunknown-mix)                                                                                                                                                                                                                            |
 
@@ -434,19 +433,27 @@ show one or two badges.
 
 Scoring ranks candidates within a lane; `pickTerms`
 ([`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts)) then splits the
-score-desc list into two lanes and zips them, so a fresh dump of terms
-can't occupy every pick until the pool is exhausted:
+score-desc list into two lanes and interleaves them proportionally to
+their own sizes, so a fresh dump of terms can't occupy every pick until
+the pool is exhausted, and an ongoing rotation isn't permanently capped at
+a flat share either:
 
 - **Never-engaged** — this context's own count is 0.
 - **Already-touched** — this context's own count is > 0 (struggling, stale,
   mastered, steady all live here; the existing score still orders _within_
   this lane).
 
-The zip cycles `MIX_NEVER_ENGAGED_SLOTS` never-engaged picks then
-`MIX_ALREADY_TOUCHED_SLOTS` already-touched picks (both default to 1 — a
-straight alternation). Once one lane's eligible terms run out, the cycle
-keeps contributing 0 from it each pass, so the other lane fills the rest of
-the pick alone.
+Each lane's share of slots tracks its own current size, recomputed fresh
+on every call — 70 already-touched against 30 never-engaged gets roughly a
+70:30 split, not a flat 50:50. `MIX_MIN_LANE_SHARE` (default `0.1`)
+guarantees whichever lane is smaller still gets at least ~10% of slots,
+even under an extreme size imbalance (e.g. a huge dump of new terms
+landing next to a small already-touched pile) — `laneTurn` in `pick.ts`
+achieves this by inflating a too-small lane's effective length to
+`totalLength × MIX_MIN_LANE_SHARE` before computing its turn, so it
+advances more slowly than its true size would and gets picked more often
+than its true proportion. Once one lane's eligible terms run out, the
+other fills the rest of the pick alone.
 
 A term sits out of a mix slot when `mastered_cooldown`, `recent_read_cooldown`,
 or `recent_fail_cooldown` fired, or (read context only) it was already read
@@ -461,12 +468,13 @@ batch, even though the batch ends up shorter than `limit`. Debug
 (`listScoredCandidates`) passes `includeOwnFailSitOut: true` and keeps
 appending them like the other sat-out reasons.
 
-Which lane starts a cycle isn't persisted — `limit=1` calls (Read, Telegram
+Which lane's turn is next isn't persisted — `limit=1` calls (Read, Telegram
 `/read`, scheduled delivery) reconstruct it each time from today's
-own-context engagements, starting with whichever lane is behind on its
-slot ratio (tie starts never-engaged). See the doc comment on
-`startingLane` in `pick.ts` for the exact reconstruction. Review/Quiz
-batches (`limit` up to 30) get a true mix-ratio list from a single zip.
+own-context engagements, favoring whichever lane the same `laneTurn`
+formula says is further behind (tie favors never-engaged). See the doc
+comment on `nextLane` in `pick.ts` for the exact reconstruction.
+Review/Quiz batches (`limit` up to 30) get a true proportional list from a
+single interleave.
 
 ### Review's known/unknown mix
 

@@ -55,12 +55,13 @@ export const RANKING = {
     fragileBoostMax: 25,
   } satisfies ScoreWeights,
 
-  // How pick.ts interleaves never-engaged vs. already-touched terms.
-  // 1:1 alternates; raise neverEngaged to favor new terms, raise alreadyTouched to protect the rotation.
-  mixSlots: {
-    neverEngaged: 1,
-    alreadyTouched: 1,
-  },
+  // Minimum share of mix slots either lane is guaranteed, even when the
+  // other lane's pool is much bigger — protects a small already-touched
+  // pile from being crowded to near-zero by a fresh large dump of
+  // never-engaged terms, and symmetrically protects a small never-engaged
+  // remainder in a mostly-already-touched collection. See laneTurn's
+  // effectiveLength formula in pick.ts.
+  mixMinLaneShare: 0.1,
 
   // How Review blends known + unknown pools by default.
   // knownSlots:unknownSlots is the target ratio each session rounds toward,

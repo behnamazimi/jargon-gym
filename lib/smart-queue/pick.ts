@@ -1,8 +1,10 @@
 /** Term selection from scored candidates.
  *
  *  Scoring ranks within a lane; picking interleaves two lanes — never-
- *  engaged and already-touched — so a fresh dump of terms can't monopolize
- *  every slot in the queue. See RANKING.mixSlots in weights.ts for the ratio.
+ *  engaged and already-touched — proportionally to their own sizes, so a
+ *  fresh dump of terms can't monopolize every slot in the queue and an
+ *  ongoing rotation isn't permanently capped at a flat share either. See
+ *  RANKING.mixMinLaneShare in weights.ts for the minimum-share floor.
  */
 
 import { isSameLocalDay } from "./local-day";
@@ -179,6 +181,28 @@ export function originOf(candidate: ReviewCandidate): "known" | "unknown" {
   return candidate.knownAt !== null ? "known" : "unknown";
 }
 
+/** A lane's fractional "turn" position for proportional interleaving with a
+ *  minimum-share floor: inflates the denominator to at least
+ *  `totalLength * minShare` before dividing, so a lane far smaller than
+ *  that share advances its turn more slowly than its true size would
+ *  produce and gets picked more often than its true proportion — converging
+ *  on roughly `minShare` of slots instead of being crowded to near-zero by
+ *  an extreme size imbalance. Once `trueLength` already clears the floor
+ *  threshold, effectiveLength === trueLength and this is identical to plain
+ *  proportional turn (index / trueLength) — no floor effect. A zero-length
+ *  lane always returns Infinity so it's never selected, matching
+ *  interleaveProportional's own zero-length handling. */
+function laneTurn(
+  index: number,
+  trueLength: number,
+  totalLength: number,
+  minShare: number,
+): number {
+  if (trueLength === 0) return Infinity;
+  const effectiveLength = Math.max(trueLength, totalLength * minShare);
+  return index / effectiveLength;
+}
+
 /** Interleaves two pre-sliced lists proportionally to their own lengths —
  *  not a fixed ratio — so results stay evenly spread even after backfill
  *  changes the effective known/unknown split for a session. Tracks each
@@ -275,12 +299,14 @@ function isEligibleForMix(candidate: ScoredCandidate, context: PickContext, now:
   return true;
 }
 
-/** Splits into never-engaged / already-touched lanes and zips them by the
- *  MIX_* slot ratio. Ineligible (sat-out) terms are appended at the end,
- *  still score-ordered, so debug keeps listing every candidate while live
- *  `limit` slices will almost never reach them — except a Review/Quiz
- *  own-fail sit-out, which `includeOwnFailSitOut` can drop entirely instead
- *  of appending, so a short eligible pool can't leak it into a live batch. */
+/** Splits into never-engaged / already-touched lanes and interleaves them
+ *  proportionally to their own sizes (RANKING.mixMinLaneShare guarantees a
+ *  minimum share for whichever lane is smaller — see laneTurn). Ineligible
+ *  (sat-out) terms are appended at the end, still score-ordered, so debug
+ *  keeps listing every candidate while live `limit` slices will almost
+ *  never reach them — except a Review/Quiz own-fail sit-out, which
+ *  `includeOwnFailSitOut` can drop entirely instead of appending, so a
+ *  short eligible pool can't leak it into a live batch. */
 function mixLanes(
   scored: ScoredCandidate[],
   context: PickContext,
@@ -309,20 +335,45 @@ function mixLanes(
     }
   }
 
-  const zipped = zipLanes(neverEngaged, alreadyTouched, startingLane(scored, context, now));
+  const startLane = nextLane(
+    scored,
+    context,
+    now,
+    neverEngaged.length,
+    alreadyTouched.length,
+    RANKING.mixMinLaneShare,
+  );
+  const zipped = interleaveLanesWithFloor(
+    neverEngaged,
+    alreadyTouched,
+    RANKING.mixMinLaneShare,
+    startLane === "never_engaged",
+  );
 
   return [...zipped, ...ineligible];
 }
 
-/** Which lane starts a fresh mix cycle. No last-lane flag is persisted, so
- *  this reconstructs it from today's own-context engagements: ownCount === 1
- *  with activity today means the last pick was that term's first (a
- *  never-engaged slot); ownCount > 1 with activity today means it was
- *  already touched before today (an already-touched slot). Starting with
- *  whichever lane is behind on its slot ratio keeps consecutive limit=1
- *  calls (Read, Telegram) on the ratio without stored state; a tie starts
- *  with never-engaged. */
-function startingLane(scored: ScoredCandidate[], context: PickContext, now: Date): Lane {
+/** Which lane's turn is next, for a fresh no-persisted-state interleave.
+ *  No last-lane flag is persisted, so — same reason this reconstruction
+ *  exists — it rebuilds "how far each lane got today" from today's own-
+ *  context engagements: ownCount === 1 with activity today means the last
+ *  pick was that term's first (a never-engaged slot); ownCount > 1 with
+ *  activity today means it was already touched before today (an already-
+ *  touched slot). Feeds those today's-picks counts into the same laneTurn
+ *  formula interleaveLanesWithFloor uses mid-zip, against the CURRENT
+ *  eligible lane sizes, so repeated limit=1 calls (Read, Telegram) stay on
+ *  the same floor-aware ratio a one-shot batch interleave would produce,
+ *  without stored state. A tie (both exactly 0, the common case at the
+ *  start of a fresh day) resolves to never-engaged, matching
+ *  interleaveLanesWithFloor's own tie convention. */
+function nextLane(
+  scored: ScoredCandidate[],
+  context: PickContext,
+  now: Date,
+  neverEngagedLength: number,
+  alreadyTouchedLength: number,
+  minShare: number,
+): Lane {
   let neverEngagedPicksToday = 0;
   let alreadyTouchedPicksToday = 0;
 
@@ -333,52 +384,63 @@ function startingLane(scored: ScoredCandidate[], context: PickContext, now: Date
     else if (ownCount > 1) alreadyTouchedPicksToday += 1;
   }
 
-  const neverEngagedCycles = neverEngagedPicksToday / RANKING.mixSlots.neverEngaged;
-  const alreadyTouchedCycles = alreadyTouchedPicksToday / RANKING.mixSlots.alreadyTouched;
+  const total = neverEngagedLength + alreadyTouchedLength;
+  const neTurn = laneTurn(neverEngagedPicksToday, neverEngagedLength, total, minShare);
+  const atTurn = laneTurn(alreadyTouchedPicksToday, alreadyTouchedLength, total, minShare);
 
-  return neverEngagedCycles > alreadyTouchedCycles ? "already_touched" : "never_engaged";
+  return neTurn <= atTurn ? "never_engaged" : "already_touched";
 }
 
-/** Interleaves the two lanes by RANKING.mixSlots.neverEngaged / .alreadyTouched,
- *  starting with `startLane`. Once a lane empties, each cycle contributes 0
- *  slots from it and the loop keeps draining the other lane alone — same
- *  end result as "the other lane fills the rest." */
-function zipLanes(
+/** Floor-aware interleave of the never-engaged / already-touched lanes.
+ *  Each pick emits from whichever lane laneTurn says is further behind;
+ *  once a lane empties, its turn value can freeze below the other lane's
+ *  (the floor's effectiveLength inflation means an exhausted small lane's
+ *  turn caps below 1.0, not at 1.0 like plain proportional turn does) — so,
+ *  like interleaveProportional, this always double-checks the intended
+ *  lane still has items left and falls back to the other lane if not,
+ *  rather than trusting the turn comparison alone once a lane is drained.
+ *
+ *  `preferNeverEngagedOnTie` breaks a tie (both turns equal — always true
+ *  on the very first comparison of a fresh call, since mixLanes/pickTerms
+ *  recompute the whole interleave from scratch with no persisted position;
+ *  can recur later too, e.g. right as a floor-protected lane exhausts and
+ *  its frozen turn briefly matches the other lane's climbing turn) as the
+ *  tie-break for the whole loop, not just the first comparison — simpler
+ *  than special-casing "first pick only," and correct either way since a
+ *  later tie needs the same resolution. */
+function interleaveLanesWithFloor(
   neverEngaged: ScoredCandidate[],
   alreadyTouched: ScoredCandidate[],
-  startLane: Lane,
+  minShare: number,
+  preferNeverEngagedOnTie: boolean,
 ): ScoredCandidate[] {
   const result: ScoredCandidate[] = [];
+  const total = neverEngaged.length + alreadyTouched.length;
   let ne = 0;
   let at = 0;
 
-  const cycle: Array<{ lane: Lane; slots: number }> =
-    startLane === "never_engaged"
-      ? [
-          { lane: "never_engaged", slots: RANKING.mixSlots.neverEngaged },
-          { lane: "already_touched", slots: RANKING.mixSlots.alreadyTouched },
-        ]
-      : [
-          { lane: "already_touched", slots: RANKING.mixSlots.alreadyTouched },
-          { lane: "never_engaged", slots: RANKING.mixSlots.neverEngaged },
-        ];
-
   while (ne < neverEngaged.length || at < alreadyTouched.length) {
-    let progressed = false;
-    for (const { lane, slots } of cycle) {
-      for (let i = 0; i < slots; i++) {
-        if (lane === "never_engaged" && ne < neverEngaged.length) {
-          result.push(neverEngaged[ne]!);
-          ne++;
-          progressed = true;
-        } else if (lane === "already_touched" && at < alreadyTouched.length) {
-          result.push(alreadyTouched[at]!);
-          at++;
-          progressed = true;
-        }
+    const neTurn = laneTurn(ne, neverEngaged.length, total, minShare);
+    const atTurn = laneTurn(at, alreadyTouched.length, total, minShare);
+    const favorNeverEngaged = neTurn === atTurn ? preferNeverEngagedOnTie : neTurn < atTurn;
+
+    if (favorNeverEngaged) {
+      if (ne < neverEngaged.length) {
+        result.push(neverEngaged[ne]!);
+        ne++;
+      } else {
+        result.push(alreadyTouched[at]!);
+        at++;
+      }
+    } else {
+      if (at < alreadyTouched.length) {
+        result.push(alreadyTouched[at]!);
+        at++;
+      } else {
+        result.push(neverEngaged[ne]!);
+        ne++;
       }
     }
-    if (!progressed) break;
   }
 
   return result;
