@@ -820,6 +820,40 @@ actual known/unknown counts in the current view; each row is tagged with
 its origin pool. See
 [Review's known/unknown mix](#reviews-knownunknown-mix).
 
+### Rotation insight
+
+Above the row list, a "Rotation insight" panel reports capacity, not
+score — how fast the pool currently in view actually cycles back around,
+and where it's bottlenecked. Read and Quiz show one pool block; Review
+shows two (unknown and known), since they compete for separate slot
+budgets. Computed by
+[`buildRotationInsight`](../lib/smart-queue/rotation-insight.ts) from the
+same candidate snapshot the row list already fetched — no event log, no
+extra query.
+
+There's no stored history of daily read/review/quiz counts, so "recent
+daily rate" is approximated as the count of candidates whose own
+last-activity falls in the last 7 days, divided by 7. That's not a
+weak substitute — for the one thing it's used for (bounding how many
+distinct terms can stay inside a rolling 7-day freshness window) it's
+the exact right measure: a first-time touch and a repeat touch both
+pull a term out of the stale bucket equally, so throughput in
+distinct-terms-touched-per-day is what determines how many terms a pace
+can keep fresh. `safePoolSize = recentDailyRate × 7` is that bound;
+`rotationPoolSize` (pool size minus never-touched terms) past it means
+part of the pool has fallen into the flattened tail past
+`stalenessCapHours` (7 days), where every candidate scores identically
+and tie-shuffling — not age — decides pick order. The panel also
+surfaces the never-touched backlog (with an estimated drain time, and a
+stronger warning on Quiz since its never-quizzed tier hard-blocks
+everything else until it's empty — see
+[Quiz ranking](#quiz-ranking-hard-tiers)) and the count of currently
+struggling terms, which keep outranking merely-stale ones and slow the
+rest of the pool's rotation further.
+
+This is purely a diagnostic surface — nothing it computes feeds back
+into scoring or picking.
+
 Rows don't show a per-context Review/Quiz strength badge — see
 [Mastery overview](#mastery-overview) for where the blended score lives
 instead.

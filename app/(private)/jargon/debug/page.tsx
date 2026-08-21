@@ -38,6 +38,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
         domainId={domainId}
         rows={[]}
         mix={null}
+        insight={[]}
         errorMessage={null}
       />
     );
@@ -52,6 +53,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
       domainId={domainId}
       rows={scored.rows ?? []}
       mix={scored.mix ?? null}
+      insight={scored.insight ?? []}
       errorMessage={scored.error ?? null}
     />
   );
