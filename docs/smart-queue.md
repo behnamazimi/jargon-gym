@@ -277,6 +277,45 @@ longer cooldown it earned. Read has no streak (`fields.streak` is `null`
 there), so it always uses the flat per-context τ — this only applies to
 Review and Quiz.
 
+**Past the 7-day cap, a second, smaller boost keeps separating candidates
+by genuine wait time** instead of letting them all tie. `stalenessBoost`'s
+input hours are clamped at `stalenessCapHours` (168h), so on their own,
+a term neglected 8 days and one neglected 800 days would score identically
+and get shuffled together on every pick. `stalenessTailBoost` adds a
+second curve, using the same decay shape, that only starts once a
+candidate is past that cap:
+
+```ts
+function stalenessTailBoost(
+  hoursSinceLastActivity: number,
+  stalenessCapHours: number,
+  tailDecayHours: number,
+  tailMaxBoost: number,
+): number {
+  const extraHours = Math.max(0, hoursSinceLastActivity - stalenessCapHours);
+  const normalized = 1 - Math.exp(-extraHours / tailDecayHours);
+  return normalized * tailMaxBoost;
+}
+```
+
+Its two constants are both deliberate reuses, not new arbitrary numbers.
+`tailMaxBoost` (`stalenessTailMaxBoost`, 12) is set to about half of
+`fragileBoostMax` (25) — the weakest _real-evidence_ signal in the whole
+formula (fragile/cross-fail/struggling all reflect an actual documented
+difficulty; mere neglect doesn't). The tail is meant to sit clearly below
+that weakest evidence-based signal, not hug its edge. `tailDecayHours`
+reuses `RANKING.masteredCooldown.capHours` (336h/14 days) directly rather
+than inventing a new pacing constant — the same constant
+`effectiveStalenessDecayHours` above also reuses, so "the longest anyone
+has to wait" is paced against the same clock as "the longest anyone gets
+to rest." Worst case, any context, any elapsed time: base (asymptotic to 84) + tail (asymptotic to 12) → asymptotic total ≈96 — far under
+struggling's max (200).
+
+Unlike the τ-scaling above, the tail is **not** streak-scaled and applies
+unconditionally across **all three contexts, including Read** — it's a
+pure "break ties among the already-stale" mechanism, not a "how proven is
+this term" one, so it only needs elapsed hours, which every context has.
+
 Staleness stays **additive** with mastered cooldown, same as before: right
 after a pass, the large negative cooldown penalty still dominates the
 front-loaded staleness boost (e.g. 24h into a Review cooldown at streak
@@ -318,18 +357,19 @@ whole tunable dimension (12 weights × 3 presets + a context multiplier) for
 one person who can just edit the constants directly. There is no settings
 UI for these. `RANKING_WEIGHTS` fields:
 
-| Constant                           | Default | Purpose                                                                            |
-| ---------------------------------- | ------- | ---------------------------------------------------------------------------------- |
-| `unseenBoost`                      | 100     | Never-engaged boost                                                                |
-| `strugglingBoostPerStreak`         | 40      | Per point of `\|streak\|` when struggling, capped at `STREAK_BOOST_CAP`            |
-| `masteredCooldownPenalty`          | 120     | Mastered-cooldown penalty                                                          |
-| `sameDayCooldownPenalty`           | 120     | Same-day Read→Review/Quiz, fail→Read, and own-activity Review/Quiz fail sit-outs   |
-| `engagedButUntestedBoost`          | 30      | Read several times, never tested (this activity)                                   |
-| `abandonedReviewBoost`             | 45      | Left mid-review                                                                    |
-| `stalenessMaxBoost`                | 84      | Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap)    |
-| `stalenessCapHours`                | 168     | Staleness cap (7 days)                                                             |
-| `crossFailOtherTestBoostPerRepeat` | 25      | Per repeat, test-context boost when the _other_ test activity most recently failed |
-| `fragileBoostMax`                  | 25      | Boost at 100% lifetime fail rate; scales linearly down to 0                        |
+| Constant                           | Default | Purpose                                                                                                                                                  |
+| ---------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unseenBoost`                      | 100     | Never-engaged boost                                                                                                                                      |
+| `strugglingBoostPerStreak`         | 40      | Per point of `\|streak\|` when struggling, capped at `STREAK_BOOST_CAP`                                                                                  |
+| `masteredCooldownPenalty`          | 120     | Mastered-cooldown penalty                                                                                                                                |
+| `sameDayCooldownPenalty`           | 120     | Same-day Read→Review/Quiz, fail→Read, and own-activity Review/Quiz fail sit-outs                                                                         |
+| `engagedButUntestedBoost`          | 30      | Read several times, never tested (this activity)                                                                                                         |
+| `abandonedReviewBoost`             | 45      | Left mid-review                                                                                                                                          |
+| `stalenessMaxBoost`                | 84      | Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap)                                                                          |
+| `stalenessCapHours`                | 168     | Staleness cap (7 days)                                                                                                                                   |
+| `stalenessTailMaxBoost`            | 12      | Ceiling of the second, smaller boost past `stalenessCapHours`; decay constant reuses `RANKING.masteredCooldown.capHours` directly (not a separate field) |
+| `crossFailOtherTestBoostPerRepeat` | 25      | Per repeat, test-context boost when the _other_ test activity most recently failed                                                                       |
+| `fragileBoostMax`                  | 25      | Boost at 100% lifetime fail rate; scales linearly down to 0                                                                                              |
 
 Related ranking constants, alongside `RANKING_WEIGHTS` in the same file
 (see [Overall strength weights](#overall-strength-display-only) below for
@@ -867,9 +907,12 @@ pull a term out of the stale bucket equally, so throughput in
 distinct-terms-touched-per-day is what determines how many terms a pace
 can keep fresh. `safePoolSize = recentDailyRate × 7` is that bound;
 `rotationPoolSize` (pool size minus never-touched terms) past it means
-part of the pool has fallen into the flattened tail past
-`stalenessCapHours` (7 days), where every candidate scores identically
-and tie-shuffling — not age — decides pick order. The panel also
+part of the pool has fallen into the tail past `stalenessCapHours` (7
+days), where a second, smaller boost (`stalenessTailMaxBoost`) still
+separates candidates by genuine wait time — long-neglected terms
+gradually surface ahead of mildly-neglected ones — though terms with
+close wait times still land close enough to shuffle together. The panel
+also
 surfaces the never-touched backlog (with an estimated drain time, and a
 stronger warning on Quiz since its never-quizzed tier hard-blocks
 everything else until it's empty — see

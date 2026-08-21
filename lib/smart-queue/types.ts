@@ -76,6 +76,12 @@ export type ScoreWeights = {
   /** Ceiling of the decay-shaped staleness curve (reached asymptotically at the cap). */
   stalenessMaxBoost: number;
   stalenessCapHours: number;
+  /** Ceiling of the second, smaller boost that activates only once a
+   *  candidate is past stalenessCapHours — breaks ties among already-capped
+   *  candidates by genuine wait time. Its decay constant is NOT a
+   *  ScoreWeights field: it reuses RANKING.masteredCooldown.capHours
+   *  directly (see stalenessTailBoost in score.ts). */
+  stalenessTailMaxBoost: number;
   /** Per point of |source activity's streak| when the OTHER test context is boosted, capped at RANKING.streakBoostCap. */
   crossFailOtherTestBoostPerRepeat: number;
   /** Boost at 100% lifetime fail rate; scales linearly down to 0. */
