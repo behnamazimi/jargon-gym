@@ -67,8 +67,8 @@ export async function SiteHeader({ initialIsDark }: { initialIsDark: boolean }) 
         user ? (
           <>
             <HeaderStudyLink href="/jargon/read" icon={Zap} label="Read" />
-            <HeaderStudyLink href="/jargon/quiz" icon={Sparkles} label="Quiz" />
             <HeaderStudyLink href="/jargon/review" icon={BookOpen} label="Review" />
+            <HeaderStudyLink href="/jargon/quiz" icon={Sparkles} label="Quiz" />
           </>
         ) : null
       }
