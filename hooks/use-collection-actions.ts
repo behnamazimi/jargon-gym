@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionRunner } from "@/hooks/use-action-runner";
 import {
   addToCollection,
   deleteOwnedDomain,
@@ -15,39 +14,13 @@ import {
 import type { DomainInput } from "@/lib/jargon/domain-schema";
 
 export function useCollectionActions() {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
-
-  const run = useCallback(
-    async (
-      action: () => Promise<{ error?: string }>,
-      options?: { onSuccess?: () => void; busyKey?: string },
-    ) => {
-      setBusyId(options?.busyKey ?? "global");
-      setError(null);
-
-      const result = await action();
-
-      setBusyId(null);
-
-      if (result.error) {
-        setError(result.error);
-        return false;
-      }
-
-      options?.onSuccess?.();
-      router.refresh();
-      return true;
-    },
-    [router],
-  );
+  const { run, error, busyId, isBusy, clearError } = useActionRunner();
 
   return {
     error,
-    isBusy: busyId !== null,
+    isBusy,
     busyId,
-    clearError: () => setError(null),
+    clearError,
     toggleActiveForReview: (domainId: string, active: boolean) =>
       run(() => toggleActiveForReview(domainId, active), { busyKey: domainId }),
     shareDomain: (domainId: string) => run(() => shareDomain(domainId), { busyKey: domainId }),
