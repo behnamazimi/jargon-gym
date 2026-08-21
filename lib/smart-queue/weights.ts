@@ -81,6 +81,17 @@ export function masteredCooldownHours(streak: number): number {
   return Math.min(hours, capHours);
 }
 
+/** Streak-scaled staleness decay: reuses masteredCooldownHours' own ratio so
+ *  a proven term's staleness ramp slows by the same proportion its cooldown
+ *  window grew. streak <= 1 (baseline +1, or struggling/negative) keeps the
+ *  flat per-context τ unchanged — only a term that's earned more than the
+ *  baseline cooldown window ramps toward "stale" more slowly. */
+export function effectiveStalenessDecayHours(streak: number, baseDecayHours: number): number {
+  if (streak <= 1) return baseDecayHours;
+  const ratio = masteredCooldownHours(streak) / RANKING.masteredCooldown.baseHours;
+  return baseDecayHours * ratio;
+}
+
 export const STRENGTH = {
   // How Review + Quiz sub-scores blend into one score, and how much a streak counts toward it. weights.review > weights.quiz because Quiz is guessable (50% floor) and Review isn't. streakMaxCredit is the streak length for full credit; streakWeight is streak's share of the blend (fail-rate gets the rest).
   blend: {
