@@ -226,3 +226,78 @@ describe("read staleness borrows review-recall timestamp", () => {
     expect(score).toBe(RANKING.formula.unseenBoost);
   });
 });
+
+describe("stale reason is per-context and label-only", () => {
+  it("Read: no stale at 25h or 47h; stale at the 7-day cap", () => {
+    const at25 = scoreCandidate(makeCandidate("read", 25), RANKING.formula, "read", now);
+    const at47 = scoreCandidate(makeCandidate("read", 47), RANKING.formula, "read", now);
+    const atCap = scoreCandidate(makeCandidate("read", CAP_HOURS), RANKING.formula, "read", now);
+
+    expect(at25.reasons).not.toContain("stale");
+    expect(at25.reasons).toContain("steady");
+    expect(at47.reasons).not.toContain("stale");
+    expect(atCap.reasons).toContain("stale");
+    expect(atCap.reasons).not.toContain("steady");
+
+    expect(at25.score).toBeCloseTo(baseStalenessAt(25, RANKING.stalenessDecayHours.read), 2);
+    expect(at47.score).toBeCloseTo(baseStalenessAt(47, RANKING.stalenessDecayHours.read), 2);
+    expect(atCap.score).toBeCloseTo(
+      baseStalenessAt(CAP_HOURS, RANKING.stalenessDecayHours.read),
+      2,
+    );
+  });
+
+  it("Review: no stale at 24h; stale at τ when not in cooldown", () => {
+    const decayHours = RANKING.stalenessDecayHours.review;
+    const at24 = scoreCandidate(makeCandidate("review", 24, -1), RANKING.formula, "review", now);
+    const atTau = scoreCandidate(
+      makeCandidate("review", decayHours, -1),
+      RANKING.formula,
+      "review",
+      now,
+    );
+
+    expect(at24.reasons).not.toContain("stale");
+    expect(atTau.reasons).toContain("stale");
+    const strugglingBoost = RANKING.formula.strugglingBoostPerStreak;
+    expect(at24.score).toBeCloseTo(strugglingBoost + baseStalenessAt(24, decayHours), 2);
+    expect(atTau.score).toBeCloseTo(strugglingBoost + baseStalenessAt(decayHours, decayHours), 2);
+  });
+
+  it("Review/Quiz: past τ but inside mastered cooldown → cooldown only, no stale", () => {
+    const review = scoreCandidate(
+      makeCandidate("review", RANKING.stalenessDecayHours.review),
+      RANKING.formula,
+      "review",
+      now,
+    );
+    const quiz = scoreCandidate(
+      makeCandidate("quiz", RANKING.stalenessDecayHours.quiz),
+      RANKING.formula,
+      "quiz",
+      now,
+    );
+
+    expect(review.reasons).toContain("mastered_cooldown");
+    expect(review.reasons).not.toContain("stale");
+    expect(quiz.reasons).toContain("mastered_cooldown");
+    expect(quiz.reasons).not.toContain("stale");
+  });
+
+  it("Quiz: stale at τ when not in cooldown (negative streak)", () => {
+    const decayHours = RANKING.stalenessDecayHours.quiz;
+    const { score, reasons } = scoreCandidate(
+      makeCandidate("quiz", decayHours, -1),
+      RANKING.formula,
+      "quiz",
+      now,
+    );
+
+    expect(reasons).toContain("stale");
+    expect(reasons).not.toContain("mastered_cooldown");
+    expect(score).toBeCloseTo(
+      RANKING.formula.strugglingBoostPerStreak + baseStalenessAt(decayHours, decayHours),
+      2,
+    );
+  });
+});

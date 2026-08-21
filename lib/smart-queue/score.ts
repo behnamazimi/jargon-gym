@@ -6,7 +6,12 @@
  */
 
 import { isSameLocalDay } from "./local-day";
-import { effectiveStalenessDecayHours, masteredCooldownHours, RANKING } from "./weights";
+import {
+  effectiveStalenessDecayHours,
+  masteredCooldownHours,
+  RANKING,
+  staleReasonThresholdHours,
+} from "./weights";
 import type { FailSource, PickContext, PickReason, ReviewCandidate, ScoreWeights } from "./types";
 
 type ScoreBreakdown = {
@@ -106,6 +111,26 @@ export function fieldsForContext(candidate: ReviewCandidate, context: PickContex
         otherActivity: "review",
       };
   }
+}
+
+/** Whether the `stale` reason/badge (and matching pool-stat bucket) attaches.
+ *  Label-only: the staleness score boost is independent of this. Skips
+ *  while mastered cooldown is active so "Recently mastered" never pairs
+ *  with "Not reviewed/quizzed recently." */
+export function shouldAttachStaleReason(
+  context: PickContext,
+  ownCount: number,
+  lastActivityAt: Date | null,
+  streak: number | null,
+  now: Date,
+): boolean {
+  if (ownCount === 0 || !lastActivityAt) return false;
+  const hoursSinceActivity = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60);
+  if (hoursSinceActivity < staleReasonThresholdHours(context)) return false;
+  if (streak !== null && streak > 0 && hoursSinceActivity < masteredCooldownHours(streak)) {
+    return false;
+  }
+  return true;
 }
 
 function evaluateCandidate(
@@ -263,7 +288,9 @@ function evaluateCandidate(
       RANKING.masteredCooldown.capHours,
       weights.stalenessTailMaxBoost,
     );
-    if (hoursSinceActivity >= RANKING.staleReasonThresholdHours) {
+    if (
+      shouldAttachStaleReason(context, fields.ownCount, fields.lastActivityAt, fields.streak, now)
+    ) {
       reasons.push("stale");
     }
   }

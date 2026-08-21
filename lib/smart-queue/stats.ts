@@ -1,13 +1,14 @@
 /** Pool statistics computation.
  */
 
-import { fieldsForContext } from "./score";
+import { fieldsForContext, shouldAttachStaleReason } from "./score";
 import type { PickContext, ReviewCandidate, PoolStats } from "./types";
 
-const STALE_THRESHOLD_HOURS = 24;
-
-export function computePoolStats(candidates: ReviewCandidate[], context: PickContext): PoolStats {
-  const now = new Date();
+export function computePoolStats(
+  candidates: ReviewCandidate[],
+  context: PickContext,
+  now: Date = new Date(),
+): PoolStats {
   let unseen = 0;
   let seen = 0;
   let stale = 0;
@@ -29,11 +30,12 @@ export function computePoolStats(candidates: ReviewCandidate[], context: PickCon
     if ((streak ?? 0) < 0) struggling++;
 
     if (lastActivityAt) {
-      const hoursSinceActivity = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60);
-      if (hoursSinceActivity >= STALE_THRESHOLD_HOURS) {
+      if (shouldAttachStaleReason(context, ownCount, lastActivityAt, streak, now)) {
         stale++;
       }
     } else {
+      // ownCount > 0 but no timestamp: can't measure recency, so count as
+      // stale. Scoring cannot attach the `stale` reason without a timestamp.
       stale++;
     }
   }
