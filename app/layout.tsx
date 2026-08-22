@@ -1,8 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { PwaProviders } from "@/components/pwa/pwa-providers";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
+import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { THEME_COOKIE_NAME, DARK_THEME, LIGHT_THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Geist, Inter, JetBrains_Mono } from "next/font/google";
@@ -23,8 +26,18 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jargon Gym",
-  description: "Private jargon review app. Log in or sign up with a reference code.",
+  applicationName: PWA_NAME,
+  title: PWA_NAME,
+  description: PWA_DESCRIPTION,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: PWA_NAME,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: PWA_THEME_COLOR,
 };
 
 export default async function RootLayout({
@@ -51,9 +64,12 @@ export default async function RootLayout({
       )}
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
-        <SiteHeader initialIsDark={theme === DARK_THEME} />
-        <main className="flex flex-1 flex-col">{children}</main>
-        <SiteFooter />
+        <PwaProviders>
+          <SiteHeader initialIsDark={theme === DARK_THEME} />
+          <OfflineBanner />
+          <main className="flex flex-1 flex-col">{children}</main>
+          <SiteFooter />
+        </PwaProviders>
       </body>
     </html>
   );

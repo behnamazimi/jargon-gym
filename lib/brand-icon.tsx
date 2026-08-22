@@ -64,23 +64,26 @@ export function brandIconBaseGlyphsProps(strokeColor = "currentColor") {
 type BrandIconImageProps = {
   boxSize: number;
   fill?: boolean;
+  /** Inset the glyph ~20% so Android adaptive icons keep JG in the safe zone. */
+  maskable?: boolean;
 };
 
-export function BrandIconImage({ boxSize, fill = false }: BrandIconImageProps) {
-  const scaled = scaleBrandIcon(boxSize);
+export function BrandIconImage({ boxSize, fill = false, maskable = false }: BrandIconImageProps) {
+  const glyphBox = maskable ? boxSize * 0.8 : boxSize;
+  const scaled = scaleBrandIcon(glyphBox);
 
   return (
     <div
       style={{
-        width: fill ? "100%" : scaled.box,
-        height: fill ? "100%" : scaled.box,
+        width: fill ? "100%" : boxSize,
+        height: fill ? "100%" : boxSize,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         background: BRAND_ICON.background,
         color: BRAND_ICON.color,
         letterSpacing: BRAND_ICON.letterSpacing,
-        borderRadius: scaled.borderRadius,
+        borderRadius: maskable ? 0 : scaled.borderRadius,
       }}
     >
       <BrandIconGlyphs

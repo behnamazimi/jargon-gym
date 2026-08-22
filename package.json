@@ -44,12 +44,15 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@serwist/turbopack": "^9.5.12",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "daisyui": "^5.7.4",
+    "esbuild": "^0.28.2",
     "knip": "^6.32.2",
+    "serwist": "^9.5.12",
     "supabase": "^2.111.0",
     "tailwindcss": "^4",
     "typescript": "^5",

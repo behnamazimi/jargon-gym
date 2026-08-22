@@ -4,6 +4,7 @@ import { BookOpen, Sparkles, Zap } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/jargon/profile-menu";
+import { InstallButton } from "@/components/pwa/install-prompt";
 import { LoggedOutHeaderNav } from "@/components/site-header-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
@@ -74,6 +75,7 @@ export async function SiteHeader({ initialIsDark }: { initialIsDark: boolean }) 
       }
       rightNav={
         <>
+          <InstallButton />
           <ThemeToggle initialIsDark={initialIsDark} />
           {user ? (
             <ProfileMenu email={user.email ?? "Account"} isAdmin={isAdmin} />
