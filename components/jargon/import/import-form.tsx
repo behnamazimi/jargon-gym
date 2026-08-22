@@ -1,15 +1,11 @@
 "use client";
 
-import { Braces, FileUp } from "lucide-react";
+import { Braces, Ellipsis, FileUp } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ImportCard,
-  ImportToolbar,
-  ImportToolbarLabel,
-} from "@/components/jargon/import/import-ui";
+import { ImportCard, ImportToolbar } from "@/components/jargon/import/import-ui";
 import { formatImportJson, readJsonFile } from "@/lib/jargon/import/json-helpers";
 import {
   IMPORT_MINIMAL_PAYLOAD,
@@ -17,7 +13,6 @@ import {
   stringifyImportPayload,
 } from "@/lib/jargon/import/sample-payload";
 import type { ImportFailure } from "@/lib/jargon/import/types";
-import { cn } from "@/lib/utils";
 
 type ImportFormProps = {
   value: string;
@@ -75,80 +70,110 @@ export function ImportForm({
     onFailure?.(null);
   }
 
+  const fileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept="application/json,.json"
+      className="hidden"
+      onChange={handleFileChange}
+    />
+  );
+
   return (
     <ImportCard
-      step={2}
       icon={Braces}
       title="Paste or upload JSON"
       description="Add terms to a collection you own, or create a new one from the file."
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <ImportToolbarLabel>Templates &amp; tools</ImportToolbarLabel>
-        <span className="text-xs tabular-nums text-base-content/60">
-          {hasContent ? `${lineCount} lines` : "No content yet"}
-        </span>
-      </div>
-
-      <ImportToolbar>
+      <div className="flex items-center gap-2 md:hidden">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          className="max-md:min-h-11"
-          onPress={() => applyTemplate("sample")}
-        >
-          Load example
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="max-md:min-h-11"
-          onPress={() => applyTemplate("minimal")}
-        >
-          Load minimal
-        </Button>
-        <Separator orientation="vertical" className="hidden h-6 md:block" />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="max-md:min-h-11"
-          onPress={handleFormat}
-          isDisabled={!hasContent}
-        >
-          Format JSON
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="max-md:min-h-11"
+          className="min-h-11 flex-1"
           onPress={() => fileInputRef.current?.click()}
         >
           <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
           Upload .json
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="max-md:min-h-11"
-          onPress={handleClear}
-          isDisabled={!hasContent}
-        >
-          Clear
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="application/json,.json"
-          className="hidden"
-          onChange={handleFileChange}
-        />
-      </ImportToolbar>
+        <DropdownMenuTrigger>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="btn-square min-h-11 min-w-11"
+            aria-label="More import tools"
+          >
+            <Ellipsis className="size-4" aria-hidden strokeWidth={1.5} />
+          </Button>
+          <DropdownMenu className="min-w-[160px]">
+            <DropdownMenuItem onAction={() => applyTemplate("sample")}>
+              Load example
+            </DropdownMenuItem>
+            <DropdownMenuItem onAction={() => applyTemplate("minimal")}>
+              Load minimal
+            </DropdownMenuItem>
+            <DropdownMenuItem isDisabled={!hasContent} onAction={handleFormat}>
+              Format JSON
+            </DropdownMenuItem>
+            <DropdownMenuItem isDisabled={!hasContent} onAction={handleClear}>
+              Clear
+            </DropdownMenuItem>
+          </DropdownMenu>
+        </DropdownMenuTrigger>
+      </div>
 
-      <div className="shadow-surface rounded-xl p-1">
+      <div className="hidden items-center justify-between gap-2 md:flex">
+        <ImportToolbar>
+          <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("sample")}>
+            Load example
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onPress={() => applyTemplate("minimal")}
+          >
+            Load minimal
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onPress={handleFormat}
+            isDisabled={!hasContent}
+          >
+            Format JSON
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onPress={() => fileInputRef.current?.click()}
+          >
+            <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
+            Upload .json
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onPress={handleClear}
+            isDisabled={!hasContent}
+          >
+            Clear
+          </Button>
+        </ImportToolbar>
+        <span className="shrink-0 text-xs tabular-nums text-base-content/60">
+          {hasContent ? `${lineCount} lines` : "No content yet"}
+        </span>
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="m-0 text-end text-xs tabular-nums text-base-content/60 md:hidden">
+          {hasContent ? `${lineCount} lines` : "No content yet"}
+        </p>
         <Textarea
           id="import-json"
           value={value}
@@ -158,10 +183,7 @@ export function ImportForm({
           }}
           placeholder={`{\n  "domain": "Software Engineering",\n  "terms": [\n    {\n      "term": "Coupling",\n      "category": "Architecture",\n      "definition": "..."\n    }\n  ],\n  "relationships": [\n    {\n      "source": "Coupling",\n      "target": "Cohesion",\n      "relationship_type": "often confused with"\n    }\n  ]\n}`}
           spellCheck={false}
-          className={cn(
-            "min-h-[220px] resize-y border-0 bg-base-100 font-mono text-sm leading-5 shadow-none ring-1 ring-base-content/[0.06] focus-visible:ring-2 sm:min-h-[320px] dark:ring-base-100/[0.06]",
-            "rounded-lg",
-          )}
+          className="min-h-48 resize-y font-mono text-sm leading-5 sm:min-h-80"
         />
       </div>
 
@@ -169,10 +191,11 @@ export function ImportForm({
         type="button"
         onPress={onValidate}
         isDisabled={isValidating || !hasContent}
-        className="w-full md:w-auto"
+        className="min-h-11 w-full md:w-auto"
       >
         {isValidating ? "Validating…" : "Validate & preview"}
       </Button>
+      {fileInput}
     </ImportCard>
   );
 }

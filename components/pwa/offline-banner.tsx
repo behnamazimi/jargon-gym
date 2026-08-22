@@ -4,7 +4,7 @@ import { WifiOff } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { pageContainerClass } from "@/components/page-container";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertContent, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { isStudyPath } from "@/lib/chrome";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +41,11 @@ export function OfflineBanner() {
   return (
     <div className={cn(pageContainerClass, "pt-4")}>
       <Alert>
-        <WifiOff className="size-4" aria-hidden />
-        <AlertTitle>You&apos;re offline</AlertTitle>
-        <AlertDescription>Quizzes and your collection need a connection.</AlertDescription>
+        <WifiOff className="stroke-current h-6 w-6 shrink-0" aria-hidden />
+        <AlertContent>
+          <AlertTitle>You&apos;re offline</AlertTitle>
+          <AlertDescription>Quizzes and your collection need a connection.</AlertDescription>
+        </AlertContent>
       </Alert>
     </div>
   );

@@ -80,27 +80,25 @@ function CopyCommand({
 
       {children}
 
-      <div className="shadow-surface rounded-xl bg-base-200/30 p-1">
-        <div className="flex items-stretch gap-2 rounded-lg bg-base-100 p-1.5 ring-1 ring-base-content/[0.06] dark:ring-base-100/[0.06]">
-          <pre className="m-0 min-w-0 flex-1 overflow-x-auto px-2.5 py-2 font-mono text-xs leading-5 whitespace-pre-wrap text-base-content">
-            {prefix ? (
-              <span className="select-none text-base-content/40" aria-hidden>
-                {prefix}{" "}
-              </span>
-            ) : null}
-            {value}
-          </pre>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={handleCopy}
-            className="max-md:min-h-11 shrink-0 self-center transition-transform duration-150 ease-out active:scale-[0.96]"
-          >
-            <CopyIconSwap copied={copied} />
-            {copied ? "Copied" : "Copy"}
-          </Button>
-        </div>
+      <div className="flex flex-col gap-2 md:flex-row md:items-start">
+        <pre className="m-0 min-w-0 flex-1 overflow-x-auto rounded-lg bg-base-200/40 px-3 py-2.5 font-mono text-xs leading-5 whitespace-pre-wrap text-base-content">
+          {prefix ? (
+            <span className="select-none text-base-content/40" aria-hidden>
+              {prefix}{" "}
+            </span>
+          ) : null}
+          {value}
+        </pre>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onPress={handleCopy}
+          className="min-h-11 w-full shrink-0 transition-transform duration-150 ease-out active:scale-[0.96] md:w-auto"
+        >
+          <CopyIconSwap copied={copied} />
+          {copied ? "Copied" : "Copy"}
+        </Button>
       </div>
     </div>
   );
@@ -132,14 +130,11 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
 
   return (
     <ImportCard
-      step={1}
       icon={Sparkles}
-      title="Generate with a skill"
-      description="Optional — install the glossary skill once, generate JSON for your domain, then paste it in step 2."
+      title="Generate with an AI skill"
+      description="Optional — install the glossary skill once, generate JSON for your domain, then paste it below."
       collapsible
       defaultExpanded={false}
-      expandLabel="Show commands"
-      collapseLabel="Hide commands"
     >
       <div className="space-y-5">
         <CopyCommand
@@ -179,7 +174,7 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
               </Field>
             ) : null}
 
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_5.5rem]">
+            <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem]">
               <Field>
                 <FieldLabel htmlFor="import-skill-domain">Collection name</FieldLabel>
                 <Input
@@ -213,8 +208,8 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
                 value={exclude}
                 onChange={(event) => setExclude(event.target.value)}
                 placeholder="e.g. Agile, Scrum, OKR"
-                rows={1}
-                className="min-h-8 text-sm"
+                rows={2}
+                className="min-h-11 text-sm"
               />
             </Field>
           </div>

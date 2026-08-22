@@ -1,10 +1,8 @@
 import { CheckCircle2 } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { ImportCard, ImportCategoryBadges, ImportStat } from "@/components/jargon/import/import-ui";
+import { ImportCard } from "@/components/jargon/import/import-ui";
 import { DangerZone } from "@/components/jargon/settings/ui";
 import type { ImportPreview } from "@/lib/jargon/import/types";
 import { pluralize } from "@/lib/utils";
@@ -16,6 +14,15 @@ type ImportPreviewPanelProps = {
   onImport: () => void;
   isImporting: boolean;
 };
+
+function previewDescription(preview: ImportPreview) {
+  const counts = `${pluralize(preview.termCount, "term")} and ${pluralize(preview.relationshipCount, "relationship")}`;
+  const inCategories = preview.categories.length > 0 ? ` in ${preview.categories.join(", ")}` : "";
+
+  return preview.isMerge
+    ? `Merge ${counts}${inCategories} into your existing "${preview.domain}" collection.`
+    : `Create a new "${preview.domain}" collection with ${counts}${inCategories}.`;
+}
 
 export function ImportPreviewPanel({
   preview,
@@ -34,35 +41,10 @@ export function ImportPreviewPanel({
 
   return (
     <ImportCard
-      step={3}
       icon={CheckCircle2}
       title="Review & import"
-      description={
-        preview.isMerge
-          ? `Merge ${pluralize(preview.termCount, "term")} into your existing "${preview.domain}" collection.`
-          : `Create a new "${preview.domain}" collection with ${pluralize(preview.termCount, "term")}.`
-      }
+      description={previewDescription(preview)}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <Badge variant={preview.isMerge ? "secondary" : "default"}>
-          {preview.isMerge ? "Merge into existing" : "Create new collection"}
-        </Badge>
-        <span className="text-sm font-medium">{preview.domain}</span>
-      </div>
-
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        <ImportStat label="Terms" value={preview.termCount} variant="primary" />
-        <ImportStat label="Relationships" value={preview.relationshipCount} />
-        <ImportStat label="Categories" value={preview.categories.length} />
-      </dl>
-
-      {preview.categories.length > 0 ? (
-        <div className="space-y-2">
-          <p className="m-0 text-xs font-medium text-base-content/60">Categories</p>
-          <ImportCategoryBadges categories={preview.categories} />
-        </div>
-      ) : null}
-
       {hasConflicts ? (
         <DangerZone
           title={`This will overwrite ${pluralize(conflictCount, "term")} you already have`}
@@ -87,19 +69,13 @@ export function ImportPreviewPanel({
             </FieldLabel>
           </Field>
         </DangerZone>
-      ) : (
-        <Alert>
-          <CheckCircle2 className="size-4" strokeWidth={1.5} />
-          <AlertTitle>Ready to import</AlertTitle>
-          <AlertDescription>No conflicts — you're good to import.</AlertDescription>
-        </Alert>
-      )}
+      ) : null}
 
       <Button
         type="button"
         onPress={onImport}
         isDisabled={isImporting || !canImport}
-        className="w-full md:w-auto"
+        className="min-h-11 w-full md:w-auto"
       >
         {isImporting ? "Importing…" : confirmLabel}
       </Button>
