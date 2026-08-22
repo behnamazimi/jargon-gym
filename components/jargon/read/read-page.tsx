@@ -15,7 +15,7 @@ import {
 } from "@/components/jargon/quiz/quiz-ui";
 import { QueueScoreDebug } from "@/components/jargon/queue-score-debug";
 import { TermBody } from "@/components/jargon/term-body";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import {
   Select,
@@ -216,8 +216,8 @@ function ReadErrorAlert({
   return (
     <Alert variant="destructive">
       <AlertCircle className="size-4" aria-hidden strokeWidth={1.5} />
-      <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <span>{message}</span>
+      <AlertDescription>{message}</AlertDescription>
+      <AlertAction>
         <Button
           type="button"
           size="sm"
@@ -227,7 +227,7 @@ function ReadErrorAlert({
         >
           {isPending ? "Loading…" : "Try again"}
         </Button>
-      </AlertDescription>
+      </AlertAction>
     </Alert>
   );
 }

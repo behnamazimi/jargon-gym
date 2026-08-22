@@ -18,7 +18,11 @@ function Alert({
     <div
       data-slot="alert"
       role="alert"
-      className={cn("alert alert-vertical sm:alert-horizontal", variantClasses[variant], className)}
+      className={cn(
+        "alert alert-vertical sm:alert-horizontal text-start! justify-items-start!",
+        variantClasses[variant],
+        className,
+      )}
       {...props}
     />
   );
@@ -33,11 +37,19 @@ function AlertTitle({ className, ...props }: React.ComponentProps<"h3">) {
 }
 
 function AlertDescription({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="alert-description" className={cn("text-xs", className)} {...props} />;
+  return (
+    <div data-slot="alert-description" className={cn("min-w-0 text-sm", className)} {...props} />
+  );
 }
 
 function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
-  return <div data-slot="alert-action" className={cn("shrink-0", className)} {...props} />;
+  return (
+    <div
+      data-slot="alert-action"
+      className={cn("flex shrink-0 flex-wrap items-center gap-2 sm:justify-self-end", className)}
+      {...props}
+    />
+  );
 }
 
 export { Alert, AlertContent, AlertTitle, AlertDescription, AlertAction };

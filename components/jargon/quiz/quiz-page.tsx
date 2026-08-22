@@ -22,7 +22,7 @@ import {
   QuizSetupFooter,
   QuizStat,
 } from "@/components/jargon/quiz/quiz-ui";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -352,32 +352,30 @@ export function QuizPage({
                 />
                 {savedSession ? (
                   <Alert>
-                    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <span>
-                        You have a quiz in progress — question{" "}
-                        <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
-                        <span className="tabular-nums">{savedSession.questions.length}</span>.
-                      </span>
-                      <span className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onPress={handleResumeSession}
-                          className="max-md:min-h-11"
-                        >
-                          Resume
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onPress={handleDiscardSession}
-                          className="max-md:min-h-11"
-                        >
-                          Start new
-                        </Button>
-                      </span>
+                    <AlertDescription>
+                      You have a quiz in progress — question{" "}
+                      <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
+                      <span className="tabular-nums">{savedSession.questions.length}</span>.
                     </AlertDescription>
+                    <AlertAction>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onPress={handleResumeSession}
+                        className="max-md:min-h-11"
+                      >
+                        Resume
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onPress={handleDiscardSession}
+                        className="max-md:min-h-11"
+                      >
+                        Start new
+                      </Button>
+                    </AlertAction>
                   </Alert>
                 ) : null}
 
@@ -423,11 +421,11 @@ export function QuizPage({
 
                 {aiRequiresSetup ? (
                   <Alert variant="destructive" className="max-w-md">
-                    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <span>
-                        AI quizzes need a provider and API key in Settings. Choose simple mode, or
-                        set up an LLM provider.
-                      </span>
+                    <AlertDescription>
+                      AI quizzes need a provider and API key in Settings. Choose simple mode, or set
+                      up an LLM provider.
+                    </AlertDescription>
+                    <AlertAction>
                       <LinkButton
                         href="/jargon/settings"
                         size="sm"
@@ -436,7 +434,7 @@ export function QuizPage({
                       >
                         Go to Settings
                       </LinkButton>
-                    </AlertDescription>
+                    </AlertAction>
                   </Alert>
                 ) : null}
 
