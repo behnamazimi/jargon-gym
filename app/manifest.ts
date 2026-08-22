@@ -3,6 +3,8 @@ import {
   PWA_BACKGROUND_COLOR,
   PWA_DESCRIPTION,
   PWA_NAME,
+  PWA_SCREENSHOT_NARROW,
+  PWA_SCREENSHOT_WIDE,
   PWA_SHORT_NAME,
   PWA_START_URL,
   PWA_THEME_COLOR,
@@ -39,6 +41,22 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
+      },
+    ],
+    screenshots: [
+      {
+        src: "/screenshots/wide",
+        sizes: `${PWA_SCREENSHOT_WIDE.width}x${PWA_SCREENSHOT_WIDE.height}`,
+        type: "image/png",
+        form_factor: "wide",
+        label: "Jargon Gym on desktop",
+      },
+      {
+        src: "/screenshots/narrow",
+        sizes: `${PWA_SCREENSHOT_NARROW.width}x${PWA_SCREENSHOT_NARROW.height}`,
+        type: "image/png",
+        form_factor: "narrow",
+        label: "Jargon Gym on mobile",
       },
     ],
     shortcuts: [

@@ -8,3 +8,6 @@ export const PWA_START_URL = "/jargon?source=pwa";
 export const PWA_THEME_COLOR = BRAND_ICON.background;
 export const PWA_BACKGROUND_COLOR = "#ffffff";
 export const PWA_INSTALL_DISMISS_KEY = "pwa-install-dismissed";
+
+export const PWA_SCREENSHOT_WIDE = { width: 1280, height: 720 } as const;
+export const PWA_SCREENSHOT_NARROW = { width: 750, height: 1334 } as const;

@@ -20,8 +20,9 @@ export function generateImageMetadata() {
   }));
 }
 
-export default function Icon({ id }: { id: IconId }) {
-  const icon = ICON_IDS[id] ?? ICON_IDS["32"];
+export default async function Icon({ id }: { id: Promise<string | number> }) {
+  const iconId = String(await id);
+  const icon = iconId in ICON_IDS ? ICON_IDS[iconId as IconId] : ICON_IDS["32"];
 
   return new ImageResponse(<BrandIconImage boxSize={icon.size} fill maskable={icon.maskable} />, {
     width: icon.size,

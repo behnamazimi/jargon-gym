@@ -7,7 +7,11 @@ function isPublicPath(pathname: string) {
   return (
     pathname === "/" ||
     pathname === "/icon" ||
+    pathname.startsWith("/icon/") ||
     pathname === "/apple-icon" ||
+    pathname === "/manifest.webmanifest" ||
+    pathname === "/~offline" ||
+    pathname.startsWith("/screenshots/") ||
     pathname === "/install-widget.sh" ||
     pathname === "/sitemap.xml" ||
     pathname === "/robots.txt" ||
