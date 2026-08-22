@@ -3,14 +3,24 @@
 import { MoonIcon, SunIcon } from "lucide-react";
 import { useState } from "react";
 import { DARK_THEME, LIGHT_THEME, THEME_COOKIE_NAME } from "@/lib/theme";
+import { cn } from "@/lib/utils";
 
 const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
-export function ThemeToggle({ initialIsDark }: { initialIsDark: boolean }) {
+export function ThemeToggle({
+  initialIsDark,
+  className,
+}: {
+  initialIsDark: boolean;
+  className?: string;
+}) {
   const [isDark, setIsDark] = useState(initialIsDark);
 
   return (
-    <label className="swap swap-rotate btn btn-ghost btn-square" aria-label="Toggle dark mode">
+    <label
+      className={cn("swap swap-rotate btn btn-ghost btn-square", className)}
+      aria-label="Toggle dark mode"
+    >
       <input
         type="checkbox"
         value={DARK_THEME}

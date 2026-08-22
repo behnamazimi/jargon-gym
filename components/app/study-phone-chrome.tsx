@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Ellipsis, LogOut } from "lucide-react";
+import { ArrowLeft, Ellipsis, LogOut, XIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
@@ -17,7 +17,7 @@ import { InstallButton } from "@/components/pwa/install-prompt";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { isDockPath, isLibraryPath, isMorePath } from "@/lib/chrome";
 import { cn } from "@/lib/utils";
 
@@ -169,10 +169,18 @@ function MoreSheet() {
       isOpen={moreOpen}
       onOpenChange={setMoreOpen}
       side="bottom"
+      showCloseButton={false}
       className="max-h-[min(36rem,85dvh)] rounded-t-2xl pb-safe md:hidden"
     >
       <SheetHeader className="border-b border-base-300 px-4 py-3">
-        <SheetTitle>More</SheetTitle>
+        <div className="flex items-center gap-1">
+          <SheetTitle className="min-w-0 flex-1">More</SheetTitle>
+          <ThemeToggle initialIsDark={initialIsDark} className="btn-sm shrink-0" />
+          <SheetClose className="shrink-0">
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </SheetClose>
+        </div>
         <div className="flex items-center gap-3 pt-1">
           <Avatar>
             <AvatarFallback className="text-xs font-semibold text-primary">
@@ -180,9 +188,6 @@ function MoreSheet() {
             </AvatarFallback>
           </Avatar>
           <p className="m-0 min-w-0 truncate text-sm">{email}</p>
-          <div className="ms-auto">
-            <ThemeToggle initialIsDark={initialIsDark} />
-          </div>
         </div>
       </SheetHeader>
       <ul className="menu w-full p-2">
