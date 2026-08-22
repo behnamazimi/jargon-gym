@@ -6,12 +6,14 @@ import {
   getNextReadTermAction,
   type NextReadTermResult,
 } from "@/app/(private)/jargon/read/actions";
+import { AdminOnly } from "@/components/admin-only";
 import {
   QuizKeyboardHint,
   QuizPanel,
   QuizPanelBody,
   QuizPanelHeader,
 } from "@/components/jargon/quiz/quiz-ui";
+import { QueueScoreDebug } from "@/components/jargon/queue-score-debug";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -24,7 +26,6 @@ import {
 } from "@/components/ui/select";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReviewTerm } from "@/lib/review/types";
-import { formatPickDebugLine } from "@/lib/smart-queue/reasons";
 import { countTermsForSelection } from "@/lib/study/count";
 import type { StudyCollection } from "@/lib/study/types";
 
@@ -89,16 +90,6 @@ function isTypingTarget(target: EventTarget | null) {
     target.isContentEditable ||
     target.closest("[data-slot='select']") !== null ||
     target.closest("[role='listbox']") !== null
-  );
-}
-
-function ReadPickDebug({ term }: { term: ReviewTerm }) {
-  if (term.pickScore === undefined || !term.pickReasons) return null;
-
-  return (
-    <p className="m-0 text-xs leading-relaxed text-base-content/40" aria-label="Queue score debug">
-      {formatPickDebugLine(term.pickScore, term.pickReasons, "read")}
-    </p>
   );
 }
 
@@ -177,7 +168,9 @@ function ReadTermCard({
       </header>
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody key={term.id} term={term} />
-        <ReadPickDebug term={term} />
+        <AdminOnly>
+          <QueueScoreDebug term={term} context="read" />
+        </AdminOnly>
       </div>
       <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-base-300/60 px-5 py-3 sm:px-6">
         <div className="hidden min-w-0 md:block coarse:hidden">

@@ -2,11 +2,12 @@
 
 import { Eye } from "lucide-react";
 import { useEffect, useRef } from "react";
-import type { ReviewTerm } from "@/lib/review/types";
+import { AdminOnly } from "@/components/admin-only";
 import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
+import { QueueScoreDebug } from "@/components/jargon/queue-score-debug";
 import { StrengthBadge } from "@/components/jargon/strength-badge";
 import { TermBody } from "@/components/jargon/term-body";
-import { Badge } from "@/components/ui/badge";
+import type { ReviewTerm } from "@/lib/review/types";
 import { cn } from "@/lib/utils";
 import { useReviewSwipe } from "./use-review-swipe";
 
@@ -19,6 +20,23 @@ type ReviewCardProps = {
   reduceMotion: boolean;
   swipeEnabled: boolean;
 };
+
+function ReviewCardHeader({ term }: { term: ReviewTerm }) {
+  return (
+    <header className="shrink-0 border-b border-base-300/60 px-5 py-3 sm:px-6">
+      <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
+        {term.term}
+      </h2>
+      <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
+        <span>{term.domainName}</span>
+        <span className="mx-1.5 text-base-content/35" aria-hidden>
+          ·
+        </span>
+        <span>{term.category}</span>
+      </p>
+    </header>
+  );
+}
 
 export function ReviewCard({
   term,
@@ -46,15 +64,12 @@ export function ReviewCard({
   return (
     <div
       ref={cardRef}
-      className="w-full [perspective:1200px]"
+      className="relative min-h-0 flex-1 [perspective:1200px]"
       onTouchStart={swipe.onTouchStart}
       onTouchEnd={swipe.onTouchEnd}
     >
       <div
-        className={cn(
-          "relative mx-auto min-h-[26rem] w-full sm:min-h-[30rem]",
-          !revealed && "cursor-pointer",
-        )}
+        className={cn("absolute inset-0", !revealed && "cursor-pointer")}
         role={revealed ? undefined : "button"}
         tabIndex={revealed ? undefined : 0}
         onClick={() => {
@@ -71,65 +86,61 @@ export function ReviewCard({
       >
         <div
           className={cn(
-            "relative min-h-[26rem] w-full [transform-style:preserve-3d] sm:min-h-[30rem]",
+            "h-full w-full [transform-style:preserve-3d]",
             !reduceMotion && "transition-transform duration-300 ease-out",
             revealed && "[transform:rotateY(180deg)]",
           )}
         >
-          {/* Front */}
-          <div
-            className={cn(
-              "shadow-surface absolute inset-0 flex flex-col rounded-2xl bg-base-100 p-4 [backface-visibility:hidden]",
-            )}
-          >
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 px-2 py-6 text-center">
-              <Badge variant="outline" className="font-normal">
-                {term.domainName}
-              </Badge>
-              <h2 className="font-heading m-0 text-2xl font-semibold tracking-tight text-base-content sm:text-3xl">
+          <div className="shadow-surface absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden]">
+            <div
+              className="flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm sm:px-6"
+              aria-hidden
+            >
+              <Eye className="invisible size-4 shrink-0" strokeWidth={1.5} />
+              <span className="invisible">Tap to reveal</span>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-5 text-center sm:px-6">
+              <AdminOnly>
+                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                  <StrengthBadge strength={term.strength} />
+                  <PickReasonBadges reasons={term.pickReasons} context="review" mode="compact" />
+                </div>
+              </AdminOnly>
+              <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
                 {term.term}
               </h2>
-              <p className="m-0 text-xs text-base-content/50">{term.category}</p>
-              <div className="flex flex-wrap items-center justify-center gap-1.5">
-                <StrengthBadge strength={term.strength} />
-                <PickReasonBadges reasons={term.pickReasons} context="review" mode="compact" />
-              </div>
+              <p className="m-0 text-xs tracking-wide text-base-content/50">
+                <span>{term.domainName}</span>
+                <span className="mx-1.5 text-base-content/35" aria-hidden>
+                  ·
+                </span>
+                <span>{term.category}</span>
+              </p>
             </div>
-
             <div
               className={cn(
-                "flex items-center justify-center gap-2 rounded-xl bg-base-200/50 py-3 text-sm text-base-content/60",
+                "flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm text-base-content/60 sm:px-6",
                 revealed && "pointer-events-none opacity-0",
               )}
               aria-hidden={revealed}
             >
               <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
-              Tap to reveal
+              <span className="inline md:hidden coarse:inline">Tap to reveal</span>
+              <span className="hidden md:inline coarse:hidden">Click or press Enter to reveal</span>
             </div>
           </div>
 
-          {/* Back */}
-          <div
-            className={cn(
-              "shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]",
-            )}
-          >
-            <div className="border-b border-base-300/60 bg-primary/[0.04] px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="font-heading m-0 min-w-0 text-lg font-semibold tracking-tight">
-                  {term.term}
-                </h2>
-                <Badge variant="outline" className="badge-sm shrink-0 font-normal">
-                  {term.category}
-                </Badge>
-              </div>
-            </div>
+          <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+            <ReviewCardHeader term={term} />
             <div
               ref={scrollRef}
-              className="flex-1 overflow-y-auto px-4 py-4"
+              className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
               <TermBody key={term.id} term={term} />
+              <AdminOnly>
+                <QueueScoreDebug term={term} context="review" />
+              </AdminOnly>
             </div>
           </div>
         </div>

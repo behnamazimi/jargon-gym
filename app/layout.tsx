@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { AppShell } from "@/components/app-shell";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
+import { AdminProvider } from "@/components/admin-only";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -71,22 +72,24 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <PwaProviders>
-          <AppShell
-            header={<SiteHeader initialIsDark={initialIsDark} />}
-            footer={<SiteFooter />}
-            studyPhone={
-              user
-                ? {
-                    email: user.email ?? "Account",
-                    isAdmin,
-                    initialIsDark,
-                  }
-                : null
-            }
-          >
-            <OfflineBanner />
-            <main className="flex flex-1 flex-col">{children}</main>
-          </AppShell>
+          <AdminProvider isAdmin={isAdmin}>
+            <AppShell
+              header={<SiteHeader initialIsDark={initialIsDark} />}
+              footer={<SiteFooter />}
+              studyPhone={
+                user
+                  ? {
+                      email: user.email ?? "Account",
+                      isAdmin,
+                      initialIsDark,
+                    }
+                  : null
+              }
+            >
+              <OfflineBanner />
+              <main className="flex min-h-0 flex-1 flex-col">{children}</main>
+            </AppShell>
+          </AdminProvider>
         </PwaProviders>
       </body>
     </html>

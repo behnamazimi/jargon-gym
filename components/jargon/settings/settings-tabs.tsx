@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-export type SettingsTabId = "quiz" | "telegram" | "widget";
+export type SettingsTabId = "quiz" | "telegram" | "widget" | "admin";
 
 type SettingsTab = {
   id: SettingsTabId;
@@ -12,20 +12,29 @@ const SETTINGS_TABS: readonly SettingsTab[] = [
   { id: "quiz", label: "Quiz" },
   { id: "telegram", label: "Telegram" },
   { id: "widget", label: "Widget setup" },
+  { id: "admin", label: "Admin" },
 ] as const;
 
 function settingsTabHref(id: SettingsTabId) {
   return id === "quiz" ? "/jargon/settings" : `/jargon/settings?tab=${id}`;
 }
 
-export function SettingsTabs({ value }: { value: SettingsTabId }) {
+export function SettingsTabs({
+  value,
+  isAdmin = false,
+}: {
+  value: SettingsTabId;
+  isAdmin?: boolean;
+}) {
+  const tabs = SETTINGS_TABS.filter((tab) => tab.id !== "admin" || isAdmin);
+
   return (
     <div
       role="tablist"
       aria-label="Settings sections"
       className="tabs tabs-box tabs-sm w-full flex-nowrap overflow-x-auto bg-base-100 p-1 ring-1 ring-base-content/10"
     >
-      {SETTINGS_TABS.map((tab) => {
+      {tabs.map((tab) => {
         const selected = value === tab.id;
         return (
           <Link

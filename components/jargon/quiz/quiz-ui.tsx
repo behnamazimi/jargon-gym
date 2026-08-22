@@ -65,9 +65,17 @@ export function QuizPanelBody({
   return <div className={cn("space-y-6 px-5 py-5 sm:px-6", className)}>{children}</div>;
 }
 
-export function QuizSetupFooter({ hint, children }: { hint?: ReactNode; children: ReactNode }) {
+export function QuizSetupFooter({
+  hint,
+  children,
+  className,
+}: {
+  hint?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-col gap-3 border-t border-base-300/60 pt-6">
+    <div className={cn("flex flex-col gap-3 border-t border-base-300/60 pt-6", className)}>
       {hint ? <p className="m-0 text-xs leading-relaxed text-base-content/60">{hint}</p> : null}
       <div className="w-full">{children}</div>
     </div>
@@ -79,7 +87,7 @@ export function QuizStat({
   value,
   variant = "default",
 }: {
-  label: string;
+  label?: string;
   value: ReactNode;
   variant?: "default" | "primary";
 }) {
@@ -92,8 +100,8 @@ export function QuizStat({
           : "bg-base-200/50 ring-1 ring-base-content/5",
       )}
     >
-      <dt className="text-xs text-base-content/60">{label}</dt>
-      <dd className="mt-0.5 text-sm font-semibold tabular-nums">{value}</dd>
+      {label ? <dt className="text-xs text-base-content/60">{label}</dt> : null}
+      <dd className={cn("text-sm font-semibold tabular-nums", label && "mt-0.5")}>{value}</dd>
     </div>
   );
 }

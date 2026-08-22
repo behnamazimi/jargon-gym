@@ -61,32 +61,6 @@ async function loadReviewCards(
   return { cards };
 }
 
-/** Preview the next queue batch without starting a session. */
-export async function previewReviewQueueAction(setup: ReviewSetup) {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) {
-    return { error: "Log in to review terms." };
-  }
-
-  try {
-    const result = await loadReviewCards(setup, auth.user.id, auth.supabase);
-    if ("error" in result) {
-      return { error: result.error };
-    }
-    return {
-      preview: result.cards.map((card) => ({
-        id: card.id,
-        term: card.term,
-        pickReasons: card.pickReasons,
-        originStatus: card.originStatus,
-      })),
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't load queue preview.";
-    return { error: message };
-  }
-}
-
 export async function startReviewAction(setup: ReviewSetup) {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {

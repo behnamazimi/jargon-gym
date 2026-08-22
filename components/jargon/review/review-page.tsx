@@ -28,11 +28,9 @@ import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { recordReviewRevealAction } from "@/app/(private)/jargon/actions";
 import {
   getReviewPoolStatsAction,
-  previewReviewQueueAction,
   rateReviewTermAction,
   startReviewAction,
 } from "@/app/(private)/jargon/review/actions";
-import { QueuePreview, type QueuePreviewItem } from "@/components/jargon/pick-reason-badges";
 import { ReviewCard } from "@/components/jargon/review/review-card";
 import { ReviewProgress } from "@/components/jargon/review/review-progress";
 import { ReviewSummary } from "@/components/jargon/review/review-summary";
@@ -67,6 +65,49 @@ function upsertRating(ratings: ReviewRating[], termId: string, known: boolean): 
   return [...without, { termId, known }];
 }
 
+function ReviewPoolBreakdown({
+  stats,
+}: {
+  stats: {
+    unseen: number;
+    seen: number;
+    stale: number;
+    total: number;
+  } | null;
+}) {
+  const unseen = stats?.unseen ?? 0;
+  const seen = stats?.seen ?? 0;
+  const stale = stats?.stale ?? 0;
+  const total = stats?.total ?? 0;
+
+  return (
+    <p
+      className={cn(
+        "mt-1 mb-0 line-clamp-2 min-h-[2lh] text-xs font-normal leading-snug text-base-content/70",
+        !stats && "invisible",
+      )}
+      aria-hidden={!stats}
+    >
+      <span className="font-medium tabular-nums">{unseen}</span> never reviewed
+      {" · "}
+      <span className="font-medium tabular-nums">{seen}</span> reviewed
+      {" · "}
+      <span className="font-medium tabular-nums">{stale}</span> stale
+      {" · "}
+      <span className="font-medium tabular-nums">
+        {seen}/{total}
+      </span>{" "}
+      covered
+    </p>
+  );
+}
+
+function cardCountPresetValues(maxCardCount: number): number[] {
+  if (maxCardCount < 1) return [];
+  const values = [5, 10, maxCardCount].filter((value) => value >= 1 && value <= maxCardCount);
+  return [...new Set(values)].sort((a, b) => a - b);
+}
+
 export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
 
@@ -94,8 +135,6 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
   } | null>(null);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
   const [shownTermIds, setShownTermIds] = useState<string[]>([]);
-  const [queuePreview, setQueuePreview] = useState<QueuePreviewItem[]>([]);
-  const [previewLoading, setPreviewLoading] = useState(false);
 
   const domainIds = useMemo(
     (): string[] | "all" => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
@@ -128,6 +167,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
     if (step !== "setup") return;
 
     let cancelled = false;
+    setPoolStats(null);
 
     void getReviewPoolStatsAction(domainIds).then((result) => {
       if (cancelled) return;
@@ -140,30 +180,6 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
       cancelled = true;
     };
   }, [domainIds, step, statsRefreshKey]);
-
-  useEffect(() => {
-    if (step !== "setup" || availableTermCount === 0 || cardCountError !== null) {
-      setQueuePreview([]);
-      return;
-    }
-
-    let cancelled = false;
-    setPreviewLoading(true);
-
-    void previewReviewQueueAction({ domainIds, cardCount }).then((result) => {
-      if (cancelled) return;
-      setPreviewLoading(false);
-      if ("preview" in result && result.preview) {
-        setQueuePreview(result.preview);
-      } else {
-        setQueuePreview([]);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [domainIds, cardCount, step, availableTermCount, cardCountError, statsRefreshKey]);
 
   const currentSetup = useMemo(
     (): ReviewSetup => ({
@@ -352,6 +368,12 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
     finishSession(ratings);
   }
 
+  function applyCardCount(value: number) {
+    setCardCount(value);
+    setCardCountInput(String(value));
+    setCardCountError(null);
+  }
+
   const positiveLabel = "Got it";
   const negativeLabel = "Missed it";
 
@@ -369,183 +391,201 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
   const retainedCount = ratings.filter((rating) => rating.known).length;
   const forgotCount = ratings.length - retainedCount;
 
+  const cardCountPresets = cardCountPresetValues(maxCardCount);
+
   return (
     <>
       {step === "setup" ? (
-        <QuizPanel>
+        <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
           {collections.length === 0 ? (
             <QuizPanelBody>
               <QuizCenteredState
                 icon={AlertCircle}
                 title="No active collections"
                 description="Turn on a collection on the collection page before you start reviewing."
-              />
+              >
+                <LinkButton href="/jargon" variant="outline" className="min-h-11">
+                  Collections
+                </LinkButton>
+              </QuizCenteredState>
             </QuizPanelBody>
           ) : (
-            <QuizPanelBody>
-              <QuizPanelLabel
-                title="Set up your review"
-                description="Pick what to study and how many cards."
-              />
-              {savedSession ? (
-                <Alert>
-                  <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <span>
-                      You have an in-progress session — card{" "}
-                      <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
-                      <span className="tabular-nums">{savedSession.cards.length}</span>.
-                    </span>
-                    <span className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" onPress={handleResumeSession}>
-                        Resume
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onPress={handleDiscardSession}
-                      >
-                        Start new
-                      </Button>
-                    </span>
-                  </AlertDescription>
-                </Alert>
-              ) : null}
-
-              <Field className="max-w-md">
-                <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
-                <Select
-                  selectedKey={selectedCollectionId}
-                  onSelectionChange={(key) => setSelectedCollectionId(String(key))}
-                >
-                  <SelectTrigger id="review-collection" className="text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem id="all">
-                      All active collections ({allCollectionsTermCount(collections)})
-                    </SelectItem>
-                    {collections.map((collection) => (
-                      <SelectItem key={collection.id} id={collection.id}>
-                        {collection.name} ({termCountForCollection(collection)})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-
-              <QuizStat
-                label="Terms available"
-                value={
-                  availableTermCount === 0
-                    ? "None"
-                    : `${availableTermCount} term${availableTermCount === 1 ? "" : "s"}`
-                }
-              />
-
-              <Field className="max-w-md">
-                <FieldLabel htmlFor="review-card-count">Cards in this session</FieldLabel>
-                <Input
-                  id="review-card-count"
-                  type="text"
-                  inputMode="numeric"
-                  value={cardCountInput}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setCardCountInput(value);
-
-                    if (value === "") {
-                      setCardCountError(null);
-                      return;
-                    }
-
-                    const parsed = Number.parseInt(value, 10);
-                    if (Number.isNaN(parsed) || parsed < 1 || parsed > maxCardCount) {
-                      setCardCountError(`Please enter a number between 1 and ${maxCardCount}`);
-                    } else {
-                      setCardCount(parsed);
-                      setCardCountError(null);
-                    }
-                  }}
-                  disabled={availableTermCount === 0}
-                  className="max-w-[8rem] tabular-nums"
+            <>
+              <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">
+                <QuizPanelLabel
+                  title="Set up your review"
+                  description="Pick what to study and how many cards."
                 />
-                <FieldDescription>
-                  {cardCountError ? (
-                    <span className="text-error">{cardCountError}</span>
-                  ) : (
+                {savedSession ? (
+                  <Alert>
+                    <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <span>
+                        You have an in-progress session — card{" "}
+                        <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
+                        <span className="tabular-nums">{savedSession.cards.length}</span>.
+                      </span>
+                      <span className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onPress={handleResumeSession}
+                          className="max-md:min-h-11"
+                        >
+                          Resume
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onPress={handleDiscardSession}
+                          className="max-md:min-h-11"
+                        >
+                          Start new
+                        </Button>
+                      </span>
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
+
+                <Field>
+                  <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
+                  <Select
+                    selectedKey={selectedCollectionId}
+                    onSelectionChange={(key) => setSelectedCollectionId(String(key))}
+                  >
+                    <SelectTrigger id="review-collection" size="sm" className="text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem id="all">
+                        All active collections ({allCollectionsTermCount(collections)})
+                      </SelectItem>
+                      {collections.map((collection) => (
+                        <SelectItem key={collection.id} id={collection.id}>
+                          {collection.name} ({termCountForCollection(collection)})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+
+                <QuizStat
+                  value={
                     <>
-                      Choose 1–{maxCardCount || 1}
-                      {availableTermCount > MAX_STUDY_TERMS
-                        ? ` (${MAX_STUDY_TERMS} max per session).`
-                        : "."}
+                      {availableTermCount === 1
+                        ? "1 term available"
+                        : `${availableTermCount} terms available`}
+                      <ReviewPoolBreakdown stats={poolStats} />
                     </>
-                  )}
-                </FieldDescription>
-              </Field>
+                  }
+                />
 
-              {poolStats ? (
-                <div className="text-sm text-base-content/70">
-                  <span className="font-medium">{poolStats.unseen} never reviewed</span>
-                  {" · "}
-                  <span className="font-medium">{poolStats.seen} reviewed</span>
-                  {" · "}
-                  <span className="font-medium">{poolStats.stale} stale</span>
-                  {" · "}
-                  <span className="font-medium">
-                    {poolStats.seen}/{poolStats.total} covered
-                  </span>
-                  {poolStats.allSeenOnce ? " · all reviewed once" : null}
-                </div>
-              ) : null}
+                <Field>
+                  <FieldLabel htmlFor="review-term-count">How many terms</FieldLabel>
+                  <div className="flex w-full items-stretch gap-2">
+                    {cardCountPresets.map((preset) => {
+                      const selected = cardCount === preset && cardCountError === null;
+                      return (
+                        <Button
+                          key={preset}
+                          type="button"
+                          variant="outline"
+                          onPress={() => applyCardCount(preset)}
+                          isDisabled={availableTermCount === 0}
+                          aria-pressed={selected}
+                          className={cn(
+                            "min-h-11 tabular-nums",
+                            selected &&
+                              "border-primary bg-primary/10 text-primary hover:bg-primary/15",
+                          )}
+                        >
+                          {preset}
+                        </Button>
+                      );
+                    })}
+                    <Input
+                      id="review-term-count"
+                      type="text"
+                      inputMode="numeric"
+                      value={cardCountInput}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        setCardCountInput(value);
 
-              {availableTermCount > 0 && cardCountError === null ? (
-                <QueuePreview items={queuePreview} context="review" loading={previewLoading} />
-              ) : null}
+                        if (value === "") {
+                          setCardCountError(null);
+                          return;
+                        }
 
-              {availableTermCount === 0 ? (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    No terms in your selection. Pick another collection or{" "}
-                    <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
-                      activate one
-                    </LinkButton>
-                    .
-                  </AlertDescription>
-                </Alert>
-              ) : null}
+                        const parsed = Number.parseInt(value, 10);
+                        if (Number.isNaN(parsed) || parsed < 1 || parsed > maxCardCount) {
+                          setCardCountError(`Please enter a number between 1 and ${maxCardCount}`);
+                        } else {
+                          setCardCount(parsed);
+                          setCardCountError(null);
+                        }
+                      }}
+                      disabled={availableTermCount === 0}
+                      className="min-h-11 min-w-16 flex-1 tabular-nums"
+                    />
+                  </div>
+                  <FieldDescription>
+                    {cardCountError ? (
+                      <span className="text-error">{cardCountError}</span>
+                    ) : (
+                      <>
+                        Choose 1–{maxCardCount || 1}
+                        {availableTermCount > MAX_STUDY_TERMS
+                          ? ` (${MAX_STUDY_TERMS} max per session).`
+                          : "."}
+                      </>
+                    )}
+                  </FieldDescription>
+                </Field>
 
-              {errorMessage ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              ) : null}
+                {availableTermCount === 0 ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>
+                      No terms in your selection. Pick another collection or{" "}
+                      <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
+                        activate one
+                      </LinkButton>
+                      .
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
 
-              <QuizSetupFooter>
+                {errorMessage ? (
+                  <Alert variant="destructive">
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                  </Alert>
+                ) : null}
+              </QuizPanelBody>
+              <QuizSetupFooter className="sticky bottom-0 shrink-0 bg-base-100 px-5 py-4 sm:px-6">
                 <Button
                   type="button"
                   onPress={handleStartReview}
                   isDisabled={availableTermCount === 0 || isStarting || cardCountError !== null}
-                  className="w-full"
+                  className="min-h-11 w-full"
                 >
                   {isStarting ? "Starting…" : "Start review"}
                 </Button>
               </QuizSetupFooter>
-            </QuizPanelBody>
+            </>
           )}
         </QuizPanel>
       ) : null}
 
       {step === "playing" && currentCard ? (
-        <div className="mx-auto w-full max-w-lg space-y-4 lg:max-w-2xl">
-          <div className="flex items-center gap-3">
+        <div className="flex min-h-0 flex-1 flex-col gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             <ReviewProgress current={currentIndex + 1} total={cards.length} />
             <Button
               type="button"
               variant="outline"
               size="sm"
               onPress={handleDone}
-              className="shrink-0 transition-transform active:scale-[0.96]"
+              className="min-h-11 shrink-0 transition-transform active:scale-[0.96]"
             >
               Done
             </Button>
@@ -561,15 +601,14 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
             swipeEnabled
           />
 
-          <div className="space-y-3">
+          <div className="shrink-0 space-y-3">
             <div className="flex items-center justify-between gap-2">
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 onPress={handlePrevious}
                 isDisabled={currentIndex === 0}
-                className="transition-transform active:scale-[0.96]"
+                className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
                 aria-label="Previous card"
               >
                 <ChevronLeft className="size-4" aria-hidden strokeWidth={1.5} />
@@ -582,7 +621,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                     onPress={() => void handleRate(true)}
                     isDisabled={isRating}
                     className={cn(
-                      "min-w-[7rem] min-h-11 flex-1 transition-transform active:scale-[0.96] md:flex-none",
+                      "min-h-11 min-w-[7rem] flex-1 transition-transform active:scale-[0.96] md:flex-none",
                       currentRating?.known === true && "btn-primary",
                     )}
                   >
@@ -594,7 +633,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                     onPress={() => void handleRate(false)}
                     isDisabled={isRating}
                     className={cn(
-                      "min-w-[7rem] min-h-11 flex-1 transition-transform active:scale-[0.96] md:flex-none",
+                      "min-h-11 min-w-[7rem] flex-1 transition-transform active:scale-[0.96] md:flex-none",
                       currentRating?.known === false && "ring-2 ring-primary/30",
                     )}
                   >
@@ -602,18 +641,15 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                   </Button>
                 </div>
               ) : (
-                <p className="m-0 flex-1 text-center text-xs text-base-content/50 sm:text-sm">
-                  Tap the card to reveal
-                </p>
+                <span className="flex-1" />
               )}
 
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
                 onPress={handleNext}
                 isDisabled={currentIndex >= cards.length - 1}
-                className="transition-transform active:scale-[0.96]"
+                className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
                 aria-label="Next card"
               >
                 <ChevronRight className="size-4" aria-hidden strokeWidth={1.5} />
@@ -639,14 +675,12 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
       ) : null}
 
       {step === "summary" ? (
-        <div className="mx-auto w-full max-w-2xl">
-          <ReviewSummary
-            reviewedCount={ratings.length}
-            retainedCount={retainedCount}
-            forgotCount={forgotCount}
-            onReviewAgain={resetToSetup}
-          />
-        </div>
+        <ReviewSummary
+          reviewedCount={ratings.length}
+          retainedCount={retainedCount}
+          forgotCount={forgotCount}
+          onReviewAgain={resetToSetup}
+        />
       ) : null}
     </>
   );
