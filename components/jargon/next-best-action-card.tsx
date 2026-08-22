@@ -43,10 +43,10 @@ export function NextBestActionCard() {
   }
 
   return (
-    <aside className="rounded-2xl bg-base-100 p-4 shadow-surface md:hidden">
-      <div className="flex items-start gap-3">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Lightbulb className="size-4" strokeWidth={1.5} aria-hidden />
+    <aside className="rounded-xl bg-primary/[0.06] p-3 md:hidden">
+      <div className="flex items-start gap-2.5">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Lightbulb className="size-3.5" strokeWidth={1.5} aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
           <p className="m-0 text-xs text-base-content/60">Do this next</p>
@@ -62,7 +62,7 @@ export function NextBestActionCard() {
           <X className="size-4" strokeWidth={1.5} />
         </Button>
       </div>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-2 flex gap-2">
         <Button variant="ghost" size="sm" onPress={handleSnooze} className="min-h-11 flex-1">
           Later
         </Button>

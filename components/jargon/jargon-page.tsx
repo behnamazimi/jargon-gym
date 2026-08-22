@@ -18,6 +18,7 @@ type JargonPageProps = {
 
 export function JargonPage({ initialData }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -81,6 +82,8 @@ export function JargonPage({ initialData }: JargonPageProps) {
             domains={domainsWithLiveCounts}
             currentDomain={domainWithLiveCount}
             currentDomainId={domain.id}
+            open={drawerOpen}
+            onOpenChange={setDrawerOpen}
           />
 
           <aside className="hidden md:flex md:w-68 md:shrink-0">

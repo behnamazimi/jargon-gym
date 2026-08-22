@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
 import { DomainSidebar } from "@/components/jargon/domain-sidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -12,6 +11,8 @@ type DomainSidebarDrawerProps = {
   domains: Domain[];
   currentDomain: Domain;
   currentDomainId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   className?: string;
 };
 
@@ -19,10 +20,10 @@ export function DomainSidebarDrawer({
   domains,
   currentDomain,
   currentDomainId,
+  open,
+  onOpenChange,
   className,
 }: DomainSidebarDrawerProps) {
-  const [open, setOpen] = useState(false);
-
   return (
     <>
       <Button
@@ -30,7 +31,7 @@ export function DomainSidebarDrawer({
         variant="outline"
         aria-haspopup="dialog"
         aria-expanded={open}
-        onPress={() => setOpen(true)}
+        onPress={() => onOpenChange(true)}
         className={cn(
           "shadow-surface h-auto w-full justify-between gap-2 rounded-xl px-3 py-2.5 text-left md:hidden",
           className,
@@ -45,7 +46,7 @@ export function DomainSidebarDrawer({
 
       <Sheet
         isOpen={open}
-        onOpenChange={setOpen}
+        onOpenChange={onOpenChange}
         side="left"
         className="w-[min(100%,18rem)] gap-0 p-0 sm:max-w-xs"
       >
@@ -56,7 +57,7 @@ export function DomainSidebarDrawer({
           <DomainSidebar
             domains={domains}
             currentDomainId={currentDomainId}
-            onDomainSelect={() => setOpen(false)}
+            onDomainSelect={() => onOpenChange(false)}
             className="min-h-0 flex-1"
           />
         </div>

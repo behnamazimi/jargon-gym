@@ -4,7 +4,6 @@ import { ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { OverallStrengthRow } from "@/lib/jargon/known-state";
 import type { Term } from "@/lib/jargon/types";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -77,10 +76,10 @@ export function TermCard({
                 )}
               />
             </div>
-            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-start justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <span
                 className={cn(
-                  "font-heading text-base font-semibold tracking-tight",
+                  "font-heading min-w-0 text-base font-semibold tracking-tight text-pretty",
                   known
                     ? "text-base-content/60 line-through decoration-primary/60 decoration-2"
                     : "text-base-content",
@@ -88,7 +87,7 @@ export function TermCard({
               >
                 {term.term}
               </span>
-              <span className="inline-flex shrink-0 items-center gap-2">
+              <span className="inline-flex shrink-0 items-center gap-2 pt-0.5">
                 {showStrength && overallStrength ? (
                   <OverallStrengthBars
                     bars={overallStrength.bars}
@@ -96,9 +95,7 @@ export function TermCard({
                     score={overallStrength.score}
                   />
                 ) : null}
-                <Badge variant="outline" className="badge-sm font-normal">
-                  {term.category}
-                </Badge>
+                <span className="text-xs text-base-content/50">{term.category}</span>
                 <ChevronRight
                   className={cn("size-4 text-base-content/60", open && "rotate-90 text-primary")}
                   aria-hidden
