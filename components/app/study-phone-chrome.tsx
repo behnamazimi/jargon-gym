@@ -72,7 +72,7 @@ export function StudyPhoneTopBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-base-300 bg-base-100/80 pt-safe backdrop-blur-sm md:hidden">
-      <div className="navbar min-h-11 px-3 py-0">
+      <div className="navbar min-h-11 px-3 py-1">
         <div className="navbar-start">
           {subPage ? (
             <Link
@@ -93,7 +93,7 @@ export function StudyPhoneTopBar() {
             {studyScreenTitle(pathname)}
           </p>
         </div>
-        <div className="navbar-end gap-0">
+        <div className="navbar-end gap-2">
           <InstallButton />
           <Button
             variant="ghost"
@@ -132,23 +132,57 @@ export function StudyPhoneDock() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={cn("min-h-11", active && "dock-active")}
+            className={cn(
+              "min-h-11 gap-0 after:content-none",
+              active && "dock-active text-primary",
+            )}
             aria-current={active ? "page" : undefined}
           >
-            <Icon className="size-5" strokeWidth={1.5} aria-hidden />
-            <span className="dock-label">{tab.label}</span>
+            <Icon
+              className={cn(
+                "size-5 transition-transform duration-300 ease-out",
+                active && "-translate-y-1",
+              )}
+              strokeWidth={1.5}
+              aria-hidden
+            />
+            <span
+              className={cn(
+                "dock-label -mt-[2px] grid overflow-hidden transition-all duration-300 ease-out",
+                active ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+              )}
+            >
+              <span className="overflow-hidden">{tab.label}</span>
+            </span>
           </Link>
         );
       })}
       <button
         type="button"
-        className={cn("min-h-11", moreActive && "dock-active")}
+        className={cn(
+          "min-h-11 gap-0 after:content-none",
+          moreActive && "dock-active text-primary",
+        )}
         aria-haspopup="dialog"
         aria-expanded={moreOpen}
         onClick={() => setMoreOpen(true)}
       >
-        <Ellipsis className="size-5" strokeWidth={1.5} aria-hidden />
-        <span className="dock-label">More</span>
+        <Ellipsis
+          className={cn(
+            "size-5 transition-transform duration-300 ease-out",
+            moreActive && "-translate-y-1",
+          )}
+          strokeWidth={1.5}
+          aria-hidden
+        />
+        <span
+          className={cn(
+            "dock-label -mt-[2px] grid overflow-hidden transition-all duration-300 ease-out",
+            moreActive ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+          )}
+        >
+          <span className="overflow-hidden">More</span>
+        </span>
       </button>
     </nav>
   );

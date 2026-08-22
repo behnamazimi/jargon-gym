@@ -151,8 +151,6 @@ describe("reducePipelineHints", () => {
 
     const hints = reducePipelineHints([], [struggling], now);
 
-    expect(hints.find((h) => h.context === "review")?.message).toBe(
-      "Your review pace has slipped",
-    );
+    expect(hints.find((h) => h.context === "review")?.message).toBe("Your review pace has slipped");
   });
 });
