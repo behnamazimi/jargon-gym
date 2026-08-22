@@ -80,6 +80,39 @@ function statsForCandidates(
   );
 }
 
+/** How fresh a touch has to be to count as "still mid-session" for the
+ *  not_started gate below — long enough to survive a page navigation
+ *  between terms, short enough that it's clearly the same sitting rather
+ *  than "sometime today". */
+const ACTIVE_SESSION_WINDOW_MS = 15 * 60 * 1000;
+
+/** Most recent own-context activity across the whole pool — used only to
+ *  ask "is the user actively mid-session on this pool right now", not to
+ *  measure pace (pace already comes from poolRotationStats's own live
+ *  7-day window, which self-corrects as the user works and needs no extra
+ *  history). */
+function mostRecentActivityAt(candidates: ReviewCandidate[], context: PickContext): Date | null {
+  let latest: Date | null = null;
+  for (const candidate of candidates) {
+    const at = fieldsForContext(candidate, context).lastActivityAt;
+    if (at && (!latest || at > latest)) latest = at;
+  }
+  return latest;
+}
+
+/** not_started fires whenever any part of the pool has never been touched —
+ *  including a pool the user is midway through clearing right now. Gate it
+ *  on recent activity in this same context so mid-session progress doesn't
+ *  get interrupted by a nag about the terms not yet reached; pace doesn't
+ *  need this gate since overSafeLine/staleCapCount/strugglingCount are
+ *  already live rolling-window numbers that ease off on their own as the
+ *  user keeps a pace that clears them. */
+function isMidSession(candidates: ReviewCandidate[], context: PickContext, now: Date): boolean {
+  const lastActivity = mostRecentActivityAt(candidates, context);
+  if (!lastActivity) return false;
+  return now.getTime() - lastActivity.getTime() < ACTIVE_SESSION_WINDOW_MS;
+}
+
 /** Pure reducer — checks each pipeline stage in fixed read/review/quiz
  *  order and returns a hint for every stage that isn't keeping up (skipping
  *  stages with no pool to check). Split from the fetching wrapper below so
@@ -106,6 +139,7 @@ export function reducePipelineHints(
     const stats = statsForCandidates(candidates, context, now);
     const flavor = flavorFor(stats);
     if (flavor === null) continue;
+    if (flavor === "not_started" && isMidSession(candidates, context, now)) continue;
 
     hints.push({
       id: context,

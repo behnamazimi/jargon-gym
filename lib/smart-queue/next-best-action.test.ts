@@ -4,9 +4,14 @@ import type { ReviewCandidate } from "./types";
 
 const now = new Date();
 const HOUR = 60 * 60 * 1000;
+const MINUTE = 60 * 1000;
 
 function hoursAgo(hours: number): Date {
   return new Date(now.getTime() - hours * HOUR);
+}
+
+function minutesAgo(minutes: number): Date {
+  return new Date(now.getTime() - minutes * MINUTE);
 }
 
 /** Minimal candidate factory — every field defaults to "never touched";
@@ -105,5 +110,49 @@ describe("reducePipelineHints", () => {
 
   it("returns nothing for an empty candidate set", () => {
     expect(reducePipelineHints([], [], now)).toEqual([]);
+  });
+
+  it("suppresses not_started while the user is mid-session on that pool", () => {
+    // 2 of 3 read moments ago; the third has never been read — still a
+    // real backlog, but the user is actively chipping away at it right now.
+    const midSessionRead = [
+      makeCandidate({ readCount: 1, lastReadAt: minutesAgo(2) }),
+      makeCandidate({ readCount: 1, lastReadAt: minutesAgo(5) }),
+      makeCandidate(), // never read
+    ];
+
+    const hints = reducePipelineHints(midSessionRead, [], now);
+
+    expect(hints.find((h) => h.context === "read")).toBeUndefined();
+  });
+
+  it("flags not_started again once the mid-session window passes", () => {
+    const staleSessionRead = [
+      makeCandidate({ readCount: 1, lastReadAt: hoursAgo(3) }),
+      makeCandidate(), // never read
+    ];
+
+    const hints = reducePipelineHints(staleSessionRead, [], now);
+
+    expect(hints.find((h) => h.context === "read")?.message).toBe(
+      "There are terms you haven't read yet",
+    );
+  });
+
+  it("does not gate pace on recent activity — pace relies on the live rolling window instead", () => {
+    // Struggling review streak touched a minute ago — still flagged, since
+    // pace's own overSafeLine/staleCapCount/strugglingCount already reflect
+    // live activity and aren't given a separate mid-session pass.
+    const struggling = makeCandidate({
+      reviewRecallCount: 3,
+      lastReviewRecallAt: minutesAgo(1),
+      reviewStreak: -2,
+    });
+
+    const hints = reducePipelineHints([], [struggling], now);
+
+    expect(hints.find((h) => h.context === "review")?.message).toBe(
+      "Your review pace has slipped",
+    );
   });
 });
