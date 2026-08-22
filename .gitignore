@@ -54,3 +54,4 @@ dataconnect-debug.log*
 ui-debug.log*
 .cache/firebase/
 **/.dataconnect/
+certificates
