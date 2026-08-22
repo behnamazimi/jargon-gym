@@ -4,12 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { RadioGroup } from "react-aria-components";
 import { Button } from "@/components/ui/button";
 import { QuizChoice, type QuizChoiceResult } from "@/components/jargon/quiz/quiz-controls";
-import {
-  QuizActionBar,
-  QuizKeyboardHint,
-  QuizPanel,
-  QuizPanelBody,
-} from "@/components/jargon/quiz/quiz-ui";
+import { QuizKeyboardHint, QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import type { QuizQuestion } from "@/lib/quiz/types";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
 
@@ -146,12 +141,9 @@ export function QuizQuestionView({
   }, []);
 
   return (
-    <QuizPanel className="quiz-feedback-enter">
-      <QuizPanelBody className="space-y-5">
-        <h2 className="m-0 text-base font-semibold leading-snug">
-          <span className="text-base-content/50">
-            Q {current}/{total}:
-          </span>{" "}
+    <QuizPanel className="quiz-feedback-enter flex min-h-0 flex-1 flex-col">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+        <h2 className="m-0 text-lg font-semibold leading-snug tracking-tight text-base-content sm:text-xl">
           {question.prompt}
         </h2>
 
@@ -161,7 +153,7 @@ export function QuizQuestionView({
             value={selectedOptionIds[0] ?? ""}
             onChange={selectOption}
             isDisabled={submitted}
-            className="flex flex-col gap-2.5 pt-3"
+            className="flex flex-col gap-2 pt-5"
           >
             {question.options.map((option) => (
               <QuizChoice
@@ -183,7 +175,7 @@ export function QuizQuestionView({
             value={trueFalseAnswer === null ? "" : String(trueFalseAnswer)}
             onChange={(value) => setTrueFalseAnswer(value === "true")}
             isDisabled={submitted}
-            className="grid gap-2.5 pt-3 sm:grid-cols-2"
+            className="grid gap-2 pt-5 sm:grid-cols-2"
           >
             {[true, false].map((value) => (
               <QuizChoice
@@ -200,30 +192,37 @@ export function QuizQuestionView({
             ))}
           </RadioGroup>
         )}
+      </div>
 
-        <div className="space-y-1.5">
-          <QuizActionBar
-            hint={
-              <span className="tabular-nums">
-                {correct} correct · {progressPercent}%
-              </span>
-            }
-          >
-            {!submitted ? (
-              <Button type="button" onPress={submitAnswer} isDisabled={!canSubmit}>
-                Check answer
-              </Button>
-            ) : (
-              <Button type="button" onPress={advanceAnswer} isDisabled={!canAdvance}>
-                {isLast ? "See results" : "Next question"}
-              </Button>
-            )}
-          </QuizActionBar>
-          <p className="m-0 text-right text-xs text-base-content/60 max-md:hidden coarse:hidden">
+      <footer className="flex shrink-0 flex-col gap-2 border-t border-base-300/60 px-5 py-3 sm:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <p className="m-0 text-xs tabular-nums text-base-content/60">
+            {correct} correct · {progressPercent}%
+          </p>
+          <p className="m-0 hidden text-xs text-base-content/60 md:block coarse:hidden">
             <QuizKeyboardHint action={!submitted ? "check" : isLast ? "see results" : "continue"} />
           </p>
         </div>
-      </QuizPanelBody>
+        {!submitted ? (
+          <Button
+            type="button"
+            onPress={submitAnswer}
+            isDisabled={!canSubmit}
+            className="min-h-11 w-full transition-transform active:scale-[0.96]"
+          >
+            Check answer
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onPress={advanceAnswer}
+            isDisabled={!canAdvance}
+            className="min-h-11 w-full transition-transform active:scale-[0.96]"
+          >
+            {isLast ? "See results" : "Next question"}
+          </Button>
+        )}
+      </footer>
     </QuizPanel>
   );
 }

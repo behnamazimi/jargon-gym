@@ -4,7 +4,6 @@ import { type CSSProperties } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { BackLink } from "@/components/jargon/back-link";
 import {
-  QuizActionBar,
   QuizPanel,
   QuizPanelBody,
   QuizPanelHeader,
@@ -73,13 +72,13 @@ export function QuizResults({ score, total, flippedTerms, onQuizAgain }: QuizRes
           emptyMessage="No term status changes this round."
         />
 
-        <QuizActionBar>
-          <Button type="button" onPress={onQuizAgain}>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <Button type="button" onPress={onQuizAgain} className="min-h-11">
             <RotateCcw className="size-3.5" aria-hidden strokeWidth={1.5} />
             Quiz again
           </Button>
-          <BackLink variant="outline" />
-        </QuizActionBar>
+          <BackLink variant="outline" className="min-h-11" />
+        </div>
       </QuizPanelBody>
     </QuizPanel>
   );

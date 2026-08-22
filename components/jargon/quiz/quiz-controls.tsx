@@ -5,41 +5,6 @@ import type { ReactNode } from "react";
 import { RadioButton, RadioField, SelectionIndicator } from "react-aria-components";
 import { cn } from "@/lib/utils";
 
-export function QuizSetupOption({
-  name,
-  value,
-  checked,
-  onChange,
-  title,
-  description,
-}: {
-  name: string;
-  value: string;
-  checked: boolean;
-  onChange: () => void;
-  title: string;
-  description: string;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-3 py-1">
-      <input
-        type="radio"
-        name={name}
-        value={value}
-        checked={checked}
-        onChange={onChange}
-        className="radio radio-primary radio-sm mt-0.5 shrink-0"
-      />
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm leading-none font-medium">{title}</span>
-        <span className="mt-1.5 block text-xs leading-relaxed text-base-content/60">
-          {description}
-        </span>
-      </span>
-    </label>
-  );
-}
-
 /** Submitted-answer result, independent of the live selection ring Radio already draws. */
 export type QuizChoiceResult = "default" | "correct" | "incorrect";
 
@@ -70,14 +35,14 @@ export function QuizChoice({
       <RadioButton
         className={({ isSelected, isFocusVisible, isDisabled }) =>
           cn(
-            "flex w-full items-start gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm outline-none transition-colors duration-150",
+            "flex min-h-11 w-full items-start gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm outline-none transition-[color,background-color,box-shadow,transform] duration-150",
             result !== "default"
               ? RESULT_STATE_CLASS[result]
               : isSelected
                 ? "bg-primary/5 ring-2 ring-primary/30"
                 : "shadow-surface bg-base-100 ring-1 ring-base-content/5 hover:ring-base-content/10",
             isFocusVisible && "ring-2 ring-primary ring-offset-2 ring-offset-base-100",
-            isDisabled ? "cursor-default" : "cursor-pointer active:scale-[0.98]",
+            isDisabled ? "cursor-default" : "cursor-pointer active:scale-[0.96]",
           )
         }
       >

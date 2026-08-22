@@ -106,17 +106,34 @@ export function QuizStat({
   );
 }
 
-export function QuizActionBar({ hint, children }: { hint?: ReactNode; children: ReactNode }) {
+export function QuizProgress({
+  current,
+  total,
+  className,
+}: {
+  current: number;
+  total: number;
+  className?: string;
+}) {
+  const percent = total > 0 ? Math.round((current / total) * 100) : 0;
+
   return (
-    <div className="flex flex-col-reverse gap-3 border-t border-base-300/60 pt-5 md:flex-row md:items-center md:justify-between">
-      {hint ? (
-        <p className="m-0 text-xs text-base-content/60 max-md:order-last">{hint}</p>
-      ) : (
-        <span className="max-md:hidden" />
-      )}
-      <div className="flex flex-wrap justify-end gap-2 max-md:flex-col max-md:[&_.btn]:min-h-11 max-md:[&_.btn]:w-full">
-        {children}
+    <div className={cn("min-w-0 w-full space-y-2", className)}>
+      <div className="flex items-center justify-between gap-3 text-xs text-base-content/60">
+        <span className="font-medium tabular-nums">
+          Question {current} of {total}
+        </span>
+        <span className="tabular-nums">{percent}%</span>
       </div>
+      <progress
+        className="progress progress-primary h-1.5 w-full"
+        value={current}
+        max={total}
+        aria-valuenow={current}
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-label={`Question ${current} of ${total}`}
+      />
     </div>
   );
 }
@@ -134,16 +151,18 @@ export function QuizCenteredState({
   title,
   description,
   children,
+  iconClassName,
 }: {
   icon: LucideIcon;
   title: string;
   description?: string;
   children?: ReactNode;
+  iconClassName?: string;
 }) {
   return (
     <div className="mx-auto flex max-w-sm flex-col items-center gap-3 py-2 text-center">
       <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <Icon className="size-5" aria-hidden strokeWidth={1.5} />
+        <Icon className={cn("size-5", iconClassName)} aria-hidden strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
         <h2 className="m-0 text-sm font-semibold text-base-content/80">{title}</h2>
