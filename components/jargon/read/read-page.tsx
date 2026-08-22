@@ -7,16 +7,14 @@ import {
   type NextReadTermResult,
 } from "@/app/(private)/jargon/read/actions";
 import {
-  QuizActionBar,
-  QuizCenteredState,
   QuizKeyboardHint,
   QuizPanel,
   QuizPanelBody,
+  QuizPanelHeader,
 } from "@/components/jargon/quiz/quiz-ui";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Button, LinkButton } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -53,6 +51,11 @@ function scrollToTop(cardEl: HTMLElement | null) {
 
 function allUnknownCount(collections: StudyCollection[]) {
   return countTermsForSelection(collections, "all", "unknown");
+}
+
+function unreadCountForSelection(domainId: string, collections: StudyCollection[]) {
+  if (domainId === "all") return allUnknownCount(collections);
+  return collections.find((collection) => collection.id === domainId)?.unknownCount ?? 0;
 }
 
 function replaceReadDomainInUrl(domainId: string) {
@@ -101,30 +104,39 @@ function ReadPickDebug({ term }: { term: ReviewTerm }) {
 
 function ReadCaughtUp({
   description,
+  showLibraryLinks,
   onCheckAgain,
   isPending,
 }: {
   description: string;
+  showLibraryLinks: boolean;
   onCheckAgain: () => void;
   isPending: boolean;
 }) {
   return (
     <QuizPanel>
+      <QuizPanelHeader icon={PartyPopper} title="You're all caught up" description={description} />
       <QuizPanelBody>
-        <QuizCenteredState
-          icon={PartyPopper}
-          title="You're all caught up"
-          description={description}
-        >
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button
-            variant="outline"
+            type="button"
             onPress={onCheckAgain}
             isDisabled={isPending}
             className={PRESS_CLASS}
           >
             {isPending ? "Loading…" : "Check again"}
           </Button>
-        </QuizCenteredState>
+          {showLibraryLinks ? (
+            <>
+              <LinkButton href="/jargon" variant="outline">
+                Collections
+              </LinkButton>
+              <LinkButton href="/jargon/import" variant="outline">
+                Import jargon
+              </LinkButton>
+            </>
+          ) : null}
+        </div>
       </QuizPanelBody>
     </QuizPanel>
   );
@@ -143,13 +155,19 @@ function ReadTermCard({
   onPrevious: () => void;
   onNext: () => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [term.id]);
+
   return (
-    <QuizPanel>
-      <header className="border-b border-base-300/60 px-5 py-5 sm:px-6">
-        <h2 className="font-heading m-0 text-2xl font-semibold tracking-tight text-base-content sm:text-[1.75rem] sm:leading-tight">
+    <QuizPanel className="flex min-h-0 flex-1 flex-col">
+      <header className="shrink-0 border-b border-base-300/60 px-5 py-3 sm:px-6">
+        <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
           {term.term}
         </h2>
-        <p className="mt-2 mb-0 text-xs tracking-wide text-base-content/50">
+        <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
           <span>{term.domainName}</span>
           <span className="mx-1.5 text-base-content/35" aria-hidden>
             ·
@@ -157,17 +175,22 @@ function ReadTermCard({
           <span>{term.category}</span>
         </p>
       </header>
-      <QuizPanelBody className="space-y-6">
-        <TermBody term={term} />
-
-        <QuizActionBar hint={<QuizKeyboardHint action="go to the next term" />}>
+      <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
+        <TermBody key={term.id} term={term} />
+        <ReadPickDebug term={term} />
+      </div>
+      <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-base-300/60 px-5 py-3 sm:px-6">
+        <div className="hidden min-w-0 md:block coarse:hidden">
+          <QuizKeyboardHint action="go to the next term" />
+        </div>
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
           {canGoBack ? (
             <Button
               type="button"
               variant="outline"
               onPress={onPrevious}
               isDisabled={isPending}
-              className={`pe-4 ps-3.5 ${PRESS_CLASS}`}
+              className={`min-h-11 pe-4 ps-3.5 ${PRESS_CLASS}`}
             >
               <ArrowLeft className="size-4" aria-hidden strokeWidth={1.5} />
               Previous
@@ -177,15 +200,13 @@ function ReadTermCard({
             type="button"
             onPress={onNext}
             isDisabled={isPending}
-            className={`ps-4 pe-3.5 ${PRESS_CLASS}`}
+            className={`min-h-11 flex-1 ps-4 pe-3.5 md:flex-none ${PRESS_CLASS}`}
           >
             {isPending ? "Loading…" : "Next term"}
             <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
           </Button>
-        </QuizActionBar>
-
-        <ReadPickDebug term={term} />
-      </QuizPanelBody>
+        </div>
+      </footer>
     </QuizPanel>
   );
 }
@@ -229,11 +250,12 @@ function ReadCollectionSelect({
   isDisabled: boolean;
   onChange: (domainId: string) => void;
 }) {
+  const remaining = unreadCountForSelection(selectedCollectionId, collections);
+
   return (
-    <Field>
-      <FieldLabel htmlFor="read-collection">Collection</FieldLabel>
+    <div className="flex items-center gap-3">
       <Select
-        className="w-full"
+        className="min-w-0 w-full flex-1 sm:max-w-xs"
         selectedKey={selectedCollectionId}
         onSelectionChange={(key) => {
           if (key == null) return;
@@ -241,7 +263,7 @@ function ReadCollectionSelect({
         }}
         isDisabled={isDisabled}
       >
-        <SelectTrigger id="read-collection" className="text-sm">
+        <SelectTrigger id="read-collection" size="sm" aria-label="Collection" className="text-sm">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -253,7 +275,8 @@ function ReadCollectionSelect({
           ))}
         </SelectContent>
       </Select>
-    </Field>
+      <span className="shrink-0 text-xs text-base-content/50 tabular-nums">{remaining} unread</span>
+    </div>
   );
 }
 
@@ -432,7 +455,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
   }, [fetchNext]);
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       {collections.length > 0 ? (
         <ReadCollectionSelect
           collections={collections}
@@ -442,10 +465,13 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
         />
       ) : null}
 
-      <div ref={cardRef}>
+      <div ref={cardRef} className="flex min-h-0 flex-1 flex-col">
         {status === "caughtUp" ? (
           <ReadCaughtUp
             description={caughtUpDescription(selectedCollectionId, lastPickedDomainId, collections)}
+            showLibraryLinks={
+              selectedCollectionId === lastPickedDomainId && selectedCollectionId === "all"
+            }
             onCheckAgain={fetchNext}
             isPending={isPending}
           />
@@ -469,6 +495,6 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
           />
         ) : null}
       </div>
-    </>
+    </div>
   );
 }
