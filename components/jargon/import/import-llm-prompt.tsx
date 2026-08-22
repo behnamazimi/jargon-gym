@@ -95,7 +95,7 @@ function CopyCommand({
             variant="outline"
             size="sm"
             onPress={handleCopy}
-            className="shrink-0 self-center transition-transform duration-150 ease-out active:scale-[0.96]"
+            className="max-md:min-h-11 shrink-0 self-center transition-transform duration-150 ease-out active:scale-[0.96]"
           >
             <CopyIconSwap copied={copied} />
             {copied ? "Copied" : "Copy"}

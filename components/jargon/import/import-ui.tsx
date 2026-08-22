@@ -67,14 +67,14 @@ export function ImportCard({
     </>
   );
 
-  const body = <div className="space-y-4 px-5 py-5 sm:px-6">{children}</div>;
+  const body = <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">{children}</div>;
 
   if (!collapsible) {
     return (
       <Card
         className={cn("shadow-surface overflow-hidden rounded-2xl ring-base-content/5", className)}
       >
-        <div className="flex items-start gap-4 border-b border-base-300/60 px-5 py-5 sm:px-6">
+        <div className="flex items-start gap-3 border-b border-base-300/60 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
           {header}
         </div>
         {body}
@@ -87,7 +87,7 @@ export function ImportCard({
       <Card
         className={cn("shadow-surface overflow-hidden rounded-2xl ring-base-content/5", className)}
       >
-        <CollapsibleTrigger className="flex w-full items-start gap-4 px-5 py-5 text-left transition-colors hover:bg-base-200/40 sm:px-6">
+        <CollapsibleTrigger className="flex w-full items-start gap-3 px-4 py-4 text-left transition-colors hover:bg-base-200/40 sm:gap-4 sm:px-6 sm:py-5">
           {header}
         </CollapsibleTrigger>
         <CollapsibleContent>

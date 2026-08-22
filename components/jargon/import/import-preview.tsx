@@ -95,7 +95,12 @@ export function ImportPreviewPanel({
         </Alert>
       )}
 
-      <Button type="button" onPress={onImport} isDisabled={isImporting || !canImport}>
+      <Button
+        type="button"
+        onPress={onImport}
+        isDisabled={isImporting || !canImport}
+        className="w-full md:w-auto"
+      >
         {isImporting ? "Importing…" : confirmLabel}
       </Button>
     </ImportCard>

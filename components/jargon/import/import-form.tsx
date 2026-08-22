@@ -90,10 +90,22 @@ export function ImportForm({
       </div>
 
       <ImportToolbar>
-        <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("sample")}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="max-md:min-h-11"
+          onPress={() => applyTemplate("sample")}
+        >
           Load example
         </Button>
-        <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("minimal")}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="max-md:min-h-11"
+          onPress={() => applyTemplate("minimal")}
+        >
           Load minimal
         </Button>
         <Separator orientation="vertical" className="hidden h-6 md:block" />
@@ -101,6 +113,7 @@ export function ImportForm({
           type="button"
           variant="outline"
           size="sm"
+          className="max-md:min-h-11"
           onPress={handleFormat}
           isDisabled={!hasContent}
         >
@@ -110,6 +123,7 @@ export function ImportForm({
           type="button"
           variant="outline"
           size="sm"
+          className="max-md:min-h-11"
           onPress={() => fileInputRef.current?.click()}
         >
           <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
@@ -119,6 +133,7 @@ export function ImportForm({
           type="button"
           variant="outline"
           size="sm"
+          className="max-md:min-h-11"
           onPress={handleClear}
           isDisabled={!hasContent}
         >
@@ -144,7 +159,7 @@ export function ImportForm({
           placeholder={`{\n  "domain": "Software Engineering",\n  "terms": [\n    {\n      "term": "Coupling",\n      "category": "Architecture",\n      "definition": "..."\n    }\n  ],\n  "relationships": [\n    {\n      "source": "Coupling",\n      "target": "Cohesion",\n      "relationship_type": "often confused with"\n    }\n  ]\n}`}
           spellCheck={false}
           className={cn(
-            "min-h-[320px] resize-y border-0 bg-base-100 font-mono text-sm leading-5 shadow-none ring-1 ring-base-content/[0.06] focus-visible:ring-2 dark:ring-base-100/[0.06]",
+            "min-h-[220px] resize-y border-0 bg-base-100 font-mono text-sm leading-5 shadow-none ring-1 ring-base-content/[0.06] focus-visible:ring-2 sm:min-h-[320px] dark:ring-base-100/[0.06]",
             "rounded-lg",
           )}
         />
