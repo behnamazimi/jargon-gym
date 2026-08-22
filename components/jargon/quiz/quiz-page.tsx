@@ -58,16 +58,24 @@ type QuizPageProps = {
   llmConfigured: boolean;
   providerLabel: string | null;
   collections: QuizableCollection[];
+  initialDomainId?: string;
 };
 
 function allCollectionsTermCount(collections: QuizableCollection[]) {
   return collections.reduce((total, collection) => total + collection.knownCount, 0);
 }
 
-export function QuizPage({ llmConfigured, providerLabel, collections }: QuizPageProps) {
+export function QuizPage({
+  llmConfigured,
+  providerLabel,
+  collections,
+  initialDomainId,
+}: QuizPageProps) {
   const [step, setStep] = useState<QuizStep>("picker");
   const [questionStyle, setQuestionStyle] = useState<QuizQuestionStyle>("simple");
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>("all");
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
+    initialDomainId ?? "all",
+  );
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [terms, setTerms] = useState<QuizTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);

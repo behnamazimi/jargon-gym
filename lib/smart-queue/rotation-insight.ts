@@ -55,9 +55,9 @@ type PoolItem = {
   streak: number | null;
 };
 
-type RawStats = Omit<RotationPoolInsight, "poolLabel" | "suggestions">;
+export type RawStats = Omit<RotationPoolInsight, "poolLabel" | "suggestions">;
 
-function poolRotationStats(items: PoolItem[], now: Date): RawStats {
+export function poolRotationStats(items: PoolItem[], now: Date): RawStats {
   const capHours = RANKING.formula.stalenessCapHours;
   const windowMs = RECENT_WINDOW_DAYS * 24 * 60 * 60 * 1000;
 

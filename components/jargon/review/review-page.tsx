@@ -49,6 +49,7 @@ type ReviewStep = "setup" | "playing" | "summary";
 
 type ReviewPageProps = {
   collections: StudyCollection[];
+  initialDomainId?: string;
 };
 
 const DEFAULT_CARD_COUNT = 10;
@@ -66,11 +67,13 @@ function upsertRating(ratings: ReviewRating[], termId: string, known: boolean): 
   return [...without, { termId, known }];
 }
 
-export function ReviewPage({ collections }: ReviewPageProps) {
+export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
 
   const [step, setStep] = useState<ReviewStep>("setup");
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>("all");
+  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
+    initialDomainId ?? "all",
+  );
   const [cardCount, setCardCount] = useState(DEFAULT_CARD_COUNT);
   const [cardCountInput, setCardCountInput] = useState(String(DEFAULT_CARD_COUNT));
   const [cardCountError, setCardCountError] = useState<string | null>(null);
