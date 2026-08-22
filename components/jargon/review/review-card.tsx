@@ -52,7 +52,7 @@ export function ReviewCard({
     >
       <div
         className={cn(
-          "relative mx-auto min-h-[26rem] w-full sm:min-h-[30rem] lg:min-h-[38rem]",
+          "relative mx-auto min-h-[26rem] w-full sm:min-h-[30rem]",
           !revealed && "cursor-pointer",
         )}
         role={revealed ? undefined : "button"}
@@ -71,7 +71,7 @@ export function ReviewCard({
       >
         <div
           className={cn(
-            "relative min-h-[26rem] w-full [transform-style:preserve-3d] sm:min-h-[30rem] lg:min-h-[38rem]",
+            "relative min-h-[26rem] w-full [transform-style:preserve-3d] sm:min-h-[30rem]",
             !reduceMotion && "transition-transform duration-300 ease-out",
             revealed && "[transform:rotateY(180deg)]",
           )}

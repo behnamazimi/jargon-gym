@@ -1,6 +1,16 @@
 "use client";
 
-import { Bug, Compass, LogOut, Mail, Settings, Signal, SquareLibrary, Upload } from "lucide-react";
+import {
+  Bug,
+  Compass,
+  LayoutList,
+  LogOut,
+  Mail,
+  Settings,
+  Signal,
+  SquareLibrary,
+  Upload,
+} from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { AppRouterProvider } from "@/components/app-router-provider";
@@ -8,6 +18,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -68,6 +79,10 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem href="/jargon">
+            <LayoutList className="h-4 w-4" />
+            Collections
+          </DropdownMenuItem>
           <DropdownMenuItem href="/jargon/browse">
             <Compass className="h-4 w-4" />
             Browse
@@ -86,22 +101,24 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
             Settings
           </DropdownMenuItem>
           {isAdmin ? (
-            <DropdownMenuItem href="/jargon/debug">
-              <Bug className="h-4 w-4" />
-              Queue debug
-            </DropdownMenuItem>
-          ) : null}
-          {isAdmin ? (
-            <DropdownMenuItem href="/admin/collections">
-              <SquareLibrary className="h-4 w-4" />
-              Collections
-            </DropdownMenuItem>
-          ) : null}
-          {isAdmin ? (
-            <DropdownMenuItem href="/admin/invites">
-              <Mail className="h-4 w-4" />
-              Invites
-            </DropdownMenuItem>
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Admin</DropdownMenuLabel>
+                <DropdownMenuItem href="/jargon/debug">
+                  <Bug className="h-4 w-4" />
+                  Queue debug
+                </DropdownMenuItem>
+                <DropdownMenuItem href="/admin/collections">
+                  <SquareLibrary className="h-4 w-4" />
+                  Manage collections
+                </DropdownMenuItem>
+                <DropdownMenuItem href="/admin/invites">
+                  <Mail className="h-4 w-4" />
+                  Invites
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </>
           ) : null}
           <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>
             <LogOut className="h-4 w-4" />

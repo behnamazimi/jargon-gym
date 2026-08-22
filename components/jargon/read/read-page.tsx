@@ -39,10 +39,16 @@ function statusFromResult(result: NextReadTermResult): ReadStatus {
   return "ready";
 }
 
-function scrollToTop() {
+function scrollToTop(cardEl: HTMLElement | null) {
   const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
     ? "instant"
     : "smooth";
+
+  if (cardEl) {
+    cardEl.scrollIntoView({ behavior, block: "start" });
+    return;
+  }
+
   window.scrollTo({ top: 0, behavior });
 }
 
@@ -344,6 +350,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
   const statusRef = useRef(status);
   const selectedCollectionIdRef = useRef(selectedCollectionId);
   const fetchingRef = useRef(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   navRef.current = nav;
   statusRef.current = status;
@@ -357,7 +364,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
     if (navRef.current.future.length > 0) {
       dispatch({ type: "redo" });
       setStatus("ready");
-      scrollToTop();
+      scrollToTop(cardRef.current);
       return;
     }
 
@@ -390,7 +397,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
 
         dispatch({ type: "fetched", term: result.term });
         setStatus("ready");
-        scrollToTop();
+        scrollToTop(cardRef.current);
       } finally {
         fetchingRef.current = false;
       }
@@ -400,7 +407,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
   const goToPrevious = useCallback(() => {
     dispatch({ type: "back" });
     setStatus("ready");
-    scrollToTop();
+    scrollToTop(cardRef.current);
   }, []);
 
   const handleCollectionChange = useCallback((nextDomainId: string) => {
@@ -436,31 +443,33 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
         />
       ) : null}
 
-      {status === "caughtUp" ? (
-        <ReadCaughtUp
-          description={caughtUpDescription(selectedCollectionId, lastPickedDomainId, collections)}
-          onCheckAgain={fetchNext}
-          isPending={isPending}
-        />
-      ) : null}
+      <div ref={cardRef}>
+        {status === "caughtUp" ? (
+          <ReadCaughtUp
+            description={caughtUpDescription(selectedCollectionId, lastPickedDomainId, collections)}
+            onCheckAgain={fetchNext}
+            isPending={isPending}
+          />
+        ) : null}
 
-      {status === "ready" && term !== null ? (
-        <ReadTermCard
-          term={term}
-          canGoBack={history.length > 0}
-          isPending={isPending}
-          onPrevious={goToPrevious}
-          onNext={fetchNext}
-        />
-      ) : null}
+        {status === "ready" && term !== null ? (
+          <ReadTermCard
+            term={term}
+            canGoBack={history.length > 0}
+            isPending={isPending}
+            onPrevious={goToPrevious}
+            onNext={fetchNext}
+          />
+        ) : null}
 
-      {status === "error" ? (
-        <ReadErrorAlert
-          message={errorMessage ?? "Couldn't load the next term. Try again."}
-          isPending={isPending}
-          onRetry={fetchNext}
-        />
-      ) : null}
+        {status === "error" ? (
+          <ReadErrorAlert
+            message={errorMessage ?? "Couldn't load the next term. Try again."}
+            isPending={isPending}
+            onRetry={fetchNext}
+          />
+        ) : null}
+      </div>
     </>
   );
 }
