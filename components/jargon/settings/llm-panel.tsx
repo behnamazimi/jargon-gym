@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Sparkles, Trash2 } from "lucide-react";
 import { useState } from "react";
 import {
   clearLlmSettingsAction,
@@ -8,6 +8,7 @@ import {
 } from "@/app/(private)/jargon/settings/actions";
 import {
   AlertBanner,
+  DangerZone,
   SettingsPanel,
   SettingsRow,
   SettingsStack,
@@ -94,6 +95,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
   return (
     <SettingsPanel
       id="quiz"
+      icon={Sparkles}
       title="Quiz settings"
       description="Connect an LLM provider to generate quizzes from your collections."
       status={<StatusPill variant={llmConfigured ? "connected" : "disconnected"} />}
@@ -115,8 +117,9 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
               selectedKey={provider}
               onSelectionChange={(key) => setProvider(key as LlmProvider)}
               isDisabled={isSaving}
+              className="w-full"
             >
-              <SelectTrigger id="llm-provider" className="text-sm">
+              <SelectTrigger id="llm-provider" className="min-h-11 w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -135,8 +138,8 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
                 onPress={() => setReplacingKey(true)}
+                className="min-h-11 w-full md:w-auto"
               >
                 Replace key
               </Button>
@@ -150,15 +153,15 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
                 placeholder="Paste your API key"
-                className="text-sm"
+                className="min-h-11"
                 autoComplete="off"
               />
-              <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex flex-col gap-2 pt-1 md:flex-row">
                 <Button
                   type="button"
                   onPress={handleSaveKey}
                   isDisabled={isSaving || !apiKey.trim()}
-                  className="text-sm"
+                  className="min-h-11 w-full md:w-auto"
                 >
                   {isSaving ? "Saving…" : llmConfigured ? "Save new key" : "Save key"}
                 </Button>
@@ -166,11 +169,11 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
                   <Button
                     type="button"
                     variant="ghost"
-                    size="sm"
                     onPress={() => {
                       setReplacingKey(false);
                       setApiKey("");
                     }}
+                    className="min-h-11 w-full md:w-auto"
                   >
                     Cancel
                   </Button>
@@ -179,26 +182,25 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
             </Field>
           )}
         </SettingsRow>
-
-        {llmConfigured ? (
-          <SettingsRow
-            title="Remove configuration"
-            description="Removes your saved API key. Quizzes won't work until you add a new one."
-          >
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onPress={handleClear}
-              isDisabled={isClearing}
-              className="text-error hover:bg-error/10"
-            >
-              <Trash2 className="size-3.5" strokeWidth={1.5} />
-              {isClearing ? "Removing…" : "Remove API key"}
-            </Button>
-          </SettingsRow>
-        ) : null}
       </SettingsStack>
+
+      {llmConfigured ? (
+        <DangerZone
+          title="Remove configuration"
+          description="Removes your saved API key. Quizzes won't work until you add a new one."
+        >
+          <Button
+            type="button"
+            variant="outline"
+            onPress={handleClear}
+            isDisabled={isClearing}
+            className="min-h-11 w-full text-error hover:bg-error/10 md:w-auto"
+          >
+            <Trash2 className="size-3.5" strokeWidth={1.5} />
+            {isClearing ? "Removing…" : "Remove API key"}
+          </Button>
+        </DangerZone>
+      ) : null}
     </SettingsPanel>
   );
 }

@@ -1,7 +1,7 @@
 import { AdminPanel } from "@/components/jargon/settings/admin-panel";
 import { LlmPanel } from "@/components/jargon/settings/llm-panel";
-import { SettingsTabs, type SettingsTabId } from "@/components/jargon/settings/settings-tabs";
 import { TelegramPanel } from "@/components/jargon/settings/telegram-panel";
+import { ScrollToSettingsPanel, type SettingsTabId } from "@/components/jargon/settings/ui";
 import { WidgetPanel } from "@/components/jargon/settings/widget-panel";
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { getUserSettings } from "@/lib/llm/settings";
@@ -13,11 +13,11 @@ type PageProps = {
   searchParams: Promise<{ tab?: string }>;
 };
 
-function parseTab(value: string | undefined): SettingsTabId {
+function parseTab(value: string | undefined): SettingsTabId | null {
   if (value === "telegram" || value === "widget" || value === "quiz" || value === "admin") {
     return value;
   }
-  return "quiz";
+  return null;
 }
 
 export default async function JargonSettingsPage({ searchParams }: PageProps) {
@@ -30,26 +30,23 @@ export default async function JargonSettingsPage({ searchParams }: PageProps) {
     return <p className="text-sm text-base-content/60">Log in to view settings.</p>;
   }
 
-  const isAdmin = await getUserIsAdmin(user.id);
+  const [isAdmin, initialSettings, telegramStatus, widgetTokens] = await Promise.all([
+    getUserIsAdmin(user.id),
+    getUserSettings(supabase, user.id),
+    getTelegramLinkStatus(supabase, user.id),
+    listWidgetTokens(supabase, user.id),
+  ]);
+
   const tab = parseTab(tabParam);
-  const visibleTab = tab === "admin" && !isAdmin ? "quiz" : tab;
+  const scrollTo = tab === "admin" && !isAdmin ? null : tab;
 
   return (
     <>
-      <SettingsTabs value={visibleTab} isAdmin={isAdmin} />
-      {visibleTab === "quiz" ? (
-        <LlmPanel initialSettings={await getUserSettings(supabase, user.id)} />
-      ) : null}
-      {visibleTab === "telegram" ? (
-        <TelegramPanel initialStatus={await getTelegramLinkStatus(supabase, user.id)} />
-      ) : null}
-      {visibleTab === "widget" ? (
-        <WidgetPanel
-          initialTokens={await listWidgetTokens(supabase, user.id)}
-          latestWidgetVersion={LATEST_WIDGET_VERSION}
-        />
-      ) : null}
-      {visibleTab === "admin" ? <AdminPanel /> : null}
+      {scrollTo ? <ScrollToSettingsPanel tab={scrollTo} /> : null}
+      <LlmPanel initialSettings={initialSettings} />
+      <TelegramPanel initialStatus={telegramStatus} />
+      <WidgetPanel initialTokens={widgetTokens} latestWidgetVersion={LATEST_WIDGET_VERSION} />
+      {isAdmin ? <AdminPanel /> : null}
     </>
   );
 }
