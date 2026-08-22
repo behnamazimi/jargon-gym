@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { AppShell } from "@/components/app-shell";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
+import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { THEME_COOKIE_NAME, DARK_THEME, LIGHT_THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -31,13 +33,14 @@ export const metadata: Metadata = {
   description: PWA_DESCRIPTION,
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: PWA_NAME,
   },
 };
 
 export const viewport: Viewport = {
   themeColor: PWA_THEME_COLOR,
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -48,6 +51,9 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const themeCookie = cookieStore.get(THEME_COOKIE_NAME)?.value;
   const theme = themeCookie === DARK_THEME ? DARK_THEME : LIGHT_THEME;
+  const { user } = await getSessionUser();
+  const isAdmin = user ? await getUserIsAdmin(user.id) : false;
+  const initialIsDark = theme === DARK_THEME;
 
   return (
     <html
@@ -65,10 +71,22 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <PwaProviders>
-          <SiteHeader initialIsDark={theme === DARK_THEME} />
-          <OfflineBanner />
-          <main className="flex flex-1 flex-col">{children}</main>
-          <SiteFooter />
+          <AppShell
+            header={<SiteHeader initialIsDark={initialIsDark} />}
+            footer={<SiteFooter />}
+            studyPhone={
+              user
+                ? {
+                    email: user.email ?? "Account",
+                    isAdmin,
+                    initialIsDark,
+                  }
+                : null
+            }
+          >
+            <OfflineBanner />
+            <main className="flex flex-1 flex-col">{children}</main>
+          </AppShell>
         </PwaProviders>
       </body>
     </html>

@@ -5,7 +5,7 @@ import { PageShell } from "@/components/page-container";
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   return (
     <PageShell innerClassName="mx-auto max-w-3xl space-y-6">
-      <PageHeader icon={Settings2} title="Settings" />
+      <PageHeader icon={Settings2} title="Settings" compactOnPhone />
       {children}
     </PageShell>
   );

@@ -9,6 +9,7 @@ export default function ImportLayout({ children }: { children: React.ReactNode }
         icon={Upload}
         title="Import jargon"
         description="Paste or upload JSON to add terms to a collection."
+        compactOnPhone
       />
       {children}
     </PageShell>

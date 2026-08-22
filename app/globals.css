@@ -81,15 +81,33 @@
   --font-mono: var(--font-jetbrains-mono);
 }
 
+/* Must match PLATFORM_MEDIA in lib/platform.ts */
+@custom-variant standalone (@media (display-mode: standalone));
+@custom-variant coarse (@media (pointer: coarse));
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@utility pb-dock {
+  padding-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom));
+}
+
 @layer base {
   html {
-    @apply font-sans;
+    @apply font-sans standalone:overscroll-none;
   }
 
   :root {
     --font-heading: var(--font-inter);
     --font-body: var(--font-geist);
     --font-mono: var(--font-jetbrains-mono);
+    --dock-height: 4.5rem;
+    --dock-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
   }
 
   h1 {

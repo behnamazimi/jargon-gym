@@ -9,6 +9,7 @@ export default function BrowseLayout({ children }: { children: React.ReactNode }
         icon={Compass}
         title="Browse shared collections"
         description="Find collections others have shared and add them to yours."
+        compactOnPhone
       />
       {children}
     </PageShell>

@@ -219,7 +219,7 @@ export function QuizQuestionView({
               </Button>
             )}
           </QuizActionBar>
-          <p className="m-0 text-right text-xs text-base-content/60">
+          <p className="m-0 text-right text-xs text-base-content/60 max-md:hidden coarse:hidden">
             <QuizKeyboardHint action={!submitted ? "check" : isLast ? "see results" : "continue"} />
           </p>
         </div>

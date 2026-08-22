@@ -17,7 +17,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
   return (
     <article
       className={cn(
-        "shadow-surface flex flex-col gap-4 rounded-xl bg-base-100 p-4 transition-shadow duration-150 sm:flex-row sm:items-center sm:justify-between",
+        "shadow-surface flex flex-col gap-4 rounded-xl bg-base-100 p-4 transition-shadow duration-150 md:flex-row md:items-center md:justify-between",
         "hover:shadow-surface-hover",
         domain.inCollection && "bg-primary/[0.03]",
       )}
@@ -52,7 +52,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 sm:ps-2">
+      <div className="flex shrink-0 items-center gap-2 md:ps-2">
         {domain.inCollection ? (
           <Button
             type="button"
@@ -60,7 +60,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
             size="sm"
             onPress={onRemove}
             isDisabled={busy}
-            className="w-full gap-1.5 transition-transform active:scale-[0.96] sm:w-auto"
+            className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
           >
             <BookmarkMinus className="size-4" aria-hidden strokeWidth={1.5} />
             {busy ? "Removing…" : "Remove"}
@@ -71,7 +71,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
             size="sm"
             onPress={onAdd}
             isDisabled={busy}
-            className="w-full gap-1.5 transition-transform active:scale-[0.96] sm:w-auto"
+            className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
           >
             <Plus className="size-4" aria-hidden strokeWidth={1.5} />
             {busy ? "Adding…" : "Add to collection"}

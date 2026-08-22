@@ -36,7 +36,7 @@ export function SettingsTabs({ value }: { value: SettingsTabId }) {
             id={`settings-tab-${tab.id}`}
             aria-selected={selected}
             aria-controls={`settings-panel-${tab.id}`}
-            className={cn("tab grow no-underline sm:grow-0", selected && "tab-active")}
+            className={cn("tab grow no-underline md:grow-0", selected && "tab-active")}
           >
             {tab.label}
           </Link>

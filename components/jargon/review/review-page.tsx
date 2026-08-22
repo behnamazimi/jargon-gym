@@ -582,7 +582,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                     onPress={() => void handleRate(true)}
                     isDisabled={isRating}
                     className={cn(
-                      "min-w-[7rem] flex-1 transition-transform active:scale-[0.96] sm:flex-none",
+                      "min-w-[7rem] min-h-11 flex-1 transition-transform active:scale-[0.96] md:flex-none",
                       currentRating?.known === true && "btn-primary",
                     )}
                   >
@@ -594,7 +594,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                     onPress={() => void handleRate(false)}
                     isDisabled={isRating}
                     className={cn(
-                      "min-w-[7rem] flex-1 transition-transform active:scale-[0.96] sm:flex-none",
+                      "min-w-[7rem] min-h-11 flex-1 transition-transform active:scale-[0.96] md:flex-none",
                       currentRating?.known === false && "ring-2 ring-primary/30",
                     )}
                   >
@@ -620,7 +620,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
               </Button>
             </div>
 
-            <p className="m-0 hidden text-center text-xs text-base-content/50 sm:block">
+            <p className="m-0 hidden text-center text-xs text-base-content/50 md:block coarse:hidden">
               <QuizKeyboardHint action="reveal" />
               {" · "}
               <kbd className="kbd kbd-xs">1</kbd> {positiveLabel.toLowerCase()} ·{" "}

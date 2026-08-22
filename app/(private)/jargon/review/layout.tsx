@@ -9,6 +9,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
         icon={BookOpen}
         title="Review"
         description="Practice recall with flashcards from your active collections."
+        compactOnPhone
       />
       {children}
     </PageShell>

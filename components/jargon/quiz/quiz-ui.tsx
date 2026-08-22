@@ -100,18 +100,24 @@ export function QuizStat({
 
 export function QuizActionBar({ hint, children }: { hint?: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex flex-col-reverse gap-3 border-t border-base-300/60 pt-5 sm:flex-row sm:items-center sm:justify-between">
-      {hint ? <p className="m-0 text-xs text-base-content/60">{hint}</p> : <span />}
-      <div className="flex flex-wrap justify-end gap-2">{children}</div>
+    <div className="flex flex-col-reverse gap-3 border-t border-base-300/60 pt-5 md:flex-row md:items-center md:justify-between">
+      {hint ? (
+        <p className="m-0 text-xs text-base-content/60 max-md:order-last">{hint}</p>
+      ) : (
+        <span className="max-md:hidden" />
+      )}
+      <div className="flex flex-wrap justify-end gap-2 max-md:flex-col max-md:[&_.btn]:min-h-11 max-md:[&_.btn]:w-full">
+        {children}
+      </div>
     </div>
   );
 }
 
 export function QuizKeyboardHint({ action }: { action: string }) {
   return (
-    <>
+    <span className="hidden md:inline coarse:hidden">
       Press <kbd className="kbd kbd-xs">Enter</kbd> to {action}
-    </>
+    </span>
   );
 }
 

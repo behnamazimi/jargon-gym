@@ -9,6 +9,7 @@ export default function MasteryLayout({ children }: { children: React.ReactNode 
         icon={Signal}
         title="Mastery"
         description="Every term's overall strength, across every collection, at a glance."
+        compactOnPhone
       />
       {children}
     </PageShell>

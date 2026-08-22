@@ -9,6 +9,7 @@ export default function ReadLayout({ children }: { children: React.ReactNode }) 
         icon={Zap}
         title="Read"
         description="One term at a time from your active collections. All matches /read on Telegram; pick one collection to stay in that context."
+        compactOnPhone
       />
       <div className="mx-auto w-full max-w-xl space-y-4">{children}</div>
     </PageShell>

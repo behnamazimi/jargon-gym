@@ -14,7 +14,7 @@ export function AdminCollectionsPageClient({ collections }: AdminCollectionsPage
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
       <AdminNav />
 
-      <div>
+      <div className="max-md:sr-only">
         <h1 className="text-2xl font-semibold text-base-content">Collections</h1>
         <p className="mt-1 text-base text-base-content/65">
           Mark collections as built-in, then publish the ones that should get a public page.

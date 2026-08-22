@@ -9,6 +9,7 @@ export default function DebugLayout({ children }: { children: React.ReactNode })
         icon={Bug}
         title="Queue debug"
         description="Every term's smart-queue score and signals — for debugging the ranking, not for studying."
+        compactOnPhone
       />
       {children}
     </PageShell>

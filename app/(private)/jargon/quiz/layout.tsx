@@ -9,6 +9,7 @@ export default function QuizLayout({ children }: { children: React.ReactNode }) 
         icon={Sparkles}
         title="Quiz"
         description="Test yourself on terms from your active collections."
+        compactOnPhone
       />
       {children}
     </PageShell>

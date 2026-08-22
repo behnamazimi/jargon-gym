@@ -92,7 +92,7 @@ export function HintPopover({ hints }: HintPopoverProps) {
   }
 
   return (
-    <div className="toast toast-bottom toast-start z-40">
+    <div className="toast toast-bottom toast-start z-40 max-md:hidden">
       <Card className="w-80 shadow-lg">
         <CardContent className="gap-3">
           <div className="flex items-start gap-3">

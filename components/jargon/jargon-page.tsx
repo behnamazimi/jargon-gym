@@ -8,6 +8,7 @@ import { DomainSidebar } from "./domain-sidebar";
 import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
+import { NextBestActionCard } from "./next-best-action-card";
 import { TermFormDialog } from "./term-form-dialog";
 import { TermList } from "./term-list";
 
@@ -93,6 +94,8 @@ export function JargonPage({ initialData }: JargonPageProps) {
           </aside>
 
           <div className="min-w-0 flex-1 space-y-4">
+            <NextBestActionCard />
+
             <JargonDomainHeader
               domain={domainWithLiveCount}
               domains={domainsWithLiveCounts}

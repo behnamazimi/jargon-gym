@@ -96,7 +96,7 @@ export function ImportForm({
         <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("minimal")}>
           Load minimal
         </Button>
-        <Separator orientation="vertical" className="hidden h-6 sm:block" />
+        <Separator orientation="vertical" className="hidden h-6 md:block" />
         <Button
           type="button"
           variant="outline"
@@ -154,7 +154,7 @@ export function ImportForm({
         type="button"
         onPress={onValidate}
         isDisabled={isValidating || !hasContent}
-        className="w-full sm:w-auto"
+        className="w-full md:w-auto"
       >
         {isValidating ? "Validating…" : "Validate & preview"}
       </Button>

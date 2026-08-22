@@ -1,7 +1,9 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useState, type RefObject } from "react";
+import { type RefObject } from "react";
+import { useMediaQuery } from "@/hooks/use-platform";
+import { PLATFORM_MEDIA } from "@/lib/platform";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
@@ -14,11 +16,7 @@ type SearchBarProps = {
 };
 
 export function SearchBar({ value, onChange, onClear, inputRef }: SearchBarProps) {
-  const [isTouch, setIsTouch] = useState(false);
-
-  useEffect(() => {
-    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
-  }, []);
+  const isTouch = useMediaQuery(PLATFORM_MEDIA.coarsePointer);
 
   return (
     <div className="relative">

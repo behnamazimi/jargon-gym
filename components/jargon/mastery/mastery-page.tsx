@@ -109,7 +109,7 @@ export function MasteryPage({ rows, collections, stats }: MasteryPageProps) {
             aria-label="Filter mastery overview"
             className="shadow-surface space-y-3 rounded-2xl bg-base-100 p-4"
           >
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center">
               <div className="min-w-0 flex-1">
                 <SearchBar
                   value={searchQuery}
@@ -123,7 +123,7 @@ export function MasteryPage({ rows, collections, stats }: MasteryPageProps) {
                 onChange={(value) => setCollectionId(value as string)}
                 aria-label="Filter by collection"
               >
-                <SelectTrigger size="sm" className="rounded-lg text-xs sm:w-48">
+                <SelectTrigger size="sm" className="rounded-lg text-xs md:w-48">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -1,18 +1,9 @@
 "use client";
 
-import {
-  Bug,
-  Compass,
-  LayoutList,
-  LogOut,
-  Mail,
-  Settings,
-  Signal,
-  SquareLibrary,
-  Upload,
-} from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
+import { ACCOUNT_HOME_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { AppRouterProvider } from "@/components/app-router-provider";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -30,20 +21,9 @@ type ProfileMenuProps = {
   isAdmin?: boolean;
 };
 
-function getInitials(email: string) {
-  const local = email.split("@")[0] ?? email;
-  const parts = local.split(/[._-]+/).filter(Boolean);
-
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-  }
-
-  return local.slice(0, 2).toUpperCase();
-}
-
 export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
   const [isBusy, setIsBusy] = useState(false);
-  const initials = getInitials(email);
+  const initials = emailInitials(email);
 
   async function handleLogout() {
     setIsBusy(true);
@@ -79,44 +59,29 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem href="/jargon">
-            <LayoutList className="h-4 w-4" />
-            Collections
-          </DropdownMenuItem>
-          <DropdownMenuItem href="/jargon/browse">
-            <Compass className="h-4 w-4" />
-            Browse
-          </DropdownMenuItem>
-          <DropdownMenuItem href="/jargon/import">
-            <Upload className="h-4 w-4" />
-            Import
-          </DropdownMenuItem>
-          <DropdownMenuItem href="/jargon/mastery">
-            <Signal className="h-4 w-4" />
-            Mastery
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem href="/jargon/settings">
-            <Settings className="h-4 w-4" />
-            Settings
-          </DropdownMenuItem>
+          {ACCOUNT_HOME_NAV.map((item) => {
+            const Icon = item.icon;
+            return (
+              <DropdownMenuItem key={item.href} href={item.href}>
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </DropdownMenuItem>
+            );
+          })}
           {isAdmin ? (
             <>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuLabel>Admin</DropdownMenuLabel>
-                <DropdownMenuItem href="/jargon/debug">
-                  <Bug className="h-4 w-4" />
-                  Queue debug
-                </DropdownMenuItem>
-                <DropdownMenuItem href="/admin/collections">
-                  <SquareLibrary className="h-4 w-4" />
-                  Manage collections
-                </DropdownMenuItem>
-                <DropdownMenuItem href="/admin/invites">
-                  <Mail className="h-4 w-4" />
-                  Invites
-                </DropdownMenuItem>
+                {ADMIN_NAV_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <DropdownMenuItem key={item.href} href={item.href}>
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuGroup>
             </>
           ) : null}

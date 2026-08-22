@@ -1,6 +1,7 @@
 import { type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { BackLink, JARGON_HOME_BACK_LABEL, JARGON_HOME_PATH } from "@/components/jargon/back-link";
+import { cn } from "@/lib/utils";
 
 type PageHeaderProps = {
   icon: LucideIcon;
@@ -9,6 +10,7 @@ type PageHeaderProps = {
   backHref?: string;
   backLabel?: string;
   showBack?: boolean;
+  compactOnPhone?: boolean;
 };
 
 export function PageHeader({
@@ -18,11 +20,14 @@ export function PageHeader({
   backHref = JARGON_HOME_PATH,
   backLabel = JARGON_HOME_BACK_LABEL,
   showBack = true,
+  compactOnPhone = false,
 }: PageHeaderProps) {
   return (
-    <div className="flex items-start justify-between gap-3">
+    <div
+      className={cn("flex items-start justify-between gap-3", compactOnPhone && "max-md:sr-only")}
+    >
       <div className="flex min-w-0 items-start gap-3">
-        <div className="hidden sm:flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+        <div className="hidden size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:flex">
           <Icon className="size-5" aria-hidden strokeWidth={1.5} />
         </div>
         <div className="min-w-0">

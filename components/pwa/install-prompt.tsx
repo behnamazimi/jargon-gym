@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { usePlatform } from "@/hooks/use-platform";
 import { PWA_INSTALL_DISMISS_KEY, PWA_NAME } from "@/lib/pwa";
 
 type BeforeInstallPromptEvent = Event & {
@@ -35,31 +36,15 @@ type InstallContextValue = {
 
 const InstallContext = createContext<InstallContextValue | null>(null);
 
-function isStandaloneDisplay() {
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    ("standalone" in navigator &&
-      Boolean((navigator as Navigator & { standalone?: boolean }).standalone))
-  );
-}
-
-function isIosDevice() {
-  const ua = navigator.userAgent;
-  const iOS = /iPad|iPhone|iPod/.test(ua) && !("MSStream" in window);
-  const iPadOs = navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-  return iOS || iPadOs;
-}
-
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [isIos, setIsIos] = useState(false);
+  const { isIos, displayMode } = usePlatform();
+  const isStandalone = displayMode === "standalone";
+  const [installed, setInstalled] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [toastDismissed, setToastDismissed] = useState(true);
   const [iosDialogOpen, setIosDialogOpen] = useState(false);
 
   useEffect(() => {
-    setIsStandalone(isStandaloneDisplay());
-    setIsIos(isIosDevice());
     setToastDismissed(window.localStorage.getItem(PWA_INSTALL_DISMISS_KEY) === "1");
 
     const onBeforeInstall = (event: Event) => {
@@ -68,23 +53,19 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     };
     const onInstalled = () => {
       setDeferredPrompt(null);
-      setIsStandalone(true);
-    };
-    const onDisplayModeChange = (event: MediaQueryListEvent) => {
-      setIsStandalone(event.matches || isStandaloneDisplay());
+      setInstalled(true);
     };
 
-    const displayMode = window.matchMedia("(display-mode: standalone)");
-    displayMode.addEventListener("change", onDisplayModeChange);
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
     window.addEventListener("appinstalled", onInstalled);
 
     return () => {
-      displayMode.removeEventListener("change", onDisplayModeChange);
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
       window.removeEventListener("appinstalled", onInstalled);
     };
   }, []);
+
+  const standalone = isStandalone || installed;
 
   const promptInstall = useCallback(async () => {
     if (!deferredPrompt) return;
@@ -106,20 +87,20 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     () => ({
       canInstall: Boolean(deferredPrompt),
       isIos,
-      isStandalone,
+      isStandalone: standalone,
       promptInstall,
       openIosDialog,
     }),
-    [deferredPrompt, isIos, isStandalone, promptInstall, openIosDialog],
+    [deferredPrompt, isIos, standalone, promptInstall, openIosDialog],
   );
 
-  const showToast = Boolean(deferredPrompt) && !toastDismissed && !isStandalone;
+  const showToast = Boolean(deferredPrompt) && !toastDismissed && !standalone;
 
   return (
     <InstallContext.Provider value={value}>
       {children}
       {showToast ? (
-        <div className="toast toast-end toast-bottom z-50">
+        <div className="toast toast-end z-50 max-md:toast-top md:toast-bottom standalone:hidden">
           <div role="status" className="alert sm:alert-horizontal">
             <span>Install {PWA_NAME} for quicker access.</span>
             <div className="flex gap-2">
@@ -154,6 +135,7 @@ export function InstallButton() {
   return (
     <Button
       variant="ghost"
+      className="standalone:hidden"
       aria-label={`Install ${PWA_NAME}`}
       onPress={() => {
         if (ctx.canInstall) {
@@ -164,7 +146,7 @@ export function InstallButton() {
       }}
     >
       <Download className="h-4 w-4" strokeWidth={1.5} />
-      <span className="hidden sm:inline">Install</span>
+      <span className="hidden md:inline">Install</span>
     </Button>
   );
 }

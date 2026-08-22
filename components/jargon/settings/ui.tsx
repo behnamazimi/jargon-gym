@@ -59,14 +59,14 @@ export function SettingsRow({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-4 py-6 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] sm:gap-8 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
+    <div className="grid gap-4 py-6 first:pt-0 last:pb-0 md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:gap-8 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
       <div className="min-w-0 space-y-1">
         <h3 className="m-0 text-sm font-semibold">{title}</h3>
         {description ? (
           <div className="text-sm leading-relaxed text-base-content/60">{description}</div>
         ) : null}
       </div>
-      <div className="min-w-0 space-y-3 sm:max-w-md">{children}</div>
+      <div className="min-w-0 space-y-3 md:max-w-md">{children}</div>
     </div>
   );
 }

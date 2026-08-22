@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReviewTerm } from "@/lib/review/types";
 import { formatPickDebugLine } from "@/lib/smart-queue/reasons";
 import { countTermsForSelection } from "@/lib/study/count";
@@ -40,9 +41,7 @@ function statusFromResult(result: NextReadTermResult): ReadStatus {
 }
 
 function scrollToTop(cardEl: HTMLElement | null) {
-  const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-    ? "instant"
-    : "smooth";
+  const behavior = window.matchMedia(PLATFORM_MEDIA.reducedMotion).matches ? "instant" : "smooth";
 
   if (cardEl) {
     cardEl.scrollIntoView({ behavior, block: "start" });

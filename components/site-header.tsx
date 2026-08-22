@@ -28,8 +28,8 @@ function SiteHeaderChrome({
             className="flex items-center gap-2 text-lg font-bold tracking-tight no-underline"
             aria-label="Jargon Gym"
           >
-            <BrandIcon className="sm:hidden" />
-            <span className="hidden text-primary sm:inline">Jargon Gym</span>
+            <BrandIcon className="md:hidden" />
+            <span className="hidden text-primary md:inline">Jargon Gym</span>
           </Link>
           {leftNav ? <nav className="flex items-center gap-1">{leftNav}</nav> : null}
         </div>
@@ -52,7 +52,7 @@ function HeaderStudyLink({
   return (
     <Link href={href} className="btn btn-ghost">
       <Icon className="h-4 w-4" strokeWidth={1.5} />
-      <span className="hidden sm:inline">{label}</span>
+      <span className="hidden md:inline">{label}</span>
     </Link>
   );
 }
