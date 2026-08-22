@@ -17,14 +17,14 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
   return (
     <article
       className={cn(
-        "shadow-surface flex flex-col gap-4 rounded-xl bg-base-100 p-4 transition-shadow duration-150 md:flex-row md:items-center md:justify-between",
+        "shadow-surface flex flex-col gap-4 rounded-2xl bg-base-100 p-4 transition-shadow duration-150 md:flex-row md:items-center md:justify-between md:gap-6",
         "hover:shadow-surface-hover",
         domain.inCollection && "bg-primary/[0.03]",
       )}
     >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <div
-          className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-base-200/70 text-xl leading-none"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-base-200/70 text-xl leading-none"
           aria-hidden
         >
           {domain.icon || "📚"}
@@ -35,7 +35,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
               {domain.name}
             </h2>
             {domain.inCollection ? (
-              <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary">
+              <Badge className="badge-soft badge-primary gap-1 border-0">
                 <CheckCircle2 className="size-3" aria-hidden strokeWidth={1.5} />
                 In collection
               </Badge>
@@ -46,18 +46,17 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
               {domain.description}
             </p>
           ) : null}
-          <p className="text-xs tabular-nums text-base-content/60">
+          <p className="text-sm tabular-nums text-base-content/60">
             {pluralize(domain.termCount, "term")}
           </p>
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 md:ps-2">
+      <div className="flex shrink-0 items-center md:ps-2">
         {domain.inCollection ? (
           <Button
             type="button"
             variant="outline"
-            size="sm"
             onPress={onRemove}
             isDisabled={busy}
             className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
@@ -68,7 +67,6 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
         ) : (
           <Button
             type="button"
-            size="sm"
             onPress={onAdd}
             isDisabled={busy}
             className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"

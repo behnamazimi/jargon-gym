@@ -9,7 +9,7 @@ export default async function BrowseSharedDomainsPage() {
     return <p className="text-sm text-base-content/60">Log in to browse shared collections.</p>;
   }
 
-  const domains = await fetchSharedDomainsBrowse(supabase, user.id);
+  const initialPage = await fetchSharedDomainsBrowse(supabase, user.id);
 
-  return <SharedDomainsBrowse domains={domains} />;
+  return <SharedDomainsBrowse initialPage={initialPage} />;
 }
