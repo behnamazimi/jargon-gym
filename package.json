@@ -37,7 +37,7 @@
     "oxfmt": "^0.64.0",
     "oxlint": "^1.75.0",
     "react": "19.2.4",
-    "react-aria-components": "^1.19.0",
+    "react-aria-components": "^1.20.0",
     "react-dom": "19.2.4",
     "resend": "^6.20.0",
     "tailwind-merge": "^3.6.0",
