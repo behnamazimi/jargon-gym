@@ -35,11 +35,12 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
       <DropdownMenuTrigger>
         <Button
           variant="ghost"
-          className="btn-circle text-xs font-semibold text-primary bg-primary/15 hover:bg-primary/25"
+          size="sm"
+          className="btn-circle size-8 shrink-0 overflow-hidden p-0 text-[11px] font-semibold text-primary bg-primary/15 hover:bg-primary/25"
           aria-label="Account menu"
         >
-          <Avatar>
-            <AvatarFallback className="bg-transparent text-xs font-semibold text-primary">
+          <Avatar className="size-8">
+            <AvatarFallback className="bg-transparent text-[11px] font-semibold leading-none text-primary">
               {initials}
             </AvatarFallback>
           </Avatar>
