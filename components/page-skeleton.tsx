@@ -37,3 +37,49 @@ export function PanelSkeleton() {
     </div>
   );
 }
+
+export function JargonPageSkeleton() {
+  return (
+    <PageShell aria-busy="true" aria-label="Loading your collection">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start">
+        <aside className="hidden md:flex md:w-68 md:shrink-0">
+          <div className="shadow-surface flex w-full flex-col gap-4 rounded-2xl bg-base-100 p-3">
+            <SkeletonBar className="h-9 w-full rounded-lg" />
+            <div className="space-y-2">
+              <SkeletonBar className="h-9 w-full rounded-lg" />
+              <SkeletonBar className="h-9 w-full rounded-lg" />
+              <SkeletonBar className="h-9 w-full rounded-lg" />
+            </div>
+          </div>
+        </aside>
+
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="shadow-surface space-y-4 rounded-2xl bg-base-100 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1 space-y-2">
+                <SkeletonBar className="h-6 w-48" />
+                <SkeletonBar className="h-4 w-32" />
+              </div>
+              <SkeletonBar className="h-8 w-8 shrink-0 rounded-lg" />
+            </div>
+            <SkeletonBar className="h-2 w-full rounded-full" />
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <SkeletonBar className="h-10 w-full max-w-xs rounded-lg" />
+            <SkeletonBar className="h-10 w-24 rounded-lg" />
+            <SkeletonBar className="h-10 w-24 rounded-lg" />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <SkeletonBar className="h-16 w-full rounded-2xl" />
+            <SkeletonBar className="h-16 w-full rounded-2xl" />
+            <SkeletonBar className="h-16 w-full rounded-2xl" />
+            <SkeletonBar className="h-16 w-full rounded-2xl" />
+            <SkeletonBar className="h-16 w-full rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    </PageShell>
+  );
+}

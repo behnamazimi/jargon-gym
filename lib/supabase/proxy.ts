@@ -3,6 +3,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import type { Database } from "@/lib/supabase/database.types";
 
+// referral_verified only ever flips false -> true (during onboarding), so once
+// we've confirmed it we can skip the DB round-trip on every subsequent
+// navigation and trust this cookie instead. This removes a query from the
+// proxy's critical path for essentially every request from an onboarded user.
+export const REFERRAL_VERIFIED_COOKIE = "jg_rv";
+const REFERRAL_VERIFIED_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
 function isPublicPath(pathname: string) {
   return (
     pathname === "/" ||
@@ -86,13 +93,28 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
-    const { data: profile } = await supabase
-      .from("users")
-      .select("referral_verified")
-      .eq("id", user.id)
-      .maybeSingle();
+    const cachedReferralVerified = request.cookies.get(REFERRAL_VERIFIED_COOKIE)?.value === "1";
 
-    const referralVerified = profile?.referral_verified ?? false;
+    let referralVerified = cachedReferralVerified;
+    if (!cachedReferralVerified) {
+      const { data: profile } = await supabase
+        .from("users")
+        .select("referral_verified")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      referralVerified = profile?.referral_verified ?? false;
+
+      if (referralVerified) {
+        supabaseResponse.cookies.set(REFERRAL_VERIFIED_COOKIE, "1", {
+          maxAge: REFERRAL_VERIFIED_COOKIE_MAX_AGE,
+          path: "/",
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+        });
+      }
+    }
 
     if (
       !referralVerified &&
