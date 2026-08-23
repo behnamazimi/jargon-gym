@@ -30,7 +30,7 @@ See the landing page for how to request an invitation.
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 24
 - [pnpm](https://pnpm.io/)
 - [Supabase CLI](https://supabase.com/docs/guides/cli) for local database and
   auth

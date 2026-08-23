@@ -100,7 +100,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     <InstallContext.Provider value={value}>
       {children}
       {showToast ? (
-        <div className="toast toast-end z-50 max-md:toast-top md:toast-bottom standalone:hidden">
+        <div className="toast toast-bottom toast-end z-50 standalone:hidden max-md:bottom-[calc(var(--dock-bottom)+1rem)]!">
           <div role="status" className="alert sm:alert-horizontal">
             <span>Install {PWA_NAME} for quicker access.</span>
             <div className="flex gap-2">
