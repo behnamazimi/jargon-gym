@@ -1,4 +1,14 @@
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  Globe,
+  Monitor,
+  Send,
+  Smartphone,
+  Sparkles,
+  Zap,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { contentPageLinkClass } from "@/components/content/content-page-shell";
 import { pageContainerClass } from "@/components/page-container";
@@ -52,8 +62,22 @@ function LandingCtas({ isLoggedIn }: { isLoggedIn: boolean }) {
         </LinkButton>
       </div>
       <p className="mt-3 m-0 text-sm leading-relaxed text-base-content/70">
-        You need an invitation code to sign up.
+        Invite-only — request access, or use the code you were given.
       </p>
+    </div>
+  );
+}
+
+function IconRow({ items }: { items: { icon: LucideIcon; label: string; body: string }[] }) {
+  return (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+      {items.map(({ icon: Icon, label, body }) => (
+        <div key={label} className="flex flex-col gap-2">
+          <Icon aria-hidden className="size-5 text-primary" strokeWidth={1.75} />
+          <p className="m-0 text-sm font-semibold text-base-content">{label}</p>
+          <p className="m-0 text-sm leading-relaxed text-base-content/75">{body}</p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -80,83 +104,121 @@ export async function LandingPage() {
           </Badge>
 
           <h1 className="mt-5 m-0 max-w-[22ch] text-balance sm:text-5xl sm:leading-[1.12]">
-            Jargon you can actually use
+            The terms your field expects you to already know.
           </h1>
 
           <p className="mt-5 m-0 max-w-[48ch] text-lg leading-relaxed text-base-content/85">
-            I built this for myself after years of picking up jargon I couldn&apos;t actually use.
-            Import term lists, mark what you know, review when you feel like it, quiz when you want
-            a check-in. It&apos;s invite-only, you&apos;re here because someone shared this link
-            with you.
+            The technical terms, acronyms, and insider language of any industry or job, no due
+            dates, no streaks to protect.
           </p>
 
           <div className="mt-8">
             <LandingCtas isLoggedIn={isLoggedIn} />
           </div>
 
-          <div className="mt-10">
-            <div className="space-y-3 text-base leading-relaxed text-base-content/85">
-              <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
-                What&apos;s in it
-              </h2>
-              <ul className="m-0 max-w-[48ch] list-disc space-y-2 ps-5 text-base-content/80">
-                <li>
-                  Add your own collection, or start with a{" "}
-                  <Link href="/j" className={contentPageLinkClass}>
-                    public one
-                  </Link>
-                  , agentic development, software engineering, standup jargon, and more, browsable
-                  with no account
-                </li>
-                <li>
-                  Terms with more than a definition, example, how it&apos;s used, where people
-                  disagree. See{" "}
-                  <Link href="/how-terms-work" className={contentPageLinkClass}>
-                    how terms are built
-                  </Link>
-                </li>
-                <li>
-                  A review queue that ranks what you&apos;ve neglected or still can&apos;t use, no
-                  due dates. See{" "}
-                  <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
-                    how that works
-                  </Link>
-                </li>
-                <li>Quizzes when you want a real check, not a daily streak to protect</li>
-                <li>
-                  Terms show up where you already are, in this web app, in a Telegram bot, and on
-                  your desktop in a widget. Same ranking everywhere.
-                </li>
-              </ul>
+          <div className="mt-14 sm:mt-20">
+            <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
+              Three ways in, no required order
+            </h2>
+            <p className="mt-2 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+              Read a term, review it, quiz yourself. Most people read first, then review and quiz to
+              lock it in, but nothing forces an order.
+            </p>
+            <div className="mt-6">
+              <IconRow
+                items={[
+                  {
+                    icon: Zap,
+                    label: "Read",
+                    body: "See a term with real usage, not just a definition.",
+                  },
+                  {
+                    icon: BookOpen,
+                    label: "Review",
+                    body: "Confirm what you know. Neglected and shaky terms surface first.",
+                  },
+                  {
+                    icon: Sparkles,
+                    label: "Quiz",
+                    body: "A real check on known terms, no daily streak to babysit.",
+                  },
+                ]}
+              />
             </div>
+          </div>
 
-            <p className="mt-6 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
-              When reviewing, the queue shows what&apos;s been neglected or stayed shaky, from your
-              history, not a schedule. I go through a ranked batch, mark what I know, and come back
-              when I feel like it.
+          <div className="mt-14 sm:mt-20">
+            <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
+              This isn&apos;t spaced repetition
+            </h2>
+            <p className="mt-2 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+              Anki and other SRS tools schedule what you see by date. Cards pile up, the daily guilt
+              kicks in, and the schedule stops matching how you actually want to learn. Jargon Gym
+              has no due dates and no reset button, come back whenever, nothing&apos;s overdue.
             </p>
+          </div>
 
-            <p className="mt-4 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
-              Known and unknown stay in separate pools so I&apos;m not wasting time on words I
-              already have.
+          <div className="mt-14 sm:mt-20">
+            <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
+              The Smart Queue
+            </h2>
+            <p className="mt-2 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+              It always shows you the term you&apos;re weakest on, never just the one that happens
+              to be due today.{" "}
+              <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
+                See how it ranks terms
+              </Link>
+              .
             </p>
+          </div>
 
-            <p className="mt-4 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
-              I tried Anki and other due-based review tools and kept falling off.
+          <div className="mt-14 sm:mt-20">
+            <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
+              Bring your own collection
+            </h2>
+            <p className="mt-2 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+              Build a collection for whatever jargon you&apos;re learning, a new job, a technical
+              field, your team&apos;s acronyms. Collections you create are private by default.{" "}
+              <Link href="/j" className={contentPageLinkClass}>
+                Or start from a public one
+              </Link>
+              .
             </p>
-            <blockquote className="mt-4 m-0 max-w-[48ch] border-s-2 border-base-content/25 ps-4 text-base leading-relaxed text-base-content">
-              Overdue cards pile up, the daily guilt kicks in, and none of it fit how I actually
-              wanted to learn.
-            </blockquote>
-            <p className="mt-4 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
-              So no due dates, no reset button. And not a glossary either, terms here are built to
-              be used, not just looked up.
-            </p>
+          </div>
 
-            <div className="mt-8">
+          <div className="mt-14 sm:mt-20">
+            <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
+              Same queue, everywhere
+            </h2>
+            <p className="mt-2 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+              Install it on your phone, glance at a macOS widget, or run it through Telegram,
+              it&apos;s the same ranked queue wherever you open it.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4">
+              {[
+                { icon: Globe, label: "Web" },
+                { icon: Smartphone, label: "Mobile" },
+                { icon: Monitor, label: "macOS widget" },
+                { icon: Send, label: "Telegram" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-2 text-base-content/80">
+                  <Icon aria-hidden className="size-4" strokeWidth={1.75} />
+                  <span className="text-sm font-medium">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-14 sm:mt-20">
+            <h2 className="m-0 text-sm font-semibold tracking-tight text-base-content">
+              Free. Invite-only.
+            </h2>
+            <p className="mt-2 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
+              Request access, or use the code someone gave you.
+            </p>
+            <div className="mt-6">
               <LandingCtas isLoggedIn={isLoggedIn} />
             </div>
-
             <p className="mt-6 m-0 max-w-[48ch] text-sm leading-relaxed text-base-content/70">
               If you want to know more before signing up:{" "}
               <Link href="/before-you-sign-up" className={contentPageLinkClass}>

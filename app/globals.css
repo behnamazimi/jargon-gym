@@ -238,7 +238,7 @@
     animation-delay: 400ms;
   }
 
-  .landing-enter > *:nth-child(6) {
+  .landing-enter > *:nth-child(n + 6) {
     animation-delay: 500ms;
   }
 
