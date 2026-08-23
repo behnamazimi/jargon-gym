@@ -58,7 +58,8 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             days, when I want a harder check, recognizing a term among options is easier than
             recalling it cold, so a Quiz pass alone doesn&apos;t mean I&apos;m done with a term.
             Testing is optional though, the rest of the app works fine if you only ever Read. Quiz
-            works out of the box, no key needed, and gets sharper if you add your own LLM key later.
+            works out of the box, no setup needed, and gets sharper if you later add your own AI API
+            key (Google or Anthropic) so it can write better questions.
           </p>
         </ContentPageSection>
 

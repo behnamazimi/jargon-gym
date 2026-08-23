@@ -11,12 +11,14 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
         </Badge>
 
         <h1 className="mt-5 m-0 max-w-[18ch] text-balance text-[clamp(2.25rem,4.5vw+1rem,3.75rem)] leading-[1.08]">
-          Field-specific terms that actually stick, not just definitions.
+          Stop nodding along to terms you don&apos;t actually know.
         </h1>
 
         <p className="mt-5 m-0 max-w-[48ch] text-lg leading-relaxed text-base-content/85">
-          Every term breaks down into a mental model, a real example, and the mistakes to avoid,
-          then the Smart Queue keeps testing you on whichever one you&apos;re weakest on.
+          Every job, industry, and hobby has its own shorthand, the terms insiders use without
+          explaining. Jargon Gym breaks each one into a mental model, a real example, and the
+          mistake to avoid, then keeps testing you on whichever one you&apos;re weakest on until it
+          sticks for good.
         </p>
 
         <div className="mt-8">

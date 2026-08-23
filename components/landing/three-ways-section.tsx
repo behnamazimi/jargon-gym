@@ -11,7 +11,7 @@ const WAYS: { icon: LucideIcon; label: string; body: string }[] = [
   {
     icon: BookOpen,
     label: "Review",
-    body: "Confirm what you know. Neglected and shaky terms surface first.",
+    body: "Confirm what you know. Terms you're shaky on come up first.",
   },
   {
     icon: Sparkles,
