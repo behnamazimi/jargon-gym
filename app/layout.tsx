@@ -9,8 +9,10 @@ import { SiteHeader } from "@/components/site-header";
 import "./globals.css";
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
+import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { THEME_COOKIE_NAME, DARK_THEME, LIGHT_THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
+import { TimezoneSync } from "@/components/timezone-sync";
 import { Geist, Inter, JetBrains_Mono } from "next/font/google";
 
 const geist = Geist({
@@ -49,11 +51,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [cookieStore, { user }] = await Promise.all([cookies(), getSessionUser()]);
+  const [cookieStore, { supabase, user }] = await Promise.all([cookies(), getSessionUser()]);
   const themeCookie = cookieStore.get(THEME_COOKIE_NAME)?.value;
   const theme = themeCookie === DARK_THEME ? DARK_THEME : LIGHT_THEME;
   const isAdmin = user ? await getUserIsAdmin(user.id) : false;
   const initialIsDark = theme === DARK_THEME;
+  const studyPhoneSettings = user ? await getStudyPhoneUserSettings(supabase, user.id) : null;
 
   return (
     <html
@@ -73,7 +76,14 @@ export default async function RootLayout({
         <PwaProviders>
           <AdminProvider isAdmin={isAdmin}>
             <AppShell
-              header={<SiteHeader initialIsDark={initialIsDark} user={user} isAdmin={isAdmin} />}
+              header={
+                <SiteHeader
+                  initialIsDark={initialIsDark}
+                  user={user}
+                  isAdmin={isAdmin}
+                  currentStreak={studyPhoneSettings?.currentStreak ?? 0}
+                />
+              }
               footer={<SiteFooter />}
               studyPhone={
                 user
@@ -81,10 +91,12 @@ export default async function RootLayout({
                       email: user.email ?? "Account",
                       isAdmin,
                       initialIsDark,
+                      currentStreak: studyPhoneSettings?.currentStreak ?? 0,
                     }
                   : null
               }
             >
+              {user ? <TimezoneSync savedTimezone={studyPhoneSettings?.timezone ?? null} /> : null}
               <OfflineBanner />
               <main className="flex min-h-0 flex-1 flex-col">{children}</main>
             </AppShell>

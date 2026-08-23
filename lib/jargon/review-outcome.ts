@@ -24,7 +24,12 @@ import {
   markTermKnownForUser,
 } from "@/lib/jargon/known-state";
 import type { ReviewEvent } from "@/lib/smart-queue";
-import { recordReviewEvent, recordReviewEventForUser } from "@/lib/smart-queue/repository";
+import {
+  bumpStreak,
+  bumpStreakForUser,
+  recordReviewEvent,
+  recordReviewEventForUser,
+} from "@/lib/smart-queue/repository";
 
 type Client = SupabaseClient<Database>;
 
@@ -40,8 +45,10 @@ async function writeEvent(
 ) {
   if (mode === "session") {
     await recordReviewEvent(client, termId, event);
+    await bumpStreak(client);
   } else {
     await recordReviewEventForUser(client, userId, termId, event);
+    await bumpStreakForUser(client, userId);
   }
 }
 

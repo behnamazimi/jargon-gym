@@ -14,6 +14,7 @@ type StudyPhoneProps = {
   email: string;
   isAdmin: boolean;
   initialIsDark: boolean;
+  currentStreak: number;
 };
 
 export function AppShell({
@@ -37,6 +38,7 @@ export function AppShell({
         email={studyPhone.email}
         isAdmin={studyPhone.isAdmin}
         initialIsDark={studyPhone.initialIsDark}
+        currentStreak={studyPhone.currentStreak}
       >
         <div
           className={cn("flex min-h-full flex-1 flex-col chrome-study", showDock && "chrome-dock")}

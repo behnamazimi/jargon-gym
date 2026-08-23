@@ -14,6 +14,7 @@ import {
 } from "@/components/app/account-nav";
 import { BrandIcon } from "@/components/brand-icon";
 import { InstallButton } from "@/components/pwa/install-prompt";
+import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ type StudyPhoneContextValue = {
   email: string;
   isAdmin: boolean;
   initialIsDark: boolean;
+  currentStreak: number;
   moreOpen: boolean;
   setMoreOpen: (open: boolean) => void;
 };
@@ -43,17 +45,19 @@ export function StudyPhoneProvider({
   email,
   isAdmin,
   initialIsDark,
+  currentStreak,
   children,
 }: {
   email: string;
   isAdmin: boolean;
   initialIsDark: boolean;
+  currentStreak: number;
   children: ReactNode;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const value = useMemo(
-    () => ({ email, isAdmin, initialIsDark, moreOpen, setMoreOpen }),
-    [email, isAdmin, initialIsDark, moreOpen],
+    () => ({ email, isAdmin, initialIsDark, currentStreak, moreOpen, setMoreOpen }),
+    [email, isAdmin, initialIsDark, currentStreak, moreOpen],
   );
 
   return (
@@ -66,7 +70,7 @@ export function StudyPhoneProvider({
 
 export function StudyPhoneTopBar() {
   const pathname = usePathname();
-  const { email, setMoreOpen } = useStudyPhone();
+  const { email, currentStreak, setMoreOpen } = useStudyPhone();
   const initials = emailInitials(email);
   const subPage = isMorePath(pathname);
 
@@ -94,6 +98,7 @@ export function StudyPhoneTopBar() {
           </p>
         </div>
         <div className="navbar-end gap-2">
+          <StreakBadge currentStreak={currentStreak} />
           <InstallButton />
           <Button
             variant="ghost"

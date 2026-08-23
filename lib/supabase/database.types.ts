@@ -447,7 +447,11 @@ export type Database = {
           api_key_encrypted: string | null;
           api_key_last4: string | null;
           created_at: string;
+          current_streak: number;
+          last_active_date: string | null;
+          longest_streak: number;
           provider: string | null;
+          timezone: string | null;
           updated_at: string;
           user_id: string;
         };
@@ -455,7 +459,11 @@ export type Database = {
           api_key_encrypted?: string | null;
           api_key_last4?: string | null;
           created_at?: string;
+          current_streak?: number;
+          last_active_date?: string | null;
+          longest_streak?: number;
           provider?: string | null;
+          timezone?: string | null;
           updated_at?: string;
           user_id: string;
         };
@@ -463,7 +471,11 @@ export type Database = {
           api_key_encrypted?: string | null;
           api_key_last4?: string | null;
           created_at?: string;
+          current_streak?: number;
+          last_active_date?: string | null;
+          longest_streak?: number;
           provider?: string | null;
+          timezone?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -592,6 +604,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      bump_streak: { Args: { p_user_id: string }; Returns: undefined };
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
       clear_term_known: {
@@ -675,6 +688,7 @@ export type Database = {
         Args: { p_term_id: string; p_user_id: string };
         Returns: undefined;
       };
+      my_bump_streak: { Args: never; Returns: undefined };
       my_clear_term_known: { Args: { p_term_id: string }; Returns: undefined };
       my_get_review_candidates: {
         Args: { p_domain_ids?: string[]; p_status?: string };

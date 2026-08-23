@@ -6,6 +6,7 @@ import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/jargon/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
 import { LoggedOutHeaderNav } from "@/components/site-header-nav";
+import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
@@ -60,10 +61,12 @@ export function SiteHeader({
   initialIsDark,
   user,
   isAdmin,
+  currentStreak,
 }: {
   initialIsDark: boolean;
   user: { email?: string | null } | null;
   isAdmin: boolean;
+  currentStreak: number;
 }) {
   return (
     <SiteHeaderChrome
@@ -79,6 +82,7 @@ export function SiteHeader({
       }
       rightNav={
         <>
+          {user ? <StreakBadge currentStreak={currentStreak} /> : null}
           <InstallButton />
           <ThemeToggle initialIsDark={initialIsDark} />
           {user ? (

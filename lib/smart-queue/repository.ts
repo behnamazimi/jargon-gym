@@ -113,3 +113,19 @@ export async function recordReviewEventForUser(
 
   if (error) throw error;
 }
+
+/** Internal — only review-outcome should call these. */
+export async function bumpStreak(client: Client): Promise<void> {
+  const { error } = await client.rpc("my_bump_streak");
+
+  if (error) throw error;
+}
+
+/** Internal — only review-outcome should call these. */
+export async function bumpStreakForUser(client: Client, userId: string): Promise<void> {
+  const { error } = await client.rpc("bump_streak", {
+    p_user_id: userId,
+  });
+
+  if (error) throw error;
+}
