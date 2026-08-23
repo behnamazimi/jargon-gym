@@ -21,6 +21,19 @@ type ReviewCardProps = {
   swipeEnabled: boolean;
 };
 
+function RecallRevealHint({ invisible }: { invisible?: boolean }) {
+  return (
+    <>
+      <span className={cn(invisible && "invisible", "inline md:hidden coarse:inline")}>
+        Recall the meaning, then tap
+      </span>
+      <span className={cn(invisible && "invisible", "hidden md:inline coarse:hidden")}>
+        Recall the meaning, then click or press Enter
+      </span>
+    </>
+  );
+}
+
 function ReviewCardHeader({ term }: { term: ReviewTerm }) {
   return (
     <header className="shrink-0 border-b border-base-300/60 px-5 py-3 sm:px-6">
@@ -82,7 +95,9 @@ export function ReviewCard({
             onReveal();
           }
         }}
-        aria-label={revealed ? undefined : `Reveal answer for ${term.term}`}
+        aria-label={
+          revealed ? undefined : `Recall the meaning, then reveal the answer for ${term.term}`
+        }
       >
         <div
           className={cn(
@@ -97,7 +112,7 @@ export function ReviewCard({
               aria-hidden
             >
               <Eye className="invisible size-4 shrink-0" strokeWidth={1.5} />
-              <span className="invisible">Tap to reveal</span>
+              <RecallRevealHint invisible />
             </div>
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-5 text-center sm:px-6">
               <AdminOnly>
@@ -125,8 +140,7 @@ export function ReviewCard({
               aria-hidden={revealed}
             >
               <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
-              <span className="inline md:hidden coarse:inline">Tap to reveal</span>
-              <span className="hidden md:inline coarse:hidden">Click or press Enter to reveal</span>
+              <RecallRevealHint />
             </div>
           </div>
 
