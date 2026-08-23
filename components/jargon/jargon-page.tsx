@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { JargonPageData } from "@/lib/jargon/types";
+import type { NextBestActionHint } from "@/lib/smart-queue/next-best-action";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { PageShell } from "@/components/page-container";
 import { DomainSidebar } from "./domain-sidebar";
@@ -14,9 +15,10 @@ import { TermList } from "./term-list";
 
 type JargonPageProps = {
   initialData: JargonPageData;
+  hints: NextBestActionHint[];
 };
 
-export function JargonPage({ initialData }: JargonPageProps) {
+export function JargonPage({ initialData, hints }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -97,7 +99,7 @@ export function JargonPage({ initialData }: JargonPageProps) {
           </aside>
 
           <div className="min-w-0 flex-1 space-y-4">
-            <NextBestActionCard />
+            <NextBestActionCard hints={hints} />
 
             <JargonDomainHeader
               domain={domainWithLiveCount}

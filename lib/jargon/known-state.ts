@@ -9,25 +9,12 @@ import { fetchUserCollection } from "./collections";
 
 type Client = SupabaseClient<Database>;
 
-/** Known-term IDs for the given collections, including paused ones.
- *  Pass the collections you want to display — not `reviewDomainIds`, which
- *  drops paused collections and would make their known terms look unknown. */
-export async function fetchKnownTermIdsForDomains(
-  client: Client,
-  domainIds: string[],
-  userId: string,
-) {
-  if (domainIds.length === 0) return [];
+/** Known-term IDs for the given term list, including paused collections.
+ *  Prefer this when the caller already loaded those terms — it skips a
+ *  second `terms` round-trip. */
+export async function fetchKnownTermIds(client: Client, termIds: string[], userId: string) {
+  if (termIds.length === 0) return [];
 
-  const { data: terms, error: termsError } = await client
-    .from("terms")
-    .select("id")
-    .in("domain_id", domainIds);
-
-  if (termsError) throw termsError;
-  if (terms.length === 0) return [];
-
-  const termIds = terms.map((t) => t.id);
   const { data, error } = await client
     .from("user_progress")
     .select("term_id")

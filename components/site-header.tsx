@@ -7,7 +7,6 @@ import { ProfileMenu } from "@/components/jargon/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
 import { LoggedOutHeaderNav } from "@/components/site-header-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { cn } from "@/lib/utils";
 
 function SiteHeaderChrome({
@@ -57,10 +56,15 @@ function HeaderStudyLink({
   );
 }
 
-export async function SiteHeader({ initialIsDark }: { initialIsDark: boolean }) {
-  const { user } = await getSessionUser();
-  const isAdmin = user ? await getUserIsAdmin(user.id) : false;
-
+export function SiteHeader({
+  initialIsDark,
+  user,
+  isAdmin,
+}: {
+  initialIsDark: boolean;
+  user: { email?: string | null } | null;
+  isAdmin: boolean;
+}) {
   return (
     <SiteHeaderChrome
       homeHref={user ? "/jargon" : "/"}

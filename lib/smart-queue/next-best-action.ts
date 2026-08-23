@@ -7,6 +7,7 @@
  *  needs you", not "which domain" or "how many terms".
  */
 
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchActiveReviewCandidates } from "./service";
@@ -153,7 +154,7 @@ export function reducePipelineHints(
   return hints;
 }
 
-export async function getNextBestActionHints(
+export const getNextBestActionHints = cache(async function getNextBestActionHints(
   client: Client,
   userId: string,
   now: Date = new Date(),
@@ -164,4 +165,4 @@ export async function getNextBestActionHints(
   ]);
 
   return reducePipelineHints(unknownCandidates, knownCandidates, now);
-}
+});

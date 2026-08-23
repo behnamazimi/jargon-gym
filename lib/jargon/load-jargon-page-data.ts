@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
 import {
-  fetchKnownTermIdsForDomains,
+  fetchKnownTermIds,
   fetchOverallStrengthByTermId,
   resolveReviewDomainIds,
 } from "./known-state";
@@ -69,25 +69,21 @@ export async function loadJargonPageData(
     // Known/unknown is stored per term, not per review pool. Fetch for the
     // selected collection even when it's paused — reviewDomainIds would omit
     // it and the collection page would paint every known term as unknown.
-    const [termRows, knownTermIds] = await Promise.all([
-      fetchTermsByDomain(client, selectedRow.id),
-      fetchKnownTermIdsForDomains(client, [selectedRow.id], userId),
-    ]);
-
+    const termRows = await fetchTermsByDomain(client, selectedRow.id);
     const mappedTerms = termRows.map(mapTerm);
     const termIds = mappedTerms.map((term) => term.id);
-    const [relationshipRows, overallStrengthByTermId] = await Promise.all([
+    const [knownTermIds, relationshipRows, overallStrengthByTermId] = await Promise.all([
+      fetchKnownTermIds(client, termIds, userId),
       fetchTermRelationshipsForTerms(client, termIds),
       fetchOverallStrengthByTermId(client, termIds, userId),
     ]);
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
-    const termIdSet = new Set(termIds);
 
     return {
       domain,
       domains,
       terms,
-      knownTermIds: knownTermIds.filter((id) => termIdSet.has(id)),
+      knownTermIds,
       activeDomainIds: reviewDomainIds,
       overallStrengthByTermId,
     };

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OverallStrength } from "@/lib/smart-queue";
 import type { Database } from "@/lib/supabase/database.types";
 import {
-  fetchKnownTermIdsForDomains,
+  fetchKnownTermIds,
   fetchOverallStrengthByTermId,
   resolveReviewDomainIds,
 } from "./known-state";
@@ -54,7 +54,7 @@ export async function loadMasteryOverview(
   const termIds = terms.map((term) => term.id);
 
   const [knownTermIds, overallStrengthByTermId] = await Promise.all([
-    fetchKnownTermIdsForDomains(client, domainIds, userId),
+    fetchKnownTermIds(client, termIds, userId),
     fetchOverallStrengthByTermId(client, termIds, userId),
   ]);
   const knownSet = new Set(knownTermIds);

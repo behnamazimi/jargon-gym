@@ -1,5 +1,6 @@
 /** Smart-queue service — composes pick + hydrate + stats. No direct RPCs. */
 
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
@@ -405,22 +406,24 @@ export async function getMixedReviewPoolStatsForUser(
 
 /** Every active-collection candidate for status, unsorted — callers group/aggregate themselves.
  *  Service-role: explicit userId, no RLS session required (Telegram). */
-export async function fetchActiveReviewCandidatesForUser(
-  client: Client,
-  userId: string,
-  status: "known" | "unknown",
-): Promise<import("./types").ReviewCandidate[]> {
-  return fetchCandidatesForUser(client, userId, { domainIds: "all" }, status);
-}
+export const fetchActiveReviewCandidatesForUser = cache(
+  async function fetchActiveReviewCandidatesForUser(
+    client: Client,
+    userId: string,
+    status: "known" | "unknown",
+  ): Promise<import("./types").ReviewCandidate[]> {
+    return fetchCandidatesForUser(client, userId, { domainIds: "all" }, status);
+  },
+);
 
 /** Session-scoped counterpart of {@link fetchActiveReviewCandidatesForUser} — RLS via `auth.uid()` (web). */
-export async function fetchActiveReviewCandidates(
+export const fetchActiveReviewCandidates = cache(async function fetchActiveReviewCandidates(
   client: Client,
   userId: string,
   status: "known" | "unknown",
 ): Promise<import("./types").ReviewCandidate[]> {
   return fetchCandidates(client, userId, { domainIds: "all" }, status);
-}
+});
 
 export async function getReviewPoolStatsByDomainForUser(
   client: Client,

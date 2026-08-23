@@ -751,7 +751,7 @@ own "Overall" mastery row too, before the dedicated page made it redundant
 one row each, sorted strongest first. `lib/jargon/mastery.ts`'s
 `loadMasteryOverview` reuses `fetchOverallStrengthByTermId` (the same fetch
 collection cards use) across all domains at once instead of one selected
-domain, plus `fetchTermsByDomains`/`fetchKnownTermIdsForDomains` for the
+domain, plus `fetchTermsByDomains`/`fetchKnownTermIds` for the
 term/known metadata each row shows. Filters are client-side over the full
 fetched set — a search box, a collection dropdown, and bucket chips
 (`unverified`/`weak`/`medium`/`strong`) — no server round-trip per filter

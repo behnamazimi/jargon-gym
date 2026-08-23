@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
@@ -23,6 +24,16 @@ export async function getReadSetupData() {
 
 function domainIdsForRead(domainId: string | undefined): string[] | "all" {
   return domainId && domainId !== "all" ? [domainId] : "all";
+}
+
+function scheduleRecordRead(userId: string, termId: string) {
+  after(async () => {
+    try {
+      await recordRead(createAdminClient(), userId, termId, "admin");
+    } catch (err) {
+      console.error("Failed to record read:", err);
+    }
+  });
 }
 
 /**
@@ -52,7 +63,7 @@ export async function getReadTermByIdAction(
     }
 
     if (!alreadyRead) {
-      await recordRead(auth.supabase, auth.user.id, card.id, "session");
+      scheduleRecordRead(auth.user.id, card.id);
     }
 
     return { term: toReviewTerm(card, "unknown") };
@@ -91,7 +102,7 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
       return { caughtUp: true };
     }
 
-    await recordRead(auth.supabase, auth.user.id, card.id, "session");
+    scheduleRecordRead(auth.user.id, card.id);
 
     return {
       term: toReviewTerm(card, "unknown", meta?.reasons, meta?.score),

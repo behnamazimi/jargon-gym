@@ -49,10 +49,9 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
+  const [cookieStore, { user }] = await Promise.all([cookies(), getSessionUser()]);
   const themeCookie = cookieStore.get(THEME_COOKIE_NAME)?.value;
   const theme = themeCookie === DARK_THEME ? DARK_THEME : LIGHT_THEME;
-  const { user } = await getSessionUser();
   const isAdmin = user ? await getUserIsAdmin(user.id) : false;
   const initialIsDark = theme === DARK_THEME;
 
@@ -74,7 +73,7 @@ export default async function RootLayout({
         <PwaProviders>
           <AdminProvider isAdmin={isAdmin}>
             <AppShell
-              header={<SiteHeader initialIsDark={initialIsDark} />}
+              header={<SiteHeader initialIsDark={initialIsDark} user={user} isAdmin={isAdmin} />}
               footer={<SiteFooter />}
               studyPhone={
                 user

@@ -3,7 +3,6 @@
 import { Lightbulb, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button, LinkButton } from "@/components/ui/button";
-import { useHints } from "@/components/jargon/hint-context";
 import { dismissHint, isHintCoolingDown, snoozeHint } from "@/lib/hints/hint-storage";
 import type { NextBestActionHint } from "@/lib/smart-queue/next-best-action";
 
@@ -14,8 +13,7 @@ function firstAvailableHint(
   return hints.find((hint) => !dismissedIds.has(hint.id) && !isHintCoolingDown(hint.id)) ?? null;
 }
 
-export function NextBestActionCard() {
-  const hints = useHints();
+export function NextBestActionCard({ hints }: { hints: NextBestActionHint[] }) {
   const [mounted, setMounted] = useState(false);
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
 
