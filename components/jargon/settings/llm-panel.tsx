@@ -114,8 +114,8 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
           <Field>
             <FieldLabel htmlFor="llm-provider">Provider</FieldLabel>
             <Select
-              selectedKey={provider}
-              onSelectionChange={(key) => setProvider(key as LlmProvider)}
+              value={provider}
+              onChange={(key) => setProvider(key as LlmProvider)}
               isDisabled={isSaving}
               className="w-full"
             >

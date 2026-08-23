@@ -249,8 +249,8 @@ function ReadCollectionSelect({
     <div className="flex items-center gap-3">
       <Select
         className="min-w-0 w-full flex-1 sm:max-w-xs"
-        selectedKey={selectedCollectionId}
-        onSelectionChange={(key) => {
+        value={selectedCollectionId}
+        onChange={(key) => {
           if (key == null) return;
           onChange(String(key));
         }}

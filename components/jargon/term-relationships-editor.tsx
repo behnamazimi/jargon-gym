@@ -103,8 +103,8 @@ export function TermRelationshipsEditor({
                   <Field>
                     <FieldLabel htmlFor={`${draft.key}-target`}>Related term</FieldLabel>
                     <Select
-                      selectedKey={draft.relatedTermId || undefined}
-                      onSelectionChange={(key) => {
+                      value={draft.relatedTermId || undefined}
+                      onChange={(key) => {
                         const term = targetOptions.find((item) => item.id === key);
                         if (!term) return;
                         updateDraft(draft.key, {

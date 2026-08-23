@@ -448,8 +448,8 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                 <Field>
                   <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
                   <Select
-                    selectedKey={selectedCollectionId}
-                    onSelectionChange={(key) => setSelectedCollectionId(String(key))}
+                    value={selectedCollectionId}
+                    onChange={(key) => setSelectedCollectionId(String(key))}
                   >
                     <SelectTrigger id="review-collection" size="sm" className="text-sm">
                       <SelectValue />

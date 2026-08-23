@@ -4,20 +4,17 @@ import {
   countTermsForSelection as countStudyTermsForSelection,
   fetchQuizTermPool as fetchStudyQuizTermPool,
   listStudyCollections,
-  MAX_STUDY_TERMS,
+  type StudyCollection,
 } from "@/lib/study";
 import { toQuizTerm } from "./mappers";
-import type { QuizableCollection, QuizTerm } from "./types";
+import type { QuizTerm } from "./types";
 
 type Client = SupabaseClient<Database>;
-
-/** @deprecated Prefer MAX_STUDY_TERMS from @/lib/study */
-export const MAX_QUIZ_TERMS = MAX_STUDY_TERMS;
 
 export async function listQuizableCollections(
   client: Client,
   userId: string,
-): Promise<QuizableCollection[]> {
+): Promise<StudyCollection[]> {
   return listStudyCollections(client, userId);
 }
 
@@ -42,7 +39,7 @@ export async function fetchQuizTermPool(
 }
 
 export function countTermsForSelection(
-  collections: QuizableCollection[],
+  collections: StudyCollection[],
   domainIds: string[] | "all",
 ): number {
   return countStudyTermsForSelection(collections, domainIds, "known");

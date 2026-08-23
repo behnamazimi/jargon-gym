@@ -154,8 +154,8 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
               <Field>
                 <FieldLabel htmlFor="import-skill-collection">Add to collection</FieldLabel>
                 <Select
-                  selectedKey={selectedCollectionId}
-                  onSelectionChange={(key) => handleCollectionChange(String(key))}
+                  value={selectedCollectionId}
+                  onChange={(key) => handleCollectionChange(String(key))}
                   className="w-full"
                 >
                   <SelectTrigger id="import-skill-collection" className="w-full text-sm">

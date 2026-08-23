@@ -1,5 +1,4 @@
 import type { OverallStrength, PickReason } from "@/lib/smart-queue";
-import type { StudyCollection } from "@/lib/study";
 
 export type QuizQuestionStyle = "ai" | "simple";
 
@@ -36,6 +35,3 @@ export type QuizAnswer = {
   termId: string;
   passed: boolean;
 };
-
-/** @deprecated Prefer StudyCollection from @/lib/study */
-export type QuizableCollection = StudyCollection;

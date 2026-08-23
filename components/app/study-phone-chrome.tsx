@@ -114,6 +114,26 @@ export function StudyPhoneTopBar() {
   );
 }
 
+function dockItemClass(active: boolean) {
+  return cn(
+    "mb-0! min-h-11 items-center justify-center gap-0.5 after:content-none",
+    active && "dock-active font-medium text-primary",
+  );
+}
+
+function DockItemLabel({ active, children }: { active: boolean; children: ReactNode }) {
+  return (
+    <span
+      className={cn(
+        "dock-label grid overflow-hidden text-center font-medium leading-none transition-[grid-template-rows,opacity] duration-300 ease-out",
+        active ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+      )}
+    >
+      <span className="overflow-hidden">{children}</span>
+    </span>
+  );
+}
+
 export function StudyPhoneDock() {
   const pathname = usePathname();
   const { setMoreOpen, moreOpen } = useStudyPhone();
@@ -132,57 +152,23 @@ export function StudyPhoneDock() {
           <Link
             key={tab.href}
             href={tab.href}
-            className={cn(
-              "min-h-11 gap-0 after:content-none",
-              active && "dock-active text-primary",
-            )}
+            className={dockItemClass(active)}
             aria-current={active ? "page" : undefined}
           >
-            <Icon
-              className={cn(
-                "size-5 transition-transform duration-300 ease-out",
-                active && "-translate-y-1",
-              )}
-              strokeWidth={1.5}
-              aria-hidden
-            />
-            <span
-              className={cn(
-                "dock-label -mt-[2px] grid overflow-hidden transition-all duration-300 ease-out",
-                active ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-              )}
-            >
-              <span className="overflow-hidden">{tab.label}</span>
-            </span>
+            <Icon className="size-5" strokeWidth={2} aria-hidden />
+            <DockItemLabel active={active}>{tab.label}</DockItemLabel>
           </Link>
         );
       })}
       <button
         type="button"
-        className={cn(
-          "min-h-11 gap-0 after:content-none",
-          moreActive && "dock-active text-primary",
-        )}
+        className={dockItemClass(moreActive)}
         aria-haspopup="dialog"
         aria-expanded={moreOpen}
         onClick={() => setMoreOpen(true)}
       >
-        <Ellipsis
-          className={cn(
-            "size-5 transition-transform duration-300 ease-out",
-            moreActive && "-translate-y-1",
-          )}
-          strokeWidth={1.5}
-          aria-hidden
-        />
-        <span
-          className={cn(
-            "dock-label -mt-[2px] grid overflow-hidden transition-all duration-300 ease-out",
-            moreActive ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
-          )}
-        >
-          <span className="overflow-hidden">More</span>
-        </span>
+        <Ellipsis className="size-5" strokeWidth={2} aria-hidden />
+        <DockItemLabel active={moreActive}>More</DockItemLabel>
       </button>
     </nav>
   );

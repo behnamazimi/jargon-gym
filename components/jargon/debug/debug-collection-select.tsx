@@ -27,8 +27,8 @@ export function DebugCollectionSelect({
 
   return (
     <Select
-      selectedKey={domainId}
-      onSelectionChange={(key) => router.push(debugQueueHref({ context, domainId: String(key) }))}
+      value={domainId}
+      onChange={(key) => router.push(debugQueueHref({ context, domainId: String(key) }))}
     >
       <SelectTrigger className="text-sm">
         <SelectValue />

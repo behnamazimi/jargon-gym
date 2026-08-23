@@ -6,9 +6,10 @@ import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
 import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
-import { MAX_QUIZ_TERMS, fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
+import { fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
 import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { MAX_STUDY_TERMS } from "@/lib/study";
 
 export async function getQuizSetupData() {
   const auth = await requireAuthenticatedClient();
@@ -48,8 +49,8 @@ export async function previewQuizQueueAction(input: {
       return { error: "Choose at least one question." };
     }
 
-    if (questionCount > MAX_QUIZ_TERMS) {
-      return { error: `Quizzes are limited to ${MAX_QUIZ_TERMS} questions.` };
+    if (questionCount > MAX_STUDY_TERMS) {
+      return { error: `Quizzes are limited to ${MAX_STUDY_TERMS} questions.` };
     }
 
     const terms = await fetchQuizTermPool(
@@ -99,8 +100,8 @@ export async function generateQuizAction(input: {
       return { error: "Choose at least one question." };
     }
 
-    if (questionCount > MAX_QUIZ_TERMS) {
-      return { error: `Quizzes are limited to ${MAX_QUIZ_TERMS} questions.` };
+    if (questionCount > MAX_STUDY_TERMS) {
+      return { error: `Quizzes are limited to ${MAX_STUDY_TERMS} questions.` };
     }
 
     const termsPromise = fetchQuizTermPool(

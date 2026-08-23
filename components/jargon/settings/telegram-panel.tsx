@@ -159,8 +159,8 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
             }
           >
             <Select
-              selectedKey={status.cadence}
-              onSelectionChange={(key) => handleCadenceChange(key as TelegramCadence)}
+              value={status.cadence}
+              onChange={(key) => handleCadenceChange(key as TelegramCadence)}
               isDisabled={isSavingCadence}
               className="w-full"
               aria-labelledby="telegram-reminders-title"

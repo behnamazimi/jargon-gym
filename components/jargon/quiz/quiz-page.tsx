@@ -34,16 +34,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getMaxStudyCount } from "@/lib/study/count";
-import { MAX_STUDY_TERMS } from "@/lib/study/types";
+import { MAX_STUDY_TERMS, type StudyCollection } from "@/lib/study/types";
 import { countTermsForSelection } from "@/lib/quiz/terms";
 import { cn } from "@/lib/utils";
-import type {
-  QuizableCollection,
-  QuizAnswer,
-  QuizQuestion,
-  QuizQuestionStyle,
-  QuizTerm,
-} from "@/lib/quiz/types";
+import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
 import {
   clearQuizSession,
   loadQuizSession,
@@ -59,11 +53,11 @@ type QuizStep = "picker" | "generating" | "playing" | "results" | "error";
 type QuizPageProps = {
   llmConfigured: boolean;
   providerLabel: string | null;
-  collections: QuizableCollection[];
+  collections: StudyCollection[];
   initialDomainId?: string;
 };
 
-function allCollectionsTermCount(collections: QuizableCollection[]) {
+function allCollectionsTermCount(collections: StudyCollection[]) {
   return collections.reduce((total, collection) => total + collection.knownCount, 0);
 }
 
@@ -447,8 +441,8 @@ export function QuizPage({
                 <Field>
                   <FieldLabel htmlFor="quiz-collection">Collection</FieldLabel>
                   <Select
-                    selectedKey={selectedCollectionId}
-                    onSelectionChange={(key) => setSelectedCollectionId(String(key))}
+                    value={selectedCollectionId}
+                    onChange={(key) => setSelectedCollectionId(String(key))}
                   >
                     <SelectTrigger id="quiz-collection" size="sm" className="text-sm">
                       <SelectValue />
