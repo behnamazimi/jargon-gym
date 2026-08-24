@@ -398,7 +398,9 @@ export const render = ({ output, error }, dispatch) => {
         {current.definition}
       </div>
       <div className="actions">
-        <span className="cat" title={current.domainName}>{current.domainName}</span>
+        <span className="cat" title={current.domainName}>
+          {current.domainName}
+        </span>
         <button
           className="read-more-btn"
           title="Open this term on the Read page"
