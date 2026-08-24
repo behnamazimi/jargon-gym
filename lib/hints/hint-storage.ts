@@ -1,3 +1,5 @@
+import type { NextBestActionHint } from "@/lib/smart-queue/next-best-action";
+
 const DISMISS_KEY = "jargon-gym:hint-dismissed:v1";
 const SNOOZE_KEY = "jargon-gym:hint-snoozed:v1";
 const SHOWN_THIS_SESSION_KEY = "jargon-gym:hint-shown-session:v1";
@@ -45,11 +47,11 @@ export function snoozeHint(hintId: string, now: Date = new Date()): void {
   writeCooldown(SNOOZE_KEY, hintId, new Date(now.getTime() + SNOOZE_COOLDOWN_MS));
 }
 
-export function isHintCoolingDown(hintId: string, now: Date = new Date()): boolean {
+function isHintCoolingDown(hintId: string, now: Date = new Date()): boolean {
   return isUnderCooldown(DISMISS_KEY, hintId, now) || isUnderCooldown(SNOOZE_KEY, hintId, now);
 }
 
-export function hasShownHintThisSession(): boolean {
+function hasShownHintThisSession(): boolean {
   if (typeof window === "undefined") return false;
 
   try {
@@ -67,4 +69,25 @@ export function markHintShownThisSession(): void {
   } catch {
     // Ignore quota errors or private browsing restrictions.
   }
+}
+
+/** SSOT for "which hint (if any) should a hint surface show right now" —
+ *  both HintPopover (desktop) and NextBestActionCard (mobile) must call this
+ *  rather than re-deriving the rule, so the two surfaces can't drift into
+ *  showing a different hint count per session. */
+export function selectVisibleHint(
+  hints: NextBestActionHint[],
+  dismissedIds: Set<string>,
+  isSuppressed?: (hint: NextBestActionHint) => boolean,
+): NextBestActionHint | null {
+  if (hasShownHintThisSession()) return null;
+
+  return (
+    hints.find(
+      (hint) =>
+        !dismissedIds.has(hint.id) &&
+        !isHintCoolingDown(hint.id) &&
+        !(isSuppressed?.(hint) ?? false),
+    ) ?? null
+  );
 }

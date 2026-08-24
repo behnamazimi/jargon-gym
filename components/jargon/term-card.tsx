@@ -70,10 +70,7 @@ export function TermCard({
                 isSelected={known}
                 onChange={onToggleKnown}
                 aria-label={known ? "Mark as not known" : "Mark as known"}
-                className={cn(
-                  "size-6 rounded-full border-2",
-                  !known && "border-base-content/30 bg-base-100",
-                )}
+                className="checkbox-primary"
               />
             </div>
             <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-start justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">

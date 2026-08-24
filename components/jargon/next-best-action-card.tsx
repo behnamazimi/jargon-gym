@@ -3,15 +3,13 @@
 import { Lightbulb, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Button, LinkButton } from "@/components/ui/button";
-import { dismissHint, isHintCoolingDown, snoozeHint } from "@/lib/hints/hint-storage";
+import {
+  dismissHint,
+  markHintShownThisSession,
+  selectVisibleHint,
+  snoozeHint,
+} from "@/lib/hints/hint-storage";
 import type { NextBestActionHint } from "@/lib/smart-queue/next-best-action";
-
-function firstAvailableHint(
-  hints: NextBestActionHint[],
-  dismissedIds: Set<string>,
-): NextBestActionHint | null {
-  return hints.find((hint) => !dismissedIds.has(hint.id) && !isHintCoolingDown(hint.id)) ?? null;
-}
 
 export function NextBestActionCard({ hints }: { hints: NextBestActionHint[] }) {
   const [mounted, setMounted] = useState(false);
@@ -22,9 +20,13 @@ export function NextBestActionCard({ hints }: { hints: NextBestActionHint[] }) {
   }, []);
 
   const hint = useMemo(
-    () => (mounted ? firstAvailableHint(hints, dismissedIds) : null),
+    () => (mounted ? selectVisibleHint(hints, dismissedIds) : null),
     [mounted, hints, dismissedIds],
   );
+
+  useEffect(() => {
+    if (hint) markHintShownThisSession();
+  }, [hint]);
 
   if (!hint) return null;
 

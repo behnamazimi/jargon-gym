@@ -37,7 +37,12 @@ export function Toolbar({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
           <Field orientation="horizontal" className="w-auto items-center gap-1.5">
-            <Checkbox id="hide-known" isSelected={hideKnown} onChange={onHideKnownChange} />
+            <Checkbox
+              id="hide-known"
+              isSelected={hideKnown}
+              onChange={onHideKnownChange}
+              className="checkbox-xs"
+            />
             <FieldLabel htmlFor="hide-known" className="text-xs font-normal text-base-content/60">
               Hide terms I know
             </FieldLabel>
@@ -47,6 +52,7 @@ export function Toolbar({
               id="show-strength"
               isSelected={showStrength}
               onChange={onShowStrengthChange}
+              className="checkbox-xs"
             />
             <FieldLabel
               htmlFor="show-strength"

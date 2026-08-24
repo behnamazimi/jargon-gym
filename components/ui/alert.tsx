@@ -2,11 +2,12 @@ import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export type AlertVariant = "default" | "destructive";
+export type AlertVariant = "default" | "destructive" | "success";
 
 const variantClasses: Record<AlertVariant, string> = {
   default: "",
   destructive: "alert-error",
+  success: "alert-success",
 };
 
 function Alert({

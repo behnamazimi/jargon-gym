@@ -15,6 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TermFormDialog } from "@/components/jargon/term-form-dialog";
+import { useToast } from "@/components/ui/toast";
 import { useTermActions } from "@/hooks/use-term-actions";
 import type { Term } from "@/lib/jargon/types";
 
@@ -26,6 +27,7 @@ type TermActionsMenuProps = {
 
 export function TermActionsMenu({ term, domainId, domainTerms }: TermActionsMenuProps) {
   const { deleteTerm: removeTerm, isBusy, busyId, error } = useTermActions();
+  const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const disabled = isBusy && busyId === term.id;
@@ -34,6 +36,7 @@ export function TermActionsMenu({ term, domainId, domainTerms }: TermActionsMenu
     const success = await removeTerm(term.id, () => setDeleteOpen(false));
     if (success) {
       setDeleteOpen(false);
+      toast(`"${term.term}" deleted`);
     }
   }
 

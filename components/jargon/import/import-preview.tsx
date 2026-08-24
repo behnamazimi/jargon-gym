@@ -60,6 +60,7 @@ export function ImportPreviewPanel({
               id="confirm-replace-terms"
               isSelected={confirmReplace}
               onChange={onConfirmReplaceChange}
+              className="checkbox-xs"
             />
             <FieldLabel
               htmlFor="confirm-replace-terms"

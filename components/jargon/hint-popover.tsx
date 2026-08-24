@@ -7,9 +7,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button, LinkButton } from "@/components/ui/button";
 import {
   dismissHint,
-  hasShownHintThisSession,
-  isHintCoolingDown,
   markHintShownThisSession,
+  selectVisibleHint,
   snoozeHint,
 } from "@/lib/hints/hint-storage";
 import type { NextBestActionHint } from "@/lib/smart-queue/next-best-action";
@@ -59,16 +58,8 @@ export function HintPopover({ hints }: HintPopoverProps) {
   const visibleHint = useMemo(() => {
     if (!mounted) return null;
     if (isHiddenOnPath(pathname)) return null;
-    if (hasShownHintThisSession()) return null;
 
-    return (
-      hints.find(
-        (hint) =>
-          !dismissedIds.has(hint.id) &&
-          !isSuppressedOnPath(hint, pathname) &&
-          !isHintCoolingDown(hint.id),
-      ) ?? null
-    );
+    return selectVisibleHint(hints, dismissedIds, (hint) => isSuppressedOnPath(hint, pathname));
   }, [mounted, hints, pathname, dismissedIds]);
 
   useEffect(() => {

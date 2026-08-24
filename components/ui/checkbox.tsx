@@ -1,36 +1,24 @@
-"use client";
-
-import {
-  Checkbox as CheckboxPrimitive,
-  composeRenderProps,
-  type CheckboxProps,
-} from "react-aria-components";
+import type { ComponentProps } from "react";
 
 import { cn } from "@/lib/utils";
-import { CheckIcon } from "lucide-react";
 
-function Checkbox({ className, children, ...props }: CheckboxProps) {
+type CheckboxProps = Omit<ComponentProps<"input">, "type" | "checked" | "onChange"> & {
+  isSelected?: boolean;
+  isDisabled?: boolean;
+  onChange?: (isSelected: boolean) => void;
+};
+
+function Checkbox({ className, isSelected, isDisabled, onChange, ...props }: CheckboxProps) {
   return (
-    <CheckboxPrimitive
+    <input
+      type="checkbox"
       data-slot="checkbox"
-      className={cn(
-        "group/checkbox relative flex size-4 shrink-0 items-center justify-center rounded-selector border-2 border-base-300 outline-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary data-disabled:cursor-not-allowed data-disabled:opacity-50 data-invalid:border-error data-selected:border-primary data-selected:bg-primary data-selected:text-primary-content",
-        className,
-      )}
+      className={cn("checkbox", className)}
+      checked={isSelected}
+      disabled={isDisabled}
+      onChange={(event) => onChange?.(event.target.checked)}
       {...props}
-    >
-      {composeRenderProps(children, (children, { isSelected, isIndeterminate }) => (
-        <>
-          <span
-            data-slot="checkbox-indicator"
-            className="grid place-content-center text-current [&>svg]:size-3.5"
-          >
-            {(isSelected || isIndeterminate) && <CheckIcon />}
-          </span>
-          {children}
-        </>
-      ))}
-    </CheckboxPrimitive>
+    />
   );
 }
 
