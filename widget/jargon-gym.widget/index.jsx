@@ -94,6 +94,13 @@ export const className = `
     background: rgba(255,255,255,0.18);
     padding: 3px 9px;
     border-radius: 999px;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 1;
+    min-width: 0;
+    
   }
   .read-more-btn {
     background: rgba(255,255,255,0.2);
@@ -391,7 +398,7 @@ export const render = ({ output, error }, dispatch) => {
         {current.definition}
       </div>
       <div className="actions">
-        <span className="cat">{current.category}</span>
+        <span className="cat" title={current.domainName}>{current.domainName}</span>
         <button
           className="read-more-btn"
           title="Open this term on the Read page"
