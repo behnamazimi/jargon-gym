@@ -37,7 +37,7 @@ export function QuizChoice({
           cn(
             "flex min-h-11 w-full items-start gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm outline-none transition-[color,background-color,box-shadow,transform] duration-150",
             result !== "default"
-              ? RESULT_STATE_CLASS[result]
+              ? cn(RESULT_STATE_CLASS[result], "quiz-choice-reveal")
               : isSelected
                 ? "bg-primary/5 ring-2 ring-primary/30"
                 : "shadow-surface bg-base-100 ring-1 ring-base-content/5 hover:ring-base-content/10",

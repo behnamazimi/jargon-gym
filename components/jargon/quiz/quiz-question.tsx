@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, Trophy } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { RadioGroup } from "react-aria-components";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { QuizChoice, type QuizChoiceResult } from "@/components/jargon/quiz/quiz
 import { QuizKeyboardHint, QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import type { QuizQuestion } from "@/lib/quiz/types";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
+import { cn } from "@/lib/utils";
 
 type QuizQuestionViewProps = {
   question: QuizQuestion;
@@ -55,7 +57,10 @@ export function QuizQuestionView({
   const [trueFalseAnswer, setTrueFalseAnswer] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [canAdvance, setCanAdvance] = useState(false);
-  const gradedPassedRef = useRef(false);
+  const [passed, setPassed] = useState(false);
+  // Brief pop when the advance button unlocks, so the lockout reads as
+  // "getting ready" instead of an unresponsive click.
+  const [justUnlocked, setJustUnlocked] = useState(false);
 
   const canSubmit =
     question.type === "multiple_choice" ? selectedOptionIds.length > 0 : trueFalseAnswer !== null;
@@ -64,6 +69,7 @@ export function QuizQuestionView({
     submitted,
     canSubmit,
     canAdvance,
+    passed,
     question,
     selectedOptionIds,
     trueFalseAnswer,
@@ -74,6 +80,7 @@ export function QuizQuestionView({
     submitted,
     canSubmit,
     canAdvance,
+    passed,
     question,
     selectedOptionIds,
     trueFalseAnswer,
@@ -94,16 +101,20 @@ export function QuizQuestionView({
         ? gradeMcqAnswer(state.question, state.selectedOptionIds)
         : gradeTrueFalseAnswer(state.question, state.trueFalseAnswer ?? false);
 
-    gradedPassedRef.current = result;
+    setPassed(result);
     setSubmitted(true);
     setCanAdvance(false);
-    setTimeout(() => setCanAdvance(true), ADVANCE_LOCKOUT_MS);
+    setTimeout(() => {
+      setCanAdvance(true);
+      setJustUnlocked(true);
+      setTimeout(() => setJustUnlocked(false), 260);
+    }, ADVANCE_LOCKOUT_MS);
   }
 
   function advanceAnswer() {
     const state = stateRef.current;
     if (!state.submitted || !state.canAdvance) return;
-    state.onAnswer(gradedPassedRef.current);
+    state.onAnswer(state.passed);
   }
 
   function selectOption(optionId: string) {
@@ -217,9 +228,22 @@ export function QuizQuestionView({
             type="button"
             onPress={advanceAnswer}
             isDisabled={!canAdvance}
-            className="min-h-11 w-full transition-transform active:scale-[0.96]"
+            className={cn(
+              "min-h-11 w-full gap-1.5 transition-transform active:scale-[0.96]",
+              justUnlocked && "quiz-advance-ready",
+            )}
           >
-            {isLast ? "See results" : "Next question"}
+            <span
+              key={isLast ? "results" : "next"}
+              className="quiz-advance-label-enter inline-flex items-center gap-1.5"
+            >
+              {isLast ? "See results" : "Next question"}
+              {isLast ? (
+                <Trophy className="size-4 shrink-0" aria-hidden strokeWidth={2} />
+              ) : (
+                <ArrowRight className="size-4 shrink-0" aria-hidden strokeWidth={2} />
+              )}
+            </span>
           </Button>
         )}
       </footer>
