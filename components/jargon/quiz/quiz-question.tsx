@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Trophy } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { RadioGroup } from "react-aria-components";
 import { Button } from "@/components/ui/button";
 import { QuizChoice, type QuizChoiceResult } from "@/components/jargon/quiz/quiz-controls";
@@ -44,6 +44,54 @@ function getTrueFalseResult(
   return "default";
 }
 
+// The check→next flow moves through exactly three phases: picking an answer,
+// locked while feedback shows, then ready to advance. Modeling it as a
+// reducer makes combinations like "locked but advance is enabled" impossible.
+type QuizAnswerPhase = "answering" | "locked" | "ready";
+
+type QuizAnswerState = {
+  phase: QuizAnswerPhase;
+  selectedOptionIds: string[];
+  trueFalseAnswer: boolean | null;
+  passed: boolean;
+};
+
+type QuizAnswerAction =
+  | { type: "SELECT_MCQ_OPTION"; optionId: string }
+  | { type: "SELECT_TRUE_FALSE"; value: boolean }
+  | { type: "SUBMIT"; passed: boolean }
+  | { type: "UNLOCK" };
+
+const initialAnswerState: QuizAnswerState = {
+  phase: "answering",
+  selectedOptionIds: [],
+  trueFalseAnswer: null,
+  passed: false,
+};
+
+function quizAnswerReducer(state: QuizAnswerState, action: QuizAnswerAction): QuizAnswerState {
+  switch (action.type) {
+    case "SELECT_MCQ_OPTION":
+      if (state.phase !== "answering") return state;
+      return { ...state, selectedOptionIds: [action.optionId] };
+    case "SELECT_TRUE_FALSE":
+      if (state.phase !== "answering") return state;
+      return { ...state, trueFalseAnswer: action.value };
+    case "SUBMIT":
+      if (state.phase !== "answering") return state;
+      return { ...state, phase: "locked", passed: action.passed };
+    case "UNLOCK":
+      if (state.phase !== "locked") return state;
+      return { ...state, phase: "ready" };
+  }
+}
+
+function canSubmitAnswer(question: QuizQuestion, state: QuizAnswerState): boolean {
+  return question.type === "multiple_choice"
+    ? state.selectedOptionIds.length > 0
+    : state.trueFalseAnswer !== null;
+}
+
 export function QuizQuestionView({
   question,
   current,
@@ -53,39 +101,26 @@ export function QuizQuestionView({
   onAnswer,
 }: QuizQuestionViewProps) {
   const progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
-  const [selectedOptionIds, setSelectedOptionIds] = useState<string[]>([]);
-  const [trueFalseAnswer, setTrueFalseAnswer] = useState<boolean | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [canAdvance, setCanAdvance] = useState(false);
-  const [passed, setPassed] = useState(false);
+  const [state, dispatch] = useReducer(quizAnswerReducer, initialAnswerState);
   // Brief pop when the advance button unlocks, so the lockout reads as
-  // "getting ready" instead of an unresponsive click.
+  // "getting ready" instead of an unresponsive click. Pure animation timing,
+  // not part of the answer lifecycle, so it stays outside the reducer.
   const [justUnlocked, setJustUnlocked] = useState(false);
 
-  const canSubmit =
-    question.type === "multiple_choice" ? selectedOptionIds.length > 0 : trueFalseAnswer !== null;
+  const canSubmit = canSubmitAnswer(question, state);
 
-  const stateRef = useRef({
-    submitted,
-    canSubmit,
-    canAdvance,
-    passed,
-    question,
-    selectedOptionIds,
-    trueFalseAnswer,
-    onAnswer,
-  });
+  const stateRef = useRef({ state, canSubmit, question, onAnswer });
+  stateRef.current = { state, canSubmit, question, onAnswer };
 
-  stateRef.current = {
-    submitted,
-    canSubmit,
-    canAdvance,
-    passed,
-    question,
-    selectedOptionIds,
-    trueFalseAnswer,
-    onAnswer,
-  };
+  const lockoutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const unlockPopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (lockoutTimeoutRef.current) clearTimeout(lockoutTimeoutRef.current);
+      if (unlockPopTimeoutRef.current) clearTimeout(unlockPopTimeoutRef.current);
+    };
+  }, []);
 
   // A real double-click delivers two click events in quick succession. Without this
   // delay, the first click submits and the second immediately lands on the button's
@@ -93,33 +128,30 @@ export function QuizQuestionView({
   const ADVANCE_LOCKOUT_MS = 350;
 
   function submitAnswer() {
-    const state = stateRef.current;
-    if (state.submitted || !state.canSubmit) return;
+    const current = stateRef.current;
+    if (current.state.phase !== "answering" || !current.canSubmit) return;
 
     const result =
-      state.question.type === "multiple_choice"
-        ? gradeMcqAnswer(state.question, state.selectedOptionIds)
-        : gradeTrueFalseAnswer(state.question, state.trueFalseAnswer ?? false);
+      current.question.type === "multiple_choice"
+        ? gradeMcqAnswer(current.question, current.state.selectedOptionIds)
+        : gradeTrueFalseAnswer(current.question, current.state.trueFalseAnswer ?? false);
 
-    setPassed(result);
-    setSubmitted(true);
-    setCanAdvance(false);
-    setTimeout(() => {
-      setCanAdvance(true);
+    dispatch({ type: "SUBMIT", passed: result });
+    lockoutTimeoutRef.current = setTimeout(() => {
+      dispatch({ type: "UNLOCK" });
       setJustUnlocked(true);
-      setTimeout(() => setJustUnlocked(false), 260);
+      unlockPopTimeoutRef.current = setTimeout(() => setJustUnlocked(false), 260);
     }, ADVANCE_LOCKOUT_MS);
   }
 
   function advanceAnswer() {
-    const state = stateRef.current;
-    if (!state.submitted || !state.canAdvance) return;
-    state.onAnswer(state.passed);
+    const current = stateRef.current;
+    if (current.state.phase !== "ready") return;
+    current.onAnswer(current.state.passed);
   }
 
   function selectOption(optionId: string) {
-    if (submitted) return;
-    setSelectedOptionIds([optionId]);
+    dispatch({ type: "SELECT_MCQ_OPTION", optionId });
   }
 
   useEffect(() => {
@@ -129,10 +161,10 @@ export function QuizQuestionView({
       const target = event.target as HTMLElement;
       if (target.tagName === "TEXTAREA") return;
 
-      const state = stateRef.current;
+      const current = stateRef.current;
 
-      if (!state.submitted) {
-        if (!state.canSubmit) return;
+      if (current.state.phase === "answering") {
+        if (!current.canSubmit) return;
 
         event.preventDefault();
         event.stopPropagation();
@@ -140,7 +172,7 @@ export function QuizQuestionView({
         return;
       }
 
-      if (!state.canAdvance) return;
+      if (current.state.phase !== "ready") return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -150,6 +182,9 @@ export function QuizQuestionView({
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
   }, []);
+
+  const submitted = state.phase !== "answering";
+  const canAdvance = state.phase === "ready";
 
   return (
     <QuizPanel className="quiz-feedback-enter flex min-h-0 flex-1 flex-col">
@@ -161,7 +196,7 @@ export function QuizQuestionView({
         {question.type === "multiple_choice" ? (
           <RadioGroup
             aria-label="Answer choices"
-            value={selectedOptionIds[0] ?? ""}
+            value={state.selectedOptionIds[0] ?? ""}
             onChange={selectOption}
             isDisabled={submitted}
             className="flex flex-col gap-2 pt-5"
@@ -173,7 +208,7 @@ export function QuizQuestionView({
                 label={option.text}
                 result={getMcqResult(
                   option.id,
-                  selectedOptionIds,
+                  state.selectedOptionIds,
                   question.correctOptionIds,
                   submitted,
                 )}
@@ -183,8 +218,8 @@ export function QuizQuestionView({
         ) : (
           <RadioGroup
             aria-label="Answer choices"
-            value={trueFalseAnswer === null ? "" : String(trueFalseAnswer)}
-            onChange={(value) => setTrueFalseAnswer(value === "true")}
+            value={state.trueFalseAnswer === null ? "" : String(state.trueFalseAnswer)}
+            onChange={(value) => dispatch({ type: "SELECT_TRUE_FALSE", value: value === "true" })}
             isDisabled={submitted}
             className="grid gap-2 pt-5 sm:grid-cols-2"
           >
@@ -195,7 +230,7 @@ export function QuizQuestionView({
                 label={value ? "True" : "False"}
                 result={getTrueFalseResult(
                   value,
-                  trueFalseAnswer,
+                  state.trueFalseAnswer,
                   question.correctAnswer,
                   submitted,
                 )}
