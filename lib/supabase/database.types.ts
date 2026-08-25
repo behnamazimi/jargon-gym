@@ -713,6 +713,24 @@ export type Database = {
         }[];
       };
       my_mark_term_known: { Args: { p_term_id: string }; Returns: undefined };
+      my_progress_state_by_domain: {
+        Args: { p_domain_ids: string[] };
+        Returns: {
+          domain_id: string;
+          known_at: string;
+          last_quiz_tested_at: string;
+          last_read_at: string;
+          last_review_recall_at: string;
+          quiz_fail_count: number;
+          quiz_streak: number;
+          quiz_test_count: number;
+          read_count: number;
+          review_fail_count: number;
+          review_recall_count: number;
+          review_streak: number;
+          term_id: string;
+        }[];
+      };
       my_record_review_event: {
         Args: {
           p_event: Database["public"]["Enums"]["review_event"];
@@ -726,6 +744,24 @@ export type Database = {
       };
       my_review_domain_ids: { Args: never; Returns: string[] };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
+      progress_state_by_domain: {
+        Args: { p_domain_ids: string[]; p_user_id: string };
+        Returns: {
+          domain_id: string;
+          known_at: string;
+          last_quiz_tested_at: string;
+          last_read_at: string;
+          last_review_recall_at: string;
+          quiz_fail_count: number;
+          quiz_streak: number;
+          quiz_test_count: number;
+          read_count: number;
+          review_fail_count: number;
+          review_recall_count: number;
+          review_streak: number;
+          term_id: string;
+        }[];
+      };
       record_review_event: {
         Args: {
           p_event: Database["public"]["Enums"]["review_event"];

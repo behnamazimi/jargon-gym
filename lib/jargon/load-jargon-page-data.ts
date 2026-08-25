@@ -1,11 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
-import {
-  fetchKnownTermIds,
-  fetchOverallStrengthByTermId,
-  resolveReviewDomainIds,
-} from "./known-state";
+import { fetchProgressStateByDomain, resolveReviewDomainIds } from "./known-state";
 import { fetchTermRelationshipsForTerms, fetchTermsByDomain } from "./terms";
 import type { JargonPageData } from "./types";
 
@@ -72,11 +68,11 @@ export async function loadJargonPageData(
     const termRows = await fetchTermsByDomain(client, selectedRow.id);
     const mappedTerms = termRows.map(mapTerm);
     const termIds = mappedTerms.map((term) => term.id);
-    const [knownTermIds, relationshipRows, overallStrengthByTermId] = await Promise.all([
-      fetchKnownTermIds(client, termIds, userId),
+    const [progressState, relationshipRows] = await Promise.all([
+      fetchProgressStateByDomain(client, [selectedRow.id]),
       fetchTermRelationshipsForTerms(client, termIds),
-      fetchOverallStrengthByTermId(client, termIds, userId),
     ]);
+    const { knownTermIds, overallStrengthByTermId } = progressState;
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
     return {

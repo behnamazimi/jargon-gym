@@ -1,11 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { OverallStrength } from "@/lib/smart-queue";
 import type { Database } from "@/lib/supabase/database.types";
-import {
-  fetchKnownTermIds,
-  fetchOverallStrengthByTermId,
-  resolveReviewDomainIds,
-} from "./known-state";
+import { fetchProgressStateByDomain, resolveReviewDomainIds } from "./known-state";
 import { fetchTermsByDomains } from "./terms";
 
 type Client = SupabaseClient<Database>;
@@ -35,8 +31,8 @@ export type MasteryOverviewData = {
 
 /** Every term across active collections (paused collections are excluded)
  *  with its blended strength, for the /jargon/mastery overview. Reuses the
- *  same per-term fetch the collection cards use
- *  (fetchOverallStrengthByTermId), just across all active domains at once
+ *  same domain-scoped fetch the collection page uses
+ *  (fetchProgressStateByDomain), just across all active domains at once
  *  instead of one selected domain. */
 export async function loadMasteryOverview(
   client: Client,
@@ -51,12 +47,11 @@ export async function loadMasteryOverview(
   const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
 
   const terms = await fetchTermsByDomains(client, domainIds);
-  const termIds = terms.map((term) => term.id);
 
-  const [knownTermIds, overallStrengthByTermId] = await Promise.all([
-    fetchKnownTermIds(client, termIds, userId),
-    fetchOverallStrengthByTermId(client, termIds, userId),
-  ]);
+  const { knownTermIds, overallStrengthByTermId } = await fetchProgressStateByDomain(
+    client,
+    domainIds,
+  );
   const knownSet = new Set(knownTermIds);
 
   const rows: MasteryRow[] = terms.map((term) => {

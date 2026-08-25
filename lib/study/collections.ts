@@ -16,12 +16,11 @@ export async function listStudyCollections(
 
   const domainIds = activeDomains.map((domain) => domain.id);
 
-  const { data: terms, error: termsError } = await client
-    .from("terms")
-    .select("id, domain_id")
-    .in("domain_id", domainIds);
+  const { data, error } = await client.rpc("my_progress_state_by_domain", {
+    p_domain_ids: domainIds,
+  });
 
-  if (termsError) throw termsError;
+  if (error) throw error;
 
   const knownByDomain = new Map<string, number>();
   const unknownByDomain = new Map<string, number>();
@@ -31,30 +30,9 @@ export async function listStudyCollections(
     unknownByDomain.set(domain.id, 0);
   }
 
-  const termToDomain = new Map<string, string>();
-  for (const term of terms) {
-    termToDomain.set(term.id, term.domain_id);
-    unknownByDomain.set(term.domain_id, (unknownByDomain.get(term.domain_id) ?? 0) + 1);
-  }
-
-  if (terms.length > 0) {
-    const { data: progress, error: progressError } = await client
-      .from("user_progress")
-      .select("term_id")
-      .eq("user_id", userId)
-      .in(
-        "term_id",
-        terms.map((term) => term.id),
-      );
-
-    if (progressError) throw progressError;
-
-    for (const row of progress) {
-      const domainId = termToDomain.get(row.term_id);
-      if (!domainId) continue;
-      knownByDomain.set(domainId, (knownByDomain.get(domainId) ?? 0) + 1);
-      unknownByDomain.set(domainId, (unknownByDomain.get(domainId) ?? 0) - 1);
-    }
+  for (const row of data) {
+    const target = row.known_at ? knownByDomain : unknownByDomain;
+    target.set(row.domain_id, (target.get(row.domain_id) ?? 0) + 1);
   }
 
   return activeDomains.map((domain) => ({

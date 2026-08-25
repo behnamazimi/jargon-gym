@@ -47,7 +47,7 @@ async function fetchAddedDomains(client: Client, userId: string) {
     .filter((domain): domain is NonNullable<typeof domain> => domain !== null);
 }
 
-async function fetchDomainStats(client: Client, domainIds: string[], userId: string) {
+async function fetchDomainStats(client: Client, domainIds: string[]) {
   const stats = new Map<string, { termCount: number; knownCount: number }>();
 
   for (const domainId of domainIds) {
@@ -56,37 +56,17 @@ async function fetchDomainStats(client: Client, domainIds: string[], userId: str
 
   if (domainIds.length === 0) return stats;
 
-  const { data: terms, error: termsError } = await client
-    .from("terms")
-    .select("id, domain_id")
-    .in("domain_id", domainIds);
+  const { data, error } = await client.rpc("my_progress_state_by_domain", {
+    p_domain_ids: domainIds,
+  });
 
-  if (termsError) throw termsError;
+  if (error) throw error;
 
-  const termToDomain = new Map<string, string>();
-
-  for (const term of terms) {
-    termToDomain.set(term.id, term.domain_id);
-    const current = stats.get(term.domain_id);
-    if (current) current.termCount += 1;
-  }
-
-  const termIds = terms.map((term) => term.id);
-  if (termIds.length === 0) return stats;
-
-  const { data: progress, error: progressError } = await client
-    .from("user_progress")
-    .select("term_id")
-    .eq("user_id", userId)
-    .in("term_id", termIds);
-
-  if (progressError) throw progressError;
-
-  for (const row of progress) {
-    const domainId = termToDomain.get(row.term_id);
-    if (!domainId) continue;
-    const current = stats.get(domainId);
-    if (current) current.knownCount += 1;
+  for (const row of data) {
+    const current = stats.get(row.domain_id);
+    if (!current) continue;
+    current.termCount += 1;
+    if (row.known_at) current.knownCount += 1;
   }
 
   return stats;
@@ -115,7 +95,6 @@ export async function fetchUserCollection(
   const stats = await fetchDomainStats(
     client,
     combined.map((row) => row.id),
-    userId,
   );
 
   return combined.map((row) => {

@@ -9,22 +9,6 @@ import { fetchUserCollection } from "./collections";
 
 type Client = SupabaseClient<Database>;
 
-/** Known-term IDs for the given term list, including paused collections.
- *  Prefer this when the caller already loaded those terms — it skips a
- *  second `terms` round-trip. */
-export async function fetchKnownTermIds(client: Client, termIds: string[], userId: string) {
-  if (termIds.length === 0) return [];
-
-  const { data, error } = await client
-    .from("user_progress")
-    .select("term_id")
-    .eq("user_id", userId)
-    .in("term_id", termIds);
-
-  if (error) throw error;
-  return data.map((row) => row.term_id);
-}
-
 export type OverallStrengthRow = {
   termId: string;
   score: number;
@@ -32,70 +16,63 @@ export type OverallStrengthRow = {
   bars: number;
 };
 
-/** Display-only overall mastery per term, blended across Read/Review/Quiz —
- *  see computeOverallStrength. Two queries (review_state + user_progress),
- *  merged in TS, mirroring the shape the RPC-fed ReviewCandidate normally
- *  has — deliberately NOT reusing the known/unknown RPCs here, since those
- *  are scoped to active review domains only and this must also work for a
- *  paused domain the collection page is still allowed to display. */
-export async function fetchOverallStrengthByTermId(
+export type DomainProgressState = {
+  knownTermIds: string[];
+  overallStrengthByTermId: Record<string, OverallStrengthRow>;
+};
+
+/** Known-term IDs and display-only overall mastery (blended across
+ *  Read/Review/Quiz — see computeOverallStrength) for every term in the
+ *  given domains, including paused collections. One RPC call joins
+ *  terms + user_progress + review_state server-side by domain_id — avoids
+ *  shipping a term-id list into an `.in()` filter, which blows past
+ *  PostgREST's URL length limit for large collections. Deliberately NOT
+ *  reusing the known/unknown RPCs here, since those are scoped to active
+ *  review domains only and this must also work for a paused domain the
+ *  collection page is still allowed to display. */
+export async function fetchProgressStateByDomain(
   client: Client,
-  termIds: string[],
-  userId: string,
-): Promise<Record<string, OverallStrengthRow>> {
-  if (termIds.length === 0) return {};
+  domainIds: string[],
+): Promise<DomainProgressState> {
+  if (domainIds.length === 0) return { knownTermIds: [], overallStrengthByTermId: {} };
 
-  const [{ data: reviewRows, error: reviewError }, { data: progressRows, error: progressError }] =
-    await Promise.all([
-      client
-        .from("review_state")
-        .select(
-          "term_id, read_count, last_read_at, review_recall_count, last_review_recall_at, review_streak, review_fail_count, quiz_test_count, last_quiz_tested_at, quiz_streak, quiz_fail_count",
-        )
-        .eq("user_id", userId)
-        .in("term_id", termIds),
-      client
-        .from("user_progress")
-        .select("term_id, known_at")
-        .eq("user_id", userId)
-        .in("term_id", termIds),
-    ]);
+  const { data, error } = await client.rpc("my_progress_state_by_domain", {
+    p_domain_ids: domainIds,
+  });
 
-  if (reviewError) throw reviewError;
-  if (progressError) throw progressError;
+  if (error) throw error;
 
-  const knownAtByTermId = new Map(progressRows.map((r) => [r.term_id, r.known_at]));
-  const reviewByTermId = new Map(reviewRows.map((r) => [r.term_id, r]));
+  const knownTermIds: string[] = [];
+  const overallStrengthByTermId: Record<string, OverallStrengthRow> = {};
   const now = new Date();
-  const result: Record<string, OverallStrengthRow> = {};
 
-  for (const termId of termIds) {
-    const rs = reviewByTermId.get(termId);
-    const knownAt = knownAtByTermId.get(termId);
+  for (const row of data) {
+    if (row.known_at) knownTermIds.push(row.term_id);
+
     const candidate: ReviewCandidate = {
-      termId,
-      domainId: "",
+      termId: row.term_id,
+      domainId: row.domain_id,
       createdAt: new Date(0),
-      readCount: rs?.read_count ?? 0,
-      lastReadAt: rs?.last_read_at ? new Date(rs.last_read_at) : null,
-      reviewRecallCount: rs?.review_recall_count ?? 0,
-      lastReviewRecallAt: rs?.last_review_recall_at ? new Date(rs.last_review_recall_at) : null,
-      reviewStreak: rs?.review_streak ?? 0,
-      quizTestCount: rs?.quiz_test_count ?? 0,
-      lastQuizTestedAt: rs?.last_quiz_tested_at ? new Date(rs.last_quiz_tested_at) : null,
-      quizStreak: rs?.quiz_streak ?? 0,
+      readCount: row.read_count,
+      lastReadAt: row.last_read_at ? new Date(row.last_read_at) : null,
+      reviewRecallCount: row.review_recall_count,
+      lastReviewRecallAt: row.last_review_recall_at ? new Date(row.last_review_recall_at) : null,
+      reviewStreak: row.review_streak,
+      quizTestCount: row.quiz_test_count,
+      lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
+      quizStreak: row.quiz_streak,
       pendingReveal: false,
       lastFailAt: null,
       lastFailSource: null,
-      reviewFailCount: rs?.review_fail_count ?? 0,
-      quizFailCount: rs?.quiz_fail_count ?? 0,
-      knownAt: knownAt ? new Date(knownAt) : null,
+      reviewFailCount: row.review_fail_count,
+      quizFailCount: row.quiz_fail_count,
+      knownAt: row.known_at ? new Date(row.known_at) : null,
     };
     const { score, bucket, bars } = computeOverallStrength(candidate, now);
-    result[termId] = { termId, score, bucket, bars };
+    overallStrengthByTermId[row.term_id] = { termId: row.term_id, score, bucket, bars };
   }
 
-  return result;
+  return { knownTermIds, overallStrengthByTermId };
 }
 
 /** Flip user_progress only — queue outcomes go through review-outcome.
