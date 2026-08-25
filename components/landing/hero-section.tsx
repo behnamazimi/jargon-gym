@@ -14,11 +14,9 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
           Stop nodding along to terms you don&apos;t actually know.
         </h1>
 
-        <p className="mt-5 m-0 max-w-[48ch] text-lg leading-relaxed text-base-content/85">
-          Every job, industry, and hobby has its own shorthand, the terms insiders use without
-          explaining. Jargon Gym breaks each one into a mental model, a real example, and the
-          mistake to avoid, then keeps testing you on whichever one you&apos;re weakest on until it
-          sticks for good.
+        <p className="mt-5 m-0 max-w-[40ch] text-lg leading-relaxed text-base-content/85">
+          Every field has its own shorthand insiders never stop to explain. Jargon Gym decodes it,
+          then drills you until it sticks.
         </p>
 
         <div className="mt-8">

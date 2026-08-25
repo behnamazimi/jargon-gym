@@ -18,7 +18,7 @@ type ReviewSummaryProps = {
 };
 
 function summaryDescription(reviewedCount: number, retainedCount: number) {
-  if (reviewedCount === 0) return "No cards reviewed this time.";
+  if (reviewedCount === 0) return "No terms reviewed this time.";
   if (retainedCount === reviewedCount) return "You got every one — great work.";
   return "Keep going on the terms you're still learning.";
 }
@@ -38,7 +38,7 @@ export function ReviewSummary({
       />
       <QuizPanelBody className="space-y-6">
         <dl className="grid grid-cols-1 gap-3">
-          <QuizStat label="Cards reviewed" value={reviewedCount} />
+          <QuizStat label="Terms reviewed" value={reviewedCount} />
           <QuizStat label="Got it" value={retainedCount} variant="primary" />
           <QuizStat label="Missed it" value={forgotCount} />
         </dl>

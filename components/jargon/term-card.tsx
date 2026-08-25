@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { OverallStrengthRow } from "@/lib/jargon/known-state";
 import type { Term } from "@/lib/jargon/types";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -108,6 +109,18 @@ export function TermCard({
           </div>
           <CollapsibleContent>
             <TermBody term={term} className="px-4 pt-4 pb-5" />
+            <div className="border-t border-base-300/60 px-4 py-3">
+              <Button
+                type="button"
+                variant={known ? "outline" : "default"}
+                size="sm"
+                onPress={onToggleKnown}
+                className="gap-1.5"
+              >
+                <Check className="size-3.5" aria-hidden strokeWidth={1.5} />
+                {known ? "Mark as not known" : "Mark as known"}
+              </Button>
+            </div>
           </CollapsibleContent>
         </article>
       </Collapsible>

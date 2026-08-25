@@ -11,5 +11,5 @@ export async function logout() {
   // Otherwise a different account signing in on this device would inherit
   // the previous user's cached referral-verified status.
   (await cookies()).delete(REFERRAL_VERIFIED_COOKIE);
-  redirect("/login");
+  redirect("/");
 }

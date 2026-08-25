@@ -7,7 +7,9 @@ function SrsComparison() {
   return (
     <div className="grid grid-cols-2 gap-3" aria-hidden>
       <div className="rounded-xl border border-base-300 bg-base-200/40 p-4">
-        <p className="m-0 text-xs font-semibold tracking-wide text-base-content/50">Typical SRS</p>
+        <p className="m-0 text-xs font-semibold tracking-wide text-base-content/50">
+          Spaced repetition apps
+        </p>
         <p className="font-heading m-0 mt-2 text-2xl font-bold text-error">47</p>
         <p className="m-0 text-xs text-base-content/50">cards overdue</p>
         <div className="mt-3 space-y-1.5">
@@ -43,19 +45,21 @@ export function NotSrsSection() {
     <div className="grid max-w-4xl grid-cols-1 items-center gap-8 sm:grid-cols-[1.2fr_1fr] sm:gap-10">
       <div>
         <h2 className="m-0 max-w-[14ch] text-4xl font-bold tracking-tight text-balance text-base-content sm:text-5xl">
-          This isn&apos;t{" "}
+          No{" "}
           <span className="relative inline-block">
-            spaced repetition
+            due dates
             <span
               aria-hidden
               className="absolute inset-x-0 top-[55%] h-[3px] -translate-y-1/2 -rotate-1 rounded-full bg-error/70"
             />
-          </span>
+          </span>{" "}
+          to fall behind on
         </h2>
         <p className="mt-3 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
-          Anki and other SRS tools schedule what you see by date. Cards pile up, the daily guilt
-          kicks in, and the schedule stops matching how you actually want to learn. Jargon Gym has
-          no due dates and no reset button, come back whenever, nothing&apos;s overdue.
+          Apps like Anki quiz you on a fixed schedule, so terms come due whether or not you&apos;re
+          ready. Miss a day and cards pile up, the guilt kicks in, and the schedule stops matching
+          how you actually want to learn. Jargon Gym has no due dates and no reset button, come back
+          whenever, nothing&apos;s overdue.
         </p>
       </div>
       <SrsComparison />

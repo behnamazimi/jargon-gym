@@ -1,8 +1,8 @@
 "use client";
 
-import { BookmarkMinus, CheckCircle2, Plus } from "lucide-react";
+import { ArrowRight, BookmarkMinus, CheckCircle2, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, LinkButton } from "@/components/ui/button";
 import type { SharedDomain } from "@/lib/jargon/types";
 import { cn, pluralize } from "@/lib/utils";
 
@@ -52,18 +52,28 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center md:ps-2">
+      <div className="flex shrink-0 flex-col items-stretch gap-2 md:flex-row md:items-center md:ps-2">
         {domain.inCollection ? (
-          <Button
-            type="button"
-            variant="outline"
-            onPress={onRemove}
-            isDisabled={busy}
-            className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
-          >
-            <BookmarkMinus className="size-4" aria-hidden strokeWidth={1.5} />
-            {busy ? "Removing…" : "Remove"}
-          </Button>
+          <>
+            <LinkButton
+              href={`/jargon?domain=${domain.id}`}
+              variant="ghost"
+              className="w-full min-h-11 gap-1.5 md:w-auto"
+            >
+              View in collection
+              <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
+            </LinkButton>
+            <Button
+              type="button"
+              variant="outline"
+              onPress={onRemove}
+              isDisabled={busy}
+              className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
+            >
+              <BookmarkMinus className="size-4" aria-hidden strokeWidth={1.5} />
+              {busy ? "Removing…" : "Remove"}
+            </Button>
+          </>
         ) : (
           <Button
             type="button"

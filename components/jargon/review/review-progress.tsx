@@ -13,7 +13,7 @@ export function ReviewProgress({ current, total, className }: ReviewProgressProp
     <div className={cn("min-w-0 flex-1 space-y-2", className)}>
       <div className="flex items-center justify-between gap-3 text-xs text-base-content/60">
         <span className="font-medium tabular-nums">
-          Card {current} of {total}
+          Term {current} of {total}
         </span>
         <span className="tabular-nums">{percent}%</span>
       </div>
@@ -24,7 +24,7 @@ export function ReviewProgress({ current, total, className }: ReviewProgressProp
         aria-valuenow={current}
         aria-valuemin={0}
         aria-valuemax={total}
-        aria-label={`Card ${current} of ${total}`}
+        aria-label={`Term ${current} of ${total}`}
       />
     </div>
   );

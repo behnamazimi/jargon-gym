@@ -414,12 +414,12 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
               <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">
                 <QuizPanelLabel
                   title="Set up your review"
-                  description="Pick what to study and how many cards."
+                  description="Pick what to study and how many terms."
                 />
                 {savedSession ? (
                   <Alert>
                     <AlertDescription>
-                      You have an in-progress session — card{" "}
+                      You have an in-progress session — term{" "}
                       <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
                       <span className="tabular-nums">{savedSession.cards.length}</span>.
                     </AlertDescription>
@@ -607,7 +607,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                 onPress={handlePrevious}
                 isDisabled={currentIndex === 0}
                 className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
-                aria-label="Previous card"
+                aria-label="Previous term"
               >
                 <ChevronLeft className="size-4" aria-hidden strokeWidth={1.5} />
               </Button>
@@ -648,7 +648,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
                 onPress={handleNext}
                 isDisabled={currentIndex >= cards.length - 1}
                 className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
-                aria-label="Next card"
+                aria-label="Next term"
               >
                 <ChevronRight className="size-4" aria-hidden strokeWidth={1.5} />
               </Button>

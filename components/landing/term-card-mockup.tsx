@@ -189,16 +189,23 @@ export function TermCardMockup() {
   // A fixed starting term keeps server and client markup identical; the random
   // pool only kicks in once this has mounted and the interval starts ticking.
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
+    if (isPaused) return;
     const id = setInterval(() => {
       setActiveIndex((current) => pickNextIndex(current, MOCK_TERMS.length));
     }, ROTATE_INTERVAL_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [isPaused]);
 
   return (
-    <div className="relative mx-auto grid w-full max-w-md grid-cols-1 grid-rows-1" aria-hidden>
+    <div
+      className="relative mx-auto grid w-full max-w-md grid-cols-1 grid-rows-1"
+      aria-hidden
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       {MOCK_TERMS.map((term, index) => (
         <TermCardFace key={term.id} term={term} visible={index === activeIndex} />
       ))}

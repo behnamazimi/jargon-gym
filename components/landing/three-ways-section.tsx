@@ -50,7 +50,8 @@ export function ThreeWaysSection() {
   return (
     <div>
       <h2 className="m-0 max-w-[20ch] text-2xl font-bold tracking-tight text-balance text-base-content sm:text-3xl">
-        Three ways in, <span className="font-normal text-base-content/45">no required order</span>
+        Three ways to learn a term,{" "}
+        <span className="font-normal text-base-content/45">no required order</span>
       </h2>
       <p className="mt-3 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
         Read a term, review it, quiz yourself. Most people read first, then review and quiz to lock
