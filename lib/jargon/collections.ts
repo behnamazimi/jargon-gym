@@ -47,20 +47,15 @@ async function fetchAddedDomains(client: Client, userId: string) {
     .filter((domain): domain is NonNullable<typeof domain> => domain !== null);
 }
 
-async function fetchDomainStats(client: Client, domainIds: string[]) {
+function tallyDomainStats(
+  domainIds: string[],
+  data: { domain_id: string; known_at: string | null }[],
+) {
   const stats = new Map<string, { termCount: number; knownCount: number }>();
 
   for (const domainId of domainIds) {
     stats.set(domainId, { termCount: 0, knownCount: 0 });
   }
-
-  if (domainIds.length === 0) return stats;
-
-  const { data, error } = await client.rpc("my_progress_state_by_domain", {
-    p_domain_ids: domainIds,
-  });
-
-  if (error) throw error;
 
   for (const row of data) {
     const current = stats.get(row.domain_id);
@@ -72,15 +67,34 @@ async function fetchDomainStats(client: Client, domainIds: string[]) {
   return stats;
 }
 
-export async function fetchUserCollection(
-  client: Client,
-  userId: string,
-): Promise<CollectionDomainRow[]> {
-  const [owned, added] = await Promise.all([
-    fetchOwnedDomains(client, userId),
-    fetchAddedDomains(client, userId),
-  ]);
+async function fetchDomainStats(client: Client, domainIds: string[]) {
+  if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
 
+  const { data, error } = await client.rpc("my_progress_state_by_domain", {
+    p_domain_ids: domainIds,
+  });
+
+  if (error) throw error;
+  return tallyDomainStats(domainIds, data);
+}
+
+/** Service-role / admin client: stats for an explicit userId (no `auth.uid()` session). */
+async function fetchDomainStatsForUser(client: Client, userId: string, domainIds: string[]) {
+  if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
+
+  const { data, error } = await client.rpc("progress_state_by_domain", {
+    p_user_id: userId,
+    p_domain_ids: domainIds,
+  });
+
+  if (error) throw error;
+  return tallyDomainStats(domainIds, data);
+}
+
+function combineOwnedAndAdded(
+  owned: Awaited<ReturnType<typeof fetchOwnedDomains>>,
+  added: Awaited<ReturnType<typeof fetchAddedDomains>>,
+) {
   const ownedRows = owned.map((d) => ({
     ...d,
     source: "owned" as const,
@@ -91,13 +105,14 @@ export async function fetchUserCollection(
     source: "added" as const,
   }));
 
-  const combined = [...ownedRows, ...addedRows].sort((a, b) => a.name.localeCompare(b.name));
-  const stats = await fetchDomainStats(
-    client,
-    combined.map((row) => row.id),
-  );
+  return [...ownedRows, ...addedRows].sort((a, b) => a.name.localeCompare(b.name));
+}
 
-  return combined.map((row) => {
+function applyDomainStats(
+  rows: ReturnType<typeof combineOwnedAndAdded>,
+  stats: Map<string, { termCount: number; knownCount: number }>,
+): CollectionDomainRow[] {
+  return rows.map((row) => {
     const domainStats = stats.get(row.id) ?? { termCount: 0, knownCount: 0 };
     return {
       ...row,
@@ -105,6 +120,44 @@ export async function fetchUserCollection(
       knownCount: domainStats.knownCount,
     };
   });
+}
+
+export async function fetchUserCollection(
+  client: Client,
+  userId: string,
+): Promise<CollectionDomainRow[]> {
+  const [owned, added] = await Promise.all([
+    fetchOwnedDomains(client, userId),
+    fetchAddedDomains(client, userId),
+  ]);
+
+  const combined = combineOwnedAndAdded(owned, added);
+  const stats = await fetchDomainStats(
+    client,
+    combined.map((row) => row.id),
+  );
+
+  return applyDomainStats(combined, stats);
+}
+
+/** Service-role / admin client: collection for an explicit userId (Telegram, widget). */
+export async function fetchUserCollectionForUser(
+  client: Client,
+  userId: string,
+): Promise<CollectionDomainRow[]> {
+  const [owned, added] = await Promise.all([
+    fetchOwnedDomains(client, userId),
+    fetchAddedDomains(client, userId),
+  ]);
+
+  const combined = combineOwnedAndAdded(owned, added);
+  const stats = await fetchDomainStatsForUser(
+    client,
+    userId,
+    combined.map((row) => row.id),
+  );
+
+  return applyDomainStats(combined, stats);
 }
 
 export async function addDomainToCollection(client: Client, userId: string, domainId: string) {

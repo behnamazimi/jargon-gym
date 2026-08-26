@@ -5,7 +5,7 @@ import {
   type ReviewCandidate,
 } from "@/lib/smart-queue";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchUserCollection } from "./collections";
+import { fetchUserCollection, fetchUserCollectionForUser } from "./collections";
 
 type Client = SupabaseClient<Database>;
 
@@ -137,7 +137,7 @@ export async function resolveReviewDomainIds(client: Client, userId: string) {
 
 export async function resolveReviewDomainIdsForUser(client: Client, userId: string) {
   const [collectionRows, reviewDomainIds] = await Promise.all([
-    fetchUserCollection(client, userId),
+    fetchUserCollectionForUser(client, userId),
     fetchReviewDomainIdsFromRpc(client, userId),
   ]);
 
