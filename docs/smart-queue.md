@@ -539,8 +539,13 @@ Quiz doesn't use scoring's lane mix at all — `pickQuizTerms`
 ([`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts)) instead fills
 three hard-ordered tiers, in order, until the batch size is met:
 
-1. **Never quizzed** (`quiz_test_count === 0`) — sorted by `known_at`
-   ascending (oldest known first); ties shuffled.
+1. **Never quizzed** (`quiz_test_count === 0`) — split into two groups
+   first: terms with zero read/review engagement (`read_count === 0` and
+   `review_recall_count === 0`, marked known by a plain toggle with no study
+   behind them — the actual false-known risk Quiz exists to catch) come
+   before terms that have at least some read or review history. Within each
+   group, sorted by `known_at` ascending (oldest known first); ties shuffled
+   within their own group, never across the two.
 2. **Not quizzed recently / remastered** — has quiz history, not in
    mastered cooldown. Ordered by the same score `evaluateCandidate`
    produces for the `quiz` context (staleness, struggling, fragile) —

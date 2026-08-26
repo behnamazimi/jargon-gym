@@ -106,6 +106,14 @@ export function quizTierOf(candidate: ScoredCandidate): QuizTier {
   return "not_quizzed_recently";
 }
 
+/** True when a term has no engagement history behind it at all — marked
+ *  known by a plain toggle, never read or reviewed. Quiz exists to catch
+ *  exactly this risk, so within tier 1 these sort ahead of terms that at
+ *  least earned their known status through real study. */
+function isUnverifiedByEngagement(candidate: ReviewCandidate): boolean {
+  return candidate.readCount === 0 && candidate.reviewRecallCount === 0;
+}
+
 export type PickQuizTermsOptions = {
   /** Debug only: append same-day sit-outs (read-today, own-fail) after the
    *  three tiers instead of dropping them, mirroring pickTerms's debug mode. */
@@ -113,12 +121,17 @@ export type PickQuizTermsOptions = {
 };
 
 /** Quiz's dedicated pick path: known pool only, hard priority tiers instead
- *  of a score mix. Never quizzed (oldest known_at first) always precedes
+ *  of a score mix. Never quizzed (zero read/review engagement first, then
+ *  oldest known_at within each of those two groups) always precedes
  *  stale/remastered (score-ordered, no Review→Quiz cross-fail), which always
  *  precedes recently mastered (soonest cooldown expiry first) — no 1:1 mix
- *  like Review/Read. Same-day sit-outs (read today, own miss today) are
- *  dropped from live picks entirely, not just deprioritized; mastered_cooldown
- *  is not a sit-out here — it defines tier 3 membership instead. */
+ *  like Review/Read. Zero-engagement terms sort first within tier 1 because
+ *  they were marked known by a plain toggle with no read or review behind
+ *  them — the actual false-known risk Quiz exists to catch, see
+ *  isUnverifiedByEngagement. Same-day sit-outs (read today, own miss today)
+ *  are dropped from live picks entirely, not just deprioritized;
+ *  mastered_cooldown is not a sit-out here — it defines tier 3 membership
+ *  instead. */
 export function pickQuizTerms(
   candidates: ReviewCandidate[],
   limit: number,
@@ -159,8 +172,16 @@ export function pickQuizTerms(
     }
   }
 
-  tier1.sort((a, b) => (a.knownAt?.getTime() ?? 0) - (b.knownAt?.getTime() ?? 0));
-  shuffleEqualKeyRuns(tier1, (c) => c.knownAt?.getTime() ?? 0);
+  const tier1Unverified: ScoredCandidate[] = [];
+  const tier1Verified: ScoredCandidate[] = [];
+  for (const candidate of tier1) {
+    (isUnverifiedByEngagement(candidate) ? tier1Unverified : tier1Verified).push(candidate);
+  }
+  for (const group of [tier1Unverified, tier1Verified]) {
+    group.sort((a, b) => (a.knownAt?.getTime() ?? 0) - (b.knownAt?.getTime() ?? 0));
+    shuffleEqualKeyRuns(group, (c) => c.knownAt?.getTime() ?? 0);
+  }
+  const tier1Ordered = [...tier1Unverified, ...tier1Verified];
 
   tier2.sort((a, b) => b.score - a.score);
   shuffleEqualScoreRuns(tier2);
@@ -168,7 +189,7 @@ export function pickQuizTerms(
   tier3.sort((a, b) => masteredCooldownExpiryMs(a) - masteredCooldownExpiryMs(b));
   shuffleEqualKeyRuns(tier3, masteredCooldownExpiryMs);
 
-  const ordered = [...tier1, ...tier2, ...tier3];
+  const ordered = [...tier1Ordered, ...tier2, ...tier3];
   const withSitOuts = options.includeSitOuts ? [...ordered, ...sitOut] : ordered;
 
   return withSitOuts.slice(0, limit);
