@@ -39,11 +39,12 @@ describe("presentation HTML escaping", () => {
     expect(message).toMatch(/<b>&lt;script&gt;/);
   });
 
-  it("round-trips quotes and apostrophes in text nodes without breaking the message", () => {
+  it("leaves quotes and apostrophes as literal characters — Telegram's HTML parser only decodes &lt; &gt; &amp; &quot;, so &apos; would render literally", () => {
     const message = formatReviewQuestion(dangerousTerm, 0, 1);
-    expect(message).toContain("&quot;");
-    expect(message).toContain("&apos;");
-    expect(message).not.toContain(`"quotes"`);
+    expect(message).toContain(`"quotes"`);
+    expect(message).toContain(`'apostrophes'`);
+    expect(message).not.toContain("&apos;");
+    expect(message).not.toContain("&quot;");
   });
 
   it("produces well-formed output for formatReviewQuestionWithAnswer", () => {
