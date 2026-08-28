@@ -39,6 +39,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
         rows={[]}
         mix={null}
         insight={[]}
+        readFallbackActive={false}
         errorMessage={null}
       />
     );
@@ -54,6 +55,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
       rows={scored.rows ?? []}
       mix={scored.mix ?? null}
       insight={scored.insight ?? []}
+      readFallbackActive={scored.readFallbackActive ?? false}
       errorMessage={scored.error ?? null}
     />
   );

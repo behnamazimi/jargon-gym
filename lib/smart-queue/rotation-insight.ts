@@ -179,13 +179,30 @@ function buildInsight(
   };
 }
 
-/** Read is always the unknown pool. */
+/** Read's primary pool is always unknown. */
 function buildReadRotationInsight(
   unknownCandidates: ScoredCandidate[],
   now: Date,
 ): RotationPoolInsight[] {
   return [
     buildInsight(toPoolItems(unknownCandidates, "read"), "Read queue (unknown pool)", "read", now),
+  ];
+}
+
+/** Read's stale-known fallback (read_mode === "stale_known"), shown once the
+ *  unknown pool is empty — a distinct pool from buildReadRotationInsight's,
+ *  so it gets its own label rather than being folded into "unknown pool". */
+export function buildReadFallbackRotationInsight(
+  staleKnownCandidates: ScoredCandidate[],
+  now: Date,
+): RotationPoolInsight[] {
+  return [
+    buildInsight(
+      toPoolItems(staleKnownCandidates, "read"),
+      "Read queue (known-pool fallback)",
+      "read",
+      now,
+    ),
   ];
 }
 

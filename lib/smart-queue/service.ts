@@ -192,6 +192,20 @@ export async function listScoredCandidates(
   return pickTerms(candidates, candidates.length, context, { includeOwnFailSitOut: true });
 }
 
+/** Every known-pool staleness candidate for Read's stale-known fallback,
+ *  sorted — no slicing. Debug/inspection only. Session-scoped (web),
+ *  mirrors listScoredCandidates but via pickStaleKnownTerms instead of the
+ *  score engine, same as pickStaleKnownTermsForUser does for the live pick. */
+export async function listStaleKnownCandidates(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+): Promise<ScoredCandidate[]> {
+  const candidates = await fetchCandidates(client, userId, scope, "known");
+  if (candidates.length === 0) return [];
+  return pickStaleKnownTerms(candidates, candidates.length);
+}
+
 /** Review's mixed-pool counterpart of {@link listScoredCandidates} — every
  *  candidate from both pools, scored, tagged with origin, and merged at the
  *  RANKING.reviewMix ratio — no slicing. Debug/inspection only. */

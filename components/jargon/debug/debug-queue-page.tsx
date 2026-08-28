@@ -18,6 +18,9 @@ type DebugQueuePageProps = {
   rows: DebugScoredRow[];
   mix: DebugReviewMixInfo | null;
   insight: RotationPoolInsight[];
+  /** Read only: unknown pool was empty, so these rows are the known-pool
+   *  stale-known fallback (read_mode === "stale_known") instead. */
+  readFallbackActive: boolean;
   errorMessage: string | null;
 };
 
@@ -29,7 +32,8 @@ const CONTEXT_OPTIONS: Array<{
   {
     value: "read",
     title: "Read",
-    description: "Read page/command priority — unknown pool only, no pass/fail concept.",
+    description:
+      "Read page/command priority — unknown pool first, no pass/fail concept. Falls back to a known-pool staleness order once the unknown pool is empty, if Read settings has known-term fallback on.",
   },
   {
     value: "review",
@@ -94,6 +98,7 @@ export function DebugQueuePage({
   rows,
   mix,
   insight,
+  readFallbackActive,
   errorMessage,
 }: DebugQueuePageProps) {
   if (collections.length === 0) {
@@ -149,6 +154,16 @@ export function DebugQueuePage({
               ) : (
                 <p className="m-0 text-xs text-base-content/60">No terms in either pool.</p>
               )}
+            </fieldset>
+          ) : null}
+
+          {context === "read" && readFallbackActive ? (
+            <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
+              <legend className="mb-2 text-sm leading-none font-medium">Fallback</legend>
+              <p className="m-0 text-xs text-base-content/60">
+                Unknown pool is empty. Read settings has known-term fallback on, so these rows are
+                the known pool ordered by staleness instead — not scored, no reasons.
+              </p>
             </fieldset>
           ) : null}
         </QuizPanelBody>

@@ -2,12 +2,18 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { getReadMode } from "@/lib/jargon/read-settings";
 import {
   listScoredCandidates,
   listScoredMixedReviewCandidates,
   listScoredQuizCandidates,
+  listStaleKnownCandidates,
 } from "@/lib/smart-queue/service";
-import { buildRotationInsight, type RotationPoolInsight } from "@/lib/smart-queue/rotation-insight";
+import {
+  buildReadFallbackRotationInsight,
+  buildRotationInsight,
+  type RotationPoolInsight,
+} from "@/lib/smart-queue/rotation-insight";
 import type { FailSource, PickContext, PickReason } from "@/lib/smart-queue/types";
 import { RANKING } from "@/lib/smart-queue/weights";
 import type { Database } from "@/lib/supabase/database.types";
@@ -58,8 +64,10 @@ export type DebugReviewMixInfo = {
 };
 
 /** No status param — there's no user-facing pool toggle anymore. Read is
- *  always the unknown pool, Quiz is always the known pool, Review blends
- *  both (see listScoredMixedReviewCandidates). */
+ *  unknown-first (falling back to known-pool staleness order when
+ *  read_mode === "stale_known" and the unknown pool is empty — see
+ *  readFallbackActive), Quiz is always the known pool, Review blends both
+ *  (see listScoredMixedReviewCandidates). */
 export async function listDebugScoredTermsAction(
   domainIds: string[] | "all",
   context: PickContext,
@@ -67,6 +75,9 @@ export async function listDebugScoredTermsAction(
   rows?: DebugScoredRow[];
   mix?: DebugReviewMixInfo;
   insight?: RotationPoolInsight[];
+  /** Read only: true when the unknown pool was empty and these rows are the
+   *  known-pool stale-known fallback instead. */
+  readFallbackActive?: boolean;
   error?: string;
 }> {
   const auth = await requireAuthenticatedClient();
@@ -109,9 +120,26 @@ export async function listDebugScoredTermsAction(
       "unknown",
       context,
     );
+
+    if (scored.length > 0) {
+      return {
+        rows: await hydrateDebugRows(auth.supabase, scored),
+        insight: buildRotationInsight(scored, context),
+      };
+    }
+
+    // Unknown pool empty: mirror getNextReadTermAction's own fallback check
+    // so this view shows exactly what Read would actually serve next.
+    const readMode = await getReadMode(auth.supabase, auth.user.id);
+    if (readMode !== "stale_known") {
+      return { rows: [], insight: buildRotationInsight(scored, context) };
+    }
+
+    const staleKnown = await listStaleKnownCandidates(auth.supabase, auth.user.id, { domainIds });
     return {
-      rows: await hydrateDebugRows(auth.supabase, scored),
-      insight: buildRotationInsight(scored, context),
+      rows: await hydrateDebugRows(auth.supabase, staleKnown, true),
+      insight: buildReadFallbackRotationInsight(staleKnown, new Date()),
+      readFallbackActive: true,
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load scored terms.";
