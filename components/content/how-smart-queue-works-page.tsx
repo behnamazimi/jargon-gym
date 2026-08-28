@@ -54,7 +54,7 @@ const QUEUE_DOWN = [
 const SURFACES = [
   {
     title: "Web Read",
-    body: "One term at a time from the Read ranking, the same ranking Telegram /read and scheduled delivery use. Opening it counts as a read.",
+    body: "One term at a time from the Read ranking, the same ranking Telegram /read and scheduled delivery use. Opening it counts as a read. Once you've read everything unknown, it stops there by default, or you can flip a setting to keep going with terms you already know, oldest-read-first.",
   },
   {
     title: "Web review",
@@ -74,7 +74,7 @@ const SURFACES = [
   },
   {
     title: "Desktop widget",
-    body: "Terms cycle on your screen, peeked from the same Read ranking as everyone else, but rotating through them doesn't count toward anything. Open one to actually read it.",
+    body: "Terms cycle on your screen, peeked from the same Read ranking as everyone else (including the known-term fallback setting), but rotating through them doesn't count toward anything. Open one to actually read it.",
   },
 ] as const;
 

@@ -530,8 +530,9 @@ wording and the end-of-session summary are neutral ("Got it" / "Missed it")
 regardless of a card's origin, to avoid labels appearing to change meaning
 mid-session.
 
-Quiz and Read are unaffected — Quiz never had a status param, and Read stays
-hardcoded to the unknown pool.
+Quiz is unaffected — it never had a status param. Read's primary pick stays
+hardcoded to the unknown pool too, but it now has an opt-in fallback for
+once that pool is empty — see [Web Read](#web-read).
 
 ### Quiz ranking (hard tiers)
 
@@ -794,6 +795,18 @@ result, rather than needing a separate "reset to 0" step.
 - The Read page and `/read` command pull one term at a time from the `read`
   context ranking (never-read, staleness of last read, cross-activity fail
   nudges). Opening it → `read` event.
+- `read_mode` (`user_settings`, default `unknown_only`) — once the unknown
+  pool is empty, `unknown_only` shows the "caught up" empty state as before;
+  `stale_known` instead falls back to the known pool, ordered by a plain
+  staleness sort (`pickStaleKnownTerms` in
+  [`lib/smart-queue/pick.ts`](../lib/smart-queue/pick.ts): oldest
+  `last_read_at` first, nulls first, `read_count` ascending tiebreak) —
+  deliberately not the score engine. Re-checked on every fetch, so it never
+  suppresses a term that's genuinely unknown; it only fills the gap when
+  there's nothing unknown left at that moment. A fallback card still
+  triggers `recordRead` like any other and never flips known/unknown.
+  Configurable in Settings → Read; both `getNextReadTermAction` and the
+  widget's `fetchWidgetState` check it the same way.
 
 ### Web review
 
@@ -863,9 +876,12 @@ result, rather than needing a separate "reset to 0" step.
 ### Desktop widget
 
 - `/api/widget/state` **peeks** — same Read scoring/mix as everyone else, up
-  to 10 unknown terms, `recordRead` is never called. `read-state.sh` stores
-  that batch locally (`state.json`: `remaining` / `staged` / `batchIds`) and
-  walks it term by term.
+  to 10 unknown terms, `recordRead` is never called. Also honors `read_mode`:
+  if the unknown pick comes back empty and `read_mode === "stale_known"`, it
+  falls back to the same known-pool staleness pick the web Read page uses
+  (see [Web Read](#web-read)) instead of returning nothing. `read-state.sh`
+  stores that batch locally (`state.json`: `remaining` / `staged` /
+  `batchIds`) and walks it term by term.
 - Local walk: serve `remaining[0]`, no API call, until only one term is left
   and nothing is staged — then prefetch the next batch with
   `exclude=<batchIds>` so it can't repeat the batch just finished. Refresh
@@ -909,11 +925,17 @@ events.
 Read is built on
 [`lib/smart-queue/service.ts`](../lib/smart-queue/service.ts)'s
 `listScoredCandidates`, which is `pickTerms` with `limit` set to every
-candidate instead of a top-N slice; the Pool filter (known/unknown) applies
-normally there. **Quiz is locked to the known pool** — selecting the Quiz
-context forces `status=known` regardless of the URL, and scoring goes
-through `listScoredQuizCandidates` (`pickQuizTerms` with every candidate,
-tiers and same-day sit-outs both included) instead of `listScoredCandidates`.
+candidate instead of a top-N slice, always against the unknown pool. When
+that comes back empty and `read_mode === "stale_known"`, the view mirrors
+`getNextReadTermAction`'s own fallback check and switches to
+`listStaleKnownCandidates` (`pickStaleKnownTerms` over every known
+candidate — no score, no reasons) instead, with a "Fallback" note above the
+rows and the Rotation insight panel relabeled "Read queue (known-pool
+fallback)" so it's clear which pool is in view. **Quiz is locked to the
+known pool** — selecting the Quiz context forces `status=known` regardless
+of the URL, and scoring goes through `listScoredQuizCandidates`
+(`pickQuizTerms` with every candidate, tiers and same-day sit-outs both
+included) instead of `listScoredCandidates`.
 
 **Review has no Pool filter** — it always shows the mixed view, via
 `listScoredMixedReviewCandidates` (`pickMixedReviewTerms` over every
