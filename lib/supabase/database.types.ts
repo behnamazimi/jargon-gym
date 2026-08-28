@@ -451,6 +451,7 @@ export type Database = {
           last_active_date: string | null;
           longest_streak: number;
           provider: string | null;
+          read_mode: string;
           timezone: string | null;
           updated_at: string;
           user_id: string;
@@ -463,6 +464,7 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
+          read_mode?: string;
           timezone?: string | null;
           updated_at?: string;
           user_id: string;
@@ -475,6 +477,7 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
+          read_mode?: string;
           timezone?: string | null;
           updated_at?: string;
           user_id?: string;
@@ -633,6 +636,7 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      get_read_mode: { Args: { p_user_id: string }; Returns: string };
       get_review_candidates: {
         Args: { p_domain_ids?: string[]; p_status?: string; p_user_id: string };
         Returns: {

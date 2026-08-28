@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { pickReviewTermsForUser } from "@/lib/smart-queue/service";
+import { getReadModeForUser } from "@/lib/jargon/read-settings";
+import { pickReviewTermsForUser, pickStaleKnownTermsForUser } from "@/lib/smart-queue/service";
 import type { WidgetStateResponse, WidgetTerm } from "@/lib/widget/types";
 import { resolveReviewDomainIdsForUser } from "./known-state";
 
@@ -8,7 +9,10 @@ type Client = SupabaseClient<Database>;
 
 const WIDGET_POOL_SIZE = 2;
 
-/** Peeks up to `limit` unknown Read terms — never records a read. */
+/** Peeks up to `limit` Read terms — never records a read. Unknown pool
+ *  first, same as the web Read action; falls back to stale known terms
+ *  only if the unknown pick is empty and read_mode === "stale_known", so
+ *  the widget stops going silently empty once a collection is fully read. */
 export async function fetchWidgetState(
   client: Client,
   userId: string,
@@ -21,15 +25,30 @@ export async function fetchWidgetState(
     return { terms: [], totalCount: 0, knownCount: 0 };
   }
 
-  const { cards } = await pickReviewTermsForUser(
+  const scope = { domainIds: reviewDomainIds };
+  let { cards } = await pickReviewTermsForUser(
     client,
     userId,
-    { domainIds: reviewDomainIds },
+    scope,
     "unknown",
     limit,
     "read",
     excludeTermIds,
   );
+
+  if (cards.length === 0) {
+    const readMode = await getReadModeForUser(client, userId);
+    if (readMode === "stale_known") {
+      const fallback = await pickStaleKnownTermsForUser(
+        client,
+        userId,
+        scope,
+        limit,
+        excludeTermIds,
+      );
+      cards = fallback.cards;
+    }
+  }
 
   const terms: WidgetTerm[] = cards.map((card) => ({
     id: card.id,

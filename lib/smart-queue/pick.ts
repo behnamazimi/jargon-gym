@@ -195,6 +195,33 @@ export function pickQuizTerms(
   return withSitOuts.slice(0, limit);
 }
 
+/** Read's stale-known fallback: known pool only, plain deterministic sort
+ *  by staleness — deliberately bypasses scoreCandidate/RANKING entirely,
+ *  unlike every other pick function in this file. This only ever runs once
+ *  the unknown pool has come up empty, so determinism (always resurface the
+ *  term you've neglected longest) matters more than the lane-mix/decay
+ *  variety pickTerms is built for. Oldest lastReadAt sorts first; a null
+ *  lastReadAt (marked known via the manual toggle, never actually read)
+ *  sorts ahead of everything, same "least engaged first" instinct as
+ *  isUnverifiedByEngagement above. readCount ascending breaks ties. */
+export function pickStaleKnownTerms(
+  candidates: ReviewCandidate[],
+  limit: number,
+): ScoredCandidate[] {
+  if (candidates.length === 0 || limit <= 0) {
+    return [];
+  }
+
+  const sorted = [...candidates].sort((a, b) => {
+    const aTime = a.lastReadAt?.getTime() ?? 0;
+    const bTime = b.lastReadAt?.getTime() ?? 0;
+    if (aTime !== bTime) return aTime - bTime;
+    return a.readCount - b.readCount;
+  });
+
+  return sorted.slice(0, limit).map((candidate) => ({ ...candidate, score: 0, reasons: [] }));
+}
+
 /** Which pool a candidate came from — derived from `knownAt` rather than
  *  stored separately, since the repository already populates it correctly
  *  per-candidate regardless of which status was queried. */

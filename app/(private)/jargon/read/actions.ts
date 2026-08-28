@@ -2,11 +2,12 @@
 
 import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { getReadMode } from "@/lib/jargon/read-settings";
 import { recordRead } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser } from "@/lib/smart-queue/hydrate";
-import { pickReviewTermsForUser } from "@/lib/smart-queue/service";
+import { pickReviewTermsForUser, pickStaleKnownTermsForUser } from "@/lib/smart-queue/service";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listStudyCollections } from "@/lib/study/collections";
 
@@ -87,16 +88,32 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
 
   try {
     const admin = createAdminClient();
+    const scope = { domainIds: domainIdsForRead(domainId) };
     const { cards, pickMeta } = await pickReviewTermsForUser(
       admin,
       auth.user.id,
-      { domainIds: domainIdsForRead(domainId) },
+      scope,
       "unknown",
       1,
       "read",
     );
-    const card = cards[0];
-    const meta = pickMeta[0];
+    let card = cards[0];
+    let meta = pickMeta[0];
+    let originStatus: "known" | "unknown" = "unknown";
+
+    if (!card) {
+      // Unknown pool empty: fall back to known terms only if the user opted
+      // in. Checked fresh on every request, so a term that later comes back
+      // unknown (import, Review miss) is found by the pick above next time,
+      // ahead of this fallback — read_mode never suppresses unknown terms.
+      const readMode = await getReadMode(auth.supabase, auth.user.id);
+      if (readMode === "stale_known") {
+        const fallback = await pickStaleKnownTermsForUser(admin, auth.user.id, scope, 1);
+        card = fallback.cards[0];
+        meta = fallback.pickMeta[0];
+        originStatus = "known";
+      }
+    }
 
     if (!card) {
       return { caughtUp: true };
@@ -105,7 +122,7 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
     scheduleRecordRead(auth.user.id, card.id);
 
     return {
-      term: toReviewTerm(card, "unknown", meta?.reasons, meta?.score),
+      term: toReviewTerm(card, originStatus, meta?.reasons, meta?.score),
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load the next term. Try again.";

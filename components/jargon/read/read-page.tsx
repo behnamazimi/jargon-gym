@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, ArrowLeft, ArrowRight, PartyPopper } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef, useState, useTransition } from "react";
 import {
   getNextReadTermAction,
@@ -96,38 +97,36 @@ function isTypingTarget(target: EventTarget | null) {
 function ReadCaughtUp({
   description,
   showLibraryLinks,
-  onCheckAgain,
-  isPending,
 }: {
   description: string;
   showLibraryLinks: boolean;
-  onCheckAgain: () => void;
-  isPending: boolean;
 }) {
   return (
     <QuizPanel>
       <QuizPanelHeader icon={PartyPopper} title="You're all caught up" description={description} />
       <QuizPanelBody>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button
-            type="button"
-            onPress={onCheckAgain}
-            isDisabled={isPending}
-            className={PRESS_CLASS}
-          >
-            {isPending ? "Loading…" : "Check again"}
-          </Button>
-          {showLibraryLinks ? (
-            <>
+        {showLibraryLinks ? (
+          <>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <LinkButton href="/jargon" variant="outline">
                 Collections
               </LinkButton>
               <LinkButton href="/jargon/import" variant="outline">
                 Import jargon
               </LinkButton>
-            </>
-          ) : null}
-        </div>
+            </div>
+            <p className="m-0 text-sm text-base-content/60">
+              Prefer to keep going instead? Turn on known-term fallback in{" "}
+              <Link
+                href="/jargon/settings?tab=read"
+                className="font-semibold text-base-content underline decoration-base-content/30 underline-offset-2 hover:decoration-base-content"
+              >
+                Read settings
+              </Link>
+              .
+            </p>
+          </>
+        ) : null}
       </QuizPanelBody>
     </QuizPanel>
   );
@@ -465,8 +464,6 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
             showLibraryLinks={
               selectedCollectionId === lastPickedDomainId && selectedCollectionId === "all"
             }
-            onCheckAgain={fetchNext}
-            isPending={isPending}
           />
         ) : null}
 

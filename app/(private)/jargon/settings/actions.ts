@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { saveReadMode } from "@/lib/jargon/read-settings";
+import type { ReadMode } from "@/lib/jargon/read-settings";
 import { clearLlmSettings, saveLlmSettings } from "@/lib/llm/settings";
 import type { LlmProvider } from "@/lib/llm/types";
 import {
@@ -103,6 +105,21 @@ export async function updateTelegramCadenceAction(
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Couldn't update reminder cadence. Try again.";
+    return { error: message };
+  }
+}
+
+export async function updateReadModeAction(readMode: ReadMode): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await saveReadMode(auth.supabase, auth.user.id, readMode);
+    revalidatePath("/jargon/settings");
+    revalidatePath("/jargon/read");
+    return {};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't update read mode. Try again.";
     return { error: message };
   }
 }

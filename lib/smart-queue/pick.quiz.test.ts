@@ -11,10 +11,7 @@ function hoursAgo(hours: number): Date {
 /** Base fixture: a never-quizzed known term, no engagement at all. Override
  *  fields per test to move a candidate between tier-1's two sub-groups, or
  *  into tier 2/3. */
-function makeCandidate(
-  termId: string,
-  overrides: Partial<ReviewCandidate> = {},
-): ReviewCandidate {
+function makeCandidate(termId: string, overrides: Partial<ReviewCandidate> = {}): ReviewCandidate {
   return {
     termId,
     domainId: "d1",
@@ -77,7 +74,11 @@ describe("pickQuizTerms tier 1: risk-ordered never-quizzed backlog", () => {
 
     const result = pickQuizTerms([newest, oldest, middle], 3);
 
-    expect(result.map((c) => c.termId)).toEqual(["engaged-oldest", "engaged-middle", "engaged-newest"]);
+    expect(result.map((c) => c.termId)).toEqual([
+      "engaged-oldest",
+      "engaged-middle",
+      "engaged-newest",
+    ]);
   });
 
   it("a read-only or review-only engagement is enough to leave the unverified group", () => {

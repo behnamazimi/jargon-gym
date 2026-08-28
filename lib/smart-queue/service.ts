@@ -9,6 +9,7 @@ import {
   originOf,
   pickMixedReviewTerms as mixReviewCandidates,
   pickQuizTerms,
+  pickStaleKnownTerms,
   pickTerms,
 } from "./pick";
 import { computePoolStats } from "./stats";
@@ -290,6 +291,45 @@ export async function pickQuizTermCardsForUser(
     score: s.score,
     reasons: s.reasons,
     strength: strengthForCandidate(s, "quiz", now),
+  }));
+
+  const cards = await hydrateTermCardsForUser(
+    client,
+    userId,
+    scored.map((s) => s.termId),
+  );
+
+  return { cards, pickMeta };
+}
+
+/** Read's stale-known fallback pick: known pool only, plain staleness sort
+ *  via pickStaleKnownTerms instead of pickTerms's score engine. Called by
+ *  getNextReadTermAction and fetchWidgetState only after their own unknown-
+ *  pool pick comes back empty and read_mode === "stale_known". Service-role
+ *  only — both current callers already use the admin client. */
+export async function pickStaleKnownTermsForUser(
+  client: Client,
+  userId: string,
+  scope: ReviewScope,
+  limit: number,
+  excludeTermIds?: string[],
+): Promise<PickReviewResult> {
+  let candidates = await fetchCandidatesForUser(client, userId, scope, "known");
+
+  if (excludeTermIds && excludeTermIds.length > 0) {
+    const excludeSet = new Set(excludeTermIds);
+    candidates = candidates.filter((c) => !excludeSet.has(c.termId));
+  }
+
+  if (candidates.length === 0) return { cards: [], pickMeta: [] };
+
+  const scored = pickStaleKnownTerms(candidates, limit);
+  if (scored.length === 0) return { cards: [], pickMeta: [] };
+
+  const pickMeta: PickMeta[] = scored.map((s) => ({
+    termId: s.termId,
+    score: s.score,
+    reasons: s.reasons,
   }));
 
   const cards = await hydrateTermCardsForUser(
