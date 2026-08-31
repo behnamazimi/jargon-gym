@@ -24,18 +24,9 @@ export async function fetchQuizTermPool(
   domainIds: string[] | "all",
   questionCount: number,
 ): Promise<QuizTerm[]> {
-  const { cards, pickMeta } = await fetchStudyQuizTermPool(
-    client,
-    userId,
-    { domainIds },
-    questionCount,
-  );
+  const { cards } = await fetchStudyQuizTermPool(client, userId, { domainIds }, questionCount);
 
-  const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
-  return cards.map((card) => {
-    const meta = metaById.get(card.id);
-    return toQuizTerm(card, meta?.reasons, meta?.strength);
-  });
+  return cards.map(toQuizTerm);
 }
 
 export function countTermsForSelection(

@@ -11,7 +11,6 @@ export function useJargonList(initialData: JargonPageData) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
   const [hideKnown, setHideKnown] = useState(false);
-  const [showStrength, setShowStrength] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>("default");
   const [openTerms, setOpenTerms] = useState<Set<string>>(new Set());
   const [knownTerms, setKnownTerms] = useState<Set<string>>(
@@ -111,8 +110,6 @@ export function useJargonList(initialData: JargonPageData) {
     activeCategories,
     hideKnown,
     setHideKnown,
-    showStrength,
-    setShowStrength,
     sortMode,
     setSortMode,
     openTerms,

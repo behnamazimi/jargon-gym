@@ -23,7 +23,7 @@ const SURFACES = [
   },
   {
     title: "Desktop widget",
-    body: "Cycles terms from the Read ranking on your screen in the background. It doesn't log anything on its own, open one to actually read it.",
+    body: "Cycles random terms on your screen in the background. It doesn't log anything on its own, open one to actually read it.",
   },
 ] as const;
 
@@ -89,12 +89,8 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
 
         <ContentPageSection title="No due dates">
           <p className="m-0">
-            Instead of a schedule, the queue ranks by what you&apos;ve neglected or gotten wrong, so
-            there&apos;s never a backlog waiting for you when you come back. See{" "}
-            <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
-              how the Smart Queue works
-            </Link>{" "}
-            for the ranking itself.
+            Instead of a schedule, terms come up at random, so there&apos;s never a backlog waiting
+            for you when you come back.
           </p>
         </ContentPageSection>
 
@@ -104,11 +100,6 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             of Review and Quiz: get it right and a term moves toward known, miss it and it goes
             back. You can also flip one directly if you already know it cold.
           </p>
-          <p className="m-0">
-            Separately, a strength score on each term reflects how well you actually know it,
-            weighted toward Review since a review pass is stronger evidence than a lucky quiz guess.
-            It never feeds back into the ranking, it&apos;s just where you stand.
-          </p>
         </ContentPageSection>
 
         <ContentPageSection title="Wherever you are">
@@ -116,8 +107,8 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             <strong className="font-medium text-base-content">
               Use as many or as few surfaces as you want
             </strong>
-            , web, Telegram, and the desktop widget all pull from the same ranking, so switching
-            between them doesn&apos;t reset anything.
+            , web, Telegram, and the desktop widget all pull from the same known/unknown state, so
+            switching between them doesn&apos;t reset anything.
           </p>
           <ContentPageTitledBulletList items={SURFACES} />
         </ContentPageSection>

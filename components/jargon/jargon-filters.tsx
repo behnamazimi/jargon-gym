@@ -23,23 +23,15 @@ type JargonFiltersProps = {
   onToggleCategory: (cat: string) => void;
   hideKnown: boolean;
   onHideKnownChange: (value: boolean) => void;
-  showStrength: boolean;
-  onShowStrengthChange: (value: boolean) => void;
   sortMode: SortMode;
   onSortChange: (value: SortMode) => void;
   visibleCount: number;
 };
 
-function countActiveFilters(
-  activeCategories: Set<string>,
-  hideKnown: boolean,
-  showStrength: boolean,
-  sortMode: SortMode,
-) {
+function countActiveFilters(activeCategories: Set<string>, hideKnown: boolean, sortMode: SortMode) {
   let count = 0;
   if (activeCategories.size > 0) count += 1;
   if (hideKnown) count += 1;
-  if (showStrength) count += 1;
   if (sortMode !== "default") count += 1;
   return count;
 }
@@ -56,8 +48,6 @@ export function JargonFilters({
   onToggleCategory,
   hideKnown,
   onHideKnownChange,
-  showStrength,
-  onShowStrengthChange,
   sortMode,
   onSortChange,
   visibleCount,
@@ -65,8 +55,8 @@ export function JargonFilters({
   const [expanded, setExpanded] = useState(false);
 
   const activeFilterCount = useMemo(
-    () => countActiveFilters(activeCategories, hideKnown, showStrength, sortMode),
-    [activeCategories, hideKnown, showStrength, sortMode],
+    () => countActiveFilters(activeCategories, hideKnown, sortMode),
+    [activeCategories, hideKnown, sortMode],
   );
 
   return (
@@ -113,8 +103,6 @@ export function JargonFilters({
           <Toolbar
             hideKnown={hideKnown}
             onHideKnownChange={onHideKnownChange}
-            showStrength={showStrength}
-            onShowStrengthChange={onShowStrengthChange}
             sortMode={sortMode}
             onSortChange={onSortChange}
             visibleCount={visibleCount}

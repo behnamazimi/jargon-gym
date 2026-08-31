@@ -18,14 +18,10 @@ export function FinalCtaSection({ isLoggedIn }: { isLoggedIn: boolean }) {
         If you want to know more before signing up:{" "}
         <Link href="/before-you-sign-up" className={contentPageLinkClass}>
           Before you sign up
-        </Link>
-        ,{" "}
+        </Link>{" "}
+        and{" "}
         <Link href="/how-terms-work" className={contentPageLinkClass}>
           how terms are built
-        </Link>
-        , and{" "}
-        <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
-          how the Smart Queue works
         </Link>
         .
       </p>

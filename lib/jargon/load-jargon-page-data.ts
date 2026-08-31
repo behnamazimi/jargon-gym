@@ -72,7 +72,7 @@ export async function loadJargonPageData(
       fetchProgressStateByDomain(client, [selectedRow.id]),
       fetchTermRelationshipsForTerms(client, termIds),
     ]);
-    const { knownTermIds, overallStrengthByTermId } = progressState;
+    const { knownTermIds } = progressState;
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
     return {
@@ -81,7 +81,6 @@ export async function loadJargonPageData(
       terms,
       knownTermIds,
       activeDomainIds: reviewDomainIds,
-      overallStrengthByTermId,
     };
   } catch (err) {
     throw toJargonDataError(err, "Couldn't load your collection. Refresh the page or try again.");

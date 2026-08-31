@@ -1,8 +1,11 @@
-/** Local calendar-day helpers for same-day cooldowns.
+/** Local calendar-day helpers for "did you do this today" dashboard counts.
  *
- *  Scoring runs on the server; "local" means RANKING.timezone, not the
+ *  Runs on the server; "local" means STUDY_TIMEZONE below, not the
  *  request's browser offset.
  */
+
+/** IANA timezone "today" is measured against for same-day dashboard counts. */
+export const STUDY_TIMEZONE = "Europe/Amsterdam";
 
 /** True when both instants fall on the same calendar date in `timeZone`. */
 export function isSameLocalDay(a: Date, b: Date, timeZone: string): boolean {

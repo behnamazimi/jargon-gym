@@ -91,7 +91,6 @@ export async function deliverNextTerm(
     { domainIds: "all" },
     "unknown",
     1,
-    "read",
   );
   const term = cards[0];
   const meta = pickMeta[0];

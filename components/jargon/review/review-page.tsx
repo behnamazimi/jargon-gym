@@ -71,13 +71,11 @@ function ReviewPoolBreakdown({
   stats: {
     unseen: number;
     seen: number;
-    stale: number;
     total: number;
   } | null;
 }) {
   const unseen = stats?.unseen ?? 0;
   const seen = stats?.seen ?? 0;
-  const stale = stats?.stale ?? 0;
   const total = stats?.total ?? 0;
 
   return (
@@ -91,8 +89,6 @@ function ReviewPoolBreakdown({
       <span className="font-medium tabular-nums">{unseen}</span> never reviewed
       {" · "}
       <span className="font-medium tabular-nums">{seen}</span> reviewed
-      {" · "}
-      <span className="font-medium tabular-nums">{stale}</span> stale
       {" · "}
       <span className="font-medium tabular-nums">
         {seen}/{total}
@@ -129,7 +125,6 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
   const [poolStats, setPoolStats] = useState<{
     unseen: number;
     seen: number;
-    stale: number;
     total: number;
     allSeenOnce: boolean;
   } | null>(null);

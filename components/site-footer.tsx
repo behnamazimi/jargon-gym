@@ -24,12 +24,6 @@ export function SiteFooter() {
             How terms are built
           </Link>
           <Link
-            href="/how-smart-queue-works"
-            className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
-          >
-            How the Smart Queue works
-          </Link>
-          <Link
             href="/j"
             className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
           >

@@ -10,15 +10,12 @@ import type {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
-function formatBucketLine(buckets: Array<[word: string, count: number]>): string {
-  const nonZero = buckets.filter(([, count]) => count > 0);
-  if (nonZero.length === 0) return "None waiting";
-  return nonZero.map(([word, count]) => `${count} ${word}`).join(" · ");
+function formatUnseenLine(unseen: number): string {
+  return unseen === 0 ? "None waiting" : `${unseen} never studied`;
 }
 
 function formatUnknownFootnote(collection: CollectionStatBreakdown): string {
-  const total = collection.unknownNever + collection.unknownRecent + collection.unknownStale;
-  return `${total} unknown: ${collection.unknownNever} never · ${collection.unknownRecent} recent · ${collection.unknownStale} stale`;
+  return `${collection.unknownCount} unknown`;
 }
 
 function formatAccuracy(accuracy: AccuracySummary): string {
@@ -26,20 +23,12 @@ function formatAccuracy(accuracy: AccuracySummary): string {
   return `${accuracy.percentage}% recall (${accuracy.passed}/${accuracy.attempted})`;
 }
 
-function RollupRow({
-  label,
-  buckets,
-  today,
-}: {
-  label: string;
-  buckets: Array<[string, number]>;
-  today: number;
-}) {
+function RollupRow({ label, unseen, today }: { label: string; unseen: number; today: number }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2 text-sm">
       <span className="font-medium text-base-content">{label}</span>
       <span className="text-base-content/60">
-        {formatBucketLine(buckets)} · {today} today
+        {formatUnseenLine(unseen)} · {today} today
       </span>
     </div>
   );
@@ -124,30 +113,13 @@ export function MasteryOverview({ stats }: MasteryOverviewProps) {
         <div className="mt-3 space-y-4">
           {stats.activeCollections.length > 0 ? (
             <div className="divide-y divide-base-content/10">
-              <RollupRow
-                label="Read"
-                buckets={[
-                  ["never", stats.rollup.read.never],
-                  ["stale", stats.rollup.read.stale],
-                ]}
-                today={stats.today.read}
-              />
+              <RollupRow label="Read" unseen={stats.rollup.read.unseen} today={stats.today.read} />
               <RollupRow
                 label="Review"
-                buckets={[
-                  ["never", stats.rollup.review.never],
-                  ["struggling", stats.rollup.review.struggling],
-                ]}
+                unseen={stats.rollup.review.unseen}
                 today={stats.today.review}
               />
-              <RollupRow
-                label="Quiz"
-                buckets={[
-                  ["never", stats.rollup.quiz.never],
-                  ["struggling", stats.rollup.quiz.struggling],
-                ]}
-                today={stats.today.quiz}
-              />
+              <RollupRow label="Quiz" unseen={stats.rollup.quiz.unseen} today={stats.today.quiz} />
             </div>
           ) : null}
 

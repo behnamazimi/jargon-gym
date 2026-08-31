@@ -1,29 +1,25 @@
-import type { MasteryRow as MasteryRowData } from "@/lib/jargon/mastery";
-import { OverallStrengthBars } from "@/components/jargon/overall-strength-bars";
-import { CircleCheckBig } from "lucide-react";
+import type { MasteryCollectionRow } from "@/lib/jargon/mastery";
 
 type MasteryRowProps = {
-  row: MasteryRowData;
+  row: MasteryCollectionRow;
 };
 
 export function MasteryRow({ row }: MasteryRowProps) {
   return (
     <li className="shadow-surface flex items-center justify-between gap-3 rounded-xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="truncate text-sm font-medium text-base-content">{row.term}</span>
-          {row.known ? (
-            <span className="text-xs text-success" aria-hidden title="Known">
-              <CircleCheckBig className="size-3.5" aria-hidden />
-            </span>
-          ) : null}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="truncate font-medium text-base-content">{row.domainName}</span>
+          <span className="shrink-0 tabular-nums text-base-content/60">
+            {row.knownCount}/{row.totalCount} known ({row.percentage}%)
+          </span>
         </div>
-        <p className="mt-0.5 truncate text-xs text-base-content/50">
-          {row.domainName} · {row.category}
-        </p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <OverallStrengthBars bars={row.bars} bucket={row.bucket} score={row.score} caption />
+        <progress
+          className="progress progress-primary mt-1.5 h-1.5 w-full"
+          value={row.percentage}
+          max={100}
+          aria-label={`${row.domainName} known ${row.percentage}%`}
+        />
       </div>
     </li>
   );

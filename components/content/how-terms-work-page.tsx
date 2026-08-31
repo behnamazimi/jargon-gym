@@ -1,5 +1,4 @@
 import { BookOpen } from "lucide-react";
-import Link from "next/link";
 import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
 import {
   ContentPageBulletList,
@@ -9,7 +8,6 @@ import {
   ContentPageSection,
   ContentPageShell,
   ContentPageTitledBulletList,
-  contentPageLinkClass,
 } from "@/components/content/content-page-shell";
 
 const TERM_FIELDS = [
@@ -156,11 +154,7 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
             desktop widget, and it moves between states. I wanted that to follow the term
             everywhere. Review always draws from whichever pool you pick; Quiz only ever draws from
             the known pool, since it&apos;s a check on terms you&apos;ve already marked known, not a
-            way to learn new ones, a miss there sends the term back to unknown automatically.{" "}
-            <Link href="/how-smart-queue-works" className={contentPageLinkClass}>
-              How the Smart Queue works
-            </Link>{" "}
-            covers how the queue ranks terms inside each pool.
+            way to learn new ones, a miss there sends the term back to unknown automatically.
           </p>
         </ContentPageSection>
 

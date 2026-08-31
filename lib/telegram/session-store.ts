@@ -477,7 +477,6 @@ export async function createReviewSession(
     { domainIds: domainIdsForScope(domainId) },
     count,
     "admin",
-    "review",
   );
   const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
   const terms: ReviewSessionTerm[] = cards.map((card) => ({

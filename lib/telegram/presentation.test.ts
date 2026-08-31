@@ -78,9 +78,9 @@ describe("presentation HTML escaping", () => {
       activeCount: 1,
       pausedCount: 0,
       rollup: {
-        read: { never: 0, stale: 0 },
-        review: { never: 0, struggling: 0 },
-        quiz: { never: 0, struggling: 0 },
+        read: { unseen: 0 },
+        review: { unseen: 0 },
+        quiz: { unseen: 0 },
       },
       activeCollections: [
         {
@@ -89,9 +89,7 @@ describe("presentation HTML escaping", () => {
           percentage: 50,
           knownCount: 1,
           totalCount: 2,
-          unknownNever: 1,
-          unknownRecent: 0,
-          unknownStale: 0,
+          unknownCount: 1,
         },
       ],
     });

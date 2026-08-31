@@ -3,9 +3,7 @@ import {
   getReadSetupData,
   getReadTermByIdAction,
 } from "@/app/(private)/jargon/read/actions";
-import { HintPopover } from "@/components/jargon/hint-popover";
 import { ReadPage } from "@/components/jargon/read/read-page";
-import { loadStudyHints } from "@/lib/hints/load-study-hints";
 import type { StudyCollection } from "@/lib/study/types";
 
 type PageProps = {
@@ -23,11 +21,7 @@ function resolveReadCollectionId(
 }
 
 export default async function JargonReadPage({ searchParams }: PageProps) {
-  const [params, setup, hints] = await Promise.all([
-    searchParams,
-    getReadSetupData(),
-    loadStudyHints(),
-  ]);
+  const [params, setup] = await Promise.all([searchParams, getReadSetupData()]);
 
   if ("error" in setup) {
     return <p className="text-sm text-base-content/60">Log in to read terms.</p>;
@@ -43,9 +37,6 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
   }
 
   return (
-    <>
-      <ReadPage initialResult={initialResult} collections={setup.collections} domainId={domainId} />
-      {hints.length > 0 ? <HintPopover hints={hints} /> : null}
-    </>
+    <ReadPage initialResult={initialResult} collections={setup.collections} domainId={domainId} />
   );
 }

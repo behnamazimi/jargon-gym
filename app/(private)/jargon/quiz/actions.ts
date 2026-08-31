@@ -68,7 +68,6 @@ export async function previewQuizQueueAction(input: {
       preview: terms.map((term) => ({
         id: term.id,
         term: term.term,
-        pickReasons: term.pickReasons,
       })),
     };
   } catch (err) {

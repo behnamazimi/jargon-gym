@@ -105,16 +105,8 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
   try {
     const admin = createAdminClient();
     const scope = { domainIds: domainIdsForRead(domainId) };
-    const { cards, pickMeta } = await pickReviewTermsForUser(
-      admin,
-      auth.user.id,
-      scope,
-      "unknown",
-      1,
-      "read",
-    );
+    const { cards } = await pickReviewTermsForUser(admin, auth.user.id, scope, "unknown", 1);
     let card = cards[0];
-    let meta = pickMeta[0];
     let originStatus: "known" | "unknown" = "unknown";
 
     if (!card) {
@@ -126,7 +118,6 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
       if (readMode === "stale_known") {
         const fallback = await pickStaleKnownTermsForUser(admin, auth.user.id, scope, 1);
         card = fallback.cards[0];
-        meta = fallback.pickMeta[0];
         originStatus = "known";
       }
     }
@@ -136,7 +127,7 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
     }
 
     return {
-      term: toReviewTerm(card, originStatus, meta?.reasons, meta?.score),
+      term: toReviewTerm(card, originStatus),
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load the next term. Try again.";

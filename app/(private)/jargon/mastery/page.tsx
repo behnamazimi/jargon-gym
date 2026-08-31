@@ -18,7 +18,7 @@ export default async function JargonMasteryPage() {
     );
   }
 
-  const [{ rows, collections }, stats] = await Promise.all([
+  const [{ rows }, stats] = await Promise.all([
     loadMasteryOverview(supabase, user.id),
     fetchStatsSnapshot(supabase, user.id),
   ]);
@@ -40,5 +40,5 @@ export default async function JargonMasteryPage() {
     );
   }
 
-  return <MasteryPage rows={rows} collections={collections} stats={stats} />;
+  return <MasteryPage rows={rows} stats={stats} />;
 }

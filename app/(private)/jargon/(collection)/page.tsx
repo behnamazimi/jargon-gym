@@ -1,21 +1,18 @@
 import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
-import { HintPopover } from "@/components/jargon/hint-popover";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/auth/require-session";
-import { loadStudyHints } from "@/lib/hints/load-study-hints";
 
 type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };
 
 export default async function JargonListPage({ searchParams }: PageProps) {
-  const [{ user, supabase }, { domain: selectedDomainId }, hints] = await Promise.all([
+  const [{ user, supabase }, { domain: selectedDomainId }] = await Promise.all([
     getSessionUser(),
     searchParams,
-    loadStudyHints(),
   ]);
 
   if (!user) {
@@ -31,12 +28,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
       userId: user.id,
       selectedDomainId,
     });
-    return (
-      <>
-        <JargonPage initialData={data} hints={hints} />
-        {hints.length > 0 ? <HintPopover hints={hints} /> : null}
-      </>
-    );
+    return <JargonPage initialData={data} />;
   } catch (err) {
     if (err instanceof JargonDataError && err.message.includes("don't have any collections")) {
       return <EmptyCollection />;

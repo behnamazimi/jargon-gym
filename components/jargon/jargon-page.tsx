@@ -2,23 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { JargonPageData } from "@/lib/jargon/types";
-import type { NextBestActionHint } from "@/lib/smart-queue/next-best-action";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { PageShell } from "@/components/page-container";
 import { DomainSidebar } from "./domain-sidebar";
 import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
-import { NextBestActionCard } from "./next-best-action-card";
 import { TermFormDialog } from "./term-form-dialog";
 import { TermList } from "./term-list";
 
 type JargonPageProps = {
   initialData: JargonPageData;
-  hints: NextBestActionHint[];
 };
 
-export function JargonPage({ initialData, hints }: JargonPageProps) {
+export function JargonPage({ initialData }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -34,8 +31,6 @@ export function JargonPage({ initialData, hints }: JargonPageProps) {
     activeCategories,
     hideKnown,
     setHideKnown,
-    showStrength,
-    setShowStrength,
     sortMode,
     setSortMode,
     openTerms,
@@ -99,8 +94,6 @@ export function JargonPage({ initialData, hints }: JargonPageProps) {
           </aside>
 
           <div className="min-w-0 flex-1 space-y-4">
-            <NextBestActionCard hints={hints} />
-
             <JargonDomainHeader
               domain={domainWithLiveCount}
               domains={domainsWithLiveCounts}
@@ -122,8 +115,6 @@ export function JargonPage({ initialData, hints }: JargonPageProps) {
               onToggleCategory={toggleCategory}
               hideKnown={hideKnown}
               onHideKnownChange={setHideKnown}
-              showStrength={showStrength}
-              onShowStrengthChange={setShowStrength}
               sortMode={sortMode}
               onSortChange={setSortMode}
               visibleCount={filteredTerms.length}
@@ -132,8 +123,6 @@ export function JargonPage({ initialData, hints }: JargonPageProps) {
             <TermList
               terms={filteredTerms}
               knownTerms={knownTerms}
-              overallStrengthByTermId={initialData.overallStrengthByTermId}
-              showStrength={showStrength}
               openTerms={openTerms}
               isOwner={isOwner}
               domainId={domain.id}

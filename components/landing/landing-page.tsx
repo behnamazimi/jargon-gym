@@ -6,7 +6,6 @@ import { FinalCtaSection } from "./final-cta-section";
 import { HeroSection } from "./hero-section";
 import { NotSrsSection } from "./not-srs-section";
 import { PlatformsSection } from "./platforms-section";
-import { SmartQueueSection } from "./smart-queue-section";
 import { ThreeWaysSection } from "./three-ways-section";
 
 export async function LandingPage() {
@@ -30,7 +29,6 @@ export async function LandingPage() {
         <div className="mt-16 space-y-14 sm:mt-24 sm:space-y-20">
           <ThreeWaysSection />
           <NotSrsSection />
-          <SmartQueueSection />
           <BringYourOwnSection />
           <PlatformsSection />
           <FinalCtaSection isLoggedIn={isLoggedIn} />

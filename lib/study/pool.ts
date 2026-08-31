@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import type { PickContext, PickMeta } from "@/lib/smart-queue";
+import type { PickMeta } from "@/lib/smart-queue";
 import type { StudyAuthMode, StudyScope } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -11,23 +11,22 @@ type StudyTermPoolResult = {
   pickMeta: PickMeta[];
 };
 
-/** Review's pool fetch: blends known + unknown internally (RANKING.reviewMix),
- *  so there's no status to pass — Review no longer has a pure pool mode. */
+/** Review's pool fetch: blends known + unknown internally, sampled
+ *  uniformly — no status to pass, Review no longer has a pure pool mode. */
 export async function fetchStudyTermPool(
   client: Client,
   userId: string,
   scope: StudyScope,
   limit: number,
   mode: StudyAuthMode = "session",
-  context: PickContext = "read",
 ): Promise<StudyTermPoolResult> {
   if (mode === "admin") {
     const { pickMixedReviewTermsForUser } = await import("@/lib/smart-queue");
-    return pickMixedReviewTermsForUser(client, userId, scope, limit, context);
+    return pickMixedReviewTermsForUser(client, userId, scope, limit);
   }
 
   const { pickMixedReviewTerms } = await import("@/lib/smart-queue");
-  return pickMixedReviewTerms(client, userId, scope, limit, context);
+  return pickMixedReviewTerms(client, userId, scope, limit);
 }
 
 /** Quiz's dedicated pool fetch: known pool only, hard-tier picking. No

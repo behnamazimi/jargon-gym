@@ -1,5 +1,3 @@
-import type { OverallStrength, PickReason } from "@/lib/smart-queue";
-
 export type QuizQuestionStyle = "ai" | "simple";
 
 export type QuizTerm = {
@@ -10,9 +8,6 @@ export type QuizTerm = {
   antiExample: string | null;
   domainId: string;
   domainName: string;
-  pickReasons?: PickReason[];
-  /** Display-only mastery tier for this term in Quiz. Never affects scoring. */
-  strength?: OverallStrength;
 };
 
 export type QuizMcqQuestion = {

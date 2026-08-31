@@ -7,11 +7,10 @@ import {
   fetchActiveReviewCandidatesForUser,
   getReviewPoolStatsByDomainForUser,
   isSameLocalDay,
-  RANKING,
-  strengthForCandidate,
   type PickContext,
   type ReviewCandidate,
 } from "@/lib/smart-queue";
+import { STUDY_TIMEZONE } from "@/lib/smart-queue/local-day";
 import type { CollectionDomainRow } from "./collections";
 
 type Client = SupabaseClient<Database>;
@@ -25,7 +24,6 @@ export type CollectionStats = {
   percentage: number;
   unknownUnseen: number;
   unknownSeen: number;
-  unknownStale: number;
 };
 
 export async function fetchCollectionStats(
@@ -60,7 +58,6 @@ export async function fetchCollectionStats(
       percentage,
       unknownUnseen: queueStats?.unseen ?? 0,
       unknownSeen: queueStats?.seen ?? 0,
-      unknownStale: queueStats?.stale ?? 0,
     };
   });
 
@@ -80,21 +77,18 @@ export type CollectionStatBreakdown = {
   knownCount: number;
   totalCount: number;
   percentage: number;
-  unknownNever: number;
-  unknownRecent: number;
-  unknownStale: number;
+  unknownCount: number;
 };
 
 /** `/stat` (Telegram) and the web Mastery page's overview share this shape:
- *  a rollup across active collections plus a per-collection unknown-Read
- *  partition. */
+ *  a rollup across active collections plus a per-collection unknown count. */
 export type StatsSnapshot = {
   activeCount: number;
   pausedCount: number;
   rollup: {
-    read: { never: number; stale: number };
-    review: { never: number; struggling: number };
-    quiz: { never: number; struggling: number };
+    read: { unseen: number };
+    review: { unseen: number };
+    quiz: { unseen: number };
   };
   activeCollections: CollectionStatBreakdown[];
 };
@@ -113,9 +107,9 @@ const EMPTY_STATS_SNAPSHOT: StatsSnapshot = {
   activeCount: 0,
   pausedCount: 0,
   rollup: {
-    read: { never: 0, stale: 0 },
-    review: { never: 0, struggling: 0 },
-    quiz: { never: 0, struggling: 0 },
+    read: { unseen: 0 },
+    review: { unseen: 0 },
+    quiz: { unseen: 0 },
   },
   activeCollections: [],
 };
@@ -140,7 +134,6 @@ function buildStatsSnapshot(
   const unknownByDomain = groupCandidatesByDomain(unknownCandidates);
   const readPool = computePoolStats(unknownCandidates, "read");
   const reviewUnknownPool = computePoolStats(unknownCandidates, "review");
-  const reviewKnownPool = computePoolStats(knownCandidates, "review");
   const quizKnownPool = computePoolStats(knownCandidates, "quiz");
 
   const activeCollections: CollectionStatBreakdown[] = activeRows.map((row) => {
@@ -155,15 +148,12 @@ function buildStatsSnapshot(
       knownCount,
       totalCount,
       percentage,
-      unknownNever: domainReadPool.unseen,
-      unknownRecent: domainReadPool.recent,
-      unknownStale: domainReadPool.stale,
+      unknownCount: domainReadPool.total,
     };
   });
 
   activeCollections.sort((a, b) => {
-    if (a.unknownStale !== b.unknownStale) return b.unknownStale - a.unknownStale;
-    if (a.unknownNever !== b.unknownNever) return b.unknownNever - a.unknownNever;
+    if (a.unknownCount !== b.unknownCount) return b.unknownCount - a.unknownCount;
     return a.name.localeCompare(b.name);
   });
 
@@ -171,16 +161,10 @@ function buildStatsSnapshot(
     activeCount: activeRows.length,
     pausedCount,
     rollup: {
-      read: { never: readPool.unseen, stale: readPool.stale },
-      review: {
-        never: reviewUnknownPool.unseen,
-        struggling: reviewUnknownPool.struggling + reviewKnownPool.struggling,
-      },
-      // Quiz is known-pool only — never/struggling reflect the known pool alone.
-      quiz: {
-        never: quizKnownPool.unseen,
-        struggling: quizKnownPool.struggling,
-      },
+      read: { unseen: readPool.unseen },
+      review: { unseen: reviewUnknownPool.unseen },
+      // Quiz is known-pool only — unseen reflects the known pool alone.
+      quiz: { unseen: quizKnownPool.unseen },
     },
     activeCollections,
   };
@@ -199,8 +183,6 @@ export async function fetchTelegramStats(client: Client, userId: string): Promis
   return buildStatsSnapshot(collectionRows, reviewDomainIds, unknownCandidates, knownCandidates);
 }
 
-type MasteryTiers = { weak: number; medium: number; strong: number };
-
 export type AccuracySummary = { passed: number; attempted: number; percentage: number };
 
 type PausedCollectionSummary = {
@@ -211,13 +193,12 @@ type PausedCollectionSummary = {
   percentage: number;
 };
 
-/** Adds diagnostic (mastery/accuracy), momentum (today), and coverage
- *  (known% across active collections only) on top of the Telegram-shared
- *  `StatsSnapshot` — web page only, richer than a Telegram message needs to be. */
+/** Adds accuracy, momentum (today), and coverage (known% across active
+ *  collections only) on top of the Telegram-shared `StatsSnapshot` — web
+ *  page only, richer than a Telegram message needs to be. */
 export type WebStatsSnapshot = StatsSnapshot & {
   coverage: { known: number; total: number; percentage: number };
   today: { read: number; review: number; quiz: number };
-  mastery: { review: MasteryTiers; quiz: MasteryTiers };
   accuracy: { review: AccuracySummary; quiz: AccuracySummary };
   pausedCollections: PausedCollectionSummary[];
 };
@@ -246,21 +227,8 @@ function countActivityToday(
 ): number {
   return candidates.filter((candidate) => {
     const lastActivityAt = lastActivityAtForContext(candidate, context);
-    return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, RANKING.timezone);
+    return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, STUDY_TIMEZONE);
   }).length;
-}
-
-function tallyMastery(
-  candidates: ReviewCandidate[],
-  context: "review" | "quiz",
-  now: Date,
-): MasteryTiers {
-  const tiers: MasteryTiers = { weak: 0, medium: 0, strong: 0 };
-  for (const candidate of candidates) {
-    const strength = strengthForCandidate(candidate, context, now);
-    if (strength && strength !== "unverified") tiers[strength]++;
-  }
-  return tiers;
 }
 
 function summarizeAccuracy(
@@ -292,10 +260,6 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   ...EMPTY_STATS_SNAPSHOT,
   coverage: { known: 0, total: 0, percentage: 0 },
   today: { read: 0, review: 0, quiz: 0 },
-  mastery: {
-    review: { weak: 0, medium: 0, strong: 0 },
-    quiz: { weak: 0, medium: 0, strong: 0 },
-  },
   accuracy: {
     review: { passed: 0, attempted: 0, percentage: 0 },
     quiz: { passed: 0, attempted: 0, percentage: 0 },
@@ -304,7 +268,7 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
 };
 
 /** Web `/jargon/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
- *  diagnostic/momentum/coverage numbers on top of the shared snapshot —
+ *  accuracy/momentum/coverage numbers on top of the shared snapshot —
  *  Telegram's `fetchTelegramStats` is untouched by this. */
 export async function fetchStatsSnapshot(
   client: Client,
@@ -340,10 +304,6 @@ export async function fetchStatsSnapshot(
       review: countActivityToday(combined, "review", now),
       // Quiz is known-pool only.
       quiz: countActivityToday(knownCandidates, "quiz", now),
-    },
-    mastery: {
-      review: tallyMastery(combined, "review", now),
-      quiz: tallyMastery(knownCandidates, "quiz", now),
     },
     accuracy: {
       review: summarizeAccuracy(combined, "review"),

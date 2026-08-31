@@ -3,19 +3,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { getReadMode } from "@/lib/jargon/read-settings";
-import {
-  listScoredCandidates,
-  listScoredMixedReviewCandidates,
-  listScoredQuizCandidates,
-  listStaleKnownCandidates,
-} from "@/lib/smart-queue/service";
-import {
-  buildReadFallbackRotationInsight,
-  buildRotationInsight,
-  type RotationPoolInsight,
-} from "@/lib/smart-queue/rotation-insight";
-import type { FailSource, PickContext, PickReason } from "@/lib/smart-queue/types";
-import { RANKING } from "@/lib/smart-queue/weights";
+import { listCandidates, listMixedReviewCandidates } from "@/lib/smart-queue/service";
+import type { FailSource, PickContext, ReviewCandidate } from "@/lib/smart-queue/types";
 import type { Database } from "@/lib/supabase/database.types";
 import { listStudyCollections } from "@/lib/study/collections";
 import type { TermPoolStatus } from "@/lib/study/types";
@@ -37,8 +26,6 @@ export type DebugScoredRow = {
   termId: string;
   term: string;
   domainId: string;
-  score: number;
-  reasons: PickReason[];
   readCount: number;
   lastReadAt: string | null;
   reviewRecallCount: number;
@@ -57,26 +44,23 @@ export type DebugScoredRow = {
 };
 
 export type DebugReviewMixInfo = {
-  knownSlots: number;
-  unknownSlots: number;
   knownCount: number;
   unknownCount: number;
 };
 
 /** No status param — there's no user-facing pool toggle anymore. Read is
- *  unknown-first (falling back to known-pool staleness order when
+ *  unknown-first (falling back to the known pool, unordered, when
  *  read_mode === "stale_known" and the unknown pool is empty — see
  *  readFallbackActive), Quiz is always the known pool, Review blends both
- *  (see listScoredMixedReviewCandidates). */
+ *  (see listMixedReviewCandidates). */
 export async function listDebugScoredTermsAction(
   domainIds: string[] | "all",
   context: PickContext,
 ): Promise<{
   rows?: DebugScoredRow[];
   mix?: DebugReviewMixInfo;
-  insight?: RotationPoolInsight[];
   /** Read only: true when the unknown pool was empty and these rows are the
-   *  known-pool stale-known fallback instead. */
+   *  known-pool fallback instead. */
   readFallbackActive?: boolean;
   error?: string;
 }> {
@@ -87,110 +71,70 @@ export async function listDebugScoredTermsAction(
 
   try {
     if (context === "quiz") {
-      const scored = await listScoredQuizCandidates(auth.supabase, auth.user.id, { domainIds });
-      return {
-        rows: await hydrateDebugRows(auth.supabase, scored),
-        insight: buildRotationInsight(scored, context),
-      };
+      const candidates = await listCandidates(auth.supabase, auth.user.id, { domainIds }, "known");
+      return { rows: await hydrateDebugRows(auth.supabase, candidates) };
     }
 
     if (context === "review") {
       const {
-        rows: scored,
+        rows: candidates,
         knownCount,
         unknownCount,
-      } = await listScoredMixedReviewCandidates(auth.supabase, auth.user.id, { domainIds });
-      const rows = await hydrateDebugRows(auth.supabase, scored, true);
+      } = await listMixedReviewCandidates(auth.supabase, auth.user.id, { domainIds });
+      const rows = await hydrateDebugRows(auth.supabase, candidates, true);
       return {
         rows,
-        mix: {
-          knownSlots: RANKING.reviewMix.knownSlots,
-          unknownSlots: RANKING.reviewMix.unknownSlots,
-          knownCount,
-          unknownCount,
-        },
-        insight: buildRotationInsight(scored, context),
+        mix: { knownCount, unknownCount },
       };
     }
 
-    const scored = await listScoredCandidates(
-      auth.supabase,
-      auth.user.id,
-      { domainIds },
-      "unknown",
-      context,
-    );
+    const candidates = await listCandidates(auth.supabase, auth.user.id, { domainIds }, "unknown");
 
-    if (scored.length > 0) {
-      return {
-        rows: await hydrateDebugRows(auth.supabase, scored),
-        insight: buildRotationInsight(scored, context),
-      };
+    if (candidates.length > 0) {
+      return { rows: await hydrateDebugRows(auth.supabase, candidates) };
     }
 
     // Unknown pool empty: mirror getNextReadTermAction's own fallback check
     // so this view shows exactly what Read would actually serve next.
     const readMode = await getReadMode(auth.supabase, auth.user.id);
     if (readMode !== "stale_known") {
-      return { rows: [], insight: buildRotationInsight(scored, context) };
+      return { rows: [] };
     }
 
-    const staleKnown = await listStaleKnownCandidates(auth.supabase, auth.user.id, { domainIds });
+    const known = await listCandidates(auth.supabase, auth.user.id, { domainIds }, "known");
     return {
-      rows: await hydrateDebugRows(auth.supabase, staleKnown, true),
-      insight: buildReadFallbackRotationInsight(staleKnown, new Date()),
+      rows: await hydrateDebugRows(auth.supabase, known, true),
       readFallbackActive: true,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't load scored terms.";
+    const message = err instanceof Error ? err.message : "Couldn't load candidate terms.";
     return { error: message };
   }
 }
 
 async function hydrateDebugRows(
   supabase: Client,
-  scored: Array<{
-    termId: string;
-    domainId: string;
-    score: number;
-    reasons: PickReason[];
-    readCount: number;
-    lastReadAt: Date | null;
-    reviewRecallCount: number;
-    lastReviewRecallAt: Date | null;
-    reviewStreak: number;
-    quizTestCount: number;
-    lastQuizTestedAt: Date | null;
-    quizStreak: number;
-    pendingReveal: boolean;
-    lastFailAt: Date | null;
-    lastFailSource: FailSource | null;
-    reviewFailCount: number;
-    quizFailCount: number;
-    knownAt: Date | null;
-  }>,
+  candidates: ReviewCandidate[],
   tagOrigin = false,
 ): Promise<DebugScoredRow[]> {
-  if (scored.length === 0) return [];
+  if (candidates.length === 0) return [];
 
   const { data: terms, error: termsError } = await supabase
     .from("terms")
     .select("id, term")
     .in(
       "id",
-      scored.map((candidate) => candidate.termId),
+      candidates.map((candidate) => candidate.termId),
     );
 
   if (termsError) throw termsError;
 
   const termNameById = new Map(terms.map((term) => [term.id, term.term]));
 
-  return scored.map((candidate) => ({
+  return candidates.map((candidate) => ({
     termId: candidate.termId,
     term: termNameById.get(candidate.termId) ?? "(deleted term)",
     domainId: candidate.domainId,
-    score: candidate.score,
-    reasons: candidate.reasons,
     readCount: candidate.readCount,
     lastReadAt: candidate.lastReadAt ? candidate.lastReadAt.toISOString() : null,
     reviewRecallCount: candidate.reviewRecallCount,

@@ -1,20 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { computePoolStats } from "./stats";
-import { RANKING } from "./weights";
 import type { PickContext, ReviewCandidate } from "./types";
 
-const HOUR = 60 * 60 * 1000;
-const now = new Date();
-
-function hoursAgo(hours: number): Date {
-  return new Date(now.getTime() - hours * HOUR);
-}
-
-function makeCandidate(context: PickContext, ownHours: number, streak = 1): ReviewCandidate {
+function makeCandidate(context: PickContext, ownCount: number): ReviewCandidate {
   const base: ReviewCandidate = {
     termId: "t1",
     domainId: "d1",
-    createdAt: hoursAgo(10000),
+    createdAt: new Date(),
     readCount: 0,
     lastReadAt: null,
     reviewRecallCount: 0,
@@ -31,52 +23,31 @@ function makeCandidate(context: PickContext, ownHours: number, streak = 1): Revi
     knownAt: null,
   };
 
-  if (context === "read") {
-    return { ...base, readCount: 1, lastReadAt: hoursAgo(ownHours) };
-  }
-  if (context === "review") {
-    return {
-      ...base,
-      reviewRecallCount: Math.abs(streak) + 1,
-      lastReviewRecallAt: hoursAgo(ownHours),
-      reviewStreak: streak,
-    };
-  }
-  return {
-    ...base,
-    quizTestCount: Math.abs(streak) + 1,
-    lastQuizTestedAt: hoursAgo(ownHours),
-    quizStreak: streak,
-  };
+  if (context === "read") return { ...base, readCount: ownCount };
+  if (context === "review") return { ...base, reviewRecallCount: ownCount };
+  return { ...base, quizTestCount: ownCount };
 }
 
-describe("computePoolStats stale bucket matches shouldAttachStaleReason", () => {
-  it("Read: yesterday is recent; 7-day cap is stale", () => {
-    const recent = computePoolStats([makeCandidate("read", 25)], "read", now);
-    const stale = computePoolStats(
-      [makeCandidate("read", RANKING.formula.stalenessCapHours)],
+describe("computePoolStats", () => {
+  it("counts unseen vs seen per context", () => {
+    const stats = computePoolStats(
+      [makeCandidate("read", 0), makeCandidate("read", 1), makeCandidate("read", 2)],
       "read",
-      now,
     );
-    expect(recent).toMatchObject({ seen: 1, stale: 0, recent: 1 });
-    expect(stale).toMatchObject({ seen: 1, stale: 1, recent: 0 });
+    expect(stats).toEqual({ unseen: 1, seen: 2, total: 3, allSeenOnce: false });
   });
 
-  it("Review: in mastered cooldown past τ counts as recent, not stale", () => {
-    const stats = computePoolStats(
-      [makeCandidate("review", RANKING.stalenessDecayHours.review, 1)],
-      "review",
-      now,
-    );
-    expect(stats).toMatchObject({ seen: 1, stale: 0, recent: 1 });
+  it("allSeenOnce is true only when every candidate has been seen", () => {
+    const stats = computePoolStats([makeCandidate("quiz", 1), makeCandidate("quiz", 3)], "quiz");
+    expect(stats).toEqual({ unseen: 0, seen: 2, total: 2, allSeenOnce: true });
   });
 
-  it("Quiz: struggling at τ counts as stale", () => {
-    const stats = computePoolStats(
-      [makeCandidate("quiz", RANKING.stalenessDecayHours.quiz, -1)],
-      "quiz",
-      now,
-    );
-    expect(stats).toMatchObject({ seen: 1, stale: 1, recent: 0, struggling: 1 });
+  it("returns all-zero stats for an empty pool", () => {
+    expect(computePoolStats([], "review")).toEqual({
+      unseen: 0,
+      seen: 0,
+      total: 0,
+      allSeenOnce: false,
+    });
   });
 });

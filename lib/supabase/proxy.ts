@@ -31,7 +31,6 @@ function isPublicPath(pathname: string) {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/before-you-sign-up") ||
     pathname.startsWith("/how-terms-work") ||
-    pathname.startsWith("/how-smart-queue-works") ||
     pathname.startsWith("/auth/callback") ||
     pathname.startsWith("/downloads/") ||
     pathname.startsWith("/api/widget") ||

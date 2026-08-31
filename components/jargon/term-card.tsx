@@ -2,21 +2,17 @@
 
 import { Check, ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
-import type { OverallStrengthRow } from "@/lib/jargon/known-state";
 import type { Term } from "@/lib/jargon/types";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { OverallStrengthBars } from "./overall-strength-bars";
 import { TermActionsMenu } from "./term-actions-menu";
 import { TermBody } from "./term-body";
 
 type TermCardProps = {
   term: Term;
   known: boolean;
-  overallStrength?: OverallStrengthRow;
-  showStrength?: boolean;
   open: boolean;
   isOwner: boolean;
   domainId: string;
@@ -28,8 +24,6 @@ type TermCardProps = {
 export function TermCard({
   term,
   known,
-  overallStrength,
-  showStrength = false,
   open,
   isOwner,
   domainId,
@@ -86,13 +80,6 @@ export function TermCard({
                 {term.term}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2 pt-0.5">
-                {showStrength && overallStrength ? (
-                  <OverallStrengthBars
-                    bars={overallStrength.bars}
-                    bucket={overallStrength.bucket}
-                    score={overallStrength.score}
-                  />
-                ) : null}
                 <span className="text-xs text-base-content/50">{term.category}</span>
                 <ChevronRight
                   className={cn("size-4 text-base-content/60", open && "rotate-90 text-primary")}

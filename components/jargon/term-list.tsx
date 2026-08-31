@@ -1,12 +1,9 @@
-import type { OverallStrengthRow } from "@/lib/jargon/known-state";
 import type { Term } from "@/lib/jargon/types";
 import { TermCard } from "./term-card";
 
 type TermListProps = {
   terms: Term[];
   knownTerms: Set<string>;
-  overallStrengthByTermId: Record<string, OverallStrengthRow>;
-  showStrength: boolean;
   openTerms: Set<string>;
   isOwner: boolean;
   domainId: string;
@@ -18,8 +15,6 @@ type TermListProps = {
 export function TermList({
   terms,
   knownTerms,
-  overallStrengthByTermId,
-  showStrength,
   openTerms,
   isOwner,
   domainId,
@@ -45,8 +40,6 @@ export function TermList({
           <TermCard
             term={term}
             known={knownTerms.has(term.id)}
-            overallStrength={overallStrengthByTermId[term.id]}
-            showStrength={showStrength}
             open={openTerms.has(term.id)}
             isOwner={isOwner}
             domainId={domainId}

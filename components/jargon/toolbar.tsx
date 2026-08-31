@@ -15,8 +15,6 @@ import { Separator } from "@/components/ui/separator";
 type ToolbarProps = {
   hideKnown: boolean;
   onHideKnownChange: (value: boolean) => void;
-  showStrength: boolean;
-  onShowStrengthChange: (value: boolean) => void;
   sortMode: SortMode;
   onSortChange: (value: SortMode) => void;
   visibleCount: number;
@@ -25,8 +23,6 @@ type ToolbarProps = {
 export function Toolbar({
   hideKnown,
   onHideKnownChange,
-  showStrength,
-  onShowStrengthChange,
   sortMode,
   onSortChange,
   visibleCount,
@@ -45,20 +41,6 @@ export function Toolbar({
             />
             <FieldLabel htmlFor="hide-known" className="text-xs font-normal text-base-content/60">
               Hide terms I know
-            </FieldLabel>
-          </Field>
-          <Field orientation="horizontal" className="w-auto items-center gap-1.5">
-            <Checkbox
-              id="show-strength"
-              isSelected={showStrength}
-              onChange={onShowStrengthChange}
-              className="checkbox-xs"
-            />
-            <FieldLabel
-              htmlFor="show-strength"
-              className="text-xs font-normal text-base-content/60"
-            >
-              Show strength tags
             </FieldLabel>
           </Field>
           <Select

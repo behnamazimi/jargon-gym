@@ -15,24 +15,8 @@ export async function fetchReviewTermPool(
   domainIds: string[] | "all",
   cardCount: number,
 ): Promise<ReviewTerm[]> {
-  const { cards, pickMeta } = await fetchStudyTermPool(
-    client,
-    userId,
-    { domainIds },
-    cardCount,
-    "session",
-    "review",
-  );
+  const { cards, pickMeta } = await fetchStudyTermPool(client, userId, { domainIds }, cardCount);
 
   const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
-  return cards.map((card) => {
-    const meta = metaById.get(card.id);
-    return toReviewTerm(
-      card,
-      meta?.originStatus ?? "unknown",
-      meta?.reasons,
-      undefined,
-      meta?.strength,
-    );
-  });
+  return cards.map((card) => toReviewTerm(card, metaById.get(card.id)?.originStatus ?? "unknown"));
 }

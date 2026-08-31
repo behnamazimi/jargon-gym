@@ -2,11 +2,9 @@ import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import type { DebugReviewMixInfo, DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
 import { DebugCollectionSelect } from "@/components/jargon/debug/debug-collection-select";
-import { RotationInsightPanel } from "@/components/jargon/debug/rotation-insight-panel";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { RotationPoolInsight } from "@/lib/smart-queue/rotation-insight";
 import type { PickContext } from "@/lib/smart-queue/types";
 import type { StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
@@ -17,7 +15,6 @@ type DebugQueuePageProps = {
   domainId: string;
   rows: DebugScoredRow[];
   mix: DebugReviewMixInfo | null;
-  insight: RotationPoolInsight[];
   /** Read only: unknown pool was empty, so these rows are the known-pool
    *  stale-known fallback (read_mode === "stale_known") instead. */
   readFallbackActive: boolean;
@@ -97,7 +94,6 @@ export function DebugQueuePage({
   domainId,
   rows,
   mix,
-  insight,
   readFallbackActive,
   errorMessage,
 }: DebugQueuePageProps) {
@@ -148,7 +144,6 @@ export function DebugQueuePage({
               <legend className="mb-2 text-sm leading-none font-medium">Mix</legend>
               {mix ? (
                 <p className="m-0 text-xs text-base-content/60">
-                  Configured ratio: {mix.knownSlots}:{mix.unknownSlots} known:unknown — this view:{" "}
                   {mix.knownCount} known / {mix.unknownCount} unknown.
                 </p>
               ) : (
@@ -162,7 +157,7 @@ export function DebugQueuePage({
               <legend className="mb-2 text-sm leading-none font-medium">Fallback</legend>
               <p className="m-0 text-xs text-base-content/60">
                 Unknown pool is empty. Read settings has known-term fallback on, so these rows are
-                the known pool ordered by staleness instead — not scored, no reasons.
+                the known pool instead.
               </p>
             </fieldset>
           ) : null}
@@ -174,10 +169,7 @@ export function DebugQueuePage({
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       ) : (
-        <>
-          <RotationInsightPanel pools={insight} />
-          <ScoreRows rows={rows} context={context} />
-        </>
+        <ScoreRows rows={rows} />
       )}
     </>
   );

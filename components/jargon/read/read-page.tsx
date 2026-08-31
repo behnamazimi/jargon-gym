@@ -8,14 +8,12 @@ import {
   recordReadRevealAction,
   type NextReadTermResult,
 } from "@/app/(private)/jargon/read/actions";
-import { AdminOnly } from "@/components/admin-only";
 import {
   QuizKeyboardHint,
   QuizPanel,
   QuizPanelBody,
   QuizPanelHeader,
 } from "@/components/jargon/quiz/quiz-ui";
-import { QueueScoreDebug } from "@/components/jargon/queue-score-debug";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -196,9 +194,6 @@ function ReadCardRevealed({ term }: { term: ReviewTerm }) {
       <ReadCardHeader term={term} />
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody key={term.id} term={term} />
-        <AdminOnly>
-          <QueueScoreDebug term={term} context="read" />
-        </AdminOnly>
       </div>
     </>
   );

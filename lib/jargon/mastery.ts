@@ -1,39 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { OverallStrength } from "@/lib/smart-queue";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchProgressStateByDomain, resolveReviewDomainIds } from "./known-state";
-import { fetchTermsByDomains } from "./terms";
+import { resolveReviewDomainIds } from "./known-state";
 
 type Client = SupabaseClient<Database>;
 
-export type MasteryRow = {
-  termId: string;
-  term: string;
-  category: string;
+export type MasteryCollectionRow = {
   domainId: string;
   domainName: string;
-  known: boolean;
-  score: number;
-  bucket: OverallStrength;
-  bars: number;
-};
-
-export type MasteryCollectionOption = {
-  id: string;
-  name: string;
-  count: number;
+  knownCount: number;
+  totalCount: number;
+  percentage: number;
 };
 
 export type MasteryOverviewData = {
-  rows: MasteryRow[];
-  collections: MasteryCollectionOption[];
+  rows: MasteryCollectionRow[];
 };
 
-/** Every term across active collections (paused collections are excluded)
- *  with its blended strength, for the /jargon/mastery overview. Reuses the
- *  same domain-scoped fetch the collection page uses
- *  (fetchProgressStateByDomain), just across all active domains at once
- *  instead of one selected domain. */
+/** Plain known/total/percentage per active collection (paused collections
+ *  are excluded), for the /jargon/mastery overview. */
 export async function loadMasteryOverview(
   client: Client,
   userId: string,
@@ -41,37 +25,22 @@ export async function loadMasteryOverview(
   const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
   const activeSet = new Set(reviewDomainIds);
   const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
-  if (activeCollectionRows.length === 0) return { rows: [], collections: [] };
+  if (activeCollectionRows.length === 0) return { rows: [] };
 
-  const domainIds = activeCollectionRows.map((row) => row.id);
-  const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
+  const rows: MasteryCollectionRow[] = activeCollectionRows
+    .map((row) => {
+      const totalCount = row.termCount;
+      const knownCount = row.knownCount;
+      const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
+      return {
+        domainId: row.id,
+        domainName: row.name,
+        knownCount,
+        totalCount,
+        percentage,
+      };
+    })
+    .sort((a, b) => a.domainName.localeCompare(b.domainName));
 
-  const terms = await fetchTermsByDomains(client, domainIds);
-
-  const { knownTermIds, overallStrengthByTermId } = await fetchProgressStateByDomain(
-    client,
-    domainIds,
-  );
-  const knownSet = new Set(knownTermIds);
-
-  const rows: MasteryRow[] = terms.map((term) => {
-    const strength = overallStrengthByTermId[term.id];
-    return {
-      termId: term.id,
-      term: term.term,
-      category: term.category,
-      domainId: term.domain_id,
-      domainName: domainNameById.get(term.domain_id) ?? "",
-      known: knownSet.has(term.id),
-      score: strength?.score ?? 0,
-      bucket: strength?.bucket ?? "unverified",
-      bars: strength?.bars ?? 0,
-    };
-  });
-
-  const collections: MasteryCollectionOption[] = activeCollectionRows
-    .map((row) => ({ id: row.id, name: row.name, count: row.termCount }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  return { rows, collections };
+  return { rows };
 }

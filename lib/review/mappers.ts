@@ -1,15 +1,8 @@
 import type { TermCard } from "@/lib/jargon/term-card";
-import type { OverallStrength, PickReason } from "@/lib/smart-queue";
 import type { TermPoolStatus } from "@/lib/study";
 import type { ReviewTerm } from "./types";
 
-export function toReviewTerm(
-  card: TermCard,
-  originStatus: TermPoolStatus,
-  pickReasons?: PickReason[],
-  pickScore?: number,
-  strength?: OverallStrength,
-): ReviewTerm {
+export function toReviewTerm(card: TermCard, originStatus: TermPoolStatus): ReviewTerm {
   return {
     id: card.id,
     term: card.term,
@@ -21,9 +14,6 @@ export function toReviewTerm(
     antiExample: card.antiExample ?? undefined,
     controversy: card.controversy ?? undefined,
     domainName: card.domainName,
-    pickReasons,
-    pickScore,
-    strength,
     originStatus,
     relationships: card.relationships.map((rel, index) => ({
       id: `${card.id}-${rel.direction}-${index}`,

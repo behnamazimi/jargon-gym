@@ -1,51 +1,38 @@
-/** Pool statistics computation.
+/** Pool statistics computation — plain counts, no scoring dependency.
  */
 
-import { fieldsForContext, shouldAttachStaleReason } from "./score";
 import type { PickContext, ReviewCandidate, PoolStats } from "./types";
 
-export function computePoolStats(
-  candidates: ReviewCandidate[],
-  context: PickContext,
-  now: Date = new Date(),
-): PoolStats {
+/** This context's own exposure/test count — Read's is readCount, Review/Quiz
+ *  are their own test counts. Mirrors the field pick.ts's callers already
+ *  know about, kept local since nothing else needs the full breakdown
+ *  score.ts used to provide. */
+function ownCountForContext(candidate: ReviewCandidate, context: PickContext): number {
+  switch (context) {
+    case "read":
+      return candidate.readCount;
+    case "review":
+      return candidate.reviewRecallCount;
+    case "quiz":
+      return candidate.quizTestCount;
+  }
+}
+
+export function computePoolStats(candidates: ReviewCandidate[], context: PickContext): PoolStats {
   let unseen = 0;
   let seen = 0;
-  let stale = 0;
-  let struggling = 0;
 
   for (const candidate of candidates) {
-    // Mirrors score.ts's unseen signal for this context — deliberate
-    // exposure only — so allSeenOnce stays in sync with when that boost
-    // actually stops applying.
-    const { ownCount, lastActivityAt, streak } = fieldsForContext(candidate, context);
-
-    if (ownCount === 0) {
+    if (ownCountForContext(candidate, context) === 0) {
       unseen++;
-      continue;
-    }
-
-    seen++;
-
-    if ((streak ?? 0) < 0) struggling++;
-
-    if (lastActivityAt) {
-      if (shouldAttachStaleReason(context, ownCount, lastActivityAt, streak, now)) {
-        stale++;
-      }
     } else {
-      // ownCount > 0 but no timestamp: can't measure recency, so count as
-      // stale. Scoring cannot attach the `stale` reason without a timestamp.
-      stale++;
+      seen++;
     }
   }
 
   return {
     unseen,
     seen,
-    stale,
-    recent: seen - stale,
-    struggling,
     total: candidates.length,
     allSeenOnce: candidates.length > 0 && unseen === 0,
   };

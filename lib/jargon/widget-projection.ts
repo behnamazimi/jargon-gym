@@ -32,7 +32,6 @@ export async function fetchWidgetState(
     scope,
     "unknown",
     limit,
-    "read",
     excludeTermIds,
   );
 

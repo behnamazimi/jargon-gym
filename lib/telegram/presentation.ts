@@ -1,7 +1,6 @@
 import { escapeText } from "entities";
 import type { CollectionStatBreakdown, StatsSnapshot } from "@/lib/jargon/collection-stats";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
-import { formatPickDebugLine, type PickMeta } from "@/lib/smart-queue";
 import type { InlineKeyboardMarkup } from "./actions";
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
@@ -62,28 +61,23 @@ function appendSearchLink(message: string, termName: string): string {
   return `${message}\n\n<a href="${searchUrl}">Search "${escapeText(termName)}" on Google</a>`;
 }
 
-function formatPickDebugFooter(pickMeta: PickMeta): string {
-  return `\n\n<i>${escapeText(formatPickDebugLine(pickMeta.score, pickMeta.reasons, "read"))}</i>`;
-}
-
 function trimMessageBody(body: string, reservedLength: number): string {
   const maxBodyLength = TELEGRAM_MESSAGE_LIMIT - reservedLength;
   if (body.length <= maxBodyLength) return body;
   return `${body.slice(0, Math.max(0, maxBodyLength - 1)).trimEnd()}…`;
 }
 
-export function formatTermMessage(term: TermCard, pickMeta?: PickMeta): string {
+export function formatTermMessage(term: TermCard): string {
   const body = buildTermMessageBody(term);
   const searchLink = appendSearchLink("", term.term);
-  const debugFooter = pickMeta ? formatPickDebugFooter(pickMeta) : "";
-  const reservedLength = searchLink.length + debugFooter.length;
+  const reservedLength = searchLink.length;
 
   const trimmed =
     body.length + reservedLength <= TELEGRAM_MESSAGE_LIMIT
       ? body
       : trimMessageBody(body, reservedLength);
 
-  return `${appendSearchLink(trimmed, term.term)}${debugFooter}`;
+  return appendSearchLink(trimmed, term.term);
 }
 
 function appendOpenInWebRow(rows: InlineKeyboardMarkup["inline_keyboard"], termId: string): void {
@@ -129,16 +123,14 @@ function formatCollectionProgressLine(collection: CollectionStatBreakdown): stri
 }
 
 function formatUnknownFootnote(collection: CollectionStatBreakdown): string {
-  const total = collection.unknownNever + collection.unknownRecent + collection.unknownStale;
-  return `${total} unknown: ${collection.unknownNever} never · ${collection.unknownRecent} recent · ${collection.unknownStale} stale`;
+  return `${collection.unknownCount} unknown`;
 }
 
-/** Renders `<label> <count> <word> · ...`, omitting zero buckets, or
- *  `<label> none waiting` when every bucket is zero. */
-function formatRollupLine(label: string, buckets: Array<[word: string, count: number]>): string {
-  const nonZero = buckets.filter(([, count]) => count > 0);
-  if (nonZero.length === 0) return `${label} none waiting`;
-  return `${label} ${nonZero.map(([word, count]) => `${count} ${word}`).join(" · ")}`;
+/** Renders `<label> <count> never studied`, or `<label> none waiting` when
+ *  the count is zero. */
+function formatRollupLine(label: string, unseen: number): string {
+  if (unseen === 0) return `${label} none waiting`;
+  return `${label} ${unseen} never studied`;
 }
 
 export function formatStatsMessage(stats: StatsSnapshot): string {
@@ -150,18 +142,9 @@ export function formatStatsMessage(stats: StatsSnapshot): string {
   message += `${stats.activeCount} active · ${stats.pausedCount} paused`;
 
   if (stats.activeCollections.length > 0) {
-    message += `\n\n${formatRollupLine("Read", [
-      ["never", stats.rollup.read.never],
-      ["stale", stats.rollup.read.stale],
-    ])}`;
-    message += `\n${formatRollupLine("Review", [
-      ["never", stats.rollup.review.never],
-      ["struggling", stats.rollup.review.struggling],
-    ])}`;
-    message += `\n${formatRollupLine("Quiz", [
-      ["never", stats.rollup.quiz.never],
-      ["struggling", stats.rollup.quiz.struggling],
-    ])}`;
+    message += `\n\n${formatRollupLine("Read", stats.rollup.read.unseen)}`;
+    message += `\n${formatRollupLine("Review", stats.rollup.review.unseen)}`;
+    message += `\n${formatRollupLine("Quiz", stats.rollup.quiz.unseen)}`;
 
     for (const collection of stats.activeCollections) {
       message += `\n\n<b>${escapeText(collection.name)}</b>\n`;

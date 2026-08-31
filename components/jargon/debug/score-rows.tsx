@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
-import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
-import type { PickContext } from "@/lib/smart-queue/types";
 import { formatReadDetail, formatRelative, formatTestDetail } from "./format";
 
 /** Debug intentionally shows every scored candidate, unsliced — but
@@ -15,15 +13,7 @@ import { formatReadDetail, formatRelative, formatTestDetail } from "./format";
  *  full list. */
 const BATCH_SIZE = 100;
 
-function ScoreRow({
-  row,
-  index,
-  context,
-}: {
-  row: DebugScoredRow;
-  index: number;
-  context: PickContext;
-}) {
+function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
   return (
     <li className="shadow-surface space-y-2 rounded-xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
       <div className="flex items-baseline justify-between gap-3">
@@ -34,12 +24,7 @@ function ScoreRow({
             <span className="badge badge-ghost badge-sm font-normal">{row.originStatus}</span>
           ) : null}
         </div>
-        <span className="shrink-0 text-sm font-semibold tabular-nums text-primary">
-          {row.score.toFixed(1)}
-        </span>
       </div>
-
-      <PickReasonBadges reasons={row.reasons} context={context} mode="full" />
 
       <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
         {formatReadDetail(row.readCount, row.lastReadAt)} ·{" "}
@@ -70,7 +55,7 @@ function ScoreRow({
   );
 }
 
-export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: PickContext }) {
+export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
   const [visibleCount, setVisibleCount] = useState(Math.min(BATCH_SIZE, rows.length));
 
   // New filter selection (context/collection) swaps in a fresh `rows` array —
@@ -90,7 +75,7 @@ export function ScoreRows({ rows, context }: { rows: DebugScoredRow[]; context: 
     <>
       <ul className="m-0 list-none space-y-3 p-0">
         {visibleRows.map((row, index) => (
-          <ScoreRow key={row.termId} row={row} index={index} context={context} />
+          <ScoreRow key={row.termId} row={row} index={index} />
         ))}
       </ul>
       {remaining > 0 ? (

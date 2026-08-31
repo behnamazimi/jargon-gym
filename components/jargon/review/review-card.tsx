@@ -2,10 +2,6 @@
 
 import { Eye } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { AdminOnly } from "@/components/admin-only";
-import { PickReasonBadges } from "@/components/jargon/pick-reason-badges";
-import { QueueScoreDebug } from "@/components/jargon/queue-score-debug";
-import { StrengthBadge } from "@/components/jargon/strength-badge";
 import { TermBody } from "@/components/jargon/term-body";
 import type { ReviewTerm } from "@/lib/review/types";
 import { cn } from "@/lib/utils";
@@ -115,12 +111,6 @@ export function ReviewCard({
               <RecallRevealHint invisible />
             </div>
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-5 text-center sm:px-6">
-              <AdminOnly>
-                <div className="flex flex-wrap items-center justify-center gap-1.5">
-                  <StrengthBadge strength={term.strength} />
-                  <PickReasonBadges reasons={term.pickReasons} context="review" mode="compact" />
-                </div>
-              </AdminOnly>
               <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
                 {term.term}
               </h2>
@@ -152,9 +142,6 @@ export function ReviewCard({
               onClick={(event) => event.stopPropagation()}
             >
               <TermBody key={term.id} term={term} />
-              <AdminOnly>
-                <QueueScoreDebug term={term} context="review" />
-              </AdminOnly>
             </div>
           </div>
         </div>

@@ -1,7 +1,5 @@
-import { HintPopover } from "@/components/jargon/hint-popover";
 import { ReviewPage } from "@/components/jargon/review/review-page";
 import { getReviewSetupData } from "@/app/(private)/jargon/review/actions";
-import { loadStudyHints } from "@/lib/hints/load-study-hints";
 import type { StudyCollection } from "@/lib/study/types";
 
 type PageProps = {
@@ -19,11 +17,7 @@ function resolveReviewCollectionId(
 }
 
 export default async function JargonReviewPage({ searchParams }: PageProps) {
-  const [params, setup, hints] = await Promise.all([
-    searchParams,
-    getReviewSetupData(),
-    loadStudyHints(),
-  ]);
+  const [params, setup] = await Promise.all([searchParams, getReviewSetupData()]);
 
   if ("error" in setup) {
     return <p className="text-sm text-base-content/60">{setup.error}</p>;
@@ -31,10 +25,5 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
 
   const domainId = resolveReviewCollectionId(params.domain, setup.collections);
 
-  return (
-    <>
-      <ReviewPage collections={setup.collections} initialDomainId={domainId} />
-      {hints.length > 0 ? <HintPopover hints={hints} /> : null}
-    </>
-  );
+  return <ReviewPage collections={setup.collections} initialDomainId={domainId} />;
 }

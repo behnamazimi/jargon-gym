@@ -70,23 +70,6 @@ export async function fetchTermsByDomain(client: Client, domainId: string) {
   return data;
 }
 
-/** Slim multi-domain term fetch — id/term/category/domain_id only, for
- *  surfaces that list across every collection at once (e.g. the mastery
- *  overview) rather than one domain's full term bodies. */
-export async function fetchTermsByDomains(client: Client, domainIds: string[]) {
-  if (domainIds.length === 0) return [];
-
-  const { data, error } = await client
-    .from("terms")
-    .select("id, term, category, domain_id")
-    .in("domain_id", domainIds)
-    .order("category")
-    .order("term");
-
-  if (error) throw error;
-  return data;
-}
-
 /**
  * Relationships touching any of `termIds` (source OR target).
  * Joins both term names so single-term hydrate (read/review) still resolves

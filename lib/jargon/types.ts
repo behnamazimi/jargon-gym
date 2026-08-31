@@ -1,5 +1,3 @@
-import type { OverallStrengthRow } from "./known-state";
-
 export type TermRelationship = {
   id: string;
   relationshipType: string;
@@ -53,8 +51,6 @@ export type JargonPageData = {
   terms: Term[];
   knownTermIds: string[];
   activeDomainIds: string[];
-  /** Display-only overall mastery per term, blended across Read/Review/Quiz. Never affects scoring. */
-  overallStrengthByTermId: Record<string, OverallStrengthRow>;
 };
 
 export type SortMode = "default" | "az" | "unknown";
