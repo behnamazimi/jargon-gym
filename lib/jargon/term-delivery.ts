@@ -6,7 +6,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import { recordRead } from "@/lib/jargon/review-outcome";
 import {
   getReviewPoolStatsForUser,
   pickReviewTermsForUser,
@@ -61,7 +60,8 @@ async function maybeRecordSend(client: Client, userId: string, options?: Deliver
   }
 }
 
-/** Pick next unknown term, record read, clear caught-up flag. */
+/** Pick next unknown term, clear caught-up flag. Does not record the read —
+ *  the caller sends it masked and records only once the user reveals it. */
 export async function deliverNextTerm(
   client: Client,
   userId: string,
@@ -102,7 +102,6 @@ export async function deliverNextTerm(
     return result;
   }
 
-  await recordRead(client, userId, term.id, "admin");
   await maybeRecordSend(client, userId, options);
   return { kind: "term", term, pickMeta: meta };
 }

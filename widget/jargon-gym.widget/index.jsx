@@ -31,6 +31,19 @@ export const updateState = (event, previousState) => {
       const data = JSON.parse(previousState.output || "{}");
       data.current = event.optimisticNext;
       data.next = null;
+      data.revealed = false;
+      return { output: JSON.stringify(data), error: null };
+    } catch {
+      return previousState;
+    }
+  }
+  // Optimistic in-place reveal so the definition shows instantly instead of
+  // waiting on reveal-term.sh's round trip. The real dispatch below
+  // reconciles this with server state.
+  if (event.optimisticReveal) {
+    try {
+      const data = JSON.parse(previousState.output || "{}");
+      data.revealed = true;
       return { output: JSON.stringify(data), error: null };
     } catch {
       return previousState;
@@ -178,6 +191,7 @@ function parseState(output) {
     return {
       current: data.current || null,
       next: data.next || null,
+      revealed: data.revealed ?? false,
       widgetDir: data.widgetDir || null,
       appBaseUrl: data.appBaseUrl || "http://localhost:3000",
       totalCount: data.totalCount ?? 0,
@@ -189,6 +203,7 @@ function parseState(output) {
   } catch {
     return {
       current: null,
+      revealed: false,
       widgetDir: null,
       appBaseUrl: "http://localhost:3000",
       totalCount: 0,
@@ -204,10 +219,12 @@ function escapeShellArg(value) {
   return `'${value.replace(/'/g, "'\\''")}'`;
 }
 
-const openApp = (appBaseUrl, current) => {
+const openApp = (appBaseUrl, current, alreadyRevealed = false) => {
   const base = appBaseUrl.replace(/\/$/, "");
   const url = current
-    ? `${base}/jargon/read?termId=${encodeURIComponent(current.id)}`
+    ? `${base}/jargon/read?termId=${encodeURIComponent(current.id)}${
+        alreadyRevealed ? "&alreadyRead=true" : ""
+      }`
     : `${base}/jargon`;
   run(`open ${escapeShellArg(url)}`);
 };
@@ -230,10 +247,10 @@ const refreshState = (dispatch, widgetDir = null, reset = false) => {
 
 /** Drops the current term and pulls in a replacement against the live
  *  queue in one round trip. `record` should be true only when nothing else
- *  will record this term's read server-side — i.e. the "Next" button,
- *  where showing the term was a passive read the user just confirmed by
- *  moving on. The script's own output is a ready-to-render state, same
- *  shape as READ_STATE_CMD, so it's dispatched directly.
+ *  will record this term's read server-side — i.e. "Read more", where
+ *  opening the term on the web page is itself the reveal. The script's own
+ *  output is a ready-to-render state, same shape as READ_STATE_CMD, so it's
+ *  dispatched directly.
  *
  *  If `next` is already cached from the last read, dispatch it immediately
  *  so the UI advances without waiting on this round trip; the eventual
@@ -249,12 +266,24 @@ const advanceTerm = (termId, widgetDir, dispatch, record = false, next = null) =
     .catch((err) => dispatch({ error: err }));
 };
 
+/** Reveals the current term in place — records the read without dropping
+ *  it from the pool, so it stays on screen until the user moves on. */
+const revealInPlace = (termId, widgetDir, dispatch) => {
+  if (!widgetDir || !termId) return;
+  dispatch({ optimisticReveal: true });
+  run(`${escapeShellArg(widgetDir + "/reveal-term.sh")} ${escapeShellArg(termId)}`)
+    .then((output) => dispatch({ output }))
+    .catch((err) => dispatch({ error: err }));
+};
+
 /** Open the current term on the Read page, then advance the widget locally.
- *  The Read page itself records the read, so this must not record again. */
-const openAppAndRotate = (appBaseUrl, current, next, widgetDir, dispatch) => {
-  openApp(appBaseUrl, current);
+ *  Opening the term is itself the reveal — record here unless the term was
+ *  already revealed in place (avoid double-recording), and always open the
+ *  web page pre-revealed since the read is accounted for either way. */
+const openAppAndRotate = (appBaseUrl, current, next, widgetDir, dispatch, revealed = false) => {
+  openApp(appBaseUrl, current, true);
   if (current?.id) {
-    advanceTerm(current.id, widgetDir, dispatch, false, next);
+    advanceTerm(current.id, widgetDir, dispatch, !revealed, next);
   }
 };
 
@@ -321,6 +350,7 @@ export const render = ({ output, error }, dispatch) => {
     totalCount,
     current,
     next,
+    revealed,
     widgetDir,
     appBaseUrl,
     widgetVersion,
@@ -387,15 +417,23 @@ export const render = ({ output, error }, dispatch) => {
       />
       <div
         className="term"
-        onClick={() => openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)}
+        onClick={() =>
+          revealed
+            ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed)
+            : revealInPlace(current.id, widgetDir, dispatch)
+        }
       >
         {current.term}
       </div>
       <div
         className="def"
-        onClick={() => openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)}
+        onClick={() =>
+          revealed
+            ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed)
+            : revealInPlace(current.id, widgetDir, dispatch)
+        }
       >
-        {current.definition}
+        {revealed ? current.definition : `What is ${current.term}?`}
       </div>
       <div className="actions">
         <span className="cat" title={current.domainName}>
@@ -406,7 +444,7 @@ export const render = ({ output, error }, dispatch) => {
           title="Open this term on the Read page"
           onClick={(e) => {
             e.stopPropagation();
-            openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch);
+            openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed);
           }}
         >
           Read more
@@ -417,7 +455,7 @@ export const render = ({ output, error }, dispatch) => {
           title="Show another term"
           onClick={(e) => {
             e.stopPropagation();
-            advanceTerm(current.id, widgetDir, dispatch, true, next);
+            advanceTerm(current.id, widgetDir, dispatch, false, next);
           }}
         >
           → Next
@@ -426,9 +464,13 @@ export const render = ({ output, error }, dispatch) => {
       <div className="hint-row">
         <span
           className="hint"
-          onClick={() => openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)}
+          onClick={() =>
+            revealed
+              ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed)
+              : revealInPlace(current.id, widgetDir, dispatch)
+          }
         >
-          Click term to read more →
+          {revealed ? "Click term to read more →" : "Click to reveal"}
         </span>
       </div>
       <UpdateBanner

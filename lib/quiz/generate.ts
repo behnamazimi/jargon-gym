@@ -2,6 +2,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import type { LlmProvider } from "@/lib/llm/types";
+import { EXAMPLE_JUDGMENT_MAX_SHARE, MCQ_SHARE_OF_REMAINDER } from "./mix-ratios";
 import { normalizeQuizQuestions } from "./normalize";
 import { buildQuizGenerationSchema } from "./schema";
 import type { QuizQuestion, QuizTerm } from "./types";
@@ -18,8 +19,17 @@ function formatDomainLabel(terms: QuizTerm[]): string {
 }
 
 function buildQuizPrompt(terms: QuizTerm[]): string {
-  const mcqCount = Math.ceil(terms.length * 0.6);
-  const trueFalseCount = Math.floor(terms.length * 0.4);
+  const eligibleForExampleJudgment = terms.filter(
+    (term) => term.example?.trim() || term.antiExample?.trim(),
+  );
+  const exampleJudgmentCount = Math.min(
+    eligibleForExampleJudgment.length,
+    Math.round(terms.length * EXAMPLE_JUDGMENT_MAX_SHARE),
+  );
+  const remainingCount = terms.length - exampleJudgmentCount;
+  const mcqCount = Math.ceil(remainingCount * MCQ_SHARE_OF_REMAINDER);
+  const plainTrueFalseCount = remainingCount - mcqCount;
+  const trueFalseCount = exampleJudgmentCount + plainTrueFalseCount;
   const domainLabel = formatDomainLabel(terms);
   const multipleDomains = new Set(terms.map((term) => term.domainName)).size > 1;
 
@@ -28,6 +38,9 @@ function buildQuizPrompt(terms: QuizTerm[]): string {
       const lines = [`- id: ${term.id}`, `  definition: ${JSON.stringify(term.definition)}`];
       if (term.example?.trim()) {
         lines.push(`  example: ${JSON.stringify(term.example)}`);
+      }
+      if (term.antiExample?.trim()) {
+        lines.push(`  anti_example: ${JSON.stringify(term.antiExample)}`);
       }
       if (multipleDomains) {
         lines.push(`  domain: ${JSON.stringify(term.domainName)}`);
@@ -38,7 +51,7 @@ function buildQuizPrompt(terms: QuizTerm[]): string {
 
   return `Generate exactly ${terms.length} vocabulary quiz questions in the domain(s): ${JSON.stringify(domainLabel)} — one per term below, in the same order as the input.
 
-Each term is given as: id and definition (and optionally an example). Use the definition to write the question but do not copy it verbatim — test comprehension via a scenario, use case, or contrast instead of restating it.
+Each term is given as: id and definition (and optionally an example and/or anti_example). Use the definition to write the question but do not copy it verbatim — test comprehension via a scenario, use case, or contrast instead of restating it.
 
 Terms:
 ${termList}
@@ -46,8 +59,16 @@ ${termList}
 QUESTION TYPE ASSIGNMENT (hard requirement):
 - Exactly ${mcqCount} questions must be "multiple_choice"
 - Exactly ${trueFalseCount} questions must be "true_false"
-- Both counts must be hit exactly — do not default to one type
+- Of those ${trueFalseCount} true_false questions, exactly ${exampleJudgmentCount} must be "example-judgment" questions (defined below) — the remaining ${plainTrueFalseCount} are ordinary true_false statements as before
+- Both top-level counts must be hit exactly — do not default to one type
 - Order the questions so same-type questions are not grouped together (no long runs of one type)
+
+EXAMPLE-JUDGMENT QUESTIONS (a specific way to author ${exampleJudgmentCount} of the true_false questions):
+- Only use terms that have an example or anti_example in the list above; use each such term at most once for this purpose across the whole quiz
+- Pick either the term's example OR its anti_example (never both for the same term) and copy that text into the prompt verbatim, with no added quotation marks around it
+- Prompt format, exactly two lines joined by a single "\\n": \`Does this illustrate "<term name>"?\\n<example or anti_example text>\`
+- If you used the term's example, correctAnswer must be true. If you used the term's anti_example, correctAnswer must be false.
+- Never say or hint whether the text came from the example or the anti_example field — the prompt must read as a plain claim to judge
 
 Output ONLY valid JSON (no markdown fences, no comments, no commentary before or after), matching this shape exactly:
 
@@ -78,7 +99,7 @@ Rules:
 - For some multiple_choice questions (roughly half of them), use a definition-match format: write a short definition of the term in the prompt without naming it, then ask which option is the term that matches that definition. In those questions, each option's text must be a term name — the correct option is the target term's name; distractors are other plausible term names from the same domain, not definitions.
 - Distractors must be other real jargon, common misconceptions, or near-miss definitions a learner at this level could plausibly confuse with the real term — never random unrelated words.
 - correctOptionIds must reference only ids present in that question's options.
-- true_false: vary true vs. false roughly evenly across the set — do not make every statement true.
+- true_false (the non-example-judgment ones): vary true vs. false roughly evenly across the set — do not make every statement true.
 - Prompts must be self-contained: don't assume the reader has the definition in front of them, and don't reference other terms from the list (this can leak answers).
 - Tone: write the way a helpful colleague would quiz someone — plain, natural, easy to follow. Avoid robotic or exam-template phrasing (e.g. "Which of the following best describes…", "It is important to note that…", "The aforementioned term"). Keep prompts and option text short, direct, and conversational; use simple words unless the jargon itself requires a technical term.
 - If terms.length is 0, return {"questions": []} and skip all other rules.`;

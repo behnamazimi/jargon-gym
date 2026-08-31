@@ -7,6 +7,7 @@ export type QuizTerm = {
   term: string;
   definition: string;
   example: string | null;
+  antiExample: string | null;
   domainId: string;
   domainName: string;
   pickReasons?: PickReason[];

@@ -99,6 +99,16 @@ function appendOpenInWebRow(rows: InlineKeyboardMarkup["inline_keyboard"], termI
   }
 }
 
+/** Masked prompt: term/domain/category only, gating the definition behind a
+ *  reveal tap so the read only counts once the user actually looks. */
+export function formatReadPrompt(term: TermCard): string {
+  return `${buildTermHeader(term)}\n\n<i>Tap Reveal to see the definition.</i>`;
+}
+
+export function buildReadRevealKeyboard(termId: string): InlineKeyboardMarkup {
+  return { inline_keyboard: [[{ text: "Reveal", callback_data: `read:reveal:${termId}` }]] };
+}
+
 export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
     [{ text: "Read next", callback_data: `read:${term.id}` }],
@@ -371,6 +381,54 @@ export function formatReviewQuestionWithAnswer(
 
   message += `\n\nScore: ${currentScore}/${totalQuestions}`;
   return message;
+}
+
+export function formatTrueFalseQuestion(
+  term: TermCard,
+  currentIndex: number,
+  totalQuestions: number,
+  scenarioText: string,
+): string {
+  let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
+  message += `Does this illustrate "${escapeText(term.term)}"?\n\n`;
+  message += `<blockquote>${escapeText(scenarioText)}</blockquote>`;
+  return message;
+}
+
+export function formatTrueFalseQuestionWithAnswer(
+  term: TermCard,
+  questionIndex: number,
+  totalQuestions: number,
+  scenarioText: string,
+  selectedAnswer: boolean,
+  correctAnswer: boolean,
+  isCorrect: boolean,
+  currentScore: number,
+  markedUnknown = false,
+): string {
+  let message = formatTrueFalseQuestion(term, questionIndex, totalQuestions, scenarioText);
+  message += `\n\n<b>Your answer:</b> ${selectedAnswer ? "True" : "False"}`;
+
+  if (isCorrect) {
+    message += `\n\n✅ <b>Correct!</b>`;
+  } else {
+    message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${correctAnswer ? "True" : "False"}</b>`;
+    if (markedUnknown) message += "\n<i>Marked as unknown.</i>";
+  }
+
+  message += `\n\nScore: ${currentScore}/${totalQuestions}`;
+  return message;
+}
+
+export function buildTrueFalseKeyboard(sessionIndex: number): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        { text: "True", callback_data: `quiztf:${sessionIndex}:true` },
+        { text: "False", callback_data: `quiztf:${sessionIndex}:false` },
+      ],
+    ],
+  };
 }
 
 export function buildReviewKeyboard(

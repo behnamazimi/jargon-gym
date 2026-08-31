@@ -72,7 +72,9 @@ async function flipKnown(
   }
 }
 
-/** Read page/command, `/read`, or opening a term card on the jargon page: deliberate but untested exposure. */
+/** Read page/command, `/read`, or opening a term card on the jargon page: deliberate but untested
+ *  exposure. All three Read surfaces (web, widget, Telegram) gate the definition behind an
+ *  explicit reveal — call this at reveal time, never at delivery/fetch time. */
 export async function recordRead(
   client: Client,
   userId: string,

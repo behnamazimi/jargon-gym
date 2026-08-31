@@ -2,6 +2,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
 import {
+  assignExampleJudgmentQuestions,
+  type ExampleJudgmentPick,
+} from "@/lib/quiz/example-judgment";
+import {
   fetchQuizTermPool,
   fetchStudyTermPool,
   getMaxStudyCount,
@@ -35,6 +39,9 @@ export type ReviewSession = {
   status: ReviewStatus;
   domainId: QuizDomainSelection;
   termIds: string[];
+  /** termId -> example-judgment true/false question, for terms picked at
+   *  session creation. Terms not in this map get the regular term-guess MCQ. */
+  exampleJudgment: Record<string, ExampleJudgmentPick>;
   currentIndex: number;
   correctCount: number;
   startedAt: number;
@@ -44,6 +51,7 @@ type StoredQuizSession = {
   status: ReviewStatus;
   domainId: QuizDomainSelection;
   termIds: string[];
+  exampleJudgment: Record<string, ExampleJudgmentPick>;
   currentIndex: number;
   correctCount: number;
   startedAt: number;
@@ -63,6 +71,20 @@ function isQuizSetupState(value: unknown): value is QuizSetupState {
   );
 }
 
+function isExampleJudgmentPick(value: unknown): value is ExampleJudgmentPick {
+  if (!value || typeof value !== "object") return false;
+  const pick = value as ExampleJudgmentPick;
+  return typeof pick.text === "string" && typeof pick.correctAnswer === "boolean";
+}
+
+function isExampleJudgmentMap(value: unknown): value is Record<string, ExampleJudgmentPick> {
+  // Older stored sessions predate this field, so treat it as optional here —
+  // the reader below defaults a missing map to {}.
+  if (value === undefined) return true;
+  if (!value || typeof value !== "object") return false;
+  return Object.values(value).every(isExampleJudgmentPick);
+}
+
 function isStoredSession(value: unknown): value is StoredQuizSession {
   if (!value || typeof value !== "object") return false;
   const session = value as StoredQuizSession;
@@ -71,6 +93,7 @@ function isStoredSession(value: unknown): value is StoredQuizSession {
     (session.domainId === "all" || typeof session.domainId === "string") &&
     Array.isArray(session.termIds) &&
     session.termIds.every((id) => typeof id === "string") &&
+    isExampleJudgmentMap(session.exampleJudgment) &&
     typeof session.currentIndex === "number" &&
     typeof session.correctCount === "number" &&
     typeof session.startedAt === "number"
@@ -195,12 +218,14 @@ export async function createSession(
     "admin",
   );
   const termIds = cards.map((t) => t.id);
+  const exampleJudgment = Object.fromEntries(assignExampleJudgmentQuestions(cards));
 
   const session: ReviewSession = {
     userId,
     status,
     domainId,
     termIds,
+    exampleJudgment,
     currentIndex: 0,
     correctCount: 0,
     startedAt: Date.now(),
@@ -211,6 +236,7 @@ export async function createSession(
       status: session.status,
       domainId: session.domainId,
       termIds: session.termIds,
+      exampleJudgment: session.exampleJudgment,
       currentIndex: session.currentIndex,
       correctCount: session.correctCount,
       startedAt: session.startedAt,
@@ -240,6 +266,7 @@ export async function getSession(client: Client, chatId: number): Promise<Review
     status: data.quiz_session.status,
     domainId: data.quiz_session.domainId,
     termIds: data.quiz_session.termIds,
+    exampleJudgment: data.quiz_session.exampleJudgment ?? {},
     currentIndex: data.quiz_session.currentIndex,
     correctCount: data.quiz_session.correctCount,
     startedAt: data.quiz_session.startedAt,
@@ -262,6 +289,7 @@ export async function updateSession(
     status: updated.status,
     domainId: updated.domainId,
     termIds: updated.termIds,
+    exampleJudgment: updated.exampleJudgment,
     currentIndex: updated.currentIndex,
     correctCount: updated.correctCount,
     startedAt: updated.startedAt,

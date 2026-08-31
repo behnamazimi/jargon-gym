@@ -18,12 +18,13 @@ import {
   parseStartToken,
 } from "./commands";
 import { CONNECT_MESSAGE, HELP_MESSAGE } from "./copy";
-import { handleRead, handleReadCallback, handleSendDue } from "./delivery-flow";
+import { handleRead, handleReadCallback, handleReadReveal, handleSendDue } from "./delivery-flow";
 import {
   handleQuizCommand,
   handleQuizSetupCallback,
   handleQuizSetupText,
   handleReviewAnswer,
+  handleReviewTrueFalseAnswer,
 } from "./quiz-flow";
 import {
   handleReviewCommand,
@@ -113,6 +114,31 @@ async function handleCallback(
       );
       return actions;
     }
+  }
+
+  if (data.startsWith("quiztf:")) {
+    const parts = data.slice("quiztf:".length).split(":");
+    if (parts.length === 2 && (parts[1] === "true" || parts[1] === "false")) {
+      const sessionIndex = parseInt(parts[0], 10);
+      if (!isNaN(sessionIndex)) {
+        actions.push(
+          ...(await handleReviewTrueFalseAnswer(
+            client,
+            chatId,
+            messageId,
+            sessionIndex,
+            parts[1] === "true",
+          )),
+        );
+        return actions;
+      }
+    }
+  }
+
+  if (data.startsWith("read:reveal:")) {
+    const termId = data.slice("read:reveal:".length);
+    actions.push(...(await handleReadReveal(client, userId, chatId, messageId, termId)));
+    return actions;
   }
 
   if (data.startsWith("read:")) {

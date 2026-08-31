@@ -33,7 +33,11 @@ Every term in your active collections carries state in two shapes:
 - **Read** — deliberate but untested exposure: the Read page/command
   (web + Telegram `/read`, scheduled delivery), or opening a term card on
   the jargon page. `read_count` + `last_read_at`. No pass/fail concept —
-  it's just "have you looked at this."
+  it's just "have you looked at this." Read's three surfaces (web, the
+  desktop widget, Telegram) all gate the definition behind an explicit
+  reveal tap — `recordRead` fires at reveal time, not at delivery/fetch
+  time, so a term shown but never revealed records nothing and stays
+  eligible to resurface.
 - **Tested** — an actual judgment, tracked **independently per activity**:
   - Review: `review_recall_count`, `last_review_recall_at`, `review_streak`, `review_fail_count`
   - Quiz: `quiz_test_count`, `last_quiz_tested_at`, `quiz_streak`, `quiz_fail_count`
@@ -842,7 +846,8 @@ result, rather than needing a separate "reset to 0" step.
 ### Telegram bot
 
 - `/read` and scheduled delivery: same `read` context ranking as the web
-  Read page, one unknown term at a time. On send → `read` event.
+  Read page, one unknown term at a time. Sent masked; tapping **Reveal** →
+  `read` event.
 - `/review`: same mixed-pool `review` context ranking as web review — no
   known/unknown argument anymore (`/review [all|<collection>] [count|all]`).
   Reveal / rate inline buttons write the same
@@ -887,8 +892,10 @@ result, rather than needing a separate "reset to 0" step.
   `exclude=<batchIds>` so it can't repeat the batch just finished. Refresh
   (↻) clears the pool and peeks a fresh top 10 (`--reset`).
 - Rotating locally writes nothing — there's no Seen tier to record it into.
-- Click the term or **Read more** → opens `/jargon/read?termId=…` (records a
-  `read` event there) and advances the widget to the next term.
+- Click the term/definition → reveals it in place (`/api/widget/reveal`
+  records a `read` event, term stays on screen). **Read more** → opens
+  `/jargon/read?termId=…&alreadyRead=true` and advances the widget to the
+  next term, recording the read itself if it wasn't already revealed.
 
 ### `/stat`
 

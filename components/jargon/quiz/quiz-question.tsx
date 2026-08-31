@@ -86,6 +86,19 @@ function quizAnswerReducer(state: QuizAnswerState, action: QuizAnswerAction): Qu
   }
 }
 
+// Example-judgment true/false questions pack a quoted scenario onto a second
+// line so it can be styled apart from the question itself. Every other
+// question's prompt is a single line and falls through unchanged.
+function splitPromptQuote(prompt: string): { question: string; quote: string | null } {
+  const newlineIndex = prompt.indexOf("\n");
+  if (newlineIndex === -1) return { question: prompt, quote: null };
+
+  return {
+    question: prompt.slice(0, newlineIndex).trim(),
+    quote: prompt.slice(newlineIndex + 1).trim(),
+  };
+}
+
 function canSubmitAnswer(question: QuizQuestion, state: QuizAnswerState): boolean {
   return question.type === "multiple_choice"
     ? state.selectedOptionIds.length > 0
@@ -185,13 +198,20 @@ export function QuizQuestionView({
 
   const submitted = state.phase !== "answering";
   const canAdvance = state.phase === "ready";
+  const { question: promptQuestion, quote: promptQuote } = splitPromptQuote(question.prompt);
 
   return (
     <QuizPanel className="quiz-feedback-enter flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
         <h2 className="m-0 text-lg font-semibold leading-snug tracking-tight text-base-content sm:text-xl">
-          {question.prompt}
+          {promptQuestion}
         </h2>
+
+        {promptQuote ? (
+          <blockquote className="mt-3 rounded-xl border-l-4 border-primary/40 bg-base-200/60 px-4 py-3 text-base-content/80">
+            <span className="text-base leading-snug">{promptQuote}</span>
+          </blockquote>
+        ) : null}
 
         {question.type === "multiple_choice" ? (
           <RadioGroup

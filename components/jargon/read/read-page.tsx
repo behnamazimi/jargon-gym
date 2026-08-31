@@ -1,10 +1,11 @@
 "use client";
 
-import { AlertCircle, ArrowLeft, ArrowRight, PartyPopper } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Eye, PartyPopper } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef, useState, useTransition } from "react";
 import {
   getNextReadTermAction,
+  recordReadRevealAction,
   type NextReadTermResult,
 } from "@/app/(private)/jargon/read/actions";
 import { AdminOnly } from "@/components/admin-only";
@@ -132,19 +133,58 @@ function ReadCaughtUp({
   );
 }
 
-function ReadTermCard({
-  term,
-  canGoBack,
-  isPending,
-  onPrevious,
-  onNext,
-}: {
-  term: ReviewTerm;
-  canGoBack: boolean;
-  isPending: boolean;
-  onPrevious: () => void;
-  onNext: () => void;
-}) {
+function ReadCardHeader({ term }: { term: ReviewTerm }) {
+  return (
+    <header className="shrink-0 border-b border-base-300/60 px-5 py-3 sm:px-6">
+      <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
+        {term.term}
+      </h2>
+      <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
+        <span>{term.domainName}</span>
+        <span className="mx-1.5 text-base-content/35" aria-hidden>
+          ·
+        </span>
+        <span>{term.category}</span>
+      </p>
+    </header>
+  );
+}
+
+function ReadCardMasked({ term, onReveal }: { term: ReviewTerm; onReveal: () => void }) {
+  return (
+    <div
+      className="flex min-h-0 flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-5 py-4 text-center sm:px-6"
+      role="button"
+      tabIndex={0}
+      onClick={onReveal}
+      onKeyDown={(event) => {
+        if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          onReveal();
+        }
+      }}
+      aria-label={`What is ${term.term}? Tap to reveal the definition.`}
+    >
+      <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
+        What is <span className="italic">{term.term}</span>?
+      </h2>
+      <p className="m-0 text-xs tracking-wide text-base-content/50">
+        <span>{term.domainName}</span>
+        <span className="mx-1.5 text-base-content/35" aria-hidden>
+          ·
+        </span>
+        <span>{term.category}</span>
+      </p>
+      <div className="mt-1 flex items-center gap-2 text-sm text-base-content/60">
+        <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
+        <span className="inline md:hidden coarse:inline">Tap to reveal</span>
+        <span className="hidden md:inline coarse:hidden">Click or press Enter to reveal</span>
+      </div>
+    </div>
+  );
+}
+
+function ReadCardRevealed({ term }: { term: ReviewTerm }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -152,28 +192,45 @@ function ReadTermCard({
   }, [term.id]);
 
   return (
-    <QuizPanel className="flex min-h-0 flex-1 flex-col">
-      <header className="shrink-0 border-b border-base-300/60 px-5 py-3 sm:px-6">
-        <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
-          {term.term}
-        </h2>
-        <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
-          <span>{term.domainName}</span>
-          <span className="mx-1.5 text-base-content/35" aria-hidden>
-            ·
-          </span>
-          <span>{term.category}</span>
-        </p>
-      </header>
+    <>
+      <ReadCardHeader term={term} />
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody key={term.id} term={term} />
         <AdminOnly>
           <QueueScoreDebug term={term} context="read" />
         </AdminOnly>
       </div>
+    </>
+  );
+}
+
+function ReadTermCard({
+  term,
+  revealed,
+  canGoBack,
+  isPending,
+  onReveal,
+  onPrevious,
+  onNext,
+}: {
+  term: ReviewTerm;
+  revealed: boolean;
+  canGoBack: boolean;
+  isPending: boolean;
+  onReveal: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <QuizPanel className="flex min-h-0 flex-1 flex-col">
+      {revealed ? (
+        <ReadCardRevealed term={term} />
+      ) : (
+        <ReadCardMasked term={term} onReveal={onReveal} />
+      )}
       <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-base-300/60 px-5 py-3 sm:px-6">
         <div className="hidden min-w-0 md:block coarse:hidden">
-          <QuizKeyboardHint action="go to the next term" />
+          <QuizKeyboardHint action={revealed ? "go to the next term" : "reveal the answer"} />
         </div>
         <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
           {canGoBack ? (
@@ -300,43 +357,51 @@ function caughtUpDescription(
   return `No unknown terms left in ${name}. Pick another collection to keep reading.`;
 }
 
+type NavEntry = { term: ReviewTerm; revealed: boolean };
+
 type NavState = {
-  term: ReviewTerm | null;
-  history: ReviewTerm[];
-  future: ReviewTerm[];
+  entry: NavEntry | null;
+  history: NavEntry[];
+  future: NavEntry[];
 };
 
 type NavAction =
-  | { type: "fetched"; term: ReviewTerm }
+  | { type: "fetched"; term: ReviewTerm; revealed: boolean }
   | { type: "redo" }
   | { type: "back" }
   | { type: "clear" }
-  | { type: "dropRedo" };
+  | { type: "dropRedo" }
+  | { type: "reveal" };
 
 function navReducer(state: NavState, action: NavAction): NavState {
   switch (action.type) {
     case "fetched": {
-      const history = state.term ? [...state.history, state.term] : state.history;
-      return { term: action.term, history, future: [] };
+      const entry = { term: action.term, revealed: action.revealed };
+      const history = state.entry ? [...state.history, state.entry] : state.history;
+      return { entry, history, future: [] };
     }
     case "redo": {
       if (state.future.length === 0) return state;
-      const term = state.future[state.future.length - 1];
+      const entry = state.future[state.future.length - 1];
       const future = state.future.slice(0, -1);
-      const history = state.term ? [...state.history, state.term] : state.history;
-      return { term, history, future };
+      const history = state.entry ? [...state.history, state.entry] : state.history;
+      return { entry, history, future };
     }
     case "back": {
       if (state.history.length === 0) return state;
-      const term = state.history[state.history.length - 1];
+      const entry = state.history[state.history.length - 1];
       const history = state.history.slice(0, -1);
-      const future = state.term ? [...state.future, state.term] : state.future;
-      return { term, history, future };
+      const future = state.entry ? [...state.future, state.entry] : state.future;
+      return { entry, history, future };
     }
     case "clear":
-      return { ...state, term: null };
+      return { ...state, entry: null };
     case "dropRedo":
       return { ...state, future: [] };
+    case "reveal": {
+      if (!state.entry || state.entry.revealed) return state;
+      return { ...state, entry: { ...state.entry, revealed: true } };
+    }
     default:
       return state;
   }
@@ -352,11 +417,15 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
   const [status, setStatus] = useState<ReadStatus>(() => statusFromResult(initialResult));
   const [nav, dispatch] = useReducer(navReducer, {
-    term: initialResult.term ?? null,
+    entry: initialResult.term
+      ? { term: initialResult.term, revealed: initialResult.revealed ?? false }
+      : null,
     history: [],
     future: [],
   });
-  const { term, history } = nav;
+  const { entry, history } = nav;
+  const term = entry?.term ?? null;
+  const revealed = entry?.revealed ?? false;
   const [lastPickedDomainId, setLastPickedDomainId] = useState(domainId);
   const [errorMessage, setErrorMessage] = useState<string | null>(initialResult.error ?? null);
   const [isPending, startTransition] = useTransition();
@@ -409,7 +478,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
           return;
         }
 
-        dispatch({ type: "fetched", term: result.term });
+        dispatch({ type: "fetched", term: result.term, revealed: false });
         setStatus("ready");
         scrollToTop(cardRef.current);
       } finally {
@@ -422,6 +491,13 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
     dispatch({ type: "back" });
     setStatus("ready");
     scrollToTop(cardRef.current);
+  }, []);
+
+  const handleReveal = useCallback(() => {
+    if (!navRef.current.entry || navRef.current.entry.revealed) return;
+    const termId = navRef.current.entry.term.id;
+    dispatch({ type: "reveal" });
+    void recordReadRevealAction(termId);
   }, []);
 
   const handleCollectionChange = useCallback((nextDomainId: string) => {
@@ -439,12 +515,16 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
       if (isTypingTarget(event.target)) return;
 
       event.preventDefault();
-      fetchNext();
+      if (navRef.current.entry && !navRef.current.entry.revealed) {
+        handleReveal();
+      } else {
+        fetchNext();
+      }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [fetchNext]);
+  }, [fetchNext, handleReveal]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -470,8 +550,10 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
         {status === "ready" && term !== null ? (
           <ReadTermCard
             term={term}
+            revealed={revealed}
             canGoBack={history.length > 0}
             isPending={isPending}
+            onReveal={handleReveal}
             onPrevious={goToPrevious}
             onNext={fetchNext}
           />

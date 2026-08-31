@@ -3,16 +3,14 @@ set -euo pipefail
 
 WIDGET_DIR="$(cd "$(dirname "$0")" && pwd)"
 TERM_ID="${1:-}"
-RECORD_FLAG="${2:-}"
 
 if [[ -z "$TERM_ID" ]]; then
-  echo "Usage: advance-term.sh <termId> [--record]" >&2
+  echo "Usage: reveal-term.sh <termId>" >&2
   exit 1
 fi
 
 export WIDGET_DIR
 export TERM_ID
-export RECORD_FLAG
 
 /usr/bin/python3 - <<'PY'
 import json
@@ -26,7 +24,6 @@ widget_dir = pathlib.Path(os.environ["WIDGET_DIR"])
 config_path = widget_dir / "config.json"
 state_path = widget_dir / "state.json"
 term_id = os.environ["TERM_ID"]
-record = os.environ.get("RECORD_FLAG") == "--record"
 
 def emit(payload, code=0):
     sys.stdout.write(json.dumps(payload))
@@ -71,15 +68,11 @@ if not config or not config.get("apiToken") or not config.get("apiBaseUrl"):
 
 pool = state["pool"]
 
-# Stale-click guard: only advance if the term shown still matches what the
-# widget last rendered. A mismatched id (double-click before UI refresh)
-# is a no-op — just re-emit the current state.
+# Stale-click guard: only record if the term shown still matches what the
+# widget last rendered. A mismatched id (double-click before UI refresh, or
+# the pool already rotated) is a no-op — just re-emit the current state.
 if not pool or pool[0].get("id") != term_id:
     emit(current_payload())
-
-# Exclude everything currently on screen so the replacement can't be the
-# term we're dropping or the one still showing.
-exclude_ids = [t["id"] for t in pool]
 
 try:
     api_base = config["apiBaseUrl"].rstrip("/")
@@ -91,35 +84,21 @@ try:
     if widget_version:
         headers["X-Widget-Version"] = widget_version
     req = urllib.request.Request(
-        f"{api_base}/api/widget/advance",
-        data=json.dumps({
-            "termId": term_id,
-            "record": record,
-            "excludeIds": exclude_ids,
-        }).encode(),
+        f"{api_base}/api/widget/reveal",
+        data=json.dumps({"termId": term_id}).encode(),
         headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=10) as resp:
-        result = json.loads(resp.read().decode())
+        json.loads(resp.read().decode())
 except Exception as err:
-    # Don't drop the term locally if we couldn't confirm the read was
-    # recorded (when record=True) — leave the pool untouched so a retry
-    # (another Next click) can try again instead of silently losing it.
-    print(f"warning: advance failed for {term_id}: {err}", file=sys.stderr)
+    # Don't mark it revealed locally if we couldn't confirm the read was
+    # recorded — leave state untouched so a retry (another click) can try
+    # again instead of silently losing the read.
+    print(f"warning: reveal failed for {term_id}: {err}", file=sys.stderr)
     emit(current_payload())
 
-pool.pop(0)
-if result.get("term"):
-    pool.append(result["term"])
-
-state["pool"] = pool
-# The new pool[0] (whatever it is) was never revealed in place.
-state["currentRevealed"] = False
-state["knownCount"] = result.get("knownCount", state["knownCount"])
-state["totalCount"] = result.get("totalCount", state["totalCount"])
-state["latestWidgetVersion"] = result.get("latestWidgetVersion", state["latestWidgetVersion"])
-
+state["currentRevealed"] = True
 state_path.write_text(json.dumps(state, indent=2))
 
 emit(current_payload())

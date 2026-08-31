@@ -9,12 +9,15 @@ import {
   buildQuizCollectionKeyboard,
   buildQuizCountKeyboard,
   buildReviewKeyboard,
+  buildTrueFalseKeyboard,
   formatQuizSetupCollectionPrompt,
   formatQuizSetupCountPrompt,
   formatReviewQuestion,
   formatReviewQuestionWithAnswer,
   formatReviewSummary,
   formatSetupPromptWithAnswer,
+  formatTrueFalseQuestion,
+  formatTrueFalseQuestionWithAnswer,
 } from "./presentation";
 import { parseQuizCommand, UUID_RE, type ParsedQuizCommand } from "./quiz-parse";
 import {
@@ -32,6 +35,7 @@ import {
   updateSession,
   type QuizDomainSelection,
   type QuizSetupState,
+  type ReviewSession,
 } from "./session-store";
 import { edit, send } from "./transport";
 
@@ -62,6 +66,23 @@ async function buildNextQuestionActions(client: Client, chatId: number): Promise
   const currentTerm = await getCurrentTerm(client, session);
   if (!currentTerm) {
     return buildReviewSummaryActions(client, chatId);
+  }
+
+  const exampleJudgment = session.exampleJudgment[currentTerm.id];
+  if (exampleJudgment) {
+    return [
+      send(
+        chatId,
+        formatTrueFalseQuestion(
+          currentTerm,
+          session.currentIndex,
+          session.termIds.length,
+          exampleJudgment.text,
+        ),
+        buildTrueFalseKeyboard(session.currentIndex),
+        true,
+      ),
+    ];
   }
 
   const distractors = await selectDistractorsFromDomain(
@@ -390,6 +411,31 @@ export async function handleQuizSetupText(
   return { handled: true, actions };
 }
 
+/** Shared tail for both answer handlers: persist the outcome, show the
+ *  answered-question message, then either advance or wrap up the session. */
+async function finishAnsweredQuestion(
+  client: Client,
+  chatId: number,
+  messageId: number,
+  session: ReviewSession,
+  isCorrect: boolean,
+  answeredMessage: string,
+): Promise<TelegramAction[]> {
+  const updatedSession = await updateSession(client, chatId, session, isCorrect);
+
+  const actions: TelegramAction[] = [edit(chatId, messageId, answeredMessage)];
+
+  if (hasMoreQuestions(updatedSession)) {
+    actions.push({ type: "pause", chatId, ms: 1500 });
+    actions.push(...(await buildNextQuestionActions(client, chatId)));
+  } else {
+    actions.push({ type: "pause", chatId, ms: 1000 });
+    actions.push(...(await buildReviewSummaryActions(client, chatId)));
+  }
+
+  return actions;
+}
+
 export async function handleReviewAnswer(
   client: Client,
   chatId: number,
@@ -427,31 +473,62 @@ export async function handleReviewAnswer(
 
   const markedUnknown = !isCorrect && flipped;
 
-  const updatedSession = await updateSession(client, chatId, session, isCorrect);
+  const message = formatReviewQuestionWithAnswer(
+    currentTerm,
+    sessionIndex,
+    session.termIds.length,
+    selectedTermName,
+    isCorrect,
+    session.correctCount + (isCorrect ? 1 : 0),
+    markedUnknown,
+  );
 
-  const actions: TelegramAction[] = [
-    edit(
-      chatId,
-      messageId,
-      formatReviewQuestionWithAnswer(
-        currentTerm,
-        sessionIndex,
-        updatedSession.termIds.length,
-        selectedTermName,
-        isCorrect,
-        updatedSession.correctCount,
-        markedUnknown,
-      ),
-    ),
-  ];
+  return finishAnsweredQuestion(client, chatId, messageId, session, isCorrect, message);
+}
 
-  if (hasMoreQuestions(updatedSession)) {
-    actions.push({ type: "pause", chatId, ms: 1500 });
-    actions.push(...(await buildNextQuestionActions(client, chatId)));
-  } else {
-    actions.push({ type: "pause", chatId, ms: 1000 });
-    actions.push(...(await buildReviewSummaryActions(client, chatId)));
+export async function handleReviewTrueFalseAnswer(
+  client: Client,
+  chatId: number,
+  messageId: number,
+  sessionIndex: number,
+  answer: boolean,
+): Promise<TelegramAction[]> {
+  const session = await getSession(client, chatId);
+  if (!session) {
+    return [send(chatId, "Your quiz session has expired. Start a new one with /quiz")];
   }
 
-  return actions;
+  if (sessionIndex !== session.currentIndex) {
+    return [send(chatId, "This question has already been answered.")];
+  }
+
+  const currentTerm = await getCurrentTerm(client, session);
+  if (!currentTerm) return [];
+
+  const exampleJudgment = session.exampleJudgment[currentTerm.id];
+  if (!exampleJudgment) return [];
+
+  const isCorrect = answer === exampleJudgment.correctAnswer;
+
+  const { flipped } = await applyQuizAnswer(client, session.userId, {
+    termId: currentTerm.id,
+    passed: isCorrect,
+    mode: "admin",
+  });
+
+  const markedUnknown = !isCorrect && flipped;
+
+  const message = formatTrueFalseQuestionWithAnswer(
+    currentTerm,
+    sessionIndex,
+    session.termIds.length,
+    exampleJudgment.text,
+    answer,
+    exampleJudgment.correctAnswer,
+    isCorrect,
+    session.correctCount + (isCorrect ? 1 : 0),
+    markedUnknown,
+  );
+
+  return finishAnsweredQuestion(client, chatId, messageId, session, isCorrect, message);
 }

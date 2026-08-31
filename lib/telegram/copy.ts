@@ -15,6 +15,8 @@ export const READ_NEXT_FAILED_MESSAGE =
 
 export const REVIEW_REVEAL_FAILED_SUFFIX = "\n\n<i>Couldn't reveal that term — try again.</i>";
 
+export const READ_REVEAL_FAILED_SUFFIX = "\n\n<i>Couldn't reveal that term — try again.</i>";
+
 export const QUIZ_HELP_MESSAGE =
   "Usage: /quiz [all|<collection>] [count|all]\n\n" +
   "Quiz checks terms you've already marked known — mark terms known in " +

@@ -11,7 +11,12 @@ import { pickReviewTermsForUser, pickStaleKnownTermsForUser } from "@/lib/smart-
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listStudyCollections } from "@/lib/study/collections";
 
-export type NextReadTermResult = { error?: string; caughtUp?: true; term?: ReviewTerm };
+export type NextReadTermResult = {
+  error?: string;
+  caughtUp?: true;
+  term?: ReviewTerm;
+  revealed?: boolean;
+};
 
 export async function getReadSetupData() {
   const auth = await requireAuthenticatedClient();
@@ -38,16 +43,30 @@ function scheduleRecordRead(userId: string, termId: string) {
 }
 
 /**
+ * Reveal gate: the client calls this the moment the user taps to reveal a
+ * term's definition — not at delivery/fetch time. If the user never
+ * reveals, nothing is recorded and the term stays eligible to resurface.
+ */
+export async function recordReadRevealAction(termId: string): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  scheduleRecordRead(auth.user.id, termId);
+  return {};
+}
+
+/**
  * Deep-link entry: open one specific term (from Telegram, the widget, or a
  * direct link) without touching the queue.
  *
  * Uses the same get_term_card RPC as Telegram /read so relationships and
  * every other field match that delivery path.
  *
- * `alreadyRead` covers Telegram's "Open in web" link, where the term was
- * already recorded as read when the bot delivered it. Every other source
- * (widget click, a bare link) hasn't recorded that exposure yet, so it's
- * counted here.
+ * `alreadyRead` covers Telegram's "Open in web" link and the widget's
+ * "Read more" handoff, where the term was already recorded as read (and
+ * revealed) at the point the user clicked through. Every other source (a
+ * bare link) opens masked, requiring an explicit reveal tap here before
+ * anything is recorded.
  */
 export async function getReadTermByIdAction(
   termId: string,
@@ -63,11 +82,7 @@ export async function getReadTermByIdAction(
       return { error: "That term isn't in your collection." };
     }
 
-    if (!alreadyRead) {
-      scheduleRecordRead(auth.user.id, card.id);
-    }
-
-    return { term: toReviewTerm(card, "unknown") };
+    return { term: toReviewTerm(card, "unknown"), revealed: alreadyRead };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load that term. Try again.";
     return { error: message };
@@ -75,7 +90,8 @@ export async function getReadTermByIdAction(
 }
 
 /**
- * Web equivalent of Telegram /read: pull one unknown term, record it as read.
+ * Web equivalent of Telegram /read: pull one unknown term. Returned masked —
+ * the client only records it as read once the user reveals it.
  * Hydrates via get_term_card (same RPC Telegram uses) so relationships match.
  *
  * `domainId` is a Read-page filter on top of the active pool. `"all"` (default)
@@ -118,8 +134,6 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
     if (!card) {
       return { caughtUp: true };
     }
-
-    scheduleRecordRead(auth.user.id, card.id);
 
     return {
       term: toReviewTerm(card, originStatus, meta?.reasons, meta?.score),

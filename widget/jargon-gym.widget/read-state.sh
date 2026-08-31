@@ -81,6 +81,7 @@ try:
         "totalCount": 0,
         "latestWidgetVersion": None,
         "lastRefreshedAt": None,
+        "currentRevealed": False,
     }
     state = default_state if reset else load_json(state_path, default_state)
     state.setdefault("pool", [])
@@ -88,6 +89,7 @@ try:
     state.setdefault("totalCount", 0)
     state.setdefault("latestWidgetVersion", None)
     state.setdefault("lastRefreshedAt", None)
+    state.setdefault("currentRevealed", False)
 
     last_refreshed_at = state.get("lastRefreshedAt")
     is_stale = last_refreshed_at is None or (time.time() - last_refreshed_at) >= REFRESH_INTERVAL_SECONDS
@@ -105,6 +107,9 @@ try:
             state["totalCount"] = api_state.get("totalCount", 0)
             state["latestWidgetVersion"] = api_state.get("latestWidgetVersion")
             state["lastRefreshedAt"] = time.time()
+            # A refetch always replaces pool[0] with a term that's never been
+            # revealed in place.
+            state["currentRevealed"] = False
     except urllib.error.HTTPError as err:
         body = err.read().decode()
         try:
@@ -129,6 +134,7 @@ try:
         "knownCount": state.get("knownCount", 0),
         "widgetVersion": widget_version,
         "latestWidgetVersion": state.get("latestWidgetVersion"),
+        "revealed": state.get("currentRevealed", False),
     })
 except SystemExit:
     raise

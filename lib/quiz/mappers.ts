@@ -12,6 +12,7 @@ export function toQuizTerm(
     term: card.term,
     definition: card.definition,
     example: card.example,
+    antiExample: card.antiExample,
     domainId: card.domainId,
     domainName: card.domainName,
     pickReasons,

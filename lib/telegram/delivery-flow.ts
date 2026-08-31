@@ -1,13 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { recordRead } from "@/lib/jargon/review-outcome";
 import {
   deliverNextTerm,
   fetchTermCardForUser,
   resolveUserIdByChatId,
 } from "@/lib/jargon/term-delivery";
 import type { TelegramAction } from "./actions";
-import { CAUGHT_UP_MESSAGE, CONNECT_MESSAGE, READ_NEXT_FAILED_MESSAGE } from "./copy";
-import { buildTermInlineKeyboard, formatTermMessage } from "./presentation";
+import {
+  CAUGHT_UP_MESSAGE,
+  CONNECT_MESSAGE,
+  READ_NEXT_FAILED_MESSAGE,
+  READ_REVEAL_FAILED_SUFFIX,
+} from "./copy";
+import {
+  buildReadRevealKeyboard,
+  buildTermInlineKeyboard,
+  formatReadPrompt,
+  formatTermMessage,
+} from "./presentation";
 import { clearTelegramInteractionState } from "./session-store";
 import { edit, send } from "./transport";
 
@@ -23,12 +34,7 @@ export async function handleRead(client: Client, chatId: number): Promise<Telegr
     const result = await deliverNextTerm(client, userId);
     if (result.kind === "term") {
       return [
-        send(
-          chatId,
-          formatTermMessage(result.term, result.pickMeta),
-          buildTermInlineKeyboard(result.term),
-          true,
-        ),
+        send(chatId, formatReadPrompt(result.term), buildReadRevealKeyboard(result.term.id), true),
       ];
     }
     if (result.kind === "caughtUp") {
@@ -40,6 +46,36 @@ export async function handleRead(client: Client, chatId: number): Promise<Telegr
     console.error("handleRead error:", detail, error);
     return [send(chatId, "Could not send a term right now. Try again in a moment.")];
   }
+}
+
+/** "Reveal": records the read (only now, not on delivery) and swaps the masked
+ *  prompt for the full term. */
+export async function handleReadReveal(
+  client: Client,
+  userId: string,
+  chatId: number,
+  messageId: number,
+  termId: string,
+): Promise<TelegramAction[]> {
+  const term = await fetchTermCardForUser(client, userId, termId);
+  if (!term) return [];
+
+  try {
+    await recordRead(client, userId, termId, "admin");
+  } catch (error) {
+    console.error("handleReadReveal: failed to record read", { userId, termId, error });
+    // Nothing recorded, so the same Reveal button can be retried.
+    return [
+      edit(
+        chatId,
+        messageId,
+        `${formatReadPrompt(term)}${READ_REVEAL_FAILED_SUFFIX}`,
+        buildReadRevealKeyboard(termId),
+      ),
+    ];
+  }
+
+  return [edit(chatId, messageId, formatTermMessage(term), buildTermInlineKeyboard(term))];
 }
 
 /** Inline "Read next": rotate to another term without writing an outcome on the current one. */
@@ -63,12 +99,7 @@ export async function handleReadCallback(
     const next = await deliverNextTerm(client, userId);
     if (next.kind === "term") {
       actions.push(
-        send(
-          chatId,
-          formatTermMessage(next.term, next.pickMeta),
-          buildTermInlineKeyboard(next.term),
-          true,
-        ),
+        send(chatId, formatReadPrompt(next.term), buildReadRevealKeyboard(next.term.id), true),
       );
     } else if (next.kind === "caughtUp") {
       actions.push(send(chatId, CAUGHT_UP_MESSAGE));
@@ -124,8 +155,8 @@ export async function handleSendDue(client: Client): Promise<{
         actions.push(
           send(
             chatId,
-            formatTermMessage(result.term, result.pickMeta),
-            buildTermInlineKeyboard(result.term),
+            formatReadPrompt(result.term),
+            buildReadRevealKeyboard(result.term.id),
             true,
           ),
         );

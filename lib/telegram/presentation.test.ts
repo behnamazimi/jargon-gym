@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import type { TermCard } from "@/lib/jargon/term-card";
 import {
+  buildReadRevealKeyboard,
+  buildTrueFalseKeyboard,
+  formatReadPrompt,
   formatReviewQuestion,
   formatReviewQuestionWithAnswer,
   formatReviewRated,
   formatStatsMessage,
   formatTermMessage,
+  formatTrueFalseQuestion,
+  formatTrueFalseQuestionWithAnswer,
 } from "./presentation";
 
 const dangerousTerm: TermCard = {
@@ -92,5 +97,59 @@ describe("presentation HTML escaping", () => {
     });
     expect(message).not.toContain("<script>");
     expect(message).toContain("&lt;script&gt;");
+  });
+
+  it("does not leak the definition in the masked read prompt", () => {
+    const message = formatReadPrompt(dangerousTerm);
+    expect(message).not.toContain(dangerousTerm.definition);
+    expect(message).not.toContain("fake bold");
+    expect(message).toContain("&lt;script&gt;");
+  });
+
+  it("escapes the term name and scenario text in formatTrueFalseQuestion", () => {
+    const message = formatTrueFalseQuestion(dangerousTerm, 0, 1, `<img src=x onerror=alert(1)>`);
+    expect(message).not.toContain("<script>");
+    expect(message).not.toContain("<img");
+    expect(message).toContain("&lt;script&gt;");
+    expect(message).toContain("&lt;img");
+  });
+
+  it("produces well-formed output for formatTrueFalseQuestionWithAnswer", () => {
+    const message = formatTrueFalseQuestionWithAnswer(
+      dangerousTerm,
+      0,
+      1,
+      `<img src=x onerror=alert(1)>`,
+      true,
+      false,
+      false,
+      0,
+    );
+    expect(message).not.toContain("<img");
+    expect(message).toContain("&lt;img");
+    expect(message).toContain("&lt;script&gt;");
+    expect(message).toContain("Your answer:</b> True");
+    expect(message).toContain("The correct answer was: <b>False</b>");
+  });
+});
+
+describe("buildReadRevealKeyboard", () => {
+  it("returns a single Reveal button keyed to the term id", () => {
+    const keyboard = buildReadRevealKeyboard("term-1");
+    expect(keyboard.inline_keyboard).toEqual([
+      [{ text: "Reveal", callback_data: "read:reveal:term-1" }],
+    ]);
+  });
+});
+
+describe("buildTrueFalseKeyboard", () => {
+  it("returns True/False buttons keyed to the session index", () => {
+    const keyboard = buildTrueFalseKeyboard(2);
+    expect(keyboard.inline_keyboard).toEqual([
+      [
+        { text: "True", callback_data: "quiztf:2:true" },
+        { text: "False", callback_data: "quiztf:2:false" },
+      ],
+    ]);
   });
 });
