@@ -368,7 +368,7 @@ describe("fragile boost", () => {
     expect(score).toBeGreaterThan(MAX - 1);
   });
 
-  it("fires alongside mastered_cooldown for a real prod-shaped term (\"Grounding\")", () => {
+  it('fires alongside mastered_cooldown for a real prod-shaped term ("Grounding")', () => {
     const candidate = makeCandidate("review", 24, 3, undefined, 5, 9);
     const { score, reasons } = scoreCandidate(candidate, RANKING.formula, "review", now);
 
