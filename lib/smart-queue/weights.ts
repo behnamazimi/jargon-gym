@@ -14,8 +14,17 @@ export const RANKING = {
   // IANA timezone same-day logic (sit-outs, daily mix counts) is measured against.
   timezone: "Europe/Amsterdam",
 
-  // Minimum lifetime tests before a term's fail rate counts toward ranking priority. Below this, no boost — e.g. 4 tests with 2 fails (50%) adds priority; 2 tests with 1 fail (also 50%) doesn't, too little data yet.
-  failRateMinAttempts: 4,
+  // Fragile boost: "virtual attempts" of doubt blended into the confidence
+  // weight on a term's observed fail rate — replaces a hard minimum-attempts
+  // gate (0 boost below 4 attempts, full raw rate at/above it) with a smooth
+  // ramp. At totalTests attempts, confidence = totalTests / (totalTests +
+  // fragileConfidenceStrength): a single fail already contributes a small
+  // boost instead of nothing; boost approaches the raw fail rate as evidence
+  // accumulates. Deliberately a separate constant from STRENGTH.failRatePrior
+  // — same shape family, but RANKING and STRENGTH are independently tunable
+  // systems (see this file's header) and must stay that way even where the
+  // math rhymes.
+  fragileConfidenceStrength: 4,
 
   // Cap on |streak| for any boost that scales per point of it (struggling, cross-fail).
   streakBoostCap: 5,
@@ -47,9 +56,9 @@ export const RANKING = {
     abandonedReviewBoost: 45,
     stalenessMaxBoost: 84,
     stalenessCapHours: 168, // 7 days
-    stalenessTailMaxBoost: 12, // ~half of fragileBoostMax (25) — deliberately below the weakest real-evidence signal, not hugging it
+    stalenessTailMaxBoost: 12, // ~a third of fragileBoostMax (35) — deliberately below the weakest real-evidence signal, not hugging it
     crossFailOtherTestBoostPerRepeat: 25,
-    fragileBoostMax: 25,
+    fragileBoostMax: 35,
   } satisfies ScoreWeights,
 
   // Minimum share of mix slots either lane is guaranteed, even when the

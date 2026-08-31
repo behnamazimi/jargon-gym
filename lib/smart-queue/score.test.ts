@@ -19,12 +19,18 @@ function hoursAgo(hours: number): Date {
  *  last-activity fields (read for "read", review for "review", quiz for
  *  "quiz") to isolate the staleness block from unseen/struggling/fragile/
  *  cross_fail/same-day sit-outs. Optional `reviewRecallHoursAgo` is read-
- *  context only — omitted leaves `lastReviewRecallAt` null. */
+ *  context only — omitted leaves `lastReviewRecallAt` null. Optional
+ *  `failCount` and `ownCountOverride` (review/quiz only) let fragile-boost
+ *  tests set fail count and own count independently of `streak` — both
+ *  default to the prior fail-free, streak-derived behavior, so every
+ *  existing call site is unaffected. */
 function makeCandidate(
   context: PickContext,
   ownHours: number,
   streak = 1,
   reviewRecallHoursAgo?: number,
+  failCount = 0,
+  ownCountOverride?: number,
 ): ReviewCandidate {
   const base: ReviewCandidate = {
     termId: "t1",
@@ -58,16 +64,18 @@ function makeCandidate(
   if (context === "review") {
     return {
       ...base,
-      reviewRecallCount: Math.abs(streak) + 1,
+      reviewRecallCount: ownCountOverride ?? Math.abs(streak) + 1,
       lastReviewRecallAt: hoursAgo(ownHours),
       reviewStreak: streak,
+      reviewFailCount: failCount,
     };
   }
   return {
     ...base,
-    quizTestCount: Math.abs(streak) + 1,
+    quizTestCount: ownCountOverride ?? Math.abs(streak) + 1,
     lastQuizTestedAt: hoursAgo(ownHours),
     quizStreak: streak,
+    quizFailCount: failCount,
   };
 }
 
@@ -299,5 +307,73 @@ describe("stale reason is per-context and label-only", () => {
       RANKING.formula.strugglingBoostPerStreak + baseStalenessAt(decayHours, decayHours),
       2,
     );
+  });
+});
+
+/** Isolates fragileBoost's contribution to the total score: `ownHours = 0`
+ *  zeroes both staleness boosts (hours-since-activity = 0), and `streak = 0`
+ *  avoids both mastered_cooldown (streak > 0) and struggling (streak < 0).
+ *  With those neutralized, scoreCandidate's total equals fragileBoost
+ *  exactly for `ownCount > 0` (for `ownCount = 0`, `unseen` fires instead). */
+function fragileOnly(totalTests: number, totalFails: number) {
+  return scoreCandidate(
+    makeCandidate("review", 0, 0, undefined, totalFails, totalTests),
+    RANKING.formula,
+    "review",
+    now,
+  );
+}
+
+describe("fragile boost", () => {
+  const MAX = RANKING.formula.fragileBoostMax; // 35
+  const K = RANKING.fragileConfidenceStrength; // 4
+  const expected = (totalTests: number, totalFails: number) =>
+    (MAX * totalFails) / (totalTests + K);
+
+  it("totalTests = 0 → fragile absent, unseen owns this case", () => {
+    const { reasons } = fragileOnly(0, 0);
+    expect(reasons).not.toContain("fragile");
+    expect(reasons).toContain("unseen");
+  });
+
+  it("a single clean pass is never fragile, even with zero evidence to the contrary", () => {
+    const { score, reasons } = fragileOnly(1, 0);
+    expect(reasons).not.toContain("fragile");
+    expect(score).toBeCloseTo(0, 5);
+  });
+
+  it("a single fail registers immediately, unlike the old hard gate", () => {
+    const { score, reasons } = fragileOnly(1, 1);
+    expect(reasons).toContain("fragile");
+    expect(score).toBeCloseTo(expected(1, 1), 2);
+    expect(score).toBeCloseTo(7.0, 2);
+  });
+
+  it("matches the confidence-weighted formula at a few representative points", () => {
+    expect(fragileOnly(2, 1).score).toBeCloseTo(expected(2, 1), 2);
+    expect(fragileOnly(4, 4).score).toBeCloseTo(expected(4, 4), 2);
+    expect(fragileOnly(4, 4).score).toBeCloseTo(17.5, 2);
+    expect(fragileOnly(20, 20).score).toBeCloseTo(expected(20, 20), 2);
+  });
+
+  it("increases monotonically with attempts at a fixed raw fail rate", () => {
+    const low = fragileOnly(2, 1).score; // 50% raw rate, thin evidence
+    const high = fragileOnly(10, 5).score; // same 50% rate, more evidence
+    expect(high).toBeGreaterThan(low);
+  });
+
+  it("never exceeds fragileBoostMax, even at extreme evidence", () => {
+    const { score } = fragileOnly(10000, 10000);
+    expect(score).toBeLessThan(MAX);
+    expect(score).toBeGreaterThan(MAX - 1);
+  });
+
+  it("fires alongside mastered_cooldown for a real prod-shaped term (\"Grounding\")", () => {
+    const candidate = makeCandidate("review", 24, 3, undefined, 5, 9);
+    const { score, reasons } = scoreCandidate(candidate, RANKING.formula, "review", now);
+
+    expect(reasons).toContain("fragile");
+    expect(reasons).toContain("mastered_cooldown");
+    expect(score).toBeCloseTo(-87.28, 1);
   });
 });

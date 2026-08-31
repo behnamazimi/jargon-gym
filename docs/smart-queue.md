@@ -213,7 +213,7 @@ applicable reasons are returned for UI badges.
 | **Engaged but untested**         | `read_count >= ENGAGED_MIN_READ_COUNT` and this context's own test count is 0                           | Moderate boost. Only applies in `review`/`quiz` contexts — you've read it several times but never actually been tested in this activity.                                                                                                                                                                                         |
 | **Abandoned review**             | `pending_reveal === true`                                                                               | Moderate boost. `review` context only — the leading edge of an unrated reveal.                                                                                                                                                                                                                                                   |
 | **Cross-activity fail**          | `review` only: `last_fail_at` is set and `last_fail_source === 'quiz'`                                  | One-directional: a Quiz miss still boosts Review. A Review miss no longer boosts Quiz — Quiz's own hard tiers (see [Quiz ranking](#quiz-ranking-hard-tiers)) replace the score mix, so it doesn't need this nudge. Scaled by `min(\|source streak\|, STREAK_BOOST_CAP)`. Read uses the same-day fail sit-out instead of a boost. |
-| **Fragile (lifetime fail rate)** | `review`/`quiz` only: this context's own attempts `>= FAIL_RATE_MIN_ATTEMPTS`                           | Boost scaled by lifetime fail rate × `fragileBoostMax`. Independent of the _current_ streak sign — see [Lifetime fail rate](#lifetime-fail-rate-fragile).                                                                                                                                                                        |
+| **Fragile (lifetime fail rate)** | `review`/`quiz` only: this context's own attempts `>= 1` and lifetime fail rate `> 0`                   | Boost scaled by a confidence weight (ramps with attempt count) × lifetime fail rate × `fragileBoostMax`. Independent of the _current_ streak sign — see [Lifetime fail rate](#lifetime-fail-rate-fragile).                                                                                                                      |
 | **Staleness**                    | Time since this context's own last-activity timestamp, only when its own count > 0                      | Decay-shaped, capped at 7 days — see [Decay-shaped staleness](#decay-shaped-staleness). Never-tested terms get no time-based pull — only the "never engaged" / "engaged but untested" signals account for those.                                                                                                                 |
 
 Same-score candidates are shuffled freshly each pick (Fisher–Yates within
@@ -320,11 +320,16 @@ function stalenessTailBoost(
 ```
 
 Its two constants are both deliberate reuses, not new arbitrary numbers.
-`tailMaxBoost` (`stalenessTailMaxBoost`, 12) is set to about half of
-`fragileBoostMax` (25) — the weakest _real-evidence_ signal in the whole
+`tailMaxBoost` (`stalenessTailMaxBoost`, 12) is set to about a third of
+`fragileBoostMax` (35) — the weakest _real-evidence_ signal in the whole
 formula (fragile/cross-fail/struggling all reflect an actual documented
-difficulty; mere neglect doesn't). The tail is meant to sit clearly below
-that weakest evidence-based signal, not hug its edge. `tailDecayHours`
+difficulty; mere neglect doesn't). Fragile holds that title even though its
+raw constant (35) isn't the smallest of the three — `crossFailOtherTestBoostPerRepeat`
+and `strugglingBoostPerStreak` both scale by up to `STREAK_BOOST_CAP` (5)
+repeats, for real maximums of 125 and 200; `fragileBoostMax` is a flat,
+unscaled ceiling, so 35 is still the smallest real reachable boost among the
+three. The tail is meant to sit clearly below that weakest evidence-based
+signal, not hug its edge. `tailDecayHours`
 reuses `RANKING.masteredCooldown.capHours` (336h/14 days) directly rather
 than inventing a new pacing constant — the same constant
 `effectiveStalenessDecayHours` above also reuses, so "the longest anyone
@@ -355,19 +360,26 @@ independent of the current streak sign:
 
 ```ts
 function fragileBoost(totalTests, totalFails, fragileBoostMax) {
-  if (totalTests < FAIL_RATE_MIN_ATTEMPTS) return 0;
-  return (totalFails / totalTests) * fragileBoostMax;
+  if (totalTests === 0) return 0;
+  const confidence = totalTests / (totalTests + fragileConfidenceStrength);
+  const rawFailRate = totalFails / totalTests;
+  return confidence * rawFailRate * fragileBoostMax;
 }
 ```
 
-Cold start: below `FAIL_RATE_MIN_ATTEMPTS` (4) own-context attempts, no
-boost — insufficient history isn't evidence of difficulty. At a 100%
-lifetime fail rate the boost caps at `fragileBoostMax` (25), which dents
-but does not cancel a mastered-cooldown penalty (−120) at default weights.
-`review`/`quiz` only — Read has no pass/fail concept, so `fragile` never
-applies there. The counters are backfilled at `0` for pre-existing rows and
-accumulate only going forward; there is no reconstruction of historical
-fail counts from streak or anything else.
+No hard minimum-attempts gate — a single fail already contributes a small,
+tentative boost (`confidence` is low with one data point), which grows
+toward the raw fail rate as more `own-context` attempts accumulate
+(`fragileConfidenceStrength`, 4, sets the ramp's pace — the same "virtual
+attempts of doubt" shape as `masteredCooldownHours`/`stalenessBoost`
+elsewhere in this file). Zero fails always means zero boost, at any attempt
+count — a fresh pass is never flagged fragile. At a large sample and a 100%
+lifetime fail rate the boost approaches its ceiling, `fragileBoostMax` (35),
+which dents but does not cancel a mastered-cooldown penalty (−120) at
+default weights. `review`/`quiz` only — Read has no pass/fail concept, so
+`fragile` never applies there. The counters are backfilled at `0` for
+pre-existing rows and accumulate only going forward; there is no
+reconstruction of historical fail counts from streak or anything else.
 
 ### Weights
 
@@ -390,7 +402,7 @@ UI for these. `RANKING_WEIGHTS` fields:
 | `stalenessCapHours`                | 168     | Staleness cap (7 days)                                                                                                                                   |
 | `stalenessTailMaxBoost`            | 12      | Ceiling of the second, smaller boost past `stalenessCapHours`; decay constant reuses `RANKING.masteredCooldown.capHours` directly (not a separate field) |
 | `crossFailOtherTestBoostPerRepeat` | 25      | Per repeat, test-context boost when the _other_ test activity most recently failed                                                                       |
-| `fragileBoostMax`                  | 25      | Boost at 100% lifetime fail rate; scales linearly down to 0                                                                                              |
+| `fragileBoostMax`                  | 35      | Ceiling `fragileBoost` approaches at a 100% lifetime fail rate and full confidence; scales down with both fail rate and `fragileConfidenceStrength`-based confidence |
 
 Related ranking constants, alongside `RANKING_WEIGHTS` in the same file
 (see [Overall strength weights](#overall-strength-display-only) below for
@@ -404,7 +416,7 @@ exports — update this table in the same commit as any change there:
 | `MASTERED_COOLDOWN_CAP_HOURS`        | 336 (14 days)                                 | Cooldown window never exceeds this, however high the streak                                                                                                                                                                                                                                                                                  |
 | `RANKING_STALENESS_DECAY_HOURS`      | `{ read: 48, review: 36, quiz: 24 }`          | Per-context _base_ decay constant (τ) for the ranking staleness boost — a map next to `RANKING_WEIGHTS`, not a field on `ScoreWeights`. For Review/Quiz at streak `> 1`, `effectiveStalenessDecayHours` scales this up by the same ratio `masteredCooldownHours` earns for the cooldown window; Read always uses this value as-is.           |
 | `staleReasonThresholdHours(context)` | Read: 168 (cap); Review: 36 (τ); Quiz: 24 (τ) | Hours since a context's own last-activity before the `stale` reason/badge (and matching pool-stat count) attaches. Derived, not a stored constant: Read reuses `stalenessCapHours` so a daily sit-out lift is not labeled neglect; Review/Quiz reuse that context's base τ. Distinct from the score curve, which still ramps from hour zero. |
-| `FAIL_RATE_MIN_ATTEMPTS`             | 4                                             | Minimum own-context attempts before a lifetime fail-rate is trusted — shared with the strength scores below                                                                                                                                                                                                                                  |
+| `fragileConfidenceStrength`          | 4                                             | Virtual attempts of doubt blended into `fragile`'s confidence weight — a soft ramp, not a hard minimum                                                                                                                                                                                                                                        |
 | `QUEUE_TIMEZONE`                     | `Europe/Amsterdam`                            | Calendar day for same-day sit-outs (edit in code if you move)                                                                                                                                                                                                                                                                                |
 | `ENGAGED_MIN_READ_COUNT`             | 3                                             | Minimum reads before `engaged_untested` applies                                                                                                                                                                                                                                                                                              |
 | `STREAK_BOOST_CAP`                   | 5                                             | Cap on `\|streak\|` magnitude wherever a boost scales per point of it — struggling and cross-fail both use it                                                                                                                                                                                                                                |
@@ -436,7 +448,7 @@ and queue previews.
 | `recent_read_cooldown` | `review`/`quiz`: `last_read_at` is today in `QUEUE_TIMEZONE`                                                                                         | Read today                                                       |
 | `recent_fail_cooldown` | `read`: `last_fail_at` is today and `last_fail_source === 'review'`; `review`/`quiz`: that context's own streak `< 0` and own last-activity is today | Missed today                                                     |
 | `cross_fail`           | `review` only: `last_fail_at` set and `last_fail_source === 'quiz'`                                                                                  | Missed elsewhere recently                                        |
-| `fragile`              | `review`/`quiz`: own attempts `>= FAIL_RATE_MIN_ATTEMPTS` and lifetime fail rate > 0                                                                 | Historically tricky                                              |
+| `fragile`              | `review`/`quiz`: own attempts `>= 1` and lifetime fail rate > 0                                                                                      | Historically tricky                                              |
 | `steady`               | No other signal fired (only reachable when this context's own count > 0 — `unseen` already covers the zero case)                                     | Recently read / Recently reviewed / Recently quizzed             |
 
 `unseen`, `stale`, and `steady` share one label per activity —

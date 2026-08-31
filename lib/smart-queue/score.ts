@@ -21,11 +21,16 @@ type ScoreBreakdown = {
 
 /** Lifetime fail-rate boost — independent of the current streak sign, so a
  *  persistently difficult term keeps some priority even right after a pass
- *  resets its streak. Cold start: below the minimum attempts, no boost. */
+ *  resets its streak. No hard minimum-attempts gate: a confidence weight
+ *  (RANKING.fragileConfidenceStrength "virtual attempts" of doubt) ramps
+ *  smoothly from a single fail's small, tentative boost toward the full raw
+ *  fail rate as more attempts accumulate — zero fails always means zero
+ *  boost, at any attempt count. */
 function fragileBoost(totalTests: number, totalFails: number, fragileBoostMax: number): number {
-  if (totalTests < RANKING.failRateMinAttempts) return 0;
-  const failRate = totalFails / totalTests;
-  return failRate * fragileBoostMax;
+  if (totalTests === 0) return 0;
+  const confidence = totalTests / (totalTests + RANKING.fragileConfidenceStrength);
+  const rawFailRate = totalFails / totalTests;
+  return confidence * rawFailRate * fragileBoostMax;
 }
 
 /** Exponential-decay-shaped staleness: front-loads the boost near a term's
