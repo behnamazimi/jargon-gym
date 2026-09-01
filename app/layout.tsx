@@ -84,6 +84,7 @@ export default async function RootLayout({
                     user={user}
                     isAdmin={isAdmin}
                     currentStreak={studyPhoneSettings?.currentStreak ?? 0}
+                    longestStreak={studyPhoneSettings?.longestStreak ?? 0}
                   />
                 }
                 footer={<SiteFooter />}
@@ -94,6 +95,7 @@ export default async function RootLayout({
                         isAdmin,
                         initialIsDark,
                         currentStreak: studyPhoneSettings?.currentStreak ?? 0,
+                        longestStreak: studyPhoneSettings?.longestStreak ?? 0,
                       }
                     : null
                 }

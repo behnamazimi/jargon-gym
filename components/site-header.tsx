@@ -62,11 +62,13 @@ export function SiteHeader({
   user,
   isAdmin,
   currentStreak,
+  longestStreak,
 }: {
   initialIsDark: boolean;
   user: { email?: string | null } | null;
   isAdmin: boolean;
   currentStreak: number;
+  longestStreak: number;
 }) {
   return (
     <SiteHeaderChrome
@@ -82,7 +84,9 @@ export function SiteHeader({
       }
       rightNav={
         <>
-          {user ? <StreakBadge currentStreak={currentStreak} /> : null}
+          {user ? (
+            <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+          ) : null}
           <InstallButton />
           <ThemeToggle initialIsDark={initialIsDark} />
           {user ? (

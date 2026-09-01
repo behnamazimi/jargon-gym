@@ -644,6 +644,16 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      get_streak_history: {
+        Args: { p_user_id: string };
+        Returns: {
+          day: string;
+          is_active: boolean;
+          quizzed_count: number;
+          read_count: number;
+          reviewed_count: number;
+        }[];
+      };
       get_term_card: {
         Args: { p_term_id: string; p_user_id: string };
         Returns: {
@@ -706,6 +716,16 @@ export type Database = {
         }[];
       };
       my_bump_streak: { Args: never; Returns: undefined };
+      my_get_streak_history: {
+        Args: never;
+        Returns: {
+          day: string;
+          is_active: boolean;
+          quizzed_count: number;
+          read_count: number;
+          reviewed_count: number;
+        }[];
+      };
       my_get_trace_candidates: {
         Args: { p_domain_ids?: string[] };
         Returns: {

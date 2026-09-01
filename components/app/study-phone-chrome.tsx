@@ -27,6 +27,7 @@ type StudyPhoneContextValue = {
   isAdmin: boolean;
   initialIsDark: boolean;
   currentStreak: number;
+  longestStreak: number;
   moreOpen: boolean;
   setMoreOpen: (open: boolean) => void;
 };
@@ -46,18 +47,20 @@ export function StudyPhoneProvider({
   isAdmin,
   initialIsDark,
   currentStreak,
+  longestStreak,
   children,
 }: {
   email: string;
   isAdmin: boolean;
   initialIsDark: boolean;
   currentStreak: number;
+  longestStreak: number;
   children: ReactNode;
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const value = useMemo(
-    () => ({ email, isAdmin, initialIsDark, currentStreak, moreOpen, setMoreOpen }),
-    [email, isAdmin, initialIsDark, currentStreak, moreOpen],
+    () => ({ email, isAdmin, initialIsDark, currentStreak, longestStreak, moreOpen, setMoreOpen }),
+    [email, isAdmin, initialIsDark, currentStreak, longestStreak, moreOpen],
   );
 
   return (
@@ -70,7 +73,7 @@ export function StudyPhoneProvider({
 
 export function StudyPhoneTopBar() {
   const pathname = usePathname();
-  const { email, currentStreak, setMoreOpen } = useStudyPhone();
+  const { email, currentStreak, longestStreak, setMoreOpen } = useStudyPhone();
   const initials = emailInitials(email);
   const subPage = isMorePath(pathname);
 
@@ -98,7 +101,7 @@ export function StudyPhoneTopBar() {
           </p>
         </div>
         <div className="navbar-end gap-2">
-          <StreakBadge currentStreak={currentStreak} />
+          <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
           <InstallButton />
           <Button
             variant="ghost"

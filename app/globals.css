@@ -79,6 +79,11 @@
   --font-sans: var(--font-geist);
   --font-heading: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
+  /* Vivid flame orange for the streak feature — deliberately outside the
+     daisyUI semantic palette (primary/accent/etc. shift per theme, and
+     accent goes purple under "dim") so the streak flame reads the same
+     warm orange in both themes. */
+  --color-streak: #f97316;
 }
 
 /* Must match PLATFORM_MEDIA in lib/platform.ts */

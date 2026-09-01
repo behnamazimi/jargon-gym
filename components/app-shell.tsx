@@ -15,6 +15,7 @@ type StudyPhoneProps = {
   isAdmin: boolean;
   initialIsDark: boolean;
   currentStreak: number;
+  longestStreak: number;
 };
 
 export function AppShell({
@@ -39,6 +40,7 @@ export function AppShell({
         isAdmin={studyPhone.isAdmin}
         initialIsDark={studyPhone.initialIsDark}
         currentStreak={studyPhone.currentStreak}
+        longestStreak={studyPhone.longestStreak}
       >
         <div
           className={cn("flex min-h-full flex-1 flex-col chrome-study", showDock && "chrome-dock")}

@@ -6,6 +6,7 @@ type Client = SupabaseClient<Database>;
 export type StudyPhoneUserSettings = {
   timezone: string | null;
   currentStreak: number;
+  longestStreak: number;
 };
 
 export async function getStudyPhoneUserSettings(
@@ -14,14 +15,18 @@ export async function getStudyPhoneUserSettings(
 ): Promise<StudyPhoneUserSettings> {
   const { data, error } = await client
     .from("user_settings")
-    .select("timezone, current_streak")
+    .select("timezone, current_streak, longest_streak")
     .eq("user_id", userId)
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) return { timezone: null, currentStreak: 0 };
+  if (!data) return { timezone: null, currentStreak: 0, longestStreak: 0 };
 
-  return { timezone: data.timezone, currentStreak: data.current_streak };
+  return {
+    timezone: data.timezone,
+    currentStreak: data.current_streak,
+    longestStreak: data.longest_streak,
+  };
 }
 
 export async function saveUserTimezone(

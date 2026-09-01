@@ -56,18 +56,6 @@ export function TermCard({
               open && "border-b border-base-300/60 bg-primary/[0.04]",
             )}
           >
-            <div className="flex shrink-0 items-center ps-1" aria-hidden={!known}>
-              {known ? (
-                <span
-                  className="flex size-5 items-center justify-center rounded-full bg-primary/15 text-primary"
-                  title="Known"
-                >
-                  <Check className="size-3" strokeWidth={2.5} />
-                </span>
-              ) : (
-                <span className="size-5" />
-              )}
-            </div>
             <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-start justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <span
                 className={cn(
@@ -78,6 +66,14 @@ export function TermCard({
                 )}
               >
                 {term.term}
+                {known ? (
+                  <span
+                    className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-primary/15 text-primary ml-2"
+                    title="Known"
+                  >
+                    <Check className="size-3" strokeWidth={2.5} />
+                  </span>
+                ) : null}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2 pt-0.5">
                 <span className="text-xs text-base-content/50">{term.category}</span>
