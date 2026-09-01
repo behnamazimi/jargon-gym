@@ -1,5 +1,3 @@
-export type TermPoolStatus = "known" | "unknown";
-
 export type StudyScope = {
   domainIds: string[] | "all";
 };
@@ -7,8 +5,7 @@ export type StudyScope = {
 export type StudyCollection = {
   id: string;
   name: string;
-  knownCount: number;
-  unknownCount: number;
+  termCount: number;
 };
 
 export const MAX_STUDY_TERMS = 30;

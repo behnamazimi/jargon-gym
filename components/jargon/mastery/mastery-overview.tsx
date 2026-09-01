@@ -2,11 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import type {
-  AccuracySummary,
-  CollectionStatBreakdown,
-  WebStatsSnapshot,
-} from "@/lib/jargon/collection-stats";
+import type { CollectionStatBreakdown, WebStatsSnapshot } from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
@@ -14,13 +10,8 @@ function formatUnseenLine(unseen: number): string {
   return unseen === 0 ? "None waiting" : `${unseen} never studied`;
 }
 
-function formatUnknownFootnote(collection: CollectionStatBreakdown): string {
-  return `${collection.unknownCount} unknown`;
-}
-
-function formatAccuracy(accuracy: AccuracySummary): string {
-  if (accuracy.attempted === 0) return "no attempts yet";
-  return `${accuracy.percentage}% recall (${accuracy.passed}/${accuracy.attempted})`;
+function formatUnseenFootnote(collection: CollectionStatBreakdown): string {
+  return `${collection.unseenCount} never read`;
 }
 
 function RollupRow({ label, unseen, today }: { label: string; unseen: number; today: number }) {
@@ -74,12 +65,18 @@ function CollectionRow({
 
 type MasteryOverviewProps = {
   stats: WebStatsSnapshot;
+  /** §8 "current strength" — live OverallMastery, 0–1. Decays with
+   *  inactivity by design (used internally for ranking, shown here too). */
+  currentStrength: number;
+  /** §8 "terms learned" — high-water mark, never decreases. */
+  termsLearned: number;
 };
 
 /** Collapsed by default so the mastery list stays the focus — expand for
  *  what's stale/struggling/waiting and the per-collection breakdown. */
-export function MasteryOverview({ stats }: MasteryOverviewProps) {
+export function MasteryOverview({ stats, currentStrength, termsLearned }: MasteryOverviewProps) {
   const [open, setOpen] = useState(false);
+  const strengthPercent = Math.round(currentStrength * 100);
 
   return (
     <Collapsible
@@ -90,11 +87,10 @@ export function MasteryOverview({ stats }: MasteryOverviewProps) {
       <CollapsibleTrigger className="flex w-full cursor-pointer items-baseline justify-between gap-3 rounded-lg border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-base-content">
-            {stats.coverage.known}/{stats.coverage.total} known ({stats.coverage.percentage}%)
+            {strengthPercent}% current strength
           </p>
           <p className="mt-0.5 text-xs text-base-content/50">
-            Review: {formatAccuracy(stats.accuracy.review)} · Quiz:{" "}
-            {formatAccuracy(stats.accuracy.quiz)}
+            <span className="tabular-nums">{termsLearned}</span> terms learned
           </p>
         </div>
         <span className="flex shrink-0 items-center gap-1 text-xs font-medium uppercase tracking-wide text-base-content/50">
@@ -129,7 +125,7 @@ export function MasteryOverview({ stats }: MasteryOverviewProps) {
                 <CollectionRow
                   key={collection.id}
                   collection={collection}
-                  footnote={formatUnknownFootnote(collection)}
+                  footnote={formatUnseenFootnote(collection)}
                 />
               ))}
             </div>

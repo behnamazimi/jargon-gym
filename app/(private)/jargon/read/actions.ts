@@ -2,12 +2,10 @@
 
 import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { getReadMode } from "@/lib/jargon/read-settings";
 import { recordRead } from "@/lib/jargon/review-outcome";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
-import { fetchTermCardForUser } from "@/lib/smart-queue/hydrate";
-import { pickReviewTermsForUser, pickStaleKnownTermsForUser } from "@/lib/smart-queue/service";
+import { fetchTermCardForUser, pickReadTermsForUser } from "@/lib/trace-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listStudyCollections } from "@/lib/study/collections";
 
@@ -82,7 +80,7 @@ export async function getReadTermByIdAction(
       return { error: "That term isn't in your collection." };
     }
 
-    return { term: toReviewTerm(card, "unknown"), revealed: alreadyRead };
+    return { term: toReviewTerm(card), revealed: alreadyRead };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load that term. Try again.";
     return { error: message };
@@ -90,9 +88,10 @@ export async function getReadTermByIdAction(
 }
 
 /**
- * Web equivalent of Telegram /read: pull one unknown term. Returned masked —
- * the client only records it as read once the user reveals it.
- * Hydrates via get_term_card (same RPC Telegram uses) so relationships match.
+ * Web equivalent of Telegram /read: pull the next term off the Read queue,
+ * ranked by lowest exposure first. Returned masked — the client only
+ * records it as read once the user reveals it. Hydrates via get_term_card
+ * (same RPC Telegram uses) so relationships match.
  *
  * `domainId` is a Read-page filter on top of the active pool. `"all"` (default)
  * matches Telegram /read. The RPC already intersects with collections that are
@@ -105,29 +104,14 @@ export async function getNextReadTermAction(domainId: string = "all"): Promise<N
   try {
     const admin = createAdminClient();
     const scope = { domainIds: domainIdsForRead(domainId) };
-    const { cards } = await pickReviewTermsForUser(admin, auth.user.id, scope, "unknown", 1);
-    let card = cards[0];
-    let originStatus: "known" | "unknown" = "unknown";
-
-    if (!card) {
-      // Unknown pool empty: fall back to known terms only if the user opted
-      // in. Checked fresh on every request, so a term that later comes back
-      // unknown (import, Review miss) is found by the pick above next time,
-      // ahead of this fallback — read_mode never suppresses unknown terms.
-      const readMode = await getReadMode(auth.supabase, auth.user.id);
-      if (readMode === "stale_known") {
-        const fallback = await pickStaleKnownTermsForUser(admin, auth.user.id, scope, 1);
-        card = fallback.cards[0];
-        originStatus = "known";
-      }
-    }
+    const [card] = await pickReadTermsForUser(admin, auth.user.id, scope, 1);
 
     if (!card) {
       return { caughtUp: true };
     }
 
     return {
-      term: toReviewTerm(card, originStatus),
+      term: toReviewTerm(card),
     };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load the next term. Try again.";

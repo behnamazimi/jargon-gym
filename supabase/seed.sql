@@ -84,8 +84,11 @@ $$;
 
 -- ---------------------------------------------------------------------------
 -- Sample collections: two domains owned by admin, active in their queue, with
--- review_state seeded across a spread of scoring signals so the debug page
--- (and the smart-queue mix) has something real to show.
+-- review_state seeded across a spread of read/review/quiz counts so the
+-- debug page has something real to show. None of these seed
+-- recall_stability/recall_difficulty/quiz_knowledge_posterior (left null),
+-- so TRACE treats every one of them as "never graded" and ranks them at the
+-- front of Review/Quiz regardless of the counts, until actually re-graded.
 -- ---------------------------------------------------------------------------
 
 do $$
@@ -344,39 +347,40 @@ begin
     (v_admin_id, v_domain_ds),
     (v_admin_id, v_domain_pm);
 
-  -- review_state: a spread of signals across both domains so the Review
-  -- pick order visibly mixes never-engaged terms with already-touched ones,
-  -- and the debug page has sat-out (cooldown) rows to show at the tail.
+  -- review_state: a spread of read/review/quiz counts across both domains
+  -- so the Review pick order visibly mixes never-engaged terms with
+  -- already-touched ones. None of these seed recall_stability/
+  -- quiz_knowledge_posterior, so under TRACE every row here is still
+  -- "never graded" and ranks at the front of Review/Quiz regardless of the
+  -- counts below — these are exposure/count signals only, not FSRS state.
 
   -- Distributed Systems --------------------------------------------------
 
-  -- CAP Theorem: mastered, still cooling down (streak 2, passed yesterday) -> sits out.
+  -- CAP Theorem: reviewed a couple of times, most recently yesterday.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '33333333-3333-3333-3333-333333333301', 3, now() - interval '1 day',
-    2, now() - interval '1 day', 2
+    2, now() - interval '1 day'
   );
 
-  -- Consensus: struggling, two-fail streak.
+  -- Consensus: reviewed several times over the last couple of days.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak, review_fail_count,
-    last_fail_at, last_fail_source
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '33333333-3333-3333-3333-333333333302', 6, now() - interval '2 days',
-    5, now() - interval '2 days', -3, 3,
-    now() - interval '2 days', 'review'
+    5, now() - interval '2 days'
   );
 
   -- Idempotency: engaged a while ago, gone stale since.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '33333333-3333-3333-3333-333333333303', 4, now() - interval '20 days',
-    4, now() - interval '20 days', 1
+    4, now() - interval '20 days'
   );
 
   -- Eventual Consistency: read several times, never actually tested in Review.
@@ -389,23 +393,21 @@ begin
   -- Leader Election: revealed mid-review, never rated (abandoned).
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak, pending_reveal
+    review_recall_count, last_review_recall_at, pending_reveal
   ) values (
     v_admin_id, '33333333-3333-3333-3333-333333333305', 3, now() - interval '10 days',
-    2, now() - interval '10 days', 1, true
+    2, now() - interval '10 days', true
   );
 
-  -- Sharding: missed in Quiz recently, nudging Review via cross-fail.
+  -- Sharding: reviewed and quizzed, most recently a few hours ago in Quiz.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak,
-    quiz_test_count, last_quiz_tested_at, quiz_streak,
-    last_fail_at, last_fail_source
+    review_recall_count, last_review_recall_at,
+    quiz_test_count, last_quiz_tested_at
   ) values (
     v_admin_id, '33333333-3333-3333-3333-333333333306', 4, now() - interval '9 days',
-    2, now() - interval '9 days', 1,
-    2, now() - interval '3 hours', -2,
-    now() - interval '3 hours', 'quiz'
+    2, now() - interval '9 days',
+    2, now() - interval '3 hours'
   );
 
   -- Backpressure: read today -> sits Review/Quiz out until tomorrow.
@@ -415,46 +417,44 @@ begin
     v_admin_id, '33333333-3333-3333-3333-333333333307', 2, now()
   );
 
-  -- Circuit Breaker: currently passing, but historically fragile (4 of 6 lifetime fails).
+  -- Circuit Breaker: read and reviewed the most out of this collection.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak, review_fail_count
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '33333333-3333-3333-3333-333333333308', 7, now() - interval '5 days',
-    6, now() - interval '5 days', 1, 4
+    6, now() - interval '5 days'
   );
 
   -- Vector Clock, Quorum: no review_state row at all -> plain never-engaged.
 
   -- Product Management -----------------------------------------------------
 
-  -- North Star Metric: mastered, still cooling down (streak 3, passed 12h ago) -> sits out.
+  -- North Star Metric: reviewed a few times, most recently 12h ago.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444401', 4, now() - interval '12 hours',
-    3, now() - interval '12 hours', 3
+    3, now() - interval '12 hours'
   );
 
-  -- MVP: struggling, one-fail streak.
+  -- MVP: reviewed a few times over the last day.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak, review_fail_count,
-    last_fail_at, last_fail_source
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444402', 4, now() - interval '1 day',
-    3, now() - interval '1 day', -2, 2,
-    now() - interval '1 day', 'review'
+    3, now() - interval '1 day'
   );
 
   -- User Story: engaged a while ago, gone stale since.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444403', 2, now() - interval '15 days',
-    2, now() - interval '15 days', 1
+    2, now() - interval '15 days'
   );
 
   -- Kanban: read several times, never actually tested in Review.
@@ -467,43 +467,39 @@ begin
   -- OKR: revealed mid-review, never rated (abandoned).
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak, pending_reveal
+    review_recall_count, last_review_recall_at, pending_reveal
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444405', 2, now() - interval '8 days',
-    1, now() - interval '8 days', 1, true
+    1, now() - interval '8 days', true
   );
 
-  -- Retention Curve: missed in Quiz recently, nudging Review via cross-fail.
+  -- Retention Curve: reviewed and quizzed, most recently a few hours ago in Quiz.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak,
-    quiz_test_count, last_quiz_tested_at, quiz_streak,
-    last_fail_at, last_fail_source
+    review_recall_count, last_review_recall_at,
+    quiz_test_count, last_quiz_tested_at
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444406', 3, now() - interval '6 days',
-    1, now() - interval '6 days', 1,
-    1, now() - interval '5 hours', -1,
-    now() - interval '5 hours', 'quiz'
+    1, now() - interval '6 days',
+    1, now() - interval '5 hours'
   );
 
-  -- Churn: struggling in Review, missed a few hours ago.
+  -- Churn: reviewed once, most recently a couple hours ago.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak, review_fail_count,
-    last_fail_at, last_fail_source
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444407', 2, now() - interval '3 days',
-    1, now() - interval '2 hours', -1, 1,
-    now() - interval '2 hours', 'review'
+    1, now() - interval '2 hours'
   );
 
-  -- Feature Flag: currently passing, but historically fragile (3 of 5 lifetime fails).
+  -- Feature Flag: read and reviewed the most out of this collection.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, review_streak, review_fail_count
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444408', 6, now() - interval '4 days',
-    5, now() - interval '4 days', 1, 3
+    5, now() - interval '4 days'
   );
 
   -- Product-Market Fit, Roadmap: no review_state row at all -> plain never-engaged.

@@ -2,12 +2,17 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { getReadMode } from "@/lib/jargon/read-settings";
-import { listCandidates, listMixedReviewCandidates } from "@/lib/smart-queue/service";
-import type { FailSource, PickContext, ReviewCandidate } from "@/lib/smart-queue/types";
+import { listTraceCandidates } from "@/lib/trace-queue";
+import type { PickContext, TraceCandidate } from "@/lib/trace-queue";
 import type { Database } from "@/lib/supabase/database.types";
 import { listStudyCollections } from "@/lib/study/collections";
-import type { TermPoolStatus } from "@/lib/study/types";
+import {
+  computeTraceSnapshot,
+  rankQuizQueue,
+  rankReadQueue,
+  rankReviewQueue,
+  type KnownLabel,
+} from "@/lib/trace";
 
 type Client = SupabaseClient<Database>;
 
@@ -28,40 +33,39 @@ export type DebugScoredRow = {
   domainId: string;
   readCount: number;
   lastReadAt: string | null;
+  familiarity: number;
   reviewRecallCount: number;
   lastReviewRecallAt: string | null;
-  reviewStreak: number;
+  recallStability: number | null;
+  recallDifficulty: number | null;
+  recallRetrievability: number | null;
   quizTestCount: number;
   lastQuizTestedAt: string | null;
-  quizStreak: number;
-  pendingReveal: boolean;
-  lastFailAt: string | null;
-  lastFailSource: FailSource | null;
-  reviewFailCount: number;
-  quizFailCount: number;
-  /** Review only: which pool this term was drawn from. */
-  originStatus?: TermPoolStatus;
+  quizKnowledgePosterior: number | null;
+  recognitionRetrievability: number | null;
+  mastery: number;
+  masteryAdjusted: number;
+  knownLabel: KnownLabel;
 };
 
-export type DebugReviewMixInfo = {
-  knownCount: number;
-  unknownCount: number;
-};
+function rankForContext(
+  candidates: TraceCandidate[],
+  context: PickContext,
+  now: Date,
+): TraceCandidate[] {
+  if (context === "read") return rankReadQueue(candidates);
+  if (context === "review") return rankReviewQueue(candidates, now);
+  return rankQuizQueue(candidates, now);
+}
 
-/** No status param — there's no user-facing pool toggle anymore. Read is
- *  unknown-first (falling back to the known pool, unordered, when
- *  read_mode === "stale_known" and the unknown pool is empty — see
- *  readFallbackActive), Quiz is always the known pool, Review blends both
- *  (see listMixedReviewCandidates). */
+/** One ranked list per tier — every tier now ranks the same single term
+ *  set by its own retrievability, so there's no known/unknown split and no
+ *  read-mode fallback to report. */
 export async function listDebugScoredTermsAction(
   domainIds: string[] | "all",
   context: PickContext,
 ): Promise<{
   rows?: DebugScoredRow[];
-  mix?: DebugReviewMixInfo;
-  /** Read only: true when the unknown pool was empty and these rows are the
-   *  known-pool fallback instead. */
-  readFallbackActive?: boolean;
   error?: string;
 }> {
   const auth = await requireAuthenticatedClient();
@@ -70,42 +74,12 @@ export async function listDebugScoredTermsAction(
   }
 
   try {
-    if (context === "quiz") {
-      const candidates = await listCandidates(auth.supabase, auth.user.id, { domainIds }, "known");
-      return { rows: await hydrateDebugRows(auth.supabase, candidates) };
-    }
+    const candidates = await listTraceCandidates(auth.supabase, auth.user.id, { domainIds });
+    if (candidates.length === 0) return { rows: [] };
 
-    if (context === "review") {
-      const {
-        rows: candidates,
-        knownCount,
-        unknownCount,
-      } = await listMixedReviewCandidates(auth.supabase, auth.user.id, { domainIds });
-      const rows = await hydrateDebugRows(auth.supabase, candidates, true);
-      return {
-        rows,
-        mix: { knownCount, unknownCount },
-      };
-    }
-
-    const candidates = await listCandidates(auth.supabase, auth.user.id, { domainIds }, "unknown");
-
-    if (candidates.length > 0) {
-      return { rows: await hydrateDebugRows(auth.supabase, candidates) };
-    }
-
-    // Unknown pool empty: mirror getNextReadTermAction's own fallback check
-    // so this view shows exactly what Read would actually serve next.
-    const readMode = await getReadMode(auth.supabase, auth.user.id);
-    if (readMode !== "stale_known") {
-      return { rows: [] };
-    }
-
-    const known = await listCandidates(auth.supabase, auth.user.id, { domainIds }, "known");
-    return {
-      rows: await hydrateDebugRows(auth.supabase, known, true),
-      readFallbackActive: true,
-    };
+    const now = new Date();
+    const ranked = rankForContext(candidates, context, now);
+    return { rows: await hydrateDebugRows(auth.supabase, ranked, now) };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load candidate terms.";
     return { error: message };
@@ -114,8 +88,8 @@ export async function listDebugScoredTermsAction(
 
 async function hydrateDebugRows(
   supabase: Client,
-  candidates: ReviewCandidate[],
-  tagOrigin = false,
+  candidates: TraceCandidate[],
+  now: Date,
 ): Promise<DebugScoredRow[]> {
   if (candidates.length === 0) return [];
 
@@ -131,25 +105,31 @@ async function hydrateDebugRows(
 
   const termNameById = new Map(terms.map((term) => [term.id, term.term]));
 
-  return candidates.map((candidate) => ({
-    termId: candidate.termId,
-    term: termNameById.get(candidate.termId) ?? "(deleted term)",
-    domainId: candidate.domainId,
-    readCount: candidate.readCount,
-    lastReadAt: candidate.lastReadAt ? candidate.lastReadAt.toISOString() : null,
-    reviewRecallCount: candidate.reviewRecallCount,
-    lastReviewRecallAt: candidate.lastReviewRecallAt
-      ? candidate.lastReviewRecallAt.toISOString()
-      : null,
-    reviewStreak: candidate.reviewStreak,
-    quizTestCount: candidate.quizTestCount,
-    lastQuizTestedAt: candidate.lastQuizTestedAt ? candidate.lastQuizTestedAt.toISOString() : null,
-    quizStreak: candidate.quizStreak,
-    pendingReveal: candidate.pendingReveal,
-    lastFailAt: candidate.lastFailAt ? candidate.lastFailAt.toISOString() : null,
-    lastFailSource: candidate.lastFailSource,
-    reviewFailCount: candidate.reviewFailCount,
-    quizFailCount: candidate.quizFailCount,
-    originStatus: tagOrigin ? (candidate.knownAt !== null ? "known" : "unknown") : undefined,
-  }));
+  return candidates.map((candidate) => {
+    const snapshot = computeTraceSnapshot(candidate, now);
+    return {
+      termId: candidate.termId,
+      term: termNameById.get(candidate.termId) ?? "(deleted term)",
+      domainId: candidate.domainId,
+      readCount: candidate.readCount,
+      lastReadAt: candidate.lastReadAt ? candidate.lastReadAt.toISOString() : null,
+      familiarity: snapshot.familiarity,
+      reviewRecallCount: candidate.reviewRecallCount,
+      lastReviewRecallAt: candidate.lastReviewRecallAt
+        ? candidate.lastReviewRecallAt.toISOString()
+        : null,
+      recallStability: candidate.recallStability,
+      recallDifficulty: candidate.recallDifficulty,
+      recallRetrievability: snapshot.recallRetrievability,
+      quizTestCount: candidate.quizTestCount,
+      lastQuizTestedAt: candidate.lastQuizTestedAt
+        ? candidate.lastQuizTestedAt.toISOString()
+        : null,
+      quizKnowledgePosterior: candidate.quizKnowledgePosterior,
+      recognitionRetrievability: snapshot.recognitionRetrievability,
+      mastery: snapshot.mastery,
+      masteryAdjusted: snapshot.masteryAdjusted,
+      knownLabel: snapshot.knownLabel,
+    };
+  });
 }

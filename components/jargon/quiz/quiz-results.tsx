@@ -3,18 +3,12 @@
 import { type CSSProperties } from "react";
 import { RotateCcw, Trophy } from "lucide-react";
 import { BackLink } from "@/components/jargon/back-link";
-import {
-  QuizPanel,
-  QuizPanelBody,
-  QuizPanelHeader,
-  QuizTermList,
-} from "@/components/jargon/quiz/quiz-ui";
+import { QuizPanel, QuizPanelBody, QuizPanelHeader } from "@/components/jargon/quiz/quiz-ui";
 import { Button } from "@/components/ui/button";
 
 type QuizResultsProps = {
   score: number;
   total: number;
-  flippedTerms: { id: string; term: string }[];
   onQuizAgain: () => void;
 };
 
@@ -27,9 +21,8 @@ function scoreMessage(score: number, total: number) {
   return "Good practice — keep at the terms that tripped you up.";
 }
 
-export function QuizResults({ score, total, flippedTerms, onQuizAgain }: QuizResultsProps) {
+export function QuizResults({ score, total, onQuizAgain }: QuizResultsProps) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
-  const flippedLabel = "Marked as unknown";
 
   return (
     <QuizPanel>
@@ -65,12 +58,6 @@ export function QuizResults({ score, total, flippedTerms, onQuizAgain }: QuizRes
             <p className="mt-1 mb-0 text-sm text-base-content/60">questions answered correctly</p>
           </div>
         </div>
-
-        <QuizTermList
-          title={flippedLabel}
-          terms={flippedTerms}
-          emptyMessage="No term status changes this round."
-        />
 
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button type="button" onPress={onQuizAgain} className="min-h-11">

@@ -89,7 +89,7 @@ describe("presentation HTML escaping", () => {
           percentage: 50,
           knownCount: 1,
           totalCount: 2,
-          unknownCount: 1,
+          unseenCount: 1,
         },
       ],
     });

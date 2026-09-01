@@ -1,38 +1,18 @@
-import type { StudyCollection, TermPoolStatus } from "./types";
+import type { StudyCollection } from "./types";
 import { MAX_STUDY_TERMS } from "./types";
 
+/** Every tier now ranks the same single term set, so "terms available" for
+ *  a selection is just the collection's total term count. */
 export function countTermsForSelection(
   collections: StudyCollection[],
   domainIds: string[] | "all",
-  status: TermPoolStatus,
 ): number {
   const selected =
     domainIds === "all"
       ? collections
       : collections.filter((collection) => domainIds.includes(collection.id));
 
-  return selected.reduce(
-    (total, collection) =>
-      total + (status === "known" ? collection.knownCount : collection.unknownCount),
-    0,
-  );
-}
-
-/** Review's pool is always blended now, so its "terms available" count is
- *  the combined known + unknown total per collection, not one status's slice. */
-export function countTermsForMixedSelection(
-  collections: StudyCollection[],
-  domainIds: string[] | "all",
-): number {
-  const selected =
-    domainIds === "all"
-      ? collections
-      : collections.filter((collection) => domainIds.includes(collection.id));
-
-  return selected.reduce(
-    (total, collection) => total + collection.knownCount + collection.unknownCount,
-    0,
-  );
+  return selected.reduce((total, collection) => total + collection.termCount, 0);
 }
 
 export function getMaxStudyCount(availableTermCount: number): number {

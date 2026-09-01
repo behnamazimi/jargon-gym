@@ -89,16 +89,16 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
 
         <ContentPageSection title="No due dates">
           <p className="m-0">
-            Instead of a schedule, terms come up at random, so there&apos;s never a backlog waiting
-            for you when you come back.
+            Instead of a schedule, whatever you&apos;re most at risk of forgetting comes up first,
+            so there&apos;s never a backlog waiting for you when you come back.
           </p>
         </ContentPageSection>
 
         <ContentPageSection title="How it knows what you know">
           <p className="m-0">
-            Known and unknown isn&apos;t something you manage by hand, it updates as a side effect
-            of Review and Quiz: get it right and a term moves toward known, miss it and it goes
-            back. You can also flip one directly if you already know it cold.
+            Known isn&apos;t something you manage by hand, it&apos;s read off how well you&apos;ve
+            actually retained a term from reading it, recalling it in Review, and recognizing it in
+            Quiz, and it fades again if you stop practicing.
           </p>
         </ContentPageSection>
 
@@ -107,7 +107,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             <strong className="font-medium text-base-content">
               Use as many or as few surfaces as you want
             </strong>
-            , web, Telegram, and the desktop widget all pull from the same known/unknown state, so
+            , web, Telegram, and the desktop widget all pull from the same practice history, so
             switching between them doesn&apos;t reset anything.
           </p>
           <ContentPageTitledBulletList items={SURFACES} />
@@ -116,8 +116,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageSection title="Private by default">
           <p className="m-0">
             Your own collections are private until you choose to share them. Even on a shared
-            collection, what you&apos;ve marked known or unknown, and your activity history, stays
-            yours, nobody else sees it.
+            collection, your progress and activity history stays yours, nobody else sees it.
           </p>
         </ContentPageSection>
 

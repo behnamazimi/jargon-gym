@@ -9,7 +9,6 @@ type TermListProps = {
   domainId: string;
   domainTerms: Term[];
   onToggleOpen: (termId: string) => void;
-  onToggleKnown: (termId: string) => void;
 };
 
 export function TermList({
@@ -20,7 +19,6 @@ export function TermList({
   domainId,
   domainTerms,
   onToggleOpen,
-  onToggleKnown,
 }: TermListProps) {
   if (terms.length === 0) {
     return (
@@ -45,7 +43,6 @@ export function TermList({
             domainId={domainId}
             domainTerms={domainTerms}
             onToggleOpen={() => onToggleOpen(term.id)}
-            onToggleKnown={() => onToggleKnown(term.id)}
           />
         </div>
       ))}

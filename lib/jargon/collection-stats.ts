@@ -2,15 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { resolveReviewDomainIds, resolveReviewDomainIdsForUser } from "@/lib/jargon/known-state";
 import {
-  computePoolStats,
-  fetchActiveReviewCandidates,
-  fetchActiveReviewCandidatesForUser,
-  getReviewPoolStatsByDomainForUser,
-  isSameLocalDay,
+  fetchActiveTraceCandidates,
+  fetchActiveTraceCandidatesForUser,
+  getPoolStatsByDomainForUser,
   type PickContext,
-  type ReviewCandidate,
-} from "@/lib/smart-queue";
-import { STUDY_TIMEZONE } from "@/lib/smart-queue/local-day";
+  type TraceCandidate,
+} from "@/lib/trace-queue";
+import { isSameLocalDay, STUDY_TIMEZONE } from "@/lib/trace";
 import type { CollectionDomainRow } from "./collections";
 
 type Client = SupabaseClient<Database>;
@@ -22,8 +20,8 @@ export type CollectionStats = {
   knownCount: number;
   totalCount: number;
   percentage: number;
-  unknownUnseen: number;
-  unknownSeen: number;
+  unseen: number;
+  seen: number;
 };
 
 export async function fetchCollectionStats(
@@ -36,18 +34,13 @@ export async function fetchCollectionStats(
   if (collectionRows.length === 0) return [];
 
   const activeSet = new Set(reviewDomainIds);
-  const unknownStatsByDomain = await getReviewPoolStatsByDomainForUser(
-    client,
-    userId,
-    "unknown",
-    context,
-  );
+  const statsByDomain = await getPoolStatsByDomainForUser(client, userId, context);
 
   const stats: CollectionStats[] = collectionRows.map((row) => {
     const totalCount = row.termCount;
     const knownCount = row.knownCount;
     const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
-    const queueStats = unknownStatsByDomain.get(row.id);
+    const queueStats = statsByDomain.get(row.id);
 
     return {
       id: row.id,
@@ -56,8 +49,8 @@ export async function fetchCollectionStats(
       knownCount,
       totalCount,
       percentage,
-      unknownUnseen: queueStats?.unseen ?? 0,
-      unknownSeen: queueStats?.seen ?? 0,
+      unseen: queueStats?.unseen ?? 0,
+      seen: queueStats?.seen ?? 0,
     };
   });
 
@@ -77,11 +70,11 @@ export type CollectionStatBreakdown = {
   knownCount: number;
   totalCount: number;
   percentage: number;
-  unknownCount: number;
+  unseenCount: number;
 };
 
 /** `/stat` (Telegram) and the web Mastery page's overview share this shape:
- *  a rollup across active collections plus a per-collection unknown count. */
+ *  a rollup across active collections plus a per-collection unseen count. */
 export type StatsSnapshot = {
   activeCount: number;
   pausedCount: number;
@@ -93,8 +86,8 @@ export type StatsSnapshot = {
   activeCollections: CollectionStatBreakdown[];
 };
 
-function groupCandidatesByDomain(candidates: ReviewCandidate[]): Map<string, ReviewCandidate[]> {
-  const byDomain = new Map<string, ReviewCandidate[]>();
+function groupCandidatesByDomain(candidates: TraceCandidate[]): Map<string, TraceCandidate[]> {
+  const byDomain = new Map<string, TraceCandidate[]>();
   for (const candidate of candidates) {
     const list = byDomain.get(candidate.domainId) ?? [];
     list.push(candidate);
@@ -114,14 +107,18 @@ const EMPTY_STATS_SNAPSHOT: StatsSnapshot = {
   activeCollections: [],
 };
 
+function countUnseen(candidates: TraceCandidate[], context: PickContext): number {
+  const ownCount = (c: TraceCandidate) =>
+    context === "read" ? c.readCount : context === "review" ? c.reviewRecallCount : c.quizTestCount;
+  return candidates.filter((c) => ownCount(c) === 0).length;
+}
+
 /** Pure aggregation shared by the Telegram and web snapshot fetchers below —
- *  two candidate fetches (unknown + known), both already scoped to active
- *  collections by `domainIds: "all"`. */
+ *  one candidate fetch across all active collections (`domainIds: "all"`). */
 function buildStatsSnapshot(
   collectionRows: CollectionDomainRow[],
   reviewDomainIds: string[],
-  unknownCandidates: ReviewCandidate[],
-  knownCandidates: ReviewCandidate[],
+  candidates: TraceCandidate[],
 ): StatsSnapshot {
   const activeSet = new Set(reviewDomainIds);
   const activeRows = collectionRows.filter((row) => activeSet.has(row.id));
@@ -131,16 +128,12 @@ function buildStatsSnapshot(
     return { ...EMPTY_STATS_SNAPSHOT, pausedCount };
   }
 
-  const unknownByDomain = groupCandidatesByDomain(unknownCandidates);
-  const readPool = computePoolStats(unknownCandidates, "read");
-  const reviewUnknownPool = computePoolStats(unknownCandidates, "review");
-  const quizKnownPool = computePoolStats(knownCandidates, "quiz");
+  const byDomain = groupCandidatesByDomain(candidates);
 
   const activeCollections: CollectionStatBreakdown[] = activeRows.map((row) => {
     const totalCount = row.termCount;
     const knownCount = row.knownCount;
     const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
-    const domainReadPool = computePoolStats(unknownByDomain.get(row.id) ?? [], "read");
 
     return {
       id: row.id,
@@ -148,12 +141,12 @@ function buildStatsSnapshot(
       knownCount,
       totalCount,
       percentage,
-      unknownCount: domainReadPool.total,
+      unseenCount: countUnseen(byDomain.get(row.id) ?? [], "read"),
     };
   });
 
   activeCollections.sort((a, b) => {
-    if (a.unknownCount !== b.unknownCount) return b.unknownCount - a.unknownCount;
+    if (a.unseenCount !== b.unseenCount) return b.unseenCount - a.unseenCount;
     return a.name.localeCompare(b.name);
   });
 
@@ -161,10 +154,9 @@ function buildStatsSnapshot(
     activeCount: activeRows.length,
     pausedCount,
     rollup: {
-      read: { unseen: readPool.unseen },
-      review: { unseen: reviewUnknownPool.unseen },
-      // Quiz is known-pool only — unseen reflects the known pool alone.
-      quiz: { unseen: quizKnownPool.unseen },
+      read: { unseen: countUnseen(candidates, "read") },
+      review: { unseen: countUnseen(candidates, "review") },
+      quiz: { unseen: countUnseen(candidates, "quiz") },
     },
     activeCollections,
   };
@@ -175,15 +167,9 @@ export async function fetchTelegramStats(client: Client, userId: string): Promis
   const { collectionRows, reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
   if (collectionRows.length === 0) return EMPTY_STATS_SNAPSHOT;
 
-  const [unknownCandidates, knownCandidates] = await Promise.all([
-    fetchActiveReviewCandidatesForUser(client, userId, "unknown"),
-    fetchActiveReviewCandidatesForUser(client, userId, "known"),
-  ]);
-
-  return buildStatsSnapshot(collectionRows, reviewDomainIds, unknownCandidates, knownCandidates);
+  const candidates = await fetchActiveTraceCandidatesForUser(client, userId);
+  return buildStatsSnapshot(collectionRows, reviewDomainIds, candidates);
 }
-
-export type AccuracySummary = { passed: number; attempted: number; percentage: number };
 
 type PausedCollectionSummary = {
   id: string;
@@ -193,13 +179,18 @@ type PausedCollectionSummary = {
   percentage: number;
 };
 
-/** Adds accuracy, momentum (today), and coverage (known% across active
- *  collections only) on top of the Telegram-shared `StatsSnapshot` — web
- *  page only, richer than a Telegram message needs to be. */
+/** Adds momentum (today) and coverage (known% across active collections
+ *  only) on top of the Telegram-shared `StatsSnapshot` — web page only,
+ *  richer than a Telegram message needs to be.
+ *
+ *  No lifetime accuracy here: the old pass/fail counters that backed it
+ *  were retired with the streak-based scoring signals (deprecated, no
+ *  longer written by record_review_event). TRACE's live retrievability is
+ *  the closer analogue and is what the Mastery page's headline numbers use
+ *  instead (see lib/jargon/mastery.ts). */
 export type WebStatsSnapshot = StatsSnapshot & {
   coverage: { known: number; total: number; percentage: number };
   today: { read: number; review: number; quiz: number };
-  accuracy: { review: AccuracySummary; quiz: AccuracySummary };
   pausedCollections: PausedCollectionSummary[];
 };
 
@@ -209,7 +200,7 @@ function computeCoverage(collectionRows: CollectionDomainRow[]) {
   return { known, total, percentage: total > 0 ? Math.round((known / total) * 100) : 0 };
 }
 
-function lastActivityAtForContext(candidate: ReviewCandidate, context: PickContext): Date | null {
+function lastActivityAtForContext(candidate: TraceCandidate, context: PickContext): Date | null {
   switch (context) {
     case "read":
       return candidate.lastReadAt;
@@ -220,33 +211,11 @@ function lastActivityAtForContext(candidate: ReviewCandidate, context: PickConte
   }
 }
 
-function countActivityToday(
-  candidates: ReviewCandidate[],
-  context: PickContext,
-  now: Date,
-): number {
+function countActivityToday(candidates: TraceCandidate[], context: PickContext, now: Date): number {
   return candidates.filter((candidate) => {
     const lastActivityAt = lastActivityAtForContext(candidate, context);
     return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, STUDY_TIMEZONE);
   }).length;
-}
-
-function summarizeAccuracy(
-  candidates: ReviewCandidate[],
-  context: "review" | "quiz",
-): AccuracySummary {
-  let attempted = 0;
-  let failed = 0;
-  for (const candidate of candidates) {
-    attempted += context === "review" ? candidate.reviewRecallCount : candidate.quizTestCount;
-    failed += context === "review" ? candidate.reviewFailCount : candidate.quizFailCount;
-  }
-  const passed = attempted - failed;
-  return {
-    passed,
-    attempted,
-    percentage: attempted > 0 ? Math.round((passed / attempted) * 100) : 0,
-  };
 }
 
 function toPausedCollectionSummary(row: CollectionDomainRow): PausedCollectionSummary {
@@ -260,10 +229,6 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   ...EMPTY_STATS_SNAPSHOT,
   coverage: { known: 0, total: 0, percentage: 0 },
   today: { read: 0, review: 0, quiz: 0 },
-  accuracy: {
-    review: { passed: 0, attempted: 0, percentage: 0 },
-    quiz: { passed: 0, attempted: 0, percentage: 0 },
-  },
   pausedCollections: [],
 };
 
@@ -277,19 +242,10 @@ export async function fetchStatsSnapshot(
   const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
   if (collectionRows.length === 0) return EMPTY_WEB_STATS_SNAPSHOT;
 
-  const [unknownCandidates, knownCandidates] = await Promise.all([
-    fetchActiveReviewCandidates(client, userId, "unknown"),
-    fetchActiveReviewCandidates(client, userId, "known"),
-  ]);
+  const candidates = await fetchActiveTraceCandidates(client, userId);
 
-  const base = buildStatsSnapshot(
-    collectionRows,
-    reviewDomainIds,
-    unknownCandidates,
-    knownCandidates,
-  );
+  const base = buildStatsSnapshot(collectionRows, reviewDomainIds, candidates);
   const now = new Date();
-  const combined = [...unknownCandidates, ...knownCandidates];
   const activeSet = new Set(reviewDomainIds);
   const pausedCollections = collectionRows
     .filter((row) => !activeSet.has(row.id))
@@ -300,16 +256,9 @@ export async function fetchStatsSnapshot(
     ...base,
     coverage: computeCoverage(collectionRows.filter((row) => activeSet.has(row.id))),
     today: {
-      read: countActivityToday(unknownCandidates, "read", now),
-      review: countActivityToday(combined, "review", now),
-      // Quiz is known-pool only.
-      quiz: countActivityToday(knownCandidates, "quiz", now),
-    },
-    accuracy: {
-      review: summarizeAccuracy(combined, "review"),
-      // Lifetime accuracy, not gated on current known status — a term that
-      // just flipped to unknown on a miss must still count that miss.
-      quiz: summarizeAccuracy(combined, "quiz"),
+      read: countActivityToday(candidates, "read", now),
+      review: countActivityToday(candidates, "review", now),
+      quiz: countActivityToday(candidates, "quiz", now),
     },
     pausedCollections,
   };

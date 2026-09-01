@@ -1,13 +1,17 @@
 /** Pool statistics computation — plain counts, no scoring dependency.
- */
+ *  Ported from lib/smart-queue/stats.ts unchanged: this was already
+ *  independent of known/unknown, just each tier's own exposure/test count. */
 
-import type { PickContext, ReviewCandidate, PoolStats } from "./types";
+import type { PickContext, TraceCandidate } from "./types";
 
-/** This context's own exposure/test count — Read's is readCount, Review/Quiz
- *  are their own test counts. Mirrors the field pick.ts's callers already
- *  know about, kept local since nothing else needs the full breakdown
- *  score.ts used to provide. */
-function ownCountForContext(candidate: ReviewCandidate, context: PickContext): number {
+export type PoolStats = {
+  unseen: number;
+  seen: number;
+  total: number;
+  allSeenOnce: boolean;
+};
+
+function ownCountForContext(candidate: TraceCandidate, context: PickContext): number {
   switch (context) {
     case "read":
       return candidate.readCount;
@@ -18,7 +22,7 @@ function ownCountForContext(candidate: ReviewCandidate, context: PickContext): n
   }
 }
 
-export function computePoolStats(candidates: ReviewCandidate[], context: PickContext): PoolStats {
+export function computePoolStats(candidates: TraceCandidate[], context: PickContext): PoolStats {
   let unseen = 0;
   let seen = 0;
 

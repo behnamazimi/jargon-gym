@@ -6,12 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import {
-  getReviewPoolStatsForUser,
-  pickReviewTermsForUser,
-  fetchTermCardForUser,
-  type PickMeta,
-} from "@/lib/smart-queue";
+import { pickReadTermsForUser, fetchTermCardForUser } from "@/lib/trace-queue";
 
 type Client = SupabaseClient<Database>;
 
@@ -26,7 +21,7 @@ export type DeliverOptions = {
 };
 
 export type DeliverResult =
-  | { kind: "term"; term: TermCard; pickMeta: PickMeta }
+  | { kind: "term"; term: TermCard }
   | { kind: "caughtUp" }
   | { kind: "silenced" };
 
@@ -60,49 +55,25 @@ async function maybeRecordSend(client: Client, userId: string, options?: Deliver
   }
 }
 
-/** Pick next unknown term, clear caught-up flag. Does not record the read —
- *  the caller sends it masked and records only once the user reveals it. */
+/** Pick the next Read term (lowest exposure first), clear caught-up flag.
+ *  Does not record the read — the caller sends it masked and records only
+ *  once the user reveals it. */
 export async function deliverNextTerm(
   client: Client,
   userId: string,
   options?: DeliverOptions,
 ): Promise<DeliverResult> {
-  const stats = await getReviewPoolStatsForUser(
-    client,
-    userId,
-    { domainIds: "all" },
-    "unknown",
-    "read",
-  );
+  const [term] = await pickReadTermsForUser(client, userId, { domainIds: "all" }, 1);
 
-  if (stats.total === 0) {
-    const result = await maybePersistCaughtUp(client, userId, options);
-    if (result.kind === "caughtUp") {
-      await maybeRecordSend(client, userId, options);
-    }
-    return result;
-  }
-
-  await clearCaughtUpFlag(client, userId);
-
-  const { cards, pickMeta } = await pickReviewTermsForUser(
-    client,
-    userId,
-    { domainIds: "all" },
-    "unknown",
-    1,
-  );
-  const term = cards[0];
-  const meta = pickMeta[0];
-
-  if (!term || !meta) {
+  if (!term) {
     const result = await maybePersistCaughtUp(client, userId, options);
     await maybeRecordSend(client, userId, options);
     return result;
   }
 
+  await clearCaughtUpFlag(client, userId);
   await maybeRecordSend(client, userId, options);
-  return { kind: "term", term, pickMeta: meta };
+  return { kind: "term", term };
 }
 
 export async function resolveUserIdByChatId(

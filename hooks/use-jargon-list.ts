@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recordTermReadAction, setTermKnown } from "@/app/(private)/jargon/actions";
+import { recordTermReadAction } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
 import type { JargonPageData, SortMode } from "@/lib/jargon/types";
 
@@ -18,9 +18,7 @@ export function useJargonList(initialData: JargonPageData) {
   );
   const countedShownRef = useRef(new Set<string>());
   const openTermsRef = useRef(openTerms);
-  const knownTermsRef = useRef(knownTerms);
   openTermsRef.current = openTerms;
-  knownTermsRef.current = knownTerms;
 
   // Sync knownTerms when initialData changes (e.g., after router.refresh())
   useEffect(() => {
@@ -74,28 +72,6 @@ export function useJargonList(initialData: JargonPageData) {
     [recordReadOnce],
   );
 
-  const toggleKnown = useCallback(async (termId: string) => {
-    const wasKnown = knownTermsRef.current.has(termId);
-    const nextIsKnown = !wasKnown;
-
-    setKnownTerms((prev) => {
-      const next = new Set(prev);
-      if (wasKnown) next.delete(termId);
-      else next.add(termId);
-      return next;
-    });
-
-    const result = await setTermKnown(termId, nextIsKnown);
-    if (result.error) {
-      setKnownTerms((prev) => {
-        const next = new Set(prev);
-        if (wasKnown) next.add(termId);
-        else next.delete(termId);
-        return next;
-      });
-    }
-  }, []);
-
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 
   return {
@@ -116,7 +92,6 @@ export function useJargonList(initialData: JargonPageData) {
     knownTerms,
     toggleCategory,
     toggleOpen,
-    toggleKnown,
     clearSearch,
   };
 }

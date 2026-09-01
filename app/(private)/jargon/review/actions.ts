@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { applyReviewRating } from "@/lib/jargon/review-outcome";
+import { applyReviewGrade } from "@/lib/jargon/review-outcome";
 import { MAX_REVIEW_TERMS, fetchReviewTermPool } from "@/lib/review/terms";
 import type { ReviewSetup } from "@/lib/review/types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import type { Database } from "@/lib/supabase/database.types";
 import { listStudyCollections } from "@/lib/study/collections";
-import { getMixedReviewPoolStats } from "@/lib/smart-queue/service";
+import { getPoolStats } from "@/lib/trace-queue";
+import type { ReviewGrade } from "@/lib/trace";
 
 export async function getReviewSetupData() {
   const auth = await requireAuthenticatedClient();
@@ -28,7 +29,7 @@ export async function getReviewPoolStatsAction(domainIds: string[] | "all") {
   }
 
   try {
-    const poolStats = await getMixedReviewPoolStats(auth.supabase, auth.user.id, { domainIds });
+    const poolStats = await getPoolStats(auth.supabase, auth.user.id, { domainIds }, "review");
     return { poolStats };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load pool stats.";
@@ -79,21 +80,16 @@ export async function startReviewAction(setup: ReviewSetup) {
   }
 }
 
-export async function rateReviewTermAction(
-  termId: string,
-  known: boolean,
-  originStatus: "known" | "unknown",
-) {
+export async function rateReviewTermAction(termId: string, grade: ReviewGrade) {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }
 
   try {
-    await applyReviewRating(auth.supabase, auth.user.id, {
+    await applyReviewGrade(auth.supabase, auth.user.id, {
       termId,
-      known,
-      sessionStatus: originStatus,
+      grade,
       mode: "session",
     });
 
@@ -102,7 +98,7 @@ export async function rateReviewTermAction(
 
     return {};
   } catch (err) {
-    console.error("rateReviewTermAction failed", { termId, known, originStatus, err });
+    console.error("rateReviewTermAction failed", { termId, grade, err });
     const message = err instanceof Error ? err.message : "Couldn't save your rating. Try again.";
     return { error: message };
   }

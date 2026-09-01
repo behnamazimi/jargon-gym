@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertCircle, ArrowLeft, ArrowRight, Eye, PartyPopper } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef, useState, useTransition } from "react";
 import {
   getNextReadTermAction,
@@ -50,13 +49,13 @@ function scrollToTop(cardEl: HTMLElement | null) {
   window.scrollTo({ top: 0, behavior });
 }
 
-function allUnknownCount(collections: StudyCollection[]) {
-  return countTermsForSelection(collections, "all", "unknown");
+function allTermCount(collections: StudyCollection[]) {
+  return countTermsForSelection(collections, "all");
 }
 
-function unreadCountForSelection(domainId: string, collections: StudyCollection[]) {
-  if (domainId === "all") return allUnknownCount(collections);
-  return collections.find((collection) => collection.id === domainId)?.unknownCount ?? 0;
+function termCountForSelection(domainId: string, collections: StudyCollection[]) {
+  if (domainId === "all") return allTermCount(collections);
+  return collections.find((collection) => collection.id === domainId)?.termCount ?? 0;
 }
 
 function replaceReadDomainInUrl(domainId: string) {
@@ -105,26 +104,14 @@ function ReadCaughtUp({
       <QuizPanelHeader icon={PartyPopper} title="You're all caught up" description={description} />
       <QuizPanelBody>
         {showLibraryLinks ? (
-          <>
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <LinkButton href="/jargon" variant="outline">
-                Collections
-              </LinkButton>
-              <LinkButton href="/jargon/import" variant="outline">
-                Import jargon
-              </LinkButton>
-            </div>
-            <p className="m-0 text-sm text-base-content/60">
-              Prefer to keep going instead? Turn on known-term fallback in{" "}
-              <Link
-                href="/jargon/settings?tab=read"
-                className="font-semibold text-base-content underline decoration-base-content/30 underline-offset-2 hover:decoration-base-content"
-              >
-                Read settings
-              </Link>
-              .
-            </p>
-          </>
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <LinkButton href="/jargon" variant="outline">
+              Collections
+            </LinkButton>
+            <LinkButton href="/jargon/import" variant="outline">
+              Import jargon
+            </LinkButton>
+          </div>
         ) : null}
       </QuizPanelBody>
     </QuizPanel>
@@ -294,7 +281,7 @@ function ReadCollectionSelect({
   isDisabled: boolean;
   onChange: (domainId: string) => void;
 }) {
-  const remaining = unreadCountForSelection(selectedCollectionId, collections);
+  const remaining = termCountForSelection(selectedCollectionId, collections);
 
   return (
     <div className="flex items-center gap-3">
@@ -311,15 +298,17 @@ function ReadCollectionSelect({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem id="all">All active collections ({allUnknownCount(collections)})</SelectItem>
+          <SelectItem id="all">All active collections ({allTermCount(collections)})</SelectItem>
           {collections.map((collection) => (
             <SelectItem key={collection.id} id={collection.id}>
-              {collection.name} ({collection.unknownCount})
+              {collection.name} ({collection.termCount})
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
-      <span className="shrink-0 text-xs text-base-content/50 tabular-nums">{remaining} unread</span>
+      <span className="shrink-0 text-xs text-base-content/50 tabular-nums">
+        {remaining} available
+      </span>
     </div>
   );
 }
@@ -341,15 +330,15 @@ function caughtUpDescription(
   }
 
   if (domainId === "all") {
-    return "No unknown terms left in your active collections. Import more terms or turn a collection back on to keep reading.";
+    return "No terms in your active collections. Import some terms or turn a collection back on to start reading.";
   }
 
   const name = collectionName(domainId, collections);
   if (!name) {
-    return "No unknown terms left in this collection. Pick another collection to keep reading.";
+    return "No terms in this collection. Pick another collection to keep reading.";
   }
 
-  return `No unknown terms left in ${name}. Pick another collection to keep reading.`;
+  return `No terms in ${name}. Pick another collection to keep reading.`;
 }
 
 type NavEntry = { term: ReviewTerm; revealed: boolean };

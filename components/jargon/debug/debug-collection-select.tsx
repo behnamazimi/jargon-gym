@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { PickContext } from "@/lib/smart-queue/types";
+import type { PickContext } from "@/lib/trace-queue";
 import type { StudyCollection } from "@/lib/study/types";
 import { debugQueueHref } from "./debug-queue-page";
 
@@ -37,7 +37,7 @@ export function DebugCollectionSelect({
         <SelectItem id="all">All active collections</SelectItem>
         {collections.map((collection) => (
           <SelectItem key={collection.id} id={collection.id}>
-            {collection.name} ({collection.unknownCount} unknown · {collection.knownCount} known)
+            {collection.name} ({collection.termCount})
           </SelectItem>
         ))}
       </SelectContent>

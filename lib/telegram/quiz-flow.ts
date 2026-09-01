@@ -41,16 +41,13 @@ import { edit, send } from "./transport";
 
 type Client = SupabaseClient<Database>;
 
-/** Quiz is known-pool only — every setup/session step below hardcodes "known". */
-const QUIZ_STATUS = "known" as const;
-
 async function resolveQuizCount(
   client: Client,
   userId: string,
   domainId: QuizDomainSelection,
   requestedCount: number | "all",
 ): Promise<number> {
-  const available = await countTermsForQuiz(client, userId, QUIZ_STATUS, domainId);
+  const available = await countTermsForQuiz(client, userId, domainId);
   const maxCount = getMaxQuizQuestionCount(available);
   if (maxCount === 0) return 0;
   if (requestedCount === "all") return maxCount;
@@ -123,7 +120,7 @@ async function startReviewSession(
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<TelegramAction[]> {
-  const session = await createSession(client, chatId, userId, QUIZ_STATUS, domainId, count);
+  const session = await createSession(client, chatId, userId, domainId, count);
 
   if (session.termIds.length === 0) {
     await deleteSession(client, chatId);
@@ -142,14 +139,13 @@ async function startQuizSetup(
   const startedAt = Date.now();
 
   if (!parsed.domainId) {
-    const setup: QuizSetupState = { step: "collection", status: QUIZ_STATUS, startedAt };
+    const setup: QuizSetupState = { step: "collection", startedAt };
     await saveQuizSetup(client, chatId, setup);
     return sendCollectionQuestion(client, chatId, userId, setup);
   }
 
   const setup: QuizSetupState = {
     step: "count",
-    status: QUIZ_STATUS,
     domainId: parsed.domainId,
     startedAt,
   };
@@ -200,7 +196,7 @@ async function sendCountQuestion(
   domainId: QuizDomainSelection,
   _setup: QuizSetupState,
 ): Promise<TelegramAction[]> {
-  const available = await countTermsForQuiz(client, userId, QUIZ_STATUS, domainId);
+  const available = await countTermsForQuiz(client, userId, domainId);
   const maxCount = getMaxQuizQuestionCount(available);
 
   if (maxCount === 0) {
@@ -293,7 +289,6 @@ export async function handleQuizSetupCallback(
 
     const countSetup: QuizSetupState = {
       step: "count",
-      status: QUIZ_STATUS,
       domainId,
       startedAt: Date.now(),
     };
@@ -316,7 +311,7 @@ export async function handleQuizSetupCallback(
       if (isNaN(count) || count < 1) return actions;
     }
 
-    const available = await countTermsForQuiz(client, userId, QUIZ_STATUS, setup.domainId);
+    const available = await countTermsForQuiz(client, userId, setup.domainId);
     const maxCount = getMaxQuizQuestionCount(available);
     const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
     const countLabel =
@@ -357,7 +352,7 @@ export async function handleQuizSetupText(
   const actions: TelegramAction[] = [];
 
   if (trimmed === "") {
-    const available = await countTermsForQuiz(client, userId, QUIZ_STATUS, setup.domainId);
+    const available = await countTermsForQuiz(client, userId, setup.domainId);
     count = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, getMaxQuizQuestionCount(available));
   } else if (trimmed.toLowerCase() === "all") {
     count = await resolveQuizCount(client, userId, setup.domainId, "all");
@@ -371,7 +366,7 @@ export async function handleQuizSetupText(
     }
 
     const maxCount = getMaxQuizQuestionCount(
-      await countTermsForQuiz(client, userId, QUIZ_STATUS, setup.domainId),
+      await countTermsForQuiz(client, userId, setup.domainId),
     );
 
     if (parsed > maxCount) {
@@ -384,7 +379,7 @@ export async function handleQuizSetupText(
     count = parsed;
   }
 
-  const available = await countTermsForQuiz(client, userId, QUIZ_STATUS, setup.domainId);
+  const available = await countTermsForQuiz(client, userId, setup.domainId);
   const maxCount = getMaxQuizQuestionCount(available);
   const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
 
@@ -465,13 +460,12 @@ export async function handleReviewAnswer(
 
   const selectedTermName = selectedTermData?.term ?? "Unknown";
 
-  const { flipped } = await applyQuizAnswer(client, session.userId, {
+  await applyQuizAnswer(client, session.userId, {
     termId: currentTerm.id,
     passed: isCorrect,
+    questionType: "multiple_choice",
     mode: "admin",
   });
-
-  const markedUnknown = !isCorrect && flipped;
 
   const message = formatReviewQuestionWithAnswer(
     currentTerm,
@@ -480,7 +474,6 @@ export async function handleReviewAnswer(
     selectedTermName,
     isCorrect,
     session.correctCount + (isCorrect ? 1 : 0),
-    markedUnknown,
   );
 
   return finishAnsweredQuestion(client, chatId, messageId, session, isCorrect, message);
@@ -510,13 +503,12 @@ export async function handleReviewTrueFalseAnswer(
 
   const isCorrect = answer === exampleJudgment.correctAnswer;
 
-  const { flipped } = await applyQuizAnswer(client, session.userId, {
+  await applyQuizAnswer(client, session.userId, {
     termId: currentTerm.id,
     passed: isCorrect,
+    questionType: "true_false",
     mode: "admin",
   });
-
-  const markedUnknown = !isCorrect && flipped;
 
   const message = formatTrueFalseQuestionWithAnswer(
     currentTerm,
@@ -527,7 +519,6 @@ export async function handleReviewTrueFalseAnswer(
     exampleJudgment.correctAnswer,
     isCorrect,
     session.correctCount + (isCorrect ? 1 : 0),
-    markedUnknown,
   );
 
   return finishAnsweredQuestion(client, chatId, messageId, session, isCorrect, message);

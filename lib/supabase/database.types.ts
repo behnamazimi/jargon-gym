@@ -122,53 +122,47 @@ export type Database = {
       };
       review_state: {
         Row: {
-          last_fail_at: string | null;
-          last_fail_source: Database["public"]["Enums"]["review_fail_source"] | null;
+          ever_mastered_at: string | null;
           last_quiz_tested_at: string | null;
           last_read_at: string | null;
           last_review_recall_at: string | null;
           pending_reveal: boolean;
-          quiz_fail_count: number;
-          quiz_streak: number;
+          quiz_knowledge_posterior: number | null;
           quiz_test_count: number;
           read_count: number;
-          review_fail_count: number;
+          recall_difficulty: number | null;
+          recall_stability: number | null;
           review_recall_count: number;
-          review_streak: number;
           term_id: string;
           user_id: string;
         };
         Insert: {
-          last_fail_at?: string | null;
-          last_fail_source?: Database["public"]["Enums"]["review_fail_source"] | null;
+          ever_mastered_at?: string | null;
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
           pending_reveal?: boolean;
-          quiz_fail_count?: number;
-          quiz_streak?: number;
+          quiz_knowledge_posterior?: number | null;
           quiz_test_count?: number;
           read_count?: number;
-          review_fail_count?: number;
+          recall_difficulty?: number | null;
+          recall_stability?: number | null;
           review_recall_count?: number;
-          review_streak?: number;
           term_id: string;
           user_id: string;
         };
         Update: {
-          last_fail_at?: string | null;
-          last_fail_source?: Database["public"]["Enums"]["review_fail_source"] | null;
+          ever_mastered_at?: string | null;
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
           pending_reveal?: boolean;
-          quiz_fail_count?: number;
-          quiz_streak?: number;
+          quiz_knowledge_posterior?: number | null;
           quiz_test_count?: number;
           read_count?: number;
-          review_fail_count?: number;
+          recall_difficulty?: number | null;
+          recall_stability?: number | null;
           review_recall_count?: number;
-          review_streak?: number;
           term_id?: string;
           user_id?: string;
         };
@@ -409,39 +403,6 @@ export type Database = {
           },
         ];
       };
-      user_progress: {
-        Row: {
-          known_at: string;
-          term_id: string;
-          user_id: string;
-        };
-        Insert: {
-          known_at?: string;
-          term_id: string;
-          user_id: string;
-        };
-        Update: {
-          known_at?: string;
-          term_id?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "user_progress_term_id_fkey";
-            columns: ["term_id"];
-            isOneToOne: false;
-            referencedRelation: "terms";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "user_progress_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       user_settings: {
         Row: {
           api_key_encrypted: string | null;
@@ -451,7 +412,6 @@ export type Database = {
           last_active_date: string | null;
           longest_streak: number;
           provider: string | null;
-          read_mode: string;
           timezone: string | null;
           updated_at: string;
           user_id: string;
@@ -464,7 +424,6 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
-          read_mode?: string;
           timezone?: string | null;
           updated_at?: string;
           user_id: string;
@@ -477,7 +436,6 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
-          read_mode?: string;
           timezone?: string | null;
           updated_at?: string;
           user_id?: string;
@@ -610,10 +568,6 @@ export type Database = {
       bump_streak: { Args: { p_user_id: string }; Returns: undefined };
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
-      clear_term_known: {
-        Args: { p_term_id: string; p_user_id: string };
-        Returns: undefined;
-      };
       complete_telegram_link: {
         Args: { p_chat_id: number; p_token_hash: string };
         Returns: string;
@@ -636,29 +590,6 @@ export type Database = {
           isSetofReturn: false;
         };
       };
-      get_read_mode: { Args: { p_user_id: string }; Returns: string };
-      get_review_candidates: {
-        Args: { p_domain_ids?: string[]; p_status?: string; p_user_id: string };
-        Returns: {
-          created_at: string;
-          domain_id: string;
-          known_at: string;
-          last_fail_at: string;
-          last_fail_source: Database["public"]["Enums"]["review_fail_source"];
-          last_quiz_tested_at: string;
-          last_read_at: string;
-          last_review_recall_at: string;
-          pending_reveal: boolean;
-          quiz_fail_count: number;
-          quiz_streak: number;
-          quiz_test_count: number;
-          read_count: number;
-          review_fail_count: number;
-          review_recall_count: number;
-          review_streak: number;
-          term_id: string;
-        }[];
-      };
       get_term_card: {
         Args: { p_term_id: string; p_user_id: string };
         Returns: {
@@ -676,6 +607,38 @@ export type Database = {
           term: string;
         }[];
       };
+      get_trace_candidates: {
+        Args: { p_domain_ids?: string[]; p_user_id: string };
+        Returns: {
+          created_at: string;
+          domain_id: string;
+          ever_mastered_at: string;
+          last_quiz_tested_at: string;
+          last_read_at: string;
+          last_review_recall_at: string;
+          quiz_knowledge_posterior: number;
+          quiz_test_count: number;
+          read_count: number;
+          recall_difficulty: number;
+          recall_stability: number;
+          review_recall_count: number;
+          term_id: string;
+        }[];
+      };
+      get_trace_state_for_term: {
+        Args: { p_term_id: string; p_user_id: string };
+        Returns: {
+          last_quiz_tested_at: string;
+          last_read_at: string;
+          last_review_recall_at: string;
+          quiz_knowledge_posterior: number;
+          quiz_test_count: number;
+          read_count: number;
+          recall_difficulty: number;
+          recall_stability: number;
+          review_recall_count: number;
+        }[];
+      };
       is_admin: { Args: never; Returns: boolean };
       is_domain_in_collection: {
         Args: { p_domain_id: string };
@@ -688,56 +651,63 @@ export type Database = {
           user_id: string;
         }[];
       };
-      mark_term_known: {
-        Args: { p_term_id: string; p_user_id: string };
-        Returns: undefined;
-      };
       my_bump_streak: { Args: never; Returns: undefined };
-      my_clear_term_known: { Args: { p_term_id: string }; Returns: undefined };
-      my_get_review_candidates: {
-        Args: { p_domain_ids?: string[]; p_status?: string };
+      my_get_trace_candidates: {
+        Args: { p_domain_ids?: string[] };
         Returns: {
           created_at: string;
           domain_id: string;
-          known_at: string;
-          last_fail_at: string;
-          last_fail_source: Database["public"]["Enums"]["review_fail_source"];
+          ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
-          pending_reveal: boolean;
-          quiz_fail_count: number;
-          quiz_streak: number;
+          quiz_knowledge_posterior: number;
           quiz_test_count: number;
           read_count: number;
-          review_fail_count: number;
+          recall_difficulty: number;
+          recall_stability: number;
           review_recall_count: number;
-          review_streak: number;
           term_id: string;
         }[];
       };
-      my_mark_term_known: { Args: { p_term_id: string }; Returns: undefined };
+      my_get_trace_state_for_term: {
+        Args: { p_term_id: string };
+        Returns: {
+          last_quiz_tested_at: string;
+          last_read_at: string;
+          last_review_recall_at: string;
+          quiz_knowledge_posterior: number;
+          quiz_test_count: number;
+          read_count: number;
+          recall_difficulty: number;
+          recall_stability: number;
+          review_recall_count: number;
+        }[];
+      };
       my_progress_state_by_domain: {
         Args: { p_domain_ids: string[] };
         Returns: {
           domain_id: string;
-          known_at: string;
+          ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
-          quiz_fail_count: number;
-          quiz_streak: number;
+          quiz_knowledge_posterior: number;
           quiz_test_count: number;
           read_count: number;
-          review_fail_count: number;
+          recall_difficulty: number;
+          recall_stability: number;
           review_recall_count: number;
-          review_streak: number;
           term_id: string;
         }[];
       };
       my_record_review_event: {
         Args: {
+          p_crossed_known_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
+          p_quiz_knowledge_posterior?: number;
+          p_recall_difficulty?: number;
+          p_recall_stability?: number;
           p_term_id: string;
         };
         Returns: undefined;
@@ -752,23 +722,26 @@ export type Database = {
         Args: { p_domain_ids: string[]; p_user_id: string };
         Returns: {
           domain_id: string;
-          known_at: string;
+          ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
-          quiz_fail_count: number;
-          quiz_streak: number;
+          quiz_knowledge_posterior: number;
           quiz_test_count: number;
           read_count: number;
-          review_fail_count: number;
+          recall_difficulty: number;
+          recall_stability: number;
           review_recall_count: number;
-          review_streak: number;
           term_id: string;
         }[];
       };
       record_review_event: {
         Args: {
+          p_crossed_known_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
+          p_quiz_knowledge_posterior?: number;
+          p_recall_difficulty?: number;
+          p_recall_stability?: number;
           p_term_id: string;
           p_user_id: string;
         };
@@ -793,7 +766,6 @@ export type Database = {
     Enums: {
       domain_visibility: "private" | "shared";
       review_event: "read" | "reveal" | "review_pass" | "review_fail" | "quiz_pass" | "quiz_fail";
-      review_fail_source: "review" | "quiz";
       telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
     };
@@ -926,7 +898,6 @@ export const Constants = {
     Enums: {
       domain_visibility: ["private", "shared"],
       review_event: ["read", "reveal", "review_pass", "review_fail", "quiz_pass", "quiz_fail"],
-      review_fail_source: ["review", "quiz"],
       telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],
     },

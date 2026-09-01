@@ -3,7 +3,7 @@ import {
   getDebugSetupData,
   listDebugScoredTermsAction,
 } from "@/app/(private)/jargon/debug/actions";
-import type { PickContext } from "@/lib/smart-queue/types";
+import type { PickContext } from "@/lib/trace-queue";
 
 type PageProps = {
   searchParams: Promise<{ context?: string; domain?: string }>;
@@ -37,8 +37,6 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
         context={context}
         domainId={domainId}
         rows={[]}
-        mix={null}
-        readFallbackActive={false}
         errorMessage={null}
       />
     );
@@ -52,8 +50,6 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
       context={context}
       domainId={domainId}
       rows={scored.rows ?? []}
-      mix={scored.mix ?? null}
-      readFallbackActive={scored.readFallbackActive ?? false}
       errorMessage={scored.error ?? null}
     />
   );

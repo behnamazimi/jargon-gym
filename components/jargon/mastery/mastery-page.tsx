@@ -1,29 +1,35 @@
 import type { WebStatsSnapshot } from "@/lib/jargon/collection-stats";
-import type { MasteryCollectionRow } from "@/lib/jargon/mastery";
+import type { MasteryCollectionRow, MasteryTermRow } from "@/lib/jargon/mastery";
 import { MasteryOverview } from "./mastery-overview";
-import { MasteryRow } from "./mastery-row";
+import { MasteryTermList } from "./mastery-term-list";
 
 type MasteryPageProps = {
   rows: MasteryCollectionRow[];
   stats: WebStatsSnapshot;
+  currentStrength: number;
+  termsLearned: number;
+  termRows: MasteryTermRow[];
 };
 
-export function MasteryPage({ rows, stats }: MasteryPageProps) {
+export function MasteryPage({
+  rows,
+  stats,
+  currentStrength,
+  termsLearned,
+  termRows,
+}: MasteryPageProps) {
   return (
     <div className="space-y-5">
-      <MasteryOverview stats={stats} />
+      <MasteryOverview
+        stats={stats}
+        currentStrength={currentStrength}
+        termsLearned={termsLearned}
+      />
 
-      {rows.length > 0 ? (
-        <ul className="m-0 list-none space-y-2 p-0">
-          {rows.map((row) => (
-            <MasteryRow key={row.domainId} row={row} />
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-base-content/60">
-          All collections are paused. Turn one on in the app to start reviewing.
-        </p>
-      )}
+      <MasteryTermList
+        termRows={termRows}
+        collections={rows.map((row) => ({ id: row.domainId, name: row.domainName }))}
+      />
     </div>
   );
 }

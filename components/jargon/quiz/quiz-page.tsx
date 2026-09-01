@@ -45,8 +45,7 @@ import {
   type QuizSessionState,
 } from "@/lib/quiz/session-storage";
 
-const NOTHING_ELIGIBLE_MESSAGE =
-  "Nothing eligible today (read or missed). Try tomorrow or mark more known.";
+const NOTHING_ELIGIBLE_MESSAGE = "No terms in this collection yet.";
 
 type QuizStep = "picker" | "generating" | "playing" | "results" | "error";
 
@@ -58,7 +57,7 @@ type QuizPageProps = {
 };
 
 function allCollectionsTermCount(collections: StudyCollection[]) {
-  return collections.reduce((total, collection) => total + collection.knownCount, 0);
+  return collections.reduce((total, collection) => total + collection.termCount, 0);
 }
 
 function questionCountPresetValues(maxQuestionCount: number): number[] {
@@ -84,8 +83,6 @@ export function QuizPage({
   const [terms, setTerms] = useState<QuizTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswer[]>([]);
-  const [flippedTerms, setFlippedTerms] = useState<{ id: string; term: string }[]>([]);
-  const [flippedTermIds, setFlippedTermIds] = useState<string[]>([]);
   const [resultsScore, setResultsScore] = useState<{
     score: number;
     total: number;
@@ -209,8 +206,6 @@ export function QuizPage({
     setTerms([]);
     setCurrentIndex(0);
     setAnswers([]);
-    setFlippedTerms([]);
-    setFlippedTermIds([]);
     setResultsScore(null);
     setErrorMessage(null);
     setStep("picker");
@@ -245,8 +240,6 @@ export function QuizPage({
     setTerms(result.terms);
     setCurrentIndex(0);
     setAnswers([]);
-    setFlippedTermIds([]);
-    setFlippedTerms([]);
     setStep("playing");
   }
 
@@ -256,6 +249,7 @@ export function QuizPage({
     const answerResult = await recordQuizAnswerAction({
       termId: question.termId,
       passed,
+      questionType: question.type,
     });
 
     if (answerResult.error) {
@@ -265,22 +259,14 @@ export function QuizPage({
     }
 
     const nextAnswers = [...answers, { termId: question.termId, passed }];
-    const nextFlippedIds = answerResult.flipped
-      ? [...new Set([...flippedTermIds, question.termId])]
-      : flippedTermIds;
-
     setAnswers(nextAnswers);
-    setFlippedTermIds(nextFlippedIds);
 
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex((index) => index + 1);
       return;
     }
 
-    const result = await submitQuizResultsAction({
-      answers: nextAnswers,
-      flippedTermIds: nextFlippedIds,
-    });
+    const result = await submitQuizResultsAction();
 
     if (result.error) {
       setErrorMessage(result.error);
@@ -288,7 +274,6 @@ export function QuizPage({
       return;
     }
 
-    setFlippedTerms(result.flippedTerms ?? []);
     setResultsScore({
       score: nextAnswers.filter((answer) => answer.passed).length,
       total: questions.length,
@@ -329,11 +314,11 @@ export function QuizPage({
             <QuizPanelBody>
               <QuizCenteredState
                 icon={AlertCircle}
-                title="No known terms yet"
-                description="Quiz only checks terms you've marked known. Mark some known in Review or on the collection page, then come back."
+                title="No terms yet"
+                description="Add some terms to a collection, then come back to quiz yourself."
               >
-                <LinkButton href="/jargon/review" variant="outline" className="min-h-11">
-                  Review
+                <LinkButton href="/jargon" variant="outline" className="min-h-11">
+                  Collections
                 </LinkButton>
               </QuizCenteredState>
             </QuizPanelBody>
@@ -342,7 +327,7 @@ export function QuizPage({
               <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">
                 <QuizPanelLabel
                   title="Set up your quiz"
-                  description="Pick which collection to pull from — Quiz checks terms you've already marked known."
+                  description="Pick which collection to pull from — Quiz surfaces the terms most at risk of slipping first."
                 />
                 {savedSession ? (
                   <Alert>
@@ -453,7 +438,7 @@ export function QuizPage({
                       </SelectItem>
                       {collections.map((collection) => (
                         <SelectItem key={collection.id} id={collection.id}>
-                          {collection.name} ({collection.knownCount})
+                          {collection.name} ({collection.termCount})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -546,10 +531,7 @@ export function QuizPage({
 
                 {availableTermCount === 0 ? (
                   <Alert variant="destructive">
-                    <AlertDescription>
-                      No known terms in this collection. Mark some known in Review or on the
-                      collection page.
-                    </AlertDescription>
+                    <AlertDescription>No terms in this collection yet.</AlertDescription>
                   </Alert>
                 ) : null}
               </QuizPanelBody>
@@ -613,12 +595,7 @@ export function QuizPage({
       ) : null}
 
       {step === "results" ? (
-        <QuizResults
-          score={score}
-          total={resultsTotal}
-          flippedTerms={flippedTerms}
-          onQuizAgain={resetQuizState}
-        />
+        <QuizResults score={score} total={resultsTotal} onQuizAgain={resetQuizState} />
       ) : null}
 
       {step === "error" ? (

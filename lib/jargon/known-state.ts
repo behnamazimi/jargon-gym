@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
 import { fetchUserCollection, fetchUserCollectionForUser } from "./collections";
 
 type Client = SupabaseClient<Database>;
@@ -8,13 +9,36 @@ export type DomainProgressState = {
   knownTermIds: string[];
 };
 
+function toTraceState(row: {
+  read_count: number;
+  last_read_at: string | null;
+  recall_stability: number | null;
+  recall_difficulty: number | null;
+  review_recall_count: number;
+  last_review_recall_at: string | null;
+  quiz_knowledge_posterior: number | null;
+  quiz_test_count: number;
+  last_quiz_tested_at: string | null;
+}): TraceState {
+  return {
+    readCount: row.read_count,
+    lastReadAt: row.last_read_at ? new Date(row.last_read_at) : null,
+    recallStability: row.recall_stability,
+    recallDifficulty: row.recall_difficulty,
+    reviewRecallCount: row.review_recall_count,
+    lastReviewRecallAt: row.last_review_recall_at ? new Date(row.last_review_recall_at) : null,
+    quizKnowledgePosterior: row.quiz_knowledge_posterior,
+    quizTestCount: row.quiz_test_count,
+    lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
+  };
+}
+
 /** Known-term IDs for every term in the given domains, including paused
- *  collections. One RPC call joins terms + user_progress + review_state
- *  server-side by domain_id — avoids shipping a term-id list into an
- *  `.in()` filter, which blows past PostgREST's URL length limit for large
- *  collections. Deliberately NOT reusing the known/unknown RPCs here, since
- *  those are scoped to active review domains only and this must also work
- *  for a paused domain the collection page is still allowed to display. */
+ *  collections. "Known" is a read-only label derived live from
+ *  Mastery_adjusted (lib/trace.deriveKnownLabel) — one RPC joins
+ *  terms + review_state server-side by domain_id, avoiding a term-id list
+ *  in an `.in()` filter that blows past PostgREST's URL length limit for
+ *  large collections. */
 export async function fetchProgressStateByDomain(
   client: Client,
   domainIds: string[],
@@ -27,52 +51,16 @@ export async function fetchProgressStateByDomain(
 
   if (error) throw error;
 
+  const now = new Date();
   const knownTermIds: string[] = [];
 
   for (const row of data) {
-    if (row.known_at) knownTermIds.push(row.term_id);
+    if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known") {
+      knownTermIds.push(row.term_id);
+    }
   }
 
   return { knownTermIds };
-}
-
-/** Flip user_progress only — queue outcomes go through review-outcome.
- *  Allowed when the term's collection is paused. */
-export async function markTermKnown(client: Client, termId: string) {
-  const { error } = await client.rpc("my_mark_term_known", {
-    p_term_id: termId,
-  });
-
-  if (error) throw error;
-}
-
-/** Flip user_progress only — queue outcomes go through review-outcome. */
-export async function markTermKnownForUser(client: Client, userId: string, termId: string) {
-  const { error } = await client.rpc("mark_term_known", {
-    p_user_id: userId,
-    p_term_id: termId,
-  });
-
-  if (error) throw error;
-}
-
-/** Flip user_progress only — queue outcomes go through review-outcome. */
-export async function clearTermKnown(client: Client, _userId: string, termId: string) {
-  const { error } = await client.rpc("my_clear_term_known", {
-    p_term_id: termId,
-  });
-
-  if (error) throw error;
-}
-
-/** Flip user_progress only — queue outcomes go through review-outcome. */
-export async function clearTermKnownForUser(client: Client, userId: string, termId: string) {
-  const { error } = await client.rpc("clear_term_known", {
-    p_user_id: userId,
-    p_term_id: termId,
-  });
-
-  if (error) throw error;
 }
 
 async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {

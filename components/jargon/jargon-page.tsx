@@ -37,7 +37,6 @@ export function JargonPage({ initialData }: JargonPageProps) {
     knownTerms,
     toggleCategory,
     toggleOpen,
-    toggleKnown,
     clearSearch,
   } = useJargonList(initialData);
 
@@ -128,7 +127,6 @@ export function JargonPage({ initialData }: JargonPageProps) {
               domainId={domain.id}
               domainTerms={terms}
               onToggleOpen={toggleOpen}
-              onToggleKnown={toggleKnown}
             />
           </div>
         </div>

@@ -5,30 +5,22 @@ import {
   assignExampleJudgmentQuestions,
   type ExampleJudgmentPick,
 } from "@/lib/quiz/example-judgment";
-import {
-  fetchQuizTermPool,
-  fetchStudyTermPool,
-  getMaxStudyCount,
-  type TermPoolStatus,
-} from "@/lib/study";
-import {
-  getMixedReviewPoolStatsForUser,
-  getReviewPoolStatsForUser,
-  fetchTermCardForUser,
-} from "@/lib/smart-queue";
+import { fetchQuizTermPool, fetchStudyTermPool, getMaxStudyCount } from "@/lib/study";
+import { getPoolStatsForUser, fetchTermCardForUser } from "@/lib/trace-queue";
+import { fetchTraceCandidatesForUser } from "@/lib/trace-queue/repository";
+import { computeTraceSnapshot } from "@/lib/trace";
+import type { KnownLabel } from "@/lib/trace";
 import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
 
 type Client = SupabaseClient<Database>;
 
-export type ReviewStatus = TermPoolStatus;
 export type QuizDomainSelection = "all" | string;
-type QuizSetupStep = "status" | "collection" | "count";
+type QuizSetupStep = "collection" | "count";
 
 export { DEFAULT_TELEGRAM_QUIZ_COUNT };
 
 export type QuizSetupState = {
   step: QuizSetupStep;
-  status?: ReviewStatus;
   domainId?: QuizDomainSelection;
   promptMessageId?: number;
   startedAt: number;
@@ -36,7 +28,6 @@ export type QuizSetupState = {
 
 export type ReviewSession = {
   userId: string;
-  status: ReviewStatus;
   domainId: QuizDomainSelection;
   termIds: string[];
   /** termId -> example-judgment true/false question, for terms picked at
@@ -48,7 +39,6 @@ export type ReviewSession = {
 };
 
 type StoredQuizSession = {
-  status: ReviewStatus;
   domainId: QuizDomainSelection;
   termIds: string[];
   exampleJudgment: Record<string, ExampleJudgmentPick>;
@@ -64,9 +54,8 @@ function isQuizSetupState(value: unknown): value is QuizSetupState {
   if (!value || typeof value !== "object") return false;
   const setup = value as QuizSetupState;
   return (
-    (setup.step === "status" || setup.step === "collection" || setup.step === "count") &&
+    (setup.step === "collection" || setup.step === "count") &&
     typeof setup.startedAt === "number" &&
-    (setup.status === undefined || setup.status === "known" || setup.status === "unknown") &&
     (setup.domainId === undefined || setup.domainId === "all" || typeof setup.domainId === "string")
   );
 }
@@ -89,7 +78,6 @@ function isStoredSession(value: unknown): value is StoredQuizSession {
   if (!value || typeof value !== "object") return false;
   const session = value as StoredQuizSession;
   return (
-    (session.status === "known" || session.status === "unknown") &&
     (session.domainId === "all" || typeof session.domainId === "string") &&
     Array.isArray(session.termIds) &&
     session.termIds.every((id) => typeof id === "string") &&
@@ -185,14 +173,12 @@ export async function deleteSession(client: Client, chatId: number): Promise<voi
 export async function countTermsForQuiz(
   client: Client,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
 ): Promise<number> {
-  const stats = await getReviewPoolStatsForUser(
+  const stats = await getPoolStatsForUser(
     client,
     userId,
     { domainIds: domainIdsForScope(domainId) },
-    status,
     "quiz",
   );
   return stats.total;
@@ -206,11 +192,10 @@ export async function createSession(
   client: Client,
   chatId: number,
   userId: string,
-  status: ReviewStatus,
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<ReviewSession> {
-  const { cards } = await fetchQuizTermPool(
+  const cards = await fetchQuizTermPool(
     client,
     userId,
     { domainIds: domainIdsForScope(domainId) },
@@ -222,7 +207,6 @@ export async function createSession(
 
   const session: ReviewSession = {
     userId,
-    status,
     domainId,
     termIds,
     exampleJudgment,
@@ -233,7 +217,6 @@ export async function createSession(
 
   if (termIds.length > 0) {
     await saveStoredSession(client, chatId, {
-      status: session.status,
       domainId: session.domainId,
       termIds: session.termIds,
       exampleJudgment: session.exampleJudgment,
@@ -263,7 +246,6 @@ export async function getSession(client: Client, chatId: number): Promise<Review
 
   return {
     userId: data.user_id,
-    status: data.quiz_session.status,
     domainId: data.quiz_session.domainId,
     termIds: data.quiz_session.termIds,
     exampleJudgment: data.quiz_session.exampleJudgment ?? {},
@@ -286,7 +268,6 @@ export async function updateSession(
   };
 
   await saveStoredSession(client, chatId, {
-    status: updated.status,
     domainId: updated.domainId,
     termIds: updated.termIds,
     exampleJudgment: updated.exampleJudgment,
@@ -322,10 +303,11 @@ export type ReviewSetupState = {
   startedAt: number;
 };
 
-/** One drawn term plus which pool it came from — needed per-term now that a
- *  session blends both pools, since rating a term flips known/unknown in the
- *  direction that depends on its own origin, not a session-wide value. */
-type ReviewSessionTerm = { id: string; status: ReviewStatus };
+/** One drawn term plus its known-label snapshot at session-build time —
+ *  a read-only label derived live from Mastery_adjusted (lib/trace), not a
+ *  stored pool. Not yet rendered anywhere; kept for the presentation
+ *  fast-follow that gives Telegram Review real 4-point grading. */
+type ReviewSessionTerm = { id: string; status: KnownLabel };
 
 export type TelegramReviewSession = {
   userId: string;
@@ -359,7 +341,10 @@ function isReviewSetupState(value: unknown): value is ReviewSetupState {
 function isReviewSessionTerm(value: unknown): value is ReviewSessionTerm {
   if (!value || typeof value !== "object") return false;
   const term = value as ReviewSessionTerm;
-  return typeof term.id === "string" && (term.status === "known" || term.status === "unknown");
+  return (
+    typeof term.id === "string" &&
+    (term.status === "known" || term.status === "learning" || term.status === "unknown")
+  );
 }
 
 function isStoredReviewSession(value: unknown): value is StoredReviewSession {
@@ -458,9 +443,12 @@ export async function countTermsForReview(
   userId: string,
   domainId: QuizDomainSelection,
 ): Promise<number> {
-  const stats = await getMixedReviewPoolStatsForUser(client, userId, {
-    domainIds: domainIdsForScope(domainId),
-  });
+  const stats = await getPoolStatsForUser(
+    client,
+    userId,
+    { domainIds: domainIdsForScope(domainId) },
+    "review",
+  );
   return stats.total;
 }
 
@@ -471,18 +459,20 @@ export async function createReviewSession(
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<TelegramReviewSession> {
-  const { cards, pickMeta } = await fetchStudyTermPool(
-    client,
-    userId,
-    { domainIds: domainIdsForScope(domainId) },
-    count,
-    "admin",
-  );
-  const metaById = new Map(pickMeta.map((m) => [m.termId, m]));
-  const terms: ReviewSessionTerm[] = cards.map((card) => ({
-    id: card.id,
-    status: metaById.get(card.id)?.originStatus ?? "unknown",
-  }));
+  const scope = { domainIds: domainIdsForScope(domainId) };
+  const [cards, candidates] = await Promise.all([
+    fetchStudyTermPool(client, userId, scope, count, "admin"),
+    fetchTraceCandidatesForUser(client, userId, scope),
+  ]);
+  const candidateById = new Map(candidates.map((c) => [c.termId, c]));
+  const now = new Date();
+  const terms: ReviewSessionTerm[] = cards.map((card) => {
+    const candidate = candidateById.get(card.id);
+    return {
+      id: card.id,
+      status: candidate ? computeTraceSnapshot(candidate, now).knownLabel : "unknown",
+    };
+  });
 
   const session: TelegramReviewSession = {
     userId,

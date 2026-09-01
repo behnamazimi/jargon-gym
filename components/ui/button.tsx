@@ -9,7 +9,16 @@ import {
 
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "default" | "outline" | "secondary" | "ghost" | "destructive" | "link";
+export type ButtonVariant =
+  | "default"
+  | "outline"
+  | "secondary"
+  | "ghost"
+  | "destructive"
+  | "link"
+  | "success"
+  | "warning"
+  | "info";
 export type ButtonSize =
   | "default"
   | "xs"
@@ -27,6 +36,9 @@ const variantClasses: Record<ButtonVariant, string> = {
   ghost: "btn-ghost",
   destructive: "btn-error",
   link: "btn-link",
+  success: "btn-success",
+  warning: "btn-warning",
+  info: "btn-info",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

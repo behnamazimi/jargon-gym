@@ -3,8 +3,6 @@
 import { Check, ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { TermActionsMenu } from "./term-actions-menu";
@@ -18,7 +16,6 @@ type TermCardProps = {
   domainId: string;
   domainTerms: Term[];
   onToggleOpen: () => void;
-  onToggleKnown: () => void;
 };
 
 export function TermCard({
@@ -29,7 +26,6 @@ export function TermCard({
   domainId,
   domainTerms,
   onToggleOpen,
-  onToggleKnown,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -60,13 +56,17 @@ export function TermCard({
               open && "border-b border-base-300/60 bg-primary/[0.04]",
             )}
           >
-            <div className="flex shrink-0 items-center ps-1">
-              <Checkbox
-                isSelected={known}
-                onChange={onToggleKnown}
-                aria-label={known ? "Mark as not known" : "Mark as known"}
-                className="checkbox-primary"
-              />
+            <div className="flex shrink-0 items-center ps-1" aria-hidden={!known}>
+              {known ? (
+                <span
+                  className="flex size-5 items-center justify-center rounded-full bg-primary/15 text-primary"
+                  title="Known"
+                >
+                  <Check className="size-3" strokeWidth={2.5} />
+                </span>
+              ) : (
+                <span className="size-5" />
+              )}
             </div>
             <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-start justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <span
@@ -96,18 +96,6 @@ export function TermCard({
           </div>
           <CollapsibleContent>
             <TermBody term={term} className="px-4 pt-4 pb-5" />
-            <div className="border-t border-base-300/60 px-4 py-3">
-              <Button
-                type="button"
-                variant={known ? "outline" : "default"}
-                size="sm"
-                onPress={onToggleKnown}
-                className="gap-1.5"
-              >
-                <Check className="size-3.5" aria-hidden strokeWidth={1.5} />
-                {known ? "Mark as not known" : "Mark as known"}
-              </Button>
-            </div>
           </CollapsibleContent>
         </article>
       </Collapsible>

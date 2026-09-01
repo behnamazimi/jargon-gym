@@ -24,7 +24,7 @@ export async function fetchQuizTermPool(
   domainIds: string[] | "all",
   questionCount: number,
 ): Promise<QuizTerm[]> {
-  const { cards } = await fetchStudyQuizTermPool(client, userId, { domainIds }, questionCount);
+  const cards = await fetchStudyQuizTermPool(client, userId, { domainIds }, questionCount);
 
   return cards.map(toQuizTerm);
 }
@@ -33,5 +33,5 @@ export function countTermsForSelection(
   collections: StudyCollection[],
   domainIds: string[] | "all",
 ): number {
-  return countStudyTermsForSelection(collections, domainIds, "known");
+  return countStudyTermsForSelection(collections, domainIds);
 }

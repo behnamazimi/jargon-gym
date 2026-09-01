@@ -13,7 +13,7 @@ import {
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
 import { resetDomainProgress } from "@/lib/jargon/known-state";
-import { recordReveal, recordRead, setKnownStatus } from "@/lib/jargon/review-outcome";
+import { recordReveal, recordRead } from "@/lib/jargon/review-outcome";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
@@ -96,20 +96,6 @@ export async function deleteTerm(termId: string): Promise<{ error?: string }> {
     return {};
   } catch (err) {
     return { error: termMutationErrorMessage(err, "Couldn't delete that term. Try again.") };
-  }
-}
-
-export async function setTermKnown(termId: string, isKnown: boolean): Promise<{ error?: string }> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    await setKnownStatus(auth.supabase, auth.user.id, termId, isKnown, "session");
-    revalidatePath("/jargon");
-    return {};
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't update that term. Try again.";
-    return { error: message };
   }
 }
 

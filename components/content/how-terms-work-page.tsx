@@ -143,18 +143,17 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
 
         <ContentPageSection title="Known and unknown">
           <p className="m-0">
-            Every term is either something I{" "}
-            <strong className="font-medium text-base-content">already know</strong> or something
-            I&apos;m <strong className="font-medium text-base-content">still learning</strong>. That
-            split is the term&apos;s state, not a queue setting. I kept mixing known and unknown
-            terms in one deck and wasted time on words I didn&apos;t need, so the two never mix now.
+            &ldquo;Known&rdquo; isn&apos;t something you set by hand anymore, it&apos;s read off how
+            well you&apos;ve actually retained the term: how much you&apos;ve read it, how
+            you&apos;ve done recalling it in Review, and how you&apos;ve done recognizing it in
+            Quiz. All three fade over time if you stop practicing, so the badge reflects where you
+            are right now, not a status you flip once and forget.
           </p>
           <p className="m-0">
-            Mark a term known or unknown anywhere, in review, the collection list, Telegram, or the
-            desktop widget, and it moves between states. I wanted that to follow the term
-            everywhere. Review always draws from whichever pool you pick; Quiz only ever draws from
-            the known pool, since it&apos;s a check on terms you&apos;ve already marked known, not a
-            way to learn new ones, a miss there sends the term back to unknown automatically.
+            Read, Review, and Quiz all draw from the same set of terms now, each ranked by what
+            you&apos;re most at risk of forgetting in that mode. There&apos;s no separate known-only
+            pool to graduate into, a term you haven&apos;t touched in a while can resurface in any
+            of the three, and a strong run of practice is what moves the badge, not a manual toggle.
           </p>
         </ContentPageSection>
 

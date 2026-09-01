@@ -1,8 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
-import { applyReviewRating, recordReveal } from "@/lib/jargon/review-outcome";
+import { applyReviewGrade, recordReveal } from "@/lib/jargon/review-outcome";
 import { getMaxStudyCount } from "@/lib/study";
+import { AGAIN, GOOD } from "@/lib/trace";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";
 import { NO_REVIEW_TERMS_MESSAGE, REVIEW_REVEAL_FAILED_SUFFIX } from "./copy";
@@ -461,12 +462,13 @@ export async function handleReviewRate(
   const currentTerm = await getCurrentReviewTerm(client, session);
   if (!currentTerm) return [];
 
-  const currentOriginStatus = session.terms[session.currentIndex].status;
-
-  await applyReviewRating(client, session.userId, {
+  // Stopgap: Telegram's binary Got-it/Missed-it keyboard maps onto two of
+  // FSRS-5's four grades until it gets its own 4-button keyboard (flagged
+  // fast-follow) — this keeps today's UX unchanged while still running
+  // through the real FSRS-5 update.
+  await applyReviewGrade(client, session.userId, {
     termId: currentTerm.id,
-    known,
-    sessionStatus: currentOriginStatus,
+    grade: known ? GOOD : AGAIN,
     mode: "admin",
   });
 

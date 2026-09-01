@@ -7,7 +7,8 @@ import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
-import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
+import type { QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
+import type { QuestionType } from "@/lib/trace";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { MAX_STUDY_TERMS } from "@/lib/study";
 
@@ -30,8 +31,7 @@ export async function getQuizSetupData() {
   };
 }
 
-const NOTHING_ELIGIBLE_ERROR =
-  "Nothing eligible today (read or missed). Try tomorrow or mark more known.";
+const NOTHING_ELIGIBLE_ERROR = "No terms in this collection yet.";
 
 /** Preview the next quiz batch without generating questions. */
 export async function previewQuizQueueAction(input: {
@@ -159,63 +159,39 @@ export async function generateQuizAction(input: {
   }
 }
 
-/** Record outcome for a single answer: a miss always flips the term back to unknown. */
+/** Record outcome for a single answer: updates the Bayesian recognition posterior. */
 export async function recordQuizAnswerAction(input: {
   termId: string;
   passed: boolean;
-}): Promise<{ error?: string; flipped?: boolean }> {
+  questionType: QuestionType;
+}): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
   }
 
   try {
-    const { flipped } = await applyQuizAnswer(auth.supabase, auth.user.id, {
+    await applyQuizAnswer(auth.supabase, auth.user.id, {
       termId: input.termId,
       passed: input.passed,
+      questionType: input.questionType,
       mode: "session",
     });
 
-    if (flipped) {
-      revalidatePath("/jargon");
-    }
-
-    return { flipped };
+    return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't update term progress.";
     return { error: message };
   }
 }
 
-/** Finalize quiz: build flipped-terms summary. Mutations already happened per answer. */
-export async function submitQuizResultsAction(input: {
-  answers: QuizAnswer[];
-  flippedTermIds: string[];
-}): Promise<{ error?: string; flippedTerms?: { id: string; term: string }[] }> {
+/** Finalize quiz. Mutations already happened per answer. */
+export async function submitQuizResultsAction(): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
   }
 
-  try {
-    const flippedTermIds = [...new Set(input.flippedTermIds)];
-    let flippedTerms: { id: string; term: string }[] = [];
-
-    if (flippedTermIds.length > 0) {
-      const { data, error } = await auth.supabase
-        .from("terms")
-        .select("id, term")
-        .in("id", flippedTermIds);
-
-      if (error) throw error;
-      flippedTerms = data;
-    }
-
-    revalidatePath("/jargon");
-
-    return { flippedTerms };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't save quiz results. Try again.";
-    return { error: message };
-  }
+  revalidatePath("/jargon");
+  return {};
 }

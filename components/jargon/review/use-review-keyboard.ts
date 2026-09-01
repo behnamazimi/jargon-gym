@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 
 type ReviewKeyboardHandlers = {
   onReveal: () => void;
-  onRateKnown: () => void;
-  onRateLearning: () => void;
+  onGrade: (grade: ReviewGrade) => void;
   onPrevious: () => void;
   onNext: () => void;
   revealed: boolean;
@@ -15,8 +15,7 @@ type ReviewKeyboardHandlers = {
 
 export function useReviewKeyboard({
   onReveal,
-  onRateKnown,
-  onRateLearning,
+  onGrade,
   onPrevious,
   onNext,
   revealed,
@@ -48,16 +47,27 @@ export function useReviewKeyboard({
         return;
       }
 
-      if (event.key === "1" && revealed && canRate) {
-        event.preventDefault();
-        onRateKnown();
-        return;
-      }
-
-      if (event.key === "2" && revealed && canRate) {
-        event.preventDefault();
-        onRateLearning();
-        return;
+      if (revealed && canRate) {
+        if (event.key === "1") {
+          event.preventDefault();
+          onGrade(AGAIN);
+          return;
+        }
+        if (event.key === "2") {
+          event.preventDefault();
+          onGrade(HARD);
+          return;
+        }
+        if (event.key === "3") {
+          event.preventDefault();
+          onGrade(GOOD);
+          return;
+        }
+        if (event.key === "4") {
+          event.preventDefault();
+          onGrade(EASY);
+          return;
+        }
       }
 
       if (event.key === "ArrowLeft") {
@@ -74,5 +84,5 @@ export function useReviewKeyboard({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canRate, enabled, onNext, onPrevious, onRateKnown, onRateLearning, onReveal, revealed]);
+  }, [canRate, enabled, onGrade, onNext, onPrevious, onReveal, revealed]);
 }

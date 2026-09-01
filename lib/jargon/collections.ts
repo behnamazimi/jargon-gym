@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { domainInputToUpdateRow, type DomainInput } from "@/lib/jargon/domain-schema";
+import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
 
 type Client = SupabaseClient<Database>;
 type DomainVisibility = Database["public"]["Enums"]["domain_visibility"];
@@ -47,11 +48,38 @@ async function fetchAddedDomains(client: Client, userId: string) {
     .filter((domain): domain is NonNullable<typeof domain> => domain !== null);
 }
 
-function tallyDomainStats(
-  domainIds: string[],
-  data: { domain_id: string; known_at: string | null }[],
-) {
+type ProgressStateRow = {
+  domain_id: string;
+  read_count: number;
+  last_read_at: string | null;
+  recall_stability: number | null;
+  recall_difficulty: number | null;
+  review_recall_count: number;
+  last_review_recall_at: string | null;
+  quiz_knowledge_posterior: number | null;
+  quiz_test_count: number;
+  last_quiz_tested_at: string | null;
+};
+
+function toTraceState(row: ProgressStateRow): TraceState {
+  return {
+    readCount: row.read_count,
+    lastReadAt: row.last_read_at ? new Date(row.last_read_at) : null,
+    recallStability: row.recall_stability,
+    recallDifficulty: row.recall_difficulty,
+    reviewRecallCount: row.review_recall_count,
+    lastReviewRecallAt: row.last_review_recall_at ? new Date(row.last_review_recall_at) : null,
+    quizKnowledgePosterior: row.quiz_knowledge_posterior,
+    quizTestCount: row.quiz_test_count,
+    lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
+  };
+}
+
+/** "known" is a read-only label derived live from Mastery_adjusted, not a
+ *  stored row — replaces the old known_at-row-presence tally. */
+function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
   const stats = new Map<string, { termCount: number; knownCount: number }>();
+  const now = new Date();
 
   for (const domainId of domainIds) {
     stats.set(domainId, { termCount: 0, knownCount: 0 });
@@ -61,7 +89,9 @@ function tallyDomainStats(
     const current = stats.get(row.domain_id);
     if (!current) continue;
     current.termCount += 1;
-    if (row.known_at) current.knownCount += 1;
+    if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known") {
+      current.knownCount += 1;
+    }
   }
 
   return stats;

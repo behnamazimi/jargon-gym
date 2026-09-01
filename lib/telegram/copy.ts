@@ -8,7 +8,7 @@ export const HELP_MESSAGE =
   "Commands:\n/read — send the next term to review\n/review — flashcard-style review (guided setup)\n/quiz — start a quiz (guided setup)\n/stat — show your collection statistics";
 
 export const CAUGHT_UP_MESSAGE =
-  "You're all caught up — no unknown terms left in your active review domains. Import more or turn domains back on in the app.";
+  "You're all caught up — no terms in your active review domains. Import more or turn domains back on in the app.";
 
 export const READ_NEXT_FAILED_MESSAGE =
   "Could not load the next term. Try /read again in a moment.";
@@ -19,22 +19,20 @@ export const READ_REVEAL_FAILED_SUFFIX = "\n\n<i>Couldn't reveal that term — t
 
 export const QUIZ_HELP_MESSAGE =
   "Usage: /quiz [all|<collection>] [count|all]\n\n" +
-  "Quiz checks terms you've already marked known — mark terms known in " +
-  "Review or on the collection page first.\n\n" +
+  "Quiz surfaces the terms most at risk of slipping first.\n\n" +
   "Examples:\n" +
   "/quiz — guided setup\n" +
-  "/quiz all 10 — 10 known terms from all collections\n" +
-  "/quiz all — choose how many known terms";
+  "/quiz all 10 — 10 terms from all collections\n" +
+  "/quiz all — choose how many terms";
 
 export const NO_KNOWN_TERMS_FOR_QUIZ_MESSAGE =
-  "You haven't marked any terms as known yet. Mark some known in Review or on the collection page, then try /quiz.";
+  "No terms in this collection yet. Import some, then try /quiz.";
 
-export const NOTHING_ELIGIBLE_FOR_QUIZ_MESSAGE =
-  "Nothing eligible today (read or missed). Try tomorrow or mark more known.";
+export const NOTHING_ELIGIBLE_FOR_QUIZ_MESSAGE = "No terms in this collection yet.";
 
 export const REVIEW_HELP_MESSAGE =
   "Usage: /review [all|<collection>] [count|all]\n\n" +
-  "Review blends mostly-unknown terms with some known ones to keep them fresh.\n\n" +
+  "Review surfaces the terms most at risk of slipping first.\n\n" +
   "Examples:\n" +
   "/review — guided setup\n" +
   "/review all 10 — 10 cards from all collections\n" +

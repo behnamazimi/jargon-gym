@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
-import type { DebugReviewMixInfo, DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
 import { DebugCollectionSelect } from "@/components/jargon/debug/debug-collection-select";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { PickContext } from "@/lib/smart-queue/types";
+import type { PickContext } from "@/lib/trace-queue";
 import type { StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
 
@@ -14,10 +14,6 @@ type DebugQueuePageProps = {
   context: PickContext;
   domainId: string;
   rows: DebugScoredRow[];
-  mix: DebugReviewMixInfo | null;
-  /** Read only: unknown pool was empty, so these rows are the known-pool
-   *  stale-known fallback (read_mode === "stale_known") instead. */
-  readFallbackActive: boolean;
   errorMessage: string | null;
 };
 
@@ -29,18 +25,17 @@ const CONTEXT_OPTIONS: Array<{
   {
     value: "read",
     title: "Read",
-    description:
-      "Read page/command priority — unknown pool first, no pass/fail concept. Falls back to a known-pool staleness order once the unknown pool is empty, if Read settings has known-term fallback on.",
+    description: "Read page/command priority — ranked by lowest exposure count first.",
   },
   {
     value: "review",
     title: "Review",
-    description: "Flashcard review priority — blends known + unknown pools.",
+    description: "Flashcard review priority — ranked by recall retrievability R_r(t) ascending.",
   },
   {
     value: "quiz",
     title: "Quiz",
-    description: "Quiz priority — known pool only, independent of Review.",
+    description: "Quiz priority — ranked by recognition retrievability R_g(t) ascending.",
   },
 ];
 
@@ -93,8 +88,6 @@ export function DebugQueuePage({
   context,
   domainId,
   rows,
-  mix,
-  readFallbackActive,
   errorMessage,
 }: DebugQueuePageProps) {
   if (collections.length === 0) {
@@ -138,29 +131,6 @@ export function DebugQueuePage({
               context={context}
             />
           </fieldset>
-
-          {context === "review" ? (
-            <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-sm leading-none font-medium">Mix</legend>
-              {mix ? (
-                <p className="m-0 text-xs text-base-content/60">
-                  {mix.knownCount} known / {mix.unknownCount} unknown.
-                </p>
-              ) : (
-                <p className="m-0 text-xs text-base-content/60">No terms in either pool.</p>
-              )}
-            </fieldset>
-          ) : null}
-
-          {context === "read" && readFallbackActive ? (
-            <fieldset className="flex max-w-md flex-col gap-2 border-0 p-0">
-              <legend className="mb-2 text-sm leading-none font-medium">Fallback</legend>
-              <p className="m-0 text-xs text-base-content/60">
-                Unknown pool is empty. Read settings has known-term fallback on, so these rows are
-                the known pool instead.
-              </p>
-            </fieldset>
-          ) : null}
         </QuizPanelBody>
       </QuizPanel>
 

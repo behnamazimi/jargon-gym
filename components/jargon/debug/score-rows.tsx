@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
-import { formatReadDetail, formatRelative, formatTestDetail } from "./format";
+import { formatMastery, formatQuizDetail, formatReadDetail, formatRecallDetail } from "./format";
 
 /** Debug intentionally shows every scored candidate, unsliced — but
  *  mounting hundreds of these rows (each with badges + formatted detail
@@ -13,6 +13,12 @@ import { formatReadDetail, formatRelative, formatTestDetail } from "./format";
  *  full list. */
 const BATCH_SIZE = 100;
 
+const LABEL_BADGE_CLASS: Record<DebugScoredRow["knownLabel"], string> = {
+  known: "badge-success",
+  learning: "badge-warning",
+  unknown: "badge-ghost",
+};
+
 function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
   return (
     <li className="shadow-surface space-y-2 rounded-xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
@@ -20,36 +26,29 @@ function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
         <div className="flex min-w-0 items-baseline gap-2">
           <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
           <span className="truncate text-sm font-medium text-base-content">{row.term}</span>
-          {row.originStatus ? (
-            <span className="badge badge-ghost badge-sm font-normal">{row.originStatus}</span>
-          ) : null}
+          <span className={`badge badge-sm font-normal ${LABEL_BADGE_CLASS[row.knownLabel]}`}>
+            {row.knownLabel}
+          </span>
         </div>
       </div>
 
       <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
         {formatReadDetail(row.readCount, row.lastReadAt)} ·{" "}
-        {formatTestDetail(
-          "review recall",
+        {formatRecallDetail(
           row.reviewRecallCount,
-          row.reviewStreak,
-          row.reviewFailCount,
+          row.recallStability,
+          row.recallDifficulty,
+          row.recallRetrievability,
           row.lastReviewRecallAt,
         )}{" "}
         ·{" "}
-        {formatTestDetail(
-          "quiz",
+        {formatQuizDetail(
           row.quizTestCount,
-          row.quizStreak,
-          row.quizFailCount,
+          row.quizKnowledgePosterior,
+          row.recognitionRetrievability,
           row.lastQuizTestedAt,
-        )}
-        {row.pendingReveal ? " · pending reveal" : ""}
-        {row.lastFailAt ? (
-          <>
-            {" "}
-            · last fail: {row.lastFailSource} ({formatRelative(row.lastFailAt)})
-          </>
-        ) : null}
+        )}{" "}
+        · {formatMastery(row.mastery, row.masteryAdjusted)}
       </p>
     </li>
   );

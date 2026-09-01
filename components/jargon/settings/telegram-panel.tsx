@@ -112,7 +112,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
       id="telegram"
       icon={Send}
       title="Telegram settings"
-      description="Get terms in Telegram, mark them known, or type /read anytime."
+      description="Get terms in Telegram, review and quiz yourself, or type /read anytime."
       status={<StatusPill variant={telegramStatusVariant(status)} />}
     >
       {error ? <AlertBanner message={error} /> : null}

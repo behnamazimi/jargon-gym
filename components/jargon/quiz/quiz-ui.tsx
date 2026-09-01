@@ -174,33 +174,3 @@ export function QuizCenteredState({
     </div>
   );
 }
-
-export function QuizTermList({
-  title,
-  terms,
-  emptyMessage,
-}: {
-  title: string;
-  terms: { id: string; term: string }[];
-  emptyMessage: string;
-}) {
-  if (terms.length === 0) {
-    return <p className="m-0 text-sm text-base-content/60">{emptyMessage}</p>;
-  }
-
-  return (
-    <div className="space-y-2">
-      <p className="m-0 text-sm font-semibold">{title}</p>
-      <ul className="m-0 space-y-1.5">
-        {terms.map((term) => (
-          <li
-            key={term.id}
-            className="shadow-surface rounded-xl bg-base-200/40 px-3.5 py-2.5 text-sm text-base-content/80"
-          >
-            {term.term}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}

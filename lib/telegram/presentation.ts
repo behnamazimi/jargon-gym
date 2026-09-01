@@ -122,8 +122,8 @@ function formatCollectionProgressLine(collection: CollectionStatBreakdown): stri
   return `${bar} ${collection.knownCount}/${collection.totalCount} known (${collection.percentage}%)`;
 }
 
-function formatUnknownFootnote(collection: CollectionStatBreakdown): string {
-  return `${collection.unknownCount} unknown`;
+function formatUnseenFootnote(collection: CollectionStatBreakdown): string {
+  return `${collection.unseenCount} never read`;
 }
 
 /** Renders `<label> <count> never studied`, or `<label> none waiting` when
@@ -149,7 +149,7 @@ export function formatStatsMessage(stats: StatsSnapshot): string {
     for (const collection of stats.activeCollections) {
       message += `\n\n<b>${escapeText(collection.name)}</b>\n`;
       message += `${formatCollectionProgressLine(collection)}\n`;
-      message += formatUnknownFootnote(collection);
+      message += formatUnseenFootnote(collection);
     }
   } else if (stats.pausedCount > 0) {
     message += `\n\n<i>All collections are paused. Turn one on in the app to start reviewing.</i>`;
@@ -350,7 +350,6 @@ export function formatReviewQuestionWithAnswer(
   selectedTerm: string,
   isCorrect: boolean,
   currentScore: number,
-  markedUnknown = false,
 ): string {
   let message = formatReviewQuestion(term, questionIndex, totalQuestions);
   message += `\n\n<b>Your answer:</b> ${escapeText(selectedTerm)}`;
@@ -359,7 +358,6 @@ export function formatReviewQuestionWithAnswer(
     message += `\n\n✅ <b>Correct!</b>`;
   } else {
     message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeText(term.term)}</b>`;
-    if (markedUnknown) message += "\n<i>Marked as unknown.</i>";
   }
 
   message += `\n\nScore: ${currentScore}/${totalQuestions}`;
@@ -387,7 +385,6 @@ export function formatTrueFalseQuestionWithAnswer(
   correctAnswer: boolean,
   isCorrect: boolean,
   currentScore: number,
-  markedUnknown = false,
 ): string {
   let message = formatTrueFalseQuestion(term, questionIndex, totalQuestions, scenarioText);
   message += `\n\n<b>Your answer:</b> ${selectedAnswer ? "True" : "False"}`;
@@ -396,7 +393,6 @@ export function formatTrueFalseQuestionWithAnswer(
     message += `\n\n✅ <b>Correct!</b>`;
   } else {
     message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${correctAnswer ? "True" : "False"}</b>`;
-    if (markedUnknown) message += "\n<i>Marked as unknown.</i>";
   }
 
   message += `\n\nScore: ${currentScore}/${totalQuestions}`;

@@ -2,8 +2,9 @@
 
 import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { countTermsForMixedSelection, getMaxStudyCount } from "@/lib/study/count";
+import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
 import { MAX_STUDY_TERMS, type StudyCollection } from "@/lib/study/types";
+import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import {
   QuizCenteredState,
   QuizKeyboardHint,
@@ -14,7 +15,7 @@ import {
   QuizStat,
 } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
-import { Button, LinkButton } from "@/components/ui/button";
+import { Button, LinkButton, type ButtonVariant } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import {
@@ -53,17 +54,31 @@ type ReviewPageProps = {
 const DEFAULT_CARD_COUNT = 10;
 
 function termCountForCollection(collection: StudyCollection) {
-  return collection.knownCount + collection.unknownCount;
+  return collection.termCount;
 }
 
 function allCollectionsTermCount(collections: StudyCollection[]) {
   return collections.reduce((total, collection) => total + termCountForCollection(collection), 0);
 }
 
-function upsertRating(ratings: ReviewRating[], termId: string, known: boolean): ReviewRating[] {
+function upsertRating(ratings: ReviewRating[], termId: string, grade: ReviewGrade): ReviewRating[] {
   const without = ratings.filter((rating) => rating.termId !== termId);
-  return [...without, { termId, known }];
+  return [...without, { termId, grade }];
 }
+
+const GRADE_LABELS: Record<ReviewGrade, string> = {
+  [AGAIN]: "Again",
+  [HARD]: "Hard",
+  [GOOD]: "Good",
+  [EASY]: "Easy",
+};
+
+const GRADE_BUTTONS: { grade: ReviewGrade; variant: ButtonVariant }[] = [
+  { grade: AGAIN, variant: "destructive" },
+  { grade: HARD, variant: "warning" },
+  { grade: GOOD, variant: "success" },
+  { grade: EASY, variant: "info" },
+];
 
 function ReviewPoolBreakdown({
   stats,
@@ -137,7 +152,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
   );
 
   const availableTermCount = useMemo(
-    () => countTermsForMixedSelection(collections, domainIds),
+    () => countTermsForSelection(collections, domainIds),
     [collections, domainIds],
   );
 
@@ -332,13 +347,13 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
     setCurrentIndex((index) => Math.min(cards.length - 1, index + 1));
   }
 
-  async function handleRate(retained: boolean) {
+  async function handleRate(grade: ReviewGrade) {
     if (!currentCard || !currentRevealed || isRating) return;
 
     const alreadyRated = ratings.some((rating) => rating.termId === currentCard.id);
 
     setIsRating(true);
-    const result = await rateReviewTermAction(currentCard.id, retained, currentCard.originStatus);
+    const result = await rateReviewTermAction(currentCard.id, grade);
     setIsRating(false);
 
     if (result.error) {
@@ -346,7 +361,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
       return;
     }
 
-    const nextRatings = upsertRating(ratings, currentCard.id, retained);
+    const nextRatings = upsertRating(ratings, currentCard.id, grade);
     setRatings(nextRatings);
 
     if (alreadyRated) return;
@@ -369,13 +384,9 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
     setCardCountError(null);
   }
 
-  const positiveLabel = "Got it";
-  const negativeLabel = "Missed it";
-
   useReviewKeyboard({
     onReveal: handleReveal,
-    onRateKnown: () => void handleRate(true),
-    onRateLearning: () => void handleRate(false),
+    onGrade: (grade) => void handleRate(grade),
     onPrevious: handlePrevious,
     onNext: handleNext,
     revealed: currentRevealed,
@@ -383,7 +394,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
     enabled: step === "playing",
   });
 
-  const retainedCount = ratings.filter((rating) => rating.known).length;
+  const retainedCount = ratings.filter((rating) => rating.grade >= GOOD).length;
   const forgotCount = ratings.length - retainedCount;
 
   const cardCountPresets = cardCountPresetValues(maxCardCount);
@@ -608,30 +619,25 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
               </Button>
 
               {currentRevealed ? (
-                <div className="flex flex-1 flex-wrap justify-center gap-2">
-                  <Button
-                    type="button"
-                    onPress={() => void handleRate(true)}
-                    isDisabled={isRating}
-                    className={cn(
-                      "min-h-11 min-w-[7rem] flex-1 transition-transform active:scale-[0.96] md:flex-none",
-                      currentRating?.known === true && "btn-primary",
-                    )}
-                  >
-                    {positiveLabel}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onPress={() => void handleRate(false)}
-                    isDisabled={isRating}
-                    className={cn(
-                      "min-h-11 min-w-[7rem] flex-1 transition-transform active:scale-[0.96] md:flex-none",
-                      currentRating?.known === false && "ring-2 ring-primary/30",
-                    )}
-                  >
-                    {negativeLabel}
-                  </Button>
+                <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+                  {GRADE_BUTTONS.map(({ grade, variant }) => (
+                    <Button
+                      key={grade}
+                      type="button"
+                      variant={variant}
+                      onPress={() => void handleRate(grade)}
+                      isDisabled={isRating}
+                      className={cn(
+                        "btn-soft min-h-11 transition-transform active:scale-[0.96]",
+                        "[--btn-bg:color-mix(in_oklab,var(--btn-color)_45%,var(--color-base-100))]",
+                        "[--btn-border:color-mix(in_oklab,var(--btn-color)_55%,var(--color-base-100))]",
+                        "[color:var(--btn-fg)]",
+                        currentRating?.grade === grade && "ring-2 ring-primary/50",
+                      )}
+                    >
+                      {GRADE_LABELS[grade]}
+                    </Button>
+                  ))}
                 </div>
               ) : (
                 <span className="flex-1" />
@@ -652,8 +658,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
             <p className="m-0 hidden text-center text-xs text-base-content/50 md:block coarse:hidden">
               <QuizKeyboardHint action="reveal" />
               {" · "}
-              <kbd className="kbd kbd-xs">1</kbd> {positiveLabel.toLowerCase()} ·{" "}
-              <kbd className="kbd kbd-xs">2</kbd> {negativeLabel.toLowerCase()} ·{" "}
+              <kbd className="kbd kbd-xs">1</kbd>-<kbd className="kbd kbd-xs">4</kbd> grade ·{" "}
               <kbd className="kbd kbd-xs">←</kbd>
               <kbd className="kbd kbd-xs">→</kbd>
             </p>

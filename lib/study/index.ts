@@ -1,6 +1,6 @@
 /** Shared study term-pool + collection metrics seam. */
 
-export type { TermPoolStatus, StudyCollection } from "./types";
+export type { StudyCollection } from "./types";
 export { MAX_STUDY_TERMS } from "./types";
 
 export { listStudyCollections } from "./collections";
