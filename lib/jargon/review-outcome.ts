@@ -52,6 +52,9 @@ async function writeEvent(
     recallDifficulty?: number;
     quizKnowledgePosterior?: number;
     crossedKnownThreshold?: boolean;
+    grade?: number;
+    questionType?: QuestionType;
+    retrievabilityBefore?: number;
   },
 ) {
   if (mode === "session") {
@@ -114,6 +117,7 @@ export async function applyReviewGrade(
   const now = new Date();
 
   const state = await loadState(client, mode, userId, input.termId);
+  const preSnapshot = computeTraceSnapshot(state, now);
   const next = computeReviewGrade(state, input.grade, now);
 
   const postState: TraceState = {
@@ -130,6 +134,8 @@ export async function applyReviewGrade(
     recallStability: next.recallStability,
     recallDifficulty: next.recallDifficulty,
     crossedKnownThreshold: snapshot.knownLabel === "known",
+    grade: input.grade,
+    retrievabilityBefore: preSnapshot.recallRetrievability ?? undefined,
   });
 
   return { passed: input.grade >= GOOD, ...next };
@@ -157,6 +163,7 @@ export async function applyQuizAnswer(
   const now = new Date();
 
   const state = await loadState(client, mode, userId, input.termId);
+  const preSnapshot = computeTraceSnapshot(state, now);
   const next = computeQuizAnswer(state, input.passed, input.questionType, now);
 
   const postState: TraceState = {
@@ -171,6 +178,8 @@ export async function applyQuizAnswer(
   await writeEvent(client, mode, userId, input.termId, event, {
     quizKnowledgePosterior: next.quizKnowledgePosterior,
     crossedKnownThreshold: snapshot.knownLabel === "known",
+    questionType: input.questionType,
+    retrievabilityBefore: preSnapshot.recognitionRetrievability ?? undefined,
   });
 
   return { passed: input.passed, quizKnowledgePosterior: next.quizKnowledgePosterior };

@@ -235,9 +235,9 @@ it:
    `app/(private)/jargon/quiz/actions.ts`. Telegram has its own equivalents
    in `lib/telegram/` that call the same `lib/jargon/review-outcome.ts`
    and `lib/trace-queue` functions underneath.
-5. **The database** — a single table, `review_state`, one row per
-   (user, term), storing exactly the fields `TraceState` needs: read count
-   and last-read time, recall stability/difficulty and last-review time,
+5. **The database** — two tables. `review_state` holds one row per (user,
+   term), storing exactly the fields `TraceState` needs: read count and
+   last-read time, recall stability/difficulty and last-review time,
    recognition posterior and last-quiz time, plus the one persisted
    high-water-mark timestamp for "terms learned." Everything else — every
    retrievability, every mastery number, the known/learning/unknown label
@@ -251,6 +251,17 @@ it:
    working end-to-end, those columns were dropped for good in
    [`supabase/migrations/20260901120000_drop_deprecated_scoring_columns.sql`](../supabase/migrations/20260901120000_drop_deprecated_scoring_columns.sql) —
    `review_state` today only has the fields `TraceState` needs.
+   `review_events`, added in
+   [`supabase/migrations/20260901140000_review_events_log.sql`](../supabase/migrations/20260901140000_review_events_log.sql),
+   is the append-only companion: one row per event (all six — read, reveal,
+   review_pass/fail, quiz_pass/fail), written by the same
+   `record_review_event`/`my_record_review_event` call, in the same
+   transaction as the `review_state` upsert. It exists for questions
+   `review_state`'s live-only design can't answer — calibration
+   (retrievability just before an event, versus its outcome), FSRS weight
+   fitting (the real 1-4 grade, not just pass/fail), per-term lapse rate,
+   and real re-read cadence — not for ranking or mastery, which never read
+   from it.
 
 If you're trying to understand a bug or add a feature: math questions
 ("why did this term's score change like that") belong in `lib/trace/`,

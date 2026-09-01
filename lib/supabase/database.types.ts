@@ -120,6 +120,63 @@ export type Database = {
           },
         ];
       };
+      review_events: {
+        Row: {
+          created_at: string;
+          event: Database["public"]["Enums"]["review_event"];
+          grade: number | null;
+          id: string;
+          question_type: string | null;
+          quiz_knowledge_posterior: number | null;
+          recall_difficulty: number | null;
+          recall_stability: number | null;
+          retrievability_before: number | null;
+          term_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          event: Database["public"]["Enums"]["review_event"];
+          grade?: number | null;
+          id?: string;
+          question_type?: string | null;
+          quiz_knowledge_posterior?: number | null;
+          recall_difficulty?: number | null;
+          recall_stability?: number | null;
+          retrievability_before?: number | null;
+          term_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          event?: Database["public"]["Enums"]["review_event"];
+          grade?: number | null;
+          id?: string;
+          question_type?: string | null;
+          quiz_knowledge_posterior?: number | null;
+          recall_difficulty?: number | null;
+          recall_stability?: number | null;
+          retrievability_before?: number | null;
+          term_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "review_events_term_id_fkey";
+            columns: ["term_id"];
+            isOneToOne: false;
+            referencedRelation: "terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "review_events_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       review_state: {
         Row: {
           ever_mastered_at: string | null;
@@ -702,9 +759,12 @@ export type Database = {
         Args: {
           p_crossed_known_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
+          p_grade?: number;
+          p_question_type?: string;
           p_quiz_knowledge_posterior?: number;
           p_recall_difficulty?: number;
           p_recall_stability?: number;
+          p_retrievability_before?: number;
           p_term_id: string;
         };
         Returns: undefined;
@@ -736,9 +796,12 @@ export type Database = {
         Args: {
           p_crossed_known_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
+          p_grade?: number;
+          p_question_type?: string;
           p_quiz_knowledge_posterior?: number;
           p_recall_difficulty?: number;
           p_recall_stability?: number;
+          p_retrievability_before?: number;
           p_term_id: string;
           p_user_id: string;
         };

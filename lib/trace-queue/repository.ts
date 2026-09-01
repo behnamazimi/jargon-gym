@@ -129,6 +129,13 @@ export type TraceEventPayload = {
    *  only sets it once and never clears it; the threshold itself lives in
    *  lib/trace, not duplicated here. */
   crossedKnownThreshold?: boolean;
+  /** 1-4 (AGAIN/HARD/GOOD/EASY) — review_pass/review_fail only, logged to review_events. */
+  grade?: number;
+  /** quiz_pass/quiz_fail only, logged to review_events. */
+  questionType?: "multiple_choice" | "true_false";
+  /** Recall/recognition retrievability just before this event — review_pass/fail and
+   *  quiz_pass/fail only, logged to review_events for calibration checking. */
+  retrievabilityBefore?: number;
 };
 
 /** Internal — only review-outcome should call these. */
@@ -145,6 +152,9 @@ export async function recordTraceEvent(
     p_recall_difficulty: payload?.recallDifficulty,
     p_quiz_knowledge_posterior: payload?.quizKnowledgePosterior,
     p_crossed_known_threshold: payload?.crossedKnownThreshold ?? false,
+    p_grade: payload?.grade,
+    p_question_type: payload?.questionType,
+    p_retrievability_before: payload?.retrievabilityBefore,
   });
 
   if (error) throw error;
@@ -166,6 +176,9 @@ export async function recordTraceEventForUser(
     p_recall_difficulty: payload?.recallDifficulty,
     p_quiz_knowledge_posterior: payload?.quizKnowledgePosterior,
     p_crossed_known_threshold: payload?.crossedKnownThreshold ?? false,
+    p_grade: payload?.grade,
+    p_question_type: payload?.questionType,
+    p_retrievability_before: payload?.retrievabilityBefore,
   });
 
   if (error) throw error;
