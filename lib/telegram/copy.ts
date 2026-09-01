@@ -5,7 +5,7 @@ export const WELCOME_MESSAGE =
   "You're connected to Jargon Gym. Use /read anytime for a term to review. Scheduled reminders follow your cadence setting in the app.";
 
 export const HELP_MESSAGE =
-  "Commands:\n/read — send the next term to review\n/review — flashcard-style review (guided setup)\n/quiz — start a quiz (guided setup)\n/stat — show your collection statistics";
+  "Commands:\n/read — send the next term to review\n/review — flashcard-style review (guided setup)\n/quiz — start a quiz (guided setup)";
 
 export const CAUGHT_UP_MESSAGE =
   "You're all caught up — no terms in your active review domains. Import more or turn domains back on in the app.";

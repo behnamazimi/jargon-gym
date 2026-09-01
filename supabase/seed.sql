@@ -390,13 +390,13 @@ begin
     v_admin_id, '33333333-3333-3333-3333-333333333304', 4, now() - interval '5 days'
   );
 
-  -- Leader Election: revealed mid-review, never rated (abandoned).
+  -- Leader Election: read and reviewed a couple of times, none recently.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, pending_reveal
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '33333333-3333-3333-3333-333333333305', 3, now() - interval '10 days',
-    2, now() - interval '10 days', true
+    2, now() - interval '10 days'
   );
 
   -- Sharding: reviewed and quizzed, most recently a few hours ago in Quiz.
@@ -464,13 +464,13 @@ begin
     v_admin_id, '44444444-4444-4444-4444-444444444404', 5, now() - interval '2 days'
   );
 
-  -- OKR: revealed mid-review, never rated (abandoned).
+  -- OKR: read and reviewed once, a while ago.
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    review_recall_count, last_review_recall_at, pending_reveal
+    review_recall_count, last_review_recall_at
   ) values (
     v_admin_id, '44444444-4444-4444-4444-444444444405', 2, now() - interval '8 days',
-    1, now() - interval '8 days', true
+    1, now() - interval '8 days'
   );
 
   -- Retention Curve: reviewed and quizzed, most recently a few hours ago in Quiz.

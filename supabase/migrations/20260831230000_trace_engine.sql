@@ -3,7 +3,7 @@
 -- Review, Bayesian recognition from Quiz). Mastery is computed in TS from
 -- these columns and never stored — Postgres never runs the FSRS/Bayesian
 -- math, it only persists the state lib/trace hands it.
--- @see docs/trace-smart-queue.md
+-- @see docs/trace-formula.md
 
 -- ---------------------------------------------------------------------------
 -- 1. review_state: add TRACE columns, deprecate the old scoring signals.

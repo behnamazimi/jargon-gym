@@ -5,7 +5,7 @@
 ```
 Telegram → Edge (telegram-webhook / telegram-send-due)
          → POST APP_BASE_URL/api/internal/telegram/*
-         → lib/telegram/flows + shared domain core (smart-queue, review-outcome, …)
+         → lib/telegram/flows + shared domain core (TRACE, review-outcome, …)
          → Edge executes returned TelegramAction DTOs
 ```
 
@@ -107,10 +107,9 @@ After deploy, verify:
 
 1. Settings → Generate Telegram link → `/start` welcomes
 2. `/read` delivers a term; Mark known / Read next buttons work
-3. `/stat` shows collection stats
-4. `/quiz` guided setup + answer flow + summary
-5. Cadence cron (`telegram-send-due`) sends or caught-up
-6. Web quiz + review still record outcomes correctly
+3. `/quiz` guided setup + answer flow + summary
+4. Cadence cron (`telegram-send-due`) sends or caught-up
+5. Web quiz + review still record outcomes correctly
 
 ## 6. User flow
 

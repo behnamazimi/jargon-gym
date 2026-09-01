@@ -5,7 +5,7 @@
  *  traces) → this barrel (compose across layers into the shapes callers
  *  actually want: a full-state snapshot, or a single event applied to
  *  full state). Nothing outside lib/trace should reach past this file.
- *  @see docs/trace-smart-queue.md
+ *  @see docs/trace-formula.md
  */
 
 import { daysBetween } from "./decay";

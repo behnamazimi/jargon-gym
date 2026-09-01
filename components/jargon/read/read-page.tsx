@@ -227,15 +227,26 @@ function ReadTermCard({
               Previous
             </Button>
           ) : null}
-          <Button
-            type="button"
-            onPress={onNext}
-            isDisabled={isPending}
-            className={`min-h-11 flex-1 ps-4 pe-3.5 md:flex-none ${PRESS_CLASS}`}
-          >
-            {isPending ? "Loading…" : "Next term"}
-            <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
-          </Button>
+          {revealed ? (
+            <Button
+              type="button"
+              onPress={onNext}
+              isDisabled={isPending}
+              className={`min-h-11 flex-1 ps-4 pe-3.5 md:flex-none ${PRESS_CLASS}`}
+            >
+              {isPending ? "Loading…" : "Next term"}
+              <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onPress={onReveal}
+              className={`min-h-11 flex-1 ps-4 pe-3.5 md:flex-none ${PRESS_CLASS}`}
+            >
+              Reveal
+              <Eye className="size-4" aria-hidden strokeWidth={1.5} />
+            </Button>
+          )}
         </div>
       </footer>
     </QuizPanel>

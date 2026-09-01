@@ -3,7 +3,6 @@ import type { Database } from "@/lib/supabase/database.types";
 import { resolveReviewDomainIds, resolveReviewDomainIdsForUser } from "@/lib/jargon/known-state";
 import {
   fetchActiveTraceCandidates,
-  fetchActiveTraceCandidatesForUser,
   getPoolStatsByDomainForUser,
   type PickContext,
   type TraceCandidate,
@@ -73,9 +72,9 @@ export type CollectionStatBreakdown = {
   unseenCount: number;
 };
 
-/** `/stat` (Telegram) and the web Mastery page's overview share this shape:
- *  a rollup across active collections plus a per-collection unseen count. */
-export type StatsSnapshot = {
+/** The web Mastery page's overview: a rollup across active collections
+ *  plus a per-collection unseen count. */
+type StatsSnapshot = {
   activeCount: number;
   pausedCount: number;
   rollup: {
@@ -113,8 +112,8 @@ function countUnseen(candidates: TraceCandidate[], context: PickContext): number
   return candidates.filter((c) => ownCount(c) === 0).length;
 }
 
-/** Pure aggregation shared by the Telegram and web snapshot fetchers below —
- *  one candidate fetch across all active collections (`domainIds: "all"`). */
+/** Pure aggregation for the web snapshot fetcher below — one candidate
+ *  fetch across all active collections (`domainIds: "all"`). */
 function buildStatsSnapshot(
   collectionRows: CollectionDomainRow[],
   reviewDomainIds: string[],
@@ -162,15 +161,6 @@ function buildStatsSnapshot(
   };
 }
 
-/** Telegram `/stat`: service-role client, explicit userId (no RLS session). */
-export async function fetchTelegramStats(client: Client, userId: string): Promise<StatsSnapshot> {
-  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
-  if (collectionRows.length === 0) return EMPTY_STATS_SNAPSHOT;
-
-  const candidates = await fetchActiveTraceCandidatesForUser(client, userId);
-  return buildStatsSnapshot(collectionRows, reviewDomainIds, candidates);
-}
-
 type PausedCollectionSummary = {
   id: string;
   name: string;
@@ -180,8 +170,7 @@ type PausedCollectionSummary = {
 };
 
 /** Adds momentum (today) and coverage (known% across active collections
- *  only) on top of the Telegram-shared `StatsSnapshot` — web page only,
- *  richer than a Telegram message needs to be.
+ *  only) on top of the base `StatsSnapshot`.
  *
  *  No lifetime accuracy here: the old pass/fail counters that backed it
  *  were retired with the streak-based scoring signals (deprecated, no
@@ -233,8 +222,7 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
 };
 
 /** Web `/jargon/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
- *  accuracy/momentum/coverage numbers on top of the shared snapshot —
- *  Telegram's `fetchTelegramStats` is untouched by this. */
+ *  accuracy/momentum/coverage numbers on top of the base snapshot. */
 export async function fetchStatsSnapshot(
   client: Client,
   userId: string,

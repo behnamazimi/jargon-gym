@@ -1,5 +1,5 @@
 /** TRACE tunable parameters — every magic number in the engine, named.
- *  @see docs/trace-smart-queue.md §11 "Default parameters"
+ *  @see docs/trace-formula.md §11 "Default parameters"
  *
  *  These are reasoned defaults, not fit to real usage data yet (§12).
  */

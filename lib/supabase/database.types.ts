@@ -126,7 +126,6 @@ export type Database = {
           last_quiz_tested_at: string | null;
           last_read_at: string | null;
           last_review_recall_at: string | null;
-          pending_reveal: boolean;
           quiz_knowledge_posterior: number | null;
           quiz_test_count: number;
           read_count: number;
@@ -141,7 +140,6 @@ export type Database = {
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
-          pending_reveal?: boolean;
           quiz_knowledge_posterior?: number | null;
           quiz_test_count?: number;
           read_count?: number;
@@ -156,7 +154,6 @@ export type Database = {
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
-          pending_reveal?: boolean;
           quiz_knowledge_posterior?: number | null;
           quiz_test_count?: number;
           read_count?: number;

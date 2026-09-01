@@ -1,11 +1,11 @@
 /**
  * Shared review/quiz outcome rules for web + Telegram.
  * Sole writer of review_state events — surfaces must not call the event RPCs directly.
- * @see docs/trace-smart-queue.md
+ * @see docs/trace-formula.md
  *
  * Three writes, one per event shape:
  * - recordRead — Read page/command, jargon-page card open. Pure exposure.
- * - recordReveal — Review flashcard reveal. Marks pending_reveal, no test yet.
+ * - recordReveal — Review flashcard reveal. No TRACE state changes, no test yet.
  * - recordTest — Review grade or quiz answer. The only writer of pass/fail
  *   history, scoped to whichever `activity` it's called with.
  *
@@ -81,7 +81,9 @@ export async function recordRead(
   await writeEvent(client, mode, userId, termId, "read");
 }
 
-/** Review flashcard reveal: marks pending_reveal, cleared by the grade that follows. */
+/** Review flashcard reveal: recorded for parity with Read's reveal gate, but
+ *  (unlike Read) doesn't change any TRACE state — the grade that follows is
+ *  what actually updates recall_stability/recall_difficulty. */
 export async function recordReveal(
   client: Client,
   userId: string,

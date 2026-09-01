@@ -1,11 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchTelegramStats } from "@/lib/jargon/collection-stats";
-import { resolveUserIdByChatId } from "@/lib/jargon/term-delivery";
 import type { TelegramAction } from "./actions";
 import { CONNECT_MESSAGE, WELCOME_MESSAGE } from "./copy";
 import { completeTelegramLink } from "./links";
-import { formatStatsMessage } from "./presentation";
 import { send } from "./transport";
 
 type Client = SupabaseClient<Database>;
@@ -17,10 +14,6 @@ export function parseStartToken(text: string): string | null {
 
 export function isReadCommand(text: string): boolean {
   return /^\/read(?:@\w+)?$/i.test(text.trim());
-}
-
-export function isStatCommand(text: string): boolean {
-  return /^\/stat(?:s)?(?:@\w+)?$/i.test(text.trim());
 }
 
 export function isQuizCommand(text: string): boolean {
@@ -50,12 +43,4 @@ export async function handleStart(
   }
 
   return [send(chatId, WELCOME_MESSAGE)];
-}
-
-export async function handleStat(client: Client, chatId: number): Promise<TelegramAction[]> {
-  const userId = await resolveUserIdByChatId(client, chatId);
-  if (!userId) return [send(chatId, CONNECT_MESSAGE)];
-
-  const stats = await fetchTelegramStats(client, userId);
-  return [send(chatId, formatStatsMessage(stats))];
 }

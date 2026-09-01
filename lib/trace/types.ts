@@ -1,5 +1,5 @@
 /** TRACE types — pure data structures, no runtime imports.
- *  @see docs/trace-smart-queue.md
+ *  @see docs/trace-formula.md
  */
 
 import { AGAIN, EASY, GOOD, HARD } from "./constants";

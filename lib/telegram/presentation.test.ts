@@ -7,7 +7,6 @@ import {
   formatReviewQuestion,
   formatReviewQuestionWithAnswer,
   formatReviewRated,
-  formatStatsMessage,
   formatTermMessage,
   formatTrueFalseQuestion,
   formatTrueFalseQuestionWithAnswer,
@@ -71,30 +70,6 @@ describe("presentation HTML escaping", () => {
     expect(message).not.toContain("<script>");
     expect(message).toContain("&lt;script&gt;");
     expect(message).toContain("Got it");
-  });
-
-  it("escapes collection names in the stats message", () => {
-    const message = formatStatsMessage({
-      activeCount: 1,
-      pausedCount: 0,
-      rollup: {
-        read: { unseen: 0 },
-        review: { unseen: 0 },
-        quiz: { unseen: 0 },
-      },
-      activeCollections: [
-        {
-          id: "c1",
-          name: `Collection & <script>`,
-          percentage: 50,
-          knownCount: 1,
-          totalCount: 2,
-          unseenCount: 1,
-        },
-      ],
-    });
-    expect(message).not.toContain("<script>");
-    expect(message).toContain("&lt;script&gt;");
   });
 
   it("does not leak the definition in the masked read prompt", () => {

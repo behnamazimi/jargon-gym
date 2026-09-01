@@ -114,7 +114,8 @@ export async function recordTermReadAction(termId: string): Promise<{ error?: st
   }
 }
 
-/** Review card reveal: marks pending_reveal, cleared by the rating that follows. */
+/** Review card reveal: no TRACE state changes — the rating that follows is
+ *  what actually updates recall_stability/recall_difficulty. */
 export async function recordReviewRevealAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };

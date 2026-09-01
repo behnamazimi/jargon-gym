@@ -1,4 +1,4 @@
-/** Smart-queue term hydration — TermCard loading. */
+/** TRACE-queue term hydration — TermCard loading. */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";

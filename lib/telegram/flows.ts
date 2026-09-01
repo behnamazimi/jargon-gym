@@ -10,11 +10,9 @@ import { resolveUserIdByChatId } from "@/lib/jargon/term-delivery";
 import type { TelegramAction } from "./actions";
 import {
   handleStart,
-  handleStat,
   isQuizCommand,
   isReadCommand,
   isReviewCommand,
-  isStatCommand,
   parseStartToken,
 } from "./commands";
 import { CONNECT_MESSAGE, HELP_MESSAGE } from "./copy";
@@ -170,9 +168,6 @@ export async function handleTelegramUpdate(
   }
   if (isReadCommand(trimmed)) {
     return handleRead(client, chatId);
-  }
-  if (isStatCommand(trimmed)) {
-    return handleStat(client, chatId);
   }
   if (isQuizCommand(trimmed)) {
     const userId = await resolveUserIdByChatId(client, chatId);

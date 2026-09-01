@@ -4,7 +4,7 @@ TRACE is the scoring engine that decides which term to show you next in
 Read, Review, and Quiz, and how "mastered" you are on any given term. This
 document explains how it works today, in plain language, and points you to
 where each piece lives in the codebase. For the original design rationale
-and the formulas' derivation, see [trace-smart-queue.md](./trace-smart-queue.md).
+and the formulas' derivation, see [trace-formula.md](./trace-formula.md).
 This file is the one to trust if the two ever disagree — a few details
 changed during implementation, and the differences are called out in
 [Where this differs from the original design](#where-this-differs-from-the-original-design).
@@ -260,7 +260,7 @@ about when something gets written belong in `lib/jargon/review-outcome.ts`.
 
 ## Where this differs from the original design
 
-[trace-smart-queue.md](./trace-smart-queue.md) is the design document
+[trace-formula.md](./trace-formula.md) is the design document
 written before implementation. A few things changed on the way to shipping
 it — this list exists so the two documents don't quietly contradict each
 other:
@@ -317,5 +317,5 @@ writing:
 | Session cooldown                                           | 0.98 retrievability | Above this, a term drops out of that tier's list for the rest of the session                |
 
 These are reasoned starting points, not values fit to real usage data — see
-`trace-smart-queue.md`'s "Open items to validate" section for what's still
+`trace-formula.md`'s "Open items to validate" section for what's still
 worth measuring once there's real pass/fail history to look at.

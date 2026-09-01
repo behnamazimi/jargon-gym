@@ -1,7 +1,5 @@
-/** Pool statistics computation — plain counts, no scoring dependency.
- *  Ported from lib/smart-queue/stats.ts unchanged: this was already
- *  independent of known/unknown, just each tier's own exposure/test count. */
-
+/** TRACE-queue pool statistics computation — plain counts, no scoring dependency.
+ */
 import type { PickContext, TraceCandidate } from "./types";
 
 export type PoolStats = {

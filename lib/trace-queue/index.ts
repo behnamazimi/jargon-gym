@@ -3,7 +3,7 @@
  *  Layers: repository (RPC) → hydrate (TermCard) → service (fetch + rank +
  *  hydrate). Ranking math lives in lib/trace, not here — this module is
  *  just the DB/React seam around it. Outcome RPCs are internal — use
- *  lib/jargon/review-outcome. Human overview: docs/trace-smart-queue.md
+ *  lib/jargon/review-outcome. Human overview: docs/trace-formula.md
  */
 
 export type { ReviewEvent, PickContext, TraceCandidate } from "./types";

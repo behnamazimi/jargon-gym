@@ -1,5 +1,4 @@
 import { escapeText } from "entities";
-import type { CollectionStatBreakdown, StatsSnapshot } from "@/lib/jargon/collection-stats";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
 import type { InlineKeyboardMarkup } from "./actions";
 
@@ -109,53 +108,6 @@ export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
   ];
   appendOpenInWebRow(rows, term.id);
   return { inline_keyboard: rows };
-}
-
-function formatProgressBar(percentage: number, width: number = 10): string {
-  const filled = Math.round((percentage / 100) * width);
-  const empty = width - filled;
-  return "█".repeat(filled) + "░".repeat(empty);
-}
-
-function formatCollectionProgressLine(collection: CollectionStatBreakdown): string {
-  const bar = formatProgressBar(collection.percentage);
-  return `${bar} ${collection.knownCount}/${collection.totalCount} known (${collection.percentage}%)`;
-}
-
-function formatUnseenFootnote(collection: CollectionStatBreakdown): string {
-  return `${collection.unseenCount} never read`;
-}
-
-/** Renders `<label> <count> never studied`, or `<label> none waiting` when
- *  the count is zero. */
-function formatRollupLine(label: string, unseen: number): string {
-  if (unseen === 0) return `${label} none waiting`;
-  return `${label} ${unseen} never studied`;
-}
-
-export function formatStatsMessage(stats: StatsSnapshot): string {
-  if (stats.activeCount === 0 && stats.pausedCount === 0) {
-    return "You don't have any collections yet. Create or add one in the app to get started.";
-  }
-
-  let message = `<b>📊 Your collections</b>\n\n`;
-  message += `${stats.activeCount} active · ${stats.pausedCount} paused`;
-
-  if (stats.activeCollections.length > 0) {
-    message += `\n\n${formatRollupLine("Read", stats.rollup.read.unseen)}`;
-    message += `\n${formatRollupLine("Review", stats.rollup.review.unseen)}`;
-    message += `\n${formatRollupLine("Quiz", stats.rollup.quiz.unseen)}`;
-
-    for (const collection of stats.activeCollections) {
-      message += `\n\n<b>${escapeText(collection.name)}</b>\n`;
-      message += `${formatCollectionProgressLine(collection)}\n`;
-      message += formatUnseenFootnote(collection);
-    }
-  } else if (stats.pausedCount > 0) {
-    message += `\n\n<i>All collections are paused. Turn one on in the app to start reviewing.</i>`;
-  }
-
-  return message;
 }
 
 function buildSetupCollectionKeyboard(
