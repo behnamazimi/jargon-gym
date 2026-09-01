@@ -39,6 +39,22 @@ export type {
 export { rankReadQueue, rankReviewQueue, rankQuizQueue } from "./queue";
 export { deriveKnownLabel, confidence, blendMastery, masteryAdjusted } from "./mastery";
 export { STUDY_TIMEZONE, isSameLocalDay } from "./local-day";
+export {
+  summarizeCalibration,
+  computeAttentionFlag,
+  findAbandonedReveals,
+  CALIBRATION_MIN_BUCKET_SAMPLE,
+  ABANDONMENT_WINDOW_MINUTES,
+  ATTENTION_MIN_RECENT_EVENTS,
+  ATTENTION_DIVERGENCE_THRESHOLD,
+} from "./calibration";
+export type {
+  TraceEventName,
+  CalibrationBucket,
+  CalibrationSummary,
+  AttentionFlag,
+  AbandonedReveal,
+} from "./calibration";
 
 /** Full live snapshot of one term's trace state — familiarity, both
  *  retrievabilities, and the blended mastery/label. */

@@ -1,8 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
-import { formatMastery, formatQuizDetail, formatReadDetail, formatRecallDetail } from "./format";
+import { ChevronDown } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
+import {
+  getTermEventHistoryAction,
+  type DebugEventRow,
+  type DebugScoredRow,
+} from "@/app/(private)/jargon/debug/actions";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import type { AttentionFlag } from "@/lib/trace";
+import { cn } from "@/lib/utils";
+import { TermTimeline } from "./term-timeline";
+import {
+  formatMastery,
+  formatPercent,
+  formatQuizDetail,
+  formatReadDetail,
+  formatRecallDetail,
+} from "./format";
 
 /** Debug intentionally shows every scored candidate, unsliced — but
  *  mounting hundreds of these rows (each with badges + formatted detail
@@ -19,37 +34,104 @@ const LABEL_BADGE_CLASS: Record<DebugScoredRow["knownLabel"], string> = {
   unknown: "badge-ghost",
 };
 
-function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
-  return (
-    <li className="shadow-surface space-y-2 rounded-xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
-      <div className="flex items-baseline justify-between gap-3">
-        <div className="flex min-w-0 items-baseline gap-2">
-          <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
-          <span className="truncate text-sm font-medium text-base-content">{row.term}</span>
-          <span className={`badge badge-sm font-normal ${LABEL_BADGE_CLASS[row.knownLabel]}`}>
-            {row.knownLabel}
-          </span>
-        </div>
-      </div>
+function attentionTitle(flag: AttentionFlag): string {
+  return `${flag.track}: recent pass rate ${formatPercent(flag.actual)} vs predicted ${formatPercent(flag.predicted)}, last ${flag.sampleSize} tests`;
+}
 
-      <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
-        {formatReadDetail(row.readCount, row.lastReadAt)} ·{" "}
-        {formatRecallDetail(
-          row.reviewRecallCount,
-          row.recallStability,
-          row.recallDifficulty,
-          row.recallRetrievability,
-          row.lastReviewRecallAt,
-        )}{" "}
-        ·{" "}
-        {formatQuizDetail(
-          row.quizTestCount,
-          row.quizKnowledgePosterior,
-          row.recognitionRetrievability,
-          row.lastQuizTestedAt,
-        )}{" "}
-        · {formatMastery(row.mastery, row.masteryAdjusted)}
-      </p>
+function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
+  const [expanded, setExpanded] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const [events, setEvents] = useState<DebugEventRow[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleExpandedChange(next: boolean) {
+    setExpanded(next);
+    if (!next || hasLoaded) return;
+
+    setHasLoaded(true);
+    startTransition(async () => {
+      const result = await getTermEventHistoryAction(row.termId);
+      if (result.error) {
+        setLoadError(result.error);
+      } else {
+        setEvents(result.rows ?? []);
+      }
+    });
+  }
+
+  return (
+    <li className="shadow-surface rounded-xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
+      <Collapsible isExpanded={expanded} onExpandedChange={handleExpandedChange}>
+        <CollapsibleTrigger
+          className="flex w-full items-start gap-2 border-0 bg-transparent p-0 text-left"
+          aria-expanded={expanded}
+          aria-label={`${row.term} — ${expanded ? "hide" : "show"} event history`}
+        >
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="flex items-baseline justify-between gap-3">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+                <span className="tabular-nums text-xs text-base-content/40">{index + 1}.</span>
+                <span className="truncate text-sm font-medium text-base-content">{row.term}</span>
+                <span className={`badge badge-sm font-normal ${LABEL_BADGE_CLASS[row.knownLabel]}`}>
+                  {row.knownLabel}
+                </span>
+                {row.attentionFlags.map((flag) => (
+                  <span
+                    key={flag.track}
+                    className="badge badge-sm badge-error font-normal"
+                    title={attentionTitle(flag)}
+                  >
+                    ⚠ {flag.track}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
+              {formatReadDetail(row.readCount, row.lastReadAt)} ·{" "}
+              {formatRecallDetail(
+                row.reviewRecallCount,
+                row.recallStability,
+                row.recallDifficulty,
+                row.recallRetrievability,
+                row.lastReviewRecallAt,
+              )}{" "}
+              ·{" "}
+              {formatQuizDetail(
+                row.quizTestCount,
+                row.quizKnowledgePosterior,
+                row.recognitionRetrievability,
+                row.lastQuizTestedAt,
+              )}{" "}
+              · {formatMastery(row.mastery, row.masteryAdjusted)}
+            </p>
+          </div>
+
+          <ChevronDown
+            className={cn(
+              "mt-0.5 size-4 shrink-0 text-base-content/40 transition-transform duration-200 ease-out motion-reduce:transition-none",
+              expanded && "rotate-180",
+            )}
+            aria-hidden
+            strokeWidth={1.5}
+          />
+        </CollapsibleTrigger>
+
+        <CollapsibleContent>
+          {hasLoaded ? (
+            <div className="mt-3 border-t border-base-content/10 pt-2">
+              {isPending ? (
+                <p className="m-0 text-xs text-base-content/50">Loading history…</p>
+              ) : loadError ? (
+                <p className="m-0 text-xs text-error">{loadError}</p>
+              ) : (
+                <TermTimeline events={events} />
+              )}
+            </div>
+          ) : null}
+        </CollapsibleContent>
+      </Collapsible>
     </li>
   );
 }
