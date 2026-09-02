@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { ListChecks, Target } from "lucide-react";
 import { debugViewHref } from "./debug-queue-page";
 import { cn } from "@/lib/utils";
 import type { PickContext } from "@/lib/trace-queue";
 
 type DebugView = "queue" | "calibration";
 
-const VIEW_OPTIONS: Array<{ value: DebugView; label: string }> = [
-  { value: "queue", label: "Queue" },
-  { value: "calibration", label: "Calibration" },
+const VIEW_OPTIONS: Array<{ value: DebugView; label: string; icon: typeof ListChecks }> = [
+  { value: "queue", label: "Queue", icon: ListChecks },
+  { value: "calibration", label: "Calibration", icon: Target },
 ];
 
 export function DebugViewTabs({
@@ -26,6 +27,7 @@ export function DebugViewTabs({
     >
       {VIEW_OPTIONS.map((option) => {
         const selected = option.value === view;
+        const Icon = option.icon;
         return (
           <Link
             key={option.value}
@@ -33,8 +35,9 @@ export function DebugViewTabs({
             scroll={false}
             role="tab"
             aria-selected={selected}
-            className={cn("tab grow no-underline md:grow-0", selected && "tab-active")}
+            className={cn("tab grow gap-1.5 no-underline md:grow-0", selected && "tab-active")}
           >
+            <Icon className="size-3.5" aria-hidden strokeWidth={1.5} />
             {option.label}
           </Link>
         );

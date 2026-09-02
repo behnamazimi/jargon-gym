@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   getTermEventHistoryAction,
@@ -68,10 +68,10 @@ function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
   }
 
   return (
-    <li className="shadow-surface rounded-xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
+    <li className="-mx-2 rounded-lg transition-colors hover:bg-base-200/50">
       <Collapsible isExpanded={expanded} onExpandedChange={handleExpandedChange}>
         <CollapsibleTrigger
-          className="flex w-full items-start gap-2 border-0 bg-transparent p-0 text-left"
+          className="flex w-full items-start gap-2 border-0 bg-transparent px-2 py-3 text-left"
           aria-expanded={expanded}
           aria-label={`${row.term} — ${expanded ? "hide" : "show"} event history`}
         >
@@ -151,7 +151,7 @@ function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
 
         <CollapsibleContent>
           {hasLoaded ? (
-            <div className="mt-3 border-t border-base-content/10 pt-2">
+            <div className="border-t border-base-content/10 px-2 pt-2 pb-3">
               {isPending ? (
                 <p className="m-0 text-xs text-base-content/50">Loading history…</p>
               ) : loadError ? (
@@ -227,14 +227,21 @@ export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search terms…"
-          className="input input-sm max-w-xs"
-          aria-label="Search terms"
-        />
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-base-content/40"
+            aria-hidden
+            strokeWidth={1.5}
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search terms…"
+            className="input input-sm max-w-xs pl-8"
+            aria-label="Search terms"
+          />
+        </div>
         <select
           value={sortBy}
           onChange={(event) => setSortBy(event.target.value as SortOption)}
@@ -253,7 +260,7 @@ export function ScoreRows({ rows }: { rows: DebugScoredRow[] }) {
         <p className="m-0 text-sm text-base-content/60">No terms match “{query}”.</p>
       ) : (
         <>
-          <ul className="m-0 list-none space-y-3 p-0">
+          <ul className="m-0 list-none divide-y divide-base-content/10 p-0">
             {visibleRows.map((row, index) => (
               <ScoreRow key={row.termId} row={row} index={index} />
             ))}

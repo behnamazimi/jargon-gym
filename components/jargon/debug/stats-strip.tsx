@@ -1,4 +1,5 @@
 import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import { QuizStat } from "@/components/jargon/quiz/quiz-ui";
 import { summarizeRetrievabilityDistribution, type RetrievabilityBucket } from "@/lib/trace";
 import type { PickContext } from "@/lib/trace-queue";
 import type { StudyCollection } from "@/lib/study/types";
@@ -52,39 +53,29 @@ const CONTEXT_TRACK_LABEL: Record<PickContext, string> = {
   quiz: "never quizzed",
 };
 
-/** A single dense text line, matching the "label value · label value"
- *  convention format.ts's row formatters already use — no boxed KPI-card
- *  widget, so there's nothing that can be wider than its content and leave
- *  dead space next to it. Color always pairs with an adjacent text label
- *  (never color alone), per the accessibility "Color Only" rule. */
+/** Stat tiles, the same `<dl>` of `QuizStat`s the rest of the app already
+ *  uses for a summary readout (see ReviewSummary) — a boxed KPI-card grid
+ *  reads as "this is the dashboard's headline number," which a stray text
+ *  line competing with dense per-term rows below it does not. Color always
+ *  pairs with an adjacent text label (never color alone), per the
+ *  accessibility "Color Only" rule. */
 export function StatsStrip({ stats, context }: { stats: QueueStats; context: PickContext }) {
   return (
-    <p className="m-0 flex flex-wrap items-baseline gap-x-1 text-xs text-base-content/60">
-      <span>
-        Total <span className="font-medium text-base-content">{stats.total}</span>
-      </span>
-      <span aria-hidden>·</span>
-      <span>
-        Known <span className="font-medium text-success">{stats.known}</span>
-      </span>
-      <span aria-hidden>·</span>
-      <span>
-        Learning <span className="font-medium text-warning">{stats.learning}</span>
-      </span>
-      <span aria-hidden>·</span>
-      <span>
-        Unknown <span className="font-medium text-base-content/70">{stats.unknown}</span>
-      </span>
-      <span aria-hidden>·</span>
-      <span>
-        {CONTEXT_TRACK_LABEL[context]}{" "}
-        <span className="font-medium text-base-content">{stats.untestedInTrack}</span>
-      </span>
-      <span aria-hidden>·</span>
-      <span>
-        Flagged <span className="font-medium text-error">{stats.attentionFlagged}</span>
-      </span>
-    </p>
+    <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      <QuizStat label="Total" value={stats.total} />
+      <QuizStat label="Known" value={<span className="text-success">{stats.known}</span>} />
+      <QuizStat label="Learning" value={<span className="text-warning">{stats.learning}</span>} />
+      <QuizStat
+        label="Unknown"
+        value={<span className="text-base-content/70">{stats.unknown}</span>}
+      />
+      <QuizStat label={CONTEXT_TRACK_LABEL[context]} value={stats.untestedInTrack} />
+      <QuizStat
+        label="Flagged"
+        value={<span className="text-error">{stats.attentionFlagged}</span>}
+        variant={stats.attentionFlagged > 0 ? "primary" : "default"}
+      />
+    </dl>
   );
 }
 
@@ -140,6 +131,7 @@ export function RetrievabilityDistributionBar({ rows }: { rows: DebugScoredRow[]
 
   return (
     <div className="space-y-2">
+      <h3 className="m-0 text-sm font-semibold">Retrievability spread</h3>
       <p className="m-0 text-xs text-base-content/50">
         How likely you are to still remember each term right now, grouped into 10 bands from 0%
         (probably forgotten) to 100% (fresh). A bar's height is how many terms fall in that band.
@@ -202,31 +194,34 @@ export function CollectionBreakdownTable({ stats }: { stats: CollectionStat[] })
   if (stats.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto">
-      <table className="table table-sm">
-        <thead>
-          <tr>
-            <th>Collection</th>
-            <th>Total</th>
-            <th>Known</th>
-            <th>Learning</th>
-            <th>Unknown</th>
-            <th>Flagged</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stats.map((stat) => (
-            <tr key={stat.domainId}>
-              <td>{stat.name}</td>
-              <td className="tabular-nums">{stat.total}</td>
-              <td className="tabular-nums text-success">{stat.known}</td>
-              <td className="tabular-nums text-warning">{stat.learning}</td>
-              <td className="tabular-nums text-base-content/70">{stat.unknown}</td>
-              <td className="tabular-nums text-error">{stat.flagged}</td>
+    <div className="space-y-2">
+      <h3 className="m-0 text-sm font-semibold">By collection</h3>
+      <div className="overflow-x-auto">
+        <table className="table table-sm">
+          <thead>
+            <tr>
+              <th>Collection</th>
+              <th>Total</th>
+              <th>Known</th>
+              <th>Learning</th>
+              <th>Unknown</th>
+              <th>Flagged</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {stats.map((stat) => (
+              <tr key={stat.domainId}>
+                <td>{stat.name}</td>
+                <td className="tabular-nums">{stat.total}</td>
+                <td className="tabular-nums text-success">{stat.known}</td>
+                <td className="tabular-nums text-warning">{stat.learning}</td>
+                <td className="tabular-nums text-base-content/70">{stat.unknown}</td>
+                <td className="tabular-nums text-error">{stat.flagged}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
