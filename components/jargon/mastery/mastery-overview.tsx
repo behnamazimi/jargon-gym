@@ -6,8 +6,11 @@ import type { CollectionStatBreakdown, WebStatsSnapshot } from "@/lib/jargon/col
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
+/** TRACE has no backlog to clear — a term with no history just ranks first
+ *  next time this tier comes up. This is a snapshot of current exposure,
+ *  not a queue count. */
 function formatUnseenLine(unseen: number): string {
-  return unseen === 0 ? "None waiting" : `${unseen} never studied`;
+  return unseen === 0 ? "Everything started" : `${unseen} never started`;
 }
 
 function formatUnseenFootnote(collection: CollectionStatBreakdown): string {

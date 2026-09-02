@@ -6,12 +6,13 @@ import { resolveReviewDomainIds } from "./known-state";
 
 type Client = SupabaseClient<Database>;
 
-export type MasteryCollectionRow = {
+/** Just enough to populate the term list's collection filter — the
+ *  known/total/percentage breakdown per collection lives in
+ *  collection-stats.ts's WebStatsSnapshot, which is what the overview card
+ *  actually renders. */
+export type MasteryCollectionOption = {
   domainId: string;
   domainName: string;
-  knownCount: number;
-  totalCount: number;
-  percentage: number;
 };
 
 /** A coarser 3-band read of the same knownLabel a term already carries
@@ -35,14 +36,13 @@ export type MasteryTermRow = {
 };
 
 export type MasteryOverviewData = {
-  rows: MasteryCollectionRow[];
+  collections: MasteryCollectionOption[];
   /** §8 "current strength" — live OverallMastery across every started term
    *  (≥1 Read). Decays with inactivity by design, unlike termsLearned. */
   currentStrength: number;
   /** §8 "terms learned" — high-water mark count of terms that ever crossed
    *  the known threshold. Never decreases even as currentStrength decays. */
   termsLearned: number;
-  activeTermCount: number;
   /** Every term across active collections, ranked by score descending, for
    *  the searchable/filterable term list. */
   termRows: MasteryTermRow[];
@@ -54,9 +54,8 @@ function tierFromLabel(label: KnownLabel): MasteryTier {
   return "weak";
 }
 
-/** Plain known/total/percentage per active collection (paused collections
- *  are excluded), the doc §8 aggregate numbers, and a flat per-term list,
- *  for /jargon/mastery. */
+/** The doc §8 aggregate numbers plus a flat per-term list, for
+ *  /jargon/mastery. Paused collections are excluded throughout. */
 export async function loadMasteryOverview(
   client: Client,
   userId: string,
@@ -65,22 +64,11 @@ export async function loadMasteryOverview(
   const activeSet = new Set(reviewDomainIds);
   const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
   if (activeCollectionRows.length === 0) {
-    return { rows: [], currentStrength: 0, termsLearned: 0, activeTermCount: 0, termRows: [] };
+    return { collections: [], currentStrength: 0, termsLearned: 0, termRows: [] };
   }
 
-  const rows: MasteryCollectionRow[] = activeCollectionRows
-    .map((row) => {
-      const totalCount = row.termCount;
-      const knownCount = row.knownCount;
-      const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
-      return {
-        domainId: row.id,
-        domainName: row.name,
-        knownCount,
-        totalCount,
-        percentage,
-      };
-    })
+  const collections: MasteryCollectionOption[] = activeCollectionRows
+    .map((row) => ({ domainId: row.id, domainName: row.name }))
     .sort((a, b) => a.domainName.localeCompare(b.domainName));
 
   const candidates = await fetchActiveTraceCandidates(client, userId);
@@ -122,10 +110,9 @@ export async function loadMasteryOverview(
     .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term));
 
   return {
-    rows,
+    collections,
     currentStrength: aggregateMastery(startedCandidates, now),
     termsLearned,
-    activeTermCount: startedCandidates.length,
     termRows,
   };
 }

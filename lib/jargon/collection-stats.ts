@@ -169,8 +169,7 @@ type PausedCollectionSummary = {
   percentage: number;
 };
 
-/** Adds momentum (today) and coverage (known% across active collections
- *  only) on top of the base `StatsSnapshot`.
+/** Adds momentum (today) on top of the base `StatsSnapshot`.
  *
  *  No lifetime accuracy here: the old pass/fail counters that backed it
  *  were retired with the streak-based scoring signals (deprecated, no
@@ -178,16 +177,9 @@ type PausedCollectionSummary = {
  *  the closer analogue and is what the Mastery page's headline numbers use
  *  instead (see lib/jargon/mastery.ts). */
 export type WebStatsSnapshot = StatsSnapshot & {
-  coverage: { known: number; total: number; percentage: number };
   today: { read: number; review: number; quiz: number };
   pausedCollections: PausedCollectionSummary[];
 };
-
-function computeCoverage(collectionRows: CollectionDomainRow[]) {
-  const known = collectionRows.reduce((sum, row) => sum + row.knownCount, 0);
-  const total = collectionRows.reduce((sum, row) => sum + row.termCount, 0);
-  return { known, total, percentage: total > 0 ? Math.round((known / total) * 100) : 0 };
-}
 
 function lastActivityAtForContext(candidate: TraceCandidate, context: PickContext): Date | null {
   switch (context) {
@@ -216,13 +208,12 @@ function toPausedCollectionSummary(row: CollectionDomainRow): PausedCollectionSu
 
 const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   ...EMPTY_STATS_SNAPSHOT,
-  coverage: { known: 0, total: 0, percentage: 0 },
   today: { read: 0, review: 0, quiz: 0 },
   pausedCollections: [],
 };
 
 /** Web `/jargon/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
- *  accuracy/momentum/coverage numbers on top of the base snapshot. */
+ *  momentum (today) numbers on top of the base snapshot. */
 export async function fetchStatsSnapshot(
   client: Client,
   userId: string,
@@ -242,7 +233,6 @@ export async function fetchStatsSnapshot(
 
   return {
     ...base,
-    coverage: computeCoverage(collectionRows.filter((row) => activeSet.has(row.id))),
     today: {
       read: countActivityToday(candidates, "read", now),
       review: countActivityToday(candidates, "review", now),
