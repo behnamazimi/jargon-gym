@@ -5,14 +5,13 @@ import {
   assignExampleJudgmentQuestions,
   buildExampleJudgmentQuestionLine,
 } from "./example-judgment";
-import { MCQ_SHARE_OF_REMAINDER } from "./mix-ratios";
+import { TRUE_FALSE_MAX_SHARE } from "./mix-ratios";
 import type { QuizQuestion, QuizTerm } from "./types";
 
 type Client = SupabaseClient<Database>;
 
 const MCQ_DISTRACTOR_COUNT = 3;
 const PLAIN_TRUE_FALSE_DISTRACTOR_COUNT = 1;
-const PLAIN_TRUE_FALSE_SHARE_OF_REMAINDER = 1 - MCQ_SHARE_OF_REMAINDER;
 
 async function buildMcqQuestion(term: QuizTerm, client: Client): Promise<QuizQuestion> {
   const distractors = await selectDistractorsFromDomain(
@@ -75,11 +74,17 @@ export async function generateSimpleQuiz(
   terms: QuizTerm[],
   client: Client,
 ): Promise<QuizQuestion[]> {
-  const exampleJudgment = assignExampleJudgmentQuestions(terms);
+  // Same TRUE_FALSE_MAX_SHARE budget generate.ts (the AI path) enforces:
+  // example-judgment spends first, and whatever's left of the cap is the
+  // most plain true/false questions can add, so the two flavors combined
+  // never exceed the quiz-wide cap.
+  const maxTrueFalse = Math.floor(terms.length * TRUE_FALSE_MAX_SHARE);
+  const exampleJudgment = assignExampleJudgmentQuestions(terms, maxTrueFalse);
 
   const remainingTerms = terms.filter((term) => !exampleJudgment.has(term.id));
-  const plainTrueFalseTarget = Math.round(
-    remainingTerms.length * PLAIN_TRUE_FALSE_SHARE_OF_REMAINDER,
+  const plainTrueFalseTarget = Math.max(
+    0,
+    Math.min(maxTrueFalse - exampleJudgment.size, remainingTerms.length),
   );
   const plainTrueFalseIds = new Set(
     [...remainingTerms]

@@ -91,8 +91,8 @@ describe("generateSimpleQuiz", () => {
   });
 
   it("sets correctAnswer=true when sourced from example, false when sourced from anti_example", async () => {
-    // Total of 4 terms (2 eligible, 2 not) so the ~50% example-judgment cap
-    // has room to select both eligible terms.
+    // Total of 5 terms (2 eligible, 3 not) so the 40% example-judgment cap
+    // (floor(5 * 0.4) = 2) has room to select both eligible terms.
     const terms: QuizTerm[] = [
       makeTerm({ id: "only-example", term: "OnlyExample", example: "A real example." }),
       makeTerm({
@@ -102,8 +102,13 @@ describe("generateSimpleQuiz", () => {
       }),
       makeTerm({ id: "plain-1", term: "Plain1" }),
       makeTerm({ id: "plain-2", term: "Plain2" }),
+      makeTerm({ id: "plain-3", term: "Plain3" }),
     ];
-    const client = makeClient([{ id: "x", term: "Distractor X" }]);
+    const client = makeClient([
+      { id: "x", term: "Distractor X" },
+      { id: "y", term: "Distractor Y" },
+      { id: "z", term: "Distractor Z" },
+    ]);
 
     const questions = await generateSimpleQuiz(terms, client);
 
@@ -120,6 +125,26 @@ describe("generateSimpleQuiz", () => {
       expect(antiQ.correctAnswer).toBe(false);
       expect(antiQ.prompt).toBe('Does this illustrate "OnlyAnti"?\nA tempting but wrong example.');
     }
+  });
+
+  it("keeps example-judgment and plain true_false combined at or under 40% of the quiz", async () => {
+    // Regression guard: illustration questions alone used to be able to hit
+    // 50% of the quiz, and plain true/false could add more on top. All 10
+    // terms here are eligible for example-judgment, so this exercises the
+    // worst case for the combined cap.
+    const terms: QuizTerm[] = Array.from({ length: 10 }, (_, i) =>
+      makeTerm({ id: `t${i}`, term: `Term${i}`, example: `Term${i} in action.` }),
+    );
+    const client = makeClient([
+      { id: "x", term: "Distractor X" },
+      { id: "y", term: "Distractor Y" },
+      { id: "z", term: "Distractor Z" },
+    ]);
+
+    const questions = await generateSimpleQuiz(terms, client);
+    const trueFalseCount = questions.filter((q) => q.type === "true_false").length;
+
+    expect(trueFalseCount).toBeLessThanOrEqual(4);
   });
 
   it("falls back to multiple_choice for terms with neither field", async () => {

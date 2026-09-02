@@ -6,7 +6,7 @@ import {
   assignExampleJudgmentQuestions,
   buildExampleJudgmentQuestionLine,
 } from "./example-judgment";
-import { MCQ_SHARE_OF_REMAINDER } from "./mix-ratios";
+import { TRUE_FALSE_MAX_SHARE } from "./mix-ratios";
 import { normalizeQuizQuestions } from "./normalize";
 import {
   buildQuizGenerationObjectSchema,
@@ -33,19 +33,28 @@ function formatDomainLabel(terms: QuizTerm[]): string {
  * the prompt — is what the model gets held to (buildQuizGenerationSchema
  * turns it into a literal `type` per position), so the mix can't collapse to
  * all-true_false the way it did when the split lived only in prompt text.
+ *
+ * `trueFalseBudget` is whatever's left of the quiz-wide TRUE_FALSE_MAX_SHARE
+ * cap after example-judgment already spent its share — capping here, not
+ * with an independent ratio of the remainder, is what keeps the two
+ * true/false flavors combined under the cap regardless of how many terms
+ * were eligible for example-judgment.
  */
-function buildRemainderPlan(remainderTerms: QuizTerm[]): QuizGenerationSlot[] {
-  const mcqCount = Math.ceil(remainderTerms.length * MCQ_SHARE_OF_REMAINDER);
-  const mcqIds = new Set(
+function buildRemainderPlan(
+  remainderTerms: QuizTerm[],
+  trueFalseBudget: number,
+): QuizGenerationSlot[] {
+  const trueFalseCount = Math.max(0, Math.min(trueFalseBudget, remainderTerms.length));
+  const trueFalseIds = new Set(
     [...remainderTerms]
       .sort(() => Math.random() - 0.5)
-      .slice(0, mcqCount)
+      .slice(0, trueFalseCount)
       .map((term) => term.id),
   );
 
   return remainderTerms.map((term) => ({
     termId: term.id,
-    type: mcqIds.has(term.id) ? "multiple_choice" : "true_false",
+    type: trueFalseIds.has(term.id) ? "true_false" : "multiple_choice",
   }));
 }
 
@@ -102,7 +111,7 @@ Output ONLY valid JSON (no markdown fences, no comments, no commentary before or
 Rules:
 - Set termId on each question to the input id for that term — copy the UUID exactly, character for character.
 - Use each termId exactly once, preserving input order.
-- multiple_choice: 3-5 options, short sequential ids ("a", "b", "c", ...). Exactly one correct option — always a single-element correctOptionIds array. Vary which option letter is correct across questions; do not always put the answer in the same position.
+- multiple_choice: 4-5 options, short sequential ids ("a", "b", "c", ...). Exactly one correct option — always a single-element correctOptionIds array. Vary which option letter is correct across questions; do not always put the answer in the same position.
 - For some multiple_choice questions (roughly half of them), use a definition-match format: write a short definition of the term in the prompt without naming it, then ask which option is the term that matches that definition. In those questions, each option's text must be a term name — the correct option is the target term's name; distractors are other plausible term names from the same domain, not definitions.
 - Distractors must be other real jargon, common misconceptions, or near-miss definitions a learner at this level could plausibly confuse with the real term — never random unrelated words.
 - correctOptionIds must reference only ids present in that question's options.
@@ -162,7 +171,8 @@ export async function generateQuizQuestions(input: {
   // Example-judgment questions are built deterministically — same source of
   // truth as the non-AI quiz path (lib/quiz/example-judgment.ts) — so the
   // model is only ever asked to produce the two plain shapes below.
-  const exampleJudgment = assignExampleJudgmentQuestions(input.terms);
+  const maxTrueFalse = Math.floor(input.terms.length * TRUE_FALSE_MAX_SHARE);
+  const exampleJudgment = assignExampleJudgmentQuestions(input.terms, maxTrueFalse);
   const remainderTerms = input.terms.filter((term) => !exampleJudgment.has(term.id));
 
   const judgmentQuestions = new Map<string, QuizQuestion>();
@@ -179,7 +189,8 @@ export async function generateQuizQuestions(input: {
 
   let generatedQuestions = new Map<string, QuizQuestion>();
   if (remainderTerms.length > 0) {
-    const plan = buildRemainderPlan(remainderTerms) as [
+    const trueFalseBudget = maxTrueFalse - exampleJudgment.size;
+    const plan = buildRemainderPlan(remainderTerms, trueFalseBudget) as [
       QuizGenerationSlot,
       ...QuizGenerationSlot[],
     ];

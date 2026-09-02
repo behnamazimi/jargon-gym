@@ -1,4 +1,4 @@
-import { EXAMPLE_JUDGMENT_MAX_SHARE } from "./mix-ratios";
+import { TRUE_FALSE_MAX_SHARE } from "./mix-ratios";
 
 export type ExampleJudgmentPick = { text: string; correctAnswer: boolean };
 
@@ -17,17 +17,23 @@ function pickJudgmentText(term: EligibleTerm): ExampleJudgmentPick | null {
 }
 
 /**
- * Selects up to EXAMPLE_JUDGMENT_MAX_SHARE of `terms` (only from ones with an
- * example or anti_example) and picks one judgment text per selected term —
- * example -> correctAnswer true, anti_example -> correctAnswer false. Shared
- * by every deterministic quiz surface (web's simple generator, the Telegram
- * bot) so the eligibility/cap rule can't drift between them.
+ * Selects up to `maxCount` of `terms` (only from ones with an example or
+ * anti_example) and picks one judgment text per selected term — example ->
+ * correctAnswer true, anti_example -> correctAnswer false. Shared by every
+ * deterministic quiz surface (web's simple generator, the Telegram bot) so
+ * the eligibility/cap rule can't drift between them.
+ *
+ * `maxCount` defaults to TRUE_FALSE_MAX_SHARE of `terms` — the same hard cap
+ * quiz surfaces that add plain true/false questions on top of this (AI and
+ * simple generation) must pass explicitly, subtracting whatever budget this
+ * call already spent, so the two flavors combined never exceed the cap.
  */
 export function assignExampleJudgmentQuestions(
   terms: EligibleTerm[],
+  maxCount: number = Math.floor(terms.length * TRUE_FALSE_MAX_SHARE),
 ): Map<string, ExampleJudgmentPick> {
   const eligible = terms.filter((term) => term.example?.trim() || term.antiExample?.trim());
-  const target = Math.min(eligible.length, Math.round(terms.length * EXAMPLE_JUDGMENT_MAX_SHARE));
+  const target = Math.min(eligible.length, maxCount);
   const selected = [...eligible].sort(() => Math.random() - 0.5).slice(0, target);
 
   const assignments = new Map<string, ExampleJudgmentPick>();

@@ -34,7 +34,7 @@ function buildMultipleChoiceSchema(termIdSchema: ZodTypeAny) {
           text: z.string(),
         }),
       )
-      .min(3)
+      .min(4)
       .max(5),
     correctOptionIds: z.array(z.string()).min(1),
   });
