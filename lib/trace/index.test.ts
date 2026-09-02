@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { GOOD } from "./constants";
-import { applyQuizAnswer, applyReadEvent, applyReviewGrade, computeTraceSnapshot } from "./index";
+import { GOOD, SESSION_COOLDOWN_RETRIEVABILITY } from "./constants";
+import {
+  applyQuizAnswer,
+  applyReadEvent,
+  applyReviewGrade,
+  computeTraceSnapshot,
+  daysUntilCooldownClears,
+} from "./index";
 import type { TraceState } from "./types";
 
 function emptyState(): TraceState {
@@ -69,5 +75,86 @@ describe("applyQuizAnswer end-to-end", () => {
       new Date(),
     );
     expect(result.quizKnowledgePosterior).toBeGreaterThan(0.5);
+  });
+});
+
+describe("daysUntilCooldownClears", () => {
+  const NOW = new Date("2026-09-02T12:00:00Z");
+
+  it("returns null for an untested recall track — cooldown never applies", () => {
+    const result = daysUntilCooldownClears(
+      {
+        recallStability: null,
+        lastReviewRecallAt: null,
+        quizKnowledgePosterior: null,
+        lastQuizTestedAt: null,
+      },
+      "recall",
+      NOW,
+    );
+    expect(result).toBeNull();
+  });
+
+  it("returns null for an untested recognition track — cooldown never applies", () => {
+    const result = daysUntilCooldownClears(
+      {
+        recallStability: null,
+        lastReviewRecallAt: null,
+        quizKnowledgePosterior: null,
+        lastQuizTestedAt: null,
+      },
+      "recognition",
+      NOW,
+    );
+    expect(result).toBeNull();
+  });
+
+  it("returns null once retrievability has already decayed to the cooldown threshold or below", () => {
+    // Enough elapsed time that recall retrievability has clearly dropped
+    // under SESSION_COOLDOWN_RETRIEVABILITY for a modest stability.
+    const result = daysUntilCooldownClears(
+      {
+        recallStability: 5,
+        lastReviewRecallAt: new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000),
+        quizKnowledgePosterior: null,
+        lastQuizTestedAt: null,
+      },
+      "recall",
+      NOW,
+    );
+    expect(result).toBeNull();
+  });
+
+  it("returns a positive number matching the closed-form inversion right after a fresh grade", () => {
+    const stability = 5;
+    const result = daysUntilCooldownClears(
+      {
+        recallStability: stability,
+        lastReviewRecallAt: NOW,
+        quizKnowledgePosterior: null,
+        lastQuizTestedAt: null,
+      },
+      "recall",
+      NOW,
+    );
+    const expected = 9 * stability * (1 / SESSION_COOLDOWN_RETRIEVABILITY - 1);
+    expect(result).not.toBeNull();
+    expect(result!).toBeCloseTo(expected, 5);
+    expect(result!).toBeGreaterThan(0);
+  });
+
+  it("derives recognition stability from the posterior via posteriorToStability", () => {
+    const result = daysUntilCooldownClears(
+      {
+        recallStability: null,
+        lastReviewRecallAt: null,
+        quizKnowledgePosterior: 0.8,
+        lastQuizTestedAt: NOW,
+      },
+      "recognition",
+      NOW,
+    );
+    expect(result).not.toBeNull();
+    expect(result!).toBeGreaterThan(0);
   });
 });

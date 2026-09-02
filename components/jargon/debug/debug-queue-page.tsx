@@ -5,8 +5,16 @@ import { DebugCalibrationView } from "@/components/jargon/debug/debug-calibratio
 import { DebugCollectionSelect } from "@/components/jargon/debug/debug-collection-select";
 import { DebugViewTabs } from "@/components/jargon/debug/debug-view-tabs";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
+import {
+  CollectionBreakdownTable,
+  computeCollectionBreakdown,
+  computeQueueStats,
+  RetrievabilityDistributionBar,
+  StatsStrip,
+} from "@/components/jargon/debug/stats-strip";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { PickContext } from "@/lib/trace-queue";
 import type { StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
@@ -19,6 +27,7 @@ type DebugQueuePageProps = {
   domainId: string;
   view: DebugView;
   rows: DebugScoredRow[];
+  coolingDown: DebugScoredRow[];
   calibration: CalibrationViewData | null;
   errorMessage: string | null;
 };
@@ -128,6 +137,7 @@ export function DebugQueuePage({
   domainId,
   view,
   rows,
+  coolingDown,
   calibration,
   errorMessage,
 }: DebugQueuePageProps) {
@@ -185,7 +195,32 @@ export function DebugQueuePage({
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       ) : view === "queue" ? (
-        <ScoreRows rows={rows} />
+        <>
+          {rows.length > 0 ? (
+            <QuizPanel>
+              <QuizPanelBody>
+                <StatsStrip stats={computeQueueStats(rows, context)} context={context} />
+                <RetrievabilityDistributionBar rows={rows} />
+                {domainId === "all" && collections.length > 1 ? (
+                  <CollectionBreakdownTable stats={computeCollectionBreakdown(rows, collections)} />
+                ) : null}
+              </QuizPanelBody>
+            </QuizPanel>
+          ) : null}
+          <ScoreRows rows={rows} />
+          {context !== "read" && coolingDown.length > 0 ? (
+            <Collapsible>
+              <CollapsibleTrigger className="btn btn-ghost btn-sm">
+                Cooling down ({coolingDown.length})
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-3">
+                  <ScoreRows rows={coolingDown} />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ) : null}
+        </>
       ) : (
         <DebugCalibrationView data={calibration} />
       )}

@@ -44,6 +44,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
         domainId={domainId}
         view={view}
         rows={[]}
+        coolingDown={[]}
         calibration={null}
         errorMessage={null}
       />
@@ -59,6 +60,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
         domainId={domainId}
         view={view}
         rows={[]}
+        coolingDown={[]}
         calibration={summary.data ?? null}
         errorMessage={summary.error ?? null}
       />
@@ -74,6 +76,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
       domainId={domainId}
       view={view}
       rows={scored.rows ?? []}
+      coolingDown={scored.coolingDown ?? []}
       calibration={null}
       errorMessage={scored.error ?? null}
     />

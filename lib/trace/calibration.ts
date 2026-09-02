@@ -12,6 +12,10 @@
 /** Below this many samples, a bucket/flag renders "not enough data" rather
  *  than a percentage that would look more confident than it is — this is
  *  one user's history, volume is low, especially early on. */
+import { AGAIN, EASY, GOOD, HARD } from "./constants";
+import { localDateKey, STUDY_TIMEZONE } from "./local-day";
+import type { ReviewGrade } from "./types";
+
 export const CALIBRATION_MIN_BUCKET_SAMPLE = 5;
 
 /** A Review reveal counts as abandoned if no grade follows within this
@@ -25,6 +29,13 @@ export const ATTENTION_MIN_RECENT_EVENTS = 3;
 /** Flag a term when the gap between mean predicted retrievability and
  *  actual pass rate, over its recent events in a track, exceeds this. */
 export const ATTENTION_DIVERGENCE_THRESHOLD = 0.35;
+
+/** Flag a term when its recall and recognition retrievability disagree by
+ *  more than this — an independent tunable from ATTENTION_DIVERGENCE_THRESHOLD
+ *  even though both are "how big a gap is worth a look," since one compares
+ *  a track against its own prediction and this compares two different
+ *  tracks against each other. */
+export const CROSS_TRACK_DIVERGENCE_THRESHOLD = 0.35;
 
 const BUCKET_COUNT = 10;
 
@@ -197,4 +208,110 @@ export function findAbandonedReveals(
   }
 
   return abandoned.sort((a, b) => b.revealedAt.getTime() - a.revealedAt.getTime());
+}
+
+/** How often each FSRS-5 grade actually gets used across review_pass/fail
+ *  events — the real 1-4 grade, not just the pass/fail split. Grade is only
+ *  ever set on review_pass/review_fail rows; other event types pass
+ *  `grade: null` and are ignored here. */
+export function summarizeGradeDistribution(
+  rows: Array<{ grade: number | null }>,
+): Record<ReviewGrade, number> {
+  const counts: Record<ReviewGrade, number> = { [AGAIN]: 0, [HARD]: 0, [GOOD]: 0, [EASY]: 0 };
+  for (const row of rows) {
+    if (row.grade === AGAIN || row.grade === HARD || row.grade === GOOD || row.grade === EASY) {
+      counts[row.grade] += 1;
+    }
+  }
+  return counts;
+}
+
+export type RetrievabilityBucket = {
+  rangeStart: number;
+  rangeEnd: number;
+  n: number;
+};
+
+/** Where every term's live retrievability currently sits, right now — a
+ *  single-value histogram, not a predicted-vs-actual comparison like
+ *  summarizeCalibration. Callers pass in the live recallRetrievability or
+ *  recognitionRetrievability values already on each Queue row; null values
+ *  (untested terms) are excluded, same reasoning as excludeUnpredicted
+ *  above but this isn't paired data so it doesn't reuse that helper. */
+export function summarizeRetrievabilityDistribution(
+  values: Array<number | null>,
+): RetrievabilityBucket[] {
+  const bucketCounts = Array.from({ length: BUCKET_COUNT }, () => 0);
+
+  for (const value of values) {
+    if (value === null) continue;
+    const index = Math.min(Math.floor(value * BUCKET_COUNT), BUCKET_COUNT - 1);
+    bucketCounts[index]! += 1;
+  }
+
+  return bucketCounts.map((n, index) => ({
+    rangeStart: index / BUCKET_COUNT,
+    rangeEnd: (index + 1) / BUCKET_COUNT,
+    n,
+  }));
+}
+
+export type CrossTrackFlag = {
+  recallRetrievability: number;
+  recognitionRetrievability: number;
+  divergence: number;
+};
+
+/** A term where recall and recognition retrievability disagree sharply is a
+ *  different signal than computeAttentionFlag above — that compares one
+ *  track against its own recent predicted-vs-actual history, this compares
+ *  the two live tracks against each other for the same term right now. Null
+ *  in either track (not enough history in one of them yet) means there's
+ *  nothing to compare. */
+export function computeCrossTrackFlag(
+  recallRetrievability: number | null,
+  recognitionRetrievability: number | null,
+  opts: { threshold?: number } = {},
+): CrossTrackFlag | null {
+  if (recallRetrievability === null || recognitionRetrievability === null) return null;
+
+  const threshold = opts.threshold ?? CROSS_TRACK_DIVERGENCE_THRESHOLD;
+  const divergence = Math.abs(recallRetrievability - recognitionRetrievability);
+  if (divergence <= threshold) return null;
+
+  return { recallRetrievability, recognitionRetrievability, divergence };
+}
+
+export type ActivityDay = { date: string; read: number; review: number; quiz: number };
+
+/** Day-bucketed event counts across the last `days` calendar days in
+ *  STUDY_TIMEZONE, oldest first — including all-zero days, since the point
+ *  is to show gaps in usage, not just totals. Answers "how much data
+ *  actually backs these numbers," distinct from everything else in this
+ *  file, which answers "is the algorithm predicting well." review_pass/
+ *  review_fail combine into `review`; quiz_pass/quiz_fail combine into
+ *  `quiz`, same as summarizeCalibration treats them as one track each. */
+export function summarizeActivityTimeline(
+  rows: Array<{ event: TraceEventName; createdAt: Date }>,
+  opts: { now: Date; days: number },
+): ActivityDay[] {
+  const { now, days } = opts;
+  const dayMs = 24 * 60 * 60 * 1000;
+
+  const counts = new Map<string, { read: number; review: number; quiz: number }>();
+  for (let i = days - 1; i >= 0; i--) {
+    const key = localDateKey(new Date(now.getTime() - i * dayMs), STUDY_TIMEZONE);
+    counts.set(key, { read: 0, review: 0, quiz: 0 });
+  }
+
+  for (const row of rows) {
+    const bucket = counts.get(localDateKey(row.createdAt, STUDY_TIMEZONE));
+    if (!bucket) continue; // outside the requested window
+
+    if (row.event === "read") bucket.read += 1;
+    else if (row.event === "review_pass" || row.event === "review_fail") bucket.review += 1;
+    else if (row.event === "quiz_pass" || row.event === "quiz_fail") bucket.quiz += 1;
+  }
+
+  return [...counts.entries()].map(([date, c]) => ({ date, ...c }));
 }

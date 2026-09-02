@@ -8,16 +8,23 @@ import type { Database } from "@/lib/supabase/database.types";
 import { listStudyCollections } from "@/lib/study/collections";
 import {
   computeTraceSnapshot,
+  daysUntilCooldownClears,
   findAbandonedReveals,
   rankQuizQueue,
   rankReadQueue,
   rankReviewQueue,
+  summarizeActivityTimeline,
   summarizeCalibration,
+  summarizeGradeDistribution,
   computeAttentionFlag,
+  computeCrossTrackFlag,
   type AbandonedReveal,
+  type ActivityDay,
   type AttentionFlag,
   type CalibrationSummary,
+  type CrossTrackFlag,
   type KnownLabel,
+  type ReviewGrade,
   type TraceEventName,
 } from "@/lib/trace";
 
@@ -33,6 +40,8 @@ export async function getDebugSetupData() {
 
   return { collections };
 }
+
+type PassFailCounts = { passes: number; fails: number };
 
 export type DebugScoredRow = {
   termId: string;
@@ -53,11 +62,29 @@ export type DebugScoredRow = {
   mastery: number;
   masteryAdjusted: number;
   knownLabel: KnownLabel;
+  /** First moment this term's Mastery_adjusted ever crossed the known
+   *  threshold — a permanent high-water mark, unlike knownLabel above,
+   *  which decays with the live score. Null if it's never happened. */
+  everMasteredAt: string | null;
+  /** Full pass/fail history per track, not just the last few — distinct
+   *  from attentionFlags below, which only look at a recent slice. */
+  recallPassFailCounts: PassFailCounts;
+  recognitionPassFailCounts: PassFailCounts;
   /** Recent-actual-vs-predicted mismatches — a term can carry one per
    *  track (recall, recognition) independently. Empty when nothing
    *  diverges enough to be worth a look, or there isn't enough recent
    *  history to trust the comparison yet. */
   attentionFlags: AttentionFlag[];
+  /** Set when this term's two live retrievabilities — not a prediction
+   *  check like attentionFlags, a comparison between them — disagree
+   *  sharply right now. */
+  crossTrackFlag: CrossTrackFlag | null;
+  /** Days until this term's retrievability in the selected context's track
+   *  decays back under the session cooldown threshold — non-null only for
+   *  a term currently excluded from the ranked queue because it was just
+   *  graded. Null for Read (cooldown doesn't apply), an untested track, or
+   *  a term that's already eligible. */
+  daysUntilEligible: number | null;
 };
 
 function rankForContext(
@@ -146,14 +173,43 @@ function attentionFlagsForTerm(events: RecentEventRow[] | undefined): AttentionF
   return flags.filter((flag): flag is AttentionFlag => flag !== null);
 }
 
+/** Full pass/fail counts per track, over the same event list attention
+ *  flags read from — but unsliced, since this is "how has this term done
+ *  overall," not "how has it done lately." */
+function passFailCountsForTerm(events: RecentEventRow[] | undefined): {
+  recall: PassFailCounts;
+  recognition: PassFailCounts;
+} {
+  const counts = {
+    recall: { passes: 0, fails: 0 },
+    recognition: { passes: 0, fails: 0 },
+  };
+  for (const event of events ?? []) {
+    if (event.event === "review_pass") counts.recall.passes += 1;
+    else if (event.event === "review_fail") counts.recall.fails += 1;
+    else if (event.event === "quiz_pass") counts.recognition.passes += 1;
+    else if (event.event === "quiz_fail") counts.recognition.fails += 1;
+  }
+  return counts;
+}
+
 /** One ranked list per tier — every tier now ranks the same single term
  *  set by its own retrievability, so there's no known/unknown split and no
- *  read-mode fallback to report. */
+ *  read-mode fallback to report.
+ *
+ *  Hydrates the FULL candidate set once (one lookupTermNames/
+ *  fetchRecentEventsByTerm pass, not two) rather than only the ranked/
+ *  filtered list, so a term excluded by the session cooldown — silently
+ *  dropped by rankReviewQueue/rankQuizQueue — can still be reported back
+ *  as `coolingDown` instead of just vanishing. The ranked set's termIds are
+ *  the sole source of truth for the partition, so there's exactly one
+ *  place deciding "is this excluded," not two that could drift. */
 export async function listDebugScoredTermsAction(
   domainIds: string[] | "all",
   context: PickContext,
 ): Promise<{
   rows?: DebugScoredRow[];
+  coolingDown?: DebugScoredRow[];
   error?: string;
 }> {
   const auth = await requireAuthenticatedClient();
@@ -163,11 +219,21 @@ export async function listDebugScoredTermsAction(
 
   try {
     const candidates = await listTraceCandidates(auth.supabase, auth.user.id, { domainIds });
-    if (candidates.length === 0) return { rows: [] };
+    if (candidates.length === 0) return { rows: [], coolingDown: [] };
 
     const now = new Date();
     const ranked = rankForContext(candidates, context, now);
-    return { rows: await hydrateDebugRows(auth.supabase, ranked, now) };
+    const rankedIds = new Set(ranked.map((candidate) => candidate.termId));
+
+    const hydrated = await hydrateDebugRows(auth.supabase, candidates, context, now);
+    const hydratedById = new Map(hydrated.map((row) => [row.termId, row]));
+
+    const rows = ranked.map((candidate) => hydratedById.get(candidate.termId)!);
+    const coolingDown = hydrated
+      .filter((row) => !rankedIds.has(row.termId))
+      .sort((a, b) => (a.daysUntilEligible ?? Infinity) - (b.daysUntilEligible ?? Infinity));
+
+    return { rows, coolingDown };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load candidate terms.";
     return { error: message };
@@ -177,6 +243,7 @@ export async function listDebugScoredTermsAction(
 async function hydrateDebugRows(
   supabase: Client,
   candidates: TraceCandidate[],
+  context: PickContext,
   now: Date,
 ): Promise<DebugScoredRow[]> {
   if (candidates.length === 0) return [];
@@ -189,6 +256,8 @@ async function hydrateDebugRows(
 
   return candidates.map((candidate) => {
     const snapshot = computeTraceSnapshot(candidate, now);
+    const events = recentEventsByTerm.get(candidate.termId);
+    const passFail = passFailCountsForTerm(events);
     return {
       termId: candidate.termId,
       term: termNameById.get(candidate.termId) ?? "(deleted term)",
@@ -212,7 +281,22 @@ async function hydrateDebugRows(
       mastery: snapshot.mastery,
       masteryAdjusted: snapshot.masteryAdjusted,
       knownLabel: snapshot.knownLabel,
-      attentionFlags: attentionFlagsForTerm(recentEventsByTerm.get(candidate.termId)),
+      everMasteredAt: candidate.everMasteredAt ? candidate.everMasteredAt.toISOString() : null,
+      recallPassFailCounts: passFail.recall,
+      recognitionPassFailCounts: passFail.recognition,
+      attentionFlags: attentionFlagsForTerm(events),
+      crossTrackFlag: computeCrossTrackFlag(
+        snapshot.recallRetrievability,
+        snapshot.recognitionRetrievability,
+      ),
+      daysUntilEligible:
+        context === "read"
+          ? null
+          : daysUntilCooldownClears(
+              candidate,
+              context === "review" ? "recall" : "recognition",
+              now,
+            ),
     };
   });
 }
@@ -283,10 +367,18 @@ export async function getTermEventHistoryAction(
   return { rows };
 }
 
+/** How many days of recent `review_events` back the Activity table on the
+ *  Calibration tab — see summarizeActivityTimeline's doc for why this is a
+ *  separate, date-bounded query rather than reusing the all-time one below
+ *  (that one deliberately excludes "read" events; this one needs them). */
+const ACTIVITY_TIMELINE_DAYS = 14;
+
 export type CalibrationViewData = {
   recall: CalibrationSummary;
   recognition: CalibrationSummary;
   abandonedReveals: Array<AbandonedReveal & { term: string }>;
+  gradeDistribution: Record<ReviewGrade, number>;
+  activityTimeline: ActivityDay[];
 };
 
 /** Global on purpose — calibration is a question about the algorithm, not
@@ -302,14 +394,34 @@ export async function getCalibrationSummaryAction(): Promise<{
     return { error: "Log in to view this." };
   }
 
-  const { data: events, error } = await auth.supabase
-    .from("review_events")
-    .select("term_id, event, retrievability_before, created_at")
-    .in("event", ["reveal", "review_pass", "review_fail", "quiz_pass", "quiz_fail"]);
+  const now = new Date();
+  const activityWindowStart = new Date(
+    now.getTime() - ACTIVITY_TIMELINE_DAYS * 24 * 60 * 60 * 1000,
+  );
+
+  const [{ data: events, error }, { data: recentEvents, error: recentEventsError }] =
+    await Promise.all([
+      auth.supabase
+        .from("review_events")
+        .select("term_id, event, grade, retrievability_before, created_at")
+        .in("event", ["reveal", "review_pass", "review_fail", "quiz_pass", "quiz_fail"]),
+      // Separate, date-bounded query — unlike the one above, this needs "read"
+      // events too, and stays cheap by not going back further than the window.
+      auth.supabase
+        .from("review_events")
+        .select("event, created_at")
+        .gte("created_at", activityWindowStart.toISOString()),
+    ]);
 
   if (error) return { error: error.message };
+  if (recentEventsError) return { error: recentEventsError.message };
 
   const rows = events ?? [];
+
+  const activityTimeline = summarizeActivityTimeline(
+    (recentEvents ?? []).map((e) => ({ event: e.event, createdAt: new Date(e.created_at) })),
+    { now, days: ACTIVITY_TIMELINE_DAYS },
+  );
 
   const recallRows = rows
     .filter((e) => e.event === "review_pass" || e.event === "review_fail")
@@ -317,6 +429,12 @@ export async function getCalibrationSummaryAction(): Promise<{
       retrievabilityBefore: e.retrievability_before,
       passed: e.event === "review_pass",
     }));
+
+  const gradeDistribution = summarizeGradeDistribution(
+    rows
+      .filter((e) => e.event === "review_pass" || e.event === "review_fail")
+      .map((e) => ({ grade: e.grade })),
+  );
 
   const recognitionRows = rows
     .filter((e) => e.event === "quiz_pass" || e.event === "quiz_fail")
@@ -329,7 +447,7 @@ export async function getCalibrationSummaryAction(): Promise<{
     .filter((e) => e.event === "reveal" || e.event === "review_pass" || e.event === "review_fail")
     .map((e) => ({ termId: e.term_id, event: e.event, createdAt: new Date(e.created_at) }));
 
-  const abandoned = findAbandonedReveals(revealSequenceRows, { now: new Date() }).slice(0, 10);
+  const abandoned = findAbandonedReveals(revealSequenceRows, { now }).slice(0, 10);
 
   const termNameById = await lookupTermNames(auth.supabase, [
     ...new Set(abandoned.map((a) => a.termId)),
@@ -343,6 +461,8 @@ export async function getCalibrationSummaryAction(): Promise<{
         ...a,
         term: termNameById.get(a.termId) ?? "(deleted term)",
       })),
+      gradeDistribution,
+      activityTimeline,
     },
   };
 }

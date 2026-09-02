@@ -10,7 +10,7 @@ export function isSameLocalDay(a: Date, b: Date, timeZone: string): boolean {
   return localDateKey(a, timeZone) === localDateKey(b, timeZone);
 }
 
-function localDateKey(d: Date, timeZone: string): string {
+export function localDateKey(d: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",

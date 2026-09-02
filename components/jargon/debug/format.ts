@@ -1,6 +1,6 @@
 import { AGAIN, EASY, GOOD, HARD, type TraceEventName } from "@/lib/trace";
 
-function formatRelative(iso: string | null): string {
+export function formatRelative(iso: string | null): string {
   if (!iso) return "never";
   const hours = (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60);
   if (hours < 1) return "just now";
@@ -56,7 +56,27 @@ export function formatMastery(mastery: number, masteryAdjusted: number): string 
   return `mastery ${formatPercent(mastery)} (adj ${formatPercent(masteryAdjusted)})`;
 }
 
-const GRADE_LABELS: Record<number, string> = {
+/** A term with no history in this track yet (0/0) is dropped rather than
+ *  printed as "0/0 pass" — that's the same "review 0"/"quiz 0" convention
+ *  formatRecallDetail/formatQuizDetail already use for an untested track. */
+export function formatPassFailDetail(
+  label: string,
+  counts: { passes: number; fails: number },
+): string | null {
+  const total = counts.passes + counts.fails;
+  if (total === 0) return null;
+  return `${label} ${counts.passes}/${total} pass`;
+}
+
+export function formatDaysUntil(days: number): string {
+  if (days <= 0) return "now";
+  const hours = days * 24;
+  if (hours < 1) return "< 1h";
+  if (hours < 24) return `~${Math.round(hours)}h`;
+  return `~${Math.round(days)}d`;
+}
+
+export const GRADE_LABELS: Record<number, string> = {
   [AGAIN]: "Again",
   [HARD]: "Hard",
   [GOOD]: "Good",

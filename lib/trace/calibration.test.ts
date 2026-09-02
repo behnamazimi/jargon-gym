@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { AGAIN, EASY, GOOD, HARD } from "./constants";
 import {
   computeAttentionFlag,
+  computeCrossTrackFlag,
   findAbandonedReveals,
+  summarizeActivityTimeline,
   summarizeCalibration,
+  summarizeGradeDistribution,
+  summarizeRetrievabilityDistribution,
   type TraceEventName,
 } from "./calibration";
 
@@ -176,5 +181,149 @@ describe("findAbandonedReveals", () => {
       { now: NOW },
     );
     expect(abandoned.map((a) => a.termId)).toEqual(["newer", "older"]);
+  });
+});
+
+describe("summarizeGradeDistribution", () => {
+  it("returns all-zero counts for no rows", () => {
+    const dist = summarizeGradeDistribution([]);
+    expect(dist).toEqual({ [AGAIN]: 0, [HARD]: 0, [GOOD]: 0, [EASY]: 0 });
+  });
+
+  it("ignores rows with no grade (reveal/quiz events)", () => {
+    const dist = summarizeGradeDistribution([{ grade: null }, { grade: null }]);
+    expect(dist).toEqual({ [AGAIN]: 0, [HARD]: 0, [GOOD]: 0, [EASY]: 0 });
+  });
+
+  it("counts each grade independently", () => {
+    const dist = summarizeGradeDistribution([
+      { grade: AGAIN },
+      { grade: GOOD },
+      { grade: GOOD },
+      { grade: EASY },
+    ]);
+    expect(dist).toEqual({ [AGAIN]: 1, [HARD]: 0, [GOOD]: 2, [EASY]: 1 });
+  });
+});
+
+describe("summarizeRetrievabilityDistribution", () => {
+  it("returns 10 empty buckets for no values", () => {
+    const buckets = summarizeRetrievabilityDistribution([]);
+    expect(buckets).toHaveLength(10);
+    for (const bucket of buckets) {
+      expect(bucket.n).toBe(0);
+    }
+  });
+
+  it("excludes null values (untested terms)", () => {
+    const buckets = summarizeRetrievabilityDistribution([null, null]);
+    expect(buckets.every((b) => b.n === 0)).toBe(true);
+  });
+
+  it("clamps a value of exactly 1.0 into the last bucket, not an 11th one", () => {
+    const buckets = summarizeRetrievabilityDistribution([1]);
+    expect(buckets[9]!.n).toBe(1);
+    expect(buckets[9]!.rangeStart).toBeCloseTo(0.9);
+    expect(buckets[9]!.rangeEnd).toBeCloseTo(1);
+  });
+
+  it("sorts values into the right bucket by range", () => {
+    const buckets = summarizeRetrievabilityDistribution([0.05, 0.75, 0.76, null]);
+    expect(buckets[0]!.n).toBe(1);
+    expect(buckets[7]!.n).toBe(2);
+    expect(buckets.reduce((sum, b) => sum + b.n, 0)).toBe(3);
+  });
+});
+
+describe("computeCrossTrackFlag", () => {
+  it("returns null when recall retrievability is missing", () => {
+    expect(computeCrossTrackFlag(null, 0.9)).toBeNull();
+  });
+
+  it("returns null when recognition retrievability is missing", () => {
+    expect(computeCrossTrackFlag(0.9, null)).toBeNull();
+  });
+
+  it("returns null when both tracks agree closely enough", () => {
+    expect(computeCrossTrackFlag(0.7, 0.8)).toBeNull();
+  });
+
+  it("returns null exactly at the threshold — divergence must exceed it, not just reach it", () => {
+    expect(computeCrossTrackFlag(0.9, 0.55)).toBeNull(); // divergence 0.35
+  });
+
+  it("flags a term whose recall and recognition retrievability disagree sharply", () => {
+    const flag = computeCrossTrackFlag(0.95, 0.2);
+    expect(flag).not.toBeNull();
+    expect(flag!.recallRetrievability).toBe(0.95);
+    expect(flag!.recognitionRetrievability).toBe(0.2);
+    expect(flag!.divergence).toBeCloseTo(0.75);
+  });
+
+  it("accepts a custom threshold", () => {
+    expect(computeCrossTrackFlag(0.6, 0.5, { threshold: 0.05 })).not.toBeNull();
+  });
+});
+
+describe("summarizeActivityTimeline", () => {
+  // Noon in Europe/Amsterdam (UTC+2 in September) — safely mid-day, no risk
+  // of a day-boundary edge case shifting which calendar day this lands on.
+  const NOW = new Date("2026-09-02T10:00:00Z");
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  it("returns `days` all-zero entries, oldest first, for no rows", () => {
+    const days = summarizeActivityTimeline([], { now: NOW, days: 14 });
+    expect(days).toHaveLength(14);
+    for (const day of days) {
+      expect(day.read).toBe(0);
+      expect(day.review).toBe(0);
+      expect(day.quiz).toBe(0);
+    }
+    expect(days[0]!.date < days[13]!.date).toBe(true);
+    expect(days[13]!.date).toBe("2026-09-02");
+  });
+
+  it("buckets same-day events into their own category, combining pass/fail per track", () => {
+    const days = summarizeActivityTimeline(
+      [
+        { event: "read", createdAt: NOW },
+        { event: "review_pass", createdAt: NOW },
+        { event: "review_fail", createdAt: NOW },
+        { event: "quiz_pass", createdAt: NOW },
+        { event: "quiz_fail", createdAt: NOW },
+      ],
+      { now: NOW, days: 14 },
+    );
+    const today = days[13]!;
+    expect(today.read).toBe(1);
+    expect(today.review).toBe(2);
+    expect(today.quiz).toBe(2);
+  });
+
+  it("includes an event exactly at the window's oldest day", () => {
+    const oldestMoment = new Date(NOW.getTime() - 13 * DAY_MS);
+    const days = summarizeActivityTimeline([{ event: "read", createdAt: oldestMoment }], {
+      now: NOW,
+      days: 14,
+    });
+    expect(days[0]!.read).toBe(1);
+  });
+
+  it("excludes an event one day older than the window", () => {
+    const tooOld = new Date(NOW.getTime() - 14 * DAY_MS);
+    const days = summarizeActivityTimeline([{ event: "read", createdAt: tooOld }], {
+      now: NOW,
+      days: 14,
+    });
+    for (const day of days) expect(day.read).toBe(0);
+  });
+
+  it("ignores reveal events — not part of any of the three counted categories", () => {
+    const days = summarizeActivityTimeline([{ event: "reveal", createdAt: NOW }], {
+      now: NOW,
+      days: 14,
+    });
+    const today = days[13]!;
+    expect(today.read + today.review + today.quiz).toBe(0);
   });
 });
