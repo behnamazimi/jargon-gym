@@ -428,6 +428,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
   const statusRef = useRef(status);
   const selectedCollectionIdRef = useRef(selectedCollectionId);
   const fetchingRef = useRef(false);
+  const revealGuardRef = useRef<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   navRef.current = nav;
@@ -489,10 +490,21 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
   }, []);
 
   const handleReveal = useCallback(() => {
-    if (!navRef.current.entry || navRef.current.entry.revealed) return;
-    const termId = navRef.current.entry.term.id;
+    const entry = navRef.current.entry;
+    if (!entry || entry.revealed) return;
+    // navRef.current only gets reassigned to the next render's state on the
+    // following render pass, so two reveal triggers landing in the same
+    // tick (e.g. a fast double-click/double-tap, or Enter racing a click)
+    // would otherwise both read a stale revealed: false and both call
+    // recordReadRevealAction, double-counting the read. Guard against that
+    // synchronously via a ref keyed on the term id, rather than mutating
+    // the reducer's entry object in place (which would make the "reveal"
+    // action's next-state equal the current state by reference, and
+    // useReducer bails out of re-rendering when that happens).
+    if (revealGuardRef.current === entry.term.id) return;
+    revealGuardRef.current = entry.term.id;
     dispatch({ type: "reveal" });
-    void recordReadRevealAction(termId);
+    void recordReadRevealAction(entry.term.id);
   }, []);
 
   const handleCollectionChange = useCallback((nextDomainId: string) => {
