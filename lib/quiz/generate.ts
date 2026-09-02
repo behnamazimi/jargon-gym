@@ -8,7 +8,12 @@ import {
 } from "./example-judgment";
 import { MCQ_SHARE_OF_REMAINDER } from "./mix-ratios";
 import { normalizeQuizQuestions } from "./normalize";
-import { buildQuizGenerationSchema, type QuizGenerationSlot } from "./schema";
+import {
+  buildQuizGenerationObjectSchema,
+  buildQuizGenerationSchema,
+  toQuizGenerationPayload,
+  type QuizGenerationSlot,
+} from "./schema";
 import type { QuizQuestion, QuizTerm } from "./types";
 
 const MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
@@ -122,23 +127,28 @@ async function requestQuizFromModel(input: {
   terms: QuizTerm[];
   plan: [QuizGenerationSlot, ...QuizGenerationSlot[]];
 }): Promise<QuizQuestion[]> {
-  const schema = buildQuizGenerationSchema(input.plan);
   const prompt = buildQuizPrompt(input.terms, input.plan);
   const model = createModel(input.provider, input.apiKey);
 
-  const { object } = await generateObject({
-    model,
-    schema,
-    prompt,
-    providerOptions:
-      input.provider === "google"
-        ? {
-            google: {
-              structuredOutputs: true,
-            },
-          }
-        : undefined,
-  });
+  // Gemini's structured-output response_schema can't express the positional
+  // tuple buildQuizGenerationSchema produces (its `items` field isn't
+  // repeating), so Google gets an object-keyed variant of the same
+  // per-slot-type schema instead — see buildQuizGenerationObjectSchema.
+  const object =
+    input.provider === "google"
+      ? toQuizGenerationPayload(
+          (
+            await generateObject({
+              model,
+              schema: buildQuizGenerationObjectSchema(input.plan),
+              prompt,
+              providerOptions: { google: { structuredOutputs: true } },
+            })
+          ).object,
+          input.plan,
+        )
+      : (await generateObject({ model, schema: buildQuizGenerationSchema(input.plan), prompt }))
+          .object;
 
   return normalizeQuizQuestions(object, input.terms);
 }
