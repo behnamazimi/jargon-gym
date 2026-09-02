@@ -4,15 +4,7 @@ import type { QuizQuestion, QuizTerm } from "./types";
 type RawQuizQuestion = QuizGenerationPayload["questions"][number];
 
 function resolveRawTermId(question: RawQuizQuestion, termIds: Set<string>): string | null {
-  const candidates = [question.termId, question.id].filter(
-    (value): value is string => typeof value === "string" && value.length > 0,
-  );
-
-  for (const candidate of candidates) {
-    if (termIds.has(candidate)) return candidate;
-  }
-
-  return null;
+  return termIds.has(question.termId) ? question.termId : null;
 }
 
 function resolveMcqCorrectOptionId(

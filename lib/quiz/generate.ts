@@ -2,9 +2,13 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import type { LlmProvider } from "@/lib/llm/types";
-import { EXAMPLE_JUDGMENT_MAX_SHARE, MCQ_SHARE_OF_REMAINDER } from "./mix-ratios";
+import {
+  assignExampleJudgmentQuestions,
+  buildExampleJudgmentQuestionLine,
+} from "./example-judgment";
+import { MCQ_SHARE_OF_REMAINDER } from "./mix-ratios";
 import { normalizeQuizQuestions } from "./normalize";
-import { buildQuizGenerationSchema } from "./schema";
+import { buildQuizGenerationSchema, type QuizGenerationSlot } from "./schema";
 import type { QuizQuestion, QuizTerm } from "./types";
 
 const MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
@@ -18,30 +22,42 @@ function formatDomainLabel(terms: QuizTerm[]): string {
   return names.join(", ");
 }
 
-function buildQuizPrompt(terms: QuizTerm[]): string {
-  const eligibleForExampleJudgment = terms.filter(
-    (term) => term.example?.trim() || term.antiExample?.trim(),
+/**
+ * Splits the non-example-judgment remainder into multiple_choice vs
+ * true_false, one slot per term. This assignment — not a free-text count in
+ * the prompt — is what the model gets held to (buildQuizGenerationSchema
+ * turns it into a literal `type` per position), so the mix can't collapse to
+ * all-true_false the way it did when the split lived only in prompt text.
+ */
+function buildRemainderPlan(remainderTerms: QuizTerm[]): QuizGenerationSlot[] {
+  const mcqCount = Math.ceil(remainderTerms.length * MCQ_SHARE_OF_REMAINDER);
+  const mcqIds = new Set(
+    [...remainderTerms]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, mcqCount)
+      .map((term) => term.id),
   );
-  const exampleJudgmentCount = Math.min(
-    eligibleForExampleJudgment.length,
-    Math.round(terms.length * EXAMPLE_JUDGMENT_MAX_SHARE),
-  );
-  const remainingCount = terms.length - exampleJudgmentCount;
-  const mcqCount = Math.ceil(remainingCount * MCQ_SHARE_OF_REMAINDER);
-  const plainTrueFalseCount = remainingCount - mcqCount;
-  const trueFalseCount = exampleJudgmentCount + plainTrueFalseCount;
+
+  return remainderTerms.map((term) => ({
+    termId: term.id,
+    type: mcqIds.has(term.id) ? "multiple_choice" : "true_false",
+  }));
+}
+
+function buildQuizPrompt(terms: QuizTerm[], plan: QuizGenerationSlot[]): string {
   const domainLabel = formatDomainLabel(terms);
   const multipleDomains = new Set(terms.map((term) => term.domainName)).size > 1;
+  const typeByTermId = new Map(plan.map((slot) => [slot.termId, slot.type]));
+  const mcqCount = plan.filter((slot) => slot.type === "multiple_choice").length;
+  const trueFalseCount = plan.length - mcqCount;
 
   const termList = terms
     .map((term) => {
-      const lines = [`- id: ${term.id}`, `  definition: ${JSON.stringify(term.definition)}`];
-      if (term.example?.trim()) {
-        lines.push(`  example: ${JSON.stringify(term.example)}`);
-      }
-      if (term.antiExample?.trim()) {
-        lines.push(`  anti_example: ${JSON.stringify(term.antiExample)}`);
-      }
+      const lines = [
+        `- id: ${term.id}`,
+        `  type: ${typeByTermId.get(term.id)}`,
+        `  definition: ${JSON.stringify(term.definition)}`,
+      ];
       if (multipleDomains) {
         lines.push(`  domain: ${JSON.stringify(term.domainName)}`);
       }
@@ -49,26 +65,12 @@ function buildQuizPrompt(terms: QuizTerm[]): string {
     })
     .join("\n");
 
-  return `Generate exactly ${terms.length} vocabulary quiz questions in the domain(s): ${JSON.stringify(domainLabel)} — one per term below, in the same order as the input.
+  return `Generate exactly ${terms.length} vocabulary quiz questions in the domain(s): ${JSON.stringify(domainLabel)} — one per term below, in the same order as the input. Each term already has a required "type" — you must write that exact question shape for that term (${mcqCount} "multiple_choice", ${trueFalseCount} "true_false" — fixed, do not change any term's type).
 
-Each term is given as: id and definition (and optionally an example and/or anti_example). Use the definition to write the question but do not copy it verbatim — test comprehension via a scenario, use case, or contrast instead of restating it.
+Each term is given as: id, type, and definition. Use the definition to write the question but do not copy it verbatim — test comprehension via a scenario, use case, or contrast instead of restating it.
 
 Terms:
 ${termList}
-
-QUESTION TYPE ASSIGNMENT (hard requirement):
-- Exactly ${mcqCount} questions must be "multiple_choice"
-- Exactly ${trueFalseCount} questions must be "true_false"
-- Of those ${trueFalseCount} true_false questions, exactly ${exampleJudgmentCount} must be "example-judgment" questions (defined below) — the remaining ${plainTrueFalseCount} are ordinary true_false statements as before
-- Both top-level counts must be hit exactly — do not default to one type
-- Order the questions so same-type questions are not grouped together (no long runs of one type)
-
-EXAMPLE-JUDGMENT QUESTIONS (a specific way to author ${exampleJudgmentCount} of the true_false questions):
-- Only use terms that have an example or anti_example in the list above; use each such term at most once for this purpose across the whole quiz
-- Pick either the term's example OR its anti_example (never both for the same term) and copy that text into the prompt verbatim, with no added quotation marks around it
-- Prompt format, exactly two lines joined by a single "\\n": \`Does this illustrate "<term name>"?\\n<example or anti_example text>\`
-- If you used the term's example, correctAnswer must be true. If you used the term's anti_example, correctAnswer must be false.
-- Never say or hint whether the text came from the example or the anti_example field — the prompt must read as a plain claim to judge
 
 Output ONLY valid JSON (no markdown fences, no comments, no commentary before or after), matching this shape exactly:
 
@@ -90,7 +92,7 @@ Output ONLY valid JSON (no markdown fences, no comments, no commentary before or
   ]
 }
 
-(The two objects above show the two allowed shapes — every question is one or the other. Do not include fields from the other type.)
+(The two objects above show the two allowed shapes — every question must match its assigned type from the Terms list above. Do not include fields from the other type.)
 
 Rules:
 - Set termId on each question to the input id for that term — copy the UUID exactly, character for character.
@@ -99,10 +101,9 @@ Rules:
 - For some multiple_choice questions (roughly half of them), use a definition-match format: write a short definition of the term in the prompt without naming it, then ask which option is the term that matches that definition. In those questions, each option's text must be a term name — the correct option is the target term's name; distractors are other plausible term names from the same domain, not definitions.
 - Distractors must be other real jargon, common misconceptions, or near-miss definitions a learner at this level could plausibly confuse with the real term — never random unrelated words.
 - correctOptionIds must reference only ids present in that question's options.
-- true_false (the non-example-judgment ones): vary true vs. false roughly evenly across the set — do not make every statement true.
+- true_false: vary true vs. false roughly evenly across the set — do not make every statement true.
 - Prompts must be self-contained: don't assume the reader has the definition in front of them, and don't reference other terms from the list (this can leak answers).
-- Tone: write the way a helpful colleague would quiz someone — plain, natural, easy to follow. Avoid robotic or exam-template phrasing (e.g. "Which of the following best describes…", "It is important to note that…", "The aforementioned term"). Keep prompts and option text short, direct, and conversational; use simple words unless the jargon itself requires a technical term.
-- If terms.length is 0, return {"questions": []} and skip all other rules.`;
+- Tone: write the way a helpful colleague would quiz someone — plain, natural, easy to follow. Avoid robotic or exam-template phrasing (e.g. "Which of the following best describes…", "It is important to note that…", "The aforementioned term"). Keep prompts and option text short, direct, and conversational; use simple words unless the jargon itself requires a technical term.`;
 }
 
 function createModel(provider: LlmProvider, apiKey: string) {
@@ -119,9 +120,10 @@ async function requestQuizFromModel(input: {
   provider: LlmProvider;
   apiKey: string;
   terms: QuizTerm[];
+  plan: [QuizGenerationSlot, ...QuizGenerationSlot[]];
 }): Promise<QuizQuestion[]> {
-  const schema = buildQuizGenerationSchema(input.terms.map((term) => term.id));
-  const prompt = buildQuizPrompt(input.terms);
+  const schema = buildQuizGenerationSchema(input.plan);
+  const prompt = buildQuizPrompt(input.terms, input.plan);
   const model = createModel(input.provider, input.apiKey);
 
   const { object } = await generateObject({
@@ -147,14 +149,53 @@ export async function generateQuizQuestions(input: {
   apiKey: string;
   terms: QuizTerm[];
 }): Promise<QuizQuestion[]> {
-  try {
-    return await requestQuizFromModel(input);
-  } catch (firstError) {
-    try {
-      return await requestQuizFromModel(input);
-    } catch {
-      if (firstError instanceof Error) throw firstError;
-      throw new Error("Couldn't generate the quiz. Check your API key and try again.");
-    }
+  // Example-judgment questions are built deterministically — same source of
+  // truth as the non-AI quiz path (lib/quiz/example-judgment.ts) — so the
+  // model is only ever asked to produce the two plain shapes below.
+  const exampleJudgment = assignExampleJudgmentQuestions(input.terms);
+  const remainderTerms = input.terms.filter((term) => !exampleJudgment.has(term.id));
+
+  const judgmentQuestions = new Map<string, QuizQuestion>();
+  for (const term of input.terms) {
+    const pick = exampleJudgment.get(term.id);
+    if (!pick) continue;
+    judgmentQuestions.set(term.id, {
+      type: "true_false",
+      termId: term.id,
+      prompt: `${buildExampleJudgmentQuestionLine(term.term)}\n${pick.text}`,
+      correctAnswer: pick.correctAnswer,
+    });
   }
+
+  let generatedQuestions = new Map<string, QuizQuestion>();
+  if (remainderTerms.length > 0) {
+    const plan = buildRemainderPlan(remainderTerms) as [
+      QuizGenerationSlot,
+      ...QuizGenerationSlot[],
+    ];
+    const requestInput = { ...input, terms: remainderTerms, plan };
+
+    let generated: QuizQuestion[];
+    try {
+      generated = await requestQuizFromModel(requestInput);
+    } catch (firstError) {
+      try {
+        generated = await requestQuizFromModel(requestInput);
+      } catch {
+        if (firstError instanceof Error) throw firstError;
+        throw new Error("Couldn't generate the quiz. Check your API key and try again.");
+      }
+    }
+    generatedQuestions = new Map(generated.map((question) => [question.termId, question]));
+  }
+
+  const questions = input.terms
+    .map((term) => judgmentQuestions.get(term.id) ?? generatedQuestions.get(term.id))
+    .filter((question): question is QuizQuestion => Boolean(question));
+
+  if (questions.length === 0) {
+    throw new Error("Could not build a valid quiz from the model response.");
+  }
+
+  return questions;
 }
