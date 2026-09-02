@@ -11,6 +11,7 @@ fi
 export RESET_FLAG
 
 /usr/bin/python3 - <<'PY'
+import fcntl
 import json
 import os
 import pathlib
@@ -28,6 +29,13 @@ widget_dir = pathlib.Path(os.environ["WIDGET_DIR"])
 config_path = widget_dir / "config.json"
 state_path = widget_dir / "state.json"
 reset = os.environ.get("RESET_FLAG") == "1"
+
+# Serialize against advance-term.sh/reveal-term.sh touching the same
+# state.json — this script can also write it (on refresh/reset/stale
+# pool), and without this lock that write could race with an in-flight
+# advance/reveal and clobber it. See advance-term.sh for the full story.
+lock_file = open(widget_dir / ".widget.lock", "a+")
+fcntl.flock(lock_file, fcntl.LOCK_EX)
 
 def emit(payload, code=0):
     sys.stdout.write(json.dumps(payload))

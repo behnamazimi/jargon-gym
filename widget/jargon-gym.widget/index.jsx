@@ -246,11 +246,14 @@ const refreshState = (dispatch, widgetDir = null, reset = false) => {
 };
 
 /** Drops the current term and pulls in a replacement against the live
- *  queue in one round trip. `record` should be true only when nothing else
- *  will record this term's read server-side — i.e. "Read more", where
- *  opening the term on the web page is itself the reveal. The script's own
- *  output is a ready-to-render state, same shape as READ_STATE_CMD, so it's
- *  dispatched directly.
+ *  queue in one round trip. `record` requests a read record for the term
+ *  being dropped — pass true only from "Read more"/click-through, where
+ *  opening the term on the web page is itself the reveal. advance-term.sh
+ *  still only actually records it if the term wasn't already revealed in
+ *  place (checked against its own local state, not this flag alone), so a
+ *  reveal that hasn't reached the UI yet can't be double-counted. The
+ *  script's own output is a ready-to-render state, same shape as
+ *  READ_STATE_CMD, so it's dispatched directly.
  *
  *  If `next` is already cached from the last read, dispatch it immediately
  *  so the UI advances without waiting on this round trip; the eventual
@@ -277,13 +280,18 @@ const revealInPlace = (termId, widgetDir, dispatch) => {
 };
 
 /** Open the current term on the Read page, then advance the widget locally.
- *  Opening the term is itself the reveal — record here unless the term was
- *  already revealed in place (avoid double-recording), and always open the
- *  web page pre-revealed since the read is accounted for either way. */
-const openAppAndRotate = (appBaseUrl, current, next, widgetDir, dispatch, revealed = false) => {
+ *  Opening the term is itself the reveal — always request a record, and
+ *  always open the web page pre-revealed since the read is accounted for
+ *  either way. Whether that record actually happens (vs. being a no-op
+ *  because the term was already revealed in place) is decided inside
+ *  advance-term.sh against its own local state, not here: this click can
+ *  fire right after a reveal click, before the widget has re-rendered with
+ *  that reveal, so a `revealed` flag captured at click time could be stale
+ *  and cause a double-count. */
+const openAppAndRotate = (appBaseUrl, current, next, widgetDir, dispatch) => {
   openApp(appBaseUrl, current, true);
   if (current?.id) {
-    advanceTerm(current.id, widgetDir, dispatch, !revealed, next);
+    advanceTerm(current.id, widgetDir, dispatch, true, next);
   }
 };
 
@@ -419,7 +427,7 @@ export const render = ({ output, error }, dispatch) => {
         className="term"
         onClick={() =>
           revealed
-            ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed)
+            ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)
             : revealInPlace(current.id, widgetDir, dispatch)
         }
       >
@@ -429,7 +437,7 @@ export const render = ({ output, error }, dispatch) => {
         className="def"
         onClick={() =>
           revealed
-            ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed)
+            ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)
             : revealInPlace(current.id, widgetDir, dispatch)
         }
       >
@@ -444,7 +452,7 @@ export const render = ({ output, error }, dispatch) => {
           title="Open this term on the Read page"
           onClick={(e) => {
             e.stopPropagation();
-            openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed);
+            openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch);
           }}
         >
           Read more
@@ -466,7 +474,7 @@ export const render = ({ output, error }, dispatch) => {
           className="hint"
           onClick={() =>
             revealed
-              ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch, revealed)
+              ? openAppAndRotate(appBaseUrl, current, next, widgetDir, dispatch)
               : revealInPlace(current.id, widgetDir, dispatch)
           }
         >
