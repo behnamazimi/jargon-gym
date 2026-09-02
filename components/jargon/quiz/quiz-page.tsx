@@ -4,12 +4,9 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   generateQuizAction,
-  previewQuizQueueAction,
   recordQuizAnswerAction,
   submitQuizResultsAction,
 } from "@/app/(private)/jargon/quiz/actions";
-import { AdminOnly, useIsAdmin, useShowAdminUi } from "@/components/admin-only";
-import { QueuePreview, type QueuePreviewItem } from "@/components/jargon/pick-reason-badges";
 import { QuizQuestionView } from "@/components/jargon/quiz/quiz-question";
 import { QuizResults } from "@/components/jargon/quiz/quiz-results";
 import {
@@ -44,8 +41,6 @@ import {
   saveQuizSession,
   type QuizSessionState,
 } from "@/lib/quiz/session-storage";
-
-const NOTHING_ELIGIBLE_MESSAGE = "No terms in this collection yet.";
 
 type QuizStep = "picker" | "generating" | "playing" | "results" | "error";
 
@@ -93,11 +88,6 @@ export function QuizPage({
   const [questionCountError, setQuestionCountError] = useState<string | null>(null);
   const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
-  const [queuePreview, setQueuePreview] = useState<QueuePreviewItem[]>([]);
-  const [previewLoading, setPreviewLoading] = useState(false);
-  const isAdmin = useIsAdmin();
-  const showAdminUi = useShowAdminUi();
-  const showQueuePreview = isAdmin && showAdminUi;
 
   const domainIds = useMemo(
     (): "all" | string[] => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
@@ -122,35 +112,6 @@ export function QuizPage({
     setQuestionCountInput(String(newMax));
     setQuestionCountError(null);
   }, [availableTermCount, selectedCollectionId]);
-
-  useEffect(() => {
-    if (
-      !showQueuePreview ||
-      step !== "picker" ||
-      availableTermCount === 0 ||
-      questionCountError !== null
-    ) {
-      setQueuePreview([]);
-      return;
-    }
-
-    let cancelled = false;
-    setPreviewLoading(true);
-
-    void previewQuizQueueAction({ domainIds, questionCount }).then((result) => {
-      if (cancelled) return;
-      setPreviewLoading(false);
-      if ("preview" in result && result.preview) {
-        setQueuePreview(result.preview);
-      } else {
-        setQueuePreview([]);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [domainIds, questionCount, step, availableTermCount, questionCountError, showQueuePreview]);
 
   useEffect(() => {
     if (step !== "playing" || questions.length === 0) return;
@@ -517,17 +478,6 @@ export function QuizPage({
                     )}
                   </FieldDescription>
                 </Field>
-
-                {showQueuePreview && availableTermCount > 0 && questionCountError === null ? (
-                  <AdminOnly>
-                    <QueuePreview
-                      items={queuePreview}
-                      context="quiz"
-                      loading={previewLoading}
-                      emptyMessage={NOTHING_ELIGIBLE_MESSAGE}
-                    />
-                  </AdminOnly>
-                ) : null}
 
                 {availableTermCount === 0 ? (
                   <Alert variant="destructive">

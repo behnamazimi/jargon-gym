@@ -38,3 +38,12 @@ in `supabase/functions/telegram-webhook` and
 `supabase/functions/telegram-send-due`; see
 [docs/supabase/telegram-setup.md](docs/supabase/telegram-setup.md) for setup
 and the manual test matrix.
+
+# macOS widget
+
+The widget's source lives in `widget/jargon-gym.widget/` (`index.jsx` +
+`read-state.sh` / `reveal-term.sh` / `advance-term.sh`), with its app-side
+counterparts in `lib/widget/` and `app/api/widget/`. Any change to the
+widget's logic must bump the version in [widget/version.json](widget/version.json) —
+`lib/widget/version.ts` and `scripts/widget-zip.sh` both read it as the
+single source of truth for the widget's release counter.

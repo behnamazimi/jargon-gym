@@ -33,49 +33,6 @@ export async function getQuizSetupData() {
 
 const NOTHING_ELIGIBLE_ERROR = "No terms in this collection yet.";
 
-/** Preview the next quiz batch without generating questions. */
-export async function previewQuizQueueAction(input: {
-  domainIds: string[] | "all";
-  questionCount: number;
-}) {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) {
-    return { error: "Log in to take a quiz." };
-  }
-
-  try {
-    const questionCount = Math.floor(input.questionCount);
-    if (!Number.isFinite(questionCount) || questionCount < 1) {
-      return { error: "Choose at least one question." };
-    }
-
-    if (questionCount > MAX_STUDY_TERMS) {
-      return { error: `Quizzes are limited to ${MAX_STUDY_TERMS} questions.` };
-    }
-
-    const terms = await fetchQuizTermPool(
-      auth.supabase,
-      auth.user.id,
-      input.domainIds,
-      questionCount,
-    );
-
-    if (terms.length === 0) {
-      return { error: NOTHING_ELIGIBLE_ERROR };
-    }
-
-    return {
-      preview: terms.map((term) => ({
-        id: term.id,
-        term: term.term,
-      })),
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't load queue preview.";
-    return { error: message };
-  }
-}
-
 export async function generateQuizAction(input: {
   domainIds: string[] | "all";
   questionCount: number;
