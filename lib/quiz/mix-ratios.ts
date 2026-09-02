@@ -1,11 +1,14 @@
 /**
- * Shared question-type mix ratios for both quiz generation paths
- * (generate.ts's AI prompt and generate-simple.ts's deterministic builder).
- * Keeping these in one place stops the two paths from drifting apart.
+ * Shared question-type mix cap for every quiz surface (generate.ts's AI
+ * prompt, generate-simple.ts's deterministic builder, and the Telegram bot's
+ * quiz session in lib/telegram/session-store.ts). Keeping this in one place
+ * stops the surfaces from drifting apart.
  */
 
-/** Max share of the quiz that can be example-judgment true/false questions. */
-export const EXAMPLE_JUDGMENT_MAX_SHARE = 0.5;
-
-/** Of the terms left after example-judgment, the share that become multiple_choice (the rest become plain true/false). */
-export const MCQ_SHARE_OF_REMAINDER = 0.6;
+/**
+ * Hard ceiling on the share of a quiz that can be true/false questions of
+ * either flavor — example-judgment ("Does this illustrate X?") plus plain
+ * true/false — combined. True/false is the easiest question shape to pass by
+ * guessing, so the rest (at least 60%) is multiple_choice.
+ */
+export const TRUE_FALSE_MAX_SHARE = 0.4;

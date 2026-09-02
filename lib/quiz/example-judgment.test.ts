@@ -21,12 +21,14 @@ describe("assignExampleJudgmentQuestions", () => {
   });
 
   it("sets correctAnswer true from example, false from anti_example", () => {
-    // 4 terms total so the ~50% cap has room for both eligible ones.
+    // 5 terms total (default cap = floor(5 * 0.4) = 2) so the default cap
+    // has room for both eligible ones.
     const terms = [
       { id: "only-example", example: "A real example.", antiExample: null },
       { id: "only-anti", example: null, antiExample: "A tempting but wrong example." },
       { id: "plain-1", example: null, antiExample: null },
       { id: "plain-2", example: null, antiExample: null },
+      { id: "plain-3", example: null, antiExample: null },
     ];
 
     const assignments = assignExampleJudgmentQuestions(terms);
@@ -41,7 +43,7 @@ describe("assignExampleJudgmentQuestions", () => {
     });
   });
 
-  it("caps assignment at roughly half of the input", () => {
+  it("defaults the cap to 40% of the input", () => {
     const terms = Array.from({ length: 10 }, (_, i) => ({
       id: `t${i}`,
       example: `Example ${i}`,
@@ -49,7 +51,18 @@ describe("assignExampleJudgmentQuestions", () => {
     }));
 
     const assignments = assignExampleJudgmentQuestions(terms);
-    expect(assignments.size).toBeLessThanOrEqual(5);
+    expect(assignments.size).toBeLessThanOrEqual(4);
+  });
+
+  it("honors an explicit maxCount override", () => {
+    const terms = Array.from({ length: 10 }, (_, i) => ({
+      id: `t${i}`,
+      example: `Example ${i}`,
+      antiExample: null,
+    }));
+
+    const assignments = assignExampleJudgmentQuestions(terms, 1);
+    expect(assignments.size).toBe(1);
   });
 });
 

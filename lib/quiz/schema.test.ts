@@ -46,6 +46,7 @@ describe("buildQuizGenerationSchema", () => {
             { id: "a", text: "T1" },
             { id: "b", text: "Distractor A" },
             { id: "c", text: "Distractor B" },
+            { id: "d", text: "Distractor C" },
           ],
           correctOptionIds: ["a"],
         },
@@ -54,6 +55,33 @@ describe("buildQuizGenerationSchema", () => {
     };
 
     expect(schema.safeParse(matching).success).toBe(true);
+  });
+
+  it("rejects a multiple_choice response with fewer than 4 options", () => {
+    // Regression guard: minimum option count was raised from 3 to 4 to make
+    // guessing harder — a 3-option response must now fail validation.
+    const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
+      { termId: "t1", type: "multiple_choice" },
+    ];
+    const schema = buildQuizGenerationSchema(plan);
+
+    const tooFewOptions = {
+      questions: [
+        {
+          type: "multiple_choice",
+          termId: "t1",
+          prompt: "Which one is t1?",
+          options: [
+            { id: "a", text: "T1" },
+            { id: "b", text: "Distractor A" },
+            { id: "c", text: "Distractor B" },
+          ],
+          correctOptionIds: ["a"],
+        },
+      ],
+    };
+
+    expect(schema.safeParse(tooFewOptions).success).toBe(false);
   });
 
   it("rejects a termId outside the plan", () => {
@@ -145,6 +173,7 @@ describe("buildQuizGenerationObjectSchema", () => {
             { id: "a", text: "T1" },
             { id: "b", text: "Distractor A" },
             { id: "c", text: "Distractor B" },
+            { id: "d", text: "Distractor C" },
           ],
           correctOptionIds: ["a"],
         },

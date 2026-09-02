@@ -41,7 +41,7 @@ function normalizeOneQuestion(question: RawQuizQuestion, termId: string): QuizQu
   if (question.type !== "multiple_choice") return null;
 
   const options = question.options?.filter((option) => option.id && option.text.trim()) ?? [];
-  if (options.length < 3) return null;
+  if (options.length < 4) return null;
 
   const correctOptionId = resolveMcqCorrectOptionId(options, question.correctOptionIds);
   if (!correctOptionId) return null;
