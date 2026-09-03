@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { aggregateMastery, computeTraceSnapshot, type KnownLabel } from "@/lib/trace";
+import { aggregateMastery, computeTraceSnapshot, daysBetween, type KnownLabel } from "@/lib/trace";
 import { fetchActiveTraceCandidates } from "@/lib/trace-queue";
 import { resolveReviewDomainIds } from "./known-state";
 
@@ -21,6 +21,18 @@ export type MasteryCollectionOption = {
  *  thresholds (§9), just relabeled for this view. */
 export type MasteryTier = "weak" | "medium" | "strong";
 
+/** The "learned in N days" reward line — first-touch-to-mastered span for
+ *  a term that has crossed the known threshold. Dates are ISO strings (not
+ *  Date objects) so the row can cross the server/client boundary the same
+ *  way the rest of MasteryTermRow does; the component formats them for
+ *  display in the viewer's own locale. */
+export type MasteryTermJourney = {
+  firstSeenAt: string;
+  masteredAt: string;
+  /** Rounded, floored at 1 — a same-day mastery still reads as "1 day". */
+  learnedInDays: number;
+};
+
 export type MasteryTermRow = {
   termId: string;
   term: string;
@@ -33,6 +45,9 @@ export type MasteryTermRow = {
   /** True only when the label is "known" (mastery ≥0.8 & n≥3) — the same
    *  bar the checkmark badge elsewhere in the app uses. */
   known: boolean;
+  /** Null unless known — and, as an edge case, if a mastered term somehow
+   *  has no review_events row to date its first touch from. */
+  journey: MasteryTermJourney | null;
 };
 
 export type MasteryOverviewData = {
@@ -47,6 +62,33 @@ export type MasteryOverviewData = {
    *  the searchable/filterable term list. */
   termRows: MasteryTermRow[];
 };
+
+/** First-touch timestamp per term, from the append-only `review_events`
+ *  log — batched once across every mastered term on the page rather than
+ *  queried per row. `TraceCandidate.createdAt` looks tempting here but is
+ *  the term's own creation date in `terms`, not when this user first saw
+ *  it, so it can't stand in for this. */
+async function fetchFirstSeenAtByTermId(
+  client: Client,
+  termIds: string[],
+): Promise<Map<string, Date>> {
+  if (termIds.length === 0) return new Map();
+
+  const { data, error } = await client
+    .from("review_events")
+    .select("term_id, created_at")
+    .in("term_id", termIds)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+
+  const firstSeenAtByTermId = new Map<string, Date>();
+  for (const row of data) {
+    if (!firstSeenAtByTermId.has(row.term_id)) {
+      firstSeenAtByTermId.set(row.term_id, new Date(row.created_at));
+    }
+  }
+  return firstSeenAtByTermId;
+}
 
 function tierFromLabel(label: KnownLabel): MasteryTier {
   if (label === "known") return "strong";
@@ -89,11 +131,30 @@ export async function loadMasteryOverview(
     for (const t of termData) termInfoById.set(t.id, { term: t.term, category: t.category });
   }
 
+  const masteredTermIds = candidates.filter((c) => c.everMasteredAt !== null).map((c) => c.termId);
+  const firstSeenAtByTermId = await fetchFirstSeenAtByTermId(client, masteredTermIds);
+
   const termRows: MasteryTermRow[] = candidates
     .flatMap((candidate) => {
       const info = termInfoById.get(candidate.termId);
       if (!info) return [];
       const snapshot = computeTraceSnapshot(candidate, now);
+
+      let journey: MasteryTermJourney | null = null;
+      if (candidate.everMasteredAt !== null) {
+        const firstSeenAt = firstSeenAtByTermId.get(candidate.termId);
+        if (firstSeenAt) {
+          journey = {
+            firstSeenAt: firstSeenAt.toISOString(),
+            masteredAt: candidate.everMasteredAt.toISOString(),
+            learnedInDays: Math.max(
+              1,
+              Math.round(daysBetween(firstSeenAt, candidate.everMasteredAt)),
+            ),
+          };
+        }
+      }
+
       return [
         {
           termId: candidate.termId,
@@ -104,6 +165,7 @@ export async function loadMasteryOverview(
           score: Math.round(snapshot.masteryAdjusted * 100),
           tier: tierFromLabel(snapshot.knownLabel),
           known: snapshot.knownLabel === "known",
+          journey,
         },
       ];
     })

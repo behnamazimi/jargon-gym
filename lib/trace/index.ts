@@ -38,6 +38,7 @@ export type {
   TraceState,
 } from "./types";
 export { rankReadQueue, rankReviewQueue, rankQuizQueue } from "./queue";
+export { daysBetween } from "./decay";
 export { deriveKnownLabel, confidence, blendMastery, masteryAdjusted } from "./mastery";
 export { STUDY_TIMEZONE, isSameLocalDay } from "./local-day";
 export {
