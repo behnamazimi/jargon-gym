@@ -169,16 +169,36 @@ type PausedCollectionSummary = {
   percentage: number;
 };
 
-/** Adds momentum (today) on top of the base `StatsSnapshot`.
- *
- *  No lifetime accuracy here: the old pass/fail counters that backed it
- *  were retired with the streak-based scoring signals (deprecated, no
- *  longer written by record_review_event). TRACE's live retrievability is
- *  the closer analogue and is what the Mastery page's headline numbers use
- *  instead (see lib/jargon/mastery.ts). */
+/** Plain lifetime volume — not accuracy. The old pass/fail counters that
+ *  backed a lifetime *accuracy* stat were retired with the streak-based
+ *  scoring signals (deprecated, no longer written by
+ *  record_review_event); TRACE's live retrievability is the closer
+ *  analogue for "how good am I doing" and is what the Mastery page's
+ *  headline numbers already use instead (see lib/jargon/mastery.ts). This
+ *  is a different, narrower thing: just a running count of exposure, no
+ *  right/wrong dimension at all. */
+export type LifetimeTotals = {
+  reviews: number;
+  quizAnswers: number;
+  termsRead: number;
+};
+
+function sumLifetimeTotals(candidates: TraceCandidate[]): LifetimeTotals {
+  return candidates.reduce(
+    (totals, c) => ({
+      reviews: totals.reviews + c.reviewRecallCount,
+      quizAnswers: totals.quizAnswers + c.quizTestCount,
+      termsRead: totals.termsRead + c.readCount,
+    }),
+    { reviews: 0, quizAnswers: 0, termsRead: 0 },
+  );
+}
+
+/** Adds momentum (today) on top of the base `StatsSnapshot`. */
 export type WebStatsSnapshot = StatsSnapshot & {
   today: { read: number; review: number; quiz: number };
   pausedCollections: PausedCollectionSummary[];
+  lifetimeTotals: LifetimeTotals;
 };
 
 function lastActivityAtForContext(candidate: TraceCandidate, context: PickContext): Date | null {
@@ -210,6 +230,7 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   ...EMPTY_STATS_SNAPSHOT,
   today: { read: 0, review: 0, quiz: 0 },
   pausedCollections: [],
+  lifetimeTotals: { reviews: 0, quizAnswers: 0, termsRead: 0 },
 };
 
 /** Web `/jargon/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
@@ -239,5 +260,6 @@ export async function fetchStatsSnapshot(
       quiz: countActivityToday(candidates, "quiz", now),
     },
     pausedCollections,
+    lifetimeTotals: sumLifetimeTotals(candidates),
   };
 }

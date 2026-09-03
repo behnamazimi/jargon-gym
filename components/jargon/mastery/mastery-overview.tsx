@@ -2,7 +2,11 @@
 
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
-import type { CollectionStatBreakdown, WebStatsSnapshot } from "@/lib/jargon/collection-stats";
+import type {
+  CollectionStatBreakdown,
+  LifetimeTotals,
+  WebStatsSnapshot,
+} from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import { cn } from "@/lib/utils";
@@ -59,6 +63,16 @@ function GradeDistributionRow({ summary }: { summary: GradeDistributionSummary }
   );
 }
 
+/** Volume, not accuracy — a running count of exposure, not a right/wrong
+ *  rate. One quiet line, not a headline. */
+function formatLifetimeTotals(totals: LifetimeTotals): string {
+  return [
+    `${totals.reviews.toLocaleString()} reviews`,
+    `${totals.quizAnswers.toLocaleString()} quiz answers`,
+    `${totals.termsRead.toLocaleString()} terms read`,
+  ].join(" · ");
+}
+
 type CollectionProgress = {
   id: string;
   name: string;
@@ -113,6 +127,11 @@ export function MasteryOverview({ stats, currentStrength, termsLearned }: Master
   const [gradeDistribution, setGradeDistribution] = useState<GradeDistributionSummary | null>(null);
   const [gradeDistributionFetched, setGradeDistributionFetched] = useState(false);
   const strengthPercent = Math.round(currentStrength * 100);
+  const hasLifetimeTotals =
+    stats.lifetimeTotals.reviews +
+      stats.lifetimeTotals.quizAnswers +
+      stats.lifetimeTotals.termsRead >
+    0;
 
   function handleExpandedChange(next: boolean) {
     setOpen(next);
@@ -162,6 +181,12 @@ export function MasteryOverview({ stats, currentStrength, termsLearned }: Master
               <RollupRow label="Quiz" unseen={stats.rollup.quiz.unseen} today={stats.today.quiz} />
               {gradeDistribution ? <GradeDistributionRow summary={gradeDistribution} /> : null}
             </div>
+          ) : null}
+
+          {hasLifetimeTotals ? (
+            <p className="m-0 text-xs text-base-content/50">
+              {formatLifetimeTotals(stats.lifetimeTotals)}
+            </p>
           ) : null}
 
           {stats.activeCollections.length > 0 ? (
