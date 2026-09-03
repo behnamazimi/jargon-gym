@@ -84,11 +84,19 @@ $$;
 
 -- ---------------------------------------------------------------------------
 -- Sample collections: two domains owned by admin, active in their queue.
--- No review_state is seeded for any term — every term starts plain
--- never-engaged, so read/review/quiz counts always agree with the
+-- No review_state is seeded directly for most terms — every term starts
+-- plain never-engaged, so read/review/quiz counts always agree with the
 -- review_events history behind them (a review_state row seeded directly,
 -- without matching events, previously made the debug page's per-term event
--- history look broken for terms nobody had actually touched).
+-- history look broken for terms nobody had actually touched). The three
+-- exceptions below (Idempotency, Leader Election, OKR) follow that same
+-- rule the hard way: their review_state rows are the exact aggregate the
+-- real record_review_event RPC would have produced from the review_events
+-- history seeded alongside them (recall/recognition stability, difficulty,
+-- and posterior were computed by actually replaying lib/trace's
+-- applyReadEvent/applyReviewGrade/applyQuizAnswer over that history, not
+-- guessed), so the Mastery page has one genuinely mastered term and two
+-- mid-progress ones to look at without any manual DB surgery.
 -- ---------------------------------------------------------------------------
 
 do $$
@@ -346,5 +354,110 @@ begin
   values
     (v_admin_id, v_domain_ds),
     (v_admin_id, v_domain_pm);
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Sample TRACE progress: one fully mastered term with a rich event log
+-- (Idempotency), and two "in progress" terms sitting in the learning band
+-- (Leader Election, OKR) — so the Mastery page isn't all-zero out of the
+-- box. Every review_events row and its matching review_state aggregate
+-- below is the real output of replaying lib/trace's pure functions
+-- (applyReadEvent/applyReviewGrade/applyQuizAnswer/computeTraceSnapshot)
+-- over a chosen history, not hand-picked numbers — see the comment above.
+-- All timestamps are relative to whenever this seed is applied.
+-- ---------------------------------------------------------------------------
+
+do $$
+declare
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_idempotency uuid := '33333333-3333-3333-3333-333333333303';
+  v_leader_election uuid := '33333333-3333-3333-3333-333333333305';
+  v_okr uuid := '44444444-4444-4444-4444-444444444405';
+begin
+  -- Idempotency — mastered today, first seen 14 days ago.
+  insert into public.review_events (
+    user_id, term_id, event, grade, question_type, retrievability_before,
+    recall_stability, recall_difficulty, quiz_knowledge_posterior, created_at
+  )
+  values
+    (v_admin_id, v_idempotency, 'read', null, null, null, null, null, null, now() - interval '14 days'),
+    (v_admin_id, v_idempotency, 'read', null, null, null, null, null, null, now() - interval '12 days'),
+    (v_admin_id, v_idempotency, 'reveal', null, null, null, null, null, null, now() - interval '10 days'),
+    (v_admin_id, v_idempotency, 'review_pass', 3, null, null, 3.7539920185492046, 4.51131249971455, null, now() - interval '10 days'),
+    (v_admin_id, v_idempotency, 'quiz_pass', null, 'multiple_choice', null, null, null, 0.7916666666666666, now() - interval '10 days'),
+    (v_admin_id, v_idempotency, 'reveal', null, null, null, null, null, null, now() - interval '7 days'),
+    (v_admin_id, v_idempotency, 'review_pass', 3, null, 0.9184470761105898, 13.01854740644538, 4.482566629207395, null, now() - interval '7 days'),
+    (v_admin_id, v_idempotency, 'quiz_pass', null, 'true_false', 0.9747634069400631, null, null, 0.8783454987834549, now() - interval '7 days'),
+    (v_admin_id, v_idempotency, 'reveal', null, null, null, null, null, null, now() - interval '4 days'),
+    (v_admin_id, v_idempotency, 'review_pass', 4, null, 0.9750347280784013, 38.577163290633266, 3.81681503258082, null, now() - interval '4 days'),
+    (v_admin_id, v_idempotency, 'quiz_pass', null, 'multiple_choice', 0.9770249874224383, null, null, 0.9648333098888733, now() - interval '4 days'),
+    (v_admin_id, v_idempotency, 'reveal', null, null, null, null, null, null, now() - interval '1 days'),
+    (v_admin_id, v_idempotency, 'review_pass', 4, null, 0.991433331305054, 62.56272343334723, 3.089697659741007, null, now() - interval '1 days'),
+    (v_admin_id, v_idempotency, 'quiz_pass', null, 'true_false', 0.9720772755213664, null, null, 0.9811776752170214, now()),
+    (v_admin_id, v_idempotency, 'quiz_pass', null, 'multiple_choice', 1, null, null, 0.9949770935373677, now()),
+    (v_admin_id, v_idempotency, 'quiz_pass', null, 'true_false', 1, null, null, 0.9973500600932171, now());
+
+  insert into public.review_state (
+    user_id, term_id, read_count, last_read_at,
+    recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
+    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at
+  )
+  values (
+    v_admin_id, v_idempotency, 2, now() - interval '12 days',
+    62.56272343334723, 3.089697659741007, 4, now() - interval '1 days',
+    0.9973500600932171, 6, now(), now()
+  );
+
+  -- Leader Election — three reviews and a quiz, sitting mid-progress (learning band).
+  insert into public.review_events (
+    user_id, term_id, event, grade, question_type, retrievability_before,
+    recall_stability, recall_difficulty, quiz_knowledge_posterior, created_at
+  )
+  values
+    (v_admin_id, v_leader_election, 'read', null, null, null, null, null, null, now() - interval '6 days'),
+    (v_admin_id, v_leader_election, 'reveal', null, null, null, null, null, null, now() - interval '6 days'),
+    (v_admin_id, v_leader_election, 'review_pass', 3, null, null, 3.5951299999999997, 4.714577829570867, null, now() - interval '6 days'),
+    (v_admin_id, v_leader_election, 'reveal', null, null, null, null, null, null, now() - interval '3 days'),
+    (v_admin_id, v_leader_election, 'review_pass', 3, null, 0.9151491804683596, 12.621541188961016, 4.681075550345074, null, now() - interval '3 days'),
+    (v_admin_id, v_leader_election, 'quiz_pass', null, 'multiple_choice', null, null, null, 0.7916666666666666, now() - interval '1 days'),
+    (v_admin_id, v_leader_election, 'reveal', null, null, null, null, null, null, now()),
+    (v_admin_id, v_leader_election, 'review_pass', 3, null, 0.9742696594428844, 20.32528090777927, 4.648357224453165, null, now());
+
+  insert into public.review_state (
+    user_id, term_id, read_count, last_read_at,
+    recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
+    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at
+  )
+  values (
+    v_admin_id, v_leader_election, 1, now() - interval '6 days',
+    20.32528090777927, 4.648357224453165, 3, now(),
+    0.7916666666666666, 1, now() - interval '1 days', null
+  );
+
+  -- OKR — two reviews and two quizzes, also mid-progress (learning band).
+  insert into public.review_events (
+    user_id, term_id, event, grade, question_type, retrievability_before,
+    recall_stability, recall_difficulty, quiz_knowledge_posterior, created_at
+  )
+  values
+    (v_admin_id, v_okr, 'read', null, null, null, null, null, null, now() - interval '5 days'),
+    (v_admin_id, v_okr, 'reveal', null, null, null, null, null, null, now() - interval '5 days'),
+    (v_admin_id, v_okr, 'review_pass', 3, null, null, 3.5951299999999997, 4.714577829570867, null, now() - interval '5 days'),
+    (v_admin_id, v_okr, 'quiz_pass', null, 'true_false', null, null, null, 0.6551724137931034, now() - interval '2 days'),
+    (v_admin_id, v_okr, 'reveal', null, null, null, null, null, null, now()),
+    (v_admin_id, v_okr, 'review_pass', 3, null, 0.8661533021184988, 18.223968588221556, 4.681075550345074, null, now()),
+    (v_admin_id, v_okr, 'quiz_pass', null, 'multiple_choice', 0.9798890429958392, null, null, 0.878345498783455, now());
+
+  insert into public.review_state (
+    user_id, term_id, read_count, last_read_at,
+    recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
+    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at
+  )
+  values (
+    v_admin_id, v_okr, 1, now() - interval '5 days',
+    18.223968588221556, 4.681075550345074, 2, now(),
+    0.878345498783455, 2, now(), null
+  );
 end;
 $$;
