@@ -52,7 +52,7 @@ def load_json(path, fallback):
 
 def normalize_state(s):
     s.setdefault("pool", [])
-    s.setdefault("knownCount", 0)
+    s.setdefault("termsLearnedCount", 0)
     s.setdefault("totalCount", 0)
     s.setdefault("latestWidgetVersion", None)
     s.setdefault("currentRevealed", False)
@@ -75,7 +75,7 @@ def current_payload(source_state):
         "widgetDir": str(widget_dir),
         "appBaseUrl": app_base,
         "totalCount": source_state.get("totalCount", 0),
-        "knownCount": source_state.get("knownCount", 0),
+        "termsLearnedCount": source_state.get("termsLearnedCount", 0),
         "widgetVersion": widget_version,
         "latestWidgetVersion": source_state.get("latestWidgetVersion"),
         "revealed": source_state.get("currentRevealed", False),
@@ -144,7 +144,7 @@ if result.get("term"):
 state["pool"] = pool
 # The new pool[0] (whatever it is) was never revealed in place.
 state["currentRevealed"] = False
-state["knownCount"] = result.get("knownCount", state["knownCount"])
+state["termsLearnedCount"] = result.get("termsLearnedCount", state["termsLearnedCount"])
 state["totalCount"] = result.get("totalCount", state["totalCount"])
 state["latestWidgetVersion"] = result.get("latestWidgetVersion", state["latestWidgetVersion"])
 

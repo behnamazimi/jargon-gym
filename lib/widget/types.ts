@@ -10,7 +10,7 @@ export type WidgetTerm = {
 export type WidgetStateResponse = {
   terms: WidgetTerm[]; // peeked batch, length 0–10, mixed Read order
   totalCount: number;
-  knownCount: number;
+  termsLearnedCount: number;
 };
 
 export type WidgetTokenRow = {

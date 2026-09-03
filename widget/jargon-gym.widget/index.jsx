@@ -6,7 +6,7 @@ const READ_STATE_CMD =
   'for d in "$HOME/Library/Application Support/Übersicht/widgets/"*/; do ' +
   '[ -f "${d}read-state.sh" ] && [ -f "${d}config.json" ] && exec "${d}read-state.sh"; ' +
   "done; " +
-  'echo \'{"error":"Widget scripts not found","current":null,"appBaseUrl":"http://localhost:3000","totalCount":0,"knownCount":0}\'; exit 1';
+  'echo \'{"error":"Widget scripts not found","current":null,"appBaseUrl":"http://localhost:3000","totalCount":0,"termsLearnedCount":0}\'; exit 1';
 
 export const command = READ_STATE_CMD;
 
@@ -195,7 +195,7 @@ function parseState(output) {
       widgetDir: data.widgetDir || null,
       appBaseUrl: data.appBaseUrl || "http://localhost:3000",
       totalCount: data.totalCount ?? 0,
-      knownCount: data.knownCount ?? 0,
+      termsLearnedCount: data.termsLearnedCount ?? 0,
       widgetVersion: data.widgetVersion || null,
       latestWidgetVersion: data.latestWidgetVersion || null,
       error: data.error || null,
@@ -207,7 +207,7 @@ function parseState(output) {
       widgetDir: null,
       appBaseUrl: "http://localhost:3000",
       totalCount: 0,
-      knownCount: 0,
+      termsLearnedCount: 0,
       widgetVersion: null,
       latestWidgetVersion: null,
       error: "Invalid widget output",
@@ -354,7 +354,7 @@ export const render = ({ output, error }, dispatch) => {
   }
 
   const {
-    knownCount,
+    termsLearnedCount,
     totalCount,
     current,
     next,
@@ -418,8 +418,8 @@ export const render = ({ output, error }, dispatch) => {
         dispatch={dispatch}
         widgetDir={widgetDir}
         trailing={
-          <span>
-            {knownCount}/{totalCount}
+          <span title="Terms learned">
+            {termsLearnedCount}/{totalCount}
           </span>
         }
       />

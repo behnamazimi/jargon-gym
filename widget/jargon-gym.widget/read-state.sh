@@ -54,7 +54,7 @@ def error_payload(message, app_base="http://localhost:3000"):
         "widgetDir": str(widget_dir),
         "appBaseUrl": app_base,
         "totalCount": 0,
-        "knownCount": 0,
+        "termsLearnedCount": 0,
     }
 
 try:
@@ -85,7 +85,7 @@ try:
 
     default_state = {
         "pool": [],
-        "knownCount": 0,
+        "termsLearnedCount": 0,
         "totalCount": 0,
         "latestWidgetVersion": None,
         "lastRefreshedAt": None,
@@ -93,7 +93,7 @@ try:
     }
     state = default_state if reset else load_json(state_path, default_state)
     state.setdefault("pool", [])
-    state.setdefault("knownCount", 0)
+    state.setdefault("termsLearnedCount", 0)
     state.setdefault("totalCount", 0)
     state.setdefault("latestWidgetVersion", None)
     state.setdefault("lastRefreshedAt", None)
@@ -111,7 +111,7 @@ try:
         if reset or not state["pool"] or is_stale:
             api_state = fetch_state()
             state["pool"] = api_state.get("terms") or []
-            state["knownCount"] = api_state.get("knownCount", 0)
+            state["termsLearnedCount"] = api_state.get("termsLearnedCount", 0)
             state["totalCount"] = api_state.get("totalCount", 0)
             state["latestWidgetVersion"] = api_state.get("latestWidgetVersion")
             state["lastRefreshedAt"] = time.time()
@@ -139,7 +139,7 @@ try:
         "widgetDir": str(widget_dir),
         "appBaseUrl": app_base,
         "totalCount": state.get("totalCount", 0),
-        "knownCount": state.get("knownCount", 0),
+        "termsLearnedCount": state.get("termsLearnedCount", 0),
         "widgetVersion": widget_version,
         "latestWidgetVersion": state.get("latestWidgetVersion"),
         "revealed": state.get("currentRevealed", False),

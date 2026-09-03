@@ -20,7 +20,7 @@ export async function fetchWidgetState(
   const { reviewDomainIds, collectionRows } = await resolveReviewDomainIdsForUser(client, userId);
 
   if (reviewDomainIds.length === 0) {
-    return { terms: [], totalCount: 0, knownCount: 0 };
+    return { terms: [], totalCount: 0, termsLearnedCount: 0 };
   }
 
   const scope = { domainIds: reviewDomainIds };
@@ -37,12 +37,12 @@ export async function fetchWidgetState(
 
   const activeSet = new Set(reviewDomainIds);
   let totalCount = 0;
-  let knownCount = 0;
+  let termsLearnedCount = 0;
   for (const row of collectionRows) {
     if (!activeSet.has(row.id)) continue;
     totalCount += row.termCount;
-    knownCount += row.knownCount;
+    termsLearnedCount += row.termsLearnedCount;
   }
 
-  return { terms, totalCount, knownCount };
+  return { terms, totalCount, termsLearnedCount };
 }

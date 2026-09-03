@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       term: state.terms[0] ?? null,
       totalCount: state.totalCount,
-      knownCount: state.knownCount,
+      termsLearnedCount: state.termsLearnedCount,
       latestWidgetVersion: LATEST_WIDGET_VERSION,
     });
   } catch (err) {
