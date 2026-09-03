@@ -358,14 +358,11 @@ end;
 $$;
 
 -- ---------------------------------------------------------------------------
--- Sample TRACE progress: two fully mastered terms with rich event logs
--- (Idempotency, Consensus — both in Distributed Systems, so that
--- collection's Mastery-page footnote clears the >=2-recent-masteries bar
--- and shows a learning-pace/ETA line, not just "N never read"), and two
--- "in progress" terms sitting in the learning band (Leader Election, OKR)
--- — so the Mastery page isn't all-zero out of the box. Every review_events
--- row and its matching review_state aggregate below is the real output of
--- replaying lib/trace's pure functions
+-- Sample TRACE progress: one fully mastered term with a rich event log
+-- (Idempotency), and two "in progress" terms sitting in the learning band
+-- (Leader Election, OKR) — so the Mastery page isn't all-zero out of the
+-- box. Every review_events row and its matching review_state aggregate
+-- below is the real output of replaying lib/trace's pure functions
 -- (applyReadEvent/applyReviewGrade/applyQuizAnswer/computeTraceSnapshot)
 -- over a chosen history, not hand-picked numbers — see the comment above.
 -- All timestamps are relative to whenever this seed is applied.
@@ -375,7 +372,6 @@ do $$
 declare
   v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
   v_idempotency uuid := '33333333-3333-3333-3333-333333333303';
-  v_consensus uuid := '33333333-3333-3333-3333-333333333302';
   v_leader_election uuid := '33333333-3333-3333-3333-333333333305';
   v_okr uuid := '44444444-4444-4444-4444-444444444405';
 begin
@@ -411,42 +407,6 @@ begin
     v_admin_id, v_idempotency, 2, now() - interval '12 days',
     62.56272343334723, 3.089697659741007, 4, now() - interval '1 days',
     0.9973500600932171, 6, now(), now()
-  );
-
-  -- Consensus — mastered 1 day ago, first seen 10 days ago. A second
-  -- recent mastery in Distributed Systems, so the pace/ETA footnote has
-  -- the 2 data points (lib/trace/pace.ts's PACE_MIN_SAMPLES) it needs.
-  insert into public.review_events (
-    user_id, term_id, event, grade, question_type, retrievability_before,
-    recall_stability, recall_difficulty, quiz_knowledge_posterior, created_at
-  )
-  values
-    (v_admin_id, v_consensus, 'read', null, null, null, null, null, null, now() - interval '10 days'),
-    (v_admin_id, v_consensus, 'read', null, null, null, null, null, null, now() - interval '9 days'),
-    (v_admin_id, v_consensus, 'reveal', null, null, null, null, null, null, now() - interval '8 days'),
-    (v_admin_id, v_consensus, 'review_pass', 3, null, null, 3.8110640202354955, 4.4382883788185215, null, now() - interval '8 days'),
-    (v_admin_id, v_consensus, 'quiz_pass', null, 'multiple_choice', null, null, null, 0.7916666666666666, now() - interval '8 days'),
-    (v_admin_id, v_consensus, 'reveal', null, null, null, null, null, null, now() - interval '6 days'),
-    (v_admin_id, v_consensus, 'review_pass', 3, null, 0.9449029379856737, 10.127704173328661, 4.4112512727403335, null, now() - interval '6 days'),
-    (v_admin_id, v_consensus, 'quiz_pass', null, 'true_false', 0.983032873806999, null, null, 0.8783454987834549, now() - interval '6 days'),
-    (v_admin_id, v_consensus, 'reveal', null, null, null, null, null, null, now() - interval '4 days'),
-    (v_admin_id, v_consensus, 'review_pass', 4, null, 0.9785291012003962, 28.062495724783314, 3.7389261699776855, null, now() - interval '4 days'),
-    (v_admin_id, v_consensus, 'quiz_pass', null, 'multiple_choice', 0.9845651194231636, null, null, 0.9648333098888733, now() - interval '4 days'),
-    (v_admin_id, v_consensus, 'reveal', null, null, null, null, null, null, now() - interval '2 days'),
-    (v_admin_id, v_consensus, 'review_pass', 4, null, 0.9921433820680631, 45.04440854564647, 3.0046293768612604, null, now() - interval '2 days'),
-    (v_admin_id, v_consensus, 'quiz_pass', null, 'true_false', 0.9858409582498475, null, null, 0.9811776752170214, now() - interval '2 days'),
-    (v_admin_id, v_consensus, 'quiz_pass', null, 'multiple_choice', 0.9929804357942229, null, null, 0.9949770935373677, now() - interval '1 days'),
-    (v_admin_id, v_consensus, 'quiz_pass', null, 'true_false', 0.9930710450240117, null, null, 0.9973500600932171, now());
-
-  insert into public.review_state (
-    user_id, term_id, read_count, last_read_at,
-    recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
-    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at
-  )
-  values (
-    v_admin_id, v_consensus, 2, now() - interval '9 days',
-    45.04440854564647, 3.0046293768612604, 4, now() - interval '2 days',
-    0.9973500600932171, 6, now(), now() - interval '1 days'
   );
 
   -- Leader Election — three reviews and a quiz, sitting mid-progress (learning band).
