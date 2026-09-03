@@ -9,6 +9,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 Use DaisyUI components.
 
+# Comments
+
+Write code that is self-explanatory. Add comments only when they are
+necessary. Any comment you add should be in plain language and not overkill.
+
 # Validating changes
 
 After finishing a change, run `pnpm check` (lint + format check + type-check + knip) and fix anything it flags before considering the change done.
