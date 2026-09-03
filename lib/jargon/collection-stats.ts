@@ -7,7 +7,13 @@ import {
   type PickContext,
   type TraceCandidate,
 } from "@/lib/trace-queue";
-import { isSameLocalDay, STUDY_TIMEZONE } from "@/lib/trace";
+import {
+  CALIBRATION_MIN_BUCKET_SAMPLE,
+  isSameLocalDay,
+  STUDY_TIMEZONE,
+  summarizeGradeDistribution,
+  type ReviewGrade,
+} from "@/lib/trace";
 import type { CollectionDomainRow } from "./collections";
 
 type Client = SupabaseClient<Database>;
@@ -194,11 +200,41 @@ function sumLifetimeTotals(candidates: TraceCandidate[]): LifetimeTotals {
   );
 }
 
+export type GradeDistributionSummary = {
+  counts: Record<ReviewGrade, number>;
+  total: number;
+};
+
+/** Grade-usage breakdown for the Mastery overview — how often each FSRS-5
+ *  grade gets used across this user's own review_pass/fail history,
+ *  purely descriptive (no "you're too generous" framing). Fetched
+ *  up front alongside the rest of the snapshot (not lazily on expand) so
+ *  the overview never re-flows once the panel opens. A narrower sibling
+ *  of the debug page's getCalibrationSummaryAction: same underlying
+ *  summarizeGradeDistribution, but only the counts a user should see, not
+ *  the debug-only calibration/attention fields. Null below
+ *  CALIBRATION_MIN_BUCKET_SAMPLE total gradings — same "not enough data
+ *  yet" bar the debug page's own buckets use. */
+async function fetchGradeDistribution(client: Client): Promise<GradeDistributionSummary | null> {
+  const { data, error } = await client
+    .from("review_events")
+    .select("grade")
+    .in("event", ["review_pass", "review_fail"]);
+  if (error) throw error;
+
+  const counts = summarizeGradeDistribution(data);
+  const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
+  if (total < CALIBRATION_MIN_BUCKET_SAMPLE) return null;
+
+  return { counts, total };
+}
+
 /** Adds momentum (today) on top of the base `StatsSnapshot`. */
 export type WebStatsSnapshot = StatsSnapshot & {
   today: { read: number; review: number; quiz: number };
   pausedCollections: PausedCollectionSummary[];
   lifetimeTotals: LifetimeTotals;
+  gradeDistribution: GradeDistributionSummary | null;
 };
 
 function lastActivityAtForContext(candidate: TraceCandidate, context: PickContext): Date | null {
@@ -231,6 +267,7 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   today: { read: 0, review: 0, quiz: 0 },
   pausedCollections: [],
   lifetimeTotals: { reviews: 0, quizAnswers: 0, termsRead: 0 },
+  gradeDistribution: null,
 };
 
 /** Web `/jargon/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
@@ -242,7 +279,10 @@ export async function fetchStatsSnapshot(
   const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
   if (collectionRows.length === 0) return EMPTY_WEB_STATS_SNAPSHOT;
 
-  const candidates = await fetchActiveTraceCandidates(client, userId);
+  const [candidates, gradeDistribution] = await Promise.all([
+    fetchActiveTraceCandidates(client, userId),
+    fetchGradeDistribution(client),
+  ]);
 
   const base = buildStatsSnapshot(collectionRows, reviewDomainIds, candidates);
   const now = new Date();
@@ -261,5 +301,6 @@ export async function fetchStatsSnapshot(
     },
     pausedCollections,
     lifetimeTotals: sumLifetimeTotals(candidates),
+    gradeDistribution,
   };
 }

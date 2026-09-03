@@ -4,16 +4,13 @@ import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type {
   CollectionStatBreakdown,
+  GradeDistributionSummary,
   LifetimeTotals,
   WebStatsSnapshot,
 } from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import { cn } from "@/lib/utils";
-import {
-  getGradeDistributionAction,
-  type GradeDistributionSummary,
-} from "@/app/(private)/jargon/mastery/actions";
 
 /** TRACE has no backlog to clear — a term with no history just ranks first
  *  next time this tier comes up. This is a snapshot of current exposure,
@@ -124,8 +121,6 @@ type MasteryOverviewProps = {
  *  what's stale/struggling/waiting and the per-collection breakdown. */
 export function MasteryOverview({ stats, currentStrength, termsLearned }: MasteryOverviewProps) {
   const [open, setOpen] = useState(false);
-  const [gradeDistribution, setGradeDistribution] = useState<GradeDistributionSummary | null>(null);
-  const [gradeDistributionFetched, setGradeDistributionFetched] = useState(false);
   const strengthPercent = Math.round(currentStrength * 100);
   const hasLifetimeTotals =
     stats.lifetimeTotals.reviews +
@@ -133,18 +128,10 @@ export function MasteryOverview({ stats, currentStrength, termsLearned }: Master
       stats.lifetimeTotals.termsRead >
     0;
 
-  function handleExpandedChange(next: boolean) {
-    setOpen(next);
-    if (next && !gradeDistributionFetched) {
-      setGradeDistributionFetched(true);
-      void getGradeDistributionAction().then(setGradeDistribution);
-    }
-  }
-
   return (
     <Collapsible
       isExpanded={open}
-      onExpandedChange={handleExpandedChange}
+      onExpandedChange={setOpen}
       className="shadow-surface rounded-2xl bg-base-100 p-4"
     >
       <CollapsibleTrigger className="flex w-full cursor-pointer items-baseline justify-between gap-3 rounded-lg border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -179,7 +166,9 @@ export function MasteryOverview({ stats, currentStrength, termsLearned }: Master
                 today={stats.today.review}
               />
               <RollupRow label="Quiz" unseen={stats.rollup.quiz.unseen} today={stats.today.quiz} />
-              {gradeDistribution ? <GradeDistributionRow summary={gradeDistribution} /> : null}
+              {stats.gradeDistribution ? (
+                <GradeDistributionRow summary={stats.gradeDistribution} />
+              ) : null}
             </div>
           ) : null}
 
