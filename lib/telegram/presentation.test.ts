@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TermCard } from "@/lib/jargon/term-card";
+import { GOOD } from "@/lib/trace";
 import {
   buildReadRevealKeyboard,
   buildTrueFalseKeyboard,
@@ -66,10 +67,10 @@ describe("presentation HTML escaping", () => {
   });
 
   it("produces well-formed output for formatReviewRated", () => {
-    const message = formatReviewRated(dangerousTerm, 0, 1, true);
+    const message = formatReviewRated(dangerousTerm, 0, 1, GOOD);
     expect(message).not.toContain("<script>");
     expect(message).toContain("&lt;script&gt;");
-    expect(message).toContain("Got it");
+    expect(message).toContain("Good");
   });
 
   it("does not leak the definition in the masked read prompt", () => {

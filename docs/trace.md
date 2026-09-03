@@ -294,12 +294,6 @@ other:
   recompute from a snapshot — see [Terms learned](#terms-learned-the-one-number-thats-actually-stored).
   This is the one intentional exception, stored as `ever_mastered_at` on
   `review_state`.
-- **Telegram's Review keyboard is still Got it / Missed it.** The web app's
-  Review screen has real 4-grade buttons (Again/Hard/Good/Easy). Telegram's
-  inline keyboard hasn't been rebuilt to match yet, so its two-button
-  yes/no answer is mapped onto Good/Again as a stopgap
-  (`lib/telegram/review-flow.ts`) — it exercises the same FSRS-5 math, just
-  without Hard or Easy as options from that surface.
 - **The old known/unknown pool toggle is gone entirely,** not repurposed.
   There's no manual "mark as known" action anywhere in the app anymore, on
   web or Telegram — the label described above is the only thing that plays

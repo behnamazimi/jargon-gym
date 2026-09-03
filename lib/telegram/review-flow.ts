@@ -3,7 +3,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
 import { applyReviewGrade, recordReveal } from "@/lib/jargon/review-outcome";
 import { getMaxStudyCount } from "@/lib/study";
-import { AGAIN, GOOD } from "@/lib/trace";
+import type { ReviewGrade } from "@/lib/trace";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";
 import { NO_REVIEW_TERMS_MESSAGE, REVIEW_REVEAL_FAILED_SUFFIX } from "./copy";
@@ -83,7 +83,7 @@ async function buildReviewSummaryActions(
   const session = await getReviewSession(client, chatId);
   if (!session) return [];
 
-  const message = formatReviewSessionSummary(session.terms.length, session.positiveCount);
+  const message = formatReviewSessionSummary(session.terms.length, session.retainedCount);
   await deleteReviewSession(client, chatId);
   return [send(chatId, message)];
 }
@@ -442,13 +442,14 @@ export async function handleReviewReveal(
   ];
 }
 
-/** "Got it / Missed it": records rating, advances. */
+/** "Again / Hard / Good / Easy": records the FSRS-5 grade, advances —
+ *  the same four grades and update the web Review page's buttons record. */
 export async function handleReviewRate(
   client: Client,
   chatId: number,
   messageId: number,
   sessionIndex: number,
-  known: boolean,
+  grade: ReviewGrade,
 ): Promise<TelegramAction[]> {
   const session = await getReviewSession(client, chatId);
   if (!session) {
@@ -462,23 +463,19 @@ export async function handleReviewRate(
   const currentTerm = await getCurrentReviewTerm(client, session);
   if (!currentTerm) return [];
 
-  // Stopgap: Telegram's binary Got-it/Missed-it keyboard maps onto two of
-  // FSRS-5's four grades until it gets its own 4-button keyboard (flagged
-  // fast-follow) — this keeps today's UX unchanged while still running
-  // through the real FSRS-5 update.
   await applyReviewGrade(client, session.userId, {
     termId: currentTerm.id,
-    grade: known ? GOOD : AGAIN,
+    grade,
     mode: "admin",
   });
 
-  const updatedSession = await recordReviewRating(client, chatId, session, known);
+  const updatedSession = await recordReviewRating(client, chatId, session, grade);
 
   const actions: TelegramAction[] = [
     edit(
       chatId,
       messageId,
-      formatReviewRated(currentTerm, sessionIndex, session.terms.length, known),
+      formatReviewRated(currentTerm, sessionIndex, session.terms.length, grade),
     ),
   ];
 

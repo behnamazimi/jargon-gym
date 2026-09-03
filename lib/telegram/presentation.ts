@@ -1,5 +1,6 @@
 import { escapeText } from "entities";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
+import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import type { InlineKeyboardMarkup } from "./actions";
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;
@@ -234,20 +235,27 @@ export function formatReviewRevealed(
   return `${header}\n\n${buildTermDetails(term)}`;
 }
 
-/** Revealed card + the recorded rating, shown briefly before advancing.
- *  Wording is neutral regardless of which pool the term came from, since a
- *  mixed session blends known and unknown terms — the flip direction still
- *  applies correctly under the hood via that term's own origin status. */
+/** Same four FSRS-5 grades the web Review page's buttons record — see
+ *  lib/trace's ReviewGrade. Telegram's keyboard used to offer only a
+ *  binary Got it / Missed it choice mapped onto Good/Again; this is the
+ *  real thing. */
+const REVIEW_GRADE_LABELS: Record<ReviewGrade, string> = {
+  [AGAIN]: "Again",
+  [HARD]: "Hard",
+  [GOOD]: "Good",
+  [EASY]: "Easy",
+};
+
+/** Revealed card + the recorded grade, shown briefly before advancing. */
 export function formatReviewRated(
   term: TermCard,
   currentIndex: number,
   totalTerms: number,
-  known: boolean,
+  grade: ReviewGrade,
 ): string {
   const message = formatReviewRevealed(term, currentIndex, totalTerms);
-  const label = known ? "Got it" : "Missed it";
-  const icon = known ? "✅" : "❌";
-  return `${message}\n\n<b>Your answer:</b> ${icon} ${label}`;
+  const icon = grade >= GOOD ? "✅" : "❌";
+  return `${message}\n\n<b>Your answer:</b> ${icon} ${REVIEW_GRADE_LABELS[grade]}`;
 }
 
 export function buildReviewRevealKeyboard(sessionIndex: number): InlineKeyboardMarkup {
@@ -257,23 +265,28 @@ export function buildReviewRevealKeyboard(sessionIndex: number): InlineKeyboardM
 }
 
 export function buildReviewRateKeyboard(sessionIndex: number): InlineKeyboardMarkup {
+  const button = (grade: ReviewGrade) => ({
+    text: REVIEW_GRADE_LABELS[grade],
+    callback_data: `review:rate:${sessionIndex}:${grade}`,
+  });
   return {
     inline_keyboard: [
-      [
-        { text: "Got it", callback_data: `review:rate:${sessionIndex}:yes` },
-        { text: "Missed it", callback_data: `review:rate:${sessionIndex}:no` },
-      ],
+      [button(AGAIN), button(HARD)],
+      [button(GOOD), button(EASY)],
     ],
   };
 }
 
-export function formatReviewSessionSummary(total: number, positiveCount: number): string {
-  const negativeCount = total - positiveCount;
-  const percentage = total > 0 ? Math.round((positiveCount / total) * 100) : 0;
+/** `retainedCount` mirrors the web summary's definition: grades of Good or
+ *  Easy count as retained, Again/Hard as missed (lib/trace's ReviewGrade,
+ *  GOOD threshold). */
+export function formatReviewSessionSummary(total: number, retainedCount: number): string {
+  const negativeCount = total - retainedCount;
+  const percentage = total > 0 ? Math.round((retainedCount / total) * 100) : 0;
 
   let message = `📊 <b>Review complete</b>\n\n`;
   message += `Cards reviewed: ${total}\n`;
-  message += `Got it: ${positiveCount}\n`;
+  message += `Got it: ${retainedCount}\n`;
   message += `Missed it: ${negativeCount}\n\n`;
 
   if (percentage === 100) message += "🎉 You got every one — great work!";

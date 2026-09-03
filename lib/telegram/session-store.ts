@@ -8,8 +8,8 @@ import {
 import { fetchQuizTermPool, fetchStudyTermPool, getMaxStudyCount } from "@/lib/study";
 import { getPoolStatsForUser, fetchTermCardForUser } from "@/lib/trace-queue";
 import { fetchTraceCandidatesForUser } from "@/lib/trace-queue/repository";
-import { computeTraceSnapshot } from "@/lib/trace";
-import type { KnownLabel } from "@/lib/trace";
+import { computeTraceSnapshot, GOOD } from "@/lib/trace";
+import type { KnownLabel, ReviewGrade } from "@/lib/trace";
 import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
 
 type Client = SupabaseClient<Database>;
@@ -315,7 +315,9 @@ export type TelegramReviewSession = {
   terms: ReviewSessionTerm[];
   currentIndex: number;
   revealed: boolean;
-  positiveCount: number;
+  /** Grades of Good or Easy (lib/trace's GOOD threshold) — same "retained"
+   *  definition the web Review summary uses. */
+  retainedCount: number;
   startedAt: number;
 };
 
@@ -324,7 +326,7 @@ type StoredReviewSession = {
   terms: ReviewSessionTerm[];
   currentIndex: number;
   revealed: boolean;
-  positiveCount: number;
+  retainedCount: number;
   startedAt: number;
 };
 
@@ -356,7 +358,7 @@ function isStoredReviewSession(value: unknown): value is StoredReviewSession {
     session.terms.every(isReviewSessionTerm) &&
     typeof session.currentIndex === "number" &&
     typeof session.revealed === "boolean" &&
-    typeof session.positiveCount === "number" &&
+    typeof session.retainedCount === "number" &&
     typeof session.startedAt === "number"
   );
 }
@@ -480,7 +482,7 @@ export async function createReviewSession(
     terms,
     currentIndex: 0,
     revealed: false,
-    positiveCount: 0,
+    retainedCount: 0,
     startedAt: Date.now(),
   };
 
@@ -490,7 +492,7 @@ export async function createReviewSession(
       terms: session.terms,
       currentIndex: session.currentIndex,
       revealed: session.revealed,
-      positiveCount: session.positiveCount,
+      retainedCount: session.retainedCount,
       startedAt: session.startedAt,
     });
   }
@@ -522,7 +524,7 @@ export async function getReviewSession(
     terms: data.review_session.terms,
     currentIndex: data.review_session.currentIndex,
     revealed: data.review_session.revealed,
-    positiveCount: data.review_session.positiveCount,
+    retainedCount: data.review_session.retainedCount,
     startedAt: data.review_session.startedAt,
   };
 }
@@ -539,7 +541,7 @@ export async function markReviewRevealed(
     terms: updated.terms,
     currentIndex: updated.currentIndex,
     revealed: updated.revealed,
-    positiveCount: updated.positiveCount,
+    retainedCount: updated.retainedCount,
     startedAt: updated.startedAt,
   });
 
@@ -550,13 +552,13 @@ export async function recordReviewRating(
   client: Client,
   chatId: number,
   session: TelegramReviewSession,
-  known: boolean,
+  grade: ReviewGrade,
 ): Promise<TelegramReviewSession> {
   const updated: TelegramReviewSession = {
     ...session,
     currentIndex: session.currentIndex + 1,
     revealed: false,
-    positiveCount: known ? session.positiveCount + 1 : session.positiveCount,
+    retainedCount: grade >= GOOD ? session.retainedCount + 1 : session.retainedCount,
   };
 
   await saveStoredReviewSession(client, chatId, {
@@ -564,7 +566,7 @@ export async function recordReviewRating(
     terms: updated.terms,
     currentIndex: updated.currentIndex,
     revealed: updated.revealed,
-    positiveCount: updated.positiveCount,
+    retainedCount: updated.retainedCount,
     startedAt: updated.startedAt,
   });
 

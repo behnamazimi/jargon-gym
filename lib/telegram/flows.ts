@@ -7,6 +7,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { resolveUserIdByChatId } from "@/lib/jargon/term-delivery";
+import { AGAIN, EASY, type ReviewGrade } from "@/lib/trace";
 import type { TelegramAction } from "./actions";
 import {
   handleStart,
@@ -51,6 +52,11 @@ export type NormalizedTelegramUpdate = {
 
 export { handleSendDue };
 
+/** ReviewGrade's runtime domain is the contiguous integers AGAIN..EASY. */
+function isReviewGrade(value: number): value is ReviewGrade {
+  return Number.isInteger(value) && value >= AGAIN && value <= EASY;
+}
+
 async function handleCallback(
   client: Client,
   callback: NonNullable<NormalizedTelegramUpdate["callbackQuery"]>,
@@ -91,12 +97,11 @@ async function handleCallback(
 
   if (data.startsWith("review:rate:")) {
     const parts = data.slice("review:rate:".length).split(":");
-    if (parts.length === 2 && (parts[1] === "yes" || parts[1] === "no")) {
+    if (parts.length === 2) {
       const sessionIndex = parseInt(parts[0], 10);
-      if (!isNaN(sessionIndex)) {
-        actions.push(
-          ...(await handleReviewRate(client, chatId, messageId, sessionIndex, parts[1] === "yes")),
-        );
+      const grade = parseInt(parts[1], 10);
+      if (!isNaN(sessionIndex) && isReviewGrade(grade)) {
+        actions.push(...(await handleReviewRate(client, chatId, messageId, sessionIndex, grade)));
       }
     }
     return actions;
