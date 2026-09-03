@@ -39,7 +39,6 @@ export type {
 } from "./types";
 export { rankReadQueue, rankReviewQueue, rankQuizQueue } from "./queue";
 export { daysBetween } from "./decay";
-export { computeRecentPacePerWeek, estimateWeeksRemaining } from "./pace";
 export { deriveKnownLabel, confidence, blendMastery, masteryAdjusted } from "./mastery";
 export { STUDY_TIMEZONE, isSameLocalDay } from "./local-day";
 export {
