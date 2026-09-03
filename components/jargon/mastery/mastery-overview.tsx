@@ -10,7 +10,7 @@ import type {
 } from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
-import { cn } from "@/lib/utils";
+import { cn, pluralize } from "@/lib/utils";
 
 /** TRACE has no backlog to clear — a term with no history just ranks first
  *  next time this tier comes up. This is a snapshot of current exposure,
@@ -19,8 +19,16 @@ function formatUnseenLine(unseen: number): string {
   return unseen === 0 ? "Everything started" : `${unseen} never started`;
 }
 
+/** "9 never read · ~3/week → ~5 weeks left" — the pace clause is omitted
+ *  entirely when it can't be estimated (see lib/trace/pace.ts), rather
+ *  than guessing at a rate or showing a divide-by-zero ETA. */
 function formatUnseenFootnote(collection: CollectionStatBreakdown): string {
-  return `${collection.unseenCount} never read`;
+  const base = `${collection.unseenCount} never read`;
+  if (collection.recentPacePerWeek === null || collection.weeksRemaining === null) return base;
+
+  const perWeek = Math.round(collection.recentPacePerWeek);
+  const weeksLeft = pluralize(collection.weeksRemaining, "week");
+  return `${base} · ~${perWeek}/week → ~${weeksLeft} left`;
 }
 
 function RollupRow({ label, unseen, today }: { label: string; unseen: number; today: number }) {

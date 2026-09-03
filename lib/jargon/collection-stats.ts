@@ -9,6 +9,8 @@ import {
 } from "@/lib/trace-queue";
 import {
   CALIBRATION_MIN_BUCKET_SAMPLE,
+  computeRecentPacePerWeek,
+  estimateWeeksRemaining,
   isSameLocalDay,
   STUDY_TIMEZONE,
   summarizeGradeDistribution,
@@ -76,6 +78,11 @@ export type CollectionStatBreakdown = {
   totalCount: number;
   percentage: number;
   unseenCount: number;
+  /** Recent-pace projection — both null when there isn't enough recent
+   *  mastery history to estimate a rate, or the collection is already
+   *  fully learned (see lib/trace/pace.ts). Always both-or-neither. */
+  recentPacePerWeek: number | null;
+  weeksRemaining: number | null;
 };
 
 /** The web Mastery page's overview: a rollup across active collections
@@ -124,6 +131,7 @@ function buildStatsSnapshot(
   collectionRows: CollectionDomainRow[],
   reviewDomainIds: string[],
   candidates: TraceCandidate[],
+  now: Date,
 ): StatsSnapshot {
   const activeSet = new Set(reviewDomainIds);
   const activeRows = collectionRows.filter((row) => activeSet.has(row.id));
@@ -139,6 +147,15 @@ function buildStatsSnapshot(
     const totalCount = row.termCount;
     const termsLearnedCount = row.termsLearnedCount;
     const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
+    const domainCandidates = byDomain.get(row.id) ?? [];
+    const remaining = totalCount - termsLearnedCount;
+    const recentPacePerWeek =
+      remaining > 0
+        ? computeRecentPacePerWeek(
+            domainCandidates.map((c) => c.everMasteredAt),
+            now,
+          )
+        : null;
 
     return {
       id: row.id,
@@ -146,7 +163,9 @@ function buildStatsSnapshot(
       termsLearnedCount,
       totalCount,
       percentage,
-      unseenCount: countUnseen(byDomain.get(row.id) ?? [], "read"),
+      unseenCount: countUnseen(domainCandidates, "read"),
+      recentPacePerWeek,
+      weeksRemaining: estimateWeeksRemaining(remaining, recentPacePerWeek),
     };
   });
 
@@ -284,8 +303,8 @@ export async function fetchStatsSnapshot(
     fetchGradeDistribution(client),
   ]);
 
-  const base = buildStatsSnapshot(collectionRows, reviewDomainIds, candidates);
   const now = new Date();
+  const base = buildStatsSnapshot(collectionRows, reviewDomainIds, candidates, now);
   const activeSet = new Set(reviewDomainIds);
   const pausedCollections = collectionRows
     .filter((row) => !activeSet.has(row.id))
