@@ -31,7 +31,7 @@ function RollupRow({ label, unseen, today }: { label: string; unseen: number; to
 type CollectionProgress = {
   id: string;
   name: string;
-  knownCount: number;
+  termsLearnedCount: number;
   totalCount: number;
   percentage: number;
 };
@@ -52,14 +52,14 @@ function CollectionRow({
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="truncate font-medium text-base-content">{collection.name}</span>
         <span className="shrink-0 tabular-nums text-base-content/60">
-          {collection.knownCount}/{collection.totalCount} known
+          {collection.termsLearnedCount}/{collection.totalCount} learned
         </span>
       </div>
       <progress
         className="progress progress-primary h-1.5 w-full"
         value={collection.percentage}
         max={100}
-        aria-label={`${collection.name} known ${collection.percentage}%`}
+        aria-label={`${collection.name} learned ${collection.percentage}%`}
       />
       {footnote ? <p className="text-xs text-base-content/50">{footnote}</p> : null}
     </div>

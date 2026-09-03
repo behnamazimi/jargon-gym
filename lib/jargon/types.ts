@@ -43,6 +43,7 @@ export type Domain = {
   isActiveForReview: boolean;
   termCount: number;
   knownCount: number;
+  termsLearnedCount: number;
 };
 
 export type JargonPageData = {
