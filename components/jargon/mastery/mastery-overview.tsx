@@ -4,7 +4,12 @@ import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type { CollectionStatBreakdown, WebStatsSnapshot } from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import { cn } from "@/lib/utils";
+import {
+  getGradeDistributionAction,
+  type GradeDistributionSummary,
+} from "@/app/(private)/jargon/mastery/actions";
 
 /** TRACE has no backlog to clear — a term with no history just ranks first
  *  next time this tier comes up. This is a snapshot of current exposure,
@@ -24,6 +29,32 @@ function RollupRow({ label, unseen, today }: { label: string; unseen: number; to
       <span className="text-base-content/60">
         {formatUnseenLine(unseen)} · {today} today
       </span>
+    </div>
+  );
+}
+
+const GRADE_LABEL: Record<ReviewGrade, string> = {
+  [AGAIN]: "Again",
+  [HARD]: "Hard",
+  [GOOD]: "Good",
+  [EASY]: "Easy",
+};
+const GRADE_ORDER: ReviewGrade[] = [AGAIN, HARD, GOOD, EASY];
+
+/** Plain distribution, no verdict — what's "too generous" is subjective,
+ *  this just shows the grading habit itself. */
+function formatGradeDistribution(summary: GradeDistributionSummary): string {
+  return GRADE_ORDER.map((grade) => {
+    const percent = Math.round((summary.counts[grade] / summary.total) * 100);
+    return `${GRADE_LABEL[grade]} ${percent}%`;
+  }).join(" · ");
+}
+
+function GradeDistributionRow({ summary }: { summary: GradeDistributionSummary }) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-2 text-sm">
+      <span className="font-medium text-base-content">Grading</span>
+      <span className="text-base-content/60">{formatGradeDistribution(summary)}</span>
     </div>
   );
 }
@@ -79,12 +110,22 @@ type MasteryOverviewProps = {
  *  what's stale/struggling/waiting and the per-collection breakdown. */
 export function MasteryOverview({ stats, currentStrength, termsLearned }: MasteryOverviewProps) {
   const [open, setOpen] = useState(false);
+  const [gradeDistribution, setGradeDistribution] = useState<GradeDistributionSummary | null>(null);
+  const [gradeDistributionFetched, setGradeDistributionFetched] = useState(false);
   const strengthPercent = Math.round(currentStrength * 100);
+
+  function handleExpandedChange(next: boolean) {
+    setOpen(next);
+    if (next && !gradeDistributionFetched) {
+      setGradeDistributionFetched(true);
+      void getGradeDistributionAction().then(setGradeDistribution);
+    }
+  }
 
   return (
     <Collapsible
       isExpanded={open}
-      onExpandedChange={setOpen}
+      onExpandedChange={handleExpandedChange}
       className="shadow-surface rounded-2xl bg-base-100 p-4"
     >
       <CollapsibleTrigger className="flex w-full cursor-pointer items-baseline justify-between gap-3 rounded-lg border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -119,6 +160,7 @@ export function MasteryOverview({ stats, currentStrength, termsLearned }: Master
                 today={stats.today.review}
               />
               <RollupRow label="Quiz" unseen={stats.rollup.quiz.unseen} today={stats.today.quiz} />
+              {gradeDistribution ? <GradeDistributionRow summary={gradeDistribution} /> : null}
             </div>
           ) : null}
 
