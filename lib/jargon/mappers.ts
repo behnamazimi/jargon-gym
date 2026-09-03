@@ -9,6 +9,7 @@ type MapDomainOptions = {
   isActiveForReview: boolean;
   termCount?: number;
   knownCount?: number;
+  termsLearnedCount?: number;
 };
 
 export function mapDomain(
@@ -25,6 +26,7 @@ export function mapDomain(
     isActiveForReview: options.isActiveForReview,
     termCount: options.termCount ?? 0,
     knownCount: options.knownCount ?? 0,
+    termsLearnedCount: options.termsLearnedCount ?? 0,
   };
 }
 

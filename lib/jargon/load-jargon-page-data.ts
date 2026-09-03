@@ -47,6 +47,7 @@ export async function loadJargonPageData(
         isActiveForReview: activeSet.has(row.id),
         termCount: row.termCount,
         knownCount: row.knownCount,
+        termsLearnedCount: row.termsLearnedCount,
       }),
     );
 
@@ -60,6 +61,7 @@ export async function loadJargonPageData(
       isActiveForReview: activeSet.has(selectedRow.id),
       termCount: selectedRow.termCount,
       knownCount: selectedRow.knownCount,
+      termsLearnedCount: selectedRow.termsLearnedCount,
     });
 
     // Known/unknown is stored per term, not per review pool. Fetch for the

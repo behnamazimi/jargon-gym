@@ -66,7 +66,7 @@ export async function fetchCollectionStats(
 export type CollectionStatBreakdown = {
   id: string;
   name: string;
-  knownCount: number;
+  termsLearnedCount: number;
   totalCount: number;
   percentage: number;
   unseenCount: number;
@@ -131,13 +131,13 @@ function buildStatsSnapshot(
 
   const activeCollections: CollectionStatBreakdown[] = activeRows.map((row) => {
     const totalCount = row.termCount;
-    const knownCount = row.knownCount;
-    const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
+    const termsLearnedCount = row.termsLearnedCount;
+    const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
 
     return {
       id: row.id,
       name: row.name,
-      knownCount,
+      termsLearnedCount,
       totalCount,
       percentage,
       unseenCount: countUnseen(byDomain.get(row.id) ?? [], "read"),
@@ -164,7 +164,7 @@ function buildStatsSnapshot(
 type PausedCollectionSummary = {
   id: string;
   name: string;
-  knownCount: number;
+  termsLearnedCount: number;
   totalCount: number;
   percentage: number;
 };
@@ -201,9 +201,9 @@ function countActivityToday(candidates: TraceCandidate[], context: PickContext, 
 
 function toPausedCollectionSummary(row: CollectionDomainRow): PausedCollectionSummary {
   const totalCount = row.termCount;
-  const knownCount = row.knownCount;
-  const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
-  return { id: row.id, name: row.name, knownCount, totalCount, percentage };
+  const termsLearnedCount = row.termsLearnedCount;
+  const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
+  return { id: row.id, name: row.name, termsLearnedCount, totalCount, percentage };
 }
 
 const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {

@@ -37,7 +37,9 @@ function DomainSidebarSection({
         {domains.map((domain) => {
           const isSelected = domain.id === currentDomainId;
           const pct =
-            domain.termCount > 0 ? Math.round((domain.knownCount / domain.termCount) * 100) : 0;
+            domain.termCount > 0
+              ? Math.round((domain.termsLearnedCount / domain.termCount) * 100)
+              : 0;
 
           return (
             <li key={domain.id}>
@@ -77,7 +79,7 @@ function DomainSidebarSection({
                     isSelected ? "text-primary" : "text-base-content/60",
                   )}
                 >
-                  {domain.knownCount}/{domain.termCount} known
+                  {domain.termsLearnedCount}/{domain.termCount} learned
                   {isSelected && domain.termCount > 0 ? ` · ${pct}%` : ""}
                 </span>
               </Button>

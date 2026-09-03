@@ -23,7 +23,7 @@ export function JargonDomainHeader({
   onAddTerm,
 }: JargonDomainHeaderProps) {
   const progressPct =
-    domain.termCount > 0 ? Math.round((domain.knownCount / domain.termCount) * 100) : 0;
+    domain.termCount > 0 ? Math.round((domain.termsLearnedCount / domain.termCount) * 100) : 0;
 
   return (
     <header className="shadow-surface space-y-4 rounded-2xl bg-base-100 p-4">
@@ -35,7 +35,7 @@ export function JargonDomainHeader({
           </h1>
           {domain.termCount > 0 ? (
             <p className="text-sm tabular-nums text-base-content/60">
-              {domain.knownCount} of {domain.termCount} known · {progressPct}%
+              {domain.termsLearnedCount} of {domain.termCount} learned · {progressPct}%
             </p>
           ) : null}
         </div>
