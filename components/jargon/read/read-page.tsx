@@ -13,7 +13,7 @@ import {
   QuizPanelBody,
   QuizPanelHeader,
 } from "@/components/jargon/quiz/quiz-ui";
-import { TermNarrationPlayer } from "@/components/jargon/read/term-narration-player";
+import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -119,26 +119,6 @@ function ReadCaughtUp({
   );
 }
 
-function ReadCardHeader({ term, narrationAccess }: { term: ReviewTerm; narrationAccess: boolean }) {
-  return (
-    <header className="flex shrink-0 items-start justify-between gap-3 border-b border-base-300/60 px-5 py-3 sm:px-6">
-      <div>
-        <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
-          {term.term}
-        </h2>
-        <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
-          <span>{term.domainName}</span>
-          <span className="mx-1.5 text-base-content/35" aria-hidden>
-            ·
-          </span>
-          <span>{term.category}</span>
-        </p>
-      </div>
-      {narrationAccess ? <TermNarrationPlayer termId={term.id} /> : null}
-    </header>
-  );
-}
-
 function ReadCardMasked({ term, onReveal }: { term: ReviewTerm; onReveal: () => void }) {
   return (
     <div
@@ -188,7 +168,7 @@ function ReadCardRevealed({
 
   return (
     <>
-      <ReadCardHeader term={term} narrationAccess={narrationAccess} />
+      <TermCardHeader term={term} narrationAccess={narrationAccess} />
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody key={term.id} term={term} />
       </div>

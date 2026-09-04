@@ -2,6 +2,7 @@
 
 import { Eye } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import type { ReviewTerm } from "@/lib/review/types";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ type ReviewCardProps = {
   onNext: () => void;
   reduceMotion: boolean;
   swipeEnabled: boolean;
+  narrationAccess: boolean;
 };
 
 function RecallRevealHint({ invisible }: { invisible?: boolean }) {
@@ -30,23 +32,6 @@ function RecallRevealHint({ invisible }: { invisible?: boolean }) {
   );
 }
 
-function ReviewCardHeader({ term }: { term: ReviewTerm }) {
-  return (
-    <header className="shrink-0 border-b border-base-300/60 px-5 py-3 sm:px-6">
-      <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
-        {term.term}
-      </h2>
-      <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
-        <span>{term.domainName}</span>
-        <span className="mx-1.5 text-base-content/35" aria-hidden>
-          ·
-        </span>
-        <span>{term.category}</span>
-      </p>
-    </header>
-  );
-}
-
 export function ReviewCard({
   term,
   revealed,
@@ -55,6 +40,7 @@ export function ReviewCard({
   onNext,
   reduceMotion,
   swipeEnabled,
+  narrationAccess,
 }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -135,7 +121,7 @@ export function ReviewCard({
           </div>
 
           <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            <ReviewCardHeader term={term} />
+            <TermCardHeader term={term} narrationAccess={narrationAccess} />
             <div
               ref={scrollRef}
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { applyReviewGrade } from "@/lib/jargon/review-outcome";
+import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { MAX_REVIEW_TERMS, fetchReviewTermPool } from "@/lib/review/terms";
 import type { ReviewSetup } from "@/lib/review/types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
@@ -17,9 +18,12 @@ export async function getReviewSetupData() {
     return { error: "Log in to review terms." };
   }
 
-  const collections = await listStudyCollections(auth.supabase, auth.user.id);
+  const [collections, narrationAccess] = await Promise.all([
+    listStudyCollections(auth.supabase, auth.user.id),
+    getNarrationAccessForUser(auth.supabase, auth.user.id),
+  ]);
 
-  return { collections };
+  return { collections, narrationAccess };
 }
 
 export async function getReviewPoolStatsAction(domainIds: string[] | "all") {

@@ -25,5 +25,11 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
 
   const domainId = resolveReviewCollectionId(params.domain, setup.collections);
 
-  return <ReviewPage collections={setup.collections} initialDomainId={domainId} />;
+  return (
+    <ReviewPage
+      collections={setup.collections}
+      initialDomainId={domainId}
+      narrationAccess={setup.narrationAccess}
+    />
+  );
 }

@@ -3,6 +3,7 @@
 import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/jargon/review-outcome";
+import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser, pickReadTermsForUser } from "@/lib/trace-queue";
@@ -22,12 +23,12 @@ export async function getReadSetupData() {
     return { error: "Log in to continue." as const };
   }
 
-  const [collections, { data: narrationAccess }] = await Promise.all([
+  const [collections, narrationAccess] = await Promise.all([
     listStudyCollections(auth.supabase, auth.user.id),
-    auth.supabase.rpc("has_narration_access", { p_user_id: auth.user.id }),
+    getNarrationAccessForUser(auth.supabase, auth.user.id),
   ]);
 
-  return { collections, narrationAccess: narrationAccess ?? false };
+  return { collections, narrationAccess };
 }
 
 function domainIdsForRead(domainId: string | undefined): string[] | "all" {

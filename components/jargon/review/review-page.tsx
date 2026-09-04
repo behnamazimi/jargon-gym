@@ -49,6 +49,7 @@ type ReviewStep = "setup" | "playing" | "summary";
 type ReviewPageProps = {
   collections: StudyCollection[];
   initialDomainId?: string;
+  narrationAccess: boolean;
 };
 
 const DEFAULT_CARD_COUNT = 10;
@@ -119,7 +120,7 @@ function cardCountPresetValues(maxCardCount: number): number[] {
   return [...new Set(values)].sort((a, b) => a - b);
 }
 
-export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
+export function ReviewPage({ collections, initialDomainId, narrationAccess }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
 
   const [step, setStep] = useState<ReviewStep>("setup");
@@ -603,6 +604,7 @@ export function ReviewPage({ collections, initialDomainId }: ReviewPageProps) {
             onNext={handleNext}
             reduceMotion={reduceMotion}
             swipeEnabled
+            narrationAccess={narrationAccess}
           />
 
           <div className="shrink-0 space-y-3">

@@ -2,9 +2,12 @@
 
 import { Loader2, Pause, Volume2 } from "lucide-react";
 import { useRef, useState, useTransition } from "react";
-import { getTermNarrationAction } from "@/app/(private)/jargon/read/narration-actions";
+import { getTermNarrationAction } from "@/app/(private)/jargon/actions";
 import { Button } from "@/components/ui/button";
 
+/** Play/pause button for a term's narration. Shared by Read and Review —
+ *  callers should only render it when narrationAccess is true, but access is
+ *  re-checked server-side regardless (see getTermNarrationAction). */
 export function TermNarrationPlayer({ termId }: { termId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const [, startTransition] = useTransition();
