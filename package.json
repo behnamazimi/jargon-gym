@@ -31,7 +31,7 @@
     "@elevenlabs/elevenlabs-js": "^2.66.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.112.4",
-    "ai": "^7.0.37",
+    "ai": "^7.0.89",
     "clsx": "^2.1.1",
     "entities": "8.0.0",
     "lucide-react": "^1.26.0",
