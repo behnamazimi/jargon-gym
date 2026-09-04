@@ -4,6 +4,7 @@ import { Check, ChevronRight } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
 import { cn } from "@/lib/utils";
 import { TermActionsMenu } from "./term-actions-menu";
 import { TermBody } from "./term-body";
@@ -15,6 +16,7 @@ type TermCardProps = {
   isOwner: boolean;
   domainId: string;
   domainTerms: Term[];
+  narrationAccess: boolean;
   onToggleOpen: () => void;
 };
 
@@ -25,6 +27,7 @@ export function TermCard({
   isOwner,
   domainId,
   domainTerms,
+  narrationAccess,
   onToggleOpen,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -56,25 +59,34 @@ export function TermCard({
               open && "border-b border-base-300/60 bg-primary/[0.04]",
             )}
           >
-            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-start justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
-              <span
-                className={cn(
-                  "font-heading min-w-0 text-base font-semibold tracking-tight text-pretty",
-                  known
-                    ? "text-base-content/60 line-through decoration-primary/60 decoration-2"
-                    : "text-base-content",
-                )}
-              >
-                {term.term}
-                {known ? (
+            {/* A CollapsibleTrigger renders a real <button>, so the narration
+                button (also a button) can't nest inside it. It's narrowed to
+                just the term name — still the primary, large toggle target —
+                and the narration button sits beside it as a true sibling. */}
+            <div className="flex min-h-11 min-w-0 flex-1 items-start justify-between gap-3 p-2">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <CollapsibleTrigger className="min-w-0 cursor-pointer rounded-md border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
                   <span
-                    className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-primary/15 text-primary ml-2"
-                    title="Known"
+                    className={cn(
+                      "font-heading min-w-0 text-base font-semibold tracking-tight text-pretty",
+                      known
+                        ? "text-base-content/60 line-through decoration-primary/60 decoration-2"
+                        : "text-base-content",
+                    )}
                   >
-                    <Check className="size-3" strokeWidth={2.5} />
+                    {term.term}
+                    {known ? (
+                      <span
+                        className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-primary/15 text-primary ml-2"
+                        title="Known"
+                      >
+                        <Check className="size-3" strokeWidth={2.5} />
+                      </span>
+                    ) : null}
                   </span>
-                ) : null}
-              </span>
+                </CollapsibleTrigger>
+                {narrationAccess ? <TermNarrationPlayer termId={term.id} /> : null}
+              </div>
               <span className="inline-flex shrink-0 items-center gap-2 pt-0.5">
                 <span className="text-xs text-base-content/50">{term.category}</span>
                 <ChevronRight
@@ -83,7 +95,7 @@ export function TermCard({
                   strokeWidth={1.5}
                 />
               </span>
-            </CollapsibleTrigger>
+            </div>
             {isOwner ? (
               <div className="flex shrink-0 items-center pe-1">
                 <TermActionsMenu term={term} domainId={domainId} domainTerms={domainTerms} />

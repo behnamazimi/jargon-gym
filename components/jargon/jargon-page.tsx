@@ -13,9 +13,10 @@ import { TermList } from "./term-list";
 
 type JargonPageProps = {
   initialData: JargonPageData;
+  narrationAccess: boolean;
 };
 
-export function JargonPage({ initialData }: JargonPageProps) {
+export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -126,6 +127,7 @@ export function JargonPage({ initialData }: JargonPageProps) {
               isOwner={isOwner}
               domainId={domain.id}
               domainTerms={terms}
+              narrationAccess={narrationAccess}
               onToggleOpen={toggleOpen}
             />
           </div>

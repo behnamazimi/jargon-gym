@@ -8,6 +8,7 @@ type TermListProps = {
   isOwner: boolean;
   domainId: string;
   domainTerms: Term[];
+  narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
 };
 
@@ -18,6 +19,7 @@ export function TermList({
   isOwner,
   domainId,
   domainTerms,
+  narrationAccess,
   onToggleOpen,
 }: TermListProps) {
   if (terms.length === 0) {
@@ -42,6 +44,7 @@ export function TermList({
             isOwner={isOwner}
             domainId={domainId}
             domainTerms={domainTerms}
+            narrationAccess={narrationAccess}
             onToggleOpen={() => onToggleOpen(term.id)}
           />
         </div>
