@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Database } from "@/lib/supabase/database.types";
 import { computeContentHash } from "./content-hash";
 import { synthesizeNarrationAudio } from "./eleven-labs";
@@ -7,6 +8,8 @@ import { buildNarrationScript } from "./template";
 import type { NarratedTermFields, NarrationResult } from "./types";
 
 type AdminClient = SupabaseClient<Database>;
+
+const DEFAULT_LANGUAGE: DomainLanguage = "en";
 
 const POLL_INTERVAL_MS = 750;
 const POLL_TIMEOUT_MS = 30_000;
@@ -55,11 +58,12 @@ async function generateAndFinalize(
   termId: string,
   contentHash: string,
   fields: NarratedTermFields,
+  language: DomainLanguage,
 ): Promise<NarrationResult> {
   const path = pathForTerm(termId);
   try {
-    const script = buildNarrationScript(fields);
-    const audio = await synthesizeNarrationAudio(script);
+    const script = buildNarrationScript(fields, language);
+    const audio = await synthesizeNarrationAudio(script, language);
 
     await uploadNarrationAudio(path, audio);
 
@@ -87,12 +91,16 @@ export async function getOrGenerateNarration(
 ): Promise<NarrationResult> {
   const { data: term, error: termError } = await admin
     .from("terms")
-    .select("term, definition, example, mental_model, discussion, anti_example, controversy")
+    .select(
+      "term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)",
+    )
     .eq("id", termId)
     .single();
   if (termError || !term) return { status: "unavailable" };
 
-  const contentHash = computeContentHash(term);
+  const { domains, ...fields } = term;
+  const language = (domains?.language as DomainLanguage | undefined) ?? DEFAULT_LANGUAGE;
+  const contentHash = computeContentHash(fields);
 
   const { data: existing } = await admin
     .from("term_narrations")
@@ -114,7 +122,7 @@ export async function getOrGenerateNarration(
   });
 
   if (Array.isArray(claimed) && claimed.length > 0) {
-    return generateAndFinalize(admin, termId, contentHash, term); // we won the claim
+    return generateAndFinalize(admin, termId, contentHash, fields, language); // we won the claim
   }
 
   return pollForResult(admin, termId, contentHash); // someone else is generating — wait

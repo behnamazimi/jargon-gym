@@ -1,3 +1,5 @@
+import type { DomainLanguage } from "./languages";
+
 export type TermRelationship = {
   id: string;
   relationshipType: string;
@@ -39,6 +41,7 @@ export type Domain = {
   icon: string;
   description: string;
   visibility: "private" | "shared";
+  language: DomainLanguage;
   source: DomainSource;
   isActiveForReview: boolean;
   termCount: number;

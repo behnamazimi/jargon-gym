@@ -39,6 +39,8 @@ function makeClient(options: {
   /** What claim_term_narration's RPC returns — non-empty means "we won the claim". */
   claimResult: NarrationRow[];
   updateSpy?: (patch: Record<string, unknown>) => void;
+  /** The term's collection language, as returned by the domains(language) embed. */
+  language?: string;
 }): Client {
   const queue = [...options.narrationRowQueue];
 
@@ -48,7 +50,11 @@ function makeClient(options: {
         return {
           select: () => ({
             eq: () => ({
-              single: () => Promise.resolve({ data: FIELDS, error: null }),
+              single: () =>
+                Promise.resolve({
+                  data: { ...FIELDS, domains: { language: options.language ?? "en" } },
+                  error: null,
+                }),
             }),
           }),
         };
@@ -117,6 +123,19 @@ describe("getOrGenerateNarration", () => {
     expect(synthesizeNarrationAudio).toHaveBeenCalledTimes(1);
     expect(uploadNarrationAudio).toHaveBeenCalledWith("term-1.mp3", Buffer.from("audio"));
     expect(updates).toEqual([{ status: "ready", storage_path: "term-1.mp3" }]);
+  });
+
+  it("passes the term's collection language through to ElevenLabs", async () => {
+    vi.mocked(synthesizeNarrationAudio).mockResolvedValue(Buffer.from("audio"));
+    const client = makeClient({
+      narrationRowQueue: [null],
+      claimResult: [{ status: "pending", content_hash: HASH, storage_path: null }],
+      language: "nl",
+    });
+
+    await getOrGenerateNarration(client, TERM_ID);
+
+    expect(synthesizeNarrationAudio).toHaveBeenCalledWith(expect.any(String), "nl");
   });
 
   it("marks the row failed and returns unavailable when synthesis throws", async () => {

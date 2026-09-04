@@ -1,8 +1,10 @@
 import { z } from "zod";
+import { DOMAIN_LANGUAGES } from "./languages";
 
 const domainFieldsSchema = z.object({
   name: z.string().trim().min(1, "Enter a collection name"),
   description: z.string().nullable().optional(),
+  language: z.enum(DOMAIN_LANGUAGES).default("en"),
 });
 
 export type DomainInput = z.infer<typeof domainFieldsSchema>;
@@ -22,5 +24,6 @@ export function domainInputToUpdateRow(input: DomainInput) {
   return {
     name: input.name.trim(),
     description: input.description?.trim() || null,
+    language: input.language,
   };
 }

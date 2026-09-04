@@ -13,7 +13,7 @@ type MapDomainOptions = {
 };
 
 export function mapDomain(
-  row: Pick<DomainRow, "id" | "name" | "visibility" | "description">,
+  row: Pick<DomainRow, "id" | "name" | "visibility" | "description" | "language">,
   options: MapDomainOptions,
 ): Domain {
   return {
@@ -22,6 +22,7 @@ export function mapDomain(
     icon: "",
     description: row.description ?? "",
     visibility: row.visibility,
+    language: row.language as Domain["language"],
     source: options.source,
     isActiveForReview: options.isActiveForReview,
     termCount: options.termCount ?? 0,

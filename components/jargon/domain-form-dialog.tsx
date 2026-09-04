@@ -12,9 +12,17 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import type { DomainInput } from "@/lib/jargon/domain-schema";
+import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/jargon/languages";
 import type { Domain } from "@/lib/jargon/types";
 
 type DomainFormDialogProps = {
@@ -27,6 +35,7 @@ function domainToForm(domain: Domain): DomainInput {
   return {
     name: domain.name,
     description: domain.description || null,
+    language: domain.language,
   };
 }
 
@@ -56,6 +65,7 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
     const payload: DomainInput = {
       name: form.name.trim(),
       description: form.description?.trim() ? form.description.trim() : null,
+      language: form.language,
     };
 
     await updateOwnedDomain(domain.id, payload, () => onOpenChange(false));
@@ -66,7 +76,7 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
         <DialogHeader>
           <DialogTitle>Edit collection</DialogTitle>
-          <DialogDescription>Change the name or description.</DialogDescription>
+          <DialogDescription>Change the name, description, or content language.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -90,6 +100,28 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
               placeholder="What is this collection about?"
               className="min-h-24"
             />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="domain-language">Content language</FieldLabel>
+            <Select
+              value={form.language}
+              onChange={(key) => {
+                if (key == null) return;
+                updateField("language", key as DomainInput["language"]);
+              }}
+            >
+              <SelectTrigger id="domain-language" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DOMAIN_LANGUAGE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} id={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
         </div>
 

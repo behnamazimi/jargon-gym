@@ -35,6 +35,7 @@ export type Database = {
           id: string;
           is_builtin: boolean;
           is_public: boolean;
+          language: string;
           name: string;
           owner_id: string;
           slug: string | null;
@@ -47,6 +48,7 @@ export type Database = {
           id?: string;
           is_builtin?: boolean;
           is_public?: boolean;
+          language?: string;
           name: string;
           owner_id: string;
           slug?: string | null;
@@ -59,6 +61,7 @@ export type Database = {
           id?: string;
           is_builtin?: boolean;
           is_public?: boolean;
+          language?: string;
           name?: string;
           owner_id?: string;
           slug?: string | null;
