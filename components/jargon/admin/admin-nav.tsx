@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const ADMIN_NAV_ITEMS = [
   { href: "/admin/collections", label: "Collections" },
   { href: "/admin/invites", label: "Invites" },
+  { href: "/admin/narration", label: "Narration" },
 ];
 
 export function AdminNav() {

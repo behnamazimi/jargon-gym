@@ -22,8 +22,12 @@ export async function getReadSetupData() {
     return { error: "Log in to continue." as const };
   }
 
-  const collections = await listStudyCollections(auth.supabase, auth.user.id);
-  return { collections };
+  const [collections, { data: narrationAccess }] = await Promise.all([
+    listStudyCollections(auth.supabase, auth.user.id),
+    auth.supabase.rpc("has_narration_access", { p_user_id: auth.user.id }),
+  ]);
+
+  return { collections, narrationAccess: narrationAccess ?? false };
 }
 
 function domainIdsForRead(domainId: string | undefined): string[] | "all" {

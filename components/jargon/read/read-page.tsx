@@ -13,6 +13,7 @@ import {
   QuizPanelBody,
   QuizPanelHeader,
 } from "@/components/jargon/quiz/quiz-ui";
+import { TermNarrationPlayer } from "@/components/jargon/read/term-narration-player";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -118,19 +119,22 @@ function ReadCaughtUp({
   );
 }
 
-function ReadCardHeader({ term }: { term: ReviewTerm }) {
+function ReadCardHeader({ term, narrationAccess }: { term: ReviewTerm; narrationAccess: boolean }) {
   return (
-    <header className="shrink-0 border-b border-base-300/60 px-5 py-3 sm:px-6">
-      <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
-        {term.term}
-      </h2>
-      <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
-        <span>{term.domainName}</span>
-        <span className="mx-1.5 text-base-content/35" aria-hidden>
-          ·
-        </span>
-        <span>{term.category}</span>
-      </p>
+    <header className="flex shrink-0 items-start justify-between gap-3 border-b border-base-300/60 px-5 py-3 sm:px-6">
+      <div>
+        <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
+          {term.term}
+        </h2>
+        <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
+          <span>{term.domainName}</span>
+          <span className="mx-1.5 text-base-content/35" aria-hidden>
+            ·
+          </span>
+          <span>{term.category}</span>
+        </p>
+      </div>
+      {narrationAccess ? <TermNarrationPlayer termId={term.id} /> : null}
     </header>
   );
 }
@@ -169,7 +173,13 @@ function ReadCardMasked({ term, onReveal }: { term: ReviewTerm; onReveal: () => 
   );
 }
 
-function ReadCardRevealed({ term }: { term: ReviewTerm }) {
+function ReadCardRevealed({
+  term,
+  narrationAccess,
+}: {
+  term: ReviewTerm;
+  narrationAccess: boolean;
+}) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -178,7 +188,7 @@ function ReadCardRevealed({ term }: { term: ReviewTerm }) {
 
   return (
     <>
-      <ReadCardHeader term={term} />
+      <ReadCardHeader term={term} narrationAccess={narrationAccess} />
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody key={term.id} term={term} />
       </div>
@@ -191,6 +201,7 @@ function ReadTermCard({
   revealed,
   canGoBack,
   isPending,
+  narrationAccess,
   onReveal,
   onPrevious,
   onNext,
@@ -199,6 +210,7 @@ function ReadTermCard({
   revealed: boolean;
   canGoBack: boolean;
   isPending: boolean;
+  narrationAccess: boolean;
   onReveal: () => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -206,7 +218,7 @@ function ReadTermCard({
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       {revealed ? (
-        <ReadCardRevealed term={term} />
+        <ReadCardRevealed term={term} narrationAccess={narrationAccess} />
       ) : (
         <ReadCardMasked term={term} onReveal={onReveal} />
       )}
@@ -406,9 +418,10 @@ type ReadPageProps = {
   initialResult: NextReadTermResult;
   collections: StudyCollection[];
   domainId: string;
+  narrationAccess: boolean;
 };
 
-export function ReadPage({ initialResult, collections, domainId }: ReadPageProps) {
+export function ReadPage({ initialResult, collections, domainId, narrationAccess }: ReadPageProps) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
   const [status, setStatus] = useState<ReadStatus>(() => statusFromResult(initialResult));
   const [nav, dispatch] = useReducer(navReducer, {
@@ -560,6 +573,7 @@ export function ReadPage({ initialResult, collections, domainId }: ReadPageProps
             revealed={revealed}
             canGoBack={history.length > 0}
             isPending={isPending}
+            narrationAccess={narrationAccess}
             onReveal={handleReveal}
             onPrevious={goToPrevious}
             onNext={fetchNext}

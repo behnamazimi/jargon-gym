@@ -6,6 +6,10 @@ import {
 import { ReadPage } from "@/components/jargon/read/read-page";
 import type { StudyCollection } from "@/lib/study/types";
 
+// Narration generation (ElevenLabs) can take longer than the platform's
+// default Server Action timeout on a cache miss.
+export const maxDuration = 60;
+
 type PageProps = {
   searchParams: Promise<{ termId?: string; alreadyRead?: string; domain?: string }>;
 };
@@ -37,6 +41,11 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
   }
 
   return (
-    <ReadPage initialResult={initialResult} collections={setup.collections} domainId={domainId} />
+    <ReadPage
+      initialResult={initialResult}
+      collections={setup.collections}
+      domainId={domainId}
+      narrationAccess={setup.narrationAccess}
+    />
   );
 }

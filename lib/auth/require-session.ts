@@ -31,3 +31,17 @@ export async function requireAuthenticatedClient() {
 
   return { supabase, user };
 }
+
+/**
+ * For admin-only server actions. Throws (rather than returning an error
+ * value) so call sites can just `await` it and let the throw propagate to
+ * the client's try/catch — matching how every admin action in this app
+ * already surfaces "Admins only." to the UI.
+ */
+export async function requireAdminClient() {
+  const { supabase, user } = await getSessionUser();
+  if (!user || !(await getUserIsAdmin(user.id))) {
+    throw new Error("Admins only.");
+  }
+  return { supabase, user };
+}

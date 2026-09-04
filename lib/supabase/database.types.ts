@@ -75,6 +75,57 @@ export type Database = {
           },
         ];
       };
+      narration_allowlist: {
+        Row: {
+          added_by: string | null;
+          created_at: string;
+          user_id: string;
+        };
+        Insert: {
+          added_by?: string | null;
+          created_at?: string;
+          user_id: string;
+        };
+        Update: {
+          added_by?: string | null;
+          created_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "narration_allowlist_added_by_fkey";
+            columns: ["added_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "narration_allowlist_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      narration_settings: {
+        Row: {
+          enabled: boolean;
+          id: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          enabled?: boolean;
+          id?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          enabled?: boolean;
+          id?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       referral_codes: {
         Row: {
           code: string;
@@ -295,6 +346,41 @@ export type Database = {
             columns: ["user_id"];
             isOneToOne: true;
             referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      term_narrations: {
+        Row: {
+          content_hash: string;
+          created_at: string;
+          status: string;
+          storage_path: string | null;
+          term_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          content_hash: string;
+          created_at?: string;
+          status?: string;
+          storage_path?: string | null;
+          term_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          content_hash?: string;
+          created_at?: string;
+          status?: string;
+          storage_path?: string | null;
+          term_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "term_narrations_term_id_fkey";
+            columns: ["term_id"];
+            isOneToOne: true;
+            referencedRelation: "terms";
             referencedColumns: ["id"];
           },
         ];
@@ -622,6 +708,23 @@ export type Database = {
       bump_streak: { Args: { p_user_id: string }; Returns: undefined };
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
+      claim_term_narration: {
+        Args: { p_content_hash: string; p_term_id: string };
+        Returns: {
+          content_hash: string;
+          created_at: string;
+          status: string;
+          storage_path: string | null;
+          term_id: string;
+          updated_at: string;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "term_narrations";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       complete_telegram_link: {
         Args: { p_chat_id: number; p_token_hash: string };
         Returns: string;
@@ -703,6 +806,7 @@ export type Database = {
           review_recall_count: number;
         }[];
       };
+      has_narration_access: { Args: { p_user_id: string }; Returns: boolean };
       is_admin: { Args: never; Returns: boolean };
       is_domain_in_collection: {
         Args: { p_domain_id: string };

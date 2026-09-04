@@ -1,19 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
+import { requireAdminClient } from "@/lib/auth/require-session";
 import { generateUniqueSlug, slugify } from "@/lib/jargon/slug";
 
-async function requireAdminClient() {
-  const { supabase, user } = await getSessionUser();
-  if (!user || !(await getUserIsAdmin(user.id))) {
-    throw new Error("Admins only.");
-  }
-  return supabase;
-}
-
 export async function setBuiltin(domainId: string, value: boolean) {
-  const supabase = await requireAdminClient();
+  const { supabase } = await requireAdminClient();
 
   const update: { is_builtin: boolean; is_public?: boolean } = { is_builtin: value };
   if (!value) update.is_public = false;
@@ -28,7 +20,7 @@ export async function setPublic(
   domainId: string,
   value: boolean,
 ): Promise<{ slug: string | null }> {
-  const supabase = await requireAdminClient();
+  const { supabase } = await requireAdminClient();
 
   const { data: domain, error: fetchError } = await supabase
     .from("domains")
@@ -79,7 +71,7 @@ export async function updateDomainSlug(
   domainId: string,
   rawSlug: string,
 ): Promise<{ slug: string }> {
-  const supabase = await requireAdminClient();
+  const { supabase } = await requireAdminClient();
 
   const { data: existingDomains, error: slugError } = await supabase
     .from("domains")
@@ -100,7 +92,7 @@ export async function updateDomainSlug(
   return { slug };
 }
 
-type AdminClient = Awaited<ReturnType<typeof requireAdminClient>>;
+type AdminClient = Awaited<ReturnType<typeof requireAdminClient>>["supabase"];
 
 async function ensureTermSlugs(supabase: AdminClient, domainId: string) {
   const { data: terms, error } = await supabase
