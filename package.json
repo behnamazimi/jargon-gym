@@ -30,7 +30,7 @@
     "@aws-sdk/client-s3": "^3.1126.0",
     "@elevenlabs/elevenlabs-js": "^2.66.0",
     "@supabase/ssr": "^0.12.3",
-    "@supabase/supabase-js": "^2.110.8",
+    "@supabase/supabase-js": "^2.112.4",
     "ai": "^7.0.37",
     "clsx": "^2.1.1",
     "entities": "8.0.0",
