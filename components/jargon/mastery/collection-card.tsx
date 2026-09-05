@@ -23,12 +23,15 @@ function BucketProgress({ buckets, name }: { buckets: MasteryBucketCounts; name:
   return (
     <div className="space-y-1.5">
       <div
-        className="flex h-1.5 w-full overflow-hidden rounded-full bg-base-300"
+        className="flex h-2 w-full gap-0.5 rounded-full bg-base-300"
         role="img"
         aria-label={`${name}: ${buckets.mastered} mastered, ${buckets.learningNotMastered} learning, ${buckets.neverLearning} not started`}
       >
-        <div className="bg-success" style={{ width: `${pct(buckets.mastered)}%` }} />
-        <div className="bg-primary" style={{ width: `${pct(buckets.learningNotMastered)}%` }} />
+        <div className="rounded-full bg-success" style={{ width: `${pct(buckets.mastered)}%` }} />
+        <div
+          className="rounded-full bg-primary"
+          style={{ width: `${pct(buckets.learningNotMastered)}%` }}
+        />
       </div>
       <p className="text-xs text-base-content/60">
         <span className="tabular-nums">{buckets.mastered}</span> mastered ·{" "}
