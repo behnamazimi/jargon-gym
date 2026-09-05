@@ -17,27 +17,18 @@ type MasteryOverviewProps = {
 function OverviewHeader({
   termsLearning,
   termsLearned,
-  activeCount,
-  pausedCount,
   lifetimeTotalsLine,
 }: {
   termsLearning: number;
   termsLearned: number;
-  activeCount: number;
-  pausedCount: number;
   lifetimeTotalsLine: string | null;
 }) {
   return (
     <div className="space-y-1">
-      <div className="flex items-baseline justify-between gap-3">
-        <p className="text-sm font-semibold text-base-content">
-          Learning <span className="tabular-nums">{termsLearning}</span> terms · Mastered{" "}
-          <span className="tabular-nums">{termsLearned}</span> terms
-        </p>
-        <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-base-content/50">
-          {activeCount} active · {pausedCount} paused
-        </span>
-      </div>
+      <p className="text-sm font-semibold text-base-content">
+        Learning <span className="tabular-nums">{termsLearning}</span> terms · Mastered{" "}
+        <span className="tabular-nums">{termsLearned}</span> terms
+      </p>
       {lifetimeTotalsLine ? (
         <p className="m-0 text-xs text-base-content/50">{lifetimeTotalsLine}</p>
       ) : null}
@@ -66,8 +57,6 @@ export function MasteryOverview({
       <OverviewHeader
         termsLearning={termsLearning}
         termsLearned={termsLearned}
-        activeCount={stats.activeCount}
-        pausedCount={stats.pausedCount}
         lifetimeTotalsLine={hasLifetimeTotals ? formatLifetimeTotals(stats.lifetimeTotals) : null}
       />
 
