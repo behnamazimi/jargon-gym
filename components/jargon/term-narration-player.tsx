@@ -4,7 +4,7 @@ import { Loader2, Pause, Volume2 } from "lucide-react";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { getTermNarrationAction } from "@/app/(private)/jargon/actions";
 import { Button } from "@/components/ui/button";
-import { getCachedNarrationAudio, setCachedNarrationAudio } from "@/lib/narration/client-cache";
+import { loadNarrationAudio } from "@/lib/narration/client-cache";
 
 /**
  * Only one narration clip should play at a time — the jargon collection
@@ -94,29 +94,17 @@ export function TermNarrationPlayer({ termId }: { termId: string }) {
 
     setStatus("loading");
     startTransition(async () => {
-      // Cache hit: skip the server round trip (auth + access check + S3
-      // signed URL) and the audio download entirely.
-      const cached = await getCachedNarrationAudio(termId);
-      if (cached) {
-        await playBlob(cached);
-        return;
-      }
+      const audioBlob = await loadNarrationAudio(termId, async () => {
+        const result = await getTermNarrationAction(termId);
+        return result.status === "ready" ? result.signedUrl : null;
+      });
 
-      const result = await getTermNarrationAction(termId);
-      if (result.status !== "ready") {
+      if (!audioBlob) {
         setStatus("idle"); // fail silently — next press retries
         return;
       }
 
-      try {
-        const response = await fetch(result.signedUrl);
-        if (!response.ok) throw new Error(`Narration fetch failed: ${response.status}`);
-        const audioBlob = await response.blob();
-        void setCachedNarrationAudio(termId, audioBlob); // best-effort, doesn't block playback
-        await playBlob(audioBlob);
-      } catch {
-        setStatus("idle");
-      }
+      await playBlob(audioBlob);
     });
   }
 

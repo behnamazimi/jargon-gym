@@ -1,13 +1,15 @@
 /**
  * Client-side cache for narration audio, backed by the browser's Cache
- * Storage API. Lets TermNarrationPlayer skip the server round trip (auth +
- * access check + S3 signed URL) and the audio download entirely when the
- * same term was played recently.
+ * Storage API. `loadNarrationAudio` is the module's only entry point: it
+ * implements a cache-aside strategy so callers (TermNarrationPlayer) never
+ * need to know whether a clip came from cache or the network — they just
+ * get a Blob, or null if it couldn't be loaded either way.
  *
- * This is a plain TTL: a term edited (and re-narrated) while a client still
- * holds a fresh cache entry keeps playing the old clip until the entry
- * expires. Acceptable trade-off given how rarely narration content changes;
- * lower CACHE_TTL_MS if that staleness window needs to be tighter.
+ * This is a plain TTL, not tied to the term's content hash: a term edited
+ * (and re-narrated) while a client still holds a fresh cache entry keeps
+ * playing the old clip until the entry expires. Acceptable trade-off given
+ * how rarely narration content changes; lower CACHE_TTL_MS if that
+ * staleness window needs to be tighter.
  */
 
 const CACHE_NAME = "narration-audio-v1";
@@ -22,7 +24,7 @@ function hasCacheStorage(): boolean {
   return typeof window !== "undefined" && "caches" in window;
 }
 
-export async function getCachedNarrationAudio(termId: string): Promise<Blob | null> {
+async function readFromCache(termId: string): Promise<Blob | null> {
   if (!hasCacheStorage()) return null;
 
   try {
@@ -43,7 +45,7 @@ export async function getCachedNarrationAudio(termId: string): Promise<Blob | nu
   }
 }
 
-export async function setCachedNarrationAudio(termId: string, audio: Blob): Promise<void> {
+async function writeToCache(termId: string, audio: Blob): Promise<void> {
   if (!hasCacheStorage()) return;
 
   try {
@@ -58,4 +60,35 @@ export async function setCachedNarrationAudio(termId: string, audio: Blob): Prom
   } catch {
     // best-effort — playback already succeeded without the cache write
   }
+}
+
+async function fetchAudio(signedUrl: string): Promise<Blob | null> {
+  try {
+    const response = await fetch(signedUrl);
+    return response.ok ? await response.blob() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolves a term's narration audio, preferring a fresh local copy over the
+ * network. `fetchSignedUrl` is only called on a cache miss, so callers can
+ * skip their own server round trip entirely on a hit.
+ */
+export async function loadNarrationAudio(
+  termId: string,
+  fetchSignedUrl: () => Promise<string | null>,
+): Promise<Blob | null> {
+  const cached = await readFromCache(termId);
+  if (cached) return cached;
+
+  const signedUrl = await fetchSignedUrl();
+  if (!signedUrl) return null;
+
+  const audio = await fetchAudio(signedUrl);
+  if (!audio) return null;
+
+  void writeToCache(termId, audio); // best-effort, doesn't block playback
+  return audio;
 }
