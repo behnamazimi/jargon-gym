@@ -46,3 +46,83 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
+
+  supabase-migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Determine diff base
+        id: diff_base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            before="${{ github.event.before }}"
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+              echo "ref=HEAD~1" >> "$GITHUB_OUTPUT"
+            else
+              echo "ref=$before" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Migrations must be append-only and ordered
+        run: |
+          base="${{ steps.diff_base.outputs.ref }}"
+          changed="$(git diff --name-status "$base"...HEAD -- supabase/migrations/)"
+          echo "$changed"
+
+          bad="$(echo "$changed" | grep -E '^(M|D|R)' || true)"
+          if [ -n "$bad" ]; then
+            echo "::error::Already-merged migrations were modified, renamed, or deleted. Add a new migration instead of editing history:"
+            echo "$bad"
+            exit 1
+          fi
+
+          latest_base_ts="$(git ls-tree -r --name-only "$base" -- supabase/migrations/ | grep -oE '[0-9]{14}_' | tr -d '_' | sort | tail -1)"
+          latest_base_ts="${latest_base_ts:-0}"
+
+          for f in $(echo "$changed" | grep -E '^A' | awk '{print $2}'); do
+            name="$(basename "$f")"
+            if ! echo "$name" | grep -qE '^[0-9]{14}_[a-zA-Z0-9_]+\.sql$'; then
+              echo "::error::$name doesn't match the required YYYYMMDDHHMMSS_description.sql naming"
+              exit 1
+            fi
+            ts="$(echo "$name" | grep -oE '^[0-9]{14}')"
+            if [ "$ts" -le "$latest_base_ts" ]; then
+              echo "::error::$name is timestamped before/at the latest existing migration ($latest_base_ts) — rebase and regenerate its timestamp"
+              exit 1
+            fi
+          done
+
+      - name: Dry-run migrations against a local database
+        run: |
+          pnpm supabase:start
+          pnpm supabase:reset
+
+      - name: Generated types must match schema
+        run: |
+          pnpm supabase:types
+          git diff --exit-code -- lib/supabase/database.types.ts
+
+      - name: All public tables must have RLS enabled
+        run: |
+          command -v psql >/dev/null || sudo apt-get install -y postgresql-client
+          unprotected="$(psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -tAc \
+            "select string_agg(tablename, ', ') from pg_tables where schemaname = 'public' and rowsecurity = false;")"
+          if [ -n "$unprotected" ]; then
+            echo "::error::Tables without Row Level Security enabled: $unprotected"
+            exit 1
+          fi
+
+      - name: Stop Supabase
+        if: always()
+        run: pnpm supabase:stop
