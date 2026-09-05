@@ -61,7 +61,6 @@ type ProgressStateRow = {
   quiz_knowledge_posterior: number | null;
   quiz_test_count: number;
   last_quiz_tested_at: string | null;
-  ever_mastered_at: string | null;
 };
 
 function toTraceState(row: ProgressStateRow): TraceState {
@@ -79,9 +78,15 @@ function toTraceState(row: ProgressStateRow): TraceState {
 }
 
 /** "known" is a read-only label derived live from Mastery_adjusted, not a
- *  stored row — replaces the old known_at-row-presence tally. `ever_mastered_at`
- *  is the companion permanent high-water mark: once set it's never cleared,
- *  even as the live label later decays back below the known threshold. */
+ *  stored row — replaces the old known_at-row-presence tally.
+ *  `termsLearnedCount` is the same live "known" count, kept as a separate
+ *  field (rather than renaming every consumer to `knownCount`) since the
+ *  day-to-day surfaces that read it — the domain header, sidebar, widget,
+ *  and paused-collection cards — all want a live, currently-decaying count
+ *  now, not the permanent `ever_mastered_at` high-water mark it used to be.
+ *  The permanent high-water mark itself is still available for lifetime
+ *  totals via `everMasteredAt`/`everLearningAt` on `TraceCandidate`
+ *  (see lib/jargon/mastery.ts). */
 function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
   const stats = new Map<
     string,
@@ -99,8 +104,6 @@ function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
     current.termCount += 1;
     if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known") {
       current.knownCount += 1;
-    }
-    if (row.ever_mastered_at !== null) {
       current.termsLearnedCount += 1;
     }
   }

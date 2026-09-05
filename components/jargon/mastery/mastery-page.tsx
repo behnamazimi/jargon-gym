@@ -10,16 +10,16 @@ import { MasteryTermList } from "./mastery-term-list";
 type MasteryPageProps = {
   collections: MasteryCollectionOption[];
   stats: WebStatsSnapshot;
-  termsLearning: number;
-  termsLearned: number;
+  lifetimeLearningCount: number;
+  lifetimeMasteredCount: number;
   termRows: MasteryTermRow[];
 };
 
 export function MasteryPage({
   collections,
   stats,
-  termsLearning,
-  termsLearned,
+  lifetimeLearningCount,
+  lifetimeMasteredCount,
   termRows,
 }: MasteryPageProps) {
   const [activeTab, setActiveTab] = useState<MasteryTab>("overview");
@@ -32,8 +32,8 @@ export function MasteryPage({
       {activeTab === "overview" ? (
         <MasteryOverview
           stats={stats}
-          termsLearning={termsLearning}
-          termsLearned={termsLearned}
+          lifetimeLearningCount={lifetimeLearningCount}
+          lifetimeMasteredCount={lifetimeMasteredCount}
           onSelectCollection={(collectionId) => {
             setTermsCollectionFilter(collectionId);
             setActiveTab("terms");

@@ -49,7 +49,12 @@ export {
 } from "./queue";
 export { daysBetween } from "./decay";
 export { deriveKnownLabel, confidence, blendMastery, masteryAdjusted } from "./mastery";
-export { partitionMasteryBuckets, computeCrossingPace, estimateMilestone } from "./pace";
+export {
+  partitionMasteryBuckets,
+  partitionLiveMasteryBuckets,
+  computeCrossingPace,
+  estimateMilestone,
+} from "./pace";
 export type { MasteryBucketCounts, PaceRate, MilestoneEstimate } from "./pace";
 export { STUDY_TIMEZONE, isSameLocalDay } from "./local-day";
 export {
