@@ -147,7 +147,7 @@ Ranking always uses the raw, undiscounted retrievability described below —
 confidence-weighting and the known/unknown split are a reporting layer on
 top of the ranking, not part of it.
 
-### Terms learned: the one number that's actually stored
+### Terms learned: the numbers that are actually stored
 
 Mastery_adjusted decays with inactivity by design — that's the point, it's
 telling you your _current_ strength. But that means it can't answer "how
@@ -155,12 +155,24 @@ many terms have I ever actually learned," since a term you nailed weeks ago
 and haven't touched since would report a low score today despite you
 having genuinely learned it once.
 
-So there's exactly one piece of TRACE state that's a permanent record
-rather than a live computation: the first moment a term's Mastery_adjusted
-crosses the known threshold, that moment gets stamped and kept forever,
-even as the live score later fades. The mastery page shows both numbers
-side by side — "current strength" (live, decays) and "terms learned"
-(high-water mark, never decreases).
+So there are two pieces of TRACE state that are permanent records rather
+than live computations. The first: the first moment a term's
+Mastery_adjusted crosses the known threshold, that moment gets stamped and
+kept forever, even as the live score later fades. The mastery page shows
+both numbers side by side — "current strength" (live, decays) and "terms
+learned" (high-water mark, never decreases).
+
+The second, a sibling high-water mark (`ever_learning_at`), does the
+identical thing one threshold lower — stamped the first time
+Mastery_adjusted crosses the learning threshold (0.6) rather than the
+known one (0.8). It exists to back the mastery page's per-collection pace
+insight (`lib/trace/pace.ts`): every term sits in exactly one of three
+permanent, monotonic buckets — never reached learning, reached learning
+but not yet mastered, or mastered — and recent crossings into each bucket
+give two independent "time to next milestone" estimates. These are
+deliberately anchored on the two permanent stamps rather than the live
+known/learning/unknown label, so a term quietly decaying back out of
+"known" can't make the estimate's target recede on its own.
 
 ## How each tier decides what to show you
 
@@ -251,8 +263,11 @@ it:
 5. **The database** — two tables. `review_state` holds one row per (user,
    term), storing exactly the fields `TraceState` needs: read count and
    last-read time, recall stability/difficulty and last-review time,
-   recognition posterior and last-quiz time, plus the one persisted
-   high-water-mark timestamp for "terms learned." Everything else — every
+   recognition posterior and last-quiz time, plus the two persisted
+   high-water-mark timestamps for "terms learned" (`ever_mastered_at`) and
+   its lower-threshold sibling (`ever_learning_at`, added in
+   [`supabase/migrations/20260905120000_ever_learning_at.sql`](../supabase/migrations/20260905120000_ever_learning_at.sql),
+   the mastery page's per-collection pace insight). Everything else — every
    retrievability, every mastery number, the known/learning/unknown label
    — is computed in TypeScript on the way out, never in SQL. The TRACE
    columns were added in

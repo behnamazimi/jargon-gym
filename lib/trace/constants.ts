@@ -68,3 +68,23 @@ export const KNOWN_MIN_TEST_COUNT = 3;
  *  starting point, meant to be retuned by feel from the debug queue view
  *  once it's live, same as everything else in this file. */
 export const READ_TEMPER_WEIGHT = 0.2;
+
+/** Per-collection "time to mastery" insight (Mastery page) — window-widening
+ *  ladder for estimating how often terms have recently crossed a mastery
+ *  threshold for the first time. Stops at the first window with enough
+ *  samples; the widest rung falls back to all-time since the first-ever
+ *  crossing of that kind. */
+export const PACE_WINDOW_LADDER_DAYS = [3, 7, 14, 30] as const;
+/** Minimum crossings within a window before that window's rate is trusted. */
+export const PACE_MIN_CROSSINGS = 2;
+/** Floor on the all-time rung's elapsed-days denominator, so two crossings
+ *  that both just happened can't produce a divide-by-zero/infinite rate. */
+export const PACE_MIN_WINDOW_DAYS = 1;
+/** Milestone estimate range: point estimate to this multiple of it — the
+ *  remaining terms in a collection tend to be the ones a user has been
+ *  avoiding or finding harder, so the true time is more likely to run
+ *  long than short. */
+export const PACE_ESTIMATE_RANGE_MULTIPLIER = 1.5;
+/** At or below this many remaining terms, show a literal count instead of
+ *  a time estimate — a time-to-clear-2-terms estimate is noise, not signal. */
+export const PACE_SMALL_REMAINING_THRESHOLD = 2;

@@ -9,9 +9,14 @@ import {
 } from "@/lib/trace-queue";
 import {
   CALIBRATION_MIN_BUCKET_SAMPLE,
+  computeCrossingPace,
+  estimateMilestone,
   isSameLocalDay,
+  partitionMasteryBuckets,
   STUDY_TIMEZONE,
   summarizeGradeDistribution,
+  type MasteryBucketCounts,
+  type MilestoneEstimate,
   type ReviewGrade,
 } from "@/lib/trace";
 import type { CollectionDomainRow } from "./collections";
@@ -69,6 +74,19 @@ export async function fetchCollectionStats(
   return stats;
 }
 
+/** Rough "time to next milestone" insight, per collection — two
+ *  independent estimates (never combined into one number, since the two
+ *  transitions compete for the same study time), anchored on the
+ *  permanent ever_learning_at/ever_mastered_at high-water marks rather
+ *  than the live, decaying mastery label. See lib/trace/pace.ts. */
+export type CollectionPaceInsight = {
+  buckets: MasteryBucketCounts;
+  /** Time until the last "never reached Learning" term first gets there. */
+  toLearning: MilestoneEstimate;
+  /** Time until the current "reached Learning, not yet Mastered" terms clear. */
+  toMastery: MilestoneEstimate;
+};
+
 export type CollectionStatBreakdown = {
   id: string;
   name: string;
@@ -76,6 +94,7 @@ export type CollectionStatBreakdown = {
   totalCount: number;
   percentage: number;
   unseenCount: number;
+  paceInsight: CollectionPaceInsight;
 };
 
 /** The web Mastery page's overview: a rollup across active collections
@@ -120,10 +139,36 @@ function countUnseen(candidates: TraceCandidate[], context: PickContext): number
 
 /** Pure aggregation for the web snapshot fetcher below — one candidate
  *  fetch across all active collections (`domainIds: "all"`). */
+function buildCollectionPaceInsight(
+  candidates: TraceCandidate[],
+  now: Date,
+): CollectionPaceInsight {
+  const buckets = partitionMasteryBuckets(candidates);
+  const learningCrossings = candidates
+    .map((c) => c.everLearningAt)
+    .filter((d): d is Date => d !== null);
+  const masteredCrossings = candidates
+    .map((c) => c.everMasteredAt)
+    .filter((d): d is Date => d !== null);
+
+  return {
+    buckets,
+    toLearning: estimateMilestone(
+      buckets.neverLearning,
+      computeCrossingPace(learningCrossings, now),
+    ),
+    toMastery: estimateMilestone(
+      buckets.learningNotMastered,
+      computeCrossingPace(masteredCrossings, now),
+    ),
+  };
+}
+
 function buildStatsSnapshot(
   collectionRows: CollectionDomainRow[],
   reviewDomainIds: string[],
   candidates: TraceCandidate[],
+  now: Date,
 ): StatsSnapshot {
   const activeSet = new Set(reviewDomainIds);
   const activeRows = collectionRows.filter((row) => activeSet.has(row.id));
@@ -139,6 +184,7 @@ function buildStatsSnapshot(
     const totalCount = row.termCount;
     const termsLearnedCount = row.termsLearnedCount;
     const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
+    const domainCandidates = byDomain.get(row.id) ?? [];
 
     return {
       id: row.id,
@@ -146,7 +192,8 @@ function buildStatsSnapshot(
       termsLearnedCount,
       totalCount,
       percentage,
-      unseenCount: countUnseen(byDomain.get(row.id) ?? [], "read"),
+      unseenCount: countUnseen(domainCandidates, "read"),
+      paceInsight: buildCollectionPaceInsight(domainCandidates, now),
     };
   });
 
@@ -284,8 +331,8 @@ export async function fetchStatsSnapshot(
     fetchGradeDistribution(client),
   ]);
 
-  const base = buildStatsSnapshot(collectionRows, reviewDomainIds, candidates);
   const now = new Date();
+  const base = buildStatsSnapshot(collectionRows, reviewDomainIds, candidates, now);
   const activeSet = new Set(reviewDomainIds);
   const pausedCollections = collectionRows
     .filter((row) => !activeSet.has(row.id))

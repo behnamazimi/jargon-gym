@@ -52,6 +52,7 @@ async function writeEvent(
     recallDifficulty?: number;
     quizKnowledgePosterior?: number;
     crossedKnownThreshold?: boolean;
+    crossedLearningThreshold?: boolean;
     grade?: number;
     questionType?: QuestionType;
     retrievabilityBefore?: number;
@@ -134,6 +135,7 @@ export async function applyReviewGrade(
     recallStability: next.recallStability,
     recallDifficulty: next.recallDifficulty,
     crossedKnownThreshold: snapshot.knownLabel === "known",
+    crossedLearningThreshold: snapshot.knownLabel !== "unknown",
     grade: input.grade,
     retrievabilityBefore: preSnapshot.recallRetrievability ?? undefined,
   });
@@ -178,6 +180,7 @@ export async function applyQuizAnswer(
   await writeEvent(client, mode, userId, input.termId, event, {
     quizKnowledgePosterior: next.quizKnowledgePosterior,
     crossedKnownThreshold: snapshot.knownLabel === "known",
+    crossedLearningThreshold: snapshot.knownLabel !== "unknown",
     questionType: input.questionType,
     retrievabilityBefore: preSnapshot.recognitionRetrievability ?? undefined,
   });

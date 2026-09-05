@@ -17,6 +17,7 @@ function makeCandidate(overrides: Partial<TraceCandidate> = {}): TraceCandidate 
     quizTestCount: 0,
     lastQuizTestedAt: null,
     everMasteredAt: null,
+    everLearningAt: null,
     ...overrides,
   };
 }

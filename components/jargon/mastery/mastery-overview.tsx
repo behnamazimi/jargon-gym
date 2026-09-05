@@ -3,14 +3,51 @@
 import { ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type {
+  CollectionPaceInsight,
   CollectionStatBreakdown,
   GradeDistributionSummary,
   LifetimeTotals,
   WebStatsSnapshot,
 } from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
+import { AGAIN, EASY, GOOD, HARD, type MilestoneEstimate, type ReviewGrade } from "@/lib/trace";
 import { cn } from "@/lib/utils";
+
+/** Raw days → a friendly, coarse unit — never raw decimals, since the
+ *  underlying rate is noisy and shouldn't read as more precise than it is. */
+function formatDayRange(lowDays: number, highDays: number): string {
+  const unit: "day" | "week" | "month" = lowDays < 14 ? "day" : lowDays < 60 ? "week" : "month";
+  const divisor = unit === "day" ? 1 : unit === "week" ? 7 : 30;
+  const low = Math.max(1, Math.round(lowDays / divisor));
+  const high = Math.max(low, Math.round(highDays / divisor));
+  const word = unit + (high === 1 ? "" : "s");
+  return low === high ? `~${low} ${word}` : `~${low}-${high} ${word}`;
+}
+
+/** One milestone's line, or null if there's nothing to say about it (no
+ *  terms waiting for this stage). Never combines the two milestones' time
+ *  estimates into one number — they compete for the same study time, so a
+ *  sum would overstate precision it doesn't have. */
+function formatMilestone(estimate: MilestoneEstimate, label: string): string | null {
+  switch (estimate.kind) {
+    case "none":
+      return null;
+    case "count":
+      return `${estimate.remaining} to ${label} left`;
+    case "insufficientData":
+      return `${estimate.remaining} to ${label} — not enough history yet`;
+    case "estimate":
+      return `${estimate.remaining} to ${label} (${formatDayRange(estimate.lowDays, estimate.highDays)})`;
+  }
+}
+
+function formatPaceLine(insight: CollectionPaceInsight): string | null {
+  const parts = [
+    formatMilestone(insight.toLearning, "Learning"),
+    formatMilestone(insight.toMastery, "Mastered"),
+  ].filter((part): part is string => part !== null);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
 
 /** TRACE has no backlog to clear — a term with no history just ranks first
  *  next time this tier comes up. This is a snapshot of current exposure,
@@ -83,10 +120,12 @@ type CollectionProgress = {
 function CollectionRow({
   collection,
   footnote,
+  paceLine,
   muted,
 }: {
   collection: CollectionProgress;
   footnote?: string;
+  paceLine?: string | null;
   muted?: boolean;
 }) {
   return (
@@ -104,6 +143,7 @@ function CollectionRow({
         aria-label={`${collection.name} learned ${collection.percentage}%`}
       />
       {footnote ? <p className="text-xs text-base-content/50">{footnote}</p> : null}
+      {paceLine ? <p className="text-xs text-base-content/50">{paceLine}</p> : null}
     </div>
   );
 }
@@ -185,6 +225,7 @@ export function MasteryOverview({ stats, currentStrength, termsLearned }: Master
                   key={collection.id}
                   collection={collection}
                   footnote={formatUnseenFootnote(collection)}
+                  paceLine={formatPaceLine(collection.paceInsight)}
                 />
               ))}
             </div>

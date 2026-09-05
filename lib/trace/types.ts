@@ -41,8 +41,9 @@ export type TraceSnapshot = {
 
 /** A term's TraceState plus the identity/bookkeeping fields queue ranking
  *  and aggregate mastery need (termId for output, createdAt as Read's
- *  tie-break, everMasteredAt for the §8 "terms learned" high-water mark —
- *  not part of the live decay math, just carried alongside it). This is
+ *  tie-break, everMasteredAt for the §8 "terms learned" high-water mark,
+ *  everLearningAt its sibling at the lower "learning" threshold — neither
+ *  is part of the live decay math, just carried alongside it). This is
  *  the shape the get_trace_candidates RPC row maps onto — lib/trace-queue
  *  re-exports it rather than redefining it. */
 export type TraceCandidate = TraceState & {
@@ -50,4 +51,5 @@ export type TraceCandidate = TraceState & {
   domainId: string;
   createdAt: Date;
   everMasteredAt: Date | null;
+  everLearningAt: Date | null;
 };

@@ -233,6 +233,7 @@ export type Database = {
       };
       review_state: {
         Row: {
+          ever_learning_at: string | null;
           ever_mastered_at: string | null;
           last_quiz_tested_at: string | null;
           last_read_at: string | null;
@@ -247,6 +248,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          ever_learning_at?: string | null;
           ever_mastered_at?: string | null;
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
@@ -261,6 +263,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          ever_learning_at?: string | null;
           ever_mastered_at?: string | null;
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
@@ -782,6 +785,7 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
+          ever_learning_at: string;
           ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
@@ -838,6 +842,7 @@ export type Database = {
         Returns: {
           created_at: string;
           domain_id: string;
+          ever_learning_at: string;
           ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
@@ -885,6 +890,7 @@ export type Database = {
       my_record_review_event: {
         Args: {
           p_crossed_known_threshold?: boolean;
+          p_crossed_learning_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
           p_grade?: number;
           p_question_type?: string;
@@ -922,6 +928,7 @@ export type Database = {
       record_review_event: {
         Args: {
           p_crossed_known_threshold?: boolean;
+          p_crossed_learning_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
           p_grade?: number;
           p_question_type?: string;

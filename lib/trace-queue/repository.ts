@@ -25,6 +25,7 @@ function mapCandidateRows(
     quiz_test_count: number;
     last_quiz_tested_at: string | null;
     ever_mastered_at: string | null;
+    ever_learning_at: string | null;
   }>,
 ): TraceCandidate[] {
   return data.map((row) => ({
@@ -41,6 +42,7 @@ function mapCandidateRows(
     quizTestCount: row.quiz_test_count,
     lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
     everMasteredAt: row.ever_mastered_at ? new Date(row.ever_mastered_at) : null,
+    everLearningAt: row.ever_learning_at ? new Date(row.ever_learning_at) : null,
   }));
 }
 
@@ -129,6 +131,11 @@ export type TraceEventPayload = {
    *  only sets it once and never clears it; the threshold itself lives in
    *  lib/trace, not duplicated here. */
   crossedKnownThreshold?: boolean;
+  /** Set when this event's post-event Mastery_adjusted crosses the learning
+   *  threshold — drives the ever_learning_at high-water mark, sibling of
+   *  crossedKnownThreshold at the lower (0.6) bound. SQL only sets it once
+   *  and never clears it. */
+  crossedLearningThreshold?: boolean;
   /** 1-4 (AGAIN/HARD/GOOD/EASY) — review_pass/review_fail only, logged to review_events. */
   grade?: number;
   /** quiz_pass/quiz_fail only, logged to review_events. */
@@ -155,6 +162,7 @@ export async function recordTraceEvent(
     p_grade: payload?.grade,
     p_question_type: payload?.questionType,
     p_retrievability_before: payload?.retrievabilityBefore,
+    p_crossed_learning_threshold: payload?.crossedLearningThreshold ?? false,
   });
 
   if (error) throw error;
@@ -179,6 +187,7 @@ export async function recordTraceEventForUser(
     p_grade: payload?.grade,
     p_question_type: payload?.questionType,
     p_retrievability_before: payload?.retrievabilityBefore,
+    p_crossed_learning_threshold: payload?.crossedLearningThreshold ?? false,
   });
 
   if (error) throw error;
