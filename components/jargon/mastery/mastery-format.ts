@@ -24,12 +24,18 @@ function formatMilestone(estimate: MilestoneEstimate, label: string): string | n
   switch (estimate.kind) {
     case "none":
       return null;
-    case "count":
-      return `${estimate.remaining} to ${label} left`;
-    case "insufficientData":
-      return `${estimate.remaining} to ${label} — not enough history yet`;
-    case "estimate":
-      return `${estimate.remaining} to ${label} (${formatDayRange(estimate.lowDays, estimate.highDays)})`;
+    case "count": {
+      const noun = estimate.remaining === 1 ? "term" : "terms";
+      return `${estimate.remaining} ${noun} away from ${label}`;
+    }
+    case "insufficientData": {
+      const noun = estimate.remaining === 1 ? "term" : "terms";
+      return `${estimate.remaining} ${noun} away from ${label} — not enough history yet`;
+    }
+    case "estimate": {
+      const noun = estimate.remaining === 1 ? "term" : "terms";
+      return `${estimate.remaining} ${noun} away from ${label} (${formatDayRange(estimate.lowDays, estimate.highDays)})`;
+    }
   }
 }
 

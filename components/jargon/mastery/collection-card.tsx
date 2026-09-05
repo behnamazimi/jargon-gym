@@ -1,5 +1,6 @@
 import { PauseCircle } from "lucide-react";
 import type { CollectionStatBreakdown } from "@/lib/jargon/collection-stats";
+import type { MasteryBucketCounts } from "@/lib/trace";
 import { formatPaceLine, formatUnseenFootnote } from "./mastery-format";
 import { cn } from "@/lib/utils";
 
@@ -11,8 +12,36 @@ type CollectionCardData = {
   percentage: number;
 };
 
+/** A term sits in exactly one of three buckets (see
+ *  lib/trace/pace.ts's partitionMasteryBuckets) — "mastered" alone is a
+ *  binary crossed/not-crossed count, so showing just that and calling it
+ *  "learned" implied a false binary. This shows all three segments instead. */
+function BucketProgress({ buckets, name }: { buckets: MasteryBucketCounts; name: string }) {
+  const total = buckets.mastered + buckets.learningNotMastered + buckets.neverLearning;
+  const pct = (count: number) => (total > 0 ? (count / total) * 100 : 0);
+
+  return (
+    <div className="space-y-1.5">
+      <div
+        className="flex h-1.5 w-full overflow-hidden rounded-full bg-base-300"
+        role="img"
+        aria-label={`${name}: ${buckets.mastered} mastered, ${buckets.learningNotMastered} learning, ${buckets.neverLearning} not started`}
+      >
+        <div className="bg-success" style={{ width: `${pct(buckets.mastered)}%` }} />
+        <div className="bg-primary" style={{ width: `${pct(buckets.learningNotMastered)}%` }} />
+      </div>
+      <p className="text-xs text-base-content/60">
+        <span className="tabular-nums">{buckets.mastered}</span> mastered ·{" "}
+        <span className="tabular-nums">{buckets.learningNotMastered}</span> learning ·{" "}
+        <span className="tabular-nums">{buckets.neverLearning}</span> not started
+      </p>
+    </div>
+  );
+}
+
 function CollectionCardShell({
   collection,
+  buckets,
   strengthPercent,
   footnote,
   paceLine,
@@ -20,6 +49,7 @@ function CollectionCardShell({
   onSelect,
 }: {
   collection: CollectionCardData;
+  buckets?: MasteryBucketCounts;
   strengthPercent?: number;
   footnote?: string;
   paceLine?: string | null;
@@ -36,15 +66,25 @@ function CollectionCardShell({
           <span className="truncate">{collection.name}</span>
         </span>
         <span className="shrink-0 tabular-nums text-base-content/60">
-          {collection.termsLearnedCount}/{collection.totalCount} learned
+          {collection.totalCount} terms
         </span>
       </div>
-      <progress
-        className="progress progress-primary h-1.5 w-full"
-        value={collection.percentage}
-        max={100}
-        aria-label={`${collection.name} learned ${collection.percentage}%`}
-      />
+      {buckets ? (
+        <BucketProgress buckets={buckets} name={collection.name} />
+      ) : (
+        <div className="space-y-1.5">
+          <progress
+            className="progress progress-success h-1.5 w-full"
+            value={collection.percentage}
+            max={100}
+            aria-label={`${collection.name} mastered ${collection.percentage}%`}
+          />
+          <p className="text-xs text-base-content/60">
+            <span className="tabular-nums">{collection.termsLearnedCount}</span>/
+            <span className="tabular-nums">{collection.totalCount}</span> mastered
+          </p>
+        </div>
+      )}
       {strengthPercent !== undefined ? (
         <p className="text-sm font-semibold text-base-content">{strengthPercent}% strength</p>
       ) : null}
@@ -88,6 +128,7 @@ export function CollectionCard({
   return (
     <CollectionCardShell
       collection={collection}
+      buckets={collection.paceInsight.buckets}
       strengthPercent={Math.round(collection.currentStrength * 100)}
       footnote={formatUnseenFootnote(collection)}
       paceLine={formatPaceLine(collection.paceInsight)}
@@ -98,8 +139,10 @@ export function CollectionCard({
 
 /** A paused collection — same shape, dimmed with a paused icon next to its
  *  name, no footnote/pace, not interactive (nothing to drill into while
- *  paused). Rendered alongside active cards, sorted after them, rather
- *  than tucked behind a separate disclosure. */
+ *  paused). No bucket breakdown available for paused collections (their
+ *  trace candidates aren't fetched), so this falls back to the single
+ *  mastered-count bar. Rendered alongside active cards, sorted after them,
+ *  rather than tucked behind a separate disclosure. */
 export function PausedCollectionCard({ collection }: { collection: CollectionCardData }) {
   return <CollectionCardShell collection={collection} paused />;
 }
