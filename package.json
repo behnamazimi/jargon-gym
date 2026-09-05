@@ -51,7 +51,7 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "daisyui": "^5.7.4",
+    "daisyui": "^5.7.22",
     "esbuild": "^0.28.2",
     "knip": "^6.32.2",
     "serwist": "^9.5.12",

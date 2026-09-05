@@ -80,8 +80,8 @@ devDependencies:
     specifier: ^19
     version: 19.2.3(@types/react@19.2.18)
   daisyui:
-    specifier: ^5.7.4
-    version: 5.7.4
+    specifier: ^5.7.22
+    version: 5.7.28
   esbuild:
     specifier: ^0.28.2
     version: 0.28.2
@@ -2664,8 +2664,8 @@ packages:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
     dev: true
 
-  /daisyui@5.7.4:
-    resolution: {integrity: sha512-zKzFIwvEvn2QvE1TbUUtDnYFOqWoxeZh+j4QXfhkZKYAT++pO2ijyT9rkFm0GIPDWR1/oo9hHZzd96AsTK0iZg==}
+  /daisyui@5.7.28:
+    resolution: {integrity: sha512-BxQap2QOj7NQy5nEsjTHRmybmUZP3t+O5G6vfdidZuptBsh/QyKN9wbdrGDZk198fMI3UyYnA/rCWlggZIhGnw==}
     dev: true
 
   /detect-libc@2.1.2:
