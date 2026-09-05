@@ -46,3 +46,130 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
+
+  supabase-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.diff_base.outputs.ref }}
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Determine diff base
+        id: diff_base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=origin/${{ github.base_ref }}" >> "$GITHUB_OUTPUT"
+          else
+            before="${{ github.event.before }}"
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+              echo "ref=HEAD~1" >> "$GITHUB_OUTPUT"
+            else
+              echo "ref=$before" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Check for Supabase changes
+        id: check
+        run: |
+          if git diff --quiet "${{ steps.diff_base.outputs.ref }}"...HEAD -- supabase/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  supabase-migrations:
+    needs: supabase-changes
+    if: needs.supabase-changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Migrations must be append-only and ordered
+        run: |
+          base="${{ needs.supabase-changes.outputs.base }}"
+          changed="$(git diff --name-status "$base"...HEAD -- supabase/migrations/)"
+          echo "$changed"
+
+          bad="$(echo "$changed" | grep -E '^(M|D|R)' || true)"
+          if [ -n "$bad" ]; then
+            echo "::error::Already-merged migrations were modified, renamed, or deleted. Add a new migration instead of editing history:"
+            echo "$bad"
+            exit 1
+          fi
+
+          latest_base_ts="$(git ls-tree -r --name-only "$base" -- supabase/migrations/ | grep -oE '[0-9]{14}_' | tr -d '_' | sort | tail -1)"
+          latest_base_ts="${latest_base_ts:-0}"
+
+          for f in $(echo "$changed" | grep -E '^A' | awk '{print $2}'); do
+            name="$(basename "$f")"
+            if ! echo "$name" | grep -qE '^[0-9]{14}_[a-zA-Z0-9_]+\.sql$'; then
+              echo "::error::$name doesn't match the required YYYYMMDDHHMMSS_description.sql naming"
+              exit 1
+            fi
+            ts="$(echo "$name" | grep -oE '^[0-9]{14}')"
+            if [ "$ts" -le "$latest_base_ts" ]; then
+              echo "::error::$name is timestamped before/at the latest existing migration ($latest_base_ts) — rebase and regenerate its timestamp"
+              exit 1
+            fi
+          done
+
+      - name: Dry-run migrations against a local database
+        run: |
+          pnpm supabase:start
+          pnpm supabase:reset
+
+      - name: Generated types must match schema
+        run: |
+          pnpm supabase:types
+          pnpm exec oxfmt lib/supabase/database.types.ts
+          git diff --exit-code -- lib/supabase/database.types.ts
+
+      - name: All public tables must have RLS enabled
+        run: |
+          command -v psql >/dev/null || sudo apt-get install -y postgresql-client
+          unprotected="$(psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -tAc \
+            "select string_agg(tablename, ', ') from pg_tables where schemaname = 'public' and rowsecurity = false;")"
+          if [ -n "$unprotected" ]; then
+            echo "::error::Tables without Row Level Security enabled: $unprotected"
+            exit 1
+          fi
+
+      - name: Stop Supabase
+        if: always()
+        run: pnpm supabase:stop
+
+  deploy-migrations:
+    needs: supabase-migrations
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: supabase-deploy
+      cancel-in-progress: false
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Link Supabase project
+        run: pnpm supabase link --project-ref ovdmwphqpttcscnjfmfp
+
+      - name: Push migrations to production
+        run: pnpm supabase db push
