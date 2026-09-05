@@ -32,7 +32,7 @@ export async function pickReadTerms(
   const candidates = await fetchTraceCandidates(client, userId, scope);
   if (candidates.length === 0) return [];
 
-  const ranked = rankReadQueue(candidates).slice(0, limit);
+  const ranked = rankReadQueue(candidates, new Date()).slice(0, limit);
   if (ranked.length === 0) return [];
 
   return hydrateTermsAsTermCards(
@@ -55,7 +55,7 @@ export async function pickReadTermsForUser(
   );
   if (candidates.length === 0) return [];
 
-  const ranked = rankReadQueue(candidates).slice(0, limit);
+  const ranked = rankReadQueue(candidates, new Date()).slice(0, limit);
   if (ranked.length === 0) return [];
 
   return hydrateTermCardsForUser(

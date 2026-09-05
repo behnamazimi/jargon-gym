@@ -7,12 +7,15 @@ import type { PickContext, TraceCandidate } from "@/lib/trace-queue";
 import type { Database } from "@/lib/supabase/database.types";
 import { listStudyCollections } from "@/lib/study/collections";
 import {
+  computeReadExposure,
+  computeReadTempering,
   computeTraceSnapshot,
   daysUntilCooldownClears,
   findAbandonedReveals,
   rankQuizQueue,
   rankReadQueue,
   rankReviewQueue,
+  READ_TEMPER_WEIGHT,
   summarizeActivityTimeline,
   summarizeCalibration,
   summarizeGradeDistribution,
@@ -50,6 +53,20 @@ export type DebugScoredRow = {
   readCount: number;
   lastReadAt: string | null;
   familiarity: number;
+  /** Read ranking's decay-aware cross-tier exposure component (see
+   *  computeReadExposure) — always computed, not just when context is
+   *  "read", matching this file's existing convention of showing every
+   *  raw/derived signal regardless of the active tab. */
+  readExposure: number;
+  /** Read ranking's mastery-tempering component, unweighted (see
+   *  computeReadTempering) — multiply by READ_TEMPER_WEIGHT to get its
+   *  actual contribution to readRankScore below. */
+  readTempering: number;
+  /** The exact value rankReadQueue sorts by: readExposure +
+   *  READ_TEMPER_WEIGHT * readTempering. Exposed directly so a
+   *  misbehaving Read pick can be reverse-engineered without redoing
+   *  this arithmetic by hand. */
+  readRankScore: number;
   reviewRecallCount: number;
   lastReviewRecallAt: string | null;
   recallStability: number | null;
@@ -92,7 +109,7 @@ function rankForContext(
   context: PickContext,
   now: Date,
 ): TraceCandidate[] {
-  if (context === "read") return rankReadQueue(candidates);
+  if (context === "read") return rankReadQueue(candidates, now);
   if (context === "review") return rankReviewQueue(candidates, now);
   return rankQuizQueue(candidates, now);
 }
@@ -256,6 +273,8 @@ async function hydrateDebugRows(
 
   return candidates.map((candidate) => {
     const snapshot = computeTraceSnapshot(candidate, now);
+    const readExposure = computeReadExposure(candidate, now);
+    const readTempering = computeReadTempering(candidate, now);
     const events = recentEventsByTerm.get(candidate.termId);
     const passFail = passFailCountsForTerm(events);
     return {
@@ -265,6 +284,9 @@ async function hydrateDebugRows(
       readCount: candidate.readCount,
       lastReadAt: candidate.lastReadAt ? candidate.lastReadAt.toISOString() : null,
       familiarity: snapshot.familiarity,
+      readExposure,
+      readTempering,
+      readRankScore: readExposure + READ_TEMPER_WEIGHT * readTempering,
       reviewRecallCount: candidate.reviewRecallCount,
       lastReviewRecallAt: candidate.lastReviewRecallAt
         ? candidate.lastReviewRecallAt.toISOString()

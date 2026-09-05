@@ -5,6 +5,9 @@
  *  traces) → this barrel (compose across layers into the shapes callers
  *  actually want: a full-state snapshot, or a single event applied to
  *  full state). Nothing outside lib/trace should reach past this file.
+ *  mastery.ts and queue.ts may import from each other directly (queue's
+ *  Read ranking reuses mastery's blend) — both are the same "compose
+ *  across traces" layer, just not the same file.
  *  @see docs/trace-formula.md
  */
 
@@ -37,7 +40,13 @@ export type {
   TraceSnapshot,
   TraceState,
 } from "./types";
-export { rankReadQueue, rankReviewQueue, rankQuizQueue } from "./queue";
+export {
+  rankReadQueue,
+  rankReviewQueue,
+  rankQuizQueue,
+  computeReadExposure,
+  computeReadTempering,
+} from "./queue";
 export { daysBetween } from "./decay";
 export { deriveKnownLabel, confidence, blendMastery, masteryAdjusted } from "./mastery";
 export { STUDY_TIMEZONE, isSameLocalDay } from "./local-day";

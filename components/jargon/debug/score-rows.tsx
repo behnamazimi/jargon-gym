@@ -18,6 +18,7 @@ import {
   formatPercent,
   formatQuizDetail,
   formatReadDetail,
+  formatReadRankDetail,
   formatRecallDetail,
   formatRelative,
 } from "./format";
@@ -115,6 +116,7 @@ function ScoreRow({ row, index }: { row: DebugScoredRow; index: number }) {
 
             <p className="m-0 min-w-0 break-words text-xs leading-relaxed text-base-content/50">
               {formatReadDetail(row.readCount, row.lastReadAt)} ·{" "}
+              {formatReadRankDetail(row.readExposure, row.readTempering, row.readRankScore)} ·{" "}
               {formatRecallDetail(
                 row.reviewRecallCount,
                 row.recallStability,

@@ -26,24 +26,58 @@ const NOW = new Date("2026-02-01T00:00:00Z");
 describe("rankReadQueue", () => {
   it("always includes every candidate (Read has no eligibility gate)", () => {
     const candidates = [makeCandidate({ termId: "a" }), makeCandidate({ termId: "b" })];
-    expect(rankReadQueue(candidates)).toHaveLength(2);
+    expect(rankReadQueue(candidates, NOW)).toHaveLength(2);
   });
 
-  it("sorts by ascending read count", () => {
+  it("ranks a stale-but-heavily-touched term ahead of a fresh-but-lightly-touched one", () => {
     const candidates = [
-      makeCandidate({ termId: "a", readCount: 5 }),
-      makeCandidate({ termId: "b", readCount: 0 }),
-      makeCandidate({ termId: "c", readCount: 2 }),
+      // Read 10 times, but the last time was 60 days ago — exposure has decayed a lot.
+      makeCandidate({
+        termId: "stale",
+        readCount: 10,
+        lastReadAt: new Date(NOW.getTime() - 60 * 24 * 60 * 60 * 1000),
+      }),
+      // Read once, just now — no decay yet.
+      makeCandidate({ termId: "fresh", readCount: 1, lastReadAt: NOW }),
     ];
-    expect(rankReadQueue(candidates).map((c) => c.termId)).toEqual(["b", "c", "a"]);
+    // Raw read count alone would rank "fresh" first (1 < 10) — decay-aware
+    // exposure correctly reverses that, since "stale" has faded the most.
+    expect(rankReadQueue(candidates, NOW).map((c) => c.termId)).toEqual(["stale", "fresh"]);
+  });
+
+  it("no longer lets a zero-reads term tie for first once it's well-tested elsewhere", () => {
+    const candidates = [
+      // Never read, but confidently graded in Review several times.
+      makeCandidate({
+        termId: "known-elsewhere",
+        readCount: 0,
+        reviewRecallCount: 5,
+        recallStability: 30,
+        lastReviewRecallAt: NOW,
+      }),
+      // Completely untouched, anywhere.
+      makeCandidate({ termId: "blank" }),
+    ];
+    expect(rankReadQueue(candidates, NOW).map((c) => c.termId)).toEqual([
+      "blank",
+      "known-elsewhere",
+    ]);
+  });
+
+  it("still ranks a fully-untouched term first ahead of any term with signal", () => {
+    const candidates = [
+      makeCandidate({ termId: "touched", readCount: 1, lastReadAt: NOW }),
+      makeCandidate({ termId: "blank" }),
+    ];
+    expect(rankReadQueue(candidates, NOW).map((c) => c.termId)).toEqual(["blank", "touched"]);
   });
 
   it("breaks ties by oldest createdAt first", () => {
     const candidates = [
-      makeCandidate({ termId: "new", readCount: 0, createdAt: new Date("2026-01-10") }),
-      makeCandidate({ termId: "old", readCount: 0, createdAt: new Date("2026-01-01") }),
+      makeCandidate({ termId: "new", createdAt: new Date("2026-01-10") }),
+      makeCandidate({ termId: "old", createdAt: new Date("2026-01-01") }),
     ];
-    expect(rankReadQueue(candidates).map((c) => c.termId)).toEqual(["old", "new"]);
+    expect(rankReadQueue(candidates, NOW).map((c) => c.termId)).toEqual(["old", "new"]);
   });
 });
 

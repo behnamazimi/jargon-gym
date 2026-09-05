@@ -45,7 +45,8 @@ const CONTEXT_OPTIONS: Array<{
   {
     value: "read",
     title: "Read",
-    description: "Read page/command priority — ranked by lowest exposure count first.",
+    description:
+      "Read page/command priority — ranked by decay-aware exposure combining Read/Review/Quiz history, tempered by how well-tested the term already is.",
   },
   {
     value: "review",

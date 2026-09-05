@@ -168,11 +168,24 @@ All three tiers rank the exact same pool of terms — every term across your
 active collections — just by a different signal. There's no separate
 "known pool" or "unknown pool" to graduate between anymore.
 
-| Tier       | Ranked by                               | Never-tested terms                                                       |
-| ---------- | --------------------------------------- | ------------------------------------------------------------------------ |
-| **Read**   | Fewest reads first                      | Always included — reading is how a term gets exposure in the first place |
-| **Review** | Lowest recall retrievability first      | Ranked _first_, ahead of every graded term                               |
-| **Quiz**   | Lowest recognition retrievability first | Ranked _first_, ahead of every answered term                             |
+| Tier       | Ranked by                                                                    | Never-tested terms                                                       |
+| ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Read**   | Lowest decay-aware exposure (Read+Review+Quiz combined), tempered by mastery | Always included — reading is how a term gets exposure in the first place |
+| **Review** | Lowest recall retrievability first                                           | Ranked _first_, ahead of every graded term                               |
+| **Quiz**   | Lowest recognition retrievability first                                      | Ranked _first_, ahead of every answered term                             |
+
+Read's ranking used to be a simple "fewest reads first" count. It's now a
+decay-aware signal that also folds in Review and Quiz history: a term's
+reads, review grades, and quiz answers are combined into one exposure
+count, anchored on whichever track was touched most recently, and decayed
+the same way familiarity decays. On top of that, a small nudge pushes an
+already-well-tested term later in the queue, so a term that's been
+thoroughly reviewed or quizzed doesn't keep dominating Read purely
+because its own read count happens to be zero. Two things this fixes: a
+term read many times long ago no longer permanently outranks one read
+once very recently (the old count never faded); and a term graded
+confidently in Review while never actually opened in Read no longer sits
+at the front of Read's queue forever just because `readCount` is 0.
 
 The Review/Quiz "never-tested terms rank first" rule is worth dwelling on,
 because it's easy to get backwards. A term with no recall trace yet isn't
@@ -306,21 +319,25 @@ Every constant TRACE uses is named and commented in
 the source of truth rather than this table, since the two can drift. As of
 writing:
 
-| Parameter                                                  | Value               | Meaning                                                                                     |
-| ---------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------- |
-| Familiarity growth rate / decay rate                       | 0.3 / 0.5           | How fast familiarity grows per read, and how quickly that growth diminishes with repetition |
-| Familiarity cap                                            | 0.35                | Most familiarity alone can ever contribute to mastery                                       |
-| Familiarity decay scale                                    | 10 days             | How fast familiarity fades if you stop reading a term                                       |
-| Cold-start nudge (difficulty / stability)                  | 2 / 0.5             | How much familiarity shifts a term's very first recall grade                                |
-| Quiz slip allowance                                        | 0.95                | Assumed chance of answering correctly when you do know the term                             |
-| Guess rate, multiple choice / true-false                   | 0.25 / 0.5          | Assumed chance of answering correctly by guessing                                           |
-| Retrievability decay scale                                 | 9                   | Shared by recall and recognition — larger stability decays retrievability more slowly       |
-| Mastery blend weights (familiarity / recall / recognition) | 0.2 / 0.5 / 0.3     | How much each trace counts toward overall mastery                                           |
-| Confidence time constant                                   | 3 tests             | How quickly the confidence discount approaches full weight                                  |
-| Known / unknown thresholds                                 | 0.8 / 0.6           | Mastery_adjusted bounds for the known/learning/unknown label                                |
-| Known label minimum test count                             | 3                   | Tests needed (Review + Quiz combined) before "known" can apply                              |
-| Session cooldown                                           | 0.98 retrievability | Above this, a term drops out of that tier's list for the rest of the session                |
+| Parameter                                                  | Value               | Meaning                                                                                                                          |
+| ---------------------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Familiarity growth rate / decay rate                       | 0.3 / 0.5           | How fast familiarity grows per read, and how quickly that growth diminishes with repetition                                      |
+| Familiarity cap                                            | 0.35                | Most familiarity alone can ever contribute to mastery                                                                            |
+| Familiarity decay scale                                    | 10 days             | How fast familiarity fades if you stop reading a term                                                                            |
+| Cold-start nudge (difficulty / stability)                  | 2 / 0.5             | How much familiarity shifts a term's very first recall grade                                                                     |
+| Quiz slip allowance                                        | 0.95                | Assumed chance of answering correctly when you do know the term                                                                  |
+| Guess rate, multiple choice / true-false                   | 0.25 / 0.5          | Assumed chance of answering correctly by guessing                                                                                |
+| Retrievability decay scale                                 | 9                   | Shared by recall and recognition — larger stability decays retrievability more slowly                                            |
+| Mastery blend weights (familiarity / recall / recognition) | 0.2 / 0.5 / 0.3     | How much each trace counts toward overall mastery                                                                                |
+| Confidence time constant                                   | 3 tests             | How quickly the confidence discount approaches full weight                                                                       |
+| Known / unknown thresholds                                 | 0.8 / 0.6           | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
+| Known label minimum test count                             | 3                   | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
+| Session cooldown                                           | 0.98 retrievability | Above this, a term drops out of that tier's list for the rest of the session                                                     |
+| Read mastery-temper weight                                 | 0.2                 | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
 
-These are reasoned starting points, not values fit to real usage data — see
+These are reasoned starting points, not values fit to real usage data — this
+one in particular is meant to be tuned by feel from the debug queue view
+once it's live, the same way the rest of the scoring engine's constants
+get adjusted — see
 `trace-formula.md`'s "Open items to validate" section for what's still
 worth measuring once there's real pass/fail history to look at.

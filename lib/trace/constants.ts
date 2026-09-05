@@ -62,3 +62,9 @@ export const UNKNOWN_THRESHOLD = 0.6;
  *  gap where confidence(n) alone doesn't stop a single lucky grade from
  *  crossing the known threshold on a brand-new term. */
 export const KNOWN_MIN_TEST_COUNT = 3;
+
+/** §10 Read ranking — weight on the mastery-tempering nudge relative to
+ *  decay-aware exposure (see rankReadQueue in queue.ts). A reasoned
+ *  starting point, meant to be retuned by feel from the debug queue view
+ *  once it's live, same as everything else in this file. */
+export const READ_TEMPER_WEIGHT = 0.2;

@@ -24,6 +24,14 @@ export function formatReadDetail(count: number, lastAt: string | null): string {
   return count === 0 ? "read 0" : `read ${count} (${formatRelative(lastAt)})`;
 }
 
+/** Read ranking's score breakdown — always shown alongside formatReadDetail,
+ *  same "stays accurate regardless of tab" convention as the other
+ *  formatters here. Distinct from formatReadDetail, which shows raw
+ *  readCount/lastReadAt state; this shows the derived ranking signal. */
+export function formatReadRankDetail(exposure: number, tempering: number, score: number): string {
+  return `score ${score.toFixed(3)} (exposure ${exposure.toFixed(3)}, temper ${tempering.toFixed(3)})`;
+}
+
 export function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
