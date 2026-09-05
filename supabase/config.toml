@@ -128,7 +128,6 @@ file_size_limit = "50MiB"
 public = false
 file_size_limit = "10MiB"
 allowed_mime_types = ["audio/mpeg"]
-objects_path = "./term-narrations"
 
 # Allow connections via S3 compatible clients
 [storage.s3_protocol]
