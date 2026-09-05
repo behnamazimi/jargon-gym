@@ -1,3 +1,4 @@
+import { PauseCircle } from "lucide-react";
 import type { CollectionStatBreakdown } from "@/lib/jargon/collection-stats";
 import { formatPaceLine, formatUnseenFootnote } from "./mastery-format";
 import { cn } from "@/lib/utils";
@@ -15,20 +16,25 @@ function CollectionCardShell({
   strengthPercent,
   footnote,
   paceLine,
-  muted,
+  paused,
   onSelect,
 }: {
   collection: CollectionCardData;
   strengthPercent?: number;
   footnote?: string;
   paceLine?: string | null;
-  muted?: boolean;
+  paused?: boolean;
   onSelect?: () => void;
 }) {
   const content = (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between gap-3 text-sm">
-        <span className="truncate font-medium text-base-content">{collection.name}</span>
+        <span className="flex min-w-0 items-center gap-1.5 font-medium text-base-content">
+          {paused ? (
+            <PauseCircle className="size-3.5 shrink-0 text-base-content/50" aria-label="Paused" />
+          ) : null}
+          <span className="truncate">{collection.name}</span>
+        </span>
         <span className="shrink-0 tabular-nums text-base-content/60">
           {collection.termsLearnedCount}/{collection.totalCount} learned
         </span>
@@ -49,7 +55,7 @@ function CollectionCardShell({
 
   const className = cn(
     "shadow-surface rounded-2xl bg-base-100 p-4 text-left",
-    muted && "opacity-60",
+    paused && "opacity-60",
   );
 
   if (!onSelect) {
@@ -90,8 +96,10 @@ export function CollectionCard({
   );
 }
 
-/** A paused collection — same shape, dimmed, no footnote/pace, not
- *  interactive (nothing to drill into while paused). */
+/** A paused collection — same shape, dimmed with a paused icon next to its
+ *  name, no footnote/pace, not interactive (nothing to drill into while
+ *  paused). Rendered alongside active cards, sorted after them, rather
+ *  than tucked behind a separate disclosure. */
 export function PausedCollectionCard({ collection }: { collection: CollectionCardData }) {
-  return <CollectionCardShell collection={collection} muted />;
+  return <CollectionCardShell collection={collection} paused />;
 }
