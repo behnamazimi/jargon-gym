@@ -132,15 +132,15 @@ This is a read-only badge, not something you set. There's no toggle
 anywhere in the app to mark a term known by hand anymore — the label is
 recalculated live from Mastery_adjusted every time it's shown:
 
-| Label        | Condition                                                             |
-| ------------ | --------------------------------------------------------------------- |
-| **Known**    | Mastery_adjusted ≥ 0.8, and you've been tested on it at least 3 times |
-| **Learning** | Everything in between                                                 |
-| **Unknown**  | Mastery_adjusted < 0.6                                                |
+| Label        | Condition                                                              |
+| ------------ | ---------------------------------------------------------------------- |
+| **Known**    | Mastery_adjusted ≥ 0.75, and you've been tested on it at least 3 times |
+| **Learning** | Everything in between                                                  |
+| **Unknown**  | Mastery_adjusted < 0.6                                                 |
 
 The test-count floor exists because the confidence discount alone doesn't
 fully protect against a single strong grade nudging a brand-new term over
-0.8 by chance — the explicit count check closes that gap.
+0.75 by chance — the explicit count check closes that gap.
 
 Importantly, **this label never affects what Review or Quiz shows you.**
 Ranking always uses the raw, undiscounted retrievability described below —
@@ -165,7 +165,7 @@ learned" (high-water mark, never decreases).
 The second, a sibling high-water mark (`ever_learning_at`), does the
 identical thing one threshold lower — stamped the first time
 Mastery_adjusted crosses the learning threshold (0.6) rather than the
-known one (0.8). It exists to back the mastery page's per-collection pace
+known one (0.75). It exists to back the mastery page's per-collection pace
 insight (`lib/trace/pace.ts`): every term sits in exactly one of three
 permanent, monotonic buckets — never reached learning, reached learning
 but not yet mastered, or mastered — and recent crossings into each bucket
@@ -344,8 +344,8 @@ writing:
 | Guess rate, multiple choice / true-false                   | 0.25 / 0.5          | Assumed chance of answering correctly by guessing                                                                                |
 | Retrievability decay scale                                 | 9                   | Shared by recall and recognition — larger stability decays retrievability more slowly                                            |
 | Mastery blend weights (familiarity / recall / recognition) | 0.2 / 0.5 / 0.3     | How much each trace counts toward overall mastery                                                                                |
-| Confidence time constant                                   | 3 tests             | How quickly the confidence discount approaches full weight                                                                       |
-| Known / unknown thresholds                                 | 0.8 / 0.6           | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
+| Confidence time constant                                   | 2 tests             | How quickly the confidence discount approaches full weight                                                                       |
+| Known / unknown thresholds                                 | 0.75 / 0.6          | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
 | Known label minimum test count                             | 3                   | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
 | Session cooldown                                           | 0.98 retrievability | Above this, a term drops out of that tier's list for the rest of the session                                                     |
 | Read mastery-temper weight                                 | 0.2                 | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |

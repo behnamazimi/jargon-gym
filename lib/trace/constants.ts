@@ -52,11 +52,20 @@ export const MASTERY_WEIGHT_FAMILIARITY = 0.2; // wF
 export const MASTERY_WEIGHT_RECALL = 0.5; // wR
 export const MASTERY_WEIGHT_RECOGNITION = 0.3; // wG
 
-/** §7 Confidence discount time constant: confidence(n) = 1 − e^(−n/τ). */
-export const CONFIDENCE_TIME_CONSTANT = 3; // τ
+/** §7 Confidence discount time constant: confidence(n) = 1 − e^(−n/τ).
+ *  Lowered from 3 to 2 (2026-09-05): at τ=3, reaching KNOWN_THRESHOLD
+ *  required ~7-8 correct grades on a term (7-10 weeks of real usage,
+ *  since each successful FSRS grade grows stability and lengthens the
+ *  wait before the term is due again). τ=2 needs ~4 correct grades
+ *  instead — this only reshapes the label's confidence curve, not
+ *  ranking or the underlying memory model. */
+export const CONFIDENCE_TIME_CONSTANT = 2; // τ
 
-/** §9 Known/unknown label thresholds (no hysteresis — see plan's deviation note). */
-export const KNOWN_THRESHOLD = 0.8;
+/** §9 Known/unknown label thresholds (no hysteresis — see plan's deviation note).
+ *  KNOWN_THRESHOLD lowered from 0.8 to 0.75 (2026-09-05) alongside the
+ *  CONFIDENCE_TIME_CONSTANT change above, as part of the same
+ *  time-to-mastery recalibration. */
+export const KNOWN_THRESHOLD = 0.75;
 export const UNKNOWN_THRESHOLD = 0.6;
 /** §9 Minimum test count before a term can be labeled "known" — closes the
  *  gap where confidence(n) alone doesn't stop a single lucky grade from
