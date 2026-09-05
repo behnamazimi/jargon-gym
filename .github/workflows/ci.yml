@@ -111,6 +111,7 @@ jobs:
       - name: Generated types must match schema
         run: |
           pnpm supabase:types
+          pnpm exec oxfmt lib/supabase/database.types.ts
           git diff --exit-code -- lib/supabase/database.types.ts
 
       - name: All public tables must have RLS enabled
