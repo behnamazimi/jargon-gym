@@ -23,10 +23,6 @@ import {
   TermMutationError,
   updateTerm as updateTermRecord,
 } from "@/lib/jargon/terms";
-import { getNarrationAccessForUser } from "@/lib/narration/access";
-import { getOrGenerateNarration } from "@/lib/narration/service";
-import type { NarrationResult } from "@/lib/narration/types";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 function termMutationErrorMessage(err: unknown, fallback: string) {
@@ -132,18 +128,6 @@ export async function recordReviewRevealAction(termId: string): Promise<{ error?
     const message = err instanceof Error ? err.message : "Couldn't record that you saw this term.";
     return { error: message };
   }
-}
-
-/** Shared by Read and Review — narration UI only renders when the caller
- *  has access, but this is re-checked server-side rather than trusted. */
-export async function getTermNarrationAction(termId: string): Promise<NarrationResult> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { status: "unavailable" };
-
-  const allowed = await getNarrationAccessForUser(auth.supabase, auth.user.id);
-  if (!allowed) return { status: "unavailable" };
-
-  return getOrGenerateNarration(createAdminClient(), termId);
 }
 
 export async function addToCollection(domainId: string): Promise<{ error?: string }> {

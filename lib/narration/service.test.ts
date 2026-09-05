@@ -9,11 +9,10 @@ vi.mock("./eleven-labs", () => ({
 }));
 vi.mock("./storage", () => ({
   uploadNarrationAudio: vi.fn(),
-  getSignedNarrationUrl: vi.fn(),
 }));
 
 const { synthesizeNarrationAudio } = await import("./eleven-labs");
-const { uploadNarrationAudio, getSignedNarrationUrl } = await import("./storage");
+const { uploadNarrationAudio } = await import("./storage");
 const { getOrGenerateNarration } = await import("./service");
 
 type Client = SupabaseClient<Database>;
@@ -85,9 +84,6 @@ function makeClient(options: {
 beforeEach(() => {
   vi.mocked(synthesizeNarrationAudio).mockReset();
   vi.mocked(uploadNarrationAudio).mockReset().mockResolvedValue(undefined);
-  vi.mocked(getSignedNarrationUrl)
-    .mockReset()
-    .mockResolvedValue("https://signed.example/audio.mp3");
 });
 
 afterEach(() => {
@@ -95,7 +91,7 @@ afterEach(() => {
 });
 
 describe("getOrGenerateNarration", () => {
-  it("returns a signed URL on a cache hit without calling ElevenLabs", async () => {
+  it("returns the storage path on a cache hit without calling ElevenLabs", async () => {
     const client = makeClient({
       narrationRowQueue: [{ status: "ready", content_hash: HASH, storage_path: "term-1.mp3" }],
       claimResult: [],
@@ -103,9 +99,8 @@ describe("getOrGenerateNarration", () => {
 
     const result = await getOrGenerateNarration(client, TERM_ID);
 
-    expect(result).toEqual({ status: "ready", signedUrl: "https://signed.example/audio.mp3" });
+    expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
     expect(synthesizeNarrationAudio).not.toHaveBeenCalled();
-    expect(getSignedNarrationUrl).toHaveBeenCalledWith("term-1.mp3");
   });
 
   it("generates and marks ready when it wins the claim", async () => {
@@ -119,7 +114,7 @@ describe("getOrGenerateNarration", () => {
 
     const result = await getOrGenerateNarration(client, TERM_ID);
 
-    expect(result).toEqual({ status: "ready", signedUrl: "https://signed.example/audio.mp3" });
+    expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
     expect(synthesizeNarrationAudio).toHaveBeenCalledTimes(1);
     expect(uploadNarrationAudio).toHaveBeenCalledWith("term-1.mp3", Buffer.from("audio"));
     expect(updates).toEqual([{ status: "ready", storage_path: "term-1.mp3" }]);
@@ -170,7 +165,7 @@ describe("getOrGenerateNarration", () => {
     await vi.advanceTimersByTimeAsync(750);
     const result = await resultPromise;
 
-    expect(result).toEqual({ status: "ready", signedUrl: "https://signed.example/audio.mp3" });
+    expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
     expect(synthesizeNarrationAudio).not.toHaveBeenCalled();
   });
 });

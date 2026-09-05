@@ -1,10 +1,8 @@
 "use client";
 
 import { Loader2, Pause, Volume2 } from "lucide-react";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { getTermNarrationAction } from "@/app/(private)/jargon/actions";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { loadNarrationAudio } from "@/lib/narration/client-cache";
 
 /**
  * Only one narration clip should play at a time — the jargon collection
@@ -33,51 +31,14 @@ function releaseActiveAudio(audio: HTMLAudioElement) {
 /** Play/pause button for a term's narration. Shared by Read, Review, and the
  *  jargon collection page — callers should only render it when
  *  narrationAccess is true, but access is re-checked server-side regardless
- *  (see getTermNarrationAction). */
+ *  by GET /api/narration/[termId], which streams the audio itself.
+ *
+ *  That route sets Cache-Control + an ETag (the narration's content hash),
+ *  so repeat plays of the same term are served from the browser's own HTTP
+ *  cache — no bespoke caching logic needed here. */
 export function TermNarrationPlayer({ termId }: { termId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
-  const [, startTransition] = useTransition();
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
-
-  // Revoke the blob URL backing the audio element whenever it's replaced or
-  // the player unmounts — otherwise each fresh play leaks one object URL.
-  useEffect(() => {
-    return () => {
-      if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    };
-  }, []);
-
-  async function playBlob(audioBlob: Blob) {
-    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-    const objectUrl = URL.createObjectURL(audioBlob);
-    objectUrlRef.current = objectUrl;
-
-    const audio = audioRef.current ?? new Audio();
-    audioRef.current = audio;
-    audio.src = objectUrl;
-    audio.onended = () => setStatus("idle");
-    audio.onerror = () => {
-      releaseActiveAudio(audio);
-      setStatus("idle");
-    };
-    // Fires both when this player pauses itself and when another
-    // TermNarrationPlayer claims the shared slot and stops this one —
-    // either way it's "paused" (resumable), not "idle" (needs refetch).
-    audio.onpause = () => {
-      releaseActiveAudio(audio);
-      setStatus("paused");
-    };
-
-    try {
-      claimActiveAudio(audio);
-      await audio.play();
-      setStatus("playing");
-    } catch {
-      releaseActiveAudio(audio);
-      setStatus("idle");
-    }
-  }
 
   function handlePress() {
     if (status === "playing") {
@@ -92,20 +53,31 @@ export function TermNarrationPlayer({ termId }: { termId: string }) {
       return;
     }
 
+    const audio = audioRef.current ?? new Audio();
+    audioRef.current = audio;
+    audio.src = `/api/narration/${termId}`;
+    audio.onended = () => setStatus("idle");
+    audio.onerror = () => {
+      releaseActiveAudio(audio);
+      setStatus("idle");
+    };
+    // Fires both when this player pauses itself and when another
+    // TermNarrationPlayer claims the shared slot and stops this one —
+    // either way it's "paused" (resumable), not "idle" (needs refetch).
+    audio.onpause = () => {
+      releaseActiveAudio(audio);
+      setStatus("paused");
+    };
+
     setStatus("loading");
-    startTransition(async () => {
-      const audioBlob = await loadNarrationAudio(termId, async () => {
-        const result = await getTermNarrationAction(termId);
-        return result.status === "ready" ? result.signedUrl : null;
-      });
-
-      if (!audioBlob) {
+    claimActiveAudio(audio);
+    audio
+      .play()
+      .then(() => setStatus("playing"))
+      .catch(() => {
+        releaseActiveAudio(audio);
         setStatus("idle"); // fail silently — next press retries
-        return;
-      }
-
-      await playBlob(audioBlob);
-    });
+      });
   }
 
   return (

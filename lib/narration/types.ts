@@ -12,4 +12,6 @@ export type NarratedTermFields = Pick<
   "term" | "definition" | "example" | "mental_model" | "discussion" | "anti_example" | "controversy"
 >;
 
-export type NarrationResult = { status: "ready"; signedUrl: string } | { status: "unavailable" };
+export type NarrationResult =
+  | { status: "ready"; storagePath: string; contentHash: string }
+  | { status: "unavailable" };
