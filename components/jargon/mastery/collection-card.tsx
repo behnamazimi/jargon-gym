@@ -12,12 +12,14 @@ type CollectionCardData = {
 
 function CollectionCardShell({
   collection,
+  strengthPercent,
   footnote,
   paceLine,
   muted,
   onSelect,
 }: {
   collection: CollectionCardData;
+  strengthPercent?: number;
   footnote?: string;
   paceLine?: string | null;
   muted?: boolean;
@@ -37,6 +39,9 @@ function CollectionCardShell({
         max={100}
         aria-label={`${collection.name} learned ${collection.percentage}%`}
       />
+      {strengthPercent !== undefined ? (
+        <p className="text-sm font-semibold text-base-content">{strengthPercent}% strength</p>
+      ) : null}
       {footnote ? <p className="text-xs text-base-content/50">{footnote}</p> : null}
       {paceLine ? <p className="text-xs text-base-content/50">{paceLine}</p> : null}
     </div>
@@ -77,6 +82,7 @@ export function CollectionCard({
   return (
     <CollectionCardShell
       collection={collection}
+      strengthPercent={Math.round(collection.currentStrength * 100)}
       footnote={formatUnseenFootnote(collection)}
       paceLine={formatPaceLine(collection.paceInsight)}
       onSelect={() => onSelect(collection.id)}

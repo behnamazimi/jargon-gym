@@ -8,6 +8,7 @@ import {
   type TraceCandidate,
 } from "@/lib/trace-queue";
 import {
+  aggregateMastery,
   CALIBRATION_MIN_BUCKET_SAMPLE,
   computeCrossingPace,
   estimateMilestone,
@@ -95,6 +96,10 @@ export type CollectionStatBreakdown = {
   percentage: number;
   unseenCount: number;
   paceInsight: CollectionPaceInsight;
+  /** §8 OverallMastery scoped to this collection's own started (≥1 Read)
+   *  terms — the per-collection analogue of the page-wide aggregate, which
+   *  blurred together collections at very different stages. */
+  currentStrength: number;
 };
 
 /** The web Mastery page's overview: a rollup across active collections
@@ -185,6 +190,7 @@ function buildStatsSnapshot(
     const termsLearnedCount = row.termsLearnedCount;
     const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
     const domainCandidates = byDomain.get(row.id) ?? [];
+    const startedDomainCandidates = domainCandidates.filter((c) => c.readCount > 0);
 
     return {
       id: row.id,
@@ -194,6 +200,7 @@ function buildStatsSnapshot(
       percentage,
       unseenCount: countUnseen(domainCandidates, "read"),
       paceInsight: buildCollectionPaceInsight(domainCandidates, now),
+      currentStrength: aggregateMastery(startedDomainCandidates, now),
     };
   });
 

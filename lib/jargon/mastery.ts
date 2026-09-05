@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { aggregateMastery, computeTraceSnapshot, daysBetween, type KnownLabel } from "@/lib/trace";
+import { computeTraceSnapshot, daysBetween, type KnownLabel } from "@/lib/trace";
 import { fetchActiveTraceCandidates } from "@/lib/trace-queue";
 import { resolveReviewDomainIds } from "./known-state";
 
@@ -52,11 +52,13 @@ export type MasteryTermRow = {
 
 export type MasteryOverviewData = {
   collections: MasteryCollectionOption[];
-  /** §8 "current strength" — live OverallMastery across every started term
-   *  (≥1 Read). Decays with inactivity by design, unlike termsLearned. */
-  currentStrength: number;
+  /** Count of terms that have ever crossed the Learning milestone but not
+   *  yet Mastered — a permanent, monotonic bucket (see
+   *  lib/trace/pace.ts's partitionMasteryBuckets), not a live/decaying
+   *  score. */
+  termsLearning: number;
   /** §8 "terms learned" — high-water mark count of terms that ever crossed
-   *  the known threshold. Never decreases even as currentStrength decays. */
+   *  the known threshold. Never decreases. */
   termsLearned: number;
   /** Every term across active collections, ranked by score descending, for
    *  the searchable/filterable term list. */
@@ -106,7 +108,7 @@ export async function loadMasteryOverview(
   const activeSet = new Set(reviewDomainIds);
   const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
   if (activeCollectionRows.length === 0) {
-    return { collections: [], currentStrength: 0, termsLearned: 0, termRows: [] };
+    return { collections: [], termsLearning: 0, termsLearned: 0, termRows: [] };
   }
 
   const collections: MasteryCollectionOption[] = activeCollectionRows
@@ -115,8 +117,10 @@ export async function loadMasteryOverview(
 
   const candidates = await fetchActiveTraceCandidates(client, userId);
   const now = new Date();
-  const startedCandidates = candidates.filter((c) => c.readCount > 0);
   const termsLearned = candidates.filter((c) => c.everMasteredAt !== null).length;
+  const termsLearning = candidates.filter(
+    (c) => c.everLearningAt !== null && c.everMasteredAt === null,
+  ).length;
 
   const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
 
@@ -173,7 +177,7 @@ export async function loadMasteryOverview(
 
   return {
     collections,
-    currentStrength: aggregateMastery(startedCandidates, now),
+    termsLearning,
     termsLearned,
     termRows,
   };
