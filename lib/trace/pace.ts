@@ -3,10 +3,13 @@
  *  estimate for the Mastery page. Pure math, no DB — mirrors the rest of
  *  this folder's layering (docs/trace.md "Where the logic lives").
  *
- *  Deliberately anchored on the permanent high-water marks, never the live
- *  (decaying) knownLabel: a term quietly decaying back out of "known"
- *  would otherwise make the estimate's target recede on its own, with no
- *  relation to the user's actual effort. */
+ *  computeCrossingPace/estimateMilestone's *rate* half stays anchored on
+ *  the permanent high-water marks below — there's no coherent "live rate"
+ *  for a signal with no stable crossing time. Callers may still feed a
+ *  *live* remaining-count (via partitionLiveMasteryBuckets) into
+ *  estimateMilestone, so the collection card's forecast can worsen
+ *  immediately when a term decays, while the velocity estimate keeps
+ *  reflecting genuine past events. */
 
 import {
   PACE_ESTIMATE_RANGE_MULTIPLIER,
@@ -16,7 +19,7 @@ import {
   PACE_WINDOW_LADDER_DAYS,
 } from "./constants";
 import { daysBetween } from "./decay";
-import type { TraceCandidate } from "./types";
+import type { KnownLabel, TraceCandidate } from "./types";
 
 export type MasteryBucketCounts = {
   neverLearning: number;
@@ -35,6 +38,25 @@ export function partitionMasteryBuckets(
   for (const c of candidates) {
     if (c.everMasteredAt !== null) mastered++;
     else if (c.everLearningAt !== null) learningNotMastered++;
+    else neverLearning++;
+  }
+  return { neverLearning, learningNotMastered, mastered };
+}
+
+/** Live counterpart of partitionMasteryBuckets: buckets by each term's
+ *  current, decaying knownLabel rather than the permanent high-water
+ *  marks. A term can move backward through these buckets as it decays —
+ *  that's intentional here, unlike the permanent buckets above. Callers
+ *  compute each label via computeTraceSnapshot(candidate, now).knownLabel
+ *  (kept out of this file to avoid importing the lib/trace barrel from
+ *  inside it). */
+export function partitionLiveMasteryBuckets(labels: KnownLabel[]): MasteryBucketCounts {
+  let neverLearning = 0;
+  let learningNotMastered = 0;
+  let mastered = 0;
+  for (const label of labels) {
+    if (label === "known") mastered++;
+    else if (label === "learning") learningNotMastered++;
     else neverLearning++;
   }
   return { neverLearning, learningNotMastered, mastered };

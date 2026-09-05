@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { PACE_ESTIMATE_RANGE_MULTIPLIER } from "./constants";
-import { computeCrossingPace, estimateMilestone, partitionMasteryBuckets } from "./pace";
+import {
+  computeCrossingPace,
+  estimateMilestone,
+  partitionLiveMasteryBuckets,
+  partitionMasteryBuckets,
+} from "./pace";
 
 const NOW = new Date("2026-02-01T00:00:00Z");
 
@@ -32,6 +37,32 @@ describe("partitionMasteryBuckets", () => {
       { everLearningAt: daysAgo(10), everMasteredAt: daysAgo(1) },
     ]);
     expect(buckets).toEqual({ neverLearning: 0, learningNotMastered: 0, mastered: 1 });
+  });
+});
+
+describe("partitionLiveMasteryBuckets", () => {
+  it("is all-zero for an empty list", () => {
+    expect(partitionLiveMasteryBuckets([])).toEqual({
+      neverLearning: 0,
+      learningNotMastered: 0,
+      mastered: 0,
+    });
+  });
+
+  it("buckets by the live label, not a permanent stamp", () => {
+    expect(partitionLiveMasteryBuckets(["unknown", "learning", "known", "known"])).toEqual({
+      neverLearning: 1,
+      learningNotMastered: 1,
+      mastered: 2,
+    });
+  });
+
+  it("can bucket a term as not-started even if it was mastered before, unlike the permanent buckets", () => {
+    expect(partitionLiveMasteryBuckets(["unknown"])).toEqual({
+      neverLearning: 1,
+      learningNotMastered: 0,
+      mastered: 0,
+    });
   });
 });
 

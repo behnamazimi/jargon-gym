@@ -158,21 +158,29 @@ having genuinely learned it once.
 So there are two pieces of TRACE state that are permanent records rather
 than live computations. The first: the first moment a term's
 Mastery_adjusted crosses the known threshold, that moment gets stamped and
-kept forever, even as the live score later fades. The mastery page shows
-both numbers side by side — "current strength" (live, decays) and "terms
-learned" (high-water mark, never decreases).
+kept forever, even as the live score later fades. The second, a sibling
+high-water mark (`ever_learning_at`), does the identical thing one
+threshold lower — stamped the first time Mastery_adjusted crosses the
+learning threshold (0.6) rather than the known one (0.75).
 
-The second, a sibling high-water mark (`ever_learning_at`), does the
-identical thing one threshold lower — stamped the first time
-Mastery_adjusted crosses the learning threshold (0.6) rather than the
-known one (0.75). It exists to back the mastery page's per-collection pace
-insight (`lib/trace/pace.ts`): every term sits in exactly one of three
-permanent, monotonic buckets — never reached learning, reached learning
-but not yet mastered, or mastered — and recent crossings into each bucket
-give two independent "time to next milestone" estimates. These are
-deliberately anchored on the two permanent stamps rather than the live
-known/learning/unknown label, so a term quietly decaying back out of
-"known" can't make the estimate's target recede on its own.
+Both stamps are permanent by design, but as of 2026-09-05 only one place in
+the app reads them that way: the mastery page's "Lifetime" summary
+(`lib/jargon/mastery.ts`'s `lifetimeLearningCount`/`lifetimeMasteredCount`,
+via `partitionMasteryBuckets`), which is deliberately the one number in the
+app that can't decrease just because a term decayed. Every other surface —
+the per-collection cards' bucket bar, the domain header's "X of Y learned",
+the sidebar, the widget, and the "current strength" figure — reads the
+live, currently-decaying `knownLabel` instead
+(`lib/trace/pace.ts`'s `partitionLiveMasteryBuckets`, or
+`lib/jargon/collections.ts`'s `knownCount`/`termsLearnedCount`), so a term
+that decays back out of "known" is reflected there immediately, including
+in the per-collection "time to next milestone" estimate's _remaining_
+count. That estimate's _rate_ half still comes from the permanent stamps
+(`computeCrossingPace` in `lib/trace/pace.ts`) — there's no coherent "live
+rate" for a signal with no stable crossing time, since rate is inherently
+about real past events, not a current snapshot. The columns themselves
+(`ever_mastered_at`/`ever_learning_at`) and their write path are unchanged;
+only which UI surfaces read them changed.
 
 ## How each tier decides what to show you
 

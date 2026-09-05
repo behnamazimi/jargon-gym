@@ -18,10 +18,11 @@ export default async function JargonMasteryPage() {
     );
   }
 
-  const [{ collections, termsLearning, termsLearned, termRows }, stats] = await Promise.all([
-    loadMasteryOverview(supabase, user.id),
-    fetchStatsSnapshot(supabase, user.id),
-  ]);
+  const [{ collections, lifetimeLearningCount, lifetimeMasteredCount, termRows }, stats] =
+    await Promise.all([
+      loadMasteryOverview(supabase, user.id),
+      fetchStatsSnapshot(supabase, user.id),
+    ]);
 
   if (stats.activeCount === 0 && stats.pausedCount === 0) {
     return (
@@ -44,8 +45,8 @@ export default async function JargonMasteryPage() {
     <MasteryPage
       collections={collections}
       stats={stats}
-      termsLearning={termsLearning}
-      termsLearned={termsLearned}
+      lifetimeLearningCount={lifetimeLearningCount}
+      lifetimeMasteredCount={lifetimeMasteredCount}
       termRows={termRows}
     />
   );

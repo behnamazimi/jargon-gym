@@ -11,9 +11,10 @@ import {
   aggregateMastery,
   CALIBRATION_MIN_BUCKET_SAMPLE,
   computeCrossingPace,
+  computeTraceSnapshot,
   estimateMilestone,
   isSameLocalDay,
-  partitionMasteryBuckets,
+  partitionLiveMasteryBuckets,
   STUDY_TIMEZONE,
   summarizeGradeDistribution,
   type MasteryBucketCounts,
@@ -77,9 +78,12 @@ export async function fetchCollectionStats(
 
 /** Rough "time to next milestone" insight, per collection — two
  *  independent estimates (never combined into one number, since the two
- *  transitions compete for the same study time), anchored on the
- *  permanent ever_learning_at/ever_mastered_at high-water marks rather
- *  than the live, decaying mastery label. See lib/trace/pace.ts. */
+ *  transitions compete for the same study time). `buckets` and the
+ *  `remaining` counts behind each estimate are live (a term can move
+ *  backward through them as it decays), while each estimate's *rate* half
+ *  stays anchored on the permanent ever_learning_at/ever_mastered_at
+ *  high-water marks — there's no coherent "live rate" for a value with no
+ *  stable crossing time. See lib/trace/pace.ts. */
 export type CollectionPaceInsight = {
   buckets: MasteryBucketCounts;
   /** Time until the last "never reached Learning" term first gets there. */
@@ -148,7 +152,8 @@ function buildCollectionPaceInsight(
   candidates: TraceCandidate[],
   now: Date,
 ): CollectionPaceInsight {
-  const buckets = partitionMasteryBuckets(candidates);
+  const labels = candidates.map((c) => computeTraceSnapshot(c, now).knownLabel);
+  const buckets = partitionLiveMasteryBuckets(labels);
   const learningCrossings = candidates
     .map((c) => c.everLearningAt)
     .filter((d): d is Date => d !== null);

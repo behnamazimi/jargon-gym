@@ -1,6 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { computeTraceSnapshot, daysBetween, type KnownLabel } from "@/lib/trace";
+import {
+  computeTraceSnapshot,
+  daysBetween,
+  partitionMasteryBuckets,
+  type KnownLabel,
+} from "@/lib/trace";
 import { fetchActiveTraceCandidates } from "@/lib/trace-queue";
 import { resolveReviewDomainIds } from "./known-state";
 
@@ -42,7 +47,7 @@ export type MasteryTermRow = {
   /** Mastery_adjusted scaled to 0–100 for display. */
   score: number;
   tier: MasteryTier;
-  /** True only when the label is "known" (mastery ≥0.8 & n≥3) — the same
+  /** True only when the label is "known" (mastery ≥0.75 & n≥3) — the same
    *  bar the checkmark badge elsewhere in the app uses. */
   known: boolean;
   /** Null unless known — and, as an edge case, if a mastered term somehow
@@ -52,14 +57,17 @@ export type MasteryTermRow = {
 
 export type MasteryOverviewData = {
   collections: MasteryCollectionOption[];
-  /** Count of terms that have ever crossed the Learning milestone but not
-   *  yet Mastered — a permanent, monotonic bucket (see
-   *  lib/trace/pace.ts's partitionMasteryBuckets), not a live/decaying
-   *  score. */
-  termsLearning: number;
+  /** Lifetime, never-decreasing count of terms that have ever crossed the
+   *  Learning milestone but not yet Mastered — a permanent, monotonic
+   *  bucket (see lib/trace/pace.ts's partitionMasteryBuckets), not a
+   *  live/decaying score. Surfaced in the page's lifetime-achievement
+   *  section; the per-collection cards above it show the live equivalent
+   *  instead (see CollectionPaceInsight.buckets in collection-stats.ts). */
+  lifetimeLearningCount: number;
   /** §8 "terms learned" — high-water mark count of terms that ever crossed
-   *  the known threshold. Never decreases. */
-  termsLearned: number;
+   *  the known threshold. Never decreases. Same lifetime-section role as
+   *  `lifetimeLearningCount` above. */
+  lifetimeMasteredCount: number;
   /** Every term across active collections, ranked by score descending, for
    *  the searchable/filterable term list. */
   termRows: MasteryTermRow[];
@@ -108,7 +116,7 @@ export async function loadMasteryOverview(
   const activeSet = new Set(reviewDomainIds);
   const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
   if (activeCollectionRows.length === 0) {
-    return { collections: [], termsLearning: 0, termsLearned: 0, termRows: [] };
+    return { collections: [], lifetimeLearningCount: 0, lifetimeMasteredCount: 0, termRows: [] };
   }
 
   const collections: MasteryCollectionOption[] = activeCollectionRows
@@ -117,10 +125,9 @@ export async function loadMasteryOverview(
 
   const candidates = await fetchActiveTraceCandidates(client, userId);
   const now = new Date();
-  const termsLearned = candidates.filter((c) => c.everMasteredAt !== null).length;
-  const termsLearning = candidates.filter(
-    (c) => c.everLearningAt !== null && c.everMasteredAt === null,
-  ).length;
+  const lifetimeBuckets = partitionMasteryBuckets(candidates);
+  const lifetimeMasteredCount = lifetimeBuckets.mastered;
+  const lifetimeLearningCount = lifetimeBuckets.learningNotMastered;
 
   const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
 
@@ -177,8 +184,8 @@ export async function loadMasteryOverview(
 
   return {
     collections,
-    termsLearning,
-    termsLearned,
+    lifetimeLearningCount,
+    lifetimeMasteredCount,
     termRows,
   };
 }
