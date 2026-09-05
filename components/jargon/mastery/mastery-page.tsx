@@ -1,6 +1,10 @@
+"use client";
+
+import { useState } from "react";
 import type { WebStatsSnapshot } from "@/lib/jargon/collection-stats";
 import type { MasteryCollectionOption, MasteryTermRow } from "@/lib/jargon/mastery";
 import { MasteryOverview } from "./mastery-overview";
+import { MasteryTabs, type MasteryTab } from "./mastery-tabs";
 import { MasteryTermList } from "./mastery-term-list";
 
 type MasteryPageProps = {
@@ -18,18 +22,30 @@ export function MasteryPage({
   termsLearned,
   termRows,
 }: MasteryPageProps) {
-  return (
-    <div className="space-y-5">
-      <MasteryOverview
-        stats={stats}
-        currentStrength={currentStrength}
-        termsLearned={termsLearned}
-      />
+  const [activeTab, setActiveTab] = useState<MasteryTab>("overview");
+  const [termsCollectionFilter, setTermsCollectionFilter] = useState("all");
 
-      <MasteryTermList
-        termRows={termRows}
-        collections={collections.map((c) => ({ id: c.domainId, name: c.domainName }))}
-      />
+  return (
+    <div className="space-y-4">
+      <MasteryTabs active={activeTab} onChange={setActiveTab} />
+
+      {activeTab === "overview" ? (
+        <MasteryOverview
+          stats={stats}
+          currentStrength={currentStrength}
+          termsLearned={termsLearned}
+          onSelectCollection={(collectionId) => {
+            setTermsCollectionFilter(collectionId);
+            setActiveTab("terms");
+          }}
+        />
+      ) : (
+        <MasteryTermList
+          termRows={termRows}
+          collections={collections.map((c) => ({ id: c.domainId, name: c.domainName }))}
+          initialCollectionId={termsCollectionFilter}
+        />
+      )}
     </div>
   );
 }

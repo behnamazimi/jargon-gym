@@ -16,6 +16,7 @@ import { MasteryTierChips, type MasteryTierFilter } from "./mastery-tier-chips";
 type MasteryTermListProps = {
   termRows: MasteryTermRowData[];
   collections: { id: string; name: string }[];
+  initialCollectionId?: string;
 };
 
 function tierCounts(rows: MasteryTermRowData[]): Record<MasteryTier, number> {
@@ -24,9 +25,13 @@ function tierCounts(rows: MasteryTermRowData[]): Record<MasteryTier, number> {
   return counts;
 }
 
-export function MasteryTermList({ termRows, collections }: MasteryTermListProps) {
+export function MasteryTermList({
+  termRows,
+  collections,
+  initialCollectionId,
+}: MasteryTermListProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [collectionId, setCollectionId] = useState("all");
+  const [collectionId, setCollectionId] = useState(initialCollectionId ?? "all");
   const [activeTier, setActiveTier] = useState<MasteryTierFilter>("all");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
