@@ -47,18 +47,15 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
 
-  supabase-migrations:
+  supabase-changes:
     runs-on: ubuntu-latest
+    outputs:
+      base: ${{ steps.diff_base.outputs.ref }}
+      changed: ${{ steps.check.outputs.changed }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
 
       - name: Determine diff base
         id: diff_base
@@ -74,9 +71,33 @@ jobs:
             fi
           fi
 
+      - name: Check for Supabase changes
+        id: check
+        run: |
+          if git diff --quiet "${{ steps.diff_base.outputs.ref }}"...HEAD -- supabase/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  supabase-migrations:
+    needs: supabase-changes
+    if: needs.supabase-changes.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
       - name: Migrations must be append-only and ordered
         run: |
-          base="${{ steps.diff_base.outputs.ref }}"
+          base="${{ needs.supabase-changes.outputs.base }}"
           changed="$(git diff --name-status "$base"...HEAD -- supabase/migrations/)"
           echo "$changed"
 
