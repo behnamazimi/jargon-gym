@@ -1,8 +1,7 @@
 "use client";
 
 import { Loader2, Pause, Volume2 } from "lucide-react";
-import { useRef, useState, useTransition } from "react";
-import { getTermNarrationAction } from "@/app/(private)/jargon/actions";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -32,10 +31,13 @@ function releaseActiveAudio(audio: HTMLAudioElement) {
 /** Play/pause button for a term's narration. Shared by Read, Review, and the
  *  jargon collection page — callers should only render it when
  *  narrationAccess is true, but access is re-checked server-side regardless
- *  (see getTermNarrationAction). */
+ *  by GET /api/narration/[termId], which streams the audio itself.
+ *
+ *  That route sets Cache-Control + an ETag (the narration's content hash),
+ *  so repeat plays of the same term are served from the browser's own HTTP
+ *  cache — no bespoke caching logic needed here. */
 export function TermNarrationPlayer({ termId }: { termId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
-  const [, startTransition] = useTransition();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   function handlePress() {
@@ -51,39 +53,31 @@ export function TermNarrationPlayer({ termId }: { termId: string }) {
       return;
     }
 
+    const audio = audioRef.current ?? new Audio();
+    audioRef.current = audio;
+    audio.src = `/api/narration/${termId}`;
+    audio.onended = () => setStatus("idle");
+    audio.onerror = () => {
+      releaseActiveAudio(audio);
+      setStatus("idle");
+    };
+    // Fires both when this player pauses itself and when another
+    // TermNarrationPlayer claims the shared slot and stops this one —
+    // either way it's "paused" (resumable), not "idle" (needs refetch).
+    audio.onpause = () => {
+      releaseActiveAudio(audio);
+      setStatus("paused");
+    };
+
     setStatus("loading");
-    startTransition(async () => {
-      const result = await getTermNarrationAction(termId);
-      if (result.status !== "ready") {
+    claimActiveAudio(audio);
+    audio
+      .play()
+      .then(() => setStatus("playing"))
+      .catch(() => {
+        releaseActiveAudio(audio);
         setStatus("idle"); // fail silently — next press retries
-        return;
-      }
-
-      const audio = audioRef.current ?? new Audio();
-      audioRef.current = audio;
-      audio.src = result.signedUrl;
-      audio.onended = () => setStatus("idle");
-      audio.onerror = () => {
-        releaseActiveAudio(audio);
-        setStatus("idle");
-      };
-      // Fires both when this player pauses itself and when another
-      // TermNarrationPlayer claims the shared slot and stops this one —
-      // either way it's "paused" (resumable), not "idle" (needs refetch).
-      audio.onpause = () => {
-        releaseActiveAudio(audio);
-        setStatus("paused");
-      };
-
-      try {
-        claimActiveAudio(audio);
-        await audio.play();
-        setStatus("playing");
-      } catch {
-        releaseActiveAudio(audio);
-        setStatus("idle");
-      }
-    });
+      });
   }
 
   return (

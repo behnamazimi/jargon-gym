@@ -1,7 +1,4 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
-const SIGNED_URL_TTL_SECONDS = 600;
 
 function getBucket(): string {
   const bucket = process.env.SUPABASE_S3_BUCKET;
@@ -47,9 +44,11 @@ export async function uploadNarrationAudio(path: string, audio: Buffer): Promise
   );
 }
 
-export async function getSignedNarrationUrl(path: string): Promise<string> {
+export async function downloadNarrationAudio(path: string): Promise<Uint8Array<ArrayBuffer>> {
   const client = getS3Client();
-  return getSignedUrl(client, new GetObjectCommand({ Bucket: getBucket(), Key: path }), {
-    expiresIn: SIGNED_URL_TTL_SECONDS,
-  });
+  const { Body } = await client.send(new GetObjectCommand({ Bucket: getBucket(), Key: path }));
+  if (!Body) throw new Error(`Narration audio missing at ${path}.`);
+  // Re-wrap: the SDK's bytes aren't guaranteed to be backed by a plain
+  // ArrayBuffer (vs. SharedArrayBuffer), which is what Response/Blob require.
+  return Uint8Array.from(await Body.transformToByteArray());
 }
