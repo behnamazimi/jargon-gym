@@ -21,6 +21,26 @@ export function PageSkeleton() {
   );
 }
 
+export function AdminPageSkeleton() {
+  return (
+    <div
+      className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <SkeletonBar className="h-9 w-64 rounded-lg" />
+      <SkeletonBar className="h-7 w-48" />
+      <div className="overflow-hidden rounded-lg border border-base-300">
+        <div className="divide-y divide-base-300">
+          <SkeletonBar className="h-11 w-full rounded-none" />
+          <SkeletonBar className="h-11 w-full rounded-none" />
+          <SkeletonBar className="h-11 w-full rounded-none" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PanelSkeleton() {
   return (
     <div

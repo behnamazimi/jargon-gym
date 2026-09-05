@@ -1,5 +1,5 @@
-import { PageSkeleton } from "@/components/page-skeleton";
+import { AdminPageSkeleton } from "@/components/page-skeleton";
 
 export default function AdminNarrationLoading() {
-  return <PageSkeleton />;
+  return <AdminPageSkeleton />;
 }

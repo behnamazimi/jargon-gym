@@ -8,6 +8,7 @@ import {
 } from "@/app/(private)/admin/narration/actions";
 import { AdminNav } from "@/components/jargon/admin/admin-nav";
 import type { AdminNarrationAllowlistRow } from "@/lib/jargon/admin/list-narration-allowlist";
+import { cn } from "@/lib/utils";
 
 type AdminNarrationPageClientProps = {
   enabled: boolean;
@@ -21,6 +22,7 @@ export function AdminNarrationPageClient({
   const [enabled, setEnabled] = useState(initialEnabled);
   const [allowlist, setAllowlist] = useState(initialAllowlist);
   const [toggleError, setToggleError] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleToggle(value: boolean) {
@@ -40,13 +42,18 @@ export function AdminNarrationPageClient({
 
   function handleRemove(userId: string) {
     const previous = allowlist;
-    setAllowlist((rows) => rows.filter((row) => row.userId !== userId));
+    setRemovingId(userId);
 
     startTransition(async () => {
       try {
         await removeFromNarrationAllowlist(userId);
+        setTimeout(() => {
+          setAllowlist((rows) => rows.filter((row) => row.userId !== userId));
+          setRemovingId(null);
+        }, 150);
       } catch {
         setAllowlist(previous);
+        setRemovingId(null);
       }
     });
   }
@@ -84,17 +91,24 @@ export function AdminNarrationPageClient({
         />
       </div>
 
-      <AllowlistManager allowlist={allowlist} onAdded={handleAdded} onRemove={handleRemove} />
+      <AllowlistManager
+        allowlist={allowlist}
+        removingId={removingId}
+        onAdded={handleAdded}
+        onRemove={handleRemove}
+      />
     </div>
   );
 }
 
 function AllowlistManager({
   allowlist,
+  removingId,
   onAdded,
   onRemove,
 }: {
   allowlist: AdminNarrationAllowlistRow[];
+  removingId: string | null;
   onAdded: (row: AdminNarrationAllowlistRow) => void;
   onRemove: (userId: string) => void;
 }) {
@@ -135,7 +149,12 @@ function AllowlistManager({
             }
           }}
         />
-        <button type="button" className="btn btn-primary" disabled={isPending} onClick={handleAdd}>
+        <button
+          type="button"
+          className="btn btn-primary transition-transform active:scale-[0.96]"
+          disabled={isPending}
+          onClick={handleAdd}
+        >
           {isPending ? "Adding…" : "Add"}
         </button>
       </div>
@@ -152,7 +171,13 @@ function AllowlistManager({
           </thead>
           <tbody>
             {allowlist.map((row) => (
-              <tr key={row.userId}>
+              <tr
+                key={row.userId}
+                className={cn(
+                  "transition-[opacity,transform] duration-150 ease-out",
+                  removingId === row.userId && "-translate-y-1 opacity-0",
+                )}
+              >
                 <td className="font-medium text-base-content">{row.email}</td>
                 <td className="text-base-content/65">
                   {new Date(row.createdAt).toLocaleDateString()}
@@ -160,7 +185,8 @@ function AllowlistManager({
                 <td className="text-right">
                   <button
                     type="button"
-                    className="btn btn-sm btn-ghost"
+                    className="btn btn-sm btn-ghost transition-transform active:scale-[0.96]"
+                    disabled={removingId === row.userId}
                     onClick={() => onRemove(row.userId)}
                   >
                     Remove

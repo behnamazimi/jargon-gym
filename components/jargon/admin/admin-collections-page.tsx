@@ -37,6 +37,13 @@ export function AdminCollectionsPageClient({ collections }: AdminCollectionsPage
             {collections.map((collection) => (
               <CollectionRow key={collection.id} collection={collection} />
             ))}
+            {collections.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center text-base-content/50">
+                  No collections yet.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>

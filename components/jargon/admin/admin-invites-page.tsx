@@ -7,6 +7,7 @@ import type {
   AdminWaitlistRow,
   AdminWaitlistStatus,
 } from "@/lib/jargon/admin/list-waitlist-requests";
+import { cn } from "@/lib/utils";
 
 type AdminInvitesPageClientProps = {
   requests: AdminWaitlistRow[];
@@ -50,6 +51,13 @@ export function AdminInvitesPageClient({ requests }: AdminInvitesPageClientProps
             {requests.map((request) => (
               <RequestRow key={request.id} request={request} />
             ))}
+            {requests.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="text-center text-base-content/50">
+                  No pending requests.
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
@@ -62,12 +70,15 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const [isApproved, setIsApproved] = useState(false);
+
   function handleApprove() {
     setError(null);
     startTransition(async () => {
       try {
         await approveWaitlistRequest(request.id);
-        setStatus("invited");
+        setIsApproved(true);
+        setTimeout(() => setStatus("invited"), 150);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to approve.");
       }
@@ -86,7 +97,10 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
         {status === "pending" ? (
           <button
             type="button"
-            className="btn btn-sm btn-primary"
+            className={cn(
+              "btn btn-sm btn-primary transition-[opacity,transform] duration-150 ease-out active:scale-[0.96]",
+              isApproved && "-translate-y-1 opacity-0",
+            )}
             disabled={isPending}
             onClick={handleApprove}
           >
