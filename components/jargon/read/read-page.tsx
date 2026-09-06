@@ -401,6 +401,12 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
   const fetchingRef = useRef(false);
   const revealGuardRef = useRef<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  // Shared between the paged view's reveal action and the fullscreen feed's
+  // scroll-exposure, for the lifetime of this ReadPage mount (i.e. this
+  // visit to /jargon/read — toggling focus mode on/off never unmounts
+  // ReadPage, only swaps which branch renders) — so the same term can't
+  // get its read recorded twice by switching between the two surfaces.
+  const recordedReadTermIdsRef = useRef<Set<string>>(new Set());
 
   navRef.current = nav;
   statusRef.current = status;
@@ -460,6 +466,15 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
     scrollToTop(cardRef.current);
   }, []);
 
+  // Records a term's read at most once per visit to this page, regardless
+  // of which surface (this paged view's reveal, or the fullscreen feed's
+  // scroll-exposure) reports it, or which reports it first.
+  const recordReadOnce = useCallback((termId: string) => {
+    if (recordedReadTermIdsRef.current.has(termId)) return;
+    recordedReadTermIdsRef.current.add(termId);
+    void recordReadRevealAction(termId);
+  }, []);
+
   const handleReveal = useCallback(() => {
     const entry = navRef.current.entry;
     if (!entry || entry.revealed) return;
@@ -467,7 +482,7 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
     // following render pass, so two reveal triggers landing in the same
     // tick (e.g. a fast double-click/double-tap, or Enter racing a click)
     // would otherwise both read a stale revealed: false and both call
-    // recordReadRevealAction, double-counting the read. Guard against that
+    // recordReadOnce, double-counting the read. Guard against that
     // synchronously via a ref keyed on the term id, rather than mutating
     // the reducer's entry object in place (which would make the "reveal"
     // action's next-state equal the current state by reference, and
@@ -475,8 +490,8 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
     if (revealGuardRef.current === entry.term.id) return;
     revealGuardRef.current = entry.term.id;
     dispatch({ type: "reveal" });
-    void recordReadRevealAction(entry.term.id);
-  }, []);
+    recordReadOnce(entry.term.id);
+  }, [recordReadOnce]);
 
   const handleCollectionChange = useCallback((nextDomainId: string) => {
     if (nextDomainId === selectedCollectionIdRef.current) return;
@@ -516,7 +531,7 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
         domainId={selectedCollectionId}
         narrationAccess={narrationAccess}
         initialTerm={term}
-        initialTermExposed={revealed}
+        onRecordRead={recordReadOnce}
         onExit={handleExitFullscreen}
       />
     );

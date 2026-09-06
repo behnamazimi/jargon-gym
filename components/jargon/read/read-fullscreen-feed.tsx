@@ -2,10 +2,7 @@
 
 import { X } from "lucide-react";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import {
-  getReadFeedBatchAction,
-  recordReadRevealAction,
-} from "@/app/(private)/jargon/read/actions";
+import { getReadFeedBatchAction } from "@/app/(private)/jargon/read/actions";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
@@ -92,7 +89,7 @@ export function ReadFullscreenFeed({
   domainId,
   narrationAccess,
   initialTerm,
-  initialTermExposed,
+  onRecordRead,
   onExit,
 }: {
   domainId: string;
@@ -103,10 +100,12 @@ export function ReadFullscreenFeed({
    *  Never re-fetched as part of a later batch (see loadedTermIdsRef
    *  below), so it can't appear twice in the same session. */
   initialTerm: ReviewTerm | null;
-  /** Whether initialTerm's read was already recorded (the paged view's
-   *  reveal action already fired) — if so, the feed must not fire it
-   *  again when this card scrolls into view. */
-  initialTermExposed: boolean;
+  /** Records a term's read exactly once per Read-page visit — owned by
+   *  the parent and shared with the paged view's own reveal action, so a
+   *  term can't be double-counted by switching between the two surfaces
+   *  (ReadPage stays mounted the whole time; only this feed mounts and
+   *  unmounts as focus mode toggles). */
+  onRecordRead: (termId: string) => void;
   onExit: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -114,9 +113,6 @@ export function ReadFullscreenFeed({
   const [status, setStatus] = useState<FeedStatus>(initialTerm ? "ready" : "loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loadedTermIdsRef = useRef<Set<string>>(new Set(initialTerm ? [initialTerm.id] : []));
-  const countedTermIdsRef = useRef<Set<string>>(
-    new Set(initialTerm && initialTermExposed ? [initialTerm.id] : []),
-  );
   const inFlightRef = useRef(false);
   const loadMoreRef = useRef<() => void>(() => {});
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -174,12 +170,6 @@ export function ReadFullscreenFeed({
     observer.observe(node);
   }, []);
 
-  const handleExposed = useCallback((termId: string) => {
-    if (countedTermIdsRef.current.has(termId)) return;
-    countedTermIdsRef.current.add(termId);
-    void recordReadRevealAction(termId);
-  }, []);
-
   const { requestExit } = useFullscreenExit(true, onExit);
 
   useEffect(() => {
@@ -202,7 +192,7 @@ export function ReadFullscreenFeed({
           key={term.id}
           term={term}
           narrationAccess={narrationAccess}
-          onExposed={handleExposed}
+          onExposed={onRecordRead}
         />
       ))}
 
