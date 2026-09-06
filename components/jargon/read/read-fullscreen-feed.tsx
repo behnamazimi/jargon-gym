@@ -55,11 +55,11 @@ function ReadFullscreenCard({
   return (
     <div
       ref={ref}
-      className="flex h-dvh w-full shrink-0 flex-col"
+      className="flex h-dvh w-full shrink-0 flex-col pt-safe"
       style={{ scrollSnapAlign: "start" }}
     >
       <TermCardHeader term={term} narrationAccess={narrationAccess} />
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 pb-safe sm:px-6">
         {term.isNewToUser && !exposed ? <FirstExposureKnownPrompt termId={term.id} /> : null}
         <TermBody term={term} />
       </div>
@@ -76,7 +76,7 @@ function ReadFullscreenSlide({
 }) {
   return (
     <div
-      className={`flex h-dvh w-full shrink-0 flex-col gap-4 px-6 ${className}`}
+      className={`flex h-dvh w-full shrink-0 flex-col gap-4 px-6 pt-safe pb-safe ${className}`}
       style={{ scrollSnapAlign: "start" }}
     >
       {children}
