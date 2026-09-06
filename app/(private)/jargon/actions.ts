@@ -12,7 +12,7 @@ import {
   updateOwnedDomain as updateOwnedDomainRecord,
 } from "@/lib/jargon/collections";
 import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
-import { resetDomainProgress } from "@/lib/jargon/known-state";
+import { resetDomainProgress, setTermMarkedKnown } from "@/lib/jargon/known-state";
 import { recordReveal, recordRead } from "@/lib/jargon/review-outcome";
 import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
@@ -276,6 +276,25 @@ export async function deleteOwnedDomain(domainId: string): Promise<{ error?: str
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Couldn't delete that collection. Try again.";
+    return { error: message };
+  }
+}
+
+/** Manual "I already know this" override — separate from TRACE's earned
+ *  known label. Doesn't touch review_state's TRACE-math columns. */
+export async function setTermMarkedKnownAction(
+  termId: string,
+  marked: boolean,
+): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await setTermMarkedKnown(auth.supabase, auth.user.id, termId, marked);
+    revalidatePath("/jargon");
+    return {};
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't update that. Try again.";
     return { error: message };
   }
 }

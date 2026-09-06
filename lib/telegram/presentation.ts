@@ -103,10 +103,16 @@ export function buildReadRevealKeyboard(termId: string): InlineKeyboardMarkup {
   return { inline_keyboard: [[{ text: "Reveal", callback_data: `read:reveal:${termId}` }]] };
 }
 
-export function buildTermInlineKeyboard(term: TermCard): InlineKeyboardMarkup {
+export function buildTermInlineKeyboard(
+  term: TermCard,
+  isNewToUser?: boolean,
+): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
     [{ text: "Read next", callback_data: `read:${term.id}` }],
   ];
+  if (isNewToUser) {
+    rows.push([{ text: "I already know this", callback_data: `read:known:${term.id}` }]);
+  }
   appendOpenInWebRow(rows, term.id);
   return { inline_keyboard: rows };
 }
@@ -264,16 +270,23 @@ export function buildReviewRevealKeyboard(sessionIndex: number): InlineKeyboardM
   };
 }
 
-export function buildReviewRateKeyboard(sessionIndex: number): InlineKeyboardMarkup {
+export function buildReviewRateKeyboard(
+  sessionIndex: number,
+  isNewToUser?: boolean,
+): InlineKeyboardMarkup {
   const button = (grade: ReviewGrade) => ({
     text: REVIEW_GRADE_LABELS[grade],
     callback_data: `review:rate:${sessionIndex}:${grade}`,
   });
+  const rows: InlineKeyboardMarkup["inline_keyboard"] = [
+    [button(AGAIN), button(HARD)],
+    [button(GOOD), button(EASY)],
+  ];
+  if (isNewToUser) {
+    rows.push([{ text: "I already know this", callback_data: `review:known:${sessionIndex}` }]);
+  }
   return {
-    inline_keyboard: [
-      [button(AGAIN), button(HARD)],
-      [button(GOOD), button(EASY)],
-    ],
+    inline_keyboard: rows,
   };
 }
 

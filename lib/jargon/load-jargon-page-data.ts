@@ -48,6 +48,7 @@ export async function loadJargonPageData(
         termCount: row.termCount,
         knownCount: row.knownCount,
         termsLearnedCount: row.termsLearnedCount,
+        markedKnownCount: row.markedKnownCount,
       }),
     );
 
@@ -62,6 +63,7 @@ export async function loadJargonPageData(
       termCount: selectedRow.termCount,
       knownCount: selectedRow.knownCount,
       termsLearnedCount: selectedRow.termsLearnedCount,
+      markedKnownCount: selectedRow.markedKnownCount,
     });
 
     // Known/unknown is stored per term, not per review pool. Fetch for the
@@ -74,7 +76,7 @@ export async function loadJargonPageData(
       fetchProgressStateByDomain(client, [selectedRow.id]),
       fetchTermRelationshipsForTerms(client, termIds),
     ]);
-    const { knownTermIds } = progressState;
+    const { knownTermIds, markedKnownTermIds } = progressState;
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
     return {
@@ -82,6 +84,7 @@ export async function loadJargonPageData(
       domains,
       terms,
       knownTermIds,
+      markedKnownTermIds,
       activeDomainIds: reviewDomainIds,
     };
   } catch (err) {

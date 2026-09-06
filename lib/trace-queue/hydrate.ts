@@ -52,6 +52,7 @@ function mapTermCardRow(row: {
     domainId: row.domain_id,
     domainName: row.domain_name,
     relationships: mapRelationshipsJson(row.relationships),
+    isNewToUser: false,
   };
 }
 
@@ -128,6 +129,7 @@ export async function hydrateTermsAsTermCards(
         relatedTermName: rel.relatedTermName,
         description: rel.description,
       })),
+      isNewToUser: false,
     };
   });
 }

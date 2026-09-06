@@ -45,11 +45,17 @@ export type TraceSnapshot = {
  *  everLearningAt its sibling at the lower "learning" threshold — neither
  *  is part of the live decay math, just carried alongside it). This is
  *  the shape the get_trace_candidates RPC row maps onto — lib/trace-queue
- *  re-exports it rather than redefining it. */
+ *  re-exports it rather than redefining it.
+ *
+ *  markedKnownAt is a separate, user-set override ("I already know this"),
+ *  not a TRACE math input and not related to everMasteredAt/everLearningAt
+ *  — it's carried here purely so the queue can exclude marked-known terms
+ *  and the Mastery page can display them distinctly. */
 export type TraceCandidate = TraceState & {
   termId: string;
   domainId: string;
   createdAt: Date;
   everMasteredAt: Date | null;
   everLearningAt: Date | null;
+  markedKnownAt: Date | null;
 };

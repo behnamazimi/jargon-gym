@@ -7,6 +7,9 @@ type Client = SupabaseClient<Database>;
 
 export type DomainProgressState = {
   knownTermIds: string[];
+  /** Terms the user manually marked known — a separate, user-set signal
+   *  from TRACE's earned `knownTermIds` label above. Never conflated. */
+  markedKnownTermIds: string[];
 };
 
 function toTraceState(row: {
@@ -43,7 +46,7 @@ export async function fetchProgressStateByDomain(
   client: Client,
   domainIds: string[],
 ): Promise<DomainProgressState> {
-  if (domainIds.length === 0) return { knownTermIds: [] };
+  if (domainIds.length === 0) return { knownTermIds: [], markedKnownTermIds: [] };
 
   const { data, error } = await client.rpc("my_progress_state_by_domain", {
     p_domain_ids: domainIds,
@@ -53,14 +56,18 @@ export async function fetchProgressStateByDomain(
 
   const now = new Date();
   const knownTermIds: string[] = [];
+  const markedKnownTermIds: string[] = [];
 
   for (const row of data) {
     if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known") {
       knownTermIds.push(row.term_id);
     }
+    if (row.marked_known_at !== null) {
+      markedKnownTermIds.push(row.term_id);
+    }
   }
 
-  return { knownTermIds };
+  return { knownTermIds, markedKnownTermIds };
 }
 
 async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
@@ -96,6 +103,39 @@ export async function resolveReviewDomainIdsForUser(client: Client, userId: stri
 export async function resetDomainProgress(client: Client, _userId: string, domainId: string) {
   const { error } = await client.rpc("my_reset_domain_progress", {
     p_domain_id: domainId,
+  });
+
+  if (error) throw error;
+}
+
+/** Manually mark/unmark a term known. A separate, user-set signal from
+ *  TRACE's earned state — never touches recall_stability, quiz_knowledge_
+ *  posterior, or the ever_mastered_at/ever_learning_at high-water marks. */
+export async function setTermMarkedKnown(
+  client: Client,
+  _userId: string,
+  termId: string,
+  marked: boolean,
+) {
+  const { error } = await client.rpc("my_set_term_marked_known", {
+    p_term_id: termId,
+    p_marked: marked,
+  });
+
+  if (error) throw error;
+}
+
+/** Service-role counterpart of {@link setTermMarkedKnown} (Telegram). */
+export async function setTermMarkedKnownForUser(
+  client: Client,
+  userId: string,
+  termId: string,
+  marked: boolean,
+) {
+  const { error } = await client.rpc("set_term_marked_known", {
+    p_user_id: userId,
+    p_term_id: termId,
+    p_marked: marked,
   });
 
   if (error) throw error;

@@ -26,6 +26,7 @@ function mapCandidateRows(
     last_quiz_tested_at: string | null;
     ever_mastered_at: string | null;
     ever_learning_at: string | null;
+    marked_known_at: string | null;
   }>,
 ): TraceCandidate[] {
   return data.map((row) => ({
@@ -43,6 +44,7 @@ function mapCandidateRows(
     lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
     everMasteredAt: row.ever_mastered_at ? new Date(row.ever_mastered_at) : null,
     everLearningAt: row.ever_learning_at ? new Date(row.ever_learning_at) : null,
+    markedKnownAt: row.marked_known_at ? new Date(row.marked_known_at) : null,
   }));
 }
 

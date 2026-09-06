@@ -60,12 +60,15 @@ describe("buildNarrationScript", () => {
     expect(script).not.toContain("For example");
   });
 
-  it("falls back to plain [pause]-joined concatenation for a language with no translation", () => {
+  it("falls back to plain pause-joined concatenation for a language with no translation", () => {
     // Cast past the DomainLanguage union to exercise the fallback path for a
     // language that isn't translated yet (e.g. a future addition to the type
     // without matching CONNECTOR_PHRASES entry).
     const script = buildNarrationScript({ ...BASE, example: "An example." }, "fr" as never);
-    expect(script).toContain("[pause] An example.");
+    // Stale expectation from before the pause marker changed from "[pause]"
+    // to "-- --" — matched loosely on whitespace since the exact spacing
+    // around the marker isn't this test's concern.
+    expect(script).toMatch(/--\s*--\s*An example\./);
     expect(script).not.toContain("For example");
     expect(script).not.toContain("Bijvoorbeeld");
   });

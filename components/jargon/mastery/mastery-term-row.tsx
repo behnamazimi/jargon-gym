@@ -54,10 +54,18 @@ export function MasteryTermRow({ row }: { row: MasteryTermRowData }) {
         {row.known && row.journey ? <JourneyLine journey={row.journey} /> : null}
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
-        <MasteryBars score={row.score} tier={row.tier} />
-        <span className="text-xs text-base-content/60 tabular-nums">
-          {TIER_LABEL[row.tier]} ({row.score}/100)
-        </span>
+        {row.markedKnown ? (
+          <span className="badge badge-outline badge-sm" title="You marked this known">
+            Marked known
+          </span>
+        ) : (
+          <>
+            <MasteryBars score={row.score} tier={row.tier} />
+            <span className="text-xs text-base-content/60 tabular-nums">
+              {TIER_LABEL[row.tier]} ({row.score}/100)
+            </span>
+          </>
+        )}
       </div>
     </li>
   );

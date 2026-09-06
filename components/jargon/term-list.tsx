@@ -4,23 +4,27 @@ import { TermCard } from "./term-card";
 type TermListProps = {
   terms: Term[];
   knownTerms: Set<string>;
+  markedKnownTerms: Set<string>;
   openTerms: Set<string>;
   isOwner: boolean;
   domainId: string;
   domainTerms: Term[];
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
+  onToggleMarkedKnown: (termId: string) => void;
 };
 
 export function TermList({
   terms,
   knownTerms,
+  markedKnownTerms,
   openTerms,
   isOwner,
   domainId,
   domainTerms,
   narrationAccess,
   onToggleOpen,
+  onToggleMarkedKnown,
 }: TermListProps) {
   if (terms.length === 0) {
     return (
@@ -40,12 +44,14 @@ export function TermList({
           <TermCard
             term={term}
             known={knownTerms.has(term.id)}
+            markedKnown={markedKnownTerms.has(term.id)}
             open={openTerms.has(term.id)}
             isOwner={isOwner}
             domainId={domainId}
             domainTerms={domainTerms}
             narrationAccess={narrationAccess}
             onToggleOpen={() => onToggleOpen(term.id)}
+            onToggleMarkedKnown={() => onToggleMarkedKnown(term.id)}
           />
         </div>
       ))}

@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, ChevronRight } from "lucide-react";
+import { Check, CheckCircle2, ChevronRight, Undo2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TermActionsMenu } from "./term-actions-menu";
 import { TermBody } from "./term-body";
@@ -12,23 +13,29 @@ import { TermBody } from "./term-body";
 type TermCardProps = {
   term: Term;
   known: boolean;
+  /** User-set "I already know this" override — separate from `known`
+   *  (TRACE's earned label). Never conflated in the UI. */
+  markedKnown: boolean;
   open: boolean;
   isOwner: boolean;
   domainId: string;
   domainTerms: Term[];
   narrationAccess: boolean;
   onToggleOpen: () => void;
+  onToggleMarkedKnown: () => void;
 };
 
 export function TermCard({
   term,
   known,
+  markedKnown,
   open,
   isOwner,
   domainId,
   domainTerms,
   narrationAccess,
   onToggleOpen,
+  onToggleMarkedKnown,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +51,7 @@ export function TermCard({
         onExpandedChange={(expanded) => {
           if (expanded !== open) onToggleOpen();
         }}
-        className={cn(known && !open && "opacity-70")}
+        className={cn((known || markedKnown) && !open && "opacity-70")}
         data-term={term.term}
       >
         <article
@@ -77,6 +84,15 @@ export function TermCard({
                     <Check className="size-3" strokeWidth={2.5} />
                   </span>
                 ) : null}
+                {markedKnown ? (
+                  <span
+                    className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-info/15 text-info ml-2"
+                    title="Marked known"
+                    aria-label="Marked known"
+                  >
+                    <Check className="size-3" strokeWidth={2.5} />
+                  </span>
+                ) : null}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
                 <span className="hidden text-xs text-base-content/50 sm:inline">
@@ -99,7 +115,26 @@ export function TermCard({
             ) : null}
           </div>
           <CollapsibleContent>
-            <TermBody term={term} className="px-4 pt-4 pb-5" />
+            <TermBody term={term} className="px-4 pt-4" />
+            <div className="px-4 pb-4">
+              <Button
+                size="sm"
+                variant={markedKnown ? "outline" : "secondary"}
+                onPress={onToggleMarkedKnown}
+              >
+                {markedKnown ? (
+                  <>
+                    <Undo2 className="size-4" aria-hidden strokeWidth={1.5} />
+                    Add to learning
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-4" aria-hidden strokeWidth={1.5} />
+                    Mark known
+                  </>
+                )}
+              </Button>
+            </div>
           </CollapsibleContent>
         </article>
       </Collapsible>

@@ -2,6 +2,7 @@
 
 import { Eye } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import type { ReviewTerm } from "@/lib/review/types";
@@ -127,6 +128,7 @@ export function ReviewCard({
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
+              {term.isNewToUser ? <FirstExposureKnownPrompt termId={term.id} /> : null}
               <TermBody key={term.id} term={term} />
             </div>
           </div>

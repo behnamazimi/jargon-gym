@@ -29,6 +29,9 @@ export type CollectionStats = {
   name: string;
   isActive: boolean;
   knownCount: number;
+  /** How many of knownCount came from the user manually marking a term
+   *  known, rather than earning it through TRACE. */
+  markedKnownCount: number;
   totalCount: number;
   percentage: number;
   unseen: number;
@@ -58,6 +61,7 @@ export async function fetchCollectionStats(
       name: row.name,
       isActive: activeSet.has(row.id),
       knownCount,
+      markedKnownCount: row.markedKnownCount,
       totalCount,
       percentage,
       unseen: queueStats?.unseen ?? 0,
@@ -92,6 +96,10 @@ export type CollectionStatBreakdown = {
   id: string;
   name: string;
   termsLearnedCount: number;
+  /** How many of termsLearnedCount the user manually marked known, rather
+   *  than earning through TRACE — the Mastery page's "N marked known by
+   *  you" line. */
+  markedKnownCount: number;
   totalCount: number;
   percentage: number;
   unseenCount: number;
@@ -148,11 +156,14 @@ function buildCollectionPaceInsight(
   candidates: TraceCandidate[],
   now: Date,
 ): CollectionPaceInsight {
-  const buckets = partitionMasteryBuckets(candidates);
-  const learningCrossings = candidates
+  // Manually-marked-known terms have no earned journey — leave them out so
+  // they don't inflate "never learning" or skew the crossing-rate math.
+  const earnedCandidates = candidates.filter((c) => !c.markedKnownAt);
+  const buckets = partitionMasteryBuckets(earnedCandidates);
+  const learningCrossings = earnedCandidates
     .map((c) => c.everLearningAt)
     .filter((d): d is Date => d !== null);
-  const masteredCrossings = candidates
+  const masteredCrossings = earnedCandidates
     .map((c) => c.everMasteredAt)
     .filter((d): d is Date => d !== null);
 
@@ -196,6 +207,7 @@ function buildStatsSnapshot(
       id: row.id,
       name: row.name,
       termsLearnedCount,
+      markedKnownCount: row.markedKnownCount,
       totalCount,
       percentage,
       unseenCount: countUnseen(domainCandidates, "read"),
@@ -225,6 +237,7 @@ type PausedCollectionSummary = {
   id: string;
   name: string;
   termsLearnedCount: number;
+  markedKnownCount: number;
   totalCount: number;
   percentage: number;
 };
@@ -313,7 +326,14 @@ function toPausedCollectionSummary(row: CollectionDomainRow): PausedCollectionSu
   const totalCount = row.termCount;
   const termsLearnedCount = row.termsLearnedCount;
   const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
-  return { id: row.id, name: row.name, termsLearnedCount, totalCount, percentage };
+  return {
+    id: row.id,
+    name: row.name,
+    termsLearnedCount,
+    markedKnownCount: row.markedKnownCount,
+    totalCount,
+    percentage,
+  };
 }
 
 const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {

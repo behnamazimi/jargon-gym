@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { setTermMarkedKnownForUser } from "@/lib/jargon/known-state";
 import { recordRead } from "@/lib/jargon/review-outcome";
 import {
   deliverNextTerm,
   fetchTermCardForUser,
   resolveUserIdByChatId,
 } from "@/lib/jargon/term-delivery";
+import { fetchTraceStateForUser } from "@/lib/trace-queue";
 import type { TelegramAction } from "./actions";
 import {
   CAUGHT_UP_MESSAGE,
@@ -60,6 +62,14 @@ export async function handleReadReveal(
   const term = await fetchTermCardForUser(client, userId, termId);
   if (!term) return [];
 
+  // Snapshot before recordRead below bumps read_count — this is the only
+  // moment that can tell "never seen before" from "seen before".
+  const priorState = await fetchTraceStateForUser(client, userId, termId);
+  const isNewToUser =
+    priorState.readCount === 0 &&
+    priorState.reviewRecallCount === 0 &&
+    priorState.quizTestCount === 0;
+
   try {
     await recordRead(client, userId, termId, "admin");
   } catch (error) {
@@ -75,7 +85,55 @@ export async function handleReadReveal(
     ];
   }
 
-  return [edit(chatId, messageId, formatTermMessage(term), buildTermInlineKeyboard(term))];
+  return [
+    edit(chatId, messageId, formatTermMessage(term), buildTermInlineKeyboard(term, isNewToUser)),
+  ];
+}
+
+/** "I already know this" on a first-exposure card: marks it known (a
+ *  separate, user-set signal from TRACE's earned state) and delivers the
+ *  next term. */
+export async function handleReadMarkKnown(
+  client: Client,
+  userId: string,
+  chatId: number,
+  messageId: number,
+  termId: string,
+): Promise<TelegramAction[]> {
+  const term = await fetchTermCardForUser(client, userId, termId);
+  if (!term) return [];
+
+  const actions: TelegramAction[] = [];
+
+  try {
+    await setTermMarkedKnownForUser(client, userId, termId, true);
+    actions.push(
+      edit(
+        chatId,
+        messageId,
+        `${formatTermMessage(term)}\n\n<b>Marked known.</b> You won't see this term again unless you add it back to learning.`,
+      ),
+    );
+  } catch (error) {
+    console.error("handleReadMarkKnown: failed to mark known", { userId, termId, error });
+    return [edit(chatId, messageId, formatTermMessage(term), buildTermInlineKeyboard(term))];
+  }
+
+  try {
+    const next = await deliverNextTerm(client, userId);
+    if (next.kind === "term") {
+      actions.push(
+        send(chatId, formatReadPrompt(next.term), buildReadRevealKeyboard(next.term.id), true),
+      );
+    } else if (next.kind === "caughtUp") {
+      actions.push(send(chatId, CAUGHT_UP_MESSAGE));
+    }
+  } catch (error) {
+    console.error("handleReadMarkKnown: failed to deliver next term", { userId, error });
+    actions.push(send(chatId, READ_NEXT_FAILED_MESSAGE));
+  }
+
+  return actions;
 }
 
 /** Inline "Read next": rotate to another term without writing an outcome on the current one. */
