@@ -9,21 +9,26 @@ import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Button } from "@/components/ui/button";
 import { useFullscreenExit } from "@/hooks/use-fullscreen-exit";
+import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReviewTerm } from "@/lib/review/types";
+
+function scrollSnapBehavior(): ScrollBehavior {
+  return window.matchMedia(PLATFORM_MEDIA.reducedMotion).matches ? "instant" : "smooth";
+}
 
 function ReadFullscreenCard({
   term,
   index,
   narrationAccess,
-  isRevealed,
   onExposed,
+  onMarkedKnown,
   cardNodesRef,
 }: {
   term: ReviewTerm;
   index: number;
   narrationAccess: boolean;
-  isRevealed: boolean;
   onExposed: (index: number, termId: string) => void;
+  onMarkedKnown: (index: number) => void;
   cardNodesRef: React.RefObject<Map<string, HTMLDivElement>>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -73,7 +78,9 @@ function ReadFullscreenCard({
         style={{ paddingInlineEnd: "calc(env(safe-area-inset-right) + 3.25rem)" }}
       />
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 pb-safe sm:px-6">
-        {term.isNewToUser && !isRevealed ? <FirstExposureKnownPrompt termId={term.id} /> : null}
+        {term.isNewToUser ? (
+          <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={() => onMarkedKnown(index)} />
+        ) : null}
         <TermBody term={term} />
       </div>
     </div>
@@ -83,12 +90,15 @@ function ReadFullscreenCard({
 function ReadFullscreenSlide({
   children,
   className = "items-center justify-center text-center",
+  slideRef,
 }: {
   children: ReactNode;
   className?: string;
+  slideRef?: React.Ref<HTMLDivElement>;
 }) {
   return (
     <div
+      ref={slideRef}
       className={`flex h-dvh w-full shrink-0 flex-col gap-4 px-6 pt-safe pb-safe ${className}`}
       style={{ scrollSnapAlign: "start" }}
     >
@@ -108,7 +118,11 @@ export function ReadFullscreenFeed({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardNodesRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const endSlideRef = useRef<HTMLDivElement>(null);
   const hasScrolledToInitialRef = useRef(false);
+  // When Mark known has to wait on a fetch (last loaded card), remember
+  // which index we left so the effect below can scroll once goNext lands.
+  const pendingAdvanceFromIndexRef = useRef<number | null>(null);
   // `queue` is a fresh object every render (its methods are individually
   // stable, but the returned bundle isn't) — mirrored into a ref so
   // handleExposed below can stay referentially stable itself instead of
@@ -145,6 +159,37 @@ export function ReadFullscreenFeed({
     queueRef.current.goToIndex(index);
   }, []);
 
+  const scrollToTermOrEnd = useCallback((index: number) => {
+    const term = queueRef.current.terms[index];
+    const node = term ? cardNodesRef.current.get(term.id) : null;
+    (node ?? endSlideRef.current)?.scrollIntoView({
+      behavior: scrollSnapBehavior(),
+      block: "start",
+    });
+  }, []);
+
+  const handleMarkedKnown = useCallback(
+    (index: number) => {
+      const nextIndex = index + 1;
+      if (queueRef.current.terms[nextIndex]) {
+        queueRef.current.goToIndex(nextIndex);
+        scrollToTermOrEnd(nextIndex);
+        return;
+      }
+      pendingAdvanceFromIndexRef.current = index;
+      void queueRef.current.goNext();
+    },
+    [scrollToTermOrEnd],
+  );
+
+  useEffect(() => {
+    const fromIndex = pendingAdvanceFromIndexRef.current;
+    if (fromIndex === null) return;
+    if (queue.currentIndex === fromIndex && queue.status === "ready") return;
+    pendingAdvanceFromIndexRef.current = null;
+    scrollToTermOrEnd(queue.currentIndex);
+  }, [queue.currentIndex, queue.status, queue.terms, scrollToTermOrEnd]);
+
   return (
     <div
       ref={containerRef}
@@ -162,14 +207,14 @@ export function ReadFullscreenFeed({
           term={term}
           index={index}
           narrationAccess={narrationAccess}
-          isRevealed={queue.isRevealed(term.id)}
           onExposed={handleExposed}
+          onMarkedKnown={handleMarkedKnown}
           cardNodesRef={cardNodesRef}
         />
       ))}
 
       {queue.status === "caughtUp" ? (
-        <ReadFullscreenSlide>
+        <ReadFullscreenSlide slideRef={endSlideRef}>
           <ReadCaughtUp
             description="Nothing left to read right now — check back later."
             actions={
@@ -182,7 +227,7 @@ export function ReadFullscreenFeed({
       ) : null}
 
       {queue.status === "error" ? (
-        <ReadFullscreenSlide>
+        <ReadFullscreenSlide slideRef={endSlideRef}>
           <p className="m-0 text-sm text-base-content/70">
             {queue.errorMessage ?? "Couldn't load more terms."}
           </p>

@@ -348,6 +348,14 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
     setCurrentIndex((index) => Math.min(cards.length - 1, index + 1));
   }
 
+  function handleMarkedKnown() {
+    if (currentIndex + 1 < cards.length) {
+      setCurrentIndex((index) => index + 1);
+      return;
+    }
+    finishSession(ratings);
+  }
+
   async function handleRate(grade: ReviewGrade) {
     if (!currentCard || !currentRevealed || isRating) return;
 
@@ -602,6 +610,7 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
             onReveal={handleReveal}
             onPrevious={handlePrevious}
             onNext={handleNext}
+            onMarkedKnown={handleMarkedKnown}
             reduceMotion={reduceMotion}
             swipeEnabled
             narrationAccess={narrationAccess}
