@@ -1,7 +1,8 @@
 import {
-  getNextReadTermAction,
+  getReadFeedBatchAction,
   getReadSetupData,
   getReadTermByIdAction,
+  type ReadQueueSeed,
 } from "@/app/(private)/jargon/read/actions";
 import { ReadPage } from "@/components/jargon/read/read-page";
 import type { StudyCollection } from "@/lib/study/types";
@@ -24,6 +25,20 @@ function resolveReadCollectionId(
   return "all";
 }
 
+async function buildReadQueueSeed(
+  params: { termId?: string; alreadyRead?: string },
+  domainId: string,
+): Promise<ReadQueueSeed> {
+  if (params.termId) {
+    const result = await getReadTermByIdAction(params.termId, params.alreadyRead === "true");
+    if (result.error) return { error: result.error, terms: [] };
+    if (!result.term) return { caughtUp: true, terms: [] };
+    return { terms: [result.term], revealedTermIds: result.revealed ? [result.term.id] : [] };
+  }
+
+  return getReadFeedBatchAction(domainId, []);
+}
+
 export default async function JargonReadPage({ searchParams }: PageProps) {
   const [params, setup] = await Promise.all([searchParams, getReadSetupData()]);
 
@@ -32,17 +47,15 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
   }
 
   const domainId = resolveReadCollectionId(params.domain, setup.collections);
-  const initialResult = params.termId
-    ? await getReadTermByIdAction(params.termId, params.alreadyRead === "true")
-    : await getNextReadTermAction(domainId);
+  const seed = await buildReadQueueSeed(params, domainId);
 
-  if (initialResult.error === "Log in to continue.") {
+  if (seed.error === "Log in to continue.") {
     return <p className="text-sm text-base-content/60">Log in to read terms.</p>;
   }
 
   return (
     <ReadPage
-      initialResult={initialResult}
+      seed={seed}
       collections={setup.collections}
       domainId={domainId}
       narrationAccess={setup.narrationAccess}
