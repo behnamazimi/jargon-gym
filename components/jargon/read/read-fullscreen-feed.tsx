@@ -1,31 +1,44 @@
 "use client";
 
 import { X } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { getReadFeedBatchAction } from "@/app/(private)/jargon/read/actions";
+import { type ReactNode, useCallback, useEffect, useRef } from "react";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
+import type { ReadQueue } from "@/components/jargon/read/use-read-queue";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Button } from "@/components/ui/button";
 import { useFullscreenExit } from "@/hooks/use-fullscreen-exit";
 import type { ReviewTerm } from "@/lib/review/types";
 
-type FeedStatus = "loading" | "ready" | "endOfQueue" | "error";
-
 function ReadFullscreenCard({
   term,
+  index,
   narrationAccess,
+  isRevealed,
   onExposed,
+  cardNodesRef,
 }: {
   term: ReviewTerm;
+  index: number;
   narrationAccess: boolean;
-  onExposed: (term: ReviewTerm) => void;
+  isRevealed: boolean;
+  onExposed: (index: number, termId: string) => void;
+  cardNodesRef: React.RefObject<Map<string, HTMLDivElement>>;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  // Gates FirstExposureKnownPrompt: once this card's read is recorded, the
-  // "already know it?" self-check no longer makes sense to keep offering.
-  const [exposed, setExposed] = useState(false);
+
+  // Registers this card's node under its term id so the feed can scroll
+  // to whichever term the shared queue's position points at, once, on
+  // mount (see ReadFullscreenFeed below).
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    cardNodesRef.current.set(term.id, el);
+    return () => {
+      cardNodesRef.current.delete(term.id);
+    };
+  }, [term.id, cardNodesRef]);
 
   useEffect(() => {
     const el = ref.current;
@@ -37,8 +50,7 @@ function ReadFullscreenCard({
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            setExposed(true);
-            onExposed(term);
+            onExposed(index, term.id);
             observer.disconnect();
           }
         }
@@ -47,7 +59,7 @@ function ReadFullscreenCard({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [term, onExposed]);
+  }, [index, term.id, onExposed]);
 
   return (
     <div
@@ -61,7 +73,7 @@ function ReadFullscreenCard({
         style={{ paddingInlineEnd: "calc(env(safe-area-inset-right) + 3.25rem)" }}
       />
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 pb-safe sm:px-6">
-        {term.isNewToUser && !exposed ? <FirstExposureKnownPrompt termId={term.id} /> : null}
+        {term.isNewToUser && !isRevealed ? <FirstExposureKnownPrompt termId={term.id} /> : null}
         <TermBody term={term} />
       </div>
     </div>
@@ -86,112 +98,51 @@ function ReadFullscreenSlide({
 }
 
 export function ReadFullscreenFeed({
-  domainId,
+  queue,
   narrationAccess,
-  initialTerm,
-  onRecordRead,
   onExit,
 }: {
-  domainId: string;
+  queue: ReadQueue;
   narrationAccess: boolean;
-  /** The term still showing (possibly masked) in the paged Read view when
-   *  the user entered focus mode — shown first here too, so the feed
-   *  continues from where the user was instead of jumping to a new term.
-   *  Never re-fetched as part of a later batch (see loadedTermIdsRef
-   *  below), so it can't appear twice in the same session. */
-  initialTerm: ReviewTerm | null;
-  /** Records a term's read exactly once per Read-page visit — owned by
-   *  the parent and shared with the paged view's own reveal action, so a
-   *  term can't be double-counted by switching between the two surfaces
-   *  (ReadPage stays mounted the whole time; only this feed mounts and
-   *  unmounts as focus mode toggles). */
-  onRecordRead: (termId: string) => void;
-  /** Called on every exit path with whichever term was last exposed in
-   *  this feed (or `initialTerm` if none was), so the paged view can pick
-   *  up from there instead of snapping back to whatever it showed before
-   *  the user entered focus mode. `null` only when the feed never had a
-   *  term to show at all. */
-  onExit: (lastTerm: ReviewTerm | null) => void;
+  onExit: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [terms, setTerms] = useState<ReviewTerm[]>(initialTerm ? [initialTerm] : []);
-  const [status, setStatus] = useState<FeedStatus>(initialTerm ? "ready" : "loading");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const loadedTermIdsRef = useRef<Set<string>>(new Set(initialTerm ? [initialTerm.id] : []));
-  const lastExposedTermRef = useRef<ReviewTerm | null>(initialTerm);
-  const inFlightRef = useRef(false);
-  const loadMoreRef = useRef<() => void>(() => {});
-  const observerRef = useRef<IntersectionObserver | null>(null);
+  const cardNodesRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const hasScrolledToInitialRef = useRef(false);
+  // `queue` is a fresh object every render (its methods are individually
+  // stable, but the returned bundle isn't) — mirrored into a ref so
+  // handleExposed below can stay referentially stable itself instead of
+  // changing identity on every render. Without this, every currently-
+  // mounted card's IntersectionObserver effect (keyed on `onExposed`)
+  // would tear down and recreate on every scroll-driven re-render, and a
+  // freshly re-created observer re-evaluates intersection immediately —
+  // re-firing exposure for a card that already fired moments earlier.
+  const queueRef = useRef(queue);
+  queueRef.current = queue;
 
-  const loadMore = useCallback(async () => {
-    if (inFlightRef.current) return;
-    inFlightRef.current = true;
-
-    try {
-      const result = await getReadFeedBatchAction(domainId, [...loadedTermIdsRef.current]);
-
-      if (result.error) {
-        setStatus("error");
-        setErrorMessage(result.error);
-        return;
-      }
-
-      if (result.caughtUp || result.terms.length === 0) {
-        setStatus("endOfQueue");
-        return;
-      }
-
-      for (const term of result.terms) loadedTermIdsRef.current.add(term.id);
-      setTerms((current) => [...current, ...result.terms]);
-      setStatus("ready");
-    } finally {
-      inFlightRef.current = false;
-    }
-  }, [domainId]);
-  loadMoreRef.current = loadMore;
-
-  useEffect(() => {
-    void loadMore();
-    // Only ever run the initial load once per mount — domainId doesn't
-    // change under a mounted feed (entering fullscreen fixes it).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // A single, stable observer bound to the sentinel via a callback ref
-  // (same pattern as hooks/use-shared-domains-browse.ts's bindSentinel),
-  // rather than one recreated on every batch — the sentinel element never
-  // moves, so there's nothing to re-observe as `terms` grows.
-  const bindSentinel = useCallback((node: HTMLDivElement | null) => {
-    observerRef.current?.disconnect();
-    observerRef.current = null;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
-      },
-      { rootMargin: "200% 0px" },
-    );
-    observerRef.current = observer;
-    observer.observe(node);
-  }, []);
-
-  const handleExposed = useCallback(
-    (term: ReviewTerm) => {
-      lastExposedTermRef.current = term;
-      onRecordRead(term.id);
-    },
-    [onRecordRead],
-  );
-
-  const handleExit = useCallback(() => {
-    onExit(lastExposedTermRef.current);
-  }, [onExit]);
-
-  const { requestExit } = useFullscreenExit(true, handleExit);
+  const { requestExit } = useFullscreenExit(true, onExit);
 
   useEffect(() => {
     containerRef.current?.focus();
+  }, []);
+
+  // Fullscreen renders the entire shared queue, not just what's ahead of
+  // the current position, so entering it needs one explicit scroll to
+  // wherever that position already is — otherwise it would default to
+  // showing the very first term instead of resuming where the user was.
+  useEffect(() => {
+    if (hasScrolledToInitialRef.current) return;
+    const currentTerm = queue.terms[queue.currentIndex];
+    if (!currentTerm) return;
+    const node = cardNodesRef.current.get(currentTerm.id);
+    if (!node) return;
+    hasScrolledToInitialRef.current = true;
+    node.scrollIntoView({ behavior: "instant", block: "start" });
+  }, [queue.terms, queue.currentIndex]);
+
+  const handleExposed = useCallback((index: number, termId: string) => {
+    queueRef.current.reveal(termId);
+    queueRef.current.goToIndex(index);
   }, []);
 
   return (
@@ -205,20 +156,19 @@ export function ReadFullscreenFeed({
         Focus mode — scroll to read, press Escape to exit.
       </span>
 
-      {terms.map((term) => (
+      {queue.terms.map((term, index) => (
         <ReadFullscreenCard
           key={term.id}
           term={term}
+          index={index}
           narrationAccess={narrationAccess}
+          isRevealed={queue.isRevealed(term.id)}
           onExposed={handleExposed}
+          cardNodesRef={cardNodesRef}
         />
       ))}
 
-      {status !== "endOfQueue" && status !== "error" ? (
-        <div ref={bindSentinel} aria-hidden className="h-px w-full shrink-0" />
-      ) : null}
-
-      {status === "endOfQueue" ? (
+      {queue.status === "caughtUp" ? (
         <ReadFullscreenSlide>
           <ReadCaughtUp
             description="Nothing left to read right now — check back later."
@@ -231,14 +181,19 @@ export function ReadFullscreenFeed({
         </ReadFullscreenSlide>
       ) : null}
 
-      {status === "error" ? (
+      {queue.status === "error" ? (
         <ReadFullscreenSlide>
           <p className="m-0 text-sm text-base-content/70">
-            {errorMessage ?? "Couldn't load more terms."}
+            {queue.errorMessage ?? "Couldn't load more terms."}
           </p>
-          <Button type="button" variant="outline" onPress={requestExit}>
-            Exit focus mode
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" onPress={() => void queue.retry()}>
+              Try again
+            </Button>
+            <Button type="button" variant="ghost" onPress={requestExit}>
+              Exit focus mode
+            </Button>
+          </div>
         </ReadFullscreenSlide>
       ) : null}
 

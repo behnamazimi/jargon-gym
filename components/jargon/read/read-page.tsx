@@ -1,16 +1,13 @@
 "use client";
 
 import { AlertCircle, ArrowLeft, ArrowRight, Eye, Maximize } from "lucide-react";
-import { useCallback, useEffect, useReducer, useRef, useState, useTransition } from "react";
-import {
-  getNextReadTermAction,
-  recordReadRevealAction,
-  type NextReadTermResult,
-} from "@/app/(private)/jargon/read/actions";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { QuizKeyboardHint, QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
+import { useReadQueue } from "@/components/jargon/read/use-read-queue";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
@@ -31,14 +28,6 @@ import type { StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
 
 const PRESS_CLASS = "transition-transform duration-150 ease-out active:scale-[0.96]";
-
-type ReadStatus = "ready" | "caughtUp" | "error";
-
-function statusFromResult(result: NextReadTermResult): ReadStatus {
-  if (result.error) return "error";
-  if (result.caughtUp || !result.term) return "caughtUp";
-  return "ready";
-}
 
 function scrollToTop(cardEl: HTMLElement | null) {
   const behavior = window.matchMedia(PLATFORM_MEDIA.reducedMotion).matches ? "instant" : "smooth";
@@ -296,18 +285,7 @@ function collectionName(domainId: string, collections: StudyCollection[]) {
   return collections.find((collection) => collection.id === domainId)?.name;
 }
 
-function caughtUpDescription(
-  domainId: string,
-  lastPickedDomainId: string,
-  collections: StudyCollection[],
-) {
-  if (domainId !== lastPickedDomainId) {
-    const name = collectionName(domainId, collections);
-    return name
-      ? `Collection changed. Check again to read from ${name}.`
-      : "Collection changed. Check again to read from your active collections.";
-  }
-
+function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
   if (domainId === "all") {
     return "No terms in your active collections. Import some terms or turn a collection back on to start reading.";
   }
@@ -320,184 +298,41 @@ function caughtUpDescription(
   return `No terms in ${name}. Pick another collection to keep reading.`;
 }
 
-type NavEntry = { term: ReviewTerm; revealed: boolean };
-
-type NavState = {
-  entry: NavEntry | null;
-  history: NavEntry[];
-  future: NavEntry[];
-};
-
-type NavAction =
-  | { type: "fetched"; term: ReviewTerm; revealed: boolean }
-  | { type: "redo" }
-  | { type: "back" }
-  | { type: "clear" }
-  | { type: "dropRedo" }
-  | { type: "reveal" };
-
-function navReducer(state: NavState, action: NavAction): NavState {
-  switch (action.type) {
-    case "fetched": {
-      const entry = { term: action.term, revealed: action.revealed };
-      const history = state.entry ? [...state.history, state.entry] : state.history;
-      return { entry, history, future: [] };
-    }
-    case "redo": {
-      if (state.future.length === 0) return state;
-      const entry = state.future[state.future.length - 1];
-      const future = state.future.slice(0, -1);
-      const history = state.entry ? [...state.history, state.entry] : state.history;
-      return { entry, history, future };
-    }
-    case "back": {
-      if (state.history.length === 0) return state;
-      const entry = state.history[state.history.length - 1];
-      const history = state.history.slice(0, -1);
-      const future = state.entry ? [...state.future, state.entry] : state.future;
-      return { entry, history, future };
-    }
-    case "clear":
-      return { ...state, entry: null };
-    case "dropRedo":
-      return { ...state, future: [] };
-    case "reveal": {
-      if (!state.entry || state.entry.revealed) return state;
-      return { ...state, entry: { ...state.entry, revealed: true } };
-    }
-    default:
-      return state;
-  }
-}
-
 type ReadPageProps = {
-  initialResult: NextReadTermResult;
+  seed: ReadQueueSeed;
   collections: StudyCollection[];
   domainId: string;
   narrationAccess: boolean;
 };
 
-export function ReadPage({ initialResult, collections, domainId, narrationAccess }: ReadPageProps) {
+export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadPageProps) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
   const [fullscreenActive, setFullscreenActive] = useState(false);
   const { preferenceOn, setPreference } = useReadFullscreenPreference();
-  const [status, setStatus] = useState<ReadStatus>(() => statusFromResult(initialResult));
-  const [nav, dispatch] = useReducer(navReducer, {
-    entry: initialResult.term
-      ? { term: initialResult.term, revealed: initialResult.revealed ?? false }
-      : null,
-    history: [],
-    future: [],
-  });
-  const { entry, history } = nav;
-  const term = entry?.term ?? null;
-  const revealed = entry?.revealed ?? false;
-  const [lastPickedDomainId, setLastPickedDomainId] = useState(domainId);
-  const [errorMessage, setErrorMessage] = useState<string | null>(initialResult.error ?? null);
-  const [isPending, startTransition] = useTransition();
-  const navRef = useRef(nav);
-  const statusRef = useRef(status);
+  const queue = useReadQueue({ domainId: selectedCollectionId, seed });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
-  const fetchingRef = useRef(false);
-  const revealGuardRef = useRef<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  // Shared between the paged view's reveal action and the fullscreen feed's
-  // scroll-exposure, for the lifetime of this ReadPage mount (i.e. this
-  // visit to /jargon/read — toggling focus mode on/off never unmounts
-  // ReadPage, only swaps which branch renders) — so the same term can't
-  // get its read recorded twice by switching between the two surfaces.
-  const recordedReadTermIdsRef = useRef<Set<string>>(new Set());
+  const previousTermIdRef = useRef<string | null>(queue.currentTerm?.id ?? null);
 
-  navRef.current = nav;
-  statusRef.current = status;
   selectedCollectionIdRef.current = selectedCollectionId;
 
   useEffect(() => {
     stripInvalidDomainParam(domainId);
   }, [domainId]);
 
-  const fetchNext = useCallback(() => {
-    if (navRef.current.future.length > 0) {
-      dispatch({ type: "redo" });
-      setStatus("ready");
-      scrollToTop(cardRef.current);
-      return;
-    }
-
-    if (fetchingRef.current) return;
-    fetchingRef.current = true;
-
-    const requestedDomainId = selectedCollectionIdRef.current;
-
-    startTransition(async () => {
-      setErrorMessage(null);
-
-      try {
-        const result = await getNextReadTermAction(requestedDomainId);
-
-        if (selectedCollectionIdRef.current !== requestedDomainId) return;
-
-        setLastPickedDomainId(requestedDomainId);
-
-        if (result.error) {
-          setStatus("error");
-          setErrorMessage(result.error);
-          return;
-        }
-
-        if (result.caughtUp || !result.term) {
-          dispatch({ type: "clear" });
-          setStatus("caughtUp");
-          return;
-        }
-
-        dispatch({ type: "fetched", term: result.term, revealed: false });
-        setStatus("ready");
-        scrollToTop(cardRef.current);
-      } finally {
-        fetchingRef.current = false;
-      }
-    });
-  }, [startTransition]);
-
-  const goToPrevious = useCallback(() => {
-    dispatch({ type: "back" });
-    setStatus("ready");
+  // Scroll back to the top of the card whenever the shown term actually
+  // changes (Next/Previous/collection switch/fullscreen hand-off) — but
+  // not on every render (e.g. a reveal, which keeps the same term).
+  useEffect(() => {
+    const currentId = queue.currentTerm?.id ?? null;
+    if (previousTermIdRef.current === currentId) return;
+    previousTermIdRef.current = currentId;
     scrollToTop(cardRef.current);
-  }, []);
-
-  // Records a term's read at most once per visit to this page, regardless
-  // of which surface (this paged view's reveal, or the fullscreen feed's
-  // scroll-exposure) reports it, or which reports it first.
-  const recordReadOnce = useCallback((termId: string) => {
-    if (recordedReadTermIdsRef.current.has(termId)) return;
-    recordedReadTermIdsRef.current.add(termId);
-    void recordReadRevealAction(termId);
-  }, []);
-
-  const handleReveal = useCallback(() => {
-    const entry = navRef.current.entry;
-    if (!entry || entry.revealed) return;
-    // navRef.current only gets reassigned to the next render's state on the
-    // following render pass, so two reveal triggers landing in the same
-    // tick (e.g. a fast double-click/double-tap, or Enter racing a click)
-    // would otherwise both read a stale revealed: false and both call
-    // recordReadOnce, double-counting the read. Guard against that
-    // synchronously via a ref keyed on the term id, rather than mutating
-    // the reducer's entry object in place (which would make the "reveal"
-    // action's next-state equal the current state by reference, and
-    // useReducer bails out of re-rendering when that happens).
-    if (revealGuardRef.current === entry.term.id) return;
-    revealGuardRef.current = entry.term.id;
-    dispatch({ type: "reveal" });
-    recordReadOnce(entry.term.id);
-  }, [recordReadOnce]);
+  }, [queue.currentTerm]);
 
   const handleCollectionChange = useCallback((nextDomainId: string) => {
     if (nextDomainId === selectedCollectionIdRef.current) return;
-
     setSelectedCollectionId(nextDomainId);
-    dispatch({ type: "dropRedo" });
     replaceReadDomainInUrl(nextDomainId);
   }, []);
 
@@ -505,50 +340,47 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
     function onKeyDown(event: KeyboardEvent) {
       if (fullscreenActive) return;
       if (event.key !== "Enter") return;
-      if (statusRef.current !== "ready" || fetchingRef.current) return;
-      if (isTypingTarget(event.target)) return;
+      if (queue.status !== "ready" || isTypingTarget(event.target)) return;
+
+      const term = queue.currentTerm;
+      if (!term) return;
 
       event.preventDefault();
-      if (navRef.current.entry && !navRef.current.entry.revealed) {
-        handleReveal();
+      if (!queue.isRevealed(term.id)) {
+        queue.reveal(term.id);
       } else {
-        fetchNext();
+        void queue.goNext();
       }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [fetchNext, handleReveal, fullscreenActive]);
+  }, [
+    fullscreenActive,
+    queue.status,
+    queue.currentTerm,
+    queue.isRevealed,
+    queue.reveal,
+    queue.goNext,
+  ]);
 
-  const handleExitFullscreen = useCallback(
-    (resumeTerm: ReviewTerm | null) => {
-      setFullscreenActive(false);
-      setPreference(false);
-      // Bring this view's own queue position in sync with wherever the
-      // feed actually left off — otherwise this view still shows whatever
-      // term it had before the user entered focus mode, even after they
-      // scrolled through several others there. Fullscreen never masks, so
-      // resumeTerm is always shown revealed here too.
-      if (resumeTerm) {
-        dispatch({ type: "fetched", term: resumeTerm, revealed: true });
-        setStatus("ready");
-        scrollToTop(cardRef.current);
-      }
-    },
-    [setPreference],
-  );
+  const handleExitFullscreen = useCallback(() => {
+    setFullscreenActive(false);
+    setPreference(false);
+  }, [setPreference]);
 
   if (fullscreenActive) {
     return (
       <ReadFullscreenFeed
-        domainId={selectedCollectionId}
+        queue={queue}
         narrationAccess={narrationAccess}
-        initialTerm={term}
-        onRecordRead={recordReadOnce}
         onExit={handleExitFullscreen}
       />
     );
   }
+
+  const term = queue.currentTerm;
+  const revealed = term ? queue.isRevealed(term.id) : false;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -557,7 +389,7 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
           <ReadCollectionSelect
             collections={collections}
             selectedCollectionId={selectedCollectionId}
-            isDisabled={isPending}
+            isDisabled={queue.isFetchingMore}
             onChange={handleCollectionChange}
           />
         ) : (
@@ -583,11 +415,11 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
       </div>
 
       <div ref={cardRef} className="flex min-h-0 flex-1 flex-col">
-        {status === "caughtUp" ? (
+        {queue.status === "caughtUp" ? (
           <ReadCaughtUp
-            description={caughtUpDescription(selectedCollectionId, lastPickedDomainId, collections)}
+            description={caughtUpDescription(selectedCollectionId, collections)}
             actions={
-              selectedCollectionId === lastPickedDomainId && selectedCollectionId === "all" ? (
+              selectedCollectionId === "all" ? (
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <LinkButton href="/jargon" variant="outline">
                     Collections
@@ -601,24 +433,24 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
           />
         ) : null}
 
-        {status === "ready" && term !== null ? (
+        {queue.status === "ready" && term !== null ? (
           <ReadTermCard
             term={term}
             revealed={revealed}
-            canGoBack={history.length > 0}
-            isPending={isPending}
+            canGoBack={queue.canGoBack}
+            isPending={queue.isFetchingMore}
             narrationAccess={narrationAccess}
-            onReveal={handleReveal}
-            onPrevious={goToPrevious}
-            onNext={fetchNext}
+            onReveal={() => queue.reveal(term.id)}
+            onPrevious={queue.goPrevious}
+            onNext={queue.goNext}
           />
         ) : null}
 
-        {status === "error" ? (
+        {queue.status === "error" ? (
           <ReadErrorAlert
-            message={errorMessage ?? "Couldn't load the next term. Try again."}
-            isPending={isPending}
-            onRetry={fetchNext}
+            message={queue.errorMessage ?? "Couldn't load the next term. Try again."}
+            isPending={queue.isFetchingMore}
+            onRetry={queue.retry}
           />
         ) : null}
       </div>

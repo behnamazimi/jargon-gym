@@ -10,11 +10,20 @@ import { fetchTermCardForUser, pickReadTermsForUser } from "@/lib/trace-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listStudyCollections } from "@/lib/study/collections";
 
-export type NextReadTermResult = {
+export type ReadTermByIdResult = {
   error?: string;
-  caughtUp?: true;
   term?: ReviewTerm;
   revealed?: boolean;
+};
+
+/** Seeds a useReadQueue instance (components/jargon/read/use-read-queue.ts)
+ *  from the server — either a deep-linked single term or the first batch
+ *  off the regular queue, built by the Read page's server component. */
+export type ReadQueueSeed = {
+  error?: string;
+  caughtUp?: boolean;
+  terms: ReviewTerm[];
+  revealedTermIds?: string[];
 };
 
 export async function getReadSetupData() {
@@ -78,7 +87,7 @@ export async function recordReadRevealAction(termId: string): Promise<{ error?: 
 export async function getReadTermByIdAction(
   termId: string,
   alreadyRead: boolean,
-): Promise<NextReadTermResult> {
+): Promise<ReadTermByIdResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
@@ -97,10 +106,15 @@ export async function getReadTermByIdAction(
 }
 
 /**
- * Web equivalent of Telegram /read: pull the next term off the Read queue,
- * ranked by lowest exposure first. Returned masked — the client only
- * records it as read once the user reveals it. Hydrates via get_term_card
- * (same RPC Telegram uses) so relationships match.
+ * Web equivalent of Telegram /read: pull the next batch off the Read
+ * queue, ranked by lowest exposure first. Returned masked — the client
+ * only records a read once the user reveals/scroll-exposes it. Hydrates
+ * via get_term_card (same RPC Telegram uses) so relationships match.
+ *
+ * The one fetch path both Read surfaces (paged view and fullscreen feed)
+ * use via useReadQueue (components/jargon/read/use-read-queue.ts) — the
+ * paged view only ever needs one term at a time, but takes the same
+ * batch so both surfaces share one queue and one prefetch mechanism.
  *
  * `domainId` is a Read-page filter on top of the active pool. `"all"` (default)
  * matches Telegram /read. The RPC already intersects with collections that are
@@ -114,12 +128,6 @@ export type ReadFeedBatchResult = {
   terms: ReviewTerm[];
 };
 
-/**
- * Fullscreen focus mode: pulls a batch off the same Read queue
- * getNextReadTermAction uses, for a scroll feed instead of one term at a
- * time. Pure delivery — exposure is still only ever recorded by
- * recordReadRevealAction, called once a term scrolls into view.
- */
 export async function getReadFeedBatchAction(
   domainId: string,
   excludeTermIds: string[],
@@ -143,27 +151,5 @@ export async function getReadFeedBatchAction(
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load more terms. Try again.";
     return { error: message, terms: [] };
-  }
-}
-
-export async function getNextReadTermAction(domainId: string = "all"): Promise<NextReadTermResult> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    const admin = createAdminClient();
-    const scope = { domainIds: domainIdsForRead(domainId) };
-    const [card] = await pickReadTermsForUser(admin, auth.user.id, scope, 1);
-
-    if (!card) {
-      return { caughtUp: true };
-    }
-
-    return {
-      term: toReviewTerm(card),
-    };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't load the next term. Try again.";
-    return { error: message };
   }
 }
