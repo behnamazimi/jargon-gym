@@ -86,12 +86,11 @@ export function TermCard({
                 ) : null}
                 {markedKnown ? (
                   <span
-                    className="badge badge-secondary badge-sm ml-2 gap-1 px-1.5 align-middle font-medium normal-case sm:px-2"
-                    title="You marked this known"
+                    className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-info/15 text-info ml-2"
+                    title="Marked known"
                     aria-label="Marked known"
                   >
-                    <CheckCircle2 className="size-3 shrink-0" aria-hidden strokeWidth={2.5} />
-                    <span className="hidden sm:inline">Marked known</span>
+                    <Check className="size-3" strokeWidth={2.5} />
                   </span>
                 ) : null}
               </span>
