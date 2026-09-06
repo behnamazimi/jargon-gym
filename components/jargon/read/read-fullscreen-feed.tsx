@@ -6,6 +6,7 @@ import {
   getReadFeedBatchAction,
   recordReadRevealAction,
 } from "@/app/(private)/jargon/read/actions";
+import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,8 @@ function ReadFullscreenCard({
       style={{ scrollSnapAlign: "start" }}
     >
       <TermCardHeader term={term} narrationAccess={narrationAccess} />
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
+        {term.isNewToUser ? <FirstExposureKnownPrompt termId={term.id} /> : null}
         <TermBody term={term} />
       </div>
     </div>
