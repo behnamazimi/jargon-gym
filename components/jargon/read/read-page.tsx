@@ -515,7 +515,8 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
       <ReadFullscreenFeed
         domainId={selectedCollectionId}
         narrationAccess={narrationAccess}
-        initialExcludeTermIds={term ? [term.id] : []}
+        initialTerm={term}
+        initialTermExposed={revealed}
         onExit={handleExitFullscreen}
       />
     );

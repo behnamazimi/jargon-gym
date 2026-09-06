@@ -58,7 +58,11 @@ function ReadFullscreenCard({
       className="flex h-dvh w-full shrink-0 flex-col pt-safe"
       style={{ scrollSnapAlign: "start" }}
     >
-      <TermCardHeader term={term} narrationAccess={narrationAccess} />
+      <TermCardHeader
+        term={term}
+        narrationAccess={narrationAccess}
+        style={{ paddingInlineEnd: "calc(env(safe-area-inset-right) + 3.25rem)" }}
+      />
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 pb-safe sm:px-6">
         {term.isNewToUser && !exposed ? <FirstExposureKnownPrompt termId={term.id} /> : null}
         <TermBody term={term} />
@@ -87,24 +91,32 @@ function ReadFullscreenSlide({
 export function ReadFullscreenFeed({
   domainId,
   narrationAccess,
-  initialExcludeTermIds,
+  initialTerm,
+  initialTermExposed,
   onExit,
 }: {
   domainId: string;
   narrationAccess: boolean;
-  /** Term ids already loaded elsewhere (the still-masked card in the
-   *  paged Read view) that shouldn't be re-served here — otherwise the
-   *  same term could get its read recorded twice: once via scroll here,
-   *  once via an explicit reveal back in the paged view. */
-  initialExcludeTermIds: string[];
+  /** The term still showing (possibly masked) in the paged Read view when
+   *  the user entered focus mode — shown first here too, so the feed
+   *  continues from where the user was instead of jumping to a new term.
+   *  Never re-fetched as part of a later batch (see loadedTermIdsRef
+   *  below), so it can't appear twice in the same session. */
+  initialTerm: ReviewTerm | null;
+  /** Whether initialTerm's read was already recorded (the paged view's
+   *  reveal action already fired) — if so, the feed must not fire it
+   *  again when this card scrolls into view. */
+  initialTermExposed: boolean;
   onExit: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [terms, setTerms] = useState<ReviewTerm[]>([]);
-  const [status, setStatus] = useState<FeedStatus>("loading");
+  const [terms, setTerms] = useState<ReviewTerm[]>(initialTerm ? [initialTerm] : []);
+  const [status, setStatus] = useState<FeedStatus>(initialTerm ? "ready" : "loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const loadedTermIdsRef = useRef<Set<string>>(new Set(initialExcludeTermIds));
-  const countedTermIdsRef = useRef<Set<string>>(new Set());
+  const loadedTermIdsRef = useRef<Set<string>>(new Set(initialTerm ? [initialTerm.id] : []));
+  const countedTermIdsRef = useRef<Set<string>>(
+    new Set(initialTerm && initialTermExposed ? [initialTerm.id] : []),
+  );
   const inFlightRef = useRef(false);
   const loadMoreRef = useRef<() => void>(() => {});
   const observerRef = useRef<IntersectionObserver | null>(null);
