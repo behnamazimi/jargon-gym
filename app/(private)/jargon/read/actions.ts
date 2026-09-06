@@ -46,9 +46,13 @@ function scheduleRecordRead(userId: string, termId: string) {
 }
 
 /**
- * Reveal gate: the client calls this the moment the user taps to reveal a
- * term's definition — not at delivery/fetch time. If the user never
- * reveals, nothing is recorded and the term stays eligible to resurface.
+ * Reveal gate: the client calls this once a term counts as read — not at
+ * delivery/fetch time. If the user never reaches that point, nothing is
+ * recorded and the term stays eligible to resurface. What counts as
+ * "reached" differs by caller: the paged Read view calls this the moment
+ * the user taps to reveal the definition; the fullscreen focus-mode feed
+ * (which shows definitions unmasked) calls this once a term scrolls to
+ * ~50% viewport visibility instead.
  */
 export async function recordReadRevealAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();

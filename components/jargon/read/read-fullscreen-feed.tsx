@@ -1,16 +1,17 @@
 "use client";
 
-import { PartyPopper, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { X } from "lucide-react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import {
   getReadFeedBatchAction,
   recordReadRevealAction,
 } from "@/app/(private)/jargon/read/actions";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
+import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Button } from "@/components/ui/button";
-import { useFullscreenElement } from "@/hooks/use-fullscreen-element";
+import { useFullscreenExit } from "@/hooks/use-fullscreen-exit";
 import type { ReviewTerm } from "@/lib/review/types";
 
 type FeedStatus = "loading" | "ready" | "endOfQueue" | "error";
@@ -25,6 +26,9 @@ function ReadFullscreenCard({
   onExposed: (termId: string) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Gates FirstExposureKnownPrompt: once this card's read is recorded, the
+  // "already know it?" self-check no longer makes sense to keep offering.
+  const [exposed, setExposed] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -36,6 +40,7 @@ function ReadFullscreenCard({
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
+            setExposed(true);
             onExposed(term.id);
             observer.disconnect();
           }
@@ -55,31 +60,26 @@ function ReadFullscreenCard({
     >
       <TermCardHeader term={term} narrationAccess={narrationAccess} />
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
-        {term.isNewToUser ? <FirstExposureKnownPrompt termId={term.id} /> : null}
+        {term.isNewToUser && !exposed ? <FirstExposureKnownPrompt termId={term.id} /> : null}
         <TermBody term={term} />
       </div>
     </div>
   );
 }
 
-function ReadFullscreenEndOfQueue({ onExit }: { onExit: () => void }) {
+function ReadFullscreenSlide({
+  children,
+  className = "items-center justify-center text-center",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <div
-      className="flex h-dvh w-full shrink-0 flex-col items-center justify-center gap-4 px-6 text-center"
+      className={`flex h-dvh w-full shrink-0 flex-col gap-4 px-6 ${className}`}
       style={{ scrollSnapAlign: "start" }}
     >
-      <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <PartyPopper className="size-5" aria-hidden strokeWidth={1.5} />
-      </div>
-      <div className="space-y-1">
-        <h2 className="m-0 text-base font-semibold text-base-content">You&apos;re all caught up</h2>
-        <p className="m-0 text-sm leading-relaxed text-base-content/60">
-          Nothing left to read right now — check back later.
-        </p>
-      </div>
-      <Button type="button" variant="outline" onPress={onExit}>
-        Exit focus mode
-      </Button>
+      {children}
     </div>
   );
 }
@@ -87,24 +87,31 @@ function ReadFullscreenEndOfQueue({ onExit }: { onExit: () => void }) {
 export function ReadFullscreenFeed({
   domainId,
   narrationAccess,
+  initialExcludeTermIds,
   onExit,
 }: {
   domainId: string;
   narrationAccess: boolean;
+  /** Term ids already loaded elsewhere (the still-masked card in the
+   *  paged Read view) that shouldn't be re-served here — otherwise the
+   *  same term could get its read recorded twice: once via scroll here,
+   *  once via an explicit reveal back in the paged view. */
+  initialExcludeTermIds: string[];
   onExit: () => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [terms, setTerms] = useState<ReviewTerm[]>([]);
   const [status, setStatus] = useState<FeedStatus>("loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const loadedTermIdsRef = useRef<Set<string>>(new Set());
+  const loadedTermIdsRef = useRef<Set<string>>(new Set(initialExcludeTermIds));
   const countedTermIdsRef = useRef<Set<string>>(new Set());
-  const fetchingRef = useRef(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const inFlightRef = useRef(false);
+  const loadMoreRef = useRef<() => void>(() => {});
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   const loadMore = useCallback(async () => {
-    if (fetchingRef.current) return;
-    fetchingRef.current = true;
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
 
     try {
       const result = await getReadFeedBatchAction(domainId, [...loadedTermIdsRef.current]);
@@ -124,9 +131,10 @@ export function ReadFullscreenFeed({
       setTerms((current) => [...current, ...result.terms]);
       setStatus("ready");
     } finally {
-      fetchingRef.current = false;
+      inFlightRef.current = false;
     }
   }, [domainId]);
+  loadMoreRef.current = loadMore;
 
   useEffect(() => {
     void loadMore();
@@ -135,21 +143,24 @@ export function ReadFullscreenFeed({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || status === "endOfQueue" || status === "error") return;
+  // A single, stable observer bound to the sentinel via a callback ref
+  // (same pattern as hooks/use-shared-domains-browse.ts's bindSentinel),
+  // rather than one recreated on every batch — the sentinel element never
+  // moves, so there's nothing to re-observe as `terms` grows.
+  const bindSentinel = useCallback((node: HTMLDivElement | null) => {
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+    if (!node) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) void loadMore();
-        }
+        if (entries.some((entry) => entry.isIntersecting)) loadMoreRef.current();
       },
       { rootMargin: "200% 0px" },
     );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [status, loadMore, terms.length]);
+    observerRef.current = observer;
+    observer.observe(node);
+  }, []);
 
   const handleExposed = useCallback((termId: string) => {
     if (countedTermIdsRef.current.has(termId)) return;
@@ -157,7 +168,7 @@ export function ReadFullscreenFeed({
     void recordReadRevealAction(termId);
   }, []);
 
-  const { mode, requestExit } = useFullscreenElement(containerRef, true, onExit);
+  const { requestExit } = useFullscreenExit(true, onExit);
 
   useEffect(() => {
     containerRef.current?.focus();
@@ -169,7 +180,6 @@ export function ReadFullscreenFeed({
       tabIndex={-1}
       className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-contain bg-base-100 outline-none"
       style={{ scrollSnapType: "y mandatory" }}
-      data-fullscreen-mode={mode}
     >
       <span className="sr-only" role="status">
         Focus mode — scroll to read, press Escape to exit.
@@ -184,22 +194,32 @@ export function ReadFullscreenFeed({
         />
       ))}
 
-      <div ref={sentinelRef} aria-hidden className="h-px w-full shrink-0" />
+      {status !== "endOfQueue" && status !== "error" ? (
+        <div ref={bindSentinel} aria-hidden className="h-px w-full shrink-0" />
+      ) : null}
 
-      {status === "endOfQueue" ? <ReadFullscreenEndOfQueue onExit={requestExit} /> : null}
+      {status === "endOfQueue" ? (
+        <ReadFullscreenSlide>
+          <ReadCaughtUp
+            description="Nothing left to read right now — check back later."
+            actions={
+              <Button type="button" variant="outline" onPress={requestExit}>
+                Exit focus mode
+              </Button>
+            }
+          />
+        </ReadFullscreenSlide>
+      ) : null}
 
       {status === "error" ? (
-        <div
-          className="flex h-dvh w-full shrink-0 flex-col items-center justify-center gap-4 px-6 text-center"
-          style={{ scrollSnapAlign: "start" }}
-        >
+        <ReadFullscreenSlide>
           <p className="m-0 text-sm text-base-content/70">
             {errorMessage ?? "Couldn't load more terms."}
           </p>
           <Button type="button" variant="outline" onPress={requestExit}>
             Exit focus mode
           </Button>
-        </div>
+        </ReadFullscreenSlide>
       ) : null}
 
       <Button

@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowLeft, ArrowRight, Eye, Maximize, PartyPopper } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Eye, Maximize } from "lucide-react";
 import { useCallback, useEffect, useReducer, useRef, useState, useTransition } from "react";
 import {
   getNextReadTermAction,
@@ -8,12 +8,8 @@ import {
   type NextReadTermResult,
 } from "@/app/(private)/jargon/read/actions";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
-import {
-  QuizKeyboardHint,
-  QuizPanel,
-  QuizPanelBody,
-  QuizPanelHeader,
-} from "@/components/jargon/quiz/quiz-ui";
+import { QuizKeyboardHint, QuizPanel } from "@/components/jargon/quiz/quiz-ui";
+import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
@@ -26,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
 import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReviewTerm } from "@/lib/review/types";
@@ -94,32 +91,6 @@ function isTypingTarget(target: EventTarget | null) {
     target.isContentEditable ||
     target.closest("[data-slot='select']") !== null ||
     target.closest("[role='listbox']") !== null
-  );
-}
-
-function ReadCaughtUp({
-  description,
-  showLibraryLinks,
-}: {
-  description: string;
-  showLibraryLinks: boolean;
-}) {
-  return (
-    <QuizPanel>
-      <QuizPanelHeader icon={PartyPopper} title="You're all caught up" description={description} />
-      <QuizPanelBody>
-        {showLibraryLinks ? (
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <LinkButton href="/jargon" variant="outline">
-              Collections
-            </LinkButton>
-            <LinkButton href="/jargon/import" variant="outline">
-              Import jargon
-            </LinkButton>
-          </div>
-        ) : null}
-      </QuizPanelBody>
-    </QuizPanel>
   );
 }
 
@@ -544,6 +515,7 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
       <ReadFullscreenFeed
         domainId={selectedCollectionId}
         narrationAccess={narrationAccess}
+        initialExcludeTermIds={term ? [term.id] : []}
         onExit={handleExitFullscreen}
       />
     );
@@ -568,6 +540,10 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
           size="icon-sm"
           aria-label="Enter focus mode"
           onPress={() => {
+            // Must happen synchronously in this click handler — deferring
+            // it into an effect after ReadFullscreenFeed mounts loses the
+            // user gesture and silently falls back to the CSS overlay.
+            requestFullscreenOnDocument();
             setFullscreenActive(true);
             setPreference(true);
           }}
@@ -581,8 +557,17 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
         {status === "caughtUp" ? (
           <ReadCaughtUp
             description={caughtUpDescription(selectedCollectionId, lastPickedDomainId, collections)}
-            showLibraryLinks={
-              selectedCollectionId === lastPickedDomainId && selectedCollectionId === "all"
+            actions={
+              selectedCollectionId === lastPickedDomainId && selectedCollectionId === "all" ? (
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <LinkButton href="/jargon" variant="outline">
+                    Collections
+                  </LinkButton>
+                  <LinkButton href="/jargon/import" variant="outline">
+                    Import jargon
+                  </LinkButton>
+                </div>
+              ) : null
             }
           />
         ) : null}
