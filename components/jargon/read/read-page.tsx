@@ -171,8 +171,8 @@ function ReadCardRevealed({
     <>
       <TermCardHeader term={term} narrationAccess={narrationAccess} />
       <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
-        <TermBody key={term.id} term={term} />
         {term.isNewToUser ? <FirstExposureKnownPrompt termId={term.id} /> : null}
+        <TermBody key={term.id} term={term} />
       </div>
     </>
   );

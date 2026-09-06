@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, ChevronRight } from "lucide-react";
+import { Check, CheckCircle2, ChevronRight, Undo2 } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TermActionsMenu } from "./term-actions-menu";
 import { TermBody } from "./term-body";
@@ -85,9 +86,10 @@ export function TermCard({
                 ) : null}
                 {markedKnown ? (
                   <span
-                    className="badge badge-sm badge-outline ml-2 align-middle font-normal normal-case"
+                    className="badge badge-secondary badge-sm ml-2 gap-1 align-middle font-medium normal-case"
                     title="You marked this known"
                   >
+                    <CheckCircle2 className="size-3" aria-hidden strokeWidth={2.5} />
                     Marked known
                   </span>
                 ) : null}
@@ -115,13 +117,23 @@ export function TermCard({
           <CollapsibleContent>
             <TermBody term={term} className="px-4 pt-4" />
             <div className="px-4 pb-4">
-              <button
-                type="button"
-                className="btn btn-sm btn-outline"
-                onClick={onToggleMarkedKnown}
+              <Button
+                size="sm"
+                variant={markedKnown ? "outline" : "secondary"}
+                onPress={onToggleMarkedKnown}
               >
-                {markedKnown ? "Add to learning" : "Mark known"}
-              </button>
+                {markedKnown ? (
+                  <>
+                    <Undo2 className="size-4" aria-hidden strokeWidth={1.5} />
+                    Add to learning
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="size-4" aria-hidden strokeWidth={1.5} />
+                    Mark known
+                  </>
+                )}
+              </Button>
             </div>
           </CollapsibleContent>
         </article>
