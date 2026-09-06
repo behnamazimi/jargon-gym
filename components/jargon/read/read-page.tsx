@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowLeft, ArrowRight, Eye, PartyPopper } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Eye, Maximize } from "lucide-react";
 import { useCallback, useEffect, useReducer, useRef, useState, useTransition } from "react";
 import {
   getNextReadTermAction,
@@ -8,12 +8,9 @@ import {
   type NextReadTermResult,
 } from "@/app/(private)/jargon/read/actions";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
-import {
-  QuizKeyboardHint,
-  QuizPanel,
-  QuizPanelBody,
-  QuizPanelHeader,
-} from "@/components/jargon/quiz/quiz-ui";
+import { QuizKeyboardHint, QuizPanel } from "@/components/jargon/quiz/quiz-ui";
+import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
+import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
@@ -25,10 +22,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
+import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReviewTerm } from "@/lib/review/types";
 import { countTermsForSelection } from "@/lib/study/count";
 import type { StudyCollection } from "@/lib/study/types";
+import { cn } from "@/lib/utils";
 
 const PRESS_CLASS = "transition-transform duration-150 ease-out active:scale-[0.96]";
 
@@ -91,32 +91,6 @@ function isTypingTarget(target: EventTarget | null) {
     target.isContentEditable ||
     target.closest("[data-slot='select']") !== null ||
     target.closest("[role='listbox']") !== null
-  );
-}
-
-function ReadCaughtUp({
-  description,
-  showLibraryLinks,
-}: {
-  description: string;
-  showLibraryLinks: boolean;
-}) {
-  return (
-    <QuizPanel>
-      <QuizPanelHeader icon={PartyPopper} title="You're all caught up" description={description} />
-      <QuizPanelBody>
-        {showLibraryLinks ? (
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <LinkButton href="/jargon" variant="outline">
-              Collections
-            </LinkButton>
-            <LinkButton href="/jargon/import" variant="outline">
-              Import jargon
-            </LinkButton>
-          </div>
-        ) : null}
-      </QuizPanelBody>
-    </QuizPanel>
   );
 }
 
@@ -405,6 +379,8 @@ type ReadPageProps = {
 
 export function ReadPage({ initialResult, collections, domainId, narrationAccess }: ReadPageProps) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
+  const [fullscreenActive, setFullscreenActive] = useState(false);
+  const { preferenceOn, setPreference } = useReadFullscreenPreference();
   const [status, setStatus] = useState<ReadStatus>(() => statusFromResult(initialResult));
   const [nav, dispatch] = useReducer(navReducer, {
     entry: initialResult.term
@@ -512,6 +488,7 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (fullscreenActive) return;
       if (event.key !== "Enter") return;
       if (statusRef.current !== "ready" || fetchingRef.current) return;
       if (isTypingTarget(event.target)) return;
@@ -526,25 +503,71 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [fetchNext, handleReveal]);
+  }, [fetchNext, handleReveal, fullscreenActive]);
+
+  const handleExitFullscreen = useCallback(() => {
+    setFullscreenActive(false);
+    setPreference(false);
+  }, [setPreference]);
+
+  if (fullscreenActive) {
+    return (
+      <ReadFullscreenFeed
+        domainId={selectedCollectionId}
+        narrationAccess={narrationAccess}
+        initialExcludeTermIds={term ? [term.id] : []}
+        onExit={handleExitFullscreen}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {collections.length > 0 ? (
-        <ReadCollectionSelect
-          collections={collections}
-          selectedCollectionId={selectedCollectionId}
-          isDisabled={isPending}
-          onChange={handleCollectionChange}
-        />
-      ) : null}
+      <div className="flex items-center gap-2">
+        {collections.length > 0 ? (
+          <ReadCollectionSelect
+            collections={collections}
+            selectedCollectionId={selectedCollectionId}
+            isDisabled={isPending}
+            onChange={handleCollectionChange}
+          />
+        ) : (
+          <div className="flex-1" />
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          aria-label="Enter focus mode"
+          onPress={() => {
+            // Must happen synchronously in this click handler — deferring
+            // it into an effect after ReadFullscreenFeed mounts loses the
+            // user gesture and silently falls back to the CSS overlay.
+            requestFullscreenOnDocument();
+            setFullscreenActive(true);
+            setPreference(true);
+          }}
+          className={cn("shrink-0", preferenceOn && "ring-2 ring-primary/60", PRESS_CLASS)}
+        >
+          <Maximize className="size-4" aria-hidden strokeWidth={1.5} />
+        </Button>
+      </div>
 
       <div ref={cardRef} className="flex min-h-0 flex-1 flex-col">
         {status === "caughtUp" ? (
           <ReadCaughtUp
             description={caughtUpDescription(selectedCollectionId, lastPickedDomainId, collections)}
-            showLibraryLinks={
-              selectedCollectionId === lastPickedDomainId && selectedCollectionId === "all"
+            actions={
+              selectedCollectionId === lastPickedDomainId && selectedCollectionId === "all" ? (
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <LinkButton href="/jargon" variant="outline">
+                    Collections
+                  </LinkButton>
+                  <LinkButton href="/jargon/import" variant="outline">
+                    Import jargon
+                  </LinkButton>
+                </div>
+              ) : null
             }
           />
         ) : null}

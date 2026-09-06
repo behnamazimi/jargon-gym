@@ -46,9 +46,13 @@ function scheduleRecordRead(userId: string, termId: string) {
 }
 
 /**
- * Reveal gate: the client calls this the moment the user taps to reveal a
- * term's definition — not at delivery/fetch time. If the user never
- * reveals, nothing is recorded and the term stays eligible to resurface.
+ * Reveal gate: the client calls this once a term counts as read — not at
+ * delivery/fetch time. If the user never reaches that point, nothing is
+ * recorded and the term stays eligible to resurface. What counts as
+ * "reached" differs by caller: the paged Read view calls this the moment
+ * the user taps to reveal the definition; the fullscreen focus-mode feed
+ * (which shows definitions unmasked) calls this once a term scrolls to
+ * ~50% viewport visibility instead.
  */
 export async function recordReadRevealAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
@@ -102,6 +106,46 @@ export async function getReadTermByIdAction(
  * matches Telegram /read. The RPC already intersects with collections that are
  * turned on, so an unknown id just yields an empty pick.
  */
+const READ_FEED_BATCH_SIZE = 8;
+
+export type ReadFeedBatchResult = {
+  error?: string;
+  caughtUp?: boolean;
+  terms: ReviewTerm[];
+};
+
+/**
+ * Fullscreen focus mode: pulls a batch off the same Read queue
+ * getNextReadTermAction uses, for a scroll feed instead of one term at a
+ * time. Pure delivery — exposure is still only ever recorded by
+ * recordReadRevealAction, called once a term scrolls into view.
+ */
+export async function getReadFeedBatchAction(
+  domainId: string,
+  excludeTermIds: string[],
+): Promise<ReadFeedBatchResult> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error, terms: [] };
+
+  try {
+    const admin = createAdminClient();
+    const scope = { domainIds: domainIdsForRead(domainId) };
+    const cards = await pickReadTermsForUser(
+      admin,
+      auth.user.id,
+      scope,
+      READ_FEED_BATCH_SIZE,
+      excludeTermIds,
+    );
+
+    if (cards.length === 0) return { caughtUp: true, terms: [] };
+    return { terms: cards.map(toReviewTerm) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't load more terms. Try again.";
+    return { error: message, terms: [] };
+  }
+}
+
 export async function getNextReadTermAction(domainId: string = "all"): Promise<NextReadTermResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
