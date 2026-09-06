@@ -5,7 +5,7 @@ function hasText(value: string | null): value is string {
   return Boolean(value?.trim());
 }
 
-const PAUSE = "[pause]";
+const PAUSE = " -- -- ";
 
 type ConnectorPhrases = {
   mentalModel: string;
@@ -18,7 +18,7 @@ type ConnectorPhrases = {
 /**
  * Connector phrases per collection language. A language present here gets
  * the phrased template below; a language without an entry (any future/
- * unsupported DomainLanguage) falls back to plain [pause]-joined
+ * unsupported DomainLanguage) falls back to plain "-- --"-joined
  * concatenation in buildNarrationScript, so narration never mixes languages.
  */
 const CONNECTOR_PHRASES: Partial<Record<DomainLanguage, ConnectorPhrases>> = {
