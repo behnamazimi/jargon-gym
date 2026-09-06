@@ -520,10 +520,23 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [fetchNext, handleReveal, fullscreenActive]);
 
-  const handleExitFullscreen = useCallback(() => {
-    setFullscreenActive(false);
-    setPreference(false);
-  }, [setPreference]);
+  const handleExitFullscreen = useCallback(
+    (resumeTerm: ReviewTerm | null) => {
+      setFullscreenActive(false);
+      setPreference(false);
+      // Bring this view's own queue position in sync with wherever the
+      // feed actually left off — otherwise this view still shows whatever
+      // term it had before the user entered focus mode, even after they
+      // scrolled through several others there. Fullscreen never masks, so
+      // resumeTerm is always shown revealed here too.
+      if (resumeTerm) {
+        dispatch({ type: "fetched", term: resumeTerm, revealed: true });
+        setStatus("ready");
+        scrollToTop(cardRef.current);
+      }
+    },
+    [setPreference],
+  );
 
   if (fullscreenActive) {
     return (

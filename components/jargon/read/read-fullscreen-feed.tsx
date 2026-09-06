@@ -20,7 +20,7 @@ function ReadFullscreenCard({
 }: {
   term: ReviewTerm;
   narrationAccess: boolean;
-  onExposed: (termId: string) => void;
+  onExposed: (term: ReviewTerm) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // Gates FirstExposureKnownPrompt: once this card's read is recorded, the
@@ -38,7 +38,7 @@ function ReadFullscreenCard({
         for (const entry of entries) {
           if (entry.isIntersecting) {
             setExposed(true);
-            onExposed(term.id);
+            onExposed(term);
             observer.disconnect();
           }
         }
@@ -47,7 +47,7 @@ function ReadFullscreenCard({
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [term.id, onExposed]);
+  }, [term, onExposed]);
 
   return (
     <div
@@ -106,13 +106,19 @@ export function ReadFullscreenFeed({
    *  (ReadPage stays mounted the whole time; only this feed mounts and
    *  unmounts as focus mode toggles). */
   onRecordRead: (termId: string) => void;
-  onExit: () => void;
+  /** Called on every exit path with whichever term was last exposed in
+   *  this feed (or `initialTerm` if none was), so the paged view can pick
+   *  up from there instead of snapping back to whatever it showed before
+   *  the user entered focus mode. `null` only when the feed never had a
+   *  term to show at all. */
+  onExit: (lastTerm: ReviewTerm | null) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [terms, setTerms] = useState<ReviewTerm[]>(initialTerm ? [initialTerm] : []);
   const [status, setStatus] = useState<FeedStatus>(initialTerm ? "ready" : "loading");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loadedTermIdsRef = useRef<Set<string>>(new Set(initialTerm ? [initialTerm.id] : []));
+  const lastExposedTermRef = useRef<ReviewTerm | null>(initialTerm);
   const inFlightRef = useRef(false);
   const loadMoreRef = useRef<() => void>(() => {});
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -170,7 +176,19 @@ export function ReadFullscreenFeed({
     observer.observe(node);
   }, []);
 
-  const { requestExit } = useFullscreenExit(true, onExit);
+  const handleExposed = useCallback(
+    (term: ReviewTerm) => {
+      lastExposedTermRef.current = term;
+      onRecordRead(term.id);
+    },
+    [onRecordRead],
+  );
+
+  const handleExit = useCallback(() => {
+    onExit(lastExposedTermRef.current);
+  }, [onExit]);
+
+  const { requestExit } = useFullscreenExit(true, handleExit);
 
   useEffect(() => {
     containerRef.current?.focus();
@@ -192,7 +210,7 @@ export function ReadFullscreenFeed({
           key={term.id}
           term={term}
           narrationAccess={narrationAccess}
-          onExposed={onRecordRead}
+          onExposed={handleExposed}
         />
       ))}
 
