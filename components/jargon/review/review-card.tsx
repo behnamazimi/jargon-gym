@@ -15,6 +15,7 @@ type ReviewCardProps = {
   onReveal: () => void;
   onPrevious: () => void;
   onNext: () => void;
+  onMarkedKnown: () => void;
   reduceMotion: boolean;
   swipeEnabled: boolean;
   narrationAccess: boolean;
@@ -39,6 +40,7 @@ export function ReviewCard({
   onReveal,
   onPrevious,
   onNext,
+  onMarkedKnown,
   reduceMotion,
   swipeEnabled,
   narrationAccess,
@@ -128,7 +130,9 @@ export function ReviewCard({
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
-              {term.isNewToUser ? <FirstExposureKnownPrompt termId={term.id} /> : null}
+              {term.isNewToUser ? (
+                <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
+              ) : null}
               <TermBody key={term.id} term={term} />
             </div>
           </div>

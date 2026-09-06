@@ -14,7 +14,13 @@ import { Button } from "@/components/ui/button";
  *  Rendered as a bordered, tinted callout — not inline text — so it reads
  *  as a real secondary action next to Reveal/Next, not something to miss
  *  while skimming the definition. */
-export function FirstExposureKnownPrompt({ termId }: { termId: string }) {
+export function FirstExposureKnownPrompt({
+  termId,
+  onMarkedKnown,
+}: {
+  termId: string;
+  onMarkedKnown?: () => void;
+}) {
   const [status, setStatus] = useState<"idle" | "pending" | "marked">("idle");
 
   if (status === "marked") {
@@ -51,7 +57,12 @@ export function FirstExposureKnownPrompt({ termId }: { termId: string }) {
           onPress={async () => {
             setStatus("pending");
             const { error } = await setTermMarkedKnownAction(termId, true);
-            setStatus(error ? "idle" : "marked");
+            if (error) {
+              setStatus("idle");
+              return;
+            }
+            setStatus("marked");
+            onMarkedKnown?.();
           }}
         >
           {status === "pending" ? "Marking…" : "Mark known"}
