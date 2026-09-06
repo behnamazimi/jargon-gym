@@ -15,9 +15,7 @@ import { Button } from "@/components/ui/button";
  *  as a real secondary action next to Reveal/Next, not something to miss
  *  while skimming the definition. */
 export function FirstExposureKnownPrompt({ termId }: { termId: string }) {
-  const [status, setStatus] = useState<"idle" | "pending" | "marked" | "dismissed">("idle");
-
-  if (status === "dismissed") return null;
+  const [status, setStatus] = useState<"idle" | "pending" | "marked">("idle");
 
   if (status === "marked") {
     return (
@@ -39,16 +37,13 @@ export function FirstExposureKnownPrompt({ termId }: { termId: string }) {
           <Sparkles className="size-4" aria-hidden strokeWidth={2} />
         </span>
         <div>
-          <p className="m-0 text-sm font-semibold text-base-content">First time seeing this term</p>
+          <p className="m-0 text-sm font-semibold text-base-content">Already know it?</p>
           <p className="m-0 text-xs text-base-content/60">
-            Already know it? Mark it known and skip it going forward.
+            Mark it known and skip it going forward.
           </p>
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
-        <Button size="sm" variant="outline" onPress={() => setStatus("dismissed")}>
-          Keep learning
-        </Button>
         <Button
           size="sm"
           variant="secondary"
