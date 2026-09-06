@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, ArrowLeft, ArrowRight, Eye, PartyPopper } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Eye, Maximize, PartyPopper } from "lucide-react";
 import { useCallback, useEffect, useReducer, useRef, useState, useTransition } from "react";
 import {
   getNextReadTermAction,
@@ -14,6 +14,7 @@ import {
   QuizPanelBody,
   QuizPanelHeader,
 } from "@/components/jargon/quiz/quiz-ui";
+import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
@@ -25,10 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReviewTerm } from "@/lib/review/types";
 import { countTermsForSelection } from "@/lib/study/count";
 import type { StudyCollection } from "@/lib/study/types";
+import { cn } from "@/lib/utils";
 
 const PRESS_CLASS = "transition-transform duration-150 ease-out active:scale-[0.96]";
 
@@ -405,6 +408,8 @@ type ReadPageProps = {
 
 export function ReadPage({ initialResult, collections, domainId, narrationAccess }: ReadPageProps) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
+  const [fullscreenActive, setFullscreenActive] = useState(false);
+  const { preferenceOn, setPreference } = useReadFullscreenPreference();
   const [status, setStatus] = useState<ReadStatus>(() => statusFromResult(initialResult));
   const [nav, dispatch] = useReducer(navReducer, {
     entry: initialResult.term
@@ -512,6 +517,7 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      if (fullscreenActive) return;
       if (event.key !== "Enter") return;
       if (statusRef.current !== "ready" || fetchingRef.current) return;
       if (isTypingTarget(event.target)) return;
@@ -526,18 +532,50 @@ export function ReadPage({ initialResult, collections, domainId, narrationAccess
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [fetchNext, handleReveal]);
+  }, [fetchNext, handleReveal, fullscreenActive]);
+
+  const handleExitFullscreen = useCallback(() => {
+    setFullscreenActive(false);
+    setPreference(false);
+  }, [setPreference]);
+
+  if (fullscreenActive) {
+    return (
+      <ReadFullscreenFeed
+        domainId={selectedCollectionId}
+        narrationAccess={narrationAccess}
+        onExit={handleExitFullscreen}
+      />
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      {collections.length > 0 ? (
-        <ReadCollectionSelect
-          collections={collections}
-          selectedCollectionId={selectedCollectionId}
-          isDisabled={isPending}
-          onChange={handleCollectionChange}
-        />
-      ) : null}
+      <div className="flex items-center gap-2">
+        {collections.length > 0 ? (
+          <ReadCollectionSelect
+            collections={collections}
+            selectedCollectionId={selectedCollectionId}
+            isDisabled={isPending}
+            onChange={handleCollectionChange}
+          />
+        ) : (
+          <div className="flex-1" />
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          aria-label="Enter focus mode"
+          onPress={() => {
+            setFullscreenActive(true);
+            setPreference(true);
+          }}
+          className={cn("shrink-0", preferenceOn && "ring-2 ring-primary/60", PRESS_CLASS)}
+        >
+          <Maximize className="size-4" aria-hidden strokeWidth={1.5} />
+        </Button>
+      </div>
 
       <div ref={cardRef} className="flex min-h-0 flex-1 flex-col">
         {status === "caughtUp" ? (
