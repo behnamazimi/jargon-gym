@@ -306,8 +306,11 @@ export type ReviewSetupState = {
 /** One drawn term plus its known-label snapshot at session-build time —
  *  a read-only label derived live from Mastery_adjusted (lib/trace), not a
  *  stored pool. Not yet rendered anywhere; kept for the presentation
- *  fast-follow that gives Telegram Review real 4-point grading. */
-type ReviewSessionTerm = { id: string; status: KnownLabel };
+ *  fast-follow that gives Telegram Review real 4-point grading.
+ *  isNewToUser is snapshotted the same way: whether this term had zero
+ *  read/review/quiz activity at session-build time, driving the one-time
+ *  "I already know this" prompt on first exposure. */
+type ReviewSessionTerm = { id: string; status: KnownLabel; isNewToUser: boolean };
 
 export type TelegramReviewSession = {
   userId: string;
@@ -345,7 +348,9 @@ function isReviewSessionTerm(value: unknown): value is ReviewSessionTerm {
   const term = value as ReviewSessionTerm;
   return (
     typeof term.id === "string" &&
-    (term.status === "known" || term.status === "learning" || term.status === "unknown")
+    (term.status === "known" || term.status === "learning" || term.status === "unknown") &&
+    // Tolerant of sessions persisted before isNewToUser existed.
+    (term.isNewToUser === undefined || typeof term.isNewToUser === "boolean")
   );
 }
 
@@ -473,6 +478,11 @@ export async function createReviewSession(
     return {
       id: card.id,
       status: candidate ? computeTraceSnapshot(candidate, now).knownLabel : "unknown",
+      isNewToUser: candidate
+        ? candidate.readCount === 0 &&
+          candidate.reviewRecallCount === 0 &&
+          candidate.quizTestCount === 0
+        : false,
     };
   });
 
@@ -573,6 +583,32 @@ export async function recordReviewRating(
   return updated;
 }
 
+/** Advance past the current term without recording an FSRS-5 grade — used
+ *  when the user marks it known instead of rating it. Doesn't touch
+ *  retainedCount, since no answer was given. */
+export async function skipCurrentReviewTerm(
+  client: Client,
+  chatId: number,
+  session: TelegramReviewSession,
+): Promise<TelegramReviewSession> {
+  const updated: TelegramReviewSession = {
+    ...session,
+    currentIndex: session.currentIndex + 1,
+    revealed: false,
+  };
+
+  await saveStoredReviewSession(client, chatId, {
+    domainId: updated.domainId,
+    terms: updated.terms,
+    currentIndex: updated.currentIndex,
+    revealed: updated.revealed,
+    retainedCount: updated.retainedCount,
+    startedAt: updated.startedAt,
+  });
+
+  return updated;
+}
+
 export function hasMoreReviewTerms(session: TelegramReviewSession): boolean {
   return session.currentIndex < session.terms.length;
 }
@@ -582,8 +618,10 @@ export async function getCurrentReviewTerm(
   session: TelegramReviewSession,
 ): Promise<TermCard | null> {
   if (session.currentIndex >= session.terms.length) return null;
-  const termId = session.terms[session.currentIndex].id;
-  return fetchTermCardForUser(client, session.userId, termId);
+  const sessionTerm = session.terms[session.currentIndex];
+  const card = await fetchTermCardForUser(client, session.userId, sessionTerm.id);
+  if (!card) return null;
+  return { ...card, isNewToUser: sessionTerm.isNewToUser };
 }
 
 export async function clearTelegramInteractionState(client: Client, chatId: number): Promise<void> {

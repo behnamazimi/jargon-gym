@@ -12,23 +12,29 @@ import { TermBody } from "./term-body";
 type TermCardProps = {
   term: Term;
   known: boolean;
+  /** User-set "I already know this" override — separate from `known`
+   *  (TRACE's earned label). Never conflated in the UI. */
+  markedKnown: boolean;
   open: boolean;
   isOwner: boolean;
   domainId: string;
   domainTerms: Term[];
   narrationAccess: boolean;
   onToggleOpen: () => void;
+  onToggleMarkedKnown: () => void;
 };
 
 export function TermCard({
   term,
   known,
+  markedKnown,
   open,
   isOwner,
   domainId,
   domainTerms,
   narrationAccess,
   onToggleOpen,
+  onToggleMarkedKnown,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -44,7 +50,7 @@ export function TermCard({
         onExpandedChange={(expanded) => {
           if (expanded !== open) onToggleOpen();
         }}
-        className={cn(known && !open && "opacity-70")}
+        className={cn((known || markedKnown) && !open && "opacity-70")}
         data-term={term.term}
       >
         <article
@@ -77,6 +83,14 @@ export function TermCard({
                     <Check className="size-3" strokeWidth={2.5} />
                   </span>
                 ) : null}
+                {markedKnown ? (
+                  <span
+                    className="badge badge-sm badge-outline ml-2 align-middle font-normal normal-case"
+                    title="You marked this known"
+                  >
+                    Marked known
+                  </span>
+                ) : null}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2">
                 <span className="hidden text-xs text-base-content/50 sm:inline">
@@ -99,7 +113,16 @@ export function TermCard({
             ) : null}
           </div>
           <CollapsibleContent>
-            <TermBody term={term} className="px-4 pt-4 pb-5" />
+            <TermBody term={term} className="px-4 pt-4" />
+            <div className="px-4 pb-4">
+              <button
+                type="button"
+                className="btn btn-sm btn-outline"
+                onClick={onToggleMarkedKnown}
+              >
+                {markedKnown ? "Add to learning" : "Mark known"}
+              </button>
+            </div>
           </CollapsibleContent>
         </article>
       </Collapsible>

@@ -24,6 +24,7 @@ export type CollectionDomainRow = {
   termCount: number;
   knownCount: number;
   termsLearnedCount: number;
+  markedKnownCount: number;
 };
 
 async function fetchOwnedDomains(client: Client, userId: string) {
@@ -62,6 +63,7 @@ type ProgressStateRow = {
   quiz_test_count: number;
   last_quiz_tested_at: string | null;
   ever_mastered_at: string | null;
+  marked_known_at: string | null;
 };
 
 function toTraceState(row: ProgressStateRow): TraceState {
@@ -81,27 +83,35 @@ function toTraceState(row: ProgressStateRow): TraceState {
 /** "known" is a read-only label derived live from Mastery_adjusted, not a
  *  stored row — replaces the old known_at-row-presence tally. `ever_mastered_at`
  *  is the companion permanent high-water mark: once set it's never cleared,
- *  even as the live label later decays back below the known threshold. */
+ *  even as the live label later decays back below the known threshold.
+ *  `marked_known_at` is the user's own manual override — separate from both,
+ *  but counted into `knownCount`/`termsLearnedCount` too since it reduces
+ *  what's left to learn regardless of how it happened; `markedKnownCount`
+ *  tracks it on its own for the Mastery page's "N marked known by you" line. */
 function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
   const stats = new Map<
     string,
-    { termCount: number; knownCount: number; termsLearnedCount: number }
+    { termCount: number; knownCount: number; termsLearnedCount: number; markedKnownCount: number }
   >();
   const now = new Date();
 
   for (const domainId of domainIds) {
-    stats.set(domainId, { termCount: 0, knownCount: 0, termsLearnedCount: 0 });
+    stats.set(domainId, { termCount: 0, knownCount: 0, termsLearnedCount: 0, markedKnownCount: 0 });
   }
 
   for (const row of data) {
     const current = stats.get(row.domain_id);
     if (!current) continue;
     current.termCount += 1;
-    if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known") {
+    const markedKnown = row.marked_known_at !== null;
+    if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known" || markedKnown) {
       current.knownCount += 1;
     }
-    if (row.ever_mastered_at !== null) {
+    if (row.ever_mastered_at !== null || markedKnown) {
       current.termsLearnedCount += 1;
+    }
+    if (markedKnown) {
+      current.markedKnownCount += 1;
     }
   }
 
@@ -151,19 +161,24 @@ function combineOwnedAndAdded(
 
 function applyDomainStats(
   rows: ReturnType<typeof combineOwnedAndAdded>,
-  stats: Map<string, { termCount: number; knownCount: number; termsLearnedCount: number }>,
+  stats: Map<
+    string,
+    { termCount: number; knownCount: number; termsLearnedCount: number; markedKnownCount: number }
+  >,
 ): CollectionDomainRow[] {
   return rows.map((row) => {
     const domainStats = stats.get(row.id) ?? {
       termCount: 0,
       knownCount: 0,
       termsLearnedCount: 0,
+      markedKnownCount: 0,
     };
     return {
       ...row,
       termCount: domainStats.termCount,
       knownCount: domainStats.knownCount,
       termsLearnedCount: domainStats.termsLearnedCount,
+      markedKnownCount: domainStats.markedKnownCount,
     };
   });
 }

@@ -238,6 +238,7 @@ export type Database = {
           last_quiz_tested_at: string | null;
           last_read_at: string | null;
           last_review_recall_at: string | null;
+          marked_known_at: string | null;
           quiz_knowledge_posterior: number | null;
           quiz_test_count: number;
           read_count: number;
@@ -253,6 +254,7 @@ export type Database = {
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
+          marked_known_at?: string | null;
           quiz_knowledge_posterior?: number | null;
           quiz_test_count?: number;
           read_count?: number;
@@ -268,6 +270,7 @@ export type Database = {
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
           last_review_recall_at?: string | null;
+          marked_known_at?: string | null;
           quiz_knowledge_posterior?: number | null;
           quiz_test_count?: number;
           read_count?: number;
@@ -790,6 +793,7 @@ export type Database = {
           last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
+          marked_known_at: string;
           quiz_knowledge_posterior: number;
           quiz_test_count: number;
           read_count: number;
@@ -847,6 +851,7 @@ export type Database = {
           last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
+          marked_known_at: string;
           quiz_knowledge_posterior: number;
           quiz_test_count: number;
           read_count: number;
@@ -878,6 +883,7 @@ export type Database = {
           last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
+          marked_known_at: string;
           quiz_knowledge_posterior: number;
           quiz_test_count: number;
           read_count: number;
@@ -907,6 +913,10 @@ export type Database = {
         Returns: undefined;
       };
       my_review_domain_ids: { Args: never; Returns: string[] };
+      my_set_term_marked_known: {
+        Args: { p_marked: boolean; p_term_id: string };
+        Returns: undefined;
+      };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
       progress_state_by_domain: {
         Args: { p_domain_ids: string[]; p_user_id: string };
@@ -916,6 +926,7 @@ export type Database = {
           last_quiz_tested_at: string;
           last_read_at: string;
           last_review_recall_at: string;
+          marked_known_at: string;
           quiz_knowledge_posterior: number;
           quiz_test_count: number;
           read_count: number;
@@ -950,6 +961,10 @@ export type Database = {
       review_domain_ids: { Args: { p_user_id: string }; Returns: string[] };
       set_telegram_all_caught_up: {
         Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      set_term_marked_known: {
+        Args: { p_marked: boolean; p_term_id: string; p_user_id: string };
         Returns: undefined;
       };
       update_telegram_cadence: {

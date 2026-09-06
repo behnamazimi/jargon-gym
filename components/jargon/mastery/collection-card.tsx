@@ -8,6 +8,7 @@ type CollectionCardData = {
   id: string;
   name: string;
   termsLearnedCount: number;
+  markedKnownCount: number;
   totalCount: number;
   percentage: number;
 };
@@ -93,6 +94,11 @@ function CollectionCardShell({
       ) : null}
       {footnote ? <p className="text-xs text-base-content/50">{footnote}</p> : null}
       {paceLine ? <p className="text-xs text-base-content/50">{paceLine}</p> : null}
+      {collection.markedKnownCount > 0 ? (
+        <p className="text-xs text-base-content/50">
+          <span className="tabular-nums">{collection.markedKnownCount}</span> marked known by you
+        </p>
+      ) : null}
     </div>
   );
 

@@ -13,6 +13,7 @@ export function toReviewTerm(card: TermCard): ReviewTerm {
     antiExample: card.antiExample ?? undefined,
     controversy: card.controversy ?? undefined,
     domainName: card.domainName,
+    isNewToUser: card.isNewToUser,
     relationships: card.relationships.map((rel, index) => ({
       id: `${card.id}-${rel.direction}-${index}`,
       relationshipType: rel.relationshipType,

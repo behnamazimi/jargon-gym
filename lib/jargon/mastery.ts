@@ -45,6 +45,11 @@ export type MasteryTermRow = {
   /** True only when the label is "known" (mastery ≥0.8 & n≥3) — the same
    *  bar the checkmark badge elsewhere in the app uses. */
   known: boolean;
+  /** True when the user manually marked this term known — separate from
+   *  `known` above (TRACE's earned label). Rows with this set render a
+   *  "Marked known" badge instead of a score, since there's no earned
+   *  score to show. */
+  markedKnown: boolean;
   /** Null unless known — and, as an edge case, if a mastered term somehow
    *  has no review_events row to date its first touch from. */
   journey: MasteryTermJourney | null;
@@ -117,9 +122,14 @@ export async function loadMasteryOverview(
 
   const candidates = await fetchActiveTraceCandidates(client, userId);
   const now = new Date();
-  const termsLearned = candidates.filter((c) => c.everMasteredAt !== null).length;
+  // A manually-marked-known term counts as "learned" for consistency with
+  // the collection percentage (lib/jargon/collections.ts) — it reduces
+  // what's left to learn regardless of how it happened.
+  const termsLearned = candidates.filter(
+    (c) => c.everMasteredAt !== null || c.markedKnownAt !== null,
+  ).length;
   const termsLearning = candidates.filter(
-    (c) => c.everLearningAt !== null && c.everMasteredAt === null,
+    (c) => c.everLearningAt !== null && c.everMasteredAt === null && c.markedKnownAt === null,
   ).length;
 
   const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
@@ -169,6 +179,7 @@ export async function loadMasteryOverview(
           score: Math.round(snapshot.masteryAdjusted * 100),
           tier: tierFromLabel(snapshot.knownLabel),
           known: snapshot.knownLabel === "known",
+          markedKnown: candidate.markedKnownAt !== null,
           journey,
         },
       ];

@@ -47,6 +47,7 @@ export type Domain = {
   termCount: number;
   knownCount: number;
   termsLearnedCount: number;
+  markedKnownCount: number;
 };
 
 export type JargonPageData = {
@@ -54,6 +55,7 @@ export type JargonPageData = {
   domains: Domain[];
   terms: Term[];
   knownTermIds: string[];
+  markedKnownTermIds: string[];
   activeDomainIds: string[];
 };
 

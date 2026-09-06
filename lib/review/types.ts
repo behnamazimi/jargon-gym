@@ -3,6 +3,7 @@ import type { ReviewGrade } from "@/lib/trace";
 
 export type ReviewTerm = Term & {
   domainName: string;
+  isNewToUser?: boolean;
 };
 
 export type ReviewRating = {

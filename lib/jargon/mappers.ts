@@ -10,6 +10,7 @@ type MapDomainOptions = {
   termCount?: number;
   knownCount?: number;
   termsLearnedCount?: number;
+  markedKnownCount?: number;
 };
 
 export function mapDomain(
@@ -28,6 +29,7 @@ export function mapDomain(
     termCount: options.termCount ?? 0,
     knownCount: options.knownCount ?? 0,
     termsLearnedCount: options.termsLearnedCount ?? 0,
+    markedKnownCount: options.markedKnownCount ?? 0,
   };
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { recordTermReadAction } from "@/app/(private)/jargon/actions";
+import { recordTermReadAction, setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
 import type { JargonPageData, SortMode } from "@/lib/jargon/types";
 
@@ -16,14 +16,26 @@ export function useJargonList(initialData: JargonPageData) {
   const [knownTerms, setKnownTerms] = useState<Set<string>>(
     () => new Set(initialData.knownTermIds),
   );
+  const [markedKnownTerms, setMarkedKnownTerms] = useState<Set<string>>(
+    () => new Set(initialData.markedKnownTermIds),
+  );
   const countedShownRef = useRef(new Set<string>());
   const openTermsRef = useRef(openTerms);
   openTermsRef.current = openTerms;
+  const markedKnownTermsRef = useRef(markedKnownTerms);
+  markedKnownTermsRef.current = markedKnownTerms;
 
   // Sync knownTerms when initialData changes (e.g., after router.refresh())
   useEffect(() => {
     setKnownTerms(new Set(initialData.knownTermIds));
   }, [initialData.knownTermIds]);
+
+  // Sync markedKnownTerms the same way, plus optimistically right after a
+  // toggle succeeds (see setTermMarkedKnown below) so the UI updates before
+  // the next router.refresh() lands.
+  useEffect(() => {
+    setMarkedKnownTerms(new Set(initialData.markedKnownTermIds));
+  }, [initialData.markedKnownTermIds]);
 
   const categories = useMemo(() => getCategories(terms), [terms]);
   const categoryCounts = useMemo(() => getCategoryCounts(terms), [terms]);
@@ -74,6 +86,30 @@ export function useJargonList(initialData: JargonPageData) {
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 
+  const toggleMarkedKnown = useCallback(async (termId: string) => {
+    const wasMarked = markedKnownTermsRef.current.has(termId);
+    const marked = !wasMarked;
+
+    // Optimistic: flip immediately, no confirmation step.
+    setMarkedKnownTerms((prev) => {
+      const next = new Set(prev);
+      if (marked) next.add(termId);
+      else next.delete(termId);
+      return next;
+    });
+
+    const { error } = await setTermMarkedKnownAction(termId, marked);
+    if (error) {
+      // Roll back on failure.
+      setMarkedKnownTerms((prev) => {
+        const next = new Set(prev);
+        if (marked) next.delete(termId);
+        else next.add(termId);
+        return next;
+      });
+    }
+  }, []);
+
   return {
     domain: initialData.domain,
     domains: initialData.domains,
@@ -90,8 +126,10 @@ export function useJargonList(initialData: JargonPageData) {
     setSortMode,
     openTerms,
     knownTerms,
+    markedKnownTerms,
     toggleCategory,
     toggleOpen,
+    toggleMarkedKnown,
     clearSearch,
   };
 }

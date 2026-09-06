@@ -36,14 +36,21 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
     setSortMode,
     openTerms,
     knownTerms,
+    markedKnownTerms,
     toggleCategory,
     toggleOpen,
+    toggleMarkedKnown,
     clearSearch,
   } = useJargonList(initialData);
 
+  const liveKnownCount = useMemo(
+    () => new Set([...knownTerms, ...markedKnownTerms]).size,
+    [knownTerms, markedKnownTerms],
+  );
+
   const domainWithLiveCount = useMemo(
-    () => ({ ...domain, knownCount: knownTerms.size }),
-    [domain, knownTerms.size],
+    () => ({ ...domain, knownCount: liveKnownCount }),
+    [domain, liveKnownCount],
   );
 
   const isOwner = domain.source === "owned";
@@ -51,9 +58,9 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
   const domainsWithLiveCounts = useMemo(
     () =>
       initialData.domains.map((d) =>
-        d.id === domain.id ? { ...d, knownCount: knownTerms.size } : d,
+        d.id === domain.id ? { ...d, knownCount: liveKnownCount } : d,
       ),
-    [initialData.domains, domain.id, knownTerms.size],
+    [initialData.domains, domain.id, liveKnownCount],
   );
 
   useEffect(() => {
@@ -123,12 +130,14 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
             <TermList
               terms={filteredTerms}
               knownTerms={knownTerms}
+              markedKnownTerms={markedKnownTerms}
               openTerms={openTerms}
               isOwner={isOwner}
               domainId={domain.id}
               domainTerms={terms}
               narrationAccess={narrationAccess}
               onToggleOpen={toggleOpen}
+              onToggleMarkedKnown={toggleMarkedKnown}
             />
           </div>
         </div>

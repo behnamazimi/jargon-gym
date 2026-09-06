@@ -17,7 +17,13 @@ import {
   parseStartToken,
 } from "./commands";
 import { CONNECT_MESSAGE, HELP_MESSAGE } from "./copy";
-import { handleRead, handleReadCallback, handleReadReveal, handleSendDue } from "./delivery-flow";
+import {
+  handleRead,
+  handleReadCallback,
+  handleReadMarkKnown,
+  handleReadReveal,
+  handleSendDue,
+} from "./delivery-flow";
 import {
   handleQuizCommand,
   handleQuizSetupCallback,
@@ -27,6 +33,7 @@ import {
 } from "./quiz-flow";
 import {
   handleReviewCommand,
+  handleReviewMarkKnown,
   handleReviewRate,
   handleReviewReveal,
   handleReviewSetupCallback,
@@ -95,6 +102,14 @@ async function handleCallback(
     return actions;
   }
 
+  if (data.startsWith("review:known:")) {
+    const sessionIndex = parseInt(data.slice("review:known:".length), 10);
+    if (!isNaN(sessionIndex)) {
+      actions.push(...(await handleReviewMarkKnown(client, chatId, messageId, sessionIndex)));
+    }
+    return actions;
+  }
+
   if (data.startsWith("review:rate:")) {
     const parts = data.slice("review:rate:".length).split(":");
     if (parts.length === 2) {
@@ -141,6 +156,12 @@ async function handleCallback(
   if (data.startsWith("read:reveal:")) {
     const termId = data.slice("read:reveal:".length);
     actions.push(...(await handleReadReveal(client, userId, chatId, messageId, termId)));
+    return actions;
+  }
+
+  if (data.startsWith("read:known:")) {
+    const termId = data.slice("read:known:".length);
+    actions.push(...(await handleReadMarkKnown(client, userId, chatId, messageId, termId)));
     return actions;
   }
 
