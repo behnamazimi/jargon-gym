@@ -92,7 +92,12 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
       setReachedEnd(false);
       setLoadError(null);
       for (const term of result.terms) loadedIdsRef.current.add(term.id);
-      setTerms((current) => [...current, ...result.terms]);
+      // Update the ref synchronously here so goNext's read right after
+      // `await loadMore()` sees the new terms immediately, instead of
+      // waiting for the next render to reassign termsRef.current.
+      const nextTerms = [...termsRef.current, ...result.terms];
+      termsRef.current = nextTerms;
+      setTerms(nextTerms);
     } finally {
       inFlightRef.current = false;
       setIsFetchingMore(false);

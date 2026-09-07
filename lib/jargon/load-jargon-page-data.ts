@@ -76,7 +76,7 @@ export async function loadJargonPageData(
       fetchProgressStateByDomain(client, [selectedRow.id]),
       fetchTermRelationshipsForTerms(client, termIds),
     ]);
-    const { knownTermIds, markedKnownTermIds } = progressState;
+    const { knownTermIds, markedKnownTermIds, everMasteredTermIds } = progressState;
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
     return {
@@ -85,6 +85,7 @@ export async function loadJargonPageData(
       terms,
       knownTermIds,
       markedKnownTermIds,
+      everMasteredTermIds,
       activeDomainIds: reviewDomainIds,
     };
   } catch (err) {

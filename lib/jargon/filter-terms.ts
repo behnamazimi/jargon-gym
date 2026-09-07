@@ -13,11 +13,12 @@ export function getCategoryCounts(terms: Term[]): Record<string, number> {
 }
 
 export function filterTerms(terms: Term[], options: FilterOptions): Term[] {
-  const { searchQuery, activeCategories, hideKnown, sortMode, knownTerms } = options;
+  const { searchQuery, activeCategories, hideKnown, sortMode, knownTerms, markedKnownTerms } =
+    options;
 
   let list = terms.filter((t) => {
     if (activeCategories.size > 0 && !activeCategories.has(t.category)) return false;
-    if (hideKnown && knownTerms.has(t.id)) return false;
+    if (hideKnown && (knownTerms.has(t.id) || markedKnownTerms.has(t.id))) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       if (!t.term.toLowerCase().includes(q) && !t.definition.toLowerCase().includes(q)) {
@@ -27,18 +28,23 @@ export function filterTerms(terms: Term[], options: FilterOptions): Term[] {
     return true;
   });
 
-  list = sortTerms(list, sortMode, knownTerms);
+  list = sortTerms(list, sortMode, knownTerms, markedKnownTerms);
   return list;
 }
 
-function sortTerms(terms: Term[], sortMode: SortMode, knownTerms: Set<string>): Term[] {
+function sortTerms(
+  terms: Term[],
+  sortMode: SortMode,
+  knownTerms: Set<string>,
+  markedKnownTerms: Set<string>,
+): Term[] {
   if (sortMode === "az") {
     return [...terms].sort((a, b) => a.term.localeCompare(b.term));
   }
   if (sortMode === "unknown") {
     return [...terms].sort((a, b) => {
-      const aKnown = knownTerms.has(a.id);
-      const bKnown = knownTerms.has(b.id);
+      const aKnown = knownTerms.has(a.id) || markedKnownTerms.has(a.id);
+      const bKnown = knownTerms.has(b.id) || markedKnownTerms.has(b.id);
       if (aKnown !== bKnown) return aKnown ? 1 : -1;
       return a.term.localeCompare(b.term);
     });

@@ -37,6 +37,7 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
     openTerms,
     knownTerms,
     markedKnownTerms,
+    everMasteredTerms,
     toggleCategory,
     toggleOpen,
     toggleMarkedKnown,
@@ -48,9 +49,14 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
     [knownTerms, markedKnownTerms],
   );
 
+  const liveTermsLearnedCount = useMemo(
+    () => new Set([...everMasteredTerms, ...markedKnownTerms]).size,
+    [everMasteredTerms, markedKnownTerms],
+  );
+
   const domainWithLiveCount = useMemo(
-    () => ({ ...domain, knownCount: liveKnownCount }),
-    [domain, liveKnownCount],
+    () => ({ ...domain, knownCount: liveKnownCount, termsLearnedCount: liveTermsLearnedCount }),
+    [domain, liveKnownCount, liveTermsLearnedCount],
   );
 
   const isOwner = domain.source === "owned";
@@ -58,9 +64,11 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
   const domainsWithLiveCounts = useMemo(
     () =>
       initialData.domains.map((d) =>
-        d.id === domain.id ? { ...d, knownCount: liveKnownCount } : d,
+        d.id === domain.id
+          ? { ...d, knownCount: liveKnownCount, termsLearnedCount: liveTermsLearnedCount }
+          : d,
       ),
-    [initialData.domains, domain.id, liveKnownCount],
+    [initialData.domains, domain.id, liveKnownCount, liveTermsLearnedCount],
   );
 
   useEffect(() => {

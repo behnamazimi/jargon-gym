@@ -16,7 +16,8 @@ import { MasteryTierChips, type MasteryTierFilter } from "./mastery-tier-chips";
 type MasteryTermListProps = {
   termRows: MasteryTermRowData[];
   collections: { id: string; name: string }[];
-  initialCollectionId?: string;
+  collectionId: string;
+  onCollectionChange: (collectionId: string) => void;
 };
 
 function tierCounts(rows: MasteryTermRowData[]): Record<MasteryTier, number> {
@@ -28,10 +29,10 @@ function tierCounts(rows: MasteryTermRowData[]): Record<MasteryTier, number> {
 export function MasteryTermList({
   termRows,
   collections,
-  initialCollectionId,
+  collectionId,
+  onCollectionChange,
 }: MasteryTermListProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [collectionId, setCollectionId] = useState(initialCollectionId ?? "all");
   const [activeTier, setActiveTier] = useState<MasteryTierFilter>("all");
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,7 +67,7 @@ export function MasteryTermList({
               inputRef={searchInputRef}
             />
           </div>
-          <Select value={collectionId} onChange={(key) => setCollectionId(String(key))}>
+          <Select value={collectionId} onChange={(key) => onCollectionChange(String(key))}>
             <SelectTrigger size="sm" className="text-sm sm:w-56" aria-label="Collection">
               <SelectValue />
             </SelectTrigger>

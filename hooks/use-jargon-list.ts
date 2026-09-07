@@ -19,6 +19,9 @@ export function useJargonList(initialData: JargonPageData) {
   const [markedKnownTerms, setMarkedKnownTerms] = useState<Set<string>>(
     () => new Set(initialData.markedKnownTermIds),
   );
+  const [everMasteredTerms, setEverMasteredTerms] = useState<Set<string>>(
+    () => new Set(initialData.everMasteredTermIds),
+  );
   const countedShownRef = useRef(new Set<string>());
   const openTermsRef = useRef(openTerms);
   openTermsRef.current = openTerms;
@@ -37,6 +40,12 @@ export function useJargonList(initialData: JargonPageData) {
     setMarkedKnownTerms(new Set(initialData.markedKnownTermIds));
   }, [initialData.markedKnownTermIds]);
 
+  // Sync everMasteredTerms when initialData changes. Read-only/display-only:
+  // no action in this hook mutates it directly.
+  useEffect(() => {
+    setEverMasteredTerms(new Set(initialData.everMasteredTermIds));
+  }, [initialData.everMasteredTermIds]);
+
   const categories = useMemo(() => getCategories(terms), [terms]);
   const categoryCounts = useMemo(() => getCategoryCounts(terms), [terms]);
 
@@ -48,8 +57,9 @@ export function useJargonList(initialData: JargonPageData) {
         hideKnown,
         sortMode,
         knownTerms,
+        markedKnownTerms,
       }),
-    [terms, searchQuery, activeCategories, hideKnown, sortMode, knownTerms],
+    [terms, searchQuery, activeCategories, hideKnown, sortMode, knownTerms, markedKnownTerms],
   );
 
   const toggleCategory = useCallback((cat: string) => {
@@ -127,6 +137,7 @@ export function useJargonList(initialData: JargonPageData) {
     openTerms,
     knownTerms,
     markedKnownTerms,
+    everMasteredTerms,
     toggleCategory,
     toggleOpen,
     toggleMarkedKnown,

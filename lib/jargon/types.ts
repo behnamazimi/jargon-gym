@@ -56,6 +56,7 @@ export type JargonPageData = {
   terms: Term[];
   knownTermIds: string[];
   markedKnownTermIds: string[];
+  everMasteredTermIds: string[];
   activeDomainIds: string[];
 };
 
@@ -67,6 +68,7 @@ export type FilterOptions = {
   hideKnown: boolean;
   sortMode: SortMode;
   knownTerms: Set<string>;
+  markedKnownTerms: Set<string>;
 };
 
 export type SharedDomain = {

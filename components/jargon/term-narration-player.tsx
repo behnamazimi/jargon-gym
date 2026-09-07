@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Pause, Volume2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -39,6 +39,16 @@ function releaseActiveAudio(audio: HTMLAudioElement) {
 export function TermNarrationPlayer({ termId }: { termId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        releaseActiveAudio(audio);
+      }
+    };
+  }, []);
 
   function handlePress() {
     if (status === "playing") {

@@ -43,7 +43,8 @@ export function MasteryPage({
         <MasteryTermList
           termRows={termRows}
           collections={collections.map((c) => ({ id: c.domainId, name: c.domainName }))}
-          initialCollectionId={termsCollectionFilter}
+          collectionId={termsCollectionFilter}
+          onCollectionChange={setTermsCollectionFilter}
         />
       )}
     </div>

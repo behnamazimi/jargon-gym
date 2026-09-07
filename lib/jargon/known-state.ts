@@ -10,6 +10,9 @@ export type DomainProgressState = {
   /** Terms the user manually marked known — a separate, user-set signal
    *  from TRACE's earned `knownTermIds` label above. Never conflated. */
   markedKnownTermIds: string[];
+  /** Terms with a permanent ever_mastered_at high-water mark — distinct
+   *  from the live, decaying `knownTermIds` label above. */
+  everMasteredTermIds: string[];
 };
 
 function toTraceState(row: {
@@ -46,7 +49,9 @@ export async function fetchProgressStateByDomain(
   client: Client,
   domainIds: string[],
 ): Promise<DomainProgressState> {
-  if (domainIds.length === 0) return { knownTermIds: [], markedKnownTermIds: [] };
+  if (domainIds.length === 0) {
+    return { knownTermIds: [], markedKnownTermIds: [], everMasteredTermIds: [] };
+  }
 
   const { data, error } = await client.rpc("my_progress_state_by_domain", {
     p_domain_ids: domainIds,
@@ -57,6 +62,7 @@ export async function fetchProgressStateByDomain(
   const now = new Date();
   const knownTermIds: string[] = [];
   const markedKnownTermIds: string[] = [];
+  const everMasteredTermIds: string[] = [];
 
   for (const row of data) {
     if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known") {
@@ -65,9 +71,12 @@ export async function fetchProgressStateByDomain(
     if (row.marked_known_at !== null) {
       markedKnownTermIds.push(row.term_id);
     }
+    if (row.ever_mastered_at !== null) {
+      everMasteredTermIds.push(row.term_id);
+    }
   }
 
-  return { knownTermIds, markedKnownTermIds };
+  return { knownTermIds, markedKnownTermIds, everMasteredTermIds };
 }
 
 async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
