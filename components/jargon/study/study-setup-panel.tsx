@@ -1,4 +1,4 @@
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, History } from "lucide-react";
 import type { ReactNode } from "react";
 import { CollectionSelect } from "@/components/jargon/collection-select";
 import {
@@ -6,7 +6,6 @@ import {
   QuizPanelBody,
   QuizSetupFooter,
 } from "@/components/jargon/quiz/quiz-ui";
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -46,23 +45,22 @@ export function StudyResumeBanner({
   onDiscard: () => void;
 }) {
   return (
-    <Alert>
-      <AlertDescription>{message}</AlertDescription>
-      <AlertAction>
-        <Button type="button" size="sm" onPress={onResume} className="max-md:min-h-11">
+    <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2.5">
+        <span className="inline-flex shrink-0 size-8 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <History className="size-4" aria-hidden strokeWidth={2} />
+        </span>
+        <p className="m-0 text-sm text-base-content">{message}</p>
+      </div>
+      <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
+        <Button type="button" size="sm" onPress={onResume}>
           Resume
         </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onPress={onDiscard}
-          className="max-md:min-h-11"
-        >
+        <Button type="button" size="sm" variant="ghost" onPress={onDiscard}>
           Start new
         </Button>
-      </AlertAction>
-    </Alert>
+      </div>
+    </div>
   );
 }
 
