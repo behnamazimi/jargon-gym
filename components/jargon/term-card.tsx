@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, CheckCircle2, ChevronRight, Undo2 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
@@ -21,11 +21,11 @@ type TermCardProps = {
   domainId: string;
   domainTerms: Term[];
   narrationAccess: boolean;
-  onToggleOpen: () => void;
-  onToggleMarkedKnown: () => void;
+  onToggleOpen: (termId: string) => void;
+  onToggleMarkedKnown: (termId: string) => void;
 };
 
-export function TermCard({
+export const TermCard = memo(function TermCard({
   term,
   known,
   markedKnown,
@@ -49,7 +49,7 @@ export function TermCard({
       <Collapsible
         isExpanded={open}
         onExpandedChange={(expanded) => {
-          if (expanded !== open) onToggleOpen();
+          if (expanded !== open) onToggleOpen(term.id);
         }}
         className={cn((known || markedKnown) && !open && "opacity-70")}
         data-term={term.term}
@@ -120,7 +120,7 @@ export function TermCard({
               <Button
                 size="sm"
                 variant={markedKnown ? "outline" : "secondary"}
-                onPress={onToggleMarkedKnown}
+                onPress={() => onToggleMarkedKnown(term.id)}
               >
                 {markedKnown ? (
                   <>
@@ -140,4 +140,4 @@ export function TermCard({
       </Collapsible>
     </div>
   );
-}
+});

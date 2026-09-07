@@ -1,15 +1,12 @@
-import { getSessionUser } from "@/lib/auth/require-session";
-import { fetchSharedDomainsBrowse } from "@/lib/jargon/browse";
+import { getBrowseSetupData } from "@/app/(private)/jargon/browse/actions";
 import { SharedDomainsBrowse } from "@/components/jargon/shared-domains-browse";
 
 export default async function BrowseSharedDomainsPage() {
-  const { supabase, user } = await getSessionUser();
+  const setup = await getBrowseSetupData();
 
-  if (!user) {
-    return <p className="text-sm text-base-content/60">Log in to browse shared collections.</p>;
+  if ("error" in setup) {
+    return <p className="text-sm text-base-content/60">{setup.error}</p>;
   }
 
-  const initialPage = await fetchSharedDomainsBrowse(supabase, user.id);
-
-  return <SharedDomainsBrowse initialPage={initialPage} />;
+  return <SharedDomainsBrowse initialPage={setup.initialPage} />;
 }

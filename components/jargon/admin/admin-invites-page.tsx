@@ -54,7 +54,7 @@ export function AdminInvitesPageClient({ requests }: AdminInvitesPageClientProps
             {requests.length === 0 ? (
               <tr>
                 <td colSpan={4} className="text-center text-base-content/50">
-                  No pending requests.
+                  No waitlist requests yet.
                 </td>
               </tr>
             ) : null}

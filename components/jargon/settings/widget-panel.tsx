@@ -1,7 +1,7 @@
 "use client";
 
 import { Monitor, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   generateWidgetTokenAction,
   revokeWidgetTokenAction,
@@ -67,13 +67,19 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
   const [newToken, setNewToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, startGenerateTransition] = useTransition();
+  const [isRevoking, startRevokeTransition] = useTransition();
   // Returning users (they already have a token) land on "update" by default;
   // first-timers land on "install". Either is still one click away.
   const [mode, setMode] = useState<SetupMode>(initialTokens.length > 0 ? "update" : "install");
 
-  const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://jargon-gym.vercel.app";
+  // Falls back to the production origin on the server and on first client
+  // render so SSR and hydration match, then fills in the real origin once
+  // mounted.
+  const [origin, setOrigin] = useState("https://jargon-gym.vercel.app");
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
   const installScriptUrl = `${origin}/install-widget.sh`;
   const installWithTokenCommand = newToken
     ? `curl -fsSL ${installScriptUrl} | JARGON_WIDGET_TOKEN=${shellQuote(newToken)} bash`
@@ -82,46 +88,48 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
   // config.json, so this just refreshes the widget files in place.
   const updateCommand = `curl -fsSL ${installScriptUrl} | bash`;
 
-  async function handleGenerate() {
+  function handleGenerate() {
     setError(null);
-    setIsGenerating(true);
 
-    const result = await generateWidgetTokenAction();
-    setIsGenerating(false);
+    startGenerateTransition(async () => {
+      const result = await generateWidgetTokenAction();
 
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
 
-    if (result.token && result.id) {
-      setNewToken(result.token);
-      setTokens((prev) => [
-        {
-          id: result.id!,
-          label: "Übersicht widget",
-          created_at: new Date().toISOString(),
-          last_used_at: null,
-          widget_version: null,
-        },
-        ...prev,
-      ]);
-    }
+      if (result.token && result.id) {
+        setNewToken(result.token);
+        setTokens((prev) => [
+          {
+            id: result.id!,
+            label: "Übersicht widget",
+            created_at: new Date().toISOString(),
+            last_used_at: null,
+            widget_version: null,
+          },
+          ...prev,
+        ]);
+      }
+    });
   }
 
-  async function handleRevoke(tokenId: string) {
+  function handleRevoke(tokenId: string) {
     setError(null);
     setBusyId(tokenId);
 
-    const result = await revokeWidgetTokenAction(tokenId);
-    setBusyId(null);
+    startRevokeTransition(async () => {
+      const result = await revokeWidgetTokenAction(tokenId);
+      setBusyId(null);
 
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
 
-    setTokens((prev) => prev.filter((t) => t.id !== tokenId));
+      setTokens((prev) => prev.filter((t) => t.id !== tokenId));
+    });
   }
 
   const hasTokens = tokens.length > 0;
@@ -296,7 +304,7 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
                     type="button"
                     variant="outline"
                     onPress={() => handleRevoke(token.id)}
-                    isDisabled={busyId === token.id}
+                    isDisabled={isRevoking && busyId === token.id}
                     className="min-h-11 w-full text-error hover:bg-error/10 md:w-auto"
                   >
                     <Trash2 className="size-3.5" strokeWidth={1.5} />

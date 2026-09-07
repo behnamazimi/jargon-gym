@@ -2,7 +2,7 @@
 
 import { Check, Copy, type LucideIcon } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { JargonErrorAlert } from "@/components/jargon/shared/error-alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -226,11 +226,7 @@ export function CopyField({
 }
 
 export function AlertBanner({ message }: { message: string }) {
-  return (
-    <Alert variant="destructive">
-      <AlertDescription>{message}</AlertDescription>
-    </Alert>
-  );
+  return <JargonErrorAlert error={message} />;
 }
 
 export function HighlightPanel({ label, children }: { label: string; children: ReactNode }) {

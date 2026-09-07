@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { memo } from "react";
 import type {
   MasteryTermJourney,
   MasteryTermRow as MasteryTermRowData,
@@ -36,7 +37,7 @@ function JourneyLine({ journey }: { journey: MasteryTermJourney }) {
   );
 }
 
-export function MasteryTermRow({ row }: { row: MasteryTermRowData }) {
+export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: MasteryTermRowData }) {
   return (
     <li className="shadow-surface flex items-center justify-between gap-4 rounded-2xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
       <div className="min-w-0">
@@ -69,4 +70,4 @@ export function MasteryTermRow({ row }: { row: MasteryTermRowData }) {
       </div>
     </li>
   );
-}
+});

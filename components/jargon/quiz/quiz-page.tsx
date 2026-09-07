@@ -73,6 +73,7 @@ export function QuizPage({
   const [questionCountError, setQuestionCountError] = useState<string | null>(null);
   const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
+  const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false);
 
   const domainIds = useMemo(
     (): "all" | string[] => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
@@ -190,6 +191,9 @@ export function QuizPage({
   }
 
   async function handleQuestionAnswer(passed: boolean) {
+    if (isSubmittingAnswer) return;
+    setIsSubmittingAnswer(true);
+
     const question = questions[currentIndex];
 
     const answerResult = await recordQuizAnswerAction({
@@ -201,6 +205,7 @@ export function QuizPage({
     if (answerResult.error) {
       setErrorMessage(answerResult.error);
       setStep("error");
+      setIsSubmittingAnswer(false);
       return;
     }
 
@@ -209,6 +214,7 @@ export function QuizPage({
 
     if (currentIndex + 1 < questions.length) {
       setCurrentIndex((index) => index + 1);
+      setIsSubmittingAnswer(false);
       return;
     }
 
@@ -217,6 +223,7 @@ export function QuizPage({
     if (result.error) {
       setErrorMessage(result.error);
       setStep("error");
+      setIsSubmittingAnswer(false);
       return;
     }
 
@@ -227,6 +234,7 @@ export function QuizPage({
     clearQuizSession();
     setSavedSession(null);
     setStep("results");
+    setIsSubmittingAnswer(false);
   }
 
   const score = resultsScore?.score ?? answers.filter((answer) => answer.passed).length;
@@ -453,6 +461,7 @@ export function QuizPage({
             correct={correctSoFar}
             isLast={currentIndex + 1 === questions.length}
             onAnswer={handleQuestionAnswer}
+            isSubmitting={isSubmittingAnswer}
           />
         </div>
       ) : null}

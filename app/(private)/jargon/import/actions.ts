@@ -2,9 +2,10 @@
 
 import { executeImport } from "@/lib/jargon/import/execute-import";
 import { formatImportFailure, ImportExecutionError } from "@/lib/jargon/import/errors";
+import { listOwnedCollectionsForImport } from "@/lib/jargon/import/owned-collections";
 import { buildImportPreview, parseImportJson } from "@/lib/jargon/import/validate-import";
 import type { ImportFailure, ImportPreview, ImportResult } from "@/lib/jargon/import/types";
-import { getSessionUser } from "@/lib/auth/require-session";
+import { getSessionUser, requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -13,6 +14,17 @@ const NOT_SIGNED_IN_FAILURE: ImportFailure = {
   message: "Log in to import jargon.",
   hint: "Sign in, then come back to this page.",
 };
+
+export async function getImportSetupData() {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to import jargon." as const };
+  }
+
+  const collections = await listOwnedCollectionsForImport(auth.supabase, auth.user.id);
+
+  return { collections };
+}
 
 export async function validateImportJson(
   raw: string,

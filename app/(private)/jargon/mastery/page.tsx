@@ -1,27 +1,22 @@
 import { Signal } from "lucide-react";
+import { getMasterySetupData } from "@/app/(private)/jargon/mastery/actions";
 import { MasteryPage } from "@/components/jargon/mastery/mastery-page";
 import { EmptyState } from "@/components/jargon/empty-state";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
-import { getSessionUser } from "@/lib/auth/require-session";
-import { fetchStatsSnapshot } from "@/lib/jargon/collection-stats";
-import { loadMasteryOverview } from "@/lib/jargon/mastery";
 
 export default async function JargonMasteryPage() {
-  const { supabase, user } = await getSessionUser();
+  const setup = await getMasterySetupData();
 
-  if (!user) {
+  if ("error" in setup) {
     return (
       <PageCenter>
-        <p className="text-sm text-base-content/60">Log in to view your mastery overview.</p>
+        <p className="text-sm text-base-content/60">{setup.error}</p>
       </PageCenter>
     );
   }
 
-  const [{ collections, termsLearning, termsLearned, termRows }, stats] = await Promise.all([
-    loadMasteryOverview(supabase, user.id),
-    fetchStatsSnapshot(supabase, user.id),
-  ]);
+  const { collections, termsLearning, termsLearned, termRows, stats } = setup;
 
   if (stats.activeCount === 0 && stats.pausedCount === 0) {
     return (

@@ -46,6 +46,20 @@ export function useJargonList(initialData: JargonPageData) {
     setEverMasteredTerms(new Set(initialData.everMasteredTermIds));
   }, [initialData.everMasteredTermIds]);
 
+  // Filters and open cards are local to whichever collection is on screen —
+  // switching collections should start from a clean slate instead of
+  // carrying over the previous one's search/category/sort/hidden state.
+  const previousDomainIdRef = useRef(initialData.domain.id);
+  useEffect(() => {
+    if (previousDomainIdRef.current === initialData.domain.id) return;
+    previousDomainIdRef.current = initialData.domain.id;
+    setSearchQuery("");
+    setActiveCategories(new Set());
+    setHideKnown(false);
+    setSortMode("default");
+    setOpenTerms(new Set());
+  }, [initialData.domain.id]);
+
   const categories = useMemo(() => getCategories(terms), [terms]);
   const categoryCounts = useMemo(() => getCategoryCounts(terms), [terms]);
 

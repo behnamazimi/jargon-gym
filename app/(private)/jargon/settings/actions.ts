@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { clearLlmSettings, saveLlmSettings } from "@/lib/llm/settings";
+import { clearLlmSettings, getUserSettings, saveLlmSettings } from "@/lib/llm/settings";
 import type { LlmProvider } from "@/lib/llm/types";
 import {
   createOrRefreshTelegramLink,
@@ -12,7 +12,22 @@ import {
   updateTelegramCadence,
 } from "@/lib/telegram/links";
 import type { TelegramCadence } from "@/lib/telegram/types";
-import { createWidgetToken, revokeWidgetToken } from "@/lib/widget/tokens";
+import { createWidgetToken, listWidgetTokens, revokeWidgetToken } from "@/lib/widget/tokens";
+
+export async function getSettingsSetupData() {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to view settings." as const };
+  }
+
+  const [initialSettings, telegramStatus, widgetTokens] = await Promise.all([
+    getUserSettings(auth.supabase, auth.user.id),
+    getTelegramLinkStatus(auth.supabase, auth.user.id),
+    listWidgetTokens(auth.supabase, auth.user.id),
+  ]);
+
+  return { initialSettings, telegramStatus, widgetTokens };
+}
 
 export async function generateWidgetTokenAction(): Promise<{
   error?: string;

@@ -50,8 +50,8 @@ export function TermList({
             domainId={domainId}
             domainTerms={domainTerms}
             narrationAccess={narrationAccess}
-            onToggleOpen={() => onToggleOpen(term.id)}
-            onToggleMarkedKnown={() => onToggleMarkedKnown(term.id)}
+            onToggleOpen={onToggleOpen}
+            onToggleMarkedKnown={onToggleMarkedKnown}
           />
         </div>
       ))}

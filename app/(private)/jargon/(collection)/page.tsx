@@ -1,55 +1,29 @@
-import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
+import { getJargonSetupData } from "@/app/(private)/jargon/(collection)/actions";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
-import { getSessionUser } from "@/lib/auth/require-session";
-import { getNarrationAccessForUser } from "@/lib/narration/access";
 
 type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };
 
 export default async function JargonListPage({ searchParams }: PageProps) {
-  const [{ user, supabase }, { domain: selectedDomainId }] = await Promise.all([
-    getSessionUser(),
-    searchParams,
-  ]);
+  const { domain: selectedDomainId } = await searchParams;
+  const setup = await getJargonSetupData(selectedDomainId);
 
-  if (!user) {
+  if ("emptyCollection" in setup) {
+    return <EmptyCollection />;
+  }
+
+  if ("error" in setup) {
     return (
-      <PageCenter>
-        <p className="text-sm text-base-content/60">Log in to view your collection.</p>
+      <PageCenter className={setup.showImportLink ? "gap-3" : undefined}>
+        <p className="text-sm text-base-content/60">{setup.error}</p>
+        {setup.showImportLink ? <LinkButton href="/jargon/import">Import jargon</LinkButton> : null}
       </PageCenter>
     );
   }
 
-  try {
-    const [data, narrationAccess] = await Promise.all([
-      loadJargonPageData(supabase, {
-        userId: user.id,
-        selectedDomainId,
-      }),
-      getNarrationAccessForUser(supabase, user.id),
-    ]);
-    return <JargonPage initialData={data} narrationAccess={narrationAccess} />;
-  } catch (err) {
-    if (err instanceof JargonDataError && err.message.includes("don't have any collections")) {
-      return <EmptyCollection />;
-    }
-
-    const message =
-      err instanceof JargonDataError
-        ? err.message
-        : err instanceof Error
-          ? err.message
-          : "Couldn't load your collection. Refresh the page or try again.";
-
-    return (
-      <PageCenter className="gap-3">
-        <p className="text-sm text-base-content/60">{message}</p>
-        <LinkButton href="/jargon/import">Import jargon</LinkButton>
-      </PageCenter>
-    );
-  }
+  return <JargonPage initialData={setup.data} narrationAccess={setup.narrationAccess} />;
 }

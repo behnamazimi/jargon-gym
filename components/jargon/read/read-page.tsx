@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertCircle, ArrowLeft, ArrowRight, Eye, Maximize } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
 import { CollectionSelect } from "@/components/jargon/collection-select";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
@@ -139,7 +139,7 @@ function ReadCardRevealed({
   );
 }
 
-function ReadTermCard({
+const ReadTermCard = memo(function ReadTermCard({
   term,
   revealed,
   canGoBack,
@@ -154,7 +154,7 @@ function ReadTermCard({
   canGoBack: boolean;
   isPending: boolean;
   narrationAccess: boolean;
-  onReveal: () => void;
+  onReveal: (termId: string) => void;
   onPrevious: () => void;
   onNext: () => void;
 }) {
@@ -163,7 +163,7 @@ function ReadTermCard({
       {revealed ? (
         <ReadCardRevealed term={term} narrationAccess={narrationAccess} onMarkedKnown={onNext} />
       ) : (
-        <ReadCardMasked term={term} onReveal={onReveal} />
+        <ReadCardMasked term={term} onReveal={() => onReveal(term.id)} />
       )}
       <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-base-300/60 px-5 py-3 sm:px-6">
         <div className="hidden min-w-0 md:block coarse:hidden">
@@ -195,7 +195,7 @@ function ReadTermCard({
           ) : (
             <Button
               type="button"
-              onPress={onReveal}
+              onPress={() => onReveal(term.id)}
               className={`min-h-11 flex-1 ps-4 pe-3.5 md:flex-none ${PRESS_CLASS}`}
             >
               Reveal
@@ -206,7 +206,7 @@ function ReadTermCard({
       </footer>
     </QuizPanel>
   );
-}
+});
 
 function ReadErrorAlert({
   message,
@@ -410,7 +410,7 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
             canGoBack={queue.canGoBack}
             isPending={queue.isFetchingMore}
             narrationAccess={narrationAccess}
-            onReveal={() => queue.reveal(term.id)}
+            onReveal={queue.reveal}
             onPrevious={queue.goPrevious}
             onNext={queue.goNext}
           />

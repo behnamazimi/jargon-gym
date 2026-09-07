@@ -1,7 +1,7 @@
 "use client";
 
 import { Sparkles, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   clearLlmSettingsAction,
   saveLlmSettingsAction,
@@ -41,50 +41,50 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
   const [apiKey, setApiKey] = useState("");
   const [replacingKey, setReplacingKey] = useState(!hasLlmConfigured(initialSettings));
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isClearing, setIsClearing] = useState(false);
+  const [isSaving, startSaveTransition] = useTransition();
+  const [isClearing, startClearTransition] = useTransition();
 
-  async function handleSaveKey() {
+  function handleSaveKey() {
     setError(null);
-    setIsSaving(true);
 
-    const result = await saveLlmSettingsAction({ provider, apiKey });
-    setIsSaving(false);
+    startSaveTransition(async () => {
+      const result = await saveLlmSettingsAction({ provider, apiKey });
 
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
 
-    const last4 = apiKey.trim().slice(-4);
-    setSettings({ provider, apiKeyLast4: last4 });
-    setApiKey("");
-    setReplacingKey(false);
+      const last4 = apiKey.trim().slice(-4);
+      setSettings({ provider, apiKeyLast4: last4 });
+      setApiKey("");
+      setReplacingKey(false);
+    });
   }
 
-  async function handleClear() {
+  function handleClear() {
     setError(null);
-    setIsClearing(true);
 
-    const result = await clearLlmSettingsAction();
-    setIsClearing(false);
+    startClearTransition(async () => {
+      const result = await clearLlmSettingsAction();
 
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
 
-    setSettings(
-      settings
-        ? {
-            ...settings,
-            provider: null,
-            apiKeyLast4: null,
-          }
-        : null,
-    );
-    setReplacingKey(true);
-    setApiKey("");
+      setSettings(
+        settings
+          ? {
+              ...settings,
+              provider: null,
+              apiKeyLast4: null,
+            }
+          : null,
+      );
+      setReplacingKey(true);
+      setApiKey("");
+    });
   }
 
   const llmConfigured = hasLlmConfigured(settings);

@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, Send, Unlink } from "lucide-react";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import {
   disconnectTelegramAction,
   generateTelegramLinkAction,
@@ -47,62 +47,62 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
   const [status, setStatus] = useState(initialStatus);
   const [deepLink, setDeepLink] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [isSavingCadence, setIsSavingCadence] = useState(false);
+  const [isGenerating, startGenerateTransition] = useTransition();
+  const [isDisconnecting, startDisconnectTransition] = useTransition();
+  const [isSavingCadence, startCadenceTransition] = useTransition();
 
-  async function handleGenerateLink() {
+  function handleGenerateLink() {
     setError(null);
-    setIsGenerating(true);
 
-    const result = await generateTelegramLinkAction();
-    setIsGenerating(false);
+    startGenerateTransition(async () => {
+      const result = await generateTelegramLinkAction();
 
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
 
-    if (result.deepLink) {
-      setDeepLink(result.deepLink);
-      setStatus((prev) => ({ ...prev, hasPendingLink: true }));
-    }
-  }
-
-  async function handleDisconnect() {
-    setError(null);
-    setIsDisconnecting(true);
-
-    const result = await disconnectTelegramAction();
-    setIsDisconnecting(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    setStatus({
-      connected: false,
-      cadence: "off",
-      linkedAt: null,
-      hasPendingLink: false,
+      if (result.deepLink) {
+        setDeepLink(result.deepLink);
+        setStatus((prev) => ({ ...prev, hasPendingLink: true }));
+      }
     });
-    setDeepLink(null);
   }
 
-  async function handleCadenceChange(nextCadence: TelegramCadence) {
+  function handleDisconnect() {
     setError(null);
-    setIsSavingCadence(true);
 
-    const result = await updateTelegramCadenceAction(nextCadence);
-    setIsSavingCadence(false);
+    startDisconnectTransition(async () => {
+      const result = await disconnectTelegramAction();
 
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
 
-    setStatus((prev) => ({ ...prev, cadence: nextCadence }));
+      setStatus({
+        connected: false,
+        cadence: "off",
+        linkedAt: null,
+        hasPendingLink: false,
+      });
+      setDeepLink(null);
+    });
+  }
+
+  function handleCadenceChange(nextCadence: TelegramCadence) {
+    setError(null);
+
+    startCadenceTransition(async () => {
+      const result = await updateTelegramCadenceAction(nextCadence);
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      setStatus((prev) => ({ ...prev, cadence: nextCadence }));
+    });
   }
 
   const linkedSince = status.linkedAt ? formatDateTime(status.linkedAt) : null;

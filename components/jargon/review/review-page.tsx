@@ -169,6 +169,10 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
       if (cancelled) return;
       if ("poolStats" in result && result.poolStats) {
         setPoolStats(result.poolStats);
+        return;
+      }
+      if ("error" in result) {
+        setErrorMessage(result.error);
       }
     });
 
