@@ -9,6 +9,7 @@ import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Button } from "@/components/ui/button";
 import { useFullscreenExit } from "@/hooks/use-fullscreen-exit";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReviewTerm } from "@/lib/review/types";
 
@@ -135,6 +136,7 @@ export function ReadFullscreenFeed({
   queueRef.current = queue;
 
   const { requestExit } = useFullscreenExit(true, onExit);
+  useWakeLock(true);
 
   useEffect(() => {
     containerRef.current?.focus();
