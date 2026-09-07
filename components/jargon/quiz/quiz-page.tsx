@@ -74,6 +74,7 @@ export function QuizPage({
   const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
   const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false);
+  const [pendingFinalAnswers, setPendingFinalAnswers] = useState<QuizAnswer[] | null>(null);
 
   const domainIds = useMemo(
     (): "all" | string[] => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
@@ -137,6 +138,7 @@ export function QuizPage({
     setAnswers(savedSession.answers);
     setSessionStartedAt(savedSession.startedAt);
     setErrorMessage(null);
+    setPendingFinalAnswers(null);
     setSavedSession(null);
     setStep("playing");
   }
@@ -155,6 +157,7 @@ export function QuizPage({
     setAnswers([]);
     setResultsScore(null);
     setErrorMessage(null);
+    setPendingFinalAnswers(null);
     setStep("picker");
     setSessionStartedAt(new Date().toISOString());
   }
@@ -193,6 +196,7 @@ export function QuizPage({
   async function handleQuestionAnswer(passed: boolean) {
     if (isSubmittingAnswer) return;
     setIsSubmittingAnswer(true);
+    setErrorMessage(null);
 
     const question = questions[currentIndex];
 
@@ -204,7 +208,6 @@ export function QuizPage({
 
     if (answerResult.error) {
       setErrorMessage(answerResult.error);
-      setStep("error");
       setIsSubmittingAnswer(false);
       return;
     }
@@ -222,7 +225,7 @@ export function QuizPage({
 
     if (result.error) {
       setErrorMessage(result.error);
-      setStep("error");
+      setPendingFinalAnswers(nextAnswers);
       setIsSubmittingAnswer(false);
       return;
     }
@@ -233,6 +236,30 @@ export function QuizPage({
     });
     clearQuizSession();
     setSavedSession(null);
+    setStep("results");
+    setIsSubmittingAnswer(false);
+  }
+
+  async function handleRetrySubmit() {
+    if (!pendingFinalAnswers || isSubmittingAnswer) return;
+    setIsSubmittingAnswer(true);
+    setErrorMessage(null);
+
+    const result = await submitQuizResultsAction();
+
+    if (result.error) {
+      setErrorMessage(result.error);
+      setIsSubmittingAnswer(false);
+      return;
+    }
+
+    setResultsScore({
+      score: pendingFinalAnswers.filter((answer) => answer.passed).length,
+      total: questions.length,
+    });
+    clearQuizSession();
+    setSavedSession(null);
+    setPendingFinalAnswers(null);
     setStep("results");
     setIsSubmittingAnswer(false);
   }
@@ -444,7 +471,37 @@ export function QuizPage({
         </QuizPanel>
       ) : null}
 
-      {step === "playing" && questions[currentIndex] ? (
+      {step === "playing" && pendingFinalAnswers ? (
+        <QuizPanel className="flex min-h-0 flex-1 flex-col">
+          <QuizPanelHeader
+            icon={AlertCircle}
+            title="Couldn't save your results"
+            description="Your last answer was recorded. Retry saving the results, or start over."
+          />
+          <QuizPanelBody className="space-y-4">
+            <Alert variant="destructive">
+              <AlertDescription>
+                {errorMessage ?? "Couldn't save the quiz results. Try again."}
+              </AlertDescription>
+            </Alert>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button
+                type="button"
+                onPress={handleRetrySubmit}
+                isDisabled={isSubmittingAnswer}
+                className="min-h-11"
+              >
+                Retry
+              </Button>
+              <Button type="button" variant="outline" onPress={resetQuizState} className="min-h-11">
+                Start over
+              </Button>
+            </div>
+          </QuizPanelBody>
+        </QuizPanel>
+      ) : null}
+
+      {step === "playing" && !pendingFinalAnswers && questions[currentIndex] ? (
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <StudyProgress
             className="shrink-0"
@@ -452,6 +509,11 @@ export function QuizPage({
             total={questions.length}
             unitLabel="Question"
           />
+          {errorMessage ? (
+            <Alert variant="destructive" className="shrink-0">
+              <AlertDescription>{errorMessage}</AlertDescription>
+            </Alert>
+          ) : null}
           <QuizQuestionView
             key={`${questions[currentIndex].termId}-${currentIndex}`}
             question={questions[currentIndex]}

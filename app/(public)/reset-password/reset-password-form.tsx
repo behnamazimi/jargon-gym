@@ -48,6 +48,7 @@ export default function ResetPasswordForm() {
             name="password"
             required
             autoComplete="new-password"
+            value={password}
             onChange={(event) => setPassword(event.target.value)}
             onBlur={() => setPasswordTouched(true)}
           />
@@ -65,6 +66,7 @@ export default function ResetPasswordForm() {
             name="confirmPassword"
             required
             autoComplete="new-password"
+            value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
           {confirmPassword.length > 0 ? (

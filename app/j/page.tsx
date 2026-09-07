@@ -9,7 +9,7 @@ export const revalidate = 3600;
 export const metadata: Metadata = {
   title: "Jargon Collections | Jargon Gym",
   description: "Browse public jargon collections and look up what terms actually mean.",
-  alternates: { canonical: `${getPublicBaseUrl()}/t` },
+  alternates: { canonical: `${getPublicBaseUrl()}/j` },
 };
 
 export default async function PublicCollectionsIndexPage() {

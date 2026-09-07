@@ -83,6 +83,7 @@ export default function SignupForm({
               name="password"
               required
               autoComplete="new-password"
+              value={password}
               onChange={(event) => setPassword(event.target.value)}
               onBlur={() => setPasswordTouched(true)}
             />
