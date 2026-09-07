@@ -23,6 +23,7 @@ export function AdminNarrationPageClient({
   const [allowlist, setAllowlist] = useState(initialAllowlist);
   const [toggleError, setToggleError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   function handleToggle(value: boolean) {
@@ -41,6 +42,7 @@ export function AdminNarrationPageClient({
   }
 
   function handleRemove(userId: string) {
+    setRemoveError(null);
     const previous = allowlist;
     setRemovingId(userId);
 
@@ -51,9 +53,10 @@ export function AdminNarrationPageClient({
           setAllowlist((rows) => rows.filter((row) => row.userId !== userId));
           setRemovingId(null);
         }, 150);
-      } catch {
+      } catch (err) {
         setAllowlist(previous);
         setRemovingId(null);
+        setRemoveError(err instanceof Error ? err.message : "Failed to remove.");
       }
     });
   }
@@ -94,6 +97,7 @@ export function AdminNarrationPageClient({
       <AllowlistManager
         allowlist={allowlist}
         removingId={removingId}
+        removeError={removeError}
         onAdded={handleAdded}
         onRemove={handleRemove}
       />
@@ -104,11 +108,13 @@ export function AdminNarrationPageClient({
 function AllowlistManager({
   allowlist,
   removingId,
+  removeError,
   onAdded,
   onRemove,
 }: {
   allowlist: AdminNarrationAllowlistRow[];
   removingId: string | null;
+  removeError: string | null;
   onAdded: (row: AdminNarrationAllowlistRow) => void;
   onRemove: (userId: string) => void;
 }) {
@@ -159,6 +165,7 @@ function AllowlistManager({
         </button>
       </div>
       {error ? <p className="text-sm text-error">{error}</p> : null}
+      {removeError ? <p className="text-sm text-error">{removeError}</p> : null}
 
       <div className="overflow-x-auto rounded-lg border border-base-300">
         <table className="table">
