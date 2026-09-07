@@ -7,6 +7,7 @@ import {
   recordQuizAnswerAction,
   submitQuizResultsAction,
 } from "@/app/(private)/jargon/quiz/actions";
+import { CollectionSelect } from "@/components/jargon/collection-select";
 import { QuizQuestionView } from "@/components/jargon/quiz/quiz-question";
 import { QuizResults } from "@/components/jargon/quiz/quiz-results";
 import {
@@ -23,13 +24,6 @@ import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { getMaxStudyCount } from "@/lib/study/count";
 import { MAX_STUDY_TERMS, type StudyCollection } from "@/lib/study/types";
 import { countTermsForSelection } from "@/lib/quiz/terms";
@@ -386,24 +380,19 @@ export function QuizPage({
 
                 <Field>
                   <FieldLabel htmlFor="quiz-collection">Collection</FieldLabel>
-                  <Select
+                  <CollectionSelect
+                    mode="local"
+                    id="quiz-collection"
+                    triggerClassName="text-sm"
+                    size="sm"
+                    collections={collections}
                     value={selectedCollectionId}
-                    onChange={(key) => setSelectedCollectionId(String(key))}
-                  >
-                    <SelectTrigger id="quiz-collection" size="sm" className="text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem id="all">
-                        All active collections ({allCollectionsTermCount(collections)})
-                      </SelectItem>
-                      {collections.map((collection) => (
-                        <SelectItem key={collection.id} id={collection.id}>
-                          {collection.name} ({collection.termCount})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    leadingOption={{
+                      id: "all",
+                      label: `All active collections (${allCollectionsTermCount(collections)})`,
+                    }}
+                    onChange={(id) => setSelectedCollectionId(id)}
+                  />
                 </Field>
 
                 <QuizStat

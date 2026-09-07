@@ -2,14 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { MasteryTermRow as MasteryTermRowData, MasteryTier } from "@/lib/jargon/mastery";
+import { CollectionSelect } from "@/components/jargon/collection-select";
 import { SearchBar } from "@/components/jargon/search-bar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { MasteryTermRow } from "./mastery-term-row";
 import { MasteryTierChips, type MasteryTierFilter } from "./mastery-tier-chips";
 
@@ -67,19 +61,16 @@ export function MasteryTermList({
               inputRef={searchInputRef}
             />
           </div>
-          <Select value={collectionId} onChange={(key) => onCollectionChange(String(key))}>
-            <SelectTrigger size="sm" className="text-sm sm:w-56" aria-label="Collection">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem id="all">All collections</SelectItem>
-              {collections.map((collection) => (
-                <SelectItem key={collection.id} id={collection.id}>
-                  {collection.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <CollectionSelect
+            mode="local"
+            aria-label="Collection"
+            triggerClassName="text-sm sm:w-56"
+            size="sm"
+            collections={collections}
+            value={collectionId}
+            leadingOption={{ id: "all", label: "All collections" }}
+            onChange={onCollectionChange}
+          />
         </div>
 
         <MasteryTierChips

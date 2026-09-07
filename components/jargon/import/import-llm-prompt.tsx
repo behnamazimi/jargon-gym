@@ -5,14 +5,8 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CollectionSelect } from "@/components/jargon/collection-select";
 import { CopyIconSwap } from "@/components/jargon/settings/ui";
 import { ImportCard } from "@/components/jargon/import/import-ui";
 import type { OwnedCollectionForImport } from "@/lib/jargon/import/owned-collections";
@@ -153,24 +147,20 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
             {collections.length > 0 ? (
               <Field>
                 <FieldLabel htmlFor="import-skill-collection">Add to collection</FieldLabel>
-                <Select
-                  value={selectedCollectionId}
-                  onChange={(key) => handleCollectionChange(String(key))}
+                <CollectionSelect
+                  mode="local"
+                  id="import-skill-collection"
                   className="w-full"
-                >
-                  <SelectTrigger id="import-skill-collection" className="w-full text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem id={NEW_COLLECTION_KEY}>New collection</SelectItem>
-                    {collections.map((collection) => (
-                      <SelectItem key={collection.id} id={collection.id}>
-                        {collection.name}
-                        {collection.terms.length > 0 ? ` (${collection.terms.length})` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  triggerClassName="w-full text-sm"
+                  collections={collections.map((collection) => ({
+                    id: collection.id,
+                    name: collection.name,
+                    termCount: collection.terms.length > 0 ? collection.terms.length : undefined,
+                  }))}
+                  value={selectedCollectionId}
+                  leadingOption={{ id: NEW_COLLECTION_KEY, label: "New collection" }}
+                  onChange={handleCollectionChange}
+                />
               </Field>
             ) : null}
 

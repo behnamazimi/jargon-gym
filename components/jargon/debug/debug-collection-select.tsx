@@ -1,13 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CollectionSelect } from "@/components/jargon/collection-select";
 import type { PickContext } from "@/lib/trace-queue";
 import type { StudyCollection } from "@/lib/study/types";
 import { debugQueueHref } from "./debug-queue-page";
@@ -23,24 +16,14 @@ export function DebugCollectionSelect({
   domainId,
   context,
 }: DebugCollectionSelectProps) {
-  const router = useRouter();
-
   return (
-    <Select
+    <CollectionSelect
+      mode="url"
+      triggerClassName="text-sm"
+      collections={collections}
       value={domainId}
-      onChange={(key) => router.push(debugQueueHref({ context, domainId: String(key) }))}
-    >
-      <SelectTrigger className="text-sm">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem id="all">All active collections</SelectItem>
-        {collections.map((collection) => (
-          <SelectItem key={collection.id} id={collection.id}>
-            {collection.name} ({collection.termCount})
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      leadingOption={{ id: "all", label: "All active collections" }}
+      hrefBuilder={(id) => debugQueueHref({ context, domainId: id })}
+    />
   );
 }

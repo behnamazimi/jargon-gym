@@ -3,6 +3,7 @@
 import { AlertCircle, ArrowLeft, ArrowRight, Eye, Maximize } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
+import { CollectionSelect } from "@/components/jargon/collection-select";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { QuizKeyboardHint, QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
@@ -12,13 +13,6 @@ import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
 import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
 import { PLATFORM_MEDIA } from "@/lib/platform";
@@ -242,49 +236,6 @@ function ReadErrorAlert({
   );
 }
 
-function ReadCollectionSelect({
-  collections,
-  selectedCollectionId,
-  isDisabled,
-  onChange,
-}: {
-  collections: StudyCollection[];
-  selectedCollectionId: string;
-  isDisabled: boolean;
-  onChange: (domainId: string) => void;
-}) {
-  const remaining = termCountForSelection(selectedCollectionId, collections);
-
-  return (
-    <div className="flex items-center gap-3">
-      <Select
-        className="min-w-0 w-full flex-1 sm:max-w-xs"
-        value={selectedCollectionId}
-        onChange={(key) => {
-          if (key == null) return;
-          onChange(String(key));
-        }}
-        isDisabled={isDisabled}
-      >
-        <SelectTrigger id="read-collection" size="sm" aria-label="Collection" className="text-sm">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem id="all">All active collections ({allTermCount(collections)})</SelectItem>
-          {collections.map((collection) => (
-            <SelectItem key={collection.id} id={collection.id}>
-              {collection.name} ({collection.termCount})
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <span className="shrink-0 text-xs text-base-content/50 tabular-nums">
-        {remaining} available
-      </span>
-    </div>
-  );
-}
-
 function collectionName(domainId: string, collections: StudyCollection[]) {
   return collections.find((collection) => collection.id === domainId)?.name;
 }
@@ -390,12 +341,27 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex items-center gap-2">
         {collections.length > 0 ? (
-          <ReadCollectionSelect
-            collections={collections}
-            selectedCollectionId={selectedCollectionId}
-            isDisabled={queue.isFetchingMore}
-            onChange={handleCollectionChange}
-          />
+          <div className="flex items-center gap-3">
+            <CollectionSelect
+              mode="local"
+              id="read-collection"
+              aria-label="Collection"
+              className="min-w-0 w-full flex-1 sm:max-w-xs"
+              triggerClassName="text-sm"
+              size="sm"
+              collections={collections}
+              value={selectedCollectionId}
+              isDisabled={queue.isFetchingMore}
+              leadingOption={{
+                id: "all",
+                label: `All active collections (${allTermCount(collections)})`,
+              }}
+              onChange={handleCollectionChange}
+            />
+            <span className="shrink-0 text-xs text-base-content/50 tabular-nums">
+              {termCountForSelection(selectedCollectionId, collections)} available
+            </span>
+          </div>
         ) : (
           <div className="flex-1" />
         )}

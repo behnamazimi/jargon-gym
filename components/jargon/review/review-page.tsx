@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
 import { MAX_STUDY_TERMS, type StudyCollection } from "@/lib/study/types";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
+import { CollectionSelect } from "@/components/jargon/collection-select";
 import {
   QuizCenteredState,
   QuizKeyboardHint,
@@ -18,13 +19,6 @@ import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton, type ButtonVariant } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { recordReviewRevealAction } from "@/app/(private)/jargon/actions";
 import {
@@ -54,12 +48,8 @@ type ReviewPageProps = {
 
 const DEFAULT_CARD_COUNT = 10;
 
-function termCountForCollection(collection: StudyCollection) {
-  return collection.termCount;
-}
-
 function allCollectionsTermCount(collections: StudyCollection[]) {
-  return collections.reduce((total, collection) => total + termCountForCollection(collection), 0);
+  return collections.reduce((total, collection) => total + collection.termCount, 0);
 }
 
 function upsertRating(ratings: ReviewRating[], termId: string, grade: ReviewGrade): ReviewRating[] {
@@ -462,24 +452,19 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
 
                 <Field>
                   <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
-                  <Select
+                  <CollectionSelect
+                    mode="local"
+                    id="review-collection"
+                    triggerClassName="text-sm"
+                    size="sm"
+                    collections={collections}
                     value={selectedCollectionId}
-                    onChange={(key) => setSelectedCollectionId(String(key))}
-                  >
-                    <SelectTrigger id="review-collection" size="sm" className="text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem id="all">
-                        All active collections ({allCollectionsTermCount(collections)})
-                      </SelectItem>
-                      {collections.map((collection) => (
-                        <SelectItem key={collection.id} id={collection.id}>
-                          {collection.name} ({termCountForCollection(collection)})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    leadingOption={{
+                      id: "all",
+                      label: `All active collections (${allCollectionsTermCount(collections)})`,
+                    }}
+                    onChange={(id) => setSelectedCollectionId(id)}
+                  />
                 </Field>
 
                 <QuizStat
