@@ -1,19 +1,20 @@
 import { cn } from "@/lib/utils";
 
-type ReviewProgressProps = {
+type StudyProgressProps = {
   current: number;
   total: number;
+  unitLabel: string;
   className?: string;
 };
 
-export function ReviewProgress({ current, total, className }: ReviewProgressProps) {
+export function StudyProgress({ current, total, unitLabel, className }: StudyProgressProps) {
   const percent = total > 0 ? Math.round((current / total) * 100) : 0;
 
   return (
-    <div className={cn("min-w-0 flex-1 space-y-2", className)}>
+    <div className={cn("min-w-0 w-full space-y-2", className)}>
       <div className="flex items-center justify-between gap-3 text-xs text-base-content/60">
         <span className="font-medium tabular-nums">
-          Term {current} of {total}
+          {unitLabel} {current} of {total}
         </span>
         <span className="tabular-nums">{percent}%</span>
       </div>
@@ -24,7 +25,7 @@ export function ReviewProgress({ current, total, className }: ReviewProgressProp
         aria-valuenow={current}
         aria-valuemin={0}
         aria-valuemax={total}
-        aria-label={`Term ${current} of ${total}`}
+        aria-label={`${unitLabel} ${current} of ${total}`}
       />
     </div>
   );

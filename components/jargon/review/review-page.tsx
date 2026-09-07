@@ -1,24 +1,30 @@
 "use client";
 
-import { AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
-import { MAX_STUDY_TERMS, type StudyCollection } from "@/lib/study/types";
-import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
-import { CollectionSelect } from "@/components/jargon/collection-select";
 import {
-  QuizCenteredState,
+  countTermsForSelection,
+  getMaxStudyCount,
+  studyCountPresetValues,
+} from "@/lib/study/count";
+import { type StudyCollection } from "@/lib/study/types";
+import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
+import {
   QuizKeyboardHint,
   QuizPanel,
-  QuizPanelBody,
   QuizPanelLabel,
-  QuizSetupFooter,
   QuizStat,
 } from "@/components/jargon/quiz/quiz-ui";
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
+import {
+  StudyCollectionField,
+  StudyCountField,
+  StudyNoActiveCollectionsState,
+  StudyResumeBanner,
+  StudySetupPanel,
+} from "@/components/jargon/study/study-setup-panel";
+import { StudyProgress } from "@/components/jargon/study/study-progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton, type ButtonVariant } from "@/components/ui/button";
-import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { recordReviewRevealAction } from "@/app/(private)/jargon/actions";
 import {
@@ -27,7 +33,6 @@ import {
   startReviewAction,
 } from "@/app/(private)/jargon/review/actions";
 import { ReviewCard } from "@/components/jargon/review/review-card";
-import { ReviewProgress } from "@/components/jargon/review/review-progress";
 import { ReviewSummary } from "@/components/jargon/review/review-summary";
 import { useReviewKeyboard } from "@/components/jargon/review/use-review-keyboard";
 import {
@@ -47,10 +52,6 @@ type ReviewPageProps = {
 };
 
 const DEFAULT_CARD_COUNT = 10;
-
-function allCollectionsTermCount(collections: StudyCollection[]) {
-  return collections.reduce((total, collection) => total + collection.termCount, 0);
-}
 
 function upsertRating(ratings: ReviewRating[], termId: string, grade: ReviewGrade): ReviewRating[] {
   const without = ratings.filter((rating) => rating.termId !== termId);
@@ -102,12 +103,6 @@ function ReviewPoolBreakdown({
       covered
     </p>
   );
-}
-
-function cardCountPresetValues(maxCardCount: number): number[] {
-  if (maxCardCount < 1) return [];
-  const values = [5, 10, maxCardCount].filter((value) => value >= 1 && value <= maxCardCount);
-  return [...new Set(values)].sort((a, b) => a - b);
 }
 
 export function ReviewPage({ collections, initialDomainId, narrationAccess }: ReviewPageProps) {
@@ -396,170 +391,17 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
   const retainedCount = ratings.filter((rating) => rating.grade >= GOOD).length;
   const forgotCount = ratings.length - retainedCount;
 
-  const cardCountPresets = cardCountPresetValues(maxCardCount);
+  const cardCountPresets = studyCountPresetValues(maxCardCount);
 
   return (
     <>
       {step === "setup" ? (
         <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
           {collections.length === 0 ? (
-            <QuizPanelBody>
-              <QuizCenteredState
-                icon={AlertCircle}
-                title="No active collections"
-                description="Turn on a collection on the collection page before you start reviewing."
-              >
-                <LinkButton href="/jargon" variant="outline" className="min-h-11">
-                  Collections
-                </LinkButton>
-              </QuizCenteredState>
-            </QuizPanelBody>
+            <StudyNoActiveCollectionsState description="Turn on a collection on the collection page before you start reviewing." />
           ) : (
-            <>
-              <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">
-                <QuizPanelLabel
-                  title="Set up your review"
-                  description="Pick what to study and how many terms."
-                />
-                {savedSession ? (
-                  <Alert>
-                    <AlertDescription>
-                      You have an in-progress session — term{" "}
-                      <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
-                      <span className="tabular-nums">{savedSession.cards.length}</span>.
-                    </AlertDescription>
-                    <AlertAction>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onPress={handleResumeSession}
-                        className="max-md:min-h-11"
-                      >
-                        Resume
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onPress={handleDiscardSession}
-                        className="max-md:min-h-11"
-                      >
-                        Start new
-                      </Button>
-                    </AlertAction>
-                  </Alert>
-                ) : null}
-
-                <Field>
-                  <FieldLabel htmlFor="review-collection">Collection</FieldLabel>
-                  <CollectionSelect
-                    mode="local"
-                    id="review-collection"
-                    triggerClassName="text-sm"
-                    size="sm"
-                    collections={collections}
-                    value={selectedCollectionId}
-                    leadingOption={{
-                      id: "all",
-                      label: `All active collections (${allCollectionsTermCount(collections)})`,
-                    }}
-                    onChange={(id) => setSelectedCollectionId(id)}
-                  />
-                </Field>
-
-                <QuizStat
-                  value={
-                    <>
-                      {availableTermCount === 1
-                        ? "1 term available"
-                        : `${availableTermCount} terms available`}
-                      <ReviewPoolBreakdown stats={poolStats} />
-                    </>
-                  }
-                />
-
-                <Field>
-                  <FieldLabel htmlFor="review-term-count">How many terms</FieldLabel>
-                  <div className="flex w-full items-stretch gap-2">
-                    {cardCountPresets.map((preset) => {
-                      const selected = cardCount === preset && cardCountError === null;
-                      return (
-                        <Button
-                          key={preset}
-                          type="button"
-                          variant="outline"
-                          onPress={() => applyCardCount(preset)}
-                          isDisabled={availableTermCount === 0}
-                          aria-pressed={selected}
-                          className={cn(
-                            "min-h-11 tabular-nums",
-                            selected &&
-                              "border-primary bg-primary/10 text-primary hover:bg-primary/15",
-                          )}
-                        >
-                          {preset}
-                        </Button>
-                      );
-                    })}
-                    <Input
-                      id="review-term-count"
-                      type="text"
-                      inputMode="numeric"
-                      value={cardCountInput}
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        setCardCountInput(value);
-
-                        if (value === "") {
-                          setCardCountError(null);
-                          return;
-                        }
-
-                        const parsed = Number.parseInt(value, 10);
-                        if (Number.isNaN(parsed) || parsed < 1 || parsed > maxCardCount) {
-                          setCardCountError(`Please enter a number between 1 and ${maxCardCount}`);
-                        } else {
-                          setCardCount(parsed);
-                          setCardCountError(null);
-                        }
-                      }}
-                      disabled={availableTermCount === 0}
-                      className="min-h-11 min-w-16 flex-1 tabular-nums"
-                    />
-                  </div>
-                  <FieldDescription>
-                    {cardCountError ? (
-                      <span className="text-error">{cardCountError}</span>
-                    ) : (
-                      <>
-                        Choose 1–{maxCardCount || 1}
-                        {availableTermCount > MAX_STUDY_TERMS
-                          ? ` (${MAX_STUDY_TERMS} max per session).`
-                          : "."}
-                      </>
-                    )}
-                  </FieldDescription>
-                </Field>
-
-                {availableTermCount === 0 ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>
-                      No terms in your selection. Pick another collection or{" "}
-                      <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
-                        activate one
-                      </LinkButton>
-                      .
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
-
-                {errorMessage ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>{errorMessage}</AlertDescription>
-                  </Alert>
-                ) : null}
-              </QuizPanelBody>
-              <QuizSetupFooter className="sticky bottom-0 shrink-0 bg-base-100 px-5 py-4 sm:px-6">
+            <StudySetupPanel
+              footer={
                 <Button
                   type="button"
                   onPress={handleStartReview}
@@ -568,8 +410,91 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
                 >
                   {isStarting ? "Starting…" : "Start review"}
                 </Button>
-              </QuizSetupFooter>
-            </>
+              }
+            >
+              <QuizPanelLabel
+                title="Set up your review"
+                description="Pick what to study and how many terms."
+              />
+              {savedSession ? (
+                <StudyResumeBanner
+                  message={
+                    <>
+                      You have an in-progress session — term{" "}
+                      <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
+                      <span className="tabular-nums">{savedSession.cards.length}</span>.
+                    </>
+                  }
+                  onResume={handleResumeSession}
+                  onDiscard={handleDiscardSession}
+                />
+              ) : null}
+
+              <StudyCollectionField
+                id="review-collection"
+                collections={collections}
+                value={selectedCollectionId}
+                onChange={setSelectedCollectionId}
+              />
+
+              <QuizStat
+                value={
+                  <>
+                    {availableTermCount === 1
+                      ? "1 term available"
+                      : `${availableTermCount} terms available`}
+                    <ReviewPoolBreakdown stats={poolStats} />
+                  </>
+                }
+              />
+
+              <StudyCountField
+                id="review-term-count"
+                label="How many terms"
+                presets={cardCountPresets}
+                selectedValue={cardCount}
+                inputValue={cardCountInput}
+                error={cardCountError}
+                max={maxCardCount}
+                availableCount={availableTermCount}
+                perUnitLabel="session"
+                onPresetSelect={applyCardCount}
+                onInputChange={(value) => {
+                  setCardCountInput(value);
+
+                  if (value === "") {
+                    setCardCountError(null);
+                    return;
+                  }
+
+                  const parsed = Number.parseInt(value, 10);
+                  if (Number.isNaN(parsed) || parsed < 1 || parsed > maxCardCount) {
+                    setCardCountError(`Please enter a number between 1 and ${maxCardCount}`);
+                  } else {
+                    setCardCount(parsed);
+                    setCardCountError(null);
+                  }
+                }}
+              />
+
+              {availableTermCount === 0 ? (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    No terms in your selection. Pick another collection or{" "}
+                    <LinkButton href="/jargon" variant="link" className="h-auto min-h-0 p-0">
+                      activate one
+                    </LinkButton>
+                    .
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              {errorMessage ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+            </StudySetupPanel>
           )}
         </QuizPanel>
       ) : null}
@@ -577,7 +502,12 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
       {step === "playing" && currentCard ? (
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div className="flex shrink-0 items-center gap-3">
-            <ReviewProgress current={currentIndex + 1} total={cards.length} />
+            <StudyProgress
+              current={currentIndex + 1}
+              total={cards.length}
+              unitLabel="Term"
+              className="flex-1"
+            />
             <Button
               type="button"
               variant="outline"
