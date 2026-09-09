@@ -76,10 +76,10 @@ async function generateAndFinalize(
   }
 }
 
-export async function getOrGenerateNarration(
+async function fetchTermData(
   admin: AdminClient,
   termId: string,
-): Promise<NarrationResult> {
+): Promise<{ fields: NarratedTermFields; language: DomainLanguage; contentHash: string } | null> {
   const { data: term, error: termError } = await admin
     .from("terms")
     .select(
@@ -87,11 +87,41 @@ export async function getOrGenerateNarration(
     )
     .eq("id", termId)
     .single();
-  if (termError || !term) return { status: "unavailable" };
+  if (termError || !term) return null;
 
   const { domains, ...fields } = term;
   const language = (domains?.language as DomainLanguage | undefined) ?? DEFAULT_LANGUAGE;
-  const contentHash = computeContentHash(fields);
+  return { fields, language, contentHash: computeContentHash(fields) };
+}
+
+type ExistingNarration = { status: string; content_hash: string; storage_path: string | null };
+
+/** cache hit — no ElevenLabs call */
+function getCachedResult(
+  existing: ExistingNarration | null | undefined,
+  contentHash: string,
+): NarrationResult | null {
+  if (
+    existing?.status === "ready" &&
+    existing.content_hash === contentHash &&
+    existing.storage_path
+  ) {
+    return { status: "ready", storagePath: existing.storage_path, contentHash };
+  }
+  return null;
+}
+
+function wonClaim(claimed: unknown): boolean {
+  return Array.isArray(claimed) && claimed.length > 0;
+}
+
+export async function getOrGenerateNarration(
+  admin: AdminClient,
+  termId: string,
+): Promise<NarrationResult> {
+  const termData = await fetchTermData(admin, termId);
+  if (!termData) return { status: "unavailable" };
+  const { fields, language, contentHash } = termData;
 
   const { data: existing } = await admin
     .from("term_narrations")
@@ -99,20 +129,15 @@ export async function getOrGenerateNarration(
     .eq("term_id", termId)
     .maybeSingle();
 
-  if (
-    existing?.status === "ready" &&
-    existing.content_hash === contentHash &&
-    existing.storage_path
-  ) {
-    return { status: "ready", storagePath: existing.storage_path, contentHash }; // cache hit — no ElevenLabs call
-  }
+  const cached = getCachedResult(existing, contentHash);
+  if (cached) return cached;
 
   const { data: claimed } = await admin.rpc("claim_term_narration", {
     p_term_id: termId,
     p_content_hash: contentHash,
   });
 
-  if (Array.isArray(claimed) && claimed.length > 0) {
+  if (wonClaim(claimed)) {
     return generateAndFinalize(admin, termId, contentHash, fields, language); // we won the claim
   }
 

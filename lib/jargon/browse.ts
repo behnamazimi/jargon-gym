@@ -129,15 +129,27 @@ async function countMatching(
   return count ?? 0;
 }
 
+function resolveBrowseQuery(query: BrowseQuery) {
+  return {
+    search: query.search ?? "",
+    filter: query.filter ?? "all",
+    offset: query.offset ?? 0,
+    limit: query.limit ?? BROWSE_PAGE_SIZE,
+  };
+}
+
+function selectMatchingCount(filter: BrowseCollectionFilter, counts: BrowseCounts): number {
+  if (filter === "available") return counts.available;
+  if (filter === "in-collection") return counts.inCollection;
+  return counts.all;
+}
+
 export async function fetchSharedDomainsBrowse(
   client: Client,
   userId: string,
   query: BrowseQuery = {},
 ): Promise<BrowsePageResult> {
-  const search = query.search ?? "";
-  const filter = query.filter ?? "all";
-  const offset = query.offset ?? 0;
-  const limit = query.limit ?? BROWSE_PAGE_SIZE;
+  const { search, filter, offset, limit } = resolveBrowseQuery(query);
 
   const collectionIds = await fetchCollectionIds(client, userId);
   const inCollection = new Set(collectionIds);
@@ -149,8 +161,7 @@ export async function fetchSharedDomainsBrowse(
   ]);
 
   const counts: BrowseCounts = { all, available, inCollection: inCollectionCount };
-  const matching =
-    filter === "available" ? available : filter === "in-collection" ? inCollectionCount : all;
+  const matching = selectMatchingCount(filter, counts);
 
   if (matching === 0) {
     return { domains: [], nextOffset: null, counts };

@@ -40,51 +40,60 @@ function postgresCodeHint(code?: string): string | undefined {
   }
 }
 
-export function formatImportFailure(
-  err: unknown,
-  context?: { step?: string; term?: string; domain?: string },
-): ImportFailure {
+type FailureContext = { step?: string; term?: string; domain?: string };
+
+function contextTitle(context?: FailureContext): string {
+  return context?.step ?? "Import didn't work";
+}
+
+function failureContext(context?: FailureContext) {
+  return { term: context?.term, domain: context?.domain };
+}
+
+function supabaseFailure(err: SupabaseLikeError, context?: FailureContext): ImportFailure {
+  const details = [err.details, err.hint].filter(Boolean) as string[];
+  const hint = postgresCodeHint(err.code) ?? err.hint ?? undefined;
+
+  return {
+    title: contextTitle(context),
+    message: err.message ?? "The database rejected this import.",
+    details: details.length > 0 ? details : undefined,
+    hint,
+    code: err.code,
+    context: failureContext(context),
+  };
+}
+
+function errorFailure(err: Error, context?: FailureContext): ImportFailure {
+  return {
+    title: contextTitle(context),
+    message: err.message,
+    context: failureContext(context),
+  };
+}
+
+function unknownFailure(context?: FailureContext): ImportFailure {
+  return {
+    title: contextTitle(context),
+    message: "Something unexpected happened during import.",
+    context: failureContext(context),
+  };
+}
+
+export function formatImportFailure(err: unknown, context?: FailureContext): ImportFailure {
   if (err instanceof ImportExecutionError) {
     return err.failure;
   }
 
   if (isSupabaseLikeError(err)) {
-    const code = err.code;
-    const details = [err.details, err.hint].filter(Boolean) as string[];
-    const hint = postgresCodeHint(code) ?? err.hint ?? undefined;
-
-    return {
-      title: context?.step ?? "Import didn't work",
-      message: err.message ?? "The database rejected this import.",
-      details: details.length > 0 ? details : undefined,
-      hint,
-      code,
-      context: {
-        term: context?.term,
-        domain: context?.domain,
-      },
-    };
+    return supabaseFailure(err, context);
   }
 
   if (err instanceof Error) {
-    return {
-      title: context?.step ?? "Import didn't work",
-      message: err.message,
-      context: {
-        term: context?.term,
-        domain: context?.domain,
-      },
-    };
+    return errorFailure(err, context);
   }
 
-  return {
-    title: context?.step ?? "Import didn't work",
-    message: "Something unexpected happened during import.",
-    context: {
-      term: context?.term,
-      domain: context?.domain,
-    },
-  };
+  return unknownFailure(context);
 }
 
 export function jsonSyntaxFailure(message: string): ImportFailure {

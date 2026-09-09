@@ -13,6 +13,70 @@ type ReviewKeyboardHandlers = {
   enabled: boolean;
 };
 
+const GRADE_KEYS: Record<string, ReviewGrade> = {
+  "1": AGAIN,
+  "2": HARD,
+  "3": GOOD,
+  "4": EASY,
+};
+
+function isEditableTarget(target: EventTarget | null) {
+  return (
+    target instanceof HTMLElement &&
+    (target.tagName === "INPUT" ||
+      target.tagName === "TEXTAREA" ||
+      target.tagName === "SELECT" ||
+      target.isContentEditable)
+  );
+}
+
+/** Space/Enter reveal the term, or advance once it's revealed and ratable. Returns true if handled. */
+function handleRevealOrNext(
+  event: KeyboardEvent,
+  {
+    revealed,
+    canRate,
+    onReveal,
+    onNext,
+  }: Pick<ReviewKeyboardHandlers, "revealed" | "canRate" | "onReveal" | "onNext">,
+) {
+  if (event.key !== " " && event.key !== "Enter") return false;
+  event.preventDefault();
+  if (!revealed) {
+    onReveal();
+  } else if (canRate) {
+    onNext();
+  }
+  return true;
+}
+
+/** Digit keys 1-4 grade the revealed term. Returns true if handled. */
+function handleGradeKey(event: KeyboardEvent, onGrade: ReviewKeyboardHandlers["onGrade"]) {
+  const grade = GRADE_KEYS[event.key];
+  if (grade === undefined) return false;
+  event.preventDefault();
+  onGrade(grade);
+  return true;
+}
+
+/** Arrow keys navigate between terms. Returns true if handled. */
+function handleArrowKeys(
+  event: KeyboardEvent,
+  { onPrevious, onNext }: Pick<ReviewKeyboardHandlers, "onPrevious" | "onNext">,
+) {
+  if (event.key === "ArrowLeft") {
+    event.preventDefault();
+    onPrevious();
+    return true;
+  }
+  if (event.key === "ArrowRight") {
+    event.preventDefault();
+    onNext();
+    return true;
+  }
+  return false;
+}
+
 export function useReviewKeyboard({
   onReveal,
   onGrade,
@@ -26,60 +90,10 @@ export function useReviewKeyboard({
     if (!enabled) return;
 
     function handleKeyDown(event: KeyboardEvent) {
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        (target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA" ||
-          target.tagName === "SELECT" ||
-          target.isContentEditable)
-      ) {
-        return;
-      }
-
-      if (event.key === " " || event.key === "Enter") {
-        event.preventDefault();
-        if (!revealed) {
-          onReveal();
-        } else if (canRate) {
-          onNext();
-        }
-        return;
-      }
-
-      if (revealed && canRate) {
-        if (event.key === "1") {
-          event.preventDefault();
-          onGrade(AGAIN);
-          return;
-        }
-        if (event.key === "2") {
-          event.preventDefault();
-          onGrade(HARD);
-          return;
-        }
-        if (event.key === "3") {
-          event.preventDefault();
-          onGrade(GOOD);
-          return;
-        }
-        if (event.key === "4") {
-          event.preventDefault();
-          onGrade(EASY);
-          return;
-        }
-      }
-
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        onPrevious();
-        return;
-      }
-
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        onNext();
-      }
+      if (isEditableTarget(event.target)) return;
+      if (handleRevealOrNext(event, { revealed, canRate, onReveal, onNext })) return;
+      if (revealed && canRate && handleGradeKey(event, onGrade)) return;
+      handleArrowKeys(event, { onPrevious, onNext });
     }
 
     window.addEventListener("keydown", handleKeyDown);

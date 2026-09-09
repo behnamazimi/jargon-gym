@@ -3,21 +3,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogFooter } from "@/components/ui/dialog";
 import { TermFormFields } from "@/components/jargon/term-form-fields";
+import {
+  buildTermPayload,
+  DialogHeaderText,
+  emptyForm,
+  getResetState,
+  SubmitButtonLabel,
+} from "@/components/jargon/term-form-dialog-helpers";
 import { useTermActions } from "@/hooks/use-term-actions";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
-import {
-  buildRelationshipSync,
-  termRelationshipsToDrafts,
-  validateRelationshipDrafts,
-} from "@/lib/jargon/relationship-sync";
+import { buildRelationshipSync, validateRelationshipDrafts } from "@/lib/jargon/relationship-sync";
 import type { TermInput } from "@/lib/jargon/term-schema";
 import type { Term } from "@/lib/jargon/types";
 
@@ -30,30 +27,6 @@ type TermFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSaved?: () => void;
 };
-
-const emptyForm: TermInput = {
-  term: "",
-  category: "",
-  definition: "",
-  example: "",
-  mental_model: "",
-  discussion: "",
-  anti_example: "",
-  controversy: "",
-};
-
-function termToForm(term: Term): TermInput {
-  return {
-    term: term.term,
-    category: term.category,
-    definition: term.definition,
-    example: term.example || "",
-    mental_model: term.mentalModel || "",
-    discussion: term.discussion || "",
-    anti_example: term.antiExample || "",
-    controversy: term.controversy || "",
-  };
-}
 
 export function TermFormDialog({
   mode,
@@ -77,12 +50,10 @@ export function TermFormDialog({
     if (isOpen && !wasOpenRef.current) {
       clearError();
       setValidationError(null);
-      setForm(mode === "edit" && initialTerm ? termToForm(initialTerm) : emptyForm);
-
-      const nextRelationships =
-        mode === "edit" && initialTerm ? termRelationshipsToDrafts(initialTerm.relationships) : [];
-      setRelationshipDrafts(nextRelationships);
-      setInitialRelationshipDrafts(nextRelationships);
+      const resetState = getResetState(mode, initialTerm);
+      setForm(resetState.form);
+      setRelationshipDrafts(resetState.relationshipDrafts);
+      setInitialRelationshipDrafts(resetState.relationshipDrafts);
     }
 
     wasOpenRef.current = isOpen;
@@ -98,6 +69,21 @@ export function TermFormDialog({
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  async function saveTerm(
+    payload: TermInput,
+    relationshipSync: ReturnType<typeof buildRelationshipSync>,
+  ) {
+    const closeDialog = () => onOpenChange(false);
+
+    if (mode === "create") {
+      return createTerm(domainId, payload, { create: relationshipSync.create }, closeDialog);
+    }
+    if (initialTerm) {
+      return updateTerm(initialTerm.id, payload, relationshipSync, closeDialog);
+    }
+    return false;
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setValidationError(null);
@@ -108,25 +94,9 @@ export function TermFormDialog({
       return;
     }
 
-    const payload: TermInput = {
-      ...form,
-      example: form.example?.trim() ? form.example : null,
-      mental_model: form.mental_model?.trim() ? form.mental_model : null,
-      discussion: form.discussion?.trim() ? form.discussion : null,
-      anti_example: form.anti_example?.trim() ? form.anti_example : null,
-      controversy: form.controversy?.trim() ? form.controversy : null,
-    };
-
+    const payload = buildTermPayload(form);
     const relationshipSync = buildRelationshipSync(initialRelationshipDrafts, relationshipDrafts);
-
-    const success =
-      mode === "create"
-        ? await createTerm(domainId, payload, { create: relationshipSync.create }, () =>
-            onOpenChange(false),
-          )
-        : initialTerm
-          ? await updateTerm(initialTerm.id, payload, relationshipSync, () => onOpenChange(false))
-          : false;
+    const success = await saveTerm(payload, relationshipSync);
 
     if (success) {
       onSaved?.();
@@ -141,14 +111,7 @@ export function TermFormDialog({
   return (
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange}>
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
-        <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Add term" : "Edit term"}</DialogTitle>
-          <DialogDescription>
-            {mode === "create"
-              ? "Add a term to this collection. Link it to others below if you like."
-              : "Update this term and its links to other terms."}
-          </DialogDescription>
-        </DialogHeader>
+        <DialogHeaderText mode={mode} />
 
         <TermFormFields
           form={form}
@@ -171,7 +134,7 @@ export function TermFormDialog({
             Cancel
           </Button>
           <Button type="submit" isDisabled={isSubmitting}>
-            {isSubmitting ? "Saving…" : mode === "create" ? "Add term" : "Save changes"}
+            <SubmitButtonLabel mode={mode} isSubmitting={isSubmitting} />
           </Button>
         </DialogFooter>
       </form>

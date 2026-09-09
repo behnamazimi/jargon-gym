@@ -2,19 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
-import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
+import { handleReadEnterKey, ReadQueueContent } from "@/components/jargon/read/read-page-content";
 import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
-import { ReadTermCard } from "@/components/jargon/read/read-term-card";
 import { ReadToolbar } from "@/components/jargon/read/read-toolbar";
-import { ReadErrorAlert } from "@/components/jargon/read/read-error-alert";
 import { useReadQueue } from "@/components/jargon/read/use-read-queue";
-import { LinkButton } from "@/components/ui/button";
 import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
 import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
 import type { StudyCollection } from "@/lib/study/types";
 import {
-  caughtUpDescription,
-  isTypingTarget,
   replaceReadDomainInUrl,
   scrollToTop,
   stripInvalidDomainParam,
@@ -60,19 +55,7 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (fullscreenActive) return;
-      if (event.key !== "Enter") return;
-      if (queue.status !== "ready" || isTypingTarget(event.target)) return;
-
-      const term = queue.currentTerm;
-      if (!term) return;
-
-      event.preventDefault();
-      if (!queue.isRevealed(term.id)) {
-        queue.reveal(term.id);
-      } else {
-        void queue.goNext();
-      }
+      handleReadEnterKey(event, fullscreenActive, queue);
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -123,44 +106,14 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
       />
 
       <div ref={cardRef} className="flex min-h-0 flex-1 flex-col">
-        {queue.status === "caughtUp" ? (
-          <ReadCaughtUp
-            description={caughtUpDescription(selectedCollectionId, collections)}
-            actions={
-              selectedCollectionId === "all" ? (
-                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  <LinkButton href="/jargon" variant="outline">
-                    Collections
-                  </LinkButton>
-                  <LinkButton href="/jargon/import" variant="outline">
-                    Import jargon
-                  </LinkButton>
-                </div>
-              ) : null
-            }
-          />
-        ) : null}
-
-        {queue.status === "ready" && term !== null ? (
-          <ReadTermCard
-            term={term}
-            revealed={revealed}
-            canGoBack={queue.canGoBack}
-            isPending={queue.isFetchingMore}
-            narrationAccess={narrationAccess}
-            onReveal={queue.reveal}
-            onPrevious={queue.goPrevious}
-            onNext={queue.goNext}
-          />
-        ) : null}
-
-        {queue.status === "error" ? (
-          <ReadErrorAlert
-            message={queue.errorMessage ?? "Couldn't load the next term. Try again."}
-            isPending={queue.isFetchingMore}
-            onRetry={queue.retry}
-          />
-        ) : null}
+        <ReadQueueContent
+          queue={queue}
+          term={term}
+          revealed={revealed}
+          collections={collections}
+          selectedCollectionId={selectedCollectionId}
+          narrationAccess={narrationAccess}
+        />
       </div>
     </div>
   );

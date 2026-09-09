@@ -113,6 +113,31 @@ function isPasswordFailure(error: AuthLikeError, message: string): boolean {
   );
 }
 
+function hasPasswordReasons(error: AuthLikeError): boolean {
+  return (error.reasons?.length ?? 0) > 0 || (error.weak_password?.reasons?.length ?? 0) > 0;
+}
+
+type FailureRule = {
+  matches: (error: AuthLikeError, message: string) => boolean;
+  result: string;
+};
+
+const FAILURE_RULES: FailureRule[] = [
+  {
+    matches: (error, message) => Boolean(message) && isLoginFailure(error, message),
+    result: INVALID_LOGIN,
+  },
+  {
+    matches: (error, message) => Boolean(message) && isReferralFailure(message),
+    result: INVALID_REFERRAL,
+  },
+  {
+    matches: (error, message) =>
+      isPasswordFailure(error, message) || (!message && hasPasswordReasons(error)),
+    result: PASSWORD_FAILED,
+  },
+];
+
 export function formatAuthError(error: unknown, context?: AuthErrorContext): string {
   const parsed = parseAuthError(error);
   if (parsed == null) {
@@ -124,20 +149,9 @@ export function formatAuthError(error: unknown, context?: AuthErrorContext): str
   }
 
   const message = readMessage(parsed);
-
-  if (message && isLoginFailure(parsed, message)) {
-    return INVALID_LOGIN;
-  }
-
-  if (message && isReferralFailure(message)) {
-    return INVALID_REFERRAL;
-  }
-
-  if (
-    isPasswordFailure(parsed, message) ||
-    (!message && (parsed.reasons?.length || parsed.weak_password?.reasons?.length))
-  ) {
-    return PASSWORD_FAILED;
+  const rule = FAILURE_RULES.find(({ matches }) => matches(parsed, message));
+  if (rule) {
+    return rule.result;
   }
 
   if (message) {

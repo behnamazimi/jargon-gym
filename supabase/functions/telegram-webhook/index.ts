@@ -33,31 +33,21 @@ function verifyWebhookSecret(request: Request) {
   return secret === getWebhookSecret();
 }
 
+function normalizeCallbackQuery(cb: NonNullable<TelegramUpdate["callback_query"]>) {
+  const chatId = cb.message?.chat.id;
+  const messageId = cb.message?.message_id;
+  return {
+    id: cb.id,
+    data: cb.data ?? "",
+    chatId: chatId ?? 0,
+    messageId: messageId ?? 0,
+    messageText: cb.message?.text,
+  };
+}
+
 function normalizeUpdate(update: TelegramUpdate) {
   if (update.callback_query) {
-    const cb = update.callback_query;
-    const chatId = cb.message?.chat.id;
-    const messageId = cb.message?.message_id;
-    if (chatId == null || messageId == null) {
-      return {
-        callbackQuery: {
-          id: cb.id,
-          data: cb.data ?? "",
-          chatId: chatId ?? 0,
-          messageId: messageId ?? 0,
-          messageText: cb.message?.text,
-        },
-      };
-    }
-    return {
-      callbackQuery: {
-        id: cb.id,
-        data: cb.data ?? "",
-        chatId,
-        messageId,
-        messageText: cb.message?.text,
-      },
-    };
+    return { callbackQuery: normalizeCallbackQuery(update.callback_query) };
   }
 
   if (update.message?.text) {
@@ -97,7 +87,48 @@ async function callNextHandle(payload: unknown): Promise<TelegramAction[]> {
   return json.actions ?? [];
 }
 
-Deno.serve(async (request) => {
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
+type NormalizedUpdate = ReturnType<typeof normalizeUpdate>;
+
+async function dismissInlineKeyboardIfCallback(
+  normalized: NormalizedUpdate,
+  supabase: ReturnType<typeof createServiceClient>,
+): Promise<void> {
+  if (normalized.callbackQuery?.chatId && normalized.callbackQuery.messageId) {
+    await dismissInlineKeyboard(
+      supabase,
+      normalized.callbackQuery.chatId,
+      normalized.callbackQuery.messageId,
+    );
+  }
+}
+
+async function processUpdate(normalized: NormalizedUpdate): Promise<Response> {
+  if (!normalized.message && !normalized.callbackQuery) {
+    return jsonResponse({ ok: true });
+  }
+
+  const chatId = normalized.callbackQuery?.chatId ?? normalized.message?.chatId;
+  if (chatId) {
+    await sendTypingAction(chatId);
+  }
+
+  const supabase = createServiceClient();
+  await dismissInlineKeyboardIfCallback(normalized, supabase);
+
+  const actions = await callNextHandle(normalized);
+  await executeTelegramActions(actions, supabase);
+
+  return jsonResponse({ ok: true });
+}
+
+async function handleRequest(request: Request): Promise<Response> {
   if (request.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
@@ -108,40 +139,11 @@ Deno.serve(async (request) => {
 
   try {
     const update = (await request.json()) as TelegramUpdate;
-    const normalized = normalizeUpdate(update);
-
-    if (!normalized.message && !normalized.callbackQuery) {
-      return new Response(JSON.stringify({ ok: true }), {
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const chatId = normalized.callbackQuery?.chatId ?? normalized.message?.chatId;
-    if (chatId) {
-      await sendTypingAction(chatId);
-    }
-
-    const supabase = createServiceClient();
-
-    if (normalized.callbackQuery?.chatId && normalized.callbackQuery.messageId) {
-      await dismissInlineKeyboard(
-        supabase,
-        normalized.callbackQuery.chatId,
-        normalized.callbackQuery.messageId,
-      );
-    }
-
-    const actions = await callNextHandle(normalized);
-    await executeTelegramActions(actions, supabase);
-
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: { "Content-Type": "application/json" },
-    });
+    return await processUpdate(normalizeUpdate(update));
   } catch (error) {
     console.error("telegram-webhook error:", error);
-    return new Response(JSON.stringify({ error: "Internal error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "Internal error" }, 500);
   }
-});
+}
+
+Deno.serve(handleRequest);

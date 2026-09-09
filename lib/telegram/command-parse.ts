@@ -9,6 +9,28 @@ export type ParsedDomainCount = {
   error: string | null;
 };
 
+/** "all" or a positive integer; null means the token is invalid. */
+function parseCountToken(token: string): number | "all" | null {
+  if (token.toLowerCase() === "all") return "all";
+  const count = parseInt(token, 10);
+  if (isNaN(count) || count < 1) return null;
+  return count;
+}
+
+/** A bare leading count (no domain token) implies domain "all". */
+function parseLeadingCount(firstArg: string): ParsedDomainCount | null {
+  if (!/^\d+$/.test(firstArg)) return null;
+  const count = parseCountToken(firstArg);
+  if (count === null) return { complete: false, error: "Invalid count." };
+  return { domainId: "all", count, complete: true, error: null };
+}
+
+function parseDomainToken(firstArg: string, firstLower: string): QuizDomainSelection | null {
+  if (firstLower === "all") return "all";
+  if (UUID_RE.test(firstArg)) return firstArg;
+  return null;
+}
+
 /** Parses "[all|<collection>] [count|all]" — shared by /quiz (no status token)
  *  and the tail of /review's grammar once its status token is consumed. */
 export function parseDomainCountArgs(argsText: string, helpMessage: string): ParsedDomainCount {
@@ -20,24 +42,15 @@ export function parseDomainCountArgs(argsText: string, helpMessage: string): Par
   const firstArg = args[0];
   const firstLower = firstArg.toLowerCase();
 
-  if (/^\d+$/.test(firstArg)) {
-    const count = parseInt(firstArg, 10);
-    if (isNaN(count) || count < 1) {
-      return { complete: false, error: "Invalid count." };
-    }
-    return { domainId: "all", count, complete: true, error: null };
-  }
+  const leading = parseLeadingCount(firstArg);
+  if (leading) return leading;
 
   if (firstLower === "all" && args.length === 1) {
     return { domainId: "all", count: "all", complete: true, error: null };
   }
 
-  let domainId: QuizDomainSelection;
-  if (firstLower === "all") {
-    domainId = "all";
-  } else if (UUID_RE.test(firstArg)) {
-    domainId = firstArg;
-  } else {
+  const domainId = parseDomainToken(firstArg, firstLower);
+  if (domainId === null) {
     return { complete: false, error: helpMessage };
   }
 
@@ -45,13 +58,8 @@ export function parseDomainCountArgs(argsText: string, helpMessage: string): Par
     return { domainId, complete: false, error: null };
   }
 
-  const countArg = args[1].toLowerCase();
-  if (countArg === "all") {
-    return { domainId, count: "all", complete: true, error: null };
-  }
-
-  const count = parseInt(countArg, 10);
-  if (isNaN(count) || count < 1) {
+  const count = parseCountToken(args[1]);
+  if (count === null) {
     return { domainId, complete: false, error: "Invalid count." };
   }
 

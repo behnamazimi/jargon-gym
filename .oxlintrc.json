@@ -5,7 +5,8 @@
     "correctness": "error"
   },
   "rules": {
-    "max-lines": ["error", 200]
+    "max-lines": ["error", 200],
+    "complexity": ["error", { "max": 10 }]
   },
   "env": {
     "builtin": true

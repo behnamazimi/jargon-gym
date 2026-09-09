@@ -16,6 +16,29 @@ export async function setBuiltin(domainId: string, value: boolean) {
   revalidatePath("/admin/collections");
 }
 
+async function ensureDomainSlug(
+  supabase: AdminClient,
+  domainId: string,
+  domainName: string,
+  existingSlug: string | null,
+): Promise<string | null> {
+  if (existingSlug) return existingSlug;
+
+  const { data: existingDomains, error: slugError } = await supabase
+    .from("domains")
+    .select("slug")
+    .not("slug", "is", null);
+  if (slugError) throw slugError;
+
+  const existingSlugs = new Set((existingDomains ?? []).map((row) => row.slug!));
+  const slug = generateUniqueSlug(domainName, existingSlugs);
+
+  const { error: updateError } = await supabase.from("domains").update({ slug }).eq("id", domainId);
+  if (updateError) throw updateError;
+
+  return slug;
+}
+
 export async function setPublic(
   domainId: string,
   value: boolean,
@@ -32,24 +55,9 @@ export async function setPublic(
     throw new Error("Only built-in collections can be made public.");
   }
 
-  let slug = domain.slug;
-
-  if (value && !slug) {
-    const { data: existingDomains, error: slugError } = await supabase
-      .from("domains")
-      .select("slug")
-      .not("slug", "is", null);
-    if (slugError) throw slugError;
-
-    const existingSlugs = new Set((existingDomains ?? []).map((row) => row.slug!));
-    slug = generateUniqueSlug(domain.name, existingSlugs);
-
-    const { error: updateError } = await supabase
-      .from("domains")
-      .update({ slug })
-      .eq("id", domainId);
-    if (updateError) throw updateError;
-  }
+  const slug = value
+    ? await ensureDomainSlug(supabase, domainId, domain.name, domain.slug)
+    : domain.slug;
 
   if (value) {
     await ensureTermSlugs(supabase, domainId);

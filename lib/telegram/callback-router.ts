@@ -26,6 +26,93 @@ function isReviewGrade(value: number): value is ReviewGrade {
   return Number.isInteger(value) && value >= AGAIN && value <= EASY;
 }
 
+interface CallbackContext {
+  client: Client;
+  chatId: number;
+  userId: string;
+  messageId: number;
+}
+
+async function routeReviewReveal(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  const sessionIndex = parseInt(rest, 10);
+  if (isNaN(sessionIndex)) return [];
+  return handleReviewReveal(ctx.client, ctx.chatId, ctx.messageId, sessionIndex);
+}
+
+async function routeReviewKnown(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  const sessionIndex = parseInt(rest, 10);
+  if (isNaN(sessionIndex)) return [];
+  return handleReviewMarkKnown(ctx.client, ctx.chatId, ctx.messageId, sessionIndex);
+}
+
+async function routeReviewRate(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  const [sessionPart, gradePart] = rest.split(":");
+  const sessionIndex = parseInt(sessionPart, 10);
+  const grade = parseInt(gradePart, 10);
+  if (isNaN(sessionIndex) || !isReviewGrade(grade)) return [];
+  return handleReviewRate(ctx.client, ctx.chatId, ctx.messageId, sessionIndex, grade);
+}
+
+async function routeQuizAnswer(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  const [sessionPart, selectedTermId] = rest.split(":");
+  if (!selectedTermId) return [];
+  const sessionIndex = parseInt(sessionPart, 10);
+  if (isNaN(sessionIndex)) return [];
+  return handleReviewAnswer(ctx.client, ctx.chatId, ctx.messageId, sessionIndex, selectedTermId);
+}
+
+async function routeQuizTrueFalse(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  const [sessionPart, answerPart] = rest.split(":");
+  if (answerPart !== "true" && answerPart !== "false") return [];
+  const sessionIndex = parseInt(sessionPart, 10);
+  if (isNaN(sessionIndex)) return [];
+  return handleReviewTrueFalseAnswer(
+    ctx.client,
+    ctx.chatId,
+    ctx.messageId,
+    sessionIndex,
+    answerPart === "true",
+  );
+}
+
+async function routeReadReveal(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  return handleReadReveal(ctx.client, ctx.userId, ctx.chatId, ctx.messageId, rest);
+}
+
+async function routeReadKnown(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  return handleReadMarkKnown(ctx.client, ctx.userId, ctx.chatId, ctx.messageId, rest);
+}
+
+async function routeRead(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
+  return handleReadCallback(ctx.client, ctx.userId, ctx.chatId, ctx.messageId, rest);
+}
+
+async function routeQuizSetup(_rest: string, ctx: CallbackContext, data: string) {
+  return handleQuizSetupCallback(ctx.client, ctx.chatId, ctx.userId, data, ctx.messageId);
+}
+
+async function routeReviewSetup(_rest: string, ctx: CallbackContext, data: string) {
+  return handleReviewSetupCallback(ctx.client, ctx.chatId, ctx.userId, data, ctx.messageId);
+}
+
+type CallbackRoute = [
+  prefix: string,
+  handler: (rest: string, ctx: CallbackContext, data: string) => Promise<TelegramAction[]>,
+];
+
+const CALLBACK_ROUTES: CallbackRoute[] = [
+  ["quizsetup:", routeQuizSetup],
+  ["reviewsetup:", routeReviewSetup],
+  ["review:reveal:", routeReviewReveal],
+  ["review:known:", routeReviewKnown],
+  ["review:rate:", routeReviewRate],
+  ["quiz:", routeQuizAnswer],
+  ["quiztf:", routeQuizTrueFalse],
+  ["read:reveal:", routeReadReveal],
+  ["read:known:", routeReadKnown],
+  ["read:", routeRead],
+];
+
 export async function handleCallback(
   client: Client,
   callback: NonNullable<NormalizedTelegramUpdate["callbackQuery"]>,
@@ -45,92 +132,12 @@ export async function handleCallback(
   }
 
   const actions: TelegramAction[] = [{ type: "answerCallbackQuery", callbackQueryId: callbackId }];
+  const ctx: CallbackContext = { client, chatId, userId, messageId };
 
-  if (data.startsWith("quizsetup:")) {
-    actions.push(...(await handleQuizSetupCallback(client, chatId, userId, data, messageId)));
-    return actions;
-  }
-
-  if (data.startsWith("reviewsetup:")) {
-    actions.push(...(await handleReviewSetupCallback(client, chatId, userId, data, messageId)));
-    return actions;
-  }
-
-  if (data.startsWith("review:reveal:")) {
-    const sessionIndex = parseInt(data.slice("review:reveal:".length), 10);
-    if (!isNaN(sessionIndex)) {
-      actions.push(...(await handleReviewReveal(client, chatId, messageId, sessionIndex)));
-    }
-    return actions;
-  }
-
-  if (data.startsWith("review:known:")) {
-    const sessionIndex = parseInt(data.slice("review:known:".length), 10);
-    if (!isNaN(sessionIndex)) {
-      actions.push(...(await handleReviewMarkKnown(client, chatId, messageId, sessionIndex)));
-    }
-    return actions;
-  }
-
-  if (data.startsWith("review:rate:")) {
-    const parts = data.slice("review:rate:".length).split(":");
-    if (parts.length === 2) {
-      const sessionIndex = parseInt(parts[0], 10);
-      const grade = parseInt(parts[1], 10);
-      if (!isNaN(sessionIndex) && isReviewGrade(grade)) {
-        actions.push(...(await handleReviewRate(client, chatId, messageId, sessionIndex, grade)));
-      }
-    }
-    return actions;
-  }
-
-  if (data.startsWith("quiz:")) {
-    const parts = data.slice("quiz:".length).split(":");
-    if (parts.length === 2) {
-      const sessionIndex = parseInt(parts[0], 10);
-      const selectedTermId = parts[1];
-      actions.push(
-        ...(await handleReviewAnswer(client, chatId, messageId, sessionIndex, selectedTermId)),
-      );
-      return actions;
-    }
-  }
-
-  if (data.startsWith("quiztf:")) {
-    const parts = data.slice("quiztf:".length).split(":");
-    if (parts.length === 2 && (parts[1] === "true" || parts[1] === "false")) {
-      const sessionIndex = parseInt(parts[0], 10);
-      if (!isNaN(sessionIndex)) {
-        actions.push(
-          ...(await handleReviewTrueFalseAnswer(
-            client,
-            chatId,
-            messageId,
-            sessionIndex,
-            parts[1] === "true",
-          )),
-        );
-        return actions;
-      }
-    }
-  }
-
-  if (data.startsWith("read:reveal:")) {
-    const termId = data.slice("read:reveal:".length);
-    actions.push(...(await handleReadReveal(client, userId, chatId, messageId, termId)));
-    return actions;
-  }
-
-  if (data.startsWith("read:known:")) {
-    const termId = data.slice("read:known:".length);
-    actions.push(...(await handleReadMarkKnown(client, userId, chatId, messageId, termId)));
-    return actions;
-  }
-
-  if (data.startsWith("read:")) {
-    const termId = data.slice("read:".length);
-    actions.push(...(await handleReadCallback(client, userId, chatId, messageId, termId)));
-    return actions;
+  const route = CALLBACK_ROUTES.find(([prefix]) => data.startsWith(prefix));
+  if (route) {
+    const [prefix, handler] = route;
+    actions.push(...(await handler(data.slice(prefix.length), ctx, data)));
   }
 
   return actions;

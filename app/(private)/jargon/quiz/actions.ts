@@ -33,80 +33,86 @@ export async function getQuizSetupData() {
 
 const NOTHING_ELIGIBLE_ERROR = "No terms in this collection yet.";
 
-export async function generateQuizAction(input: {
-  domainIds: string[] | "all";
-  questionCount: number;
-  questionStyle: QuizQuestionStyle;
-}): Promise<
+type QuizGenerationResult =
   | { error: string }
   | {
       questions: QuizQuestion[];
       terms: QuizTerm[];
       providerLabel: string;
-    }
-> {
+    };
+
+function validateQuestionCount(rawCount: number): { error: string } | { questionCount: number } {
+  const questionCount = Math.floor(rawCount);
+  if (!Number.isFinite(questionCount) || questionCount < 1) {
+    return { error: "Choose at least one question." };
+  }
+  if (questionCount > MAX_STUDY_TERMS) {
+    return { error: `Quizzes are limited to ${MAX_STUDY_TERMS} questions.` };
+  }
+  return { questionCount };
+}
+
+async function generateSimpleQuizResult(
+  auth: Extract<Awaited<ReturnType<typeof requireAuthenticatedClient>>, { supabase: unknown }>,
+  termsPromise: Promise<QuizTerm[]>,
+): Promise<QuizGenerationResult> {
+  const terms = await termsPromise;
+  if (terms.length === 0) {
+    return { error: NOTHING_ELIGIBLE_ERROR };
+  }
+  const questions = await generateSimpleQuiz(terms, auth.supabase);
+  return { questions, terms, providerLabel: "Simple (Definition → Term)" };
+}
+
+async function generateAiQuizResult(
+  auth: Extract<Awaited<ReturnType<typeof requireAuthenticatedClient>>, { supabase: unknown }>,
+  termsPromise: Promise<QuizTerm[]>,
+): Promise<QuizGenerationResult> {
+  const [terms, credentials] = await Promise.all([
+    termsPromise,
+    getDecryptedApiKey(auth.supabase, auth.user.id),
+  ]);
+
+  if (terms.length === 0) {
+    return { error: NOTHING_ELIGIBLE_ERROR };
+  }
+  if (!credentials) {
+    return { error: "Add a provider and API key in Settings to generate AI quizzes." };
+  }
+
+  const questions = await generateQuizQuestions({
+    provider: credentials.provider,
+    apiKey: credentials.apiKey,
+    terms,
+  });
+
+  return { questions, terms, providerLabel: LLM_PROVIDER_LABELS[credentials.provider] };
+}
+
+export async function generateQuizAction(input: {
+  domainIds: string[] | "all";
+  questionCount: number;
+  questionStyle: QuizQuestionStyle;
+}): Promise<QuizGenerationResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to take a quiz." };
   }
 
   try {
-    const questionCount = Math.floor(input.questionCount);
-    if (!Number.isFinite(questionCount) || questionCount < 1) {
-      return { error: "Choose at least one question." };
-    }
-
-    if (questionCount > MAX_STUDY_TERMS) {
-      return { error: `Quizzes are limited to ${MAX_STUDY_TERMS} questions.` };
-    }
+    const countResult = validateQuestionCount(input.questionCount);
+    if ("error" in countResult) return countResult;
 
     const termsPromise = fetchQuizTermPool(
       auth.supabase,
       auth.user.id,
       input.domainIds,
-      questionCount,
+      countResult.questionCount,
     );
 
-    let questions: QuizQuestion[];
-    let providerLabel: string;
-    let terms: QuizTerm[];
-
-    if (input.questionStyle === "simple") {
-      terms = await termsPromise;
-      if (terms.length === 0) {
-        return { error: NOTHING_ELIGIBLE_ERROR };
-      }
-      questions = await generateSimpleQuiz(terms, auth.supabase);
-      providerLabel = "Simple (Definition → Term)";
-    } else {
-      let credentials;
-      [terms, credentials] = await Promise.all([
-        termsPromise,
-        getDecryptedApiKey(auth.supabase, auth.user.id),
-      ]);
-
-      if (terms.length === 0) {
-        return { error: NOTHING_ELIGIBLE_ERROR };
-      }
-
-      if (!credentials) {
-        return { error: "Add a provider and API key in Settings to generate AI quizzes." };
-      }
-
-      questions = await generateQuizQuestions({
-        provider: credentials.provider,
-        apiKey: credentials.apiKey,
-        terms,
-      });
-
-      providerLabel = LLM_PROVIDER_LABELS[credentials.provider];
-    }
-
-    return {
-      questions,
-      terms,
-      providerLabel,
-    };
+    return input.questionStyle === "simple"
+      ? await generateSimpleQuizResult(auth, termsPromise)
+      : await generateAiQuizResult(auth, termsPromise);
   } catch (err) {
     const message =
       err instanceof Error

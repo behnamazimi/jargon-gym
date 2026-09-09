@@ -19,25 +19,22 @@ function throwStepError(
   throw new ImportExecutionError(formatImportFailure(err, { step, ...context }));
 }
 
-export async function executeImport(
-  client: Client,
-  ownerId: string,
-  payload: ImportPayload,
-  options: { isMerge: boolean },
-): Promise<ImportResult> {
-  const { data: existingDomain, error: existingDomainError } = await client
+async function domainExisted(client: Client, ownerId: string, domainName: string) {
+  const { data: existingDomain, error } = await client
     .from("domains")
     .select("id")
     .eq("owner_id", ownerId)
-    .ilike("name", payload.domain)
+    .ilike("name", domainName)
     .maybeSingle();
 
-  if (existingDomainError) {
-    throwStepError(existingDomainError, "Could not look up domain", { domain: payload.domain });
+  if (error) {
+    throwStepError(error, "Could not look up domain", { domain: domainName });
   }
 
-  const hadExisting = Boolean(existingDomain);
+  return Boolean(existingDomain);
+}
 
+async function resolveImportDomain(client: Client, ownerId: string, payload: ImportPayload) {
   let domain;
   try {
     domain = await createOrGetOwnedDomain(client, ownerId, payload.domain, payload.description);
@@ -53,59 +50,106 @@ export async function executeImport(
     });
   }
 
+  return domain;
+}
+
+function trimOrNull(value: string | null | undefined): string | null {
+  return value?.trim() || null;
+}
+
+function buildTermRow(item: ImportPayload["terms"][number], domainId: string) {
+  return {
+    term: item.term.trim(),
+    category: item.category.trim(),
+    definition: item.definition.trim(),
+    example: trimOrNull(item.example),
+    mental_model: trimOrNull(item.mental_model),
+    discussion: trimOrNull(item.discussion),
+    anti_example: trimOrNull(item.anti_example),
+    controversy: trimOrNull(item.controversy),
+    domain_id: domainId,
+  };
+}
+
+async function upsertImportTerm(
+  client: Client,
+  domainId: string,
+  domainName: string,
+  item: ImportPayload["terms"][number],
+): Promise<{ id: string; wasUpdate: boolean }> {
+  const { data: existingTerm, error: existingTermError } = await client
+    .from("terms")
+    .select("id")
+    .eq("domain_id", domainId)
+    .ilike("term", item.term)
+    .maybeSingle();
+
+  if (existingTermError) {
+    throwStepError(existingTermError, "Could not check existing term", {
+      term: item.term,
+      domain: domainName,
+    });
+  }
+
+  const row = buildTermRow(item, domainId);
+
+  if (existingTerm) {
+    const { error } = await client.from("terms").update(row).eq("id", existingTerm.id);
+    if (error) {
+      throwStepError(error, "Could not update term", { term: item.term, domain: domainName });
+    }
+    return { id: existingTerm.id, wasUpdate: true };
+  }
+
+  const { data, error } = await client.from("terms").insert(row).select("id").single();
+  if (error || !data) {
+    throwStepError(error ?? new Error("Term insert returned no row"), "Could not create term", {
+      term: item.term,
+      domain: domainName,
+    });
+  }
+  return { id: data.id, wasUpdate: false };
+}
+
+async function markDomainActive(
+  client: Client,
+  ownerId: string,
+  domainId: string,
+  domainName: string,
+) {
+  const { error } = await client
+    .from("user_active_domains")
+    .upsert(
+      { user_id: ownerId, domain_id: domainId },
+      { onConflict: "user_id,domain_id", ignoreDuplicates: true },
+    );
+
+  if (error) {
+    throwStepError(error, "Import succeeded but domain could not be marked active", {
+      domain: domainName,
+    });
+  }
+}
+
+export async function executeImport(
+  client: Client,
+  ownerId: string,
+  payload: ImportPayload,
+  options: { isMerge: boolean },
+): Promise<ImportResult> {
+  const hadExisting = await domainExisted(client, ownerId, payload.domain);
+  const domain = await resolveImportDomain(client, ownerId, payload);
+
   let termsCreated = 0;
   let termsUpdated = 0;
-
   const termIdByKey = new Map<string, string>();
 
   for (const item of payload.terms) {
-    const key = normalizeTermKey(item.term);
-
-    const { data: existingTerm, error: existingTermError } = await client
-      .from("terms")
-      .select("id")
-      .eq("domain_id", domain.id)
-      .ilike("term", item.term)
-      .maybeSingle();
-
-    if (existingTermError) {
-      throwStepError(existingTermError, "Could not check existing term", {
-        term: item.term,
-        domain: payload.domain,
-      });
-    }
-
-    const row = {
-      term: item.term.trim(),
-      category: item.category.trim(),
-      definition: item.definition.trim(),
-      example: item.example?.trim() || null,
-      mental_model: item.mental_model?.trim() || null,
-      discussion: item.discussion?.trim() || null,
-      anti_example: item.anti_example?.trim() || null,
-      controversy: item.controversy?.trim() || null,
-      domain_id: domain.id,
-    };
-
-    if (existingTerm) {
-      const { error } = await client.from("terms").update(row).eq("id", existingTerm.id);
-      if (error) {
-        throwStepError(error, "Could not update term", {
-          term: item.term,
-          domain: payload.domain,
-        });
-      }
-      termIdByKey.set(key, existingTerm.id);
+    const { id, wasUpdate } = await upsertImportTerm(client, domain.id, payload.domain, item);
+    termIdByKey.set(normalizeTermKey(item.term), id);
+    if (wasUpdate) {
       termsUpdated += 1;
     } else {
-      const { data, error } = await client.from("terms").insert(row).select("id").single();
-      if (error || !data) {
-        throwStepError(error ?? new Error("Term insert returned no row"), "Could not create term", {
-          term: item.term,
-          domain: payload.domain,
-        });
-      }
-      termIdByKey.set(key, data.id);
       termsCreated += 1;
     }
   }
@@ -118,19 +162,7 @@ export async function executeImport(
     normalizeTermKey,
   );
 
-  const { error: activeError } = await client.from("user_active_domains").upsert(
-    {
-      user_id: ownerId,
-      domain_id: domain.id,
-    },
-    { onConflict: "user_id,domain_id", ignoreDuplicates: true },
-  );
-
-  if (activeError) {
-    throwStepError(activeError, "Import succeeded but domain could not be marked active", {
-      domain: payload.domain,
-    });
-  }
+  await markDomainActive(client, ownerId, domain.id, payload.domain);
 
   return {
     domainId: domain.id,

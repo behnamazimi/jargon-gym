@@ -52,6 +52,29 @@ export async function validateImportJson(
   }
 }
 
+function conflictConfirmationFailure(
+  conflictingTerms: ImportPreview["conflictingTerms"],
+): ImportFailure {
+  return {
+    title: "Confirm before importing",
+    message: `This import would overwrite ${conflictingTerms.length} existing term${conflictingTerms.length === 1 ? "" : "s"}.`,
+    details: conflictingTerms,
+    hint: "Check the preview and confirm you want to replace the conflicting terms.",
+  };
+}
+
+function handleImportError(err: unknown): { ok: false; failure: ImportFailure } {
+  if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
+  if (err instanceof ImportExecutionError) {
+    return { ok: false, failure: err.failure };
+  }
+
+  return {
+    ok: false,
+    failure: formatImportFailure(err, { step: "Import failed" }),
+  };
+}
+
 export async function confirmImport(
   raw: string,
   confirmReplace = false,
@@ -68,15 +91,7 @@ export async function confirmImport(
     const preview = await buildImportPreview(supabase, user.id, parsed.data);
 
     if (preview.conflictingTerms.length > 0 && !confirmReplace) {
-      return {
-        ok: false,
-        failure: {
-          title: "Confirm before importing",
-          message: `This import would overwrite ${preview.conflictingTerms.length} existing term${preview.conflictingTerms.length === 1 ? "" : "s"}.`,
-          details: preview.conflictingTerms,
-          hint: "Check the preview and confirm you want to replace the conflicting terms.",
-        },
-      };
+      return { ok: false, failure: conflictConfirmationFailure(preview.conflictingTerms) };
     }
 
     const result = await executeImport(supabase, user.id, parsed.data, {
@@ -86,14 +101,6 @@ export async function confirmImport(
     revalidatePath("/jargon");
     redirect(`/jargon?domain=${result.domainId}`);
   } catch (err) {
-    if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
-    if (err instanceof ImportExecutionError) {
-      return { ok: false, failure: err.failure };
-    }
-
-    return {
-      ok: false,
-      failure: formatImportFailure(err, { step: "Import failed" }),
-    };
+    return handleImportError(err);
   }
 }

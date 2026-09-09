@@ -21,6 +21,62 @@ function parseView(value: string | undefined): DebugView {
   return value === "calibration" ? "calibration" : "queue";
 }
 
+function resolveDomainId(
+  domainParam: string | undefined,
+  collections: Extract<
+    Awaited<ReturnType<typeof getDebugSetupData>>,
+    { collections: unknown }
+  >["collections"],
+) {
+  const isKnownDomain =
+    domainParam && collections.some((collection) => collection.id === domainParam);
+  return isKnownDomain ? domainParam : "all";
+}
+
+type SetupData = Extract<Awaited<ReturnType<typeof getDebugSetupData>>, { collections: unknown }>;
+
+async function buildCalibrationView(
+  setup: SetupData,
+  context: PickContext,
+  domainId: string,
+  view: DebugView,
+) {
+  const summary = await getCalibrationSummaryAction();
+  return (
+    <DebugQueuePage
+      collections={setup.collections}
+      context={context}
+      domainId={domainId}
+      view={view}
+      rows={[]}
+      coolingDown={[]}
+      calibration={summary.data ?? null}
+      errorMessage={summary.error ?? null}
+    />
+  );
+}
+
+async function buildQueueView(
+  setup: SetupData,
+  context: PickContext,
+  domainId: string,
+  view: DebugView,
+) {
+  const scored = await listDebugScoredTermsAction(domainId === "all" ? "all" : [domainId], context);
+  return (
+    <DebugQueuePage
+      collections={setup.collections}
+      context={context}
+      domainId={domainId}
+      view={view}
+      rows={scored.rows ?? []}
+      coolingDown={scored.coolingDown ?? []}
+      calibration={null}
+      errorMessage={scored.error ?? null}
+    />
+  );
+}
+
 export default async function JargonDebugPage({ searchParams }: PageProps) {
   const [{ context: contextParam, domain: domainParam, view: viewParam }, setup] =
     await Promise.all([searchParams, getDebugSetupData()]);
@@ -31,10 +87,7 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
 
   const context = parseContext(contextParam);
   const view = parseView(viewParam);
-  const domainId =
-    domainParam && setup.collections.some((collection) => collection.id === domainParam)
-      ? domainParam
-      : "all";
+  const domainId = resolveDomainId(domainParam, setup.collections);
 
   if (setup.collections.length === 0) {
     return (
@@ -52,33 +105,8 @@ export default async function JargonDebugPage({ searchParams }: PageProps) {
   }
 
   if (view === "calibration") {
-    const summary = await getCalibrationSummaryAction();
-    return (
-      <DebugQueuePage
-        collections={setup.collections}
-        context={context}
-        domainId={domainId}
-        view={view}
-        rows={[]}
-        coolingDown={[]}
-        calibration={summary.data ?? null}
-        errorMessage={summary.error ?? null}
-      />
-    );
+    return buildCalibrationView(setup, context, domainId, view);
   }
 
-  const scored = await listDebugScoredTermsAction(domainId === "all" ? "all" : [domainId], context);
-
-  return (
-    <DebugQueuePage
-      collections={setup.collections}
-      context={context}
-      domainId={domainId}
-      view={view}
-      rows={scored.rows ?? []}
-      coolingDown={scored.coolingDown ?? []}
-      calibration={null}
-      errorMessage={scored.error ?? null}
-    />
-  );
+  return buildQueueView(setup, context, domainId, view);
 }

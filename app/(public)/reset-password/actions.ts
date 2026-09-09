@@ -7,6 +7,23 @@ import { getSessionUser } from "@/lib/auth/require-session";
 
 export type ResetPasswordState = { error: string } | null;
 
+function validateNewPassword(password: string, confirmPassword: string): string | null {
+  if (!password || !confirmPassword) {
+    return "Enter a new password in both fields.";
+  }
+
+  const passwordError = getPasswordValidationError(password);
+  if (passwordError) {
+    return passwordError;
+  }
+
+  if (password !== confirmPassword) {
+    return "Passwords don't match.";
+  }
+
+  return null;
+}
+
 export async function resetPassword(
   _prev: ResetPasswordState,
   formData: FormData,
@@ -14,17 +31,9 @@ export async function resetPassword(
   const password = formData.get("password")?.toString() ?? "";
   const confirmPassword = formData.get("confirmPassword")?.toString() ?? "";
 
-  if (!password || !confirmPassword) {
-    return { error: "Enter a new password in both fields." };
-  }
-
-  const passwordError = getPasswordValidationError(password);
-  if (passwordError) {
-    return { error: passwordError };
-  }
-
-  if (password !== confirmPassword) {
-    return { error: "Passwords don't match." };
+  const validationError = validateNewPassword(password, confirmPassword);
+  if (validationError) {
+    return { error: validationError };
   }
 
   const { supabase, user } = await getSessionUser();

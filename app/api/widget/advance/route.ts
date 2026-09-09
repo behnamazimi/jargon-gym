@@ -10,6 +10,21 @@ function isValidUuid(id: unknown): id is string {
   return typeof id === "string" && UUID_RE.test(id);
 }
 
+type AdvanceRequestBody = { termId: string; record: boolean; excludeIds: string[] };
+
+async function parseAdvanceRequest(request: Request): Promise<AdvanceRequestBody | null> {
+  const body = await request.json().catch(() => null);
+  const termId = body?.termId;
+  if (!isValidUuid(termId)) return null;
+
+  const record = body?.record === true;
+  const excludeIds = Array.isArray(body?.excludeIds)
+    ? body.excludeIds.filter(isValidUuid).slice(0, 10)
+    : [];
+
+  return { termId, record, excludeIds };
+}
+
 /**
  * Drops the term the widget just rotated past — recording its read unless
  * the Read page already did (termId/record) — and returns one fresh unknown
@@ -21,22 +36,16 @@ export async function POST(request: Request) {
   if ("error" in auth) return auth.error;
 
   try {
-    const body = await request.json().catch(() => null);
-    const termId = body?.termId;
-    const record = body?.record === true;
-    const excludeIds = Array.isArray(body?.excludeIds)
-      ? body.excludeIds.filter(isValidUuid).slice(0, 10)
-      : [];
-
-    if (!isValidUuid(termId)) {
+    const parsed = await parseAdvanceRequest(request);
+    if (!parsed) {
       return NextResponse.json({ error: "Invalid termId." }, { status: 400 });
     }
 
-    if (record) {
-      await recordRead(auth.admin, auth.userId, termId, "admin");
+    if (parsed.record) {
+      await recordRead(auth.admin, auth.userId, parsed.termId, "admin");
     }
 
-    const state = await fetchWidgetState(auth.admin, auth.userId, excludeIds, 1);
+    const state = await fetchWidgetState(auth.admin, auth.userId, parsed.excludeIds, 1);
 
     return NextResponse.json({
       term: state.terms[0] ?? null,

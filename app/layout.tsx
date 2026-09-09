@@ -46,17 +46,42 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+type StudyPhoneSettings = Awaited<ReturnType<typeof getStudyPhoneUserSettings>>;
+
+async function loadRootLayoutData() {
   const [cookieStore, { supabase, user }] = await Promise.all([cookies(), getSessionUser()]);
   const themeCookie = cookieStore.get(THEME_COOKIE_NAME)?.value;
   const theme = themeCookie === DARK_THEME ? DARK_THEME : LIGHT_THEME;
   const isAdmin = user ? await getUserIsAdmin(user.id) : false;
   const initialIsDark = theme === DARK_THEME;
   const studyPhoneSettings = user ? await getStudyPhoneUserSettings(supabase, user.id) : null;
+
+  return { theme, user, isAdmin, initialIsDark, studyPhoneSettings };
+}
+
+function buildStudyPhoneProps(
+  user: Awaited<ReturnType<typeof getSessionUser>>["user"],
+  isAdmin: boolean,
+  initialIsDark: boolean,
+  studyPhoneSettings: StudyPhoneSettings | null,
+) {
+  if (!user) return null;
+  return {
+    email: user.email ?? "Account",
+    isAdmin,
+    initialIsDark,
+    currentStreak: studyPhoneSettings?.currentStreak ?? 0,
+    longestStreak: studyPhoneSettings?.longestStreak ?? 0,
+  };
+}
+
+export default async function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  const { theme, user, isAdmin, initialIsDark, studyPhoneSettings } = await loadRootLayoutData();
+  const studyPhone = buildStudyPhoneProps(user, isAdmin, initialIsDark, studyPhoneSettings);
 
   return (
     <html
@@ -86,17 +111,7 @@ export default async function RootLayout({
                 />
               }
               footer={<SiteFooter />}
-              studyPhone={
-                user
-                  ? {
-                      email: user.email ?? "Account",
-                      isAdmin,
-                      initialIsDark,
-                      currentStreak: studyPhoneSettings?.currentStreak ?? 0,
-                      longestStreak: studyPhoneSettings?.longestStreak ?? 0,
-                    }
-                  : null
-              }
+              studyPhone={studyPhone}
             >
               {user ? <TimezoneSync savedTimezone={studyPhoneSettings?.timezone ?? null} /> : null}
               <OfflineBanner />

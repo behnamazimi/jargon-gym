@@ -78,6 +78,78 @@ export async function handleQuizCommand(
   return startReviewSession(client, chatId, userId, parsed.domainId!, count);
 }
 
+async function handleQuizSetupDomain(
+  client: Client,
+  chatId: number,
+  userId: string,
+  messageId: number,
+  parts: string[],
+): Promise<TelegramAction[]> {
+  const actions: TelegramAction[] = [];
+  const domainToken = parts.slice(1).join(":");
+  const domainId: QuizDomainSelection = domainToken === "all" ? "all" : domainToken;
+  if (domainId !== "all" && !UUID_RE.test(domainId)) return actions;
+
+  const domainLabel = await formatDomainChoiceLabel(client, userId, domainId);
+  actions.push(
+    edit(
+      chatId,
+      messageId,
+      formatSetupPromptWithAnswer(formatQuizSetupCollectionPrompt(), domainLabel),
+    ),
+  );
+
+  const countSetup: QuizSetupState = {
+    step: "count",
+    domainId,
+    startedAt: Date.now(),
+  };
+  await saveQuizSetup(client, chatId, countSetup);
+  actions.push(...(await sendCountQuestion(client, chatId, userId, domainId)));
+  return actions;
+}
+
+async function handleQuizSetupCount(
+  client: Client,
+  chatId: number,
+  userId: string,
+  messageId: number,
+  parts: string[],
+): Promise<TelegramAction[]> {
+  const actions: TelegramAction[] = [];
+  const setup = await loadQuizSetup(client, chatId);
+  if (!setup?.domainId) return actions;
+
+  const countToken = parts[1];
+  let count: number;
+
+  if (countToken === "all") {
+    count = await resolveQuizCount(client, userId, setup.domainId, "all");
+  } else {
+    count = parseInt(countToken, 10);
+    if (isNaN(count) || count < 1) return actions;
+  }
+
+  const available = await countTermsForQuiz(client, userId, setup.domainId);
+  const maxCount = getMaxQuizQuestionCount(available);
+  const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
+  const countLabel =
+    countToken === "all" ? `All (${count})` : `${count} question${count === 1 ? "" : "s"}`;
+
+  actions.push(
+    edit(
+      chatId,
+      messageId,
+      formatSetupPromptWithAnswer(formatQuizSetupCountPrompt(maxCount, defaultCount), countLabel),
+    ),
+  );
+
+  await clearQuizSetup(client, chatId);
+  actions.push(...(await startReviewSession(client, chatId, userId, setup.domainId, count)));
+
+  return actions;
+}
+
 export async function handleQuizSetupCallback(
   client: Client,
   chatId: number,
@@ -87,65 +159,15 @@ export async function handleQuizSetupCallback(
 ): Promise<TelegramAction[]> {
   const parts = data.slice("quizsetup:".length).split(":");
   const action = parts[0];
-  const actions: TelegramAction[] = [];
 
   if (action === "domain") {
-    const domainToken = parts.slice(1).join(":");
-    const domainId: QuizDomainSelection = domainToken === "all" ? "all" : domainToken;
-    if (domainId !== "all" && !UUID_RE.test(domainId)) return actions;
-
-    const domainLabel = await formatDomainChoiceLabel(client, userId, domainId);
-    actions.push(
-      edit(
-        chatId,
-        messageId,
-        formatSetupPromptWithAnswer(formatQuizSetupCollectionPrompt(), domainLabel),
-      ),
-    );
-
-    const countSetup: QuizSetupState = {
-      step: "count",
-      domainId,
-      startedAt: Date.now(),
-    };
-    await saveQuizSetup(client, chatId, countSetup);
-    actions.push(...(await sendCountQuestion(client, chatId, userId, domainId)));
-    return actions;
+    return handleQuizSetupDomain(client, chatId, userId, messageId, parts);
   }
-
   if (action === "count") {
-    const setup = await loadQuizSetup(client, chatId);
-    if (!setup?.domainId) return actions;
-
-    const countToken = parts[1];
-    let count: number;
-
-    if (countToken === "all") {
-      count = await resolveQuizCount(client, userId, setup.domainId, "all");
-    } else {
-      count = parseInt(countToken, 10);
-      if (isNaN(count) || count < 1) return actions;
-    }
-
-    const available = await countTermsForQuiz(client, userId, setup.domainId);
-    const maxCount = getMaxQuizQuestionCount(available);
-    const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
-    const countLabel =
-      countToken === "all" ? `All (${count})` : `${count} question${count === 1 ? "" : "s"}`;
-
-    actions.push(
-      edit(
-        chatId,
-        messageId,
-        formatSetupPromptWithAnswer(formatQuizSetupCountPrompt(maxCount, defaultCount), countLabel),
-      ),
-    );
-
-    await clearQuizSetup(client, chatId);
-    actions.push(...(await startReviewSession(client, chatId, userId, setup.domainId, count)));
+    return handleQuizSetupCount(client, chatId, userId, messageId, parts);
   }
 
-  return actions;
+  return [];
 }
 
 export { handleQuizSetupText } from "./quiz-setup-text";

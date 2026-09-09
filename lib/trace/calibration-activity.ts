@@ -38,41 +38,64 @@ export type AbandonedReveal = {
  *  per term, no hand-rolled session state machine, and correctly re-flags
  *  an earlier abandoned reveal even inside a reveal→reveal→grade sequence,
  *  since each reveal is judged against what immediately follows it. */
-export function findAbandonedReveals(
+function groupEventsByTerm(
   events: Array<{ termId: string; event: TraceEventName; createdAt: Date }>,
-  opts: { windowMinutes?: number; now: Date },
-): AbandonedReveal[] {
-  const windowMs = (opts.windowMinutes ?? ABANDONMENT_WINDOW_MINUTES) * 60_000;
-
+): Map<string, Array<{ event: TraceEventName; createdAt: Date }>> {
   const byTerm = new Map<string, Array<{ event: TraceEventName; createdAt: Date }>>();
   for (const e of events) {
     const list = byTerm.get(e.termId) ?? [];
     list.push({ event: e.event, createdAt: e.createdAt });
     byTerm.set(e.termId, list);
   }
+  return byTerm;
+}
 
+function isGradedInTime(
+  current: { createdAt: Date },
+  next: { event: TraceEventName; createdAt: Date } | undefined,
+  windowMs: number,
+): boolean {
+  return (
+    next !== undefined &&
+    (next.event === "review_pass" || next.event === "review_fail") &&
+    next.createdAt.getTime() - current.createdAt.getTime() <= windowMs
+  );
+}
+
+function findAbandonedRevealsForTerm(
+  termId: string,
+  termEvents: Array<{ event: TraceEventName; createdAt: Date }>,
+  windowMs: number,
+  now: Date,
+): AbandonedReveal[] {
+  const sorted = [...termEvents].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
   const abandoned: AbandonedReveal[] = [];
 
-  for (const [termId, termEvents] of byTerm) {
-    const sorted = [...termEvents].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+  for (let i = 0; i < sorted.length; i++) {
+    const current = sorted[i]!;
+    if (current.event !== "reveal") continue;
 
-    for (let i = 0; i < sorted.length; i++) {
-      const current = sorted[i]!;
-      if (current.event !== "reveal") continue;
+    // Too young to judge yet — not abandoned, just not graded *yet*.
+    if (now.getTime() - current.createdAt.getTime() < windowMs) continue;
 
-      // Too young to judge yet — not abandoned, just not graded *yet*.
-      if (opts.now.getTime() - current.createdAt.getTime() < windowMs) continue;
-
-      const next = sorted[i + 1];
-      const gradedInTime =
-        next !== undefined &&
-        (next.event === "review_pass" || next.event === "review_fail") &&
-        next.createdAt.getTime() - current.createdAt.getTime() <= windowMs;
-
-      if (!gradedInTime) {
-        abandoned.push({ termId, revealedAt: current.createdAt });
-      }
+    if (!isGradedInTime(current, sorted[i + 1], windowMs)) {
+      abandoned.push({ termId, revealedAt: current.createdAt });
     }
+  }
+
+  return abandoned;
+}
+
+export function findAbandonedReveals(
+  events: Array<{ termId: string; event: TraceEventName; createdAt: Date }>,
+  opts: { windowMinutes?: number; now: Date },
+): AbandonedReveal[] {
+  const windowMs = (opts.windowMinutes ?? ABANDONMENT_WINDOW_MINUTES) * 60_000;
+  const byTerm = groupEventsByTerm(events);
+
+  const abandoned: AbandonedReveal[] = [];
+  for (const [termId, termEvents] of byTerm) {
+    abandoned.push(...findAbandonedRevealsForTerm(termId, termEvents, windowMs, opts.now));
   }
 
   return abandoned.sort((a, b) => b.revealedAt.getTime() - a.revealedAt.getTime());

@@ -8,7 +8,7 @@ import {
   jsonSyntaxFailure,
   validationFailure,
 } from "./errors";
-import { normalizeRelationshipKey } from "./relationship-key";
+import { collectRelationshipIssues, collectTermKeys } from "./validate-import-issues";
 import type { ImportFailure, ImportPreview, ImportValidationIssue } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -66,61 +66,8 @@ export function parseImportJson(
     return { ok: false, failure: validationFailure(issues) };
   }
 
-  const termKeys = new Set<string>();
-  const duplicateIssues: ImportValidationIssue[] = [];
-
-  for (const [index, term] of result.data.terms.entries()) {
-    const key = term.term.trim().toLowerCase();
-    if (termKeys.has(key)) {
-      duplicateIssues.push({
-        path: `terms[${index}].term`,
-        message: `Duplicate term "${term.term}" in import`,
-        expected: "unique term name within this import",
-      });
-    }
-    termKeys.add(key);
-  }
-
-  const relationshipIssues: ImportValidationIssue[] = [];
-  const relationshipKeys = new Set<string>();
-
-  for (const [index, rel] of (result.data.relationships ?? []).entries()) {
-    const sourceKey = rel.source.trim().toLowerCase();
-    const targetKey = rel.target.trim().toLowerCase();
-    const relationshipKey = normalizeRelationshipKey(rel.source, rel.target, rel.relationship_type);
-
-    if (relationshipKeys.has(relationshipKey)) {
-      relationshipIssues.push({
-        path: `relationships[${index}]`,
-        message: `Duplicate relationship "${rel.source}" → "${rel.target}" (${rel.relationship_type}) in import`,
-        expected: "unique source, target, and relationship type within this import",
-      });
-    }
-    relationshipKeys.add(relationshipKey);
-
-    if (!termKeys.has(sourceKey)) {
-      relationshipIssues.push({
-        path: `relationships[${index}].source`,
-        message: `Source term "${rel.source}" not found in terms[]`,
-        expected: "term name that exists in terms[]",
-      });
-    }
-
-    if (!termKeys.has(targetKey)) {
-      relationshipIssues.push({
-        path: `relationships[${index}].target`,
-        message: `Target term "${rel.target}" not found in terms[]`,
-        expected: "term name that exists in terms[]",
-      });
-    }
-
-    if (sourceKey === targetKey) {
-      relationshipIssues.push({
-        path: `relationships[${index}]`,
-        message: "A term cannot relate to itself",
-      });
-    }
-  }
+  const { termKeys, duplicateIssues } = collectTermKeys(result.data.terms);
+  const relationshipIssues = collectRelationshipIssues(result.data.relationships ?? [], termKeys);
 
   const issues = [...duplicateIssues, ...relationshipIssues];
   if (issues.length > 0) {

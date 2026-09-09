@@ -10,33 +10,114 @@ import type { Database } from "@/lib/supabase/database.types";
 export const REFERRAL_VERIFIED_COOKIE = "jg_rv";
 const REFERRAL_VERIFIED_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
+const PUBLIC_EXACT_PATHS = new Set([
+  "/",
+  "/icon",
+  "/apple-icon",
+  "/manifest.webmanifest",
+  "/~offline",
+  "/install-widget.sh",
+  "/sitemap.xml",
+  "/robots.txt",
+  "/j",
+]);
+
+const PUBLIC_PATH_PREFIXES = [
+  "/icon/",
+  "/screenshots/",
+  "/j/",
+  "/login",
+  "/signup",
+  "/request-access",
+  "/forgot-password",
+  "/reset-password",
+  "/before-you-sign-up",
+  "/how-terms-work",
+  "/auth/callback",
+  "/downloads/",
+  "/api/widget",
+  // Bearer-secret auth in route handlers (Edge → Next Telegram proxy)
+  "/api/internal/telegram",
+];
+
 function isPublicPath(pathname: string) {
   return (
-    pathname === "/" ||
-    pathname === "/icon" ||
-    pathname.startsWith("/icon/") ||
-    pathname === "/apple-icon" ||
-    pathname === "/manifest.webmanifest" ||
-    pathname === "/~offline" ||
-    pathname.startsWith("/screenshots/") ||
-    pathname === "/install-widget.sh" ||
-    pathname === "/sitemap.xml" ||
-    pathname === "/robots.txt" ||
-    pathname === "/j" ||
-    pathname.startsWith("/j/") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/signup") ||
-    pathname.startsWith("/request-access") ||
-    pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/reset-password") ||
-    pathname.startsWith("/before-you-sign-up") ||
-    pathname.startsWith("/how-terms-work") ||
-    pathname.startsWith("/auth/callback") ||
-    pathname.startsWith("/downloads/") ||
-    pathname.startsWith("/api/widget") ||
-    // Bearer-secret auth in route handlers (Edge → Next Telegram proxy)
-    pathname.startsWith("/api/internal/telegram")
+    PUBLIC_EXACT_PATHS.has(pathname) || PUBLIC_PATH_PREFIXES.some((p) => pathname.startsWith(p))
   );
+}
+
+function redirectToPathWithNext(request: NextRequest, pathname: string) {
+  const url = request.nextUrl.clone();
+  const next = requestPathWithSearch(request.nextUrl.pathname, request.nextUrl.search);
+  url.pathname = pathname;
+  url.search = "";
+  url.searchParams.set("next", next);
+  return NextResponse.redirect(url);
+}
+
+function redirectToNextParam(request: NextRequest) {
+  const nextPath = safeNextPath(request.nextUrl.searchParams.get("next"));
+  return NextResponse.redirect(new URL(nextPath, request.url));
+}
+
+function redirectForAuthCode(request: NextRequest, pathname: string) {
+  if (!request.nextUrl.searchParams.has("code") || pathname.startsWith("/auth/callback")) {
+    return null;
+  }
+  const url = request.nextUrl.clone();
+  url.pathname = "/auth/callback";
+  return NextResponse.redirect(url);
+}
+
+async function resolveReferralVerified(
+  supabase: ReturnType<typeof createServerClient<Database>>,
+  request: NextRequest,
+  supabaseResponse: NextResponse,
+  userId: string,
+) {
+  const cachedReferralVerified = request.cookies.get(REFERRAL_VERIFIED_COOKIE)?.value === "1";
+  if (cachedReferralVerified) return true;
+
+  const { data: profile } = await supabase
+    .from("users")
+    .select("referral_verified")
+    .eq("id", userId)
+    .maybeSingle();
+  const referralVerified = profile?.referral_verified ?? false;
+
+  if (referralVerified) {
+    supabaseResponse.cookies.set(REFERRAL_VERIFIED_COOKIE, "1", {
+      maxAge: REFERRAL_VERIFIED_COOKIE_MAX_AGE,
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+  }
+
+  return referralVerified;
+}
+
+function redirectForSignedInUser(
+  request: NextRequest,
+  pathname: string,
+  referralVerified: boolean,
+) {
+  const onReferralExemptPath =
+    pathname.startsWith("/complete-signup") || pathname.startsWith("/request-access");
+  if (!referralVerified && !onReferralExemptPath) {
+    return redirectToPathWithNext(request, "/complete-signup");
+  }
+
+  if (referralVerified && pathname.startsWith("/complete-signup")) {
+    return redirectToNextParam(request);
+  }
+
+  if (pathname.startsWith("/login") || pathname.startsWith("/signup")) {
+    return redirectToNextParam(request);
+  }
+
+  return null;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -76,68 +157,21 @@ export async function updateSession(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (request.nextUrl.searchParams.has("code") && !pathname.startsWith("/auth/callback")) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/callback";
-    return NextResponse.redirect(url);
+  const authCodeRedirect = redirectForAuthCode(request, pathname);
+  if (authCodeRedirect) return authCodeRedirect;
+
+  if (!user) {
+    return isPublicPath(pathname) ? supabaseResponse : redirectToPathWithNext(request, "/login");
   }
 
-  if (!user && !isPublicPath(pathname)) {
-    const url = request.nextUrl.clone();
-    const next = requestPathWithSearch(pathname, request.nextUrl.search);
-    url.pathname = "/login";
-    url.search = "";
-    url.searchParams.set("next", next);
-    return NextResponse.redirect(url);
-  }
-
-  if (user) {
-    const cachedReferralVerified = request.cookies.get(REFERRAL_VERIFIED_COOKIE)?.value === "1";
-
-    let referralVerified = cachedReferralVerified;
-    if (!cachedReferralVerified) {
-      const { data: profile } = await supabase
-        .from("users")
-        .select("referral_verified")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      referralVerified = profile?.referral_verified ?? false;
-
-      if (referralVerified) {
-        supabaseResponse.cookies.set(REFERRAL_VERIFIED_COOKIE, "1", {
-          maxAge: REFERRAL_VERIFIED_COOKIE_MAX_AGE,
-          path: "/",
-          httpOnly: true,
-          sameSite: "lax",
-          secure: process.env.NODE_ENV === "production",
-        });
-      }
-    }
-
-    if (
-      !referralVerified &&
-      !pathname.startsWith("/complete-signup") &&
-      !pathname.startsWith("/request-access")
-    ) {
-      const url = request.nextUrl.clone();
-      const next = requestPathWithSearch(pathname, request.nextUrl.search);
-      url.pathname = "/complete-signup";
-      url.search = "";
-      url.searchParams.set("next", next);
-      return NextResponse.redirect(url);
-    }
-
-    if (referralVerified && pathname.startsWith("/complete-signup")) {
-      const nextPath = safeNextPath(request.nextUrl.searchParams.get("next"));
-      return NextResponse.redirect(new URL(nextPath, request.url));
-    }
-
-    if (pathname.startsWith("/login") || pathname.startsWith("/signup")) {
-      const nextPath = safeNextPath(request.nextUrl.searchParams.get("next"));
-      return NextResponse.redirect(new URL(nextPath, request.url));
-    }
-  }
+  const referralVerified = await resolveReferralVerified(
+    supabase,
+    request,
+    supabaseResponse,
+    user.id,
+  );
+  const signedInRedirect = redirectForSignedInUser(request, pathname, referralVerified);
+  if (signedInRedirect) return signedInRedirect;
 
   return supabaseResponse;
 }

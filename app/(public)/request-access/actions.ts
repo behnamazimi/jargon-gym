@@ -12,6 +12,37 @@ export type RequestAccessState = { error: string } | { success: true } | null;
 
 const emailSchema = z.string().trim().toLowerCase().email();
 
+function scheduleAdminNotification(email: string): void {
+  after(async () => {
+    try {
+      await notifyAdmins(email);
+    } catch (err) {
+      console.error("Failed to notify admins of waitlist request:", err);
+    }
+  });
+}
+
+async function resolveRequestEmail(formData: FormData): Promise<string> {
+  const { user } = await getSessionUser();
+  return user?.email ?? formData.get("email")?.toString() ?? "";
+}
+
+async function insertWaitlistRequest(
+  email: string,
+  normalizedEmail: string,
+): Promise<{ failure: string } | { failure: null; isNewRequest: boolean }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("waitlist_requests")
+    .insert({ email, normalized_email: normalizedEmail });
+
+  if (error && error.code !== "23505") {
+    return { failure: "Something went wrong. Try again." };
+  }
+
+  return { failure: null, isNewRequest: !error };
+}
+
 export async function requestAccess(
   _prev: RequestAccessState,
   formData: FormData,
@@ -21,35 +52,21 @@ export async function requestAccess(
     return { success: true };
   }
 
-  const { user } = await getSessionUser();
-  const rawEmail = user?.email ?? formData.get("email")?.toString() ?? "";
+  const rawEmail = await resolveRequestEmail(formData);
   const parsed = emailSchema.safeParse(rawEmail);
   if (!parsed.success) {
     return { error: "Enter a valid email address." };
   }
 
-  const normalizedEmail = parsed.data;
   const email = rawEmail.trim();
-
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("waitlist_requests")
-    .insert({ email, normalized_email: normalizedEmail });
-
-  if (error && error.code !== "23505") {
-    return { error: "Something went wrong. Try again." };
+  const insertResult = await insertWaitlistRequest(email, parsed.data);
+  if (insertResult.failure !== null) {
+    return { error: insertResult.failure };
   }
 
-  if (!error) {
-    after(async () => {
-      try {
-        await notifyAdmins(email);
-      } catch (err) {
-        console.error("Failed to notify admins of waitlist request:", err);
-      }
-    });
+  if (insertResult.isNewRequest) {
+    scheduleAdminNotification(email);
   }
-
   return { success: true };
 }
 

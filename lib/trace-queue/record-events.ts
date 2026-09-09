@@ -29,6 +29,31 @@ export type TraceEventPayload = {
   retrievabilityBefore?: number;
 };
 
+function toEventRpcRecallFields(payload?: TraceEventPayload) {
+  return {
+    p_recall_stability: payload?.recallStability,
+    p_recall_difficulty: payload?.recallDifficulty,
+    p_quiz_knowledge_posterior: payload?.quizKnowledgePosterior,
+    p_crossed_known_threshold: payload?.crossedKnownThreshold ?? false,
+  };
+}
+
+function toEventRpcOutcomeFields(payload?: TraceEventPayload) {
+  return {
+    p_grade: payload?.grade,
+    p_question_type: payload?.questionType,
+    p_retrievability_before: payload?.retrievabilityBefore,
+    p_crossed_learning_threshold: payload?.crossedLearningThreshold ?? false,
+  };
+}
+
+function toEventRpcFields(payload?: TraceEventPayload) {
+  return {
+    ...toEventRpcRecallFields(payload),
+    ...toEventRpcOutcomeFields(payload),
+  };
+}
+
 export async function recordTraceEvent(
   client: Client,
   termId: string,
@@ -38,14 +63,7 @@ export async function recordTraceEvent(
   const { error } = await client.rpc("my_record_review_event", {
     p_term_id: termId,
     p_event: event,
-    p_recall_stability: payload?.recallStability,
-    p_recall_difficulty: payload?.recallDifficulty,
-    p_quiz_knowledge_posterior: payload?.quizKnowledgePosterior,
-    p_crossed_known_threshold: payload?.crossedKnownThreshold ?? false,
-    p_grade: payload?.grade,
-    p_question_type: payload?.questionType,
-    p_retrievability_before: payload?.retrievabilityBefore,
-    p_crossed_learning_threshold: payload?.crossedLearningThreshold ?? false,
+    ...toEventRpcFields(payload),
   });
 
   if (error) throw error;
@@ -62,14 +80,7 @@ export async function recordTraceEventForUser(
     p_user_id: userId,
     p_term_id: termId,
     p_event: event,
-    p_recall_stability: payload?.recallStability,
-    p_recall_difficulty: payload?.recallDifficulty,
-    p_quiz_knowledge_posterior: payload?.quizKnowledgePosterior,
-    p_crossed_known_threshold: payload?.crossedKnownThreshold ?? false,
-    p_grade: payload?.grade,
-    p_question_type: payload?.questionType,
-    p_retrievability_before: payload?.retrievabilityBefore,
-    p_crossed_learning_threshold: payload?.crossedLearningThreshold ?? false,
+    ...toEventRpcFields(payload),
   });
 
   if (error) throw error;

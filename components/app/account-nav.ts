@@ -55,18 +55,23 @@ export const ADMIN_NAV_ITEMS: AccountNavItem[] = [
   { href: "/admin/invites", label: "Invites", icon: Mail },
 ];
 
+const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
+  ["/jargon/read", "Read"],
+  ["/jargon/review", "Review"],
+  ["/jargon/quiz", "Quiz"],
+  ["/jargon/browse", "Browse"],
+  ["/jargon/import", "Import"],
+  ["/jargon/mastery", "Mastery"],
+  ["/jargon/settings", "Settings"],
+  ["/jargon/debug", "Queue debug"],
+  ["/admin/collections", "Manage collections"],
+  ["/admin/invites", "Invites"],
+  ["/admin", "Admin"],
+];
+
 export function studyScreenTitle(pathname: string): string {
-  if (pathname.startsWith("/jargon/read")) return "Read";
-  if (pathname.startsWith("/jargon/review")) return "Review";
-  if (pathname.startsWith("/jargon/quiz")) return "Quiz";
-  if (pathname.startsWith("/jargon/browse")) return "Browse";
-  if (pathname.startsWith("/jargon/import")) return "Import";
-  if (pathname.startsWith("/jargon/mastery")) return "Mastery";
-  if (pathname.startsWith("/jargon/settings")) return "Settings";
-  if (pathname.startsWith("/jargon/debug")) return "Queue debug";
-  if (pathname.startsWith("/admin/collections")) return "Manage collections";
-  if (pathname.startsWith("/admin/invites")) return "Invites";
-  if (pathname.startsWith("/admin")) return "Admin";
   if (pathname === "/jargon") return "Library";
-  return "Jargon Gym";
+
+  const match = STUDY_SCREEN_TITLE_PREFIXES.find(([prefix]) => pathname.startsWith(prefix));
+  return match ? match[1] : "Jargon Gym";
 }

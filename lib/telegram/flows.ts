@@ -40,6 +40,55 @@ export type NormalizedTelegramUpdate = {
 
 export { handleSendDue };
 
+type MessageHandler = (
+  client: Client,
+  chatId: number,
+  trimmed: string,
+) => Promise<TelegramAction[]>;
+
+async function routeStart(client: Client, chatId: number, trimmed: string) {
+  return handleStart(client, chatId, parseStartToken(trimmed));
+}
+
+async function routeRead(client: Client, chatId: number) {
+  return handleRead(client, chatId);
+}
+
+async function routeQuiz(client: Client, chatId: number, trimmed: string) {
+  const userId = await resolveUserIdByChatId(client, chatId);
+  if (!userId) return [send(chatId, CONNECT_MESSAGE)];
+  return handleQuizCommand(client, chatId, userId, trimmed);
+}
+
+async function routeReview(client: Client, chatId: number, trimmed: string) {
+  const userId = await resolveUserIdByChatId(client, chatId);
+  if (!userId) return [send(chatId, CONNECT_MESSAGE)];
+  return handleReviewCommand(client, chatId, userId, trimmed);
+}
+
+const MESSAGE_ROUTES: [predicate: (trimmed: string) => boolean, handler: MessageHandler][] = [
+  [(trimmed) => trimmed.startsWith("/start"), routeStart],
+  [isReadCommand, routeRead],
+  [isQuizCommand, routeQuiz],
+  [isReviewCommand, routeReview],
+];
+
+/** Neither /quiz nor /review setup owns this reply — fall back to help. */
+async function routeSetupText(
+  client: Client,
+  chatId: number,
+  userId: string,
+  trimmed: string,
+): Promise<TelegramAction[]> {
+  const setupResult = await handleQuizSetupText(client, chatId, userId, trimmed);
+  if (setupResult.handled) return setupResult.actions;
+
+  const reviewSetupResult = await handleReviewSetupText(client, chatId, userId, trimmed);
+  if (reviewSetupResult.handled) return reviewSetupResult.actions;
+
+  return [send(chatId, HELP_MESSAGE)];
+}
+
 /** Main entry: process a normalized Telegram update into transport actions. */
 export async function handleTelegramUpdate(
   client: Client,
@@ -55,31 +104,14 @@ export async function handleTelegramUpdate(
   const { chatId, text } = message;
   const trimmed = text.trim();
 
-  if (trimmed.startsWith("/start")) {
-    return handleStart(client, chatId, parseStartToken(trimmed));
-  }
-  if (isReadCommand(trimmed)) {
-    return handleRead(client, chatId);
-  }
-  if (isQuizCommand(trimmed)) {
-    const userId = await resolveUserIdByChatId(client, chatId);
-    if (!userId) return [send(chatId, CONNECT_MESSAGE)];
-    return handleQuizCommand(client, chatId, userId, trimmed);
-  }
-  if (isReviewCommand(trimmed)) {
-    const userId = await resolveUserIdByChatId(client, chatId);
-    if (!userId) return [send(chatId, CONNECT_MESSAGE)];
-    return handleReviewCommand(client, chatId, userId, trimmed);
+  const route = MESSAGE_ROUTES.find(([predicate]) => predicate(trimmed));
+  if (route) {
+    const [, handler] = route;
+    return handler(client, chatId, trimmed);
   }
 
   const userId = await resolveUserIdByChatId(client, chatId);
   if (!userId) return [send(chatId, CONNECT_MESSAGE)];
 
-  const setupResult = await handleQuizSetupText(client, chatId, userId, trimmed);
-  if (setupResult.handled) return setupResult.actions;
-
-  const reviewSetupResult = await handleReviewSetupText(client, chatId, userId, trimmed);
-  if (reviewSetupResult.handled) return reviewSetupResult.actions;
-
-  return [send(chatId, HELP_MESSAGE)];
+  return routeSetupText(client, chatId, userId, trimmed);
 }

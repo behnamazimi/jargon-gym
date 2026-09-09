@@ -24,16 +24,26 @@ export function parseTermInput(
   return { ok: true, data: result.data };
 }
 
+function trimOrNull(value: string | null | undefined): string | null {
+  return value?.trim() || null;
+}
+
+function trimmedOptionalFields(input: TermInput) {
+  return {
+    example: trimOrNull(input.example),
+    mental_model: trimOrNull(input.mental_model),
+    discussion: trimOrNull(input.discussion),
+    anti_example: trimOrNull(input.anti_example),
+    controversy: trimOrNull(input.controversy),
+  };
+}
+
 export function termInputToRow(input: TermInput, domainId: string) {
   return {
     term: input.term.trim(),
     category: input.category.trim(),
     definition: input.definition.trim(),
-    example: input.example?.trim() || null,
-    mental_model: input.mental_model?.trim() || null,
-    discussion: input.discussion?.trim() || null,
-    anti_example: input.anti_example?.trim() || null,
-    controversy: input.controversy?.trim() || null,
+    ...trimmedOptionalFields(input),
     domain_id: domainId,
   };
 }
@@ -43,10 +53,6 @@ export function termInputToUpdateRow(input: TermInput) {
     term: input.term.trim(),
     category: input.category.trim(),
     definition: input.definition.trim(),
-    example: input.example?.trim() || null,
-    mental_model: input.mental_model?.trim() || null,
-    discussion: input.discussion?.trim() || null,
-    anti_example: input.anti_example?.trim() || null,
-    controversy: input.controversy?.trim() || null,
+    ...trimmedOptionalFields(input),
   };
 }

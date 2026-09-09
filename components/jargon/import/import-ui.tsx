@@ -6,27 +6,20 @@ import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
-export function ImportCard({
-  icon: Icon,
+function ImportCardHeaderContent({
+  Icon,
   title,
-  description,
-  children,
-  className,
-  collapsible = false,
-  defaultExpanded = true,
+  headerDescription,
+  collapsible,
+  expanded,
 }: {
-  icon: LucideIcon;
+  Icon: LucideIcon;
   title: string;
-  description?: string;
-  children: ReactNode;
-  className?: string;
-  collapsible?: boolean;
-  defaultExpanded?: boolean;
+  headerDescription?: string;
+  collapsible: boolean;
+  expanded: boolean;
 }) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-  const headerDescription = !collapsible && description ? description : undefined;
-
-  const header = (
+  return (
     <>
       <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon className="size-5" aria-hidden strokeWidth={1.5} />
@@ -49,13 +42,18 @@ export function ImportCard({
       ) : null}
     </>
   );
+}
 
-  const headerClassName = cn(
-    "flex gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5",
-    headerDescription ? "items-start" : "items-center",
-  );
-
-  const body = (
+function ImportCardBody({
+  collapsible,
+  description,
+  children,
+}: {
+  collapsible: boolean;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
     <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
       {collapsible && description ? (
         <p className="m-0 text-sm leading-relaxed text-base-content/60">{description}</p>
@@ -63,29 +61,38 @@ export function ImportCard({
       {children}
     </div>
   );
+}
 
-  if (!collapsible) {
-    return (
-      <Card
-        className={cn(
-          "shadow-surface overflow-hidden rounded-2xl ring-1 ring-base-content/5",
-          className,
-        )}
-      >
-        <div className={cn(headerClassName, "border-b border-base-300/60")}>{header}</div>
-        {body}
-      </Card>
-    );
-  }
+const cardShellClassName = (className?: string) =>
+  cn("shadow-surface overflow-hidden rounded-2xl ring-1 ring-base-content/5", className);
 
+type ImportCardShellProps = {
+  className?: string;
+  headerClassName: string;
+  header: ReactNode;
+  body: ReactNode;
+};
+
+function StaticImportCard({ className, headerClassName, header, body }: ImportCardShellProps) {
   return (
-    <Collapsible isExpanded={expanded} onExpandedChange={setExpanded}>
-      <Card
-        className={cn(
-          "shadow-surface overflow-hidden rounded-2xl ring-1 ring-base-content/5",
-          className,
-        )}
-      >
+    <Card className={cardShellClassName(className)}>
+      <div className={cn(headerClassName, "border-b border-base-300/60")}>{header}</div>
+      {body}
+    </Card>
+  );
+}
+
+function CollapsibleImportCard({
+  className,
+  headerClassName,
+  header,
+  body,
+  expanded,
+  onExpandedChange,
+}: ImportCardShellProps & { expanded: boolean; onExpandedChange: (expanded: boolean) => void }) {
+  return (
+    <Collapsible isExpanded={expanded} onExpandedChange={onExpandedChange}>
+      <Card className={cardShellClassName(className)}>
         <CollapsibleTrigger
           className={cn(
             headerClassName,
@@ -100,6 +107,70 @@ export function ImportCard({
         </CollapsibleContent>
       </Card>
     </Collapsible>
+  );
+}
+
+export function ImportCard({
+  icon: Icon,
+  title,
+  description,
+  children,
+  className,
+  collapsible = false,
+  defaultExpanded = true,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  className?: string;
+  collapsible?: boolean;
+  defaultExpanded?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const headerDescription = !collapsible && description ? description : undefined;
+
+  const header = (
+    <ImportCardHeaderContent
+      Icon={Icon}
+      title={title}
+      headerDescription={headerDescription}
+      collapsible={collapsible}
+      expanded={expanded}
+    />
+  );
+
+  const headerClassName = cn(
+    "flex gap-3 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5",
+    headerDescription ? "items-start" : "items-center",
+  );
+
+  const body = (
+    <ImportCardBody collapsible={collapsible} description={description}>
+      {children}
+    </ImportCardBody>
+  );
+
+  if (!collapsible) {
+    return (
+      <StaticImportCard
+        className={className}
+        headerClassName={headerClassName}
+        header={header}
+        body={body}
+      />
+    );
+  }
+
+  return (
+    <CollapsibleImportCard
+      className={className}
+      headerClassName={headerClassName}
+      header={header}
+      body={body}
+      expanded={expanded}
+      onExpandedChange={setExpanded}
+    />
   );
 }
 

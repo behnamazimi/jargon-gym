@@ -26,6 +26,36 @@ type LlmPanelProps = {
   initialSettings: UserSettings | null;
 };
 
+function getProviderLabel(settings: UserSettings | null) {
+  if (!settings?.provider) return null;
+  return LLM_PROVIDER_OPTIONS.find((option) => option.value === settings.provider)?.label ?? null;
+}
+
+type RemoveKeySectionProps = {
+  onClear: () => void;
+  isClearing: boolean;
+};
+
+function RemoveKeySection({ onClear, isClearing }: RemoveKeySectionProps) {
+  return (
+    <DangerZone
+      title="Remove configuration"
+      description="Removes your saved API key. Quizzes won't work until you add a new one."
+    >
+      <Button
+        type="button"
+        variant="outline"
+        onPress={onClear}
+        isDisabled={isClearing}
+        className="min-h-11 w-full text-error hover:bg-error/10 md:w-auto"
+      >
+        <Trash2 className="size-3.5" strokeWidth={1.5} />
+        {isClearing ? "Removing…" : "Remove API key"}
+      </Button>
+    </DangerZone>
+  );
+}
+
 export function LlmPanel({ initialSettings }: LlmPanelProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [provider, setProvider] = useState<LlmProvider>(initialSettings?.provider ?? "google");
@@ -79,9 +109,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
   }
 
   const llmConfigured = hasLlmConfigured(settings);
-  const providerLabel = settings?.provider
-    ? LLM_PROVIDER_OPTIONS.find((option) => option.value === settings.provider)?.label
-    : null;
+  const providerLabel = getProviderLabel(settings);
 
   return (
     <SettingsPanel
@@ -109,23 +137,7 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
         />
       </SettingsStack>
 
-      {llmConfigured ? (
-        <DangerZone
-          title="Remove configuration"
-          description="Removes your saved API key. Quizzes won't work until you add a new one."
-        >
-          <Button
-            type="button"
-            variant="outline"
-            onPress={handleClear}
-            isDisabled={isClearing}
-            className="min-h-11 w-full text-error hover:bg-error/10 md:w-auto"
-          >
-            <Trash2 className="size-3.5" strokeWidth={1.5} />
-            {isClearing ? "Removing…" : "Remove API key"}
-          </Button>
-        </DangerZone>
-      ) : null}
+      {llmConfigured ? <RemoveKeySection onClear={handleClear} isClearing={isClearing} /> : null}
     </SettingsPanel>
   );
 }

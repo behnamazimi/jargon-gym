@@ -185,33 +185,50 @@ export const className = `
   }
 `;
 
+const PARSE_STATE_FALLBACK = {
+  current: null,
+  revealed: false,
+  widgetDir: null,
+  appBaseUrl: "http://localhost:3000",
+  totalCount: 0,
+  termsLearnedCount: 0,
+  widgetVersion: null,
+  latestWidgetVersion: null,
+  error: "Invalid widget output",
+};
+
+function normalizeWidgetTermFields(data) {
+  return {
+    current: data.current || null,
+    next: data.next || null,
+    revealed: data.revealed ?? false,
+    widgetDir: data.widgetDir || null,
+    appBaseUrl: data.appBaseUrl || "http://localhost:3000",
+  };
+}
+
+function normalizeWidgetMetaFields(data) {
+  return {
+    totalCount: data.totalCount ?? 0,
+    termsLearnedCount: data.termsLearnedCount ?? 0,
+    widgetVersion: data.widgetVersion || null,
+    latestWidgetVersion: data.latestWidgetVersion || null,
+    error: data.error || null,
+  };
+}
+
+function normalizeWidgetState(data) {
+  return {
+    ...normalizeWidgetTermFields(data),
+    ...normalizeWidgetMetaFields(data),
+  };
+}
+
 function parseState(output) {
   try {
-    const data = JSON.parse(output || "{}");
-    return {
-      current: data.current || null,
-      next: data.next || null,
-      revealed: data.revealed ?? false,
-      widgetDir: data.widgetDir || null,
-      appBaseUrl: data.appBaseUrl || "http://localhost:3000",
-      totalCount: data.totalCount ?? 0,
-      termsLearnedCount: data.termsLearnedCount ?? 0,
-      widgetVersion: data.widgetVersion || null,
-      latestWidgetVersion: data.latestWidgetVersion || null,
-      error: data.error || null,
-    };
+    return normalizeWidgetState(JSON.parse(output || "{}"));
   } catch {
-    return {
-      current: null,
-      revealed: false,
-      widgetDir: null,
-      appBaseUrl: "http://localhost:3000",
-      totalCount: 0,
-      termsLearnedCount: 0,
-      widgetVersion: null,
-      latestWidgetVersion: null,
-      error: "Invalid widget output",
-    };
+    return PARSE_STATE_FALLBACK;
   }
 }
 
