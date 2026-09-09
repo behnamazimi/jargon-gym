@@ -1,12 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  getReadFeedBatchAction,
-  recordReadRevealAction,
-  type ReadQueueSeed,
-} from "@/app/(private)/jargon/read/actions";
+import { getReadFeedBatchAction, type ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
 import type { ReviewTerm } from "@/lib/review/types";
+import { useReadRevealTracking } from "@/components/jargon/read/use-read-reveal-tracking";
 
 // Trigger the next batch once this few terms remain past the current
 // position — leaves runway for both a deliberate Next-tap and a fast
@@ -39,10 +36,8 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
   // see goNext/status below for why.
   const [reachedEnd, setReachedEnd] = useState(seed.caughtUp ?? false);
   const [loadError, setLoadError] = useState<string | null>(seed.error ?? null);
-  const [revealedIds, setRevealedIds] = useState<Set<string>>(
-    () => new Set(seed.revealedTermIds ?? []),
-  );
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const { reveal, isRevealed } = useReadRevealTracking(seed.revealedTermIds);
 
   // Refs mirror the latest render's values so stable callbacks (goNext,
   // loadMore) always read current state without needing to be recreated
@@ -62,12 +57,6 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
   // when the user switches collections. Same pattern as
   // hooks/use-shared-domains-browse.ts's requestId guard.
   const requestIdRef = useRef(0);
-  // Synchronous, StrictMode-safe guard for the reveal/record side effect —
-  // two reveal triggers landing in the same tick (a fast double-tap, or
-  // Enter racing a click) must not double-record. `revealedIds` state
-  // exists only to trigger re-renders for masked/revealed UI; this ref is
-  // the actual source of truth for "have we recorded this yet".
-  const recordedIdsRef = useRef<Set<string>>(new Set(seed.revealedTermIds ?? []));
 
   const loadMore = useCallback(async () => {
     if (inFlightRef.current) return;
@@ -131,21 +120,6 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
     setReachedEnd(false);
     setLoadError(null);
   }, [domainId]);
-
-  const reveal = useCallback((termId: string) => {
-    // Always sync UI state, even if the DB write below is guarded off —
-    // self-healing if a stray extra call ever arrives after the ref guard
-    // has already tripped (e.g. a re-fired observer), rather than a
-    // desync where recordedIdsRef thinks a term is done but the masked/
-    // revealed UI never actually reflects it.
-    setRevealedIds((current) => (current.has(termId) ? current : new Set(current).add(termId)));
-
-    if (recordedIdsRef.current.has(termId)) return;
-    recordedIdsRef.current.add(termId);
-    void recordReadRevealAction(termId);
-  }, []);
-
-  const isRevealed = useCallback((termId: string) => revealedIds.has(termId), [revealedIds]);
 
   // If the next term isn't loaded yet, try to fetch it. Whether that
   // succeeds or not, advancing past the last loaded term (even to the

@@ -4,9 +4,31 @@
   "categories": {
     "correctness": "error"
   },
-  "rules": {},
+  "rules": {
+    "max-lines": ["error", 200]
+  },
   "env": {
     "builtin": true
   },
-  "ignorePatterns": [".next/**", "out/**", "build/**", "next-env.d.ts", "node_modules/**"]
+  "ignorePatterns": [
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "node_modules/**",
+    "lib/supabase/database.types.ts"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "components/ui/**",
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "widget/jargon-gym.widget/index.jsx"
+      ],
+      "rules": {
+        "max-lines": "off"
+      }
+    }
+  ]
 }

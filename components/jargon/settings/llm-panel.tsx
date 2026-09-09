@@ -10,20 +10,11 @@ import {
   AlertBanner,
   DangerZone,
   SettingsPanel,
-  SettingsRow,
   SettingsStack,
   StatusPill,
 } from "@/components/jargon/settings/ui";
+import { LlmProviderForm } from "@/components/jargon/settings/llm-provider-form";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   hasLlmConfigured,
   LLM_PROVIDER_OPTIONS,
@@ -103,85 +94,19 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
       {error ? <AlertBanner message={error} /> : null}
 
       <SettingsStack>
-        <SettingsRow
-          title="LLM provider"
-          description={
-            llmConfigured
-              ? `${providerLabel} key ending in ${settings?.apiKeyLast4}. Keys stay encrypted and are only used for quiz generation.`
-              : "Your key stays encrypted and is only used to generate quizzes."
-          }
-        >
-          <Field>
-            <FieldLabel htmlFor="llm-provider">Provider</FieldLabel>
-            <Select
-              value={provider}
-              onChange={(key) => setProvider(key as LlmProvider)}
-              isDisabled={isSaving}
-              className="w-full"
-            >
-              <SelectTrigger id="llm-provider" className="min-h-11 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {LLM_PROVIDER_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} id={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          {llmConfigured && !replacingKey ? (
-            <div className="space-y-2">
-              <p className="m-0 text-sm text-base-content/60">Key saved.</p>
-              <Button
-                type="button"
-                variant="outline"
-                onPress={() => setReplacingKey(true)}
-                className="min-h-11 w-full md:w-auto"
-              >
-                Replace key
-              </Button>
-            </div>
-          ) : (
-            <Field>
-              <FieldLabel htmlFor="llm-api-key">API key</FieldLabel>
-              <Input
-                id="llm-api-key"
-                type="password"
-                value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
-                placeholder="Paste your API key"
-                className="min-h-11"
-                autoComplete="off"
-              />
-              <div className="flex flex-col gap-2 pt-1 md:flex-row">
-                <Button
-                  type="button"
-                  onPress={handleSaveKey}
-                  isDisabled={isSaving || !apiKey.trim()}
-                  className="min-h-11 w-full md:w-auto"
-                >
-                  {isSaving ? "Saving…" : llmConfigured ? "Save new key" : "Save key"}
-                </Button>
-                {llmConfigured && replacingKey ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onPress={() => {
-                      setReplacingKey(false);
-                      setApiKey("");
-                    }}
-                    className="min-h-11 w-full md:w-auto"
-                  >
-                    Cancel
-                  </Button>
-                ) : null}
-              </div>
-            </Field>
-          )}
-        </SettingsRow>
+        <LlmProviderForm
+          settings={settings}
+          llmConfigured={llmConfigured}
+          providerLabel={providerLabel ?? null}
+          provider={provider}
+          onProviderChange={setProvider}
+          apiKey={apiKey}
+          onApiKeyChange={setApiKey}
+          replacingKey={replacingKey}
+          onReplacingKeyChange={setReplacingKey}
+          isSaving={isSaving}
+          onSaveKey={handleSaveKey}
+        />
       </SettingsStack>
 
       {llmConfigured ? (

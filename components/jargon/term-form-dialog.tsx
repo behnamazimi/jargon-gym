@@ -10,10 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { TermRelationshipsEditor } from "@/components/jargon/term-relationships-editor";
+import { TermFormFields } from "@/components/jargon/term-form-fields";
 import { useTermActions } from "@/hooks/use-term-actions";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
 import {
@@ -153,100 +150,15 @@ export function TermFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
-          <Field>
-            <FieldLabel htmlFor="term-name">Term</FieldLabel>
-            <Input
-              id="term-name"
-              value={form.term}
-              onChange={(event) => updateField("term", event.target.value)}
-              placeholder="e.g. Coupling"
-              required
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="term-category">Category</FieldLabel>
-            <Input
-              id="term-category"
-              value={form.category}
-              onChange={(event) => updateField("category", event.target.value)}
-              placeholder="e.g. Architecture"
-              required
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="term-definition">Definition</FieldLabel>
-            <Textarea
-              id="term-definition"
-              value={form.definition}
-              onChange={(event) => updateField("definition", event.target.value)}
-              placeholder="What does this term mean?"
-              className="min-h-24"
-              required
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="term-example">Example (optional)</FieldLabel>
-            <Textarea
-              id="term-example"
-              value={form.example ?? ""}
-              onChange={(event) => updateField("example", event.target.value)}
-              className="min-h-20"
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="term-mental-model">Mental model (optional)</FieldLabel>
-            <Textarea
-              id="term-mental-model"
-              value={form.mental_model ?? ""}
-              onChange={(event) => updateField("mental_model", event.target.value)}
-              className="min-h-20"
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="term-discussion">In practice (optional)</FieldLabel>
-            <Textarea
-              id="term-discussion"
-              value={form.discussion ?? ""}
-              onChange={(event) => updateField("discussion", event.target.value)}
-              className="min-h-20"
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="term-anti-example">Anti-example (optional)</FieldLabel>
-            <Textarea
-              id="term-anti-example"
-              value={form.anti_example ?? ""}
-              onChange={(event) => updateField("anti_example", event.target.value)}
-              className="min-h-20"
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="term-controversy">Debated (optional)</FieldLabel>
-            <Textarea
-              id="term-controversy"
-              value={form.controversy ?? ""}
-              onChange={(event) => updateField("controversy", event.target.value)}
-              className="min-h-20"
-            />
-          </Field>
-
-          {canManageRelationships ? (
-            <TermRelationshipsEditor
-              drafts={relationshipDrafts}
-              onChange={setRelationshipDrafts}
-              domainTerms={domainTerms}
-              sourceTermId={sourceTermId}
-            />
-          ) : null}
-        </div>
+        <TermFormFields
+          form={form}
+          onFieldChange={updateField}
+          canManageRelationships={canManageRelationships}
+          relationshipDrafts={relationshipDrafts}
+          onRelationshipDraftsChange={setRelationshipDrafts}
+          domainTerms={domainTerms}
+          sourceTermId={sourceTermId}
+        />
 
         {displayError ? (
           <Alert variant="destructive">

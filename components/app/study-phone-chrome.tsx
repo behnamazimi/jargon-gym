@@ -1,75 +1,20 @@
 "use client";
 
-import { ArrowLeft, Ellipsis, LogOut, XIcon } from "lucide-react";
+import { ArrowLeft, Ellipsis } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { logout } from "@/app/(private)/auth/actions";
-import {
-  ACCOUNT_OVERFLOW_NAV,
-  ADMIN_NAV_ITEMS,
-  STUDY_DOCK_TABS,
-  emailInitials,
-  studyScreenTitle,
-} from "@/components/app/account-nav";
+import { type ReactNode } from "react";
+import { STUDY_DOCK_TABS, emailInitials, studyScreenTitle } from "@/components/app/account-nav";
 import { BrandIcon } from "@/components/brand-icon";
 import { InstallButton } from "@/components/pwa/install-prompt";
 import { StreakBadge } from "@/components/streak-badge";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { isDockPath, isLibraryPath, isMorePath } from "@/lib/chrome";
 import { cn } from "@/lib/utils";
+import { useStudyPhone } from "@/components/app/study-phone-context";
 
-type StudyPhoneContextValue = {
-  email: string;
-  isAdmin: boolean;
-  initialIsDark: boolean;
-  currentStreak: number;
-  longestStreak: number;
-  moreOpen: boolean;
-  setMoreOpen: (open: boolean) => void;
-};
-
-const StudyPhoneContext = createContext<StudyPhoneContextValue | null>(null);
-
-function useStudyPhone() {
-  const ctx = useContext(StudyPhoneContext);
-  if (!ctx) {
-    throw new Error("Study phone chrome must be used inside StudyPhoneProvider");
-  }
-  return ctx;
-}
-
-export function StudyPhoneProvider({
-  email,
-  isAdmin,
-  initialIsDark,
-  currentStreak,
-  longestStreak,
-  children,
-}: {
-  email: string;
-  isAdmin: boolean;
-  initialIsDark: boolean;
-  currentStreak: number;
-  longestStreak: number;
-  children: ReactNode;
-}) {
-  const [moreOpen, setMoreOpen] = useState(false);
-  const value = useMemo(
-    () => ({ email, isAdmin, initialIsDark, currentStreak, longestStreak, moreOpen, setMoreOpen }),
-    [email, isAdmin, initialIsDark, currentStreak, longestStreak, moreOpen],
-  );
-
-  return (
-    <StudyPhoneContext.Provider value={value}>
-      {children}
-      <MoreSheet />
-    </StudyPhoneContext.Provider>
-  );
-}
+export { StudyPhoneProvider } from "@/components/app/study-phone-context";
 
 export function StudyPhoneTopBar() {
   const pathname = usePathname();
@@ -179,82 +124,5 @@ export function StudyPhoneDock() {
         <DockItemLabel active={moreActive}>More</DockItemLabel>
       </button>
     </nav>
-  );
-}
-
-function MoreSheet() {
-  const { email, isAdmin, initialIsDark, moreOpen, setMoreOpen } = useStudyPhone();
-  const [isBusy, setIsBusy] = useState(false);
-  const initials = emailInitials(email);
-
-  async function handleLogout() {
-    setIsBusy(true);
-    await logout();
-  }
-
-  return (
-    <Sheet
-      isOpen={moreOpen}
-      onOpenChange={setMoreOpen}
-      side="bottom"
-      showCloseButton={false}
-      className="max-h-[min(36rem,85dvh)] rounded-t-2xl pb-safe md:hidden"
-    >
-      <SheetHeader className="border-b border-base-300 px-4 py-3">
-        <div className="flex items-center gap-1">
-          <SheetTitle className="min-w-0 flex-1">More</SheetTitle>
-          <ThemeToggle initialIsDark={initialIsDark} className="btn-sm shrink-0" />
-          <SheetClose className="shrink-0">
-            <XIcon className="size-4" />
-            <span className="sr-only">Close</span>
-          </SheetClose>
-        </div>
-        <div className="flex items-center gap-3 pt-1">
-          <Avatar>
-            <AvatarFallback className="text-xs font-semibold text-primary">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <p className="m-0 min-w-0 truncate text-sm">{email}</p>
-        </div>
-      </SheetHeader>
-      <ul className="menu w-full p-2">
-        {ACCOUNT_OVERFLOW_NAV.map((item) => {
-          const Icon = item.icon;
-          return (
-            <li key={item.href}>
-              <Link href={item.href} onClick={() => setMoreOpen(false)} className="min-h-11">
-                <Icon className="size-4" strokeWidth={1.5} aria-hidden />
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-        {isAdmin
-          ? ADMIN_NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              return (
-                <li key={item.href}>
-                  <Link href={item.href} onClick={() => setMoreOpen(false)} className="min-h-11">
-                    <Icon className="size-4" strokeWidth={1.5} aria-hidden />
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })
-          : null}
-        <li>
-          <button
-            type="button"
-            className="min-h-11 text-error"
-            disabled={isBusy}
-            onClick={() => void handleLogout()}
-          >
-            <LogOut className="size-4" strokeWidth={1.5} aria-hidden />
-            {isBusy ? "Signing out…" : "Log out"}
-          </button>
-        </li>
-      </ul>
-    </Sheet>
   );
 }

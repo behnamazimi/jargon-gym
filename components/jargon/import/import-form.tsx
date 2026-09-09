@@ -1,11 +1,14 @@
 "use client";
 
-import { Braces, Ellipsis, FileUp } from "lucide-react";
+import { Braces } from "lucide-react";
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
-import { ImportCard, ImportToolbar } from "@/components/jargon/import/import-ui";
+import { ImportCard } from "@/components/jargon/import/import-ui";
+import {
+  ImportFormDesktopToolbar,
+  ImportFormMobileToolbar,
+} from "@/components/jargon/import/import-form-toolbars";
 import { formatImportJson, readJsonFile } from "@/lib/jargon/import/json-helpers";
 import {
   IMPORT_MINIMAL_PAYLOAD,
@@ -80,95 +83,22 @@ export function ImportForm({
     />
   );
 
+  const toolbarProps = {
+    hasContent,
+    onApplyTemplate: applyTemplate,
+    onFormat: handleFormat,
+    onClear: handleClear,
+    onUploadClick: () => fileInputRef.current?.click(),
+  };
+
   return (
     <ImportCard
       icon={Braces}
       title="Paste or upload JSON"
       description="Add terms to a collection you own, or create a new one from the file."
     >
-      <div className="flex items-center gap-2 md:hidden">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="min-h-11 flex-1"
-          onPress={() => fileInputRef.current?.click()}
-        >
-          <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
-          Upload .json
-        </Button>
-        <DropdownMenuTrigger>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="btn-square min-h-11 min-w-11"
-            aria-label="More import tools"
-          >
-            <Ellipsis className="size-4" aria-hidden strokeWidth={1.5} />
-          </Button>
-          <DropdownMenu className="min-w-[160px]">
-            <DropdownMenuItem onAction={() => applyTemplate("sample")}>
-              Load example
-            </DropdownMenuItem>
-            <DropdownMenuItem onAction={() => applyTemplate("minimal")}>
-              Load minimal
-            </DropdownMenuItem>
-            <DropdownMenuItem isDisabled={!hasContent} onAction={handleFormat}>
-              Format JSON
-            </DropdownMenuItem>
-            <DropdownMenuItem isDisabled={!hasContent} onAction={handleClear}>
-              Clear
-            </DropdownMenuItem>
-          </DropdownMenu>
-        </DropdownMenuTrigger>
-      </div>
-
-      <div className="hidden items-center justify-between gap-2 md:flex">
-        <ImportToolbar>
-          <Button type="button" variant="outline" size="sm" onPress={() => applyTemplate("sample")}>
-            Load example
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={() => applyTemplate("minimal")}
-          >
-            Load minimal
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={handleFormat}
-            isDisabled={!hasContent}
-          >
-            Format JSON
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={() => fileInputRef.current?.click()}
-          >
-            <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
-            Upload .json
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={handleClear}
-            isDisabled={!hasContent}
-          >
-            Clear
-          </Button>
-        </ImportToolbar>
-        <span className="shrink-0 text-xs tabular-nums text-base-content/60">
-          {hasContent ? `${lineCount} lines` : "No content yet"}
-        </span>
-      </div>
+      <ImportFormMobileToolbar {...toolbarProps} />
+      <ImportFormDesktopToolbar {...toolbarProps} lineCount={lineCount} />
 
       <div className="space-y-1.5">
         <p className="m-0 text-end text-xs tabular-nums text-base-content/60 md:hidden">

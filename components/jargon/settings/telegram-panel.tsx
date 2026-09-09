@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Send, Unlink } from "lucide-react";
+import { Send, Unlink } from "lucide-react";
 import { useState, useTransition } from "react";
 import {
   disconnectTelegramAction,
@@ -9,26 +9,15 @@ import {
 } from "@/app/(private)/jargon/settings/actions";
 import {
   AlertBanner,
-  CopyField,
   DangerZone,
   SettingsPanel,
-  SettingsRow,
   SettingsStack,
   StatusPill,
 } from "@/components/jargon/settings/ui";
-import { Button, LinkButton } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  TELEGRAM_CADENCE_OPTIONS,
-  type TelegramCadence,
-  type TelegramLinkStatus,
-} from "@/lib/telegram/types";
+import { TelegramConnectRow } from "@/components/jargon/settings/telegram-connect-row";
+import { TelegramRemindersRow } from "@/components/jargon/settings/telegram-reminders-row";
+import { Button } from "@/components/ui/button";
+import { type TelegramCadence, type TelegramLinkStatus } from "@/lib/telegram/types";
 import { formatDateTime } from "@/lib/utils";
 
 type TelegramPanelProps = {
@@ -119,64 +108,18 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
 
       <SettingsStack>
         {!status.connected ? (
-          <SettingsRow
-            title="Connect"
-            description="Generate a link, open it in Telegram, and tap Start. Don't share the link — it expires in 5 minutes."
-          >
-            <Button
-              type="button"
-              onPress={handleGenerateLink}
-              isDisabled={isGenerating}
-              className="min-h-11 w-full md:w-auto"
-            >
-              {isGenerating ? "Generating…" : "Generate Telegram link"}
-            </Button>
-
-            {deepLink ? (
-              <div className="space-y-3">
-                <CopyField value={deepLink} />
-                <LinkButton
-                  href={deepLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="outline"
-                  className="min-h-11 w-full md:w-auto"
-                >
-                  Open bot
-                  <ExternalLink className="size-3.5" strokeWidth={1.5} />
-                </LinkButton>
-              </div>
-            ) : null}
-          </SettingsRow>
+          <TelegramConnectRow
+            isGenerating={isGenerating}
+            onGenerateLink={handleGenerateLink}
+            deepLink={deepLink}
+          />
         ) : (
-          <SettingsRow
-            titleId="telegram-reminders-title"
-            title="Reminders"
-            description={
-              linkedSince
-                ? `Linked ${linkedSince}. Reminders go out on a rolling schedule from your last one.`
-                : "Reminders go out on a rolling schedule from your last one."
-            }
-          >
-            <Select
-              value={status.cadence}
-              onChange={(key) => handleCadenceChange(key as TelegramCadence)}
-              isDisabled={isSavingCadence}
-              className="w-full"
-              aria-labelledby="telegram-reminders-title"
-            >
-              <SelectTrigger id="telegram-cadence" className="min-h-11 w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TELEGRAM_CADENCE_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} id={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </SettingsRow>
+          <TelegramRemindersRow
+            linkedSince={linkedSince}
+            cadence={status.cadence}
+            isSavingCadence={isSavingCadence}
+            onCadenceChange={handleCadenceChange}
+          />
         )}
       </SettingsStack>
 
