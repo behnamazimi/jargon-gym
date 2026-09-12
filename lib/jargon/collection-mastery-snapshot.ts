@@ -7,10 +7,13 @@ import {
   type TraceCandidate,
 } from "@/lib/trace-queue";
 import {
+  AGAIN,
   CALIBRATION_MIN_BUCKET_SAMPLE,
+  EASY,
+  GOOD,
+  HARD,
   isSameLocalDay,
   STUDY_TIMEZONE,
-  summarizeGradeDistribution,
   type ReviewGrade,
 } from "@/lib/trace";
 import type { CollectionDomainRow } from "./collections";
@@ -63,24 +66,37 @@ export type GradeDistributionSummary = {
   total: number;
 };
 
+/** Folds my_grade_distribution()'s one-row-per-grade result into the same
+ *  Record<ReviewGrade, number> shape summarizeGradeDistribution produces
+ *  from raw rows. Kept separate from summarizeGradeDistribution itself
+ *  (lib/trace/calibration-activity.ts) since that function's raw-row input
+ *  is still exactly what the debug page's getCalibrationSummaryAction
+ *  needs — not safe to repoint at this pre-aggregated shape. */
+function foldGradeDistributionCounts(
+  rows: Array<{ grade: number; count: number }>,
+): Record<ReviewGrade, number> {
+  const counts: Record<ReviewGrade, number> = { [AGAIN]: 0, [HARD]: 0, [GOOD]: 0, [EASY]: 0 };
+  for (const row of rows) {
+    if (row.grade === AGAIN || row.grade === HARD || row.grade === GOOD || row.grade === EASY) {
+      counts[row.grade] += row.count;
+    }
+  }
+  return counts;
+}
+
 /** Grade-usage breakdown for the Mastery overview — how often each FSRS-5
  *  grade gets used across this user's own review_pass/fail history,
  *  purely descriptive (no "you're too generous" framing). Fetched
  *  up front alongside the rest of the snapshot (not lazily on expand) so
- *  the overview never re-flows once the panel opens. A narrower sibling
- *  of the debug page's getCalibrationSummaryAction: same underlying
- *  summarizeGradeDistribution, but only the counts a user should see, not
- *  the debug-only calibration/attention fields. Null below
- *  CALIBRATION_MIN_BUCKET_SAMPLE total gradings — same "not enough data
- *  yet" bar the debug page's own buckets use. */
+ *  the overview never re-flows once the panel opens. Grouped server-side
+ *  via a GROUP BY grade RPC rather than pulling every graded event into JS.
+ *  Null below CALIBRATION_MIN_BUCKET_SAMPLE total gradings — same "not
+ *  enough data yet" bar the debug page's own buckets use. */
 async function fetchGradeDistribution(client: Client): Promise<GradeDistributionSummary | null> {
-  const { data, error } = await client
-    .from("review_events")
-    .select("grade")
-    .in("event", ["review_pass", "review_fail"]);
+  const { data, error } = await client.rpc("my_grade_distribution");
   if (error) throw error;
 
-  const counts = summarizeGradeDistribution(data);
+  const counts = foldGradeDistributionCounts(data ?? []);
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
   if (total < CALIBRATION_MIN_BUCKET_SAMPLE) return null;
 
