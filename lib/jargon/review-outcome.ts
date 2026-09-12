@@ -59,11 +59,12 @@ async function writeEvent(
   },
 ) {
   if (mode === "session") {
-    await recordTraceEvent(client, termId, event, payload);
-    await bumpStreak(client);
+    await Promise.all([recordTraceEvent(client, termId, event, payload), bumpStreak(client)]);
   } else {
-    await recordTraceEventForUser(client, userId, termId, event, payload);
-    await bumpStreakForUser(client, userId);
+    await Promise.all([
+      recordTraceEventForUser(client, userId, termId, event, payload),
+      bumpStreakForUser(client, userId),
+    ]);
   }
 }
 
