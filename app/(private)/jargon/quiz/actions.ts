@@ -123,11 +123,16 @@ export async function generateQuizAction(input: {
   }
 }
 
-/** Record outcome for a single answer: updates the Bayesian recognition posterior. */
+/** Record outcome for a single answer: updates the Bayesian recognition
+ *  posterior. On the last question, also finalizes the quiz (revalidates
+ *  the jargon pages) in the same round trip instead of a separate action —
+ *  finalizing has no data dependency on the answer write, it just needs to
+ *  happen after it succeeds. */
 export async function recordQuizAnswerAction(input: {
   termId: string;
   passed: boolean;
   questionType: QuestionType;
+  isLastQuestion?: boolean;
 }): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
@@ -141,21 +146,14 @@ export async function recordQuizAnswerAction(input: {
       questionType: input.questionType,
       mode: "session",
     });
-
-    return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't update term progress.";
     return { error: message };
   }
-}
 
-/** Finalize quiz. Mutations already happened per answer. */
-export async function submitQuizResultsAction(): Promise<{ error?: string }> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) {
-    return { error: "Log in to take a quiz." };
+  if (input.isLastQuestion) {
+    revalidatePath("/jargon");
   }
 
-  revalidatePath("/jargon");
   return {};
 }
