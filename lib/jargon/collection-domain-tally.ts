@@ -1,37 +1,30 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
+import { computeTraceSnapshot } from "@/lib/trace";
+import { toTraceState, type ProgressStateRow } from "./progress-state";
 import type { CollectionDomainRow } from "./collections";
 
 type Client = SupabaseClient<Database>;
 
-type ProgressStateRow = {
-  domain_id: string;
-  read_count: number;
-  last_read_at: string | null;
-  recall_stability: number | null;
-  recall_difficulty: number | null;
-  review_recall_count: number;
-  last_review_recall_at: string | null;
-  quiz_knowledge_posterior: number | null;
-  quiz_test_count: number;
-  last_quiz_tested_at: string | null;
-  ever_mastered_at: string | null;
-  marked_known_at: string | null;
-};
+export type { ProgressStateRow };
 
-function toTraceState(row: ProgressStateRow): TraceState {
-  return {
-    readCount: row.read_count,
-    lastReadAt: row.last_read_at ? new Date(row.last_read_at) : null,
-    recallStability: row.recall_stability,
-    recallDifficulty: row.recall_difficulty,
-    reviewRecallCount: row.review_recall_count,
-    lastReviewRecallAt: row.last_review_recall_at ? new Date(row.last_review_recall_at) : null,
-    quizKnowledgePosterior: row.quiz_knowledge_posterior,
-    quizTestCount: row.quiz_test_count,
-    lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
-  };
+/** Raw my_progress_state_by_domain rows for every term in `domainIds` —
+ *  fetched once by callers that need both the tallied counts (via
+ *  tallyDomainStats below) and the individual rows (via
+ *  lib/jargon/progress-state.ts's foldProgressStateRows), instead of
+ *  hitting the RPC again for a subset of the same domains. */
+export async function fetchProgressStateRows(
+  client: Client,
+  domainIds: string[],
+): Promise<ProgressStateRow[]> {
+  if (domainIds.length === 0) return [];
+
+  const { data, error } = await client.rpc("my_progress_state_by_domain", {
+    p_domain_ids: domainIds,
+  });
+
+  if (error) throw error;
+  return data;
 }
 
 /** "known" is a read-only label derived live from Mastery_adjusted, not a
@@ -42,7 +35,7 @@ function toTraceState(row: ProgressStateRow): TraceState {
  *  but counted into `knownCount`/`termsLearnedCount` too since it reduces
  *  what's left to learn regardless of how it happened; `markedKnownCount`
  *  tracks it on its own for the Mastery page's "N marked known by you" line. */
-function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
+export function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
   const stats = new Map<
     string,
     { termCount: number; knownCount: number; termsLearnedCount: number; markedKnownCount: number }
@@ -70,17 +63,6 @@ function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
   }
 
   return stats;
-}
-
-export async function fetchDomainStats(client: Client, domainIds: string[]) {
-  if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
-
-  const { data, error } = await client.rpc("my_progress_state_by_domain", {
-    p_domain_ids: domainIds,
-  });
-
-  if (error) throw error;
-  return tallyDomainStats(domainIds, data);
 }
 
 /** Service-role / admin client: stats for an explicit userId (no `auth.uid()` session). */

@@ -1,84 +1,13 @@
 import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  fetchUserCollection,
+  fetchUserCollectionForUser,
+  fetchUserCollectionWithProgressRows,
+} from "./collections";
 import type { Database } from "@/lib/supabase/database.types";
-import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
-import { fetchUserCollection, fetchUserCollectionForUser } from "./collections";
 
 type Client = SupabaseClient<Database>;
-
-export type DomainProgressState = {
-  knownTermIds: string[];
-  /** Terms the user manually marked known — a separate, user-set signal
-   *  from TRACE's earned `knownTermIds` label above. Never conflated. */
-  markedKnownTermIds: string[];
-  /** Terms with a permanent ever_mastered_at high-water mark — distinct
-   *  from the live, decaying `knownTermIds` label above. */
-  everMasteredTermIds: string[];
-};
-
-function toTraceState(row: {
-  read_count: number;
-  last_read_at: string | null;
-  recall_stability: number | null;
-  recall_difficulty: number | null;
-  review_recall_count: number;
-  last_review_recall_at: string | null;
-  quiz_knowledge_posterior: number | null;
-  quiz_test_count: number;
-  last_quiz_tested_at: string | null;
-}): TraceState {
-  return {
-    readCount: row.read_count,
-    lastReadAt: row.last_read_at ? new Date(row.last_read_at) : null,
-    recallStability: row.recall_stability,
-    recallDifficulty: row.recall_difficulty,
-    reviewRecallCount: row.review_recall_count,
-    lastReviewRecallAt: row.last_review_recall_at ? new Date(row.last_review_recall_at) : null,
-    quizKnowledgePosterior: row.quiz_knowledge_posterior,
-    quizTestCount: row.quiz_test_count,
-    lastQuizTestedAt: row.last_quiz_tested_at ? new Date(row.last_quiz_tested_at) : null,
-  };
-}
-
-/** Known-term IDs for every term in the given domains, including paused
- *  collections. "Known" is a read-only label derived live from
- *  Mastery_adjusted (lib/trace.deriveKnownLabel) — one RPC joins
- *  terms + review_state server-side by domain_id, avoiding a term-id list
- *  in an `.in()` filter that blows past PostgREST's URL length limit for
- *  large collections. */
-export async function fetchProgressStateByDomain(
-  client: Client,
-  domainIds: string[],
-): Promise<DomainProgressState> {
-  if (domainIds.length === 0) {
-    return { knownTermIds: [], markedKnownTermIds: [], everMasteredTermIds: [] };
-  }
-
-  const { data, error } = await client.rpc("my_progress_state_by_domain", {
-    p_domain_ids: domainIds,
-  });
-
-  if (error) throw error;
-
-  const now = new Date();
-  const knownTermIds: string[] = [];
-  const markedKnownTermIds: string[] = [];
-  const everMasteredTermIds: string[] = [];
-
-  for (const row of data) {
-    if (computeTraceSnapshot(toTraceState(row), now).knownLabel === "known") {
-      knownTermIds.push(row.term_id);
-    }
-    if (row.marked_known_at !== null) {
-      markedKnownTermIds.push(row.term_id);
-    }
-    if (row.ever_mastered_at !== null) {
-      everMasteredTermIds.push(row.term_id);
-    }
-  }
-
-  return { knownTermIds, markedKnownTermIds, everMasteredTermIds };
-}
 
 async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
   const { data, error } = await client.rpc("review_domain_ids", {
@@ -89,16 +18,19 @@ async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
   return data ?? [];
 }
 
+async function fetchMyReviewDomainIdsFromRpc(client: Client) {
+  const { data, error } = await client.rpc("my_review_domain_ids");
+  if (error) throw error;
+  return data ?? [];
+}
+
 export const resolveReviewDomainIds = cache(async function resolveReviewDomainIds(
   client: Client,
   userId: string,
 ) {
   const [collectionRows, reviewDomainIds] = await Promise.all([
     fetchUserCollection(client, userId),
-    client.rpc("my_review_domain_ids").then(({ data, error }) => {
-      if (error) throw error;
-      return data ?? [];
-    }),
+    fetchMyReviewDomainIdsFromRpc(client),
   ]);
 
   return { reviewDomainIds, collectionRows };
@@ -115,6 +47,22 @@ export const resolveReviewDomainIdsForUser = cache(async function resolveReviewD
 
   return { reviewDomainIds, collectionRows };
 });
+
+/** Like {@link resolveReviewDomainIds}, but also returns the raw progress
+ *  rows the collection stats were tallied from — for callers (the
+ *  collection page) that additionally need one specific domain's
+ *  known/marked/mastered term ids without a second round trip to
+ *  my_progress_state_by_domain. Use foldProgressStateRows on the result. */
+export const resolveReviewDomainIdsWithProgressRows = cache(
+  async function resolveReviewDomainIdsWithProgressRows(client: Client, userId: string) {
+    const [{ rows: collectionRows, progressRows }, reviewDomainIds] = await Promise.all([
+      fetchUserCollectionWithProgressRows(client, userId),
+      fetchMyReviewDomainIdsFromRpc(client),
+    ]);
+
+    return { reviewDomainIds, collectionRows, progressRows };
+  },
+);
 
 export async function resetDomainProgress(client: Client, _userId: string, domainId: string) {
   const { error } = await client.rpc("my_reset_domain_progress", {

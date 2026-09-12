@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
-import { fetchProgressStateByDomain, resolveReviewDomainIds } from "./known-state";
+import { resolveReviewDomainIdsWithProgressRows } from "./known-state";
+import { foldProgressStateRows } from "./progress-state";
 import { fetchTermRelationshipsForTerms, fetchTermsByDomain } from "./terms";
 import type { JargonPageData } from "./types";
 
@@ -34,7 +35,8 @@ export async function loadJargonPageData(
   try {
     const { userId, selectedDomainId } = options;
 
-    const { reviewDomainIds, collectionRows } = await resolveReviewDomainIds(client, userId);
+    const { reviewDomainIds, collectionRows, progressRows } =
+      await resolveReviewDomainIdsWithProgressRows(client, userId);
 
     if (collectionRows.length === 0) {
       throw new JargonDataError("You don't have any collections yet.");
@@ -66,17 +68,19 @@ export async function loadJargonPageData(
       markedKnownCount: selectedRow.markedKnownCount,
     });
 
-    // Known/unknown is stored per term, not per review pool. Fetch for the
-    // selected collection even when it's paused — reviewDomainIds would omit
-    // it and the collection page would paint every known term as unknown.
+    // Known/unknown is stored per term, not per review pool. Selected-
+    // collection state must hold even when it's paused — reviewDomainIds
+    // would omit it and the collection page would paint every known term as
+    // unknown — so it's derived from progressRows (already fetched for every
+    // owned+added domain above, paused or not) rather than a second RPC call.
     const termRows = await fetchTermsByDomain(client, selectedRow.id);
     const mappedTerms = termRows.map(mapTerm);
     const termIds = mappedTerms.map((term) => term.id);
-    const [progressState, relationshipRows] = await Promise.all([
-      fetchProgressStateByDomain(client, [selectedRow.id]),
-      fetchTermRelationshipsForTerms(client, termIds),
-    ]);
-    const { knownTermIds, markedKnownTermIds, everMasteredTermIds } = progressState;
+    const relationshipRows = await fetchTermRelationshipsForTerms(client, termIds);
+    const { knownTermIds, markedKnownTermIds, everMasteredTermIds } = foldProgressStateRows(
+      [selectedRow.id],
+      progressRows,
+    );
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
     return {
