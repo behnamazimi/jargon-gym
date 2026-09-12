@@ -163,7 +163,12 @@ export function useQuizPlaying({
     setIsSubmittingAnswer(true);
     setErrorMessage(null);
 
-    await retryQuizSubmit(answerSetters, pendingFinalAnswers, questions.length);
+    await retryQuizSubmit(
+      answerSetters,
+      pendingFinalAnswers,
+      questions[currentIndex],
+      questions.length,
+    );
   }
 
   const score = resultsScore?.score ?? answers.filter((answer) => answer.passed).length;
