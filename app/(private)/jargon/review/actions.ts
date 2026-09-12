@@ -12,18 +12,37 @@ import { listStudyCollections } from "@/lib/study/collections";
 import { getPoolStats } from "@/lib/trace-queue";
 import type { ReviewGrade } from "@/lib/trace";
 
-export async function getReviewSetupData() {
+function resolveReviewCollectionId(
+  domainParam: string | undefined,
+  collections: { id: string }[],
+): string {
+  if (domainParam && collections.some((collection) => collection.id === domainParam)) {
+    return domainParam;
+  }
+  return "all";
+}
+
+/** Also computes the setup screen's pool-stats breakdown up front, scoped
+ *  to the resolved domain, so the client doesn't need a second round trip
+ *  on first mount just to fill in the "never reviewed / reviewed / covered"
+ *  line — see getReviewPoolStatsAction, which still handles the breakdown
+ *  refetching when the user changes the collection filter afterward. */
+export async function getReviewSetupData(domainParam?: string) {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
   }
 
-  const [collections, narrationAccess] = await Promise.all([
-    listStudyCollections(auth.supabase, auth.user.id),
+  const collections = await listStudyCollections(auth.supabase, auth.user.id);
+  const domainId = resolveReviewCollectionId(domainParam, collections);
+  const scope = { domainIds: domainId === "all" ? ("all" as const) : [domainId] };
+
+  const [narrationAccess, poolStats] = await Promise.all([
     getNarrationAccessForUser(auth.supabase, auth.user.id),
+    getPoolStats(auth.supabase, auth.user.id, scope, "review"),
   ]);
 
-  return { collections, narrationAccess };
+  return { collections, narrationAccess, poolStats, domainId };
 }
 
 export async function getReviewPoolStatsAction(domainIds: string[] | "all") {

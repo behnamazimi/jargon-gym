@@ -1,6 +1,7 @@
 "use client";
 
 import { type StudyCollection } from "@/lib/study/types";
+import type { PoolStats } from "@/lib/trace-queue";
 import { ReviewSummary } from "@/components/jargon/review/review-summary";
 import { useReviewKeyboard } from "@/components/jargon/review/use-review-keyboard";
 import { useReviewSession } from "@/components/jargon/review/use-review-session";
@@ -12,11 +13,17 @@ type ReviewPageProps = {
   collections: StudyCollection[];
   initialDomainId?: string;
   narrationAccess: boolean;
+  initialPoolStats?: PoolStats | null;
 };
 
-export function ReviewPage({ collections, initialDomainId, narrationAccess }: ReviewPageProps) {
+export function ReviewPage({
+  collections,
+  initialDomainId,
+  narrationAccess,
+  initialPoolStats,
+}: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
-  const session = useReviewSession(collections, initialDomainId);
+  const session = useReviewSession(collections, initialDomainId, initialPoolStats);
 
   useReviewKeyboard({
     onReveal: session.handleReveal,
