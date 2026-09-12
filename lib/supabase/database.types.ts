@@ -831,6 +831,13 @@ export type Database = {
         }[];
       };
       my_bump_streak: { Args: never; Returns: undefined };
+      my_first_seen_at_by_term: {
+        Args: { p_term_ids: string[] };
+        Returns: {
+          first_seen_at: string;
+          term_id: string;
+        }[];
+      };
       my_get_streak_history: {
         Args: never;
         Returns: {
@@ -873,6 +880,13 @@ export type Database = {
           recall_difficulty: number;
           recall_stability: number;
           review_recall_count: number;
+        }[];
+      };
+      my_grade_distribution: {
+        Args: never;
+        Returns: {
+          count: number;
+          grade: number;
         }[];
       };
       my_progress_state_by_domain: {

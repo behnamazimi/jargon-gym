@@ -71,28 +71,25 @@ export type MasteryOverviewData = {
 };
 
 /** First-touch timestamp per term, from the append-only `review_events`
- *  log — batched once across every mastered term on the page rather than
- *  queried per row. `TraceCandidate.createdAt` looks tempting here but is
- *  the term's own creation date in `terms`, not when this user first saw
- *  it, so it can't stand in for this. */
+ *  log — batched once across every mastered term on the page via a
+ *  MIN(created_at) GROUP BY term_id RPC rather than pulling every event
+ *  row for these terms into JS. `TraceCandidate.createdAt` looks tempting
+ *  here but is the term's own creation date in `terms`, not when this user
+ *  first saw it, so it can't stand in for this. */
 async function fetchFirstSeenAtByTermId(
   client: Client,
   termIds: string[],
 ): Promise<Map<string, Date>> {
   if (termIds.length === 0) return new Map();
 
-  const { data, error } = await client
-    .from("review_events")
-    .select("term_id, created_at")
-    .in("term_id", termIds)
-    .order("created_at", { ascending: true });
+  const { data, error } = await client.rpc("my_first_seen_at_by_term", {
+    p_term_ids: termIds,
+  });
   if (error) throw error;
 
   const firstSeenAtByTermId = new Map<string, Date>();
   for (const row of data) {
-    if (!firstSeenAtByTermId.has(row.term_id)) {
-      firstSeenAtByTermId.set(row.term_id, new Date(row.created_at));
-    }
+    firstSeenAtByTermId.set(row.term_id, new Date(row.first_seen_at));
   }
   return firstSeenAtByTermId;
 }
