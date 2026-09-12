@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
 import { fetchProgressStateByDomain, resolveReviewDomainIds } from "./known-state";
-import { fetchTermRelationshipsForTerms, fetchTermsByDomain } from "./terms";
+import { fetchTermRelationshipsForDomain, fetchTermsByDomain } from "./terms";
 import type { JargonPageData } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -71,10 +71,9 @@ export async function loadJargonPageData(
     // it and the collection page would paint every known term as unknown.
     const termRows = await fetchTermsByDomain(client, selectedRow.id);
     const mappedTerms = termRows.map(mapTerm);
-    const termIds = mappedTerms.map((term) => term.id);
     const [progressState, relationshipRows] = await Promise.all([
       fetchProgressStateByDomain(client, [selectedRow.id]),
-      fetchTermRelationshipsForTerms(client, termIds),
+      fetchTermRelationshipsForDomain(client, selectedRow.id),
     ]);
     const { knownTermIds, markedKnownTermIds, everMasteredTermIds } = progressState;
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);

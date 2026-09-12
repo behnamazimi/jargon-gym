@@ -116,3 +116,33 @@ export async function fetchTermRelationshipsForTerms(
     ];
   });
 }
+
+/**
+ * All relationships touching domain `domainId` — source OR target term
+ * belongs to it. Domain-scoped RPC, not a term-id list, so it doesn't hit
+ * PostgREST's URL length limit for large domains. Only equivalent to
+ * fetchTermRelationshipsForTerms(client, everyTermIdInDomain) because
+ * term_relationships rows are always single-domain (RLS-enforced on every
+ * insert/update, see 20260725140000_user_owned_domains.sql) — do not reuse
+ * this for a caller that needs cross-domain relationship lookups.
+ */
+export async function fetchTermRelationshipsForDomain(
+  client: Client,
+  domainId: string,
+): Promise<TermRelationshipLink[]> {
+  const { data, error } = await client.rpc("my_term_relationships_by_domain", {
+    p_domain_id: domainId,
+  });
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    relationship_type: row.relationship_type,
+    description: row.description,
+    source_term_id: row.source_term_id,
+    target_term_id: row.target_term_id,
+    source_term_name: row.source_term_name,
+    target_term_name: row.target_term_name,
+  }));
+}

@@ -154,12 +154,17 @@ export async function fetchSharedDomainsBrowse(
   const collectionIds = await fetchCollectionIds(client, userId);
   const inCollection = new Set(collectionIds);
 
-  const [all, available, inCollectionCount] = await Promise.all([
+  const [all, inCollectionCount] = await Promise.all([
     countMatching(client, userId, search, "all", collectionIds),
-    countMatching(client, userId, search, "available", collectionIds),
     countMatching(client, userId, search, "in-collection", collectionIds),
   ]);
 
+  // "available" and "in-collection" exactly partition "all" — applyBrowseFilters
+  // applies them as complementary id-in-collectionIds filters over the same
+  // base predicate "all" uses, so every matching row is in exactly one of
+  // the two. Re-verify this identity before relying on it if a new filter
+  // dimension is ever added here.
+  const available = all - inCollectionCount;
   const counts: BrowseCounts = { all, available, inCollection: inCollectionCount };
   const matching = selectMatchingCount(filter, counts);
 
