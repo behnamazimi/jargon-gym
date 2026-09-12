@@ -61,7 +61,7 @@ export function buildQuizPrompt(terms: QuizTerm[], plan: QuizGenerationSlot[]): 
 
   return `Generate exactly ${terms.length} vocabulary quiz questions in the domain(s): ${JSON.stringify(domainLabel)} — one per term below, in the same order as the input. Each term already has a required "type" — you must write that exact question shape for that term (${mcqCount} "multiple_choice", ${trueFalseCount} "true_false" — fixed, do not change any term's type).
 
-Each term is given as: id, type, and definition. Use the definition to write the question but do not copy it verbatim — test comprehension via a scenario, use case, or contrast instead of restating it.
+Each term is given as: id, type, and definition. Use the definition to write the question but do not copy it verbatim — the question must require applying the concept to a scenario, use case, or contrast, not just recognizing a reworded version of the definition. If a learner could match your prompt back to the definition by wording alone, without understanding what the term means, rewrite it.
 
 Terms:
 ${termList}
@@ -93,9 +93,9 @@ Rules:
 - Use each termId exactly once, preserving input order.
 - multiple_choice: 4-5 options, short sequential ids ("a", "b", "c", ...). Exactly one correct option — always a single-element correctOptionIds array. Vary which option letter is correct across questions; do not always put the answer in the same position.
 - For some multiple_choice questions (roughly half of them), use a definition-match format: write a short definition of the term in the prompt without naming it, then ask which option is the term that matches that definition. In those questions, each option's text must be a term name — the correct option is the target term's name; distractors are other plausible term names from the same domain, not definitions.
-- Distractors must be other real jargon, common misconceptions, or near-miss definitions a learner at this level could plausibly confuse with the real term — never random unrelated words.
+- Distractors must be other real jargon, common misconceptions, or near-miss definitions a learner at this level could plausibly confuse with the real term. Each distractor must share a category, mechanism, or use case with the correct answer — never an option from an obviously unrelated concern that a learner could rule out without knowing the target term.
 - correctOptionIds must reference only ids present in that question's options.
-- true_false: vary true vs. false roughly evenly across the set — do not make every statement true.
+- true_false: vary true vs. false roughly evenly across the set — do not make every statement true. False statements must alter one specific, plausible-sounding detail (a scope, a trigger condition, a boundary, or a cause/effect direction) while keeping everything else accurate — never swap in an unrelated term or an absurd claim that's obviously false without knowing the term.
 - Prompts must be self-contained: don't assume the reader has the definition in front of them, and don't reference other terms from the list (this can leak answers).
 - Tone: write the way a helpful colleague would quiz someone — plain, natural, easy to follow. Avoid robotic or exam-template phrasing (e.g. "Which of the following best describes…", "It is important to note that…", "The aforementioned term"). Keep prompts and option text short, direct, and conversational; use simple words unless the jargon itself requires a technical term.`;
 }
