@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
@@ -88,7 +89,10 @@ async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
   return data ?? [];
 }
 
-export async function resolveReviewDomainIds(client: Client, userId: string) {
+export const resolveReviewDomainIds = cache(async function resolveReviewDomainIds(
+  client: Client,
+  userId: string,
+) {
   const [collectionRows, reviewDomainIds] = await Promise.all([
     fetchUserCollection(client, userId),
     client.rpc("my_review_domain_ids").then(({ data, error }) => {
@@ -98,16 +102,19 @@ export async function resolveReviewDomainIds(client: Client, userId: string) {
   ]);
 
   return { reviewDomainIds, collectionRows };
-}
+});
 
-export async function resolveReviewDomainIdsForUser(client: Client, userId: string) {
+export const resolveReviewDomainIdsForUser = cache(async function resolveReviewDomainIdsForUser(
+  client: Client,
+  userId: string,
+) {
   const [collectionRows, reviewDomainIds] = await Promise.all([
     fetchUserCollectionForUser(client, userId),
     fetchReviewDomainIdsFromRpc(client, userId),
   ]);
 
   return { reviewDomainIds, collectionRows };
-}
+});
 
 export async function resetDomainProgress(client: Client, _userId: string, domainId: string) {
   const { error } = await client.rpc("my_reset_domain_progress", {
