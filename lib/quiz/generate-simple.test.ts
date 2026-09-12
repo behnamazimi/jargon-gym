@@ -188,4 +188,60 @@ describe("generateSimpleQuiz", () => {
     expect(questions).toHaveLength(1);
     expect(["multiple_choice", "true_false"]).toContain(questions[0].type);
   });
+
+  it("produces both true and false outcomes for plain true_false questions", async () => {
+    // No example/antiExample on any term, so none qualify for example-
+    // judgment — every true_false question in the output is a plain one.
+    // This isolates makeTrue's alternation, which used to be an interleaved
+    // counter and is now precomputed before the per-term work runs
+    // concurrently — a bug there (e.g. defaulting every term to one value)
+    // wouldn't show up in the shape/count assertions elsewhere in this file.
+    const terms: QuizTerm[] = Array.from({ length: 10 }, (_, i) =>
+      makeTerm({ id: `t${i}`, term: `Term${i}` }),
+    );
+    const client = makeClient([
+      { id: "x", term: "Distractor X" },
+      { id: "y", term: "Distractor Y" },
+      { id: "z", term: "Distractor Z" },
+    ]);
+
+    const seenAnswers = new Set<boolean>();
+    for (let i = 0; i < 20; i++) {
+      const questions = await generateSimpleQuiz(terms, client);
+      for (const q of questions) {
+        if (q.type === "true_false") seenAnswers.add(q.correctAnswer);
+      }
+    }
+
+    expect(seenAnswers.has(true)).toBe(true);
+    expect(seenAnswers.has(false)).toBe(true);
+  });
+
+  it("falls back to multiple_choice, without dropping the term, when a plain true_false question has no distractor to borrow", async () => {
+    // No example/antiExample (excludes example-judgment) and a completely
+    // empty domain (no other terms, no relationships) means any term picked
+    // for a *false* plain true/false question has nothing to borrow a
+    // distractor from — buildPlainTrueFalseQuestion returns null for that
+    // term, and it must fall back to multiple_choice for that same term
+    // rather than the term silently disappearing from the quiz.
+    const terms: QuizTerm[] = Array.from({ length: 5 }, (_, i) =>
+      makeTerm({ id: `t${i}`, term: `Term${i}` }),
+    );
+    const client = makeClient([]);
+
+    for (let i = 0; i < 20; i++) {
+      const questions = await generateSimpleQuiz(terms, client);
+      expect(questions).toHaveLength(terms.length);
+      expect(new Set(questions.map((q) => q.termId)).size).toBe(terms.length);
+
+      for (const q of questions) {
+        if (q.type === "true_false") {
+          // A false plain true/false question needs a borrowed distractor,
+          // which doesn't exist here, so any true_false question that
+          // survives must be the true (no-distractor-needed) case.
+          expect(q.correctAnswer).toBe(true);
+        }
+      }
+    }
+  });
 });
