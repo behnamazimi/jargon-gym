@@ -84,6 +84,7 @@ async function generateAiQuizResult(
     provider: credentials.provider,
     apiKey: credentials.apiKey,
     terms,
+    client: auth.supabase,
   });
 
   return { questions, terms, providerLabel: LLM_PROVIDER_LABELS[credentials.provider] };

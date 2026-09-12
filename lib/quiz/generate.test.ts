@@ -1,11 +1,38 @@
 import { generateObject } from "ai";
 import { describe, expect, it, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
 import { generateQuizQuestions } from "./generate";
 import type { QuizTerm } from "./types";
 
 vi.mock("ai", () => ({
   generateObject: vi.fn(),
 }));
+
+type Client = SupabaseClient<Database>;
+
+function makeClient(): Client {
+  return {
+    from(table: string) {
+      if (table === "term_relationships") {
+        return {
+          select: () => ({
+            or: () => Promise.resolve({ data: [], error: null }),
+          }),
+        };
+      }
+      return {
+        select: () => ({
+          eq: () => ({
+            not: () => ({
+              limit: () => Promise.resolve({ data: [], error: null }),
+            }),
+          }),
+        }),
+      };
+    },
+  } as unknown as Client;
+}
 
 function makeTerm(overrides: Partial<QuizTerm>): QuizTerm {
   return {
@@ -80,6 +107,7 @@ describe("generateQuizQuestions", () => {
       provider: "anthropic",
       apiKey: "test-key",
       terms,
+      client: makeClient(),
     });
 
     const trueFalseCount = questions.filter((q) => q.type === "true_false").length;

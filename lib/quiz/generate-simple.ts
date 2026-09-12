@@ -79,7 +79,7 @@ export async function generateSimpleQuiz(
   // most plain true/false questions can add, so the two flavors combined
   // never exceed the quiz-wide cap.
   const maxTrueFalse = Math.floor(terms.length * TRUE_FALSE_MAX_SHARE);
-  const exampleJudgment = assignExampleJudgmentQuestions(terms, maxTrueFalse);
+  const exampleJudgment = await assignExampleJudgmentQuestions(terms, client, maxTrueFalse);
 
   const remainingTerms = terms.filter((term) => !exampleJudgment.has(term.id));
   const plainTrueFalseTarget = Math.max(

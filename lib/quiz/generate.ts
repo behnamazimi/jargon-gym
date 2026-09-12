@@ -1,7 +1,9 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LlmProvider } from "@/lib/llm/types";
+import type { Database } from "@/lib/supabase/database.types";
 import {
   assignExampleJudgmentQuestions,
   buildExampleJudgmentQuestionLine,
@@ -69,12 +71,17 @@ export async function generateQuizQuestions(input: {
   provider: LlmProvider;
   apiKey: string;
   terms: QuizTerm[];
+  client: SupabaseClient<Database>;
 }): Promise<QuizQuestion[]> {
   // Example-judgment questions are built deterministically — same source of
   // truth as the non-AI quiz path (lib/quiz/example-judgment.ts) — so the
   // model is only ever asked to produce the two plain shapes below.
   const maxTrueFalse = Math.floor(input.terms.length * TRUE_FALSE_MAX_SHARE);
-  const exampleJudgment = assignExampleJudgmentQuestions(input.terms, maxTrueFalse);
+  const exampleJudgment = await assignExampleJudgmentQuestions(
+    input.terms,
+    input.client,
+    maxTrueFalse,
+  );
   const remainderTerms = input.terms.filter((term) => !exampleJudgment.has(term.id));
 
   const judgmentQuestions = new Map<string, QuizQuestion>();

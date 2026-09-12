@@ -6,7 +6,8 @@ import type { QuizTerm } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-function makeClient(domainTerms: { id: string; term: string }[]): Client {
+function makeClient(domainTerms: { id: string; term: string; example?: string | null }[]): Client {
+  const rows = domainTerms.map((t) => ({ ...t, example: t.example ?? null }));
   return {
     from(table: string) {
       if (table === "term_relationships") {
@@ -20,7 +21,7 @@ function makeClient(domainTerms: { id: string; term: string }[]): Client {
         select: () => ({
           eq: () => ({
             not: () => ({
-              limit: () => Promise.resolve({ data: domainTerms, error: null }),
+              limit: () => Promise.resolve({ data: rows, error: null }),
             }),
           }),
         }),
@@ -104,6 +105,8 @@ describe("generateSimpleQuiz", () => {
       makeTerm({ id: "plain-2", term: "Plain2" }),
       makeTerm({ id: "plain-3", term: "Plain3" }),
     ];
+    // None of these distractors have an `example`, so there's nothing to
+    // borrow — each one-sided term keeps its single authored candidate.
     const client = makeClient([
       { id: "x", term: "Distractor X" },
       { id: "y", term: "Distractor Y" },
@@ -125,6 +128,31 @@ describe("generateSimpleQuiz", () => {
       expect(antiQ.correctAnswer).toBe(false);
       expect(antiQ.prompt).toBe('Does this illustrate "OnlyAnti"?\nA tempting but wrong example.');
     }
+  });
+
+  it("can answer false for an example-only term when a distractor has a real example to borrow", async () => {
+    // 5 terms so the 40% cap (floor(5 * 0.4) = 2) leaves room for the
+    // example-only term to actually be selected as an illustration question.
+    const terms: QuizTerm[] = [
+      makeTerm({ id: "only-example", term: "OnlyExample", example: "A real example." }),
+      makeTerm({ id: "plain-1", term: "Plain1" }),
+      makeTerm({ id: "plain-2", term: "Plain2" }),
+      makeTerm({ id: "plain-3", term: "Plain3" }),
+      makeTerm({ id: "plain-4", term: "Plain4" }),
+    ];
+    const client = makeClient([
+      { id: "x", term: "Distractor X", example: "Distractor's real example." },
+    ]);
+
+    const seenAnswers = new Set<boolean>();
+    for (let i = 0; i < 50; i++) {
+      const questions = await generateSimpleQuiz(terms, client);
+      const q = questions.find((question) => question.termId === "only-example");
+      if (q?.type === "true_false") seenAnswers.add(q.correctAnswer);
+    }
+
+    expect(seenAnswers.has(true)).toBe(true);
+    expect(seenAnswers.has(false)).toBe(true);
   });
 
   it("keeps example-judgment and plain true_false combined at or under 40% of the quiz", async () => {

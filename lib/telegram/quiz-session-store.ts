@@ -131,7 +131,7 @@ export async function createSession(
     "admin",
   );
   const termIds = cards.map((t) => t.id);
-  const exampleJudgment = Object.fromEntries(assignExampleJudgmentQuestions(cards));
+  const exampleJudgment = Object.fromEntries(await assignExampleJudgmentQuestions(cards, client));
 
   const session: ReviewSession = {
     userId,

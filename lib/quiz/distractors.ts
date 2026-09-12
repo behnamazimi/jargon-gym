@@ -3,7 +3,7 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Client = SupabaseClient<Database>;
 
-type TermRef = { id: string; term: string };
+type TermRef = { id: string; term: string; example: string | null };
 
 async function fetchRelatedDistractors(
   client: Client,
@@ -17,8 +17,8 @@ async function fetchRelatedDistractors(
       `
       source_term_id,
       target_term_id,
-      source:terms!term_relationships_source_term_id_fkey(id, term),
-      target:terms!term_relationships_target_term_id_fkey(id, term)
+      source:terms!term_relationships_source_term_id_fkey(id, term, example),
+      target:terms!term_relationships_target_term_id_fkey(id, term, example)
     `,
     )
     .or(`source_term_id.eq.${termId},target_term_id.eq.${termId}`);
@@ -49,7 +49,7 @@ async function fetchRandomDistractors(
 ): Promise<TermRef[]> {
   const { data: randomTerms, error: randomError } = await client
     .from("terms")
-    .select("id, term")
+    .select("id, term, example")
     .eq("domain_id", domainId)
     .not("id", "in", `(${excludedIds.join(",")})`)
     .limit(needed * 3);
@@ -57,7 +57,7 @@ async function fetchRandomDistractors(
   if (randomError || !randomTerms) return [];
 
   const shuffled = randomTerms.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, needed).map((t) => ({ id: t.id, term: t.term }));
+  return shuffled.slice(0, needed).map((t) => ({ id: t.id, term: t.term, example: t.example }));
 }
 
 /**
@@ -68,7 +68,7 @@ export async function selectDistractorsFromDomain(
   termId: string,
   domainId: string,
   count: number = 3,
-): Promise<Array<{ id: string; term: string }>> {
+): Promise<TermRef[]> {
   const excludedIds = [termId];
   const distractors = await fetchRelatedDistractors(client, termId, excludedIds, count);
 
