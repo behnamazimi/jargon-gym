@@ -917,6 +917,18 @@ export type Database = {
         Args: { p_marked: boolean; p_term_id: string };
         Returns: undefined;
       };
+      my_term_relationships_by_domain: {
+        Args: { p_domain_id: string };
+        Returns: {
+          description: string;
+          id: string;
+          relationship_type: string;
+          source_term_id: string;
+          source_term_name: string;
+          target_term_id: string;
+          target_term_name: string;
+        }[];
+      };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
       progress_state_by_domain: {
         Args: { p_domain_ids: string[]; p_user_id: string };
