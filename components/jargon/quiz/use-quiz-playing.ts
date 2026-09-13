@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { generateQuizAction, recordQuizAnswerAction } from "@/app/(private)/jargon/quiz/actions";
+import { generateQuizAction } from "@/app/(private)/jargon/quiz/actions";
 import { revalidateStudyPathsAction } from "@/app/(private)/jargon/actions";
 import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
 import {
   clearQuizSession,
   loadQuizSession,
   saveQuizSession,
-  type PendingQuizWrite,
   type QuizSessionState,
 } from "@/lib/quiz/session-storage";
 import type { QuizStep } from "@/components/jargon/quiz/use-quiz-setup";
 import { submitQuizAnswer } from "@/components/jargon/quiz/quiz-answer-actions";
-import { useToast } from "@/components/ui/toast";
-import { useTraceWriteQueue } from "@/lib/study/trace-write-queue";
+import { useQuizWriteQueue } from "@/components/jargon/quiz/use-quiz-write-queue";
 
 type UseQuizPlayingArgs = {
   step: QuizStep;
@@ -43,7 +41,6 @@ export function useQuizPlaying({
   const [terms, setTerms] = useState<QuizTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswer[]>([]);
-  const [pendingWrites, setPendingWrites] = useState<PendingQuizWrite[]>([]);
   const [resultsScore, setResultsScore] = useState<{
     score: number;
     total: number;
@@ -51,10 +48,23 @@ export function useQuizPlaying({
   const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
 
-  const { toast } = useToast();
-  const queue = useTraceWriteQueue();
-  const sessionCompleteRef = useRef(false);
   const advancedQuestionKeyRef = useRef<string | null>(null);
+
+  const {
+    pendingWrites,
+    setPendingWrites,
+    enqueueAnswerWrite,
+    flushPendingWrites,
+    markSessionComplete,
+    resetSession,
+  } = useQuizWriteQueue({
+    setErrorMessage,
+    onSessionIdleAfterComplete: () => {
+      clearQuizSession();
+      setSavedSession(null);
+      void revalidateStudyPathsAction("quiz");
+    },
+  });
 
   useEffect(() => {
     setSavedSession(loadQuizSession());
@@ -87,45 +97,6 @@ export function useQuizPlaying({
   const termById = useMemo(() => new Map(terms.map((term) => [term.id, term])), [terms]);
   const correctSoFar = answers.filter((answer) => answer.passed).length;
 
-  function maybeFinalizeSession() {
-    if (!sessionCompleteRef.current || !queue.getState().isIdle) return;
-    clearQuizSession();
-    setSavedSession(null);
-    void revalidateStudyPathsAction("quiz");
-  }
-
-  function markSessionComplete() {
-    sessionCompleteRef.current = true;
-    maybeFinalizeSession();
-  }
-
-  /** Enqueues the background write for one answer and wires up its settle
-   *  handling — shared by a fresh submit and by resume-replay, so both
-   *  paths retry/toast/clean up pendingWrites identically. */
-  function enqueueAnswerWrite(write: PendingQuizWrite) {
-    queue.enqueue({
-      label: `quiz:${write.termId}`,
-      run: () =>
-        recordQuizAnswerAction({
-          termId: write.termId,
-          passed: write.passed,
-          questionType: write.questionType,
-        }),
-      onSettled: (result, outcome) => {
-        if (outcome === "success") {
-          setPendingWrites((prev) => prev.filter((w) => w.id !== write.id));
-        }
-        if (result.error) {
-          setErrorMessage(result.error);
-        }
-        if (outcome === "exhausted") {
-          toast("Couldn't save an answer. We'll keep trying.", "destructive");
-        }
-        maybeFinalizeSession();
-      },
-    });
-  }
-
   const answerSetters = {
     setStep,
     setAnswers,
@@ -139,7 +110,7 @@ export function useQuizPlaying({
   function handleResumeSession() {
     if (!savedSession) return;
 
-    sessionCompleteRef.current = false;
+    resetSession();
     advancedQuestionKeyRef.current = null;
     setQuestionStyle(savedSession.setup.questionStyle ?? "ai");
     setSelectedCollectionId(
@@ -156,19 +127,19 @@ export function useQuizPlaying({
     setErrorMessage(null);
     setSavedSession(null);
     setStep("playing");
-
-    for (const write of savedSession.pendingWrites) {
-      enqueueAnswerWrite(write);
-    }
+    flushPendingWrites(savedSession.pendingWrites);
   }
 
   function handleDiscardSession() {
+    // Discarding the session UI must not discard answers the user already
+    // submitted — give any unconfirmed write one more shot before clearing.
+    if (savedSession) flushPendingWrites(savedSession.pendingWrites);
     clearQuizSession();
     setSavedSession(null);
   }
 
   function resetQuizState() {
-    sessionCompleteRef.current = false;
+    resetSession();
     advancedQuestionKeyRef.current = null;
     clearQuizSession();
     setSavedSession(null);
@@ -189,7 +160,11 @@ export function useQuizPlaying({
       return;
     }
 
-    sessionCompleteRef.current = false;
+    // Same as discard: starting fresh abandons the OLD session's UI, but
+    // any answer the user already submitted in it still needs to reach the
+    // server, so flush before clearing storage.
+    if (savedSession) flushPendingWrites(savedSession.pendingWrites);
+    resetSession();
     advancedQuestionKeyRef.current = null;
     clearQuizSession();
     setSavedSession(null);

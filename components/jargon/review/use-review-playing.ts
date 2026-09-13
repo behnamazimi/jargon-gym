@@ -62,14 +62,20 @@ export function useReviewPlaying({
     setCardCount,
   };
 
-  const { pendingWrites, setPendingWrites, enqueueRating, markComplete, resetSession } =
-    useReviewWriteQueue({
-      setErrorMessage,
-      onSessionIdleAfterComplete: () => {
-        finalizeReviewSessionIfComplete(setters);
-        void revalidateStudyPathsAction("review");
-      },
-    });
+  const {
+    pendingWrites,
+    setPendingWrites,
+    enqueueRating,
+    flushPendingWrites,
+    markComplete,
+    resetSession,
+  } = useReviewWriteQueue({
+    setErrorMessage,
+    onSessionIdleAfterComplete: () => {
+      finalizeReviewSessionIfComplete(setters);
+      void revalidateStudyPathsAction("review");
+    },
+  });
 
   useEffect(() => {
     setSavedSession(loadReviewSession());
@@ -122,17 +128,22 @@ export function useReviewPlaying({
     resetSession();
     advancedCardIdRef.current = null;
     resumeReviewSession({ ...setters, setPendingWrites }, savedSession);
-    for (const write of savedSession.pendingWrites) {
-      enqueueRating(write.termId, write.grade);
-    }
+    flushPendingWrites(savedSession.pendingWrites);
   }
 
   function handleDiscardSession() {
+    // Discarding the session UI must not discard grades the user already
+    // tapped — give any unconfirmed write one more shot before clearing.
+    if (savedSession) flushPendingWrites(savedSession.pendingWrites);
     clearReviewSession();
     setters.setSavedSession(null);
   }
 
   function handleStartReview() {
+    // Same as discard: starting fresh abandons the OLD session's UI, but
+    // any grade the user already tapped in it still needs to reach the
+    // server, so flush before startReviewSession clears storage.
+    if (savedSession) flushPendingWrites(savedSession.pendingWrites);
     resetSession();
     advancedCardIdRef.current = null;
     startReviewSession({ ...setters, setPendingWrites }, currentSetup, startReview);
