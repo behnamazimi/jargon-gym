@@ -13,7 +13,7 @@ type TermListProps = {
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => void;
   onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (term: Term, index: number) => void;
+  onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
 };
 
 export function TermList({

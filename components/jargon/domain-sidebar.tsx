@@ -1,7 +1,6 @@
 "use client";
 
 import { PauseCircle, Plus, Search, X } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,7 @@ import { cn } from "@/lib/utils";
 type DomainSidebarProps = {
   domains: Domain[];
   currentDomainId: string;
+  onSelectDomain: (domainId: string) => void;
   onDomainSelect?: () => void;
   className?: string;
 };
@@ -94,10 +94,10 @@ function DomainSidebarSection({
 export function DomainSidebar({
   domains,
   currentDomainId,
+  onSelectDomain,
   onDomainSelect,
   className,
 }: DomainSidebarProps) {
-  const router = useRouter();
   const [filterQuery, setFilterQuery] = useState("");
 
   const filteredDomains = useMemo(() => {
@@ -117,7 +117,7 @@ export function DomainSidebar({
 
   function handleSelect(domainId: string) {
     if (domainId !== currentDomainId) {
-      router.push(`/jargon?domain=${domainId}`);
+      onSelectDomain(domainId);
     }
     onDomainSelect?.();
   }

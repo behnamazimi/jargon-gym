@@ -24,7 +24,7 @@ type TermCardProps = {
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => void;
   onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (term: Term, index: number) => void;
+  onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
 };
 
 function KnownBadge() {
@@ -80,7 +80,7 @@ type CardToolsProps = {
   isOwner: boolean;
   narrationAccess: boolean;
   onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (term: Term, index: number) => void;
+  onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
 };
 
 function CardTools({

@@ -17,10 +17,11 @@ export default async function JargonListPage({ searchParams }: PageProps) {
   }
 
   if ("error" in setup) {
+    const showImportLink = "showImportLink" in setup;
     return (
-      <PageCenter className={setup.showImportLink ? "gap-3" : undefined}>
+      <PageCenter className={showImportLink ? "gap-3" : undefined}>
         <p className="text-sm text-base-content/60">{setup.error}</p>
-        {setup.showImportLink ? <LinkButton href="/jargon/import">Import jargon</LinkButton> : null}
+        {showImportLink ? <LinkButton href="/jargon/import">Import jargon</LinkButton> : null}
       </PageCenter>
     );
   }

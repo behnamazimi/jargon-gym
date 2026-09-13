@@ -23,7 +23,7 @@ type TermActionsMenuProps = {
   domainId: string;
   domainTerms: Term[];
   onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (term: Term, index: number) => void;
+  onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
 };
 
 export function TermActionsMenu({
@@ -46,7 +46,7 @@ export function TermActionsMenu({
     if (success) {
       toast(`"${term.term}" deleted`);
     } else {
-      onTermRemoveFailed(term, index === -1 ? domainTerms.length : index);
+      onTermRemoveFailed(term, index === -1 ? domainTerms.length : index, domainId);
       toast(`Couldn't delete "${term.term}" — it's back in the list.`, "destructive");
     }
   }

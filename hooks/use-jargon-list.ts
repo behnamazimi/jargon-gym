@@ -18,7 +18,13 @@ export function useJargonList(initialData: JargonPageData) {
     setTerms((prev) => prev.filter((t) => t.id !== termId));
   }, []);
 
-  const restoreTermLocally = useCallback((term: Term, index: number) => {
+  // The delete this is rolling back was scoped to whichever domain was on
+  // screen when it started. If the user has since switched collections
+  // (the page no longer remounts on switch — see jargon-page.tsx), `terms`
+  // now belongs to a different domain, and splicing the old term back in
+  // would corrupt that domain's list. Bail if the domain has moved on.
+  const restoreTermLocally = useCallback((term: Term, index: number, domainId: string) => {
+    if (domainId !== domainIdRef.current) return;
     setTerms((prev) => {
       const next = [...prev];
       next.splice(Math.min(index, next.length), 0, term);
@@ -38,6 +44,8 @@ export function useJargonList(initialData: JargonPageData) {
     () => domains.find((d) => d.id === initialData.domain.id) ?? initialData.domain,
     [domains, initialData.domain],
   );
+  const domainIdRef = useRef(domain.id);
+  domainIdRef.current = domain.id;
 
   const setDomainActiveForReview = useCallback((domainId: string, active: boolean) => {
     setDomains((prev) =>

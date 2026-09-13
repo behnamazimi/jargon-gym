@@ -3,8 +3,18 @@
 import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import type { JargonPageData } from "@/lib/jargon/types";
 
-export async function getJargonSetupData(selectedDomainId?: string) {
+/** Explicit so "key in result" narrows cleanly at call sites — TS's
+ *  inferred return type for a multi-branch async function doesn't always
+ *  discriminate a union the same way an annotated one does. */
+export type JargonSetupResult =
+  | { error: string }
+  | { emptyCollection: true }
+  | { error: string; showImportLink: true }
+  | { data: JargonPageData; narrationAccess: boolean };
+
+export async function getJargonSetupData(selectedDomainId?: string): Promise<JargonSetupResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to view your collection." as const };
@@ -33,4 +43,10 @@ export async function getJargonSetupData(selectedDomainId?: string) {
 
     return { error: message, showImportLink: true as const };
   }
+}
+
+/** Client-invoked counterpart to getJargonSetupData, for switching
+ *  collections in place without a route navigation. */
+export async function getJargonCollectionDataAction(domainId: string): Promise<JargonSetupResult> {
+  return getJargonSetupData(domainId);
 }

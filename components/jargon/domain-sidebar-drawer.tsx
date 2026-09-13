@@ -11,6 +11,7 @@ type DomainSidebarDrawerProps = {
   domains: Domain[];
   currentDomain: Domain;
   currentDomainId: string;
+  onSelectDomain: (domainId: string) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   className?: string;
@@ -20,6 +21,7 @@ export function DomainSidebarDrawer({
   domains,
   currentDomain,
   currentDomainId,
+  onSelectDomain,
   open,
   onOpenChange,
   className,
@@ -57,6 +59,7 @@ export function DomainSidebarDrawer({
           <DomainSidebar
             domains={domains}
             currentDomainId={currentDomainId}
+            onSelectDomain={onSelectDomain}
             onDomainSelect={() => onOpenChange(false)}
             className="min-h-0 flex-1"
           />
