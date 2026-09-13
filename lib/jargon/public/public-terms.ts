@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/public";
 import { attachRelationshipsToTerms, mapTerm } from "@/lib/jargon/mappers";
 import type { TermRelationshipLink } from "@/lib/jargon/types";
@@ -69,7 +70,9 @@ export type PublicDomainPage = {
   terms: PublicTermSummary[];
 };
 
-export async function getPublicDomainPage(domainSlug: string): Promise<PublicDomainPage | null> {
+export const getPublicDomainPage = cache(async function getPublicDomainPage(
+  domainSlug: string,
+): Promise<PublicDomainPage | null> {
   const supabase = createPublicClient();
 
   const { data: domainRow, error: domainError } = await supabase
@@ -105,7 +108,7 @@ export async function getPublicDomainPage(domainSlug: string): Promise<PublicDom
       definition: row.definition,
     })),
   };
-}
+});
 
 export type PublicTermPage = {
   domain: PublicDomain;
@@ -113,7 +116,7 @@ export type PublicTermPage = {
   relatedTermSlugsById: Map<string, string>;
 };
 
-export async function getPublicTermPage(
+export const getPublicTermPage = cache(async function getPublicTermPage(
   domainSlug: string,
   termSlug: string,
 ): Promise<PublicTermPage | null> {
@@ -182,4 +185,4 @@ export async function getPublicTermPage(
     term: { ...term, slug: termRow.slug!, updatedAt: termRow.updated_at },
     relatedTermSlugsById,
   };
-}
+});

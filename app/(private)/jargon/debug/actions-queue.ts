@@ -1,5 +1,6 @@
 "use server";
 
+import { cache } from "react";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { listTraceCandidates } from "@/lib/trace-queue";
 import type { PickContext } from "@/lib/trace-queue";
@@ -9,7 +10,7 @@ import type { DebugScoredRow } from "@/app/(private)/jargon/debug/debug-row-type
 
 export type { DebugScoredRow } from "@/app/(private)/jargon/debug/debug-row-types";
 
-export async function getDebugSetupData() {
+export const getDebugSetupData = cache(async function getDebugSetupData() {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to view this." };
@@ -18,7 +19,7 @@ export async function getDebugSetupData() {
   const collections = await listStudyCollections(auth.supabase, auth.user.id);
 
   return { collections };
-}
+});
 
 /** One ranked list per tier — every tier now ranks the same single term
  *  set by its own retrievability, so there's no known/unknown split and no

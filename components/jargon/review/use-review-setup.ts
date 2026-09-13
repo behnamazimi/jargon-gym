@@ -1,14 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
 import { type StudyCollection } from "@/lib/study/types";
 import { getReviewPoolStatsAction } from "@/app/(private)/jargon/review/actions";
 import type { ReviewSetup } from "@/lib/review/types";
+import type { PoolStats } from "@/lib/trace-queue";
 
 export type ReviewStep = "setup" | "playing" | "summary";
 
 const DEFAULT_CARD_COUNT = 10;
 
-export function useReviewSetup(collections: StudyCollection[], initialDomainId?: string) {
+export function useReviewSetup(
+  collections: StudyCollection[],
+  initialDomainId?: string,
+  initialPoolStats?: PoolStats | null,
+) {
   const [step, setStep] = useState<ReviewStep>("setup");
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
     initialDomainId ?? "all",
@@ -17,13 +22,11 @@ export function useReviewSetup(collections: StudyCollection[], initialDomainId?:
   const [cardCountInput, setCardCountInput] = useState(String(DEFAULT_CARD_COUNT));
   const [cardCountError, setCardCountError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [poolStats, setPoolStats] = useState<{
-    unseen: number;
-    seen: number;
-    total: number;
-    allSeenOnce: boolean;
-  } | null>(null);
+  const [poolStats, setPoolStats] = useState<PoolStats | null>(initialPoolStats ?? null);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
+  const fetchedStatsKeyRef = useRef<string | null>(
+    initialPoolStats != null ? `setup:${initialDomainId ?? "all"}:0` : null,
+  );
 
   const domainIds = useMemo(
     (): string[] | "all" => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
@@ -51,11 +54,15 @@ export function useReviewSetup(collections: StudyCollection[], initialDomainId?:
   useEffect(() => {
     if (step !== "setup") return;
 
+    const fetchKey = `${step}:${selectedCollectionId}:${statsRefreshKey}`;
+    if (fetchedStatsKeyRef.current === fetchKey) return;
+
     let cancelled = false;
     setPoolStats(null);
 
     void getReviewPoolStatsAction(domainIds).then((result) => {
       if (cancelled) return;
+      fetchedStatsKeyRef.current = fetchKey;
       if ("poolStats" in result && result.poolStats) {
         setPoolStats(result.poolStats);
         return;
@@ -68,7 +75,7 @@ export function useReviewSetup(collections: StudyCollection[], initialDomainId?:
     return () => {
       cancelled = true;
     };
-  }, [domainIds, step, statsRefreshKey]);
+  }, [domainIds, selectedCollectionId, step, statsRefreshKey]);
 
   const currentSetup = useMemo(
     (): ReviewSetup => ({

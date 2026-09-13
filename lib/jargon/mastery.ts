@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { computeTraceSnapshot, daysBetween, type KnownLabel } from "@/lib/trace";
 import { fetchActiveTraceCandidates } from "@/lib/trace-queue";
+import type { CollectionDomainRow } from "./collections";
 import { resolveReviewDomainIds } from "./known-state";
 
 type Client = SupabaseClient<Database>;
@@ -55,7 +56,7 @@ export type MasteryTermRow = {
   journey: MasteryTermJourney | null;
 };
 
-export type MasteryOverviewData = {
+export type MasteryCountsData = {
   collections: MasteryCollectionOption[];
   /** Count of terms that have ever crossed the Learning milestone but not
    *  yet Mastered — a permanent, monotonic bucket (see
@@ -65,9 +66,11 @@ export type MasteryOverviewData = {
   /** §8 "terms learned" — high-water mark count of terms that ever crossed
    *  the known threshold. Never decreases. */
   termsLearned: number;
-  /** Every term across active collections, ranked by score descending, for
-   *  the searchable/filterable term list. */
-  termRows: MasteryTermRow[];
+};
+
+type ActiveMasteryCollections = {
+  collections: MasteryCollectionOption[];
+  activeCollectionRows: CollectionDomainRow[];
 };
 
 /** First-touch timestamp per term, from the append-only `review_events`
@@ -100,25 +103,31 @@ function tierFromLabel(label: KnownLabel): MasteryTier {
   return "weak";
 }
 
-/** The doc §8 aggregate numbers plus a flat per-term list, for
- *  /jargon/mastery. Paused collections are excluded throughout. */
-export async function loadMasteryOverview(
+async function loadActiveMasteryCollections(
   client: Client,
   userId: string,
-): Promise<MasteryOverviewData> {
+): Promise<ActiveMasteryCollections> {
   const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
   const activeSet = new Set(reviewDomainIds);
   const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
-  if (activeCollectionRows.length === 0) {
-    return { collections: [], termsLearning: 0, termsLearned: 0, termRows: [] };
-  }
-
   const collections: MasteryCollectionOption[] = activeCollectionRows
     .map((row) => ({ domainId: row.id, domainName: row.name }))
     .sort((a, b) => a.domainName.localeCompare(b.domainName));
+  return { collections, activeCollectionRows };
+}
+
+/** Overview numbers for /jargon/mastery — no per-term rows. Paused
+ *  collections are excluded throughout. */
+export async function loadMasteryCounts(
+  client: Client,
+  userId: string,
+): Promise<MasteryCountsData> {
+  const { collections, activeCollectionRows } = await loadActiveMasteryCollections(client, userId);
+  if (activeCollectionRows.length === 0) {
+    return { collections: [], termsLearning: 0, termsLearned: 0 };
+  }
 
   const candidates = await fetchActiveTraceCandidates(client, userId);
-  const now = new Date();
   // A manually-marked-known term counts as "learned" for consistency with
   // the collection percentage (lib/jargon/collections.ts) — it reduces
   // what's left to learn regardless of how it happened.
@@ -129,6 +138,20 @@ export async function loadMasteryOverview(
     (c) => c.everLearningAt !== null && c.everMasteredAt === null && c.markedKnownAt === null,
   ).length;
 
+  return { collections, termsLearning, termsLearned };
+}
+
+/** Every term across active collections, ranked by score descending, for
+ *  the searchable/filterable term list. */
+export async function loadMasteryTermRows(
+  client: Client,
+  userId: string,
+): Promise<MasteryTermRow[]> {
+  const { activeCollectionRows } = await loadActiveMasteryCollections(client, userId);
+  if (activeCollectionRows.length === 0) return [];
+
+  const candidates = await fetchActiveTraceCandidates(client, userId);
+  const now = new Date();
   const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
 
   const termIds = candidates.map((c) => c.termId);
@@ -145,7 +168,7 @@ export async function loadMasteryOverview(
   const masteredTermIds = candidates.filter((c) => c.everMasteredAt !== null).map((c) => c.termId);
   const firstSeenAtByTermId = await fetchFirstSeenAtByTermId(client, masteredTermIds);
 
-  const termRows: MasteryTermRow[] = candidates
+  return candidates
     .flatMap((candidate) => {
       const info = termInfoById.get(candidate.termId);
       if (!info) return [];
@@ -182,11 +205,4 @@ export async function loadMasteryOverview(
       ];
     })
     .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term));
-
-  return {
-    collections,
-    termsLearning,
-    termsLearned,
-    termRows,
-  };
 }

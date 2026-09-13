@@ -16,7 +16,7 @@ export default async function JargonMasteryPage() {
     );
   }
 
-  const { collections, termsLearning, termsLearned, termRows, stats } = setup;
+  const { collections, termsLearning, termsLearned, stats } = setup;
 
   if (stats.activeCount === 0 && stats.pausedCount === 0) {
     return (
@@ -41,7 +41,6 @@ export default async function JargonMasteryPage() {
       stats={stats}
       termsLearning={termsLearning}
       termsLearned={termsLearned}
-      termRows={termRows}
     />
   );
 }

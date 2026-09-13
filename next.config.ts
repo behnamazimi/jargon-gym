@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
-    optimizePackageImports: ["react-aria-components"],
+    optimizePackageImports: ["react-aria-components", "lucide-react"],
   },
   async headers() {
     return [

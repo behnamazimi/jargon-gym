@@ -1,9 +1,14 @@
 import { type StudyCollection } from "@/lib/study/types";
 import { useReviewSetup } from "@/components/jargon/review/use-review-setup";
 import { useReviewPlaying } from "@/components/jargon/review/use-review-playing";
+import type { PoolStats } from "@/lib/trace-queue";
 
-export function useReviewSession(collections: StudyCollection[], initialDomainId?: string) {
-  const setup = useReviewSetup(collections, initialDomainId);
+export function useReviewSession(
+  collections: StudyCollection[],
+  initialDomainId?: string,
+  initialPoolStats?: PoolStats | null,
+) {
+  const setup = useReviewSetup(collections, initialDomainId, initialPoolStats);
   const playing = useReviewPlaying({
     step: setup.step,
     setStep: setup.setStep,

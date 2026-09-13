@@ -64,10 +64,20 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
       {terms.length === 0 ? (
         <p className="text-base text-base-content/55">No public terms yet.</p>
       ) : (
-        <Suspense>
+        <Suspense fallback={<PublicTermsListSkeleton />}>
           <DomainTermsList domainSlug={domain.slug} terms={terms} />
         </Suspense>
       )}
+    </div>
+  );
+}
+
+function PublicTermsListSkeleton() {
+  return (
+    <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading terms">
+      <div className="skeleton h-20 w-full rounded-lg bg-base-200" />
+      <div className="skeleton h-20 w-full rounded-lg bg-base-200" />
+      <div className="skeleton h-20 w-full rounded-lg bg-base-200" />
     </div>
   );
 }

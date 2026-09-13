@@ -14,19 +14,34 @@ import {
 import type { TelegramCadence } from "@/lib/telegram/types";
 import { createWidgetToken, listWidgetTokens, revokeWidgetToken } from "@/lib/widget/tokens";
 
-export async function getSettingsSetupData() {
+export async function getLlmSettingsData() {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to view settings." as const };
   }
 
-  const [initialSettings, telegramStatus, widgetTokens] = await Promise.all([
-    getUserSettings(auth.supabase, auth.user.id),
-    getTelegramLinkStatus(auth.supabase, auth.user.id),
-    listWidgetTokens(auth.supabase, auth.user.id),
-  ]);
+  const initialSettings = await getUserSettings(auth.supabase, auth.user.id);
+  return { initialSettings };
+}
 
-  return { initialSettings, telegramStatus, widgetTokens };
+export async function getTelegramSettingsData() {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to view settings." as const };
+  }
+
+  const telegramStatus = await getTelegramLinkStatus(auth.supabase, auth.user.id);
+  return { telegramStatus };
+}
+
+export async function getWidgetSettingsData() {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to view settings." as const };
+  }
+
+  const widgetTokens = await listWidgetTokens(auth.supabase, auth.user.id);
+  return { widgetTokens };
 }
 
 export async function generateWidgetTokenAction(): Promise<{

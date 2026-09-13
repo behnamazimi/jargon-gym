@@ -7,16 +7,23 @@ import { useReviewSession } from "@/components/jargon/review/use-review-session"
 import { ReviewSetupStep } from "@/components/jargon/review/review-setup-step";
 import { ReviewPlayingStep } from "@/components/jargon/review/review-playing-step";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import type { PoolStats } from "@/lib/trace-queue";
 
 type ReviewPageProps = {
   collections: StudyCollection[];
   initialDomainId?: string;
+  initialPoolStats?: PoolStats | null;
   narrationAccess: boolean;
 };
 
-export function ReviewPage({ collections, initialDomainId, narrationAccess }: ReviewPageProps) {
+export function ReviewPage({
+  collections,
+  initialDomainId,
+  initialPoolStats,
+  narrationAccess,
+}: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
-  const session = useReviewSession(collections, initialDomainId);
+  const session = useReviewSession(collections, initialDomainId, initialPoolStats);
 
   useReviewKeyboard({
     onReveal: session.handleReveal,

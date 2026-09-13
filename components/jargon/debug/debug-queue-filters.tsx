@@ -28,6 +28,24 @@ const CONTEXT_OPTIONS: Array<{
   },
 ];
 
+export function parseDebugContext(value: string | undefined): PickContext {
+  if (value === "read" || value === "quiz" || value === "review") return value;
+  return "review";
+}
+
+export function parseDebugView(value: string | undefined): "queue" | "calibration" {
+  return value === "calibration" ? "calibration" : "queue";
+}
+
+export function resolveDebugDomainId(
+  domainParam: string | undefined,
+  collections: StudyCollection[],
+): string {
+  const isKnownDomain =
+    domainParam && collections.some((collection) => collection.id === domainParam);
+  return isKnownDomain ? domainParam : "all";
+}
+
 export function debugQueueHref({ context, domainId }: { context: PickContext; domainId: string }) {
   const params = new URLSearchParams();
   if (context !== "review") params.set("context", context);

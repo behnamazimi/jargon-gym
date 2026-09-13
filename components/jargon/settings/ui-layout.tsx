@@ -11,11 +11,23 @@ export type SettingsTabId = "quiz" | "telegram" | "widget";
 
 export function ScrollToSettingsPanel({ tab }: { tab: SettingsTabId }) {
   useEffect(() => {
-    const el = document.getElementById(`settings-panel-${tab}`);
-    if (!el) return;
-
+    const id = `settings-panel-${tab}`;
     const behavior = window.matchMedia(PLATFORM_MEDIA.reducedMotion).matches ? "instant" : "smooth";
-    el.scrollIntoView({ block: "start", behavior });
+
+    function scrollToPanel(): boolean {
+      const el = document.getElementById(id);
+      if (!el) return false;
+      el.scrollIntoView({ block: "start", behavior });
+      return true;
+    }
+
+    if (scrollToPanel()) return;
+
+    const observer = new MutationObserver(() => {
+      if (scrollToPanel()) observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [tab]);
 
   return null;
