@@ -76,6 +76,7 @@ export function ReviewPlayingStep({
       </div>
 
       <ReviewCard
+        key={currentCard.id}
         term={currentCard}
         revealed={currentRevealed}
         onReveal={onReveal}

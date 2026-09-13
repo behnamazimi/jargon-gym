@@ -1,13 +1,25 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { countTermsForSelection, getMaxStudyCount } from "@/lib/study/count";
 import { type StudyCollection } from "@/lib/study/types";
 import { getReviewPoolStatsAction } from "@/app/(private)/jargon/review/actions";
 import type { ReviewSetup } from "@/lib/review/types";
 import type { PoolStats } from "@/lib/trace-queue";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 export type ReviewStep = "setup" | "playing" | "summary";
 
 const DEFAULT_CARD_COUNT = 10;
+
+function clampCardCount(current: number, availableTermCount: number): number {
+  if (availableTermCount === 0) return current;
+  const next = Math.min(Math.max(DEFAULT_CARD_COUNT, 1), getMaxStudyCount(availableTermCount));
+  return Math.min(current, next) || next;
+}
+
+function initialCardCount(collections: StudyCollection[], initialDomainId?: string): number {
+  const domainIds = initialDomainId && initialDomainId !== "all" ? [initialDomainId] : "all";
+  return clampCardCount(DEFAULT_CARD_COUNT, countTermsForSelection(collections, domainIds));
+}
 
 export function useReviewSetup(
   collections: StudyCollection[],
@@ -18,15 +30,13 @@ export function useReviewSetup(
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
     initialDomainId ?? "all",
   );
-  const [cardCount, setCardCount] = useState(DEFAULT_CARD_COUNT);
-  const [cardCountInput, setCardCountInput] = useState(String(DEFAULT_CARD_COUNT));
+  const startingCardCount = initialCardCount(collections, initialDomainId);
+  const [cardCount, setCardCount] = useState(startingCardCount);
+  const [cardCountInput, setCardCountInput] = useState(String(startingCardCount));
   const [cardCountError, setCardCountError] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [poolStats, setPoolStats] = useState<PoolStats | null>(initialPoolStats ?? null);
-  const [statsRefreshKey, setStatsRefreshKey] = useState(0);
-  const fetchedStatsKeyRef = useRef<string | null>(
-    initialPoolStats != null ? `setup:${initialDomainId ?? "all"}:0` : null,
-  );
+  const poolStatsRequestIdRef = useRef(0);
 
   const domainIds = useMemo(
     (): string[] | "all" => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
@@ -40,29 +50,23 @@ export function useReviewSetup(
 
   const maxCardCount = getMaxStudyCount(availableTermCount);
 
-  useEffect(() => {
-    if (availableTermCount === 0) return;
-    setCardCount((current) => {
-      const next = Math.min(Math.max(DEFAULT_CARD_COUNT, 1), getMaxStudyCount(availableTermCount));
-      const newCount = Math.min(current, next) || next;
+  const selectionKey = `${selectedCollectionId}:${availableTermCount}`;
+  const [prevSelectionKey, setPrevSelectionKey] = useState(selectionKey);
+  if (selectionKey !== prevSelectionKey) {
+    setPrevSelectionKey(selectionKey);
+    if (availableTermCount > 0) {
+      const newCount = clampCardCount(cardCount, availableTermCount);
+      setCardCount(newCount);
       setCardCountInput(String(newCount));
       setCardCountError(null);
-      return newCount;
-    });
-  }, [availableTermCount, selectedCollectionId]);
+    }
+  }
 
-  useEffect(() => {
-    if (step !== "setup") return;
-
-    const fetchKey = `${step}:${selectedCollectionId}:${statsRefreshKey}`;
-    if (fetchedStatsKeyRef.current === fetchKey) return;
-
-    let cancelled = false;
+  function fetchPoolStats(ids: string[] | "all") {
+    const requestId = ++poolStatsRequestIdRef.current;
     setPoolStats(null);
-
-    void getReviewPoolStatsAction(domainIds).then((result) => {
-      if (cancelled) return;
-      fetchedStatsKeyRef.current = fetchKey;
+    void getReviewPoolStatsAction(ids).then((result) => {
+      if (requestId !== poolStatsRequestIdRef.current) return;
       if ("poolStats" in result && result.poolStats) {
         setPoolStats(result.poolStats);
         return;
@@ -71,11 +75,12 @@ export function useReviewSetup(
         setErrorMessage(result.error);
       }
     });
+  }
 
-    return () => {
-      cancelled = true;
-    };
-  }, [domainIds, selectedCollectionId, step, statsRefreshKey]);
+  useMountEffect(() => {
+    if (initialPoolStats != null || collections.length === 0) return;
+    fetchPoolStats(initialDomainId && initialDomainId !== "all" ? [initialDomainId] : "all");
+  });
 
   const currentSetup = useMemo(
     (): ReviewSetup => ({
@@ -108,11 +113,21 @@ export function useReviewSetup(
     }
   }
 
+  function handleSelectedCollectionIdChange(id: string) {
+    setSelectedCollectionId(id);
+    fetchPoolStats(id === "all" ? "all" : [id]);
+  }
+
+  function refreshPoolStats() {
+    fetchPoolStats(domainIds);
+  }
+
   return {
     step,
     setStep,
     selectedCollectionId,
     setSelectedCollectionId,
+    handleSelectedCollectionIdChange,
     cardCount,
     setCardCount,
     cardCountInput,
@@ -122,7 +137,7 @@ export function useReviewSetup(
     errorMessage,
     setErrorMessage,
     poolStats,
-    refreshPoolStats: () => setStatsRefreshKey((key) => key + 1),
+    refreshPoolStats,
     domainIds,
     availableTermCount,
     maxCardCount,

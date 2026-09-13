@@ -32,7 +32,7 @@ export function upsertPendingWrite(
   return [...without, write];
 }
 
-export function persistReviewSession(state: {
+function persistReviewSession(state: {
   cards: ReviewTerm[];
   currentIndex: number;
   ratings: ReviewRating[];
@@ -53,6 +53,41 @@ export function persistReviewSession(state: {
     complete: state.complete === true,
   });
   return loadReviewSession();
+}
+
+export type PlayingSnapshot = {
+  step: ReviewStep;
+  cards: ReviewTerm[];
+  currentIndex: number;
+  ratings: ReviewRating[];
+  revealedTermIds: string[];
+  setup: ReviewSetup;
+  startedAt: string;
+  pendingWrites: PendingReviewWrite[];
+};
+
+/** Writes the playing/summary snapshot to localStorage. Same guards as the
+ *  old persist effect: skip an empty deck, ignore setup, and don't leave a
+ *  finished session with nothing left to replay. */
+export function persistPlayingSnapshot(
+  state: PlayingSnapshot,
+  overrides: Partial<PlayingSnapshot> = {},
+) {
+  const next = { ...state, ...overrides };
+  if (next.cards.length === 0) return;
+  if (next.step !== "playing" && next.step !== "summary") return;
+  if (next.step === "summary" && next.pendingWrites.length === 0) return;
+
+  persistReviewSession({
+    setup: next.setup,
+    cards: next.cards,
+    currentIndex: next.currentIndex,
+    ratings: next.ratings,
+    revealedTermIds: next.revealedTermIds,
+    startedAt: next.startedAt,
+    pendingWrites: next.pendingWrites,
+    complete: next.step === "summary",
+  });
 }
 
 type PlayingSetters = {

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffectEvent } from "react";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 type ReviewKeyboardHandlers = {
   onReveal: () => void;
@@ -77,26 +78,21 @@ function handleArrowKeys(
   return false;
 }
 
-export function useReviewKeyboard({
-  onReveal,
-  onGrade,
-  onPrevious,
-  onNext,
-  revealed,
-  canRate,
-  enabled,
-}: ReviewKeyboardHandlers) {
-  useEffect(() => {
-    if (!enabled) return;
+function handleReviewKeyDown(event: KeyboardEvent, handlers: ReviewKeyboardHandlers) {
+  if (!handlers.enabled) return;
+  if (isEditableTarget(event.target)) return;
+  if (handleRevealOrNext(event, handlers)) return;
+  if (handlers.revealed && handlers.canRate && handleGradeKey(event, handlers.onGrade)) return;
+  handleArrowKeys(event, handlers);
+}
 
-    function handleKeyDown(event: KeyboardEvent) {
-      if (isEditableTarget(event.target)) return;
-      if (handleRevealOrNext(event, { revealed, canRate, onReveal, onNext })) return;
-      if (revealed && canRate && handleGradeKey(event, onGrade)) return;
-      handleArrowKeys(event, { onPrevious, onNext });
-    }
+export function useReviewKeyboard(handlers: ReviewKeyboardHandlers) {
+  const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    handleReviewKeyDown(event, handlers);
+  });
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [canRate, enabled, onGrade, onNext, onPrevious, onReveal, revealed]);
+  useMountEffect(() => {
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  });
 }

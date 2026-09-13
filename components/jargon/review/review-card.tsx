@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
@@ -46,11 +46,6 @@ export function ReviewCard({
   narrationAccess,
 }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 });
-  }, [term.id]);
 
   const swipe = useReviewSwipe(cardRef, {
     onReveal,
@@ -126,7 +121,6 @@ export function ReviewCard({
           <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
             <TermCardHeader term={term} narrationAccess={narrationAccess} />
             <div
-              ref={scrollRef}
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >

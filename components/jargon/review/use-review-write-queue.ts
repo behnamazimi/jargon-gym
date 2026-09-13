@@ -26,7 +26,11 @@ export function useReviewWriteQueue(options: {
     }
   }
 
-  function enqueueRating(termId: string, grade: ReviewGrade, existing?: PendingReviewWrite) {
+  function enqueueRating(
+    termId: string,
+    grade: ReviewGrade,
+    existing?: PendingReviewWrite,
+  ): PendingReviewWrite {
     const write = existing ?? { id: crypto.randomUUID(), termId, grade };
     if (!existing) {
       setPendingWrites((prev) => upsertPendingWrite(prev, write));
@@ -50,6 +54,8 @@ export function useReviewWriteQueue(options: {
         checkIdle();
       },
     });
+
+    return write;
   }
 
   function markComplete() {

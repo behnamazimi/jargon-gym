@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { GOOD, type ReviewGrade } from "@/lib/trace";
 import {
   recordReviewRevealAction,
@@ -11,12 +11,15 @@ import { useReviewWriteQueue } from "@/components/jargon/review/use-review-write
 import {
   finalizeReviewSessionIfComplete,
   finishReviewSession,
-  persistReviewSession,
+  persistPlayingSnapshot,
+  type PlayingSnapshot,
   resetReviewToSetup,
   resumeReviewSession,
   startReviewSession,
+  upsertPendingWrite,
   upsertRating,
 } from "@/components/jargon/review/review-session-actions";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 type UseReviewPlayingArgs = {
   step: ReviewStep;
@@ -77,7 +80,7 @@ export function useReviewPlaying({
     },
   });
 
-  useEffect(() => {
+  useMountEffect(() => {
     const loaded = loadReviewSession();
     if (!loaded) return;
     if (loaded.complete) {
@@ -86,7 +89,7 @@ export function useReviewPlaying({
       return;
     }
     setSavedSession(loaded);
-  }, []);
+  });
 
   const currentCard = cards[currentIndex];
   const currentRevealed = currentCard ? revealedTermIds.includes(currentCard.id) : false;
@@ -94,37 +97,31 @@ export function useReviewPlaying({
     ? ratings.find((rating) => rating.termId === currentCard.id)
     : undefined;
 
-  useEffect(() => {
-    if (cards.length === 0) return;
-    if (step !== "playing" && step !== "summary") return;
-    if (step === "summary" && pendingWrites.length === 0) return;
-
-    setSavedSession(
-      persistReviewSession({
-        setup: currentSetup,
+  function persistSnapshot(overrides: Partial<PlayingSnapshot> = {}) {
+    persistPlayingSnapshot(
+      {
+        step,
         cards,
         currentIndex,
         ratings,
         revealedTermIds,
+        setup: currentSetup,
         startedAt: sessionStartedAt,
         pendingWrites,
-        complete: step === "summary",
-      }),
+      },
+      overrides,
     );
-  }, [
-    step,
-    cards,
-    currentIndex,
-    ratings,
-    revealedTermIds,
-    pendingWrites,
-    currentSetup,
-    sessionStartedAt,
-  ]);
+  }
 
-  function completeSession(finalRatings: ReviewRating[]) {
+  function goToIndex(nextIndex: number, extra?: Partial<PlayingSnapshot>) {
+    setCurrentIndex(nextIndex);
+    persistSnapshot({ currentIndex: nextIndex, ...extra });
+  }
+
+  function completeSession(finalRatings: ReviewRating[], nextPendingWrites = pendingWrites) {
     markComplete();
     finishReviewSession(setters, finalRatings);
+    persistSnapshot({ step: "summary", ratings: finalRatings, pendingWrites: nextPendingWrites });
   }
 
   function resetToSetup() {
@@ -142,17 +139,14 @@ export function useReviewPlaying({
   }
 
   function handleDiscardSession() {
-    // Discarding the session UI must not discard grades the user already
-    // tapped — give any unconfirmed write one more shot before clearing.
+    // Flush tapped grades before dropping the session UI.
     if (savedSession) flushPendingWrites(savedSession.pendingWrites);
     clearReviewSession();
     setters.setSavedSession(null);
   }
 
   function handleStartReview() {
-    // Same as discard: starting fresh abandons the OLD session's UI, but
-    // any grade the user already tapped in it still needs to reach the
-    // server, so flush before startReviewSession clears storage.
+    // Flush the abandoned session's grades before startReviewSession clears storage.
     if (savedSession) flushPendingWrites(savedSession.pendingWrites);
     resetSession();
     advancedCardIdRef.current = null;
@@ -161,7 +155,9 @@ export function useReviewPlaying({
 
   function handleReveal() {
     if (!currentCard || currentRevealed) return;
-    setRevealedTermIds((ids) => [...ids, currentCard.id]);
+    const nextRevealed = [...revealedTermIds, currentCard.id];
+    setRevealedTermIds(nextRevealed);
+    persistSnapshot({ revealedTermIds: nextRevealed });
 
     if (!shownTermIds.includes(currentCard.id)) {
       setShownTermIds((ids) => [...ids, currentCard.id]);
@@ -174,16 +170,16 @@ export function useReviewPlaying({
   }
 
   function handlePrevious() {
-    setCurrentIndex((index) => Math.max(0, index - 1));
+    goToIndex(Math.max(0, currentIndex - 1));
   }
 
   function handleNext() {
-    setCurrentIndex((index) => Math.min(cards.length - 1, index + 1));
+    goToIndex(Math.min(cards.length - 1, currentIndex + 1));
   }
 
   function handleMarkedKnown() {
     if (currentIndex + 1 < cards.length) {
-      setCurrentIndex((index) => index + 1);
+      goToIndex(currentIndex + 1);
       return;
     }
     completeSession(ratings);
@@ -197,18 +193,25 @@ export function useReviewPlaying({
 
     const nextRatings = upsertRating(ratings, currentCard.id, grade);
     setRatings(nextRatings);
-    enqueueRating(currentCard.id, grade);
+    const write = enqueueRating(currentCard.id, grade);
+    const nextPendingWrites = upsertPendingWrite(pendingWrites, write);
 
-    if (alreadyRated) return;
+    if (alreadyRated) {
+      persistSnapshot({ ratings: nextRatings, pendingWrites: nextPendingWrites });
+      return;
+    }
 
     advancedCardIdRef.current = currentCard.id;
 
     if (currentIndex + 1 < cards.length) {
-      setCurrentIndex((index) => index + 1);
+      goToIndex(currentIndex + 1, {
+        ratings: nextRatings,
+        pendingWrites: nextPendingWrites,
+      });
       return;
     }
 
-    completeSession(nextRatings);
+    completeSession(nextRatings, nextPendingWrites);
   }
 
   function handleDone() {

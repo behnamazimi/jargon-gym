@@ -22,7 +22,7 @@ export function useReviewSession(
   return {
     step: setup.step,
     selectedCollectionId: setup.selectedCollectionId,
-    setSelectedCollectionId: setup.setSelectedCollectionId,
+    setSelectedCollectionId: setup.handleSelectedCollectionIdChange,
     cardCount: setup.cardCount,
     cardCountInput: setup.cardCountInput,
     cardCountError: setup.cardCountError,
