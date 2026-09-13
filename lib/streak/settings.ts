@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
+import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Client = SupabaseClient<Database>;
@@ -9,10 +11,10 @@ export type StudyPhoneUserSettings = {
   longestStreak: number;
 };
 
-export async function getStudyPhoneUserSettings(
-  client: Client,
+export const getStudyPhoneUserSettings = cache(async function getStudyPhoneUserSettings(
   userId: string,
 ): Promise<StudyPhoneUserSettings> {
+  const client = await createClient();
   const { data, error } = await client
     .from("user_settings")
     .select("timezone, current_streak, longest_streak")
@@ -27,7 +29,7 @@ export async function getStudyPhoneUserSettings(
     currentStreak: data.current_streak,
     longestStreak: data.longest_streak,
   };
-}
+});
 
 export async function saveUserTimezone(
   client: Client,

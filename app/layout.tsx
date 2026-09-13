@@ -1,18 +1,21 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
+import { Suspense } from "react";
 import { AppShell } from "@/components/app-shell";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
 import { ToastProvider } from "@/components/ui/toast";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { HeaderIsland } from "@/components/header-island";
+import { HeaderSkeleton } from "@/components/page-skeleton";
+import { StudyPhoneChromeIsland } from "@/components/app/study-phone-chrome-island";
+import { StudyPhoneTopBarSkeleton } from "@/components/app/study-phone-topbar-skeleton";
+import { TimezoneSyncIsland } from "@/components/timezone-sync-island";
 import "./globals.css";
-import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
+import { hasLikelySession } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
-import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
-import { THEME_COOKIE_NAME, DARK_THEME, LIGHT_THEME } from "@/lib/theme";
+import { DARK_THEME } from "@/lib/theme";
+import { getTheme } from "@/lib/theme-server";
 import { cn } from "@/lib/utils";
-import { TimezoneSync } from "@/components/timezone-sync";
 import { Geist, Inter, JetBrains_Mono } from "next/font/google";
 
 const geist = Geist({
@@ -46,42 +49,13 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
-type StudyPhoneSettings = Awaited<ReturnType<typeof getStudyPhoneUserSettings>>;
-
-async function loadRootLayoutData() {
-  const [cookieStore, { supabase, user }] = await Promise.all([cookies(), getSessionUser()]);
-  const themeCookie = cookieStore.get(THEME_COOKIE_NAME)?.value;
-  const theme = themeCookie === DARK_THEME ? DARK_THEME : LIGHT_THEME;
-  const isAdmin = user ? await getUserIsAdmin(user.id) : false;
-  const initialIsDark = theme === DARK_THEME;
-  const studyPhoneSettings = user ? await getStudyPhoneUserSettings(supabase, user.id) : null;
-
-  return { theme, user, isAdmin, initialIsDark, studyPhoneSettings };
-}
-
-function buildStudyPhoneProps(
-  user: Awaited<ReturnType<typeof getSessionUser>>["user"],
-  isAdmin: boolean,
-  initialIsDark: boolean,
-  studyPhoneSettings: StudyPhoneSettings | null,
-) {
-  if (!user) return null;
-  return {
-    email: user.email ?? "Account",
-    isAdmin,
-    initialIsDark,
-    currentStreak: studyPhoneSettings?.currentStreak ?? 0,
-    longestStreak: studyPhoneSettings?.longestStreak ?? 0,
-  };
-}
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { theme, user, isAdmin, initialIsDark, studyPhoneSettings } = await loadRootLayoutData();
-  const studyPhone = buildStudyPhoneProps(user, isAdmin, initialIsDark, studyPhoneSettings);
+  const [theme, hasSession] = await Promise.all([getTheme(), hasLikelySession()]);
+  const initialIsDark = theme === DARK_THEME;
 
   return (
     <html
@@ -102,18 +76,21 @@ export default async function RootLayout({
           <ToastProvider>
             <AppShell
               header={
-                <SiteHeader
-                  initialIsDark={initialIsDark}
-                  user={user}
-                  isAdmin={isAdmin}
-                  currentStreak={studyPhoneSettings?.currentStreak ?? 0}
-                  longestStreak={studyPhoneSettings?.longestStreak ?? 0}
-                />
+                <Suspense fallback={<HeaderSkeleton hasLikelySession={hasSession} />}>
+                  <HeaderIsland initialIsDark={initialIsDark} />
+                </Suspense>
               }
               footer={<SiteFooter />}
-              studyPhone={studyPhone}
+              studyPhoneChrome={
+                <Suspense fallback={<StudyPhoneTopBarSkeleton />}>
+                  <StudyPhoneChromeIsland initialIsDark={initialIsDark} />
+                </Suspense>
+              }
+              hasLikelySession={hasSession}
             >
-              {user ? <TimezoneSync savedTimezone={studyPhoneSettings?.timezone ?? null} /> : null}
+              <Suspense fallback={null}>
+                <TimezoneSyncIsland />
+              </Suspense>
               <OfflineBanner />
               <main className="flex min-h-0 flex-1 flex-col">{children}</main>
             </AppShell>

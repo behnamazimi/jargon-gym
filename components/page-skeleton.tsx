@@ -1,8 +1,38 @@
-import { PageShell } from "@/components/page-container";
+import { PageShell, pageContainerClass } from "@/components/page-container";
 import { cn } from "@/lib/utils";
 
-function SkeletonBar({ className }: { className: string }) {
+export function SkeletonBar({ className }: { className: string }) {
   return <div aria-hidden className={cn("skeleton bg-base-200", className)} />;
+}
+
+/** Chrome-sized fallback matching `SiteHeaderChrome`'s exact shape — avoids layout shift. */
+export function HeaderSkeleton({ hasLikelySession }: { hasLikelySession: boolean }) {
+  return (
+    <header
+      className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm"
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
+        <div className="flex items-center gap-4">
+          <SkeletonBar className="h-7 w-7 rounded-full md:hidden" />
+          <SkeletonBar className="hidden h-6 w-28 md:block" />
+          {hasLikelySession ? (
+            <div className="hidden items-center gap-1 md:flex">
+              <SkeletonBar className="h-9 w-16 rounded-lg" />
+              <SkeletonBar className="h-9 w-16 rounded-lg" />
+              <SkeletonBar className="h-9 w-16 rounded-lg" />
+            </div>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-1">
+          {hasLikelySession ? <SkeletonBar className="h-9 w-14 rounded-lg" /> : null}
+          <SkeletonBar className="h-9 w-9 rounded-lg" />
+          <SkeletonBar className="h-9 w-9 rounded-full" />
+        </div>
+      </div>
+    </header>
+  );
 }
 
 export function PageSkeleton() {

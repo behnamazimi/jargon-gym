@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
@@ -21,6 +22,17 @@ export const getUserIsAdmin = cache(async function getUserIsAdmin(userId: string
 
   return profile?.role === "admin";
 });
+
+/**
+ * Cheap, unverified signal for layout chrome branch selection only — checks
+ * for the presence of a Supabase auth cookie without validating it. Never
+ * use this for authorization; getSessionUser()/requireAuthenticatedClient()
+ * remain the source of truth for whether a user is actually logged in.
+ */
+export async function hasLikelySession(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.getAll().some((c) => c.name.includes("-auth-token"));
+}
 
 export async function requireAuthenticatedClient() {
   const { supabase, user, error } = await getSessionUser();
