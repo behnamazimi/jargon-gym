@@ -8,17 +8,14 @@ function formatDomainLabel(terms: QuizTerm[]): string {
 }
 
 /**
- * Splits the non-example-judgment remainder into multiple_choice vs
- * true_false, one slot per term. This assignment — not a free-text count in
- * the prompt — is what the model gets held to (buildQuizGenerationSchema
- * turns it into a literal `type` per position), so the mix can't collapse to
- * all-true_false the way it did when the split lived only in prompt text.
+ * Splits the given terms into multiple_choice vs true_false, one slot per
+ * term. This assignment — not a free-text count in the prompt — is what the
+ * model gets held to (buildQuizGenerationSchema turns it into a literal
+ * `type` per position), so the mix can't collapse to all-true_false the way
+ * it did when the split lived only in prompt text.
  *
- * `trueFalseBudget` is whatever's left of the quiz-wide TRUE_FALSE_MAX_SHARE
- * cap after example-judgment already spent its share — capping here, not
- * with an independent ratio of the remainder, is what keeps the two
- * true/false flavors combined under the cap regardless of how many terms
- * were eligible for example-judgment.
+ * `trueFalseBudget` is `floor(terms.length * TRUE_FALSE_MAX_SHARE)` — the
+ * only consumer of that cap in AI-mode quiz generation.
  */
 export function buildRemainderPlan(
   remainderTerms: QuizTerm[],

@@ -1,5 +1,6 @@
 import { escapeText } from "entities";
 import type { TermCard } from "@/lib/jargon/term-card";
+import { ILLUSTRATION_QUESTION_LINE } from "@/lib/quiz/illustration";
 import type { InlineKeyboardMarkup } from "./actions";
 
 export function formatReviewQuestion(
@@ -34,50 +35,37 @@ export function formatReviewQuestionWithAnswer(
   return message;
 }
 
-export function formatTrueFalseQuestion(
-  term: TermCard,
+export function formatIllustrationQuestion(
   currentIndex: number,
   totalQuestions: number,
   scenarioText: string,
 ): string {
   let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
-  message += `Does this illustrate "${escapeText(term.term)}"?\n\n`;
+  message += `${ILLUSTRATION_QUESTION_LINE}\n\n`;
   message += `<blockquote>${escapeText(scenarioText)}</blockquote>`;
   return message;
 }
 
-export function formatTrueFalseQuestionWithAnswer(
-  term: TermCard,
+export function formatIllustrationQuestionWithAnswer(
   questionIndex: number,
   totalQuestions: number,
   scenarioText: string,
-  selectedAnswer: boolean,
-  correctAnswer: boolean,
+  selectedLabel: string,
+  correctLabel: string,
   isCorrect: boolean,
   currentScore: number,
 ): string {
-  let message = formatTrueFalseQuestion(term, questionIndex, totalQuestions, scenarioText);
-  message += `\n\n<b>Your answer:</b> ${selectedAnswer ? "True" : "False"}`;
+  let message = formatIllustrationQuestion(questionIndex, totalQuestions, scenarioText);
+  message += `\n\n<b>Your answer:</b> ${escapeText(selectedLabel)}`;
 
   if (isCorrect) {
     message += `\n\n✅ <b>Correct!</b>`;
   } else {
-    message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${correctAnswer ? "True" : "False"}</b>`;
+    message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeText(correctLabel)}</b>`;
   }
 
   message += `\n\nScore: ${currentScore}/${totalQuestions}`;
   return message;
-}
-
-export function buildTrueFalseKeyboard(sessionIndex: number): InlineKeyboardMarkup {
-  return {
-    inline_keyboard: [
-      [
-        { text: "True", callback_data: `quiztf:${sessionIndex}:true` },
-        { text: "False", callback_data: `quiztf:${sessionIndex}:false` },
-      ],
-    ],
-  };
 }
 
 export function buildReviewKeyboard(

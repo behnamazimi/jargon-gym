@@ -44,7 +44,7 @@ function makeTerm(overrides: Partial<QuizTerm>): QuizTerm {
 }
 
 describe("generateSimpleQuiz", () => {
-  it("only builds example-judgment questions for eligible terms, one per term", async () => {
+  it("builds an illustration multiple_choice question for eligible terms, one per term", async () => {
     const terms: QuizTerm[] = [
       makeTerm({ id: "a", term: "Alpha", example: "Alpha in action." }),
       makeTerm({ id: "b", term: "Beta", antiExample: "This looks like Beta but isn't." }),
@@ -70,30 +70,44 @@ describe("generateSimpleQuiz", () => {
     // Each term produces exactly one question.
     expect(new Set(questions.map((q) => q.termId)).size).toBe(terms.length);
 
-    const exampleJudgment = questions.filter(
-      (q) =>
-        q.type === "true_false" &&
-        (q.prompt.includes("Alpha in action.") ||
-          q.prompt.includes("This looks like Beta but isn't.") ||
-          q.prompt.includes("Gamma in action.") ||
-          q.prompt.includes("This looks like Gamma but isn't.")),
+    const illustrationQuestions = questions.filter((q) =>
+      q.prompt.startsWith("What does this illustrate?"),
     );
 
     // Only terms a, b, c are eligible (have example or anti_example).
-    for (const q of exampleJudgment) {
+    for (const q of illustrationQuestions) {
       expect(["a", "b", "c"]).toContain(q.termId);
+      expect(q.type).toBe("multiple_choice");
     }
+    expect(new Set(illustrationQuestions.map((q) => q.termId))).toEqual(new Set(["a", "b", "c"]));
 
-    // Terms with no example/anti_example never produce an example-judgment question.
+    // Terms with no example/anti_example fall back to definition MCQ, whose
+    // prompt is the term's own definition, not an illustration prompt.
     const ineligibleQuestions = questions.filter((q) => ["d", "e", "f"].includes(q.termId));
     for (const q of ineligibleQuestions) {
-      expect(q.prompt.includes("in action") || q.prompt.includes("isn't")).toBe(false);
+      expect(q.prompt.startsWith("What does this illustrate?")).toBe(false);
     }
   });
 
-  it("sets correctAnswer=true when sourced from example, false when sourced from anti_example", async () => {
-    // Total of 5 terms (2 eligible, 3 not) so the 40% example-judgment cap
-    // (floor(5 * 0.4) = 2) has room to select both eligible terms.
+  it("has no cap — all eligible terms get an illustration question regardless of quiz size", async () => {
+    const terms: QuizTerm[] = Array.from({ length: 10 }, (_, i) =>
+      makeTerm({ id: `t${i}`, term: `Term${i}`, example: `Term${i} in action.` }),
+    );
+    const client = makeClient([
+      { id: "x", term: "Distractor X" },
+      { id: "y", term: "Distractor Y" },
+      { id: "z", term: "Distractor Z" },
+    ]);
+
+    const questions = await generateSimpleQuiz(terms, client);
+    const illustrationCount = questions.filter((q) =>
+      q.prompt.startsWith("What does this illustrate?"),
+    ).length;
+
+    expect(illustrationCount).toBe(10);
+  });
+
+  it("sets correctOptionIds to the term itself when sourced from example, and to 'none' when sourced from anti_example", async () => {
     const terms: QuizTerm[] = [
       makeTerm({ id: "only-example", term: "OnlyExample", example: "A real example." }),
       makeTerm({
@@ -101,12 +115,7 @@ describe("generateSimpleQuiz", () => {
         term: "OnlyAnti",
         antiExample: "A tempting but wrong example.",
       }),
-      makeTerm({ id: "plain-1", term: "Plain1" }),
-      makeTerm({ id: "plain-2", term: "Plain2" }),
-      makeTerm({ id: "plain-3", term: "Plain3" }),
     ];
-    // None of these distractors have an `example`, so there's nothing to
-    // borrow — each one-sided term keeps its single authored candidate.
     const client = makeClient([
       { id: "x", term: "Distractor X" },
       { id: "y", term: "Distractor Y" },
@@ -118,64 +127,20 @@ describe("generateSimpleQuiz", () => {
     const exampleQ = questions.find((q) => q.termId === "only-example");
     const antiQ = questions.find((q) => q.termId === "only-anti");
 
-    expect(exampleQ?.type).toBe("true_false");
-    expect(antiQ?.type).toBe("true_false");
-    if (exampleQ?.type === "true_false") {
-      expect(exampleQ.correctAnswer).toBe(true);
-      expect(exampleQ.prompt).toBe('Does this illustrate "OnlyExample"?\nA real example.');
+    expect(exampleQ?.type).toBe("multiple_choice");
+    expect(antiQ?.type).toBe("multiple_choice");
+    if (exampleQ?.type === "multiple_choice") {
+      expect(exampleQ.correctOptionIds).toEqual(["only-example"]);
+      expect(exampleQ.prompt).toBe("What does this illustrate?\nA real example.");
     }
-    if (antiQ?.type === "true_false") {
-      expect(antiQ.correctAnswer).toBe(false);
-      expect(antiQ.prompt).toBe('Does this illustrate "OnlyAnti"?\nA tempting but wrong example.');
+    if (antiQ?.type === "multiple_choice") {
+      expect(antiQ.correctOptionIds).toEqual(["none"]);
+      expect(antiQ.prompt).toBe("What does this illustrate?\nA tempting but wrong example.");
+      expect(antiQ.options.at(-1)).toEqual({ id: "none", text: "None of these" });
     }
   });
 
-  it("can answer false for an example-only term when a distractor has a real example to borrow", async () => {
-    // 5 terms so the 40% cap (floor(5 * 0.4) = 2) leaves room for the
-    // example-only term to actually be selected as an illustration question.
-    const terms: QuizTerm[] = [
-      makeTerm({ id: "only-example", term: "OnlyExample", example: "A real example." }),
-      makeTerm({ id: "plain-1", term: "Plain1" }),
-      makeTerm({ id: "plain-2", term: "Plain2" }),
-      makeTerm({ id: "plain-3", term: "Plain3" }),
-      makeTerm({ id: "plain-4", term: "Plain4" }),
-    ];
-    const client = makeClient([
-      { id: "x", term: "Distractor X", example: "Distractor's real example." },
-    ]);
-
-    const seenAnswers = new Set<boolean>();
-    for (let i = 0; i < 50; i++) {
-      const questions = await generateSimpleQuiz(terms, client);
-      const q = questions.find((question) => question.termId === "only-example");
-      if (q?.type === "true_false") seenAnswers.add(q.correctAnswer);
-    }
-
-    expect(seenAnswers.has(true)).toBe(true);
-    expect(seenAnswers.has(false)).toBe(true);
-  });
-
-  it("keeps example-judgment and plain true_false combined at or under 40% of the quiz", async () => {
-    // Regression guard: illustration questions alone used to be able to hit
-    // 50% of the quiz, and plain true/false could add more on top. All 10
-    // terms here are eligible for example-judgment, so this exercises the
-    // worst case for the combined cap.
-    const terms: QuizTerm[] = Array.from({ length: 10 }, (_, i) =>
-      makeTerm({ id: `t${i}`, term: `Term${i}`, example: `Term${i} in action.` }),
-    );
-    const client = makeClient([
-      { id: "x", term: "Distractor X" },
-      { id: "y", term: "Distractor Y" },
-      { id: "z", term: "Distractor Z" },
-    ]);
-
-    const questions = await generateSimpleQuiz(terms, client);
-    const trueFalseCount = questions.filter((q) => q.type === "true_false").length;
-
-    expect(trueFalseCount).toBeLessThanOrEqual(4);
-  });
-
-  it("falls back to multiple_choice for terms with neither field", async () => {
+  it("falls back to definition multiple_choice for terms with neither field", async () => {
     const terms: QuizTerm[] = [makeTerm({ id: "plain", term: "Plain" })];
     const client = makeClient([
       { id: "x", term: "Distractor X" },
@@ -186,62 +151,7 @@ describe("generateSimpleQuiz", () => {
     const questions = await generateSimpleQuiz(terms, client);
 
     expect(questions).toHaveLength(1);
-    expect(["multiple_choice", "true_false"]).toContain(questions[0].type);
-  });
-
-  it("produces both true and false outcomes for plain true_false questions", async () => {
-    // No example/antiExample on any term, so none qualify for example-
-    // judgment — every true_false question in the output is a plain one.
-    // This isolates makeTrue's alternation, which used to be an interleaved
-    // counter and is now precomputed before the per-term work runs
-    // concurrently — a bug there (e.g. defaulting every term to one value)
-    // wouldn't show up in the shape/count assertions elsewhere in this file.
-    const terms: QuizTerm[] = Array.from({ length: 10 }, (_, i) =>
-      makeTerm({ id: `t${i}`, term: `Term${i}` }),
-    );
-    const client = makeClient([
-      { id: "x", term: "Distractor X" },
-      { id: "y", term: "Distractor Y" },
-      { id: "z", term: "Distractor Z" },
-    ]);
-
-    const seenAnswers = new Set<boolean>();
-    for (let i = 0; i < 20; i++) {
-      const questions = await generateSimpleQuiz(terms, client);
-      for (const q of questions) {
-        if (q.type === "true_false") seenAnswers.add(q.correctAnswer);
-      }
-    }
-
-    expect(seenAnswers.has(true)).toBe(true);
-    expect(seenAnswers.has(false)).toBe(true);
-  });
-
-  it("falls back to multiple_choice, without dropping the term, when a plain true_false question has no distractor to borrow", async () => {
-    // No example/antiExample (excludes example-judgment) and a completely
-    // empty domain (no other terms, no relationships) means any term picked
-    // for a *false* plain true/false question has nothing to borrow a
-    // distractor from — buildPlainTrueFalseQuestion returns null for that
-    // term, and it must fall back to multiple_choice for that same term
-    // rather than the term silently disappearing from the quiz.
-    const terms: QuizTerm[] = Array.from({ length: 5 }, (_, i) =>
-      makeTerm({ id: `t${i}`, term: `Term${i}` }),
-    );
-    const client = makeClient([]);
-
-    for (let i = 0; i < 20; i++) {
-      const questions = await generateSimpleQuiz(terms, client);
-      expect(questions).toHaveLength(terms.length);
-      expect(new Set(questions.map((q) => q.termId)).size).toBe(terms.length);
-
-      for (const q of questions) {
-        if (q.type === "true_false") {
-          // A false plain true/false question needs a borrowed distractor,
-          // which doesn't exist here, so any true_false question that
-          // survives must be the true (no-distractor-needed) case.
-          expect(q.correctAnswer).toBe(true);
-        }
-      }
-    }
+    expect(questions[0].type).toBe("multiple_choice");
+    expect(questions[0].prompt).toBe("A default definition.");
   });
 });

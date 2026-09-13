@@ -5,10 +5,9 @@ import type { TelegramAction } from "./actions";
 import { NOTHING_ELIGIBLE_FOR_QUIZ_MESSAGE } from "./copy";
 import {
   buildReviewKeyboard,
-  buildTrueFalseKeyboard,
+  formatIllustrationQuestion,
   formatReviewQuestion,
   formatReviewSummary,
-  formatTrueFalseQuestion,
 } from "./presentation";
 import {
   createSession,
@@ -35,18 +34,20 @@ export async function buildNextQuestionActions(
     return buildReviewSummaryActions(client, chatId);
   }
 
-  const exampleJudgment = session.exampleJudgment[currentTerm.id];
-  if (exampleJudgment) {
+  const illustrationPick = session.illustration[currentTerm.id];
+  if (illustrationPick) {
     return [
       send(
         chatId,
-        formatTrueFalseQuestion(
-          currentTerm,
+        formatIllustrationQuestion(
           session.currentIndex,
           session.termIds.length,
-          exampleJudgment.text,
+          illustrationPick.scenarioText,
         ),
-        buildTrueFalseKeyboard(session.currentIndex),
+        buildReviewKeyboard(
+          illustrationPick.options.map((o) => ({ id: o.id, term: o.text })),
+          session.currentIndex,
+        ),
         true,
       ),
     ];
@@ -100,4 +101,4 @@ export async function startReviewSession(
   return buildNextQuestionActions(client, chatId);
 }
 
-export { handleReviewAnswer, handleReviewTrueFalseAnswer } from "./quiz-answer-flow";
+export { handleReviewAnswer } from "./quiz-answer-flow";

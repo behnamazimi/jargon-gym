@@ -1,9 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
-import {
-  assignExampleJudgmentQuestions,
-  type ExampleJudgmentPick,
-} from "@/lib/quiz/example-judgment";
+import { buildIllustrationQuestions, type IllustrationPick } from "@/lib/quiz/illustration";
 import { fetchQuizTermPool, getMaxStudyCount } from "@/lib/study";
 import { getPoolStatsForUser } from "@/lib/trace-queue";
 import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
@@ -18,9 +15,9 @@ export type ReviewSession = {
   userId: string;
   domainId: QuizDomainSelection;
   termIds: string[];
-  /** termId -> example-judgment true/false question, for terms picked at
-   *  session creation. Terms not in this map get the regular term-guess MCQ. */
-  exampleJudgment: Record<string, ExampleJudgmentPick>;
+  /** termId -> illustration MCQ pick, for terms picked at session creation.
+   *  Terms not in this map get the regular term-guess MCQ. */
+  illustration: Record<string, IllustrationPick>;
   currentIndex: number;
   correctCount: number;
   startedAt: number;
@@ -29,7 +26,7 @@ export type ReviewSession = {
 type StoredQuizSession = {
   domainId: QuizDomainSelection;
   termIds: string[];
-  exampleJudgment: Record<string, ExampleJudgmentPick>;
+  illustration: Record<string, IllustrationPick>;
   currentIndex: number;
   correctCount: number;
   startedAt: number;
@@ -37,18 +34,25 @@ type StoredQuizSession = {
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
-function isExampleJudgmentPick(value: unknown): value is ExampleJudgmentPick {
+function isIllustrationPick(value: unknown): value is IllustrationPick {
   if (!value || typeof value !== "object") return false;
-  const pick = value as ExampleJudgmentPick;
-  return typeof pick.text === "string" && typeof pick.correctAnswer === "boolean";
+  const pick = value as IllustrationPick;
+  return (
+    typeof pick.scenarioText === "string" &&
+    Array.isArray(pick.options) &&
+    pick.options.every(
+      (option) => option && typeof option.id === "string" && typeof option.text === "string",
+    ) &&
+    typeof pick.correctOptionId === "string"
+  );
 }
 
-function isExampleJudgmentMap(value: unknown): value is Record<string, ExampleJudgmentPick> {
+function isIllustrationMap(value: unknown): value is Record<string, IllustrationPick> {
   // Older stored sessions predate this field, so treat it as optional here —
   // the reader below defaults a missing map to {}.
   if (value === undefined) return true;
   if (!value || typeof value !== "object") return false;
-  return Object.values(value).every(isExampleJudgmentPick);
+  return Object.values(value).every(isIllustrationPick);
 }
 
 function isStoredSession(value: unknown): value is StoredQuizSession {
@@ -58,7 +62,7 @@ function isStoredSession(value: unknown): value is StoredQuizSession {
     (session.domainId === "all" || typeof session.domainId === "string") &&
     Array.isArray(session.termIds) &&
     session.termIds.every((id) => typeof id === "string") &&
-    isExampleJudgmentMap(session.exampleJudgment) &&
+    isIllustrationMap(session.illustration) &&
     typeof session.currentIndex === "number" &&
     typeof session.correctCount === "number" &&
     typeof session.startedAt === "number"
@@ -131,13 +135,13 @@ export async function createSession(
     "admin",
   );
   const termIds = cards.map((t) => t.id);
-  const exampleJudgment = Object.fromEntries(await assignExampleJudgmentQuestions(cards, client));
+  const illustration = Object.fromEntries(await buildIllustrationQuestions(cards, client));
 
   const session: ReviewSession = {
     userId,
     domainId,
     termIds,
-    exampleJudgment,
+    illustration,
     currentIndex: 0,
     correctCount: 0,
     startedAt: Date.now(),
@@ -147,7 +151,7 @@ export async function createSession(
     await saveStoredSession(client, chatId, {
       domainId: session.domainId,
       termIds: session.termIds,
-      exampleJudgment: session.exampleJudgment,
+      illustration: session.illustration,
       currentIndex: session.currentIndex,
       correctCount: session.correctCount,
       startedAt: session.startedAt,
@@ -176,7 +180,7 @@ export async function getSession(client: Client, chatId: number): Promise<Review
     userId: data.user_id,
     domainId: data.quiz_session.domainId,
     termIds: data.quiz_session.termIds,
-    exampleJudgment: data.quiz_session.exampleJudgment ?? {},
+    illustration: data.quiz_session.illustration ?? {},
     currentIndex: data.quiz_session.currentIndex,
     correctCount: data.quiz_session.correctCount,
     startedAt: data.quiz_session.startedAt,

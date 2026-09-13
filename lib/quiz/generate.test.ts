@@ -90,11 +90,10 @@ function fakeGeneratedQuestions(prompt: string) {
 }
 
 describe("generateQuizQuestions", () => {
-  it("keeps example-judgment and model-planned true_false combined at or under 40% of the quiz", async () => {
-    // Regression guard: illustration questions alone used to be able to hit
-    // 50% of the quiz, with the remainder's true_false share adding more on
-    // top. All 10 terms here are eligible for example-judgment, exercising
-    // the worst case for the combined cap.
+  it("keeps AI-planned true_false at or under 40% of the quiz", async () => {
+    // AI mode no longer builds illustration questions itself (that's
+    // Simple-mode-only, via lib/quiz/illustration.ts) — its entire
+    // true_false budget is TRUE_FALSE_MAX_SHARE of the full term set.
     const terms: QuizTerm[] = Array.from({ length: 10 }, (_, i) =>
       makeTerm({ id: `t${i}`, term: `Term${i}`, example: `Term${i} in action.` }),
     );

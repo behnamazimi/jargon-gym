@@ -1,8 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
+import { NONE_OF_THESE_OPTION_TEXT } from "@/lib/quiz/illustration";
 import type { TelegramAction } from "./actions";
-import { formatReviewQuestionWithAnswer, formatTrueFalseQuestionWithAnswer } from "./presentation";
+import {
+  formatIllustrationQuestionWithAnswer,
+  formatReviewQuestionWithAnswer,
+} from "./presentation";
 import { buildNextQuestionActions, buildReviewSummaryActions } from "./quiz-session-flow";
 import {
   getCurrentTerm,
@@ -14,6 +18,11 @@ import {
 import { edit, send } from "./transport";
 
 type Client = SupabaseClient<Database>;
+
+async function lookupTermName(client: Client, termId: string): Promise<string> {
+  const { data } = await client.from("terms").select("term").eq("id", termId).single();
+  return data?.term ?? "Unknown";
+}
 
 /** Shared tail for both answer handlers: persist the outcome, show the
  *  answered-question message, then either advance or wrap up the session. */
@@ -59,15 +68,28 @@ export async function handleReviewAnswer(
   const currentTerm = await getCurrentTerm(client, session);
   if (!currentTerm) return [];
 
-  const isCorrect = selectedTermId === currentTerm.id;
+  const illustrationPick = session.illustration[currentTerm.id];
 
-  const { data: selectedTermData } = await client
-    .from("terms")
-    .select("term")
-    .eq("id", selectedTermId)
-    .single();
+  let isCorrect: boolean;
+  let selectedLabel: string;
+  let correctLabel: string;
 
-  const selectedTermName = selectedTermData?.term ?? "Unknown";
+  if (illustrationPick) {
+    isCorrect = selectedTermId === illustrationPick.correctOptionId;
+    // Both labels come from the pick's own options — the same list already
+    // sent to the user in the keyboard — rather than a DB lookup, since that
+    // list already covers every id the user could have tapped, including
+    // the "none" sentinel.
+    correctLabel =
+      illustrationPick.options.find((o) => o.id === illustrationPick.correctOptionId)?.text ??
+      NONE_OF_THESE_OPTION_TEXT;
+    selectedLabel =
+      illustrationPick.options.find((o) => o.id === selectedTermId)?.text ?? "Unknown";
+  } else {
+    isCorrect = selectedTermId === currentTerm.id;
+    correctLabel = currentTerm.term;
+    selectedLabel = await lookupTermName(client, selectedTermId);
+  }
 
   await applyQuizAnswer(client, session.userId, {
     termId: currentTerm.id,
@@ -76,59 +98,24 @@ export async function handleReviewAnswer(
     mode: "admin",
   });
 
-  const message = formatReviewQuestionWithAnswer(
-    currentTerm,
-    sessionIndex,
-    session.termIds.length,
-    selectedTermName,
-    isCorrect,
-    session.correctCount + (isCorrect ? 1 : 0),
-  );
-
-  return finishAnsweredQuestion(client, chatId, messageId, session, isCorrect, message);
-}
-
-export async function handleReviewTrueFalseAnswer(
-  client: Client,
-  chatId: number,
-  messageId: number,
-  sessionIndex: number,
-  answer: boolean,
-): Promise<TelegramAction[]> {
-  const session = await getSession(client, chatId);
-  if (!session) {
-    return [send(chatId, "Your quiz session has expired. Start a new one with /quiz")];
-  }
-
-  if (sessionIndex !== session.currentIndex) {
-    return [send(chatId, "This question has already been answered.")];
-  }
-
-  const currentTerm = await getCurrentTerm(client, session);
-  if (!currentTerm) return [];
-
-  const exampleJudgment = session.exampleJudgment[currentTerm.id];
-  if (!exampleJudgment) return [];
-
-  const isCorrect = answer === exampleJudgment.correctAnswer;
-
-  await applyQuizAnswer(client, session.userId, {
-    termId: currentTerm.id,
-    passed: isCorrect,
-    questionType: "true_false",
-    mode: "admin",
-  });
-
-  const message = formatTrueFalseQuestionWithAnswer(
-    currentTerm,
-    sessionIndex,
-    session.termIds.length,
-    exampleJudgment.text,
-    answer,
-    exampleJudgment.correctAnswer,
-    isCorrect,
-    session.correctCount + (isCorrect ? 1 : 0),
-  );
+  const message = illustrationPick
+    ? formatIllustrationQuestionWithAnswer(
+        sessionIndex,
+        session.termIds.length,
+        illustrationPick.scenarioText,
+        selectedLabel,
+        correctLabel,
+        isCorrect,
+        session.correctCount + (isCorrect ? 1 : 0),
+      )
+    : formatReviewQuestionWithAnswer(
+        currentTerm,
+        sessionIndex,
+        session.termIds.length,
+        selectedLabel,
+        isCorrect,
+        session.correctCount + (isCorrect ? 1 : 0),
+      );
 
   return finishAnsweredQuestion(client, chatId, messageId, session, isCorrect, message);
 }

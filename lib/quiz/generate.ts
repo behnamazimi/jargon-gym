@@ -4,10 +4,6 @@ import { generateObject } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LlmProvider } from "@/lib/llm/types";
 import type { Database } from "@/lib/supabase/database.types";
-import {
-  assignExampleJudgmentQuestions,
-  buildExampleJudgmentQuestionLine,
-} from "./example-judgment";
 import { TRUE_FALSE_MAX_SHARE } from "./mix-ratios";
 import { normalizeQuizQuestions } from "./normalize";
 import { buildQuizPrompt, buildRemainderPlan } from "./generate-prompt";
@@ -73,54 +69,32 @@ export async function generateQuizQuestions(input: {
   terms: QuizTerm[];
   client: SupabaseClient<Database>;
 }): Promise<QuizQuestion[]> {
-  // Example-judgment questions are built deterministically — same source of
-  // truth as the non-AI quiz path (lib/quiz/example-judgment.ts) — so the
-  // model is only ever asked to produce the two plain shapes below.
-  const maxTrueFalse = Math.floor(input.terms.length * TRUE_FALSE_MAX_SHARE);
-  const exampleJudgment = await assignExampleJudgmentQuestions(
-    input.terms,
-    input.client,
-    maxTrueFalse,
-  );
-  const remainderTerms = input.terms.filter((term) => !exampleJudgment.has(term.id));
-
-  const judgmentQuestions = new Map<string, QuizQuestion>();
-  for (const term of input.terms) {
-    const pick = exampleJudgment.get(term.id);
-    if (!pick) continue;
-    judgmentQuestions.set(term.id, {
-      type: "true_false",
-      termId: term.id,
-      prompt: `${buildExampleJudgmentQuestionLine(term.term)}\n${pick.text}`,
-      correctAnswer: pick.correctAnswer,
-    });
+  if (input.terms.length === 0) {
+    throw new Error("No terms to generate a quiz for.");
   }
 
-  let generatedQuestions = new Map<string, QuizQuestion>();
-  if (remainderTerms.length > 0) {
-    const trueFalseBudget = maxTrueFalse - exampleJudgment.size;
-    const plan = buildRemainderPlan(remainderTerms, trueFalseBudget) as [
-      QuizGenerationSlot,
-      ...QuizGenerationSlot[],
-    ];
-    const requestInput = { ...input, terms: remainderTerms, plan };
+  const maxTrueFalse = Math.floor(input.terms.length * TRUE_FALSE_MAX_SHARE);
+  const plan = buildRemainderPlan(input.terms, maxTrueFalse) as [
+    QuizGenerationSlot,
+    ...QuizGenerationSlot[],
+  ];
+  const requestInput = { ...input, plan };
 
-    let generated: QuizQuestion[];
+  let generated: QuizQuestion[];
+  try {
+    generated = await requestQuizFromModel(requestInput);
+  } catch (firstError) {
     try {
       generated = await requestQuizFromModel(requestInput);
-    } catch (firstError) {
-      try {
-        generated = await requestQuizFromModel(requestInput);
-      } catch {
-        if (firstError instanceof Error) throw firstError;
-        throw new Error("Couldn't generate the quiz. Check your API key and try again.");
-      }
+    } catch {
+      if (firstError instanceof Error) throw firstError;
+      throw new Error("Couldn't generate the quiz. Check your API key and try again.");
     }
-    generatedQuestions = new Map(generated.map((question) => [question.termId, question]));
   }
 
+  const generatedByTermId = new Map(generated.map((question) => [question.termId, question]));
   const questions = input.terms
-    .map((term) => judgmentQuestions.get(term.id) ?? generatedQuestions.get(term.id))
+    .map((term) => generatedByTermId.get(term.id))
     .filter((question): question is QuizQuestion => Boolean(question));
 
   if (questions.length === 0) {

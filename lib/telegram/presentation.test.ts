@@ -3,14 +3,13 @@ import type { TermCard } from "@/lib/jargon/term-card";
 import { GOOD } from "@/lib/trace";
 import {
   buildReadRevealKeyboard,
-  buildTrueFalseKeyboard,
+  formatIllustrationQuestion,
+  formatIllustrationQuestionWithAnswer,
   formatReadPrompt,
   formatReviewQuestion,
   formatReviewQuestionWithAnswer,
   formatReviewRated,
   formatTermMessage,
-  formatTrueFalseQuestion,
-  formatTrueFalseQuestionWithAnswer,
 } from "./presentation";
 
 const dangerousTerm: TermCard = {
@@ -80,30 +79,42 @@ describe("presentation HTML escaping", () => {
     expect(message).toContain("&lt;script&gt;");
   });
 
-  it("escapes the term name and scenario text in formatTrueFalseQuestion", () => {
-    const message = formatTrueFalseQuestion(dangerousTerm, 0, 1, `<img src=x onerror=alert(1)>`);
-    expect(message).not.toContain("<script>");
+  it("escapes scenario text in formatIllustrationQuestion", () => {
+    const message = formatIllustrationQuestion(0, 1, `<img src=x onerror=alert(1)>`);
     expect(message).not.toContain("<img");
-    expect(message).toContain("&lt;script&gt;");
     expect(message).toContain("&lt;img");
+    expect(message).toContain("What does this illustrate?");
   });
 
-  it("produces well-formed output for formatTrueFalseQuestionWithAnswer", () => {
-    const message = formatTrueFalseQuestionWithAnswer(
-      dangerousTerm,
+  it("produces well-formed output for formatIllustrationQuestionWithAnswer", () => {
+    const message = formatIllustrationQuestionWithAnswer(
       0,
       1,
       `<img src=x onerror=alert(1)>`,
-      true,
-      false,
+      `<script>alert("x")</script>`,
+      "None of these",
       false,
       0,
     );
     expect(message).not.toContain("<img");
     expect(message).toContain("&lt;img");
+    expect(message).not.toContain("<script>");
     expect(message).toContain("&lt;script&gt;");
-    expect(message).toContain("Your answer:</b> True");
-    expect(message).toContain("The correct answer was: <b>False</b>");
+    expect(message).toContain("The correct answer was: <b>None of these</b>");
+  });
+
+  it("renders 'None of these' as a plain label, not escaped or altered", () => {
+    const message = formatIllustrationQuestionWithAnswer(
+      0,
+      1,
+      "A plain scenario.",
+      "None of these",
+      "None of these",
+      true,
+      1,
+    );
+    expect(message).toContain("Your answer:</b> None of these");
+    expect(message).toContain("✅ <b>Correct!</b>");
   });
 });
 
@@ -112,18 +123,6 @@ describe("buildReadRevealKeyboard", () => {
     const keyboard = buildReadRevealKeyboard("term-1");
     expect(keyboard.inline_keyboard).toEqual([
       [{ text: "Reveal", callback_data: "read:reveal:term-1" }],
-    ]);
-  });
-});
-
-describe("buildTrueFalseKeyboard", () => {
-  it("returns True/False buttons keyed to the session index", () => {
-    const keyboard = buildTrueFalseKeyboard(2);
-    expect(keyboard.inline_keyboard).toEqual([
-      [
-        { text: "True", callback_data: "quiztf:2:true" },
-        { text: "False", callback_data: "quiztf:2:false" },
-      ],
     ]);
   });
 });

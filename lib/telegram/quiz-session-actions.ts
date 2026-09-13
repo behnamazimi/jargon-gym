@@ -21,7 +21,7 @@ export async function updateSession(
   await saveStoredSession(client, chatId, {
     domainId: updated.domainId,
     termIds: updated.termIds,
-    exampleJudgment: updated.exampleJudgment,
+    illustration: updated.illustration,
     currentIndex: updated.currentIndex,
     correctCount: updated.correctCount,
     startedAt: updated.startedAt,

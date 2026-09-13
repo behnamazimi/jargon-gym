@@ -5,11 +5,7 @@ import { AGAIN, EASY, type ReviewGrade } from "@/lib/trace";
 import type { TelegramAction } from "./actions";
 import { CONNECT_MESSAGE } from "./copy";
 import { handleReadCallback, handleReadMarkKnown, handleReadReveal } from "./delivery-flow";
-import {
-  handleQuizSetupCallback,
-  handleReviewAnswer,
-  handleReviewTrueFalseAnswer,
-} from "./quiz-flow";
+import { handleQuizSetupCallback, handleReviewAnswer } from "./quiz-flow";
 import {
   handleReviewMarkKnown,
   handleReviewRate,
@@ -61,20 +57,6 @@ async function routeQuizAnswer(rest: string, ctx: CallbackContext): Promise<Tele
   return handleReviewAnswer(ctx.client, ctx.chatId, ctx.messageId, sessionIndex, selectedTermId);
 }
 
-async function routeQuizTrueFalse(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
-  const [sessionPart, answerPart] = rest.split(":");
-  if (answerPart !== "true" && answerPart !== "false") return [];
-  const sessionIndex = parseInt(sessionPart, 10);
-  if (isNaN(sessionIndex)) return [];
-  return handleReviewTrueFalseAnswer(
-    ctx.client,
-    ctx.chatId,
-    ctx.messageId,
-    sessionIndex,
-    answerPart === "true",
-  );
-}
-
 async function routeReadReveal(rest: string, ctx: CallbackContext): Promise<TelegramAction[]> {
   return handleReadReveal(ctx.client, ctx.userId, ctx.chatId, ctx.messageId, rest);
 }
@@ -107,7 +89,6 @@ const CALLBACK_ROUTES: CallbackRoute[] = [
   ["review:known:", routeReviewKnown],
   ["review:rate:", routeReviewRate],
   ["quiz:", routeQuizAnswer],
-  ["quiztf:", routeQuizTrueFalse],
   ["read:reveal:", routeReadReveal],
   ["read:known:", routeReadKnown],
   ["read:", routeRead],
