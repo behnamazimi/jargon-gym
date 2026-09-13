@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import { recordQuizAnswerAction } from "@/app/(private)/jargon/quiz/actions";
 import { useToast } from "@/components/ui/toast";
-import { useTraceWriteQueue } from "@/lib/study/trace-write-queue";
-import type { PendingQuizWrite } from "@/lib/quiz/session-storage";
+import { hasInflightTraceWrites, useTraceWriteQueue } from "@/lib/study/trace-write-queue";
+import { dropPendingQuizWrite, type PendingQuizWrite } from "@/lib/quiz/session-storage";
 
 /** Owns the background TRACE write queue for one Quiz session: enqueues
  *  an answer, retries/toasts on failure, tracks unconfirmed writes for
@@ -18,7 +18,7 @@ export function useQuizWriteQueue(options: {
   const sessionCompleteRef = useRef(false);
 
   function checkIdle() {
-    if (sessionCompleteRef.current && queue.getState().isIdle) {
+    if (sessionCompleteRef.current && queue.getState().isIdle && !hasInflightTraceWrites()) {
       options.onSessionIdleAfterComplete();
     }
   }
@@ -27,6 +27,7 @@ export function useQuizWriteQueue(options: {
    *  retry/toast/clean up pendingWrites identically. */
   function enqueueAnswerWrite(write: PendingQuizWrite) {
     queue.enqueue({
+      id: write.id,
       label: `quiz:${write.termId}`,
       run: () =>
         recordQuizAnswerAction({
@@ -37,12 +38,13 @@ export function useQuizWriteQueue(options: {
       onSettled: (result, outcome) => {
         if (outcome === "success") {
           setPendingWrites((prev) => prev.filter((w) => w.id !== write.id));
+          dropPendingQuizWrite(write.id);
         }
         if (result.error) {
           options.setErrorMessage(result.error);
         }
         if (outcome === "exhausted") {
-          toast("Couldn't save an answer. We'll keep trying.", "destructive");
+          toast("Couldn't save an answer. Return to Quiz to retry.", "destructive");
         }
         checkIdle();
       },
@@ -62,7 +64,9 @@ export function useQuizWriteQueue(options: {
    *  call this before discarding or replacing a saved session (resume,
    *  discard, or starting a fresh one), so an answer the user already
    *  submitted still gets a shot at reaching the server instead of being
-   *  silently dropped along with the session it was recorded against. */
+   *  silently dropped along with the session it was recorded against.
+   *  Reuses the stored write id so a queue that's still draining after
+   *  unmount isn't duplicated. */
   function flushPendingWrites(writes: PendingQuizWrite[]) {
     for (const write of writes) {
       enqueueAnswerWrite(write);

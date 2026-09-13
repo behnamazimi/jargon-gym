@@ -40,7 +40,16 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
   const [switchingDomainId, setSwitchingDomainId] = useState<string | null>(null);
 
   async function handleSelectDomain(domainId: string) {
-    if (domainId === activeData.domain.id || domainId === switchingDomainId) return;
+    if (domainId === switchingDomainId) return;
+
+    if (domainId === activeData.domain.id) {
+      if (!switchingDomainId) return;
+      // Clicking back to the collection already on screen cancels the
+      // in-flight switch so a slower B response can't overwrite A.
+      switchRequestIdRef.current++;
+      setSwitchingDomainId(null);
+      return;
+    }
 
     const requestId = ++switchRequestIdRef.current;
     setSwitchingDomainId(domainId);

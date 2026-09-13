@@ -28,6 +28,7 @@ export function loadReviewSession(): ReviewSessionState | null {
     delete parsed.setup.sortMode;
 
     parsed.pendingWrites ??= [];
+    parsed.complete = parsed.complete === true;
 
     return parsed as ReviewSessionState;
   } catch {
@@ -43,4 +44,21 @@ export function clearReviewSession(): void {
   } catch {
     // Ignore storage errors.
   }
+}
+
+/** Drops a settled write from the stored session. Called from onSettled
+ *  so a drain after unmount still updates localStorage when React state
+ *  no longer will. Clears the session once a completed one has no writes
+ *  left, so a reload doesn't offer to resume a finished deck. */
+export function dropPendingReviewWrite(writeId: string): void {
+  const session = loadReviewSession();
+  if (!session) return;
+
+  const pendingWrites = session.pendingWrites.filter((write) => write.id !== writeId);
+  if (session.complete && pendingWrites.length === 0) {
+    clearReviewSession();
+    return;
+  }
+
+  saveReviewSession({ ...session, pendingWrites });
 }

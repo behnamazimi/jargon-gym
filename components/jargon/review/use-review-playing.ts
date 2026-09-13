@@ -78,7 +78,14 @@ export function useReviewPlaying({
   });
 
   useEffect(() => {
-    setSavedSession(loadReviewSession());
+    const loaded = loadReviewSession();
+    if (!loaded) return;
+    if (loaded.complete) {
+      flushPendingWrites(loaded.pendingWrites);
+      markComplete();
+      return;
+    }
+    setSavedSession(loaded);
   }, []);
 
   const currentCard = cards[currentIndex];
@@ -88,7 +95,9 @@ export function useReviewPlaying({
     : undefined;
 
   useEffect(() => {
-    if (step !== "playing" || cards.length === 0) return;
+    if (cards.length === 0) return;
+    if (step !== "playing" && step !== "summary") return;
+    if (step === "summary" && pendingWrites.length === 0) return;
 
     setSavedSession(
       persistReviewSession({
@@ -99,6 +108,7 @@ export function useReviewPlaying({
         revealedTermIds,
         startedAt: sessionStartedAt,
         pendingWrites,
+        complete: step === "summary",
       }),
     );
   }, [
@@ -213,7 +223,7 @@ export function useReviewPlaying({
     currentIndex,
     ratings,
     isStarting,
-    savedSession,
+    savedSession: savedSession?.complete ? null : savedSession,
     currentCard,
     currentRevealed,
     currentRating,

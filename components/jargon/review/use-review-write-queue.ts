@@ -1,8 +1,9 @@
 import { useRef, useState } from "react";
 import { rateReviewTermAction } from "@/app/(private)/jargon/review/actions";
 import { useToast } from "@/components/ui/toast";
-import { useTraceWriteQueue } from "@/lib/study/trace-write-queue";
+import { hasInflightTraceWrites, useTraceWriteQueue } from "@/lib/study/trace-write-queue";
 import { upsertPendingWrite } from "@/components/jargon/review/review-session-actions";
+import { dropPendingReviewWrite } from "@/lib/review/session-storage";
 import type { PendingReviewWrite } from "@/lib/review/types";
 import type { ReviewGrade } from "@/lib/trace";
 
@@ -20,27 +21,31 @@ export function useReviewWriteQueue(options: {
   const sessionCompleteRef = useRef(false);
 
   function checkIdle() {
-    if (sessionCompleteRef.current && queue.getState().isIdle) {
+    if (sessionCompleteRef.current && queue.getState().isIdle && !hasInflightTraceWrites()) {
       options.onSessionIdleAfterComplete();
     }
   }
 
-  function enqueueRating(termId: string, grade: ReviewGrade) {
-    const write: PendingReviewWrite = { id: crypto.randomUUID(), termId, grade };
-    setPendingWrites((prev) => upsertPendingWrite(prev, write));
+  function enqueueRating(termId: string, grade: ReviewGrade, existing?: PendingReviewWrite) {
+    const write = existing ?? { id: crypto.randomUUID(), termId, grade };
+    if (!existing) {
+      setPendingWrites((prev) => upsertPendingWrite(prev, write));
+    }
 
     queue.enqueue({
+      id: write.id,
       label: `review:${termId}`,
       run: () => rateReviewTermAction(termId, grade),
       onSettled: (result, outcome) => {
         if (outcome === "success") {
           setPendingWrites((prev) => prev.filter((w) => w.id !== write.id));
+          dropPendingReviewWrite(write.id);
         }
         if (result.error) {
           options.setErrorMessage(result.error);
         }
         if (outcome === "exhausted") {
-          toast("Couldn't save a rating. We'll keep trying.", "destructive");
+          toast("Couldn't save a rating. Return to Review to retry.", "destructive");
         }
         checkIdle();
       },
@@ -60,10 +65,12 @@ export function useReviewWriteQueue(options: {
    *  call this before discarding or replacing a saved session (resume,
    *  discard, or starting a fresh one), so a grade the user already tapped
    *  still gets a shot at reaching the server instead of being silently
-   *  dropped along with the session it was recorded against. */
+   *  dropped along with the session it was recorded against. Reuses the
+   *  stored write id so a queue that's still draining after unmount isn't
+   *  duplicated. */
   function flushPendingWrites(writes: PendingReviewWrite[]) {
     for (const write of writes) {
-      enqueueRating(write.termId, write.grade);
+      enqueueRating(write.termId, write.grade, write);
     }
   }
 

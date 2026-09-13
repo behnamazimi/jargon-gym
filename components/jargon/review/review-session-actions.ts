@@ -40,6 +40,7 @@ export function persistReviewSession(state: {
   setup: ReviewSetup;
   startedAt: string;
   pendingWrites: PendingReviewWrite[];
+  complete?: boolean;
 }) {
   saveReviewSession({
     setup: state.setup,
@@ -49,6 +50,7 @@ export function persistReviewSession(state: {
     revealedTermIds: state.revealedTermIds,
     startedAt: state.startedAt,
     pendingWrites: state.pendingWrites,
+    complete: state.complete === true,
   });
   return loadReviewSession();
 }
@@ -75,7 +77,8 @@ export function resetReviewToSetup(setters: PlayingSetters, refreshPoolStats: ()
   setters.setShownTermIds([]);
   setters.setErrorMessage(null);
   setters.setPendingWrites([]);
-  setters.setSavedSession(loadReviewSession());
+  const loaded = loadReviewSession();
+  setters.setSavedSession(loaded?.complete ? null : loaded);
   refreshPoolStats();
 }
 
@@ -153,6 +156,7 @@ export function startReviewSession(
       revealedTermIds: [],
       startedAt,
       pendingWrites: [],
+      complete: false,
     });
     setters.setSavedSession(saved);
   });

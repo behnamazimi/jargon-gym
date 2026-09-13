@@ -67,11 +67,20 @@ export function useQuizPlaying({
   });
 
   useEffect(() => {
-    setSavedSession(loadQuizSession());
+    const loaded = loadQuizSession();
+    if (!loaded) return;
+    if (loaded.complete) {
+      flushPendingWrites(loaded.pendingWrites);
+      markSessionComplete();
+      return;
+    }
+    setSavedSession(loaded);
   }, []);
 
   useEffect(() => {
-    if (step !== "playing" || questions.length === 0) return;
+    if (questions.length === 0) return;
+    if (step !== "playing" && step !== "results") return;
+    if (step === "results" && pendingWrites.length === 0) return;
 
     saveQuizSession({
       setup: { domainIds, questionCount: questions.length, questionStyle },
@@ -81,6 +90,7 @@ export function useQuizPlaying({
       answers,
       startedAt: sessionStartedAt,
       pendingWrites,
+      complete: step === "results",
     });
   }, [
     step,
@@ -211,7 +221,7 @@ export function useQuizPlaying({
   return {
     questions,
     currentIndex,
-    savedSession,
+    savedSession: savedSession?.complete ? null : savedSession,
     termById,
     correctSoFar,
     handleResumeSession,

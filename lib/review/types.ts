@@ -32,4 +32,7 @@ export type ReviewSessionState = {
   /** Grades applied locally but not yet confirmed persisted by the write
    *  queue — replayed on resume so a crash/reload can't silently drop one. */
   pendingWrites: PendingReviewWrite[];
+  /** True once the last card has been graded. A reload must not restore
+   *  the last card as if the session were still in progress. */
+  complete?: boolean;
 };
