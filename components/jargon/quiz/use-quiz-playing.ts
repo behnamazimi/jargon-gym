@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
-import { generateQuizAction } from "@/app/(private)/jargon/quiz/actions";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { generateQuizAction, recordQuizAnswerAction } from "@/app/(private)/jargon/quiz/actions";
+import { revalidateStudyPathsAction } from "@/app/(private)/jargon/actions";
 import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
 import {
   clearQuizSession,
   loadQuizSession,
   saveQuizSession,
+  type PendingQuizWrite,
   type QuizSessionState,
 } from "@/lib/quiz/session-storage";
 import type { QuizStep } from "@/components/jargon/quiz/use-quiz-setup";
-import { retryQuizSubmit, submitQuizAnswer } from "@/components/jargon/quiz/quiz-answer-actions";
+import { submitQuizAnswer } from "@/components/jargon/quiz/quiz-answer-actions";
+import { useToast } from "@/components/ui/toast";
+import { useTraceWriteQueue } from "@/lib/study/trace-write-queue";
 
 type UseQuizPlayingArgs = {
   step: QuizStep;
@@ -39,14 +43,18 @@ export function useQuizPlaying({
   const [terms, setTerms] = useState<QuizTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<QuizAnswer[]>([]);
+  const [pendingWrites, setPendingWrites] = useState<PendingQuizWrite[]>([]);
   const [resultsScore, setResultsScore] = useState<{
     score: number;
     total: number;
   } | null>(null);
   const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
-  const [isSubmittingAnswer, setIsSubmittingAnswer] = useState(false);
-  const [pendingFinalAnswers, setPendingFinalAnswers] = useState<QuizAnswer[] | null>(null);
+
+  const { toast } = useToast();
+  const queue = useTraceWriteQueue();
+  const sessionCompleteRef = useRef(false);
+  const advancedQuestionKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     setSavedSession(loadQuizSession());
@@ -62,15 +70,77 @@ export function useQuizPlaying({
       currentIndex,
       answers,
       startedAt: sessionStartedAt,
+      pendingWrites,
     });
-  }, [step, questions, terms, currentIndex, answers, domainIds, questionStyle, sessionStartedAt]);
+  }, [
+    step,
+    questions,
+    terms,
+    currentIndex,
+    answers,
+    pendingWrites,
+    domainIds,
+    questionStyle,
+    sessionStartedAt,
+  ]);
 
   const termById = useMemo(() => new Map(terms.map((term) => [term.id, term])), [terms]);
   const correctSoFar = answers.filter((answer) => answer.passed).length;
 
+  function maybeFinalizeSession() {
+    if (!sessionCompleteRef.current || !queue.getState().isIdle) return;
+    clearQuizSession();
+    setSavedSession(null);
+    void revalidateStudyPathsAction("quiz");
+  }
+
+  function markSessionComplete() {
+    sessionCompleteRef.current = true;
+    maybeFinalizeSession();
+  }
+
+  /** Enqueues the background write for one answer and wires up its settle
+   *  handling — shared by a fresh submit and by resume-replay, so both
+   *  paths retry/toast/clean up pendingWrites identically. */
+  function enqueueAnswerWrite(write: PendingQuizWrite) {
+    queue.enqueue({
+      label: `quiz:${write.termId}`,
+      run: () =>
+        recordQuizAnswerAction({
+          termId: write.termId,
+          passed: write.passed,
+          questionType: write.questionType,
+        }),
+      onSettled: (result, outcome) => {
+        if (outcome === "success") {
+          setPendingWrites((prev) => prev.filter((w) => w.id !== write.id));
+        }
+        if (result.error) {
+          setErrorMessage(result.error);
+        }
+        if (outcome === "exhausted") {
+          toast("Couldn't save an answer. We'll keep trying.", "destructive");
+        }
+        maybeFinalizeSession();
+      },
+    });
+  }
+
+  const answerSetters = {
+    setStep,
+    setAnswers,
+    setCurrentIndex,
+    setResultsScore,
+    setPendingWrites,
+    enqueueAnswerWrite,
+    markSessionComplete,
+  };
+
   function handleResumeSession() {
     if (!savedSession) return;
 
+    sessionCompleteRef.current = false;
+    advancedQuestionKeyRef.current = null;
     setQuestionStyle(savedSession.setup.questionStyle ?? "ai");
     setSelectedCollectionId(
       savedSession.setup.domainIds === "all" ? "all" : savedSession.setup.domainIds[0],
@@ -81,11 +151,15 @@ export function useQuizPlaying({
     setTerms(savedSession.terms);
     setCurrentIndex(savedSession.currentIndex);
     setAnswers(savedSession.answers);
+    setPendingWrites(savedSession.pendingWrites);
     setSessionStartedAt(savedSession.startedAt);
     setErrorMessage(null);
-    setPendingFinalAnswers(null);
     setSavedSession(null);
     setStep("playing");
+
+    for (const write of savedSession.pendingWrites) {
+      enqueueAnswerWrite(write);
+    }
   }
 
   function handleDiscardSession() {
@@ -94,15 +168,17 @@ export function useQuizPlaying({
   }
 
   function resetQuizState() {
+    sessionCompleteRef.current = false;
+    advancedQuestionKeyRef.current = null;
     clearQuizSession();
     setSavedSession(null);
     setQuestions([]);
     setTerms([]);
     setCurrentIndex(0);
     setAnswers([]);
+    setPendingWrites([]);
     setResultsScore(null);
     setErrorMessage(null);
-    setPendingFinalAnswers(null);
     setStep("picker");
     setSessionStartedAt(new Date().toISOString());
   }
@@ -113,6 +189,8 @@ export function useQuizPlaying({
       return;
     }
 
+    sessionCompleteRef.current = false;
+    advancedQuestionKeyRef.current = null;
     clearQuizSession();
     setSavedSession(null);
     setErrorMessage(null);
@@ -131,44 +209,25 @@ export function useQuizPlaying({
     setTerms(result.terms);
     setCurrentIndex(0);
     setAnswers([]);
+    setPendingWrites([]);
     setStep("playing");
   }
 
-  const answerSetters = {
-    setStep,
-    setErrorMessage,
-    setIsSubmittingAnswer,
-    setAnswers,
-    setCurrentIndex,
-    setResultsScore,
-    setSavedSession,
-    setPendingFinalAnswers,
-  };
+  function handleQuestionAnswer(passed: boolean) {
+    const question = questions[currentIndex];
+    if (!question) return;
 
-  async function handleQuestionAnswer(passed: boolean) {
-    if (isSubmittingAnswer) return;
-    setIsSubmittingAnswer(true);
+    const key = `${question.termId}-${currentIndex}`;
+    if (advancedQuestionKeyRef.current === key) return;
+    advancedQuestionKeyRef.current = key;
+
     setErrorMessage(null);
-
-    await submitQuizAnswer(answerSetters, passed, {
-      question: questions[currentIndex],
+    submitQuizAnswer(answerSetters, passed, {
+      question,
       answers,
       currentIndex,
       totalQuestions: questions.length,
     });
-  }
-
-  async function handleRetrySubmit() {
-    if (!pendingFinalAnswers || isSubmittingAnswer) return;
-    setIsSubmittingAnswer(true);
-    setErrorMessage(null);
-
-    await retryQuizSubmit(
-      answerSetters,
-      pendingFinalAnswers,
-      questions[currentIndex],
-      questions.length,
-    );
   }
 
   const score = resultsScore?.score ?? answers.filter((answer) => answer.passed).length;
@@ -178,8 +237,6 @@ export function useQuizPlaying({
     questions,
     currentIndex,
     savedSession,
-    isSubmittingAnswer,
-    pendingFinalAnswers,
     termById,
     correctSoFar,
     handleResumeSession,
@@ -187,7 +244,6 @@ export function useQuizPlaying({
     resetQuizState,
     handleStartQuiz,
     handleQuestionAnswer,
-    handleRetrySubmit,
     score,
     resultsTotal,
   };

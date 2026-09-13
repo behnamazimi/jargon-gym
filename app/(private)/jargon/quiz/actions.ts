@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
 import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
 import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
@@ -124,15 +123,12 @@ export async function generateQuizAction(input: {
 }
 
 /** Record outcome for a single answer: updates the Bayesian recognition
- *  posterior. On the last question, also finalizes the quiz (revalidates
- *  the jargon pages) in the same round trip instead of a separate action —
- *  finalizing has no data dependency on the answer write, it just needs to
- *  happen after it succeeds. */
+ *  posterior. Revalidation of the jargon pages happens separately, once
+ *  the client's write queue goes idle — see revalidateStudyPathsAction. */
 export async function recordQuizAnswerAction(input: {
   termId: string;
   passed: boolean;
   questionType: QuestionType;
-  isLastQuestion?: boolean;
 }): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
@@ -149,10 +145,6 @@ export async function recordQuizAnswerAction(input: {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't update term progress.";
     return { error: message };
-  }
-
-  if (input.isLastQuestion) {
-    revalidatePath("/jargon");
   }
 
   return {};

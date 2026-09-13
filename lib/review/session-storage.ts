@@ -27,6 +27,8 @@ export function loadReviewSession(): ReviewSessionState | null {
     delete parsed.setup.shuffle;
     delete parsed.setup.sortMode;
 
+    parsed.pendingWrites ??= [];
+
     return parsed as ReviewSessionState;
   } catch {
     return null;

@@ -28,7 +28,6 @@ type ReviewPlayingStepProps = {
   totalCards: number;
   currentRevealed: boolean;
   currentRating: ReviewRating | undefined;
-  isRating: boolean;
   errorMessage: string | null;
   reduceMotion: boolean;
   narrationAccess: boolean;
@@ -46,7 +45,6 @@ export function ReviewPlayingStep({
   totalCards,
   currentRevealed,
   currentRating,
-  isRating,
   errorMessage,
   reduceMotion,
   narrationAccess,
@@ -110,7 +108,6 @@ export function ReviewPlayingStep({
                   type="button"
                   variant={variant}
                   onPress={() => onRate(grade)}
-                  isDisabled={isRating}
                   className={cn(
                     "btn-soft min-h-11 transition-transform active:scale-[0.96]",
                     "[--btn-bg:color-mix(in_oklab,var(--btn-color)_45%,var(--color-base-100))]",

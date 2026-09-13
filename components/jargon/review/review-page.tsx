@@ -20,11 +20,11 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
 
   useReviewKeyboard({
     onReveal: session.handleReveal,
-    onGrade: (grade) => void session.handleRate(grade),
+    onGrade: session.handleRate,
     onPrevious: session.handlePrevious,
     onNext: session.handleNext,
     revealed: session.currentRevealed,
-    canRate: session.currentRevealed && !session.isRating,
+    canRate: session.currentRevealed,
     enabled: session.step === "playing",
   });
 
@@ -57,7 +57,6 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
           totalCards={session.cards.length}
           currentRevealed={session.currentRevealed}
           currentRating={session.currentRating}
-          isRating={session.isRating}
           errorMessage={session.errorMessage}
           reduceMotion={reduceMotion}
           narrationAccess={narrationAccess}
@@ -65,7 +64,7 @@ export function ReviewPage({ collections, initialDomainId, narrationAccess }: Re
           onPrevious={session.handlePrevious}
           onNext={session.handleNext}
           onMarkedKnown={session.handleMarkedKnown}
-          onRate={(grade) => void session.handleRate(grade)}
+          onRate={session.handleRate}
           onDone={session.handleDone}
         />
       ) : null}

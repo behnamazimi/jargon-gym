@@ -21,7 +21,6 @@ type QuizQuestionViewProps = {
   correct: number;
   isLast: boolean;
   onAnswer: (passed: boolean) => void;
-  isSubmitting: boolean;
 };
 
 export function QuizQuestionView({
@@ -31,7 +30,6 @@ export function QuizQuestionView({
   correct,
   isLast,
   onAnswer,
-  isSubmitting,
 }: QuizQuestionViewProps) {
   const progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
   const [state, dispatch] = useReducer(quizAnswerReducer, initialAnswerState);
@@ -42,8 +40,8 @@ export function QuizQuestionView({
 
   const canSubmit = canSubmitAnswer(question, state);
 
-  const stateRef = useRef({ state, canSubmit, question, onAnswer, isSubmitting });
-  stateRef.current = { state, canSubmit, question, onAnswer, isSubmitting };
+  const stateRef = useRef({ state, canSubmit, question, onAnswer });
+  stateRef.current = { state, canSubmit, question, onAnswer };
 
   const lockoutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const unlockPopTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -79,7 +77,7 @@ export function QuizQuestionView({
 
   function advanceAnswer() {
     const current = stateRef.current;
-    if (current.state.phase !== "ready" || current.isSubmitting) return;
+    if (current.state.phase !== "ready") return;
     current.onAnswer(current.state.passed);
   }
 
@@ -101,7 +99,7 @@ export function QuizQuestionView({
         return;
       }
 
-      if (current.state.phase !== "ready" || current.isSubmitting) return;
+      if (current.state.phase !== "ready") return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -113,7 +111,7 @@ export function QuizQuestionView({
   }, []);
 
   const submitted = state.phase !== "answering";
-  const canAdvance = state.phase === "ready" && !isSubmitting;
+  const canAdvance = state.phase === "ready";
   const { question: promptQuestion, quote: promptQuote } = splitPromptQuote(question.prompt);
 
   return (

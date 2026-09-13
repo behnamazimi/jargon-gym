@@ -1,20 +1,24 @@
-import { recordQuizAnswerAction } from "@/app/(private)/jargon/quiz/actions";
-import { clearQuizSession } from "@/lib/quiz/session-storage";
+import type { PendingQuizWrite } from "@/lib/quiz/session-storage";
 import type { QuizAnswer, QuizQuestion } from "@/lib/quiz/types";
 import type { QuizStep } from "@/components/jargon/quiz/use-quiz-setup";
 
 type AnswerSetters = {
   setStep: (step: QuizStep) => void;
-  setErrorMessage: (message: string | null) => void;
-  setIsSubmittingAnswer: (value: boolean) => void;
   setAnswers: (answers: QuizAnswer[]) => void;
   setCurrentIndex: (updater: (index: number) => number) => void;
   setResultsScore: (score: { score: number; total: number }) => void;
-  setSavedSession: (session: null) => void;
-  setPendingFinalAnswers: (answers: QuizAnswer[] | null) => void;
+  setPendingWrites: (updater: (writes: PendingQuizWrite[]) => PendingQuizWrite[]) => void;
+  /** Enqueues the background TRACE write for one answer and wires up its
+   *  own settle handling (retry, toast, pendingWrites cleanup, finalize
+   *  check) — defined in the hook, shared with resume-replay. */
+  enqueueAnswerWrite: (write: PendingQuizWrite) => void;
+  /** Called once, when the last question is answered — marks the session
+   *  complete and checks for an immediate finalize, in case the queue is
+   *  already idle at that instant. */
+  markSessionComplete: () => void;
 };
 
-export async function submitQuizAnswer(
+export function submitQuizAnswer(
   setters: AnswerSetters,
   passed: boolean,
   args: {
@@ -27,27 +31,19 @@ export async function submitQuizAnswer(
   const isLastQuestion = args.currentIndex + 1 >= args.totalQuestions;
   const nextAnswers = [...args.answers, { termId: args.question.termId, passed }];
 
-  const answerResult = await recordQuizAnswerAction({
+  setters.setAnswers(nextAnswers);
+
+  const write: PendingQuizWrite = {
+    id: crypto.randomUUID(),
     termId: args.question.termId,
     passed,
     questionType: args.question.type,
-    isLastQuestion,
-  });
-
-  if (answerResult.error) {
-    setters.setErrorMessage(answerResult.error);
-    setters.setIsSubmittingAnswer(false);
-    if (isLastQuestion) {
-      setters.setPendingFinalAnswers(nextAnswers);
-    }
-    return;
-  }
-
-  setters.setAnswers(nextAnswers);
+  };
+  setters.setPendingWrites((prev) => [...prev, write]);
+  setters.enqueueAnswerWrite(write);
 
   if (!isLastQuestion) {
     setters.setCurrentIndex((index) => index + 1);
-    setters.setIsSubmittingAnswer(false);
     return;
   }
 
@@ -55,44 +51,6 @@ export async function submitQuizAnswer(
     score: nextAnswers.filter((answer) => answer.passed).length,
     total: args.totalQuestions,
   });
-  clearQuizSession();
-  setters.setSavedSession(null);
   setters.setStep("results");
-  setters.setIsSubmittingAnswer(false);
-}
-
-/** Retries the last question's answer+finalize call after it failed —
- *  correct rather than merely convenient, since a failed
- *  recordQuizAnswerAction call never persisted that answer in the first
- *  place (it fails before or during the write, never after). */
-export async function retryQuizSubmit(
-  setters: AnswerSetters,
-  pendingFinalAnswers: QuizAnswer[],
-  lastQuestion: QuizQuestion,
-  totalQuestions: number,
-) {
-  const lastAnswer = pendingFinalAnswers[pendingFinalAnswers.length - 1];
-
-  const result = await recordQuizAnswerAction({
-    termId: lastAnswer.termId,
-    passed: lastAnswer.passed,
-    questionType: lastQuestion.type,
-    isLastQuestion: true,
-  });
-
-  if (result.error) {
-    setters.setErrorMessage(result.error);
-    setters.setIsSubmittingAnswer(false);
-    return;
-  }
-
-  setters.setResultsScore({
-    score: pendingFinalAnswers.filter((answer) => answer.passed).length,
-    total: totalQuestions,
-  });
-  clearQuizSession();
-  setters.setSavedSession(null);
-  setters.setPendingFinalAnswers(null);
-  setters.setStep("results");
-  setters.setIsSubmittingAnswer(false);
+  setters.markSessionComplete();
 }

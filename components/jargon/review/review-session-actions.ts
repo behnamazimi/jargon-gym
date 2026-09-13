@@ -4,7 +4,13 @@ import {
   saveReviewSession,
 } from "@/lib/review/session-storage";
 import { startReviewAction } from "@/app/(private)/jargon/review/actions";
-import type { ReviewRating, ReviewSessionState, ReviewSetup, ReviewTerm } from "@/lib/review/types";
+import type {
+  PendingReviewWrite,
+  ReviewRating,
+  ReviewSessionState,
+  ReviewSetup,
+  ReviewTerm,
+} from "@/lib/review/types";
 import type { ReviewGrade } from "@/lib/trace";
 import type { ReviewStep } from "@/components/jargon/review/use-review-setup";
 import type { TransitionStartFunction } from "react";
@@ -18,6 +24,14 @@ export function upsertRating(
   return [...without, { termId, grade }];
 }
 
+export function upsertPendingWrite(
+  pendingWrites: PendingReviewWrite[],
+  write: PendingReviewWrite,
+): PendingReviewWrite[] {
+  const without = pendingWrites.filter((existing) => existing.termId !== write.termId);
+  return [...without, write];
+}
+
 export function persistReviewSession(state: {
   cards: ReviewTerm[];
   currentIndex: number;
@@ -25,6 +39,7 @@ export function persistReviewSession(state: {
   revealedTermIds: string[];
   setup: ReviewSetup;
   startedAt: string;
+  pendingWrites: PendingReviewWrite[];
 }) {
   saveReviewSession({
     setup: state.setup,
@@ -33,6 +48,7 @@ export function persistReviewSession(state: {
     ratings: state.ratings,
     revealedTermIds: state.revealedTermIds,
     startedAt: state.startedAt,
+    pendingWrites: state.pendingWrites,
   });
   return loadReviewSession();
 }
@@ -47,6 +63,7 @@ type PlayingSetters = {
   setSessionStartedAt: (startedAt: string) => void;
   setSavedSession: (session: ReviewSessionState | null) => void;
   setErrorMessage: (message: string | null) => void;
+  setPendingWrites: (writes: PendingReviewWrite[]) => void;
 };
 
 export function resetReviewToSetup(setters: PlayingSetters, refreshPoolStats: () => void) {
@@ -57,18 +74,26 @@ export function resetReviewToSetup(setters: PlayingSetters, refreshPoolStats: ()
   setters.setRevealedTermIds([]);
   setters.setShownTermIds([]);
   setters.setErrorMessage(null);
+  setters.setPendingWrites([]);
   setters.setSavedSession(loadReviewSession());
   refreshPoolStats();
 }
 
+/** Advances the UI to the summary step immediately (optimistic). Storage
+ *  isn't cleared here — that only happens once the write queue is
+ *  confirmed idle, via finalizeReviewSessionIfComplete, so a write still
+ *  in flight when the user navigates away survives for resume/replay. */
 export function finishReviewSession(
-  setters: Pick<PlayingSetters, "setRatings" | "setSavedSession" | "setStep">,
+  setters: Pick<PlayingSetters, "setRatings" | "setStep">,
   finalRatings: ReviewRating[],
 ) {
   setters.setRatings(finalRatings);
+  setters.setStep("summary");
+}
+
+export function finalizeReviewSessionIfComplete(setters: Pick<PlayingSetters, "setSavedSession">) {
   clearReviewSession();
   setters.setSavedSession(null);
-  setters.setStep("summary");
 }
 
 export function resumeReviewSession(
@@ -89,6 +114,7 @@ export function resumeReviewSession(
   setters.setShownTermIds(savedSession.revealedTermIds);
   setters.setSessionStartedAt(savedSession.startedAt);
   setters.setErrorMessage(null);
+  setters.setPendingWrites(savedSession.pendingWrites);
   setters.setStep("playing");
 }
 
@@ -116,6 +142,7 @@ export function startReviewSession(
     setters.setRatings([]);
     setters.setRevealedTermIds([]);
     setters.setShownTermIds([]);
+    setters.setPendingWrites([]);
     setters.setStep("playing");
 
     const saved = persistReviewSession({
@@ -125,6 +152,7 @@ export function startReviewSession(
       ratings: [],
       revealedTermIds: [],
       startedAt,
+      pendingWrites: [],
     });
     setters.setSavedSession(saved);
   });

@@ -1,11 +1,15 @@
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { GOOD, type ReviewGrade } from "@/lib/trace";
-import { recordReviewRevealAction } from "@/app/(private)/jargon/actions";
-import { rateReviewTermAction } from "@/app/(private)/jargon/review/actions";
+import {
+  recordReviewRevealAction,
+  revalidateStudyPathsAction,
+} from "@/app/(private)/jargon/actions";
 import { clearReviewSession, loadReviewSession } from "@/lib/review/session-storage";
 import type { ReviewRating, ReviewSessionState, ReviewSetup, ReviewTerm } from "@/lib/review/types";
 import type { ReviewStep } from "@/components/jargon/review/use-review-setup";
+import { useReviewWriteQueue } from "@/components/jargon/review/use-review-write-queue";
 import {
+  finalizeReviewSessionIfComplete,
   finishReviewSession,
   persistReviewSession,
   resetReviewToSetup,
@@ -38,20 +42,11 @@ export function useReviewPlaying({
   const [ratings, setRatings] = useState<ReviewRating[]>([]);
   const [revealedTermIds, setRevealedTermIds] = useState<string[]>([]);
   const [isStarting, startReview] = useTransition();
-  const [isRating, setIsRating] = useState(false);
   const [savedSession, setSavedSession] = useState<ReviewSessionState | null>(null);
   const [shownTermIds, setShownTermIds] = useState<string[]>([]);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
 
-  useEffect(() => {
-    setSavedSession(loadReviewSession());
-  }, []);
-
-  const currentCard = cards[currentIndex];
-  const currentRevealed = currentCard ? revealedTermIds.includes(currentCard.id) : false;
-  const currentRating = currentCard
-    ? ratings.find((rating) => rating.termId === currentCard.id)
-    : undefined;
+  const advancedCardIdRef = useRef<string | null>(null);
 
   const setters = {
     setStep,
@@ -67,6 +62,25 @@ export function useReviewPlaying({
     setCardCount,
   };
 
+  const { pendingWrites, setPendingWrites, enqueueRating, markComplete, resetSession } =
+    useReviewWriteQueue({
+      setErrorMessage,
+      onSessionIdleAfterComplete: () => {
+        finalizeReviewSessionIfComplete(setters);
+        void revalidateStudyPathsAction("review");
+      },
+    });
+
+  useEffect(() => {
+    setSavedSession(loadReviewSession());
+  }, []);
+
+  const currentCard = cards[currentIndex];
+  const currentRevealed = currentCard ? revealedTermIds.includes(currentCard.id) : false;
+  const currentRating = currentCard
+    ? ratings.find((rating) => rating.termId === currentCard.id)
+    : undefined;
+
   useEffect(() => {
     if (step !== "playing" || cards.length === 0) return;
 
@@ -78,17 +92,39 @@ export function useReviewPlaying({
         ratings,
         revealedTermIds,
         startedAt: sessionStartedAt,
+        pendingWrites,
       }),
     );
-  }, [step, cards, currentIndex, ratings, revealedTermIds, currentSetup, sessionStartedAt]);
+  }, [
+    step,
+    cards,
+    currentIndex,
+    ratings,
+    revealedTermIds,
+    pendingWrites,
+    currentSetup,
+    sessionStartedAt,
+  ]);
+
+  function completeSession(finalRatings: ReviewRating[]) {
+    markComplete();
+    finishReviewSession(setters, finalRatings);
+  }
 
   function resetToSetup() {
-    resetReviewToSetup(setters, refreshPoolStats);
+    resetSession();
+    advancedCardIdRef.current = null;
+    resetReviewToSetup({ ...setters, setPendingWrites }, refreshPoolStats);
   }
 
   function handleResumeSession() {
     if (!savedSession) return;
-    resumeReviewSession(setters, savedSession);
+    resetSession();
+    advancedCardIdRef.current = null;
+    resumeReviewSession({ ...setters, setPendingWrites }, savedSession);
+    for (const write of savedSession.pendingWrites) {
+      enqueueRating(write.termId, write.grade);
+    }
   }
 
   function handleDiscardSession() {
@@ -97,7 +133,9 @@ export function useReviewPlaying({
   }
 
   function handleStartReview() {
-    startReviewSession(setters, currentSetup, startReview);
+    resetSession();
+    advancedCardIdRef.current = null;
+    startReviewSession({ ...setters, setPendingWrites }, currentSetup, startReview);
   }
 
   function handleReveal() {
@@ -127,38 +165,33 @@ export function useReviewPlaying({
       setCurrentIndex((index) => index + 1);
       return;
     }
-    finishReviewSession(setters, ratings);
+    completeSession(ratings);
   }
 
-  async function handleRate(grade: ReviewGrade) {
-    if (!currentCard || !currentRevealed || isRating) return;
+  function handleRate(grade: ReviewGrade) {
+    if (!currentCard || !currentRevealed) return;
 
     const alreadyRated = ratings.some((rating) => rating.termId === currentCard.id);
-
-    setIsRating(true);
-    const result = await rateReviewTermAction(currentCard.id, grade);
-    setIsRating(false);
-
-    if (result.error) {
-      setErrorMessage(result.error);
-      return;
-    }
+    if (!alreadyRated && advancedCardIdRef.current === currentCard.id) return;
 
     const nextRatings = upsertRating(ratings, currentCard.id, grade);
     setRatings(nextRatings);
+    enqueueRating(currentCard.id, grade);
 
     if (alreadyRated) return;
+
+    advancedCardIdRef.current = currentCard.id;
 
     if (currentIndex + 1 < cards.length) {
       setCurrentIndex((index) => index + 1);
       return;
     }
 
-    finishReviewSession(setters, nextRatings);
+    completeSession(nextRatings);
   }
 
   function handleDone() {
-    finishReviewSession(setters, ratings);
+    completeSession(ratings);
   }
 
   const retainedCount = ratings.filter((rating) => rating.grade >= GOOD).length;
@@ -169,7 +202,6 @@ export function useReviewPlaying({
     currentIndex,
     ratings,
     isStarting,
-    isRating,
     savedSession,
     currentCard,
     currentRevealed,

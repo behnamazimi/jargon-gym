@@ -33,7 +33,6 @@ export function useReviewSession(collections: StudyCollection[], initialDomainId
     currentIndex: playing.currentIndex,
     ratings: playing.ratings,
     isStarting: playing.isStarting,
-    isRating: playing.isRating,
     savedSession: playing.savedSession,
     currentCard: playing.currentCard,
     currentRevealed: playing.currentRevealed,

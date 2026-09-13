@@ -37,43 +37,6 @@ export function QuizGeneratingStep({ quiz }: { quiz: UseQuizSessionResult }) {
   );
 }
 
-function QuizSaveFailedStep({ quiz }: { quiz: UseQuizSessionResult }) {
-  return (
-    <QuizPanel className="flex min-h-0 flex-1 flex-col">
-      <QuizPanelHeader
-        icon={AlertCircle}
-        title="Couldn't save your results"
-        description="Your last answer was recorded. Retry saving the results, or start over."
-      />
-      <QuizPanelBody className="space-y-4">
-        <Alert variant="destructive">
-          <AlertDescription>
-            {quiz.errorMessage ?? "Couldn't save the quiz results. Try again."}
-          </AlertDescription>
-        </Alert>
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Button
-            type="button"
-            onPress={() => void quiz.handleRetrySubmit()}
-            isDisabled={quiz.isSubmittingAnswer}
-            className="min-h-11"
-          >
-            Retry
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onPress={quiz.resetQuizState}
-            className="min-h-11"
-          >
-            Start over
-          </Button>
-        </div>
-      </QuizPanelBody>
-    </QuizPanel>
-  );
-}
-
 function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
   const question = quiz.questions[quiz.currentIndex];
   if (!question) return null;
@@ -99,19 +62,14 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         total={quiz.questions.length}
         correct={quiz.correctSoFar}
         isLast={quiz.currentIndex + 1 === quiz.questions.length}
-        onAnswer={(passed) => void quiz.handleQuestionAnswer(passed)}
-        isSubmitting={quiz.isSubmittingAnswer}
+        onAnswer={quiz.handleQuestionAnswer}
       />
     </div>
   );
 }
 
 export function QuizPlayingStep({ quiz }: { quiz: UseQuizSessionResult }) {
-  return quiz.pendingFinalAnswers ? (
-    <QuizSaveFailedStep quiz={quiz} />
-  ) : (
-    <QuizActiveQuestionStep quiz={quiz} />
-  );
+  return <QuizActiveQuestionStep quiz={quiz} />;
 }
 
 export function QuizPickerStepSection({

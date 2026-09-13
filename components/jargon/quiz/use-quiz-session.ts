@@ -38,8 +38,6 @@ export function useQuizSession(collections: StudyCollection[], initialDomainId?:
     questions: playing.questions,
     currentIndex: playing.currentIndex,
     savedSession: playing.savedSession,
-    isSubmittingAnswer: playing.isSubmittingAnswer,
-    pendingFinalAnswers: playing.pendingFinalAnswers,
     termById: playing.termById,
     correctSoFar: playing.correctSoFar,
     handleResumeSession: playing.handleResumeSession,
@@ -47,7 +45,6 @@ export function useQuizSession(collections: StudyCollection[], initialDomainId?:
     resetQuizState: playing.resetQuizState,
     handleStartQuiz: playing.handleStartQuiz,
     handleQuestionAnswer: playing.handleQuestionAnswer,
-    handleRetrySubmit: playing.handleRetrySubmit,
     score: playing.score,
     resultsTotal: playing.resultsTotal,
   };

@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { applyReviewGrade } from "@/lib/jargon/review-outcome";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
@@ -96,9 +95,6 @@ export async function rateReviewTermAction(termId: string, grade: ReviewGrade) {
       grade,
       mode: "session",
     });
-
-    revalidatePath("/jargon");
-    revalidatePath("/jargon/review");
 
     return {};
   } catch (err) {

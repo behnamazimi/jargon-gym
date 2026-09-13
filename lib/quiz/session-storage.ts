@@ -1,9 +1,17 @@
+import type { QuestionType } from "@/lib/trace";
 import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "./types";
 
 type QuizSetup = {
   domainIds: string[] | "all";
   questionCount: number;
   questionStyle: QuizQuestionStyle;
+};
+
+export type PendingQuizWrite = {
+  id: string;
+  termId: string;
+  passed: boolean;
+  questionType: QuestionType;
 };
 
 export type QuizSessionState = {
@@ -13,6 +21,9 @@ export type QuizSessionState = {
   currentIndex: number;
   answers: QuizAnswer[];
   startedAt: string;
+  /** Answers applied locally but not yet confirmed persisted by the write
+   *  queue — replayed on resume so a crash/reload can't silently drop one. */
+  pendingWrites: PendingQuizWrite[];
 };
 
 const STORAGE_KEY = "jargon-gym:quiz-session:v1";
@@ -36,6 +47,8 @@ export function loadQuizSession(): QuizSessionState | null {
 
     const parsed = JSON.parse(raw) as QuizSessionState;
     if (!parsed.questions?.length || !parsed.setup) return null;
+
+    parsed.pendingWrites ??= [];
 
     return parsed;
   } catch {
