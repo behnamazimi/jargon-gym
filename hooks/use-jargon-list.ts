@@ -3,10 +3,47 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { recordTermReadAction, setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
-import type { JargonPageData, SortMode } from "@/lib/jargon/types";
+import type { JargonPageData, SortMode, Term } from "@/lib/jargon/types";
 
 export function useJargonList(initialData: JargonPageData) {
-  const terms = initialData.terms;
+  const [terms, setTerms] = useState(initialData.terms);
+
+  // Sync terms when initialData changes (e.g., after router.refresh() or a
+  // collection switch), same pattern as knownTerms/markedKnownTerms below.
+  useEffect(() => {
+    setTerms(initialData.terms);
+  }, [initialData.terms]);
+
+  const removeTermLocally = useCallback((termId: string) => {
+    setTerms((prev) => prev.filter((t) => t.id !== termId));
+  }, []);
+
+  const restoreTermLocally = useCallback((term: Term, index: number) => {
+    setTerms((prev) => {
+      const next = [...prev];
+      next.splice(Math.min(index, next.length), 0, term);
+      return next;
+    });
+  }, []);
+
+  const [domains, setDomains] = useState(initialData.domains);
+
+  // Sync domains when initialData changes (e.g., after router.refresh() or a
+  // collection switch), same pattern as knownTerms/markedKnownTerms below.
+  useEffect(() => {
+    setDomains(initialData.domains);
+  }, [initialData.domains]);
+
+  const domain = useMemo(
+    () => domains.find((d) => d.id === initialData.domain.id) ?? initialData.domain,
+    [domains, initialData.domain],
+  );
+
+  const setDomainActiveForReview = useCallback((domainId: string, active: boolean) => {
+    setDomains((prev) =>
+      prev.map((d) => (d.id === domainId ? { ...d, isActiveForReview: active } : d)),
+    );
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
@@ -135,9 +172,12 @@ export function useJargonList(initialData: JargonPageData) {
   }, []);
 
   return {
-    domain: initialData.domain,
-    domains: initialData.domains,
+    domain,
+    domains,
+    setDomainActiveForReview,
     terms,
+    removeTermLocally,
+    restoreTermLocally,
     categories,
     categoryCounts,
     filteredTerms,

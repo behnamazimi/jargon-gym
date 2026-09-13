@@ -29,7 +29,7 @@ export function useTermActions() {
       relationshipSync?: RelationshipSyncPayload,
       onSuccess?: () => void,
     ) => run(() => updateTerm(termId, input, relationshipSync), { busyKey: termId, onSuccess }),
-    deleteTerm: (termId: string, onSuccess?: () => void) =>
-      run(() => deleteTerm(termId), { busyKey: termId, onSuccess }),
+    deleteTerm: (termId: string) =>
+      run(() => deleteTerm(termId), { busyKey: termId, skipRefresh: true }),
   };
 }

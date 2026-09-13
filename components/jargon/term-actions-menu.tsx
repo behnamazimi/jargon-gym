@@ -11,7 +11,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { TermFormDialog } from "@/components/jargon/term-form-dialog";
@@ -23,20 +22,32 @@ type TermActionsMenuProps = {
   term: Term;
   domainId: string;
   domainTerms: Term[];
+  onTermRemoved: (termId: string) => void;
+  onTermRemoveFailed: (term: Term, index: number) => void;
 };
 
-export function TermActionsMenu({ term, domainId, domainTerms }: TermActionsMenuProps) {
-  const { deleteTerm: removeTerm, isBusy, busyId, error } = useTermActions();
+export function TermActionsMenu({
+  term,
+  domainId,
+  domainTerms,
+  onTermRemoved,
+  onTermRemoveFailed,
+}: TermActionsMenuProps) {
+  const { deleteTerm: removeTerm } = useTermActions();
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const disabled = isBusy && busyId === term.id;
 
   async function handleConfirmDelete() {
-    const success = await removeTerm(term.id, () => setDeleteOpen(false));
+    const index = domainTerms.findIndex((t) => t.id === term.id);
+    setDeleteOpen(false);
+    onTermRemoved(term.id);
+    const success = await removeTerm(term.id);
     if (success) {
-      setDeleteOpen(false);
       toast(`"${term.term}" deleted`);
+    } else {
+      onTermRemoveFailed(term, index === -1 ? domainTerms.length : index);
+      toast(`Couldn't delete "${term.term}" — it's back in the list.`, "destructive");
     }
   }
 
@@ -48,7 +59,6 @@ export function TermActionsMenu({ term, domainId, domainTerms }: TermActionsMenu
           size="icon-sm"
           className="text-base-content/60 hover:text-base-content"
           aria-label={`Actions for ${term.term}`}
-          isDisabled={disabled}
         >
           <MoreVertical className="size-4" />
         </Button>
@@ -80,11 +90,6 @@ export function TermActionsMenu({ term, domainId, domainTerms }: TermActionsMenu
             Delete &ldquo;{term.term}&rdquo;? This can&apos;t be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        {error ? (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        ) : null}
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction variant="destructive" onPress={handleConfirmDelete}>

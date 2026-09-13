@@ -38,13 +38,15 @@ export function SharedDomainsBrowse({ initialPage }: SharedDomainsBrowseProps) {
   }, []);
 
   async function handleAdd(domainId: string) {
+    browse.markInCollection(domainId, true);
     const ok = await addToCollection(domainId);
-    if (ok) browse.markInCollection(domainId, true);
+    if (!ok) browse.retry();
   }
 
   async function handleRemove(domainId: string) {
+    browse.markInCollection(domainId, false);
     const ok = await removeFromCollection(domainId);
-    if (ok) browse.markInCollection(domainId, false);
+    if (!ok) browse.retry();
   }
 
   const bannerError = error ?? browse.listError;

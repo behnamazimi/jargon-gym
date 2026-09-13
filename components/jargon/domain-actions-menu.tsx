@@ -17,9 +17,15 @@ type DomainActionsMenuProps = {
   domain: Domain;
   domains: Domain[];
   terms: Term[];
+  onToggleActiveForReviewLocal: (domainId: string, active: boolean) => void;
 };
 
-export function DomainActionsMenu({ domain, domains, terms }: DomainActionsMenuProps) {
+export function DomainActionsMenu({
+  domain,
+  domains,
+  terms,
+  onToggleActiveForReviewLocal,
+}: DomainActionsMenuProps) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -64,6 +70,13 @@ export function DomainActionsMenu({ domain, domains, terms }: DomainActionsMenuP
     setResetProgressOpen(false);
   }
 
+  async function handleToggleActiveForReview() {
+    const next = !domain.isActiveForReview;
+    onToggleActiveForReviewLocal(domain.id, next);
+    const ok = await toggleActiveForReview(domain.id, next);
+    if (!ok) onToggleActiveForReviewLocal(domain.id, !next);
+  }
+
   useEffect(() => {
     if (!unshareConfirmOpen) {
       setSubscriberCount(null);
@@ -99,7 +112,7 @@ export function DomainActionsMenu({ domain, domains, terms }: DomainActionsMenuP
       <DomainActionsDropdown
         domain={domain}
         disabled={disabled}
-        onToggleActiveForReview={() => toggleActiveForReview(domain.id, !domain.isActiveForReview)}
+        onToggleActiveForReview={() => void handleToggleActiveForReview()}
         onResetProgress={() => setResetProgressOpen(true)}
         onExport={() => setExportOpen(true)}
         onEdit={() => setEditOpen(true)}

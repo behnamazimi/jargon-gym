@@ -4,6 +4,7 @@ import { Check, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 
 /** Shown once, the very first time a term is ever revealed to this user
  *  (term.isNewToUser) — a chance to say "I already know this" before it
@@ -21,7 +22,8 @@ export function FirstExposureKnownPrompt({
   termId: string;
   onMarkedKnown?: () => void;
 }) {
-  const [status, setStatus] = useState<"idle" | "pending" | "marked">("idle");
+  const [status, setStatus] = useState<"idle" | "marked">("idle");
+  const { toast } = useToast();
 
   if (status === "marked") {
     return (
@@ -53,19 +55,17 @@ export function FirstExposureKnownPrompt({
         <Button
           size="sm"
           variant="secondary"
-          isDisabled={status === "pending"}
           onPress={async () => {
-            setStatus("pending");
+            setStatus("marked");
+            onMarkedKnown?.();
             const { error } = await setTermMarkedKnownAction(termId, true);
             if (error) {
               setStatus("idle");
-              return;
+              toast("Couldn't mark that term known — it may show up again.", "destructive");
             }
-            setStatus("marked");
-            onMarkedKnown?.();
           }}
         >
-          {status === "pending" ? "Marking…" : "Mark known"}
+          Mark known
         </Button>
       </div>
     </div>

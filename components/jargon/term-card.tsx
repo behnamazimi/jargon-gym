@@ -23,6 +23,8 @@ type TermCardProps = {
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => void;
+  onTermRemoved: (termId: string) => void;
+  onTermRemoveFailed: (term: Term, index: number) => void;
 };
 
 function KnownBadge() {
@@ -77,15 +79,31 @@ type CardToolsProps = {
   domainTerms: Term[];
   isOwner: boolean;
   narrationAccess: boolean;
+  onTermRemoved: (termId: string) => void;
+  onTermRemoveFailed: (term: Term, index: number) => void;
 };
 
-function CardTools({ term, domainId, domainTerms, isOwner, narrationAccess }: CardToolsProps) {
+function CardTools({
+  term,
+  domainId,
+  domainTerms,
+  isOwner,
+  narrationAccess,
+  onTermRemoved,
+  onTermRemoveFailed,
+}: CardToolsProps) {
   if (!narrationAccess && !isOwner) return null;
   return (
     <div className="flex shrink-0 items-center gap-1 pe-1">
       {narrationAccess ? <TermNarrationPlayer termId={term.id} /> : null}
       {isOwner ? (
-        <TermActionsMenu term={term} domainId={domainId} domainTerms={domainTerms} />
+        <TermActionsMenu
+          term={term}
+          domainId={domainId}
+          domainTerms={domainTerms}
+          onTermRemoved={onTermRemoved}
+          onTermRemoveFailed={onTermRemoveFailed}
+        />
       ) : null}
     </div>
   );
@@ -125,6 +143,8 @@ export const TermCard = memo(function TermCard({
   narrationAccess,
   onToggleOpen,
   onToggleMarkedKnown,
+  onTermRemoved,
+  onTermRemoveFailed,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -174,6 +194,8 @@ export const TermCard = memo(function TermCard({
               domainTerms={domainTerms}
               isOwner={isOwner}
               narrationAccess={narrationAccess}
+              onTermRemoved={onTermRemoved}
+              onTermRemoveFailed={onTermRemoveFailed}
             />
           </div>
           <CollapsibleContent>

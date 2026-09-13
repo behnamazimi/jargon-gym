@@ -11,7 +11,7 @@ export function useActionRunner() {
   const run = useCallback(
     async (
       action: () => Promise<{ error?: string }>,
-      options?: { onSuccess?: () => void; busyKey?: string },
+      options?: { onSuccess?: () => void; busyKey?: string; skipRefresh?: boolean },
     ) => {
       setBusyId(options?.busyKey ?? "global");
       setError(null);
@@ -26,7 +26,7 @@ export function useActionRunner() {
       }
 
       options?.onSuccess?.();
-      router.refresh();
+      if (!options?.skipRefresh) router.refresh();
       return true;
     },
     [router],

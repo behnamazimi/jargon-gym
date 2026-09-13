@@ -12,6 +12,8 @@ type TermListProps = {
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => void;
+  onTermRemoved: (termId: string) => void;
+  onTermRemoveFailed: (term: Term, index: number) => void;
 };
 
 export function TermList({
@@ -25,6 +27,8 @@ export function TermList({
   narrationAccess,
   onToggleOpen,
   onToggleMarkedKnown,
+  onTermRemoved,
+  onTermRemoveFailed,
 }: TermListProps) {
   if (terms.length === 0) {
     return (
@@ -52,6 +56,8 @@ export function TermList({
             narrationAccess={narrationAccess}
             onToggleOpen={onToggleOpen}
             onToggleMarkedKnown={onToggleMarkedKnown}
+            onTermRemoved={onTermRemoved}
+            onTermRemoveFailed={onTermRemoveFailed}
           />
         </div>
       ))}

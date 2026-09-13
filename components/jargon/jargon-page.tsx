@@ -23,7 +23,11 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
 
   const {
     domain,
+    domains,
+    setDomainActiveForReview,
     terms,
+    removeTermLocally,
+    restoreTermLocally,
     categories,
     categoryCounts,
     filteredTerms,
@@ -55,20 +59,30 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
   );
 
   const domainWithLiveCount = useMemo(
-    () => ({ ...domain, knownCount: liveKnownCount, termsLearnedCount: liveTermsLearnedCount }),
-    [domain, liveKnownCount, liveTermsLearnedCount],
+    () => ({
+      ...domain,
+      knownCount: liveKnownCount,
+      termsLearnedCount: liveTermsLearnedCount,
+      termCount: terms.length,
+    }),
+    [domain, liveKnownCount, liveTermsLearnedCount, terms.length],
   );
 
   const isOwner = domain.source === "owned";
 
   const domainsWithLiveCounts = useMemo(
     () =>
-      initialData.domains.map((d) =>
+      domains.map((d) =>
         d.id === domain.id
-          ? { ...d, knownCount: liveKnownCount, termsLearnedCount: liveTermsLearnedCount }
+          ? {
+              ...d,
+              knownCount: liveKnownCount,
+              termsLearnedCount: liveTermsLearnedCount,
+              termCount: terms.length,
+            }
           : d,
       ),
-    [initialData.domains, domain.id, liveKnownCount, liveTermsLearnedCount],
+    [domains, domain.id, liveKnownCount, liveTermsLearnedCount, terms.length],
   );
 
   useEffect(() => {
@@ -116,6 +130,7 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
               categoryCount={categories.length}
               isOwner={isOwner}
               onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
+              onToggleActiveForReviewLocal={setDomainActiveForReview}
             />
 
             <JargonFilters
@@ -146,6 +161,8 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
               narrationAccess={narrationAccess}
               onToggleOpen={toggleOpen}
               onToggleMarkedKnown={toggleMarkedKnown}
+              onTermRemoved={removeTermLocally}
+              onTermRemoveFailed={restoreTermLocally}
             />
           </div>
         </div>

@@ -12,6 +12,7 @@ type JargonDomainHeaderProps = {
   categoryCount: number;
   isOwner?: boolean;
   onAddTerm?: () => void;
+  onToggleActiveForReviewLocal: (domainId: string, active: boolean) => void;
 };
 
 export function JargonDomainHeader({
@@ -21,6 +22,7 @@ export function JargonDomainHeader({
   categoryCount,
   isOwner = false,
   onAddTerm,
+  onToggleActiveForReviewLocal,
 }: JargonDomainHeaderProps) {
   const progressPct =
     domain.termCount > 0 ? Math.round((domain.termsLearnedCount / domain.termCount) * 100) : 0;
@@ -52,7 +54,12 @@ export function JargonDomainHeader({
               <Plus className="size-5" strokeWidth={1.5} />
             </Button>
           ) : null}
-          <DomainActionsMenu domain={domain} domains={domains} terms={terms} />
+          <DomainActionsMenu
+            domain={domain}
+            domains={domains}
+            terms={terms}
+            onToggleActiveForReviewLocal={onToggleActiveForReviewLocal}
+          />
         </div>
       </div>
 

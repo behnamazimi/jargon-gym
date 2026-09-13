@@ -22,7 +22,7 @@ export function useCollectionActions() {
     busyId,
     clearError,
     toggleActiveForReview: (domainId: string, active: boolean) =>
-      run(() => toggleActiveForReview(domainId, active), { busyKey: domainId }),
+      run(() => toggleActiveForReview(domainId, active), { busyKey: domainId, skipRefresh: true }),
     shareDomain: (domainId: string) => run(() => shareDomain(domainId), { busyKey: domainId }),
     unshareDomain: (domainId: string) => run(() => unshareDomain(domainId), { busyKey: domainId }),
     updateOwnedDomain: (domainId: string, input: DomainInput, onSuccess?: () => void) =>
@@ -30,9 +30,13 @@ export function useCollectionActions() {
     deleteOwnedDomain: (domainId: string, onSuccess?: () => void) =>
       run(() => deleteOwnedDomain(domainId), { busyKey: domainId, onSuccess }),
     removeFromCollection: (domainId: string, onSuccess?: () => void) =>
-      run(() => removeFromCollection(domainId), { busyKey: domainId, onSuccess }),
+      run(() => removeFromCollection(domainId), {
+        busyKey: domainId,
+        onSuccess,
+        skipRefresh: true,
+      }),
     addToCollection: (domainId: string) =>
-      run(() => addToCollection(domainId), { busyKey: domainId }),
+      run(() => addToCollection(domainId), { busyKey: domainId, skipRefresh: true }),
     resetProgress: (domainId: string, onSuccess?: () => void) =>
       run(() => resetCollectionProgress(domainId), { busyKey: domainId, onSuccess }),
   };

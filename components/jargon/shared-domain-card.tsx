@@ -71,7 +71,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
               className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
             >
               <BookmarkMinus className="size-4" aria-hidden strokeWidth={1.5} />
-              {busy ? "Removing…" : "Remove"}
+              Remove
             </Button>
           </>
         ) : (
@@ -82,7 +82,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
             className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
           >
             <Plus className="size-4" aria-hidden strokeWidth={1.5} />
-            {busy ? "Adding…" : "Add to collection"}
+            Add to collection
           </Button>
         )}
       </div>
