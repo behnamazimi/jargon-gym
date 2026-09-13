@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import {
   ReadFullscreenCard,
@@ -22,20 +22,19 @@ export function ReadFullscreenFeed({
   narrationAccess: boolean;
   onExit: () => void;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { cardNodesRef, endSlideRef, handleExposed, handleMarkedKnown } =
+  const { endSlideRef, registerCardNode, unregisterCardNode, handleExposed, handleMarkedKnown } =
     useReadFullscreenScroll(queue);
 
   const { requestExit } = useFullscreenExit(true, onExit);
   useWakeLock(true);
 
-  useEffect(() => {
-    containerRef.current?.focus();
+  const bindContainer = useCallback((node: HTMLDivElement | null) => {
+    node?.focus();
   }, []);
 
   return (
     <div
-      ref={containerRef}
+      ref={bindContainer}
       tabIndex={-1}
       className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-contain bg-base-100 outline-none"
       style={{ scrollSnapType: "y mandatory" }}
@@ -52,7 +51,8 @@ export function ReadFullscreenFeed({
           narrationAccess={narrationAccess}
           onExposed={handleExposed}
           onMarkedKnown={handleMarkedKnown}
-          cardNodesRef={cardNodesRef}
+          registerCardNode={registerCardNode}
+          unregisterCardNode={unregisterCardNode}
         />
       ))}
 

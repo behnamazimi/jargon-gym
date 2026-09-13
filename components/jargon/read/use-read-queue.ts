@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getReadFeedBatchAction, type ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
 import type { ReviewTerm } from "@/lib/review/types";
 import { useReadRevealTracking } from "@/components/jargon/read/use-read-reveal-tracking";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 // Trigger the next batch once this few terms remain past the current
 // position — leaves runway for both a deliberate Next-tap and a fast
@@ -42,13 +43,18 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
   // Refs mirror the latest render's values so stable callbacks (goNext,
   // loadMore) always read current state without needing to be recreated
   // every render — same mirroring pattern read-page.tsx already used for
-  // its old nav reducer (navRef/statusRef).
+  // its old nav reducer (navRef/statusRef). Handlers also write these
+  // synchronously so a caller can read the new index before the next paint.
   const termsRef = useRef(terms);
   const currentIndexRef = useRef(currentIndex);
   const domainIdRef = useRef(domainId);
+  const reachedEndRef = useRef(reachedEnd);
+  const loadErrorRef = useRef(loadError);
   termsRef.current = terms;
   currentIndexRef.current = currentIndex;
   domainIdRef.current = domainId;
+  reachedEndRef.current = reachedEnd;
+  loadErrorRef.current = loadError;
 
   const loadedIdsRef = useRef<Set<string>>(new Set(seed.terms.map((t) => t.id)));
   const inFlightRef = useRef(false);
@@ -71,13 +77,17 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
         // Deliberately NOT surfaced unless goNext hits a genuine dead end
         // (below) — a failed background prefetch shouldn't blow away a
         // perfectly valid currentTerm the user is still looking at.
+        loadErrorRef.current = result.error;
         setLoadError(result.error);
         return;
       }
       if (result.caughtUp || result.terms.length === 0) {
+        reachedEndRef.current = true;
         setReachedEnd(true);
         return;
       }
+      reachedEndRef.current = false;
+      loadErrorRef.current = null;
       setReachedEnd(false);
       setLoadError(null);
       for (const term of result.terms) loadedIdsRef.current.add(term.id);
@@ -93,16 +103,61 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
     }
   }, []);
 
-  // Keep a few terms of runway ahead of wherever the user actually is.
-  // currentIndex is the ONE shared position — the paged view advances it
-  // one at a time (goNext), fullscreen advances it as cards scroll into
-  // view (goToIndex) — so this same effect drives prefetch for both.
-  useEffect(() => {
-    if (reachedEnd || loadError) return;
-    if (terms.length - currentIndex <= PREFETCH_REMAINING_THRESHOLD) {
+  const maybePrefetch = useCallback(() => {
+    if (reachedEndRef.current || loadErrorRef.current) return;
+    if (termsRef.current.length - currentIndexRef.current <= PREFETCH_REMAINING_THRESHOLD) {
       void loadMore();
     }
-  }, [currentIndex, terms.length, reachedEnd, loadError, loadMore]);
+  }, [loadMore]);
+
+  useMountEffect(() => {
+    maybePrefetch();
+  });
+
+  const goNext = useCallback(async () => {
+    if (currentIndexRef.current + 1 < termsRef.current.length) {
+      const next = currentIndexRef.current + 1;
+      currentIndexRef.current = next;
+      setCurrentIndex(next);
+      maybePrefetch();
+      return next;
+    }
+    // If the next term isn't loaded yet, try to fetch it. Whether that
+    // succeeds or not, advancing past the last loaded term (even to the
+    // one-past-the-end sentinel index) is what makes currentTerm become
+    // null and the caughtUp/error panel show — mirroring the old reducer's
+    // explicit "clear" on a genuine dead end, while a mid-session
+    // *background* prefetch failure never reaches this path at all.
+    await loadMore();
+    const next =
+      currentIndexRef.current + 1 < termsRef.current.length
+        ? currentIndexRef.current + 1
+        : termsRef.current.length;
+    currentIndexRef.current = next;
+    setCurrentIndex(next);
+    maybePrefetch();
+    return next;
+  }, [loadMore, maybePrefetch]);
+
+  const goPrevious = useCallback(() => {
+    const next = Math.max(0, currentIndexRef.current - 1);
+    currentIndexRef.current = next;
+    setCurrentIndex(next);
+  }, []);
+
+  // Fullscreen's per-card exposure calls this with the card's array index
+  // as it scrolls into view — only ever moves the shared position forward
+  // to the furthest point reached, never backward (scrolling up to reread
+  // must not "rewind" the paged view's position).
+  const goToIndex = useCallback(
+    (index: number) => {
+      const next = Math.max(currentIndexRef.current, index);
+      currentIndexRef.current = next;
+      setCurrentIndex(next);
+      maybePrefetch();
+    },
+    [maybePrefetch],
+  );
 
   // Collection switch is lazy: it only changes what FUTURE fetches pull
   // from, never interrupts whatever term is currently on screen. Drop any
@@ -111,47 +166,22 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
   // the old one; loadedIdsRef is left as-is (a few stale excluded ids from
   // the old domain are harmless — exclude-lists only ever prevent
   // re-showing something, never wrongly show it).
-  const previousDomainIdRef = useRef(domainId);
-  useEffect(() => {
-    if (previousDomainIdRef.current === domainId) return;
-    previousDomainIdRef.current = domainId;
-    requestIdRef.current++; // discard any response still in flight for the old domain
-    setTerms((current) => current.slice(0, currentIndexRef.current + 1));
-    setReachedEnd(false);
-    setLoadError(null);
-  }, [domainId]);
-
-  // If the next term isn't loaded yet, try to fetch it. Whether that
-  // succeeds or not, advancing past the last loaded term (even to the
-  // one-past-the-end sentinel index) is what makes currentTerm become
-  // null and the caughtUp/error panel show — mirroring the old reducer's
-  // explicit "clear" on a genuine dead end, while a mid-session
-  // *background* prefetch failure (handled by the effect above) never
-  // reaches this path at all.
-  const goNext = useCallback(async () => {
-    if (currentIndexRef.current + 1 < termsRef.current.length) {
-      setCurrentIndex(currentIndexRef.current + 1);
-      return;
-    }
-    await loadMore();
-    setCurrentIndex(
-      currentIndexRef.current + 1 < termsRef.current.length
-        ? currentIndexRef.current + 1
-        : termsRef.current.length,
-    );
-  }, [loadMore]);
-
-  const goPrevious = useCallback(() => {
-    setCurrentIndex((current) => Math.max(0, current - 1));
-  }, []);
-
-  // Fullscreen's per-card exposure calls this with the card's array index
-  // as it scrolls into view — only ever moves the shared position forward
-  // to the furthest point reached, never backward (scrolling up to reread
-  // must not "rewind" the paged view's position).
-  const goToIndex = useCallback((index: number) => {
-    setCurrentIndex((current) => Math.max(current, index));
-  }, []);
+  const switchDomain = useCallback(
+    (nextId: string) => {
+      if (nextId === domainIdRef.current) return;
+      domainIdRef.current = nextId;
+      requestIdRef.current++; // discard any response still in flight for the old domain
+      const trimmed = termsRef.current.slice(0, currentIndexRef.current + 1);
+      termsRef.current = trimmed;
+      setTerms(trimmed);
+      reachedEndRef.current = false;
+      loadErrorRef.current = null;
+      setReachedEnd(false);
+      setLoadError(null);
+      maybePrefetch();
+    },
+    [maybePrefetch],
+  );
 
   const currentTerm = terms[currentIndex] ?? null;
   const status: ReadQueueStatus = currentTerm ? "ready" : loadError ? "error" : "caughtUp";
@@ -169,6 +199,7 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
     goNext,
     goPrevious,
     goToIndex,
+    switchDomain,
     // Same function serves both "Next" and "Try again" — goNext already
     // re-attempts loadMore and re-checks when called with currentIndex
     // sitting at the past-the-end sentinel.

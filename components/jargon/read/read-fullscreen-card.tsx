@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useCallback } from "react";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
@@ -10,49 +10,43 @@ export function ReadFullscreenCard({
   narrationAccess,
   onExposed,
   onMarkedKnown,
-  cardNodesRef,
+  registerCardNode,
+  unregisterCardNode,
 }: {
   term: ReviewTerm;
   index: number;
   narrationAccess: boolean;
   onExposed: (index: number, termId: string) => void;
-  onMarkedKnown: (index: number) => void;
-  cardNodesRef: React.RefObject<Map<string, HTMLDivElement>>;
+  onMarkedKnown: () => void;
+  registerCardNode: (termId: string, node: HTMLDivElement) => void;
+  unregisterCardNode: (termId: string) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node) return;
+      registerCardNode(term.id, node);
 
-  // Registers this card's node under its term id so the feed can scroll
-  // to whichever term the shared queue's position points at, once, on
-  // mount (see ReadFullscreenFeed).
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    cardNodesRef.current.set(term.id, el);
-    return () => {
-      cardNodesRef.current.delete(term.id);
-    };
-  }, [term.id, cardNodesRef]);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    // One-shot: disconnect after the first crossing so scrolling back up to
-    // reread this term can never refire the exposure event.
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            onExposed(index, term.id);
-            observer.disconnect();
+      // One-shot: disconnect after the first crossing so scrolling back up
+      // to reread this term can never refire the exposure event.
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              onExposed(index, term.id);
+              observer.disconnect();
+            }
           }
-        }
-      },
-      { threshold: 0.5 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [index, term.id, onExposed]);
+        },
+        { threshold: 0.5 },
+      );
+      observer.observe(node);
+      return () => {
+        observer.disconnect();
+        unregisterCardNode(term.id);
+      };
+    },
+    [index, term.id, onExposed, registerCardNode, unregisterCardNode],
+  );
 
   return (
     <div
@@ -67,7 +61,7 @@ export function ReadFullscreenCard({
       />
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 pb-safe sm:px-6">
         {term.isNewToUser ? (
-          <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={() => onMarkedKnown(index)} />
+          <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
         ) : null}
         <TermBody term={term} />
       </div>

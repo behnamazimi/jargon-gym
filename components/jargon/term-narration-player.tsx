@@ -1,8 +1,9 @@
 "use client";
 
 import { Loader2, Pause, Volume2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 /**
  * Only one narration clip should play at a time — the jargon collection
@@ -40,7 +41,7 @@ export function TermNarrationPlayer({ termId }: { termId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
+  useMountEffect(() => {
     return () => {
       const audio = audioRef.current;
       if (audio) {
@@ -48,7 +49,7 @@ export function TermNarrationPlayer({ termId }: { termId: string }) {
         releaseActiveAudio(audio);
       }
     };
-  }, []);
+  });
 
   function handlePress() {
     if (status === "playing") {

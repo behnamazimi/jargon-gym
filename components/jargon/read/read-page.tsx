@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
-import { handleReadEnterKey, ReadQueueContent } from "@/components/jargon/read/read-page-content";
+import { ReadQueueContent } from "@/components/jargon/read/read-page-content";
 import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
 import { ReadToolbar } from "@/components/jargon/read/read-toolbar";
+import { useReadEnterKey } from "@/components/jargon/read/use-read-enter-key";
 import { useReadQueue } from "@/components/jargon/read/use-read-queue";
 import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
 import type { StudyCollection } from "@/lib/study/types";
 import {
@@ -28,46 +30,28 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
   const { preferenceOn, setPreference } = useReadFullscreenPreference();
   const queue = useReadQueue({ domainId: selectedCollectionId, seed });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const previousTermIdRef = useRef<string | null>(queue.currentTerm?.id ?? null);
 
   selectedCollectionIdRef.current = selectedCollectionId;
 
-  useEffect(() => {
+  useMountEffect(() => {
     stripInvalidDomainParam(domainId);
-  }, [domainId]);
+  });
 
-  // Scroll back to the top of the card whenever the shown term actually
-  // changes (Next/Previous/collection switch/fullscreen hand-off) — but
-  // not on every render (e.g. a reveal, which keeps the same term).
-  useEffect(() => {
-    const currentId = queue.currentTerm?.id ?? null;
-    if (previousTermIdRef.current === currentId) return;
-    previousTermIdRef.current = currentId;
-    scrollToTop(cardRef.current);
-  }, [queue.currentTerm]);
+  useReadEnterKey(fullscreenActive, queue);
 
-  const handleCollectionChange = useCallback((nextDomainId: string) => {
-    if (nextDomainId === selectedCollectionIdRef.current) return;
-    setSelectedCollectionId(nextDomainId);
-    replaceReadDomainInUrl(nextDomainId);
+  const handleCollectionChange = useCallback(
+    (nextDomainId: string) => {
+      if (nextDomainId === selectedCollectionIdRef.current) return;
+      setSelectedCollectionId(nextDomainId);
+      replaceReadDomainInUrl(nextDomainId);
+      queue.switchDomain(nextDomainId);
+    },
+    [queue.switchDomain],
+  );
+
+  const bindCard = useCallback((node: HTMLDivElement | null) => {
+    if (node) scrollToTop(node);
   }, []);
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      handleReadEnterKey(event, fullscreenActive, queue);
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [
-    fullscreenActive,
-    queue.status,
-    queue.currentTerm,
-    queue.isRevealed,
-    queue.reveal,
-    queue.goNext,
-  ]);
 
   const handleExitFullscreen = useCallback(() => {
     setFullscreenActive(false);
@@ -105,7 +89,7 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
         }}
       />
 
-      <div ref={cardRef} className="flex min-h-0 flex-1 flex-col">
+      <div key={term?.id ?? "empty"} ref={bindCard} className="flex min-h-0 flex-1 flex-col">
         <ReadQueueContent
           queue={queue}
           term={term}

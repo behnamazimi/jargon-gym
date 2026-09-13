@@ -3,32 +3,10 @@
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { ReadErrorAlert } from "@/components/jargon/read/read-error-alert";
 import { ReadTermCard } from "@/components/jargon/read/read-term-card";
-import { caughtUpDescription, isTypingTarget } from "@/components/jargon/read/read-page-helpers";
-import { useReadQueue } from "@/components/jargon/read/use-read-queue";
+import { caughtUpDescription } from "@/components/jargon/read/read-page-helpers";
+import type { ReadQueue } from "@/components/jargon/read/use-read-queue";
 import { LinkButton } from "@/components/ui/button";
 import type { StudyCollection } from "@/lib/study/types";
-
-export type ReadQueue = ReturnType<typeof useReadQueue>;
-
-export function handleReadEnterKey(
-  event: KeyboardEvent,
-  fullscreenActive: boolean,
-  queue: ReadQueue,
-) {
-  if (fullscreenActive) return;
-  if (event.key !== "Enter") return;
-  if (queue.status !== "ready" || isTypingTarget(event.target)) return;
-
-  const term = queue.currentTerm;
-  if (!term) return;
-
-  event.preventDefault();
-  if (!queue.isRevealed(term.id)) {
-    queue.reveal(term.id);
-  } else {
-    void queue.goNext();
-  }
-}
 
 function ReadCaughtUpActions({ selectedCollectionId }: { selectedCollectionId: string }) {
   if (selectedCollectionId !== "all") return null;

@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Eye } from "lucide-react";
-import { memo, useEffect, useRef } from "react";
+import { memo } from "react";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { QuizKeyboardHint, QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
@@ -52,20 +52,14 @@ function ReadCardRevealed({
   narrationAccess: boolean;
   onMarkedKnown: () => void;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: 0 });
-  }, [term.id]);
-
   return (
     <>
       <TermCardHeader term={term} narrationAccess={narrationAccess} />
-      <div ref={scrollRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         {term.isNewToUser ? (
           <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
         ) : null}
-        <TermBody key={term.id} term={term} />
+        <TermBody term={term} />
       </div>
     </>
   );
@@ -93,7 +87,12 @@ export const ReadTermCard = memo(function ReadTermCard({
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       {revealed ? (
-        <ReadCardRevealed term={term} narrationAccess={narrationAccess} onMarkedKnown={onNext} />
+        <ReadCardRevealed
+          key={term.id}
+          term={term}
+          narrationAccess={narrationAccess}
+          onMarkedKnown={onNext}
+        />
       ) : (
         <ReadCardMasked term={term} onReveal={() => onReveal(term.id)} />
       )}
