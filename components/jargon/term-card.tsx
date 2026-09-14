@@ -61,14 +61,14 @@ function CardTitle({ term, known, markedKnown }: CardTitleProps) {
     <span
       className={cn(
         "font-heading min-w-0 text-base font-semibold tracking-tight text-pretty",
-        known
-          ? "text-base-content/60 line-through decoration-primary/60 decoration-2"
+        known || markedKnown
+          ? "text-base-content/60 decoration-primary/60 decoration-2"
           : "text-base-content",
       )}
     >
       {term.term}
       {known ? <KnownBadge /> : null}
-      {markedKnown ? <MarkedKnownBadge /> : null}
+      {markedKnown && !known ? <MarkedKnownBadge /> : null}
     </span>
   );
 }
