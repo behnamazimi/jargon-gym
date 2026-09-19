@@ -1,16 +1,17 @@
 import { ArrowRight } from "lucide-react";
 import { LinkButton } from "@/components/ui/button";
+import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 
 export function LandingCtas({ isLoggedIn }: { isLoggedIn: boolean }) {
   if (isLoggedIn) {
     return (
       <div className="flex flex-wrap items-center gap-3">
         <LinkButton
-          href="/jargon"
+          href={AUTHENTICATED_HOME_PATH}
           size="lg"
           className="group min-h-12 gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96]"
         >
-          See your collection
+          Continue reviewing
           <ArrowRight
             aria-hidden
             className="size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5"

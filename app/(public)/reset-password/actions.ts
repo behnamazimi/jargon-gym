@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { getPasswordValidationError } from "@/lib/auth/password-policy";
 import { getSessionUser } from "@/lib/auth/require-session";
+import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 
 export type ResetPasswordState = { error: string } | null;
 
@@ -48,5 +49,5 @@ export async function resetPassword(
     return { error: formatAuthError(error, "reset") };
   }
 
-  redirect("/jargon");
+  redirect(AUTHENTICATED_HOME_PATH);
 }

@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import {
   PWA_BACKGROUND_COLOR,
   PWA_DESCRIPTION,
+  PWA_ID,
   PWA_NAME,
   PWA_SCREENSHOT_NARROW,
   PWA_SCREENSHOT_WIDE,
@@ -16,7 +17,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: PWA_SHORT_NAME,
     description: PWA_DESCRIPTION,
     start_url: PWA_START_URL,
-    id: PWA_START_URL,
+    id: PWA_ID,
     scope: "/",
     display: "standalone",
     background_color: PWA_BACKGROUND_COLOR,

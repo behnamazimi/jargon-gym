@@ -10,6 +10,7 @@ import { InstallButton } from "@/components/pwa/install-prompt";
 import { StreakBadge } from "@/components/streak-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 import { isDockPath, isLibraryPath, isMorePath } from "@/lib/chrome";
 import { cn } from "@/lib/utils";
 import { useStudyPhone } from "@/components/app/study-phone-context";
@@ -35,7 +36,11 @@ export function StudyPhoneTopBar() {
               <ArrowLeft className="size-5" strokeWidth={1.5} aria-hidden />
             </Link>
           ) : (
-            <Link href="/jargon" className="btn btn-ghost btn-square btn-sm" aria-label="Library">
+            <Link
+              href={AUTHENTICATED_HOME_PATH}
+              className="btn btn-ghost btn-square btn-sm"
+              aria-label="Jargon Gym"
+            >
               <BrandIcon />
             </Link>
           )}

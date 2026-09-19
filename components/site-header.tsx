@@ -8,6 +8,7 @@ import { InstallButton } from "@/components/pwa/install-prompt";
 import { LoggedOutHeaderNav } from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 import { cn } from "@/lib/utils";
 
 function SiteHeaderChrome({
@@ -72,7 +73,7 @@ export function SiteHeader({
 }) {
   return (
     <SiteHeaderChrome
-      homeHref={user ? "/jargon" : "/"}
+      homeHref={user ? AUTHENTICATED_HOME_PATH : "/"}
       leftNav={
         user ? (
           <>

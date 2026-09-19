@@ -3,7 +3,9 @@
 // origin and only accept paths that stay on it.
 const BASE = "https://n.invalid";
 
-export function safeNextPath(raw: string | null, fallback = "/jargon"): string {
+export const AUTHENTICATED_HOME_PATH = "/jargon/review";
+
+export function safeNextPath(raw: string | null, fallback = AUTHENTICATED_HOME_PATH): string {
   if (!raw || !raw.startsWith("/")) {
     return fallback;
   }

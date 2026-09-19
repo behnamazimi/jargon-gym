@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { appendNextParam, safeNextPath } from "./safe-next-path";
+import { AUTHENTICATED_HOME_PATH, appendNextParam, safeNextPath } from "./safe-next-path";
 
 describe("safeNextPath", () => {
   it("falls back for null and empty input", () => {
-    expect(safeNextPath(null)).toBe("/jargon");
-    expect(safeNextPath("")).toBe("/jargon");
+    expect(safeNextPath(null)).toBe(AUTHENTICATED_HOME_PATH);
+    expect(safeNextPath("")).toBe(AUTHENTICATED_HOME_PATH);
   });
 
   it("passes through plain in-app paths", () => {
@@ -18,23 +18,23 @@ describe("safeNextPath", () => {
   });
 
   it("rejects protocol-relative URLs", () => {
-    expect(safeNextPath("//evil.com")).toBe("/jargon");
-    expect(safeNextPath("//evil.com/jargon")).toBe("/jargon");
+    expect(safeNextPath("//evil.com")).toBe(AUTHENTICATED_HOME_PATH);
+    expect(safeNextPath("//evil.com/jargon")).toBe(AUTHENTICATED_HOME_PATH);
   });
 
   it("rejects absolute URLs", () => {
-    expect(safeNextPath("https://evil.com")).toBe("/jargon");
-    expect(safeNextPath("http://evil.com/jargon")).toBe("/jargon");
+    expect(safeNextPath("https://evil.com")).toBe(AUTHENTICATED_HOME_PATH);
+    expect(safeNextPath("http://evil.com/jargon")).toBe(AUTHENTICATED_HOME_PATH);
   });
 
   it("rejects backslash escapes that URL parsing treats as slashes", () => {
-    expect(safeNextPath("/\\evil.com")).toBe("/jargon");
-    expect(safeNextPath("\\/\\/evil.com")).toBe("/jargon");
-    expect(safeNextPath("/\\/evil.com")).toBe("/jargon");
+    expect(safeNextPath("/\\evil.com")).toBe(AUTHENTICATED_HOME_PATH);
+    expect(safeNextPath("\\/\\/evil.com")).toBe(AUTHENTICATED_HOME_PATH);
+    expect(safeNextPath("/\\/evil.com")).toBe(AUTHENTICATED_HOME_PATH);
   });
 
   it("rejects non-path schemes", () => {
-    expect(safeNextPath("javascript:alert(1)")).toBe("/jargon");
+    expect(safeNextPath("javascript:alert(1)")).toBe(AUTHENTICATED_HOME_PATH);
   });
 
   it("honors a custom fallback", () => {
@@ -49,7 +49,9 @@ describe("appendNextParam", () => {
     expect(appendNextParam("/signup", "/jargon?tab=quiz")).toBe(
       "/signup?next=%2Fjargon%3Ftab%3Dquiz",
     );
-    expect(appendNextParam("/signup", "//evil.com")).toBe("/signup?next=%2Fjargon");
+    expect(appendNextParam("/signup", "//evil.com")).toBe(
+      `/signup?next=${encodeURIComponent(AUTHENTICATED_HOME_PATH)}`,
+    );
   });
 
   it("returns the path unchanged when next is missing", () => {
