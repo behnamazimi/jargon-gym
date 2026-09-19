@@ -55,12 +55,14 @@ function ReadCardRevealed({
   return (
     <>
       <TermCardHeader term={term} narrationAccess={narrationAccess} />
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
-        {term.isNewToUser ? (
-          <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
-        ) : null}
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody term={term} />
       </div>
+      {term.isNewToUser ? (
+        <div className="shrink-0 px-5 pb-3 sm:px-6">
+          <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
+        </div>
+      ) : null}
     </>
   );
 }
