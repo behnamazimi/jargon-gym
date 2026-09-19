@@ -3,15 +3,15 @@
 A private, invite-only app for learning industry jargon you can
 actually use — not just recognize. Import term lists into collections (or start
 with built-in ones), mark what you already know, review a ranked queue when you
-feel like it, and quiz when you want a check-in. No due dates, no daily
-streaks.
+feel like it, and quiz when you want a check-in. No due dates — there's an
+optional streak badge, but nothing punishes you for breaking it.
 
 Terms go beyond one-line definitions: optional example, mental model,
 in-practice notes, anti-example, debated angles, and links to related terms.
-Known and unknown terms stay in separate pools so review never mixes words
-you already have with ones you're still learning.
+Known/unknown isn't set by hand — it's read off how well you've actually
+retained a term, and fades again if you stop practicing it.
 
-The same smart-queue ranking powers Read, Review, and Quiz across every
+The same TRACE ranking powers Read, Review, and Quiz across every
 surface — web, Telegram bot, and macOS desktop widget — not random shuffle,
 and not spaced repetition with future review dates. Collection browse picks
 its own way and doesn't use the ranking.
@@ -20,13 +20,13 @@ See the landing page for how to request an invitation.
 
 ## Documentation
 
-- [Smart review queue](docs/smart-queue.md) — scoring, outcomes, and how picking
-  works across surfaces (companion to `/how-smart-queue-works`)
+- [TRACE scoring engine](docs/trace.md) — scoring, outcomes, and how picking
+  works across surfaces
 - [Telegram bot setup](docs/supabase/telegram-setup.md) — webhook, secrets, and
   Edge Function deployment
-- User-facing guides at `/how-terms-work` (term structure, known/unknown pools)
-  and `/how-smart-queue-works` (ranking, badges) when the app is running —
-  linked from the landing page and site footer
+- User-facing guide at `/how-terms-work` (term structure, how known/unknown
+  status is computed) when the app is running — linked from the landing page
+  and site footer
 
 ## Prerequisites
 
@@ -78,15 +78,15 @@ pnpm supabase:types
 
 ## Scripts
 
-| Command                                   | Purpose                             |
-| ----------------------------------------- | ----------------------------------- |
-| `pnpm dev`                                | Start Next.js in development        |
-| `pnpm build`                              | Build widget zip and production app |
-| `pnpm check`                              | Lint, format check, and type-check  |
-| `pnpm supabase:start` / `stop` / `status` | Local Supabase lifecycle            |
-| `pnpm supabase:reset`                     | Reset local DB and run migrations   |
-| `pnpm widget:zip`                         | Package the macOS desktop widget    |
-| `pnpm widget:link`                        | Symlink the widget into Übersicht   |
+| Command                                   | Purpose                                                      |
+| ----------------------------------------- | ------------------------------------------------------------ |
+| `pnpm dev`                                | Start Next.js in development                                 |
+| `pnpm build`                              | Build widget zip and production app                          |
+| `pnpm check`                              | Lint, format check, type-check, and unused-code check (knip) |
+| `pnpm supabase:start` / `stop` / `status` | Local Supabase lifecycle                                     |
+| `pnpm supabase:reset`                     | Reset local DB and run migrations                            |
+| `pnpm widget:zip`                         | Package the macOS desktop widget                             |
+| `pnpm widget:link`                        | Symlink the widget into Übersicht                            |
 
 ## Tech stack
 
@@ -99,7 +99,8 @@ TypeScript.
 | ------------------ | ----------------------------------------- |
 | `app/`             | Next.js routes (auth, jargon UI, API)     |
 | `components/`      | React UI                                  |
-| `lib/smart-queue/` | Review queue scoring and pick pipeline    |
+| `lib/trace/`       | TRACE scoring — decay, recall, mastery    |
+| `lib/trace-queue/` | Term-picking pipeline built on TRACE      |
 | `lib/jargon/`      | Term cards, outcomes, known/unknown state |
 | `lib/study/`       | Collection scope and study pool wrapper   |
 | `lib/telegram/`    | Telegram bot flows                        |

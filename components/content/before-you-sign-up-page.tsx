@@ -81,9 +81,9 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             you&apos;re in on the import page. You can also add terms one at a time, or skip
             building anything and browse a shared collection instead.{" "}
             <strong className="font-medium text-base-content">
-              Any collection you build can be shared with other users too
+              Any collection you build can be shared too
             </strong>
-            , it&apos;s not a one-way street.
+            , which puts it in Browse for everyone, not sent to one specific person.
           </p>
         </ContentPageSection>
 

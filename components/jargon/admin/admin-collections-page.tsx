@@ -28,6 +28,7 @@ export function AdminCollectionsPageClient({ collections }: AdminCollectionsPage
               <th>Name</th>
               <th>Owner</th>
               <th>Terms</th>
+              <th>Visibility</th>
               <th>Built-in</th>
               <th>Public</th>
               <th>Slug</th>
@@ -39,7 +40,7 @@ export function AdminCollectionsPageClient({ collections }: AdminCollectionsPage
             ))}
             {collections.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center text-base-content/50">
+                <td colSpan={7} className="text-center text-base-content/50">
                   No collections yet.
                 </td>
               </tr>
@@ -112,6 +113,9 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
       <td className="font-medium text-base-content">{collection.name}</td>
       <td className="text-base-content/65">{collection.ownerEmail ?? "—"}</td>
       <td className="text-base-content/65">{collection.termCount}</td>
+      <td className="text-base-content/65">
+        {collection.visibility === "shared" ? "Shared" : "Private"}
+      </td>
       <td>
         <input
           type="checkbox"

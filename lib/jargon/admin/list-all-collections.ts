@@ -11,12 +11,15 @@ export type AdminCollectionRow = {
   isBuiltin: boolean;
   isPublic: boolean;
   slug: string | null;
+  visibility: "private" | "shared";
 };
 
 export async function listAllCollectionsForAdmin(client: Client): Promise<AdminCollectionRow[]> {
   const { data: domains, error } = await client
     .from("domains")
-    .select("id, name, owner_id, is_builtin, is_public, slug, users!domains_owner_id_fkey(email)")
+    .select(
+      "id, name, owner_id, is_builtin, is_public, slug, visibility, users!domains_owner_id_fkey(email)",
+    )
     .order("name");
 
   if (error) throw error;
@@ -39,5 +42,6 @@ export async function listAllCollectionsForAdmin(client: Client): Promise<AdminC
     isBuiltin: domain.is_builtin,
     isPublic: domain.is_public,
     slug: domain.slug,
+    visibility: domain.visibility,
   }));
 }

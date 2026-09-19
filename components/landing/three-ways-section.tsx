@@ -16,7 +16,7 @@ const WAYS: { icon: LucideIcon; label: string; body: string }[] = [
   {
     icon: Sparkles,
     label: "Quiz",
-    body: "A real check on known terms, no daily streak to babysit.",
+    body: "A real check, sharper with your own AI key.",
   },
 ];
 
