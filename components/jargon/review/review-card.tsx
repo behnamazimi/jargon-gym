@@ -94,7 +94,7 @@ export function ReviewCard({
               <Eye className="invisible size-4 shrink-0" strokeWidth={1.5} />
               <RecallRevealHint invisible />
             </div>
-            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 px-5 text-center sm:px-6">
+            <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden px-5 text-center sm:px-6">
               <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
                 {term.term}
               </h2>

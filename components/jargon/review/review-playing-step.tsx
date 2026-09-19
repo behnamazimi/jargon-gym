@@ -1,12 +1,12 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { QuizKeyboardHint } from "@/components/jargon/quiz/quiz-ui";
-import { StudyProgress } from "@/components/jargon/study/study-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, type ButtonVariant } from "@/components/ui/button";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import type { ReviewRating, ReviewTerm } from "@/lib/review/types";
 import { ReviewCard } from "@/components/jargon/review/review-card";
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 const GRADE_LABELS: Record<ReviewGrade, string> = {
   [AGAIN]: "Again",
@@ -24,56 +24,40 @@ const GRADE_BUTTONS: { grade: ReviewGrade; variant: ButtonVariant }[] = [
 
 type ReviewPlayingStepProps = {
   currentCard: ReviewTerm;
-  currentIndex: number;
-  totalCards: number;
+  canGoBack: boolean;
+  canGoForward: boolean;
   currentRevealed: boolean;
   currentRating: ReviewRating | undefined;
   errorMessage: string | null;
   reduceMotion: boolean;
   narrationAccess: boolean;
+  collectionControl: ReactNode;
   onReveal: () => void;
   onPrevious: () => void;
   onNext: () => void;
   onMarkedKnown: () => void;
   onRate: (grade: ReviewGrade) => void;
-  onDone: () => void;
 };
 
 export function ReviewPlayingStep({
   currentCard,
-  currentIndex,
-  totalCards,
+  canGoBack,
+  canGoForward,
   currentRevealed,
   currentRating,
   errorMessage,
   reduceMotion,
   narrationAccess,
+  collectionControl,
   onReveal,
   onPrevious,
   onNext,
   onMarkedKnown,
   onRate,
-  onDone,
 }: ReviewPlayingStepProps) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex shrink-0 items-center gap-3">
-        <StudyProgress
-          current={currentIndex + 1}
-          total={totalCards}
-          unitLabel="Term"
-          className="flex-1"
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onPress={onDone}
-          className="min-h-11 shrink-0 transition-transform active:scale-[0.96]"
-        >
-          Done
-        </Button>
-      </div>
+      <div className="flex shrink-0 items-center">{collectionControl}</div>
 
       <ReviewCard
         key={currentCard.id}
@@ -94,7 +78,7 @@ export function ReviewPlayingStep({
             type="button"
             variant="ghost"
             onPress={onPrevious}
-            isDisabled={currentIndex === 0}
+            isDisabled={!canGoBack}
             className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
             aria-label="Previous term"
           >
@@ -129,7 +113,7 @@ export function ReviewPlayingStep({
             type="button"
             variant="ghost"
             onPress={onNext}
-            isDisabled={currentIndex >= totalCards - 1}
+            isDisabled={!canGoForward}
             className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
             aria-label="Next term"
           >
