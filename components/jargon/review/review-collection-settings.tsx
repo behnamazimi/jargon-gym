@@ -1,8 +1,8 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
+import { Button as ButtonPrimitive } from "react-aria-components";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -42,19 +42,16 @@ export function ReviewCollectionSettings({
 
   return (
     <DropdownMenuTrigger>
-      <Button
+      <ButtonPrimitive
         type="button"
-        variant="outline"
-        size="sm"
         isDisabled={isDisabled}
-        className="min-h-11 max-w-full min-w-0 justify-between gap-2 transition-transform active:scale-[0.96]"
+        className="select select-sm w-fit max-w-full min-w-0 font-normal"
         aria-label="Collection"
       >
         <span className="truncate">
           {selectedCollectionLabel(selectedCollectionId, collections)}
         </span>
-        <ChevronDown className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
-      </Button>
+      </ButtonPrimitive>
       <DropdownMenu className="min-w-56" placement="bottom start">
         <DropdownMenuLabel>Collection</DropdownMenuLabel>
         <DropdownMenuItem id="all" onAction={() => onCollectionChange("all")}>
