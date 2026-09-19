@@ -1,12 +1,13 @@
-/** §9's threshold-crossing high-water marks (ever_learning_at,
- *  ever_mastered_at) turned into a per-collection "time to next milestone"
- *  estimate for the Mastery page. Pure math, no DB — mirrors the rest of
- *  this folder's layering (docs/trace.md "Where the logic lives").
+/** Mastery-page buckets and the per-collection "time to Mastered"
+ *  estimate. Pure math, no DB — mirrors the rest of this folder's
+ *  layering (docs/trace.md "Where the logic lives").
  *
- *  Deliberately anchored on the permanent high-water marks, never the live
- *  (decaying) knownLabel: a term quietly decaying back out of "known"
- *  would otherwise make the estimate's target recede on its own, with no
- *  relation to the user's actual effort. */
+ *  Buckets split on activity vs the ever_mastered_at high-water mark,
+ *  never the live (decaying) knownLabel: a term you've touched is
+ *  learning even if Mastery_adjusted is still below 0.6, and a term
+ *  quietly decaying back out of "known" doesn't leave the mastered
+ *  bucket. The pace estimate is anchored on the same stamp so its
+ *  target can't recede on its own. */
 
 import {
   PACE_ESTIMATE_RANGE_MULTIPLIER,
@@ -16,7 +17,7 @@ import {
   PACE_WINDOW_LADDER_DAYS,
 } from "./constants";
 import { daysBetween } from "./decay";
-import type { TraceCandidate } from "./types";
+import type { TraceCandidate, TraceState } from "./types";
 
 export type MasteryBucketCounts = {
   neverLearning: number;
@@ -24,17 +25,28 @@ export type MasteryBucketCounts = {
   mastered: number;
 };
 
-/** Every term sits in exactly one permanent, monotonic bucket — derived
- *  from the two high-water marks, never from the live (decaying) label. */
+/** True once the user has any Read, Review, or Quiz history on this term. */
+export function hasTraceActivity(
+  state: Pick<TraceState, "readCount" | "reviewRecallCount" | "quizTestCount">,
+): boolean {
+  return state.readCount > 0 || state.reviewRecallCount > 0 || state.quizTestCount > 0;
+}
+
+/** Every earned term sits in exactly one bucket: mastered (everMasteredAt
+ *  set), learning (any activity, not mastered), or not started (no
+ *  activity). Marked-known terms are filtered out by the caller. */
 export function partitionMasteryBuckets(
-  candidates: Pick<TraceCandidate, "everLearningAt" | "everMasteredAt">[],
+  candidates: Pick<
+    TraceCandidate,
+    "everMasteredAt" | "readCount" | "reviewRecallCount" | "quizTestCount"
+  >[],
 ): MasteryBucketCounts {
   let neverLearning = 0;
   let learningNotMastered = 0;
   let mastered = 0;
   for (const c of candidates) {
     if (c.everMasteredAt !== null) mastered++;
-    else if (c.everLearningAt !== null) learningNotMastered++;
+    else if (hasTraceActivity(c)) learningNotMastered++;
     else neverLearning++;
   }
   return { neverLearning, learningNotMastered, mastered };

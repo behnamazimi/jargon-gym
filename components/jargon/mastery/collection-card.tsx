@@ -14,9 +14,9 @@ type CollectionCardData = {
 };
 
 /** A term sits in exactly one of three buckets (see
- *  lib/trace/pace.ts's partitionMasteryBuckets) — "mastered" alone is a
- *  binary crossed/not-crossed count, so showing just that and calling it
- *  "learned" implied a false binary. This shows all three segments instead. */
+ *  lib/trace/pace.ts's partitionMasteryBuckets) — mastered, learning
+ *  (any activity, not mastered), or not started (no activity). Marked-known
+ *  terms are excluded from this bar. */
 function BucketProgress({ buckets, name }: { buckets: MasteryBucketCounts; name: string }) {
   const total = buckets.mastered + buckets.learningNotMastered + buckets.neverLearning;
   const pct = (count: number) => (total > 0 ? (count / total) * 100 : 0);

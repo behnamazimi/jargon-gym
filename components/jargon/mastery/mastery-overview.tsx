@@ -7,7 +7,7 @@ import { MasteryPracticeActivity } from "./mastery-practice-activity";
 
 type MasteryOverviewProps = {
   stats: WebStatsSnapshot;
-  /** Ever crossed Learning, not yet Mastered — permanent bucket count. */
+  /** Ever touched (any activity), not yet Mastered, not marked known. */
   termsLearning: number;
   /** §8 "terms learned" — high-water mark, never decreases. */
   termsLearned: number;

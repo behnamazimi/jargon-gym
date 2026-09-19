@@ -1,12 +1,36 @@
 import { describe, expect, it } from "vitest";
 import { PACE_ESTIMATE_RANGE_MULTIPLIER } from "./constants";
-import { computeCrossingPace, estimateMilestone, partitionMasteryBuckets } from "./pace";
+import {
+  computeCrossingPace,
+  estimateMilestone,
+  hasTraceActivity,
+  partitionMasteryBuckets,
+} from "./pace";
 
 const NOW = new Date("2026-02-01T00:00:00Z");
 
 function daysAgo(days: number): Date {
   return new Date(NOW.getTime() - days * 24 * 60 * 60 * 1000);
 }
+
+const idle = {
+  readCount: 0,
+  reviewRecallCount: 0,
+  quizTestCount: 0,
+  everMasteredAt: null,
+};
+
+describe("hasTraceActivity", () => {
+  it("is false when every track is still at zero", () => {
+    expect(hasTraceActivity(idle)).toBe(false);
+  });
+
+  it("is true when any track has a count", () => {
+    expect(hasTraceActivity({ ...idle, readCount: 1 })).toBe(true);
+    expect(hasTraceActivity({ ...idle, reviewRecallCount: 1 })).toBe(true);
+    expect(hasTraceActivity({ ...idle, quizTestCount: 1 })).toBe(true);
+  });
+});
 
 describe("partitionMasteryBuckets", () => {
   it("is all-zero for an empty list", () => {
@@ -17,19 +41,32 @@ describe("partitionMasteryBuckets", () => {
     });
   });
 
-  it("buckets a term with neither timestamp as neverLearning", () => {
-    const buckets = partitionMasteryBuckets([{ everLearningAt: null, everMasteredAt: null }]);
+  it("buckets a term with no activity as neverLearning", () => {
+    const buckets = partitionMasteryBuckets([idle]);
     expect(buckets).toEqual({ neverLearning: 1, learningNotMastered: 0, mastered: 0 });
   });
 
-  it("buckets a term with only everLearningAt as learningNotMastered", () => {
-    const buckets = partitionMasteryBuckets([{ everLearningAt: daysAgo(5), everMasteredAt: null }]);
+  it("buckets a term with reads but no mastery stamp as learningNotMastered", () => {
+    const buckets = partitionMasteryBuckets([{ ...idle, readCount: 2 }]);
     expect(buckets).toEqual({ neverLearning: 0, learningNotMastered: 1, mastered: 0 });
   });
 
-  it("buckets a term with both timestamps as mastered, never double-counted", () => {
+  it("buckets a term with only review or quiz activity as learningNotMastered", () => {
+    expect(partitionMasteryBuckets([{ ...idle, reviewRecallCount: 1 }])).toEqual({
+      neverLearning: 0,
+      learningNotMastered: 1,
+      mastered: 0,
+    });
+    expect(partitionMasteryBuckets([{ ...idle, quizTestCount: 1 }])).toEqual({
+      neverLearning: 0,
+      learningNotMastered: 1,
+      mastered: 0,
+    });
+  });
+
+  it("buckets a term with everMasteredAt as mastered, never double-counted", () => {
     const buckets = partitionMasteryBuckets([
-      { everLearningAt: daysAgo(10), everMasteredAt: daysAgo(1) },
+      { ...idle, readCount: 4, everMasteredAt: daysAgo(1) },
     ]);
     expect(buckets).toEqual({ neverLearning: 0, learningNotMastered: 0, mastered: 1 });
   });

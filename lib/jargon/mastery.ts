@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { computeTraceSnapshot, daysBetween, type KnownLabel } from "@/lib/trace";
+import { computeTraceSnapshot, daysBetween, hasTraceActivity, type KnownLabel } from "@/lib/trace";
 import { fetchActiveTraceCandidates } from "@/lib/trace-queue";
 import type { CollectionDomainRow } from "./collections";
 import { resolveReviewDomainIds } from "./known-state";
@@ -58,10 +58,9 @@ export type MasteryTermRow = {
 
 export type MasteryCountsData = {
   collections: MasteryCollectionOption[];
-  /** Count of terms that have ever crossed the Learning milestone but not
-   *  yet Mastered — a permanent, monotonic bucket (see
-   *  lib/trace/pace.ts's partitionMasteryBuckets), not a live/decaying
-   *  score. */
+  /** Terms with any Read/Review/Quiz activity that aren't mastered or
+   *  marked known — same activity split as partitionMasteryBuckets, not
+   *  the live/decaying knownLabel. */
   termsLearning: number;
   /** §8 "terms learned" — high-water mark count of terms that ever crossed
    *  the known threshold. Never decreases. */
@@ -135,7 +134,7 @@ export async function loadMasteryCounts(
     (c) => c.everMasteredAt !== null || c.markedKnownAt !== null,
   ).length;
   const termsLearning = candidates.filter(
-    (c) => c.everLearningAt !== null && c.everMasteredAt === null && c.markedKnownAt === null,
+    (c) => hasTraceActivity(c) && c.everMasteredAt === null && c.markedKnownAt === null,
   ).length;
 
   return { collections, termsLearning, termsLearned };

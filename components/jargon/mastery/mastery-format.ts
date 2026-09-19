@@ -17,9 +17,7 @@ function formatDayRange(lowDays: number, highDays: number): string {
 }
 
 /** One milestone's line, or null if there's nothing to say about it (no
- *  terms waiting for this stage). Never combines the two milestones' time
- *  estimates into one number — they compete for the same study time, so a
- *  sum would overstate precision it doesn't have. */
+ *  terms waiting for this stage). */
 function formatMilestone(estimate: MilestoneEstimate, label: string): string | null {
   switch (estimate.kind) {
     case "none":
@@ -40,11 +38,7 @@ function formatMilestone(estimate: MilestoneEstimate, label: string): string | n
 }
 
 export function formatPaceLine(insight: CollectionPaceInsight): string | null {
-  const parts = [
-    formatMilestone(insight.toLearning, "Learning"),
-    formatMilestone(insight.toMastery, "Mastered"),
-  ].filter((part): part is string => part !== null);
-  return parts.length > 0 ? parts.join(" · ") : null;
+  return formatMilestone(insight.toMastery, "Mastered");
 }
 
 export function formatUnseenFootnote(collection: CollectionStatBreakdown): string {

@@ -9,16 +9,13 @@ import {
 } from "@/lib/trace";
 import type { CollectionDomainRow } from "./collections";
 
-/** Rough "time to next milestone" insight, per collection — two
- *  independent estimates (never combined into one number, since the two
- *  transitions compete for the same study time), anchored on the
- *  permanent ever_learning_at/ever_mastered_at high-water marks rather
- *  than the live, decaying mastery label. See lib/trace/pace.ts. */
+/** Rough "time to Mastered" insight, per collection — remaining learning
+ *  terms (any activity, not yet mastered) against the ever_mastered_at
+ *  crossing rate, never the live decaying mastery label. See
+ *  lib/trace/pace.ts. */
 export type CollectionPaceInsight = {
   buckets: MasteryBucketCounts;
-  /** Time until the last "never reached Learning" term first gets there. */
-  toLearning: MilestoneEstimate;
-  /** Time until the current "reached Learning, not yet Mastered" terms clear. */
+  /** Time until the current learning (has activity, not mastered) terms clear. */
   toMastery: MilestoneEstimate;
 };
 
@@ -90,19 +87,12 @@ function buildCollectionPaceInsight(
   // they don't inflate "never learning" or skew the crossing-rate math.
   const earnedCandidates = candidates.filter((c) => !c.markedKnownAt);
   const buckets = partitionMasteryBuckets(earnedCandidates);
-  const learningCrossings = earnedCandidates
-    .map((c) => c.everLearningAt)
-    .filter((d): d is Date => d !== null);
   const masteredCrossings = earnedCandidates
     .map((c) => c.everMasteredAt)
     .filter((d): d is Date => d !== null);
 
   return {
     buckets,
-    toLearning: estimateMilestone(
-      buckets.neverLearning,
-      computeCrossingPace(learningCrossings, now),
-    ),
     toMastery: estimateMilestone(
       buckets.learningNotMastered,
       computeCrossingPace(masteredCrossings, now),

@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/jargon/term-card";
-import { rankQuizQueue, rankReadQueue, rankReviewQueue } from "@/lib/trace";
+import { hasTraceActivity, rankQuizQueue, rankReadQueue, rankReviewQueue } from "@/lib/trace";
 import { fetchTraceCandidates, fetchTraceCandidatesForUser, type ReviewScope } from "./repository";
 import { hydrateTermCardsForUser, hydrateTermsAsTermCards } from "./hydrate";
 import type { TraceCandidate } from "./types";
@@ -30,12 +30,7 @@ function excludeMarkedKnown(candidates: TraceCandidate[]): TraceCandidate[] {
  *  fetched (before hydration drops that state), then merged back onto the
  *  hydrated TermCards by id. */
 function withIsNewToUser(cards: TermCard[], candidates: TraceCandidate[]): TermCard[] {
-  const isNewById = new Map(
-    candidates.map((c) => [
-      c.termId,
-      c.readCount === 0 && c.reviewRecallCount === 0 && c.quizTestCount === 0,
-    ]),
-  );
+  const isNewById = new Map(candidates.map((c) => [c.termId, !hasTraceActivity(c)]));
   return cards.map((card) => ({ ...card, isNewToUser: isNewById.get(card.id) ?? false }));
 }
 

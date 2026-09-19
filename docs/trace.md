@@ -165,14 +165,20 @@ learned" (high-water mark, never decreases).
 The second, a sibling high-water mark (`ever_learning_at`), does the
 identical thing one threshold lower — stamped the first time
 Mastery_adjusted crosses the learning threshold (0.6) rather than the
-known one (0.75). It exists to back the mastery page's per-collection pace
-insight (`lib/trace/pace.ts`): every term sits in exactly one of three
-permanent, monotonic buckets — never reached learning, reached learning
-but not yet mastered, or mastered — and recent crossings into each bucket
-give two independent "time to next milestone" estimates. These are
-deliberately anchored on the two permanent stamps rather than the live
-known/learning/unknown label, so a term quietly decaying back out of
-"known" can't make the estimate's target recede on its own.
+known one (0.75). That stamp is still written, but it no longer drives
+the mastery page. Collection cards there put every earned term (not
+marked known) into exactly one of three buckets from live activity
+counts plus `ever_mastered_at` (`lib/trace/pace.ts`):
+
+- **Not started** — no Read, Review, or Quiz activity yet
+- **Learning** — any activity on those tracks, and not yet mastered
+- **Mastered** — `ever_mastered_at` is set
+
+The per-collection pace line estimates time until the current learning
+terms reach Mastered, using recent `ever_mastered_at` crossings. It's
+anchored on that permanent stamp rather than the live known/learning/
+unknown label, so a term quietly decaying back out of "known" can't make
+the estimate's target recede on its own.
 
 ## How each tier decides what to show you
 
@@ -266,8 +272,10 @@ it:
    recognition posterior and last-quiz time, plus the two persisted
    high-water-mark timestamps for "terms learned" (`ever_mastered_at`) and
    its lower-threshold sibling (`ever_learning_at`, added in
-   [`supabase/migrations/20260905120000_ever_learning_at.sql`](../supabase/migrations/20260905120000_ever_learning_at.sql),
-   the mastery page's per-collection pace insight). Everything else — every
+   [`supabase/migrations/20260905120000_ever_learning_at.sql`](../supabase/migrations/20260905120000_ever_learning_at.sql)).
+   The mastery page's collection buckets and pace line use activity counts
+   plus `ever_mastered_at`; `ever_learning_at` is still stamped, but it
+   doesn't drive that view. Everything else — every
    retrievability, every mastery number, the known/learning/unknown label
    — is computed in TypeScript on the way out, never in SQL. The TRACE
    columns were added in
