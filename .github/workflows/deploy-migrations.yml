@@ -1,5 +1,6 @@
 # Separate from CI so a failed production push cannot fail check/build/test
-# or the local migration dry-run. Runs only after CI succeeds on main.
+# or the local migration dry-run. Runs after CI succeeds on main, and can
+# be re-run by hand if a push fails.
 name: Deploy Supabase migrations
 
 on:
@@ -7,52 +8,45 @@ on:
     workflows: [CI]
     types: [completed]
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   deploy:
-    if: github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     concurrency:
       group: supabase-deploy
       cancel-in-progress: false
     env:
-      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-          fetch-depth: 2
-
-      - name: Skip if this commit did not add migrations
-        id: gate
-        run: |
-          if git diff --quiet HEAD^ HEAD -- supabase/migrations/; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          fi
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - uses: pnpm/action-setup@v6
-        if: steps.gate.outputs.changed == 'true'
       - uses: actions/setup-node@v7
-        if: steps.gate.outputs.changed == 'true'
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - if: steps.gate.outputs.changed == 'true'
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
+      # Direct db.*.supabase.co is IPv6-only; GitHub-hosted runners get
+      # ECONNREFUSED there. supabase link uses the IPv4 session pooler.
       - name: Push pending migrations
-        if: steps.gate.outputs.changed == 'true'
         run: |
           if [ -n "$SUPABASE_DB_URL" ]; then
-            db_url="$SUPABASE_DB_URL"
+            pnpm supabase db push --yes --db-url "$SUPABASE_DB_URL"
+          elif [ -n "$SUPABASE_ACCESS_TOKEN" ] && [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            pnpm supabase link --project-ref ovdmwphqpttcscnjfmfp --yes
+            pnpm supabase db push --yes --linked
           elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
             encoded="$(python3 -c 'import os, urllib.parse; print(urllib.parse.quote(os.environ["SUPABASE_DB_PASSWORD"], safe=""))')"
-            db_url="postgresql://postgres:${encoded}@db.ovdmwphqpttcscnjfmfp.supabase.co:5432/postgres?sslmode=require"
+            db_url="postgresql://postgres.ovdmwphqpttcscnjfmfp:${encoded}@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require"
+            pnpm supabase db push --yes --db-url "$db_url"
           else
-            echo "::error::Set GitHub secret SUPABASE_DB_URL (Session pooler URI) or SUPABASE_DB_PASSWORD."
+            echo "::error::Set GitHub secrets SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD, or SUPABASE_DB_URL (session pooler URI)."
             exit 1
           fi
-          pnpm supabase db push --yes --db-url "$db_url"
