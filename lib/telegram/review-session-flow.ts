@@ -17,23 +17,27 @@ import {
   getReviewSession,
   markReviewRevealed,
   type QuizDomainSelection,
+  type TelegramReviewSession,
 } from "./session-store";
 import { edit, send } from "./transport";
 
 type Client = SupabaseClient<Database>;
 
+/** `knownSession` lets a caller that just mutated the session (rate/skip)
+ *  pass it straight through instead of re-reading it back from storage. */
 export async function buildCurrentCardActions(
   client: Client,
   chatId: number,
+  knownSession?: TelegramReviewSession,
 ): Promise<TelegramAction[]> {
-  const session = await getReviewSession(client, chatId);
+  const session = knownSession ?? (await getReviewSession(client, chatId));
   if (!session) {
     return [send(chatId, "Your review session has expired. Start a new one with /review")];
   }
 
   const currentTerm = await getCurrentReviewTerm(client, session);
   if (!currentTerm) {
-    return buildReviewSummaryActions(client, chatId);
+    return buildReviewSummaryActions(client, chatId, session);
   }
 
   return [
@@ -49,8 +53,9 @@ export async function buildCurrentCardActions(
 export async function buildReviewSummaryActions(
   client: Client,
   chatId: number,
+  knownSession?: TelegramReviewSession,
 ): Promise<TelegramAction[]> {
-  const session = await getReviewSession(client, chatId);
+  const session = knownSession ?? (await getReviewSession(client, chatId));
   if (!session) return [];
 
   const message = formatReviewSessionSummary(session.terms.length, session.retainedCount);
@@ -72,7 +77,7 @@ export async function startReviewFlashcardSession(
     return [send(chatId, NO_REVIEW_TERMS_MESSAGE)];
   }
 
-  return buildCurrentCardActions(client, chatId);
+  return buildCurrentCardActions(client, chatId, session);
 }
 
 /** "Reveal": records read (only now, not on delivery) and swaps the button row to rating. */

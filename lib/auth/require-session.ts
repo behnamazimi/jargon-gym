@@ -1,9 +1,26 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
+import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import { createClient } from "@/lib/supabase/server";
 
 export const getSessionUser = cache(async function getSessionUser() {
   const supabase = await createClient();
+
+  // proxy.ts already verified this request's session via a network call to
+  // supabase.auth.getUser() moments ago. When it forwarded the verified user
+  // id, getSession() (a local cookie decode, no network round trip) is
+  // enough to fetch the same user — we just confirm it matches what the
+  // proxy verified before trusting it.
+  const verifiedUserId = (await headers()).get(VERIFIED_USER_HEADER);
+  if (verifiedUserId) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (session?.user.id === verifiedUserId) {
+      return { supabase, user: session.user, error: null };
+    }
+  }
+
   const {
     data: { user },
     error,

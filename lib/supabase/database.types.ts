@@ -855,6 +855,23 @@ export type Database = {
           term: string;
         }[];
       };
+      get_term_cards: {
+        Args: { p_term_ids: string[]; p_user_id: string };
+        Returns: {
+          anti_example: string;
+          category: string;
+          controversy: string;
+          definition: string;
+          discussion: string;
+          domain_id: string;
+          domain_name: string;
+          example: string;
+          id: string;
+          mental_model: string;
+          relationships: Json;
+          term: string;
+        }[];
+      };
       get_trace_candidates: {
         Args: { p_domain_ids?: string[]; p_user_id: string };
         Returns: {

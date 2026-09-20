@@ -181,7 +181,12 @@ export async function updateSession(request: NextRequest) {
   // is discarded here, not appended to.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(VERIFIED_USER_HEADER, user.id);
-  supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
+  const responseWithHeader = NextResponse.next({ request: { headers: requestHeaders } });
+  // NextResponse.next() returns a fresh response object, which would drop
+  // any cookies already queued on supabaseResponse (session refresh,
+  // referral_verified) — carry them over instead of losing them.
+  supabaseResponse.cookies.getAll().forEach((cookie) => responseWithHeader.cookies.set(cookie));
+  supabaseResponse = responseWithHeader;
 
   return supabaseResponse;
 }

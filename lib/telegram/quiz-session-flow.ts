@@ -15,23 +15,27 @@ import {
   getCurrentTerm,
   getSession,
   type QuizDomainSelection,
+  type ReviewSession,
 } from "./session-store";
 import { send } from "./transport";
 
 type Client = SupabaseClient<Database>;
 
+/** `knownSession` lets a caller that just mutated the session (answer) pass
+ *  it straight through instead of re-reading it back from storage. */
 export async function buildNextQuestionActions(
   client: Client,
   chatId: number,
+  knownSession?: ReviewSession,
 ): Promise<TelegramAction[]> {
-  const session = await getSession(client, chatId);
+  const session = knownSession ?? (await getSession(client, chatId));
   if (!session) {
     return [send(chatId, "Your quiz session has expired. Start a new one with /quiz")];
   }
 
   const currentTerm = await getCurrentTerm(client, session);
   if (!currentTerm) {
-    return buildReviewSummaryActions(client, chatId);
+    return buildReviewSummaryActions(client, chatId, session);
   }
 
   const illustrationPick = session.illustration[currentTerm.id];
@@ -75,8 +79,9 @@ export async function buildNextQuestionActions(
 export async function buildReviewSummaryActions(
   client: Client,
   chatId: number,
+  knownSession?: ReviewSession,
 ): Promise<TelegramAction[]> {
-  const session = await getSession(client, chatId);
+  const session = knownSession ?? (await getSession(client, chatId));
   if (!session) return [];
 
   const message = formatReviewSummary(session.correctCount, session.termIds.length);
@@ -98,7 +103,7 @@ export async function startReviewSession(
     return [send(chatId, NOTHING_ELIGIBLE_FOR_QUIZ_MESSAGE)];
   }
 
-  return buildNextQuestionActions(client, chatId);
+  return buildNextQuestionActions(client, chatId, session);
 }
 
 export { handleReviewAnswer } from "./quiz-answer-flow";
