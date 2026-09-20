@@ -91,8 +91,6 @@ export async function hydrateTermsAsTermCards(
   const domainIds = [...new Set(fullTerms.map((t) => t.domain_id))];
   const mappedTerms = fullTerms.map(mapTerm);
 
-  // Neither query depends on the other's result, only on fullTerms — fetch
-  // them together instead of one after the other.
   const [domainsResult, relationshipRows] = await Promise.all([
     client.from("domains").select("id, name").in("id", domainIds),
     fetchTermRelationshipsForTerms(

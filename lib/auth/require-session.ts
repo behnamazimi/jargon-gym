@@ -6,11 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 export const getSessionUser = cache(async function getSessionUser() {
   const supabase = await createClient();
 
-  // proxy.ts already verified this request's session via a network call to
-  // supabase.auth.getUser() moments ago. When it forwarded the verified user
-  // id, getSession() (a local cookie decode, no network round trip) is
-  // enough to fetch the same user — we just confirm it matches what the
-  // proxy verified before trusting it.
+  // proxy.ts already ran the network-verified getUser() check for this
+  // request; getSession() (a local cookie decode) is enough to re-derive the
+  // same user without paying for that check twice.
   const verifiedUserId = (await headers()).get(VERIFIED_USER_HEADER);
   if (verifiedUserId) {
     const {
