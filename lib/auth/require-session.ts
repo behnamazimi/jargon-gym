@@ -1,24 +1,9 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { cache } from "react";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import { createClient } from "@/lib/supabase/server";
 
 export const getSessionUser = cache(async function getSessionUser() {
   const supabase = await createClient();
-
-  // proxy.ts already ran the network-verified getUser() check for this
-  // request; getSession() (a local cookie decode) is enough to re-derive the
-  // same user without paying for that check twice.
-  const verifiedUserId = (await headers()).get(VERIFIED_USER_HEADER);
-  if (verifiedUserId) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user.id === verifiedUserId) {
-      return { supabase, user: session.user, error: null };
-    }
-  }
-
   const {
     data: { user },
     error,
