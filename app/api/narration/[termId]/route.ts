@@ -38,12 +38,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ term
     });
   }
 
-  const audio = await downloadNarrationAudio(result.storagePath);
-  return new NextResponse(new Blob([audio]), {
-    headers: {
-      "Content-Type": "audio/mpeg",
-      "Cache-Control": CACHE_CONTROL,
-      ETag: etag,
-    },
+  const range = request.headers.get("range") ?? undefined;
+  const audio = await downloadNarrationAudio(result.storagePath, range);
+
+  const headers: HeadersInit = {
+    "Content-Type": "audio/mpeg",
+    "Cache-Control": CACHE_CONTROL,
+    "Accept-Ranges": "bytes",
+    ETag: etag,
+  };
+  if (audio.contentLength !== undefined) headers["Content-Length"] = String(audio.contentLength);
+  if (audio.contentRange) headers["Content-Range"] = audio.contentRange;
+
+  return new NextResponse(audio.stream, {
+    status: audio.partial ? 206 : 200,
+    headers,
   });
 }
