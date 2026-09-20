@@ -119,7 +119,7 @@ export function ReviewCard({
           </div>
 
           <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            <TermCardHeader term={term} narrationAccess={narrationAccess} />
+            <TermCardHeader term={term} narrationAccess={narrationAccess} narrationPreload />
             <div
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
               onClick={(event) => event.stopPropagation()}

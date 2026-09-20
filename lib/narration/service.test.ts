@@ -40,6 +40,7 @@ function makeClient(options: {
   updateSpy?: (patch: Record<string, unknown>) => void;
   /** The term's collection language, as returned by the domains(language) embed. */
   language?: string;
+  onTermSelect?: (columns: string) => void;
 }): Client {
   const queue = [...options.narrationRowQueue];
 
@@ -47,15 +48,21 @@ function makeClient(options: {
     from(table: string) {
       if (table === "terms") {
         return {
-          select: () => ({
-            eq: () => ({
-              single: () =>
-                Promise.resolve({
-                  data: { ...FIELDS, domains: { language: options.language ?? "en" } },
-                  error: null,
-                }),
-            }),
-          }),
+          select: (columns: string) => {
+            options.onTermSelect?.(columns);
+            const includeDomains = columns.includes("domains");
+            return {
+              eq: () => ({
+                single: () =>
+                  Promise.resolve({
+                    data: includeDomains
+                      ? { domains: { language: options.language ?? "en" } }
+                      : { ...FIELDS },
+                    error: null,
+                  }),
+              }),
+            };
+          },
         };
       }
       if (table === "term_narrations") {
@@ -91,16 +98,41 @@ afterEach(() => {
 });
 
 describe("getOrGenerateNarration", () => {
-  it("returns the storage path on a cache hit without calling ElevenLabs", async () => {
+  it("returns the storage path on a cache hit without calling ElevenLabs or loading language", async () => {
+    const termSelects: string[] = [];
     const client = makeClient({
       narrationRowQueue: [{ status: "ready", content_hash: HASH, storage_path: "term-1.mp3" }],
       claimResult: [],
+      onTermSelect: (columns) => termSelects.push(columns),
     });
 
     const result = await getOrGenerateNarration(client, TERM_ID);
 
     expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
     expect(synthesizeNarrationAudio).not.toHaveBeenCalled();
+    expect(termSelects).toHaveLength(1);
+    expect(termSelects[0]).not.toContain("domains");
+  });
+
+  it("generates when a ready row's content hash no longer matches the term", async () => {
+    vi.mocked(synthesizeNarrationAudio).mockResolvedValue(Buffer.from("audio"));
+    const updates: Record<string, unknown>[] = [];
+    const termSelects: string[] = [];
+    const client = makeClient({
+      narrationRowQueue: [
+        { status: "ready", content_hash: "stale-hash", storage_path: "term-1.mp3" },
+      ],
+      claimResult: [{ status: "pending", content_hash: HASH, storage_path: null }],
+      updateSpy: (patch) => updates.push(patch),
+      onTermSelect: (columns) => termSelects.push(columns),
+    });
+
+    const result = await getOrGenerateNarration(client, TERM_ID);
+
+    expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
+    expect(synthesizeNarrationAudio).toHaveBeenCalledTimes(1);
+    expect(updates).toEqual([{ status: "ready", storage_path: "term-1.mp3" }]);
+    expect(termSelects.some((columns) => columns.includes("domains"))).toBe(true);
   });
 
   it("generates and marks ready when it wins the claim", async () => {

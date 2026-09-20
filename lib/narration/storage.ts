@@ -6,7 +6,11 @@ function getBucket(): string {
   return bucket;
 }
 
+let s3Client: S3Client | undefined;
+
 function getS3Client(): S3Client {
+  if (s3Client) return s3Client;
+
   const endpoint = process.env.SUPABASE_S3_ENDPOINT;
   const region = process.env.SUPABASE_S3_REGION;
   const accessKeyId = process.env.SUPABASE_S3_ACCESS_KEY_ID;
@@ -24,12 +28,13 @@ function getS3Client(): S3Client {
     throw new Error(`Missing ${missing}.`);
   }
 
-  return new S3Client({
+  s3Client = new S3Client({
     endpoint,
     region,
     credentials: { accessKeyId, secretAccessKey },
     forcePathStyle: true,
   });
+  return s3Client;
 }
 
 export async function uploadNarrationAudio(path: string, audio: Buffer): Promise<void> {

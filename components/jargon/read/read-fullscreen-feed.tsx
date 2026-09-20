@@ -49,6 +49,7 @@ export function ReadFullscreenFeed({
           term={term}
           index={index}
           narrationAccess={narrationAccess}
+          narrationPreload={index === queue.currentIndex}
           onExposed={handleExposed}
           onMarkedKnown={handleMarkedKnown}
           registerCardNode={registerCardNode}

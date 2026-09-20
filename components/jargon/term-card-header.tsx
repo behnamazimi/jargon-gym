@@ -10,10 +10,12 @@ import type { ReviewTerm } from "@/lib/review/types";
 export function TermCardHeader({
   term,
   narrationAccess,
+  narrationPreload = false,
   style,
 }: {
   term: ReviewTerm;
   narrationAccess: boolean;
+  narrationPreload?: boolean;
   style?: CSSProperties;
 }) {
   return (
@@ -33,7 +35,7 @@ export function TermCardHeader({
           <span>{term.category}</span>
         </p>
       </div>
-      {narrationAccess ? <TermNarrationPlayer termId={term.id} /> : null}
+      {narrationAccess ? <TermNarrationPlayer termId={term.id} preload={narrationPreload} /> : null}
     </header>
   );
 }
