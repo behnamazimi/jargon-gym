@@ -44,11 +44,30 @@ export async function uploadNarrationAudio(path: string, audio: Buffer): Promise
   );
 }
 
-export async function downloadNarrationAudio(path: string): Promise<Uint8Array<ArrayBuffer>> {
+export type NarrationAudioStream = {
+  stream: ReadableStream<Uint8Array>;
+  contentLength?: number;
+  contentRange?: string;
+  partial: boolean;
+};
+
+/** Streams the object straight from S3 instead of buffering it in memory,
+ *  so the response can start flowing to the client immediately. `range` is
+ *  the raw incoming `Range` header, passed through so the caller can serve
+ *  partial content (and so `<audio>` seeking works). */
+export async function downloadNarrationAudio(
+  path: string,
+  range?: string,
+): Promise<NarrationAudioStream> {
   const client = getS3Client();
-  const { Body } = await client.send(new GetObjectCommand({ Bucket: getBucket(), Key: path }));
+  const { Body, ContentLength, ContentRange, $metadata } = await client.send(
+    new GetObjectCommand({ Bucket: getBucket(), Key: path, Range: range }),
+  );
   if (!Body) throw new Error(`Narration audio missing at ${path}.`);
-  // Re-wrap: the SDK's bytes aren't guaranteed to be backed by a plain
-  // ArrayBuffer (vs. SharedArrayBuffer), which is what Response/Blob require.
-  return Uint8Array.from(await Body.transformToByteArray());
+  return {
+    stream: Body.transformToWebStream(),
+    contentLength: ContentLength,
+    contentRange: ContentRange,
+    partial: $metadata.httpStatusCode === 206,
+  };
 }

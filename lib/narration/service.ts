@@ -119,15 +119,16 @@ export async function getOrGenerateNarration(
   admin: AdminClient,
   termId: string,
 ): Promise<NarrationResult> {
-  const termData = await fetchTermData(admin, termId);
+  const [termData, { data: existing }] = await Promise.all([
+    fetchTermData(admin, termId),
+    admin
+      .from("term_narrations")
+      .select("status, content_hash, storage_path")
+      .eq("term_id", termId)
+      .maybeSingle(),
+  ]);
   if (!termData) return { status: "unavailable" };
   const { fields, language, contentHash } = termData;
-
-  const { data: existing } = await admin
-    .from("term_narrations")
-    .select("status, content_hash, storage_path")
-    .eq("term_id", termId)
-    .maybeSingle();
 
   const cached = getCachedResult(existing, contentHash);
   if (cached) return cached;
