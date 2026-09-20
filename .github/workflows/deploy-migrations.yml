@@ -1,0 +1,58 @@
+# Separate from CI so a failed production push cannot fail check/build/test
+# or the local migration dry-run. Runs only after CI succeeds on main.
+name: Deploy Supabase migrations
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: supabase-deploy
+      cancel-in-progress: false
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+
+      - name: Skip if this commit did not add migrations
+        id: gate
+        run: |
+          if git diff --quiet HEAD^ HEAD -- supabase/migrations/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v6
+        if: steps.gate.outputs.changed == 'true'
+      - uses: actions/setup-node@v7
+        if: steps.gate.outputs.changed == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - if: steps.gate.outputs.changed == 'true'
+        run: pnpm install --frozen-lockfile
+
+      - name: Push pending migrations
+        if: steps.gate.outputs.changed == 'true'
+        run: |
+          if [ -n "$SUPABASE_DB_URL" ]; then
+            db_url="$SUPABASE_DB_URL"
+          elif [ -n "$SUPABASE_DB_PASSWORD" ]; then
+            encoded="$(python3 -c 'import os, urllib.parse; print(urllib.parse.quote(os.environ["SUPABASE_DB_PASSWORD"], safe=""))')"
+            db_url="postgresql://postgres:${encoded}@db.ovdmwphqpttcscnjfmfp.supabase.co:5432/postgres?sslmode=require"
+          else
+            echo "::error::Set GitHub secret SUPABASE_DB_URL (Session pooler URI) or SUPABASE_DB_PASSWORD."
+            exit 1
+          fi
+          pnpm supabase db push --yes --db-url "$db_url"
