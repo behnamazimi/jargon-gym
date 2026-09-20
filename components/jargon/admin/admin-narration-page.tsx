@@ -7,16 +7,25 @@ import {
 } from "@/app/(private)/admin/narration/actions";
 import { AdminNav } from "@/components/jargon/admin/admin-nav";
 import { AllowlistManager } from "@/components/jargon/admin/admin-narration-allowlist-manager";
+import { AdminNarrationSync } from "@/components/jargon/admin/admin-narration-sync";
 import type { AdminNarrationAllowlistRow } from "@/lib/jargon/admin/list-narration-allowlist";
+import type {
+  CollectionNarrationCoverage,
+  NarrationSyncJobView,
+} from "@/lib/narration/sync-shared";
 
 type AdminNarrationPageClientProps = {
   enabled: boolean;
   allowlist: AdminNarrationAllowlistRow[];
+  coverage: CollectionNarrationCoverage[];
+  lastJob: NarrationSyncJobView | null;
 };
 
 export function AdminNarrationPageClient({
   enabled: initialEnabled,
   allowlist: initialAllowlist,
+  coverage,
+  lastJob,
 }: AdminNarrationPageClientProps) {
   const [enabled, setEnabled] = useState(initialEnabled);
   const [allowlist, setAllowlist] = useState(initialAllowlist);
@@ -100,6 +109,8 @@ export function AdminNarrationPageClient({
         onAdded={handleAdded}
         onRemove={handleRemove}
       />
+
+      <AdminNarrationSync enabled={enabled} coverage={coverage} lastJob={lastJob} />
     </div>
   );
 }
