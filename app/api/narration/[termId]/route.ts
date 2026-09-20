@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { getOrGenerateNarration } from "@/lib/narration/service";
 import { downloadNarrationAudio } from "@/lib/narration/storage";
@@ -16,18 +16,22 @@ function etagFor(contentHash: string): string {
   return `"${contentHash}"`;
 }
 
-/** Serves a term's narration audio. Re-checks narration access itself
- *  rather than trusting the caller — same rule the old server action
- *  (getTermNarrationAction) followed. */
+/** Serves a term's narration audio. Trusts the proxy (lib/supabase/proxy.ts)
+ *  to have already verified the session via supabase.auth.getUser() and
+ *  forwarded the user id — that verification is unspoofable (the proxy
+ *  always overwrites the header, never merges), so this route doesn't need
+ *  to re-verify. It still re-checks narration *access* itself (the allowlist
+ *  RPC), same rule the old server action (getTermNarrationAction) followed. */
 export async function GET(request: Request, { params }: { params: Promise<{ termId: string }> }) {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return new NextResponse(null, { status: 401 });
+  const userId = request.headers.get(VERIFIED_USER_HEADER);
+  if (!userId) return new NextResponse(null, { status: 401 });
 
-  const allowed = await getNarrationAccessForUser(auth.supabase, auth.user.id);
+  const admin = createAdminClient();
+  const allowed = await getNarrationAccessForUser(admin, userId);
   if (!allowed) return new NextResponse(null, { status: 403 });
 
   const { termId } = await params;
-  const result = await getOrGenerateNarration(createAdminClient(), termId);
+  const result = await getOrGenerateNarration(admin, termId);
   if (result.status !== "ready") return new NextResponse(null, { status: 404 });
 
   const etag = etagFor(result.contentHash);
