@@ -15,7 +15,7 @@ import { useMountEffect } from "@/hooks/use-mount-effect";
  * `previous.pause()` fires a 'pause' event asynchronously, so `active` is
  * reassigned before that fires — by the time the paused instance's own
  * onpause handler runs, `active` already points elsewhere, so it correctly
- * no-ops instead of clobbering the new claim.
+ * treats that pause as "someone else took the slot" instead of a load glitch.
  */
 let activeAudio: HTMLAudioElement | null = null;
 
@@ -29,6 +29,14 @@ function releaseActiveAudio(audio: HTMLAudioElement) {
   if (activeAudio === audio) activeAudio = null;
 }
 
+function narrationSrc(termId: string): string {
+  return new URL(`/api/narration/${termId}`, window.location.origin).href;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
 /** Play/pause button for a term's narration. Shared by Read, Review, and the
  *  jargon collection page — callers should only render it when
  *  narrationAccess is true, but access is re-checked server-side regardless
@@ -40,9 +48,12 @@ function releaseActiveAudio(audio: HTMLAudioElement) {
 export function TermNarrationPlayer({ termId }: { termId: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wantPlayingRef = useRef(false);
+  const abortRetriesRef = useRef(0);
 
   useMountEffect(() => {
     return () => {
+      wantPlayingRef.current = false;
       const audio = audioRef.current;
       if (audio) {
         audio.pause();
@@ -51,62 +62,105 @@ export function TermNarrationPlayer({ termId }: { termId: string }) {
     };
   });
 
-  function handlePress() {
-    if (status === "playing") {
-      audioRef.current?.pause(); // onpause below flips status to "paused"
-      return;
-    }
-
-    if (status === "paused" && audioRef.current) {
-      claimActiveAudio(audioRef.current);
-      audioRef.current.play();
-      setStatus("playing");
-      return;
-    }
-
-    const audio = audioRef.current ?? new Audio();
-    audioRef.current = audio;
-    audio.src = `/api/narration/${termId}`;
-    audio.onended = () => setStatus("idle");
-    audio.onerror = () => {
-      releaseActiveAudio(audio);
-      setStatus("idle");
-    };
-    // Fires both when this player pauses itself and when another
-    // TermNarrationPlayer claims the shared slot and stops this one —
-    // either way it's "paused" (resumable), not "idle" (needs refetch).
-    audio.onpause = () => {
-      releaseActiveAudio(audio);
-      setStatus("paused");
-    };
-
-    setStatus("loading");
-    claimActiveAudio(audio);
-    audio
+  function playClip(audio: HTMLAudioElement) {
+    return audio
       .play()
-      .then(() => setStatus("playing"))
-      .catch(() => {
+      .then(() => {
+        if (wantPlayingRef.current) setStatus("playing");
+      })
+      .catch((error: unknown) => {
+        // Setting src and calling play() in the same tap often rejects with
+        // AbortError ("interrupted by a new load request"). Stay on loading
+        // and retry once the element can play — bouncing to idle made the
+        // first tap look like a no-op.
+        if (isAbortError(error) && wantPlayingRef.current && abortRetriesRef.current < 1) {
+          abortRetriesRef.current += 1;
+          const retry = () => {
+            if (wantPlayingRef.current) void playClip(audio);
+          };
+          if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) retry();
+          else audio.addEventListener("canplay", retry, { once: true });
+          return;
+        }
+        wantPlayingRef.current = false;
         releaseActiveAudio(audio);
-        setStatus("idle"); // fail silently — next press retries
+        setStatus("idle");
       });
   }
 
+  function handlePress() {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (status === "playing") {
+      wantPlayingRef.current = false;
+      audio.pause();
+      return;
+    }
+
+    abortRetriesRef.current = 0;
+    wantPlayingRef.current = true;
+    const src = narrationSrc(termId);
+    const needsLoad = audio.src !== src || audio.readyState < HTMLMediaElement.HAVE_FUTURE_DATA;
+    if (audio.src !== src) audio.src = src;
+
+    claimActiveAudio(audio);
+    setStatus(needsLoad ? "loading" : "playing");
+    void playClip(audio);
+  }
+
+  function handlePause() {
+    const audio = audioRef.current;
+    if (!audio || audio.ended) return;
+    // A load abort fires pause while we still intend to play. Ignore that;
+    // playClip retries. A real pause is the user, or another player claiming
+    // the slot (activeAudio already points elsewhere by then).
+    if (wantPlayingRef.current && activeAudio === audio) return;
+    wantPlayingRef.current = false;
+    releaseActiveAudio(audio);
+    setStatus("paused");
+  }
+
+  function handleEnded() {
+    wantPlayingRef.current = false;
+    const audio = audioRef.current;
+    if (audio) releaseActiveAudio(audio);
+    setStatus("idle");
+  }
+
+  function handleError() {
+    wantPlayingRef.current = false;
+    const audio = audioRef.current;
+    if (audio) releaseActiveAudio(audio);
+    setStatus("idle");
+  }
+
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      onPress={handlePress}
-      isDisabled={status === "loading"}
-      aria-label={status === "playing" ? "Pause narration" : "Play narration"}
-    >
-      {status === "loading" ? (
-        <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />
-      ) : status === "playing" ? (
-        <Pause className="size-4" aria-hidden strokeWidth={1.5} />
-      ) : (
-        <Volume2 className="size-4" aria-hidden strokeWidth={1.5} />
-      )}
-    </Button>
+    <span className="inline-flex">
+      <audio
+        ref={audioRef}
+        hidden
+        preload="none"
+        onEnded={handleEnded}
+        onError={handleError}
+        onPause={handlePause}
+      />
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        onPress={handlePress}
+        isDisabled={status === "loading"}
+        aria-label={status === "playing" ? "Pause narration" : "Play narration"}
+      >
+        {status === "loading" ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />
+        ) : status === "playing" ? (
+          <Pause className="size-4" aria-hidden strokeWidth={1.5} />
+        ) : (
+          <Volume2 className="size-4" aria-hidden strokeWidth={1.5} />
+        )}
+      </Button>
+    </span>
   );
 }
