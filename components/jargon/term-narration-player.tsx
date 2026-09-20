@@ -96,14 +96,6 @@ export function TermNarrationPlayer({
       });
   }
 
-  function startWhenReady(audio: HTMLAudioElement) {
-    const start = () => {
-      if (wantPlayingRef.current) void playClip(audio);
-    };
-    if (canPlayThrough(audio)) start();
-    else audio.addEventListener("canplay", start, { once: true });
-  }
-
   function handlePress() {
     const audio = audioRef.current;
     if (!audio) return;
@@ -115,28 +107,39 @@ export function TermNarrationPlayer({
     }
 
     wantPlayingRef.current = true;
-    const alreadySet = srcMatches(audio, src);
-    const ready = alreadySet && canPlayThrough(audio);
-    if (!alreadySet) audio.src = src;
-
     claimActiveAudio(audio);
 
-    if (ready) {
-      setStatus("playing");
+    // Attach canplay before assigning src: a cache hit can fire it in the
+    // same turn as the assignment, and a listener added after would miss it.
+    let started = false;
+    const start = () => {
+      if (started || !wantPlayingRef.current) return;
+      started = true;
       void playClip(audio);
+    };
+    audio.addEventListener("canplay", start, { once: true });
+    if (!srcMatches(audio, src)) audio.src = src;
+
+    if (canPlayThrough(audio)) {
+      setStatus("playing");
+      start();
       return;
     }
 
     setStatus("loading");
-    startWhenReady(audio);
+    // Jargon leaves preload="none", so assigning src does not fetch. Without
+    // load(), canplay never fires and the button sticks on loading.
+    if (audio.networkState !== HTMLMediaElement.NETWORK_LOADING) {
+      audio.load();
+    }
   }
 
   function handlePause() {
     const audio = audioRef.current;
     if (!audio || audio.ended) return;
     // A load can fire pause while we still intend to play (waiting on
-    // canplay). Ignore that; startWhenReady will call play(). A real pause
-    // is the user, or another player claiming the slot.
+    // canplay). Ignore that; the canplay handler will call play(). A real
+    // pause is the user, or another player claiming the slot.
     if (wantPlayingRef.current && activeAudio === audio) return;
     wantPlayingRef.current = false;
     releaseActiveAudio(audio);
@@ -162,7 +165,10 @@ export function TermNarrationPlayer({
       <audio
         ref={audioRef}
         hidden
-        src={preload ? src : undefined}
+        // Omit src when not preloading. `src={undefined}` is still a React
+        // prop, so a loading re-render would clear an src we set on press
+        // and abort the jargon-page load.
+        {...(preload ? { src } : {})}
         preload={preload ? "auto" : "none"}
         onEnded={handleEnded}
         onError={handleError}
