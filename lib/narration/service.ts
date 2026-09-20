@@ -76,22 +76,25 @@ async function generateAndFinalize(
   }
 }
 
-async function fetchTermData(
+const NARRATED_FIELD_COLUMNS =
+  "term, definition, example, mental_model, discussion, anti_example, controversy";
+
+async function fetchNarratedFields(
   admin: AdminClient,
   termId: string,
-): Promise<{ fields: NarratedTermFields; language: DomainLanguage; contentHash: string } | null> {
-  const { data: term, error: termError } = await admin
+): Promise<{ fields: NarratedTermFields; contentHash: string } | null> {
+  const { data: fields, error } = await admin
     .from("terms")
-    .select(
-      "term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)",
-    )
+    .select(NARRATED_FIELD_COLUMNS)
     .eq("id", termId)
     .single();
-  if (termError || !term) return null;
+  if (error || !fields) return null;
+  return { fields, contentHash: computeContentHash(fields) };
+}
 
-  const { domains, ...fields } = term;
-  const language = (domains?.language as DomainLanguage | undefined) ?? DEFAULT_LANGUAGE;
-  return { fields, language, contentHash: computeContentHash(fields) };
+async function fetchDomainLanguage(admin: AdminClient, termId: string): Promise<DomainLanguage> {
+  const { data } = await admin.from("terms").select("domains(language)").eq("id", termId).single();
+  return (data?.domains?.language as DomainLanguage | undefined) ?? DEFAULT_LANGUAGE;
 }
 
 type ExistingNarration = { status: string; content_hash: string; storage_path: string | null };
@@ -120,7 +123,7 @@ export async function getOrGenerateNarration(
   termId: string,
 ): Promise<NarrationResult> {
   const [termData, { data: existing }] = await Promise.all([
-    fetchTermData(admin, termId),
+    fetchNarratedFields(admin, termId),
     admin
       .from("term_narrations")
       .select("status, content_hash, storage_path")
@@ -128,10 +131,12 @@ export async function getOrGenerateNarration(
       .maybeSingle(),
   ]);
   if (!termData) return { status: "unavailable" };
-  const { fields, language, contentHash } = termData;
+  const { fields, contentHash } = termData;
 
   const cached = getCachedResult(existing, contentHash);
   if (cached) return cached;
+
+  const language = await fetchDomainLanguage(admin, termId);
 
   const { data: claimed } = await admin.rpc("claim_term_narration", {
     p_term_id: termId,

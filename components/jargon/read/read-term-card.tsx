@@ -45,16 +45,13 @@ function ReadCardMasked({ term, onReveal }: { term: ReviewTerm; onReveal: () => 
 
 function ReadCardRevealed({
   term,
-  narrationAccess,
   onMarkedKnown,
 }: {
   term: ReviewTerm;
-  narrationAccess: boolean;
   onMarkedKnown: () => void;
 }) {
   return (
     <>
-      <TermCardHeader term={term} narrationAccess={narrationAccess} />
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody term={term} />
       </div>
@@ -88,13 +85,14 @@ export const ReadTermCard = memo(function ReadTermCard({
 }) {
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
+      <div
+        className={revealed ? undefined : "invisible pointer-events-none h-0 overflow-hidden"}
+        aria-hidden={!revealed}
+      >
+        <TermCardHeader term={term} narrationAccess={narrationAccess} narrationPreload />
+      </div>
       {revealed ? (
-        <ReadCardRevealed
-          key={term.id}
-          term={term}
-          narrationAccess={narrationAccess}
-          onMarkedKnown={onNext}
-        />
+        <ReadCardRevealed term={term} onMarkedKnown={onNext} />
       ) : (
         <ReadCardMasked term={term} onReveal={() => onReveal(term.id)} />
       )}

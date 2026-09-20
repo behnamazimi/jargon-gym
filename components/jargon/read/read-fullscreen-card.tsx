@@ -8,6 +8,7 @@ export function ReadFullscreenCard({
   term,
   index,
   narrationAccess,
+  narrationPreload,
   onExposed,
   onMarkedKnown,
   registerCardNode,
@@ -16,6 +17,7 @@ export function ReadFullscreenCard({
   term: ReviewTerm;
   index: number;
   narrationAccess: boolean;
+  narrationPreload: boolean;
   onExposed: (index: number, termId: string) => void;
   onMarkedKnown: () => void;
   registerCardNode: (termId: string, node: HTMLDivElement) => void;
@@ -57,6 +59,7 @@ export function ReadFullscreenCard({
       <TermCardHeader
         term={term}
         narrationAccess={narrationAccess}
+        narrationPreload={narrationPreload}
         style={{ paddingInlineEnd: "calc(env(safe-area-inset-right) + 3.25rem)" }}
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
