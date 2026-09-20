@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { listMissingNarrationTermIds } from "./sync-missing";
 import {
-  isActiveNarrationSyncStatus,
+  isNarrationSyncLeaseStale,
   NARRATION_SYNC_ACTIVE_STATUSES,
   type NarrationSyncJobView,
   type NarrationSyncStatus,
@@ -21,15 +21,11 @@ export {
 export {
   continueNarrationSyncChain,
   kickNarrationSyncWorker,
+  processNarrationSyncBatch,
   processNarrationSyncTick,
 } from "./sync-worker";
 
 type AdminClient = SupabaseClient<Database>;
-
-function isLeaseExpired(leaseExpiresAt: string | null, nowMs: number): boolean {
-  if (!leaseExpiresAt) return true;
-  return Date.parse(leaseExpiresAt) < nowMs;
-}
 
 function toJobView(
   row: Database["public"]["Tables"]["narration_sync_jobs"]["Row"],
@@ -46,8 +42,12 @@ function toJobView(
     generatedCount: row.generated_count,
     failedCount: row.failed_count,
     lastError: row.last_error,
-    leaseExpired:
-      isActiveNarrationSyncStatus(row.status) && isLeaseExpired(row.lease_expires_at, nowMs),
+    leaseExpired: isNarrationSyncLeaseStale({
+      status: row.status,
+      leaseExpiresAt: row.lease_expires_at,
+      updatedAt: row.updated_at,
+      nowMs,
+    }),
   };
 }
 

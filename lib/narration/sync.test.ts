@@ -16,12 +16,14 @@ const { getOrGenerateNarration } = await import("./service");
 const {
   cancelNarrationSync,
   enqueueNarrationSync,
+  getLastNarrationSyncJob,
   isCurrentNarration,
   listCollectionNarrationCoverage,
   listMissingNarrationTermIds,
+  processNarrationSyncBatch,
   processNarrationSyncTick,
 } = await import("./sync");
-const { canResumeNarrationSync } = await import("./sync-shared");
+const { canResumeNarrationSync, isNarrationSyncLeaseStale } = await import("./sync-shared");
 
 type Client = SupabaseClient<Database>;
 type JobRow = Database["public"]["Tables"]["narration_sync_jobs"]["Row"];
@@ -440,6 +442,127 @@ describe("cancelNarrationSync", () => {
     const view = await cancelNarrationSync(makeClient(store));
     expect(view?.status).toBe("cancelled");
     expect(job.status).toBe("cancelled");
+  });
+});
+
+describe("processNarrationSyncBatch", () => {
+  it("processes several terms in one invocation", async () => {
+    vi.mocked(getOrGenerateNarration).mockResolvedValue({
+      status: "ready",
+      storagePath: "t.mp3",
+      contentHash: HASH,
+    });
+    const job = jobRow({
+      status: "running",
+      cursor: 0,
+      lease_expires_at: "2099-01-01T00:00:00.000Z",
+    });
+    const store = emptyStore({
+      jobs: [job],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 2 }],
+    });
+
+    await expect(
+      processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 }),
+    ).resolves.toEqual({ shouldContinue: false });
+    expect(getOrGenerateNarration).toHaveBeenCalledTimes(2);
+    expect(job.cursor).toBe(2);
+    expect(job.generated_count).toBe(2);
+    expect(job.status).toBe("completed");
+  });
+
+  it("stops after the budget and leaves remaining terms for the next hop", async () => {
+    vi.mocked(getOrGenerateNarration).mockResolvedValue({
+      status: "ready",
+      storagePath: "t.mp3",
+      contentHash: HASH,
+    });
+    const job = jobRow({ status: "running", cursor: 0 });
+    const store = emptyStore({
+      jobs: [job],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 2 }],
+    });
+
+    await expect(processNarrationSyncBatch(makeClient(store), { budgetMs: 0 })).resolves.toEqual({
+      shouldContinue: true,
+    });
+    expect(getOrGenerateNarration).toHaveBeenCalledTimes(1);
+    expect(job.cursor).toBe(1);
+    expect(job.status).toBe("running");
+    expect(job.lease_expires_at).toBeNull();
+  });
+});
+
+describe("getLastNarrationSyncJob", () => {
+  it("does not mark a live job resumable between hops", async () => {
+    const view = await getLastNarrationSyncJob(
+      makeClient(
+        emptyStore({
+          jobs: [
+            jobRow({
+              status: "running",
+              lease_expires_at: null,
+              updated_at: new Date().toISOString(),
+            }),
+          ],
+        }),
+      ),
+    );
+    expect(view?.leaseExpired).toBe(false);
+  });
+
+  it("marks a job resumable when the lease is in the past", async () => {
+    const view = await getLastNarrationSyncJob(
+      makeClient(
+        emptyStore({
+          jobs: [
+            jobRow({
+              status: "running",
+              lease_expires_at: "2020-01-01T00:00:00.000Z",
+              updated_at: new Date().toISOString(),
+            }),
+          ],
+        }),
+      ),
+    );
+    expect(view?.leaseExpired).toBe(true);
+  });
+});
+
+describe("isNarrationSyncLeaseStale", () => {
+  const nowMs = Date.parse("2026-09-20T00:02:00.000Z");
+
+  it("is false while a lease is still held", () => {
+    expect(
+      isNarrationSyncLeaseStale({
+        status: "running",
+        leaseExpiresAt: "2026-09-20T00:03:00.000Z",
+        updatedAt: "2026-09-20T00:00:00.000Z",
+        nowMs,
+      }),
+    ).toBe(false);
+  });
+
+  it("is false between hops when the row was just updated", () => {
+    expect(
+      isNarrationSyncLeaseStale({
+        status: "running",
+        leaseExpiresAt: null,
+        updatedAt: "2026-09-20T00:01:30.000Z",
+        nowMs,
+      }),
+    ).toBe(false);
+  });
+
+  it("is true when there is no lease and the row is stale", () => {
+    expect(
+      isNarrationSyncLeaseStale({
+        status: "queued",
+        leaseExpiresAt: null,
+        updatedAt: "2026-09-20T00:00:00.000Z",
+        nowMs,
+      }),
+    ).toBe(true);
   });
 });
 

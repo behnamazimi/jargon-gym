@@ -44,7 +44,7 @@ export function AdminNarrationSync({
 
   useInterval(
     () => {
-      startTransition(async () => {
+      void (async () => {
         try {
           const next = await getNarrationSyncStatus();
           setJob(next);
@@ -57,7 +57,7 @@ export function AdminNarrationSync({
         } catch (err) {
           setError(actionError(err, "Failed to refresh status."));
         }
-      });
+      })();
     },
     active ? POLL_MS : null,
   );
