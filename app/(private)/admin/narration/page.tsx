@@ -24,13 +24,18 @@ export default async function AdminNarrationPage() {
     listNarrationAllowlistForAdmin(supabase),
     listAllCollectionsForAdmin(supabase),
   ]);
-  const [coverage, lastJob] = await Promise.all([
-    listCollectionNarrationCoverage(
-      admin,
-      collections.map((collection) => ({ id: collection.id, name: collection.name })),
-    ),
-    getLastNarrationSyncJob(admin),
-  ]);
+
+  let lastJob = null;
+  try {
+    lastJob = await getLastNarrationSyncJob(admin);
+  } catch (err) {
+    console.error("Failed to load narration sync job:", err);
+  }
+
+  const coverage = await listCollectionNarrationCoverage(
+    admin,
+    collections.map((collection) => ({ id: collection.id, name: collection.name })),
+  );
 
   if (canResumeNarrationSync(lastJob)) {
     kickNarrationSyncWorker();

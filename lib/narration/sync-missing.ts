@@ -6,6 +6,8 @@ import type { NarratedTermFields } from "./types";
 
 type AdminClient = SupabaseClient<Database>;
 
+type TermRow = { id: string; domain_id: string } & NarratedTermFields;
+
 type NarrationCacheRow = {
   term_id: string;
   status: string;
@@ -15,6 +17,11 @@ type NarrationCacheRow = {
 
 const TERM_FIELD_COLUMNS =
   "id, domain_id, term, definition, example, mental_model, discussion, anti_example, controversy";
+
+/** PostgREST's default max-rows cap. */
+const PAGE_SIZE = 1000;
+/** Keep `.in()` query strings under Kong/PostgREST URL limits. */
+const IN_FILTER_CHUNK = 80;
 
 export function isCurrentNarration(
   fields: NarratedTermFields,
@@ -39,6 +46,49 @@ function fieldsFromTerm(term: NarratedTermFields): NarratedTermFields {
   };
 }
 
+function chunkIds(ids: string[]): string[][] {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += IN_FILTER_CHUNK) {
+    chunks.push(ids.slice(i, i + IN_FILTER_CHUNK));
+  }
+  return chunks;
+}
+
+async function fetchAllTermsForDomain(admin: AdminClient, domainId: string): Promise<TermRow[]> {
+  const terms: TermRow[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await admin
+      .from("terms")
+      .select(TERM_FIELD_COLUMNS)
+      .eq("domain_id", domainId)
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    terms.push(...((data ?? []) as TermRow[]));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+  return terms;
+}
+
+async function fetchAllTermsForDomains(
+  admin: AdminClient,
+  domainIds: string[],
+): Promise<TermRow[]> {
+  const terms: TermRow[] = [];
+  for (const domainChunk of chunkIds(domainIds)) {
+    for (let from = 0; ; from += PAGE_SIZE) {
+      const { data, error } = await admin
+        .from("terms")
+        .select(TERM_FIELD_COLUMNS)
+        .in("domain_id", domainChunk)
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) throw error;
+      terms.push(...((data ?? []) as TermRow[]));
+      if (!data || data.length < PAGE_SIZE) break;
+    }
+  }
+  return terms;
+}
+
 async function loadNarrationRows(
   admin: AdminClient,
   termIds: string[],
@@ -46,15 +96,16 @@ async function loadNarrationRows(
   const byTermId = new Map<string, NarrationCacheRow>();
   if (termIds.length === 0) return byTermId;
 
-  const { data, error } = await admin
-    .from("term_narrations")
-    .select("term_id, status, content_hash, storage_path")
-    .in("term_id", termIds)
-    .limit(10_000);
-  if (error) throw error;
-
-  for (const row of data ?? []) {
-    byTermId.set(row.term_id, row);
+  for (const chunk of chunkIds(termIds)) {
+    const { data, error } = await admin
+      .from("term_narrations")
+      .select("term_id, status, content_hash, storage_path")
+      .in("term_id", chunk)
+      .range(0, chunk.length - 1);
+    if (error) throw error;
+    for (const row of data ?? []) {
+      byTermId.set(row.term_id, row);
+    }
   }
   return byTermId;
 }
@@ -63,13 +114,8 @@ export async function listMissingNarrationTermIds(
   admin: AdminClient,
   domainId: string,
 ): Promise<string[]> {
-  const { data: terms, error } = await admin
-    .from("terms")
-    .select(TERM_FIELD_COLUMNS)
-    .eq("domain_id", domainId)
-    .limit(10_000);
-  if (error) throw error;
-  if (!terms?.length) return [];
+  const terms = await fetchAllTermsForDomain(admin, domainId);
+  if (terms.length === 0) return [];
 
   const narrations = await loadNarrationRows(
     admin,
@@ -87,21 +133,17 @@ export async function listCollectionNarrationCoverage(
 ): Promise<CollectionNarrationCoverage[]> {
   if (collections.length === 0) return [];
 
-  const domainIds = collections.map((collection) => collection.id);
-  const { data: terms, error } = await admin
-    .from("terms")
-    .select(TERM_FIELD_COLUMNS)
-    .in("domain_id", domainIds)
-    .limit(10_000);
-  if (error) throw error;
-
+  const terms = await fetchAllTermsForDomains(
+    admin,
+    collections.map((collection) => collection.id),
+  );
   const narrations = await loadNarrationRows(
     admin,
-    (terms ?? []).map((term) => term.id),
+    terms.map((term) => term.id),
   );
 
   const missingByDomain = new Map<string, number>();
-  for (const term of terms ?? []) {
+  for (const term of terms) {
     if (isCurrentNarration(fieldsFromTerm(term), narrations.get(term.id))) continue;
     missingByDomain.set(term.domain_id, (missingByDomain.get(term.domain_id) ?? 0) + 1);
   }

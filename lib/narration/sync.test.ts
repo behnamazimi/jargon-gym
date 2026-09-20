@@ -184,6 +184,7 @@ function makeClient(store: Store): Client {
         },
         order: () => builder,
         limit: (count: number) => (count <= 1 ? builder : finish("list")),
+        range: () => finish("list"),
         single: () => finish("single"),
         maybeSingle: () => finish("maybe"),
       });
