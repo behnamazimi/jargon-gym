@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
+import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import type { Database } from "@/lib/supabase/database.types";
 
 // referral_verified only ever flips false -> true (during onboarding), so once
@@ -173,6 +174,14 @@ export async function updateSession(request: NextRequest) {
   );
   const signedInRedirect = redirectForSignedInUser(request, pathname, referralVerified);
   if (signedInRedirect) return signedInRedirect;
+
+  // Forward the already-verified user id so route handlers behind this proxy
+  // don't need to call supabase.auth.getUser() again. .set() overwrites
+  // rather than merges, so any value the client sent under this header name
+  // is discarded here, not appended to.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(VERIFIED_USER_HEADER, user.id);
+  supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   return supabaseResponse;
 }
