@@ -129,6 +129,69 @@ export type Database = {
         };
         Relationships: [];
       };
+      narration_sync_jobs: {
+        Row: {
+          created_at: string;
+          cursor: number;
+          domain_id: string;
+          failed_count: number;
+          finished_at: string | null;
+          generated_count: number;
+          id: string;
+          last_error: string | null;
+          lease_expires_at: string | null;
+          started_by: string;
+          status: string;
+          term_ids: string[];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          cursor?: number;
+          domain_id: string;
+          failed_count?: number;
+          finished_at?: string | null;
+          generated_count?: number;
+          id?: string;
+          last_error?: string | null;
+          lease_expires_at?: string | null;
+          started_by: string;
+          status?: string;
+          term_ids: string[];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          cursor?: number;
+          domain_id?: string;
+          failed_count?: number;
+          finished_at?: string | null;
+          generated_count?: number;
+          id?: string;
+          last_error?: string | null;
+          lease_expires_at?: string | null;
+          started_by?: string;
+          status?: string;
+          term_ids?: string[];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "narration_sync_jobs_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "narration_sync_jobs_started_by_fkey";
+            columns: ["started_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       referral_codes: {
         Row: {
           code: string;
@@ -717,6 +780,15 @@ export type Database = {
       bump_streak: { Args: { p_user_id: string }; Returns: undefined };
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
+      claim_narration_sync_tick: {
+        Args: never;
+        Returns: {
+          cursor: number;
+          job_id: string;
+          term_count: number;
+          term_id: string;
+        }[];
+      };
       claim_term_narration: {
         Args: { p_content_hash: string; p_term_id: string };
         Returns: {

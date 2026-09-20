@@ -36,8 +36,9 @@ const PUBLIC_PATH_PREFIXES = [
   "/auth/callback",
   "/downloads/",
   "/api/widget",
-  // Bearer-secret auth in route handlers (Edge → Next Telegram proxy)
+  // Bearer-secret auth in route handlers (Edge → Next Telegram proxy, narration sync)
   "/api/internal/telegram",
+  "/api/internal/narration",
 ];
 
 function isPublicPath(pathname: string) {
