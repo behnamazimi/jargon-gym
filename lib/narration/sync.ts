@@ -19,7 +19,6 @@ export {
   listMissingNarrationTermIds,
 } from "./sync-missing";
 export {
-  continueNarrationSyncChain,
   kickNarrationSyncWorker,
   processNarrationSyncBatch,
   processNarrationSyncTick,

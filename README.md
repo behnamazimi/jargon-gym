@@ -24,6 +24,8 @@ See the landing page for how to request an invitation.
   works across surfaces
 - [Telegram bot setup](docs/supabase/telegram-setup.md) — webhook, secrets, and
   Edge Function deployment
+- [Narration sync cron](docs/supabase/narration-sync-cron.md) — Dashboard job
+  that continues admin audio generation after the first invoke
 - User-facing guide at `/how-terms-work` (term structure, how known/unknown
   status is computed) when the app is running — linked from the landing page
   and site footer

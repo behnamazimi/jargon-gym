@@ -446,50 +446,77 @@ describe("cancelNarrationSync", () => {
 });
 
 describe("processNarrationSyncBatch", () => {
-  it("processes several terms in one invocation", async () => {
+  it("processes a parallel wave then remaining terms in one invocation", async () => {
     vi.mocked(getOrGenerateNarration).mockResolvedValue({
       status: "ready",
       storagePath: "t.mp3",
       contentHash: HASH,
     });
+    const termIds = ["term-1", "term-2", "term-3", "term-4", "term-5"];
     const job = jobRow({
       status: "running",
       cursor: 0,
+      term_ids: termIds,
       lease_expires_at: "2099-01-01T00:00:00.000Z",
     });
     const store = emptyStore({
       jobs: [job],
-      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 2 }],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: termIds.length }],
     });
 
     await expect(
       processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 }),
     ).resolves.toEqual({ shouldContinue: false });
-    expect(getOrGenerateNarration).toHaveBeenCalledTimes(2);
-    expect(job.cursor).toBe(2);
-    expect(job.generated_count).toBe(2);
+    expect(getOrGenerateNarration).toHaveBeenCalledTimes(5);
+    expect(job.cursor).toBe(5);
+    expect(job.generated_count).toBe(5);
     expect(job.status).toBe("completed");
   });
 
-  it("stops after the budget and leaves remaining terms for the next hop", async () => {
+  it("stops after the budget and leaves remaining terms for the next kick", async () => {
     vi.mocked(getOrGenerateNarration).mockResolvedValue({
       status: "ready",
       storagePath: "t.mp3",
       contentHash: HASH,
     });
-    const job = jobRow({ status: "running", cursor: 0 });
+    const termIds = ["term-1", "term-2", "term-3", "term-4", "term-5", "term-6"];
+    const job = jobRow({ status: "running", cursor: 0, term_ids: termIds });
     const store = emptyStore({
       jobs: [job],
-      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 2 }],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: termIds.length }],
     });
 
     await expect(processNarrationSyncBatch(makeClient(store), { budgetMs: 0 })).resolves.toEqual({
       shouldContinue: true,
     });
-    expect(getOrGenerateNarration).toHaveBeenCalledTimes(1);
-    expect(job.cursor).toBe(1);
+    expect(getOrGenerateNarration).toHaveBeenCalledTimes(4);
+    expect(job.cursor).toBe(4);
     expect(job.status).toBe("running");
     expect(job.lease_expires_at).toBeNull();
+  });
+
+  it("does not overwrite a cancelled job after a parallel wave", async () => {
+    const job = jobRow({
+      status: "running",
+      cursor: 0,
+      term_ids: ["term-1", "term-2", "term-3", "term-4"],
+    });
+    vi.mocked(getOrGenerateNarration).mockImplementation(async () => {
+      job.status = "cancelled";
+      job.finished_at = "2026-09-20T00:01:00.000Z";
+      return { status: "ready", storagePath: "t.mp3", contentHash: HASH };
+    });
+    const store = emptyStore({
+      jobs: [job],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 4 }],
+    });
+
+    await expect(
+      processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 }),
+    ).resolves.toEqual({ shouldContinue: false });
+    expect(job.status).toBe("cancelled");
+    expect(job.cursor).toBe(4);
+    expect(job.generated_count).toBe(4);
   });
 });
 

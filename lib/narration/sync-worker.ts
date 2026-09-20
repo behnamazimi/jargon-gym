@@ -8,9 +8,11 @@ import { isActiveNarrationSyncStatus, NARRATION_SYNC_ACTIVE_STATUSES } from "./s
 
 type AdminClient = SupabaseClient<Database>;
 type ClaimedTick = { job_id: string; term_id: string };
+type WaveResult = { generated: boolean; lastError: string | null };
 
-/** Leave headroom under the route's 60s maxDuration for the next hop. */
+/** Leave headroom under the route's 60s maxDuration. */
 const NARRATION_SYNC_INVOKE_BUDGET_MS = 45_000;
+const WAVE_CONCURRENCY = 4;
 const LEASE_MS = 120_000;
 
 async function markJobFailed(admin: AdminClient, jobId: string, message: string) {
@@ -38,11 +40,10 @@ async function releaseLease(admin: AdminClient, jobId: string) {
     .maybeSingle();
 }
 
-async function finalizeTick(
+async function finalizeWave(
   admin: AdminClient,
   jobId: string,
-  generated: boolean,
-  lastError: string | null,
+  results: WaveResult[],
   keepLease: boolean,
 ) {
   const { data: row, error: readError } = await admin
@@ -52,13 +53,18 @@ async function finalizeTick(
     .single();
   if (readError) throw readError;
 
-  const nextCursor = row.cursor + 1;
+  const generatedDelta = results.filter((result) => result.generated).length;
+  const nextCursor = row.cursor + results.length;
   const exhausted = nextCursor >= row.term_ids.length;
+  let waveError: string | null = null;
+  for (const result of results) {
+    if (result.lastError) waveError = result.lastError;
+  }
   const counts = {
     cursor: nextCursor,
-    generated_count: row.generated_count + (generated ? 1 : 0),
-    failed_count: row.failed_count + (generated ? 0 : 1),
-    last_error: lastError ?? row.last_error,
+    generated_count: row.generated_count + generatedDelta,
+    failed_count: row.failed_count + (results.length - generatedDelta),
+    last_error: waveError ?? row.last_error,
     lease_expires_at:
       exhausted || !keepLease ? null : new Date(Date.now() + LEASE_MS).toISOString(),
   };
@@ -97,7 +103,11 @@ async function claimTick(admin: AdminClient): Promise<ClaimedTick | null> {
   return { job_id: tick.job_id, term_id: tick.term_id };
 }
 
-async function peekNextTerm(admin: AdminClient, jobId: string): Promise<ClaimedTick | null> {
+async function peekSlice(
+  admin: AdminClient,
+  jobId: string,
+  limit: number,
+): Promise<string[] | null> {
   const { data: row, error } = await admin
     .from("narration_sync_jobs")
     .select("*")
@@ -106,23 +116,28 @@ async function peekNextTerm(admin: AdminClient, jobId: string): Promise<ClaimedT
   if (error) throw error;
   if (!isActiveNarrationSyncStatus(row.status)) return null;
   if (row.cursor >= row.term_ids.length) return null;
-  return { job_id: row.id, term_id: row.term_ids[row.cursor] };
+  return row.term_ids.slice(row.cursor, row.cursor + limit);
 }
 
-async function processClaimedTerm(
+async function generateTerm(admin: AdminClient, termId: string): Promise<WaveResult> {
+  const result = await getOrGenerateNarration(admin, termId);
+  const generated = result.status === "ready";
+  return { generated, lastError: generated ? null : `Unavailable for term ${termId}` };
+}
+
+async function processWave(
   admin: AdminClient,
-  tick: ClaimedTick,
+  jobId: string,
+  termIds: string[],
   keepLease: boolean,
 ): Promise<boolean> {
   try {
-    const result = await getOrGenerateNarration(admin, tick.term_id);
-    const generated = result.status === "ready";
-    const lastError = generated ? null : `Unavailable for term ${tick.term_id}`;
-    return finalizeTick(admin, tick.job_id, generated, lastError, keepLease);
+    const results = await Promise.all(termIds.map((termId) => generateTerm(admin, termId)));
+    return finalizeWave(admin, jobId, results, keepLease);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("Narration sync tick failed:", err);
-    await markJobFailed(admin, tick.job_id, message);
+    await markJobFailed(admin, jobId, message);
     return false;
   }
 }
@@ -132,7 +147,7 @@ export async function processNarrationSyncTick(
 ): Promise<{ shouldContinue: boolean }> {
   const tick = await claimTick(admin);
   if (!tick) return { shouldContinue: false };
-  const shouldContinue = await processClaimedTerm(admin, tick, false);
+  const shouldContinue = await processWave(admin, tick.job_id, [tick.term_id], false);
   return { shouldContinue };
 }
 
@@ -141,19 +156,18 @@ export async function processNarrationSyncBatch(
   options: { budgetMs?: number } = {},
 ): Promise<{ shouldContinue: boolean }> {
   const deadline = Date.now() + (options.budgetMs ?? NARRATION_SYNC_INVOKE_BUDGET_MS);
-  let tick = await claimTick(admin);
-  if (!tick) return { shouldContinue: false };
+  const claimed = await claimTick(admin);
+  if (!claimed) return { shouldContinue: false };
 
   while (true) {
-    const shouldContinue = await processClaimedTerm(admin, tick, true);
+    const slice = await peekSlice(admin, claimed.job_id, WAVE_CONCURRENCY);
+    if (!slice || slice.length === 0) return { shouldContinue: false };
+    const shouldContinue = await processWave(admin, claimed.job_id, slice, true);
     if (!shouldContinue) return { shouldContinue: false };
     if (Date.now() >= deadline) {
-      await releaseLease(admin, tick.job_id);
+      await releaseLease(admin, claimed.job_id);
       return { shouldContinue: true };
     }
-    const next = await peekNextTerm(admin, tick.job_id);
-    if (!next) return { shouldContinue: false };
-    tick = next;
   }
 }
 
@@ -176,8 +190,4 @@ export function kickNarrationSyncWorker() {
       console.error("Failed to kick narration sync worker:", err);
     }
   });
-}
-
-export async function continueNarrationSyncChain() {
-  await requestNarrationSyncTick();
 }
