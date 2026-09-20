@@ -89,19 +89,20 @@ export async function hydrateTermsAsTermCards(
   }
 
   const domainIds = [...new Set(fullTerms.map((t) => t.domain_id))];
-  const { data: domains, error: domainsError } = await client
-    .from("domains")
-    .select("id, name")
-    .in("id", domainIds);
+  const mappedTerms = fullTerms.map(mapTerm);
 
+  const [domainsResult, relationshipRows] = await Promise.all([
+    client.from("domains").select("id, name").in("id", domainIds),
+    fetchTermRelationshipsForTerms(
+      client,
+      mappedTerms.map((t) => t.id),
+    ),
+  ]);
+
+  const { data: domains, error: domainsError } = domainsResult;
   if (domainsError) throw domainsError;
 
   const domainNameById = new Map(domains.map((d) => [d.id, d.name]));
-  const mappedTerms = fullTerms.map(mapTerm);
-  const relationshipRows = await fetchTermRelationshipsForTerms(
-    client,
-    mappedTerms.map((t) => t.id),
-  );
   const termsWithRelationships = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
   const termOrderMap = new Map(termIds.map((id, idx) => [id, idx]));
@@ -134,20 +135,24 @@ export async function hydrateTermsAsTermCards(
   });
 }
 
-/** Admin hydrate via get_term_card RPC, preserving order. */
+/** Admin hydrate via the batched get_term_cards RPC, preserving order. */
 export async function hydrateTermCardsForUser(
   client: Client,
   userId: string,
   termIds: string[],
 ): Promise<TermCard[]> {
-  const cards = await Promise.all(
-    termIds.map(async (termId) => {
-      const card = await fetchTermCardForUser(client, userId, termId);
-      if (!card) {
-        throw new Error(`Term card missing for ${termId}`);
-      }
-      return card;
-    }),
-  );
-  return cards;
+  if (termIds.length === 0) return [];
+
+  const { data, error } = await client.rpc("get_term_cards", {
+    p_user_id: userId,
+    p_term_ids: termIds,
+  });
+  if (error) throw error;
+
+  const cardById = new Map((data ?? []).map((row) => [row.id, mapTermCardRow(row)]));
+  return termIds.map((termId) => {
+    const card = cardById.get(termId);
+    if (!card) throw new Error(`Term card missing for ${termId}`);
+    return card;
+  });
 }

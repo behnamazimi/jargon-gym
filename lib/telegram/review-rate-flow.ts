@@ -56,10 +56,10 @@ export async function handleReviewRate(
 
   if (hasMoreReviewTerms(updatedSession)) {
     actions.push({ type: "pause", chatId, ms: 1200 });
-    actions.push(...(await buildCurrentCardActions(client, chatId)));
+    actions.push(...(await buildCurrentCardActions(client, chatId, updatedSession)));
   } else {
     actions.push({ type: "pause", chatId, ms: 800 });
-    actions.push(...(await buildReviewSummaryActions(client, chatId)));
+    actions.push(...(await buildReviewSummaryActions(client, chatId, updatedSession)));
   }
 
   return actions;
@@ -100,10 +100,10 @@ export async function handleReviewMarkKnown(
 
   if (hasMoreReviewTerms(updatedSession)) {
     actions.push({ type: "pause", chatId, ms: 1000 });
-    actions.push(...(await buildCurrentCardActions(client, chatId)));
+    actions.push(...(await buildCurrentCardActions(client, chatId, updatedSession)));
   } else {
     actions.push({ type: "pause", chatId, ms: 800 });
-    actions.push(...(await buildReviewSummaryActions(client, chatId)));
+    actions.push(...(await buildReviewSummaryActions(client, chatId, updatedSession)));
   }
 
   return actions;

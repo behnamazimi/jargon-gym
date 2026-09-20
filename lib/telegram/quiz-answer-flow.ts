@@ -40,10 +40,10 @@ async function finishAnsweredQuestion(
 
   if (hasMoreQuestions(updatedSession)) {
     actions.push({ type: "pause", chatId, ms: 1500 });
-    actions.push(...(await buildNextQuestionActions(client, chatId)));
+    actions.push(...(await buildNextQuestionActions(client, chatId, updatedSession)));
   } else {
     actions.push({ type: "pause", chatId, ms: 1000 });
-    actions.push(...(await buildReviewSummaryActions(client, chatId)));
+    actions.push(...(await buildReviewSummaryActions(client, chatId, updatedSession)));
   }
 
   return actions;
