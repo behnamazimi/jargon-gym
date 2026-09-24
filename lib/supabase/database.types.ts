@@ -422,6 +422,51 @@ export type Database = {
           },
         ];
       };
+      term_evaluations: {
+        Row: {
+          content_hash: string;
+          created_at: string;
+          evaluated_by: string | null;
+          plain: boolean;
+          schema_fit: number;
+          term_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          content_hash: string;
+          created_at?: string;
+          evaluated_by?: string | null;
+          plain: boolean;
+          schema_fit: number;
+          term_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          content_hash?: string;
+          created_at?: string;
+          evaluated_by?: string | null;
+          plain?: boolean;
+          schema_fit?: number;
+          term_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "term_evaluations_evaluated_by_fkey";
+            columns: ["evaluated_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "term_evaluations_term_id_fkey";
+            columns: ["term_id"];
+            isOneToOne: true;
+            referencedRelation: "terms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       term_narrations: {
         Row: {
           content_hash: string;
