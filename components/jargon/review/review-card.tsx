@@ -5,6 +5,7 @@ import { useRef } from "react";
 import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/jargon/term-card-header";
 import { TermBody } from "@/components/jargon/term-body";
+import { TermEvalButton } from "./term-eval-button";
 import type { ReviewTerm } from "@/lib/review/types";
 import { cn } from "@/lib/utils";
 import { useReviewSwipe } from "./use-review-swipe";
@@ -129,6 +130,7 @@ export function ReviewCard({
                 <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
               ) : null}
             </div>
+            {revealed ? <TermEvalButton key={term.id} termId={term.id} /> : null}
           </div>
         </div>
       </div>
