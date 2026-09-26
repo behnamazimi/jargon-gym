@@ -180,6 +180,22 @@ anchored on that permanent stamp rather than the live known/learning/
 unknown label, so a term quietly decaying back out of "known" can't make
 the estimate's target recede on its own.
 
+### Stories, a second way to read
+
+Read has a Stories mode (`/jargon/read/stories`, logic in `lib/stories/`)
+that writes a short AI piece around the top of a collection's Read queue —
+the same `rankReadQueue` order Cards uses, minus marked-known terms. It
+doesn't add a trace or a weight of its own. Marking a piece read writes one
+ordinary `read` event per term that actually made it into the text, through
+the same `recordRead` Cards uses, and only once per piece (`stories.read_at`
+is set at most once). Diminishing returns on familiarity apply exactly as
+they do for cards.
+
+Cards only count a read after you reveal the definition. Stories doesn't
+hide anything, so the piece carries a glossary of the definitions for every
+term in it, and the reads are recorded when you mark the piece read, not
+when it's generated.
+
 ## How each tier decides what to show you
 
 All three tiers rank the exact same pool of terms — every term across your

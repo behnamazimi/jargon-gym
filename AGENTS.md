@@ -28,6 +28,14 @@ how it works — the memory traces, mastery blend, ranking rules, or which
 layer owns what — read [docs/trace.md](docs/trace.md) in detail rather than
 guessing from the code alone.
 
+# Stories
+
+Read's Stories mode lives in `lib/stories/` (prompt, generation, style
+picker, repository, narration) with its page, actions, and components under
+`app/(private)/jargon/read/stories/` and `components/jargon/read/stories/`.
+It credits reads through `recordRead` like Cards; see the Stories section in
+[docs/trace.md](docs/trace.md).
+
 # Telegram bot
 
 The Telegram bot's app-side logic lives in `lib/telegram/`: `flows.ts` is

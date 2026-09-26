@@ -1,7 +1,6 @@
-import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
 import type { Database } from "@/lib/supabase/database.types";
 import { TRUE_FALSE_MAX_SHARE } from "./mix-ratios";
@@ -14,21 +13,6 @@ import {
   type QuizGenerationSlot,
 } from "./schema";
 import type { QuizQuestion, QuizTerm } from "./types";
-
-const MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
-  google: "gemini-2.5-flash",
-  anthropic: "claude-3-5-haiku-latest",
-};
-
-function createModel(provider: LlmProvider, apiKey: string) {
-  if (provider === "google") {
-    const google = createGoogleGenerativeAI({ apiKey });
-    return google(MODEL_BY_PROVIDER.google);
-  }
-
-  const anthropic = createAnthropic({ apiKey });
-  return anthropic(MODEL_BY_PROVIDER.anthropic);
-}
 
 async function requestQuizFromModel(input: {
   provider: LlmProvider;

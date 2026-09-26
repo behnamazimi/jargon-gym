@@ -30,6 +30,8 @@ type CollectionSelectCommonProps = {
   className?: string;
   triggerClassName?: string;
   size?: "sm" | "default";
+  disabledKeys?: string[];
+  labelFor?: (collection: CollectionSelectOption) => string;
 };
 
 export type CollectionSelectProps =
@@ -52,6 +54,8 @@ export function CollectionSelect(props: CollectionSelectProps) {
     className,
     triggerClassName,
     size,
+    disabledKeys,
+    labelFor = optionLabel,
     "aria-label": ariaLabel,
   } = props;
   const router = useRouter();
@@ -69,6 +73,7 @@ export function CollectionSelect(props: CollectionSelectProps) {
       className={className}
       value={value}
       isDisabled={isDisabled}
+      disabledKeys={disabledKeys}
       onChange={(key) => {
         if (key == null) return;
         handleChange(String(key));
@@ -83,7 +88,7 @@ export function CollectionSelect(props: CollectionSelectProps) {
         ) : null}
         {collections.map((collection) => (
           <SelectItem key={collection.id} id={collection.id}>
-            {optionLabel(collection)}
+            {labelFor(collection)}
           </SelectItem>
         ))}
       </SelectContent>
