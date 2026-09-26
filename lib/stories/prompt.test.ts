@@ -40,12 +40,13 @@ describe("buildStoryPrompt", () => {
 
   it("gives each setting its own line", () => {
     const prompt = userPrompt({ language: "nl" });
-    expect(prompt).toContain("Language: Dutch");
+    expect(prompt).toContain("reading in Dutch at CEFR B1");
+    expect(prompt).not.toContain("Language: Dutch");
     expect(prompt).toContain("Language level: B1 (intermediate)");
     expect(prompt).toContain("Term support: Give each term strong support");
     expect(prompt).toContain("Format: a Slack thread");
     expect(prompt).toContain("Tone: light and humorous.");
-    expect(prompt).toContain("Length: 70 to 120 words");
+    expect(prompt).toContain("Length: 70 to 120 words, in 2 or 3 paragraphs");
   });
 
   it("keeps sentence complexity out of term support", () => {
@@ -60,14 +61,14 @@ describe("buildStoryPrompt", () => {
       length: { min: 140, max: 240, unit: "characters" },
     });
     expect(prompt).toContain('everyday equivalents of "and" and "but"');
-    expect(prompt).toContain("about 8 characters to 16 characters");
-    expect(prompt).toContain("Length: 140 to 240 characters");
+    expect(prompt).toContain("about 8 to 16 characters");
+    expect(prompt).toContain("Length: 140 to 240 characters, in 2 to 4 paragraphs");
     expect(prompt).not.toContain("Present tense only");
   });
 
   it("uses the picked setting as the topic without an outline", () => {
     const prompt = userPrompt();
-    expect(prompt).toContain("Topic: a rainy weekend at home.");
+    expect(prompt).toContain("Topic: a rainy weekend at home, shaped to fit the format.");
     expect(prompt).toContain("Never write about the collection itself");
   });
 
@@ -94,7 +95,7 @@ describe("buildStoryPrompt", () => {
     expect(system).toContain("Sound like a real person wrote it");
     expect(system).toContain("never straight double quotes");
     expect(system).toContain("[[the words used|term number]]");
-    expect(system).toContain("no introduction, notes, length count or code fences");
+    expect(system).toContain("no introduction, notes about the piece, length count or code fences");
     expect(system).not.toContain("Distributed Systems");
   });
 });

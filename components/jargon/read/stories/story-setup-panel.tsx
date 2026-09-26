@@ -32,9 +32,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const READING_LEVEL_LABELS: Record<ReadingLevel, { label: string; hint: string }> = {
-  plain: { label: "Plain", hint: "Everyday prose; context carries the meaning." },
-  professional: { label: "Professional", hint: "Like a colleague's write-up." },
-  expert: { label: "Expert", hint: "Dense and technical; assumes background." },
+  plain: { label: "Plain", hint: "Context makes each term guessable." },
+  professional: { label: "Professional", hint: "Help only where a term would be unclear." },
+  expert: { label: "Expert", hint: "Terms used as an insider would, no extra help." },
 };
 
 const CEFR_HINTS: Record<CefrLevel, string> = {
@@ -62,7 +62,7 @@ function ReadingLevelField({
 }) {
   return (
     <fieldset className="flex flex-col gap-2 border-0 p-0">
-      <legend className="mb-2 text-sm font-medium leading-none">Reading level</legend>
+      <legend className="mb-2 text-sm font-medium leading-none">Term support</legend>
       <div className="flex gap-2">
         {READING_LEVELS.map((level) => (
           <Button

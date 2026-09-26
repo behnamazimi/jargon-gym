@@ -97,7 +97,7 @@ export async function generateStoryAction(input: {
       readingLevel,
       cefrLevel,
       outline,
-      setting: pickSetting(),
+      setting: pickSetting(format.id),
       recentTitles,
     });
 

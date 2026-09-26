@@ -1,5 +1,5 @@
 import { DOMAIN_LANGUAGE_OPTIONS, type DomainLanguage } from "@/lib/jargon/languages";
-import { lengthPhrase, type StoryLength } from "./length";
+import { lengthPhrase, rangePhrase, type StoryLength } from "./length";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, ReadingLevel, StoryTerm } from "./types";
 
@@ -17,7 +17,7 @@ type Unit = StoryLength["unit"];
 // "A2" alone gets ignored. Written for any language, not just English.
 const CEFR_GUIDANCE: Record<CefrLevel, (unit: Unit) => string> = {
   A1: (unit) =>
-    `A1 (beginner). Mostly sentences of about ${lengthPhrase(4, unit)} to ${lengthPhrase(8, unit)}. Only very basic everyday words. The simplest present-time verb forms. Join ideas only with the language's everyday equivalents of "and" and "but". Short statements, simple questions and everyday phrases people really say. No idioms, figurative language or passive constructions.`,
+    `A1 (beginner). Mostly sentences of about ${rangePhrase(4, 8, unit)}. Only very basic everyday words. The simplest present-time verb forms. Join ideas only with the language's everyday equivalents of "and" and "but". Short statements, simple questions and everyday phrases people really say. No idioms, figurative language or passive constructions.`,
   A2: (unit) =>
     `A2 (elementary). Mostly sentences of up to about ${lengthPhrase(10, unit)}. Only the most common everyday words. Simple present, past and near-future forms. Join ideas with the language's everyday equivalents of "and", "but", "because" and "when". No idioms, figurative language or passive constructions.`,
   B1: (unit) =>
@@ -30,9 +30,9 @@ const CEFR_GUIDANCE: Record<CefrLevel, (unit: Unit) => string> = {
 
 // The same for every piece, so it goes in the system prompt.
 const STORY_SYSTEM_PROMPT = [
-  "You write short reading passages for people learning vocabulary. A glossary of the listed terms sits beside each passage, so never define a term outright.",
+  "You write short reading passages for people learning vocabulary. A glossary of the listed terms sits beside each passage, so never define a term outright. Write everything, including the title, in the reader's language.",
   "",
-  "Each setting in a request has one job:",
+  "Each option in a request has one job:",
   "- Language level: the language around the terms (vocabulary, grammar, sentence length). The terms themselves may be above it.",
   "- Term support: only how much help each term gets from the sentences around it.",
   "- Format and tone: what the piece is and how it feels.",
@@ -45,10 +45,16 @@ const STORY_SYSTEM_PROMPT = [
   "- For dialogue, use the language's own typographic quotation marks (for example “ ” or ‘ ’), never straight double quotes.",
   "",
   "Output:",
-  "- Reply with only the title and the piece: no introduction, notes, length count or code fences. Plain text, no Markdown.",
+  "- Reply with only the title and the piece: no introduction, notes about the piece, length count or code fences. Plain text, no Markdown.",
   "- The first line is a short title on its own. Then a blank line, then the piece, with a blank line between paragraphs.",
   "- Mark each occurrence of a listed term as [[the words used|term number]], using the term's number from the list, for example [[shards|2]]. The words are exactly as they appear in the sentence (inflected forms are fine); everything else, including spaces and punctuation, stays outside the brackets.",
 ].join("\n");
+
+// Beginner levels get more words for the same terms, in shorter sentences,
+// so they need room for an extra paragraph.
+function paragraphCount(cefrLevel: CefrLevel): string {
+  return cefrLevel === "A1" || cefrLevel === "A2" ? "2 to 4" : "2 or 3";
+}
 
 function languageName(language: DomainLanguage): string {
   return DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? "English";
@@ -76,7 +82,7 @@ function topicLines(input: StoryPromptInput): string[] {
     ];
   }
   const lines = [
-    `Topic: ${input.setting}. If the terms can't fit that naturally, pick another concrete, everyday or workplace situation where they do. Never write about the collection itself, about learning a language, or about the words.`,
+    `Topic: ${input.setting}, shaped to fit the format. If the terms can't fit it naturally, pick another concrete situation that suits both the format and the terms. Never write about the collection itself, about learning a language, or about the words.`,
   ];
   if (input.recentTitles.length > 0) {
     const titles = input.recentTitles.map((title) => `"${title}"`).join(", ");
@@ -97,12 +103,11 @@ export function buildStoryPrompt(input: StoryPromptInput): { system: string; pro
   const prompt = [
     `You're writing a short reading passage for someone learning the vocabulary of "${input.collectionName}", reading in ${language} at CEFR ${input.cefrLevel}, with a glossary beside the text. It succeeds if they can read it comfortably and see each term used correctly.`,
     "",
-    `Language: ${language}, including the title.`,
     `Language level: ${CEFR_GUIDANCE[input.cefrLevel](unit)}`,
     `Term support: ${TERM_SUPPORT[input.readingLevel]}`,
     `Format: ${input.format.prompt}.`,
     `Tone: ${input.tone.prompt}.`,
-    `Length: ${min} to ${max} ${unit}, in 2 or 3 short paragraphs. A thread, interview or notes may instead use one short paragraph per message, turn or section, up to 8.`,
+    `Length: ${min} to ${max} ${unit}, in ${paragraphCount(input.cefrLevel)} paragraphs. A thread, interview or notes may instead use one short paragraph per message, turn or section, up to 8.`,
     ...topicLines(input),
     "",
     "Terms:",

@@ -46,18 +46,27 @@ export function storyLength(
   };
 }
 
-/** The same length unit for a phrase like "up to about 10 words". */
+/** A length in the story's unit, like "10 words". */
 export function lengthPhrase(words: number, unit: LengthUnit): string {
   return `${inUnit(words, unit)} ${unit}`;
+}
+
+/** A range in the story's unit, like "4 to 8 words". */
+export function rangePhrase(minWords: number, maxWords: number, unit: LengthUnit): string {
+  return `${inUnit(minWords, unit)} to ${lengthPhrase(maxWords, unit)}`;
 }
 
 /** How far a finished piece may stray from the asked-for length before it
  *  is rejected and retried. */
 export function acceptedLength(length: StoryLength): { min: number; max: number } {
-  return { min: Math.floor(length.min * 0.5), max: Math.ceil(length.max * 1.5) };
+  return { min: Math.floor(length.min * 0.6), max: Math.ceil(length.max * 1.3) };
+}
+
+export function splitWords(text: string): string[] {
+  return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 }
 
 export function countLength(text: string, unit: LengthUnit): number {
   if (unit === "characters") return text.replace(/[^\p{L}\p{N}]/gu, "").length;
-  return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean).length;
+  return splitWords(text).length;
 }

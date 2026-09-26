@@ -99,4 +99,20 @@ describe("generateStory", () => {
     await expect(generateStory(INPUT)).rejects.toBeInstanceOf(StoryProviderError);
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
   });
+
+  it("sends the fixed rules as the system prompt and the story details as the prompt", async () => {
+    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    await generateStory(INPUT);
+    const call = mockedGenerate.mock.calls[0]![0];
+    expect(call.system).toContain("Each option in a request has one job");
+    expect(call.prompt).toContain("1. Idempotency: d");
+  });
+
+  it("retries once when a term marker comes back broken", async () => {
+    mockedGenerate
+      .mockReturnValueOnce(resolveWith(`Title\n\n[idempotency|1] ${FILLER}`))
+      .mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    await expect(generateStory(INPUT)).resolves.toBeTruthy();
+    expect(mockedGenerate).toHaveBeenCalledTimes(2);
+  });
 });

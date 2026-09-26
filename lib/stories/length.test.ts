@@ -20,7 +20,7 @@ describe("storyLength", () => {
 
 describe("acceptedLength", () => {
   it("allows some slack around the asked-for range", () => {
-    expect(acceptedLength({ min: 70, max: 120, unit: "words" })).toEqual({ min: 35, max: 180 });
+    expect(acceptedLength({ min: 70, max: 120, unit: "words" })).toEqual({ min: 42, max: 156 });
   });
 });
 

@@ -1,18 +1,13 @@
-import { acceptedLength, countLength, type StoryLength } from "./length";
+import { StoryGenerationError } from "./errors";
+import { acceptedLength, countLength, splitWords, type StoryLength } from "./length";
 import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./markup";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
 
-const DEFAULT_LENGTH: StoryLength = { min: 70, max: 120, unit: "words" };
 const MAX_TITLE_LENGTH = 120;
 
-export class StoryGenerationError extends Error {}
-
 function words(text: string): string[] {
-  return text
-    .toLocaleLowerCase()
-    .split(/[^\p{L}\p{N}]+/u)
-    .filter(Boolean);
+  return splitWords(text.toLocaleLowerCase());
 }
 
 /** True when every word of the term has a word in the text sharing a short
@@ -47,7 +42,7 @@ function checkLength(segments: StorySegment[], length: StoryLength) {
 export function normalizeStory(
   payload: StoryGenerationPayload,
   terms: StoryTerm[],
-  length: StoryLength = DEFAULT_LENGTH,
+  length: StoryLength,
 ): { title: string; segments: StorySegment[]; termIds: string[] } {
   const title = checkedTitle(payload.title);
   const termById = new Map(terms.map((term) => [term.id, term]));

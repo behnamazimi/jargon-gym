@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseStoryText } from "./markup";
-import { StoryGenerationError } from "./normalize";
+import { StoryGenerationError } from "./errors";
 
 const TERMS = [
   { id: "t1", term: "Idempotency", definition: "d" },
@@ -29,15 +29,19 @@ describe("parseStoryText", () => {
     ]);
   });
 
-  it("keeps the words of a marker with an unknown or missing number as plain text", () => {
-    const result = parseStoryText("Title\n\nA [[shard|9]] and [[retry]].", TERMS);
+  it("keeps the words of a marker with an unknown number as plain text", () => {
+    const result = parseStoryText("Title\n\nA [[shard|9]] fails.", TERMS);
     expect(result.paragraphs[0].segments).toEqual([
       { text: "A " },
       { text: "shard" },
-      { text: " and " },
-      { text: "retry" },
-      { text: "." },
+      { text: " fails." },
     ]);
+  });
+
+  it("leaves brackets in ordinary text exactly as written", () => {
+    const text = "Read m[i[0]], [[1,2],[3,4]] and [[ -f x ]] or [[retry]].";
+    const result = parseStoryText(`Title\n\n${text}`, TERMS);
+    expect(result.paragraphs[0].segments).toEqual([{ text }]);
   });
 
   it("drops markers and bold from the title", () => {
@@ -74,6 +78,11 @@ describe("parseStoryText edge cases", () => {
     expect(termIds).toEqual(["t1", undefined, "t2", undefined, "t1"]);
   });
 
+  it("only looks at the line right after a bare 'Title:'", () => {
+    const result = parseStoryText("Title:\n\nIt [[sharded|2]].", TERMS);
+    expect(result.title).toBe("");
+  });
+
   it("returns an empty piece for a title-only reply", () => {
     expect(parseStoryText("Just a title", TERMS)).toEqual({
       title: "Just a title",
@@ -88,6 +97,7 @@ describe("parseStoryText edge cases", () => {
     ["marker across a line", "T\n\nWe [[shard\ning|2]] it."],
     ["marker across paragraphs", "T\n\nWe [[shard\n\ning|2]] it."],
     ["marker in the title", "[[On|2]\n\nText."],
+    ["single brackets", "T\n\nWe [shards|2] it."],
   ])("rejects a broken marker: %s", (_name, reply) => {
     expect(() => parseStoryText(reply, TERMS)).toThrow(StoryGenerationError);
   });

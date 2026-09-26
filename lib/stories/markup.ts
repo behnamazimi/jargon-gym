@@ -1,4 +1,4 @@
-import { StoryGenerationError } from "./normalize";
+import { StoryGenerationError } from "./errors";
 import type { StorySegment, StoryTerm } from "./types";
 
 export type StoryGenerationPayload = {
@@ -6,7 +6,11 @@ export type StoryGenerationPayload = {
   paragraphs: { segments: StorySegment[] }[];
 };
 
-const TERM_MARKER = /\[\[([^[\]|\n]+?)(?:\|\s*(?:#|term\s*)?(\d+)\s*)?\]\]/gi;
+const TERM_MARKER = /\[\[([^[\]|\n]+?)\|\s*(?:#|term\s*)?(\d+)\s*\]\]/gi;
+// What's left of a marker the parser couldn't read: "[x|2]", "[[x|2]",
+// "[[2|x]]", or the extra brackets of "[[[x|2]]]". Brackets in ordinary text
+// (code like "m[i[0]]" or "[[ -f x ]]") have no "|number" and are left alone.
+const BROKEN_MARKER = /\|\s*(?:#|term\s*)?\d+\s*\]|\[\[?\s*\d+\s*\||\[\uFFFC|\uFFFC\]/i;
 const TITLE_PREFIX = /^(?:#+\s*|\*+\s*|title:\s*)+/i;
 const CODE_FENCE = /^```[\w-]*$/;
 
@@ -15,7 +19,7 @@ function readParagraph(text: string, termIdByNumber: Map<string, string>): Story
   let last = 0;
   for (const match of text.matchAll(TERM_MARKER)) {
     if (match.index > last) segments.push({ text: text.slice(last, match.index) });
-    const termId = match[2] ? termIdByNumber.get(match[2]) : undefined;
+    const termId = termIdByNumber.get(match[2]!);
     segments.push(termId ? { text: match[1], termId } : { text: match[1] });
     last = match.index + match[0].length;
   }
@@ -23,10 +27,8 @@ function readParagraph(text: string, termIdByNumber: Map<string, string>): Story
   return segments;
 }
 
-/** Brackets left once the readable markers are taken out, like "[[2|x]]"
- *  or the extra brackets of "[[[x|2]]]". */
-function hasLeftoverMarker(text: string): boolean {
-  return /\[\[|\]\]|\[\uFFFC|\uFFFC\]/.test(text.replace(TERM_MARKER, "\uFFFC"));
+function hasBrokenMarker(text: string): boolean {
+  return BROKEN_MARKER.test(text.replace(TERM_MARKER, "\uFFFC"));
 }
 
 /** The reply's lines without a code fence wrapped around the whole reply. */
@@ -49,10 +51,11 @@ export function parseStoryText(reply: string, terms: StoryTerm[]): StoryGenerati
   const termIdByNumber = new Map(terms.map((term, index) => [String(index + 1), term.id]));
   const lines = replyLines(reply);
 
-  // A bare "Title:" line puts the title on the next non-empty line.
-  let titleIndex = lines.findIndex((line) => cleanTitle(line));
-  if (titleIndex < 0) titleIndex = lines.length;
-  const title = cleanTitle(lines[titleIndex] ?? "");
+  // A bare "Title:" line puts the title on the line right after it.
+  let titleIndex = lines.findIndex((line) => line.trim());
+  if (titleIndex >= 0 && !cleanTitle(lines[titleIndex]!)) titleIndex += 1;
+  const titleLine = lines[titleIndex] ?? "";
+  const title = cleanTitle(titleLine);
 
   const texts = lines
     .slice(titleIndex + 1)
@@ -61,7 +64,7 @@ export function parseStoryText(reply: string, terms: StoryTerm[]): StoryGenerati
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 
-  if (texts.some(hasLeftoverMarker) || hasLeftoverMarker(lines[titleIndex] ?? "")) {
+  if (texts.some(hasBrokenMarker) || hasBrokenMarker(titleLine)) {
     throw new StoryGenerationError("The story came back with a broken term marker.");
   }
   const paragraphs = texts.map((text) => ({ segments: readParagraph(text, termIdByNumber) }));
