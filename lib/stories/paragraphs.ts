@@ -21,26 +21,6 @@ export function trimParagraph(paragraph: StorySegment[]): StorySegment[] {
   return segments.filter((segment) => segment.text);
 }
 
-const WORD_END = /[\p{L}\p{N}.!?]$/u;
-const WORD_START = /^[\p{L}\p{N}]/u;
-const RUN_ON_SENTENCE = /(\p{Ll})([.!?])(\p{Lu})/gu;
-
-/** Restores a missing space where two words or sentences were run together
- *  ("gezicht.Niemand", or the terms "Als" + "dit" with nothing between). It
- *  never changes the wording or the paragraph breaks. */
-export function spaceRunOnWords(paragraph: StorySegment[]): StorySegment[] {
-  const spaced: StorySegment[] = [];
-  for (const segment of paragraph) {
-    const text = segment.termId ? segment.text : segment.text.replace(RUN_ON_SENTENCE, "$1$2 $3");
-    const previous = spaced[spaced.length - 1];
-    if (previous && WORD_END.test(previous.text) && WORD_START.test(text)) {
-      pushSegment(spaced, { text: " " });
-    }
-    pushSegment(spaced, { ...segment, text });
-  }
-  return spaced;
-}
-
 export function flattenParagraphs(paragraphs: StorySegment[][]): StorySegment[] {
   const segments: StorySegment[] = [];
   paragraphs.forEach((paragraph, index) => {
@@ -50,8 +30,7 @@ export function flattenParagraphs(paragraphs: StorySegment[][]): StorySegment[] 
   return segments;
 }
 
-/** The paragraphs the model wrote, recovered from the stored blank-line breaks.
- *  Run-on words are spaced here too, for pieces saved before that was fixed. */
+/** The paragraphs the model wrote, recovered from the stored blank-line breaks. */
 export function toParagraphs(segments: StorySegment[]): StorySegment[][] {
   const paragraphs: StorySegment[][] = [[]];
   for (const segment of segments) {
@@ -64,7 +43,5 @@ export function toParagraphs(segments: StorySegment[]): StorySegment[][] {
       if (part) paragraphs[paragraphs.length - 1]!.push({ text: part });
     });
   }
-  return paragraphs
-    .filter((paragraph) => paragraph.some((segment) => segment.text.trim()))
-    .map(spaceRunOnWords);
+  return paragraphs.filter((paragraph) => paragraph.some((segment) => segment.text.trim()));
 }

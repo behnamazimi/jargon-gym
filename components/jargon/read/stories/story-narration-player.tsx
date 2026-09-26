@@ -61,7 +61,9 @@ export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
     if (!cancelledRef.current) setStatus("unavailable");
   }
 
-  if (status === "ready") return <StoryAudioControls src={src} />;
+  if (status === "ready") {
+    return <StoryAudioControls src={src} onError={() => setStatus("unavailable")} />;
+  }
 
   const message = STATUS_MESSAGES[status];
   return (

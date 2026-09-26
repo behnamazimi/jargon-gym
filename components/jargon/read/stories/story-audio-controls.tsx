@@ -4,8 +4,9 @@ import { Pause, Play, RotateCcw, RotateCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { claimActiveAudio, releaseActiveAudio } from "@/components/jargon/active-audio";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { formatPlaybackTime } from "@/lib/stories/feedback";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { cn } from "@/lib/utils";
 
 const SKIP_SECONDS = 10;
 const SPEEDS = [0.75, 1, 1.25, 1.5] as const;
@@ -28,29 +29,27 @@ function saveSpeed(speed: number) {
   }
 }
 
-function formatTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-  const whole = Math.floor(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
-}
-
 /** Custom controls for a story's narration: big play/pause, ±10s skips, a
  *  seek bar, and always-visible speed chips sized for thumbs. */
-export function StoryAudioControls({ src }: { src: string }) {
+export function StoryAudioControls({ src, onError }: { src: string; onError: () => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [speed, setSpeed] = useState(1);
+  // Rendered only on the client, once the audio is ready, so reading the
+  // saved speed here is safe.
+  const [speed, setSpeed] = useState(loadSpeed);
 
   useMountEffect(() => {
     const audio = audioRef.current;
-    const initialSpeed = loadSpeed();
-    setSpeed(initialSpeed);
     if (audio) {
-      audio.defaultPlaybackRate = initialSpeed;
-      audio.playbackRate = initialSpeed;
-      // Metadata can load before React attaches its listeners.
+      audio.defaultPlaybackRate = speed;
+      audio.playbackRate = speed;
+      // Metadata, or a load error, can arrive before React attaches its listeners.
+      if (audio.error) {
+        onError();
+        return;
+      }
       if (Number.isFinite(audio.duration)) setDuration(audio.duration);
       void audio.play().catch(() => undefined);
     }
@@ -67,6 +66,11 @@ export function StoryAudioControls({ src }: { src: string }) {
     if (!audio) return;
     if (audio.paused) void audio.play().catch(() => undefined);
     else audio.pause();
+  }
+
+  function skip(seconds: number) {
+    const audio = audioRef.current;
+    if (audio) seekTo(audio.currentTime + seconds);
   }
 
   function seekTo(seconds: number) {
@@ -105,6 +109,7 @@ export function StoryAudioControls({ src }: { src: string }) {
           releaseActiveAudio(event.currentTarget);
           setPlaying(false);
         }}
+        onError={onError}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onDurationChange={(event) => {
           const { duration: next } = event.currentTarget;
@@ -118,7 +123,7 @@ export function StoryAudioControls({ src }: { src: string }) {
           variant="ghost"
           size="icon"
           aria-label={`Back ${SKIP_SECONDS} seconds`}
-          onPress={() => seekTo(currentTime - SKIP_SECONDS)}
+          onPress={() => skip(-SKIP_SECONDS)}
           className="size-11"
         >
           <RotateCcw className="size-5" aria-hidden strokeWidth={1.5} />
@@ -141,47 +146,52 @@ export function StoryAudioControls({ src }: { src: string }) {
           variant="ghost"
           size="icon"
           aria-label={`Forward ${SKIP_SECONDS} seconds`}
-          onPress={() => seekTo(currentTime + SKIP_SECONDS)}
+          onPress={() => skip(SKIP_SECONDS)}
           className="size-11"
         >
           <RotateCw className="size-5" aria-hidden strokeWidth={1.5} />
         </Button>
         <span className="ms-auto text-xs text-base-content/60 tabular-nums">
-          {formatTime(currentTime)} / {formatTime(duration)}
+          {formatPlaybackTime(currentTime)} / {formatPlaybackTime(duration)}
         </span>
       </div>
 
       <input
         type="range"
         aria-label="Seek"
+        aria-valuetext={`${formatPlaybackTime(currentTime)} of ${formatPlaybackTime(duration)}`}
         min={0}
         max={duration || 0}
-        step={0.1}
+        step={1}
         value={Math.min(currentTime, duration || 0)}
+        disabled={!duration}
         onChange={(event) => seekTo(Number(event.target.value))}
-        className="range range-xs range-primary w-full"
+        className="range range-sm range-primary my-2.5 w-full md:range-xs md:my-0"
       />
 
       <div className="flex items-center justify-between gap-2">
         <span className="text-xs text-base-content/60">Speed</span>
-        <div className="join" role="group" aria-label="Playback speed">
+        <ToggleGroup
+          aria-label="Playback speed"
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={new Set([String(speed)])}
+          onSelectionChange={(keys) => {
+            const next = Number(keys.values().next().value);
+            if ((SPEEDS as readonly number[]).includes(next)) changeSpeed(next);
+          }}
+          size="sm"
+        >
           {SPEEDS.map((option) => (
-            <Button
+            <ToggleGroupItem
               key={option}
-              type="button"
-              size="sm"
-              variant="ghost"
-              aria-pressed={speed === option}
-              onPress={() => changeSpeed(option)}
-              className={cn(
-                "join-item min-h-11 min-w-12 px-2 text-xs tabular-nums md:min-h-8",
-                speed === option && "bg-primary/15 text-primary",
-              )}
+              id={String(option)}
+              className="min-h-11 min-w-12 px-2 text-xs tabular-nums data-selected:bg-primary/15 data-selected:text-primary md:min-h-8"
             >
               {option}×
-            </Button>
+            </ToggleGroupItem>
           ))}
-        </div>
+        </ToggleGroup>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import {
   type StoryResult,
 } from "@/app/(private)/jargon/read/stories/actions";
 import { useToast } from "@/components/ui/toast";
+import { voteFeedback } from "@/lib/stories/feedback";
 import type { StoriesSetupData } from "@/lib/stories/setup";
 import {
   DEFAULT_CEFR_LEVEL,
@@ -20,12 +21,6 @@ import {
   type StoryLevels,
   type StoryTerm,
 } from "@/lib/stories/types";
-
-const VOTE_MESSAGES: Record<string, string> = {
-  "1": "Liked. You'll get more stories in this style.",
-  "-1": "Got it. You'll get fewer stories in this style.",
-  null: "Vote removed.",
-};
 
 type StoryStep = "setup" | "generating" | "reading" | "error";
 
@@ -109,7 +104,7 @@ export function useStorySession(setup: StoriesSetupData) {
       toast(result.error, "destructive");
       return;
     }
-    toast(VOTE_MESSAGES[String(next)]!);
+    toast(voteFeedback(next));
   }
 
   async function dismiss() {
