@@ -4,7 +4,13 @@ import {
   getReadTermByIdAction,
   type ReadQueueSeed,
 } from "@/app/(private)/jargon/read/actions";
+import { redirect } from "next/navigation";
 import { ReadPage } from "@/components/jargon/read/read-page";
+import { getSessionUser } from "@/lib/auth/require-session";
+import { DEFAULT_READ_OPTIONS, getReadOptions, type ReadOptions } from "@/lib/read/options";
+import { readLandingRedirect } from "@/lib/read/landing";
+import { hasCurrentStory } from "@/lib/stories/repository";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { StudyCollection } from "@/lib/study/types";
 
 // Narration generation (ElevenLabs) can take longer than the platform's
@@ -12,8 +18,32 @@ import type { StudyCollection } from "@/lib/study/types";
 export const maxDuration = 60;
 
 type PageProps = {
-  searchParams: Promise<{ termId?: string; alreadyRead?: string; domain?: string }>;
+  searchParams: Promise<{
+    termId?: string;
+    alreadyRead?: string;
+    domain?: string;
+    view?: string;
+    [key: string]: string | undefined;
+  }>;
 };
+
+/** Options and "is a story in progress" for the landing redirect. Both fall
+ *  back safely, so a failure here never takes Cards down with it. */
+async function loadLandingState(): Promise<{ options: ReadOptions; hasStory: boolean }> {
+  const { supabase, user } = await getSessionUser();
+  if (!user) return { options: DEFAULT_READ_OPTIONS, hasStory: false };
+  const [options, hasStory] = await Promise.all([
+    getReadOptions(supabase, user.id).catch((err: unknown) => {
+      console.error("Failed to load Read options:", err);
+      return DEFAULT_READ_OPTIONS;
+    }),
+    hasCurrentStory(createAdminClient(), user.id).catch((err: unknown) => {
+      console.error("Failed to check for a current story:", err);
+      return false;
+    }),
+  ]);
+  return { options, hasStory };
+}
 
 function resolveReadCollectionId(
   domainParam: string | undefined,
@@ -39,6 +69,8 @@ function LoginPrompt() {
 export default async function JargonReadPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
+  const { options, hasStory } = await loadLandingState();
+
   if (params.termId) {
     const setup = await getReadSetupData();
     if ("error" in setup) return <LoginPrompt />;
@@ -53,9 +85,17 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
         collections={setup.collections}
         domainId={domainId}
         narrationAccess={setup.narrationAccess}
+        options={options}
       />
     );
   }
+
+  const storiesPath = readLandingRedirect({
+    params,
+    storiesDefault: options.storiesDefault,
+    hasCurrentStory: hasStory,
+  });
+  if (storiesPath) redirect(storiesPath);
 
   // No deep link: the domain is already resolvable from the URL (or
   // defaults to "all"), so fire the feed batch next to setup instead of
@@ -81,6 +121,7 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
       collections={setup.collections}
       domainId={domainId}
       narrationAccess={setup.narrationAccess}
+      options={options}
     />
   );
 }

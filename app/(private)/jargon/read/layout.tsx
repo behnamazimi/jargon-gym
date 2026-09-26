@@ -1,9 +1,17 @@
 import { Zap } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
 import { ReadModeTabs } from "@/components/jargon/read/read-mode-tabs";
+import { ReadOptionsMenu } from "@/components/jargon/read/read-options-menu";
 import { PageShell } from "@/components/page-container";
+import { getSessionUser } from "@/lib/auth/require-session";
+import { DEFAULT_READ_OPTIONS, getReadOptions } from "@/lib/read/options";
 
-export default function ReadLayout({ children }: { children: React.ReactNode }) {
+export default async function ReadLayout({ children }: { children: React.ReactNode }) {
+  const { supabase, user } = await getSessionUser();
+  const options = user
+    ? await getReadOptions(supabase, user.id).catch(() => DEFAULT_READ_OPTIONS)
+    : DEFAULT_READ_OPTIONS;
+
   return (
     <PageShell
       className="flex min-h-0 flex-1 flex-col"
@@ -16,7 +24,10 @@ export default function ReadLayout({ children }: { children: React.ReactNode }) 
         compactOnPhone
       />
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
-        <ReadModeTabs />
+        <div className="flex items-center justify-between gap-2">
+          <ReadModeTabs />
+          {user ? <ReadOptionsMenu initialOptions={options} /> : null}
+        </div>
         {children}
       </div>
     </PageShell>

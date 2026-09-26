@@ -19,6 +19,8 @@ import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-s
 import { Button, LinkButton } from "@/components/ui/button";
 import { STORY_MIN_TERMS } from "@/lib/stories/types";
 
+const CARDS_HREF = "/jargon/read?view=cards";
+
 function StoriesNoTerms() {
   return (
     <QuizPanelBody>
@@ -27,9 +29,14 @@ function StoriesNoTerms() {
         title="Not enough terms to read"
         description={`Stories need a collection with at least ${STORY_MIN_TERMS} terms you haven't marked known.`}
       >
-        <LinkButton href="/jargon" variant="outline" className="min-h-11">
-          Collections
-        </LinkButton>
+        <div className="flex flex-wrap justify-center gap-2">
+          <LinkButton href="/jargon" variant="outline" className="min-h-11">
+            Collections
+          </LinkButton>
+          <LinkButton href={CARDS_HREF} variant="ghost" className="min-h-11">
+            Read cards instead
+          </LinkButton>
+        </div>
       </QuizCenteredState>
     </QuizPanelBody>
   );
@@ -99,8 +106,8 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
       return (
         <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
           {setup.collections.length === 0 ? (
-            <StudyNoActiveCollectionsState description="Turn on a collection on the collection page before you read stories." />
-          ) : setup.initialDomainId === null && !session.savedStoryId ? (
+            <StudyNoActiveCollectionsState description="Turn on a collection on the collection page before you read stories. Cards need one too." />
+          ) : setup.initialDomainId === null ? (
             <StoriesNoTerms />
           ) : (
             <StorySetupPanel

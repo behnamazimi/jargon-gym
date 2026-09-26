@@ -4,19 +4,13 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import {
   generateStoryAction,
-  getStoryAction,
+  dismissStoryAction,
   markStoryReadAction,
   voteStoryAction,
   type StoryResult,
 } from "@/app/(private)/jargon/read/stories/actions";
 import { useToast } from "@/components/ui/toast";
 import type { StoriesSetupData } from "@/lib/stories/setup";
-import { useMountEffect } from "@/hooks/use-mount-effect";
-import {
-  clearCurrentStoryId,
-  loadCurrentStoryId,
-  saveCurrentStoryId,
-} from "@/lib/stories/session-storage";
 import {
   DEFAULT_CEFR_LEVEL,
   DEFAULT_READING_LEVEL,
@@ -37,7 +31,7 @@ const DEFAULT_LEVELS: StoryLevels = {
 export function useStorySession(setup: StoriesSetupData) {
   const router = useRouter();
   const { toast } = useToast();
-  const [step, setStep] = useState<StoryStep>("setup");
+  const [step, setStep] = useState<StoryStep>(setup.currentStory ? "reading" : "setup");
   const [domainId, setDomainId] = useState(setup.initialDomainId);
   const [levelsByDomain, setLevelsByDomain] = useState(setup.levelsByDomain);
   const initialLevels =
@@ -45,17 +39,11 @@ export function useStorySession(setup: StoriesSetupData) {
   const [readingLevel, setReadingLevel] = useState<ReadingLevel>(initialLevels.readingLevel);
   const [cefrLevel, setCefrLevel] = useState<CefrLevel>(initialLevels.cefrLevel);
   const [outline, setOutline] = useState("");
-  const [story, setStory] = useState<Story | null>(null);
-  const [terms, setTerms] = useState<StoryTerm[]>([]);
+  const [story, setStory] = useState<Story | null>(setup.currentStory?.story ?? null);
+  const [terms, setTerms] = useState<StoryTerm[]>(setup.currentStory?.terms ?? []);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [savedStoryId, setSavedStoryId] = useState<string | null>(null);
-  const [isResuming, setIsResuming] = useState(false);
   const [isMarkingRead, setIsMarkingRead] = useState(false);
   const busyRef = useRef(false);
-
-  useMountEffect(() => {
-    setSavedStoryId(loadCurrentStoryId());
-  });
 
   function selectCollection(nextDomainId: string) {
     setDomainId(nextDomainId);
@@ -69,13 +57,6 @@ export function useStorySession(setup: StoriesSetupData) {
     setTerms(result.terms);
     setErrorMessage(null);
     setStep("reading");
-    if (result.story.readAt) {
-      clearCurrentStoryId();
-      setSavedStoryId(null);
-    } else {
-      saveCurrentStoryId(result.story.id);
-      setSavedStoryId(result.story.id);
-    }
   }
 
   async function generate() {
@@ -98,24 +79,6 @@ export function useStorySession(setup: StoriesSetupData) {
     showStory(result);
   }
 
-  async function resume() {
-    if (!savedStoryId || isResuming) return;
-    setIsResuming(true);
-    const result = await getStoryAction(savedStoryId);
-    setIsResuming(false);
-    if ("error" in result) {
-      discardSaved();
-      toast(result.error, "destructive");
-      return;
-    }
-    showStory(result);
-  }
-
-  function discardSaved() {
-    clearCurrentStoryId();
-    setSavedStoryId(null);
-  }
-
   async function markRead() {
     if (!story || story.readAt || isMarkingRead) return;
     setIsMarkingRead(true);
@@ -127,7 +90,6 @@ export function useStorySession(setup: StoriesSetupData) {
     }
     const readAt = result.readAt ?? new Date().toISOString();
     setStory((current) => (current ? { ...current, readAt } : current));
-    discardSaved();
   }
 
   async function vote(value: -1 | 1) {
@@ -140,6 +102,18 @@ export function useStorySession(setup: StoriesSetupData) {
       setStory((current) => (current ? { ...current, vote: previous } : current));
       toast(result.error, "destructive");
     }
+  }
+
+  async function dismiss() {
+    if (!story) return;
+    const result = await dismissStoryAction(story.id);
+    if (result.error) {
+      toast(result.error, "destructive");
+      return;
+    }
+    setStory(null);
+    setTerms([]);
+    backToSetup();
   }
 
   function backToSetup() {
@@ -161,15 +135,12 @@ export function useStorySession(setup: StoriesSetupData) {
     story,
     terms,
     errorMessage,
-    savedStoryId: story && story.id === savedStoryId && step === "reading" ? null : savedStoryId,
-    isResuming,
     isMarkingRead,
     generate,
-    resume,
-    discardSaved,
     markRead,
     vote,
     backToSetup,
+    dismiss,
   };
 }
 

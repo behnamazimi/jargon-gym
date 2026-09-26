@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
 import { ReadQueueContent } from "@/components/jargon/read/read-page-content";
 import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
@@ -10,11 +10,12 @@ import { useReadQueue } from "@/components/jargon/read/use-read-queue";
 import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
+import type { ReadOptions } from "@/lib/read/options";
 import type { StudyCollection } from "@/lib/study/types";
 import {
   replaceReadDomainInUrl,
   scrollToTop,
-  stripInvalidDomainParam,
+  normalizeCardsUrl,
 } from "@/components/jargon/read/read-page-helpers";
 
 type ReadPageProps = {
@@ -22,9 +23,10 @@ type ReadPageProps = {
   collections: StudyCollection[];
   domainId: string;
   narrationAccess: boolean;
+  options: ReadOptions;
 };
 
-export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadPageProps) {
+export function ReadPage({ seed, collections, domainId, narrationAccess, options }: ReadPageProps) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
   const [fullscreenActive, setFullscreenActive] = useState(false);
   const { preferenceOn, setPreference } = useReadFullscreenPreference();
@@ -34,10 +36,21 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
   selectedCollectionIdRef.current = selectedCollectionId;
 
   useMountEffect(() => {
-    stripInvalidDomainParam(domainId);
+    normalizeCardsUrl(domainId);
   });
 
   useReadEnterKey(fullscreenActive, queue);
+
+  const term = queue.currentTerm;
+  const revealed = term ? options.revealedDefault || queue.isRevealed(term.id) : false;
+
+  // With cards revealed by default, showing a card is what counts the read,
+  // the same rule focus mode uses. `reveal` records each term only once.
+  const shownTermId = !fullscreenActive && options.revealedDefault ? term?.id : undefined;
+  const { reveal } = queue;
+  useEffect(() => {
+    if (shownTermId) reveal(shownTermId);
+  }, [shownTermId, reveal]);
 
   const handleCollectionChange = useCallback(
     (nextDomainId: string) => {
@@ -68,9 +81,6 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
     );
   }
 
-  const term = queue.currentTerm;
-  const revealed = term ? queue.isRevealed(term.id) : false;
-
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <ReadToolbar
@@ -97,6 +107,7 @@ export function ReadPage({ seed, collections, domainId, narrationAccess }: ReadP
           collections={collections}
           selectedCollectionId={selectedCollectionId}
           narrationAccess={narrationAccess}
+          hideQuestion={options.hideQuestion}
         />
       </div>
     </div>

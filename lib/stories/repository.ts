@@ -7,6 +7,7 @@ import {
   parseReadingLevel,
   type Story,
   type StoryLevels,
+  type StoryTerm,
   type StorySegment,
   type StoryVote,
 } from "./types";
@@ -111,6 +112,62 @@ export async function getStoryForUser(
     .maybeSingle();
   if (error) throw error;
   return data ? mapStory(data) : null;
+}
+
+/** The story Read and Stories open into: the newest one the user hasn't
+ *  marked read or dismissed. */
+export async function getCurrentStory(admin: Client, userId: string): Promise<Story | null> {
+  const { data, error } = await admin
+    .from("stories")
+    .select(STORY_COLUMNS)
+    .eq("user_id", userId)
+    .is("read_at", null)
+    .is("dismissed_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapStory(data) : null;
+}
+
+export async function hasCurrentStory(admin: Client, userId: string): Promise<boolean> {
+  const { data, error } = await admin
+    .from("stories")
+    .select("id")
+    .eq("user_id", userId)
+    .is("read_at", null)
+    .is("dismissed_at", null)
+    .limit(1);
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+/** Dismisses the user's unread stories, except `keepStoryId` when given. */
+export async function dismissUnreadStories(
+  admin: Client,
+  userId: string,
+  options: { onlyStoryId?: string; keepStoryId?: string } = {},
+): Promise<void> {
+  let query = admin
+    .from("stories")
+    .update({ dismissed_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .is("read_at", null)
+    .is("dismissed_at", null);
+  if (options.onlyStoryId) query = query.eq("id", options.onlyStoryId);
+  if (options.keepStoryId) query = query.neq("id", options.keepStoryId);
+  const { error } = await query;
+  if (error) throw error;
+}
+
+export async function getStoryTerms(admin: Client, termIds: string[]): Promise<StoryTerm[]> {
+  if (termIds.length === 0) return [];
+  const { data, error } = await admin
+    .from("terms")
+    .select("id, term, definition")
+    .in("id", termIds);
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function getCollection(

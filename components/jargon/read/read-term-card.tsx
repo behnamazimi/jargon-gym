@@ -9,7 +9,15 @@ import type { ReviewTerm } from "@/lib/review/types";
 
 const PRESS_CLASS = "transition-transform duration-150 ease-out active:scale-[0.96]";
 
-function ReadCardMasked({ term, onReveal }: { term: ReviewTerm; onReveal: () => void }) {
+function ReadCardMasked({
+  term,
+  hideQuestion,
+  onReveal,
+}: {
+  term: ReviewTerm;
+  hideQuestion: boolean;
+  onReveal: () => void;
+}) {
   return (
     <div
       className="flex min-h-0 flex-1 cursor-pointer flex-col items-center justify-center gap-3 px-5 py-4 text-center sm:px-6"
@@ -22,10 +30,16 @@ function ReadCardMasked({ term, onReveal }: { term: ReviewTerm; onReveal: () => 
           onReveal();
         }
       }}
-      aria-label={`What is ${term.term}? Tap to reveal the definition.`}
+      aria-label={`${hideQuestion ? `${term.term}.` : `What is ${term.term}?`} Tap to reveal the definition.`}
     >
       <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
-        What is <span className="italic">{term.term}</span>?
+        {hideQuestion ? (
+          term.term
+        ) : (
+          <>
+            What is <span className="italic">{term.term}</span>?
+          </>
+        )}
       </h2>
       <p className="m-0 text-xs tracking-wide text-base-content/50">
         <span>{term.domainName}</span>
@@ -70,6 +84,7 @@ export const ReadTermCard = memo(function ReadTermCard({
   canGoBack,
   isPending,
   narrationAccess,
+  hideQuestion,
   onReveal,
   onPrevious,
   onNext,
@@ -79,6 +94,7 @@ export const ReadTermCard = memo(function ReadTermCard({
   canGoBack: boolean;
   isPending: boolean;
   narrationAccess: boolean;
+  hideQuestion: boolean;
   onReveal: (termId: string) => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -94,7 +110,11 @@ export const ReadTermCard = memo(function ReadTermCard({
       {revealed ? (
         <ReadCardRevealed term={term} onMarkedKnown={onNext} />
       ) : (
-        <ReadCardMasked term={term} onReveal={() => onReveal(term.id)} />
+        <ReadCardMasked
+          term={term}
+          hideQuestion={hideQuestion}
+          onReveal={() => onReveal(term.id)}
+        />
       )}
       <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-base-300/60 px-5 py-3 sm:px-6">
         <div className="hidden min-w-0 md:block coarse:hidden">

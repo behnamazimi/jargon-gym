@@ -364,6 +364,7 @@ export type Database = {
         Row: {
           cefr_level: string;
           created_at: string;
+          dismissed_at: string | null;
           domain_id: string | null;
           format: string;
           id: string;
@@ -385,6 +386,7 @@ export type Database = {
         Insert: {
           cefr_level: string;
           created_at?: string;
+          dismissed_at?: string | null;
           domain_id?: string | null;
           format: string;
           id?: string;
@@ -406,6 +408,7 @@ export type Database = {
         Update: {
           cefr_level?: string;
           created_at?: string;
+          dismissed_at?: string | null;
           domain_id?: string | null;
           format?: string;
           id?: string;
@@ -792,6 +795,9 @@ export type Database = {
           last_active_date: string | null;
           longest_streak: number;
           provider: string | null;
+          read_hide_question: boolean;
+          read_revealed_default: boolean;
+          read_stories_default: boolean;
           story_last_domain_id: string | null;
           timezone: string | null;
           updated_at: string;
@@ -805,6 +811,9 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
+          read_hide_question?: boolean;
+          read_revealed_default?: boolean;
+          read_stories_default?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;
           updated_at?: string;
@@ -818,6 +827,9 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
+          read_hide_question?: boolean;
+          read_revealed_default?: boolean;
+          read_stories_default?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;
           updated_at?: string;
