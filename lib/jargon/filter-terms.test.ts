@@ -34,6 +34,24 @@ describe("filterTerms hideKnown", () => {
   });
 });
 
+describe("filterTerms sortMode", () => {
+  const terms = [
+    makeTerm({ id: "a", term: "Zeta", category: "B" }),
+    makeTerm({ id: "b", term: "Beta", category: "A" }),
+    makeTerm({ id: "c", term: "Alpha", category: "B" }),
+  ];
+
+  it("keeps the query order by default", () => {
+    const result = filterTerms(terms, baseOptions);
+    expect(result.map((t) => t.id)).toEqual(["a", "b", "c"]);
+  });
+
+  it("sorts by category, then term", () => {
+    const result = filterTerms(terms, { ...baseOptions, sortMode: "category" });
+    expect(result.map((t) => t.id)).toEqual(["b", "c", "a"]);
+  });
+});
+
 describe("filterTerms sortMode unknown", () => {
   it("sorts a marked-known-only term after unknown terms", () => {
     const terms = [makeTerm({ id: "a", term: "Alpha" }), makeTerm({ id: "b", term: "Beta" })];

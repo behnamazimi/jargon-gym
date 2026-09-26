@@ -61,7 +61,7 @@ export type JargonPageData = {
   activeDomainIds: string[];
 };
 
-export type SortMode = "default" | "az" | "unknown";
+export type SortMode = "default" | "category" | "az" | "unknown";
 
 export type FilterOptions = {
   searchQuery: string;

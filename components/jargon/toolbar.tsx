@@ -52,7 +52,8 @@ export function Toolbar({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem id="default">Sort: category order</SelectItem>
+              <SelectItem id="default">Sort: default</SelectItem>
+              <SelectItem id="category">Sort: category order</SelectItem>
               <SelectItem id="az">Sort: A–Z</SelectItem>
               <SelectItem id="unknown">Sort: unknown first</SelectItem>
             </SelectContent>

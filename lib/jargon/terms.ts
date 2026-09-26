@@ -63,7 +63,7 @@ export async function fetchTermsByDomain(client: Client, domainId: string) {
     .from("terms")
     .select("*")
     .eq("domain_id", domainId)
-    .order("category")
+    .order("created_at")
     .order("term");
 
   if (error) throw error;
