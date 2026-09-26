@@ -21,6 +21,8 @@ type GenerateStoryInput = {
   readingLevel: ReadingLevel;
   cefrLevel: CefrLevel;
   outline: string | null;
+  setting: string;
+  recentTitles: string[];
 };
 
 type GeneratedStory = { title: string; segments: StorySegment[]; termIds: string[] };

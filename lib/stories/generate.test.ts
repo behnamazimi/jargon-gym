@@ -25,6 +25,8 @@ const INPUT = {
   readingLevel: "professional" as const,
   cefrLevel: "B2" as const,
   outline: null,
+  setting: "a rainy weekend at home",
+  recentTitles: [],
 };
 
 const FILLER = Array.from({ length: 90 }, (_, index) => `word${index}`).join(" ");
