@@ -1,10 +1,10 @@
-import { APICallError, generateObject, RetryError } from "ai";
+import { APICallError, generateText, RetryError } from "ai";
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
+import { parseStoryText } from "./markup";
 import { normalizeStory, StoryGenerationError } from "./normalize";
 import { buildStoryPrompt } from "./prompt";
-import { buildStorySchema } from "./schema";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, ReadingLevel, StorySegment, StoryTerm } from "./types";
 
@@ -49,18 +49,15 @@ function toProviderError(error: unknown): StoryProviderError {
   return new StoryProviderError("Couldn't write a story this time. Try again.");
 }
 
+// Plain text rather than a JSON object: in JSON output the model has been
+// dropping the space after sentence-ending periods ("first.What").
 async function requestStory(input: GenerateStoryInput): Promise<GeneratedStory> {
-  const termIds = input.terms.map((term) => term.id) as [string, ...string[]];
-  const { object } = await generateObject({
+  const { text } = await generateText({
     model: createModel(input.provider, input.apiKey),
-    schema: buildStorySchema(termIds),
     prompt: buildStoryPrompt(input),
     maxRetries: 0,
-    ...(input.provider === "google"
-      ? { providerOptions: { google: { structuredOutputs: true } } }
-      : {}),
   });
-  return normalizeStory(object, input.terms);
+  return normalizeStory(parseStoryText(text, input.terms), input.terms);
 }
 
 /** One retry, only for failures a second attempt can plausibly fix: a

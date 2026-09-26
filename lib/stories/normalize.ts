@@ -1,9 +1,10 @@
 import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
-import type { StoryGenerationPayload } from "./schema";
+import type { StoryGenerationPayload } from "./markup";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
 
 const MIN_WORDS = 40;
 const MAX_WORDS = 300;
+const MAX_TITLE_LENGTH = 120;
 
 export class StoryGenerationError extends Error {}
 
@@ -27,10 +28,19 @@ export function surfaceMatchesTerm(surface: string, term: string): boolean {
   });
 }
 
+function checkedTitle(raw: string): string {
+  const title = raw.trim();
+  if (!title || title.length > MAX_TITLE_LENGTH) {
+    throw new StoryGenerationError("The story came back without a usable title.");
+  }
+  return title;
+}
+
 export function normalizeStory(
   payload: StoryGenerationPayload,
   terms: StoryTerm[],
 ): { title: string; segments: StorySegment[]; termIds: string[] } {
+  const title = checkedTitle(payload.title);
   const termById = new Map(terms.map((term) => [term.id, term]));
   const used = new Set<string>();
   const paragraphs: StorySegment[][] = [];
@@ -67,5 +77,5 @@ export function normalizeStory(
     throw new StoryGenerationError(`The story came back at ${wordCount} words.`);
   }
 
-  return { title: payload.title.trim(), segments, termIds };
+  return { title, segments, termIds };
 }

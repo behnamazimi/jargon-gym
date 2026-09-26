@@ -36,7 +36,7 @@ export function buildStoryPrompt(input: {
   outline: string | null;
 }): string {
   const termLines = input.terms
-    .map((term) => `- id: ${term.id}\n  term: ${term.term}\n  meaning: ${term.definition}`)
+    .map((term, index) => `${index + 1}. ${term.term}: ${term.definition}`)
     .join("\n");
 
   const topic = input.outline
@@ -58,11 +58,11 @@ export function buildStoryPrompt(input: {
     "Rules:",
     "- Use every term above at least once, in a way that matches its meaning. Use as many of them more than once as reads naturally.",
     "- Do not define the terms outright; the reader sees a glossary separately. Context should still make sense of them.",
-    "- 125 to 200 words, in 2 to 4 short paragraphs. A conversation (a thread, an interview) may instead use one short paragraph per message or turn, up to 12 paragraphs. Never put a blank line inside a paragraph; each paragraph is its own list entry.",
+    "- 125 to 200 words, in 2 to 4 short paragraphs. A conversation (a thread, an interview) may instead use one short paragraph per message or turn, up to 12 paragraphs.",
     `- Reading level. ${READING_LEVEL_GUIDANCE[input.readingLevel]}`,
-    "- Write normal, correctly spaced text: a space after every sentence-ending period, question mark or exclamation mark, and between words.",
     "- For dialogue, use the language's own typographic quotation marks (for example “ ” or ‘ ’), never straight double quotes.",
     "",
-    "Output: a short title, and the piece as a list of paragraphs in reading order. Each paragraph is a list of segments. Put each occurrence of a listed term in its own segment with that term's id as termId; the segment text is the exact words used in the piece (inflected forms are fine). All other text goes in segments without a termId. Concatenating a paragraph's segments must give that paragraph's full text exactly, so the spaces and punctuation between words belong in the plain segments around each term (a term segment holds only the term's words).",
+    "Output: plain text, no Markdown. The first line is a short title on its own. Then a blank line, then the piece, with a blank line between paragraphs.",
+    "Mark each occurrence of a listed term as [[the words used|term number]], using the number from the list above, for example [[shards|2]]. The words are exactly as they appear in the sentence (inflected forms are fine); everything else, including spaces and punctuation, stays outside the brackets.",
   ].join("\n");
 }

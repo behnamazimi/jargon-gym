@@ -218,4 +218,10 @@ describe("normalizeStory", () => {
       written.map((segment) => segment.text).join(""),
     );
   });
+
+  it("rejects a missing title", () => {
+    expect(() => normalizeStory({ ...payload([]), title: "  " }, TERMS)).toThrow(
+      StoryGenerationError,
+    );
+  });
 });
