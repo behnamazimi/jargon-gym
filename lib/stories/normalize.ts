@@ -1,5 +1,5 @@
 import { StoryGenerationError } from "./errors";
-import { acceptedLength, countLength, splitWords, type StoryLength } from "./length";
+import { acceptedLength, countLength, splitWords, type LengthRange } from "./length";
 import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./markup";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
@@ -31,7 +31,7 @@ function checkedTitle(raw: string): string {
   return title;
 }
 
-function checkLength(segments: StorySegment[], length: StoryLength) {
+function checkLength(segments: StorySegment[], length: LengthRange) {
   const count = countLength(segments.map((segment) => segment.text).join(""), length.unit);
   const accepted = acceptedLength(length);
   if (count < accepted.min || count > accepted.max) {
@@ -42,7 +42,7 @@ function checkLength(segments: StorySegment[], length: StoryLength) {
 export function normalizeStory(
   payload: StoryGenerationPayload,
   terms: StoryTerm[],
-  length: StoryLength,
+  length: LengthRange,
 ): { title: string; segments: StorySegment[]; termIds: string[] } {
   const title = checkedTitle(payload.title);
   const termById = new Map(terms.map((term) => [term.id, term]));

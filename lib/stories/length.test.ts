@@ -1,26 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { acceptedLength, countLength, storyLength } from "./length";
+import { acceptedLength, countLength, storyLength, termsForLength } from "./length";
 
 describe("storyLength", () => {
-  it("keeps a floor for few terms", () => {
-    expect(storyLength(3, "C2", "en")).toEqual({ min: 70, max: 120, unit: "words" });
-  });
-
-  it("grows with the term count", () => {
-    expect(storyLength(6, "B2", "en")).toEqual({ min: 90, max: 140, unit: "words" });
+  it("follows the picked length", () => {
+    expect(storyLength("short", "B2", "en")).toEqual({
+      min: 50,
+      max: 90,
+      unit: "words",
+      paragraphs: "1 or 2",
+      turns: 5,
+    });
+    expect(storyLength("long", "C2", "en")).toMatchObject({ min: 160, max: 240 });
   });
 
   it("gives beginner levels more room", () => {
-    const a1 = storyLength(6, "A1", "nl");
-    const b2 = storyLength(6, "B2", "nl");
-    expect(a1.min).toBeGreaterThan(b2.min);
-    expect(a1.max).toBeGreaterThan(b2.max);
+    expect(storyLength("medium", "A1", "nl")).toMatchObject({ min: 115, max: 190 });
+    expect(storyLength("medium", "A2", "nl")).toMatchObject({ min: 105, max: 175 });
+    expect(storyLength("medium", "B1", "nl")).toMatchObject({ min: 90, max: 150 });
+  });
+});
+
+describe("termsForLength", () => {
+  it("puts more terms in longer pieces", () => {
+    expect(termsForLength("short")).toBeLessThan(termsForLength("medium"));
+    expect(termsForLength("medium")).toBeLessThan(termsForLength("long"));
   });
 });
 
 describe("acceptedLength", () => {
   it("allows some slack around the asked-for range", () => {
-    expect(acceptedLength({ min: 70, max: 120, unit: "words" })).toEqual({ min: 42, max: 156 });
+    expect(acceptedLength(storyLength("medium", "B2", "en"))).toEqual({ min: 54, max: 195 });
   });
 });
 

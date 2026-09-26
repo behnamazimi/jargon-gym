@@ -3,6 +3,7 @@ import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import {
   parseCefrLevel,
+  parsePieceLength,
   parseLanguage,
   parseReadingLevel,
   type Story,
@@ -15,7 +16,7 @@ type Client = SupabaseClient<Database>;
 type StoryRow = Database["public"]["Tables"]["stories"]["Row"];
 
 const STORY_COLUMNS =
-  "id, domain_id, language, format, tone, reading_level, cefr_level, outline, title, segments, term_ids, new_term_ids, vote, read_at";
+  "id, domain_id, language, format, tone, reading_level, cefr_level, piece_length, outline, title, segments, term_ids, new_term_ids, vote, read_at";
 
 export function toVote(value: number | null): -1 | 1 | null {
   return value === 1 || value === -1 ? value : null;
@@ -30,6 +31,7 @@ type StoryRowSubset = Pick<
   | "tone"
   | "reading_level"
   | "cefr_level"
+  | "piece_length"
   | "outline"
   | "title"
   | "segments"
@@ -48,6 +50,7 @@ function mapStory(row: StoryRowSubset): Story {
     tone: row.tone,
     readingLevel: parseReadingLevel(row.reading_level),
     cefrLevel: parseCefrLevel(row.cefr_level),
+    pieceLength: parsePieceLength(row.piece_length),
     outline: row.outline,
     title: row.title,
     segments: row.segments as StorySegment[],
@@ -84,6 +87,7 @@ export async function insertStory(
       tone: input.tone,
       reading_level: input.levels.readingLevel,
       cefr_level: input.levels.cefrLevel,
+      piece_length: input.levels.pieceLength,
       outline: input.outline,
       title: input.title,
       segments: input.segments as unknown as Json,
