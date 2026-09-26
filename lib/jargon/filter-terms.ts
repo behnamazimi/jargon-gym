@@ -38,6 +38,11 @@ function sortTerms(
   knownTerms: Set<string>,
   markedKnownTerms: Set<string>,
 ): Term[] {
+  if (sortMode === "category") {
+    return [...terms].sort(
+      (a, b) => a.category.localeCompare(b.category) || a.term.localeCompare(b.term),
+    );
+  }
   if (sortMode === "az") {
     return [...terms].sort((a, b) => a.term.localeCompare(b.term));
   }
