@@ -556,6 +556,7 @@ export type Database = {
           example: string | null;
           id: string;
           mental_model: string | null;
+          note: string | null;
           slug: string | null;
           term: string;
           updated_at: string;
@@ -571,6 +572,7 @@ export type Database = {
           example?: string | null;
           id?: string;
           mental_model?: string | null;
+          note?: string | null;
           slug?: string | null;
           term: string;
           updated_at?: string;
@@ -586,6 +588,7 @@ export type Database = {
           example?: string | null;
           id?: string;
           mental_model?: string | null;
+          note?: string | null;
           slug?: string | null;
           term?: string;
           updated_at?: string;
@@ -896,6 +899,7 @@ export type Database = {
           example: string;
           id: string;
           mental_model: string;
+          note: string;
           relationships: Json;
           term: string;
         }[];
@@ -913,6 +917,7 @@ export type Database = {
           example: string;
           id: string;
           mental_model: string;
+          note: string;
           relationships: Json;
           term: string;
         }[];

@@ -7,6 +7,7 @@ type ImportTerm = {
   discussion?: string | null;
   anti_example?: string | null;
   controversy?: string | null;
+  note?: string | null;
 };
 
 type ImportRelationship = {

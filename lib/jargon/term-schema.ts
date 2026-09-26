@@ -9,6 +9,7 @@ export const termFieldsSchema = z.object({
   discussion: z.string().nullable().optional(),
   anti_example: z.string().nullable().optional(),
   controversy: z.string().nullable().optional(),
+  note: z.string().nullable().optional(),
 });
 
 export type TermInput = z.infer<typeof termFieldsSchema>;
@@ -35,6 +36,7 @@ function trimmedOptionalFields(input: TermInput) {
     discussion: trimOrNull(input.discussion),
     anti_example: trimOrNull(input.anti_example),
     controversy: trimOrNull(input.controversy),
+    note: trimOrNull(input.note),
   };
 }
 

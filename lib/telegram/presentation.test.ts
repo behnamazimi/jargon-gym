@@ -22,6 +22,7 @@ const dangerousTerm: TermCard = {
   discussion: null,
   antiExample: null,
   controversy: null,
+  note: null,
   domainId: "domain-1",
   domainName: `Domain & <Co>`,
   relationships: [],
@@ -70,6 +71,17 @@ describe("presentation HTML escaping", () => {
     expect(message).not.toContain("<script>");
     expect(message).toContain("&lt;script&gt;");
     expect(message).toContain("Good");
+  });
+
+  it("escapes a note and labels it", () => {
+    const message = formatTermMessage({
+      ...dangerousTerm,
+      note: `See <b>this</b> & that`,
+    });
+    expect(message).toContain("📝 <b>Note:</b>");
+    expect(message).toContain("&lt;b&gt;this&lt;/b&gt;");
+    expect(message).toContain("&amp; that");
+    expect(message).not.toContain("<b>this</b>");
   });
 
   it("does not leak the definition in the masked read prompt", () => {

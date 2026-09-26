@@ -12,6 +12,7 @@ export function toReviewTerm(card: TermCard): ReviewTerm {
     discussion: card.discussion ?? "",
     antiExample: card.antiExample ?? undefined,
     controversy: card.controversy ?? undefined,
+    note: card.note ?? undefined,
     domainName: card.domainName,
     isNewToUser: card.isNewToUser,
     relationships: card.relationships.map((rel, index) => ({

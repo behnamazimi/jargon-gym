@@ -21,6 +21,7 @@ type TermDetails = {
   discussion: string | null;
   antiExample: string | null;
   controversy: string | null;
+  note: string | null;
 };
 
 function getTermDetails(term: Term): TermDetails {
@@ -30,6 +31,7 @@ function getTermDetails(term: Term): TermDetails {
     discussion: hasText(term.discussion) ? term.discussion.trim() : null,
     antiExample: hasText(term.antiExample) ? term.antiExample.trim() : null,
     controversy: hasText(term.controversy) ? term.controversy.trim() : null,
+    note: hasText(term.note) ? term.note.trim() : null,
   };
 }
 
@@ -59,6 +61,11 @@ function TermDetailSections({ details }: { details: TermDetails }) {
       {details.controversy ? (
         <TermDetailSection emoji="⚡" label="Debated" variant="debated">
           {details.controversy}
+        </TermDetailSection>
+      ) : null}
+      {details.note ? (
+        <TermDetailSection emoji="📝" label="Note">
+          {details.note}
         </TermDetailSection>
       ) : null}
     </>

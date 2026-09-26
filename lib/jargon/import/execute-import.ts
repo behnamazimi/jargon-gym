@@ -67,6 +67,7 @@ function buildTermRow(item: ImportPayload["terms"][number], domainId: string) {
     discussion: trimOrNull(item.discussion),
     anti_example: trimOrNull(item.anti_example),
     controversy: trimOrNull(item.controversy),
+    note: trimOrNull(item.note),
     domain_id: domainId,
   };
 }

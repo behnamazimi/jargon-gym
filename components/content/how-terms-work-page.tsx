@@ -44,6 +44,10 @@ const TERM_FIELDS = [
     body: "Optional and rare. Only when practitioners genuinely disagree on meaning or scope, not loose usage, not a caution about overuse.",
   },
   {
+    title: "Note",
+    body: "Optional. Freeform text for something that doesn't belong in the other fields. What it holds is up to the collection. Empty means not needed.",
+  },
+  {
     title: "Relationships",
     body: "Optional links to other terms in the collection, often confused with, depends on, builds on, opposite of, or any real connection worth pointing out. Add a line on how they differ when it helps.",
   },
@@ -69,6 +73,10 @@ const OPTIONAL_FIELD_TRIGGERS = [
   {
     title: "Debated",
     body: "People in the field actually disagree on what this term means or how far it extends.",
+  },
+  {
+    title: "Note",
+    body: "There's something about this term that doesn't belong in the other fields.",
   },
   {
     title: "Relationships",

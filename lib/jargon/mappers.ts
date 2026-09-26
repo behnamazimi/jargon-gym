@@ -44,6 +44,7 @@ export function mapTerm(row: TermRow): Term {
     discussion: row.discussion ?? "",
     antiExample: row.anti_example ?? undefined,
     controversy: row.controversy ?? undefined,
+    note: row.note ?? undefined,
     relationships: [],
   };
 }

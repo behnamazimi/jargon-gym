@@ -35,6 +35,7 @@ function mapTermCardRow(row: {
   discussion: string | null;
   anti_example: string | null;
   controversy: string | null;
+  note: string | null;
   domain_id: string;
   domain_name: string;
   relationships: Json;
@@ -49,6 +50,7 @@ function mapTermCardRow(row: {
     discussion: row.discussion,
     antiExample: row.anti_example,
     controversy: row.controversy,
+    note: row.note,
     domainId: row.domain_id,
     domainName: row.domain_name,
     relationships: mapRelationshipsJson(row.relationships),
@@ -122,6 +124,7 @@ export async function hydrateTermsAsTermCards(
       discussion: term.discussion || null,
       antiExample: term.antiExample || null,
       controversy: term.controversy ?? null,
+      note: term.note ?? null,
       domainId: domainId ?? "",
       domainName: domainId ? (domainNameById.get(domainId) ?? "Unknown") : "Unknown",
       relationships: term.relationships.map((rel) => ({

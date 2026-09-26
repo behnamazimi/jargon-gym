@@ -30,6 +30,7 @@ export type Term = {
   discussion: string;
   antiExample?: string;
   controversy?: string;
+  note?: string;
   relationships: TermRelationship[];
 };
 

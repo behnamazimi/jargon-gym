@@ -47,6 +47,7 @@ export function buildTermDetails(term: TermCard): string {
   details += formatInlineSection("⚠️", "Anti-example", term.antiExample ?? "");
   details += formatInlineSection("🛠", "In practice", term.discussion ?? "");
   details += formatInlineSection("⚡", "Debated", term.controversy ?? "");
+  details += formatInlineSection("📝", "Note", term.note ?? "");
   details += formatRelationships(term.relationships ?? []);
   return details;
 }

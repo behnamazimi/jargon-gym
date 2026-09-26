@@ -17,6 +17,7 @@ export type TermCard = {
   discussion: string | null;
   antiExample: string | null;
   controversy: string | null;
+  note: string | null;
   domainId: string;
   domainName: string;
   relationships: TermCardRelationship[];

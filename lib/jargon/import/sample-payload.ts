@@ -15,6 +15,7 @@ export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
         "Think of it like two people sharing a single house key — convenient until one of them changes the lock.",
       discussion:
         "Teams usually reduce coupling by communicating through a stable API or event contract instead of reaching into another service's internal data model directly.",
+      note: "The word is borrowed from physics, where coupling is how strongly two systems influence each other.",
     },
     {
       term: "Cohesion",

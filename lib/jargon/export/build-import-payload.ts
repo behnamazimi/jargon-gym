@@ -15,6 +15,7 @@ export function buildImportPayloadFromCollection(domain: Domain, terms: Term[]):
       const discussion = optionalText(term.discussion);
       const antiExample = optionalText(term.antiExample);
       const controversy = optionalText(term.controversy);
+      const note = optionalText(term.note);
 
       return {
         term: term.term,
@@ -25,6 +26,7 @@ export function buildImportPayloadFromCollection(domain: Domain, terms: Term[]):
         ...(discussion ? { discussion } : {}),
         ...(antiExample ? { anti_example: antiExample } : {}),
         ...(controversy ? { controversy } : {}),
+        ...(note ? { note } : {}),
       };
     }),
   };

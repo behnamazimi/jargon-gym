@@ -7,7 +7,8 @@ feel like it, and quiz when you want a check-in. No due dates — there's an
 optional streak badge, but nothing punishes you for breaking it.
 
 Terms go beyond one-line definitions: optional example, mental model,
-in-practice notes, anti-example, debated angles, and links to related terms.
+in-practice notes, anti-example, debated angles, a freeform note, and links
+to related terms.
 Known/unknown isn't set by hand — it's read off how well you've actually
 retained a term, and fades again if you stop practicing it.
 

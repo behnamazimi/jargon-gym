@@ -111,6 +111,16 @@ export function TermFormFields({
         />
       </Field>
 
+      <Field>
+        <FieldLabel htmlFor="term-note">Note (optional)</FieldLabel>
+        <Textarea
+          id="term-note"
+          value={form.note ?? ""}
+          onChange={(event) => onFieldChange("note", event.target.value)}
+          className="min-h-20"
+        />
+      </Field>
+
       {canManageRelationships ? (
         <TermRelationshipsEditor
           drafts={relationshipDrafts}

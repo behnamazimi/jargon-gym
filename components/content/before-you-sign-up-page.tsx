@@ -66,8 +66,9 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageSection title="What's actually in a term">
           <p className="m-0">
             A term isn&apos;t a flashcard. Alongside the definition there&apos;s room for an
-            example, a mental model, in-practice notes, an anti-example, and debated angles, added
-            only when they&apos;d actually help, plus links to related terms. See{" "}
+            example, a mental model, in-practice notes, an anti-example, debated angles, and a
+            freeform note, added only when they&apos;d actually help, plus links to related terms.
+            See{" "}
             <Link href="/how-terms-work" className={contentPageLinkClass}>
               how terms are built
             </Link>{" "}

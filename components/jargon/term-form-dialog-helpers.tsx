@@ -12,6 +12,7 @@ export const emptyForm: TermInput = {
   discussion: "",
   anti_example: "",
   controversy: "",
+  note: "",
 };
 
 function termToForm(term: Term): TermInput {
@@ -24,6 +25,7 @@ function termToForm(term: Term): TermInput {
     discussion: term.discussion || "",
     anti_example: term.antiExample || "",
     controversy: term.controversy || "",
+    note: term.note || "",
   };
 }
 
@@ -39,6 +41,7 @@ export function buildTermPayload(form: TermInput): TermInput {
     discussion: blankToNull(form.discussion),
     anti_example: blankToNull(form.anti_example),
     controversy: blankToNull(form.controversy),
+    note: blankToNull(form.note),
   };
 }
 
