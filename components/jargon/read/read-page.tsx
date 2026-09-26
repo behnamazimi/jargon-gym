@@ -15,7 +15,7 @@ import type { StudyCollection } from "@/lib/study/types";
 import {
   replaceReadDomainInUrl,
   scrollToTop,
-  stripInvalidDomainParam,
+  normalizeCardsUrl,
 } from "@/components/jargon/read/read-page-helpers";
 
 type ReadPageProps = {
@@ -36,7 +36,7 @@ export function ReadPage({ seed, collections, domainId, narrationAccess, options
   selectedCollectionIdRef.current = selectedCollectionId;
 
   useMountEffect(() => {
-    stripInvalidDomainParam(domainId);
+    normalizeCardsUrl(domainId);
   });
 
   useReadEnterKey(fullscreenActive, queue);

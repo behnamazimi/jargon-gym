@@ -8,7 +8,9 @@ import { DEFAULT_READ_OPTIONS, getReadOptions } from "@/lib/read/options";
 
 export default async function ReadLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user } = await getSessionUser();
-  const options = user ? await getReadOptions(supabase, user.id) : DEFAULT_READ_OPTIONS;
+  const options = user
+    ? await getReadOptions(supabase, user.id).catch(() => DEFAULT_READ_OPTIONS)
+    : DEFAULT_READ_OPTIONS;
 
   return (
     <PageShell

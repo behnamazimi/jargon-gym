@@ -36,13 +36,16 @@ export function replaceReadDomainInUrl(domainId: string) {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-export function stripInvalidDomainParam(resolvedDomainId: string) {
+/** Tidies the URL once Cards is showing: drops a stale collection and marks
+ *  the view as Cards, so a reload or a refresh after saving an option never
+ *  gets redirected to Stories. */
+export function normalizeCardsUrl(resolvedDomainId: string) {
   const url = new URL(window.location.href);
   const param = url.searchParams.get("domain");
-  if (!param) return;
-  if (resolvedDomainId !== "all" && param === resolvedDomainId) return;
-
-  url.searchParams.delete("domain");
+  if (param && (resolvedDomainId === "all" || param !== resolvedDomainId)) {
+    url.searchParams.delete("domain");
+  }
+  if (!url.searchParams.has("termId")) url.searchParams.set("view", "cards");
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 

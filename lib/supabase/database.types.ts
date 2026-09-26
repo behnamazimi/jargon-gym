@@ -364,6 +364,7 @@ export type Database = {
         Row: {
           cefr_level: string;
           created_at: string;
+          dismissed_at: string | null;
           domain_id: string | null;
           format: string;
           id: string;
@@ -385,6 +386,7 @@ export type Database = {
         Insert: {
           cefr_level: string;
           created_at?: string;
+          dismissed_at?: string | null;
           domain_id?: string | null;
           format: string;
           id?: string;
@@ -406,6 +408,7 @@ export type Database = {
         Update: {
           cefr_level?: string;
           created_at?: string;
+          dismissed_at?: string | null;
           domain_id?: string | null;
           format?: string;
           id?: string;

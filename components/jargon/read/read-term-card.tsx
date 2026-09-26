@@ -30,7 +30,7 @@ function ReadCardMasked({
           onReveal();
         }
       }}
-      aria-label={`${hideQuestion ? term.term : `What is ${term.term}?`} Tap to reveal the definition.`}
+      aria-label={`${hideQuestion ? `${term.term}.` : `What is ${term.term}?`} Tap to reveal the definition.`}
     >
       <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
         {hideQuestion ? (

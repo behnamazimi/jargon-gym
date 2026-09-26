@@ -49,28 +49,34 @@ function OptionRow({
 }) {
   const disabled = Boolean(disabledNote);
   return (
-    <li>
-      <label
-        htmlFor={id}
-        className={cn(
-          "flex min-h-14 cursor-pointer items-center justify-between gap-4 px-4 py-3",
-          disabled && "cursor-not-allowed opacity-50",
-        )}
-      >
-        <span className="min-w-0">
-          <span className="block text-sm font-medium text-base-content">{label}</span>
-          <span className="block text-xs leading-relaxed text-base-content/60">
-            {disabledNote ?? description}
-          </span>
-        </span>
-        <Switch
-          id={id}
-          checked={checked}
-          disabled={disabled}
-          onCheckedChange={onChange}
-          className="toggle-primary shrink-0"
-        />
-      </label>
+    <li
+      className={cn(
+        "flex min-h-14 items-center justify-between gap-4 px-4 py-3",
+        disabled && "opacity-50",
+      )}
+    >
+      <div className="min-w-0">
+        <label
+          htmlFor={id}
+          className={cn(
+            "block text-sm font-medium text-base-content",
+            disabled ? "cursor-not-allowed" : "cursor-pointer",
+          )}
+        >
+          {label}
+        </label>
+        <p id={`${id}-description`} className="m-0 text-xs leading-relaxed text-base-content/60">
+          {disabledNote ?? description}
+        </p>
+      </div>
+      <Switch
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        aria-describedby={`${id}-description`}
+        onCheckedChange={onChange}
+        className="toggle-primary shrink-0"
+      />
     </li>
   );
 }
@@ -129,15 +135,16 @@ export function ReadOptionsMenu({ initialOptions }: { initialOptions: ReadOption
   const { toast } = useToast();
 
   async function update(key: ReadOptionKey, value: boolean) {
-    const previous = options;
-    setOptions({ ...options, [key]: value });
+    setOptions((current) => ({ ...current, [key]: value }));
     const result = await saveReadOptionAction(key, value);
     if (result.error) {
-      setOptions(previous);
+      setOptions((current) => ({ ...current, [key]: !value }));
       toast(result.error, "destructive");
       return;
     }
-    router.refresh();
+    // The Stories default only matters the next time Read opens; refreshing
+    // now would move the user off the page they're on.
+    if (key !== "storiesDefault") router.refresh();
   }
 
   const list = <OptionsList options={options} onChange={(key, value) => void update(key, value)} />;

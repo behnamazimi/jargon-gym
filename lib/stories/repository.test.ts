@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
-import { markStoryRead } from "./repository";
+import { dismissUnreadStories, hasCurrentStory, markStoryRead } from "./repository";
 
 type Client = SupabaseClient<Database>;
 
@@ -64,5 +64,61 @@ describe("markStoryRead", () => {
     const row = { id: "s1", user_id: "u1", read_at: null, term_ids: ["t1", "t2", "t3"] };
     expect(await markStoryRead(makeClient(row), "u2", "s1")).toBeNull();
     expect(row.read_at).toBeNull();
+  });
+});
+
+type Call = [string, ...unknown[]];
+const QUERY_METHODS = ["select", "update", "eq", "neq", "is", "order", "limit"] as const;
+
+/** A query builder that records every call and resolves to `result` when
+ *  awaited at any point, like the real one. */
+function recordingClient(result: { data?: unknown; error: null }) {
+  const calls: Call[] = [];
+  function builder(): Promise<typeof result> {
+    const methods = Object.fromEntries(
+      QUERY_METHODS.map((method) => [
+        method,
+        (...args: unknown[]) => {
+          calls.push([method, ...args]);
+          return builder();
+        },
+      ]),
+    );
+    return Object.assign(Promise.resolve(result), methods);
+  }
+  const client = { from: () => builder() } as unknown as Client;
+  return { client, calls };
+}
+
+describe("hasCurrentStory", () => {
+  it("only counts stories that are neither read nor dismissed", async () => {
+    const { client, calls } = recordingClient({ data: [{ id: "s1" }], error: null });
+    expect(await hasCurrentStory(client, "u1")).toBe(true);
+    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
+    expect(calls).toContainEqual(["is", "read_at", null]);
+    expect(calls).toContainEqual(["is", "dismissed_at", null]);
+  });
+
+  it("is false when nothing matches", async () => {
+    const { client } = recordingClient({ data: [], error: null });
+    expect(await hasCurrentStory(client, "u1")).toBe(false);
+  });
+});
+
+describe("dismissUnreadStories", () => {
+  it("dismisses every other unread story when keeping the new one", async () => {
+    const { client, calls } = recordingClient({ error: null });
+    await dismissUnreadStories(client, "u1", { keepStoryId: "new" });
+    expect(calls[0]?.[0]).toBe("update");
+    expect(calls).toContainEqual(["neq", "id", "new"]);
+    expect(calls).toContainEqual(["is", "read_at", null]);
+    expect(calls.some(([method, column]) => method === "eq" && column === "id")).toBe(false);
+  });
+
+  it("dismisses just the one story when asked", async () => {
+    const { client, calls } = recordingClient({ error: null });
+    await dismissUnreadStories(client, "u1", { onlyStoryId: "s1" });
+    expect(calls).toContainEqual(["eq", "id", "s1"]);
+    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
   });
 });

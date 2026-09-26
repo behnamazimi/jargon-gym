@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import {
   generateStoryAction,
+  dismissStoryAction,
   markStoryReadAction,
   voteStoryAction,
   type StoryResult,
@@ -103,6 +104,18 @@ export function useStorySession(setup: StoriesSetupData) {
     }
   }
 
+  async function dismiss() {
+    if (!story) return;
+    const result = await dismissStoryAction(story.id);
+    if (result.error) {
+      toast(result.error, "destructive");
+      return;
+    }
+    setStory(null);
+    setTerms([]);
+    backToSetup();
+  }
+
   function backToSetup() {
     setErrorMessage(null);
     setStep("setup");
@@ -127,6 +140,7 @@ export function useStorySession(setup: StoriesSetupData) {
     markRead,
     vote,
     backToSetup,
+    dismiss,
   };
 }
 

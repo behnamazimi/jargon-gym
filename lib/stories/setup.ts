@@ -6,7 +6,7 @@ import { listStudyCollections } from "@/lib/study/collections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getReadEligibleCountsByDomainForUser } from "@/lib/trace-queue";
 import { loadPrefs } from "./prefs";
-import { getLatestUnreadStory, getStoryTerms } from "./repository";
+import { getCurrentStory, getStoryTerms } from "./repository";
 import { STORY_MIN_TERMS, type Story, type StoryLevels, type StoryTerm } from "./types";
 
 export type StoryCollection = { id: string; name: string; eligibleCount: number };
@@ -51,7 +51,10 @@ export async function getStoriesSetupData(
       loadPrefs(admin, auth.user.id),
       getUserSettings(auth.supabase, auth.user.id),
       getNarrationAccessForUser(auth.supabase, auth.user.id),
-      getLatestUnreadStory(admin, auth.user.id),
+      getCurrentStory(admin, auth.user.id).catch((err: unknown) => {
+        console.error("Failed to load the current story:", err);
+        return null;
+      }),
     ]);
 
   const collections = studyCollections.map((collection) => ({

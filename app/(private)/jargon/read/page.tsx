@@ -8,7 +8,8 @@ import { redirect } from "next/navigation";
 import { ReadPage } from "@/components/jargon/read/read-page";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { DEFAULT_READ_OPTIONS, getReadOptions, type ReadOptions } from "@/lib/read/options";
-import { hasUnreadStory } from "@/lib/stories/repository";
+import { readLandingRedirect } from "@/lib/read/landing";
+import { hasCurrentStory } from "@/lib/stories/repository";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { StudyCollection } from "@/lib/study/types";
 
@@ -22,24 +23,26 @@ type PageProps = {
     alreadyRead?: string;
     domain?: string;
     view?: string;
+    [key: string]: string | undefined;
   }>;
 };
 
-/** Stories is the default Read tab when the user asked for it, or while an
- *  unread story exists. The Cards tab links here with `view=cards` so it can
- *  still be opened. */
-async function redirectToStories(domain: string | undefined, options: ReadOptions) {
-  const { user } = await getSessionUser();
-  if (!user) return;
-  if (!options.storiesDefault && !(await hasUnreadStory(createAdminClient(), user.id))) return;
-  redirect(
-    domain ? `/jargon/read/stories?domain=${encodeURIComponent(domain)}` : "/jargon/read/stories",
-  );
-}
-
-async function loadReadOptions(): Promise<ReadOptions> {
+/** Options and "is a story in progress" for the landing redirect. Both fall
+ *  back safely, so a failure here never takes Cards down with it. */
+async function loadLandingState(): Promise<{ options: ReadOptions; hasStory: boolean }> {
   const { supabase, user } = await getSessionUser();
-  return user ? getReadOptions(supabase, user.id) : DEFAULT_READ_OPTIONS;
+  if (!user) return { options: DEFAULT_READ_OPTIONS, hasStory: false };
+  const [options, hasStory] = await Promise.all([
+    getReadOptions(supabase, user.id).catch((err: unknown) => {
+      console.error("Failed to load Read options:", err);
+      return DEFAULT_READ_OPTIONS;
+    }),
+    hasCurrentStory(createAdminClient(), user.id).catch((err: unknown) => {
+      console.error("Failed to check for a current story:", err);
+      return false;
+    }),
+  ]);
+  return { options, hasStory };
 }
 
 function resolveReadCollectionId(
@@ -66,7 +69,7 @@ function LoginPrompt() {
 export default async function JargonReadPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
-  const options = await loadReadOptions();
+  const { options, hasStory } = await loadLandingState();
 
   if (params.termId) {
     const setup = await getReadSetupData();
@@ -87,7 +90,12 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
     );
   }
 
-  if (params.view !== "cards") await redirectToStories(params.domain, options);
+  const storiesPath = readLandingRedirect({
+    params,
+    storiesDefault: options.storiesDefault,
+    hasCurrentStory: hasStory,
+  });
+  if (storiesPath) redirect(storiesPath);
 
   // No deep link: the domain is already resolvable from the URL (or
   // defaults to "all"), so fire the feed batch next to setup instead of

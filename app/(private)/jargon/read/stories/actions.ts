@@ -7,6 +7,7 @@ import { recordRead } from "@/lib/jargon/review-outcome";
 import { getDecryptedApiKey } from "@/lib/llm/settings";
 import { StoryProviderError, generateStory } from "@/lib/stories/generate";
 import {
+  dismissUnreadStories,
   getCollection,
   insertStory,
   loadRecentVotes,
@@ -112,6 +113,7 @@ export async function generateStoryAction(input: {
         .filter((card) => card.isNewToUser && usedIds.has(card.id))
         .map((card) => card.id),
     });
+    await dismissUnreadStories(admin, userId, { keepStoryId: story.id });
 
     return { story, terms: terms.filter((term) => usedIds.has(term.id)) };
   } catch (err) {
@@ -165,5 +167,19 @@ export async function voteStoryAction(
   } catch (err) {
     console.error("voteStoryAction failed:", err);
     return { error: "Couldn't save your vote." };
+  }
+}
+
+export async function dismissStoryAction(storyId: string): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: LOGIN_ERROR };
+  if (!z.uuid().safeParse(storyId).success) return { error: "That story isn't available." };
+
+  try {
+    await dismissUnreadStories(createAdminClient(), auth.user.id, { onlyStoryId: storyId });
+    return {};
+  } catch (err) {
+    console.error("dismissStoryAction failed:", err);
+    return { error: "Couldn't close this story. Try again." };
   }
 }

@@ -152,6 +152,14 @@ function NoLlmAlert() {
         <LinkButton href="/jargon/settings" size="sm" variant="outline" className="max-md:min-h-11">
           Go to Settings
         </LinkButton>
+        <LinkButton
+          href="/jargon/read?view=cards"
+          size="sm"
+          variant="ghost"
+          className="max-md:min-h-11"
+        >
+          Read cards
+        </LinkButton>
       </AlertAction>
     </Alert>
   );

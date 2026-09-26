@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, ChevronDown } from "lucide-react";
+import { ArrowUpRight, ChevronDown, X } from "lucide-react";
 import Link from "next/link";
 import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { StoryFooter } from "@/components/jargon/read/stories/story-footer";
@@ -8,6 +8,7 @@ import { StoryMarkKnown } from "@/components/jargon/read/stories/story-mark-know
 import { StoryNarrationPlayer } from "@/components/jargon/read/stories/story-narration-player";
 import { StoryTermPopover } from "@/components/jargon/read/stories/story-term-popover";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toParagraphs } from "@/lib/stories/paragraphs";
 import { findFormat, findTone } from "@/lib/stories/styles";
@@ -26,14 +27,23 @@ function firstOccurrences(story: Story): Map<string, string> {
   return occurrences;
 }
 
+/** Opens the term already revealed without recording a read: marking the
+ *  story read is what credits its terms. */
 function termHref(termId: string, story: Story): string {
-  const params = new URLSearchParams({ termId });
+  const params = new URLSearchParams({ termId, alreadyRead: "true" });
   if (story.domainId) params.set("domain", story.domainId);
-  if (story.readAt) params.set("alreadyRead", "true");
   return `/jargon/read?${params.toString()}`;
 }
 
-function StoryHeader({ story, narrationAccess }: { story: Story; narrationAccess: boolean }) {
+function StoryHeader({
+  story,
+  narrationAccess,
+  onDismiss,
+}: {
+  story: Story;
+  narrationAccess: boolean;
+  onDismiss: () => void;
+}) {
   const meta = [
     findFormat(story.format)?.label,
     findTone(story.tone)?.label,
@@ -43,9 +53,23 @@ function StoryHeader({ story, narrationAccess }: { story: Story; narrationAccess
 
   return (
     <header className="shrink-0 space-y-1 border-b border-base-300/60 px-5 py-3 sm:px-6">
-      <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-balance text-base-content sm:text-2xl sm:leading-tight">
-        {story.title}
-      </h2>
+      <div className="flex items-start justify-between gap-2">
+        <h2 className="font-heading m-0 min-w-0 text-xl font-semibold tracking-tight text-balance text-base-content sm:text-2xl sm:leading-tight">
+          {story.title}
+        </h2>
+        {story.readAt ? null : (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Dismiss story"
+            onPress={onDismiss}
+            className="-me-2 -mt-1 size-11 shrink-0 text-base-content/60 md:size-9"
+          >
+            <X className="size-4" aria-hidden strokeWidth={1.5} />
+          </Button>
+        )}
+      </div>
       <p className="m-0 text-xs tracking-wide text-base-content/50">
         {meta.map((item, index) => (
           <span key={item}>
@@ -130,7 +154,7 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
                     <Link
                       href={termHref(termId, story)}
                       aria-label={`Open ${term.term}`}
-                      className="btn btn-ghost btn-square btn-xs size-8 text-base-content/50"
+                      className="btn btn-ghost btn-square btn-xs size-11 text-base-content/50 md:size-8"
                     >
                       <ArrowUpRight className="size-4" aria-hidden strokeWidth={1.5} />
                     </Link>
@@ -163,7 +187,11 @@ export function StoryReader({
 
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
-      <StoryHeader story={story} narrationAccess={narrationAccess} />
+      <StoryHeader
+        story={story}
+        narrationAccess={narrationAccess}
+        onDismiss={() => void session.dismiss()}
+      />
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         <StoryBody story={story} termById={termById} />
         <StoryGlossary story={story} termById={termById} />
