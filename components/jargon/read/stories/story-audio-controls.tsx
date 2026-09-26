@@ -4,12 +4,12 @@ import { Pause, Play, RotateCcw, RotateCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { claimActiveAudio, releaseActiveAudio } from "@/components/jargon/active-audio";
 import { Button } from "@/components/ui/button";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatPlaybackTime } from "@/lib/stories/feedback";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
 const SKIP_SECONDS = 10;
-const SPEEDS = [0.75, 1, 1.25, 1.5] as const;
+// The speed button steps through these in order and wraps around.
+const SPEEDS = [1, 1.25, 1.5, 0.75] as const;
 const SPEED_STORAGE_KEY = "jargon-gym:story-audio-speed:v1";
 
 function loadSpeed(): number {
@@ -21,6 +21,39 @@ function loadSpeed(): number {
   }
 }
 
+function nextSpeed(speed: number): number {
+  const index = (SPEEDS as readonly number[]).indexOf(speed);
+  return SPEEDS[(index + 1) % SPEEDS.length]!;
+}
+
+function SkipButton({
+  direction,
+  onPress,
+}: {
+  direction: "back" | "forward";
+  onPress: () => void;
+}) {
+  const Icon = direction === "back" ? RotateCcw : RotateCw;
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={`${direction === "back" ? "Back" : "Forward"} ${SKIP_SECONDS} seconds`}
+      onPress={onPress}
+      className="relative size-9 shrink-0 sm:size-10"
+    >
+      <Icon className="size-6" aria-hidden strokeWidth={1.25} />
+      <span
+        aria-hidden
+        className="absolute inset-0 flex items-center justify-center pt-px text-[0.5625rem] font-bold tabular-nums"
+      >
+        {SKIP_SECONDS}
+      </span>
+    </Button>
+  );
+}
+
 function saveSpeed(speed: number) {
   try {
     window.localStorage.setItem(SPEED_STORAGE_KEY, String(speed));
@@ -29,8 +62,8 @@ function saveSpeed(speed: number) {
   }
 }
 
-/** Custom controls for a story's narration: big play/pause, ±10s skips, a
- *  seek bar, and always-visible speed chips sized for thumbs. */
+/** One-line controls for a story's narration: ±10s skips, play/pause, a seek
+ *  bar, the time, and a speed button that steps through the speeds. */
 export function StoryAudioControls({ src, onError }: { src: string; onError: () => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -91,12 +124,13 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
   }
 
   return (
-    <div className="space-y-2 rounded-box bg-base-200/60 p-3">
+    <div className="flex items-center gap-0.5 rounded-box bg-base-200/60 py-1 ps-1 pe-1 sm:gap-1">
       <audio
         ref={audioRef}
         src={src}
         preload="auto"
         className="hidden"
+        onError={onError}
         onPlay={(event) => {
           claimActiveAudio(event.currentTarget);
           setPlaying(true);
@@ -109,7 +143,6 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
           releaseActiveAudio(event.currentTarget);
           setPlaying(false);
         }}
-        onError={onError}
         onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
         onDurationChange={(event) => {
           const { duration: next } = event.currentTarget;
@@ -117,44 +150,21 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         }}
       />
 
-      <div className="flex items-center gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={`Back ${SKIP_SECONDS} seconds`}
-          onPress={() => skip(-SKIP_SECONDS)}
-          className="size-11"
-        >
-          <RotateCcw className="size-5" aria-hidden strokeWidth={1.5} />
-        </Button>
-        <Button
-          type="button"
-          size="icon"
-          aria-label={playing ? "Pause" : "Play"}
-          onPress={togglePlay}
-          className="btn-circle size-12"
-        >
-          {playing ? (
-            <Pause className="size-5 fill-current" aria-hidden strokeWidth={1.5} />
-          ) : (
-            <Play className="size-5 translate-x-px fill-current" aria-hidden strokeWidth={1.5} />
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={`Forward ${SKIP_SECONDS} seconds`}
-          onPress={() => skip(SKIP_SECONDS)}
-          className="size-11"
-        >
-          <RotateCw className="size-5" aria-hidden strokeWidth={1.5} />
-        </Button>
-        <span className="ms-auto text-xs text-base-content/60 tabular-nums">
-          {formatPlaybackTime(currentTime)} / {formatPlaybackTime(duration)}
-        </span>
-      </div>
+      <SkipButton direction="back" onPress={() => skip(-SKIP_SECONDS)} />
+      <Button
+        type="button"
+        size="icon"
+        aria-label={playing ? "Pause" : "Play"}
+        onPress={togglePlay}
+        className="btn-circle size-9 shrink-0 sm:size-10"
+      >
+        {playing ? (
+          <Pause className="size-4 fill-current" aria-hidden strokeWidth={1.5} />
+        ) : (
+          <Play className="size-4 translate-x-px fill-current" aria-hidden strokeWidth={1.5} />
+        )}
+      </Button>
+      <SkipButton direction="forward" onPress={() => skip(SKIP_SECONDS)} />
 
       <input
         type="range"
@@ -166,33 +176,22 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         value={Math.min(currentTime, duration || 0)}
         disabled={!duration}
         onChange={(event) => seekTo(Number(event.target.value))}
-        className="range range-sm range-primary my-2.5 w-full md:range-xs md:my-0"
+        className="range range-xs range-primary mx-1.5 min-w-0 flex-1"
       />
-
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-base-content/60">Speed</span>
-        <ToggleGroup
-          aria-label="Playback speed"
-          selectionMode="single"
-          disallowEmptySelection
-          selectedKeys={new Set([String(speed)])}
-          onSelectionChange={(keys) => {
-            const next = Number(keys.values().next().value);
-            if ((SPEEDS as readonly number[]).includes(next)) changeSpeed(next);
-          }}
-          size="sm"
-        >
-          {SPEEDS.map((option) => (
-            <ToggleGroupItem
-              key={option}
-              id={String(option)}
-              className="min-h-11 min-w-12 px-2 text-xs tabular-nums data-selected:bg-primary/15 data-selected:text-primary md:min-h-8"
-            >
-              {option}×
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
-      </div>
+      <span className="shrink-0 text-xs text-base-content/60 tabular-nums max-[359px]:hidden">
+        {formatPlaybackTime(currentTime)}
+        <span className="max-sm:hidden"> / {formatPlaybackTime(duration)}</span>
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        aria-label={`Playback speed ${speed}×, change speed`}
+        onPress={() => changeSpeed(nextSpeed(speed))}
+        className="h-9 min-w-10 shrink-0 px-1 text-xs font-semibold tabular-nums sm:h-10"
+      >
+        {speed}×
+      </Button>
     </div>
   );
 }
