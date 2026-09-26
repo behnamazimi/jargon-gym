@@ -7,6 +7,7 @@ import {
 import { redirect } from "next/navigation";
 import { ReadPage } from "@/components/jargon/read/read-page";
 import { getSessionUser } from "@/lib/auth/require-session";
+import { DEFAULT_READ_OPTIONS, getReadOptions, type ReadOptions } from "@/lib/read/options";
 import { hasUnreadStory } from "@/lib/stories/repository";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { StudyCollection } from "@/lib/study/types";
@@ -24,14 +25,21 @@ type PageProps = {
   }>;
 };
 
-/** An unread story makes Stories the default Read tab; the Cards tab links
- *  here with `view=cards` so it can still be opened. */
-async function redirectToUnreadStory(domain: string | undefined) {
+/** Stories is the default Read tab when the user asked for it, or while an
+ *  unread story exists. The Cards tab links here with `view=cards` so it can
+ *  still be opened. */
+async function redirectToStories(domain: string | undefined, options: ReadOptions) {
   const { user } = await getSessionUser();
-  if (!user || !(await hasUnreadStory(createAdminClient(), user.id))) return;
+  if (!user) return;
+  if (!options.storiesDefault && !(await hasUnreadStory(createAdminClient(), user.id))) return;
   redirect(
     domain ? `/jargon/read/stories?domain=${encodeURIComponent(domain)}` : "/jargon/read/stories",
   );
+}
+
+async function loadReadOptions(): Promise<ReadOptions> {
+  const { supabase, user } = await getSessionUser();
+  return user ? getReadOptions(supabase, user.id) : DEFAULT_READ_OPTIONS;
 }
 
 function resolveReadCollectionId(
@@ -58,6 +66,8 @@ function LoginPrompt() {
 export default async function JargonReadPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
+  const options = await loadReadOptions();
+
   if (params.termId) {
     const setup = await getReadSetupData();
     if ("error" in setup) return <LoginPrompt />;
@@ -72,11 +82,12 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
         collections={setup.collections}
         domainId={domainId}
         narrationAccess={setup.narrationAccess}
+        options={options}
       />
     );
   }
 
-  if (params.view !== "cards") await redirectToUnreadStory(params.domain);
+  if (params.view !== "cards") await redirectToStories(params.domain, options);
 
   // No deep link: the domain is already resolvable from the URL (or
   // defaults to "all"), so fire the feed batch next to setup instead of
@@ -102,6 +113,7 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
       collections={setup.collections}
       domainId={domainId}
       narrationAccess={setup.narrationAccess}
+      options={options}
     />
   );
 }

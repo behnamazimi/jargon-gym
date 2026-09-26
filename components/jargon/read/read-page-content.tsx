@@ -30,6 +30,7 @@ export function ReadQueueContent({
   collections,
   selectedCollectionId,
   narrationAccess,
+  hideQuestion,
 }: {
   queue: ReadQueue;
   term: ReadQueue["currentTerm"];
@@ -37,6 +38,7 @@ export function ReadQueueContent({
   collections: StudyCollection[];
   selectedCollectionId: string;
   narrationAccess: boolean;
+  hideQuestion: boolean;
 }) {
   if (queue.status === "caughtUp") {
     return (
@@ -55,6 +57,7 @@ export function ReadQueueContent({
         canGoBack={queue.canGoBack}
         isPending={queue.isFetchingMore}
         narrationAccess={narrationAccess}
+        hideQuestion={hideQuestion}
         onReveal={queue.reveal}
         onPrevious={queue.goPrevious}
         onNext={queue.goNext}

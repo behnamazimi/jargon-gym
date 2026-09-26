@@ -191,7 +191,9 @@ the same `recordRead` Cards uses, and only once per piece (`stories.read_at`
 is set at most once). Diminishing returns on familiarity apply exactly as
 they do for cards.
 
-Cards only count a read after you reveal the definition. Stories doesn't
+Cards only count a read after you reveal the definition (or, with the
+"Show definitions right away" Read option on, as soon as the card is shown,
+the same rule focus mode uses). Stories doesn't
 hide anything, so the piece carries a glossary of the definitions for every
 term in it, and the reads are recorded when you mark the piece read, not
 when it's generated.
