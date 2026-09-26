@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { StoryFooter } from "@/components/jargon/read/stories/story-footer";
@@ -8,6 +8,7 @@ import { StoryMarkKnown } from "@/components/jargon/read/stories/story-mark-know
 import { StoryNarrationPlayer } from "@/components/jargon/read/stories/story-narration-player";
 import { StoryTermPopover } from "@/components/jargon/read/stories/story-term-popover";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toParagraphs } from "@/lib/stories/paragraphs";
 import { findFormat, findTone } from "@/lib/stories/styles";
 import type { Story, StoryTerm } from "@/lib/stories/types";
@@ -93,48 +94,57 @@ function StoryBody({ story, termById }: { story: Story; termById: Map<string, St
 
 function StoryGlossary({ story, termById }: { story: Story; termById: Map<string, StoryTerm> }) {
   const newTermIds = new Set(story.newTermIds);
+  const occurrences = [...firstOccurrences(story)];
 
   return (
-    <section aria-labelledby="story-glossary-title" className="border-t border-base-300/60 pt-4">
-      <h3
-        id="story-glossary-title"
-        className="m-0 text-xs font-semibold tracking-wide text-base-content/50 uppercase"
-      >
-        Terms in this piece
-      </h3>
-      <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
-        {[...firstOccurrences(story)].map(([termId, surface]) => {
-          const term = termById.get(termId);
-          if (!term) {
+    <Collapsible className="group border-t border-base-300/60 pt-2">
+      <CollapsibleTrigger className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] cursor-pointer items-center justify-between gap-3 rounded-lg border-none bg-transparent px-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span className="text-xs font-semibold tracking-wide text-base-content/50 uppercase">
+          Terms in this piece ({occurrences.length})
+        </span>
+        <ChevronDown
+          className="size-4 shrink-0 text-base-content/50 transition-transform duration-200 group-data-[expanded]:rotate-180"
+          aria-hidden
+          strokeWidth={1.5}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
+          {occurrences.map(([termId, surface]) => {
+            const term = termById.get(termId);
+            if (!term) {
+              return (
+                <li key={termId} className="py-3 text-sm text-base-content/50">
+                  <span className="font-semibold">{surface}</span> · No longer available
+                </li>
+              );
+            }
             return (
-              <li key={termId} className="py-3 text-sm text-base-content/50">
-                <span className="font-semibold">{surface}</span> · No longer available
+              <li key={termId} className="py-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="m-0 min-w-0 text-sm font-semibold text-base-content">{term.term}</p>
+                  <div className="-me-1.5 flex shrink-0 items-center gap-0.5">
+                    {newTermIds.has(termId) ? (
+                      <StoryMarkKnown termId={termId} term={term.term} />
+                    ) : null}
+                    <Link
+                      href={termHref(termId, story)}
+                      aria-label={`Open ${term.term}`}
+                      className="btn btn-ghost btn-square btn-xs size-8 text-base-content/50"
+                    >
+                      <ArrowUpRight className="size-4" aria-hidden strokeWidth={1.5} />
+                    </Link>
+                  </div>
+                </div>
+                <p className="m-0 text-sm leading-relaxed text-base-content/65">
+                  {term.definition}
+                </p>
               </li>
             );
-          }
-          return (
-            <li key={termId} className="py-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="m-0 min-w-0 text-sm font-semibold text-base-content">{term.term}</p>
-                <div className="-me-1.5 flex shrink-0 items-center gap-0.5">
-                  {newTermIds.has(termId) ? (
-                    <StoryMarkKnown termId={termId} term={term.term} />
-                  ) : null}
-                  <Link
-                    href={termHref(termId, story)}
-                    aria-label={`Open ${term.term}`}
-                    className="btn btn-ghost btn-square btn-xs size-8 text-base-content/50"
-                  >
-                    <ArrowUpRight className="size-4" aria-hidden strokeWidth={1.5} />
-                  </Link>
-                </div>
-              </div>
-              <p className="m-0 text-sm leading-relaxed text-base-content/65">{term.definition}</p>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+          })}
+        </ul>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
