@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { normalizeStory, StoryGenerationError, surfaceMatchesTerm } from "./normalize";
+import { StoryGenerationError } from "./errors";
+import { normalizeStory as normalizeWithLength, surfaceMatchesTerm } from "./normalize";
 
 const TERMS = [
   { id: "t1", term: "Idempotency", definition: "d" },
@@ -7,6 +8,14 @@ const TERMS = [
   { id: "t3", term: "Backpressure", definition: "d" },
   { id: "t4", term: "Sharding", definition: "d" },
 ];
+
+const LENGTH = { min: 70, max: 120, unit: "words" as const };
+
+type NormalizeArgs = Parameters<typeof normalizeWithLength>;
+
+function normalizeStory(payload: NormalizeArgs[0], terms: NormalizeArgs[1]) {
+  return normalizeWithLength(payload, terms, LENGTH);
+}
 
 const FILLER = Array.from({ length: 90 }, (_, index) => `word${index}`).join(" ");
 
@@ -222,6 +231,21 @@ describe("normalizeStory", () => {
   it("rejects a missing title", () => {
     expect(() => normalizeStory({ ...payload([]), title: "  " }, TERMS)).toThrow(
       StoryGenerationError,
+    );
+  });
+
+  it("checks the length against the asked-for range", () => {
+    const story = payload([
+      { text: "idempotency", termId: "t1" },
+      { text: " " },
+      { text: "sharding", termId: "t4" },
+      { text: " " },
+      { text: "backpressure", termId: "t3" },
+    ]);
+    // 93 words: inside 0.6 × 70 to 1.3 × 120, outside a longer asked-for range.
+    expect(() => normalizeWithLength(story, TERMS, LENGTH)).not.toThrow();
+    expect(() => normalizeWithLength(story, TERMS, { min: 200, max: 260, unit: "words" })).toThrow(
+      /93 words/,
     );
   });
 });

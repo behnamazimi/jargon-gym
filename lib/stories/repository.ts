@@ -9,18 +9,15 @@ import {
   type StoryLevels,
   type StoryTerm,
   type StorySegment,
-  type StoryVote,
 } from "./types";
 
 type Client = SupabaseClient<Database>;
 type StoryRow = Database["public"]["Tables"]["stories"]["Row"];
 
-const RECENT_VOTE_LIMIT = 50;
-
 const STORY_COLUMNS =
   "id, domain_id, language, format, tone, reading_level, cefr_level, outline, title, segments, term_ids, new_term_ids, vote, read_at";
 
-function toVote(value: number | null): -1 | 1 | null {
+export function toVote(value: number | null): -1 | 1 | null {
   return value === 1 || value === -1 ? value : null;
 }
 
@@ -181,24 +178,6 @@ export async function getCollection(
     .maybeSingle();
   if (error) throw error;
   return data ? { name: data.name, language: parseLanguage(data.language) } : null;
-}
-
-export async function loadRecentVotes(admin: Client, userId: string): Promise<StoryVote[]> {
-  const { data, error } = await admin
-    .from("stories")
-    .select("format, tone, vote, created_at")
-    .eq("user_id", userId)
-    .not("vote", "is", null)
-    .order("created_at", { ascending: false })
-    .limit(RECENT_VOTE_LIMIT);
-  if (error) throw error;
-
-  return (data ?? []).flatMap((row) => {
-    const vote = toVote(row.vote);
-    return vote
-      ? [{ format: row.format, tone: row.tone, vote, createdAt: new Date(row.created_at) }]
-      : [];
-  });
 }
 
 export async function setVote(

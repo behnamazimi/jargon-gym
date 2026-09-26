@@ -30,8 +30,9 @@ guessing from the code alone.
 
 # Stories
 
-Read's Stories mode lives in `lib/stories/` (prompt, generation, style
-picker, repository, narration) with its page, actions, and components under
+Read's Stories mode lives in `lib/stories/` (prompt, generation, parsing
+the model's plain-text reply in `markup.ts`, style and setting pickers,
+repository, narration) with its page, actions, and components under
 `app/(private)/jargon/read/stories/` and `components/jargon/read/stories/`.
 It credits reads through `recordRead` like Cards; see the Stories section in
 [docs/trace.md](docs/trace.md).

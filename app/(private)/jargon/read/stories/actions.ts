@@ -10,11 +10,12 @@ import {
   dismissUnreadStories,
   getCollection,
   insertStory,
-  loadRecentVotes,
   markStoryRead,
   setVote,
 } from "@/lib/stories/repository";
 import { savePrefs } from "@/lib/stories/prefs";
+import { loadRecentTitles, loadRecentVotes } from "@/lib/stories/recent";
+import { pickSetting } from "@/lib/stories/settings";
 import { pickStyle } from "@/lib/stories/style-picker";
 import { findFormat, findTone } from "@/lib/stories/styles";
 import {
@@ -68,10 +69,11 @@ export async function generateStoryAction(input: {
 
     await savePrefs(admin, userId, domainId, levels);
 
-    const [cards, collection, votes] = await Promise.all([
+    const [cards, collection, votes, recentTitles] = await Promise.all([
       pickReadTermsForUser(admin, userId, { domainIds: [domainId] }, STORY_MAX_TERMS),
       getCollection(admin, domainId),
       loadRecentVotes(admin, userId),
+      loadRecentTitles(admin, userId, domainId),
     ]);
     if (!collection || cards.length < STORY_MIN_TERMS) return { error: NOT_ENOUGH_TERMS_ERROR };
 
@@ -95,6 +97,8 @@ export async function generateStoryAction(input: {
       readingLevel,
       cefrLevel,
       outline,
+      setting: pickSetting(format.id),
+      recentTitles,
     });
 
     const usedIds = new Set(generated.termIds);

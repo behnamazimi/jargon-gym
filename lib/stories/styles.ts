@@ -16,13 +16,13 @@ export const STORY_FORMATS: readonly StyleOption[] = [
   {
     id: "incident-postmortem",
     label: "Incident postmortem",
-    prompt: "an incident postmortem with a summary, timeline, and lessons learned",
+    prompt: "a short incident postmortem: what happened, why, and what changes now",
   },
   { id: "email", label: "Email", prompt: "a work email from one colleague to another" },
   {
     id: "meeting-notes",
     label: "Meeting notes",
-    prompt: "meeting notes with short sections for discussion, decisions, and next steps",
+    prompt: "short meeting notes covering the discussion, decisions, and next steps",
   },
   {
     id: "interview",
@@ -34,9 +34,13 @@ export const STORY_FORMATS: readonly StyleOption[] = [
 export const STORY_TONES: readonly StyleOption[] = [
   { id: "casual", label: "Casual", prompt: "casual and friendly" },
   { id: "neutral", label: "Neutral", prompt: "neutral and clear" },
-  { id: "formal", label: "Formal", prompt: "formal and precise" },
+  { id: "formal", label: "Formal", prompt: "formal and precise, but still warm and readable" },
   { id: "humorous", label: "Humorous", prompt: "light and humorous" },
-  { id: "dramatic", label: "Dramatic", prompt: "dramatic, with some tension" },
+  {
+    id: "dramatic",
+    label: "Dramatic",
+    prompt: "tense and gripping, but believable (no melodrama)",
+  },
 ];
 
 export function findFormat(id: string): StyleOption | undefined {

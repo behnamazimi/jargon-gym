@@ -2,8 +2,10 @@ import { APICallError, generateText, RetryError } from "ai";
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
+import { storyLength } from "./length";
 import { parseStoryText } from "./markup";
-import { normalizeStory, StoryGenerationError } from "./normalize";
+import { StoryGenerationError } from "./errors";
+import { normalizeStory } from "./normalize";
 import { buildStoryPrompt } from "./prompt";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, ReadingLevel, StorySegment, StoryTerm } from "./types";
@@ -21,6 +23,8 @@ type GenerateStoryInput = {
   readingLevel: ReadingLevel;
   cefrLevel: CefrLevel;
   outline: string | null;
+  setting: string;
+  recentTitles: string[];
 };
 
 type GeneratedStory = { title: string; segments: StorySegment[]; termIds: string[] };
@@ -52,12 +56,15 @@ function toProviderError(error: unknown): StoryProviderError {
 // Plain text rather than a JSON object: in JSON output the model has been
 // dropping the space after sentence-ending periods ("first.What").
 async function requestStory(input: GenerateStoryInput): Promise<GeneratedStory> {
+  const length = storyLength(input.terms.length, input.cefrLevel, input.language);
+  const { system, prompt } = buildStoryPrompt({ ...input, length });
   const { text } = await generateText({
     model: createModel(input.provider, input.apiKey),
-    prompt: buildStoryPrompt(input),
+    system,
+    prompt,
     maxRetries: 0,
   });
-  return normalizeStory(parseStoryText(text, input.terms), input.terms);
+  return normalizeStory(parseStoryText(text, input.terms), input.terms, length);
 }
 
 /** One retry, only for failures a second attempt can plausibly fix: a

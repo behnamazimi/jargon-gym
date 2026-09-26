@@ -20,7 +20,7 @@ export function StoryTermPopover({ text, term }: { text: string; term: StoryTerm
 
   return (
     <DialogTrigger>
-      <AriaButton className="cursor-pointer rounded-sm font-medium underline decoration-primary decoration-2 underline-offset-4 outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-primary/60">
+      <AriaButton className="cursor-pointer rounded-sm font-medium underline decoration-primary/70 decoration-2 underline-offset-4 outline-none transition-colors hover:text-primary hover:decoration-primary focus-visible:ring-2 focus-visible:ring-primary/60">
         {text}
       </AriaButton>
       <Popover
