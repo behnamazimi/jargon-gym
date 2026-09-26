@@ -75,7 +75,7 @@ export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
         controls
         src={src}
         preload="auto"
-        className="h-10 w-full"
+        className="h-9 w-full"
         onPlay={(event) => claimActiveAudio(event.currentTarget)}
         onPause={(event) => releaseActiveAudio(event.currentTarget)}
         onEnded={(event) => releaseActiveAudio(event.currentTarget)}
@@ -85,14 +85,14 @@ export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
 
   const message = STATUS_MESSAGES[status];
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       <Button
         type="button"
-        size="sm"
-        variant="outline"
+        size="xs"
+        variant="ghost"
         onPress={() => void prepare()}
         isDisabled={status === "preparing" || status === "capped"}
-        className="max-md:min-h-11"
+        className="-ms-2 h-8 px-2 text-xs font-medium text-base-content/70"
       >
         {status === "preparing" ? (
           <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />

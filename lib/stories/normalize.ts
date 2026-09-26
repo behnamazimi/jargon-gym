@@ -1,3 +1,4 @@
+import { flattenParagraphs, pushSegment, splitLongParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./schema";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
 
@@ -26,37 +27,32 @@ export function surfaceMatchesTerm(surface: string, term: string): boolean {
   });
 }
 
-function pushSegment(segments: StorySegment[], segment: StorySegment) {
-  const last = segments[segments.length - 1];
-  if (!segment.termId && last && !last.termId) {
-    last.text += segment.text;
-    return;
-  }
-  segments.push(segment);
-}
-
 export function normalizeStory(
   payload: StoryGenerationPayload,
   terms: StoryTerm[],
 ): { title: string; segments: StorySegment[]; termIds: string[] } {
   const termById = new Map(terms.map((term) => [term.id, term]));
-  const segments: StorySegment[] = [];
   const used = new Set<string>();
+  const paragraphs: StorySegment[][] = [];
 
-  for (const raw of payload.segments) {
-    if (!raw.text) continue;
-    const term = raw.termId ? termById.get(raw.termId) : undefined;
-    const core = raw.text.trim();
-    if (term && core && surfaceMatchesTerm(core, term.term)) {
-      const start = raw.text.indexOf(core);
-      if (start > 0) pushSegment(segments, { text: raw.text.slice(0, start) });
-      pushSegment(segments, { text: core, termId: term.id });
-      const rest = raw.text.slice(start + core.length);
-      if (rest) pushSegment(segments, { text: rest });
-      used.add(term.id);
-    } else {
-      pushSegment(segments, { text: raw.text });
+  for (const rawParagraph of payload.paragraphs) {
+    const segments: StorySegment[] = [];
+    for (const raw of rawParagraph.segments) {
+      if (!raw.text) continue;
+      const term = raw.termId ? termById.get(raw.termId) : undefined;
+      const core = raw.text.trim();
+      if (term && core && surfaceMatchesTerm(core, term.term)) {
+        const start = raw.text.indexOf(core);
+        if (start > 0) pushSegment(segments, { text: raw.text.slice(0, start) });
+        pushSegment(segments, { text: core, termId: term.id });
+        const rest = raw.text.slice(start + core.length);
+        if (rest) pushSegment(segments, { text: rest });
+        used.add(term.id);
+      } else {
+        pushSegment(segments, { text: raw.text });
+      }
     }
+    for (const block of splitLongParagraph(segments)) paragraphs.push(block);
   }
 
   const termIds = terms.map((term) => term.id).filter((id) => used.has(id));
@@ -64,6 +60,7 @@ export function normalizeStory(
     throw new StoryGenerationError(`Only ${termIds.length} of the terms made it into the story.`);
   }
 
+  const segments = flattenParagraphs(paragraphs);
   const wordCount = words(segments.map((segment) => segment.text).join("")).length;
   if (wordCount < MIN_WORDS || wordCount > MAX_WORDS) {
     throw new StoryGenerationError(`The story came back at ${wordCount} words.`);

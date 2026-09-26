@@ -55,10 +55,10 @@ export function buildStoryPrompt(input: {
     "Rules:",
     "- Use every term above at least once, in a way that matches its meaning. Use as many of them more than once as reads naturally.",
     "- Do not define the terms outright; the reader sees a glossary separately. Context should still make sense of them.",
-    "- 250 to 400 words. Separate paragraphs with a blank line.",
+    "- 250 to 400 words, in 3 to 6 short paragraphs of 2 to 4 sentences each. In a conversation (a thread, an interview), every message or turn is its own paragraph.",
     `- Reading level. ${READING_LEVEL_GUIDANCE[input.readingLevel]}`,
     `- Language level. ${CEFR_GUIDANCE[input.cefrLevel]}`,
     "",
-    "Output: a short title, and the piece split into segments in reading order. Put each occurrence of a listed term in its own segment with that term's id as termId; the segment text is the exact words used in the piece (inflected forms are fine). All other text goes in segments without a termId. Concatenating every segment's text must give the full piece.",
+    "Output: a short title, and the piece as a list of paragraphs in reading order. Each paragraph is a list of segments. Put each occurrence of a listed term in its own segment with that term's id as termId; the segment text is the exact words used in the piece (inflected forms are fine). All other text goes in segments without a termId. Concatenating a paragraph's segments must give that paragraph's full text.",
   ].join("\n");
 }
