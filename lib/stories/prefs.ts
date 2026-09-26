@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { parseCefrLevel, parseReadingLevel, type StoryLevels } from "./types";
+import { parseCefrLevel, parsePieceLength, parseReadingLevel, type StoryLevels } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -11,7 +11,7 @@ export async function loadPrefs(
   const [prefs, settings] = await Promise.all([
     admin
       .from("story_collection_prefs")
-      .select("domain_id, reading_level, cefr_level")
+      .select("domain_id, reading_level, cefr_level, piece_length")
       .eq("user_id", userId),
     admin.from("user_settings").select("story_last_domain_id").eq("user_id", userId).maybeSingle(),
   ]);
@@ -23,6 +23,7 @@ export async function loadPrefs(
     levelsByDomain[row.domain_id] = {
       readingLevel: parseReadingLevel(row.reading_level),
       cefrLevel: parseCefrLevel(row.cefr_level),
+      pieceLength: parsePieceLength(row.piece_length),
     };
   }
   return { lastDomainId: settings.data?.story_last_domain_id ?? null, levelsByDomain };
@@ -42,6 +43,7 @@ export async function savePrefs(
         domain_id: domainId,
         reading_level: levels.readingLevel,
         cefr_level: levels.cefrLevel,
+        piece_length: levels.pieceLength,
         updated_at: now,
       },
       { onConflict: "user_id,domain_id" },

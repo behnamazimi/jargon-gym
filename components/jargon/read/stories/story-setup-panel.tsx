@@ -22,20 +22,15 @@ import type { StoryCollection } from "@/lib/stories/setup";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
 import {
   CEFR_LEVELS,
-  READING_LEVELS,
-  STORY_MAX_TERMS,
   STORY_MIN_TERMS,
   STORY_OUTLINE_MAX,
   type CefrLevel,
-  type ReadingLevel,
 } from "@/lib/stories/types";
-import { cn } from "@/lib/utils";
-
-const READING_LEVEL_LABELS: Record<ReadingLevel, { label: string; hint: string }> = {
-  plain: { label: "Plain", hint: "Context makes each term guessable." },
-  professional: { label: "Professional", hint: "Help only where a term would be unclear." },
-  expert: { label: "Expert", hint: "Terms used as an insider would, no extra help." },
-};
+import { termsForLength } from "@/lib/stories/length";
+import {
+  PieceLengthField,
+  ReadingLevelField,
+} from "@/components/jargon/read/stories/story-setup-fields";
 
 const CEFR_HINTS: Record<CefrLevel, string> = {
   A1: "A1 · very short, basic sentences",
@@ -51,40 +46,6 @@ function collectionLabel(collection: CollectionSelectOption) {
   return count < STORY_MIN_TERMS
     ? `${collection.name} (needs ${STORY_MIN_TERMS}+ terms)`
     : `${collection.name} (${count})`;
-}
-
-function ReadingLevelField({
-  value,
-  onChange,
-}: {
-  value: ReadingLevel;
-  onChange: (level: ReadingLevel) => void;
-}) {
-  return (
-    <fieldset className="flex flex-col gap-2 border-0 p-0">
-      <legend className="mb-2 text-sm font-medium leading-none">Term support</legend>
-      <div className="flex gap-2">
-        {READING_LEVELS.map((level) => (
-          <Button
-            key={level}
-            type="button"
-            variant="outline"
-            onPress={() => onChange(level)}
-            aria-pressed={value === level}
-            className={cn(
-              "min-h-11 flex-1 px-2",
-              value === level && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
-            )}
-          >
-            {READING_LEVEL_LABELS[level].label}
-          </Button>
-        ))}
-      </div>
-      <p className="m-0 text-xs leading-relaxed text-base-content/60">
-        {READING_LEVEL_LABELS[value].hint}
-      </p>
-    </fieldset>
-  );
 }
 
 function CefrLevelField({
@@ -180,7 +141,7 @@ export function StorySetupPanel({
   const selected = collections.find((collection) => collection.id === session.domainId);
   const eligibleCount = selected?.eligibleCount ?? 0;
   const canGenerate = llmConfigured && eligibleCount >= STORY_MIN_TERMS;
-  const termCount = Math.min(eligibleCount, STORY_MAX_TERMS);
+  const termCount = Math.min(eligibleCount, termsForLength(session.pieceLength));
 
   return (
     <StudySetupPanel
@@ -230,6 +191,7 @@ export function StorySetupPanel({
 
       <ReadingLevelField value={session.readingLevel} onChange={session.setReadingLevel} />
       <CefrLevelField value={session.cefrLevel} onChange={session.setCefrLevel} />
+      <PieceLengthField value={session.pieceLength} onChange={session.setPieceLength} />
       <OutlineField value={session.outline} onChange={session.setOutline} />
     </StudySetupPanel>
   );

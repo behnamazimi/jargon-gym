@@ -24,6 +24,7 @@ const INPUT = {
   tone: findTone("neutral")!,
   readingLevel: "professional" as const,
   cefrLevel: "B2" as const,
+  pieceLength: "medium" as const,
   outline: null,
   setting: "a rainy weekend at home",
   recentTitles: [],

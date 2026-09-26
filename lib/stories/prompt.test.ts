@@ -18,7 +18,7 @@ const BASE: PromptInput = {
   outline: null,
   setting: "a rainy weekend at home",
   recentTitles: [],
-  length: { min: 70, max: 120, unit: "words" },
+  length: { min: 70, max: 120, unit: "words", paragraphs: "2 or 3", turns: 8 },
 };
 
 function userPrompt(overrides: Partial<PromptInput> = {}) {
@@ -28,7 +28,7 @@ function userPrompt(overrides: Partial<PromptInput> = {}) {
 describe("buildStoryPrompt", () => {
   it("opens with who the reader is and what success looks like", () => {
     expect(userPrompt()).toMatch(
-      /^You're writing a short reading passage for someone learning the vocabulary of "Distributed Systems", reading in English at CEFR B1/,
+      /^You're writing a short reading passage for someone learning the terms in their collection "Distributed Systems", reading in English at CEFR B1/,
     );
   });
 
@@ -58,11 +58,11 @@ describe("buildStoryPrompt", () => {
   it("phrases level rules for any language and in the story's length unit", () => {
     const prompt = userPrompt({
       cefrLevel: "A1",
-      length: { min: 140, max: 240, unit: "characters" },
+      length: { min: 140, max: 240, unit: "characters", paragraphs: "3 to 5", turns: 12 },
     });
     expect(prompt).toContain('everyday equivalents of "and" and "but"');
     expect(prompt).toContain("about 8 to 16 characters");
-    expect(prompt).toContain("Length: 140 to 240 characters, in 2 to 4 paragraphs");
+    expect(prompt).toContain("Length: 140 to 240 characters, in 3 to 5 paragraphs");
     expect(prompt).not.toContain("Present tense only");
   });
 
@@ -86,6 +86,11 @@ describe("buildStoryPrompt", () => {
     expect(prompt).not.toContain("rainy weekend");
   });
 
+  it("takes the paragraph and turn counts from the picked length", () => {
+    expect(userPrompt()).toContain("in 2 or 3 paragraphs");
+    expect(userPrompt()).toContain("per message, turn or section, up to 8.");
+  });
+
   it("keeps the fixed rules in a system prompt that never changes", () => {
     const { system } = buildStoryPrompt(BASE);
     expect(buildStoryPrompt({ ...BASE, cefrLevel: "A1", language: "nl" }).system).toBe(system);
@@ -97,5 +102,9 @@ describe("buildStoryPrompt", () => {
     expect(system).toContain("[[the words used|term number]]");
     expect(system).toContain("no introduction, notes about the piece, length count or code fences");
     expect(system).not.toContain("Distributed Systems");
+    expect(system).toContain(
+      "the jargon of a field they work or study in or the words of a new language",
+    );
+    expect(system).not.toContain("learning vocabulary");
   });
 });

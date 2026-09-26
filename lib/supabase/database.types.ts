@@ -374,6 +374,7 @@ export type Database = {
           narration_status: string;
           new_term_ids: string[];
           outline: string | null;
+          piece_length: string;
           read_at: string | null;
           reading_level: string;
           segments: Json;
@@ -396,6 +397,7 @@ export type Database = {
           narration_status?: string;
           new_term_ids?: string[];
           outline?: string | null;
+          piece_length?: string;
           read_at?: string | null;
           reading_level: string;
           segments: Json;
@@ -418,6 +420,7 @@ export type Database = {
           narration_status?: string;
           new_term_ids?: string[];
           outline?: string | null;
+          piece_length?: string;
           read_at?: string | null;
           reading_level?: string;
           segments?: Json;
@@ -448,6 +451,7 @@ export type Database = {
         Row: {
           cefr_level: string;
           domain_id: string;
+          piece_length: string;
           reading_level: string;
           updated_at: string;
           user_id: string;
@@ -455,6 +459,7 @@ export type Database = {
         Insert: {
           cefr_level: string;
           domain_id: string;
+          piece_length?: string;
           reading_level: string;
           updated_at?: string;
           user_id: string;
@@ -462,6 +467,7 @@ export type Database = {
         Update: {
           cefr_level?: string;
           domain_id?: string;
+          piece_length?: string;
           reading_level?: string;
           updated_at?: string;
           user_id?: string;

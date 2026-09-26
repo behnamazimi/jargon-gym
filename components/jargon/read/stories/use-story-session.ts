@@ -14,8 +14,10 @@ import { voteFeedback } from "@/lib/stories/feedback";
 import type { StoriesSetupData } from "@/lib/stories/setup";
 import {
   DEFAULT_CEFR_LEVEL,
+  DEFAULT_PIECE_LENGTH,
   DEFAULT_READING_LEVEL,
   type CefrLevel,
+  type PieceLength,
   type ReadingLevel,
   type Story,
   type StoryLevels,
@@ -27,6 +29,7 @@ type StoryStep = "setup" | "generating" | "reading" | "error";
 const DEFAULT_LEVELS: StoryLevels = {
   readingLevel: DEFAULT_READING_LEVEL,
   cefrLevel: DEFAULT_CEFR_LEVEL,
+  pieceLength: DEFAULT_PIECE_LENGTH,
 };
 
 export function useStorySession(setup: StoriesSetupData) {
@@ -39,6 +42,7 @@ export function useStorySession(setup: StoriesSetupData) {
     (setup.initialDomainId && setup.levelsByDomain[setup.initialDomainId]) || DEFAULT_LEVELS;
   const [readingLevel, setReadingLevel] = useState<ReadingLevel>(initialLevels.readingLevel);
   const [cefrLevel, setCefrLevel] = useState<CefrLevel>(initialLevels.cefrLevel);
+  const [pieceLength, setPieceLength] = useState<PieceLength>(initialLevels.pieceLength);
   const [outline, setOutline] = useState("");
   const [story, setStory] = useState<Story | null>(setup.currentStory?.story ?? null);
   const [terms, setTerms] = useState<StoryTerm[]>(setup.currentStory?.terms ?? []);
@@ -55,6 +59,7 @@ export function useStorySession(setup: StoriesSetupData) {
     const levels = levelsByDomain[nextDomainId] ?? DEFAULT_LEVELS;
     setReadingLevel(levels.readingLevel);
     setCefrLevel(levels.cefrLevel);
+    setPieceLength(levels.pieceLength);
   }
 
   function showStory(result: Extract<StoryResult, { story: Story }>) {
@@ -70,7 +75,7 @@ export function useStorySession(setup: StoriesSetupData) {
     setStep("generating");
     setErrorMessage(null);
 
-    const levels = { readingLevel, cefrLevel };
+    const levels = { readingLevel, cefrLevel, pieceLength };
     const result = await generateStoryAction({ domainId, ...levels, outline });
     busyRef.current = false;
 
@@ -141,6 +146,8 @@ export function useStorySession(setup: StoriesSetupData) {
     setReadingLevel,
     cefrLevel,
     setCefrLevel,
+    pieceLength,
+    setPieceLength,
     outline,
     setOutline,
     story,

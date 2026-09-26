@@ -30,7 +30,7 @@ const CEFR_GUIDANCE: Record<CefrLevel, (unit: Unit) => string> = {
 
 // The same for every piece, so it goes in the system prompt.
 const STORY_SYSTEM_PROMPT = [
-  "You write short reading passages for people learning vocabulary. A glossary of the listed terms sits beside each passage, so never define a term outright. Write everything, including the title, in the reader's language.",
+  "You write short reading passages for people learning new terms, whether the jargon of a field they work or study in or the words of a new language. A glossary of the listed terms sits beside each passage, so never define a term outright. Write everything, including the title, in the reader's language.",
   "",
   "Each option in a request has one job:",
   "- Language level: the language around the terms (vocabulary, grammar, sentence length). The terms themselves may be above it.",
@@ -49,12 +49,6 @@ const STORY_SYSTEM_PROMPT = [
   "- The first line is a short title on its own. Then a blank line, then the piece, with a blank line between paragraphs.",
   "- Mark each occurrence of a listed term as [[the words used|term number]], using the term's number from the list, for example [[shards|2]]. The words are exactly as they appear in the sentence (inflected forms are fine); everything else, including spaces and punctuation, stays outside the brackets.",
 ].join("\n");
-
-// Beginner levels get more words for the same terms, in shorter sentences,
-// so they need room for an extra paragraph.
-function paragraphCount(cefrLevel: CefrLevel): string {
-  return cefrLevel === "A1" || cefrLevel === "A2" ? "2 to 4" : "2 or 3";
-}
 
 function languageName(language: DomainLanguage): string {
   return DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? "English";
@@ -95,19 +89,19 @@ function topicLines(input: StoryPromptInput): string[] {
 
 export function buildStoryPrompt(input: StoryPromptInput): { system: string; prompt: string } {
   const language = languageName(input.language);
-  const { min, max, unit } = input.length;
+  const { min, max, unit, paragraphs, turns } = input.length;
   const termLines = input.terms
     .map((term, index) => `${index + 1}. ${term.term}: ${term.definition}`)
     .join("\n");
 
   const prompt = [
-    `You're writing a short reading passage for someone learning the vocabulary of "${input.collectionName}", reading in ${language} at CEFR ${input.cefrLevel}, with a glossary beside the text. It succeeds if they can read it comfortably and see each term used correctly.`,
+    `You're writing a short reading passage for someone learning the terms in their collection "${input.collectionName}", reading in ${language} at CEFR ${input.cefrLevel}, with a glossary beside the text. It succeeds if they can read it comfortably and see each term used correctly.`,
     "",
     `Language level: ${CEFR_GUIDANCE[input.cefrLevel](unit)}`,
     `Term support: ${TERM_SUPPORT[input.readingLevel]}`,
     `Format: ${input.format.prompt}.`,
     `Tone: ${input.tone.prompt}.`,
-    `Length: ${min} to ${max} ${unit}, in ${paragraphCount(input.cefrLevel)} paragraphs. A thread, interview or notes may instead use one short paragraph per message, turn or section, up to 8.`,
+    `Length: ${min} to ${max} ${unit}, in ${paragraphs} paragraphs. A thread, interview or notes may instead use one short paragraph per message, turn or section, up to ${turns}.`,
     ...topicLines(input),
     "",
     "Terms:",

@@ -13,6 +13,7 @@ import {
   markStoryRead,
   setVote,
 } from "@/lib/stories/repository";
+import { termsForLength } from "@/lib/stories/length";
 import { savePrefs } from "@/lib/stories/prefs";
 import { loadRecentTitles, loadRecentVotes } from "@/lib/stories/recent";
 import { pickSetting } from "@/lib/stories/settings";
@@ -20,8 +21,8 @@ import { pickStyle } from "@/lib/stories/style-picker";
 import { findFormat, findTone } from "@/lib/stories/styles";
 import {
   CEFR_LEVELS,
+  PIECE_LENGTHS,
   READING_LEVELS,
-  STORY_MAX_TERMS,
   STORY_MIN_TERMS,
   STORY_OUTLINE_MAX,
   type Story,
@@ -39,6 +40,7 @@ const generateInputSchema = z.object({
   domainId: z.uuid(),
   readingLevel: z.enum(READING_LEVELS),
   cefrLevel: z.enum(CEFR_LEVELS),
+  pieceLength: z.enum(PIECE_LENGTHS),
   outline: z
     .string()
     .trim()
@@ -51,6 +53,7 @@ export async function generateStoryAction(input: {
   domainId: string;
   readingLevel: string;
   cefrLevel: string;
+  pieceLength: string;
   outline: string | null;
 }): Promise<StoryResult> {
   const auth = await requireAuthenticatedClient();
@@ -58,8 +61,8 @@ export async function generateStoryAction(input: {
 
   const parsed = generateInputSchema.safeParse(input);
   if (!parsed.success) return { error: "Check the story setup and try again." };
-  const { domainId, readingLevel, cefrLevel, outline } = parsed.data;
-  const levels = { readingLevel, cefrLevel };
+  const { domainId, readingLevel, cefrLevel, pieceLength, outline } = parsed.data;
+  const levels = { readingLevel, cefrLevel, pieceLength };
   const userId = auth.user.id;
   const admin = createAdminClient();
 
@@ -70,7 +73,7 @@ export async function generateStoryAction(input: {
     await savePrefs(admin, userId, domainId, levels);
 
     const [cards, collection, votes, recentTitles] = await Promise.all([
-      pickReadTermsForUser(admin, userId, { domainIds: [domainId] }, STORY_MAX_TERMS),
+      pickReadTermsForUser(admin, userId, { domainIds: [domainId] }, termsForLength(pieceLength)),
       getCollection(admin, domainId),
       loadRecentVotes(admin, userId),
       loadRecentTitles(admin, userId, domainId),
@@ -96,6 +99,7 @@ export async function generateStoryAction(input: {
       tone,
       readingLevel,
       cefrLevel,
+      pieceLength,
       outline,
       setting: pickSetting(format.id),
       recentTitles,
