@@ -30,7 +30,7 @@ describe("buildStoryPrompt", () => {
     expect(prompt).toContain("humorous");
     expect(prompt).toContain("Dutch");
     expect(prompt).toContain("Plain:");
-    expect(prompt).toContain("B1:");
+    expect(prompt).toContain("B1 (intermediate)");
   });
 
   it("falls back to the collection as the topic without an outline", () => {

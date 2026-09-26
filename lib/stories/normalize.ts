@@ -1,4 +1,4 @@
-import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
+import { flattenParagraphs, pushSegment, spaceRunOnWords, trimParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./schema";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
 
@@ -52,7 +52,7 @@ export function normalizeStory(
         pushSegment(segments, { text: raw.text });
       }
     }
-    const paragraph = trimParagraph(segments);
+    const paragraph = trimParagraph(spaceRunOnWords(segments));
     if (paragraph.length > 0) paragraphs.push(paragraph);
   }
 

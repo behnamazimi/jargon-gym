@@ -2,7 +2,7 @@
 
 import { Headphones, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
-import { claimActiveAudio, releaseActiveAudio } from "@/components/jargon/active-audio";
+import { StoryAudioControls } from "@/components/jargon/read/stories/story-audio-controls";
 import { Button } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
@@ -23,10 +23,9 @@ function sleep(ms: number) {
 
 /** Audio is generated on the first Listen tap, so the player asks the route
  *  to prepare it (retrying while another request is still generating), then
- *  hands the ready file to a native <audio> element for seeking. */
+ *  hands the ready file to the story's audio controls. */
 export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
   const [status, setStatus] = useState<PlayerStatus>("idle");
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const cancelledRef = useRef(false);
   const src = `/api/stories/${storyId}/narration`;
 
@@ -34,11 +33,6 @@ export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
     cancelledRef.current = false;
     return () => {
       cancelledRef.current = true;
-      const audio = audioRef.current;
-      if (audio) {
-        audio.pause();
-        releaseActiveAudio(audio);
-      }
     };
   });
 
@@ -67,21 +61,7 @@ export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
     if (!cancelledRef.current) setStatus("unavailable");
   }
 
-  if (status === "ready") {
-    return (
-      <audio
-        ref={audioRef}
-        autoPlay
-        controls
-        src={src}
-        preload="auto"
-        className="h-9 w-full"
-        onPlay={(event) => claimActiveAudio(event.currentTarget)}
-        onPause={(event) => releaseActiveAudio(event.currentTarget)}
-        onEnded={(event) => releaseActiveAudio(event.currentTarget)}
-      />
-    );
-  }
+  if (status === "ready") return <StoryAudioControls src={src} />;
 
   const message = STATUS_MESSAGES[status];
   return (
