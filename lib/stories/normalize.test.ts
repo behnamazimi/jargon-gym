@@ -134,6 +134,30 @@ describe("normalizeStory", () => {
     ).toThrow(/words/);
   });
 
+  it("rejects a story that is too long", () => {
+    const longFiller = Array.from({ length: 320 }, (_, index) => `word${index}`).join(" ");
+    expect(() =>
+      normalizeStory(
+        {
+          title: "t",
+          paragraphs: [
+            {
+              segments: [
+                { text: "idempotency", termId: "t1" },
+                { text: " " },
+                { text: "sharding", termId: "t4" },
+                { text: " " },
+                { text: "backpressure", termId: "t3" },
+                { text: ` ${longFiller}` },
+              ],
+            },
+          ],
+        },
+        TERMS,
+      ),
+    ).toThrow(/words/);
+  });
+
   it("joins paragraphs with a blank line", () => {
     const result = normalizeStory(
       {

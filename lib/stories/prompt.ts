@@ -55,7 +55,7 @@ export function buildStoryPrompt(input: {
     "Rules:",
     "- Use every term above at least once, in a way that matches its meaning. Use as many of them more than once as reads naturally.",
     "- Do not define the terms outright; the reader sees a glossary separately. Context should still make sense of them.",
-    "- 250 to 400 words, in 3 to 6 short paragraphs of 2 to 4 sentences each. In a conversation (a thread, an interview), every message or turn is its own paragraph.",
+    "- 125 to 200 words, in 2 to 4 short paragraphs of 2 to 3 sentences each. In a conversation (a thread, an interview), every message or turn is its own paragraph.",
     `- Reading level. ${READING_LEVEL_GUIDANCE[input.readingLevel]}`,
     `- Language level. ${CEFR_GUIDANCE[input.cefrLevel]}`,
     "",

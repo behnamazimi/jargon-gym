@@ -2,8 +2,8 @@ import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./schema";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
 
-const MIN_WORDS = 80;
-const MAX_WORDS = 600;
+const MIN_WORDS = 40;
+const MAX_WORDS = 300;
 
 export class StoryGenerationError extends Error {}
 
