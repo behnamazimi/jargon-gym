@@ -1,42 +1,18 @@
 "use client";
 
-import { BookOpenText, Check, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { FirstExposureKnownPrompt } from "@/components/jargon/first-exposure-known-prompt";
-import { QuizPanel, QuizPanelBody, QuizPanelHeader } from "@/components/jargon/quiz/quiz-ui";
+import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
+import { StoryFooter } from "@/components/jargon/read/stories/story-footer";
+import { StoryMarkKnown } from "@/components/jargon/read/stories/story-mark-known";
 import { StoryNarrationPlayer } from "@/components/jargon/read/stories/story-narration-player";
 import { StoryTermPopover } from "@/components/jargon/read/stories/story-term-popover";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Toggle } from "@/components/ui/toggle";
+import { toParagraphs } from "@/lib/stories/paragraphs";
 import { findFormat, findTone } from "@/lib/stories/styles";
-import type { Story, StorySegment, StoryTerm } from "@/lib/stories/types";
+import type { Story, StoryTerm } from "@/lib/stories/types";
 
-const READING_LEVEL_BADGES = { plain: "Plain", professional: "Professional", expert: "Expert" };
-const OUTLINE_PREVIEW_LENGTH = 120;
-
-function truncate(text: string): string {
-  return text.length > OUTLINE_PREVIEW_LENGTH
-    ? `${text.slice(0, OUTLINE_PREVIEW_LENGTH).trimEnd()}…`
-    : text;
-}
-
-function toParagraphs(segments: StorySegment[]): StorySegment[][] {
-  const paragraphs: StorySegment[][] = [[]];
-  for (const segment of segments) {
-    if (segment.termId) {
-      paragraphs[paragraphs.length - 1]!.push(segment);
-      continue;
-    }
-    segment.text.split(/\n\s*\n/).forEach((part, index) => {
-      if (index > 0) paragraphs.push([]);
-      if (part) paragraphs[paragraphs.length - 1]!.push({ text: part });
-    });
-  }
-  return paragraphs.filter((paragraph) => paragraph.some((segment) => segment.text.trim()));
-}
+const READING_LEVEL_LABELS = { plain: "Plain", professional: "Professional", expert: "Expert" };
 
 /** Each term's first wording in the piece, in reading order. */
 function firstOccurrences(story: Story): Map<string, string> {
@@ -56,9 +32,46 @@ function termHref(termId: string, story: Story): string {
   return `/jargon/read?${params.toString()}`;
 }
 
+function StoryHeader({ story, narrationAccess }: { story: Story; narrationAccess: boolean }) {
+  const meta = [
+    findFormat(story.format)?.label,
+    findTone(story.tone)?.label,
+    READING_LEVEL_LABELS[story.readingLevel],
+    story.cefrLevel,
+  ].filter(Boolean);
+
+  return (
+    <header className="shrink-0 space-y-1 border-b border-base-300/60 px-5 py-3 sm:px-6">
+      <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-balance text-base-content sm:text-2xl sm:leading-tight">
+        {story.title}
+      </h2>
+      <p className="m-0 text-xs tracking-wide text-base-content/50">
+        {meta.map((item, index) => (
+          <span key={item}>
+            {index > 0 ? (
+              <span className="mx-1.5 text-base-content/35" aria-hidden>
+                ·
+              </span>
+            ) : null}
+            {item}
+          </span>
+        ))}
+      </p>
+      {story.outline ? (
+        <p className="m-0 line-clamp-2 text-xs text-base-content/50">Outline: {story.outline}</p>
+      ) : null}
+      {narrationAccess ? (
+        <div className="pt-1">
+          <StoryNarrationPlayer key={story.id} storyId={story.id} />
+        </div>
+      ) : null}
+    </header>
+  );
+}
+
 function StoryBody({ story, termById }: { story: Story; termById: Map<string, StoryTerm> }) {
   return (
-    <div className="flex max-w-prose flex-col gap-4 text-base leading-relaxed break-words">
+    <div className="flex max-w-prose flex-col gap-4 text-[1.0625rem] leading-7 break-words text-base-content/90">
       {toParagraphs(story.segments).map((paragraph, paragraphIndex) => (
         <p key={paragraphIndex} className="m-0 whitespace-pre-line">
           {paragraph.map((segment, index) =>
@@ -82,125 +95,46 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
   const newTermIds = new Set(story.newTermIds);
 
   return (
-    <section aria-labelledby="story-glossary-title" className="space-y-3">
-      <h3 id="story-glossary-title" className="m-0 text-sm font-semibold text-base-content/80">
+    <section aria-labelledby="story-glossary-title" className="border-t border-base-300/60 pt-4">
+      <h3
+        id="story-glossary-title"
+        className="m-0 text-xs font-semibold tracking-wide text-base-content/50 uppercase"
+      >
         Terms in this piece
       </h3>
-      <ul className="m-0 list-none space-y-3 p-0">
+      <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
         {[...firstOccurrences(story)].map(([termId, surface]) => {
           const term = termById.get(termId);
+          if (!term) {
+            return (
+              <li key={termId} className="py-3 text-sm text-base-content/50">
+                <span className="font-semibold">{surface}</span> · No longer available
+              </li>
+            );
+          }
           return (
-            <li
-              key={termId}
-              className="space-y-2 rounded-xl bg-base-200/50 px-4 py-3 ring-1 ring-base-content/5"
-            >
-              {term ? (
-                <>
-                  <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <p className="m-0 text-sm font-semibold">{term.term}</p>
-                    <Link
-                      href={termHref(termId, story)}
-                      className="link link-hover text-xs text-base-content/60"
-                    >
-                      Open term →
-                    </Link>
-                  </div>
-                  <p className="m-0 text-sm leading-relaxed text-base-content/70">
-                    {term.definition}
-                  </p>
-                  {newTermIds.has(termId) ? <FirstExposureKnownPrompt termId={termId} /> : null}
-                </>
-              ) : (
-                <p className="m-0 text-sm text-base-content/50">
-                  <span className="font-semibold">{surface}</span> · No longer available
-                </p>
-              )}
+            <li key={termId} className="py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="m-0 min-w-0 text-sm font-semibold text-base-content">{term.term}</p>
+                <div className="-me-1.5 flex shrink-0 items-center gap-0.5">
+                  {newTermIds.has(termId) ? (
+                    <StoryMarkKnown termId={termId} term={term.term} />
+                  ) : null}
+                  <Link
+                    href={termHref(termId, story)}
+                    aria-label={`Open ${term.term}`}
+                    className="btn btn-ghost btn-square btn-xs size-8 text-base-content/50"
+                  >
+                    <ArrowUpRight className="size-4" aria-hidden strokeWidth={1.5} />
+                  </Link>
+                </div>
+              </div>
+              <p className="m-0 text-sm leading-relaxed text-base-content/65">{term.definition}</p>
             </li>
           );
         })}
       </ul>
     </section>
-  );
-}
-
-function VoteToggle({
-  isSelected,
-  label,
-  onChange,
-  children,
-}: {
-  isSelected: boolean;
-  label: string;
-  onChange: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <Toggle
-      size="sm"
-      variant="outline"
-      isSelected={isSelected}
-      onChange={onChange}
-      aria-label={label}
-      className="btn-square max-md:size-11"
-    >
-      {children}
-    </Toggle>
-  );
-}
-
-function StoryFooter({ session, story }: { session: StorySession; story: Story }) {
-  const isRead = Boolean(story.readAt);
-
-  return (
-    <div className="sticky bottom-0 flex flex-col gap-3 border-t border-base-300/60 bg-base-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-      <div className="flex items-center gap-2">
-        <VoteToggle
-          isSelected={story.vote === 1}
-          label="I liked this style"
-          onChange={() => void session.vote(1)}
-        >
-          <ThumbsUp className="size-4" aria-hidden strokeWidth={1.5} />
-        </VoteToggle>
-        <VoteToggle
-          isSelected={story.vote === -1}
-          label="I didn't like this style"
-          onChange={() => void session.vote(-1)}
-        >
-          <ThumbsDown className="size-4" aria-hidden strokeWidth={1.5} />
-        </VoteToggle>
-        <Button type="button" variant="ghost" size="sm" onPress={session.backToSetup}>
-          Change setup
-        </Button>
-      </div>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant={isRead ? "default" : "outline"}
-          onPress={() => void session.generate()}
-          className="min-h-11 flex-1 sm:flex-none"
-        >
-          New story
-        </Button>
-        {isRead ? (
-          <span
-            role="status"
-            className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 px-3 text-sm font-semibold text-success sm:flex-none"
-          >
-            <Check className="size-4" aria-hidden strokeWidth={2.5} />
-            Read
-          </span>
-        ) : (
-          <Button
-            type="button"
-            onPress={() => void session.markRead()}
-            isDisabled={session.isMarkingRead}
-            className="min-h-11 flex-1 sm:flex-none"
-          >
-            Mark as read
-          </Button>
-        )}
-      </div>
-    </div>
   );
 }
 
@@ -216,34 +150,14 @@ export function StoryReader({
   narrationAccess: boolean;
 }) {
   const termById = new Map(terms.map((term) => [term.id, term]));
-  const badges = [
-    findFormat(story.format)?.label,
-    findTone(story.tone)?.label,
-    READING_LEVEL_BADGES[story.readingLevel],
-    story.cefrLevel,
-  ].filter(Boolean);
 
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
-      <QuizPanelHeader
-        icon={BookOpenText}
-        title={story.title}
-        aside={
-          <div className="flex flex-wrap gap-1.5">
-            {badges.map((badge) => (
-              <Badge key={badge} variant="ghost" className="badge-sm">
-                {badge}
-              </Badge>
-            ))}
-          </div>
-        }
-        description={story.outline ? `From your outline: ${truncate(story.outline)}` : undefined}
-      />
-      <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">
-        {narrationAccess ? <StoryNarrationPlayer key={story.id} storyId={story.id} /> : null}
+      <StoryHeader story={story} narrationAccess={narrationAccess} />
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
         <StoryBody story={story} termById={termById} />
         <StoryGlossary story={story} termById={termById} />
-      </QuizPanelBody>
+      </div>
       <StoryFooter session={session} story={story} />
     </QuizPanel>
   );

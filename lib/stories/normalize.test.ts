@@ -11,7 +11,10 @@ const TERMS = [
 const FILLER = Array.from({ length: 90 }, (_, index) => `word${index}`).join(" ");
 
 function payload(segments: { text: string; termId?: string }[]) {
-  return { title: "  A title ", segments: [...segments, { text: ` ${FILLER}.` }] };
+  return {
+    title: "  A title ",
+    paragraphs: [{ segments: [...segments, { text: ` ${FILLER}.` }] }],
+  };
 }
 
 describe("surfaceMatchesTerm", () => {
@@ -114,16 +117,65 @@ describe("normalizeStory", () => {
       normalizeStory(
         {
           title: "t",
-          segments: [
-            { text: "idempotency", termId: "t1" },
-            { text: " " },
-            { text: "sharding", termId: "t4" },
-            { text: " " },
-            { text: "backpressure", termId: "t3" },
+          paragraphs: [
+            {
+              segments: [
+                { text: "idempotency", termId: "t1" },
+                { text: " " },
+                { text: "sharding", termId: "t4" },
+                { text: " " },
+                { text: "backpressure", termId: "t3" },
+              ],
+            },
           ],
         },
         TERMS,
       ),
     ).toThrow(/words/);
+  });
+
+  it("joins paragraphs with a blank line", () => {
+    const result = normalizeStory(
+      {
+        title: "t",
+        paragraphs: [
+          { segments: [{ text: "First " }, { text: "idempotency", termId: "t1" }, { text: ". " }] },
+          { segments: [{ text: " Then " }, { text: "sharding", termId: "t4" }, { text: "." }] },
+          { segments: [{ text: "backpressure", termId: "t3" }, { text: ` ${FILLER}` }] },
+        ],
+      },
+      TERMS,
+    );
+    expect(result.segments.slice(0, 5)).toEqual([
+      { text: "First " },
+      { text: "idempotency", termId: "t1" },
+      { text: ".\n\nThen " },
+      { text: "sharding", termId: "t4" },
+      { text: ".\n\n" },
+    ]);
+  });
+
+  it("keeps the model's paragraphs as written", () => {
+    const sentences = Array.from({ length: 10 }, (_, index) => `Sentence ${index}.`).join(" ");
+    const result = normalizeStory(
+      {
+        title: "t",
+        paragraphs: [
+          {
+            segments: [
+              { text: "idempotency", termId: "t1" },
+              { text: " and " },
+              { text: "sharding", termId: "t4" },
+              { text: " and " },
+              { text: "backpressure", termId: "t3" },
+              { text: `. ${sentences} ${FILLER}` },
+            ],
+          },
+        ],
+      },
+      TERMS,
+    );
+    const text = result.segments.map((segment) => segment.text).join("");
+    expect(text).not.toContain("\n");
   });
 });

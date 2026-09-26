@@ -31,17 +31,21 @@ const FILLER = Array.from({ length: 90 }, (_, index) => `word${index}`).join(" "
 
 const GOOD_OBJECT = {
   title: "Title",
-  segments: [
-    { text: "idempotency", termId: "t1" },
-    { text: " " },
-    { text: "sharding", termId: "t2" },
-    { text: " " },
-    { text: "backpressure", termId: "t3" },
-    { text: ` ${FILLER}` },
+  paragraphs: [
+    {
+      segments: [
+        { text: "idempotency", termId: "t1" },
+        { text: " " },
+        { text: "sharding", termId: "t2" },
+        { text: " " },
+        { text: "backpressure", termId: "t3" },
+        { text: ` ${FILLER}` },
+      ],
+    },
   ],
 };
 
-const MISSING_TERMS_OBJECT = { title: "Title", segments: [{ text: FILLER }] };
+const MISSING_TERMS_OBJECT = { title: "Title", paragraphs: [{ segments: [{ text: FILLER }] }] };
 
 function apiError(statusCode: number) {
   return new APICallError({
