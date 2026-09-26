@@ -38,6 +38,7 @@ const READING_LEVEL_LABELS: Record<ReadingLevel, { label: string; hint: string }
 };
 
 const CEFR_HINTS: Record<CefrLevel, string> = {
+  A1: "A1 · very short, basic sentences",
   A2: "A2 · simple sentences",
   B1: "B1 · clear, common words",
   B2: "B2 · varied, everyday fluent",

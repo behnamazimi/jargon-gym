@@ -17,11 +17,10 @@ const BASE = {
 };
 
 describe("buildStoryPrompt", () => {
-  it("lists every term with its id and meaning", () => {
+  it("numbers every term with its meaning", () => {
     const prompt = buildStoryPrompt(BASE);
-    expect(prompt).toContain("id: t1");
-    expect(prompt).toContain("term: Backpressure");
-    expect(prompt).toContain("meaning: Same result when repeated.");
+    expect(prompt).toContain("1. Idempotency: Same result when repeated.");
+    expect(prompt).toContain("2. Backpressure: Slowing producers to match consumers.");
   });
 
   it("includes the style, language, and both levels", () => {
@@ -52,10 +51,16 @@ describe("buildStoryPrompt", () => {
     expect(prompt).toContain("at most 10 words");
   });
 
-  it("asks for spaced text and typographic dialogue quotes", () => {
+  it("asks for plain text with inline term markers", () => {
     const prompt = buildStoryPrompt(BASE);
-    expect(prompt).toContain("a space after every sentence-ending period");
+    expect(prompt).toContain("plain text, no Markdown");
+    expect(prompt).toContain("[[the words used|term number]]");
     expect(prompt).toContain("never straight double quotes");
-    expect(prompt).toContain("a term segment holds only the term's words");
+  });
+
+  it("supports A1 and asks for a short piece", () => {
+    const prompt = buildStoryPrompt({ ...BASE, cefrLevel: "A1" });
+    expect(prompt).toContain("A1 (beginner)");
+    expect(prompt).toContain("70 to 120 words");
   });
 });

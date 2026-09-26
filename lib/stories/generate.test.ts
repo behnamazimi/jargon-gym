@@ -1,11 +1,11 @@
-import { APICallError, generateObject } from "ai";
+import { APICallError, generateText } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateStory, StoryProviderError } from "./generate";
 import { findFormat, findTone } from "./styles";
 
 vi.mock("ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("ai")>()),
-  generateObject: vi.fn(),
+  generateText: vi.fn(),
 }));
 
 const TERMS = [
@@ -29,23 +29,13 @@ const INPUT = {
 
 const FILLER = Array.from({ length: 90 }, (_, index) => `word${index}`).join(" ");
 
-const GOOD_OBJECT = {
-  title: "Title",
-  paragraphs: [
-    {
-      segments: [
-        { text: "idempotency", termId: "t1" },
-        { text: " " },
-        { text: "sharding", termId: "t2" },
-        { text: " " },
-        { text: "backpressure", termId: "t3" },
-        { text: ` ${FILLER}` },
-      ],
-    },
-  ],
-};
+const GOOD_TEXT = `Title
 
-const MISSING_TERMS_OBJECT = { title: "Title", paragraphs: [{ segments: [{ text: FILLER }] }] };
+[[idempotency|1]] [[sharding|2]] [[backpressure|3]] ${FILLER}`;
+
+const MISSING_TERMS_TEXT = `Title
+
+${FILLER}`;
 
 function apiError(statusCode: number) {
   return new APICallError({
@@ -56,10 +46,10 @@ function apiError(statusCode: number) {
   });
 }
 
-const mockedGenerate = vi.mocked(generateObject);
+const mockedGenerate = vi.mocked(generateText);
 
-function resolveWith(object: unknown) {
-  return Promise.resolve({ object }) as unknown as ReturnType<typeof generateObject>;
+function resolveWith(text: string) {
+  return Promise.resolve({ text }) as unknown as ReturnType<typeof generateText>;
 }
 
 beforeEach(() => {
@@ -68,7 +58,7 @@ beforeEach(() => {
 
 describe("generateStory", () => {
   it("returns the normalized story", async () => {
-    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_OBJECT));
+    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
     const story = await generateStory(INPUT);
     expect(story.termIds).toEqual(["t1", "t2", "t3"]);
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
@@ -76,17 +66,15 @@ describe("generateStory", () => {
 
   it("retries once when the story misses terms", async () => {
     mockedGenerate
-      .mockReturnValueOnce(resolveWith(MISSING_TERMS_OBJECT))
-      .mockReturnValueOnce(resolveWith(GOOD_OBJECT));
+      .mockReturnValueOnce(resolveWith(MISSING_TERMS_TEXT))
+      .mockReturnValueOnce(resolveWith(GOOD_TEXT));
     const story = await generateStory(INPUT);
     expect(story.termIds).toHaveLength(3);
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
   });
 
   it("retries once on a server error", async () => {
-    mockedGenerate
-      .mockRejectedValueOnce(apiError(503))
-      .mockReturnValueOnce(resolveWith(GOOD_OBJECT));
+    mockedGenerate.mockRejectedValueOnce(apiError(503)).mockReturnValueOnce(resolveWith(GOOD_TEXT));
     await expect(generateStory(INPUT)).resolves.toBeTruthy();
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
   });
@@ -104,7 +92,7 @@ describe("generateStory", () => {
   });
 
   it("gives up after the second failure", async () => {
-    mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_OBJECT));
+    mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     await expect(generateStory(INPUT)).rejects.toBeInstanceOf(StoryProviderError);
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
