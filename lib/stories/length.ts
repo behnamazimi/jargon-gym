@@ -22,9 +22,9 @@ const PIECE_LENGTH_SPEC: Record<
   PieceLength,
   { words: [number, number]; paragraphs: string; turns: number; terms: number }
 > = {
-  short: { words: [50, 90], paragraphs: "1 or 2", turns: 5, terms: 4 },
-  medium: { words: [90, 150], paragraphs: "2 or 3", turns: 8, terms: 6 },
-  long: { words: [160, 240], paragraphs: "3 to 5", turns: 12, terms: 8 },
+  short: { words: [50, 90], paragraphs: "1 or 2", turns: 5, terms: 6 },
+  medium: { words: [90, 150], paragraphs: "2 or 3", turns: 8, terms: 8 },
+  long: { words: [160, 240], paragraphs: "3 to 5", turns: 12, terms: 10 },
 };
 
 export type StoryLength = {
