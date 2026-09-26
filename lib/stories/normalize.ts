@@ -1,9 +1,9 @@
+import { acceptedLength, countLength, type StoryLength } from "./length";
 import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./markup";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
 
-const MIN_WORDS = 30;
-const MAX_WORDS = 200;
+const DEFAULT_LENGTH: StoryLength = { min: 70, max: 120, unit: "words" };
 const MAX_TITLE_LENGTH = 120;
 
 export class StoryGenerationError extends Error {}
@@ -36,9 +36,18 @@ function checkedTitle(raw: string): string {
   return title;
 }
 
+function checkLength(segments: StorySegment[], length: StoryLength) {
+  const count = countLength(segments.map((segment) => segment.text).join(""), length.unit);
+  const accepted = acceptedLength(length);
+  if (count < accepted.min || count > accepted.max) {
+    throw new StoryGenerationError(`The story came back at ${count} ${length.unit}.`);
+  }
+}
+
 export function normalizeStory(
   payload: StoryGenerationPayload,
   terms: StoryTerm[],
+  length: StoryLength = DEFAULT_LENGTH,
 ): { title: string; segments: StorySegment[]; termIds: string[] } {
   const title = checkedTitle(payload.title);
   const termById = new Map(terms.map((term) => [term.id, term]));
@@ -72,10 +81,7 @@ export function normalizeStory(
   }
 
   const segments = flattenParagraphs(paragraphs);
-  const wordCount = words(segments.map((segment) => segment.text).join("")).length;
-  if (wordCount < MIN_WORDS || wordCount > MAX_WORDS) {
-    throw new StoryGenerationError(`The story came back at ${wordCount} words.`);
-  }
+  checkLength(segments, length);
 
   return { title, segments, termIds };
 }
