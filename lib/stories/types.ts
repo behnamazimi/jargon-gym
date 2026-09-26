@@ -8,7 +8,7 @@ export const STORY_NARRATION_DAILY_CAP = 20;
 export const READING_LEVELS = ["plain", "professional", "expert"] as const;
 export type ReadingLevel = (typeof READING_LEVELS)[number];
 
-export const CEFR_LEVELS = ["A2", "B1", "B2", "C1", "C2"] as const;
+export const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 export type CefrLevel = (typeof CEFR_LEVELS)[number];
 
 export const DEFAULT_READING_LEVEL: ReadingLevel = "professional";

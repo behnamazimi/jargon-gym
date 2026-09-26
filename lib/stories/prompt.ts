@@ -14,6 +14,7 @@ const READING_LEVEL_GUIDANCE: Record<ReadingLevel, string> = {
 // Concrete limits the model can check itself against; a one-word label like
 // "A2" alone gets ignored, especially with a dramatic tone or expert terms.
 const CEFR_GUIDANCE: Record<CefrLevel, string> = {
+  A1: "A1 (beginner). Sentences of at most 7 words, one idea each. Only very basic everyday words besides the listed terms. Present tense only. Join ideas only with 'and' or 'but'. Short statements and simple questions. No idioms, no figurative language, no passive voice.",
   A2: "A2 (elementary). Sentences of at most 10 words, one idea each. Only the most common everyday words besides the listed terms. Present tense, plus simple past or 'going to' future. Join ideas only with 'and', 'but', 'because' or 'when'. No idioms, no figurative language, no passive voice.",
   B1: "B1 (intermediate). Sentences of at most 15 words. Common everyday vocabulary besides the listed terms. Simple connectors (because, so, when, if, although). At most one subordinate clause per sentence. No idioms or figurative language.",
   B2: "B2 (upper intermediate). Sentences of at most 22 words. Broad everyday vocabulary; occasional less common words must be clear from context. Varied connectors and clauses are fine. Idioms only if very common.",
@@ -58,7 +59,7 @@ export function buildStoryPrompt(input: {
     "Rules:",
     "- Use every term above at least once, in a way that matches its meaning. Use as many of them more than once as reads naturally.",
     "- Do not define the terms outright; the reader sees a glossary separately. Context should still make sense of them.",
-    "- 125 to 200 words, in 2 to 4 short paragraphs. A conversation (a thread, an interview) may instead use one short paragraph per message or turn, up to 12 paragraphs.",
+    "- 70 to 120 words, in 2 or 3 short paragraphs. A conversation (a thread, an interview) may instead use one short paragraph per message or turn, up to 8 paragraphs.",
     `- Reading level. ${READING_LEVEL_GUIDANCE[input.readingLevel]}`,
     "- For dialogue, use the language's own typographic quotation marks (for example “ ” or ‘ ’), never straight double quotes.",
     "",

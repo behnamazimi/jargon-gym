@@ -135,7 +135,7 @@ describe("normalizeStory", () => {
   });
 
   it("rejects a story that is too long", () => {
-    const longFiller = Array.from({ length: 320 }, (_, index) => `word${index}`).join(" ");
+    const longFiller = Array.from({ length: 220 }, (_, index) => `word${index}`).join(" ");
     expect(() =>
       normalizeStory(
         {

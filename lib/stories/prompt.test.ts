@@ -57,4 +57,10 @@ describe("buildStoryPrompt", () => {
     expect(prompt).toContain("[[the words used|term number]]");
     expect(prompt).toContain("never straight double quotes");
   });
+
+  it("supports A1 and asks for a short piece", () => {
+    const prompt = buildStoryPrompt({ ...BASE, cefrLevel: "A1" });
+    expect(prompt).toContain("A1 (beginner)");
+    expect(prompt).toContain("70 to 120 words");
+  });
 });
