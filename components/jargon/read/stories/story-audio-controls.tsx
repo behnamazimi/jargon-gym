@@ -18,6 +18,14 @@ function loadSpeed(): number {
   }
 }
 
+function saveSpeed(speed: number) {
+  try {
+    window.localStorage.setItem(SPEED_STORAGE_KEY, String(speed));
+  } catch {
+    // Ignore storage restrictions; the speed still applies for this story.
+  }
+}
+
 function SkipButton({
   direction,
   onPress,
@@ -33,7 +41,7 @@ function SkipButton({
       size="icon"
       aria-label={`${direction === "back" ? "Back" : "Forward"} ${SKIP_SECONDS} seconds`}
       onPress={onPress}
-      className="relative size-10 shrink-0"
+      className="relative size-10 shrink-0 min-[360px]:size-11 md:size-10"
     >
       <Icon className="size-6" aria-hidden strokeWidth={1.25} />
       <span
@@ -46,14 +54,6 @@ function SkipButton({
   );
 }
 
-function saveSpeed(speed: number) {
-  try {
-    window.localStorage.setItem(SPEED_STORAGE_KEY, String(speed));
-  } catch {
-    // Ignore storage restrictions; the speed still applies for this story.
-  }
-}
-
 /** One-line controls for a story's narration: ±10s skips, play/pause, a seek
  *  bar, the time, and a speed button that steps through the speeds. */
 export function StoryAudioControls({ src, onError }: { src: string; onError: () => void }) {
@@ -64,6 +64,8 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
   // Rendered only on the client, once the audio is ready, so reading the
   // saved speed here is safe.
   const [speed, setSpeed] = useState(loadSpeed);
+  // Only filled in when the user changes speed, so nothing is read out on load.
+  const [speedAnnouncement, setSpeedAnnouncement] = useState("");
 
   useMountEffect(() => {
     const audio = audioRef.current;
@@ -113,6 +115,7 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
 
   function changeSpeed(next: number) {
     setSpeed(next);
+    setSpeedAnnouncement(`Speed ${next}×`);
     saveSpeed(next);
     if (audioRef.current) {
       audioRef.current.defaultPlaybackRate = next;
@@ -121,7 +124,7 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
   }
 
   return (
-    <div className="flex items-center gap-0.5 rounded-box bg-base-200/60 py-1 ps-1 pe-1 sm:gap-1">
+    <div className="flex items-center gap-0.5 rounded-box bg-base-200/60 py-1 px-1 sm:gap-1">
       <audio
         ref={audioRef}
         src={src}
@@ -153,7 +156,7 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         size="icon"
         aria-label={playing ? "Pause" : "Play"}
         onPress={togglePlay}
-        className="btn-circle size-10 shrink-0"
+        className="btn-circle size-10 shrink-0 min-[360px]:size-11 md:size-10"
       >
         {playing ? (
           <Pause className="size-4 fill-current" aria-hidden strokeWidth={1.5} />
@@ -170,10 +173,10 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         min={0}
         max={seekMax}
         step={1}
-        value={Math.min(currentTime, seekMax)}
-        disabled={!duration}
+        value={Math.floor(Math.min(currentTime, seekMax))}
+        disabled={seekMax < 1}
         onChange={(event) => seekTo(Number(event.target.value))}
-        className="range range-xs range-primary mx-1.5 min-w-0 flex-1"
+        className="range range-sm range-primary mx-1.5 min-w-0 flex-1 sm:range-xs"
       />
       <span className="shrink-0 text-xs text-base-content/60 tabular-nums max-[359px]:hidden">
         {formatPlaybackTime(currentTime)}
@@ -185,12 +188,12 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         size="sm"
         aria-label={`Playback speed ${speed}×`}
         onPress={() => changeSpeed(nextPlaybackSpeed(speed))}
-        className="h-10 min-w-10 shrink-0 px-1 text-xs font-semibold tabular-nums"
+        className="h-10 min-w-10 shrink-0 px-1 text-xs font-semibold tabular-nums min-[360px]:h-11 min-[360px]:min-w-11 md:h-10 md:min-w-10"
       >
         {speed}×
       </Button>
       <span className="sr-only" aria-live="polite">
-        {`Speed ${speed}×`}
+        {speedAnnouncement}
       </span>
     </div>
   );

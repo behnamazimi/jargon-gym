@@ -18,4 +18,9 @@ describe("flattenParagraphs / toParagraphs", () => {
     ];
     expect(toParagraphs(flattenParagraphs([paragraph]))).toEqual([paragraph]);
   });
+
+  it("treats a blank line the model wrote inside a paragraph as its own break", () => {
+    const flat = flattenParagraphs([[{ text: "Eerste deel.\n\nTweede deel." }]]);
+    expect(toParagraphs(flat)).toEqual([[{ text: "Eerste deel." }], [{ text: "Tweede deel." }]]);
+  });
 });
