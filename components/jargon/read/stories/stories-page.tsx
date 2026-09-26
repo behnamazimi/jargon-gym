@@ -100,7 +100,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
         <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
           {setup.collections.length === 0 ? (
             <StudyNoActiveCollectionsState description="Turn on a collection on the collection page before you read stories." />
-          ) : setup.initialDomainId === null && !session.savedStoryId ? (
+          ) : setup.initialDomainId === null ? (
             <StoriesNoTerms />
           ) : (
             <StorySetupPanel

@@ -4,7 +4,11 @@ import {
   getReadTermByIdAction,
   type ReadQueueSeed,
 } from "@/app/(private)/jargon/read/actions";
+import { redirect } from "next/navigation";
 import { ReadPage } from "@/components/jargon/read/read-page";
+import { getSessionUser } from "@/lib/auth/require-session";
+import { hasUnreadStory } from "@/lib/stories/repository";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { StudyCollection } from "@/lib/study/types";
 
 // Narration generation (ElevenLabs) can take longer than the platform's
@@ -12,8 +16,23 @@ import type { StudyCollection } from "@/lib/study/types";
 export const maxDuration = 60;
 
 type PageProps = {
-  searchParams: Promise<{ termId?: string; alreadyRead?: string; domain?: string }>;
+  searchParams: Promise<{
+    termId?: string;
+    alreadyRead?: string;
+    domain?: string;
+    view?: string;
+  }>;
 };
+
+/** An unread story makes Stories the default Read tab; the Cards tab links
+ *  here with `view=cards` so it can still be opened. */
+async function redirectToUnreadStory(domain: string | undefined) {
+  const { user } = await getSessionUser();
+  if (!user || !(await hasUnreadStory(createAdminClient(), user.id))) return;
+  redirect(
+    domain ? `/jargon/read/stories?domain=${encodeURIComponent(domain)}` : "/jargon/read/stories",
+  );
+}
 
 function resolveReadCollectionId(
   domainParam: string | undefined,
@@ -56,6 +75,8 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
       />
     );
   }
+
+  if (params.view !== "cards") await redirectToUnreadStory(params.domain);
 
   // No deep link: the domain is already resolvable from the URL (or
   // defaults to "all"), so fire the feed batch next to setup instead of

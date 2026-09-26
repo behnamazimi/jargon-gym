@@ -17,7 +17,7 @@ import {
   type CollectionSelectOption,
 } from "@/components/jargon/collection-select";
 import { QuizPanelLabel } from "@/components/jargon/quiz/quiz-ui";
-import { StudyResumeBanner, StudySetupPanel } from "@/components/jargon/study/study-setup-panel";
+import { StudySetupPanel } from "@/components/jargon/study/study-setup-panel";
 import type { StoryCollection } from "@/lib/stories/setup";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
 import {
@@ -195,14 +195,6 @@ export function StorySetupPanel({
         title="Set up your story"
         description="A short piece of reading built around the next terms in your Read queue. Mark it read to count a read for every term in it."
       />
-
-      {session.savedStoryId ? (
-        <StudyResumeBanner
-          message="You have an unread story from this session."
-          onResume={() => void session.resume()}
-          onDiscard={session.discardSaved}
-        />
-      ) : null}
 
       {llmConfigured ? null : <NoLlmAlert />}
 

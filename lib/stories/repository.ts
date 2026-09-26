@@ -7,6 +7,7 @@ import {
   parseReadingLevel,
   type Story,
   type StoryLevels,
+  type StoryTerm,
   type StorySegment,
   type StoryVote,
 } from "./types";
@@ -111,6 +112,40 @@ export async function getStoryForUser(
     .maybeSingle();
   if (error) throw error;
   return data ? mapStory(data) : null;
+}
+
+/** The newest piece the user hasn't marked read yet, if any. */
+export async function getLatestUnreadStory(admin: Client, userId: string): Promise<Story | null> {
+  const { data, error } = await admin
+    .from("stories")
+    .select(STORY_COLUMNS)
+    .eq("user_id", userId)
+    .is("read_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapStory(data) : null;
+}
+
+export async function hasUnreadStory(admin: Client, userId: string): Promise<boolean> {
+  const { count, error } = await admin
+    .from("stories")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .is("read_at", null);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+export async function getStoryTerms(admin: Client, termIds: string[]): Promise<StoryTerm[]> {
+  if (termIds.length === 0) return [];
+  const { data, error } = await admin
+    .from("terms")
+    .select("id, term, definition")
+    .in("id", termIds);
+  if (error) throw error;
+  return data ?? [];
 }
 
 export async function getCollection(

@@ -6,7 +6,8 @@ import { listStudyCollections } from "@/lib/study/collections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getReadEligibleCountsByDomainForUser } from "@/lib/trace-queue";
 import { loadPrefs } from "./prefs";
-import { STORY_MIN_TERMS, type StoryLevels } from "./types";
+import { getLatestUnreadStory, getStoryTerms } from "./repository";
+import { STORY_MIN_TERMS, type Story, type StoryLevels, type StoryTerm } from "./types";
 
 export type StoryCollection = { id: string; name: string; eligibleCount: number };
 
@@ -17,6 +18,8 @@ export type StoriesSetupData = {
   llmConfigured: boolean;
   providerLabel: string | null;
   narrationAccess: boolean;
+  /** An unread piece to open straight into, instead of the setup screen. */
+  currentStory: { story: Story; terms: StoryTerm[] } | null;
 };
 
 function isEligible(collection: StoryCollection): boolean {
@@ -41,13 +44,15 @@ export async function getStoriesSetupData(
   if ("error" in auth) return { error: "Log in to read stories." };
 
   const admin = createAdminClient();
-  const [studyCollections, eligibleCounts, prefs, settings, narrationAccess] = await Promise.all([
-    listStudyCollections(auth.supabase, auth.user.id),
-    getReadEligibleCountsByDomainForUser(admin, auth.user.id),
-    loadPrefs(admin, auth.user.id),
-    getUserSettings(auth.supabase, auth.user.id),
-    getNarrationAccessForUser(auth.supabase, auth.user.id),
-  ]);
+  const [studyCollections, eligibleCounts, prefs, settings, narrationAccess, unreadStory] =
+    await Promise.all([
+      listStudyCollections(auth.supabase, auth.user.id),
+      getReadEligibleCountsByDomainForUser(admin, auth.user.id),
+      loadPrefs(admin, auth.user.id),
+      getUserSettings(auth.supabase, auth.user.id),
+      getNarrationAccessForUser(auth.supabase, auth.user.id),
+      getLatestUnreadStory(admin, auth.user.id),
+    ]);
 
   const collections = studyCollections.map((collection) => ({
     id: collection.id,
@@ -62,5 +67,8 @@ export async function getStoriesSetupData(
     llmConfigured: hasLlmConfigured(settings),
     providerLabel: settings?.provider ? LLM_PROVIDER_LABELS[settings.provider] : null,
     narrationAccess,
+    currentStory: unreadStory
+      ? { story: unreadStory, terms: await getStoryTerms(admin, unreadStory.termIds) }
+      : null,
   };
 }

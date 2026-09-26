@@ -31,6 +31,8 @@ export function replaceReadDomainInUrl(domainId: string) {
   }
   url.searchParams.delete("termId");
   url.searchParams.delete("alreadyRead");
+  // Keeps a reload on Cards even when an unread story would redirect to Stories.
+  url.searchParams.set("view", "cards");
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 

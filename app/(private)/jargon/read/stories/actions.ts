@@ -8,7 +8,6 @@ import { getDecryptedApiKey } from "@/lib/llm/settings";
 import { StoryProviderError, generateStory } from "@/lib/stories/generate";
 import {
   getCollection,
-  getStoryForUser,
   insertStory,
   loadRecentVotes,
   markStoryRead,
@@ -33,16 +32,6 @@ export type StoryResult = { error: string } | { story: Story; terms: StoryTerm[]
 
 const LOGIN_ERROR = "Log in to continue.";
 const NOT_ENOUGH_TERMS_ERROR = `This collection needs at least ${STORY_MIN_TERMS} terms left to read.`;
-
-async function fetchStoryTerms(termIds: string[]): Promise<StoryTerm[]> {
-  if (termIds.length === 0) return [];
-  const { data, error } = await createAdminClient()
-    .from("terms")
-    .select("id, term, definition")
-    .in("id", termIds);
-  if (error) throw error;
-  return data ?? [];
-}
 
 const generateInputSchema = z.object({
   domainId: z.uuid(),
@@ -129,21 +118,6 @@ export async function generateStoryAction(input: {
     if (err instanceof StoryProviderError) return { error: err.message };
     console.error("generateStoryAction failed:", err);
     return { error: "Couldn't write a story this time. Try again." };
-  }
-}
-
-export async function getStoryAction(storyId: string): Promise<StoryResult> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: LOGIN_ERROR };
-  if (!z.uuid().safeParse(storyId).success) return { error: "That story isn't available." };
-
-  try {
-    const story = await getStoryForUser(createAdminClient(), auth.user.id, storyId);
-    if (!story) return { error: "That story isn't available." };
-    return { story, terms: await fetchStoryTerms(story.termIds) };
-  } catch (err) {
-    console.error("getStoryAction failed:", err);
-    return { error: "Couldn't load that story. Try again." };
   }
 }
 

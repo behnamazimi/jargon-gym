@@ -5,10 +5,16 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { cn } from "@/lib/utils";
 
-const READ_MODES = [
-  { href: "/jargon/read", label: "Cards" },
-  { href: "/jargon/read/stories", label: "Stories" },
-] as const;
+// Cards passes view=cards so an unread story doesn't redirect it back to Stories.
+const READ_MODES: { href: string; label: string; params: Record<string, string> }[] = [
+  { href: "/jargon/read", label: "Cards", params: { view: "cards" } },
+  { href: "/jargon/read/stories", label: "Stories", params: {} },
+];
+
+function hrefFor(path: string, params: Record<string, string>): string {
+  const query = new URLSearchParams(params).toString();
+  return query ? `${path}?${query}` : path;
+}
 
 function isStoriesPath(pathname: string) {
   return pathname.startsWith("/jargon/read/stories");
@@ -17,7 +23,7 @@ function isStoriesPath(pathname: string) {
 function ReadModeTabList({ domain }: { domain: string | null }) {
   const pathname = usePathname();
   const activeHref = isStoriesPath(pathname) ? "/jargon/read/stories" : "/jargon/read";
-  const query = domain && domain !== "all" ? `?domain=${encodeURIComponent(domain)}` : "";
+  const domainParam: Record<string, string> = domain && domain !== "all" ? { domain } : {};
 
   return (
     <nav aria-label="Read mode" className="tabs tabs-box tabs-sm w-fit shrink-0">
@@ -26,7 +32,7 @@ function ReadModeTabList({ domain }: { domain: string | null }) {
         return (
           <Link
             key={mode.href}
-            href={`${mode.href}${query}`}
+            href={hrefFor(mode.href, { ...mode.params, ...domainParam })}
             aria-current={active ? "page" : undefined}
             className={cn("tab min-h-9 px-4", active && "tab-active")}
           >
