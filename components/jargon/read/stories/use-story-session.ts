@@ -10,6 +10,7 @@ import {
   type StoryResult,
 } from "@/app/(private)/jargon/read/stories/actions";
 import { useToast } from "@/components/ui/toast";
+import { voteFeedback } from "@/lib/stories/feedback";
 import type { StoriesSetupData } from "@/lib/stories/setup";
 import {
   DEFAULT_CEFR_LEVEL,
@@ -44,6 +45,10 @@ export function useStorySession(setup: StoriesSetupData) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isMarkingRead, setIsMarkingRead] = useState(false);
   const busyRef = useRef(false);
+  // The story on screen right now, so a late vote result can tell whether the
+  // user has already moved on.
+  const currentStoryIdRef = useRef(story?.id);
+  currentStoryIdRef.current = story?.id;
 
   function selectCollection(nextDomainId: string) {
     setDomainId(nextDomainId);
@@ -97,11 +102,17 @@ export function useStorySession(setup: StoriesSetupData) {
     const previous = story.vote;
     const next = previous === value ? null : value;
     setStory({ ...story, vote: next });
-    const result = await voteStoryAction(story.id, next);
+    const storyId = story.id;
+    const result = await voteStoryAction(storyId, next);
+    const stillShowing = currentStoryIdRef.current === storyId;
     if (result.error) {
-      setStory((current) => (current ? { ...current, vote: previous } : current));
+      if (stillShowing) {
+        setStory((current) => (current ? { ...current, vote: previous } : current));
+      }
       toast(result.error, "destructive");
+      return;
     }
+    if (stillShowing) toast(voteFeedback(next));
   }
 
   async function dismiss() {

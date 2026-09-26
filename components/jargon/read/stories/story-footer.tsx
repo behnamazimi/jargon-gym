@@ -26,7 +26,7 @@ function IconToggle({
       isSelected={isSelected}
       onChange={onChange}
       aria-label={label}
-      className={`btn-square size-11 md:size-9 ${PRESS_CLASS}`}
+      className={`btn-square size-11 md:size-9 data-selected:bg-primary/15 data-selected:text-primary ${PRESS_CLASS}`}
     >
       {children}
     </Toggle>
@@ -44,14 +44,22 @@ export function StoryFooter({ session, story }: { session: StorySession; story: 
           label="I liked this style"
           onChange={() => void session.vote(1)}
         >
-          <ThumbsUp className="size-4" aria-hidden strokeWidth={1.5} />
+          <ThumbsUp
+            className={story.vote === 1 ? "size-4 fill-current" : "size-4"}
+            aria-hidden
+            strokeWidth={1.5}
+          />
         </IconToggle>
         <IconToggle
           isSelected={story.vote === -1}
           label="I didn't like this style"
           onChange={() => void session.vote(-1)}
         >
-          <ThumbsDown className="size-4" aria-hidden strokeWidth={1.5} />
+          <ThumbsDown
+            className={story.vote === -1 ? "size-4 fill-current" : "size-4"}
+            aria-hidden
+            strokeWidth={1.5}
+          />
         </IconToggle>
         <Button
           type="button"
