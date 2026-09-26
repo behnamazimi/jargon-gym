@@ -1,4 +1,4 @@
-import { flattenParagraphs, pushSegment, splitLongParagraph } from "./paragraphs";
+import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./schema";
 import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
 
@@ -52,7 +52,8 @@ export function normalizeStory(
         pushSegment(segments, { text: raw.text });
       }
     }
-    for (const block of splitLongParagraph(segments)) paragraphs.push(block);
+    const paragraph = trimParagraph(segments);
+    if (paragraph.length > 0) paragraphs.push(paragraph);
   }
 
   const termIds = terms.map((term) => term.id).filter((id) => used.has(id));

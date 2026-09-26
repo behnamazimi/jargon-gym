@@ -155,10 +155,8 @@ describe("normalizeStory", () => {
     ]);
   });
 
-  it("splits a paragraph that runs too long at sentence ends", () => {
-    const sentences = Array.from({ length: 10 }, (_, index) => `Sentence ${index} is here.`).join(
-      " ",
-    );
+  it("keeps the model's paragraphs as written", () => {
+    const sentences = Array.from({ length: 10 }, (_, index) => `Sentence ${index}.`).join(" ");
     const result = normalizeStory(
       {
         title: "t",
@@ -178,10 +176,6 @@ describe("normalizeStory", () => {
       TERMS,
     );
     const text = result.segments.map((segment) => segment.text).join("");
-    const paragraphs = text.split("\n\n");
-    expect(paragraphs.length).toBe(3);
-    expect(paragraphs[0]).toMatch(/^idempotency and sharding and backpressure\. Sentence 0/);
-    expect(paragraphs[1]).toMatch(/^Sentence 3 is here\./);
-    expect(paragraphs.every((paragraph) => paragraph === paragraph.trim())).toBe(true);
+    expect(text).not.toContain("\n");
   });
 });
