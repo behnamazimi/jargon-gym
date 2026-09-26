@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { synthesizeNarrationAudio } from "@/lib/narration/eleven-labs";
 import { uploadNarrationAudio } from "@/lib/narration/storage";
 import type { Database } from "@/lib/supabase/database.types";
-import { toParagraphs } from "./paragraphs";
 import { getStoryForUser } from "./repository";
 import { STORY_NARRATION_DAILY_CAP } from "./types";
 
@@ -97,10 +96,7 @@ export async function getOrGenerateStoryNarration(
 
   const path = pathForStory(userId, storyId);
   try {
-    const body = toParagraphs(story.segments)
-      .map((paragraph) => paragraph.map((segment) => segment.text).join(""))
-      .join("\n\n");
-    const script = `${story.title}\n\n${body}`;
+    const script = `${story.title}\n\n${story.segments.map((segment) => segment.text).join("")}`;
     const audio = await synthesizeNarrationAudio(script, story.language);
     await uploadNarrationAudio(path, audio);
     await setNarrationResult(admin, storyId, { status: "ready", path });

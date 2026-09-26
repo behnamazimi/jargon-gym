@@ -202,4 +202,20 @@ describe("normalizeStory", () => {
     const text = result.segments.map((segment) => segment.text).join("");
     expect(text).not.toContain("\n");
   });
+
+  it("saves the model's text exactly as written, slips included", () => {
+    const written = [
+      { text: "Ze zei: \u201cDe " },
+      { text: "idempotency", termId: "t1" },
+      { text: "s zijn klaar.Niemand weet het,\u201d en ging. De " },
+      { text: "sharding", termId: "t4" },
+      { text: " en " },
+      { text: "backpressure", termId: "t3" },
+      { text: ` blijven. ${FILLER}` },
+    ];
+    const result = normalizeStory({ title: "t", paragraphs: [{ segments: written }] }, TERMS);
+    expect(result.segments.map((segment) => segment.text).join("")).toBe(
+      written.map((segment) => segment.text).join(""),
+    );
+  });
 });

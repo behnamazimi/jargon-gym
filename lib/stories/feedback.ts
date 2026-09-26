@@ -9,10 +9,3 @@ export function voteFeedback(vote: -1 | 1 | null): string {
       return "Vote removed.";
   }
 }
-
-/** m:ss for the audio controls; 0:00 for anything not yet known. */
-export function formatPlaybackTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
-  const whole = Math.floor(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
-}

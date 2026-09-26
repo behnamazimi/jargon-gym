@@ -58,7 +58,7 @@ export function buildStoryPrompt(input: {
     "Rules:",
     "- Use every term above at least once, in a way that matches its meaning. Use as many of them more than once as reads naturally.",
     "- Do not define the terms outright; the reader sees a glossary separately. Context should still make sense of them.",
-    "- 125 to 200 words, in 2 to 4 short paragraphs. In a conversation (a thread, an interview), every message or turn is its own paragraph.",
+    "- 125 to 200 words, in 2 to 4 short paragraphs. A conversation (a thread, an interview) may instead use one short paragraph per message or turn.",
     `- Reading level. ${READING_LEVEL_GUIDANCE[input.readingLevel]}`,
     "- Write normal, correctly spaced text: a space after every sentence-ending period, question mark or exclamation mark, and between words.",
     "- For dialogue, use typographic quotes (“ ”) or single quotes (‘ ’), never straight double quotes.",

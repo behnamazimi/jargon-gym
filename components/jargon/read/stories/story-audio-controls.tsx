@@ -4,26 +4,18 @@ import { Pause, Play, RotateCcw, RotateCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { claimActiveAudio, releaseActiveAudio } from "@/components/jargon/active-audio";
 import { Button } from "@/components/ui/button";
-import { formatPlaybackTime } from "@/lib/stories/feedback";
+import { formatPlaybackTime, nextPlaybackSpeed, parsePlaybackSpeed } from "@/lib/stories/playback";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
 const SKIP_SECONDS = 10;
-// The speed button steps through these in order and wraps around.
-const SPEEDS = [1, 1.25, 1.5, 0.75] as const;
 const SPEED_STORAGE_KEY = "jargon-gym:story-audio-speed:v1";
 
 function loadSpeed(): number {
   try {
-    const stored = Number(window.localStorage.getItem(SPEED_STORAGE_KEY));
-    return (SPEEDS as readonly number[]).includes(stored) ? stored : 1;
+    return parsePlaybackSpeed(window.localStorage.getItem(SPEED_STORAGE_KEY));
   } catch {
     return 1;
   }
-}
-
-function nextSpeed(speed: number): number {
-  const index = (SPEEDS as readonly number[]).indexOf(speed);
-  return SPEEDS[(index + 1) % SPEEDS.length]!;
 }
 
 function SkipButton({
@@ -41,7 +33,7 @@ function SkipButton({
       size="icon"
       aria-label={`${direction === "back" ? "Back" : "Forward"} ${SKIP_SECONDS} seconds`}
       onPress={onPress}
-      className="relative size-9 shrink-0 sm:size-10"
+      className="relative size-10 shrink-0"
     >
       <Icon className="size-6" aria-hidden strokeWidth={1.25} />
       <span
@@ -84,6 +76,8 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         return;
       }
       if (Number.isFinite(audio.duration)) setDuration(audio.duration);
+      // Browsers (notably iOS Safari) may block this if preparing the audio
+      // took a while after the Listen tap; the Play button still works.
       void audio.play().catch(() => undefined);
     }
     return () => {
@@ -93,6 +87,9 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
       }
     };
   });
+
+  // Whole seconds, so the 1s steps can reach the end.
+  const seekMax = Math.floor(duration);
 
   function togglePlay() {
     const audio = audioRef.current;
@@ -156,7 +153,7 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         size="icon"
         aria-label={playing ? "Pause" : "Play"}
         onPress={togglePlay}
-        className="btn-circle size-9 shrink-0 sm:size-10"
+        className="btn-circle size-10 shrink-0"
       >
         {playing ? (
           <Pause className="size-4 fill-current" aria-hidden strokeWidth={1.5} />
@@ -171,9 +168,9 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         aria-label="Seek"
         aria-valuetext={`${formatPlaybackTime(currentTime)} of ${formatPlaybackTime(duration)}`}
         min={0}
-        max={duration || 0}
+        max={seekMax}
         step={1}
-        value={Math.min(currentTime, duration || 0)}
+        value={Math.min(currentTime, seekMax)}
         disabled={!duration}
         onChange={(event) => seekTo(Number(event.target.value))}
         className="range range-xs range-primary mx-1.5 min-w-0 flex-1"
@@ -186,12 +183,15 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         type="button"
         variant="ghost"
         size="sm"
-        aria-label={`Playback speed ${speed}×, change speed`}
-        onPress={() => changeSpeed(nextSpeed(speed))}
-        className="h-9 min-w-10 shrink-0 px-1 text-xs font-semibold tabular-nums sm:h-10"
+        aria-label={`Playback speed ${speed}×`}
+        onPress={() => changeSpeed(nextPlaybackSpeed(speed))}
+        className="h-10 min-w-10 shrink-0 px-1 text-xs font-semibold tabular-nums"
       >
         {speed}×
       </Button>
+      <span className="sr-only" aria-live="polite">
+        {`Speed ${speed}×`}
+      </span>
     </div>
   );
 }
