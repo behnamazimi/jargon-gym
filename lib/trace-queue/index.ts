@@ -19,6 +19,7 @@ export {
   getPoolStats,
   getPoolStatsForUser,
   getPoolStatsByDomainForUser,
+  getReadEligibleCountsByDomainForUser,
   fetchActiveTraceCandidatesForUser,
   fetchActiveTraceCandidates,
   fetchTermCardForUser,

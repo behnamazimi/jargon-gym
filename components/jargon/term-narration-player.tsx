@@ -2,32 +2,13 @@
 
 import { Loader2, Pause, Volume2 } from "lucide-react";
 import { useRef, useState } from "react";
+import {
+  claimActiveAudio,
+  isActiveAudio,
+  releaseActiveAudio,
+} from "@/components/jargon/active-audio";
 import { Button } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-
-/**
- * Only one narration clip should play at a time — the jargon collection
- * page renders many TermNarrationPlayer instances at once, and starting a
- * new one should pause whichever was previously playing (simultaneous
- * fetches/loads are fine; simultaneous *playback* is not). A module-level
- * singleton coordinates this across every independent instance.
- *
- * `previous.pause()` fires a 'pause' event asynchronously, so `active` is
- * reassigned before that fires — by the time the paused instance's own
- * onpause handler runs, `active` already points elsewhere, so it correctly
- * treats that pause as "someone else took the slot" instead of a load glitch.
- */
-let activeAudio: HTMLAudioElement | null = null;
-
-function claimActiveAudio(audio: HTMLAudioElement) {
-  const previous = activeAudio;
-  activeAudio = audio;
-  if (previous && previous !== audio) previous.pause();
-}
-
-function releaseActiveAudio(audio: HTMLAudioElement) {
-  if (activeAudio === audio) activeAudio = null;
-}
 
 function narrationSrc(termId: string): string {
   return `/api/narration/${termId}`;
@@ -137,7 +118,7 @@ export function TermNarrationPlayer({
     // A load can fire pause while we still intend to play (waiting on
     // canplay). Ignore that; startWhenReady will call play(). A real pause
     // is the user, or another player claiming the slot.
-    if (wantPlayingRef.current && activeAudio === audio) return;
+    if (wantPlayingRef.current && isActiveAudio(audio)) return;
     wantPlayingRef.current = false;
     releaseActiveAudio(audio);
     setStatus("paused");

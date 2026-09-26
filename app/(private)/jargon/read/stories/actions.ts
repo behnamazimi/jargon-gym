@@ -1,0 +1,195 @@
+"use server";
+
+import { after } from "next/server";
+import { z } from "zod";
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { recordRead } from "@/lib/jargon/review-outcome";
+import { getDecryptedApiKey } from "@/lib/llm/settings";
+import { StoryProviderError, generateStory } from "@/lib/stories/generate";
+import {
+  getCollection,
+  getStoryForUser,
+  insertStory,
+  loadRecentVotes,
+  markStoryRead,
+  setVote,
+} from "@/lib/stories/repository";
+import { savePrefs } from "@/lib/stories/prefs";
+import { pickStyle } from "@/lib/stories/style-picker";
+import { findFormat, findTone } from "@/lib/stories/styles";
+import {
+  CEFR_LEVELS,
+  READING_LEVELS,
+  STORY_MAX_TERMS,
+  STORY_MIN_TERMS,
+  STORY_OUTLINE_MAX,
+  type Story,
+  type StoryTerm,
+} from "@/lib/stories/types";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { pickReadTermsForUser } from "@/lib/trace-queue";
+
+export type StoryResult = { error: string } | { story: Story; terms: StoryTerm[] };
+
+const LOGIN_ERROR = "Log in to continue.";
+const NOT_ENOUGH_TERMS_ERROR = `This collection needs at least ${STORY_MIN_TERMS} terms left to read.`;
+
+async function fetchStoryTerms(termIds: string[]): Promise<StoryTerm[]> {
+  if (termIds.length === 0) return [];
+  const { data, error } = await createAdminClient()
+    .from("terms")
+    .select("id, term, definition")
+    .in("id", termIds);
+  if (error) throw error;
+  return data ?? [];
+}
+
+const generateInputSchema = z.object({
+  domainId: z.uuid(),
+  readingLevel: z.enum(READING_LEVELS),
+  cefrLevel: z.enum(CEFR_LEVELS),
+  outline: z
+    .string()
+    .trim()
+    .max(STORY_OUTLINE_MAX)
+    .transform((value) => value || null)
+    .nullable(),
+});
+
+export async function generateStoryAction(input: {
+  domainId: string;
+  readingLevel: string;
+  cefrLevel: string;
+  outline: string | null;
+}): Promise<StoryResult> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: LOGIN_ERROR };
+
+  const parsed = generateInputSchema.safeParse(input);
+  if (!parsed.success) return { error: "Check the story setup and try again." };
+  const { domainId, readingLevel, cefrLevel, outline } = parsed.data;
+  const levels = { readingLevel, cefrLevel };
+  const userId = auth.user.id;
+  const admin = createAdminClient();
+
+  try {
+    const credentials = await getDecryptedApiKey(auth.supabase, userId);
+    if (!credentials) return { error: "Add a provider and API key in Settings to write stories." };
+
+    await savePrefs(admin, userId, domainId, levels);
+
+    const [cards, collection, votes] = await Promise.all([
+      pickReadTermsForUser(admin, userId, { domainIds: [domainId] }, STORY_MAX_TERMS),
+      getCollection(admin, domainId),
+      loadRecentVotes(admin, userId),
+    ]);
+    if (!collection || cards.length < STORY_MIN_TERMS) return { error: NOT_ENOUGH_TERMS_ERROR };
+
+    const style = pickStyle(votes);
+    const format = findFormat(style.format)!;
+    const tone = findTone(style.tone)!;
+    const terms = cards.map((card) => ({
+      id: card.id,
+      term: card.term,
+      definition: card.definition,
+    }));
+
+    const generated = await generateStory({
+      provider: credentials.provider,
+      apiKey: credentials.apiKey,
+      terms,
+      collectionName: collection.name,
+      language: collection.language,
+      format,
+      tone,
+      readingLevel,
+      cefrLevel,
+      outline,
+    });
+
+    const usedIds = new Set(generated.termIds);
+    const story = await insertStory(admin, {
+      userId,
+      domainId,
+      language: collection.language,
+      format: format.id,
+      tone: tone.id,
+      levels,
+      outline,
+      title: generated.title,
+      segments: generated.segments,
+      termIds: generated.termIds,
+      newTermIds: cards
+        .filter((card) => card.isNewToUser && usedIds.has(card.id))
+        .map((card) => card.id),
+    });
+
+    return { story, terms: terms.filter((term) => usedIds.has(term.id)) };
+  } catch (err) {
+    if (err instanceof StoryProviderError) return { error: err.message };
+    console.error("generateStoryAction failed:", err);
+    return { error: "Couldn't write a story this time. Try again." };
+  }
+}
+
+export async function getStoryAction(storyId: string): Promise<StoryResult> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: LOGIN_ERROR };
+  if (!z.uuid().safeParse(storyId).success) return { error: "That story isn't available." };
+
+  try {
+    const story = await getStoryForUser(createAdminClient(), auth.user.id, storyId);
+    if (!story) return { error: "That story isn't available." };
+    return { story, terms: await fetchStoryTerms(story.termIds) };
+  } catch (err) {
+    console.error("getStoryAction failed:", err);
+    return { error: "Couldn't load that story. Try again." };
+  }
+}
+
+export async function markStoryReadAction(
+  storyId: string,
+): Promise<{ error: string } | { readAt: string | null }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: LOGIN_ERROR };
+  if (!z.uuid().safeParse(storyId).success) return { error: "That story isn't available." };
+
+  const userId = auth.user.id;
+  try {
+    const marked = await markStoryRead(createAdminClient(), userId, storyId);
+    if (!marked) return { readAt: null };
+
+    after(async () => {
+      const admin = createAdminClient();
+      for (const termId of marked.termIds) {
+        try {
+          await recordRead(admin, userId, termId, "admin");
+        } catch (err) {
+          console.error("Failed to record story read:", err);
+        }
+      }
+    });
+    return { readAt: marked.readAt };
+  } catch (err) {
+    console.error("markStoryReadAction failed:", err);
+    return { error: "Couldn't mark this story as read. Try again." };
+  }
+}
+
+export async function voteStoryAction(
+  storyId: string,
+  vote: -1 | 1 | null,
+): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: LOGIN_ERROR };
+  if (!z.uuid().safeParse(storyId).success) return { error: "That story isn't available." };
+  if (vote !== null && vote !== 1 && vote !== -1) return { error: "Invalid vote." };
+
+  try {
+    await setVote(createAdminClient(), auth.user.id, storyId, vote);
+    return {};
+  } catch (err) {
+    console.error("voteStoryAction failed:", err);
+    return { error: "Couldn't save your vote." };
+  }
+}

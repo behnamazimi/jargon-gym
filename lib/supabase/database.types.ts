@@ -360,6 +360,126 @@ export type Database = {
           },
         ];
       };
+      stories: {
+        Row: {
+          cefr_level: string;
+          created_at: string;
+          domain_id: string | null;
+          format: string;
+          id: string;
+          language: string;
+          narration_path: string | null;
+          narration_requested_at: string | null;
+          narration_status: string;
+          new_term_ids: string[];
+          outline: string | null;
+          read_at: string | null;
+          reading_level: string;
+          segments: Json;
+          term_ids: string[];
+          title: string;
+          tone: string;
+          user_id: string;
+          vote: number | null;
+        };
+        Insert: {
+          cefr_level: string;
+          created_at?: string;
+          domain_id?: string | null;
+          format: string;
+          id?: string;
+          language: string;
+          narration_path?: string | null;
+          narration_requested_at?: string | null;
+          narration_status?: string;
+          new_term_ids?: string[];
+          outline?: string | null;
+          read_at?: string | null;
+          reading_level: string;
+          segments: Json;
+          term_ids: string[];
+          title: string;
+          tone: string;
+          user_id: string;
+          vote?: number | null;
+        };
+        Update: {
+          cefr_level?: string;
+          created_at?: string;
+          domain_id?: string | null;
+          format?: string;
+          id?: string;
+          language?: string;
+          narration_path?: string | null;
+          narration_requested_at?: string | null;
+          narration_status?: string;
+          new_term_ids?: string[];
+          outline?: string | null;
+          read_at?: string | null;
+          reading_level?: string;
+          segments?: Json;
+          term_ids?: string[];
+          title?: string;
+          tone?: string;
+          user_id?: string;
+          vote?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "stories_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "stories_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      story_collection_prefs: {
+        Row: {
+          cefr_level: string;
+          domain_id: string;
+          reading_level: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          cefr_level: string;
+          domain_id: string;
+          reading_level: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          cefr_level?: string;
+          domain_id?: string;
+          reading_level?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "story_collection_prefs_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "story_collection_prefs_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       telegram_links: {
         Row: {
           all_caught_up_at: string | null;
@@ -672,6 +792,7 @@ export type Database = {
           last_active_date: string | null;
           longest_streak: number;
           provider: string | null;
+          story_last_domain_id: string | null;
           timezone: string | null;
           updated_at: string;
           user_id: string;
@@ -684,6 +805,7 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
+          story_last_domain_id?: string | null;
           timezone?: string | null;
           updated_at?: string;
           user_id: string;
@@ -696,11 +818,19 @@ export type Database = {
           last_active_date?: string | null;
           longest_streak?: number;
           provider?: string | null;
+          story_last_domain_id?: string | null;
           timezone?: string | null;
           updated_at?: string;
           user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "user_settings_story_last_domain_id_fkey";
+            columns: ["story_last_domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "user_settings_user_id_fkey";
             columns: ["user_id"];

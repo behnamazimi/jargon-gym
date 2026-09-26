@@ -77,3 +77,18 @@ export const fetchActiveTraceCandidates = cache(async function fetchActiveTraceC
 ): Promise<TraceCandidate[]> {
   return fetchTraceCandidates(client, userId, { domainIds: "all" });
 });
+
+/** Read-eligible term count per collection: the same pool Read ranks,
+ *  minus terms the user marked known. */
+export async function getReadEligibleCountsByDomainForUser(
+  client: Client,
+  userId: string,
+): Promise<Map<string, number>> {
+  const candidates = await fetchTraceCandidatesForUser(client, userId, { domainIds: "all" });
+  const counts = new Map<string, number>();
+  for (const candidate of candidates) {
+    if (candidate.markedKnownAt) continue;
+    counts.set(candidate.domainId, (counts.get(candidate.domainId) ?? 0) + 1);
+  }
+  return counts;
+}
