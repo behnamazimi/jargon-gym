@@ -3,6 +3,7 @@
 import { Settings2, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Dialog as AriaDialog, DialogTrigger, Popover } from "react-aria-components";
 import { saveReadOptionAction } from "@/app/(private)/jargon/read/actions";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -74,9 +75,53 @@ function OptionRow({
   );
 }
 
-/** Gear next to the Cards/Stories switch. A bottom sheet on phone (like the
- *  More sheet), a side sheet on desktop. Saves each toggle as it changes. */
-export function ReadOptionsSheet({ initialOptions }: { initialOptions: ReadOptions }) {
+function OptionsList({
+  options,
+  onChange,
+}: {
+  options: ReadOptions;
+  onChange: (key: ReadOptionKey, value: boolean) => void;
+}) {
+  return (
+    <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
+      {OPTION_ROWS.map((row) => (
+        <OptionRow
+          key={row.key}
+          id={`read-option-${row.key}`}
+          label={row.label}
+          description={row.description}
+          checked={options[row.key]}
+          disabledNote={
+            row.key === "hideQuestion" && options.revealedDefault
+              ? "Not used while definitions show right away."
+              : undefined
+          }
+          onChange={(checked) => onChange(row.key, checked)}
+        />
+      ))}
+    </ul>
+  );
+}
+
+function GearButton({ onPress }: { onPress?: () => void }) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Read options"
+      onPress={onPress}
+      className="size-11 shrink-0 text-base-content/70 md:size-9"
+    >
+      <Settings2 className="size-4" aria-hidden strokeWidth={1.5} />
+    </Button>
+  );
+}
+
+/** Gear next to the Cards/Stories switch: a bottom sheet on phone (like the
+ *  More sheet), a dropdown-style popover on desktop. Saves each toggle as it
+ *  changes. */
+export function ReadOptionsMenu({ initialOptions }: { initialOptions: ReadOptions }) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState(initialOptions);
   const isPhone = useMediaQuery(PLATFORM_MEDIA.phone, true);
@@ -95,24 +140,37 @@ export function ReadOptionsSheet({ initialOptions }: { initialOptions: ReadOptio
     router.refresh();
   }
 
+  const list = <OptionsList options={options} onChange={(key, value) => void update(key, value)} />;
+
+  if (!isPhone) {
+    return (
+      <DialogTrigger isOpen={open} onOpenChange={setOpen}>
+        <GearButton />
+        <Popover
+          placement="bottom end"
+          offset={6}
+          className="dropdown-content z-50 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-box bg-base-100 shadow-md ring-1 ring-base-content/10"
+        >
+          <AriaDialog aria-label="Read options" className="outline-none">
+            <p className="m-0 border-b border-base-300/60 px-4 py-2.5 text-sm font-medium">
+              Read options
+            </p>
+            {list}
+          </AriaDialog>
+        </Popover>
+      </DialogTrigger>
+    );
+  }
+
   return (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        aria-label="Read options"
-        onPress={() => setOpen(true)}
-        className="size-11 shrink-0 text-base-content/70 md:size-9"
-      >
-        <Settings2 className="size-4" aria-hidden strokeWidth={1.5} />
-      </Button>
+      <GearButton onPress={() => setOpen(true)} />
       <Sheet
         isOpen={open}
         onOpenChange={setOpen}
-        side={isPhone ? "bottom" : "right"}
+        side="bottom"
         showCloseButton={false}
-        className={cn(isPhone && "max-h-[min(36rem,85dvh)] rounded-t-2xl pb-safe")}
+        className="max-h-[min(36rem,85dvh)] rounded-t-2xl pb-safe"
       >
         <SheetHeader className="border-b border-base-300 px-4 py-3">
           <div className="flex items-center gap-1">
@@ -123,23 +181,7 @@ export function ReadOptionsSheet({ initialOptions }: { initialOptions: ReadOptio
             </SheetClose>
           </div>
         </SheetHeader>
-        <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
-          {OPTION_ROWS.map((row) => (
-            <OptionRow
-              key={row.key}
-              id={`read-option-${row.key}`}
-              label={row.label}
-              description={row.description}
-              checked={options[row.key]}
-              disabledNote={
-                row.key === "hideQuestion" && options.revealedDefault
-                  ? "Not used while definitions show right away."
-                  : undefined
-              }
-              onChange={(checked) => void update(row.key, checked)}
-            />
-          ))}
-        </ul>
+        {list}
       </Sheet>
     </>
   );
