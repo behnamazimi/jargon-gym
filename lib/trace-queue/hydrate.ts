@@ -2,6 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
+import { parseLanguage, type DomainLanguage } from "@/lib/jargon/languages";
 import { attachRelationshipsToTerms, mapTerm } from "@/lib/jargon/mappers";
 import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
 import { fetchTermRelationshipsForTerms } from "@/lib/jargon/terms";
@@ -25,21 +26,36 @@ function mapRelationshipsJson(raw: Json): TermCardRelationship[] {
   });
 }
 
-function mapTermCardRow(row: {
-  id: string;
-  term: string;
-  category: string;
-  definition: string | null;
-  example: string | null;
-  mental_model: string | null;
-  discussion: string | null;
-  anti_example: string | null;
-  controversy: string | null;
-  note: string | null;
-  domain_id: string;
-  domain_name: string;
-  relationships: Json;
-}): TermCard {
+async function fetchDomainLanguages(
+  client: Client,
+  domainIds: string[],
+): Promise<Map<string, DomainLanguage>> {
+  const { data, error } = await client
+    .from("domains")
+    .select("id, language")
+    .in("id", [...new Set(domainIds)]);
+  if (error) throw error;
+  return new Map(data.map((d) => [d.id, parseLanguage(d.language)]));
+}
+
+function mapTermCardRow(
+  row: {
+    id: string;
+    term: string;
+    category: string;
+    definition: string | null;
+    example: string | null;
+    mental_model: string | null;
+    discussion: string | null;
+    anti_example: string | null;
+    controversy: string | null;
+    note: string | null;
+    domain_id: string;
+    domain_name: string;
+    relationships: Json;
+  },
+  languageByDomainId: Map<string, DomainLanguage>,
+): TermCard {
   return {
     id: row.id,
     term: row.term,
@@ -53,6 +69,7 @@ function mapTermCardRow(row: {
     note: row.note,
     domainId: row.domain_id,
     domainName: row.domain_name,
+    domainLanguage: languageByDomainId.get(row.domain_id) ?? "en",
     relationships: mapRelationshipsJson(row.relationships),
     isNewToUser: false,
   };
@@ -70,7 +87,8 @@ export async function fetchTermCardForUser(
 
   if (error) throw error;
   const row = data?.[0];
-  return row ? mapTermCardRow(row) : null;
+  if (!row) return null;
+  return mapTermCardRow(row, await fetchDomainLanguages(client, [row.domain_id]));
 }
 
 /** Session-client hydrate: full term join → TermCard[] in scored order. */
@@ -94,7 +112,7 @@ export async function hydrateTermsAsTermCards(
   const mappedTerms = fullTerms.map(mapTerm);
 
   const [domainsResult, relationshipRows] = await Promise.all([
-    client.from("domains").select("id, name").in("id", domainIds),
+    client.from("domains").select("id, name, language").in("id", domainIds),
     fetchTermRelationshipsForTerms(
       client,
       mappedTerms.map((t) => t.id),
@@ -104,7 +122,7 @@ export async function hydrateTermsAsTermCards(
   const { data: domains, error: domainsError } = domainsResult;
   if (domainsError) throw domainsError;
 
-  const domainNameById = new Map(domains.map((d) => [d.id, d.name]));
+  const domainById = new Map(domains.map((d) => [d.id, d]));
   const termsWithRelationships = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
   const termOrderMap = new Map(termIds.map((id, idx) => [id, idx]));
@@ -114,6 +132,7 @@ export async function hydrateTermsAsTermCards(
 
   return termsWithRelationships.map((term) => {
     const domainId = fullTerms.find((t) => t.id === term.id)?.domain_id;
+    const domain = domainId ? domainById.get(domainId) : undefined;
     return {
       id: term.id,
       term: term.term,
@@ -126,7 +145,8 @@ export async function hydrateTermsAsTermCards(
       controversy: term.controversy ?? null,
       note: term.note ?? null,
       domainId: domainId ?? "",
-      domainName: domainId ? (domainNameById.get(domainId) ?? "Unknown") : "Unknown",
+      domainName: domain?.name ?? "Unknown",
+      domainLanguage: parseLanguage(domain?.language),
       relationships: term.relationships.map((rel) => ({
         direction: rel.direction,
         relationshipType: rel.relationshipType,
@@ -152,7 +172,12 @@ export async function hydrateTermCardsForUser(
   });
   if (error) throw error;
 
-  const cardById = new Map((data ?? []).map((row) => [row.id, mapTermCardRow(row)]));
+  const rows = data ?? [];
+  const languageByDomainId = await fetchDomainLanguages(
+    client,
+    rows.map((row) => row.domain_id),
+  );
+  const cardById = new Map(rows.map((row) => [row.id, mapTermCardRow(row, languageByDomainId)]));
   return termIds.map((termId) => {
     const card = cardById.get(termId);
     if (!card) throw new Error(`Term card missing for ${termId}`);

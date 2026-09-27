@@ -46,7 +46,7 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
   const data = await getPublicTermPage(domainSlug, termSlug);
   if (!data) notFound();
 
-  const { domain, term, relatedTermSlugsById } = data;
+  const { domain, language, term, relatedTermSlugsById } = data;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-10">
@@ -69,6 +69,7 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
       <TermBody
         term={term}
         showSearchLink={false}
+        language={language}
         getRelationshipHref={(relatedTermId) => {
           const relatedSlug = relatedTermSlugsById.get(relatedTermId);
           return relatedSlug ? `/j/${domain.slug}/${relatedSlug}` : undefined;

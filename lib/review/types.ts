@@ -1,8 +1,10 @@
+import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Term } from "@/lib/jargon/types";
 import type { ReviewGrade } from "@/lib/trace";
 
 export type ReviewTerm = Term & {
   domainName: string;
+  domainLanguage: DomainLanguage;
   isNewToUser?: boolean;
 };
 

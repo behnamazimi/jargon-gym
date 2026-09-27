@@ -1,10 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import { parseLanguage, type DomainLanguage } from "@/lib/jargon/languages";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import {
   parseCefrLevel,
   parsePieceLength,
-  parseLanguage,
   parseReadingLevel,
   type Story,
   type StoryLevels,

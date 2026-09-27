@@ -8,6 +8,8 @@ import {
   StickyNote,
 } from "lucide-react";
 import Link from "next/link";
+import type { DomainLanguage } from "@/lib/jargon/languages";
+import { TERM_LABELS, type TermLabels as Labels } from "@/lib/jargon/term-labels";
 import type { Term } from "@/lib/jargon/types";
 import { cn } from "@/lib/utils";
 import { TermDetailSection } from "./term-detail-section";
@@ -16,6 +18,7 @@ type TermBodyProps = {
   term: Term;
   className?: string;
   showSearchLink?: boolean;
+  language?: DomainLanguage;
   getRelationshipHref?: (relatedTermId: string) => string | undefined;
 };
 
@@ -43,36 +46,36 @@ function getTermDetails(term: Term): TermDetails {
   };
 }
 
-function TermDetailSections({ details }: { details: TermDetails }) {
+function TermDetailSections({ details, labels }: { details: TermDetails; labels: Labels }) {
   return (
     <>
       {details.mentalModel ? (
-        <TermDetailSection icon={Lightbulb} label="Mental model">
+        <TermDetailSection icon={Lightbulb} label={labels.mentalModel}>
           {details.mentalModel}
         </TermDetailSection>
       ) : null}
       {details.example ? (
-        <TermDetailSection icon={Quote} label="Example">
+        <TermDetailSection icon={Quote} label={labels.example}>
           {details.example}
         </TermDetailSection>
       ) : null}
       {details.antiExample ? (
-        <TermDetailSection icon={Ban} label="Anti-example" variant="anti">
+        <TermDetailSection icon={Ban} label={labels.antiExample} variant="anti">
           {details.antiExample}
         </TermDetailSection>
       ) : null}
       {details.discussion ? (
-        <TermDetailSection icon={Signpost} label="In practice">
+        <TermDetailSection icon={Signpost} label={labels.discussion}>
           {details.discussion}
         </TermDetailSection>
       ) : null}
       {details.controversy ? (
-        <TermDetailSection icon={MessagesSquare} label="Debated" variant="debated">
+        <TermDetailSection icon={MessagesSquare} label={labels.controversy} variant="debated">
           {details.controversy}
         </TermDetailSection>
       ) : null}
       {details.note ? (
-        <TermDetailSection icon={StickyNote} label="Note">
+        <TermDetailSection icon={StickyNote} label={labels.note}>
           {details.note}
         </TermDetailSection>
       ) : null}
@@ -101,14 +104,15 @@ function RelatedTermLink({ relationship, href }: RelatedTermLinkProps) {
 
 type RelationshipsListProps = {
   term: Term;
+  labels: Labels;
   getRelationshipHref?: (relatedTermId: string) => string | undefined;
 };
 
-function RelationshipsList({ term, getRelationshipHref }: RelationshipsListProps) {
+function RelationshipsList({ term, labels, getRelationshipHref }: RelationshipsListProps) {
   if (term.relationships.length === 0) return null;
   return (
     <ul
-      aria-label="Related terms"
+      aria-label={labels.relatedTerms}
       className="m-0 mt-2 max-w-prose list-disc space-y-2 ps-5 text-base leading-relaxed text-base-content/85"
     >
       {term.relationships.map((relationship) => {
@@ -132,7 +136,7 @@ function RelationshipsList({ term, getRelationshipHref }: RelationshipsListProps
   );
 }
 
-function SearchLink({ term }: { term: Term }) {
+function SearchLink({ term, labels }: { term: Term; labels: Labels }) {
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${term.term} definition`)}`;
   return (
     <a
@@ -142,7 +146,7 @@ function SearchLink({ term }: { term: Term }) {
       rel="noopener noreferrer"
     >
       <ExternalLink className="size-3.5" aria-hidden strokeWidth={1.5} />
-      Search &ldquo;{term.term}&rdquo; on Google
+      {labels.searchOnGoogle(term.term)}
     </a>
   );
 }
@@ -151,9 +155,11 @@ export function TermBody({
   term,
   className,
   showSearchLink = true,
+  language = "en",
   getRelationshipHref,
 }: TermBodyProps) {
   const details = getTermDetails(term);
+  const labels = TERM_LABELS[language];
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
@@ -161,11 +167,11 @@ export function TermBody({
         {term.definition}
       </p>
 
-      <TermDetailSections details={details} />
+      <TermDetailSections details={details} labels={labels} />
 
-      <RelationshipsList term={term} getRelationshipHref={getRelationshipHref} />
+      <RelationshipsList term={term} labels={labels} getRelationshipHref={getRelationshipHref} />
 
-      {showSearchLink ? <SearchLink term={term} /> : null}
+      {showSearchLink ? <SearchLink term={term} labels={labels} /> : null}
     </div>
   );
 }

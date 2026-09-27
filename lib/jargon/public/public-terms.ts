@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/public";
 import { attachRelationshipsToTerms, mapTerm } from "@/lib/jargon/mappers";
 import type { TermRelationshipLink } from "@/lib/jargon/types";
+import { parseLanguage, type DomainLanguage } from "@/lib/jargon/languages";
 
 export type PublicTermPath = {
   domainSlug: string;
@@ -112,6 +113,7 @@ export const getPublicDomainPage = cache(async function getPublicDomainPage(
 
 export type PublicTermPage = {
   domain: PublicDomain;
+  language: DomainLanguage;
   term: ReturnType<typeof mapTerm> & { slug: string; updatedAt: string };
   relatedTermSlugsById: Map<string, string>;
 };
@@ -124,7 +126,7 @@ export const getPublicTermPage = cache(async function getPublicTermPage(
 
   const { data: domainRow, error: domainError } = await supabase
     .from("domains")
-    .select("id, slug, name, description, updated_at")
+    .select("id, slug, name, description, updated_at, language")
     .eq("slug", domainSlug)
     .eq("is_public", true)
     .maybeSingle();
@@ -182,6 +184,7 @@ export const getPublicTermPage = cache(async function getPublicTermPage(
       description: domainRow.description ?? "",
       updatedAt: domainRow.updated_at,
     },
+    language: parseLanguage(domainRow.language),
     term: { ...term, slug: termRow.slug!, updatedAt: termRow.updated_at },
     relatedTermSlugsById,
   };

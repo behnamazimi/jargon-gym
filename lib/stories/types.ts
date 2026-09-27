@@ -1,4 +1,4 @@
-import { DOMAIN_LANGUAGES, type DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/jargon/languages";
 
 export const STORY_MIN_TERMS = 3;
 export const STORY_OUTLINE_MAX = 280;
@@ -41,12 +41,6 @@ export function parsePieceLength(value: string): PieceLength {
   return (PIECE_LENGTHS as readonly string[]).includes(value)
     ? (value as PieceLength)
     : DEFAULT_PIECE_LENGTH;
-}
-
-export function parseLanguage(value: string | null | undefined): DomainLanguage {
-  return (DOMAIN_LANGUAGES as readonly string[]).includes(value ?? "")
-    ? (value as DomainLanguage)
-    : "en";
 }
 
 export type StorySegment = { text: string; termId?: string };

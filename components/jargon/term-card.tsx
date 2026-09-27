@@ -2,6 +2,7 @@
 
 import { Check, CheckCircle2, ChevronRight, Undo2 } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
+import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
@@ -19,6 +20,7 @@ type TermCardProps = {
   open: boolean;
   isOwner: boolean;
   domainId: string;
+  language: DomainLanguage;
   domainTerms: Term[];
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
@@ -139,6 +141,7 @@ export const TermCard = memo(function TermCard({
   open,
   isOwner,
   domainId,
+  language,
   domainTerms,
   narrationAccess,
   onToggleOpen,
@@ -199,7 +202,7 @@ export const TermCard = memo(function TermCard({
             />
           </div>
           <CollapsibleContent>
-            <TermBody term={term} className="px-4 pt-4" />
+            <TermBody term={term} language={language} className="px-4 pt-4" />
             <div className="px-4 pb-4 mt-4">
               <MarkKnownButton
                 markedKnown={markedKnown}
