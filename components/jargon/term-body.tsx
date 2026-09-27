@@ -1,4 +1,12 @@
-import { ExternalLink } from "lucide-react";
+import {
+  Ban,
+  ExternalLink,
+  Lightbulb,
+  MessagesSquare,
+  Quote,
+  Signpost,
+  StickyNote,
+} from "lucide-react";
 import Link from "next/link";
 import type { Term } from "@/lib/jargon/types";
 import { cn } from "@/lib/utils";
@@ -39,32 +47,32 @@ function TermDetailSections({ details }: { details: TermDetails }) {
   return (
     <>
       {details.mentalModel ? (
-        <TermDetailSection emoji="💡" label="Mental model">
+        <TermDetailSection icon={Lightbulb} label="Mental model">
           {details.mentalModel}
         </TermDetailSection>
       ) : null}
       {details.example ? (
-        <TermDetailSection emoji="📌" label="Example">
+        <TermDetailSection icon={Quote} label="Example">
           {details.example}
         </TermDetailSection>
       ) : null}
       {details.antiExample ? (
-        <TermDetailSection emoji="⚠️" label="Anti-example" variant="anti">
+        <TermDetailSection icon={Ban} label="Anti-example" variant="anti">
           {details.antiExample}
         </TermDetailSection>
       ) : null}
       {details.discussion ? (
-        <TermDetailSection emoji="🛠" label="In practice">
+        <TermDetailSection icon={Signpost} label="In practice">
           {details.discussion}
         </TermDetailSection>
       ) : null}
       {details.controversy ? (
-        <TermDetailSection emoji="⚡" label="Debated" variant="debated">
+        <TermDetailSection icon={MessagesSquare} label="Debated" variant="debated">
           {details.controversy}
         </TermDetailSection>
       ) : null}
       {details.note ? (
-        <TermDetailSection emoji="📝" label="Note">
+        <TermDetailSection icon={StickyNote} label="Note">
           {details.note}
         </TermDetailSection>
       ) : null}
@@ -113,7 +121,9 @@ function RelationshipsList({ term, getRelationshipHref }: RelationshipsListProps
               <RelatedTermLink relationship={relationship} href={href} />
             </span>
             {description ? (
-              <span className="mt-1 block text-base-content/65">{description}</span>
+              <span className="mt-1 block whitespace-pre-line text-base-content/65">
+                {description}
+              </span>
             ) : null}
           </li>
         );
@@ -147,7 +157,7 @@ export function TermBody({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <p className="m-0 max-w-prose text-base leading-relaxed text-base-content/85">
+      <p className="m-0 max-w-prose text-base leading-relaxed whitespace-pre-line text-base-content/85">
         {term.definition}
       </p>
 
