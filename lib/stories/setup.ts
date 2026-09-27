@@ -2,7 +2,8 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { getUserSettings } from "@/lib/llm/settings";
 import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
-import { listStudyCollections } from "@/lib/study/collections";
+import { listStudyCollectionState } from "@/lib/study/collections";
+import type { PausedStudyCollection } from "@/lib/study/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getReadEligibleCountsByDomainForUser } from "@/lib/trace-queue";
 import { loadPrefs } from "./prefs";
@@ -13,6 +14,7 @@ export type StoryCollection = { id: string; name: string; eligibleCount: number 
 
 export type StoriesSetupData = {
   collections: StoryCollection[];
+  paused: PausedStudyCollection[];
   initialDomainId: string | null;
   levelsByDomain: Record<string, StoryLevels>;
   llmConfigured: boolean;
@@ -44,9 +46,9 @@ export async function getStoriesSetupData(
   if ("error" in auth) return { error: "Log in to read stories." };
 
   const admin = createAdminClient();
-  const [studyCollections, eligibleCounts, prefs, settings, narrationAccess, unreadStory] =
+  const [collectionState, eligibleCounts, prefs, settings, narrationAccess, unreadStory] =
     await Promise.all([
-      listStudyCollections(auth.supabase, auth.user.id),
+      listStudyCollectionState(auth.supabase, auth.user.id),
       getReadEligibleCountsByDomainForUser(admin, auth.user.id),
       loadPrefs(admin, auth.user.id),
       getUserSettings(auth.supabase, auth.user.id),
@@ -57,7 +59,7 @@ export async function getStoriesSetupData(
       }),
     ]);
 
-  const collections = studyCollections.map((collection) => ({
+  const collections = collectionState.active.map((collection) => ({
     id: collection.id,
     name: collection.name,
     eligibleCount: eligibleCounts.get(collection.id) ?? 0,
@@ -65,6 +67,7 @@ export async function getStoriesSetupData(
 
   return {
     collections,
+    paused: collectionState.paused,
     initialDomainId: resolveInitialDomainId(collections, [requestedDomainId, prefs.lastDomainId]),
     levelsByDomain: prefs.levelsByDomain,
     llmConfigured: hasLlmConfigured(settings),

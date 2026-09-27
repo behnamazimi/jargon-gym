@@ -26,9 +26,9 @@ export default async function JargonMasteryPage() {
         description="Import your own terms or add a shared collection to see your mastery overview here."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <LinkButton href="/jargon/import">Import jargon</LinkButton>
-          <LinkButton href="/jargon/browse" variant="outline">
-            Browse shared collections
+          <LinkButton href="/jargon/browse">Browse shared collections</LinkButton>
+          <LinkButton href="/jargon/import" variant="outline">
+            Import jargon
           </LinkButton>
         </div>
       </EmptyState>

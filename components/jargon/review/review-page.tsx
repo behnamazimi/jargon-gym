@@ -10,7 +10,7 @@ import { ReviewPlayingStep } from "@/components/jargon/review/review-playing-ste
 import { useReviewKeyboard } from "@/components/jargon/review/use-review-keyboard";
 import { useReviewQueue } from "@/components/jargon/review/use-review-queue";
 import { useReviewWriteQueue } from "@/components/jargon/review/use-review-write-queue";
-import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-setup-panel";
+import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
 import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { LinkButton } from "@/components/ui/button";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
@@ -21,12 +21,13 @@ import {
 import { canMoveForward } from "@/lib/review/keyboard";
 import { upsertRating } from "@/lib/review/writes";
 import type { ReviewRating } from "@/lib/review/types";
-import type { StudyCollection } from "@/lib/study/types";
+import type { PausedStudyCollection, StudyCollection } from "@/lib/study/types";
 import type { ReviewGrade } from "@/lib/trace";
 
 type ReviewPageProps = {
   seed: ReviewQueueSeed;
   collections: StudyCollection[];
+  paused: PausedStudyCollection[];
   domainId: string;
   narrationAccess: boolean;
 };
@@ -49,7 +50,13 @@ function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
   return `Nothing left to recall in ${name} right now. Pick another collection, or come back later.`;
 }
 
-export function ReviewPage({ seed, collections, domainId, narrationAccess }: ReviewPageProps) {
+export function ReviewPage({
+  seed,
+  collections,
+  paused,
+  domainId,
+  narrationAccess,
+}: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
   const [rememberOnDevice, setRememberOnDevice] = useState(true);
@@ -148,7 +155,7 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
   if (collections.length === 0) {
     return (
       <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
-        <StudyNoActiveCollectionsState description="Turn on a collection on the collection page before you start reviewing." />
+        <StudyNoActiveCollectionsState paused={paused} activity="reviewing" />
       </QuizPanel>
     );
   }

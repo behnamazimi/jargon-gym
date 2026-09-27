@@ -15,7 +15,7 @@ import {
   useStorySession,
   type StorySession,
 } from "@/components/jargon/read/stories/use-story-session";
-import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-setup-panel";
+import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
 import { Button, LinkButton } from "@/components/ui/button";
 import { STORY_MIN_TERMS } from "@/lib/stories/types";
 
@@ -106,7 +106,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
       return (
         <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
           {setup.collections.length === 0 ? (
-            <StudyNoActiveCollectionsState description="Turn on a collection on the collection page before you read stories. Cards need one too." />
+            <StudyNoActiveCollectionsState paused={setup.paused} activity="reading stories" />
           ) : setup.initialDomainId === null ? (
             <StoriesNoTerms />
           ) : (

@@ -9,7 +9,7 @@ import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser, pickReadTermsForUser } from "@/lib/trace-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { listStudyCollections } from "@/lib/study/collections";
+import { listStudyCollectionState } from "@/lib/study/collections";
 
 export type ReadTermByIdResult = {
   error?: string;
@@ -33,12 +33,12 @@ export async function getReadSetupData() {
     return { error: "Log in to continue." as const };
   }
 
-  const [collections, narrationAccess] = await Promise.all([
-    listStudyCollections(auth.supabase, auth.user.id),
+  const [{ active: collections, paused }, narrationAccess] = await Promise.all([
+    listStudyCollectionState(auth.supabase, auth.user.id),
     getNarrationAccessForUser(auth.supabase, auth.user.id),
   ]);
 
-  return { collections, narrationAccess };
+  return { collections, paused, narrationAccess };
 }
 
 function domainIdsForRead(domainId: string | undefined): string[] | "all" {

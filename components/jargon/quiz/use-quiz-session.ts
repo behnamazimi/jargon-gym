@@ -1,9 +1,10 @@
+import type { InitialQuizSetup } from "@/lib/quiz/setup-preference";
 import { type StudyCollection } from "@/lib/study/types";
 import { useQuizSetup } from "@/components/jargon/quiz/use-quiz-setup";
 import { useQuizPlaying } from "@/components/jargon/quiz/use-quiz-playing";
 
-export function useQuizSession(collections: StudyCollection[], initialDomainId?: string) {
-  const setup = useQuizSetup(collections, initialDomainId);
+export function useQuizSession(collections: StudyCollection[], initialSetup: InitialQuizSetup) {
+  const setup = useQuizSetup(collections, initialSetup);
   const playing = useQuizPlaying({
     step: setup.step,
     setStep: setup.setStep,
@@ -34,6 +35,7 @@ export function useQuizSession(collections: StudyCollection[], initialDomainId?:
     questionCountPresets: setup.questionCountPresets,
     applyQuestionCount: setup.applyQuestionCount,
     handleQuestionCountInputChange: setup.handleQuestionCountInputChange,
+    saveSetup: setup.saveSetup,
 
     questions: playing.questions,
     currentIndex: playing.currentIndex,

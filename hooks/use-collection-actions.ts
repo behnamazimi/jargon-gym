@@ -7,7 +7,6 @@ import {
   removeFromCollection,
   resetCollectionProgress,
   shareDomain,
-  toggleActiveForReview,
   updateOwnedDomain,
   unshareDomain,
 } from "@/app/(private)/jargon/actions";
@@ -21,8 +20,6 @@ export function useCollectionActions() {
     isBusy,
     busyId,
     clearError,
-    toggleActiveForReview: (domainId: string, active: boolean) =>
-      run(() => toggleActiveForReview(domainId, active), { busyKey: domainId, skipRefresh: true }),
     shareDomain: (domainId: string) => run(() => shareDomain(domainId), { busyKey: domainId }),
     unshareDomain: (domainId: string) => run(() => unshareDomain(domainId), { busyKey: domainId }),
     updateOwnedDomain: (domainId: string, input: DomainInput, onSuccess?: () => void) =>

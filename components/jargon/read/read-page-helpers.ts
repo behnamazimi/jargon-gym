@@ -22,6 +22,13 @@ export function termCountForSelection(domainId: string, collections: StudyCollec
   return collections.find((collection) => collection.id === domainId)?.termCount ?? 0;
 }
 
+/** `null` state (not `window.history.state`) is what lets Next sync
+ *  `useSearchParams`, so the Cards/Stories tabs see the new collection.
+ *  Next copies its own history state over by itself. */
+function replaceUrl(url: URL) {
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
 export function replaceReadDomainInUrl(domainId: string) {
   const url = new URL(window.location.href);
   if (domainId === "all") {
@@ -33,7 +40,7 @@ export function replaceReadDomainInUrl(domainId: string) {
   url.searchParams.delete("alreadyRead");
   // Keeps a reload on Cards even when an unread story would redirect to Stories.
   url.searchParams.set("view", "cards");
-  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  replaceUrl(url);
 }
 
 /** Tidies the URL once Cards is showing: drops a stale collection and marks
@@ -41,12 +48,15 @@ export function replaceReadDomainInUrl(domainId: string) {
  *  gets redirected to Stories. */
 export function normalizeCardsUrl(resolvedDomainId: string) {
   const url = new URL(window.location.href);
-  const param = url.searchParams.get("domain");
-  if (param && (resolvedDomainId === "all" || param !== resolvedDomainId)) {
+  // Writes a remembered collection into the URL too, so the Cards/Stories
+  // tabs (which read `domain` from the URL) keep it.
+  if (resolvedDomainId === "all") {
     url.searchParams.delete("domain");
+  } else {
+    url.searchParams.set("domain", resolvedDomainId);
   }
   if (!url.searchParams.has("termId")) url.searchParams.set("view", "cards");
-  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  replaceUrl(url);
 }
 
 export function isTypingTarget(target: EventTarget | null) {

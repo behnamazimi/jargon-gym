@@ -10,6 +10,7 @@ import { useReadQueue } from "@/components/jargon/read/use-read-queue";
 import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
+import { saveReadCollectionPreference } from "@/lib/read/collection-preference";
 import type { ReadOptions } from "@/lib/read/options";
 import type { StudyCollection } from "@/lib/study/types";
 import {
@@ -58,6 +59,7 @@ export function ReadPage({ seed, collections, domainId, narrationAccess, options
       setSelectedCollectionId(nextDomainId);
       replaceReadDomainInUrl(nextDomainId);
       queue.switchDomain(nextDomainId);
+      saveReadCollectionPreference(nextDomainId);
     },
     [queue.switchDomain],
   );

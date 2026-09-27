@@ -4,13 +4,22 @@ import {
   getReadTermByIdAction,
   type ReadQueueSeed,
 } from "@/app/(private)/jargon/read/actions";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { ReadPage } from "@/components/jargon/read/read-page";
+import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { DEFAULT_READ_OPTIONS, getReadOptions, type ReadOptions } from "@/lib/read/options";
+import {
+  parseReadCollectionCookie,
+  READ_COLLECTION_COOKIE,
+} from "@/lib/read/collection-preference";
 import { readLandingRedirect } from "@/lib/read/landing";
 import { hasCurrentStory } from "@/lib/stories/repository";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { resolveStudyCollectionId } from "@/lib/study/collection-preference";
+import { hasNoCollections } from "@/lib/study/collections";
 import type { StudyCollection } from "@/lib/study/types";
 
 // Narration generation (ElevenLabs) can take longer than the platform's
@@ -62,6 +71,10 @@ async function buildDeepLinkSeed(termId: string, alreadyRead: boolean): Promise<
   return { terms: [result.term], revealedTermIds: result.revealed ? [result.term.id] : [] };
 }
 
+function activeCollectionsKey(collections: StudyCollection[]): string {
+  return collections.map((collection) => collection.id).join(",");
+}
+
 function LoginPrompt() {
   return <p className="text-sm text-base-content/60">Log in to read terms.</p>;
 }
@@ -81,6 +94,7 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
 
     return (
       <ReadPage
+        key={activeCollectionsKey(setup.collections)}
         seed={seed}
         collections={setup.collections}
         domainId={domainId}
@@ -103,20 +117,36 @@ export default async function JargonReadPage({ searchParams }: PageProps) {
   // own auth check and an unknown/inactive domain id just yields an empty
   // pick. Only discard it if the resolved domain turns out different (a
   // stale/removed collection in the URL).
-  const speculativeDomainId = params.domain ?? "all";
+  const rememberedId = parseReadCollectionCookie(
+    (await cookies()).get(READ_COLLECTION_COOKIE)?.value,
+  );
+  const speculativeDomainId = params.domain ?? rememberedId ?? "all";
   const [setup, speculativeSeed] = await Promise.all([
     getReadSetupData(),
     getReadFeedBatchAction(speculativeDomainId, []),
   ]);
   if ("error" in setup) return <LoginPrompt />;
+  if (hasNoCollections({ active: setup.collections, paused: setup.paused })) redirect("/jargon");
+  if (setup.collections.length === 0) {
+    return (
+      <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
+        <StudyNoActiveCollectionsState paused={setup.paused} activity="reading" />
+      </QuizPanel>
+    );
+  }
 
-  const domainId = resolveReadCollectionId(params.domain, setup.collections);
+  const domainId = resolveStudyCollectionId(
+    params.domain,
+    rememberedId,
+    setup.collections.map((collection) => collection.id),
+  );
   const seed =
     domainId === speculativeDomainId ? speculativeSeed : await getReadFeedBatchAction(domainId, []);
   if (seed.error === "Log in to continue.") return <LoginPrompt />;
 
   return (
     <ReadPage
+      key={activeCollectionsKey(setup.collections)}
       seed={seed}
       collections={setup.collections}
       domainId={domainId}

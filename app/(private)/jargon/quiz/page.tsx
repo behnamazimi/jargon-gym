@@ -1,36 +1,48 @@
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { QuizPage } from "@/components/jargon/quiz/quiz-page";
 import { getQuizSetupData } from "@/app/(private)/jargon/quiz/actions";
-import type { StudyCollection } from "@/lib/study/types";
+import {
+  parseQuizSetupCookie,
+  QUIZ_SETUP_COOKIE,
+  resolveInitialQuizSetup,
+} from "@/lib/quiz/setup-preference";
+import { hasNoCollections } from "@/lib/study/collections";
 
 type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };
 
-function resolveQuizCollectionId(
-  domainParam: string | undefined,
-  collections: StudyCollection[],
-): string {
-  if (domainParam && collections.some((collection) => collection.id === domainParam)) {
-    return domainParam;
-  }
-  return "all";
-}
-
 export default async function JargonQuizPage({ searchParams }: PageProps) {
-  const [params, setup] = await Promise.all([searchParams, getQuizSetupData()]);
+  const [params, setup, cookieStore] = await Promise.all([
+    searchParams,
+    getQuizSetupData(),
+    cookies(),
+  ]);
 
   if ("error" in setup) {
     return <p className="text-sm text-base-content/60">{setup.error}</p>;
   }
+  if (hasNoCollections({ active: setup.collections, paused: setup.paused })) redirect("/jargon");
 
-  const domainId = resolveQuizCollectionId(params.domain, setup.collections);
+  const activeIds = setup.collections.map((collection) => collection.id);
+  const initialSetup = resolveInitialQuizSetup({
+    saved: parseQuizSetupCookie(cookieStore.get(QUIZ_SETUP_COOKIE)?.value),
+    domainParam: params.domain,
+    activeIds,
+    llmConfigured: setup.llmConfigured,
+  });
 
   return (
     <QuizPage
+      // Resuming a paused collection refreshes the page; a new active set
+      // remounts it so the setup picks up the new collections.
+      key={activeIds.join(",")}
       llmConfigured={setup.llmConfigured}
       providerLabel={setup.providerLabel}
       collections={setup.collections}
-      initialDomainId={domainId}
+      paused={setup.paused}
+      initialSetup={initialSetup}
     />
   );
 }

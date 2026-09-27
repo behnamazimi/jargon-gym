@@ -12,7 +12,7 @@ import { QuizPickerStep } from "@/components/jargon/quiz/quiz-picker-step";
 import { StudyProgress } from "@/components/jargon/study/study-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
-import { type StudyCollection } from "@/lib/study/types";
+import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import { type useQuizSession } from "@/components/jargon/quiz/use-quiz-session";
 
 export type UseQuizSessionResult = ReturnType<typeof useQuizSession>;
@@ -77,17 +77,20 @@ export function QuizPickerStepSection({
   llmConfigured,
   providerLabel,
   collections,
+  paused,
   aiRequiresSetup,
 }: {
   quiz: UseQuizSessionResult;
   llmConfigured: boolean;
   providerLabel: string | null;
   collections: StudyCollection[];
+  paused: PausedStudyCollection[];
   aiRequiresSetup: boolean;
 }) {
   return (
     <QuizPickerStep
       collections={collections}
+      paused={paused}
       providerLabel={providerLabel}
       savedSession={quiz.savedSession}
       onResumeSession={quiz.handleResumeSession}
@@ -109,7 +112,10 @@ export function QuizPickerStepSection({
       questionCountPresets={quiz.questionCountPresets}
       onApplyQuestionCount={quiz.applyQuestionCount}
       onQuestionCountInputChange={quiz.handleQuestionCountInputChange}
-      onStartQuiz={() => void quiz.handleStartQuiz(llmConfigured)}
+      onStartQuiz={() => {
+        quiz.saveSetup();
+        void quiz.handleStartQuiz(llmConfigured);
+      }}
     />
   );
 }
