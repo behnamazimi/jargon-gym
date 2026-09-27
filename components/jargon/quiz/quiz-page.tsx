@@ -50,7 +50,11 @@ export function QuizPage({
         <QuizResults
           score={quiz.score}
           total={quiz.resultsTotal}
-          onQuizAgain={quiz.resetQuizState}
+          practice={quiz.practice}
+          missedTerms={quiz.missedTerms}
+          onQuizAgain={() => void quiz.handleStartQuiz(llmConfigured)}
+          onPractice={quiz.handleStartPractice}
+          onChangeSetup={quiz.resetQuizState}
         />
       );
     case "error":

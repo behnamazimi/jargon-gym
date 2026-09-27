@@ -47,6 +47,9 @@ export function useQuizSession(collections: StudyCollection[], initialSetup: Ini
     resetQuizState: playing.resetQuizState,
     handleStartQuiz: playing.handleStartQuiz,
     handleQuestionAnswer: playing.handleQuestionAnswer,
+    handleStartPractice: playing.handleStartPractice,
+    practice: playing.practice,
+    missedTerms: playing.missedTerms,
     score: playing.score,
     resultsTotal: playing.resultsTotal,
   };

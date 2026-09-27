@@ -1,4 +1,6 @@
-import { PauseCircle } from "lucide-react";
+import { BookOpen, PauseCircle } from "lucide-react";
+import type { ReactNode } from "react";
+import { LinkButton } from "@/components/ui/button";
 import type { CollectionStatBreakdown } from "@/lib/jargon/collection-stats";
 import type { MasteryBucketCounts } from "@/lib/trace";
 import { formatPaceLine, formatUnseenFootnote } from "./mastery-format";
@@ -51,6 +53,7 @@ function CollectionCardShell({
   paceLine,
   paused,
   onSelect,
+  footer,
 }: {
   collection: CollectionCardData;
   buckets?: MasteryBucketCounts;
@@ -59,6 +62,7 @@ function CollectionCardShell({
   paceLine?: string | null;
   paused?: boolean;
   onSelect?: () => void;
+  footer?: ReactNode;
 }) {
   const content = (
     <div className="space-y-1.5">
@@ -102,26 +106,24 @@ function CollectionCardShell({
     </div>
   );
 
-  const className = cn(
-    "shadow-surface rounded-2xl bg-base-100 p-4 text-left",
-    paused && "opacity-60",
-  );
+  const surface = cn("shadow-surface rounded-2xl bg-base-100 text-left", paused && "opacity-60");
 
   if (!onSelect) {
-    return <div className={className}>{content}</div>;
+    return <div className={cn(surface, "p-4")}>{content}</div>;
   }
 
+  // The footer holds a link, which can't sit inside the card's button.
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        className,
-        "w-full cursor-pointer transition-colors hover:bg-base-200/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-      )}
-    >
-      {content}
-    </button>
+    <div className={surface}>
+      <button
+        type="button"
+        onClick={onSelect}
+        className="w-full cursor-pointer rounded-2xl p-4 text-left transition-colors hover:bg-base-200/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        {content}
+      </button>
+      {footer ? <div className="px-4 pb-4">{footer}</div> : null}
+    </div>
   );
 }
 
@@ -142,6 +144,18 @@ export function CollectionCard({
       footnote={formatUnseenFootnote(collection)}
       paceLine={formatPaceLine(collection.paceInsight)}
       onSelect={() => onSelect(collection.id)}
+      footer={
+        <LinkButton
+          href={`/jargon/review?domain=${collection.id}`}
+          variant="outline"
+          size="sm"
+          className="min-h-11 gap-1.5 md:min-h-8"
+          aria-label={`Practice ${collection.name} in Review`}
+        >
+          <BookOpen className="size-4" aria-hidden strokeWidth={1.5} />
+          Practice
+        </LinkButton>
+      }
     />
   );
 }

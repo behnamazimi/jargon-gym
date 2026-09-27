@@ -5,11 +5,12 @@ import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string }>;
+  searchParams: Promise<{ domain?: string; imported?: string }>;
 };
 
 export default async function JargonListPage({ searchParams }: PageProps) {
-  const { domain: selectedDomainId } = await searchParams;
+  const { domain: selectedDomainId, imported } = await searchParams;
+  const importedCount = imported === undefined ? undefined : Number.parseInt(imported, 10);
   const setup = await getJargonSetupData(selectedDomainId);
 
   if ("emptyCollection" in setup) {
@@ -26,5 +27,15 @@ export default async function JargonListPage({ searchParams }: PageProps) {
     );
   }
 
-  return <JargonPage initialData={setup.data} narrationAccess={setup.narrationAccess} />;
+  return (
+    <JargonPage
+      initialData={setup.data}
+      narrationAccess={setup.narrationAccess}
+      importedCount={
+        importedCount !== undefined && Number.isInteger(importedCount) && importedCount >= 0
+          ? importedCount
+          : undefined
+      }
+    />
+  );
 }

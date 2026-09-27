@@ -11,16 +11,27 @@ import { dropPendingQuizWrite, type PendingQuizWrite } from "@/lib/quiz/session-
 export function useQuizWriteQueue(options: {
   setErrorMessage: (message: string | null) => void;
   onSessionIdleAfterComplete: () => void;
+  /** A finished session was replaced (e.g. "Quiz again") while its
+   *  answers were still saving; called once those writes land. */
+  onReplacedSessionIdle: () => void;
 }) {
   const [pendingWrites, setPendingWrites] = useState<PendingQuizWrite[]>([]);
   const { toast } = useToast();
   const queue = useTraceWriteQueue();
   const sessionCompleteRef = useRef(false);
+  const replacedSessionPendingRef = useRef(false);
+
+  function isIdle() {
+    return queue.getState().isIdle && !hasInflightTraceWrites();
+  }
 
   function checkIdle() {
-    if (sessionCompleteRef.current && queue.getState().isIdle && !hasInflightTraceWrites()) {
-      options.onSessionIdleAfterComplete();
+    if (!isIdle()) return;
+    if (replacedSessionPendingRef.current) {
+      replacedSessionPendingRef.current = false;
+      options.onReplacedSessionIdle();
     }
+    if (sessionCompleteRef.current) options.onSessionIdleAfterComplete();
   }
 
   /** Shared by a fresh submit and by resume-replay, so both paths
@@ -57,6 +68,9 @@ export function useQuizWriteQueue(options: {
   }
 
   function resetSession() {
+    // Without this, a finished quiz replaced before its writes drain would
+    // never trigger its page revalidation.
+    if (sessionCompleteRef.current && !isIdle()) replacedSessionPendingRef.current = true;
     sessionCompleteRef.current = false;
   }
 

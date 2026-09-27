@@ -99,7 +99,8 @@ export async function confirmImport(
     });
 
     revalidatePath("/jargon");
-    redirect(`/jargon?domain=${result.domainId}`);
+    const imported = result.termsCreated + result.termsUpdated;
+    redirect(`/jargon?domain=${result.domainId}&imported=${imported}`);
   } catch (err) {
     return handleImportError(err);
   }

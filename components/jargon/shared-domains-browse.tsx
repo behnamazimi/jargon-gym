@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useRef } from "react";
 import { SharedDomainCard } from "@/components/jargon/shared-domain-card";
 import { SharedDomainsFilterBar } from "@/components/jargon/shared-domains-filter-bar";
 import {
@@ -8,8 +9,10 @@ import {
   SharedDomainsNoMatches,
 } from "@/components/jargon/shared-domains-empty-states";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/components/ui/toast";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
+import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
 import type { BrowsePageResult } from "@/lib/jargon/browse";
 import { cn } from "@/lib/utils";
 
@@ -21,26 +24,26 @@ export function SharedDomainsBrowse({ initialPage }: SharedDomainsBrowseProps) {
   const { error, busyId, addToCollection, removeFromCollection } = useCollectionActions();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const browse = useSharedDomainsBrowse({ initialPage });
+  const router = useRouter();
+  const { toast } = useToast();
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "/") return;
-      const target = event.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
-        return;
-      }
-      event.preventDefault();
-      searchInputRef.current?.focus();
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  useSlashToFocus(searchInputRef);
 
   async function handleAdd(domainId: string) {
+    const name = browse.domains.find((domain) => domain.id === domainId)?.name;
     browse.markInCollection(domainId, true);
     const ok = await addToCollection(domainId);
-    if (!ok) browse.retry();
+    if (!ok) {
+      browse.retry();
+      return;
+    }
+    // Added collections are always active, so Read can open on it.
+    toast(name ? `Added "${name}"` : "Added to your library", "success", {
+      action: {
+        label: "Start reading",
+        onPress: () => router.push(`/jargon/read?domain=${domainId}`),
+      },
+    });
   }
 
   async function handleRemove(domainId: string) {

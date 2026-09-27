@@ -31,11 +31,12 @@ export function QuizAnswerChoices({
         isDisabled={submitted}
         className="flex flex-col gap-2 pt-5"
       >
-        {question.options.map((option) => (
+        {question.options.map((option, index) => (
           <QuizChoice
             key={option.id}
             value={option.id}
             label={option.text}
+            shortcut={index + 1}
             result={getMcqResult(
               option.id,
               state.selectedOptionIds,
@@ -56,11 +57,12 @@ export function QuizAnswerChoices({
       isDisabled={submitted}
       className="grid gap-2 pt-5 sm:grid-cols-2"
     >
-      {[true, false].map((value) => (
+      {[true, false].map((value, index) => (
         <QuizChoice
           key={String(value)}
           value={String(value)}
           label={value ? "True" : "False"}
+          shortcut={index + 1}
           result={getTrueFalseResult(
             value,
             state.trueFalseAnswer,

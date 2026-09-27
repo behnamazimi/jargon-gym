@@ -5,8 +5,12 @@ import { EmptyState } from "@/components/jargon/empty-state";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 
-export default async function JargonMasteryPage() {
-  const setup = await getMasterySetupData();
+type PageProps = {
+  searchParams: Promise<{ tab?: string; collection?: string }>;
+};
+
+export default async function JargonMasteryPage({ searchParams }: PageProps) {
+  const [params, setup] = await Promise.all([searchParams, getMasterySetupData()]);
 
   if ("error" in setup) {
     return (
@@ -37,6 +41,12 @@ export default async function JargonMasteryPage() {
 
   return (
     <MasteryPage
+      initialTab={params.tab === "terms" ? "terms" : "overview"}
+      initialCollectionId={
+        collections.some((collection) => collection.domainId === params.collection)
+          ? (params.collection ?? "all")
+          : "all"
+      }
       collections={collections}
       stats={stats}
       termsLearning={termsLearning}

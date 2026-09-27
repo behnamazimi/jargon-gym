@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { generateQuizAction } from "@/app/(private)/jargon/quiz/actions";
 import { revalidateStudyPathsAction } from "@/app/(private)/jargon/actions";
+import { missedQuestions, missedTermIds } from "@/lib/quiz/results";
 import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
 import {
   clearQuizSession,
   loadQuizSession,
-  saveQuizSession,
   type QuizSessionState,
 } from "@/lib/quiz/session-storage";
 import type { QuizStep } from "@/components/jargon/quiz/use-quiz-setup";
 import { submitQuizAnswer } from "@/components/jargon/quiz/quiz-answer-actions";
+import { useQuizSessionPersistence } from "@/components/jargon/quiz/use-quiz-session-persistence";
 import { useQuizWriteQueue } from "@/components/jargon/quiz/use-quiz-write-queue";
 
 type UseQuizPlayingArgs = {
@@ -47,6 +48,8 @@ export function useQuizPlaying({
   } | null>(null);
   const [savedSession, setSavedSession] = useState<QuizSessionState | null>(null);
   const [sessionStartedAt, setSessionStartedAt] = useState<string>(new Date().toISOString());
+  // Replaying missed questions: graded on screen, never sent to TRACE.
+  const [practice, setPractice] = useState(false);
 
   const advancedQuestionKeyRef = useRef<string | null>(null);
 
@@ -64,6 +67,9 @@ export function useQuizPlaying({
       setSavedSession(null);
       void revalidateStudyPathsAction("quiz");
     },
+    onReplacedSessionIdle: () => {
+      void revalidateStudyPathsAction("quiz");
+    },
   });
 
   useEffect(() => {
@@ -77,22 +83,8 @@ export function useQuizPlaying({
     setSavedSession(loaded);
   }, []);
 
-  useEffect(() => {
-    if (questions.length === 0) return;
-    if (step !== "playing" && step !== "results") return;
-    if (step === "results" && pendingWrites.length === 0) return;
-
-    saveQuizSession({
-      setup: { domainIds, questionCount: questions.length, questionStyle },
-      questions,
-      terms,
-      currentIndex,
-      answers,
-      startedAt: sessionStartedAt,
-      pendingWrites,
-      complete: step === "results",
-    });
-  }, [
+  useQuizSessionPersistence({
+    practice,
     step,
     questions,
     terms,
@@ -101,8 +93,8 @@ export function useQuizPlaying({
     pendingWrites,
     domainIds,
     questionStyle,
-    sessionStartedAt,
-  ]);
+    startedAt: sessionStartedAt,
+  });
 
   const termById = useMemo(() => new Map(terms.map((term) => [term.id, term])), [terms]);
   const correctSoFar = answers.filter((answer) => answer.passed).length;
@@ -149,6 +141,7 @@ export function useQuizPlaying({
   }
 
   function resetQuizState() {
+    setPractice(false);
     resetSession();
     advancedQuestionKeyRef.current = null;
     clearQuizSession();
@@ -174,6 +167,7 @@ export function useQuizPlaying({
     // any answer the user already submitted in it still needs to reach the
     // server, so flush before clearing storage.
     if (savedSession) flushPendingWrites(savedSession.pendingWrites);
+    setPractice(false);
     resetSession();
     advancedQuestionKeyRef.current = null;
     clearQuizSession();
@@ -198,6 +192,23 @@ export function useQuizPlaying({
     setStep("playing");
   }
 
+  /** Leaves the write queue and saved session alone, so the real quiz's
+   *  answers keep saving and its pages still revalidate. */
+  function handleStartPractice() {
+    const missed = missedQuestions(questions, answers);
+    if (missed.length === 0) return;
+
+    // Practice reuses term ids at new indexes; a stale key could eat an answer.
+    advancedQuestionKeyRef.current = null;
+    setPractice(true);
+    setQuestions(missed);
+    setCurrentIndex(0);
+    setAnswers([]);
+    setResultsScore(null);
+    setErrorMessage(null);
+    setStep("playing");
+  }
+
   function handleQuestionAnswer(passed: boolean) {
     const question = questions[currentIndex];
     if (!question) return;
@@ -212,6 +223,7 @@ export function useQuizPlaying({
       answers,
       currentIndex,
       totalQuestions: questions.length,
+      practice,
     });
   }
 
@@ -229,6 +241,9 @@ export function useQuizPlaying({
     resetQuizState,
     handleStartQuiz,
     handleQuestionAnswer,
+    handleStartPractice,
+    practice,
+    missedTerms: missedTermIds(questions, answers).flatMap((id) => termById.get(id) ?? []),
     score,
     resultsTotal,
   };

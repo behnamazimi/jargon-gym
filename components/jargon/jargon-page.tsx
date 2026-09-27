@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { getJargonCollectionDataAction } from "@/app/(private)/jargon/(collection)/actions";
 import type { JargonPageData } from "@/lib/jargon/types";
 import { useJargonList } from "@/hooks/use-jargon-list";
+import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
 import { PageShell } from "@/components/page-container";
 import { JargonListSkeleton } from "@/components/page-skeleton";
 import { useToast } from "@/components/ui/toast";
 import { DomainSidebar } from "./domain-sidebar";
 import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
+import { ImportedBanner, useImportedNotice } from "./imported-banner";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
 import { replaceLibraryDomainInUrl } from "./jargon-page-helpers";
@@ -19,9 +21,11 @@ import { TermList } from "./term-list";
 type JargonPageProps = {
   initialData: JargonPageData;
   narrationAccess: boolean;
+  /** Terms just imported into the collection on screen (from ?imported=). */
+  importedCount?: number;
 };
 
-export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
+export function JargonPage({ initialData, narrationAccess, importedCount }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -32,6 +36,7 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
   // server-rendered `initialData` prop, so switching collections doesn't
   // require a route navigation (which would remount this whole page).
   const [activeData, setActiveData] = useState(initialData);
+  const importedNotice = useImportedNotice(importedCount, initialData.domain.id);
   const [activeNarrationAccess, setActiveNarrationAccess] = useState(narrationAccess);
   useEffect(() => setActiveData(initialData), [initialData]);
   useEffect(() => setActiveNarrationAccess(narrationAccess), [narrationAccess]);
@@ -143,20 +148,7 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
     ? (domainsWithLiveCounts.find((d) => d.id === switchingDomainId) ?? domainWithLiveCount)
     : domainWithLiveCount;
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== "/") return;
-      const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
-        return;
-      }
-      e.preventDefault();
-      searchInputRef.current?.focus();
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  useSlashToFocus(searchInputRef);
 
   return (
     <>
@@ -186,6 +178,11 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
             <JargonListSkeleton />
           ) : (
             <div className="min-w-0 flex-1 space-y-4">
+              <ImportedBanner
+                notice={importedNotice.notice}
+                domain={domain}
+                onDismiss={importedNotice.dismiss}
+              />
               <JargonDomainHeader
                 domain={domainWithLiveCount}
                 domains={domainsWithLiveCounts}

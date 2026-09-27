@@ -6,12 +6,22 @@ import { QuizAnswerChoices } from "@/components/jargon/quiz/quiz-answer-choices"
 import { QuizQuestionFooter } from "@/components/jargon/quiz/quiz-question-footer";
 import type { QuizQuestion } from "@/lib/quiz/types";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
+import { quizChoiceForKey } from "@/lib/quiz/keyboard";
 import {
   canSubmitAnswer,
   initialAnswerState,
   quizAnswerReducer,
   splitPromptQuote,
 } from "@/components/jargon/quiz/quiz-question-state";
+
+/** Radios are inputs too, so only fields you type into count. */
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable || target.tagName === "TEXTAREA") return true;
+  return (
+    target instanceof HTMLInputElement && target.type !== "radio" && target.type !== "checkbox"
+  );
+}
 
 type QuizQuestionViewProps = {
   question: QuizQuestion;
@@ -83,6 +93,28 @@ export function QuizQuestionView({
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
+      const choice = quizChoiceForKey(
+        {
+          key: event.key,
+          metaKey: event.metaKey,
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey,
+          repeat: event.repeat,
+          typing: isTextEntryTarget(event.target),
+        },
+        stateRef.current.question,
+      );
+      if (choice) {
+        if (stateRef.current.state.phase !== "answering") return;
+        event.preventDefault();
+        dispatch(
+          choice.type === "multiple_choice"
+            ? { type: "SELECT_MCQ_OPTION", optionId: choice.optionId }
+            : { type: "SELECT_TRUE_FALSE", value: choice.value },
+        );
+        return;
+      }
+
       if (event.key !== "Enter") return;
 
       const target = event.target as HTMLElement;

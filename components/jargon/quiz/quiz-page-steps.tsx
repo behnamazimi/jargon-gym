@@ -47,8 +47,13 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         className="shrink-0"
         current={quiz.currentIndex + 1}
         total={quiz.questions.length}
-        unitLabel="Question"
+        unitLabel={quiz.practice ? "Practice" : "Question"}
       />
+      {quiz.practice ? (
+        <p className="m-0 shrink-0 text-xs text-base-content/60">
+          Practice round — answers aren&apos;t counted toward mastery.
+        </p>
+      ) : null}
       {quiz.errorMessage ? (
         <Alert variant="destructive" className="shrink-0">
           <AlertDescription>{quiz.errorMessage}</AlertDescription>
