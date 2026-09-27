@@ -17,9 +17,11 @@ type PageProps = {
 };
 
 function parseTab(value: string | undefined): SettingsTabId | null {
-  if (value === "telegram" || value === "widget" || value === "quiz") {
+  if (value === "telegram" || value === "widget" || value === "ai") {
     return value;
   }
+  // The AI panel used to be the "quiz" tab; keep old links working.
+  if (value === "quiz") return "ai";
   return null;
 }
 

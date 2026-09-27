@@ -5,5 +5,6 @@
 export function replaceLibraryDomainInUrl(domainId: string) {
   const url = new URL(window.location.href);
   url.searchParams.set("domain", domainId);
-  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  // `null` state lets Next sync useSearchParams (the phone back arrow reads it).
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }

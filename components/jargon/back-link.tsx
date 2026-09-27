@@ -3,7 +3,7 @@ import { LinkButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export const JARGON_HOME_PATH = "/jargon";
-export const JARGON_HOME_BACK_LABEL = "Back to collection";
+export const JARGON_HOME_BACK_LABEL = "Back to library";
 export const PUBLIC_HOME_PATH = "/";
 export const PUBLIC_HOME_BACK_LABEL = "Back to home";
 

@@ -143,7 +143,7 @@ export function QuizErrorStep({ quiz }: { quiz: UseQuizSessionResult }) {
           >
             Try again
           </Button>
-          <LinkButton href="/jargon/settings" variant="ghost" className="min-h-11">
+          <LinkButton href="/jargon/settings?tab=ai" variant="ghost" className="min-h-11">
             Check settings
           </LinkButton>
         </div>

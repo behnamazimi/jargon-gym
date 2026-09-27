@@ -31,7 +31,7 @@ function StoriesNoTerms() {
       >
         <div className="flex flex-wrap justify-center gap-2">
           <LinkButton href="/jargon" variant="outline" className="min-h-11">
-            Collections
+            Go to library
           </LinkButton>
           <LinkButton href={CARDS_HREF} variant="ghost" className="min-h-11">
             Read cards instead

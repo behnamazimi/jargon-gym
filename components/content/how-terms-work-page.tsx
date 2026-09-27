@@ -97,7 +97,7 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
           title="How terms are built"
           description="I kept learning jargon the wrong way, memorizing definitions I couldn't use. This is the shape that came out of that."
           backHref={isLoggedIn ? JARGON_HOME_PATH : PUBLIC_HOME_PATH}
-          backLabel={isLoggedIn ? "Back to collection" : "Back to home"}
+          backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
 
         <p className="m-0 mb-4 text-sm leading-relaxed text-base-content/80">

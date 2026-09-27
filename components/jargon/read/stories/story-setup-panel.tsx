@@ -111,7 +111,12 @@ function NoLlmAlert() {
         Stories are written with your own AI provider. Add a provider and API key in Settings.
       </AlertDescription>
       <AlertAction>
-        <LinkButton href="/jargon/settings" size="sm" variant="outline" className="max-md:min-h-11">
+        <LinkButton
+          href="/jargon/settings?tab=ai"
+          size="sm"
+          variant="outline"
+          className="max-md:min-h-11"
+        >
           Go to Settings
         </LinkButton>
         <LinkButton

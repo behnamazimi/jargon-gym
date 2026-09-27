@@ -82,7 +82,12 @@ function QuizPickerAiSetupAlert() {
         provider.
       </AlertDescription>
       <AlertAction>
-        <LinkButton href="/jargon/settings" size="sm" variant="outline" className="max-md:min-h-11">
+        <LinkButton
+          href="/jargon/settings?tab=ai"
+          size="sm"
+          variant="outline"
+          className="max-md:min-h-11"
+        >
           Go to Settings
         </LinkButton>
       </AlertAction>

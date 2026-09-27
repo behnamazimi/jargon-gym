@@ -24,3 +24,12 @@ export function isMorePath(pathname: string): boolean {
 export function isDockPath(pathname: string): boolean {
   return isStudyPath(pathname) && !isMorePath(pathname);
 }
+
+/** Where the phone back arrow on an overflow page (Settings, Mastery, …)
+ *  should return to: the dock page the user was last on, with its query so
+ *  a scoped collection survives. Overflow and non-study pages are never
+ *  back targets. */
+export function studyBackTarget(pathname: string, search: string): string | null {
+  if (!isDockPath(pathname)) return null;
+  return search ? `${pathname}?${search}` : pathname;
+}
