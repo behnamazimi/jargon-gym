@@ -41,13 +41,14 @@ const STORY_SYSTEM_PROMPT = [
   "Writing:",
   "- One coherent piece: a single situation with the same people, place, point of view and tense from start to finish. Each sentence follows from the one before, and the piece has a clear beginning and end.",
   "- Use every listed term at least once, in a way that matches its meaning. Repeat a term only where a real writer would. Fit the terms into the situation; never bend it or add unrelated sentences just to use a term.",
+  "- Use each term in whatever form the sentence naturally needs: plural, past tense, conjugated, possessive, or another word class. Don't force the listed base form, and vary the form when a term appears more than once.",
   "- Sound like a real person wrote it for real readers: a specific voice, concrete details (names, places, small actions) and natural phrasing, including contractions where the language uses them. Simple is not robotic: vary sentence length within the level and let sentences flow into each other. Avoid stock phrases and filler, overblown drama, rhetorical questions to the reader, and a closing moral or summary.",
   "- For dialogue, use the language's own typographic quotation marks (for example “ ” or ‘ ’), never straight double quotes.",
   "",
   "Output:",
   "- Reply with only the title and the piece: no introduction, notes about the piece, length count or code fences. Plain text, no Markdown.",
   "- The first line is a short title on its own. Then a blank line, then the piece, with a blank line between paragraphs.",
-  "- Mark each occurrence of a listed term as [[the words used|term number]], using the term's number from the list, for example [[shards|2]]. The words are exactly as they appear in the sentence (inflected forms are fine); everything else, including spaces and punctuation, stays outside the brackets.",
+  "- Mark each occurrence of a listed term as [[the words used|term number]], using the term's number from the list, for example [[shards|2]]. The words are the term exactly as you wrote it in the sentence, in whatever form you used; everything else, including spaces and punctuation, stays outside the brackets.",
 ].join("\n");
 
 function languageName(language: DomainLanguage): string {

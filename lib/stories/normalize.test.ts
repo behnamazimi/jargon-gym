@@ -32,6 +32,12 @@ describe("surfaceMatchesTerm", () => {
     expect(surfaceMatchesTerm("circuit breakers", "Circuit breaker")).toBe(true);
   });
 
+  it("accepts irregular forms that keep the first two letters", () => {
+    expect(surfaceMatchesTerm("heeft", "hebben")).toBe(true);
+    expect(surfaceMatchesTerm("wordt", "worden")).toBe(true);
+    expect(surfaceMatchesTerm("ran", "run")).toBe(false);
+  });
+
   it("rejects unrelated words", () => {
     expect(surfaceMatchesTerm("the retry", "Idempotency")).toBe(false);
     expect(surfaceMatchesTerm("circuit", "Circuit breaker")).toBe(false);

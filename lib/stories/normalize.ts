@@ -10,15 +10,18 @@ function words(text: string): string[] {
   return splitWords(text.toLocaleLowerCase());
 }
 
-/** True when every word of the term has a word in the text sharing a short
- *  prefix, so "idempotent" matches "idempotency" but not an unrelated word. */
+/** True when every word of the term has a word in the text starting with the
+ *  same two letters. Loose on purpose: the model says which term it marked,
+ *  and this only catches a clearly wrong word, while letting through forms
+ *  whose ending changes ("idempotent", "wordt") or whose stem shifts after
+ *  the start ("heeft" for "hebben"). */
 export function surfaceMatchesTerm(surface: string, term: string): boolean {
   const surfaceWords = words(surface);
   const termWords = words(term);
   if (termWords.length === 0 || surfaceWords.length === 0) return false;
 
   return termWords.every((termWord) => {
-    const prefix = termWord.slice(0, Math.min(4, termWord.length));
+    const prefix = termWord.slice(0, 2);
     return surfaceWords.some((word) => word.startsWith(prefix));
   });
 }

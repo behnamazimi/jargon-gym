@@ -97,6 +97,7 @@ describe("buildStoryPrompt", () => {
     expect(system).toContain("If anything still conflicts, the language level wins.");
     expect(system).toContain("One coherent piece");
     expect(system).toContain("Repeat a term only where a real writer would.");
+    expect(system).toContain("Don't force the listed base form");
     expect(system).toContain("Sound like a real person wrote it");
     expect(system).toContain("never straight double quotes");
     expect(system).toContain("[[the words used|term number]]");
