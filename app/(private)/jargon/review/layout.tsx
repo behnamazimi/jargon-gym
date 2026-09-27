@@ -13,6 +13,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
         title="Review"
         description="Practice recall with flashcards from your active collections."
         compactOnPhone
+        showBack={false}
       />
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
         {children}

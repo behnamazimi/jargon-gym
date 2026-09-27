@@ -18,6 +18,7 @@ import {
   clearReviewCollectionPreference,
   saveReviewCollectionPreference,
 } from "@/lib/review/collection-preference";
+import { canMoveForward } from "@/lib/review/keyboard";
 import { upsertRating } from "@/lib/review/writes";
 import type { ReviewRating } from "@/lib/review/types";
 import type { StudyCollection } from "@/lib/study/types";
@@ -59,6 +60,9 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
   const { enqueueRating } = useReviewWriteQueue({ setErrorMessage });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
   const advancedCardIdRef = useRef<string | null>(null);
+  // State updates land after the event, so two reveal triggers in one
+  // event would both see the card as hidden and record the reveal twice.
+  const revealRecordedRef = useRef(new Set<string>());
 
   selectedCollectionIdRef.current = selectedCollectionId;
 
@@ -92,20 +96,22 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
   }, []);
 
   const handleReveal = useCallback(() => {
-    if (!currentCard || currentRevealed) return;
+    if (!currentCard || revealRecordedRef.current.has(currentCard.id)) return;
+    revealRecordedRef.current.add(currentCard.id);
     setRevealedTermIds((ids) => [...ids, currentCard.id]);
     void recordReviewRevealAction(currentCard.id).then((result) => {
       if (result.error) setErrorMessage(result.error);
     });
-  }, [currentCard, currentRevealed]);
+  }, [currentCard]);
 
   const handlePrevious = useCallback(() => {
     queue.goPrevious();
   }, [queue.goPrevious]);
 
   const handleNext = useCallback(() => {
+    if (!canMoveForward({ revealed: currentRevealed, rated: currentRating !== undefined })) return;
     void queue.goNext();
-  }, [queue.goNext]);
+  }, [currentRevealed, currentRating, queue.goNext]);
 
   const handleMarkedKnown = useCallback(() => {
     void queue.goNext();
@@ -135,7 +141,7 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
     onPrevious: handlePrevious,
     onNext: handleNext,
     revealed: currentRevealed,
-    canRate: currentRevealed,
+    rated: currentRating !== undefined,
     enabled: currentCard !== null,
   });
 
@@ -211,7 +217,6 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
     <ReviewPlayingStep
       currentCard={currentCard}
       canGoBack={queue.canGoBack}
-      canGoForward
       currentRevealed={currentRevealed}
       currentRating={currentRating}
       errorMessage={errorMessage ?? queue.errorMessage}

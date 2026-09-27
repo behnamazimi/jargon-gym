@@ -22,6 +22,7 @@ export default async function ReadLayout({ children }: { children: React.ReactNo
         title="Read"
         description="Read terms one at a time, or inside short AI-written pieces built from your queue."
         compactOnPhone
+        showBack={false}
       />
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
         <div className="flex items-center justify-between gap-2">

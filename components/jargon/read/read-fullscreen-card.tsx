@@ -67,7 +67,11 @@ export function ReadFullscreenCard({
       </div>
       {term.isNewToUser ? (
         <div className="shrink-0 px-5 pb-4 sm:px-6">
-          <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
+          <FirstExposureKnownPrompt
+            termId={term.id}
+            term={term.term}
+            onMarkedKnown={onMarkedKnown}
+          />
         </div>
       ) : null}
     </div>

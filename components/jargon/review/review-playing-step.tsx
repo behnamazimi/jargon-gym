@@ -1,7 +1,8 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { QuizKeyboardHint } from "@/components/jargon/quiz/quiz-ui";
+import type { PressEvent } from "react-aria-components";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, type ButtonVariant } from "@/components/ui/button";
+import { canMoveForward } from "@/lib/review/keyboard";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import type { ReviewRating, ReviewTerm } from "@/lib/review/types";
 import { ReviewCard } from "@/components/jargon/review/review-card";
@@ -22,10 +23,18 @@ const GRADE_BUTTONS: { grade: ReviewGrade; variant: ButtonVariant }[] = [
   { grade: EASY, variant: "info" },
 ];
 
+/** A clicked or tapped button keeps focus, and a focused button owns
+ *  Enter — so the next Enter would press it again instead of revealing.
+ *  Keyboard presses keep focus where the user put it. */
+function releaseFocusAfterPointerPress(event: PressEvent) {
+  if (event.pointerType === "mouse" || event.pointerType === "touch") {
+    (event.target as HTMLElement).blur();
+  }
+}
+
 type ReviewPlayingStepProps = {
   currentCard: ReviewTerm;
   canGoBack: boolean;
-  canGoForward: boolean;
   currentRevealed: boolean;
   currentRating: ReviewRating | undefined;
   errorMessage: string | null;
@@ -42,7 +51,6 @@ type ReviewPlayingStepProps = {
 export function ReviewPlayingStep({
   currentCard,
   canGoBack,
-  canGoForward,
   currentRevealed,
   currentRating,
   errorMessage,
@@ -55,6 +63,9 @@ export function ReviewPlayingStep({
   onMarkedKnown,
   onRate,
 }: ReviewPlayingStepProps) {
+  const rated = currentRating !== undefined;
+  const showForward = canMoveForward({ revealed: currentRevealed, rated });
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex shrink-0 items-center">{collectionControl}</div>
@@ -77,7 +88,10 @@ export function ReviewPlayingStep({
           <Button
             type="button"
             variant="ghost"
-            onPress={onPrevious}
+            onPress={(event) => {
+              releaseFocusAfterPointerPress(event);
+              onPrevious();
+            }}
             isDisabled={!canGoBack}
             className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
             aria-label="Previous term"
@@ -92,7 +106,10 @@ export function ReviewPlayingStep({
                   key={grade}
                   type="button"
                   variant={variant}
-                  onPress={() => onRate(grade)}
+                  onPress={(event) => {
+                    releaseFocusAfterPointerPress(event);
+                    onRate(grade);
+                  }}
                   className={cn(
                     "btn-soft min-h-11 transition-transform active:scale-[0.96]",
                     "[--btn-bg:color-mix(in_oklab,var(--btn-color)_45%,var(--color-base-100))]",
@@ -109,25 +126,27 @@ export function ReviewPlayingStep({
             <span className="flex-1" />
           )}
 
-          <Button
-            type="button"
-            variant="ghost"
-            onPress={onNext}
-            isDisabled={!canGoForward}
-            className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
-            aria-label="Next term"
-          >
-            <ChevronRight className="size-4" aria-hidden strokeWidth={1.5} />
-          </Button>
+          {showForward ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onPress={(event) => {
+                releaseFocusAfterPointerPress(event);
+                onNext();
+              }}
+              className={cn(
+                "min-h-11 min-w-11 transition-transform active:scale-[0.96]",
+                !currentRevealed && "gap-1 ps-3 pe-2",
+              )}
+              aria-label={currentRevealed ? "Next term" : "Skip this term"}
+            >
+              {currentRevealed ? null : <span className="text-sm">Skip</span>}
+              <ChevronRight className="size-4" aria-hidden strokeWidth={1.5} />
+            </Button>
+          ) : null}
         </div>
 
-        <p className="m-0 hidden text-center text-xs text-base-content/50 md:block coarse:hidden">
-          <QuizKeyboardHint action="reveal" />
-          {" · "}
-          <kbd className="kbd kbd-xs">1</kbd>-<kbd className="kbd kbd-xs">4</kbd> grade ·{" "}
-          <kbd className="kbd kbd-xs">←</kbd>
-          <kbd className="kbd kbd-xs">→</kbd>
-        </p>
+        <ReviewKeyboardHints revealed={currentRevealed} rated={rated} />
       </div>
 
       {errorMessage ? (
@@ -136,5 +155,29 @@ export function ReviewPlayingStep({
         </Alert>
       ) : null}
     </div>
+  );
+}
+
+function ReviewKeyboardHints({ revealed, rated }: { revealed: boolean; rated: boolean }) {
+  return (
+    <p className="m-0 hidden text-center text-xs text-base-content/50 md:block coarse:hidden">
+      {revealed ? (
+        <>
+          <kbd className="kbd kbd-xs">1</kbd>–<kbd className="kbd kbd-xs">4</kbd> grade ·{" "}
+          <kbd className="kbd kbd-xs">←</kbd> back
+          {rated ? (
+            <>
+              {" · "}
+              <kbd className="kbd kbd-xs">→</kbd> next
+            </>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <kbd className="kbd kbd-xs">Space</kbd> reveal · <kbd className="kbd kbd-xs">→</kbd> skip
+          · <kbd className="kbd kbd-xs">←</kbd> back
+        </>
+      )}
+    </p>
   );
 }

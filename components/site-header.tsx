@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BookOpen, Sparkles, Zap } from "lucide-react";
+import { BookOpen, LayoutList, Sparkles, Zap } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/jargon/profile-menu";
@@ -45,13 +45,15 @@ function HeaderStudyLink({
   href,
   icon: Icon,
   label,
+  className,
 }: {
   href: string;
   icon: typeof Sparkles;
   label: string;
+  className?: string;
 }) {
   return (
-    <Link href={href} className="btn btn-ghost">
+    <Link href={href} className={cn("btn btn-ghost", className)}>
       <Icon className="h-4 w-4" strokeWidth={1.5} />
       <span className="hidden md:inline">{label}</span>
     </Link>
@@ -77,6 +79,14 @@ export function SiteHeader({
       leftNav={
         user ? (
           <>
+            {/* Desktop only: phones reach the Library from the dock, and a
+                fourth icon would crowd the public-page header. */}
+            <HeaderStudyLink
+              href="/jargon"
+              icon={LayoutList}
+              label="Library"
+              className="hidden md:inline-flex"
+            />
             <HeaderStudyLink href="/jargon/read" icon={Zap} label="Read" />
             <HeaderStudyLink href="/jargon/review" icon={BookOpen} label="Review" />
             <HeaderStudyLink href="/jargon/quiz" icon={Sparkles} label="Quiz" />
