@@ -25,6 +25,7 @@ const dangerousTerm: TermCard = {
   note: null,
   domainId: "domain-1",
   domainName: `Domain & <Co>`,
+  domainLanguage: "en",
   relationships: [],
 };
 

@@ -220,6 +220,7 @@ export function JargonPage({ initialData, narrationAccess }: JargonPageProps) {
                 openTerms={openTerms}
                 isOwner={isOwner}
                 domainId={domain.id}
+                language={domain.language}
                 domainTerms={terms}
                 narrationAccess={activeNarrationAccess}
                 onToggleOpen={toggleOpen}

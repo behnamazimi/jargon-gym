@@ -1,3 +1,4 @@
+import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Term } from "@/lib/jargon/types";
 import { TermCard } from "./term-card";
 
@@ -8,6 +9,7 @@ type TermListProps = {
   openTerms: Set<string>;
   isOwner: boolean;
   domainId: string;
+  language: DomainLanguage;
   domainTerms: Term[];
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
@@ -23,6 +25,7 @@ export function TermList({
   openTerms,
   isOwner,
   domainId,
+  language,
   domainTerms,
   narrationAccess,
   onToggleOpen,
@@ -52,6 +55,7 @@ export function TermList({
             open={openTerms.has(term.id)}
             isOwner={isOwner}
             domainId={domainId}
+            language={language}
             domainTerms={domainTerms}
             narrationAccess={narrationAccess}
             onToggleOpen={onToggleOpen}
