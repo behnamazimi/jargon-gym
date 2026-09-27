@@ -25,20 +25,12 @@ function canPlayThrough(audio: HTMLAudioElement): boolean {
   return audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA;
 }
 
-/** Play/pause button for a term's narration. Shared by Read, Review, and the
- *  jargon collection page — callers should only render it when
- *  narrationAccess is true, but access is re-checked server-side regardless
- *  by GET /api/narration/[termId], which streams the audio itself.
- *
- *  That route sets Cache-Control + an ETag (the narration's content hash),
- *  so repeat plays of the same term are served from the browser's own HTTP
- *  cache — no bespoke caching logic needed here.
- *
- *  `preload` assigns src on mount so Read/Review can buffer the current
- *  term (including the masked face) before the speaker tap. Jargon leaves
- *  it off so a collection list does not fetch every clip. `play()` never
- *  runs in the same tick as setting src — that pairing AbortErrors and
- *  made the first tap look like a no-op. */
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "AbortError";
+}
+
+/** Play/pause for one term. `preload` buffers the clip before the tap;
+ *  the collection list leaves it off so it does not fetch every term. */
 export function TermNarrationPlayer({
   termId,
   preload = false,
@@ -51,6 +43,7 @@ export function TermNarrationPlayer({
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wantPlayingRef = useRef(false);
+  const abortRetriedRef = useRef(false);
   const src = narrationSrc(termId);
 
   useMountEffect(() => {
@@ -70,7 +63,20 @@ export function TermNarrationPlayer({
       .then(() => {
         if (wantPlayingRef.current) setStatus("playing");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
+        // preload "none" never fires canplay unless something asks it to load.
+        if (isAbortError(error) && wantPlayingRef.current && !abortRetriedRef.current) {
+          abortRetriedRef.current = true;
+          const retry = () => {
+            if (wantPlayingRef.current && audio.paused) void playClip(audio);
+          };
+          if (canPlayThrough(audio)) retry();
+          else {
+            audio.addEventListener("canplay", retry, { once: true });
+            audio.load();
+          }
+          return;
+        }
         wantPlayingRef.current = false;
         releaseActiveAudio(audio);
         setStatus("idle");
@@ -79,10 +85,14 @@ export function TermNarrationPlayer({
 
   function startWhenReady(audio: HTMLAudioElement) {
     const start = () => {
-      if (wantPlayingRef.current) void playClip(audio);
+      if (wantPlayingRef.current && audio.paused) void playClip(audio);
     };
-    if (canPlayThrough(audio)) start();
-    else audio.addEventListener("canplay", start, { once: true });
+    if (canPlayThrough(audio)) {
+      start();
+      return;
+    }
+    // play() in the same turn as assigning src is aborted by that load.
+    queueMicrotask(start);
   }
 
   function handlePress() {
@@ -95,6 +105,7 @@ export function TermNarrationPlayer({
       return;
     }
 
+    abortRetriedRef.current = false;
     wantPlayingRef.current = true;
     const alreadySet = srcMatches(audio, src);
     const ready = alreadySet && canPlayThrough(audio);
@@ -115,9 +126,7 @@ export function TermNarrationPlayer({
   function handlePause() {
     const audio = audioRef.current;
     if (!audio || audio.ended) return;
-    // A load can fire pause while we still intend to play (waiting on
-    // canplay). Ignore that; startWhenReady will call play(). A real pause
-    // is the user, or another player claiming the slot.
+    // A load can pause the element while this player still means to play.
     if (wantPlayingRef.current && isActiveAudio(audio)) return;
     wantPlayingRef.current = false;
     releaseActiveAudio(audio);
