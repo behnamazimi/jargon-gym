@@ -1067,6 +1067,18 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_ai_credit_summary: {
+        Args: never;
+        Returns: {
+          credits_spent: number;
+          refunds_24h: number;
+          spends_24h: number;
+          total_users: number;
+          users_exhausted: number;
+          users_with_own_key: number;
+          users_with_use: number;
+        }[];
+      };
       admin_ai_credit_usage: {
         Args: { p_limit?: number };
         Returns: {

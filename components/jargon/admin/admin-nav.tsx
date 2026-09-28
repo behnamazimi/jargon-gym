@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Library, Mail, Volume2 } from "lucide-react";
+import { Coins, Library, Mail, Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ADMIN_NAV_ITEMS = [
   { href: "/admin/collections", label: "Collections", icon: Library },
   { href: "/admin/invites", label: "Invites", icon: Mail },
   { href: "/admin/narration", label: "Narration", icon: Volume2 },
+  { href: "/admin/ai-credits", label: "AI credits", icon: Coins },
 ];
 
 export function AdminNav() {
