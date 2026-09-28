@@ -56,13 +56,6 @@ export const STUDY_CHAPTERS = [
         title: "Choose what to read",
         body: "Read from one collection or all of them. The count shows how many terms are available.",
       },
-      {
-        target: "read-focus",
-        title: "Focus mode",
-        body: "A full-screen feed of cards you scroll through. Each card counts as read when it comes into view. Press Esc to leave.",
-        bodyTouch:
-          "A full-screen feed of cards you scroll through. Each card counts as read when it comes into view. Tap × to leave.",
-      },
     ],
   },
   {

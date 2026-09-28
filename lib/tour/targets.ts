@@ -22,7 +22,6 @@ export const TOUR_TARGETS = [
   "read-modes",
   "read-options",
   "read-collection",
-  "read-focus",
   "stories-level",
   "stories-write",
   "quiz-style",
