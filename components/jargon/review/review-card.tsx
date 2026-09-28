@@ -20,6 +20,8 @@ type ReviewCardProps = {
   reduceMotion: boolean;
   swipeEnabled: boolean;
   narrationAccess: boolean;
+  /** The "Recall the meaning" prompt on the front; Triage asks a different question. */
+  showRevealHint?: boolean;
 };
 
 function RecallRevealHint({ invisible }: { invisible?: boolean }) {
@@ -45,6 +47,7 @@ export function ReviewCard({
   reduceMotion,
   swipeEnabled,
   narrationAccess,
+  showRevealHint = true,
 }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -88,13 +91,15 @@ export function ReviewCard({
           )}
         >
           <div className="shadow-surface absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden]">
-            <div
-              className="flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm sm:px-6"
-              aria-hidden
-            >
-              <Eye className="invisible size-4 shrink-0" strokeWidth={1.5} />
-              <RecallRevealHint invisible />
-            </div>
+            {showRevealHint ? (
+              <div
+                className="flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm sm:px-6"
+                aria-hidden
+              >
+                <Eye className="invisible size-4 shrink-0" strokeWidth={1.5} />
+                <RecallRevealHint invisible />
+              </div>
+            ) : null}
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden px-5 text-center sm:px-6">
               <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
                 {term.term}
@@ -107,16 +112,18 @@ export function ReviewCard({
                 <span>{term.category}</span>
               </p>
             </div>
-            <div
-              className={cn(
-                "flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm text-base-content/60 sm:px-6",
-                revealed && "pointer-events-none opacity-0",
-              )}
-              aria-hidden={revealed}
-            >
-              <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
-              <RecallRevealHint />
-            </div>
+            {showRevealHint ? (
+              <div
+                className={cn(
+                  "flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm text-base-content/60 sm:px-6",
+                  revealed && "pointer-events-none opacity-0",
+                )}
+                aria-hidden={revealed}
+              >
+                <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
+                <RecallRevealHint />
+              </div>
+            ) : null}
           </div>
 
           <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
