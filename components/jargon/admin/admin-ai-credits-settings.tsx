@@ -18,6 +18,11 @@ const FIELDS: { key: keyof Draft; label: string; hint: string }[] = [
   { key: "storyCreditsPerTerm", label: "Credits per story term", hint: "Charged per term used." },
 ];
 
+/** An empty field is not a zero. */
+function toNumber(value: string): number {
+  return value.trim() === "" ? Number.NaN : Number(value);
+}
+
 function toDraft(settings: AiCreditSettingsView): Draft {
   return {
     defaultAllowance: String(settings.defaultAllowance),
@@ -34,10 +39,10 @@ export function AdminAiCreditsSettings({ settings }: { settings: AiCreditSetting
   const [isPending, startTransition] = useTransition();
 
   const parsed = creditSettingsSchema.safeParse({
-    defaultAllowance: Number(draft.defaultAllowance),
-    monthlyRefill: Number(draft.monthlyRefill),
-    quizCreditsPerQuestion: Number(draft.quizCreditsPerQuestion),
-    storyCreditsPerTerm: Number(draft.storyCreditsPerTerm),
+    defaultAllowance: toNumber(draft.defaultAllowance),
+    monthlyRefill: toNumber(draft.monthlyRefill),
+    quizCreditsPerQuestion: toNumber(draft.quizCreditsPerQuestion),
+    storyCreditsPerTerm: toNumber(draft.storyCreditsPerTerm),
   });
   const changed = FIELDS.some(({ key }) => draft[key] !== saved[key]);
 

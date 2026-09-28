@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { exactEmailPattern } from "@/lib/ai-credits/email-lookup";
 import { requireAdminClient } from "@/lib/auth/require-session";
 import {
   creditSettingsSchema,
@@ -53,7 +54,7 @@ export async function grantAiCredits(input: {
   const { data: account, error: lookupError } = await supabase
     .from("users")
     .select("id")
-    .ilike("email", parsed.data.email)
+    .ilike("email", exactEmailPattern(parsed.data.email))
     .maybeSingle();
   if (lookupError) throw lookupError;
   if (!account) throw new Error("No account found for that email.");

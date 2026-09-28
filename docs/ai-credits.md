@@ -109,35 +109,33 @@ console as a backstop.
 
 ## Changing settings and helping a user
 
-The settings row and the ledger live in `ai_credit_settings` and
-`ai_credit_ledger`. Until the admin page exists, use the Supabase SQL editor.
+Admins manage AI credits at `/admin/ai-credits`, which is also in the admin tabs
+and menus. There you can switch AI credits on or off and change the allowance,
+the monthly refill, and the costs. **Grant** adds credits to someone's starter
+pool by email, and **Reset** clears their usage from that point on. Both keep
+every record, and a reset keeps any grants. Users with their own key are not
+affected by the switch.
 
-To change the allowance, the refill, or the costs:
+The settings row and the ledger live in `ai_credit_settings` and
+`ai_credit_ledger`. If you ever need to work on them directly, use the Supabase
+SQL editor:
 
 ```sql
 update public.ai_credit_settings
 set default_allowance = 100, monthly_refill = 30,
     quiz_credits_per_question = 1, story_credits_per_term = 1;
-```
 
-To switch AI credits off for everyone, set `enabled = false` in the same table.
-Users with their own key are not affected.
-
-To give a user extra credits, or clear their usage while keeping the history:
-
-```sql
 insert into public.ai_credit_ledger (user_id, kind, amount, note)
 values ('<user id>', 'grant', 50, 'why');
-
-insert into public.ai_credit_ledger (user_id, kind, amount, note)
-values ('<user id>', 'reset', 0, 'why');
 ```
-
-A reset clears usage from that point on and keeps grants.
 
 ## Checking that it works
 
-These queries answer whether people use credits and what happens next:
+The **Is it working?** section of the admin page shows how many people used
+credits, ran out, or then saved their own key, how many credits were spent, and
+how many requests failed and were refunded in the last 24 hours. A warning
+appears when many recent requests failed, which usually means the app's key was
+revoked or ran out of quota. The same numbers, and more, come from SQL:
 
 ```sql
 -- People who have had at least one quiz or story from credits.

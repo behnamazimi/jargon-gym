@@ -104,6 +104,11 @@ export function AdminAiCreditsUsage({ usage }: { usage: AiCreditUsageRow[] }) {
         </table>
       </div>
 
+      <p className="m-0 text-xs text-base-content/60">
+        Used counts credits spent since the person&apos;s last reset. Refunded requests aren&apos;t
+        counted.
+      </p>
+
       <AdminAiCreditsGrantDialog
         email={grantEmail}
         onOpenChange={(open) => !open && setGrantEmail(null)}
