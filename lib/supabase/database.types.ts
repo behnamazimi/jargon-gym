@@ -806,6 +806,8 @@ export type Database = {
           read_stories_default: boolean;
           story_last_domain_id: string | null;
           timezone: string | null;
+          tour_seen: string[];
+          tour_status: string;
           updated_at: string;
           user_id: string;
         };
@@ -822,6 +824,8 @@ export type Database = {
           read_stories_default?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;
+          tour_seen?: string[];
+          tour_status?: string;
           updated_at?: string;
           user_id: string;
         };
@@ -838,6 +842,8 @@ export type Database = {
           read_stories_default?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;
+          tour_seen?: string[];
+          tour_status?: string;
           updated_at?: string;
           user_id?: string;
         };

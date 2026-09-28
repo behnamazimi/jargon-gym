@@ -56,7 +56,7 @@ function CefrLevelField({
   onChange: (level: CefrLevel) => void;
 }) {
   return (
-    <Field>
+    <Field data-tour="stories-level">
       <FieldLabel htmlFor="story-cefr">Language level</FieldLabel>
       <Select
         value={value}
@@ -153,6 +153,7 @@ export function StorySetupPanel({
       footer={
         <Button
           type="button"
+          data-tour="stories-write"
           onPress={() => void session.generate()}
           isDisabled={!canGenerate}
           className="min-h-11 w-full"

@@ -68,6 +68,7 @@ function CollectionStudyActions({
   return (
     <nav
       aria-label={`Study ${domain.name}`}
+      data-tour="library-study"
       className={cn("grid gap-2 sm:flex", showTriage ? "grid-cols-2" : "grid-cols-3")}
     >
       {links.map(({ path, label, icon: Icon }) => (

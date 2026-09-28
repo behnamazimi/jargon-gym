@@ -33,6 +33,7 @@ export function DomainSidebarDrawer({
         variant="outline"
         aria-haspopup="dialog"
         aria-expanded={open}
+        data-tour="library-collections"
         onPress={() => onOpenChange(true)}
         className={cn(
           "shadow-surface h-auto w-full justify-between gap-2 rounded-xl px-3 py-2.5 text-left md:hidden",

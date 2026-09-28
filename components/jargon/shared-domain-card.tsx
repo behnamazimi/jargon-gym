@@ -77,6 +77,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
         ) : (
           <Button
             type="button"
+            data-tour="browse-add"
             onPress={onAdd}
             isDisabled={busy}
             className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"

@@ -108,7 +108,7 @@ export function ReviewPlayingStep({
           </Button>
 
           {currentRevealed ? (
-            <div className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
+            <div data-tour="review-grades" className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
               {GRADE_BUTTONS.map(({ grade, variant }) => (
                 <Button
                   key={grade}

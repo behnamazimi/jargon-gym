@@ -53,7 +53,11 @@ function HeaderStudyLink({
   className?: string;
 }) {
   return (
-    <Link href={href} className={cn("btn btn-ghost", className)}>
+    <Link
+      href={href}
+      data-tour={`nav-${label.toLowerCase()}`}
+      className={cn("btn btn-ghost", className)}
+    >
       <Icon className="h-4 w-4" strokeWidth={1.5} />
       <span className="hidden md:inline">{label}</span>
     </Link>

@@ -9,7 +9,7 @@ type QuizQuestionStyleFieldProps = {
 
 export function QuizQuestionStyleField({ value, onChange }: QuizQuestionStyleFieldProps) {
   return (
-    <fieldset className="flex flex-col gap-2 border-0 p-0">
+    <fieldset data-tour="quiz-style" className="flex flex-col gap-2 border-0 p-0">
       <legend className="mb-2 text-sm font-medium leading-none">Question style</legend>
       <div className="flex gap-2">
         <Button

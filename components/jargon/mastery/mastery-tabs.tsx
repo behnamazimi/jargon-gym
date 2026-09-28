@@ -18,6 +18,7 @@ export function MasteryTabs({
   return (
     <div
       role="tablist"
+      data-tour="mastery-tabs"
       className="tabs tabs-box tabs-sm w-full flex-nowrap bg-base-100 p-1 ring-1 ring-base-content/10"
     >
       {TAB_OPTIONS.map((option) => {

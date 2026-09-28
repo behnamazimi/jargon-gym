@@ -26,7 +26,11 @@ function ReadModeTabList({ domain }: { domain: string | null }) {
   const domainParam: Record<string, string> = domain && domain !== "all" ? { domain } : {};
 
   return (
-    <nav aria-label="Read mode" className="tabs tabs-box tabs-sm w-fit shrink-0">
+    <nav
+      aria-label="Read mode"
+      data-tour="read-modes"
+      className="tabs tabs-box tabs-sm w-fit shrink-0"
+    >
       {READ_MODES.map((mode) => {
         const active = mode.href === activeHref;
         return (

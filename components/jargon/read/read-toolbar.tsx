@@ -27,7 +27,7 @@ export function ReadToolbar({
   return (
     <div className="flex items-center gap-2">
       {collections.length > 0 ? (
-        <div className="flex items-center gap-3">
+        <div data-tour="read-collection" className="flex items-center gap-3">
           <CollectionSelect
             mode="local"
             id="read-collection"
@@ -56,6 +56,7 @@ export function ReadToolbar({
         variant="outline"
         size="icon-sm"
         aria-label="Enter focus mode"
+        data-tour="read-focus"
         onPress={onEnterFullscreen}
         className={cn("shrink-0", preferenceOn && "ring-2 ring-primary/60", PRESS_CLASS)}
       >

@@ -125,7 +125,11 @@ export function DomainSidebar({
   if (domains.length === 0) return null;
 
   return (
-    <nav aria-label="Collections" className={cn("flex min-h-0 flex-col gap-2 p-1", className)}>
+    <nav
+      aria-label="Collections"
+      data-tour="library-collections"
+      className={cn("flex min-h-0 flex-col gap-2 p-1", className)}
+    >
       <div className="relative shrink-0">
         <Search
           className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-base-content/60"
