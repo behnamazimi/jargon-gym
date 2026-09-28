@@ -32,8 +32,8 @@ export const STUDY_CHAPTERS = [
     steps: [
       {
         target: "read-card",
-        title: "Guess, then reveal",
-        body: "Take a guess before you reveal the definition. Every term you read counts toward learning it.",
+        title: "Read to get familiar",
+        body: "Read the term and its definition. There's nothing to get right here: every term you read builds familiarity and gives it a head start in Review.",
       },
       {
         target: "read-modes",
