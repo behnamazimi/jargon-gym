@@ -1,8 +1,9 @@
 "use client";
 
-import { BookOpen, Plus, Sparkles, Zap } from "lucide-react";
+import { BookOpen, Layers, Plus, Sparkles, Zap } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useReviewToggle } from "@/hooks/use-review-toggle";
+import { cn } from "@/lib/utils";
 import type { Domain, Term } from "@/lib/jargon/types";
 import { DomainActionsMenu, DomainMeta } from "./domain-actions-menu";
 
@@ -12,6 +13,8 @@ type JargonDomainHeaderProps = {
   terms: Term[];
   categoryCount: number;
   isOwner?: boolean;
+  /** Terms not yet known or marked known — Triage only shows while > 0. */
+  untriagedCount: number;
   onAddTerm?: () => void;
   onToggleActiveForReviewLocal: (domainId: string, active: boolean) => void;
 };
@@ -22,14 +25,19 @@ const STUDY_LINKS = [
   { path: "/jargon/quiz", label: "Quiz", icon: Sparkles },
 ] as const;
 
+/** Only while the collection still has terms that aren't known or marked known. */
+const TRIAGE_LINK = { path: "/jargon/triage", label: "Triage", icon: Layers } as const;
+
 /** Study pages ignore a paused collection and fall back to "All", so a
  *  paused one offers Resume instead of links that wouldn't be scoped. */
 function CollectionStudyActions({
   domain,
+  showTriage,
   resumePending,
   onResume,
 }: {
   domain: Domain;
+  showTriage: boolean;
   resumePending: boolean;
   onResume: () => void;
 }) {
@@ -55,9 +63,14 @@ function CollectionStudyActions({
 
   if (domain.termCount === 0) return null;
 
+  const links = showTriage ? [...STUDY_LINKS, TRIAGE_LINK] : STUDY_LINKS;
+
   return (
-    <nav aria-label={`Study ${domain.name}`} className="grid grid-cols-3 gap-2 sm:flex">
-      {STUDY_LINKS.map(({ path, label, icon: Icon }) => (
+    <nav
+      aria-label={`Study ${domain.name}`}
+      className={cn("grid gap-2 sm:flex", showTriage ? "grid-cols-2" : "grid-cols-3")}
+    >
+      {links.map(({ path, label, icon: Icon }) => (
         <LinkButton
           key={path}
           href={`${path}?domain=${domain.id}`}
@@ -79,6 +92,7 @@ export function JargonDomainHeader({
   terms,
   categoryCount,
   isOwner = false,
+  untriagedCount,
   onAddTerm,
   onToggleActiveForReviewLocal,
 }: JargonDomainHeaderProps) {
@@ -130,6 +144,7 @@ export function JargonDomainHeader({
 
       <CollectionStudyActions
         domain={domain}
+        showTriage={untriagedCount > 0}
         resumePending={togglePending}
         onResume={() => void setActiveForReview(domain.id, true)}
       />

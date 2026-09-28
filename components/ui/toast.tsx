@@ -11,6 +11,7 @@ import {
 } from "react";
 import { Alert, AlertAction, AlertDescription, type AlertVariant } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 type ToastVariant = Extract<AlertVariant, "success" | "destructive">;
 
@@ -51,7 +52,8 @@ function ToastView({ item, onDismiss }: { item: ToastItem; onDismiss: (id: numbe
   return (
     <Alert
       variant={item.variant}
-      className="shadow-lg"
+      // Horizontal on every width so an action sits beside the message, not under it.
+      className={cn("alert-horizontal gap-3 px-4 py-2.5 shadow-lg", item.action && "py-1.5 pe-2")}
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -64,7 +66,7 @@ function ToastView({ item, onDismiss }: { item: ToastItem; onDismiss: (id: numbe
             type="button"
             size="sm"
             variant="ghost"
-            className="min-h-9 font-semibold underline underline-offset-2"
+            className="font-semibold underline underline-offset-2"
             onPress={() => {
               onDismiss(item.id);
               item.action?.onPress();

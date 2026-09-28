@@ -23,10 +23,18 @@ const GRADE_BUTTONS: { grade: ReviewGrade; variant: ButtonVariant }[] = [
   { grade: EASY, variant: "info" },
 ];
 
+/** Tinted study-action buttons (Review grades, Triage choices). */
+export const SOFT_ACTION_BUTTON_CLASS = cn(
+  "btn-soft min-h-11 transition-transform active:scale-[0.96]",
+  "[--btn-bg:color-mix(in_oklab,var(--btn-color)_45%,var(--color-base-100))]",
+  "[--btn-border:color-mix(in_oklab,var(--btn-color)_55%,var(--color-base-100))]",
+  "[color:var(--btn-fg)]",
+);
+
 /** A clicked or tapped button keeps focus, and a focused button owns
  *  Enter — so the next Enter would press it again instead of revealing.
  *  Keyboard presses keep focus where the user put it. */
-function releaseFocusAfterPointerPress(event: PressEvent) {
+export function releaseFocusAfterPointerPress(event: PressEvent) {
   if (event.pointerType === "mouse" || event.pointerType === "touch") {
     (event.target as HTMLElement).blur();
   }
@@ -111,10 +119,7 @@ export function ReviewPlayingStep({
                     onRate(grade);
                   }}
                   className={cn(
-                    "btn-soft min-h-11 transition-transform active:scale-[0.96]",
-                    "[--btn-bg:color-mix(in_oklab,var(--btn-color)_45%,var(--color-base-100))]",
-                    "[--btn-border:color-mix(in_oklab,var(--btn-color)_55%,var(--color-base-100))]",
-                    "[color:var(--btn-fg)]",
+                    SOFT_ACTION_BUTTON_CLASS,
                     currentRating?.grade === grade && "ring-2 ring-primary/50",
                   )}
                 >
