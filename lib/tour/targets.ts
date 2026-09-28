@@ -4,6 +4,7 @@
 export const TOUR_TARGETS = [
   "app-streak",
   "app-account",
+  "menu-mastery",
   "nav-library",
   "nav-read",
   "nav-review",
@@ -25,9 +26,6 @@ export const TOUR_TARGETS = [
   "stories-level",
   "stories-write",
   "quiz-style",
-  "mastery-summary",
-  "mastery-collection",
-  "mastery-tabs",
   "triage-card",
   "triage-actions",
   "browse-filters",

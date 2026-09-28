@@ -114,7 +114,7 @@ function CollectionCardShell({
 
   // The footer holds a link, which can't sit inside the card's button.
   return (
-    <div data-tour="mastery-collection" className={surface}>
+    <div className={surface}>
       <button
         type="button"
         onClick={onSelect}

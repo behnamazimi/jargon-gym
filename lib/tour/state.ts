@@ -29,10 +29,13 @@ export function withTourSkipped(state: TourState): TourState {
   return { ...state, status: "done" };
 }
 
+function matchesRoute(route: string, pathname: string) {
+  return route.endsWith("*") ? pathname.startsWith(route.slice(0, -1)) : route === pathname;
+}
+
 function runsOn(chapter: TourChapter, pathname: string) {
-  return typeof chapter.route === "string"
-    ? chapter.route === pathname
-    : chapter.route.includes(pathname);
+  const routes = typeof chapter.route === "string" ? [chapter.route] : chapter.route;
+  return routes.some((route) => matchesRoute(route, pathname));
 }
 
 function unseenChaptersOn(pathname: string, state: TourState): TourChapter[] {

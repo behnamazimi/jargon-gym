@@ -64,7 +64,11 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
           {ACCOUNT_HOME_NAV.map((item) => {
             const Icon = item.icon;
             return (
-              <DropdownMenuItem key={item.href} href={item.href}>
+              <DropdownMenuItem
+                key={item.href}
+                href={item.href}
+                data-tour={`menu-${item.label.toLowerCase()}`}
+              >
                 <Icon className="h-4 w-4" />
                 {item.label}
               </DropdownMenuItem>

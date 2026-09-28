@@ -5,12 +5,14 @@ import { createPortal } from "react-dom";
 import { OverlayArrow, Popover } from "react-aria-components";
 import { Button } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { cn } from "@/lib/utils";
 import type { TourPlacement } from "@/lib/tour/chapters";
 import type { TargetBox } from "./use-tour-dom";
 
 type TourStepCardProps = {
   target: HTMLElement;
   box: TargetBox | null;
+  scrolling: boolean;
   title: string;
   body: string;
   placement?: TourPlacement;
@@ -31,20 +33,43 @@ const ARROW_TRANSFORM: Record<TourPlacement, string> = {
   right: "translate(calc(50% + 1px), -50%) rotate(45deg)",
 };
 
-/** Drawn over the page rather than styled onto the target, so only this one
- *  element is ringed and the tour never touches markup React owns. */
-function TargetRing({ target, box }: { target: HTMLElement; box: TargetBox }) {
+/** Same dim DaisyUI puts behind its modals. */
+const DIM = "oklch(0% 0 0 / 0.4)";
+
+/** React Aria's overlay layer. The spotlight joins it so it also dims open
+ *  menus and sheets; it mounts before the tip, so the tip stays on top. */
+const OVERLAY_Z = 100000;
+
+/** A ring around the target with the rest of the page dimmed around it (a
+ *  huge shadow leaves a cut-out over the target). It's drawn over the page,
+ *  so only this one element is highlighted and the tour never touches markup
+ *  React owns. Clicks pass straight through, so the page stays usable. It
+ *  fades out while the page scrolls and back in once it settles. */
+function TargetSpotlight({
+  target,
+  box,
+  scrolling,
+}: {
+  target: HTMLElement;
+  box: TargetBox;
+  scrolling: boolean;
+}) {
   const radius = getComputedStyle(target).borderRadius;
   return createPortal(
     <div
       aria-hidden
-      className="pointer-events-none fixed z-[99999] outline-2 outline-primary"
+      className={cn(
+        "pointer-events-none fixed outline-2 outline-primary transition-opacity duration-200 motion-reduce:transition-none",
+        scrolling ? "opacity-0" : "opacity-100",
+      )}
       style={{
         top: box.top - RING_OFFSET_PX,
         left: box.left - RING_OFFSET_PX,
         width: box.width + RING_OFFSET_PX * 2,
         height: box.height + RING_OFFSET_PX * 2,
         borderRadius: radius === "0px" ? undefined : `calc(${radius} + ${RING_OFFSET_PX}px)`,
+        boxShadow: `0 0 0 100vmax ${DIM}`,
+        zIndex: OVERLAY_Z,
       }}
     />,
     document.body,
@@ -54,6 +79,7 @@ function TargetRing({ target, box }: { target: HTMLElement; box: TargetBox }) {
 export function TourStepCard({
   target,
   box,
+  scrolling,
   title,
   body,
   placement = "bottom",
@@ -89,65 +115,67 @@ export function TourStepCard({
 
   return (
     <>
-      <TargetRing target={target} box={box} />
-      <Popover
-        // Re-anchor after the page scrolls or the target moves.
-        key={`${box.top},${box.left},${box.width},${box.height}`}
-        triggerRef={triggerRef}
-        isOpen
-        // Non-modal so the page stays usable: tapping the element being
-        // explained must not close the tip. Only its own buttons, a click on
-        // the target, or Escape move it on.
-        isNonModal
-        onOpenChange={() => {}}
-        placement={placement}
-        offset={12}
-        className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-box border border-base-300 bg-base-100 p-4 shadow-md"
-      >
-        <OverlayArrow
-          className="size-3 border-base-300 bg-base-100 data-[placement=bottom]:border-t data-[placement=bottom]:border-l data-[placement=left]:border-t data-[placement=left]:border-r data-[placement=right]:border-b data-[placement=right]:border-l data-[placement=top]:border-r data-[placement=top]:border-b"
-          style={({ placement: arrowPlacement, defaultStyle }) => ({
-            ...defaultStyle,
-            transform:
-              ARROW_TRANSFORM[
-                arrowPlacement && arrowPlacement !== "center" ? arrowPlacement : placement
-              ],
-          })}
-        />
-        <div
-          data-tour-card=""
-          role="dialog"
-          aria-modal="false"
-          aria-labelledby={titleId}
-          className="flex flex-col gap-3"
+      <TargetSpotlight target={target} box={box} scrolling={scrolling} />
+      {scrolling ? null : (
+        <Popover
+          // Re-anchor after the page scrolls or the target moves.
+          key={`${box.top},${box.left},${box.width},${box.height}`}
+          triggerRef={triggerRef}
+          isOpen
+          // Non-modal so the page stays usable: tapping the element being
+          // explained must not close the tip. Only its own buttons, a click on
+          // the target, or Escape move it on.
+          isNonModal
+          onOpenChange={() => {}}
+          placement={placement}
+          offset={12}
+          className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-box border border-base-300 bg-base-100 p-4 shadow-md"
         >
-          <div>
-            <p id={titleId} className="m-0 font-heading text-sm font-semibold text-base-content">
-              {title}
-            </p>
-            <p className="m-0 mt-1 text-sm leading-relaxed text-base-content/70">{body}</p>
+          <OverlayArrow
+            className="size-3 border-base-300 bg-base-100 data-[placement=bottom]:border-t data-[placement=bottom]:border-l data-[placement=left]:border-t data-[placement=left]:border-r data-[placement=right]:border-b data-[placement=right]:border-l data-[placement=top]:border-r data-[placement=top]:border-b"
+            style={({ placement: arrowPlacement, defaultStyle }) => ({
+              ...defaultStyle,
+              transform:
+                ARROW_TRANSFORM[
+                  arrowPlacement && arrowPlacement !== "center" ? arrowPlacement : placement
+                ],
+            })}
+          />
+          <div
+            data-tour-card=""
+            role="dialog"
+            aria-modal="false"
+            aria-labelledby={titleId}
+            className="flex flex-col gap-3"
+          >
+            <div>
+              <p id={titleId} className="m-0 font-heading text-sm font-semibold text-base-content">
+                {title}
+              </p>
+              <p className="m-0 mt-1 text-sm leading-relaxed text-base-content/70">{body}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {stepCount > 1 ? (
+                <span className="text-xs tabular-nums text-base-content/50">
+                  {stepNumber} of {stepCount}
+                </span>
+              ) : null}
+              <span className="flex-1" />
+              <Button variant="ghost" size="sm" className="min-h-11 md:min-h-8" onPress={onSkip}>
+                Skip tips
+              </Button>
+              <Button
+                size="sm"
+                className="min-h-11 md:min-h-8"
+                autoFocus={focusPrimary}
+                onPress={(event) => onNext(event.pointerType === "keyboard")}
+              >
+                {isLast ? "Got it" : "Next"}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {stepCount > 1 ? (
-              <span className="text-xs tabular-nums text-base-content/50">
-                {stepNumber} of {stepCount}
-              </span>
-            ) : null}
-            <span className="flex-1" />
-            <Button variant="ghost" size="sm" className="min-h-11 md:min-h-8" onPress={onSkip}>
-              Skip tips
-            </Button>
-            <Button
-              size="sm"
-              className="min-h-11 md:min-h-8"
-              autoFocus={focusPrimary}
-              onPress={(event) => onNext(event.pointerType === "keyboard")}
-            >
-              {isLast ? "Got it" : "Next"}
-            </Button>
-          </div>
-        </div>
-      </Popover>
+        </Popover>
+      )}
     </>
   );
 }

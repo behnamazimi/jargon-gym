@@ -16,7 +16,8 @@ type TourStep = {
 
 export type TourChapter = {
   id: string;
-  /** Exact pathname(s) the chapter runs on. */
+  /** Pathname(s) the chapter runs on. Exact, or a prefix ending in `*`
+   *  (e.g. "/jargon*" for every study page). */
   route: string | readonly string[];
   steps: readonly TourStep[];
 };

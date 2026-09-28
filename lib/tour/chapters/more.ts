@@ -3,27 +3,6 @@ import type { TourChapter } from "./types";
 /** Progress and the pages reached from the More menu. */
 export const MORE_CHAPTERS = [
   {
-    id: "mastery",
-    route: "/jargon/mastery",
-    steps: [
-      {
-        target: "mastery-summary",
-        title: "Learning and mastered",
-        body: "A term is learning once you've read, reviewed, or quizzed it. It's mastered once Review and Quiz show you recall it reliably, or when you mark it known. Reading alone won't master it.",
-      },
-      {
-        target: "mastery-collection",
-        title: "Each collection",
-        body: "See how far along each collection is. Open one to see its terms, or Practice to review it.",
-      },
-      {
-        target: "mastery-tabs",
-        title: "Every term",
-        body: "Terms lists each term with how well you know it.",
-      },
-    ],
-  },
-  {
     id: "triage",
     route: "/jargon/triage",
     steps: [

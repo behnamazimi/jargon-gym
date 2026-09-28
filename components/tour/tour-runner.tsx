@@ -15,7 +15,7 @@ import {
   type TourState,
 } from "@/lib/tour/state";
 import { TourStepCard } from "./tour-step-card";
-import { usePageCovered, useTargetBox, useTourTarget, useVisibleTourTargets } from "./use-tour-dom";
+import { useTargetBox, useTourTarget, useVisibleTourTargets } from "./use-tour-dom";
 
 const targetIds = new WeakMap<HTMLElement, number>();
 let nextTargetId = 0;
@@ -62,19 +62,16 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
   const [keyboardFlow, setKeyboardFlow] = useState(false);
   const watched = tourTargetsOn(pathname, state);
   const visible = useVisibleTourTargets(watched);
-  const covered = usePageCovered(watched.length > 0);
   // Same split the UI uses for its gestures (swipe rows, tap to reveal):
   // phone-width screens or touch pointers get the touch wording.
   const isTouch = useMediaQuery(`${PLATFORM_MEDIA.phone}, ${PLATFORM_MEDIA.coarsePointer}`);
 
-  // While something covers the page its targets may be unmounted; hold the
-  // current step instead of skipping past them.
-  const resolved = covered
-    ? null
-    : resolveTourStep(pathname, state, progress, (target) => visible.has(target));
+  // While a sheet, menu, or focus mode covers the page, only targets inside
+  // it count as visible, so the page's own step holds until it closes.
+  const resolved = resolveTourStep(pathname, state, progress, (target) => visible.has(target));
   const step = resolved ? resolved.chapter.steps[resolved.stepIndex] : null;
   const target = useTourTarget(step?.target ?? null);
-  const box = useTargetBox(target);
+  const { box, scrolling } = useTargetBox(target);
 
   // Remember where we are, so the chapter survives its first target leaving
   // the screen and an auto-advanced step doesn't slip back.
@@ -119,6 +116,7 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
           key={`${showing.chapterId}-${showing.stepIndex}-${targetKey(showing.target)}`}
           target={showing.target}
           box={box}
+          scrolling={scrolling}
           title={showing.step.title}
           body={stepBody(showing.step, isTouch)}
           placement={showing.step.placement}
