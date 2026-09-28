@@ -146,7 +146,9 @@ export function TriageSwipeCard({
   return (
     <div
       ref={cardRef}
-      className="relative flex min-h-0 flex-1 touch-pan-y flex-col select-none"
+      // Every descendant too: the revealed definition scrolls on its own, and a
+      // scroll area would otherwise let the browser take horizontal pans.
+      className="relative flex min-h-0 flex-1 touch-pan-y flex-col select-none [&_*]:touch-pan-y"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -169,6 +171,7 @@ export function TriageSwipeCard({
         reduceMotion={reduceMotion}
         swipeEnabled={false}
         narrationAccess={narrationAccess}
+        showRevealHint={false}
       />
       <SwipeActionLabel
         ref={knewLabelRef}
