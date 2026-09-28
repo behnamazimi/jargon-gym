@@ -6,7 +6,7 @@ type TourStep = {
   target: TourTargetId;
   title: string;
   body: string;
-  /** Replaces `body` on touch screens, where the gesture differs. */
+  /** Replaces `body` on phone-width or touch screens, where the gesture differs. */
   bodyTouch?: string;
   placement?: TourPlacement;
   /** Move on by itself once this target appears, e.g. the grade buttons

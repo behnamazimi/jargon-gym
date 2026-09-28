@@ -63,7 +63,9 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
   const watched = tourTargetsOn(pathname, state);
   const visible = useVisibleTourTargets(watched);
   const covered = usePageCovered(watched.length > 0);
-  const isTouch = useMediaQuery(PLATFORM_MEDIA.coarsePointer);
+  // Same split the UI uses for its gestures (swipe rows, tap to reveal):
+  // phone-width screens or touch pointers get the touch wording.
+  const isTouch = useMediaQuery(`${PLATFORM_MEDIA.phone}, ${PLATFORM_MEDIA.coarsePointer}`);
 
   // While something covers the page its targets may be unmounted; hold the
   // current step instead of skipping past them.
