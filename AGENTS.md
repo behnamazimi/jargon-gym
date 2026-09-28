@@ -55,15 +55,15 @@ and the manual test matrix.
 
 # Guided tour
 
-New signups get short per-page tips ("chapters"). The steps are plain data
+Every account gets short per-page tips ("chapters") until it has seen them
+all or skipped them. The steps are plain data
 in `lib/tour/chapters/` (grouped by area); `lib/tour/state.ts` decides what
 shows, and `components/tour/` renders it (a React Aria `Popover` plus a
 ring). Chapters on the same page run back to back in the order listed. To
 add a chapter, add an entry to the matching area file, add any new target ids to
 `lib/tour/targets.ts`, and put `data-tour="<id>"` on the element. Feature
 components only carry that attribute and never import tour code. Progress
-lives in `user_settings.tour_status` / `tour_seen`; existing accounts were
-marked done when the tour shipped.
+lives in `user_settings.tour_status` / `tour_seen`.
 
 # macOS widget
 

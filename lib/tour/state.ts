@@ -10,7 +10,7 @@ export type TourState = {
 
 type IsTargetVisible = (target: TourTargetId) => boolean;
 
-/** A missing settings row means a new account (existing ones were backfilled). */
+/** No settings row yet means the tour hasn't started. */
 export const NEW_USER_TOUR_STATE: TourState = { status: "pending", seen: [] };
 
 export function isTourDone(state: TourState): boolean {
