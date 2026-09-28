@@ -67,8 +67,12 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
             </div>
           </DropdownMenuLabel>
           {creditsLine ? (
-            <DropdownMenuItem href="/jargon/settings?tab=ai" textValue={creditsLine.label}>
-              <Sparkles className="h-4 w-4" />
+            <DropdownMenuItem
+              href={creditsLine.pending ? undefined : "/jargon/settings?tab=ai"}
+              isDisabled={creditsLine.pending}
+              textValue={creditsLine.label}
+            >
+              <Sparkles className="h-4 w-4" aria-hidden />
               <span className={cn(creditsLine.tone === "error" && "text-error")}>
                 {creditsLine.label}
               </span>

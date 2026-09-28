@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { MoreSheet } from "@/components/app/study-phone-more-sheet";
 import { useAiCredits } from "@/hooks/use-ai-credits";
 import {
@@ -56,10 +56,13 @@ export function StudyPhoneProvider({
   const { load: aiCreditsLoad, refresh: refreshAiCredits } = useAiCredits(aiCreditsMode);
 
   // The balance is only looked up when the sheet opens.
-  function setMoreOpen(open: boolean) {
-    setMoreOpenState(open);
-    if (open) void refreshAiCredits();
-  }
+  const setMoreOpen = useCallback(
+    (open: boolean) => {
+      setMoreOpenState(open);
+      if (open) void refreshAiCredits();
+    },
+    [refreshAiCredits],
+  );
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [backHref, setBackHref] = useState("/jargon");
@@ -89,6 +92,7 @@ export function StudyPhoneProvider({
       currentStreak,
       longestStreak,
       moreOpen,
+      setMoreOpen,
       aiCreditsMode,
       aiCreditsLoad,
       backHref,

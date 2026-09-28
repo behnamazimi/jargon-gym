@@ -51,7 +51,7 @@ export function MoreSheet() {
                 href="/jargon/settings?tab=ai"
                 onClick={() => setMoreOpen(false)}
                 className={cn(
-                  "text-xs no-underline",
+                  "-my-1.5 flex min-h-11 items-center text-xs no-underline",
                   aiCreditsLine.tone === "error" ? "text-error" : "text-base-content/60",
                 )}
               >
