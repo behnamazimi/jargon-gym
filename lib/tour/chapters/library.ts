@@ -27,11 +27,6 @@ export const LIBRARY_CHAPTERS = [
         title: "Your collections",
         body: "Everything you've added lives here. Pick one to see its terms and progress.",
       },
-      {
-        target: "library-study",
-        title: "Study one collection",
-        body: "Jump into Read, Review, or Quiz for just this collection. When Triage shows up here, it lets you quickly sort out terms you already know.",
-      },
     ],
   },
   {

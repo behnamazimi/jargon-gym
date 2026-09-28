@@ -117,7 +117,7 @@ export function StudyCountField({
   onInputChange: (raw: string) => void;
 }) {
   return (
-    <Field data-tour="quiz-count">
+    <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
       <div className="flex w-full items-stretch gap-2">
         {presets.map((preset) => {

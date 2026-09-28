@@ -56,7 +56,6 @@ export function ReadToolbar({
         variant="outline"
         size="icon-sm"
         aria-label="Enter focus mode"
-        data-tour="read-focus"
         onPress={onEnterFullscreen}
         className={cn("shrink-0", preferenceOn && "ring-2 ring-primary/60", PRESS_CLASS)}
       >

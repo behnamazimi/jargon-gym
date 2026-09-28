@@ -24,7 +24,7 @@ function OverviewHeader({
   lifetimeTotalsLine: string | null;
 }) {
   return (
-    <div data-tour="mastery-summary" className="space-y-1">
+    <div className="space-y-1">
       <p className="text-sm font-semibold text-base-content">
         Learning <span className="tabular-nums">{termsLearning}</span> terms · Mastered{" "}
         <span className="tabular-nums">{termsLearned}</span> terms

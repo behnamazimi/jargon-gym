@@ -32,8 +32,8 @@ export const STUDY_CHAPTERS = [
     steps: [
       {
         target: "read-card",
-        title: "Guess, then reveal",
-        body: "Take a guess before you reveal the definition. Every term you read counts toward learning it.",
+        title: "Read to get familiar",
+        body: "Read the term and its definition. There's nothing to get right here: every term you read builds familiarity and gives it a head start in Review.",
       },
       {
         target: "read-modes",
@@ -55,13 +55,6 @@ export const STUDY_CHAPTERS = [
         target: "read-collection",
         title: "Choose what to read",
         body: "Read from one collection or all of them. The count shows how many terms are available.",
-      },
-      {
-        target: "read-focus",
-        title: "Focus mode",
-        body: "A full-screen feed of cards you scroll through. Each card counts as read when it comes into view. Press Esc to leave.",
-        bodyTouch:
-          "A full-screen feed of cards you scroll through. Each card counts as read when it comes into view. Tap × to leave.",
       },
     ],
   },
@@ -92,11 +85,6 @@ export const STUDY_CHAPTERS = [
         target: "quiz-style",
         title: "Simple or AI",
         body: "Simple quizzes use the collection's definitions and examples. AI writes fresh questions and needs your API key in Settings.",
-      },
-      {
-        target: "quiz-count",
-        title: "Size your quiz",
-        body: "Pick a collection and how many questions. Quiz starts with the terms most at risk of slipping.",
       },
     ],
   },

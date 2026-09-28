@@ -16,8 +16,8 @@ export const OVERVIEW_CHAPTERS = [
       },
       {
         target: "nav-read",
-        title: "Read: meet new terms",
-        body: "Guess what a term means, then reveal it. Nothing is graded, so it's the easy way to get to know new terms.",
+        title: "Read: get familiar",
+        body: "Read terms and their definitions. It's input, not a test: every term you read builds familiarity and gives it a head start in Review.",
         placement: "top",
       },
       {
@@ -29,7 +29,7 @@ export const OVERVIEW_CHAPTERS = [
       {
         target: "nav-quiz",
         title: "Quiz: test yourself",
-        body: "Pick the right term from a few options drawn from the same collection. AI mode adds true/false and comprehension questions.",
+        body: "Check what you know with a quick quiz. There are two ways to take one: Simple, or smarter questions written by AI.",
         placement: "top",
       },
     ],

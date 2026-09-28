@@ -10,7 +10,7 @@ export type TourState = {
 
 type IsTargetVisible = (target: TourTargetId) => boolean;
 
-/** A missing settings row means a new account (existing ones were backfilled). */
+/** No settings row yet means the tour hasn't started. */
 export const NEW_USER_TOUR_STATE: TourState = { status: "pending", seen: [] };
 
 export function isTourDone(state: TourState): boolean {
@@ -30,9 +30,9 @@ export function withTourSkipped(state: TourState): TourState {
 }
 
 function runsOn(chapter: TourChapter, pathname: string) {
-  return typeof chapter.route === "string"
-    ? chapter.route === pathname
-    : chapter.route.includes(pathname);
+  const routes: readonly string[] =
+    typeof chapter.route === "string" ? [chapter.route] : chapter.route;
+  return routes.includes(pathname);
 }
 
 function unseenChaptersOn(pathname: string, state: TourState): TourChapter[] {

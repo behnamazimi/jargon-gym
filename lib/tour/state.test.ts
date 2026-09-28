@@ -60,10 +60,9 @@ describe("pickChapter", () => {
   });
 
   it("runs the Library chapter once a collection exists", () => {
-    expect(
-      pickChapter("/jargon", NEW_USER_TOUR_STATE, visible("library-collections", "library-study"))
-        ?.id,
-    ).toBe("library");
+    expect(pickChapter("/jargon", NEW_USER_TOUR_STATE, visible("library-collections"))?.id).toBe(
+      "library",
+    );
   });
 
   it("waits until the first target is on screen", () => {
@@ -176,7 +175,7 @@ describe("resolveTourStep", () => {
         "/jargon",
         { status: "pending", seen: ["overview"] },
         progress,
-        visible("library-collections", "library-study"),
+        visible("library-collections"),
       ),
     ).toMatchObject({ chapterId: "library", stepIndex: 0 });
   });
@@ -220,5 +219,9 @@ describe("tourTargetsOn", () => {
       tourTargetsOn("/jargon/quiz", { status: "pending", seen: ["overview", "quiz"] }),
     ).toEqual([]);
     expect(tourTargetsOn("/jargon/review", withTourSkipped(NEW_USER_TOUR_STATE))).toEqual([]);
+  });
+
+  it("never watches outside the app", () => {
+    expect(tourTargetsOn("/", NEW_USER_TOUR_STATE)).toEqual([]);
   });
 });
