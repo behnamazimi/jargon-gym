@@ -1,8 +1,6 @@
 "use client";
 
-import { KeyRound } from "lucide-react";
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
-import { Button, LinkButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import {
   Select,
@@ -27,10 +25,17 @@ import {
   type CefrLevel,
 } from "@/lib/stories/types";
 import { termsForLength } from "@/lib/stories/length";
+import { aiAvailable, type AiAccessView } from "@/lib/llm/types";
+import { storyCreditUse } from "@/lib/stories/credit-fit";
 import {
   PieceLengthField,
   ReadingLevelField,
 } from "@/components/jargon/read/stories/story-setup-fields";
+import {
+  StoryFooterHint,
+  StoryNoAiNotice,
+  StoryOverBalance,
+} from "@/components/jargon/read/stories/story-setup-notices";
 
 const CEFR_HINTS: Record<CefrLevel, string> = {
   A1: "A1 · very short, basic sentences",
@@ -103,50 +108,21 @@ function OutlineField({ value, onChange }: { value: string; onChange: (value: st
   );
 }
 
-function NoLlmAlert() {
-  return (
-    <Alert variant="destructive">
-      <KeyRound className="size-4" aria-hidden strokeWidth={1.5} />
-      <AlertDescription>
-        Stories are written with your own AI provider. Add a provider and API key in Settings.
-      </AlertDescription>
-      <AlertAction>
-        <LinkButton
-          href="/jargon/settings?tab=ai"
-          size="sm"
-          variant="outline"
-          className="max-md:min-h-11"
-        >
-          Go to Settings
-        </LinkButton>
-        <LinkButton
-          href="/jargon/read?view=cards"
-          size="sm"
-          variant="ghost"
-          className="max-md:min-h-11"
-        >
-          Read cards
-        </LinkButton>
-      </AlertAction>
-    </Alert>
-  );
-}
-
 export function StorySetupPanel({
   session,
   collections,
-  llmConfigured,
-  providerLabel,
+  ai,
 }: {
   session: StorySession;
   collections: StoryCollection[];
-  llmConfigured: boolean;
-  providerLabel: string | null;
+  ai: AiAccessView;
 }) {
   const selected = collections.find((collection) => collection.id === session.domainId);
   const eligibleCount = selected?.eligibleCount ?? 0;
-  const canGenerate = llmConfigured && eligibleCount >= STORY_MIN_TERMS;
   const termCount = Math.min(eligibleCount, termsForLength(session.pieceLength));
+  const use = storyCreditUse(ai, session.pieceLength, eligibleCount);
+  const hasEnoughTerms = eligibleCount >= STORY_MIN_TERMS;
+  const canGenerate = aiAvailable(ai) && hasEnoughTerms && !use.overBalance;
 
   return (
     <StudySetupPanel
@@ -162,9 +138,7 @@ export function StorySetupPanel({
         </Button>
       }
       footerHint={
-        canGenerate
-          ? `Uses ${termCount} terms from this collection${providerLabel ? ` · written by ${providerLabel}` : ""}.`
-          : undefined
+        <StoryFooterHint ai={ai} use={use} termCount={termCount} hasEnoughTerms={hasEnoughTerms} />
       }
     >
       <QuizPanelLabel
@@ -172,7 +146,7 @@ export function StorySetupPanel({
         description="A short piece of reading built around the next terms in your Read queue. Mark it read to count a read for every term in it."
       />
 
-      {llmConfigured ? null : <NoLlmAlert />}
+      <StoryNoAiNotice ai={ai} />
 
       <Field>
         <FieldLabel htmlFor="story-collection">Collection</FieldLabel>
@@ -198,6 +172,12 @@ export function StorySetupPanel({
       <ReadingLevelField value={session.readingLevel} onChange={session.setReadingLevel} />
       <CefrLevelField value={session.cefrLevel} onChange={session.setCefrLevel} />
       <PieceLengthField value={session.pieceLength} onChange={session.setPieceLength} />
+      <StoryOverBalance
+        use={use}
+        pieceLength={session.pieceLength}
+        eligibleCount={eligibleCount}
+        onFit={session.setPieceLength}
+      />
       <OutlineField value={session.outline} onChange={session.setOutline} />
     </StudySetupPanel>
   );

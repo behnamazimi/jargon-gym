@@ -1,6 +1,6 @@
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { getUserSettings } from "@/lib/llm/settings";
-import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
+import { getAiAccessView } from "@/lib/llm/access";
+import type { AiAccessView } from "@/lib/llm/types";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { listStudyCollectionState } from "@/lib/study/collections";
 import type { PausedStudyCollection } from "@/lib/study/types";
@@ -17,8 +17,7 @@ export type StoriesSetupData = {
   paused: PausedStudyCollection[];
   initialDomainId: string | null;
   levelsByDomain: Record<string, StoryLevels>;
-  llmConfigured: boolean;
-  providerLabel: string | null;
+  ai: AiAccessView;
   narrationAccess: boolean;
   /** An unread piece to open straight into, instead of the setup screen. */
   currentStory: { story: Story; terms: StoryTerm[] } | null;
@@ -46,12 +45,12 @@ export async function getStoriesSetupData(
   if ("error" in auth) return { error: "Log in to read stories." };
 
   const admin = createAdminClient();
-  const [collectionState, eligibleCounts, prefs, settings, narrationAccess, unreadStory] =
+  const [collectionState, eligibleCounts, prefs, ai, narrationAccess, unreadStory] =
     await Promise.all([
       listStudyCollectionState(auth.supabase, auth.user.id),
       getReadEligibleCountsByDomainForUser(admin, auth.user.id),
       loadPrefs(admin, auth.user.id),
-      getUserSettings(auth.supabase, auth.user.id),
+      getAiAccessView(auth.supabase, auth.user.id),
       getNarrationAccessForUser(auth.supabase, auth.user.id),
       getCurrentStory(admin, auth.user.id).catch((err: unknown) => {
         console.error("Failed to load the current story:", err);
@@ -70,8 +69,7 @@ export async function getStoriesSetupData(
     paused: collectionState.paused,
     initialDomainId: resolveInitialDomainId(collections, [requestedDomainId, prefs.lastDomainId]),
     levelsByDomain: prefs.levelsByDomain,
-    llmConfigured: hasLlmConfigured(settings),
-    providerLabel: settings?.provider ? LLM_PROVIDER_LABELS[settings.provider] : null,
+    ai,
     narrationAccess,
     currentStory: unreadStory
       ? { story: unreadStory, terms: await getStoryTerms(admin, unreadStory.termIds) }

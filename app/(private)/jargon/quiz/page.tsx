@@ -7,6 +7,7 @@ import {
   QUIZ_SETUP_COOKIE,
   resolveInitialQuizSetup,
 } from "@/lib/quiz/setup-preference";
+import { aiAvailable } from "@/lib/llm/types";
 import { hasNoCollections } from "@/lib/study/collections";
 
 type PageProps = {
@@ -30,7 +31,7 @@ export default async function JargonQuizPage({ searchParams }: PageProps) {
     saved: parseQuizSetupCookie(cookieStore.get(QUIZ_SETUP_COOKIE)?.value),
     domainParam: params.domain,
     activeIds,
-    llmConfigured: setup.llmConfigured,
+    aiAvailable: aiAvailable(setup.ai),
   });
 
   return (
@@ -38,8 +39,7 @@ export default async function JargonQuizPage({ searchParams }: PageProps) {
       // Resuming a paused collection refreshes the page; a new active set
       // remounts it so the setup picks up the new collections.
       key={activeIds.join(",")}
-      llmConfigured={setup.llmConfigured}
-      providerLabel={setup.providerLabel}
+      ai={setup.ai}
       collections={setup.collections}
       paused={setup.paused}
       initialSetup={initialSetup}

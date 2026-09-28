@@ -2,6 +2,7 @@
 
 import { AlertCircle, BookOpenText, Loader2 } from "lucide-react";
 import type { StoriesSetupData } from "@/lib/stories/setup";
+import { CreditsInsteadButton } from "@/components/jargon/ai-credits/credits-instead-button";
 import { JargonErrorAlert } from "@/components/jargon/shared/error-alert";
 import {
   QuizCenteredState,
@@ -17,6 +18,7 @@ import {
 } from "@/components/jargon/read/stories/use-story-session";
 import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
 import { Button, LinkButton } from "@/components/ui/button";
+import type { AiAccessView } from "@/lib/llm/types";
 import { STORY_MIN_TERMS } from "@/lib/stories/types";
 
 const CARDS_HREF = "/jargon/read?view=cards";
@@ -57,7 +59,7 @@ function StoriesGeneratingStep() {
   );
 }
 
-function StoriesErrorStep({ session }: { session: StorySession }) {
+function StoriesErrorStep({ session, ai }: { session: StorySession; ai: AiAccessView }) {
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <QuizPanelHeader
@@ -76,6 +78,12 @@ function StoriesErrorStep({ session }: { session: StorySession }) {
           >
             Try again
           </Button>
+          <CreditsInsteadButton
+            ai={ai}
+            reason={session.errorReason}
+            onSwitched={session.backToSetup}
+            onError={session.setErrorMessage}
+          />
           <Button type="button" variant="ghost" onPress={session.backToSetup} className="min-h-11">
             Back to setup
           </Button>
@@ -92,7 +100,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
     case "generating":
       return <StoriesGeneratingStep />;
     case "error":
-      return <StoriesErrorStep session={session} />;
+      return <StoriesErrorStep session={session} ai={setup.ai} />;
     case "reading":
       return session.story ? (
         <StoryReader
@@ -110,12 +118,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
           ) : setup.initialDomainId === null ? (
             <StoriesNoTerms />
           ) : (
-            <StorySetupPanel
-              session={session}
-              collections={setup.collections}
-              llmConfigured={setup.llmConfigured}
-              providerLabel={setup.providerLabel}
-            />
+            <StorySetupPanel session={session} collections={setup.collections} ai={setup.ai} />
           )}
         </QuizPanel>
       );

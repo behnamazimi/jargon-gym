@@ -6,8 +6,15 @@ import {
   StudySetupPanel,
 } from "@/components/jargon/study/study-setup-panel";
 import { QuizQuestionStyleField } from "@/components/jargon/quiz/quiz-question-style-field";
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
-import { Button, LinkButton } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  QuizPickerAiNotices,
+  QuizPickerFooterHint,
+  QuizPickerOverBalance,
+} from "@/components/jargon/quiz/quiz-picker-notices";
+import { quizCreditUse } from "@/lib/quiz/credit-use";
+import type { AiAccessView } from "@/lib/llm/types";
 import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 import type { QuizSessionState } from "@/lib/quiz/session-storage";
@@ -15,7 +22,8 @@ import type { QuizSessionState } from "@/lib/quiz/session-storage";
 export type QuizPickerStepProps = {
   collections: StudyCollection[];
   paused: PausedStudyCollection[];
-  providerLabel: string | null;
+  ai: AiAccessView;
+  aiFellBack: boolean;
   savedSession: QuizSessionState | null;
   onResumeSession: () => void;
   onDiscardSession: () => void;
@@ -35,20 +43,6 @@ export type QuizPickerStepProps = {
   onQuestionCountInputChange: (value: string) => void;
   onStartQuiz: () => void;
 };
-
-function QuizPickerFooterHint({
-  questionStyle,
-  providerLabel,
-}: {
-  questionStyle: QuizQuestionStyle;
-  providerLabel: string | null;
-}) {
-  return questionStyle === "simple" ? (
-    <>Uses terms from your collections — no AI needed.</>
-  ) : (
-    <>Uses {providerLabel ?? "your LLM provider"} — this may take a moment.</>
-  );
-}
 
 function QuizPickerResumeBanner({
   savedSession,
@@ -74,31 +68,11 @@ function QuizPickerResumeBanner({
   );
 }
 
-function QuizPickerAiSetupAlert() {
-  return (
-    <Alert variant="destructive" className="max-w-md">
-      <AlertDescription>
-        AI quizzes need a provider and API key in Settings. Choose simple mode, or set up an LLM
-        provider.
-      </AlertDescription>
-      <AlertAction>
-        <LinkButton
-          href="/jargon/settings?tab=ai"
-          size="sm"
-          variant="outline"
-          className="max-md:min-h-11"
-        >
-          Go to Settings
-        </LinkButton>
-      </AlertAction>
-    </Alert>
-  );
-}
-
 export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
   const {
     collections,
-    providerLabel,
+    ai,
+    aiFellBack,
     savedSession,
     onResumeSession,
     onDiscardSession,
@@ -119,21 +93,23 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
     onStartQuiz,
   } = props;
 
+  const use = quizCreditUse(questionStyle, ai, questionCount);
+  const startDisabled =
+    availableTermCount === 0 || questionCountError !== null || aiRequiresSetup || use.overBalance;
+
   return (
     <StudySetupPanel
       footer={
         <Button
           type="button"
           onPress={onStartQuiz}
-          isDisabled={availableTermCount === 0 || questionCountError !== null || aiRequiresSetup}
+          isDisabled={startDisabled}
           className="min-h-11 w-full"
         >
           Start quiz
         </Button>
       }
-      footerHint={
-        <QuizPickerFooterHint questionStyle={questionStyle} providerLabel={providerLabel} />
-      }
+      footerHint={<QuizPickerFooterHint questionStyle={questionStyle} ai={ai} cost={use.cost} />}
     >
       <QuizPanelLabel
         title="Set up your quiz"
@@ -149,7 +125,12 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
 
       <QuizQuestionStyleField value={questionStyle} onChange={onQuestionStyleChange} />
 
-      {aiRequiresSetup ? <QuizPickerAiSetupAlert /> : null}
+      <QuizPickerAiNotices
+        ai={ai}
+        aiFellBack={aiFellBack}
+        aiRequiresSetup={aiRequiresSetup}
+        questionStyle={questionStyle}
+      />
 
       {errorMessage ? (
         <Alert variant="destructive" className="max-w-md">
@@ -183,6 +164,8 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         onPresetSelect={onApplyQuestionCount}
         onInputChange={onQuestionCountInputChange}
       />
+
+      <QuizPickerOverBalance use={use} questionCount={questionCount} onFit={onApplyQuestionCount} />
 
       {availableTermCount === 0 ? (
         <Alert variant="destructive">

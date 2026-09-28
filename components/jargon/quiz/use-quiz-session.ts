@@ -5,18 +5,7 @@ import { useQuizPlaying } from "@/components/jargon/quiz/use-quiz-playing";
 
 export function useQuizSession(collections: StudyCollection[], initialSetup: InitialQuizSetup) {
   const setup = useQuizSetup(collections, initialSetup);
-  const playing = useQuizPlaying({
-    step: setup.step,
-    setStep: setup.setStep,
-    questionStyle: setup.questionStyle,
-    setQuestionStyle: setup.setQuestionStyle,
-    setSelectedCollectionId: setup.setSelectedCollectionId,
-    setQuestionCount: setup.setQuestionCount,
-    setQuestionCountInput: setup.setQuestionCountInput,
-    setErrorMessage: setup.setErrorMessage,
-    domainIds: setup.domainIds,
-    questionCount: setup.questionCount,
-  });
+  const playing = useQuizPlaying(setup);
 
   return {
     step: setup.step,
@@ -37,6 +26,7 @@ export function useQuizSession(collections: StudyCollection[], initialSetup: Ini
     handleQuestionCountInputChange: setup.handleQuestionCountInputChange,
     saveSetup: setup.saveSetup,
 
+    errorReason: playing.errorReason,
     questions: playing.questions,
     currentIndex: playing.currentIndex,
     savedSession: playing.savedSession,

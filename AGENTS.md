@@ -28,6 +28,17 @@ how it works — the memory traces, mastery blend, ranking rules, or which
 layer owns what — read [docs/trace.md](docs/trace.md) in detail rather than
 guessing from the code alone.
 
+# AI credits
+
+AI Quiz and Stories run on the user's own key when they have one, and
+otherwise on the app's key (`CENTRAL_LLM_API_KEY`), spending AI credits. The
+resolver is `lib/llm/access.ts`; charging, refunds and cost math are in
+`lib/ai-credits/`; the ledger, balance and admin functions are in
+`supabase/migrations/20260929120000_ai_credits.sql`. Credits are charged before
+the model call and refunded on any failure. Read
+[docs/ai-credits.md](docs/ai-credits.md) before changing balances, costs or
+the charge flow.
+
 # Stories
 
 Read's Stories mode lives in `lib/stories/` (prompt, generation, parsing

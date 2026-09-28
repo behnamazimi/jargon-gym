@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getAiAccessView } from "@/lib/llm/access";
 import { clearLlmSettings, getUserSettings, saveLlmSettings } from "@/lib/llm/settings";
 import type { LlmProvider } from "@/lib/llm/types";
 import {
@@ -20,8 +21,11 @@ export async function getLlmSettingsData() {
     return { error: "Log in to view settings." as const };
   }
 
-  const initialSettings = await getUserSettings(auth.supabase, auth.user.id);
-  return { initialSettings };
+  const [initialSettings, ai] = await Promise.all([
+    getUserSettings(auth.supabase, auth.user.id),
+    getAiAccessView(auth.supabase, auth.user.id),
+  ]);
+  return { initialSettings, ai };
 }
 
 export async function getTelegramSettingsData() {
@@ -148,6 +152,7 @@ export async function saveLlmSettingsAction(input: {
     await saveLlmSettings(auth.supabase, auth.user.id, input);
     revalidatePath("/jargon/settings");
     revalidatePath("/jargon/quiz");
+    revalidatePath("/jargon/read/stories");
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't save quiz settings. Try again.";
@@ -163,6 +168,7 @@ export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
     await clearLlmSettings(auth.supabase, auth.user.id);
     revalidatePath("/jargon/settings");
     revalidatePath("/jargon/quiz");
+    revalidatePath("/jargon/read/stories");
     return {};
   } catch (err) {
     const message =
