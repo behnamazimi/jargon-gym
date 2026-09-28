@@ -86,11 +86,6 @@ export const STUDY_CHAPTERS = [
         title: "Simple or AI",
         body: "Simple quizzes use the collection's definitions and examples. AI writes fresh questions and needs your API key in Settings.",
       },
-      {
-        target: "quiz-count",
-        title: "Size your quiz",
-        body: "Pick a collection and how many questions. Quiz starts with the terms most at risk of slipping.",
-      },
     ],
   },
 ] as const satisfies readonly TourChapter[];

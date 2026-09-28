@@ -25,7 +25,6 @@ export const TOUR_TARGETS = [
   "stories-level",
   "stories-write",
   "quiz-style",
-  "quiz-count",
   "mastery-summary",
   "mastery-collection",
   "mastery-tabs",
