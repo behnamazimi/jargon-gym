@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { recordTermReadAction, setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
-import type { JargonPageData, SortMode, Term } from "@/lib/jargon/types";
+import type { JargonPageData, Term } from "@/lib/jargon/types";
+import { useLibraryFilters } from "./use-library-filters";
 
 export function useJargonList(initialData: JargonPageData) {
   const [terms, setTerms] = useState(initialData.terms);
@@ -54,9 +55,6 @@ export function useJargonList(initialData: JargonPageData) {
   }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
-  const [hideKnown, setHideKnown] = useState(false);
-  const [sortMode, setSortMode] = useState<SortMode>("default");
   const [openTerms, setOpenTerms] = useState<Set<string>>(new Set());
   const [knownTerms, setKnownTerms] = useState<Set<string>>(
     () => new Set(initialData.knownTermIds),
@@ -91,22 +89,21 @@ export function useJargonList(initialData: JargonPageData) {
     setEverMasteredTerms(new Set(initialData.everMasteredTermIds));
   }, [initialData.everMasteredTermIds]);
 
-  // Filters and open cards are local to whichever collection is on screen —
-  // switching collections should start from a clean slate instead of
-  // carrying over the previous one's search/category/sort/hidden state.
+  // Search and open cards are local to whichever collection is on screen —
+  // switching collections starts them fresh. The other filters are
+  // remembered on this device (useLibraryFilters).
   const previousDomainIdRef = useRef(initialData.domain.id);
   useEffect(() => {
     if (previousDomainIdRef.current === initialData.domain.id) return;
     previousDomainIdRef.current = initialData.domain.id;
     setSearchQuery("");
-    setActiveCategories(new Set());
-    setHideKnown(false);
-    setSortMode("default");
     setOpenTerms(new Set());
   }, [initialData.domain.id]);
 
   const categories = useMemo(() => getCategories(terms), [terms]);
   const categoryCounts = useMemo(() => getCategoryCounts(terms), [terms]);
+  const { hideKnown, setHideKnown, sortMode, setSortMode, activeCategories, toggleCategory } =
+    useLibraryFilters(domain.id, categories);
 
   const filteredTerms = useMemo(
     () =>
@@ -120,16 +117,6 @@ export function useJargonList(initialData: JargonPageData) {
       }),
     [terms, searchQuery, activeCategories, hideKnown, sortMode, knownTerms, markedKnownTerms],
   );
-
-  const toggleCategory = useCallback((cat: string) => {
-    setActiveCategories((prev) => {
-      if (cat === "All") return new Set();
-      const next = new Set(prev);
-      if (next.has(cat)) next.delete(cat);
-      else next.add(cat);
-      return next;
-    });
-  }, []);
 
   const recordReadOnce = useCallback((termId: string) => {
     if (countedShownRef.current.has(termId)) return;
@@ -155,7 +142,8 @@ export function useJargonList(initialData: JargonPageData) {
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 
-  const toggleMarkedKnown = useCallback(async (termId: string) => {
+  /** Resolves true once the change is saved, false if it was rolled back. */
+  const toggleMarkedKnown = useCallback(async (termId: string): Promise<boolean> => {
     const wasMarked = markedKnownTermsRef.current.has(termId);
     const marked = !wasMarked;
 
@@ -176,7 +164,9 @@ export function useJargonList(initialData: JargonPageData) {
         else next.add(termId);
         return next;
       });
+      return false;
     }
+    return true;
   }, []);
 
   return {

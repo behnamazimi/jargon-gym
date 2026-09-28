@@ -110,6 +110,11 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
     [knownTerms, markedKnownTerms],
   );
 
+  const untriagedCount = useMemo(
+    () => terms.filter((t) => !knownTerms.has(t.id) && !markedKnownTerms.has(t.id)).length,
+    [terms, knownTerms, markedKnownTerms],
+  );
+
   const liveTermsLearnedCount = useMemo(
     () => new Set([...everMasteredTerms, ...markedKnownTerms]).size,
     [everMasteredTerms, markedKnownTerms],
@@ -189,6 +194,7 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
                 terms={terms}
                 categoryCount={categories.length}
                 isOwner={isOwner}
+                untriagedCount={untriagedCount}
                 onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
                 onToggleActiveForReviewLocal={setDomainActiveForReview}
               />

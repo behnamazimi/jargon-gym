@@ -59,6 +59,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/jargon/read", "Read"],
   ["/jargon/review", "Review"],
   ["/jargon/quiz", "Quiz"],
+  ["/jargon/triage", "Triage"],
   ["/jargon/browse", "Browse"],
   ["/jargon/import", "Import"],
   ["/jargon/mastery", "Mastery"],

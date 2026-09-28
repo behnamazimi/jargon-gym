@@ -49,6 +49,14 @@ export function ImportedBanner({
           Start reading
           <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
         </LinkButton>
+        <LinkButton
+          href={`/jargon/triage?domain=${domain.id}`}
+          size="sm"
+          variant="outline"
+          className="min-h-11 md:min-h-8"
+        >
+          Mark what you know
+        </LinkButton>
         <Button
           type="button"
           size="icon-sm"

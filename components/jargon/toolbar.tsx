@@ -61,7 +61,14 @@ export function Toolbar({
         </div>
         <span className="text-sm tabular-nums text-base-content/60">{visibleCount} shown</span>
       </div>
-      <p className="text-xs text-base-content/60">Tap a term to expand · ✓ marks it known</p>
+      <p className="text-xs text-base-content/60">
+        <span className="md:hidden coarse:inline">
+          Tap a term to expand · swipe it left to mark it known
+        </span>
+        <span className="hidden md:inline coarse:hidden">
+          Click a term to expand · ✓ on a row marks it known
+        </span>
+      </p>
     </div>
   );
 }

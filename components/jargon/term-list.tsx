@@ -13,7 +13,7 @@ type TermListProps = {
   domainTerms: Term[];
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
-  onToggleMarkedKnown: (termId: string) => void;
+  onToggleMarkedKnown: (termId: string) => Promise<boolean>;
   onTermRemoved: (termId: string) => void;
   onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
 };

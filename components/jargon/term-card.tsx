@@ -1,15 +1,21 @@
 "use client";
 
-import { Check, CheckCircle2, ChevronRight, Undo2 } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { memo, useEffect, useRef } from "react";
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  MarkKnownButton,
+  QuickMarkKnownButton,
+  RowSwipeLayer,
+  useQuickToggleMarkedKnown,
+} from "./mark-known-controls";
 import { TermActionsMenu } from "./term-actions-menu";
 import { TermBody } from "./term-body";
+import { useRowSwipe } from "./use-row-swipe";
 
 type TermCardProps = {
   term: Term;
@@ -24,7 +30,7 @@ type TermCardProps = {
   domainTerms: Term[];
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
-  onToggleMarkedKnown: (termId: string) => void;
+  onToggleMarkedKnown: (termId: string) => Promise<boolean>;
   onTermRemoved: (termId: string) => void;
   onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
 };
@@ -81,6 +87,8 @@ type CardToolsProps = {
   domainTerms: Term[];
   isOwner: boolean;
   narrationAccess: boolean;
+  markedKnown: boolean;
+  onQuickToggleMarkedKnown: () => void;
   onTermRemoved: (termId: string) => void;
   onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
 };
@@ -91,12 +99,14 @@ function CardTools({
   domainTerms,
   isOwner,
   narrationAccess,
+  markedKnown,
+  onQuickToggleMarkedKnown,
   onTermRemoved,
   onTermRemoveFailed,
 }: CardToolsProps) {
-  if (!narrationAccess && !isOwner) return null;
   return (
     <div className="flex shrink-0 items-center gap-1 pe-1">
+      <QuickMarkKnownButton markedKnown={markedKnown} onPress={onQuickToggleMarkedKnown} />
       {narrationAccess ? <TermNarrationPlayer termId={term.id} /> : null}
       {isOwner ? (
         <TermActionsMenu
@@ -108,29 +118,6 @@ function CardTools({
         />
       ) : null}
     </div>
-  );
-}
-
-type MarkKnownButtonProps = {
-  markedKnown: boolean;
-  onPress: () => void;
-};
-
-function MarkKnownButton({ markedKnown, onPress }: MarkKnownButtonProps) {
-  return (
-    <Button size="sm" variant={markedKnown ? "outline" : "secondary"} onPress={onPress}>
-      {markedKnown ? (
-        <>
-          <Undo2 className="size-4" aria-hidden strokeWidth={1.5} />
-          Add to learning
-        </>
-      ) : (
-        <>
-          <CheckCircle2 className="size-4" aria-hidden strokeWidth={1.5} />
-          Mark known
-        </>
-      )}
-    </Button>
   );
 }
 
@@ -156,19 +143,30 @@ export const TermCard = memo(function TermCard({
     cardRef.current?.scrollIntoView({ block: "nearest" });
   }, [open]);
 
+  const quickToggleMarkedKnown = useQuickToggleMarkedKnown(term, markedKnown, onToggleMarkedKnown);
+  const swipe = useRowSwipe({ enabled: !open, onCommit: quickToggleMarkedKnown });
+
   return (
-    <div ref={cardRef} className="scroll-mb-20">
+    <div
+      ref={cardRef}
+      className={cn("relative scroll-mb-20", !open && "touch-pan-y")}
+      {...swipe.handlers}
+    >
+      <RowSwipeLayer ref={swipe.layerRef} markedKnown={markedKnown} />
       <Collapsible
         isExpanded={open}
         onExpandedChange={(expanded) => {
+          // The lift at the end of a row swipe also reads as a press.
+          if (swipe.justSwipedRef.current) return;
           if (expanded !== open) onToggleOpen(term.id);
         }}
         className={cn((known || markedKnown) && !open && "opacity-70")}
         data-term={term.term}
       >
         <article
+          ref={swipe.rowRef}
           className={cn(
-            "overflow-hidden rounded-xl bg-base-100",
+            "group relative overflow-hidden rounded-xl bg-base-100",
             open ? "shadow-surface-raised" : "shadow-surface",
           )}
         >
@@ -197,6 +195,8 @@ export const TermCard = memo(function TermCard({
               domainTerms={domainTerms}
               isOwner={isOwner}
               narrationAccess={narrationAccess}
+              markedKnown={markedKnown}
+              onQuickToggleMarkedKnown={quickToggleMarkedKnown}
               onTermRemoved={onTermRemoved}
               onTermRemoveFailed={onTermRemoveFailed}
             />
@@ -206,7 +206,7 @@ export const TermCard = memo(function TermCard({
             <div className="px-4 pb-4 mt-4">
               <MarkKnownButton
                 markedKnown={markedKnown}
-                onPress={() => onToggleMarkedKnown(term.id)}
+                onPress={() => void onToggleMarkedKnown(term.id)}
               />
             </div>
           </CollapsibleContent>
