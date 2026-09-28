@@ -12,7 +12,6 @@ export const TOUR_TARGETS = [
   "library-browse",
   "library-import",
   "library-collections",
-  "library-study",
   "library-search",
   "library-term",
   "library-actions",

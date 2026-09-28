@@ -60,10 +60,9 @@ describe("pickChapter", () => {
   });
 
   it("runs the Library chapter once a collection exists", () => {
-    expect(
-      pickChapter("/jargon", NEW_USER_TOUR_STATE, visible("library-collections", "library-study"))
-        ?.id,
-    ).toBe("library");
+    expect(pickChapter("/jargon", NEW_USER_TOUR_STATE, visible("library-collections"))?.id).toBe(
+      "library",
+    );
   });
 
   it("waits until the first target is on screen", () => {
@@ -176,7 +175,7 @@ describe("resolveTourStep", () => {
         "/jargon",
         { status: "pending", seen: ["overview"] },
         progress,
-        visible("library-collections", "library-study"),
+        visible("library-collections"),
       ),
     ).toMatchObject({ chapterId: "library", stepIndex: 0 });
   });

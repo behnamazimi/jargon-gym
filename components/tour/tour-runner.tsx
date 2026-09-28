@@ -16,6 +16,7 @@ import {
 } from "@/lib/tour/state";
 import { TourStepCard } from "./tour-step-card";
 import { useTargetBox, useTourTarget, useVisibleTourTargets } from "./use-tour-dom";
+import { useTourWalk } from "./use-tour-walk";
 
 const targetIds = new WeakMap<HTMLElement, number>();
 let nextTargetId = 0;
@@ -81,6 +82,16 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
   }
 
   const showing = resolved && step && target ? { ...resolved, step, target } : null;
+  const walk = useTourWalk(
+    pathname,
+    state,
+    visible,
+    showing && {
+      chapterId: showing.chapterId,
+      stepIndex: showing.stepIndex,
+      stepCount: showing.chapter.steps.length,
+    },
+  );
 
   function finishChapter() {
     if (!showing) return;
@@ -98,6 +109,14 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
       return;
     }
     setProgress({ chapterId: showing.chapterId, step: showing.stepIndex + 1 });
+  }
+
+  function handleContinue(viaKeyboard: boolean) {
+    const stop = walk.nextStop;
+    if (!stop) return;
+    setKeyboardFlow(viaKeyboard);
+    finishChapter();
+    walk.goTo(stop);
   }
 
   function handleSkip() {
@@ -123,7 +142,9 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
           stepNumber={showing.stepIndex + 1}
           stepCount={showing.chapter.steps.length}
           focusPrimary={shouldFocusCard(keyboardFlow)}
+          nextStopLabel={walk.nextStop?.label}
           onNext={handleNext}
+          onContinue={handleContinue}
           onDismiss={finishChapter}
           onSkip={handleSkip}
         />
