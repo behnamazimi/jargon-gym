@@ -70,18 +70,4 @@ export const LIBRARY_CHAPTERS = [
       },
     ],
   },
-  {
-    // Starts the first time the More sheet (phone) or account menu (desktop)
-    // is opened, on any page.
-    id: "menu",
-    route: "/jargon*",
-    steps: [
-      {
-        target: "menu-mastery",
-        title: "Your mastery",
-        body: "See how much of each collection you've mastered.",
-        placement: "top",
-      },
-    ],
-  },
 ] as const satisfies readonly TourChapter[];

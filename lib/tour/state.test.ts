@@ -205,10 +205,9 @@ describe("resolveTourStep", () => {
 });
 
 describe("tourTargetsOn", () => {
-  it("watches this page's remaining targets, plus the account menu's", () => {
+  it("watches this page's remaining targets", () => {
     const state: TourState = { status: "pending", seen: ["overview"] };
     expect(tourTargetsOn("/jargon/review", state)).toEqual([
-      "menu-mastery",
       "review-collection",
       "review-card",
       "review-grades",
@@ -217,21 +216,12 @@ describe("tourTargetsOn", () => {
 
   it("watches nothing once the page's chapters are seen or the tour is done", () => {
     expect(
-      tourTargetsOn("/jargon/quiz", { status: "pending", seen: ["overview", "menu", "quiz"] }),
+      tourTargetsOn("/jargon/quiz", { status: "pending", seen: ["overview", "quiz"] }),
     ).toEqual([]);
     expect(tourTargetsOn("/jargon/review", withTourSkipped(NEW_USER_TOUR_STATE))).toEqual([]);
   });
 
   it("never watches outside the app", () => {
     expect(tourTargetsOn("/", NEW_USER_TOUR_STATE)).toEqual([]);
-  });
-});
-
-describe("menu chapter", () => {
-  it("runs on any app page once the account menu is open", () => {
-    const state: TourState = { status: "pending", seen: ["overview"] };
-    for (const pathname of ["/jargon", "/jargon/review", "/jargon/settings"]) {
-      expect(pickChapter(pathname, state, visible("menu-mastery"))?.id).toBe("menu");
-    }
   });
 });

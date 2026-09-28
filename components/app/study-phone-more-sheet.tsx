@@ -51,12 +51,7 @@ export function MoreSheet() {
           const Icon = item.icon;
           return (
             <li key={item.href}>
-              <Link
-                href={item.href}
-                data-tour={`menu-${item.label.toLowerCase()}`}
-                onClick={() => setMoreOpen(false)}
-                className="min-h-11"
-              >
+              <Link href={item.href} onClick={() => setMoreOpen(false)} className="min-h-11">
                 <Icon className="size-4" strokeWidth={1.5} aria-hidden />
                 {item.label}
               </Link>

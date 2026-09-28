@@ -4,7 +4,6 @@
 export const TOUR_TARGETS = [
   "app-streak",
   "app-account",
-  "menu-mastery",
   "nav-library",
   "nav-read",
   "nav-review",
