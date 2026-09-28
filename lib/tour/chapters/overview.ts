@@ -29,7 +29,7 @@ export const OVERVIEW_CHAPTERS = [
       {
         target: "nav-quiz",
         title: "Quiz: test yourself",
-        body: "Pick the right term from a few options drawn from the same collection. AI mode adds true/false and comprehension questions.",
+        body: "Check what you know with a quick quiz. There are two ways to take one: Simple, or smarter questions written by AI.",
         placement: "top",
       },
     ],
