@@ -15,10 +15,13 @@
 create table public.ai_credit_settings (
   id boolean primary key default true,
   enabled boolean not null default true,
-  default_allowance integer not null default 100 check (default_allowance >= 0),
-  monthly_refill integer not null default 30 check (monthly_refill >= 0),
-  quiz_credits_per_question integer not null default 1 check (quiz_credits_per_question >= 1),
-  story_credits_per_term integer not null default 1 check (story_credits_per_term >= 1),
+  default_allowance integer not null default 100
+    check (default_allowance between 0 and 1000000),
+  monthly_refill integer not null default 30 check (monthly_refill between 0 and 1000000),
+  quiz_credits_per_question integer not null default 1
+    check (quiz_credits_per_question between 1 and 1000),
+  story_credits_per_term integer not null default 1
+    check (story_credits_per_term between 1 and 1000),
   updated_at timestamptz not null default now(),
   constraint ai_credit_settings_singleton check (id)
 );
@@ -38,6 +41,7 @@ create policy "Admins manage ai credit settings"
   using (public.is_admin())
   with check (public.is_admin());
 
+revoke all on table public.ai_credit_settings from public, anon, authenticated, service_role;
 grant select, update on public.ai_credit_settings to authenticated;
 grant select on public.ai_credit_settings to service_role;
 
@@ -74,7 +78,7 @@ create policy "Admins read ai credit ledger"
   to authenticated
   using (public.is_admin());
 
-revoke all on table public.ai_credit_ledger from public, anon, authenticated;
+revoke all on table public.ai_credit_ledger from public, anon, authenticated, service_role;
 grant select on public.ai_credit_ledger to authenticated;
 grant select, insert on public.ai_credit_ledger to service_role;
 
@@ -310,6 +314,7 @@ begin
     u.email,
     coalesce(sum(l.amount) filter (
       where l.kind = 'spend'
+        and l.id > rs.reset_id
         and not exists (select 1 from public.ai_credit_ledger r where r.refund_of = l.id)
     ), 0)::integer,
     coalesce(sum(l.amount) filter (where l.kind = 'grant'), 0)::integer,
@@ -317,7 +322,12 @@ begin
     max(l.created_at)
   from public.users u
   join public.ai_credit_ledger l on l.user_id = u.id
-  group by u.id, u.email
+  cross join lateral (
+    select coalesce(max(r.id), 0) as reset_id
+    from public.ai_credit_ledger r
+    where r.user_id = u.id and r.kind = 'reset'
+  ) rs
+  group by u.id, u.email, rs.reset_id
   order by max(l.created_at) desc
   limit greatest(1, least(coalesce(p_limit, 200), 1000));
 end;

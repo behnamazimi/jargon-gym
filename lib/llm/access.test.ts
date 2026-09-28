@@ -3,11 +3,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
 
 const central = vi.hoisted(() => ({ config: null as { provider: string; apiKey: string } | null }));
-const credits = vi.hoisted(() => ({ state: null as unknown }));
+const credits = vi.hoisted(() => ({ state: null as unknown, fail: false, calls: 0 }));
 const own = vi.hoisted(() => ({ key: null as unknown, settings: null as unknown }));
 
 vi.mock("./central", () => ({ getCentralLlmConfig: () => central.config }));
-vi.mock("@/lib/ai-credits/repository", () => ({ getMyCreditState: async () => credits.state }));
+vi.mock("@/lib/ai-credits/repository", () => ({
+  getMyCreditState: async () => {
+    credits.calls += 1;
+    if (credits.fail) throw new Error("rpc failed");
+    return credits.state;
+  },
+}));
 vi.mock("./settings", () => ({
   getDecryptedApiKey: async () => own.key,
   getUserSettings: async () => own.settings,
@@ -25,18 +31,21 @@ function state(remaining: number, enabled = true) {
 beforeEach(() => {
   central.config = { provider: "google", apiKey: "central-key" };
   credits.state = state(50);
+  credits.fail = false;
+  credits.calls = 0;
   own.key = null;
   own.settings = null;
 });
 
 describe("resolveAiAccess", () => {
-  it("prefers the user's own key over credits", async () => {
+  it("prefers the user's own key over credits, without asking for a balance", async () => {
     own.key = { provider: "anthropic", apiKey: "own-key" };
     expect(await resolveAiAccess(client, "u1")).toEqual({
       kind: "own",
       provider: "anthropic",
       apiKey: "own-key",
     });
+    expect(credits.calls).toBe(0);
   });
 
   it("falls back to credits with the app's key", async () => {

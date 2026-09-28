@@ -1,17 +1,13 @@
 "use server";
 
 import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
-import {
-  creditsRefusedFailure,
-  noAiFailure,
-  AI_TEMPORARILY_UNAVAILABLE,
-} from "@/lib/ai-credits/messages";
+import { creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { runWithCredits } from "@/lib/ai-credits/charge";
 import { quizCost } from "@/lib/ai-credits/costs";
 import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
-import { isProviderKeyFault } from "@/lib/llm/errors";
 import { LLM_PROVIDER_LABELS, type AiFailureReason } from "@/lib/llm/types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { quizFailure } from "@/lib/quiz/failure";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { fetchQuizTermPool } from "@/lib/quiz/terms";
@@ -97,11 +93,7 @@ async function generateAiQuizResult(
     try {
       return { questions: await generate(), terms, providerLabel };
     } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Couldn't generate the quiz. Check your API key and try again.";
-      return { error: message, reason: isProviderKeyFault(err) ? "own-key" : undefined };
+      return quizFailure(err, false);
     }
   }
 
@@ -119,12 +111,7 @@ async function generateAiQuizResult(
     return { questions: outcome.value, terms, providerLabel };
   } catch (err) {
     console.error("AI quiz with credits failed:", err);
-    return {
-      error: isProviderKeyFault(err)
-        ? AI_TEMPORARILY_UNAVAILABLE
-        : "Couldn't generate the quiz. Try again.",
-      reason: "unavailable",
-    };
+    return quizFailure(err, true);
   }
 }
 

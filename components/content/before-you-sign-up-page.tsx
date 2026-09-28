@@ -60,7 +60,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             Testing is optional though, the rest of the app works fine if you only ever Read. Quiz
             works out of the box, no setup needed, and gets sharper with free AI credits, or your
             own AI API key (Google or Anthropic), so it can write better questions. When you use AI
-            credits, the terms and collection names in a quiz or story are sent to our AI provider.
+            credits, the terms, definitions and any outline you write are sent to our AI provider.
           </p>
         </ContentPageSection>
 

@@ -6,14 +6,11 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/jargon/review-outcome";
 import { runWithCredits } from "@/lib/ai-credits/charge";
 import { storyCost } from "@/lib/ai-credits/costs";
-import {
-  AI_TEMPORARILY_UNAVAILABLE,
-  creditsRefusedFailure,
-  noAiFailure,
-} from "@/lib/ai-credits/messages";
+import { creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { resolveAiAccess } from "@/lib/llm/access";
 import type { AiFailureReason } from "@/lib/llm/types";
-import { StoryProviderError, generateStory } from "@/lib/stories/generate";
+import { storyFailure } from "@/lib/stories/failure";
+import { generateStory } from "@/lib/stories/generate";
 import {
   dismissUnreadStories,
   getCollection,
@@ -58,23 +55,6 @@ const generateInputSchema = z.object({
     .transform((value) => value || null)
     .nullable(),
 });
-
-/** Turns a failed generation into what the user sees. Credits users never see
- *  provider or key details, since the key isn't theirs. */
-function storyFailure(err: unknown, usingCredits: boolean): StoryResult {
-  if (err instanceof StoryProviderError) {
-    if (usingCredits) {
-      const keyFault = err.kind === "auth" || err.kind === "rate-limit";
-      return { error: keyFault ? AI_TEMPORARILY_UNAVAILABLE : err.message, reason: "unavailable" };
-    }
-    return { error: err.message, reason: err.kind === "auth" ? "own-key" : undefined };
-  }
-  console.error("generateStoryAction failed:", err);
-  return {
-    error: "Couldn't write a story this time. Try again.",
-    reason: usingCredits ? "unavailable" : undefined,
-  };
-}
 
 export async function generateStoryAction(input: {
   domainId: string;
@@ -172,7 +152,10 @@ export async function generateStoryAction(input: {
       produced = await produce();
     }
 
-    await dismissUnreadStories(admin, userId, { keepStoryId: produced.story.id });
+    // The story already exists, so tidying older ones must not fail the request.
+    await dismissUnreadStories(admin, userId, { keepStoryId: produced.story.id }).catch(
+      (err: unknown) => console.error("Failed to dismiss older stories:", err),
+    );
 
     return {
       story: produced.story,

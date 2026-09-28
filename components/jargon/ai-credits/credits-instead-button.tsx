@@ -44,7 +44,7 @@ export function CreditsInsteadButton({
       isDisabled={isSwitching}
       className="min-h-11"
     >
-      {isSwitching ? "Switching…" : "Use AI credits instead"}
+      {isSwitching ? "Removing key…" : "Remove my key, use AI credits"}
     </Button>
   );
 }

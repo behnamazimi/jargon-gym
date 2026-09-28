@@ -12,8 +12,8 @@ import {
   QuizPickerAiNotices,
   QuizPickerFooterHint,
   QuizPickerOverBalance,
-  quizCreditUse,
 } from "@/components/jargon/quiz/quiz-picker-notices";
+import { quizCreditUse } from "@/lib/quiz/credit-use";
 import type { AiAccessView } from "@/lib/llm/types";
 import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";

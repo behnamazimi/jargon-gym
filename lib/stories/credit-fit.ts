@@ -1,5 +1,6 @@
 import { storyCost } from "@/lib/ai-credits/costs";
 import type { CreditCosts } from "@/lib/ai-credits/types";
+import type { AiAccessView, CreditUse } from "@/lib/llm/types";
 import { termsForLength } from "./length";
 import { PIECE_LENGTHS, type PieceLength } from "./types";
 
@@ -23,4 +24,15 @@ export function largestFittingLength(
   return (
     shorter.find((length) => storyCostForLength(length, eligibleCount, costs) <= remaining) ?? null
   );
+}
+
+/** What this story would spend, when it runs on AI credits. */
+export function storyCreditUse(
+  ai: AiAccessView,
+  pieceLength: PieceLength,
+  eligibleCount: number,
+): CreditUse {
+  const credits = ai.kind === "credits" ? ai : null;
+  const cost = credits ? storyCostForLength(pieceLength, eligibleCount, credits.costs) : 0;
+  return { credits, cost, overBalance: credits !== null && cost > credits.remaining };
 }

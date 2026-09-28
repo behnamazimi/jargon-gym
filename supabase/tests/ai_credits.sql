@@ -123,5 +123,64 @@ begin
 end;
 $$;
 
+do $$
+declare
+  u1 uuid := pg_temp.make_user('r1@example.test');
+  u2 uuid := pg_temp.make_user('r2@example.test');
+  admin_id uuid := pg_temp.make_user('admin2@example.test', true);
+  r record;
+  n integer;
+begin
+  -- The monthly pool is spent first: 20 spent last month never touches the starter pool.
+  insert into public.ai_credit_ledger (user_id, kind, feature, amount, created_at)
+  values (u1, 'spend', 'quiz', 20, date_trunc('month', now()) - interval '2 days');
+  assert pg_temp.remaining(u1) = 130, 'last month spend within the monthly pool leaves the starter whole';
+
+  -- Non-admins can't read the ledger or the settings, or change the settings.
+  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  select count(*) into n from public.ai_credit_ledger;
+  assert n = 0, 'a member must not see ledger rows';
+  select count(*) into n from public.ai_credit_settings;
+  assert n = 0, 'a member must not see the settings';
+  update public.ai_credit_settings set default_allowance = 5;
+  get diagnostics n = row_count;
+  assert n = 0, 'a member must not change the settings';
+  execute 'reset role';
+  assert (select default_allowance from public.ai_credit_settings) = 100, 'settings untouched';
+
+  -- Admin usage counts spend since the last reset, like the balance.
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
+  perform public.reserve_ai_credits(u2, 'quiz', 40);
+  perform public.admin_reset_ai_credits(u2, null);
+  perform public.reserve_ai_credits(u2, 'story', 5);
+  execute 'set local role authenticated';
+  select * into r from public.admin_ai_credit_usage(50) where user_id = u2;
+  execute 'reset role';
+  assert r.spent = 5 and r.remaining = 125, 'usage reflects spend since the reset';
+
+  -- Settings are bounded.
+  begin
+    update public.ai_credit_settings set default_allowance = -1;
+    raise exception 'negative allowance accepted';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.ai_credit_settings set monthly_refill = 2000000;
+    raise exception 'huge refill accepted';
+  exception when check_violation then null;
+  end;
+
+  -- Table privileges are only what the app needs.
+  assert not has_table_privilege('authenticated', 'public.ai_credit_ledger', 'INSERT');
+  assert not has_table_privilege('service_role', 'public.ai_credit_ledger', 'TRUNCATE');
+  assert not has_table_privilege('service_role', 'public.ai_credit_ledger', 'UPDATE');
+  assert not has_table_privilege('service_role', 'public.ai_credit_ledger', 'DELETE');
+  assert not has_table_privilege('anon', 'public.ai_credit_ledger', 'SELECT');
+  assert not has_table_privilege('anon', 'public.ai_credit_settings', 'SELECT');
+  assert not has_table_privilege('authenticated', 'public.ai_credit_settings', 'TRUNCATE');
+end;
+$$;
+
 rollback;
 \echo ai_credits.sql: ok

@@ -48,7 +48,9 @@ export function QuizPage({ ai, collections, paused, initialSetup }: QuizPageProp
           total={quiz.resultsTotal}
           practice={quiz.practice}
           missedTerms={quiz.missedTerms}
-          onQuizAgain={() => void quiz.handleStartQuiz(canUseAi)}
+          onQuizAgain={() =>
+            aiRequiresSetup ? quiz.resetQuizState() : void quiz.handleStartQuiz(canUseAi)
+          }
           onPractice={quiz.handleStartPractice}
           onChangeSetup={quiz.resetQuizState}
         />

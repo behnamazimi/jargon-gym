@@ -21,7 +21,10 @@ SQL
 )"
 USER_ID="$(echo "$USER_ID" | head -n1)"
 
+OUT_A="$(mktemp)"
+
 cleanup() {
+  rm -f "$OUT_A"
   "${PSQL[@]}" -c "delete from public.referral_codes where used_by = '$USER_ID'; delete from auth.users where id = '$USER_ID'" >/dev/null
 }
 trap cleanup EXIT
@@ -30,7 +33,7 @@ trap cleanup EXIT
 "${PSQL[@]}" -c "insert into public.ai_credit_ledger (user_id, kind, feature, amount) values ('$USER_ID', 'spend', 'quiz', 120)" >/dev/null
 
 # The first session holds its transaction open so the second must wait on the lock.
-"${PSQL[@]}" > /tmp/ai_credits_a.out <<SQL &
+"${PSQL[@]}" > "$OUT_A" <<SQL &
 begin;
 select status from public.reserve_ai_credits('$USER_ID', 'quiz', 8);
 select pg_sleep(1.5);
@@ -40,8 +43,7 @@ PID_A=$!
 sleep 0.5
 RESULT_B="$("${PSQL[@]}" -c "select status from public.reserve_ai_credits('$USER_ID', 'quiz', 8)")"
 wait "$PID_A"
-RESULT_A="$(head -n1 /tmp/ai_credits_a.out)"
-rm -f /tmp/ai_credits_a.out
+RESULT_A="$(head -n1 "$OUT_A")"
 
 OK_COUNT=0
 for r in "$RESULT_A" "$RESULT_B"; do [ "$r" = "ok" ] && OK_COUNT=$((OK_COUNT + 1)); done

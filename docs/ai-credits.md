@@ -24,7 +24,9 @@ Simple quizzes, Read, and Review never use credits.
 
 ## What things cost
 
-A quiz costs one credit per question it actually generates. A story costs one
+A quiz costs one credit per question it will ask, which is one per term picked.
+The charge is set before the model runs, so if the model returns fewer usable
+questions than asked for, the full amount is still charged. A story costs one
 credit per term it uses, which is 6, 8, or 10 for a short, medium, or long
 story, and fewer if the collection has fewer eligible terms. Both weights are
 settings, so the cost can change without a deploy.
@@ -71,8 +73,10 @@ story. Credits only stay spent for a quiz or story the user actually received.
 Retries inside one attempt never charge twice. Refunding twice is harmless.
 
 One case isn't covered. If the server process dies between the charge and the
-refund, the credits stay spent. It's rare, and it shows up in the ledger as a
-spend with no matching refund.
+refund, for example when a request runs past the platform's time limit, the
+credits stay spent. Nothing marks these spends, so they look the same as any
+other spend in the ledger. If this turns out to matter, a later change can add a
+"settled" marker to spends and a job that refunds ones that never settle.
 
 The code is in `lib/ai-credits/charge.ts` and `lib/ai-credits/repository.ts`.
 
@@ -82,6 +86,14 @@ Set these server-only environment variables, listed in `.env-template`:
 
 - `CENTRAL_LLM_API_KEY`: the app's key. Leave it empty to switch AI credits off.
 - `CENTRAL_LLM_PROVIDER`: `google` (the default) or `anthropic`.
+
+Apply the migration before you set the key. If the key is set on a deployment
+that doesn't have the migration yet, the balance lookup fails and users see the
+same "add a key" screens as before, with no harm done to users on their own key.
+
+When someone uses AI credits, the terms, their definitions, and any outline the
+person writes are sent to the app's AI provider. Settings and the sign-up page
+say so.
 
 The models are the same ones users get with their own key, set in
 `lib/llm/model.ts`. We recommend setting a monthly budget cap in the provider's

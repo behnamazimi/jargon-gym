@@ -26,6 +26,7 @@ import {
 } from "@/lib/stories/types";
 import { termsForLength } from "@/lib/stories/length";
 import { aiAvailable, type AiAccessView } from "@/lib/llm/types";
+import { storyCreditUse } from "@/lib/stories/credit-fit";
 import {
   PieceLengthField,
   ReadingLevelField,
@@ -34,7 +35,6 @@ import {
   StoryFooterHint,
   StoryNoAiNotice,
   StoryOverBalance,
-  storyCreditUse,
 } from "@/components/jargon/read/stories/story-setup-notices";
 
 const CEFR_HINTS: Record<CefrLevel, string> = {

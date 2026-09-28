@@ -34,7 +34,10 @@ async function resolveCredits(client: Client): Promise<CreditsOrNone> {
 export async function getAiAccessView(client: Client, userId: string): Promise<AiAccessView> {
   const [settings, credits] = await Promise.all([
     getUserSettings(client, userId),
-    resolveCredits(client),
+    resolveCredits(client).catch((error: unknown): CreditsOrNone => {
+      console.error("Couldn't load AI credits:", error);
+      return { kind: "unavailable", reason: "none" };
+    }),
   ]);
 
   if (settings?.provider && hasLlmConfigured(settings)) {

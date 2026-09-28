@@ -1,25 +1,8 @@
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
-import { largestQuizCount, quizCost } from "@/lib/ai-credits/costs";
-import { AI_CREDITS_LOW_THRESHOLD, type AiAccessView } from "@/lib/llm/types";
+import { largestQuizCount } from "@/lib/ai-credits/costs";
+import { AI_CREDITS_LOW_THRESHOLD, type AiAccessView, type CreditUse } from "@/lib/llm/types";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
-
-type CreditUse = {
-  credits: Extract<AiAccessView, { kind: "credits" }> | null;
-  cost: number;
-  overBalance: boolean;
-};
-
-/** What this quiz would spend, when it runs on AI credits. */
-export function quizCreditUse(
-  questionStyle: QuizQuestionStyle,
-  ai: AiAccessView,
-  questionCount: number,
-): CreditUse {
-  const credits = questionStyle === "ai" && ai.kind === "credits" ? ai : null;
-  const cost = credits ? quizCost(questionCount, credits.costs) : 0;
-  return { credits, cost, overBalance: credits !== null && cost > credits.remaining };
-}
 
 export function QuizPickerFooterHint({
   questionStyle,
@@ -58,7 +41,7 @@ function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
     <Alert variant="destructive" className="max-w-md">
       <AlertDescription>
         {exhausted
-          ? "You've used your AI credits. Add your own key in Settings, or use a simple quiz."
+          ? "You've used your AI credits for now. Add your own key in Settings, or use a simple quiz."
           : "AI quizzes need a provider and API key in Settings. Choose simple mode, or set up an LLM provider."}
       </AlertDescription>
       <AlertAction>
@@ -103,8 +86,8 @@ function QuizPickerOverBalanceAlert({
         This quiz needs <span className="tabular-nums">{cost}</span> credits and you have{" "}
         <span className="tabular-nums">{remaining}</span>.
       </AlertDescription>
-      {fitCount >= 1 ? (
-        <AlertAction>
+      <AlertAction>
+        {fitCount >= 1 ? (
           <Button
             type="button"
             size="sm"
@@ -114,8 +97,17 @@ function QuizPickerOverBalanceAlert({
           >
             Make it {fitCount} {fitCount === 1 ? "question" : "questions"}
           </Button>
-        </AlertAction>
-      ) : null}
+        ) : (
+          <LinkButton
+            href="/jargon/settings?tab=ai"
+            size="sm"
+            variant="outline"
+            className="max-md:min-h-11"
+          >
+            Add your own key
+          </LinkButton>
+        )}
+      </AlertAction>
     </Alert>
   );
 }

@@ -8,7 +8,7 @@ type Failure = { error: string; reason: AiFailureReason };
 export function noAiFailure(reason: "none" | "exhausted", activity: string): Failure {
   if (reason === "exhausted") {
     return {
-      error: `You've used your AI credits. Add your own key in Settings to ${activity}.`,
+      error: `You've used your AI credits for now. Add your own key in Settings to ${activity}.`,
       reason: "credits",
     };
   }

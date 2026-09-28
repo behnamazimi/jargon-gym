@@ -33,6 +33,15 @@ export type AiAccessView =
     }
   | { kind: "unavailable"; reason: "none" | "exhausted" };
 
+type CreditsView = Extract<AiAccessView, { kind: "credits" }>;
+
+/** What one request would spend, when it runs on AI credits. */
+export type CreditUse = {
+  credits: CreditsView | null;
+  cost: number;
+  overBalance: boolean;
+};
+
 export type AiFailureReason = "no-ai" | "credits" | "unavailable" | "own-key";
 
 export const AI_CREDITS_LOW_THRESHOLD = 10;

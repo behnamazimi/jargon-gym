@@ -2,26 +2,14 @@ import { KeyRound } from "lucide-react";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { PIECE_LENGTH_LABELS } from "@/components/jargon/read/stories/story-setup-fields";
-import { largestFittingLength, storyCostForLength } from "@/lib/stories/credit-fit";
+import { largestFittingLength } from "@/lib/stories/credit-fit";
 import type { PieceLength } from "@/lib/stories/types";
-import { AI_CREDITS_LOW_THRESHOLD, aiAvailable, type AiAccessView } from "@/lib/llm/types";
-
-type CreditUse = {
-  credits: Extract<AiAccessView, { kind: "credits" }> | null;
-  cost: number;
-  overBalance: boolean;
-};
-
-/** What this story would spend, when it runs on AI credits. */
-export function storyCreditUse(
-  ai: AiAccessView,
-  pieceLength: PieceLength,
-  eligibleCount: number,
-): CreditUse {
-  const credits = ai.kind === "credits" ? ai : null;
-  const cost = credits ? storyCostForLength(pieceLength, eligibleCount, credits.costs) : 0;
-  return { credits, cost, overBalance: credits !== null && cost > credits.remaining };
-}
+import {
+  AI_CREDITS_LOW_THRESHOLD,
+  aiAvailable,
+  type AiAccessView,
+  type CreditUse,
+} from "@/lib/llm/types";
 
 export function StoryFooterHint({
   ai,
@@ -69,7 +57,7 @@ function NoLlmAlert({ ai }: { ai: AiAccessView }) {
       <KeyRound className="size-4" aria-hidden strokeWidth={1.5} />
       <AlertDescription>
         {exhausted
-          ? "You've used your AI credits. Add your own key in Settings to keep writing stories."
+          ? "You've used your AI credits for now. Add your own key in Settings to keep writing stories."
           : "Stories are written with an AI provider. Add a provider and API key in Settings."}
       </AlertDescription>
       <AlertAction>
@@ -111,8 +99,8 @@ function OverBalanceAlert({
         This story needs <span className="tabular-nums">{cost}</span> credits and you have{" "}
         <span className="tabular-nums">{remaining}</span>.
       </AlertDescription>
-      {fitLength ? (
-        <AlertAction>
+      <AlertAction>
+        {fitLength ? (
           <Button
             type="button"
             size="sm"
@@ -122,8 +110,27 @@ function OverBalanceAlert({
           >
             Try {PIECE_LENGTH_LABELS[fitLength]}
           </Button>
-        </AlertAction>
-      ) : null}
+        ) : (
+          <>
+            <LinkButton
+              href="/jargon/settings?tab=ai"
+              size="sm"
+              variant="outline"
+              className="max-md:min-h-11"
+            >
+              Add your own key
+            </LinkButton>
+            <LinkButton
+              href="/jargon/read?view=cards"
+              size="sm"
+              variant="ghost"
+              className="max-md:min-h-11"
+            >
+              Read cards
+            </LinkButton>
+          </>
+        )}
+      </AlertAction>
     </Alert>
   );
 }

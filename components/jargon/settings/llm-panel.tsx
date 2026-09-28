@@ -82,7 +82,7 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
           </p>
         </div>
         <p className="m-0 text-xs text-base-content/60">
-          When you use AI credits, the terms and collection names in a quiz or story are sent to our
+          When you use AI credits, the terms, definitions and any outline you write are sent to our
           AI provider.
         </p>
       </HighlightPanel>
