@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo } from "react";
+import { useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { OverlayArrow, Popover } from "react-aria-components";
 import { Button } from "@/components/ui/button";
@@ -76,6 +76,51 @@ function TargetSpotlight({
   );
 }
 
+/** A target taller than this share of the screen (the Review card on a
+ *  phone) leaves no room for the tip above or below it. */
+const TALL_TARGET_SHARE = 0.5;
+const TALL_TARGET_INSET_PX = 16;
+
+/** Where the tip anchors: the target itself, or for a tall target a line
+ *  just inside its bottom edge, so the tip sits over the target and stays
+ *  on screen. */
+function tipAnchor(box: TargetBox, placement: TourPlacement) {
+  if (box.height <= window.innerHeight * TALL_TARGET_SHARE) {
+    return { box, placement, offset: 12, inside: false };
+  }
+  return {
+    box: {
+      top: box.top + box.height - TALL_TARGET_INSET_PX,
+      left: box.left,
+      width: box.width,
+      height: 0,
+    },
+    placement: "top" as const,
+    offset: 0,
+    inside: true,
+  };
+}
+
+/** An invisible stand-in the tip anchors to, drawn over the page like the
+ *  spotlight so it tracks the settled target box. */
+function TipAnchor({
+  box,
+  onNode,
+}: {
+  box: TargetBox;
+  onNode: (node: HTMLDivElement | null) => void;
+}) {
+  return createPortal(
+    <div
+      ref={onNode}
+      aria-hidden
+      className="pointer-events-none invisible fixed"
+      style={{ top: box.top, left: box.left, width: box.width, height: box.height }}
+    />,
+    document.body,
+  );
+}
+
 export function TourStepCard({
   target,
   box,
@@ -91,7 +136,8 @@ export function TourStepCard({
   onSkip,
 }: TourStepCardProps) {
   const titleId = useId();
-  const triggerRef = useMemo(() => ({ current: target }), [target]);
+  const [anchorNode, setAnchorNode] = useState<HTMLDivElement | null>(null);
+  const triggerRef = useMemo(() => ({ current: anchorNode }), [anchorNode]);
   const isLast = stepNumber === stepCount;
 
   // The card is keyed per step and target, so this runs once each: bring the
@@ -112,11 +158,13 @@ export function TourStepCard({
   });
 
   if (!box) return null;
+  const anchor = tipAnchor(box, placement);
 
   return (
     <>
       <TargetSpotlight target={target} box={box} scrolling={scrolling} />
-      {scrolling ? null : (
+      <TipAnchor box={anchor.box} onNode={setAnchorNode} />
+      {scrolling || !anchorNode ? null : (
         <Popover
           // Re-anchor after the page scrolls or the target moves.
           key={`${box.top},${box.left},${box.width},${box.height}`}
@@ -127,26 +175,30 @@ export function TourStepCard({
           // the target, or Escape move it on.
           isNonModal
           onOpenChange={() => {}}
-          placement={placement}
-          offset={12}
-          className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-box border border-base-300 bg-base-100 p-4 shadow-md"
+          placement={anchor.placement}
+          offset={anchor.offset}
+          className="z-50 w-[min(20rem,calc(100vw-2rem))] rounded-box border border-base-300 bg-base-100 shadow-md"
         >
-          <OverlayArrow
-            className="size-3 border-base-300 bg-base-100 data-[placement=bottom]:border-t data-[placement=bottom]:border-l data-[placement=left]:border-t data-[placement=left]:border-r data-[placement=right]:border-b data-[placement=right]:border-l data-[placement=top]:border-r data-[placement=top]:border-b"
-            style={({ placement: arrowPlacement, defaultStyle }) => ({
-              ...defaultStyle,
-              transform:
-                ARROW_TRANSFORM[
-                  arrowPlacement && arrowPlacement !== "center" ? arrowPlacement : placement
-                ],
-            })}
-          />
+          {anchor.inside ? null : (
+            <OverlayArrow
+              className="size-3 border-base-300 bg-base-100 data-[placement=bottom]:border-t data-[placement=bottom]:border-l data-[placement=left]:border-t data-[placement=left]:border-r data-[placement=right]:border-b data-[placement=right]:border-l data-[placement=top]:border-r data-[placement=top]:border-b"
+              style={({ placement: arrowPlacement, defaultStyle }) => ({
+                ...defaultStyle,
+                transform:
+                  ARROW_TRANSFORM[
+                    arrowPlacement && arrowPlacement !== "center" ? arrowPlacement : placement
+                  ],
+              })}
+            />
+          )}
           <div
             data-tour-card=""
             role="dialog"
             aria-modal="false"
             aria-labelledby={titleId}
-            className="flex flex-col gap-3"
+            // Scrolls inside the popover's max height if the screen is ever
+            // too short, so the buttons stay reachable.
+            className="flex max-h-[inherit] flex-col gap-3 overflow-y-auto p-4"
           >
             <div>
               <p id={titleId} className="m-0 font-heading text-sm font-semibold text-base-content">
