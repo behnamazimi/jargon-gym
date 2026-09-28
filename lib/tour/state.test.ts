@@ -5,6 +5,7 @@ import {
   isTourDone,
   pickChapter,
   resolveTourStep,
+  tourTargetsOn,
   withChapterSeen,
   withTourSkipped,
   type TourState,
@@ -124,17 +125,14 @@ describe("tour completion", () => {
 });
 
 describe("resolveTourStep", () => {
-  const onReviewStep = (step: number) => ({
-    chapterId: "review" as const,
-    pathname: "/jargon/review",
-    step,
-  });
+  const atReviewStep = (step: number) => ({ chapterId: "review" as const, step });
+  const overviewSeen: TourState = { status: "pending", seen: ["overview"] };
 
   it("starts a chapter at its first step", () => {
     expect(
       resolveTourStep(
         "/jargon/review",
-        NEW_USER_TOUR_STATE,
+        overviewSeen,
         null,
         visible("review-collection", "review-card"),
       ),
@@ -145,23 +143,54 @@ describe("resolveTourStep", () => {
     expect(
       resolveTourStep(
         "/jargon/review",
-        NEW_USER_TOUR_STATE,
-        onReviewStep(1),
+        overviewSeen,
+        atReviewStep(1),
         visible("review-collection", "review-card", "review-grades"),
       ),
     ).toMatchObject({ chapterId: "review", stepIndex: 2 });
   });
 
-  it("keeps a started chapter on its step after targets change", () => {
+  it("waits on a step whose target may come back, without restarting the chapter", () => {
     expect(
-      resolveTourStep("/jargon/review", NEW_USER_TOUR_STATE, onReviewStep(2), visible()),
-    ).toMatchObject({ chapterId: "review", stepIndex: 2 });
+      resolveTourStep(
+        "/jargon/review",
+        overviewSeen,
+        atReviewStep(2),
+        visible("review-collection", "review-card"),
+      ),
+    ).toBeNull();
   });
 
-  it("ignores progress from another page", () => {
+  it("skips a step whose target is gone when a later one is on screen", () => {
+    const progress = { chapterId: "library-terms" as const, step: 1 };
+    const state: TourState = { status: "pending", seen: ["overview", "library"] };
     expect(
-      resolveTourStep("/jargon/quiz", NEW_USER_TOUR_STATE, onReviewStep(1), visible("quiz-style")),
-    ).toMatchObject({ chapterId: "quiz", stepIndex: 0 });
+      resolveTourStep("/jargon", state, progress, visible("library-search", "library-actions")),
+    ).toMatchObject({ chapterId: "library-terms", stepIndex: 2 });
+  });
+
+  it("lets the page's other chapters run when a started one is stuck", () => {
+    const progress = { chapterId: "welcome" as const, step: 1 };
+    expect(
+      resolveTourStep(
+        "/jargon",
+        { status: "pending", seen: ["overview"] },
+        progress,
+        visible("library-collections", "library-study"),
+      ),
+    ).toMatchObject({ chapterId: "library", stepIndex: 0 });
+  });
+
+  it("carries the overview across the pages it runs on", () => {
+    const progress = { chapterId: "overview" as const, step: 2 };
+    expect(
+      resolveTourStep(
+        "/jargon/read",
+        NEW_USER_TOUR_STATE,
+        progress,
+        visible("nav-library", "nav-read", "nav-review", "nav-quiz"),
+      ),
+    ).toMatchObject({ chapterId: "overview", stepIndex: 2 });
   });
 
   it("shows nothing once skipped", () => {
@@ -169,9 +198,27 @@ describe("resolveTourStep", () => {
       resolveTourStep(
         "/jargon/review",
         withTourSkipped(NEW_USER_TOUR_STATE),
-        onReviewStep(0),
+        atReviewStep(0),
         visible("review-collection"),
       ),
     ).toBeNull();
+  });
+});
+
+describe("tourTargetsOn", () => {
+  it("watches this page's remaining targets", () => {
+    const state: TourState = { status: "pending", seen: ["overview"] };
+    expect(tourTargetsOn("/jargon/review", state)).toEqual([
+      "review-collection",
+      "review-card",
+      "review-grades",
+    ]);
+  });
+
+  it("watches nothing once the page's chapters are seen or the tour is done", () => {
+    expect(
+      tourTargetsOn("/jargon/quiz", { status: "pending", seen: ["overview", "quiz"] }),
+    ).toEqual([]);
+    expect(tourTargetsOn("/jargon/review", withTourSkipped(NEW_USER_TOUR_STATE))).toEqual([]);
   });
 });

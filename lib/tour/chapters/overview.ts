@@ -23,13 +23,13 @@ export const OVERVIEW_CHAPTERS = [
       {
         target: "nav-review",
         title: "Review: recall them",
-        body: "See a term, recall its meaning from memory, then rate how well you did. The terms you're weakest on come up first.",
+        body: "See a term, recall its meaning from memory, then rate how well you did. New terms come first, then the ones you're closest to forgetting.",
         placement: "top",
       },
       {
         target: "nav-quiz",
         title: "Quiz: test yourself",
-        body: "Multiple-choice and true/false questions that check you can tell similar terms apart.",
+        body: "Pick the right term from a few options drawn from the same collection. AI mode adds true/false and comprehension questions.",
         placement: "top",
       },
     ],

@@ -30,7 +30,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-study",
         title: "Study one collection",
-        body: "Jump into Read, Review, or Quiz for just this collection. Triage lets you quickly sort out terms you already know.",
+        body: "Jump into Read, Review, or Quiz for just this collection. When Triage shows up here, it lets you quickly sort out terms you already know.",
       },
     ],
   },
@@ -48,14 +48,14 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-term",
         title: "Already know one?",
-        body: "Hover a term and click the check to mark it known, so practice skips it. Click a term to open its full card.",
+        body: "Hover a term and click the check to mark it known, so practice skips it. Click a term to expand it.",
         bodyTouch:
-          "Swipe a term left to mark it known, so practice skips it. Tap a term to open its full card.",
+          "Swipe a term left to mark it known, so practice skips it. Tap a term to expand it.",
       },
       {
         target: "library-actions",
         title: "Collection settings",
-        body: "Pause a collection to take it out of practice for a while, reset its progress, or export it as JSON.",
+        body: "Pause a collection to take it out of Read, Review, and Quiz for a while, export it as JSON, or remove it.",
       },
     ],
   },

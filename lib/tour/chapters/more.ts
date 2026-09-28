@@ -9,7 +9,7 @@ export const MORE_CHAPTERS = [
       {
         target: "mastery-summary",
         title: "Learning and mastered",
-        body: "A term is learning once you've practiced it, and mastered once you recall it reliably. Reading alone won't master a term: Review and Quiz do.",
+        body: "A term is learning once you've read, reviewed, or quizzed it. It's mastered once Review and Quiz show you recall it reliably, or when you mark it known. Reading alone won't master it.",
       },
       {
         target: "mastery-collection",

@@ -14,7 +14,7 @@ export const STUDY_CHAPTERS = [
       {
         target: "review-card",
         title: "Recall, then reveal",
-        body: "Think of what the term means, then click the card or press Enter. Arrow keys move between cards.",
+        body: "Think of what the term means, then click the card or press Enter. ← goes back, and → skips a card you haven't revealed.",
         bodyTouch:
           "Think of what the term means, then tap the card or swipe up. Swipe left or right to move between cards.",
         advanceOnTarget: "review-grades",
@@ -54,14 +54,14 @@ export const STUDY_CHAPTERS = [
       {
         target: "read-collection",
         title: "Choose what to read",
-        body: "Read from one collection or all of them. The count shows how many terms are ready.",
+        body: "Read from one collection or all of them. The count shows how many terms are available.",
       },
       {
         target: "read-focus",
         title: "Focus mode",
         body: "A full-screen feed of cards you scroll through. Each card counts as read when it comes into view. Press Esc to leave.",
         bodyTouch:
-          "A full-screen feed of cards you scroll through. Each card counts as read when it comes into view.",
+          "A full-screen feed of cards you scroll through. Each card counts as read when it comes into view. Tap × to leave.",
       },
     ],
   },
@@ -71,8 +71,8 @@ export const STUDY_CHAPTERS = [
     steps: [
       {
         target: "stories-level",
-        title: "Shape your story",
-        body: "Choose how much help you get with terms, the language level, and the length.",
+        title: "Match your level",
+        body: "Pick the language level the story is written at. Term support above and Length below set how much help you get and how long it runs.",
       },
       {
         target: "stories-write",
@@ -91,7 +91,7 @@ export const STUDY_CHAPTERS = [
       {
         target: "quiz-style",
         title: "Simple or AI",
-        body: "Simple quizzes use your own definitions and examples. AI writes fresh questions and needs your API key in Settings.",
+        body: "Simple quizzes use the collection's definitions and examples. AI writes fresh questions and needs your API key in Settings.",
       },
       {
         target: "quiz-count",

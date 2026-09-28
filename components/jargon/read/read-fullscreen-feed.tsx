@@ -36,6 +36,7 @@ export function ReadFullscreenFeed({
     <div
       ref={bindContainer}
       tabIndex={-1}
+      data-tour-blocking=""
       className="fixed inset-0 z-[100] flex flex-col overflow-y-auto overscroll-contain bg-base-100 outline-none"
       style={{ scrollSnapType: "y mandatory" }}
     >
