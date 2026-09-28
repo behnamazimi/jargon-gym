@@ -10,8 +10,6 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
     parts.push("Added");
   }
 
-  if (!domain.isActiveForReview) parts.push("Paused");
-
   parts.push(pluralize(domain.termCount, "term"));
   parts.push(pluralize(categoryCount, "category", "categories"));
 

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import { cn } from "@/lib/utils";
 
-export type SettingsTabId = "quiz" | "telegram" | "widget";
+export type SettingsTabId = "ai" | "telegram" | "widget";
 
 export function ScrollToSettingsPanel({ tab }: { tab: SettingsTabId }) {
   useEffect(() => {

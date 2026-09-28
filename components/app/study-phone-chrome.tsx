@@ -19,7 +19,7 @@ export { StudyPhoneProvider } from "@/components/app/study-phone-context";
 
 export function StudyPhoneTopBar() {
   const pathname = usePathname();
-  const { email, currentStreak, longestStreak, setMoreOpen } = useStudyPhone();
+  const { email, currentStreak, longestStreak, setMoreOpen, backHref } = useStudyPhone();
   const initials = emailInitials(email);
   const subPage = isMorePath(pathname);
 
@@ -29,9 +29,9 @@ export function StudyPhoneTopBar() {
         <div className="navbar-start">
           {subPage ? (
             <Link
-              href="/jargon"
+              href={backHref}
               className="btn btn-ghost btn-square min-h-11 min-w-11"
-              aria-label="Back to library"
+              aria-label="Back"
             >
               <ArrowLeft className="size-5" strokeWidth={1.5} aria-hidden />
             </Link>

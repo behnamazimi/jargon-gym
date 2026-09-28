@@ -8,12 +8,13 @@ import {
 import { QuizQuestionStyleField } from "@/components/jargon/quiz/quiz-question-style-field";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
-import { type StudyCollection } from "@/lib/study/types";
+import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 import type { QuizSessionState } from "@/lib/quiz/session-storage";
 
 export type QuizPickerStepProps = {
   collections: StudyCollection[];
+  paused: PausedStudyCollection[];
   providerLabel: string | null;
   savedSession: QuizSessionState | null;
   onResumeSession: () => void;
@@ -81,7 +82,12 @@ function QuizPickerAiSetupAlert() {
         provider.
       </AlertDescription>
       <AlertAction>
-        <LinkButton href="/jargon/settings" size="sm" variant="outline" className="max-md:min-h-11">
+        <LinkButton
+          href="/jargon/settings?tab=ai"
+          size="sm"
+          variant="outline"
+          className="max-md:min-h-11"
+        >
           Go to Settings
         </LinkButton>
       </AlertAction>

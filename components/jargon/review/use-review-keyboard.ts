@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffectEvent } from "react";
-import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
+import { reviewKeyAction, type ReviewKeyTarget } from "@/lib/review/keyboard";
+import type { ReviewGrade } from "@/lib/trace";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
 type ReviewKeyboardHandlers = {
@@ -10,80 +11,49 @@ type ReviewKeyboardHandlers = {
   onPrevious: () => void;
   onNext: () => void;
   revealed: boolean;
-  canRate: boolean;
+  rated: boolean;
   enabled: boolean;
 };
 
-const GRADE_KEYS: Record<string, ReviewGrade> = {
-  "1": AGAIN,
-  "2": HARD,
-  "3": GOOD,
-  "4": EASY,
-};
-
-function isEditableTarget(target: EventTarget | null) {
-  return (
-    target instanceof HTMLElement &&
-    (target.tagName === "INPUT" ||
-      target.tagName === "TEXTAREA" ||
-      target.tagName === "SELECT" ||
-      target.isContentEditable)
-  );
-}
-
-/** Space/Enter reveal the term, or advance once it's revealed and ratable. Returns true if handled. */
-function handleRevealOrNext(
-  event: KeyboardEvent,
-  {
-    revealed,
-    canRate,
-    onReveal,
-    onNext,
-  }: Pick<ReviewKeyboardHandlers, "revealed" | "canRate" | "onReveal" | "onNext">,
-) {
-  if (event.key !== " " && event.key !== "Enter") return false;
-  event.preventDefault();
-  if (!revealed) {
-    onReveal();
-  } else if (canRate) {
-    onNext();
-  }
-  return true;
-}
-
-/** Digit keys 1-4 grade the revealed term. Returns true if handled. */
-function handleGradeKey(event: KeyboardEvent, onGrade: ReviewKeyboardHandlers["onGrade"]) {
-  const grade = GRADE_KEYS[event.key];
-  if (grade === undefined) return false;
-  event.preventDefault();
-  onGrade(grade);
-  return true;
-}
-
-/** Arrow keys navigate between terms. Returns true if handled. */
-function handleArrowKeys(
-  event: KeyboardEvent,
-  { onPrevious, onNext }: Pick<ReviewKeyboardHandlers, "onPrevious" | "onNext">,
-) {
-  if (event.key === "ArrowLeft") {
-    event.preventDefault();
-    onPrevious();
-    return true;
-  }
-  if (event.key === "ArrowRight") {
-    event.preventDefault();
-    onNext();
-    return true;
-  }
-  return false;
+function classifyTarget(target: EventTarget | null): ReviewKeyTarget {
+  if (!(target instanceof HTMLElement)) return "other";
+  if (target.isContentEditable || target.closest("input, textarea, select")) return "editable";
+  if (target.closest("button, a[href], [role='button']")) return "interactive";
+  return "other";
 }
 
 function handleReviewKeyDown(event: KeyboardEvent, handlers: ReviewKeyboardHandlers) {
   if (!handlers.enabled) return;
-  if (isEditableTarget(event.target)) return;
-  if (handleRevealOrNext(event, handlers)) return;
-  if (handlers.revealed && handlers.canRate && handleGradeKey(event, handlers.onGrade)) return;
-  handleArrowKeys(event, handlers);
+
+  const action = reviewKeyAction(
+    {
+      key: event.key,
+      metaKey: event.metaKey,
+      ctrlKey: event.ctrlKey,
+      altKey: event.altKey,
+      repeat: event.repeat,
+      target: classifyTarget(event.target),
+    },
+    { revealed: handlers.revealed, rated: handlers.rated },
+  );
+
+  if (action.type === "ignore") return;
+  event.preventDefault();
+
+  switch (action.type) {
+    case "reveal":
+      handlers.onReveal();
+      break;
+    case "grade":
+      handlers.onGrade(action.grade);
+      break;
+    case "previous":
+      handlers.onPrevious();
+      break;
+    case "next":
+      handlers.onNext();
+      break;
+  }
 }
 
 export function useReviewKeyboard(handlers: ReviewKeyboardHandlers) {

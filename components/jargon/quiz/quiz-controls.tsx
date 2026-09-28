@@ -22,10 +22,13 @@ const RESULT_STATUS_TEXT: Partial<Record<QuizChoiceResult, string>> = {
 export function QuizChoice({
   value,
   label,
+  shortcut,
   result = "default",
 }: {
   value: string;
   label: ReactNode;
+  /** Digit key that picks this choice; shown on desktop keyboards only. */
+  shortcut?: number;
   result?: QuizChoiceResult;
 }) {
   const statusText = RESULT_STATUS_TEXT[result];
@@ -60,6 +63,14 @@ export function QuizChoice({
               {label}
               {statusText ? <span className="sr-only"> — {statusText}</span> : null}
             </span>
+            {shortcut !== undefined && result === "default" ? (
+              <kbd
+                className="kbd kbd-xs mt-0.5 hidden shrink-0 md:inline-flex coarse:hidden"
+                aria-hidden
+              >
+                {shortcut}
+              </kbd>
+            ) : null}
             {result === "correct" ? (
               <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden strokeWidth={2} />
             ) : result === "incorrect" ? (

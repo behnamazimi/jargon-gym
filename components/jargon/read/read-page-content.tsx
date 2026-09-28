@@ -14,7 +14,7 @@ function ReadCaughtUpActions({ selectedCollectionId }: { selectedCollectionId: s
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
       <LinkButton href="/jargon" variant="outline">
-        Collections
+        Go to library
       </LinkButton>
       <LinkButton href="/jargon/import" variant="outline">
         Import jargon

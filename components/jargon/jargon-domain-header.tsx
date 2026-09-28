@@ -1,7 +1,8 @@
 "use client";
 
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BookOpen, Plus, Sparkles, Zap } from "lucide-react";
+import { Button, LinkButton } from "@/components/ui/button";
+import { useReviewToggle } from "@/hooks/use-review-toggle";
 import type { Domain, Term } from "@/lib/jargon/types";
 import { DomainActionsMenu, DomainMeta } from "./domain-actions-menu";
 
@@ -15,6 +16,63 @@ type JargonDomainHeaderProps = {
   onToggleActiveForReviewLocal: (domainId: string, active: boolean) => void;
 };
 
+const STUDY_LINKS = [
+  { path: "/jargon/read", label: "Read", icon: Zap },
+  { path: "/jargon/review", label: "Review", icon: BookOpen },
+  { path: "/jargon/quiz", label: "Quiz", icon: Sparkles },
+] as const;
+
+/** Study pages ignore a paused collection and fall back to "All", so a
+ *  paused one offers Resume instead of links that wouldn't be scoped. */
+function CollectionStudyActions({
+  domain,
+  resumePending,
+  onResume,
+}: {
+  domain: Domain;
+  resumePending: boolean;
+  onResume: () => void;
+}) {
+  if (!domain.isActiveForReview) {
+    return (
+      <div className="flex flex-col gap-2 rounded-xl bg-base-200/60 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="m-0 text-sm text-base-content/70">
+          Paused — left out of Read, Review and Quiz.
+        </p>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="min-h-11 shrink-0 md:min-h-8"
+          isDisabled={resumePending}
+          onPress={onResume}
+        >
+          {resumePending ? "Resuming…" : "Resume"}
+        </Button>
+      </div>
+    );
+  }
+
+  if (domain.termCount === 0) return null;
+
+  return (
+    <nav aria-label={`Study ${domain.name}`} className="grid grid-cols-3 gap-2 sm:flex">
+      {STUDY_LINKS.map(({ path, label, icon: Icon }) => (
+        <LinkButton
+          key={path}
+          href={`${path}?domain=${domain.id}`}
+          variant="outline"
+          size="sm"
+          className="min-h-11 gap-1.5 md:min-h-8"
+        >
+          <Icon className="size-4" aria-hidden strokeWidth={1.5} />
+          {label}
+        </LinkButton>
+      ))}
+    </nav>
+  );
+}
+
 export function JargonDomainHeader({
   domain,
   domains,
@@ -24,6 +82,8 @@ export function JargonDomainHeader({
   onAddTerm,
   onToggleActiveForReviewLocal,
 }: JargonDomainHeaderProps) {
+  const { setActiveForReview, pendingId } = useReviewToggle(onToggleActiveForReviewLocal);
+  const togglePending = pendingId === domain.id;
   const progressPct =
     domain.termCount > 0 ? Math.round((domain.termsLearnedCount / domain.termCount) * 100) : 0;
 
@@ -58,12 +118,21 @@ export function JargonDomainHeader({
             domain={domain}
             domains={domains}
             terms={terms}
-            onToggleActiveForReviewLocal={onToggleActiveForReviewLocal}
+            togglePending={togglePending}
+            onToggleActiveForReview={() =>
+              void setActiveForReview(domain.id, !domain.isActiveForReview)
+            }
           />
         </div>
       </div>
 
       <DomainMeta domain={domain} categoryCount={categoryCount} />
+
+      <CollectionStudyActions
+        domain={domain}
+        resumePending={togglePending}
+        onResume={() => void setActiveForReview(domain.id, true)}
+      />
     </header>
   );
 }

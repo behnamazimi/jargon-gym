@@ -5,7 +5,8 @@ import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
 import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
-import { fetchQuizTermPool, listQuizableCollections } from "@/lib/quiz/terms";
+import { fetchQuizTermPool } from "@/lib/quiz/terms";
+import { listStudyCollectionState } from "@/lib/study/collections";
 import type { QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
 import type { QuestionType } from "@/lib/trace";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
@@ -17,9 +18,9 @@ export async function getQuizSetupData() {
     return { error: "Log in to take a quiz." };
   }
 
-  const [settings, collections] = await Promise.all([
+  const [settings, { active: collections, paused }] = await Promise.all([
     getUserSettings(auth.supabase, auth.user.id),
-    listQuizableCollections(auth.supabase, auth.user.id),
+    listStudyCollectionState(auth.supabase, auth.user.id),
   ]);
 
   return {
@@ -27,6 +28,7 @@ export async function getQuizSetupData() {
     provider: settings?.provider ?? null,
     providerLabel: settings?.provider ? LLM_PROVIDER_LABELS[settings.provider] : null,
     collections,
+    paused,
   };
 }
 

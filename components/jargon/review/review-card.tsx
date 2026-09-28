@@ -127,7 +127,11 @@ export function ReviewCard({
             >
               <TermBody key={term.id} term={term} language={term.domainLanguage} />
               {term.isNewToUser ? (
-                <FirstExposureKnownPrompt termId={term.id} onMarkedKnown={onMarkedKnown} />
+                <FirstExposureKnownPrompt
+                  termId={term.id}
+                  term={term.term}
+                  onMarkedKnown={onMarkedKnown}
+                />
               ) : null}
             </div>
             {revealed ? <TermEvalButton key={term.id} termId={term.id} /> : null}

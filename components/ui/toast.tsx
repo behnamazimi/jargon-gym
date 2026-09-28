@@ -1,39 +1,110 @@
 "use client";
 
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
-import { Alert, AlertDescription, type AlertVariant } from "@/components/ui/alert";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
+import { Alert, AlertAction, AlertDescription, type AlertVariant } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 type ToastVariant = Extract<AlertVariant, "success" | "destructive">;
-type ToastItem = { id: number; message: string; variant: ToastVariant };
+
+type ToastAction = { label: string; onPress: () => void };
+
+type ToastOptions = { action?: ToastAction };
+
+type ToastItem = {
+  id: number;
+  message: string;
+  variant: ToastVariant;
+  action?: ToastAction;
+};
 
 type ToastContextValue = {
-  toast: (message: string, variant?: ToastVariant) => void;
+  /** Returns the toast's id, for `dismiss`. */
+  toast: (message: string, variant?: ToastVariant, options?: ToastOptions) => number;
+  dismiss: (id: number) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
 const TOAST_DURATION_MS = 3000;
+// Long enough to read the message and reach the button.
+const ACTION_TOAST_DURATION_MS = 6000;
+const MAX_TOASTS = 3;
+
+function ToastView({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number) => void }) {
+  const [paused, setPaused] = useState(false);
+  const duration = item.action ? ACTION_TOAST_DURATION_MS : TOAST_DURATION_MS;
+
+  useEffect(() => {
+    if (paused) return;
+    const timeout = setTimeout(() => onDismiss(item.id), duration);
+    return () => clearTimeout(timeout);
+  }, [paused, item.id, duration, onDismiss]);
+
+  return (
+    <Alert
+      variant={item.variant}
+      className="shadow-lg"
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <AlertDescription>{item.message}</AlertDescription>
+      {item.action ? (
+        <AlertAction>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="min-h-9 font-semibold underline underline-offset-2"
+            onPress={() => {
+              onDismiss(item.id);
+              item.action?.onPress();
+            }}
+          >
+            {item.action.label}
+          </Button>
+        </AlertAction>
+      ) : null}
+    </Alert>
+  );
+}
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const nextId = useRef(0);
 
-  const toast = useCallback((message: string, variant: ToastVariant = "success") => {
-    const id = nextId.current++;
-    setToasts((prev) => [...prev, { id, message, variant }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, TOAST_DURATION_MS);
+  const dismiss = useCallback((id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  const toast = useCallback(
+    (message: string, variant: ToastVariant = "success", options?: ToastOptions) => {
+      const id = nextId.current++;
+      setToasts((prev) =>
+        [...prev, { id, message, variant, action: options?.action }].slice(-MAX_TOASTS),
+      );
+      return id;
+    },
+    [],
+  );
+
   return (
-    <ToastContext.Provider value={{ toast }}>
+    <ToastContext.Provider value={{ toast, dismiss }}>
       {children}
-      <div className="toast toast-bottom toast-center sm:toast-start z-50">
+      {/* Phone: below the top bar, clear of the dock and study controls.
+          Above focus mode's z-[100] overlay. */}
+      <div className="toast toast-top toast-center z-[110] max-md:top-[calc(env(safe-area-inset-top,0px)+2.75rem)] md:toast-bottom md:toast-start">
         {toasts.map((t) => (
-          <Alert key={t.id} variant={t.variant} className="shadow-lg">
-            <AlertDescription>{t.message}</AlertDescription>
-          </Alert>
+          <ToastView key={t.id} item={t} onDismiss={dismiss} />
         ))}
       </div>
     </ToastContext.Provider>

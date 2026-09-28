@@ -1,12 +1,8 @@
-import { AlertCircle, History } from "lucide-react";
+import { History } from "lucide-react";
 import type { ReactNode } from "react";
 import { CollectionSelect } from "@/components/jargon/collection-select";
-import {
-  QuizCenteredState,
-  QuizPanelBody,
-  QuizSetupFooter,
-} from "@/components/jargon/quiz/quiz-ui";
-import { Button, LinkButton } from "@/components/ui/button";
+import { QuizPanelBody, QuizSetupFooter } from "@/components/jargon/quiz/quiz-ui";
+import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { allCollectionsTermCount } from "@/lib/study/count";
@@ -61,18 +57,6 @@ export function StudyResumeBanner({
         </Button>
       </div>
     </div>
-  );
-}
-
-export function StudyNoActiveCollectionsState({ description }: { description: string }) {
-  return (
-    <QuizPanelBody>
-      <QuizCenteredState icon={AlertCircle} title="No active collections" description={description}>
-        <LinkButton href="/jargon" variant="outline" className="min-h-11">
-          Collections
-        </LinkButton>
-      </QuizCenteredState>
-    </QuizPanelBody>
   );
 }
 

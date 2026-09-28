@@ -17,14 +17,16 @@ type DomainActionsMenuProps = {
   domain: Domain;
   domains: Domain[];
   terms: Term[];
-  onToggleActiveForReviewLocal: (domainId: string, active: boolean) => void;
+  onToggleActiveForReview: () => void;
+  togglePending: boolean;
 };
 
 export function DomainActionsMenu({
   domain,
   domains,
   terms,
-  onToggleActiveForReviewLocal,
+  onToggleActiveForReview,
+  togglePending,
 }: DomainActionsMenuProps) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -40,7 +42,6 @@ export function DomainActionsMenu({
     error,
     isBusy,
     busyId,
-    toggleActiveForReview,
     shareDomain,
     unshareDomain,
     deleteOwnedDomain,
@@ -48,7 +49,7 @@ export function DomainActionsMenu({
     resetProgress,
   } = useCollectionActions();
 
-  const disabled = isBusy && busyId === domain.id;
+  const disabled = togglePending || (isBusy && busyId === domain.id);
 
   function handleConfirmDelete() {
     deleteOwnedDomain(domain.id, () => router.push("/jargon"));
@@ -68,13 +69,6 @@ export function DomainActionsMenu({
   function handleConfirmResetProgress() {
     resetProgress(domain.id);
     setResetProgressOpen(false);
-  }
-
-  async function handleToggleActiveForReview() {
-    const next = !domain.isActiveForReview;
-    onToggleActiveForReviewLocal(domain.id, next);
-    const ok = await toggleActiveForReview(domain.id, next);
-    if (!ok) onToggleActiveForReviewLocal(domain.id, !next);
   }
 
   useEffect(() => {
@@ -112,7 +106,7 @@ export function DomainActionsMenu({
       <DomainActionsDropdown
         domain={domain}
         disabled={disabled}
-        onToggleActiveForReview={() => void handleToggleActiveForReview()}
+        onToggleActiveForReview={onToggleActiveForReview}
         onResetProgress={() => setResetProgressOpen(true)}
         onExport={() => setExportOpen(true)}
         onEdit={() => setEditOpen(true)}

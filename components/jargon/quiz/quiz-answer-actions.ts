@@ -26,6 +26,9 @@ export function submitQuizAnswer(
     answers: QuizAnswer[];
     currentIndex: number;
     totalQuestions: number;
+    /** Practice rounds replay questions whose answers were just shown, so
+     *  they're graded on screen but never sent to TRACE. */
+    practice: boolean;
   },
 ) {
   const isLastQuestion = args.currentIndex + 1 >= args.totalQuestions;
@@ -33,14 +36,16 @@ export function submitQuizAnswer(
 
   setters.setAnswers(nextAnswers);
 
-  const write: PendingQuizWrite = {
-    id: crypto.randomUUID(),
-    termId: args.question.termId,
-    passed,
-    questionType: args.question.type,
-  };
-  setters.setPendingWrites((prev) => [...prev, write]);
-  setters.enqueueAnswerWrite(write);
+  if (!args.practice) {
+    const write: PendingQuizWrite = {
+      id: crypto.randomUUID(),
+      termId: args.question.termId,
+      passed,
+      questionType: args.question.type,
+    };
+    setters.setPendingWrites((prev) => [...prev, write]);
+    setters.enqueueAnswerWrite(write);
+  }
 
   if (!isLastQuestion) {
     setters.setCurrentIndex((index) => index + 1);
@@ -52,5 +57,5 @@ export function submitQuizAnswer(
     total: args.totalQuestions,
   });
   setters.setStep("results");
-  setters.markSessionComplete();
+  if (!args.practice) setters.markSessionComplete();
 }

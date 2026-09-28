@@ -1,26 +1,40 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { getMaxStudyCount, studyCountPresetValues } from "@/lib/study/count";
 import { type StudyCollection } from "@/lib/study/types";
 import { countTermsForSelection } from "@/lib/quiz/terms";
+import {
+  questionCountFor,
+  quizSetupToSave,
+  saveQuizSetupPreference,
+  type InitialQuizSetup,
+} from "@/lib/quiz/setup-preference";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 
 export type QuizStep = "picker" | "generating" | "playing" | "results" | "error";
 
-export function useQuizSetup(collections: StudyCollection[], initialDomainId?: string) {
+function domainIdsFor(collectionId: string): "all" | string[] {
+  return collectionId === "all" ? "all" : [collectionId];
+}
+
+export function useQuizSetup(collections: StudyCollection[], initial: InitialQuizSetup) {
+  const maxFor = (collectionId: string) =>
+    getMaxStudyCount(countTermsForSelection(collections, domainIdsFor(collectionId)));
+
   const [step, setStep] = useState<QuizStep>("picker");
-  const [questionStyle, setQuestionStyle] = useState<QuizQuestionStyle>("simple");
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>(
-    initialDomainId ?? "all",
-  );
+  const [questionStyle, setQuestionStyle] = useState<QuizQuestionStyle>(initial.style);
+  const [selectedCollectionId, setSelectedCollectionIdState] = useState(initial.collectionId);
+  const [collectionChanged, setCollectionChanged] = useState(false);
+  // The count the user asked for; the field shows it capped to the
+  // collection's size, so switching collections never loses it.
+  const [preferredCount, setPreferredCount] = useState<number | null>(initial.count);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [questionCount, setQuestionCount] = useState(1);
-  const [questionCountInput, setQuestionCountInput] = useState("1");
+  const [questionCount, setQuestionCount] = useState(() =>
+    questionCountFor(initial.count, maxFor(initial.collectionId)),
+  );
+  const [questionCountInput, setQuestionCountInput] = useState(() => String(questionCount));
   const [questionCountError, setQuestionCountError] = useState<string | null>(null);
 
-  const domainIds = useMemo(
-    (): "all" | string[] => (selectedCollectionId === "all" ? "all" : [selectedCollectionId]),
-    [selectedCollectionId],
-  );
+  const domainIds = useMemo(() => domainIdsFor(selectedCollectionId), [selectedCollectionId]);
 
   const availableTermCount = useMemo(
     () => countTermsForSelection(collections, domainIds),
@@ -29,18 +43,21 @@ export function useQuizSetup(collections: StudyCollection[], initialDomainId?: s
 
   const maxQuestionCount = getMaxStudyCount(availableTermCount);
 
-  useEffect(() => {
-    if (availableTermCount === 0) return;
-    const newMax = getMaxStudyCount(availableTermCount);
-    setQuestionCount(newMax);
-    setQuestionCountInput(String(newMax));
-    setQuestionCountError(null);
-  }, [availableTermCount, selectedCollectionId]);
-
-  function applyQuestionCount(value: number) {
+  function showQuestionCount(value: number) {
     setQuestionCount(value);
     setQuestionCountInput(String(value));
     setQuestionCountError(null);
+  }
+
+  function setSelectedCollectionId(collectionId: string) {
+    setSelectedCollectionIdState(collectionId);
+    setCollectionChanged(true);
+    showQuestionCount(questionCountFor(preferredCount, maxFor(collectionId)));
+  }
+
+  function applyQuestionCount(value: number) {
+    setPreferredCount(value);
+    showQuestionCount(value);
   }
 
   function handleQuestionCountInputChange(value: string) {
@@ -56,8 +73,21 @@ export function useQuizSetup(collections: StudyCollection[], initialDomainId?: s
       setQuestionCountError(`Please enter a number between 1 and ${maxQuestionCount}`);
     } else {
       setQuestionCount(parsed);
+      setPreferredCount(parsed);
       setQuestionCountError(null);
     }
+  }
+
+  function saveSetup() {
+    saveQuizSetupPreference(
+      quizSetupToSave({
+        style: questionStyle,
+        preferredCount,
+        selectedCollectionId,
+        collectionChanged,
+        initial,
+      }),
+    );
   }
 
   const questionCountPresets = studyCountPresetValues(maxQuestionCount);
@@ -82,5 +112,6 @@ export function useQuizSetup(collections: StudyCollection[], initialDomainId?: s
     questionCountPresets,
     applyQuestionCount,
     handleQuestionCountInputChange,
+    saveSetup,
   };
 }

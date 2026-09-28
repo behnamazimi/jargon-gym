@@ -40,7 +40,7 @@ function RemoveKeySection({ onClear, isClearing }: RemoveKeySectionProps) {
   return (
     <DangerZone
       title="Remove configuration"
-      description="Removes your saved API key. Quizzes won't work until you add a new one."
+      description="Removes your saved API key. AI quizzes and Stories won't work until you add a new one."
     >
       <Button
         type="button"
@@ -113,10 +113,10 @@ export function LlmPanel({ initialSettings }: LlmPanelProps) {
 
   return (
     <SettingsPanel
-      id="quiz"
+      id="ai"
       icon={Sparkles}
-      title="Quiz settings"
-      description="Connect an LLM provider to generate quizzes from your collections."
+      title="AI provider"
+      description="Connect an LLM provider to power AI quizzes and Stories."
       status={<StatusPill variant={llmConfigured ? "connected" : "disconnected"} />}
     >
       {error ? <AlertBanner message={error} /> : null}

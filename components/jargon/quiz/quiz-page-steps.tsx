@@ -12,7 +12,7 @@ import { QuizPickerStep } from "@/components/jargon/quiz/quiz-picker-step";
 import { StudyProgress } from "@/components/jargon/study/study-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
-import { type StudyCollection } from "@/lib/study/types";
+import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import { type useQuizSession } from "@/components/jargon/quiz/use-quiz-session";
 
 export type UseQuizSessionResult = ReturnType<typeof useQuizSession>;
@@ -47,8 +47,13 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         className="shrink-0"
         current={quiz.currentIndex + 1}
         total={quiz.questions.length}
-        unitLabel="Question"
+        unitLabel={quiz.practice ? "Practice" : "Question"}
       />
+      {quiz.practice ? (
+        <p className="m-0 shrink-0 text-xs text-base-content/60">
+          Practice round — answers aren&apos;t counted toward mastery.
+        </p>
+      ) : null}
       {quiz.errorMessage ? (
         <Alert variant="destructive" className="shrink-0">
           <AlertDescription>{quiz.errorMessage}</AlertDescription>
@@ -77,17 +82,20 @@ export function QuizPickerStepSection({
   llmConfigured,
   providerLabel,
   collections,
+  paused,
   aiRequiresSetup,
 }: {
   quiz: UseQuizSessionResult;
   llmConfigured: boolean;
   providerLabel: string | null;
   collections: StudyCollection[];
+  paused: PausedStudyCollection[];
   aiRequiresSetup: boolean;
 }) {
   return (
     <QuizPickerStep
       collections={collections}
+      paused={paused}
       providerLabel={providerLabel}
       savedSession={quiz.savedSession}
       onResumeSession={quiz.handleResumeSession}
@@ -109,7 +117,10 @@ export function QuizPickerStepSection({
       questionCountPresets={quiz.questionCountPresets}
       onApplyQuestionCount={quiz.applyQuestionCount}
       onQuestionCountInputChange={quiz.handleQuestionCountInputChange}
-      onStartQuiz={() => void quiz.handleStartQuiz(llmConfigured)}
+      onStartQuiz={() => {
+        quiz.saveSetup();
+        void quiz.handleStartQuiz(llmConfigured);
+      }}
     />
   );
 }
@@ -137,7 +148,7 @@ export function QuizErrorStep({ quiz }: { quiz: UseQuizSessionResult }) {
           >
             Try again
           </Button>
-          <LinkButton href="/jargon/settings" variant="ghost" className="min-h-11">
+          <LinkButton href="/jargon/settings?tab=ai" variant="ghost" className="min-h-11">
             Check settings
           </LinkButton>
         </div>

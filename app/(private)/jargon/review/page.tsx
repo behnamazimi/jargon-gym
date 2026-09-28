@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { ReviewPage } from "@/components/jargon/review/review-page";
 import {
   getReviewFeedBatchAction,
@@ -8,26 +9,12 @@ import {
   parseReviewCollectionCookie,
   REVIEW_COLLECTION_COOKIE,
 } from "@/lib/review/collection-preference";
-import type { StudyCollection } from "@/lib/study/types";
+import { resolveStudyCollectionId } from "@/lib/study/collection-preference";
+import { hasNoCollections } from "@/lib/study/collections";
 
 type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };
-
-function resolveReviewCollectionId(
-  domainParam: string | undefined,
-  rememberedId: string | null,
-  collections: StudyCollection[],
-): string {
-  if (domainParam && collections.some((collection) => collection.id === domainParam)) {
-    return domainParam;
-  }
-  if (rememberedId === "all") return "all";
-  if (rememberedId && collections.some((collection) => collection.id === rememberedId)) {
-    return rememberedId;
-  }
-  return "all";
-}
 
 function LoginPrompt({ message }: { message: string }) {
   return <p className="text-sm text-base-content/60">{message}</p>;
@@ -48,8 +35,13 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
   if ("error" in setup) {
     return <LoginPrompt message={setup.error ?? "Log in to review terms."} />;
   }
+  if (hasNoCollections({ active: setup.collections, paused: setup.paused })) redirect("/jargon");
 
-  const domainId = resolveReviewCollectionId(params.domain, rememberedId, setup.collections);
+  const domainId = resolveStudyCollectionId(
+    params.domain,
+    rememberedId,
+    setup.collections.map((collection) => collection.id),
+  );
   const seed =
     domainId === speculativeDomainId
       ? speculativeSeed
@@ -61,8 +53,12 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
 
   return (
     <ReviewPage
+      // Resuming a paused collection refreshes the page; a new active set
+      // remounts it so the queue rebuilds from the fresh seed.
+      key={setup.collections.map((collection) => collection.id).join(",")}
       seed={seed}
       collections={setup.collections}
+      paused={setup.paused}
       domainId={domainId}
       narrationAccess={setup.narrationAccess}
     />

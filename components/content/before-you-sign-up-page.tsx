@@ -40,7 +40,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
           title="Before you sign up"
           description="A private app for learning jargon well enough to use it, not just recognize it. Here's the full picture before you ask for an invite."
           backHref={isLoggedIn ? JARGON_HOME_PATH : PUBLIC_HOME_PATH}
-          backLabel={isLoggedIn ? "Back to collection" : "Back to home"}
+          backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
       </ContentPageIntro>
 

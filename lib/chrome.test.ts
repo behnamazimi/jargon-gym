@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isDockPath, isLibraryPath, isMorePath, isStudyPath } from "./chrome";
+import { isDockPath, isLibraryPath, isMorePath, isStudyPath, studyBackTarget } from "./chrome";
 
 describe("isStudyPath", () => {
   it("treats jargon and admin as study chrome", () => {
@@ -46,5 +46,21 @@ describe("isDockPath", () => {
     expect(isDockPath("/jargon/browse")).toBe(false);
     expect(isDockPath("/admin/invites")).toBe(false);
     expect(isDockPath("/login")).toBe(false);
+  });
+});
+
+describe("studyBackTarget", () => {
+  it("returns dock pages with their query", () => {
+    expect(studyBackTarget("/jargon/quiz", "")).toBe("/jargon/quiz");
+    expect(studyBackTarget("/jargon", "domain=abc")).toBe("/jargon?domain=abc");
+    expect(studyBackTarget("/jargon/read/stories", "domain=abc")).toBe(
+      "/jargon/read/stories?domain=abc",
+    );
+  });
+
+  it("never targets overflow or website pages", () => {
+    expect(studyBackTarget("/jargon/settings", "tab=ai")).toBeNull();
+    expect(studyBackTarget("/admin/invites", "")).toBeNull();
+    expect(studyBackTarget("/how-terms-work", "")).toBeNull();
   });
 });

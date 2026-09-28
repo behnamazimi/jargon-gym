@@ -7,23 +7,26 @@ import {
   QuizPickerStepSection,
   QuizPlayingStep,
 } from "@/components/jargon/quiz/quiz-page-steps";
-import { type StudyCollection } from "@/lib/study/types";
+import type { InitialQuizSetup } from "@/lib/quiz/setup-preference";
+import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import { useQuizSession } from "@/components/jargon/quiz/use-quiz-session";
 
 type QuizPageProps = {
   llmConfigured: boolean;
   providerLabel: string | null;
   collections: StudyCollection[];
-  initialDomainId?: string;
+  paused: PausedStudyCollection[];
+  initialSetup: InitialQuizSetup;
 };
 
 export function QuizPage({
   llmConfigured,
   providerLabel,
   collections,
-  initialDomainId,
+  paused,
+  initialSetup,
 }: QuizPageProps) {
-  const quiz = useQuizSession(collections, initialDomainId);
+  const quiz = useQuizSession(collections, initialSetup);
   const aiRequiresSetup = quiz.questionStyle === "ai" && !llmConfigured;
 
   switch (quiz.step) {
@@ -34,6 +37,7 @@ export function QuizPage({
           llmConfigured={llmConfigured}
           providerLabel={providerLabel}
           collections={collections}
+          paused={paused}
           aiRequiresSetup={aiRequiresSetup}
         />
       );
@@ -46,7 +50,11 @@ export function QuizPage({
         <QuizResults
           score={quiz.score}
           total={quiz.resultsTotal}
-          onQuizAgain={quiz.resetQuizState}
+          practice={quiz.practice}
+          missedTerms={quiz.missedTerms}
+          onQuizAgain={() => void quiz.handleStartQuiz(llmConfigured)}
+          onPractice={quiz.handleStartPractice}
+          onChangeSetup={quiz.resetQuizState}
         />
       );
     case "error":

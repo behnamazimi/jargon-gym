@@ -10,7 +10,7 @@ import { ReviewPlayingStep } from "@/components/jargon/review/review-playing-ste
 import { useReviewKeyboard } from "@/components/jargon/review/use-review-keyboard";
 import { useReviewQueue } from "@/components/jargon/review/use-review-queue";
 import { useReviewWriteQueue } from "@/components/jargon/review/use-review-write-queue";
-import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-setup-panel";
+import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
 import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { LinkButton } from "@/components/ui/button";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
@@ -18,14 +18,16 @@ import {
   clearReviewCollectionPreference,
   saveReviewCollectionPreference,
 } from "@/lib/review/collection-preference";
+import { canMoveForward } from "@/lib/review/keyboard";
 import { upsertRating } from "@/lib/review/writes";
 import type { ReviewRating } from "@/lib/review/types";
-import type { StudyCollection } from "@/lib/study/types";
+import type { PausedStudyCollection, StudyCollection } from "@/lib/study/types";
 import type { ReviewGrade } from "@/lib/trace";
 
 type ReviewPageProps = {
   seed: ReviewQueueSeed;
   collections: StudyCollection[];
+  paused: PausedStudyCollection[];
   domainId: string;
   narrationAccess: boolean;
 };
@@ -48,7 +50,13 @@ function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
   return `Nothing left to recall in ${name} right now. Pick another collection, or come back later.`;
 }
 
-export function ReviewPage({ seed, collections, domainId, narrationAccess }: ReviewPageProps) {
+export function ReviewPage({
+  seed,
+  collections,
+  paused,
+  domainId,
+  narrationAccess,
+}: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
   const [rememberOnDevice, setRememberOnDevice] = useState(true);
@@ -59,6 +67,9 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
   const { enqueueRating } = useReviewWriteQueue({ setErrorMessage });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
   const advancedCardIdRef = useRef<string | null>(null);
+  // State updates land after the event, so two reveal triggers in one
+  // event would both see the card as hidden and record the reveal twice.
+  const revealRecordedRef = useRef(new Set<string>());
 
   selectedCollectionIdRef.current = selectedCollectionId;
 
@@ -92,20 +103,22 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
   }, []);
 
   const handleReveal = useCallback(() => {
-    if (!currentCard || currentRevealed) return;
+    if (!currentCard || revealRecordedRef.current.has(currentCard.id)) return;
+    revealRecordedRef.current.add(currentCard.id);
     setRevealedTermIds((ids) => [...ids, currentCard.id]);
     void recordReviewRevealAction(currentCard.id).then((result) => {
       if (result.error) setErrorMessage(result.error);
     });
-  }, [currentCard, currentRevealed]);
+  }, [currentCard]);
 
   const handlePrevious = useCallback(() => {
     queue.goPrevious();
   }, [queue.goPrevious]);
 
   const handleNext = useCallback(() => {
+    if (!canMoveForward({ revealed: currentRevealed, rated: currentRating !== undefined })) return;
     void queue.goNext();
-  }, [queue.goNext]);
+  }, [currentRevealed, currentRating, queue.goNext]);
 
   const handleMarkedKnown = useCallback(() => {
     void queue.goNext();
@@ -135,14 +148,14 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
     onPrevious: handlePrevious,
     onNext: handleNext,
     revealed: currentRevealed,
-    canRate: currentRevealed,
+    rated: currentRating !== undefined,
     enabled: currentCard !== null,
   });
 
   if (collections.length === 0) {
     return (
       <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
-        <StudyNoActiveCollectionsState description="Turn on a collection on the collection page before you start reviewing." />
+        <StudyNoActiveCollectionsState paused={paused} activity="reviewing" />
       </QuizPanel>
     );
   }
@@ -194,7 +207,7 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
             selectedCollectionId === "all" ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                 <LinkButton href="/jargon" variant="outline">
-                  Collections
+                  Go to library
                 </LinkButton>
                 <LinkButton href="/jargon/import" variant="outline">
                   Import jargon
@@ -211,7 +224,6 @@ export function ReviewPage({ seed, collections, domainId, narrationAccess }: Rev
     <ReviewPlayingStep
       currentCard={currentCard}
       canGoBack={queue.canGoBack}
-      canGoForward
       currentRevealed={currentRevealed}
       currentRating={currentRating}
       errorMessage={errorMessage ?? queue.errorMessage}

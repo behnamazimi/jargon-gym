@@ -46,7 +46,7 @@ export async function sendCollectionQuestion(
     return [
       send(
         chatId,
-        "You have no active collections in your review pool. Turn one on in the app first.",
+        "You have no active collections. Add or resume one in your Library in the app first.",
       ),
     ];
   }

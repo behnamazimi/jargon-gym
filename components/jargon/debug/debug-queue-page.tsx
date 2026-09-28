@@ -18,7 +18,7 @@ export function DebugQueueEmpty() {
         <QuizCenteredState
           icon={AlertCircle}
           title="No active collections"
-          description="Turn on a collection on the collection page to see its terms here."
+          description="Resume a collection in your library to see its terms here."
         />
       </QuizPanelBody>
     </QuizPanel>

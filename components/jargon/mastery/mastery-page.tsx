@@ -12,15 +12,38 @@ import { MasteryTabs, type MasteryTab } from "./mastery-tabs";
 import { MasteryTermList } from "./mastery-term-list";
 
 type MasteryPageProps = {
+  initialTab: MasteryTab;
+  initialCollectionId: string;
   collections: MasteryCollectionOption[];
   stats: WebStatsSnapshot;
   termsLearning: number;
   termsLearned: number;
 };
 
-export function MasteryPage({ collections, stats, termsLearning, termsLearned }: MasteryPageProps) {
-  const [activeTab, setActiveTab] = useState<MasteryTab>("overview");
-  const [termsCollectionFilter, setTermsCollectionFilter] = useState("all");
+/** Keeps the tab and collection filter in the URL so Back (e.g. from a
+ *  Practice link) and shared links land on the same view. `null` state
+ *  lets Next sync useSearchParams. */
+function replaceMasteryUrl(tab: MasteryTab, collectionId: string) {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("tab");
+  url.searchParams.delete("collection");
+  if (tab === "terms") {
+    url.searchParams.set("tab", "terms");
+    if (collectionId !== "all") url.searchParams.set("collection", collectionId);
+  }
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+export function MasteryPage({
+  initialTab,
+  initialCollectionId,
+  collections,
+  stats,
+  termsLearning,
+  termsLearned,
+}: MasteryPageProps) {
+  const [activeTab, setActiveTab] = useState<MasteryTab>(initialTab);
+  const [termsCollectionFilter, setTermsCollectionFilter] = useState(initialCollectionId);
   const [termRows, setTermRows] = useState<MasteryTermRow[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const inFlightRef = useRef(false);
@@ -39,6 +62,10 @@ export function MasteryPage({ collections, stats, termsLearning, termsLearned }:
       setTermRows(result.termRows);
     });
   }, []);
+
+  useEffect(() => {
+    replaceMasteryUrl(activeTab, termsCollectionFilter);
+  }, [activeTab, termsCollectionFilter]);
 
   useEffect(() => {
     if (activeTab !== "terms") return;
