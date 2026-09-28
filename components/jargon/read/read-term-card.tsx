@@ -104,7 +104,7 @@ export const ReadTermCard = memo(function ReadTermCard({
   onNext: () => void;
 }) {
   return (
-    <QuizPanel className="flex min-h-0 flex-1 flex-col">
+    <QuizPanel data-tour="read-card" className="flex min-h-0 flex-1 flex-col">
       <div
         className={revealed ? undefined : "invisible pointer-events-none h-0 overflow-hidden"}
         aria-hidden={!revealed}

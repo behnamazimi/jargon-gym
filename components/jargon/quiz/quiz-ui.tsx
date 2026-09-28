@@ -1,10 +1,11 @@
 import { type LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function QuizPanel({ children, className }: { children: ReactNode; className?: string }) {
+export function QuizPanel({ children, className, ...props }: ComponentProps<"div">) {
   return (
     <div
+      {...props}
       className={cn(
         "shadow-surface overflow-hidden rounded-2xl bg-base-100 ring-1 ring-base-content/5",
         className,

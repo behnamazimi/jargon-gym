@@ -53,8 +53,9 @@ export function SettingsPanel({
   return (
     <section
       id={`settings-panel-${id}`}
+      data-tour={`settings-${id}`}
       aria-labelledby={headingId}
-      className="scroll-mt-4 max-md:scroll-mt-[calc(3.5rem+env(safe-area-inset-top,0px))]"
+      className="scroll-mt-4 rounded-2xl max-md:scroll-mt-[calc(3.5rem+env(safe-area-inset-top,0px))]"
     >
       <Card className="shadow-surface overflow-hidden rounded-2xl ring-1 ring-base-content/5">
         <div

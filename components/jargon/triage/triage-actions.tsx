@@ -15,7 +15,7 @@ type TriageActionsProps = {
 /** Same bottom row as Review: back-slot on the left, tinted choices next to it. */
 export function TriageActions({ canUndo, onUndo, onNotYet, onKnew }: TriageActionsProps) {
   return (
-    <div className="shrink-0 space-y-3">
+    <div data-tour="triage-actions" className="shrink-0 space-y-3">
       <div className="flex items-center gap-2">
         <Button
           type="button"

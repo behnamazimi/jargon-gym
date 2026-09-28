@@ -61,7 +61,8 @@ export function ReviewCard({
   return (
     <div
       ref={cardRef}
-      className="relative min-h-0 flex-1 [perspective:1200px]"
+      data-tour="review-card"
+      className="relative min-h-0 flex-1 rounded-2xl [perspective:1200px]"
       onTouchStart={swipe.onTouchStart}
       onTouchEnd={swipe.onTouchEnd}
     >

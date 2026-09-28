@@ -116,6 +116,7 @@ function GearButton({ onPress }: { onPress?: () => void }) {
       variant="ghost"
       size="icon-sm"
       aria-label="Read options"
+      data-tour="read-options"
       onPress={onPress}
       className="size-11 shrink-0 text-base-content/70 md:size-9"
     >

@@ -3,6 +3,8 @@
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { fetchStreakHistory, type StreakDay } from "@/lib/streak/history";
 import { saveUserTimezone } from "@/lib/streak/settings";
+import { isTourChapterId } from "@/lib/tour/chapters";
+import { markTourChapterSeen, skipTour } from "@/lib/tour/settings";
 
 /** Silently persists the client-detected IANA timezone, used for streak day boundaries. */
 export async function syncTimezoneAction(timezone: string): Promise<{ error?: string }> {
@@ -28,5 +30,30 @@ export async function getStreakHistoryAction(): Promise<{ days?: StreakDay[]; er
     return { days };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Couldn't load streak history." };
+  }
+}
+
+export async function markTourChapterSeenAction(chapterId: string): Promise<{ error?: string }> {
+  if (!isTourChapterId(chapterId)) return { error: "Unknown tour chapter." };
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await markTourChapterSeen(auth.supabase, chapterId);
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Couldn't save tour progress." };
+  }
+}
+
+export async function skipTourAction(): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await skipTour(auth.supabase, auth.user.id);
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Couldn't skip the tour." };
   }
 }

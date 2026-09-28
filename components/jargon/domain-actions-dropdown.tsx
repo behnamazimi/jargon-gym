@@ -51,6 +51,7 @@ export function DomainActionsDropdown({
         size="icon-sm"
         className="text-base-content/60 hover:text-base-content"
         aria-label="Collection actions"
+        data-tour="library-actions"
         isDisabled={disabled}
       >
         <Settings className="size-5" />

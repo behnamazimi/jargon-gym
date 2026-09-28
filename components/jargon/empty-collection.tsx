@@ -17,8 +17,10 @@ export function EmptyCollection() {
         description="Add a collection others have shared in one tap, or import your own terms as JSON."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <LinkButton href="/jargon/browse">Browse shared collections</LinkButton>
-          <LinkButton href="/jargon/import" variant="outline">
+          <LinkButton href="/jargon/browse" data-tour="library-browse">
+            Browse shared collections
+          </LinkButton>
+          <LinkButton href="/jargon/import" variant="outline" data-tour="library-import">
             Import jargon
           </LinkButton>
         </div>

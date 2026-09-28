@@ -58,6 +58,7 @@ export function StudyPhoneTopBar() {
             size="sm"
             className="btn-circle size-8 shrink-0 overflow-hidden p-0 text-[11px] font-semibold text-primary bg-primary/15 hover:bg-primary/25"
             aria-label="More"
+            data-tour="app-account"
             onPress={() => setMoreOpen(true)}
           >
             <Avatar className="size-8">
@@ -110,6 +111,7 @@ export function StudyPhoneDock() {
           <Link
             key={tab.href}
             href={tab.href}
+            data-tour={`nav-${tab.label.toLowerCase()}`}
             className={dockItemClass(active)}
             aria-current={active ? "page" : undefined}
           >

@@ -62,6 +62,7 @@ export function JargonFilters({
   return (
     <section
       aria-label="Filter terms"
+      data-tour="library-search"
       className="shadow-surface space-y-3 rounded-2xl bg-base-100 p-4"
     >
       <div className="flex items-start gap-2">

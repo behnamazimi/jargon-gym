@@ -10,6 +10,7 @@ import { HeaderSkeleton } from "@/components/page-skeleton";
 import { StudyPhoneChromeIsland } from "@/components/app/study-phone-chrome-island";
 import { StudyPhoneTopBarSkeleton } from "@/components/app/study-phone-topbar-skeleton";
 import { TimezoneSyncIsland } from "@/components/timezone-sync-island";
+import { TourIsland } from "@/components/tour/tour-island";
 import "./globals.css";
 import { hasLikelySession } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
@@ -90,6 +91,9 @@ export default async function RootLayout({
             >
               <Suspense fallback={null}>
                 <TimezoneSyncIsland />
+              </Suspense>
+              <Suspense fallback={null}>
+                <TourIsland />
               </Suspense>
               <OfflineBanner />
               <main className="flex min-h-0 flex-1 flex-col">{children}</main>

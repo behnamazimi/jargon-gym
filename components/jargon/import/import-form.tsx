@@ -106,6 +106,7 @@ export function ImportForm({
         </p>
         <Textarea
           id="import-json"
+          data-tour="import-json"
           value={value}
           onChange={(event) => {
             onChange(event.target.value);
@@ -119,6 +120,7 @@ export function ImportForm({
 
       <Button
         type="button"
+        data-tour="import-validate"
         onPress={onValidate}
         isDisabled={isValidating || !hasContent}
         className="min-h-11 w-full md:w-auto"

@@ -28,6 +28,7 @@ export function StreakBadge({
         onClick={() => setIsOpen(true)}
         className={cn("btn btn-ghost gap-1.5", currentStreak === 0 && "opacity-50", className)}
         aria-label={`${currentStreak} day streak. View streak history.`}
+        data-tour="app-streak"
       >
         <Flame className="size-4.5 text-streak" strokeWidth={2} aria-hidden />
         <span className="text-sm leading-none font-semibold tabular-nums">{currentStreak}</span>

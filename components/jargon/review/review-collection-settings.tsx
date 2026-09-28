@@ -47,6 +47,7 @@ export function ReviewCollectionSettings({
         isDisabled={isDisabled}
         className="select select-sm w-fit max-w-full min-w-0 font-normal"
         aria-label="Collection"
+        data-tour="review-collection"
       >
         <span className="truncate">
           {selectedCollectionLabel(selectedCollectionId, collections)}

@@ -165,6 +165,7 @@ export const TermCard = memo(function TermCard({
       >
         <article
           ref={swipe.rowRef}
+          data-tour="library-term"
           className={cn(
             "group relative overflow-hidden rounded-xl bg-base-100",
             open ? "shadow-surface-raised" : "shadow-surface",
