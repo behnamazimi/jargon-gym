@@ -80,6 +80,14 @@ other spend in the ledger. If this turns out to matter, a later change can add a
 
 The code is in `lib/ai-credits/charge.ts` and `lib/ai-credits/repository.ts`.
 
+## What users see
+
+The account menu, and the More sheet on phones, show one plain line under the
+email: how many credits are left, that the credits are used up, or that the
+account uses its own key. The line is hidden when credits aren't offered. The
+balance is looked up only when the menu opens, so ordinary page loads don't
+pay for it. The line links to the AI section of Settings.
+
 ## Setting it up
 
 Set these server-only environment variables, listed in `.env-template`:

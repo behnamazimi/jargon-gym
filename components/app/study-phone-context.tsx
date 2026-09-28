@@ -1,8 +1,14 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import { MoreSheet } from "@/components/app/study-phone-more-sheet";
+import { useAiCredits } from "@/hooks/use-ai-credits";
+import {
+  aiCreditsLine,
+  type AiCreditsLine,
+  type AiCreditsMenuMode,
+} from "@/lib/ai-credits/menu-line";
 import { studyBackTarget } from "@/lib/chrome";
 
 type StudyPhoneContextValue = {
@@ -13,6 +19,8 @@ type StudyPhoneContextValue = {
   longestStreak: number;
   moreOpen: boolean;
   setMoreOpen: (open: boolean) => void;
+  /** What the More sheet says about AI credits, or null to say nothing. */
+  aiCreditsLine: AiCreditsLine | null;
   /** Where the top bar's back arrow goes on overflow pages. */
   backHref: string;
 };
@@ -33,6 +41,7 @@ export function StudyPhoneProvider({
   initialIsDark,
   currentStreak,
   longestStreak,
+  aiCreditsMode,
   children,
 }: {
   email: string;
@@ -40,9 +49,20 @@ export function StudyPhoneProvider({
   initialIsDark: boolean;
   currentStreak: number;
   longestStreak: number;
+  aiCreditsMode: AiCreditsMenuMode;
   children: ReactNode;
 }) {
-  const [moreOpen, setMoreOpen] = useState(false);
+  const [moreOpen, setMoreOpenState] = useState(false);
+  const { load: aiCreditsLoad, refresh: refreshAiCredits } = useAiCredits(aiCreditsMode);
+
+  // The balance is only looked up when the sheet opens.
+  const setMoreOpen = useCallback(
+    (open: boolean) => {
+      setMoreOpenState(open);
+      if (open) void refreshAiCredits();
+    },
+    [refreshAiCredits],
+  );
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [backHref, setBackHref] = useState("/jargon");
@@ -62,9 +82,21 @@ export function StudyPhoneProvider({
       longestStreak,
       moreOpen,
       setMoreOpen,
+      aiCreditsLine: aiCreditsLine(aiCreditsMode, aiCreditsLoad),
       backHref,
     }),
-    [email, isAdmin, initialIsDark, currentStreak, longestStreak, moreOpen, backHref],
+    [
+      email,
+      isAdmin,
+      initialIsDark,
+      currentStreak,
+      longestStreak,
+      moreOpen,
+      setMoreOpen,
+      aiCreditsMode,
+      aiCreditsLoad,
+      backHref,
+    ],
   );
 
   return (

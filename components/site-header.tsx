@@ -8,6 +8,7 @@ import { InstallButton } from "@/components/pwa/install-prompt";
 import { LoggedOutHeaderNav } from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
+import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 import { cn } from "@/lib/utils";
 
@@ -70,12 +71,14 @@ export function SiteHeader({
   isAdmin,
   currentStreak,
   longestStreak,
+  aiCreditsMode,
 }: {
   initialIsDark: boolean;
   user: { email?: string | null } | null;
   isAdmin: boolean;
   currentStreak: number;
   longestStreak: number;
+  aiCreditsMode: AiCreditsMenuMode;
 }) {
   return (
     <SiteHeaderChrome
@@ -105,7 +108,11 @@ export function SiteHeader({
           <InstallButton />
           <ThemeToggle initialIsDark={initialIsDark} />
           {user ? (
-            <ProfileMenu email={user.email ?? "Account"} isAdmin={isAdmin} />
+            <ProfileMenu
+              email={user.email ?? "Account"}
+              isAdmin={isAdmin}
+              aiCreditsMode={aiCreditsMode}
+            />
           ) : (
             <LoggedOutHeaderNav />
           )}

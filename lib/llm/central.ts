@@ -1,3 +1,4 @@
+import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
 import type { LlmProvider } from "./types";
 
 export type CentralLlmConfig = { provider: LlmProvider; apiKey: string };
@@ -20,4 +21,10 @@ export function getCentralLlmConfig(): CentralLlmConfig | null {
   }
 
   return { provider, apiKey };
+}
+
+/** Whether the account menus should mention AI credits at all. */
+export function aiCreditsMenuMode(hasOwnKey: boolean): AiCreditsMenuMode {
+  if (hasOwnKey) return "own";
+  return getCentralLlmConfig() ? "credits" : "hidden";
 }

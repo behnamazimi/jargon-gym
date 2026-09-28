@@ -153,6 +153,7 @@ export async function saveLlmSettingsAction(input: {
     revalidatePath("/jargon/settings");
     revalidatePath("/jargon/quiz");
     revalidatePath("/jargon/read/stories");
+    revalidatePath("/", "layout");
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't save quiz settings. Try again.";
@@ -169,6 +170,7 @@ export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
     revalidatePath("/jargon/settings");
     revalidatePath("/jargon/quiz");
     revalidatePath("/jargon/read/stories");
+    revalidatePath("/", "layout");
     return {};
   } catch (err) {
     const message =

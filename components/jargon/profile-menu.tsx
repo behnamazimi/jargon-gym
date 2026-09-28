@@ -1,10 +1,13 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { LogOut, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { ACCOUNT_HOME_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { AppRouterProvider } from "@/components/app-router-provider";
+import { useAiCredits } from "@/hooks/use-ai-credits";
+import { aiCreditsLine, type AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,10 +22,13 @@ import {
 type ProfileMenuProps = {
   email: string;
   isAdmin?: boolean;
+  aiCreditsMode: AiCreditsMenuMode;
 };
 
-export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
+export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMenuProps) {
   const [isBusy, setIsBusy] = useState(false);
+  const { load: aiCreditsLoad, refresh: refreshAiCredits } = useAiCredits(aiCreditsMode);
+  const creditsLine = aiCreditsLine(aiCreditsMode, aiCreditsLoad);
   const initials = emailInitials(email);
 
   async function handleLogout() {
@@ -32,7 +38,7 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
 
   return (
     <AppRouterProvider>
-      <DropdownMenuTrigger>
+      <DropdownMenuTrigger onOpenChange={(open) => open && void refreshAiCredits()}>
         <Button
           variant="ghost"
           size="sm"
@@ -60,6 +66,18 @@ export function ProfileMenu({ email, isAdmin = false }: ProfileMenuProps) {
               <p className="mt-0.5 truncate text-sm font-medium text-base-content">{email}</p>
             </div>
           </DropdownMenuLabel>
+          {creditsLine ? (
+            <DropdownMenuItem
+              href={creditsLine.pending ? undefined : "/jargon/settings?tab=ai"}
+              isDisabled={creditsLine.pending}
+              textValue={creditsLine.label}
+            >
+              <Sparkles className="h-4 w-4" aria-hidden />
+              <span className={cn(creditsLine.tone === "error" && "text-error")}>
+                {creditsLine.label}
+              </span>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuSeparator />
           {ACCOUNT_HOME_NAV.map((item) => {
             const Icon = item.icon;

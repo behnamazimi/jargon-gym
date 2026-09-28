@@ -1,4 +1,5 @@
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
+import { aiCreditsMenuMode } from "@/lib/llm/central";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import {
   StudyPhoneDock,
@@ -22,6 +23,7 @@ export async function StudyPhoneChromeIsland({ initialIsDark }: { initialIsDark:
         initialIsDark={initialIsDark}
         currentStreak={settings.currentStreak}
         longestStreak={settings.longestStreak}
+        aiCreditsMode={aiCreditsMenuMode(settings.hasOwnKey)}
       >
         <StudyPhoneTopBar />
         <StudyPhoneDock />
