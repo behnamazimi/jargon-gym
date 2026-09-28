@@ -9,9 +9,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useStudyPhone } from "@/components/app/study-phone-context";
+import { cn } from "@/lib/utils";
 
 export function MoreSheet() {
-  const { email, isAdmin, initialIsDark, moreOpen, setMoreOpen } = useStudyPhone();
+  const { email, isAdmin, initialIsDark, moreOpen, setMoreOpen, aiCreditsLine } = useStudyPhone();
   const [isBusy, setIsBusy] = useState(false);
   const initials = emailInitials(email);
 
@@ -43,7 +44,21 @@ export function MoreSheet() {
               {initials}
             </AvatarFallback>
           </Avatar>
-          <p className="m-0 min-w-0 truncate text-sm">{email}</p>
+          <div className="min-w-0">
+            <p className="m-0 truncate text-sm">{email}</p>
+            {aiCreditsLine ? (
+              <Link
+                href="/jargon/settings?tab=ai"
+                onClick={() => setMoreOpen(false)}
+                className={cn(
+                  "text-xs no-underline",
+                  aiCreditsLine.tone === "error" ? "text-error" : "text-base-content/60",
+                )}
+              >
+                {aiCreditsLine.label}
+              </Link>
+            ) : null}
+          </div>
         </div>
       </SheetHeader>
       <ul className="menu w-full p-2">
