@@ -1,5 +1,6 @@
-import { APICallError, generateText, RetryError } from "ai";
+import { generateText } from "ai";
 import type { DomainLanguage } from "@/lib/jargon/languages";
+import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
 import { storyLength } from "./length";
@@ -10,7 +11,16 @@ import { buildStoryPrompt } from "./prompt";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, PieceLength, ReadingLevel, StorySegment, StoryTerm } from "./types";
 
-export class StoryProviderError extends Error {}
+export type StoryProviderErrorKind = "auth" | "rate-limit" | "other";
+
+export class StoryProviderError extends Error {
+  constructor(
+    message: string,
+    readonly kind: StoryProviderErrorKind,
+  ) {
+    super(message);
+  }
+}
 
 type GenerateStoryInput = {
   provider: LlmProvider;
@@ -30,28 +40,24 @@ type GenerateStoryInput = {
 
 type GeneratedStory = { title: string; segments: StorySegment[]; termIds: string[] };
 
-function statusOf(error: unknown): number | undefined {
-  const inner = RetryError.isInstance(error) ? error.lastError : error;
-  return APICallError.isInstance(inner) ? inner.statusCode : undefined;
-}
-
 function isRetryable(error: unknown): boolean {
   if (error instanceof StoryGenerationError) return true;
-  const status = statusOf(error);
+  const status = providerStatus(error);
   return status === undefined || status >= 500;
 }
 
 function toProviderError(error: unknown): StoryProviderError {
-  const status = statusOf(error);
-  if (status === 401 || status === 403) {
-    return new StoryProviderError("Your API key was rejected. Update it in Settings.");
+  const status = providerStatus(error);
+  if (isKeyRejected(error)) {
+    return new StoryProviderError("Your API key was rejected. Update it in Settings.", "auth");
   }
   if (status === 429) {
     return new StoryProviderError(
       "Your provider is rate-limiting requests. Try again in a minute.",
+      "rate-limit",
     );
   }
-  return new StoryProviderError("Couldn't write a story this time. Try again.");
+  return new StoryProviderError("Couldn't write a story this time. Try again.", "other");
 }
 
 // Plain text rather than a JSON object: in JSON output the model has been

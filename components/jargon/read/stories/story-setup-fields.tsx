@@ -33,6 +33,12 @@ const PIECE_LENGTH_CHOICES: Record<PieceLength, Choice> = {
   },
 };
 
+export const PIECE_LENGTH_LABELS: Record<PieceLength, string> = {
+  short: PIECE_LENGTH_CHOICES.short.label,
+  medium: PIECE_LENGTH_CHOICES.medium.label,
+  long: PIECE_LENGTH_CHOICES.long.label,
+};
+
 function ChoiceField<T extends string>({
   legend,
   options,

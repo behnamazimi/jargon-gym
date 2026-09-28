@@ -70,9 +70,9 @@ export const STUDY_CHAPTERS = [
       {
         target: "stories-write",
         title: "Write it",
-        body: "Your AI provider writes the piece. Click a highlighted term for its definition, and mark the story read to count a read for every term in it.",
+        body: "AI writes the piece, using your AI credits or your own key. Click a highlighted term for its definition, and mark the story read to count a read for every term in it.",
         bodyTouch:
-          "Your AI provider writes the piece. Tap a highlighted term for its definition, and mark the story read to count a read for every term in it.",
+          "AI writes the piece, using your AI credits or your own key. Tap a highlighted term for its definition, and mark the story read to count a read for every term in it.",
         placement: "top",
       },
     ],
@@ -84,7 +84,7 @@ export const STUDY_CHAPTERS = [
       {
         target: "quiz-style",
         title: "Simple or AI",
-        body: "Simple quizzes use the collection's definitions and examples. AI writes fresh questions and needs your API key in Settings.",
+        body: "Simple quizzes use the collection's definitions and examples. AI writes fresh questions, using your AI credits or your own key from Settings.",
       },
     ],
   },

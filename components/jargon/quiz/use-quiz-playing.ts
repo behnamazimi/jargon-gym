@@ -1,43 +1,35 @@
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { generateQuizAction } from "@/app/(private)/jargon/quiz/actions";
 import { revalidateStudyPathsAction } from "@/app/(private)/jargon/actions";
+import type { AiFailureReason } from "@/lib/llm/types";
 import { missedQuestions, missedTermIds } from "@/lib/quiz/results";
-import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
+import type { QuizAnswer, QuizQuestion, QuizTerm } from "@/lib/quiz/types";
 import {
   clearQuizSession,
   loadQuizSession,
   type QuizSessionState,
 } from "@/lib/quiz/session-storage";
-import type { QuizStep } from "@/components/jargon/quiz/use-quiz-setup";
+import type { useQuizSetup } from "@/components/jargon/quiz/use-quiz-setup";
 import { submitQuizAnswer } from "@/components/jargon/quiz/quiz-answer-actions";
 import { useQuizSessionPersistence } from "@/components/jargon/quiz/use-quiz-session-persistence";
 import { useQuizWriteQueue } from "@/components/jargon/quiz/use-quiz-write-queue";
 
-type UseQuizPlayingArgs = {
-  step: QuizStep;
-  setStep: (step: QuizStep) => void;
-  questionStyle: QuizQuestionStyle;
-  setQuestionStyle: (style: QuizQuestionStyle) => void;
-  setSelectedCollectionId: (id: string) => void;
-  setQuestionCount: (count: number) => void;
-  setQuestionCountInput: (value: string) => void;
-  setErrorMessage: (message: string | null) => void;
-  domainIds: "all" | string[];
-  questionCount: number;
-};
-
-export function useQuizPlaying({
-  step,
-  setStep,
-  questionStyle,
-  setQuestionStyle,
-  setSelectedCollectionId,
-  setQuestionCount,
-  setQuestionCountInput,
-  setErrorMessage,
-  domainIds,
-  questionCount,
-}: UseQuizPlayingArgs) {
+export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
+  const {
+    step,
+    setStep,
+    questionStyle,
+    setQuestionStyle,
+    setSelectedCollectionId,
+    setQuestionCount,
+    setQuestionCountInput,
+    setErrorMessage,
+    domainIds,
+    questionCount,
+  } = setup;
+  const router = useRouter();
+  const [errorReason, setErrorReason] = useState<AiFailureReason | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [terms, setTerms] = useState<QuizTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -153,13 +145,14 @@ export function useQuizPlaying({
     setPendingWrites([]);
     setResultsScore(null);
     setErrorMessage(null);
+    setErrorReason(null);
     setStep("picker");
     setSessionStartedAt(new Date().toISOString());
   }
 
-  async function handleStartQuiz(llmConfigured: boolean) {
-    if (questionStyle === "ai" && !llmConfigured) {
-      setErrorMessage("Add a provider and API key in Settings to generate AI quizzes.");
+  async function handleStartQuiz(canUseAi: boolean) {
+    if (questionStyle === "ai" && !canUseAi) {
+      setErrorMessage("AI quizzes aren't available right now. Use a simple quiz.");
       return;
     }
 
@@ -173,13 +166,18 @@ export function useQuizPlaying({
     clearQuizSession();
     setSavedSession(null);
     setErrorMessage(null);
+    setErrorReason(null);
     setStep("generating");
     setSessionStartedAt(new Date().toISOString());
 
     const result = await generateQuizAction({ domainIds, questionCount, questionStyle });
 
+    // The balance may have changed either way, so refresh what shows it.
+    if (questionStyle === "ai") router.refresh();
+
     if ("error" in result) {
       setErrorMessage(result.error);
+      setErrorReason(result.reason ?? null);
       setStep("error");
       return;
     }
@@ -231,6 +229,7 @@ export function useQuizPlaying({
   const resultsTotal = resultsScore?.total ?? questions.length;
 
   return {
+    errorReason,
     questions,
     currentIndex,
     savedSession: savedSession?.complete ? null : savedSession,

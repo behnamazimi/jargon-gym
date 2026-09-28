@@ -28,6 +28,94 @@ export type Database = {
   };
   public: {
     Tables: {
+      ai_credit_ledger: {
+        Row: {
+          amount: number;
+          created_at: string;
+          created_by: string | null;
+          feature: string | null;
+          id: number;
+          kind: string;
+          note: string | null;
+          refund_of: number | null;
+          user_id: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          created_by?: string | null;
+          feature?: string | null;
+          id?: never;
+          kind: string;
+          note?: string | null;
+          refund_of?: number | null;
+          user_id: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          created_by?: string | null;
+          feature?: string | null;
+          id?: never;
+          kind?: string;
+          note?: string | null;
+          refund_of?: number | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_ledger_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_credit_ledger_refund_of_fkey";
+            columns: ["refund_of"];
+            isOneToOne: true;
+            referencedRelation: "ai_credit_ledger";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_credit_ledger_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ai_credit_settings: {
+        Row: {
+          default_allowance: number;
+          enabled: boolean;
+          id: boolean;
+          monthly_refill: number;
+          quiz_credits_per_question: number;
+          story_credits_per_term: number;
+          updated_at: string;
+        };
+        Insert: {
+          default_allowance?: number;
+          enabled?: boolean;
+          id?: boolean;
+          monthly_refill?: number;
+          quiz_credits_per_question?: number;
+          story_credits_per_term?: number;
+          updated_at?: string;
+        };
+        Update: {
+          default_allowance?: number;
+          enabled?: boolean;
+          id?: boolean;
+          monthly_refill?: number;
+          quiz_credits_per_question?: number;
+          story_credits_per_term?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       domains: {
         Row: {
           created_at: string;
@@ -979,6 +1067,35 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_ai_credit_usage: {
+        Args: { p_limit?: number };
+        Returns: {
+          email: string;
+          granted: number;
+          last_activity: string;
+          remaining: number;
+          spent: number;
+          user_id: string;
+        }[];
+      };
+      admin_grant_ai_credits: {
+        Args: { p_amount: number; p_note: string; p_user_id: string };
+        Returns: undefined;
+      };
+      admin_reset_ai_credits: {
+        Args: { p_note: string; p_user_id: string };
+        Returns: undefined;
+      };
+      ai_credit_balance: {
+        Args: { p_user_id: string };
+        Returns: {
+          enabled: boolean;
+          quiz_credits_per_question: number;
+          remaining: number;
+          story_credits_per_term: number;
+          total: number;
+        }[];
+      };
       bump_streak: { Args: { p_user_id: string }; Returns: undefined };
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
@@ -1121,6 +1238,16 @@ export type Database = {
         Returns: {
           chat_id: number;
           user_id: string;
+        }[];
+      };
+      my_ai_credit_state: {
+        Args: never;
+        Returns: {
+          enabled: boolean;
+          quiz_credits_per_question: number;
+          remaining: number;
+          story_credits_per_term: number;
+          total: number;
         }[];
       };
       my_bump_streak: { Args: never; Returns: undefined };
@@ -1277,6 +1404,15 @@ export type Database = {
       };
       record_telegram_send: { Args: { p_user_id: string }; Returns: undefined };
       redeem_referral_code: { Args: { p_code: string }; Returns: undefined };
+      refund_ai_credits: { Args: { p_ledger_id: number }; Returns: undefined };
+      reserve_ai_credits: {
+        Args: { p_cost: number; p_feature: string; p_user_id: string };
+        Returns: {
+          ledger_id: number;
+          remaining: number;
+          status: string;
+        }[];
+      };
       reset_domain_progress: {
         Args: { p_domain_id: string; p_user_id: string };
         Returns: undefined;

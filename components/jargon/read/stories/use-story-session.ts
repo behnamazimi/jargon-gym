@@ -10,6 +10,7 @@ import {
   type StoryResult,
 } from "@/app/(private)/jargon/read/stories/actions";
 import { useToast } from "@/components/ui/toast";
+import type { AiFailureReason } from "@/lib/llm/types";
 import { voteFeedback } from "@/lib/stories/feedback";
 import type { StoriesSetupData } from "@/lib/stories/setup";
 import {
@@ -47,6 +48,7 @@ export function useStorySession(setup: StoriesSetupData) {
   const [story, setStory] = useState<Story | null>(setup.currentStory?.story ?? null);
   const [terms, setTerms] = useState<StoryTerm[]>(setup.currentStory?.terms ?? []);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorReason, setErrorReason] = useState<AiFailureReason | null>(null);
   const [isMarkingRead, setIsMarkingRead] = useState(false);
   const busyRef = useRef(false);
   // The story on screen right now, so a late vote result can tell whether the
@@ -74,13 +76,17 @@ export function useStorySession(setup: StoriesSetupData) {
     busyRef.current = true;
     setStep("generating");
     setErrorMessage(null);
+    setErrorReason(null);
 
     const levels = { readingLevel, cefrLevel, pieceLength };
     const result = await generateStoryAction({ domainId, ...levels, outline });
     busyRef.current = false;
+    // The balance may have changed either way, so refresh what shows it.
+    router.refresh();
 
     if ("error" in result) {
       setErrorMessage(result.error);
+      setErrorReason(result.reason ?? null);
       setStep("error");
       return;
     }
@@ -153,6 +159,8 @@ export function useStorySession(setup: StoriesSetupData) {
     story,
     terms,
     errorMessage,
+    setErrorMessage,
+    errorReason,
     isMarkingRead,
     generate,
     markRead,

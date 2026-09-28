@@ -1,8 +1,17 @@
 "use server";
 
 import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
-import { getDecryptedApiKey, getUserSettings } from "@/lib/llm/settings";
-import { hasLlmConfigured, LLM_PROVIDER_LABELS } from "@/lib/llm/types";
+import {
+  creditsRefusedFailure,
+  noAiFailure,
+  AI_TEMPORARILY_UNAVAILABLE,
+} from "@/lib/ai-credits/messages";
+import { runWithCredits } from "@/lib/ai-credits/charge";
+import { quizCost } from "@/lib/ai-credits/costs";
+import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
+import { isProviderKeyFault } from "@/lib/llm/errors";
+import { LLM_PROVIDER_LABELS, type AiFailureReason } from "@/lib/llm/types";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { fetchQuizTermPool } from "@/lib/quiz/terms";
@@ -18,24 +27,18 @@ export async function getQuizSetupData() {
     return { error: "Log in to take a quiz." };
   }
 
-  const [settings, { active: collections, paused }] = await Promise.all([
-    getUserSettings(auth.supabase, auth.user.id),
+  const [ai, { active: collections, paused }] = await Promise.all([
+    getAiAccessView(auth.supabase, auth.user.id),
     listStudyCollectionState(auth.supabase, auth.user.id),
   ]);
 
-  return {
-    llmConfigured: hasLlmConfigured(settings),
-    provider: settings?.provider ?? null,
-    providerLabel: settings?.provider ? LLM_PROVIDER_LABELS[settings.provider] : null,
-    collections,
-    paused,
-  };
+  return { ai, collections, paused };
 }
 
 const NOTHING_ELIGIBLE_ERROR = "No terms in this collection yet.";
 
 type QuizGenerationResult =
-  | { error: string }
+  | { error: string; reason?: AiFailureReason }
   | {
       questions: QuizQuestion[];
       terms: QuizTerm[];
@@ -69,26 +72,60 @@ async function generateAiQuizResult(
   auth: Extract<Awaited<ReturnType<typeof requireAuthenticatedClient>>, { supabase: unknown }>,
   termsPromise: Promise<QuizTerm[]>,
 ): Promise<QuizGenerationResult> {
-  const [terms, credentials] = await Promise.all([
+  const [terms, access] = await Promise.all([
     termsPromise,
-    getDecryptedApiKey(auth.supabase, auth.user.id),
+    resolveAiAccess(auth.supabase, auth.user.id),
   ]);
 
   if (terms.length === 0) {
     return { error: NOTHING_ELIGIBLE_ERROR };
   }
-  if (!credentials) {
-    return { error: "Add a provider and API key in Settings to generate AI quizzes." };
+  if (access.kind === "unavailable") {
+    return noAiFailure(access.reason, "generate AI quizzes");
   }
 
-  const questions = await generateQuizQuestions({
-    provider: credentials.provider,
-    apiKey: credentials.apiKey,
-    terms,
-    client: auth.supabase,
-  });
+  const providerLabel = LLM_PROVIDER_LABELS[access.provider];
+  const generate = () =>
+    generateQuizQuestions({
+      provider: access.provider,
+      apiKey: access.apiKey,
+      terms,
+      client: auth.supabase,
+    });
 
-  return { questions, terms, providerLabel: LLM_PROVIDER_LABELS[credentials.provider] };
+  if (access.kind === "own") {
+    try {
+      return { questions: await generate(), terms, providerLabel };
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Couldn't generate the quiz. Check your API key and try again.";
+      return { error: message, reason: isProviderKeyFault(err) ? "own-key" : undefined };
+    }
+  }
+
+  try {
+    const outcome = await runWithCredits(
+      {
+        admin: createAdminClient(),
+        userId: auth.user.id,
+        feature: "quiz",
+        cost: quizCost(terms.length, access.costs),
+      },
+      generate,
+    );
+    if (!outcome.charged) return creditsRefusedFailure(outcome, "quiz");
+    return { questions: outcome.value, terms, providerLabel };
+  } catch (err) {
+    console.error("AI quiz with credits failed:", err);
+    return {
+      error: isProviderKeyFault(err)
+        ? AI_TEMPORARILY_UNAVAILABLE
+        : "Couldn't generate the quiz. Try again.",
+      reason: "unavailable",
+    };
+  }
 }
 
 export async function generateQuizAction(input: {

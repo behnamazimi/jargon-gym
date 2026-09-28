@@ -23,6 +23,7 @@ type LlmProviderFormProps = {
   onReplacingKeyChange: (value: boolean) => void;
   isSaving: boolean;
   onSaveKey: () => void;
+  creditsNote: boolean;
 };
 
 export function LlmProviderForm({
@@ -37,13 +38,14 @@ export function LlmProviderForm({
   onReplacingKeyChange,
   isSaving,
   onSaveKey,
+  creditsNote,
 }: LlmProviderFormProps) {
   return (
     <SettingsRow
       title="LLM provider"
       description={
         llmConfigured
-          ? `${providerLabel} key ending in ${settings?.apiKeyLast4}. Keys stay encrypted and are only used for AI quizzes and Stories.`
+          ? `${providerLabel} key ending in ${settings?.apiKeyLast4}. Keys stay encrypted and are only used for AI quizzes and Stories.${creditsNote ? " Your key is used, so no AI credits are spent." : ""}`
           : "Your key stays encrypted and is only used for AI quizzes and Stories."
       }
     >

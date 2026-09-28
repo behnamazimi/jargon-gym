@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, Loader2 } from "lucide-react";
+import { CreditsInsteadButton } from "@/components/jargon/ai-credits/credits-instead-button";
 import { QuizQuestionView } from "@/components/jargon/quiz/quiz-question";
 import {
   QuizCenteredState,
@@ -12,6 +13,7 @@ import { QuizPickerStep } from "@/components/jargon/quiz/quiz-picker-step";
 import { StudyProgress } from "@/components/jargon/study/study-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
+import type { AiAccessView } from "@/lib/llm/types";
 import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import { type useQuizSession } from "@/components/jargon/quiz/use-quiz-session";
 
@@ -79,15 +81,17 @@ export function QuizPlayingStep({ quiz }: { quiz: UseQuizSessionResult }) {
 
 export function QuizPickerStepSection({
   quiz,
-  llmConfigured,
-  providerLabel,
+  ai,
+  aiFellBack,
+  canUseAi,
   collections,
   paused,
   aiRequiresSetup,
 }: {
   quiz: UseQuizSessionResult;
-  llmConfigured: boolean;
-  providerLabel: string | null;
+  ai: AiAccessView;
+  aiFellBack: boolean;
+  canUseAi: boolean;
   collections: StudyCollection[];
   paused: PausedStudyCollection[];
   aiRequiresSetup: boolean;
@@ -96,7 +100,8 @@ export function QuizPickerStepSection({
     <QuizPickerStep
       collections={collections}
       paused={paused}
-      providerLabel={providerLabel}
+      ai={ai}
+      aiFellBack={aiFellBack}
       savedSession={quiz.savedSession}
       onResumeSession={quiz.handleResumeSession}
       onDiscardSession={quiz.handleDiscardSession}
@@ -119,13 +124,13 @@ export function QuizPickerStepSection({
       onQuestionCountInputChange={quiz.handleQuestionCountInputChange}
       onStartQuiz={() => {
         quiz.saveSetup();
-        void quiz.handleStartQuiz(llmConfigured);
+        void quiz.handleStartQuiz(canUseAi);
       }}
     />
   );
 }
 
-export function QuizErrorStep({ quiz }: { quiz: UseQuizSessionResult }) {
+export function QuizErrorStep({ quiz, ai }: { quiz: UseQuizSessionResult; ai: AiAccessView }) {
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <QuizPanelHeader
@@ -148,9 +153,17 @@ export function QuizErrorStep({ quiz }: { quiz: UseQuizSessionResult }) {
           >
             Try again
           </Button>
-          <LinkButton href="/jargon/settings?tab=ai" variant="ghost" className="min-h-11">
-            Check settings
-          </LinkButton>
+          <CreditsInsteadButton
+            ai={ai}
+            reason={quiz.errorReason}
+            onSwitched={quiz.resetQuizState}
+            onError={quiz.setErrorMessage}
+          />
+          {quiz.errorReason === "unavailable" ? null : (
+            <LinkButton href="/jargon/settings?tab=ai" variant="ghost" className="min-h-11">
+              {quiz.errorReason === "credits" ? "Add your own key" : "Check settings"}
+            </LinkButton>
+          )}
         </div>
       </QuizPanelBody>
     </QuizPanel>

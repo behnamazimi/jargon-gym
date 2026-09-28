@@ -59,7 +59,7 @@ export const MORE_CHAPTERS = [
       {
         target: "settings-ai",
         title: "Unlock AI features",
-        body: "Add your own AI provider and API key to use AI quizzes and Stories.",
+        body: "Use your AI credits for AI quizzes and Stories, or add your own provider and API key to keep going.",
       },
     ],
   },

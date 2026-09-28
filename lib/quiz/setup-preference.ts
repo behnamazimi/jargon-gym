@@ -25,6 +25,8 @@ export type InitialQuizSetup = {
   savedCollectionId: string | null;
   /** The collection came from a `?domain=` link, not from the picker. */
   collectionFromLink: boolean;
+  /** They last used AI quizzes but AI isn't available now, so we opened on Simple. */
+  aiFellBack: boolean;
 };
 
 function isValidCount(value: unknown): value is number {
@@ -59,14 +61,16 @@ export function resolveInitialQuizSetup(input: {
   saved: SavedQuizSetup | null;
   domainParam: string | undefined;
   activeIds: string[];
-  llmConfigured: boolean;
+  aiAvailable: boolean;
 }): InitialQuizSetup {
-  const { saved, domainParam, activeIds, llmConfigured } = input;
+  const { saved, domainParam, activeIds, aiAvailable } = input;
   const savedCollectionId = saved?.collectionId ?? null;
+  const wantedAi = saved?.style === "ai";
 
   return {
-    // An AI quiz can't start without a key, so don't open on it.
-    style: saved?.style === "ai" && llmConfigured ? "ai" : "simple",
+    // An AI quiz can't start without a key or credits, so don't open on it.
+    style: wantedAi && aiAvailable ? "ai" : "simple",
+    aiFellBack: wantedAi && !aiAvailable,
     collectionId: resolveStudyCollectionId(domainParam, savedCollectionId, activeIds),
     count: saved?.count ?? null,
     savedCollectionId,

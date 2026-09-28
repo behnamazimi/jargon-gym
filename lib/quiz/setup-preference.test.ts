@@ -50,7 +50,7 @@ describe("resolveInitialQuizSetup", () => {
         saved: null,
         domainParam: undefined,
         activeIds: [A],
-        llmConfigured: true,
+        aiAvailable: true,
       }),
     ).toEqual({
       style: "simple",
@@ -58,26 +58,38 @@ describe("resolveInitialQuizSetup", () => {
       count: null,
       savedCollectionId: null,
       collectionFromLink: false,
+      aiFellBack: false,
     });
   });
 
-  it("falls back to simple when AI has no key", () => {
+  it("falls back to simple, and says so, when AI isn't available", () => {
     const setup = resolveInitialQuizSetup({
       saved: { style: "ai" },
       domainParam: undefined,
       activeIds: [A],
-      llmConfigured: false,
+      aiAvailable: false,
     });
     expect(setup.style).toBe("simple");
+    expect(setup.aiFellBack).toBe(true);
+  });
+
+  it("stays on AI when it is available", () => {
+    const setup = resolveInitialQuizSetup({
+      saved: { style: "ai" },
+      domainParam: undefined,
+      activeIds: [A],
+      aiAvailable: true,
+    });
+    expect(setup).toMatchObject({ style: "ai", aiFellBack: false });
   });
 
   it("uses the remembered collection only while it's active", () => {
     const base = { saved: { style: "simple" as const, collectionId: A }, domainParam: undefined };
     expect(
-      resolveInitialQuizSetup({ ...base, activeIds: [A, B], llmConfigured: false }).collectionId,
+      resolveInitialQuizSetup({ ...base, activeIds: [A, B], aiAvailable: false }).collectionId,
     ).toBe(A);
     expect(
-      resolveInitialQuizSetup({ ...base, activeIds: [B], llmConfigured: false }).collectionId,
+      resolveInitialQuizSetup({ ...base, activeIds: [B], aiAvailable: false }).collectionId,
     ).toBe("all");
   });
 
@@ -86,7 +98,7 @@ describe("resolveInitialQuizSetup", () => {
       saved: { style: "simple", collectionId: A },
       domainParam: B,
       activeIds: [A, B],
-      llmConfigured: false,
+      aiAvailable: false,
     });
     expect(setup).toMatchObject({
       collectionId: B,
@@ -100,7 +112,7 @@ describe("resolveInitialQuizSetup", () => {
       saved: null,
       domainParam: B,
       activeIds: [A],
-      llmConfigured: false,
+      aiAvailable: false,
     });
     expect(setup).toMatchObject({ collectionId: "all", collectionFromLink: false });
   });
@@ -129,6 +141,7 @@ describe("quizSetupToSave", () => {
     count: null,
     savedCollectionId: A,
     collectionFromLink: true,
+    aiFellBack: false,
   };
 
   it("keeps the remembered collection after an unchanged link visit", () => {

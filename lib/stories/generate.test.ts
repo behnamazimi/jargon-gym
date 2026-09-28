@@ -84,13 +84,19 @@ describe("generateStory", () => {
 
   it("does not retry a rejected key", async () => {
     mockedGenerate.mockRejectedValue(apiError(401));
-    await expect(generateStory(INPUT)).rejects.toThrow(/API key was rejected/);
+    await expect(generateStory(INPUT)).rejects.toMatchObject({
+      kind: "auth",
+      message: expect.stringMatching(/API key was rejected/),
+    });
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
   });
 
   it("does not retry a rate limit", async () => {
     mockedGenerate.mockRejectedValue(apiError(429));
-    await expect(generateStory(INPUT)).rejects.toThrow(/rate-limiting/);
+    await expect(generateStory(INPUT)).rejects.toMatchObject({
+      kind: "rate-limit",
+      message: expect.stringMatching(/rate-limiting/),
+    });
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
   });
 

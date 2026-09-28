@@ -4,7 +4,15 @@ import { after } from "next/server";
 import { z } from "zod";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/jargon/review-outcome";
-import { getDecryptedApiKey } from "@/lib/llm/settings";
+import { runWithCredits } from "@/lib/ai-credits/charge";
+import { storyCost } from "@/lib/ai-credits/costs";
+import {
+  AI_TEMPORARILY_UNAVAILABLE,
+  creditsRefusedFailure,
+  noAiFailure,
+} from "@/lib/ai-credits/messages";
+import { resolveAiAccess } from "@/lib/llm/access";
+import type { AiFailureReason } from "@/lib/llm/types";
 import { StoryProviderError, generateStory } from "@/lib/stories/generate";
 import {
   dismissUnreadStories,
@@ -31,7 +39,9 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { pickReadTermsForUser } from "@/lib/trace-queue";
 
-export type StoryResult = { error: string } | { story: Story; terms: StoryTerm[] };
+export type StoryResult =
+  | { error: string; reason?: AiFailureReason }
+  | { story: Story; terms: StoryTerm[] };
 
 const LOGIN_ERROR = "Log in to continue.";
 const NOT_ENOUGH_TERMS_ERROR = `This collection needs at least ${STORY_MIN_TERMS} terms left to read.`;
@@ -49,6 +59,23 @@ const generateInputSchema = z.object({
     .nullable(),
 });
 
+/** Turns a failed generation into what the user sees. Credits users never see
+ *  provider or key details, since the key isn't theirs. */
+function storyFailure(err: unknown, usingCredits: boolean): StoryResult {
+  if (err instanceof StoryProviderError) {
+    if (usingCredits) {
+      const keyFault = err.kind === "auth" || err.kind === "rate-limit";
+      return { error: keyFault ? AI_TEMPORARILY_UNAVAILABLE : err.message, reason: "unavailable" };
+    }
+    return { error: err.message, reason: err.kind === "auth" ? "own-key" : undefined };
+  }
+  console.error("generateStoryAction failed:", err);
+  return {
+    error: "Couldn't write a story this time. Try again.",
+    reason: usingCredits ? "unavailable" : undefined,
+  };
+}
+
 export async function generateStoryAction(input: {
   domainId: string;
   readingLevel: string;
@@ -65,10 +92,12 @@ export async function generateStoryAction(input: {
   const levels = { readingLevel, cefrLevel, pieceLength };
   const userId = auth.user.id;
   const admin = createAdminClient();
+  let usingCredits = false;
 
   try {
-    const credentials = await getDecryptedApiKey(auth.supabase, userId);
-    if (!credentials) return { error: "Add a provider and API key in Settings to write stories." };
+    const access = await resolveAiAccess(auth.supabase, userId);
+    if (access.kind === "unavailable") return noAiFailure(access.reason, "write stories");
+    usingCredits = access.kind === "credits";
 
     await savePrefs(admin, userId, domainId, levels);
 
@@ -89,45 +118,68 @@ export async function generateStoryAction(input: {
       definition: card.definition,
     }));
 
-    const generated = await generateStory({
-      provider: credentials.provider,
-      apiKey: credentials.apiKey,
-      terms,
-      collectionName: collection.name,
-      language: collection.language,
-      format,
-      tone,
-      readingLevel,
-      cefrLevel,
-      pieceLength,
-      outline,
-      setting: pickSetting(format.id),
-      recentTitles,
-    });
+    // Everything the user receives, so a failure anywhere in here refunds the credits.
+    const produce = async () => {
+      const generated = await generateStory({
+        provider: access.provider,
+        apiKey: access.apiKey,
+        terms,
+        collectionName: collection.name,
+        language: collection.language,
+        format,
+        tone,
+        readingLevel,
+        cefrLevel,
+        pieceLength,
+        outline,
+        setting: pickSetting(format.id),
+        recentTitles,
+      });
 
-    const usedIds = new Set(generated.termIds);
-    const story = await insertStory(admin, {
-      userId,
-      domainId,
-      language: collection.language,
-      format: format.id,
-      tone: tone.id,
-      levels,
-      outline,
-      title: generated.title,
-      segments: generated.segments,
-      termIds: generated.termIds,
-      newTermIds: cards
-        .filter((card) => card.isNewToUser && usedIds.has(card.id))
-        .map((card) => card.id),
-    });
-    await dismissUnreadStories(admin, userId, { keepStoryId: story.id });
+      const usedIds = new Set(generated.termIds);
+      const story = await insertStory(admin, {
+        userId,
+        domainId,
+        language: collection.language,
+        format: format.id,
+        tone: tone.id,
+        levels,
+        outline,
+        title: generated.title,
+        segments: generated.segments,
+        termIds: generated.termIds,
+        newTermIds: cards
+          .filter((card) => card.isNewToUser && usedIds.has(card.id))
+          .map((card) => card.id),
+      });
+      return { story, usedIds };
+    };
 
-    return { story, terms: terms.filter((term) => usedIds.has(term.id)) };
+    let produced: Awaited<ReturnType<typeof produce>>;
+    if (access.kind === "credits") {
+      const outcome = await runWithCredits(
+        {
+          admin,
+          userId,
+          feature: "story",
+          cost: storyCost(cards.length, access.costs),
+        },
+        produce,
+      );
+      if (!outcome.charged) return creditsRefusedFailure(outcome, "story");
+      produced = outcome.value;
+    } else {
+      produced = await produce();
+    }
+
+    await dismissUnreadStories(admin, userId, { keepStoryId: produced.story.id });
+
+    return {
+      story: produced.story,
+      terms: terms.filter((term) => produced.usedIds.has(term.id)),
+    };
   } catch (err) {
-    if (err instanceof StoryProviderError) return { error: err.message };
-    console.error("generateStoryAction failed:", err);
-    return { error: "Couldn't write a story this time. Try again." };
+    return storyFailure(err, usingCredits);
   }
 }
 
