@@ -23,6 +23,8 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 **Status:**
 
+- Phase 1: merged in #116, 2026-09-29. Accepted gaps: a rejected server-action call (network drop, stale tab) is not caught per component and reaches `error.tsx` until phase 3's `useAdminAction`; the ai-credits actions keep their own private `runAdminAction` until phase 3.
+
 ---
 
 ## 1. Summary

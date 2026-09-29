@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { AdminAiCreditsPageClient } from "@/components/jargon/admin/admin-ai-credits-page";
 import {
   getAiCreditSettingsForAdmin,
@@ -9,13 +8,10 @@ import {
 import { featureHealth } from "@/lib/ai/health";
 import { getFeatureSettings } from "@/lib/ai/feature-settings";
 import type { AiFeatureRow } from "@/components/jargon/admin/admin-ai-features";
-import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 
 export default async function AdminAiCreditsPage() {
-  const { supabase, user } = await getSessionUser();
-  if (!user || !(await getUserIsAdmin(user.id))) {
-    notFound();
-  }
+  const { supabase } = await requireAdminPage();
 
   const [settings, usage, summary, failureReasons] = await Promise.all([
     getAiCreditSettingsForAdmin(supabase),

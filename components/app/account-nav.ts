@@ -1,13 +1,10 @@
 import {
-  Bug,
-  Coins,
   Compass,
+  LayoutDashboard,
   LayoutList,
-  Mail,
   Settings,
   Signal,
   Sparkles,
-  SquareLibrary,
   Upload,
   Zap,
   BookOpen,
@@ -51,10 +48,7 @@ export const ACCOUNT_HOME_NAV: AccountNavItem[] = [
 ];
 
 export const ADMIN_NAV_ITEMS: AccountNavItem[] = [
-  { href: "/jargon/debug", label: "Queue debug", icon: Bug },
-  { href: "/admin/collections", label: "Manage collections", icon: SquareLibrary },
-  { href: "/admin/invites", label: "Invites", icon: Mail },
-  { href: "/admin/ai-credits", label: "AI credits", icon: Coins },
+  { href: "/admin", label: "Admin panel", icon: LayoutDashboard },
 ];
 
 const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
@@ -70,6 +64,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/admin/collections", "Manage collections"],
   ["/admin/invites", "Invites"],
   ["/admin/ai-credits", "AI credits"],
+  ["/admin/narration", "Narration"],
   ["/admin", "Admin"],
 ];
 

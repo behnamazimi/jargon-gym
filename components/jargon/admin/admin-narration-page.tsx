@@ -5,7 +5,6 @@ import {
   removeFromNarrationAllowlist,
   setNarrationEnabled,
 } from "@/app/(private)/admin/narration/actions";
-import { AdminNav } from "@/components/jargon/admin/admin-nav";
 import { AllowlistManager } from "@/components/jargon/admin/admin-narration-allowlist-manager";
 import { AdminNarrationSync } from "@/components/jargon/admin/admin-narration-sync";
 import { AdminNarrationCaps } from "@/components/jargon/admin/admin-narration-caps";
@@ -83,9 +82,7 @@ export function AdminNarrationPageClient({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
-      <AdminNav />
-
+    <div className="flex flex-col gap-6">
       <div className="max-md:sr-only">
         <h1 className="text-2xl font-semibold text-base-content">Narration</h1>
         <p className="mt-1 text-base text-base-content/65">

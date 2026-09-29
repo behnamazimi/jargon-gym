@@ -1,8 +1,7 @@
-import { notFound } from "next/navigation";
 import { AdminNarrationPageClient } from "@/components/jargon/admin/admin-narration-page";
 import { describeCron, getCronStatus } from "@/lib/narration/worker-status";
 import { featureHealth } from "@/lib/ai/health";
-import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
 import { listNarrationAllowlistForAdmin } from "@/lib/jargon/admin/list-narration-allowlist";
 import { getNarrationSettingsForAdmin } from "@/lib/jargon/admin/narration-settings";
@@ -14,10 +13,7 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminNarrationPage() {
-  const { supabase, user } = await getSessionUser();
-  if (!user || !(await getUserIsAdmin(user.id))) {
-    notFound();
-  }
+  const { supabase } = await requireAdminPage();
 
   const admin = createAdminClient();
   const [settings, allowlist, collections] = await Promise.all([

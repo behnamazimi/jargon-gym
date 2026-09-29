@@ -10,7 +10,7 @@ export default function AdminError({ reset, unstable_retry }: AdminErrorProps) {
   const retry = unstable_retry ?? reset;
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col items-start gap-4 px-4 py-8">
+    <div className="flex flex-col items-start gap-4">
       <div role="alert" className="alert alert-error w-full">
         Something went wrong loading this page.
       </div>
