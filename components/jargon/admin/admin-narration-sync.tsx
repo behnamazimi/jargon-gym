@@ -24,10 +24,6 @@ type AdminNarrationSyncProps = {
   lastJob: NarrationSyncJobView | null;
 };
 
-function actionError(err: unknown, fallback: string) {
-  return err instanceof Error ? err.message : fallback;
-}
-
 export function AdminNarrationSync({
   enabled: narrationEnabled,
   coverage: initialCoverage,
@@ -46,30 +42,33 @@ export function AdminNarrationSync({
     () => {
       void (async () => {
         try {
-          const next = await getNarrationSyncStatus();
+          const status = await getNarrationSyncStatus();
+          if (!status.ok) {
+            setError(status.error);
+            return;
+          }
+          setError(null);
+          const next = status.data;
           setJob(next);
           if (!next || isActiveNarrationSyncStatus(next.status)) return;
-          setCoverage(
-            await getNarrationSyncCoverage(
-              coverage.map((row) => ({ id: row.domainId, name: row.name })),
-            ),
+          const refreshed = await getNarrationSyncCoverage(
+            coverage.map((row) => ({ id: row.domainId, name: row.name })),
           );
-        } catch (err) {
-          setError(actionError(err, "Failed to refresh status."));
+          if (refreshed.ok) setCoverage(refreshed.data);
+          else setError(refreshed.error);
+        } catch {
+          setError("Failed to refresh status.");
         }
       })();
     },
     active ? POLL_MS : null,
   );
 
-  function run(fallback: string, work: () => Promise<void>) {
+  function run(work: () => Promise<{ ok: true } | { ok: false; error: string }>) {
     setError(null);
     startTransition(async () => {
-      try {
-        await work();
-      } catch (err) {
-        setError(actionError(err, fallback));
-      }
+      const result = await work();
+      if (!result.ok) setError(result.error);
     });
   }
 
@@ -98,20 +97,27 @@ export function AdminNarrationSync({
         isPending={isPending}
         onSelect={setSelectedId}
         onStart={() =>
-          run("Failed to start.", async () => {
-            if (!selectedId) return;
-            setJob(await startNarrationSync(selectedId));
+          run(async () => {
+            if (!selectedId) return { ok: true };
+            const result = await startNarrationSync(selectedId);
+            if (result.ok) setJob(result.data);
+            return result;
           })
         }
         onCancel={() =>
-          run("Failed to cancel.", async () => {
-            setJob(await cancelNarrationSyncJob());
+          run(async () => {
+            const result = await cancelNarrationSyncJob();
+            if (result.ok) setJob(result.data);
+            return result;
           })
         }
         onResume={() =>
-          run("Failed to resume.", async () => {
-            await resumeNarrationSync();
-            setJob(await getNarrationSyncStatus());
+          run(async () => {
+            const resumed = await resumeNarrationSync();
+            if (!resumed.ok) return resumed;
+            const status = await getNarrationSyncStatus();
+            if (status.ok) setJob(status.data);
+            return status;
           })
         }
       />

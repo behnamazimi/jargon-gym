@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { cache } from "react";
+import { AdminError } from "@/lib/admin/admin-error";
 import { createClient } from "@/lib/supabase/server";
 
 export const getSessionUser = cache(async function getSessionUser() {
@@ -45,15 +46,13 @@ export async function requireAuthenticatedClient() {
 }
 
 /**
- * For admin-only server actions. Throws (rather than returning an error
- * value) so call sites can just `await` it and let the throw propagate to
- * the client's try/catch — matching how every admin action in this app
- * already surfaces "Admins only." to the UI.
+ * For admin-only server actions. Throws an `AdminError` for non-admins; admin
+ * actions call it through `runAdminAction`, which turns the throw into a result.
  */
 export async function requireAdminClient() {
   const { supabase, user } = await getSessionUser();
   if (!user || !(await getUserIsAdmin(user.id))) {
-    throw new Error("Admins only.");
+    throw new AdminError("Admins only.");
   }
   return { supabase, user };
 }

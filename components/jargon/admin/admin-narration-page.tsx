@@ -50,11 +50,10 @@ export function AdminNarrationPageClient({
     setEnabled(value);
 
     startTransition(async () => {
-      try {
-        await setNarrationEnabled(value);
-      } catch (err) {
+      const result = await setNarrationEnabled(value);
+      if (!result.ok) {
         setEnabled(previous);
-        setToggleError(err instanceof Error ? err.message : "Failed to update.");
+        setToggleError(result.error);
       }
     });
   }
@@ -65,17 +64,17 @@ export function AdminNarrationPageClient({
     setRemovingId(userId);
 
     startTransition(async () => {
-      try {
-        await removeFromNarrationAllowlist(userId);
-        setTimeout(() => {
-          setAllowlist((rows) => rows.filter((row) => row.userId !== userId));
-          setRemovingId(null);
-        }, 150);
-      } catch (err) {
+      const result = await removeFromNarrationAllowlist(userId);
+      if (!result.ok) {
         setAllowlist(previous);
         setRemovingId(null);
-        setRemoveError(err instanceof Error ? err.message : "Failed to remove.");
+        setRemoveError(result.error);
+        return;
       }
+      setTimeout(() => {
+        setAllowlist((rows) => rows.filter((row) => row.userId !== userId));
+        setRemovingId(null);
+      }, 150);
     });
   }
 

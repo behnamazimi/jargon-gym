@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { AdminError } from "@/lib/admin/admin-error";
 import type { Database } from "@/lib/supabase/database.types";
 import { isNarrationEnabled } from "./feature";
 import { listMissingNarrationTermIds } from "./sync-missing";
@@ -9,11 +10,7 @@ import {
   type NarrationSyncStatus,
 } from "./sync-shared";
 
-export {
-  canResumeNarrationSync,
-  type CollectionNarrationCoverage,
-  type NarrationSyncJobView,
-} from "./sync-shared";
+export { canResumeNarrationSync, type NarrationSyncJobView } from "./sync-shared";
 export {
   isCurrentAudio,
   listCollectionNarrationCoverage,
@@ -91,16 +88,16 @@ export async function enqueueNarrationSync(
   startedBy: string,
 ): Promise<NarrationSyncJobView> {
   if (!(await isNarrationEnabled(admin))) {
-    throw new Error("Narration is turned off.");
+    throw new AdminError("Narration is turned off.");
   }
 
   if (await getActiveJob(admin)) {
-    throw new Error("A sync is already running.");
+    throw new AdminError("A sync is already running.");
   }
 
   const termIds = await listMissingNarrationTermIds(admin, domainId);
   if (termIds.length === 0) {
-    throw new Error("No missing audio in that collection.");
+    throw new AdminError("No missing audio in that collection.");
   }
 
   const { data: domain, error: domainError } = await admin
@@ -109,7 +106,7 @@ export async function enqueueNarrationSync(
     .eq("id", domainId)
     .maybeSingle();
   if (domainError) throw domainError;
-  if (!domain) throw new Error("Collection not found.");
+  if (!domain) throw new AdminError("Collection not found.");
 
   const { data: row, error } = await admin
     .from("narration_sync_jobs")
@@ -124,7 +121,7 @@ export async function enqueueNarrationSync(
 
   if (error) {
     if (error.code === "23505") {
-      throw new Error("A sync is already running.");
+      throw new AdminError("A sync is already running.");
     }
     throw error;
   }

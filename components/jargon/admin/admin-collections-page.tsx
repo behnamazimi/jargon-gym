@@ -67,12 +67,11 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
     if (!value) setIsPublic(false);
 
     startTransition(async () => {
-      try {
-        await setBuiltin(collection.id, value);
-      } catch (err) {
+      const result = await setBuiltin(collection.id, value);
+      if (!result.ok) {
         setIsBuiltin(previousBuiltin);
         setIsPublic(previousPublic);
-        setError(err instanceof Error ? err.message : "Failed to update.");
+        setError(result.error);
       }
     });
   }
@@ -83,13 +82,13 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
     setIsPublic(value);
 
     startTransition(async () => {
-      try {
-        const result = await setPublic(collection.id, value);
-        if (result.slug) setSlug(result.slug);
-      } catch (err) {
+      const result = await setPublic(collection.id, value);
+      if (!result.ok) {
         setIsPublic(previous);
-        setError(err instanceof Error ? err.message : "Failed to update.");
+        setError(result.error);
+        return;
       }
+      if (result.data.slug) setSlug(result.data.slug);
     });
   }
 
@@ -98,13 +97,13 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
     setError(null);
 
     startTransition(async () => {
-      try {
-        const result = await updateDomainSlug(collection.id, slug);
-        setSlug(result.slug);
-      } catch (err) {
+      const result = await updateDomainSlug(collection.id, slug);
+      if (!result.ok) {
         setSlug(collection.slug ?? "");
-        setError(err instanceof Error ? err.message : "Failed to update slug.");
+        setError(result.error);
+        return;
       }
+      setSlug(result.data.slug);
     });
   }
 
