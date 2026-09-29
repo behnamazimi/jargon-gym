@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { grantAiCredits } from "@/app/(private)/admin/ai-credits/actions";
+import { grantAiCredits } from "@/app/(private)/admin/ai/credits/actions";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import {
   Dialog,

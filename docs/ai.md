@@ -63,12 +63,12 @@ Audio is made by ElevenLabs and kept in the storage bucket. The shared code is
 Terms use `/api/narration/[termId]`, stories `/api/stories/[storyId]/narration`.
 Bulk generation per collection is the narration sync job
 (`narration_sync_jobs`, `lib/narration/sync*.ts`), started from
-`/admin/narration` and continued by a cron job; see
+`/admin/ai/narration` and continued by a cron job; see
 [supabase/narration-sync-cron.md](supabase/narration-sync-cron.md).
 
 ## Cost levers
 
-- Credits: allowance, monthly refill and per-feature prices (`/admin/ai-credits`).
+- Credits: allowance, monthly refill and per-feature prices (`/admin/ai/credits`).
 - Per-feature switch, access mode and daily cap (admin pages).
 - Narration caps are counted in provider calls (`ai_usage_events`), and a clip
   that already exists costs nothing.

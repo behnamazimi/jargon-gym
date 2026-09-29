@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugScoredRow } from "@/app/(private)/admin/system/queue/actions";
 import { ScoreRow } from "./score-row";
 import { ScoreRowsToolbar } from "./score-rows-toolbar";
 import { filterAndSort, type SortOption } from "./score-rows-sort";

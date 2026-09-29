@@ -4,7 +4,7 @@ import {
   getTermEventHistoryAction,
   type DebugEventRow,
   type DebugScoredRow,
-} from "@/app/(private)/jargon/debug/actions";
+} from "@/app/(private)/admin/system/queue/actions";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type { AttentionFlag, CrossTrackFlag } from "@/lib/trace";
 import { cn } from "@/lib/utils";

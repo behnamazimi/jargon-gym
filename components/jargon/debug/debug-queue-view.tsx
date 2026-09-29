@@ -1,5 +1,5 @@
 import { Clock, Gauge, ListChecks } from "lucide-react";
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugScoredRow } from "@/app/(private)/admin/system/queue/actions";
 import { CollapsiblePanel } from "@/components/jargon/debug/collapsible-panel";
 import { ScoreRows } from "@/components/jargon/debug/score-rows";
 import {

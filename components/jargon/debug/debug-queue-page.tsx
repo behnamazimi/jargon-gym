@@ -1,5 +1,8 @@
 import { AlertCircle } from "lucide-react";
-import type { CalibrationViewData, DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type {
+  CalibrationViewData,
+  DebugScoredRow,
+} from "@/app/(private)/admin/system/queue/actions";
 import { DebugCalibrationView } from "@/components/jargon/debug/debug-calibration-view";
 import { DebugQueueView } from "@/components/jargon/debug/debug-queue-view";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";

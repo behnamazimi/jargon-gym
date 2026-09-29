@@ -1,5 +1,5 @@
 import { SlidersHorizontal, Target, Timer } from "lucide-react";
-import type { CalibrationViewData } from "@/app/(private)/jargon/debug/actions";
+import type { CalibrationViewData } from "@/app/(private)/admin/system/queue/actions";
 import { CollapsiblePanel } from "@/components/jargon/debug/collapsible-panel";
 import { QuizPanel, QuizPanelBody, QuizPanelHeader } from "@/components/jargon/quiz/quiz-ui";
 import {

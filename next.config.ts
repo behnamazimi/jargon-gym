@@ -1,9 +1,13 @@
 import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
+import { LEGACY_ADMIN_REDIRECTS } from "./lib/redirects";
 
 const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["react-aria-components", "lucide-react"],
+  },
+  async redirects() {
+    return LEGACY_ADMIN_REDIRECTS;
   },
   async headers() {
     return [

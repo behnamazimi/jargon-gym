@@ -1,4 +1,4 @@
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugScoredRow } from "@/app/(private)/admin/system/queue/actions";
 import { summarizeRetrievabilityDistribution, type RetrievabilityBucket } from "@/lib/trace";
 import { formatPercent } from "./format";
 

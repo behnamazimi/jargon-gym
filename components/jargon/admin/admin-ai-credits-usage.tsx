@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { resetAiCredits } from "@/app/(private)/admin/ai-credits/actions";
+import { resetAiCredits } from "@/app/(private)/admin/ai/credits/actions";
 import { AdminSection } from "@/components/admin/admin-section";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { AdminAiCreditsGrantDialog } from "@/components/jargon/admin/admin-ai-credits-grant-dialog";

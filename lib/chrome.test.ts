@@ -28,6 +28,7 @@ describe("isMorePath", () => {
   it("covers overflow destinations", () => {
     expect(isMorePath("/jargon/settings")).toBe(true);
     expect(isMorePath("/admin/collections")).toBe(true);
+    expect(isMorePath("/admin/system/queue")).toBe(true);
     expect(isMorePath("/jargon/read")).toBe(false);
     expect(isMorePath("/jargon")).toBe(false);
   });

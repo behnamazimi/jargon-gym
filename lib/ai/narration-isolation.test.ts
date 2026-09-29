@@ -22,7 +22,7 @@ function narrationFiles(): string[] {
     ...sourceFiles("lib/ai/speech"),
     "app/api/narration/[termId]/route.ts",
     "app/api/stories/[storyId]/narration/route.ts",
-    "app/(private)/admin/narration/actions.ts",
+    "app/(private)/admin/ai/narration/actions.ts",
     "lib/ai/usage.ts",
   ];
 }

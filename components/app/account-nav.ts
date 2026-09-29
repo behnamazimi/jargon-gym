@@ -60,11 +60,12 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/jargon/import", "Import"],
   ["/jargon/mastery", "Mastery"],
   ["/jargon/settings", "Settings"],
-  ["/jargon/debug", "Queue debug"],
   ["/admin/collections", "Manage collections"],
   ["/admin/invites", "Invites"],
-  ["/admin/ai-credits", "AI credits"],
-  ["/admin/narration", "Narration"],
+  ["/admin/ai/credits", "AI credits"],
+  ["/admin/ai/narration", "Narration"],
+  ["/admin/ai", "AI features"],
+  ["/admin/system/queue", "Queue debug"],
   ["/admin", "Admin"],
 ];
 

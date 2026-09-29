@@ -5,10 +5,13 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { listTraceCandidates } from "@/lib/trace-queue";
 import type { PickContext } from "@/lib/trace-queue";
 import { listStudyCollections } from "@/lib/study/collections";
-import { hydrateDebugRows, rankForContext } from "@/app/(private)/jargon/debug/debug-row-hydration";
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/debug-row-types";
+import {
+  hydrateDebugRows,
+  rankForContext,
+} from "@/app/(private)/admin/system/queue/debug-row-hydration";
+import type { DebugScoredRow } from "@/app/(private)/admin/system/queue/debug-row-types";
 
-export type { DebugScoredRow } from "@/app/(private)/jargon/debug/debug-row-types";
+export type { DebugScoredRow } from "@/app/(private)/admin/system/queue/debug-row-types";
 
 export const getDebugSetupData = cache(async function getDebugSetupData() {
   const auth = await requireAuthenticatedClient();

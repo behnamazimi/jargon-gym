@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { setNarrationCaps } from "@/app/(private)/admin/narration/actions";
+import { setNarrationCaps } from "@/app/(private)/admin/ai/narration/actions";
 import { AdminSection } from "@/components/admin/admin-section";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import type { NarrationSettings } from "@/lib/jargon/admin/narration-settings";

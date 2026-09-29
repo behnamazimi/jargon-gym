@@ -1,10 +1,9 @@
 "use client";
 
-import { setAiCreditsEnabled } from "@/app/(private)/admin/ai-credits/actions";
+import { setAiCreditsEnabled } from "@/app/(private)/admin/ai/credits/actions";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminSettingRow } from "@/components/admin/admin-setting-row";
 import { AdminSwitch } from "@/components/admin/admin-switch";
-import { AdminAiFeatures, type AiFeatureRow } from "@/components/jargon/admin/admin-ai-features";
 import { AdminAiCreditsFailures } from "@/components/jargon/admin/admin-ai-credits-failures";
 import { AdminAiCreditsSettings } from "@/components/jargon/admin/admin-ai-credits-settings";
 import { AdminAiCreditsSummary } from "@/components/jargon/admin/admin-ai-credits-summary";
@@ -17,7 +16,6 @@ import type {
 } from "@/lib/ai-credits/admin";
 
 type AdminAiCreditsPageClientProps = {
-  features: AiFeatureRow[];
   settings: AiCreditSettingsView;
   usage: AiCreditUsageRow[];
   summary: AiCreditSummary;
@@ -25,7 +23,6 @@ type AdminAiCreditsPageClientProps = {
 };
 
 export function AdminAiCreditsPageClient({
-  features,
   settings,
   usage,
   summary,
@@ -35,7 +32,7 @@ export function AdminAiCreditsPageClient({
     <>
       <AdminPageHeader
         title="AI credits"
-        description="Let people use the app's AI key until they add their own, and see how it's going."
+        description="Let people use the app's AI key until they add their own, and see how it's going. Feature switches are on the AI features page."
       />
 
       <AdminSettingRow
@@ -50,7 +47,6 @@ export function AdminAiCreditsPageClient({
         }
       />
 
-      <AdminAiFeatures rows={features} />
       <AdminAiCreditsSummary summary={summary} />
       <AdminAiCreditsFailures reasons={failureReasons} />
       <AdminAiCreditsSettings settings={settings} totalPeople={summary.totalUsers} />
