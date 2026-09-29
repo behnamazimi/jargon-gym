@@ -6,42 +6,55 @@ type Client = SupabaseClient<Database>;
 export type AdminCollectionRow = {
   id: string;
   name: string;
+  ownerId: string;
   ownerEmail: string | null;
   termCount: number;
   isBuiltin: boolean;
   isPublic: boolean;
   slug: string | null;
   visibility: "private" | "shared";
+  /** Someone else's private collection: an admin can see it exists, not change it. */
+  readOnly: boolean;
 };
 
-export async function listAllCollectionsForAdmin(client: Client): Promise<AdminCollectionRow[]> {
-  const { data: domains, error } = await client
-    .from("domains")
-    .select(
-      "id, name, owner_id, is_builtin, is_public, slug, visibility, users!domains_owner_id_fkey(email)",
-    )
-    .order("name");
+/** Admins act on shared collections and their own. Other people's private ones are theirs alone. */
+export function canActOnCollection(
+  collection: { visibility: string; ownerId: string },
+  adminId: string,
+): boolean {
+  return collection.visibility === "shared" || collection.ownerId === adminId;
+}
 
+/** Narration is generated for whatever it is asked about, so it also covers public collections
+ *  (which anyone can read), but never someone else's private, unpublished one. */
+export function canNarrateCollection(collection: {
+  readOnly: boolean;
+  isPublic: boolean;
+}): boolean {
+  return !collection.readOnly || collection.isPublic;
+}
+
+/** Every collection, including other people's private ones: the table's row
+ *  level security hides those from an admin's own session, so this reads
+ *  through a function. */
+export async function listAllCollectionsForAdmin(
+  client: Client,
+  adminId: string,
+): Promise<AdminCollectionRow[]> {
+  const { data, error } = await client.rpc("admin_list_collections");
   if (error) throw error;
-  if (!domains?.length) return [];
 
-  const { data: terms, error: termsError } = await client.from("terms").select("domain_id");
-
-  if (termsError) throw termsError;
-
-  const termCountByDomain = new Map<string, number>();
-  for (const row of terms ?? []) {
-    termCountByDomain.set(row.domain_id, (termCountByDomain.get(row.domain_id) ?? 0) + 1);
-  }
-
-  return domains.map((domain) => ({
-    id: domain.id,
-    name: domain.name,
-    ownerEmail: domain.users?.email ?? null,
-    termCount: termCountByDomain.get(domain.id) ?? 0,
-    isBuiltin: domain.is_builtin,
-    isPublic: domain.is_public,
-    slug: domain.slug,
-    visibility: domain.visibility,
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    ownerId: row.owner_id,
+    // The generated types treat these two as never null; the join and the column can be.
+    ownerEmail: (row.owner_email as string | null) ?? null,
+    termCount: Number(row.term_count),
+    isBuiltin: row.is_builtin,
+    isPublic: row.is_public,
+    slug: (row.slug as string | null) || null,
+    visibility: row.visibility,
+    readOnly: !canActOnCollection({ visibility: row.visibility, ownerId: row.owner_id }, adminId),
   }));
 }

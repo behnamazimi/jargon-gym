@@ -7,8 +7,10 @@ export function slugify(input: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+const MAX_SLUG_ROOT = 100;
+
 export function generateUniqueSlug(base: string, existingSlugs: ReadonlySet<string>): string {
-  const root = slugify(base) || "item";
+  const root = slugify(base).slice(0, MAX_SLUG_ROOT).replace(/-+$/, "") || "item";
   if (!existingSlugs.has(root)) return root;
 
   let suffix = 2;

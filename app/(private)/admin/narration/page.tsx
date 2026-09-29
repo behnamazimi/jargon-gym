@@ -2,7 +2,10 @@ import { AdminNarrationPageClient } from "@/components/jargon/admin/admin-narrat
 import { describeCron, getCronStatus } from "@/lib/narration/worker-status";
 import { featureHealth } from "@/lib/ai/health";
 import { requireAdminPage } from "@/lib/admin/page-guard";
-import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
+import {
+  canNarrateCollection,
+  listAllCollectionsForAdmin,
+} from "@/lib/jargon/admin/list-all-collections";
 import { listNarrationAllowlistForAdmin } from "@/lib/jargon/admin/list-narration-allowlist";
 import { getNarrationSettingsForAdmin } from "@/lib/jargon/admin/narration-settings";
 import {
@@ -13,13 +16,13 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminNarrationPage() {
-  const { supabase } = await requireAdminPage();
+  const { supabase, user } = await requireAdminPage();
 
   const admin = createAdminClient();
   const [settings, allowlist, collections] = await Promise.all([
     getNarrationSettingsForAdmin(supabase),
     listNarrationAllowlistForAdmin(supabase),
-    listAllCollectionsForAdmin(supabase),
+    listAllCollectionsForAdmin(supabase, user.id),
   ]);
 
   let lastJob = null;
@@ -31,7 +34,9 @@ export default async function AdminNarrationPage() {
 
   const coverage = await listCollectionNarrationCoverage(
     admin,
-    collections.map((collection) => ({ id: collection.id, name: collection.name })),
+    collections
+      .filter(canNarrateCollection)
+      .map((collection) => ({ id: collection.id, name: collection.name })),
   );
 
   const resumable = canResumeNarrationSync(lastJob);

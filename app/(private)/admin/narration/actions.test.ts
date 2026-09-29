@@ -4,20 +4,36 @@ const state = vi.hoisted(() => ({
   admin: true,
   account: { id: "u1", email: "a@example.test" } as { id: string; email: string } | null,
   ilikeArgs: [] as string[],
-  updated: [] as unknown[],
-  updatedWhere: [] as unknown[],
-  updatedFeatures: [] as unknown[],
-  capRows: {} as Record<string, unknown[]>,
-  updateRows: [{ feature: "narration_term" }, { feature: "narration_story" }] as unknown[],
+  rpcCalls: [] as { name: string; args: unknown }[],
+  rpcError: null as { message: string } | null,
+  collections: [] as Record<string, unknown>[],
   upserts: [] as unknown[],
   upsertOptions: [] as unknown[],
   deleted: [] as unknown[],
+  enqueued: [] as string[],
+  coverageFor: [] as { id: string; name: string }[],
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: () => undefined }));
 vi.spyOn(console, "error").mockImplementation(() => undefined);
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
-vi.mock("@/lib/narration/sync", () => ({}));
+vi.mock("@/lib/narration/sync", () => ({
+  cancelNarrationSync: async () => null,
+  canResumeNarrationSync: () => false,
+  enqueueNarrationSync: async (_client: unknown, domainId: string) => {
+    state.enqueued.push(domainId);
+    return { id: "job-1" };
+  },
+  getLastNarrationSyncJob: async () => null,
+  kickNarrationSyncWorker: () => undefined,
+  listCollectionNarrationCoverage: async (
+    _client: unknown,
+    collections: typeof state.coverageFor,
+  ) => {
+    state.coverageFor = collections;
+    return [];
+  },
+}));
 vi.mock("@/lib/auth/require-session", async () => {
   const { AdminError } = await import("@/lib/admin/admin-error");
   return {
@@ -26,6 +42,13 @@ vi.mock("@/lib/auth/require-session", async () => {
       return {
         user: { id: "admin-1" },
         supabase: {
+          rpc: (name: string, args: unknown) => {
+            state.rpcCalls.push({ name, args });
+            if (name === "admin_list_collections") {
+              return Promise.resolve({ data: state.collections, error: null });
+            }
+            return Promise.resolve({ error: state.rpcError });
+          },
           from: (table: string) => {
             if (table === "users") {
               return {
@@ -37,28 +60,6 @@ vi.mock("@/lib/auth/require-session", async () => {
                     };
                   },
                 }),
-              };
-            }
-            if (table === "ai_feature_settings") {
-              return {
-                update: (values: unknown) => {
-                  state.updated.push(values);
-                  return {
-                    eq: (_column: string, feature: string) => {
-                      state.updatedWhere.push(feature);
-                      return {
-                        select: () =>
-                          Promise.resolve({ data: state.capRows[feature] ?? [], error: null }),
-                      };
-                    },
-                    in: (_column: string, features: unknown) => {
-                      state.updatedFeatures.push(features);
-                      return {
-                        select: () => Promise.resolve({ data: state.updateRows, error: null }),
-                      };
-                    },
-                  };
-                },
               };
             }
             if (table === "ai_feature_allowlist") {
@@ -88,42 +89,55 @@ vi.mock("@/lib/auth/require-session", async () => {
 
 const {
   addToNarrationAllowlist,
+  getNarrationSyncCoverage,
   removeFromNarrationAllowlist,
   setNarrationCaps,
   setNarrationEnabled,
+  startNarrationSync,
 } = await import("./actions");
 
 const BOTH = ["narration_term", "narration_story"];
+
+const collection = (id: string, overrides: Record<string, unknown> = {}) => ({
+  id,
+  name: `Collection ${id}`,
+  owner_id: "admin-1",
+  owner_email: null,
+  visibility: "private",
+  is_builtin: false,
+  is_public: false,
+  slug: null,
+  term_count: 1,
+  ...overrides,
+});
 
 beforeEach(() => {
   state.admin = true;
   state.account = { id: "u1", email: "a@example.test" };
   state.ilikeArgs = [];
-  state.updated = [];
-  state.updatedWhere = [];
-  state.capRows = {
-    narration_term: [{ feature: "narration_term" }],
-    narration_story: [{ feature: "narration_story" }],
-  };
-  state.updatedFeatures = [];
-  state.updateRows = [{ feature: "narration_term" }, { feature: "narration_story" }];
+  state.rpcCalls = [];
+  state.rpcError = null;
+  state.collections = [];
   state.upserts = [];
   state.upsertOptions = [];
   state.deleted = [];
+  state.enqueued = [];
+  state.coverageFor = [];
 });
 
 describe("narration admin actions", () => {
-  it("switches both narration features together, and nothing else", async () => {
+  it("switches both narration features together in one call", async () => {
     expect(await setNarrationEnabled(true)).toEqual({ ok: true, data: undefined });
-    expect(state.updated).toEqual([{ enabled: true }]);
-    expect(state.updatedFeatures).toEqual([BOTH]);
+    expect(state.rpcCalls).toEqual([
+      { name: "admin_set_narration_enabled", args: { p_enabled: true } },
+    ]);
   });
 
-  it("fails when a feature row didn't change, as a non-admin's update would", async () => {
-    state.updateRows = [];
+  it("shows a generic message when the database refuses", async () => {
+    state.rpcError = { message: "Expected both narration features to exist" };
     expect(await setNarrationEnabled(true)).toEqual({
       ok: false,
-      error: "Couldn't change the switch.",
+      error: "Something went wrong. Try again.",
     });
   });
 
@@ -166,15 +180,16 @@ describe("narration admin actions", () => {
   it("keeps non-admins out", async () => {
     state.admin = false;
     expect(await setNarrationEnabled(true)).toEqual({ ok: false, error: "Admins only." });
-    expect(state.updated).toEqual([]);
+    expect(state.rpcCalls).toEqual([]);
   });
 });
 
 describe("setNarrationCaps", () => {
-  it("saves both caps, a blank term cap meaning no limit", async () => {
+  it("saves both caps in one call, a blank term cap meaning no limit", async () => {
     expect(await setNarrationCaps({ term: null, story: 15 })).toMatchObject({ ok: true });
-    expect(state.updated).toEqual([{ daily_cap: null }, { daily_cap: 15 }]);
-    expect(state.updatedWhere).toEqual(["narration_term", "narration_story"]);
+    expect(state.rpcCalls).toEqual([
+      { name: "admin_set_narration_caps", args: { p_term_cap: null, p_story_cap: 15 } },
+    ]);
   });
 
   it("keeps a cap on stories and refuses nonsense numbers", async () => {
@@ -186,19 +201,54 @@ describe("setNarrationCaps", () => {
     ]) {
       expect(await setNarrationCaps(input)).toMatchObject({ ok: false, error: expect.any(String) });
     }
-    expect(state.updated).toEqual([]);
-  });
-
-  it("says so when a row didn't change, as a non-admin's update wouldn't", async () => {
-    state.capRows = {};
-    expect(await setNarrationCaps({ term: 5, story: 5 })).toEqual({
-      ok: false,
-      error: "Couldn't save the caps.",
-    });
+    expect(state.rpcCalls).toEqual([]);
   });
 
   it("keeps non-admins out", async () => {
     state.admin = false;
     expect(await setNarrationCaps({ term: 5, story: 5 })).toMatchObject({ ok: false });
+  });
+});
+
+describe("narration sync collections", () => {
+  beforeEach(() => {
+    state.collections = [
+      collection("mine"),
+      collection("shared", { owner_id: "someone", visibility: "shared" }),
+      collection("theirs", { owner_id: "someone", visibility: "private" }),
+      collection("theirs-public", {
+        owner_id: "someone",
+        visibility: "private",
+        is_builtin: true,
+        is_public: true,
+      }),
+    ];
+  });
+
+  it("starts a sync for a collection an admin may act on", async () => {
+    expect(await startNarrationSync("shared")).toMatchObject({ ok: true });
+    expect(state.enqueued).toEqual(["shared"]);
+  });
+
+  it("allows a public collection even when it is someone else's private one", async () => {
+    expect(await startNarrationSync("theirs-public")).toMatchObject({ ok: true });
+  });
+
+  it("refuses another person's private collection, whatever the browser sends", async () => {
+    expect(await startNarrationSync("theirs")).toEqual({
+      ok: false,
+      error: "Collection not found.",
+    });
+    expect(await startNarrationSync("nope")).toEqual({ ok: false, error: "Collection not found." });
+    expect(state.enqueued).toEqual([]);
+  });
+
+  it("only counts coverage for allowed collections, with names from the database", async () => {
+    await getNarrationSyncCoverage([
+      { id: "mine", name: "spoofed" },
+      { id: "theirs", name: "Theirs" },
+      { id: "unknown", name: "X" },
+    ]);
+    expect(state.coverageFor).toEqual([{ id: "mine", name: "Collection mine" }]);
   });
 });
