@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { AdminNarrationPageClient } from "@/components/jargon/admin/admin-narration-page";
+import { describeCron, getCronStatus } from "@/lib/narration/worker-status";
 import { featureHealth } from "@/lib/ai/health";
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
@@ -38,15 +39,20 @@ export default async function AdminNarrationPage() {
     collections.map((collection) => ({ id: collection.id, name: collection.name })),
   );
 
-  if (canResumeNarrationSync(lastJob)) {
+  const resumable = canResumeNarrationSync(lastJob);
+  if (resumable) {
     kickNarrationSyncWorker();
   }
+
+  const jobNeedsCron = resumable || lastJob?.status === "queued" || lastJob?.status === "running";
+  const cronNote = describeCron(await getCronStatus(supabase), jobNeedsCron);
 
   const health = featureHealth("narration_term");
 
   return (
     <AdminNarrationPageClient
       healthNote={health.ok ? null : health.note}
+      cronNote={cronNote}
       enabled={settings.enabled}
       caps={settings.caps}
       usageLast24h={settings.usageLast24h}

@@ -403,4 +403,4 @@ A second reviewer re-checked every claim in this report against the code. Result
 - Split the main build into **expand migration, code release, contract migration** (D1, D6). Do **F14-A after F1-A**, not together.
 - E15 and E16 are the real bill and outage risks and need their dry-run checks (5.3). E20 (secret change) is low risk by comparison.
 
-- Phase 4 (audio jobs expand): in progress, split into 4a migration and 4b app (second secret, heartbeat, versioned hash).
+- Phase 4 (audio jobs expand): split into 4a migration (merged in #108: `audio_jobs`, mirror triggers with exception handlers, repairable backfill, `ai_worker_status`) and 4b app prep (second internal secret, cron heartbeat, versioned hash): in progress. No claim function in phase 4 (phase 5 adds it with supersede semantics).

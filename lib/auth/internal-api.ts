@@ -25,11 +25,3 @@ export function authenticateInternalApiRequest(request: Request) {
 
   return { ok: true as const };
 }
-
-export function getInternalApiSecret(): string {
-  const secret = process.env.TELEGRAM_INTERNAL_SECRET;
-  if (!secret) {
-    throw new Error("TELEGRAM_INTERNAL_SECRET is not set");
-  }
-  return secret;
-}

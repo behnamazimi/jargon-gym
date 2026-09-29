@@ -3,7 +3,11 @@
 -- every minute.
 --
 --   select vault.create_secret('https://your-app-host', 'app_base_url');
---   select vault.create_secret('YOUR_TELEGRAM_INTERNAL_SECRET', 'telegram_internal_secret');
+--   select vault.create_secret('YOUR_AI_INTERNAL_SECRET', 'telegram_internal_secret');
+--
+-- The vault name keeps the old wording so an existing job keeps working; put the
+-- AI_INTERNAL_SECRET value in it (the older TELEGRAM_INTERNAL_SECRET is still
+-- accepted by the route). See docs/supabase/narration-sync-cron.md.
 
 select cron.schedule(
   'narration-sync',
