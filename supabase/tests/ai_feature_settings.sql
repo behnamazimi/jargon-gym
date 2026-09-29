@@ -163,7 +163,6 @@ begin
   assert has_column_privilege('authenticated', 'public.ai_feature_settings', 'enabled', 'update');
   assert has_column_privilege('authenticated', 'public.ai_feature_settings', 'credit_cost', 'update');
   assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update');
-  assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update');
   assert has_table_privilege('service_role', 'public.ai_feature_allowlist', 'select');
   assert not has_table_privilege('service_role', 'public.ai_feature_allowlist', 'insert');
   assert has_table_privilege('service_role', 'public.ai_feature_runs', 'insert');

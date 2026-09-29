@@ -28,7 +28,7 @@ begin
     );
   if v_terms > 0 or v_stories > 0 then
     raise exception
-      'audio_jobs is missing % term and % story rows that still exist in the old tables; not dropping them',
+      'audio_jobs is missing % term and % story rows that still exist in the old tables; not dropping them. Run select public.backfill_audio_jobs() and retry.',
       v_terms, v_stories;
   end if;
 end;
