@@ -47,6 +47,7 @@ export function AdminNarrationSync({
             setError(status.error);
             return;
           }
+          setError(null);
           const next = status.data;
           setJob(next);
           if (!next || isActiveNarrationSyncStatus(next.status)) return;

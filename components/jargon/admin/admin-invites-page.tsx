@@ -69,6 +69,7 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
   const [status, setStatus] = useState(request.status);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [canResend, setCanResend] = useState(true);
   const [isPending, startTransition] = useTransition();
 
   const [isApproved, setIsApproved] = useState(false);
@@ -95,8 +96,14 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
     setNotice(null);
     startTransition(async () => {
       const result = await resendInvite(request.id);
-      if (result.ok) setNotice("Sent again.");
-      else setError(result.error);
+      if (result.ok) {
+        setNotice("Sent again.");
+        return;
+      }
+      setError(result.error);
+      if (result.error.startsWith("They already") || result.error.includes("no longer active")) {
+        setCanResend(false);
+      }
     });
   }
 
@@ -131,7 +138,7 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
             {isPending ? "Approving…" : "Approve"}
           </button>
         ) : null}
-        {status === "invited" ? (
+        {status === "invited" && canResend ? (
           <button
             type="button"
             className="btn btn-sm btn-ghost transition-transform active:scale-[0.96]"
