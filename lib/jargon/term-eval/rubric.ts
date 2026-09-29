@@ -129,3 +129,9 @@ export function presentTerm(term: EvalTerm): Partial<Record<TermField, string>> 
   }
   return present;
 }
+
+export const EVAL_MODEL = "typesafe-ai/jev";
+
+/** Bump when the rubric, FIT_WEIGHT or PLAIN_THRESHOLD change, so stored
+ *  scores stop matching and are recomputed. */
+export const EVAL_VERSION = 1;

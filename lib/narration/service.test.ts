@@ -13,7 +13,7 @@ vi.mock("./storage", () => ({
 
 const { synthesizeNarrationAudio } = await import("./eleven-labs");
 const { uploadNarrationAudio } = await import("./storage");
-const { getOrGenerateNarration } = await import("./service");
+const { getCachedNarration, getOrGenerateNarration } = await import("./service");
 
 type Client = SupabaseClient<Database>;
 
@@ -198,6 +198,43 @@ describe("getOrGenerateNarration", () => {
     const result = await resultPromise;
 
     expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
+    expect(synthesizeNarrationAudio).not.toHaveBeenCalled();
+  });
+});
+
+describe("getCachedNarration", () => {
+  it("returns a current ready clip without generating or claiming", async () => {
+    const rpc = vi.fn();
+    const client = {
+      ...makeClient({
+        narrationRowQueue: [{ status: "ready", content_hash: HASH, storage_path: "term-1.mp3" }],
+        claimResult: [],
+      }),
+      rpc,
+    } as unknown as Client;
+
+    expect(await getCachedNarration(client, TERM_ID)).toEqual({
+      status: "ready",
+      storagePath: "term-1.mp3",
+      contentHash: HASH,
+    });
+    expect(rpc).not.toHaveBeenCalled();
+    expect(synthesizeNarrationAudio).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["no row", null],
+    ["a stale hash", { status: "ready", content_hash: "old", storage_path: "term-1.mp3" }],
+    ["a failed row", { status: "failed", content_hash: HASH, storage_path: null }],
+  ])("is unavailable for %s and still never generates", async (_name, row) => {
+    const rpc = vi.fn();
+    const client = {
+      ...makeClient({ narrationRowQueue: [row], claimResult: [] }),
+      rpc,
+    } as unknown as Client;
+
+    expect(await getCachedNarration(client, TERM_ID)).toEqual({ status: "unavailable" });
+    expect(rpc).not.toHaveBeenCalled();
     expect(synthesizeNarrationAudio).not.toHaveBeenCalled();
   });
 });

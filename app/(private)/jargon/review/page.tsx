@@ -61,6 +61,7 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
       paused={setup.paused}
       domainId={domainId}
       narrationAccess={setup.narrationAccess}
+      canEvaluateTerms={setup.canEvaluateTerms}
     />
   );
 }

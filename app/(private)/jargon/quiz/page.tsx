@@ -10,6 +10,8 @@ import {
 import { aiAvailable } from "@/lib/llm/types";
 import { hasNoCollections } from "@/lib/study/collections";
 
+export const maxDuration = 60;
+
 type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };

@@ -44,6 +44,7 @@ export function TermNarrationPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wantPlayingRef = useRef(false);
   const abortRetriedRef = useRef(false);
+  const preparedRef = useRef(false);
   const src = narrationSrc(termId);
 
   useMountEffect(() => {
@@ -56,6 +57,38 @@ export function TermNarrationPlayer({
       }
     };
   });
+
+  function giveUp(audio: HTMLAudioElement) {
+    wantPlayingRef.current = false;
+    releaseActiveAudio(audio);
+    setStatus("idle");
+  }
+
+  // Loading never generates audio. When the clip is not cached yet, ask the
+  // server to make it once, then load it again.
+  async function prepareThenPlay(audio: HTMLAudioElement) {
+    if (preparedRef.current) {
+      giveUp(audio);
+      return;
+    }
+    preparedRef.current = true;
+    setStatus("loading");
+    try {
+      const response = await fetch(src, { method: "POST" });
+      if (!response.ok) {
+        giveUp(audio);
+        return;
+      }
+    } catch {
+      giveUp(audio);
+      return;
+    }
+    if (!wantPlayingRef.current) return;
+    abortRetriedRef.current = false;
+    audio.src = src;
+    audio.load();
+    void playClip(audio);
+  }
 
   function playClip(audio: HTMLAudioElement) {
     return audio
@@ -77,9 +110,8 @@ export function TermNarrationPlayer({
           }
           return;
         }
-        wantPlayingRef.current = false;
-        releaseActiveAudio(audio);
-        setStatus("idle");
+        if (wantPlayingRef.current) void prepareThenPlay(audio);
+        else giveUp(audio);
       });
   }
 
@@ -106,6 +138,7 @@ export function TermNarrationPlayer({
     }
 
     abortRetriedRef.current = false;
+    preparedRef.current = false;
     wantPlayingRef.current = true;
     const alreadySet = srcMatches(audio, src);
     const ready = alreadySet && canPlayThrough(audio);
@@ -141,10 +174,10 @@ export function TermNarrationPlayer({
   }
 
   function handleError() {
-    wantPlayingRef.current = false;
     const audio = audioRef.current;
-    if (audio) releaseActiveAudio(audio);
-    setStatus("idle");
+    if (!audio) return;
+    if (wantPlayingRef.current) void prepareThenPlay(audio);
+    else giveUp(audio);
   }
 
   return (

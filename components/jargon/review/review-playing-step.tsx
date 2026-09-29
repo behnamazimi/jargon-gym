@@ -48,6 +48,7 @@ type ReviewPlayingStepProps = {
   errorMessage: string | null;
   reduceMotion: boolean;
   narrationAccess: boolean;
+  canEvaluateTerms: boolean;
   collectionControl: ReactNode;
   onReveal: () => void;
   onPrevious: () => void;
@@ -64,6 +65,7 @@ export function ReviewPlayingStep({
   errorMessage,
   reduceMotion,
   narrationAccess,
+  canEvaluateTerms,
   collectionControl,
   onReveal,
   onPrevious,
@@ -89,6 +91,7 @@ export function ReviewPlayingStep({
         reduceMotion={reduceMotion}
         swipeEnabled
         narrationAccess={narrationAccess}
+        canEvaluateTerms={canEvaluateTerms}
       />
 
       <div className="shrink-0 space-y-3">

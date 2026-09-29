@@ -93,6 +93,7 @@ async function generateAiQuizResult(
     try {
       return { questions: await generate(), terms, providerLabel };
     } catch (err) {
+      console.error("AI quiz with own key failed:", err);
       return quizFailure(err, false);
     }
   }
@@ -140,11 +141,8 @@ export async function generateQuizAction(input: {
       ? await generateSimpleQuizResult(auth, termsPromise)
       : await generateAiQuizResult(auth, termsPromise);
   } catch (err) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : "Couldn't generate the quiz. Check your API key and try again.";
-    return { error: message };
+    console.error("Quiz generation failed:", err);
+    return { error: "Couldn't generate the quiz. Try again." };
   }
 }
 
@@ -169,7 +167,8 @@ export async function recordQuizAnswerAction(input: {
       mode: "session",
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't update term progress.";
+    console.error("Quiz answer failed:", err);
+    const message = "Couldn't update term progress.";
     return { error: message };
   }
 

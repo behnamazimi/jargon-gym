@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { EvalTerm } from "./rubric";
+import { EVAL_MODEL, EVAL_VERSION, type EvalTerm } from "./rubric";
 
 function text(value: string | null): string {
   return value?.trim() ?? "";
@@ -7,6 +7,8 @@ function text(value: string | null): string {
 
 export function computeTermEvalHash(term: EvalTerm): string {
   const canonical = JSON.stringify([
+    EVAL_MODEL,
+    EVAL_VERSION,
     term.domainName.trim(),
     term.term.trim(),
     term.category.trim(),

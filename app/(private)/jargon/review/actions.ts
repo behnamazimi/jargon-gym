@@ -5,7 +5,7 @@ import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { toReviewTerm } from "@/lib/review/mappers";
 import { REVIEW_QUEUE_BUFFER_SIZE } from "@/lib/review/queue";
 import type { ReviewTerm } from "@/lib/review/types";
-import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { getUserIsAdmin, requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { listStudyCollectionState } from "@/lib/study/collections";
 import { pickReviewTermsForUser } from "@/lib/trace-queue";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -17,12 +17,13 @@ export async function getReviewSetupData() {
     return { error: "Log in to review terms." as const };
   }
 
-  const [{ active: collections, paused }, narrationAccess] = await Promise.all([
+  const [{ active: collections, paused }, narrationAccess, canEvaluateTerms] = await Promise.all([
     listStudyCollectionState(auth.supabase, auth.user.id),
     getNarrationAccessForUser(auth.supabase, auth.user.id),
+    getUserIsAdmin(auth.user.id),
   ]);
 
-  return { collections, paused, narrationAccess };
+  return { collections, paused, narrationAccess, canEvaluateTerms };
 }
 
 export type ReviewQueueSeed = {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getUserIsAdmin } from "@/lib/auth/require-session";
 import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import { computeTermEvalHash } from "@/lib/jargon/term-eval/content-hash";
 import { evaluateTermEntry } from "@/lib/jargon/term-eval/evaluate";
@@ -6,11 +7,17 @@ import type { EvalTerm } from "@/lib/jargon/term-eval/rubric";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchTermCardForUser } from "@/lib/trace-queue/hydrate";
 
+export const maxDuration = 60;
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request, { params }: { params: Promise<{ termId: string }> }) {
   const userId = request.headers.get(VERIFIED_USER_HEADER);
   if (!userId) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+
+  if (!(await getUserIsAdmin(userId))) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
 
   const { termId } = await params;
   if (!UUID_RE.test(termId)) {
@@ -33,6 +40,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ ter
     controversy: card.controversy,
   };
 
+  const contentHash = computeTermEvalHash(term);
+  const { data: stored } = await admin
+    .from("term_evaluations")
+    .select("schema_fit, plain, content_hash")
+    .eq("term_id", termId)
+    .maybeSingle();
+  if (stored && stored.content_hash === contentHash) {
+    return NextResponse.json({ schemaFit: stored.schema_fit, plain: stored.plain });
+  }
+
   try {
     const result = await evaluateTermEntry(term);
     const { error } = await admin.from("term_evaluations").upsert(
@@ -40,7 +57,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ter
         term_id: termId,
         schema_fit: result.schemaFit,
         plain: result.plain,
-        content_hash: computeTermEvalHash(term),
+        content_hash: contentHash,
         evaluated_by: userId,
       },
       { onConflict: "term_id" },

@@ -4,8 +4,8 @@ import type { AiFailureReason } from "@/lib/llm/types";
 
 type QuizFailure = { error: string; reason?: AiFailureReason };
 
-/** Turns a failed AI quiz into what the user sees. Users on AI credits never see
- *  provider text, since the key isn't theirs. Only a rejected key offers to
+/** Turns a failed AI quiz into what the user sees. Nobody sees provider or
+ *  database text. Only a rejected key offers to
  *  switch to credits, so a passing hiccup never puts a working key at risk. */
 export function quizFailure(err: unknown, usingCredits: boolean): QuizFailure {
   if (usingCredits) {
@@ -17,11 +17,8 @@ export function quizFailure(err: unknown, usingCredits: boolean): QuizFailure {
     };
   }
 
-  return {
-    error:
-      err instanceof Error
-        ? err.message
-        : "Couldn't generate the quiz. Check your API key and try again.",
-    reason: isKeyRejected(err) ? "own-key" : undefined,
-  };
+  if (isKeyRejected(err)) {
+    return { error: "Your API key was rejected. Check it in Settings.", reason: "own-key" };
+  }
+  return { error: "Couldn't generate the quiz. Try again." };
 }
