@@ -1,5 +1,6 @@
 import { experimental_evaluate } from "ai";
 import {
+  EVAL_MODEL,
   FIELD_CONTRACT,
   FIT_LEVELS,
   FIT_TOP,
@@ -9,8 +10,6 @@ import {
   type EvalTerm,
   type TermField,
 } from "./rubric";
-
-const MODEL = "typesafe-ai/jev";
 
 const PLAIN_THRESHOLD = 0.8;
 
@@ -118,7 +117,7 @@ export async function evaluateTermEntry(
   term: EvalTerm,
 ): Promise<{ schemaFit: number; plain: boolean }> {
   const result = await experimental_evaluate({
-    model: MODEL,
+    model: EVAL_MODEL,
     state: {
       domain: term.domainName,
       field_contract: FIELD_CONTRACT,

@@ -49,6 +49,19 @@ export async function uploadNarrationAudio(path: string, audio: Buffer): Promise
   );
 }
 
+export class NarrationAudioMissingError extends Error {
+  constructor(path: string) {
+    super(`Narration audio missing at ${path}.`);
+    this.name = "NarrationAudioMissingError";
+  }
+}
+
+function isMissingObject(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+  return error.name === "NoSuchKey" || error.name === "NotFound" || status === 404;
+}
+
 export type NarrationAudioStream = {
   stream: ReadableStream<Uint8Array>;
   contentLength?: number;
@@ -65,10 +78,17 @@ export async function downloadNarrationAudio(
   range?: string,
 ): Promise<NarrationAudioStream> {
   const client = getS3Client();
-  const { Body, ContentLength, ContentRange, $metadata } = await client.send(
-    new GetObjectCommand({ Bucket: getBucket(), Key: path, Range: range }),
-  );
-  if (!Body) throw new Error(`Narration audio missing at ${path}.`);
+  let response;
+  try {
+    response = await client.send(
+      new GetObjectCommand({ Bucket: getBucket(), Key: path, Range: range }),
+    );
+  } catch (error) {
+    if (isMissingObject(error)) throw new NarrationAudioMissingError(path);
+    throw error;
+  }
+  const { Body, ContentLength, ContentRange, $metadata } = response;
+  if (!Body) throw new NarrationAudioMissingError(path);
   return {
     stream: Body.transformToWebStream(),
     contentLength: ContentLength,

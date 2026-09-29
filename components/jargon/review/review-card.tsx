@@ -20,6 +20,7 @@ type ReviewCardProps = {
   reduceMotion: boolean;
   swipeEnabled: boolean;
   narrationAccess: boolean;
+  canEvaluateTerms?: boolean;
   /** The "Recall the meaning" prompt on the front; Triage asks a different question. */
   showRevealHint?: boolean;
 };
@@ -47,6 +48,7 @@ export function ReviewCard({
   reduceMotion,
   swipeEnabled,
   narrationAccess,
+  canEvaluateTerms,
   showRevealHint = true,
 }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -142,7 +144,9 @@ export function ReviewCard({
                 />
               ) : null}
             </div>
-            {revealed ? <TermEvalButton key={term.id} termId={term.id} /> : null}
+            {revealed && canEvaluateTerms ? (
+              <TermEvalButton key={term.id} termId={term.id} />
+            ) : null}
           </div>
         </div>
       </div>

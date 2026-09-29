@@ -118,6 +118,38 @@ function wonClaim(claimed: unknown): boolean {
   return Array.isArray(claimed) && claimed.length > 0;
 }
 
+/** Read-only: returns the cached clip if it is current, and never calls
+ *  ElevenLabs or claims a generation. */
+export async function getCachedNarration(
+  admin: AdminClient,
+  termId: string,
+): Promise<NarrationResult> {
+  const [termData, { data: existing }] = await Promise.all([
+    fetchNarratedFields(admin, termId),
+    admin
+      .from("term_narrations")
+      .select("status, content_hash, storage_path")
+      .eq("term_id", termId)
+      .maybeSingle(),
+  ]);
+  if (!termData) return { status: "unavailable" };
+  return getCachedResult(existing, termData.contentHash) ?? { status: "unavailable" };
+}
+
+/** The row says ready but the file is gone. Marking it failed lets the next
+ *  explicit generation reclaim it. */
+export async function markNarrationFileMissing(
+  admin: AdminClient,
+  termId: string,
+  contentHash: string,
+): Promise<void> {
+  await admin
+    .from("term_narrations")
+    .update({ status: "failed" })
+    .eq("term_id", termId)
+    .eq("content_hash", contentHash);
+}
+
 export async function getOrGenerateNarration(
   admin: AdminClient,
   termId: string,

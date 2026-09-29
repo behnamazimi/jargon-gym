@@ -62,8 +62,8 @@ export async function generateWidgetTokenAction(): Promise<{
     revalidatePath("/jargon/settings");
     return result;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't generate a token. Try again.";
-    return { error: message };
+    console.error("Settings action failed:", err);
+    return { error: "Couldn't generate a token. Try again." };
   }
 }
 
@@ -77,8 +77,8 @@ export async function revokeWidgetTokenAction(tokenId: string): Promise<{ error?
     revalidatePath("/jargon/settings");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't revoke that token. Try again.";
-    return { error: message };
+    console.error("Settings action failed:", err);
+    return { error: "Couldn't revoke that token. Try again." };
   }
 }
 
@@ -103,9 +103,8 @@ export async function generateTelegramLinkAction(): Promise<{
     revalidatePath("/jargon/settings");
     return { deepLink: result.deepLink };
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Couldn't generate a Telegram link. Try again.";
-    return { error: message };
+    console.error("Settings action failed:", err);
+    return { error: "Couldn't generate a Telegram link. Try again." };
   }
 }
 
@@ -119,8 +118,8 @@ export async function disconnectTelegramAction(): Promise<{ error?: string }> {
     revalidatePath("/jargon/settings");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't disconnect Telegram. Try again.";
-    return { error: message };
+    console.error("Settings action failed:", err);
+    return { error: "Couldn't disconnect Telegram. Try again." };
   }
 }
 
@@ -135,9 +134,8 @@ export async function updateTelegramCadenceAction(
     revalidatePath("/jargon/settings");
     return {};
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Couldn't update reminder cadence. Try again.";
-    return { error: message };
+    console.error("Settings action failed:", err);
+    return { error: "Couldn't update reminder cadence. Try again." };
   }
 }
 
@@ -148,16 +146,19 @@ export async function saveLlmSettingsAction(input: {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
+  const apiKey = input.apiKey.trim();
+  if (!apiKey) return { error: "API key is required." };
+
   try {
-    await saveLlmSettings(auth.supabase, auth.user.id, input);
+    await saveLlmSettings(auth.supabase, auth.user.id, { ...input, apiKey });
     revalidatePath("/jargon/settings");
     revalidatePath("/jargon/quiz");
     revalidatePath("/jargon/read/stories");
     revalidatePath("/", "layout");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't save quiz settings. Try again.";
-    return { error: message };
+    console.error("Settings action failed:", err);
+    return { error: "Couldn't save your AI key. Try again." };
   }
 }
 
@@ -173,8 +174,7 @@ export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
     revalidatePath("/", "layout");
     return {};
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Couldn't remove quiz settings. Try again.";
-    return { error: message };
+    console.error("Settings action failed:", err);
+    return { error: "Couldn't remove your AI key. Try again." };
   }
 }

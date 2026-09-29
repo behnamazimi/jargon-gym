@@ -1,37 +1,57 @@
 import { NextResponse } from "next/server";
 import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
-import { getOrGenerateNarration } from "@/lib/narration/service";
-import { downloadNarrationAudio } from "@/lib/narration/storage";
+import {
+  getCachedNarration,
+  getOrGenerateNarration,
+  markNarrationFileMissing,
+} from "@/lib/narration/service";
+import { downloadNarrationAudio, NarrationAudioMissingError } from "@/lib/narration/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 
-// A day is a generous but bounded window; the ETag (the narration's content
-// hash) is what actually keeps this correct — a revalidation request gets a
-// fresh copy immediately if the term's narrated fields changed, or a cheap
-// 304 if they didn't. This lets the browser's own HTTP cache do the work
-// instead of any bespoke client-side caching.
-const CACHE_CONTROL = "private, max-age=86400";
+export const maxDuration = 60;
+
+// `no-cache` makes the browser revalidate with the ETag (the narration's
+// content hash) on every play: a cheap 304 when the term is unchanged, fresh
+// audio right after an edit.
+const CACHE_CONTROL = "private, no-cache";
+
+type RouteContext = { params: Promise<{ termId: string }> };
 
 function etagFor(contentHash: string): string {
   return `"${contentHash}"`;
 }
 
-/** Serves a term's narration audio. Trusts the proxy (lib/supabase/proxy.ts)
- *  to have already verified the session via supabase.auth.getUser() and
- *  forwarded the user id — that verification is unspoofable (the proxy
- *  always overwrites the header, never merges), so this route doesn't need
- *  to re-verify. It still re-checks narration *access* itself (the allowlist
- *  RPC), same rule the old server action (getTermNarrationAction) followed. */
-export async function GET(request: Request, { params }: { params: Promise<{ termId: string }> }) {
+async function userCanReadTerm(termId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("terms").select("id").eq("id", termId).maybeSingle();
+  return data != null;
+}
+
+/** Trusts the proxy (lib/supabase/proxy.ts) to have verified the session and
+ *  forwarded the user id. Still checks narration access and that the user can
+ *  read the term, since the admin client below bypasses RLS. */
+async function authorize(request: Request, termId: string): Promise<NextResponse | null> {
   const userId = request.headers.get(VERIFIED_USER_HEADER);
   if (!userId) return new NextResponse(null, { status: 401 });
 
-  const admin = createAdminClient();
-  const allowed = await getNarrationAccessForUser(admin, userId);
+  const allowed = await getNarrationAccessForUser(createAdminClient(), userId);
   if (!allowed) return new NextResponse(null, { status: 403 });
 
+  if (!(await userCanReadTerm(termId))) return new NextResponse(null, { status: 404 });
+  return null;
+}
+
+/** Serves cached audio only. It never generates, so preloading a card costs
+ *  nothing; generation is an explicit POST. */
+export async function GET(request: Request, { params }: RouteContext) {
   const { termId } = await params;
-  const result = await getOrGenerateNarration(admin, termId);
+  const denied = await authorize(request, termId);
+  if (denied) return denied;
+
+  const admin = createAdminClient();
+  const result = await getCachedNarration(admin, termId);
   if (result.status !== "ready") return new NextResponse(null, { status: 404 });
 
   const etag = etagFor(result.contentHash);
@@ -43,7 +63,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ term
   }
 
   const range = request.headers.get("range") ?? undefined;
-  const audio = await downloadNarrationAudio(result.storagePath, range);
+  let audio;
+  try {
+    audio = await downloadNarrationAudio(result.storagePath, range);
+  } catch (error) {
+    if (error instanceof NarrationAudioMissingError) {
+      console.error(error.message);
+      await markNarrationFileMissing(admin, termId, result.contentHash);
+      return new NextResponse(null, { status: 404 });
+    }
+    console.error("Narration download failed:", error);
+    return new NextResponse(null, { status: 502 });
+  }
 
   const headers: HeadersInit = {
     "Content-Type": "audio/mpeg",
@@ -58,4 +89,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ term
     status: audio.partial ? 206 : 200,
     headers,
   });
+}
+
+/** Explicit "prepare": generates the clip if it is not cached yet. Replies
+ *  with JSON only; the audio itself is then fetched with GET. */
+export async function POST(request: Request, { params }: RouteContext) {
+  const { termId } = await params;
+  const denied = await authorize(request, termId);
+  if (denied) return denied;
+
+  const result = await getOrGenerateNarration(createAdminClient(), termId);
+  if (result.status !== "ready") return NextResponse.json({ ready: false }, { status: 502 });
+  return NextResponse.json({ ready: true });
 }

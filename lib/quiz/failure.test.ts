@@ -10,7 +10,7 @@ function apiError(statusCode: number, message = "fail") {
 describe("quizFailure with the user's own key", () => {
   it("offers the switch only when the key was rejected", () => {
     expect(quizFailure(apiError(401, "bad key"), false)).toEqual({
-      error: "bad key",
+      error: "Your API key was rejected. Check it in Settings.",
       reason: "own-key",
     });
     expect(quizFailure(apiError(400, "API key not valid."), false).reason).toBe("own-key");
@@ -22,9 +22,15 @@ describe("quizFailure with the user's own key", () => {
     }
   });
 
-  it("keeps the provider's own message, as before", () => {
-    expect(quizFailure(new Error("Quota exceeded"), false).error).toBe("Quota exceeded");
-    expect(quizFailure("weird", false).error).toMatch(/Check your API key/);
+  it("says so when the provider reports quota or rate limits", () => {
+    expect(quizFailure(apiError(429), false).error).toMatch(/quota/);
+  });
+
+  it("never shows provider or database text", () => {
+    expect(quizFailure(new Error("Quota exceeded"), false).error).toBe(
+      "Couldn't generate the quiz. Try again.",
+    );
+    expect(quizFailure("weird", false).error).toBe("Couldn't generate the quiz. Try again.");
   });
 });
 
