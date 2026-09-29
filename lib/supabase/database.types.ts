@@ -1617,6 +1617,10 @@ export type Database = {
         Args: { p_marked: boolean; p_term_id: string; p_user_id: string };
         Returns: undefined;
       };
+      sync_narration_features_from_old_tables: {
+        Args: never;
+        Returns: undefined;
+      };
       update_telegram_cadence: {
         Args: { p_cadence: Database["public"]["Enums"]["telegram_cadence"] };
         Returns: undefined;

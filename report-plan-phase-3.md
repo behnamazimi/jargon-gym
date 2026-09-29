@@ -39,7 +39,7 @@ Revert the app PR. The migration is additive; the old app still works because `h
 
 ## 3b scope
 
-### Migration `20260929190000_ai_usage_events.sql`
+### Table `ai_usage_events` (created in the 3a migration)
 
 `ai_usage_events(id, user_id, feature fk, units int, outcome check in ('ok','failed'), created_at)`, index `(user_id, feature, created_at)`. RLS on; admins read; `service_role` select and insert only (no update or delete); explicit grants and a SQL grant test (D2). It never touches the ledger and has no cost column. Reporting only; it never reduces a balance.
 
@@ -60,6 +60,7 @@ SQL grants and shape for `ai_usage_events`; vitest for recordUsage/count, term r
 **Three PRs, proper expand then release.** The review showed that shipping the migration and the app together lets the new admin page write `ai_feature_settings` before the migration re-points access, and the migration's resync would then overwrite those edits (finding 3). So:
 
 - **3a `ai-phase-3a-narration-migration`: migration only.** Resync, old-to-new triggers, `has_feature_access`, the re-pointed `has_narration_access`, and the `ai_usage_events` table. No app code changes, so app-first deploy order is harmless. The old app keeps working because the triggers keep the new tables equal to what its admin page writes.
+- (The `ai_usage_events` table ships in 3a, so 3c has no migration.)
 - **3b `ai-phase-3b-narration-app`: app cutover** (access helper, worker check, admin page and actions, health note). Merges only after the 3a migration is confirmed applied in production, so the "fall back to the old tables on schema-missing" code is dropped: the tables and functions exist by then.
 - **3c `ai-phase-3c-narration-caps`: usage log writes, caps from settings, admin cap fields.** Same gate.
 

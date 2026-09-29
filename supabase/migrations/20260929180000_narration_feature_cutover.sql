@@ -3,26 +3,45 @@
 -- old narration tables stay, and triggers copy anything the current app writes
 -- to them into ai_feature_settings / ai_feature_allowlist, so the two never
 -- disagree while the app is switched over. A later release drops the old tables.
+-- The old page has a single switch, so toggling it sets both narration features;
+-- a separate switch set later on the feature tables is overwritten by that.
 --
 -- Narration is never billed: nothing here touches the credit ledger.
+
+-- Nothing may write the old tables between the copy and the triggers below.
+lock table public.narration_settings, public.narration_allowlist in share row exclusive mode;
 
 -- ---------------------------------------------------------------------------
 -- Copy today's values (they may have changed since ai_feature_settings was seeded)
 -- ---------------------------------------------------------------------------
 
-update public.ai_feature_settings
-set enabled = (select enabled from public.narration_settings where id)
-where feature in ('narration_term', 'narration_story');
+-- Kept as a function so the copy can be run (and tested) again. Only the
+-- database owner can call it.
+create function public.sync_narration_features_from_old_tables()
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.ai_feature_settings
+  set enabled = (select enabled from public.narration_settings where id)
+  where feature in ('narration_term', 'narration_story');
 
-delete from public.ai_feature_allowlist
-where feature in ('narration_term', 'narration_story')
-  and user_id not in (select user_id from public.narration_allowlist);
+  delete from public.ai_feature_allowlist
+  where feature in ('narration_term', 'narration_story')
+    and user_id not in (select user_id from public.narration_allowlist);
 
-insert into public.ai_feature_allowlist (feature, user_id)
-select f.feature, a.user_id
-from public.narration_allowlist a
-cross join (values ('narration_term'), ('narration_story')) as f (feature)
-on conflict do nothing;
+  insert into public.ai_feature_allowlist (feature, user_id)
+  select f.feature, a.user_id
+  from public.narration_allowlist a
+  cross join (values ('narration_term'), ('narration_story')) as f (feature)
+  on conflict do nothing;
+$$;
+
+revoke all on function public.sync_narration_features_from_old_tables()
+  from public, anon, authenticated, service_role;
+
+select public.sync_narration_features_from_old_tables();
 
 -- ---------------------------------------------------------------------------
 -- Old tables -> new tables, one way only
@@ -62,8 +81,15 @@ begin
 end;
 $$;
 
+-- The old admin page adds people with an upsert, which updates instead of
+-- inserting when the row already exists, so both paths mirror.
 create trigger narration_allowlist_mirror_insert
   after insert on public.narration_allowlist
+  for each row
+  execute function public.mirror_narration_allowlist_insert();
+
+create trigger narration_allowlist_mirror_update
+  after update on public.narration_allowlist
   for each row
   execute function public.mirror_narration_allowlist_insert();
 

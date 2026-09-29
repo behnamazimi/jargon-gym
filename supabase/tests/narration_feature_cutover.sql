@@ -131,20 +131,43 @@ $$;
 do $$
 declare
   u1 uuid := pg_temp.make_user('n3@example.test');
+  u2 uuid := pg_temp.make_user('n4@example.test');
 begin
   update public.narration_settings set enabled = true where id;
+  insert into public.narration_allowlist (user_id) values (u2);
   update public.ai_feature_settings set enabled = false where feature = 'narration_story';
   insert into public.ai_feature_allowlist (feature, user_id) values ('narration_term', u1);
+  delete from public.ai_feature_allowlist where feature = 'narration_story' and user_id = u2;
 
-  update public.ai_feature_settings
-  set enabled = (select enabled from public.narration_settings where id)
-  where feature in ('narration_term', 'narration_story');
-  delete from public.ai_feature_allowlist
-  where feature in ('narration_term', 'narration_story')
-    and user_id not in (select user_id from public.narration_allowlist);
+  perform public.sync_narration_features_from_old_tables();
 
   assert (select enabled from public.ai_feature_settings where feature = 'narration_story'), 'copy should fix a drifted switch';
   assert not exists (select 1 from public.ai_feature_allowlist where user_id = u1), 'copy should drop an extra allowlist row';
+  assert (select count(*) from public.ai_feature_allowlist where user_id = u2 and feature in ('narration_term', 'narration_story')) = 2,
+    'copy should restore a missing allowlist row';
+  assert not has_function_privilege('service_role', 'public.sync_narration_features_from_old_tables()', 'execute');
+  assert not has_function_privilege('authenticated', 'public.sync_narration_features_from_old_tables()', 'execute');
+end;
+$$;
+
+-- The old admin page adds people with an upsert; re-adding someone whose
+-- feature rows were removed puts them back, and a same-value toggle still mirrors.
+do $$
+declare
+  u1 uuid := pg_temp.make_user('n5@example.test');
+begin
+  insert into public.narration_allowlist (user_id) values (u1);
+  delete from public.ai_feature_allowlist where user_id = u1;
+  insert into public.narration_allowlist (user_id, added_by) values (u1, u1)
+  on conflict (user_id) do update set added_by = excluded.added_by;
+  assert (select count(*) from public.ai_feature_allowlist where user_id = u1 and feature in ('narration_term', 'narration_story')) = 2,
+    'an upsert of an existing row should mirror again';
+
+  update public.narration_settings set enabled = true where id;
+  update public.ai_feature_settings set enabled = false where feature = 'narration_story';
+  update public.narration_settings set enabled = true where id;
+  assert (select enabled from public.ai_feature_settings where feature = 'narration_story'),
+    'setting the old toggle to its current value still mirrors';
 end;
 $$;
 
