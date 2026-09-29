@@ -8,9 +8,14 @@
 -- One object key per file. Version-1 paths stay. Two rows cannot share a key.
 -- ---------------------------------------------------------------------------
 
-create unique index if not exists audio_jobs_storage_path_idx
+-- Only new keys are unique. Version-1 paths are reused by the current app
+-- (<termId>.mp3, stories/...), and a superseded row keeps that path for the
+-- sweep. A global unique index would make the mirror drop the new ready file.
+drop index if exists public.audio_jobs_storage_path_idx;
+create unique index audio_jobs_storage_path_idx
   on public.audio_jobs (storage_path)
-  where storage_path is not null;
+  where storage_path is not null
+    and storage_path like 'audio/%';
 
 -- Superseded jobs keep their file path. This index is the sweep's scan.
 create index if not exists audio_jobs_orphans_idx
@@ -87,8 +92,8 @@ begin
     raise exception 'a term job has no owner';
   end if;
 
-  -- Lock whatever is live, then read it again. A row that was superseded while
-  -- we waited no longer matches, so we must not reclaim it from a stale copy.
+  -- Lock whatever is live, then lock it again. A row that was superseded while
+  -- we waited no longer matches, and the second lock is the winner's new row.
   perform 1
   from public.audio_jobs
   where subject_type = p_subject_type
@@ -100,7 +105,8 @@ begin
   from public.audio_jobs
   where subject_type = p_subject_type
     and subject_id = p_subject_id
-    and status <> 'superseded';
+    and status <> 'superseded'
+  for update;
 
   if not found then
     if p_hash_version < 2 then
@@ -146,18 +152,25 @@ begin
   where id = v_live.id
     and status <> 'superseded';
 
-  insert into public.audio_jobs (
-    subject_type, subject_id, user_id, content_hash, hash_version,
-    status, attempts, storage_path, error, requested_at
-  ) values (
-    p_subject_type, p_subject_id,
-    case when p_subject_type = 'story' then p_user_id end,
-    p_content_hash, p_hash_version,
-    'pending', v_live.attempts + 1, null, null, now()
-  )
-  returning * into v_new;
+  if not found then
+    return;
+  end if;
 
-  return next v_new;
+  begin
+    insert into public.audio_jobs (
+      subject_type, subject_id, user_id, content_hash, hash_version,
+      status, attempts, storage_path, error, requested_at
+    ) values (
+      p_subject_type, p_subject_id,
+      case when p_subject_type = 'story' then p_user_id end,
+      p_content_hash, p_hash_version,
+      'pending', v_live.attempts + 1, null, null, now()
+    )
+    returning * into v_new;
+    return next v_new;
+  exception when unique_violation then
+    return;
+  end;
 end;
 $$;
 

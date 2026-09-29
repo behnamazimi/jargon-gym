@@ -18,6 +18,24 @@ begin
 end;
 $$;
 
+create function pg_temp.make_story(p_user uuid, p_status text, p_path text, p_requested timestamptz)
+returns uuid
+language plpgsql
+as $$
+declare
+  v_id uuid := gen_random_uuid();
+begin
+  insert into public.stories
+    (id, user_id, language, format, tone, reading_level, cefr_level, title, segments, term_ids,
+     narration_status, narration_path, narration_requested_at)
+  values
+    (v_id, p_user, 'en', 'email', 'neutral', 'plain', 'B1', 'T', '[]'::jsonb,
+     array[gen_random_uuid(), gen_random_uuid(), gen_random_uuid()],
+     p_status, p_path, p_requested);
+  return v_id;
+end;
+$$;
+
 do $$
 declare
   u_owner uuid := pg_temp.make_user('claim-owner@example.test');
@@ -88,14 +106,19 @@ begin
   assert (select updated_at from public.audio_jobs where id = v_old) > 'epoch',
     'superseding stamps updated_at';
 
-  -- The live row cannot take the superseded file's path.
+-- The live row may reuse that version-1 path. Only new keys are unique.
+  update public.audio_jobs set storage_path = v_subject::text || '.mp3' where id = r.id;
+  assert (select count(*) from public.audio_jobs where storage_path = v_subject::text || '.mp3') = 2,
+    'a version-1 path can sit on both the superseded row and the live row';
+  v_path := 'audio/term/' || v_subject::text || '/2/v2-hash/shared.mp3';
+  update public.audio_jobs set storage_path = v_path where id = v_old;
   begin
-    update public.audio_jobs set storage_path = v_subject::text || '.mp3' where id = r.id;
+    update public.audio_jobs set storage_path = v_path where id = r.id;
     v_failed := false;
   exception when unique_violation then
     v_failed := true;
   end;
-  assert v_failed, 'two jobs cannot share a storage path';
+  assert v_failed, 'two jobs cannot share a new storage path';
 
   -- Same hash, newer version: also a new job.
   v_subject := gen_random_uuid();
@@ -168,6 +191,13 @@ begin
   end;
   assert v_failed, 'an empty hash is rejected';
   begin
+    perform public.claim_audio_job('term', gen_random_uuid(), null, 'h', 0, false);
+    v_failed := false;
+  exception when others then
+    v_failed := true;
+  end;
+  assert v_failed, 'a hash version below 1 is rejected';
+  begin
     perform public.claim_audio_job('nope', gen_random_uuid(), null, 'h', 2, false);
     v_failed := false;
   exception when others then
@@ -186,6 +216,35 @@ begin
           where subject_id = v_story and status = 'superseded') = u_owner;
   assert (select storage_path from public.audio_jobs
           where subject_id = v_story and status = 'superseded') = 'stories/old.mp3';
+
+  -- The current app can save the same version-1 path again after a supersede.
+  v_subject := gen_random_uuid();
+  insert into public.terms (id, term, category, definition, domain_id)
+  values (v_subject, 'Reuse', 'c', 'd', v_domain);
+  insert into public.term_narrations (term_id, content_hash, status, storage_path)
+  values (v_subject, 'h', 'ready', v_subject::text || '.mp3');
+  delete from public.term_narrations where term_id = v_subject;
+  perform public.claim_term_narration(v_subject, 'h2');
+  update public.term_narrations
+  set status = 'ready', storage_path = v_subject::text || '.mp3'
+  where term_id = v_subject;
+  assert (select status || ':' || storage_path from public.audio_jobs
+          where subject_id = v_subject and status <> 'superseded')
+    = 'ready:' || v_subject::text || '.mp3',
+    'a reused version-1 path is mirrored onto the new live job';
+  assert (select count(*) from public.audio_jobs
+          where subject_id = v_subject and storage_path = v_subject::text || '.mp3') = 2,
+    'the superseded job keeps that same path';
+
+  -- A story's version-2 job is not rewritten when the old columns change.
+  v_story := pg_temp.make_story(u_owner, 'none', null, null);
+  select * into r from public.claim_audio_job('story', v_story, u_owner, 'story-v2', 2, false);
+  update public.stories
+  set narration_status = 'ready', narration_path = 'stories/u/clash.mp3', narration_requested_at = now()
+  where id = v_story;
+  assert (select content_hash || ':' || status || ':' || hash_version::text
+          from public.audio_jobs where id = r.id) = 'story-v2:pending:2',
+    'a story mirror does not clobber a version-2 job';
 
   -- Path keys include the hash and the job id, and differ per attempt.
   v_new := gen_random_uuid();
