@@ -3,7 +3,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import type { LlmProvider } from "./types";
 
 const MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
-  google: "gemini-2.5-flash",
+  google: "gemini-3.8-flash",
   anthropic: "claude-haiku-4-5",
 };
 

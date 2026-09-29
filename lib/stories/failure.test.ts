@@ -36,6 +36,11 @@ describe("storyFailure on AI credits", () => {
     expect(storyFailure(err, true)).toEqual({ error: err.message, reason: "unavailable" });
   });
 
+  it("tells the user a timeout took too long", () => {
+    const err = new StoryProviderError("Writing the story took too long. Try again.", "timeout");
+    expect(storyFailure(err, true)).toEqual({ error: err.message, reason: "unavailable" });
+  });
+
   it("never leaks an unexpected error's text", () => {
     const result = storyFailure(new Error("PGRST: relation stories missing"), true);
     expect(result.error).toBe("Couldn't write a story this time. Try again.");

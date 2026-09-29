@@ -25,6 +25,13 @@ describe("describeFailure", () => {
     expect(describeFailure(error)).toBe("Provider error 503: Service unavailable");
   });
 
+  it("describes the original failure of an error that wraps it as its cause", () => {
+    const wrapped = new Error("Couldn't write a story this time. Try again.", {
+      cause: apiError(404, "Model no longer available"),
+    });
+    expect(describeFailure(wrapped)).toBe("Provider error 404: Model no longer available");
+  });
+
   it("names other errors by type, so unusable model replies are recognizable", () => {
     class StoryGenerationError extends Error {
       name = "StoryGenerationError";

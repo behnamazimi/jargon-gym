@@ -14,9 +14,19 @@ function tidy(text: string): string {
     .slice(0, MAX_LENGTH);
 }
 
+/** The failure underneath any wrapper: the SDK's retry error, or an error that
+ *  keeps the original as its `cause`. */
+function rootCause(error: unknown): unknown {
+  if (RetryError.isInstance(error)) return rootCause(error.lastError);
+  if (error instanceof Error && !APICallError.isInstance(error) && error.cause) {
+    return rootCause(error.cause);
+  }
+  return error;
+}
+
 /** A short reason a request failed, kept on the refund so admins can see why. */
 export function describeFailure(error: unknown): string {
-  const inner = RetryError.isInstance(error) ? error.lastError : error;
+  const inner = rootCause(error);
 
   if (APICallError.isInstance(inner)) {
     const status = inner.statusCode ? `${inner.statusCode}` : "no status";
