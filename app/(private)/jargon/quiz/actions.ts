@@ -1,8 +1,9 @@
 "use server";
 
 import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
-import { creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
-import { runWithCredits } from "@/lib/ai-credits/charge";
+import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
+import { withRunGuard } from "@/lib/ai/run-guard";
+import { runMetered } from "@/lib/ai/run-metered";
 import { quizCost } from "@/lib/ai-credits/costs";
 import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
 import { LLM_PROVIDER_LABELS, type AiFailureReason } from "@/lib/llm/types";
@@ -70,7 +71,7 @@ async function generateAiQuizResult(
 ): Promise<QuizGenerationResult> {
   const [terms, access] = await Promise.all([
     termsPromise,
-    resolveAiAccess(auth.supabase, auth.user.id),
+    resolveAiAccess(auth.supabase, createAdminClient(), auth.user.id, "quiz"),
   ]);
 
   if (terms.length === 0) {
@@ -91,7 +92,12 @@ async function generateAiQuizResult(
 
   if (access.kind === "own") {
     try {
-      return { questions: await generate(), terms, providerLabel };
+      const guarded = await withRunGuard(
+        { admin: createAdminClient(), userId: auth.user.id, feature: "quiz" },
+        generate,
+      );
+      if (guarded.busy) return busyFailure();
+      return { questions: guarded.value, terms, providerLabel };
     } catch (err) {
       console.error("AI quiz with own key failed:", err);
       return quizFailure(err, false);
@@ -99,7 +105,7 @@ async function generateAiQuizResult(
   }
 
   try {
-    const outcome = await runWithCredits(
+    const outcome = await runMetered(
       {
         admin: createAdminClient(),
         userId: auth.user.id,
@@ -108,7 +114,9 @@ async function generateAiQuizResult(
       },
       generate,
     );
-    if (!outcome.charged) return creditsRefusedFailure(outcome, "quiz");
+    if (!outcome.charged) {
+      return outcome.reason === "busy" ? busyFailure() : creditsRefusedFailure(outcome, "quiz");
+    }
     return { questions: outcome.value, terms, providerLabel };
   } catch (err) {
     console.error("AI quiz with credits failed:", err);

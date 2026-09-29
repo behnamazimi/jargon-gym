@@ -1,3 +1,5 @@
+import type { BillableFeatureId } from "@/lib/ai/registry";
+
 export type CreditCosts = { quizPerQuestion: number; storyPerTerm: number };
 
 export type CreditState = {
@@ -7,4 +9,4 @@ export type CreditState = {
   costs: CreditCosts;
 };
 
-export type CreditFeature = "quiz" | "story";
+export type CreditFeature = BillableFeatureId;

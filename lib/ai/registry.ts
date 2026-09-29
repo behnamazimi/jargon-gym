@@ -1,4 +1,4 @@
-export type Capability = "object" | "text" | "evaluate" | "speech";
+type Capability = "object" | "text" | "evaluate" | "speech";
 
 type FeatureDefinition = {
   capability: Capability;

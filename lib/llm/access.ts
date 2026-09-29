@@ -3,7 +3,14 @@ import { getMyCreditState } from "@/lib/ai-credits/repository";
 import type { CreditState } from "@/lib/ai-credits/types";
 import type { Database } from "@/lib/supabase/database.types";
 import { getCentralLlmConfig, type CentralLlmConfig } from "./central";
-import { getDecryptedApiKey, getUserSettings } from "./settings";
+import {
+  checkFeaturePolicy,
+  getFeatureSettings,
+  isOnFeatureAllowlist,
+} from "@/lib/ai/feature-settings";
+import type { BillableFeatureId } from "@/lib/ai/registry";
+import { getUserIsAdmin } from "@/lib/auth/require-session";
+import { getDecryptedApiKey, getUserSettings, UnreadableKeyError } from "./settings";
 import {
   hasLlmConfigured,
   LLM_PROVIDER_LABELS,
@@ -68,11 +75,57 @@ export type AiAccess =
       remaining: number;
       costs: CreditState["costs"];
     }
-  | { kind: "unavailable"; reason: "none" | "exhausted" };
+  | { kind: "unavailable"; reason: "none" | "exhausted" | "key-unreadable" | "feature-off" };
 
-/** The key to generate with. A saved key of the user's own always wins. */
-export async function resolveAiAccess(client: Client, userId: string): Promise<AiAccess> {
-  const own = await getDecryptedApiKey(client, userId);
+/** The feature switch and who may use it. A settings read that fails lets the
+ *  request through, so an app deployed ahead of its database keeps working;
+ *  a missing row means the feature is off. */
+async function featureAllowed(
+  client: Client,
+  admin: Client,
+  userId: string,
+  feature: BillableFeatureId,
+): Promise<boolean> {
+  let settings;
+  try {
+    settings = await getFeatureSettings(client, feature);
+  } catch (error) {
+    console.error("Couldn't read AI feature settings:", error);
+    return true;
+  }
+  if (!settings) return false;
+  if (settings.enabled && settings.accessMode === "everyone") return true;
+
+  const isAdmin = await getUserIsAdmin(userId);
+  const onAllowlist =
+    settings.accessMode === "allowlist" && !isAdmin
+      ? await isOnFeatureAllowlist(admin, feature, userId)
+      : false;
+  return checkFeaturePolicy(settings, { isAdmin, onAllowlist }).usable;
+}
+
+/** The key to generate with. The feature switch comes first and blocks
+ *  everyone. Then a saved key of the user's own always wins, and a key that
+ *  can't be read never falls back to credits. */
+export async function resolveAiAccess(
+  client: Client,
+  admin: Client,
+  userId: string,
+  feature: BillableFeatureId,
+): Promise<AiAccess> {
+  if (!(await featureAllowed(client, admin, userId, feature))) {
+    return { kind: "unavailable", reason: "feature-off" };
+  }
+
+  let own;
+  try {
+    own = await getDecryptedApiKey(client, userId);
+  } catch (error) {
+    if (error instanceof UnreadableKeyError) {
+      return { kind: "unavailable", reason: "key-unreadable" };
+    }
+    throw error;
+  }
   if (own) return { kind: "own", ...own };
 
   const credits = await resolveCredits(client);

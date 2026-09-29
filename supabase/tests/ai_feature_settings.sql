@@ -185,6 +185,22 @@ begin
   execute 'reset role';
   assert v_count = 0, 'a non-admin update should touch no rows';
   assert (select enabled from public.ai_feature_settings where feature = 'quiz'), 'quiz should still be enabled';
+
+  -- An admin can switch a feature off, but cannot change its cost directly.
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  update public.ai_feature_settings set enabled = false where feature = 'quiz';
+  get diagnostics v_count = row_count;
+  assert v_count = 1, 'an admin update of the switch should change one row';
+  begin
+    update public.ai_feature_settings set credit_cost = 9 where feature = 'quiz';
+    v_failed := false;
+  exception when insufficient_privilege then
+    v_failed := true;
+  end;
+  execute 'reset role';
+  assert v_failed, 'an admin should not be able to write credit_cost';
+  assert not (select enabled from public.ai_feature_settings where feature = 'quiz'), 'quiz should now be off';
 end;
 $$;
 

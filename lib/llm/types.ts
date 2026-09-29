@@ -42,7 +42,13 @@ export type CreditUse = {
   overBalance: boolean;
 };
 
-export type AiFailureReason = "no-ai" | "credits" | "unavailable" | "own-key";
+export type AiFailureReason =
+  | "no-ai"
+  | "credits"
+  | "unavailable"
+  | "own-key"
+  | "busy"
+  | "feature-off";
 
 export const AI_CREDITS_LOW_THRESHOLD = 10;
 

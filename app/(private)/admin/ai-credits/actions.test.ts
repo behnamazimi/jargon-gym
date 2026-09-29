@@ -7,6 +7,8 @@ const state = vi.hoisted(() => ({
   rpcCalls: [] as { name: string; args: unknown }[],
   ilikeArgs: [] as unknown[],
   revalidated: [] as string[],
+  featureRows: [{ feature: "quiz" }] as { feature: string }[],
+  featureUpdates: [] as unknown[],
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: (path: string) => state.revalidated.push(path) }));
@@ -16,7 +18,14 @@ vi.mock("@/lib/auth/require-session", () => ({
     return {
       supabase: {
         from: () => ({
-          update: () => ({ eq: () => Promise.resolve({ error: null }) }),
+          update: (values: unknown) => ({
+            eq: () => {
+              state.featureUpdates.push(values);
+              return Object.assign(Promise.resolve({ error: null }), {
+                select: () => Promise.resolve({ data: state.featureRows, error: null }),
+              });
+            },
+          }),
           select: () => ({
             ilike: (_column: string, pattern: string) => {
               state.ilikeArgs.push(pattern);
@@ -33,8 +42,13 @@ vi.mock("@/lib/auth/require-session", () => ({
   },
 }));
 
-const { grantAiCredits, resetAiCredits, saveAiCreditSettings, setAiCreditsEnabled } =
-  await import("./actions");
+const {
+  grantAiCredits,
+  resetAiCredits,
+  saveAiCreditSettings,
+  setAiCreditsEnabled,
+  setAiFeatureEnabled,
+} = await import("./actions");
 
 beforeEach(() => {
   state.admin = true;
@@ -43,6 +57,8 @@ beforeEach(() => {
   state.rpcCalls = [];
   state.ilikeArgs = [];
   state.revalidated = [];
+  state.featureRows = [{ feature: "quiz" }];
+  state.featureUpdates = [];
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
@@ -113,5 +129,32 @@ describe("the other admin actions", () => {
     expect(await setAiCreditsEnabled(true)).toEqual({ error: "Something went wrong. Try again." });
     expect(await resetAiCredits("u1")).toEqual({ error: "Something went wrong. Try again." });
     expect(state.rpcCalls).toEqual([]);
+  });
+});
+
+describe("setAiFeatureEnabled", () => {
+  it("writes only the switch for a known feature", async () => {
+    expect(await setAiFeatureEnabled("quiz", false)).toEqual({});
+    expect(state.featureUpdates).toEqual([{ enabled: false }]);
+  });
+
+  it("refuses features that aren't part of the card", async () => {
+    expect(await setAiFeatureEnabled("narration_term", true)).toEqual({
+      error: "Unknown feature.",
+    });
+    expect(state.featureUpdates).toEqual([]);
+  });
+
+  it("reports an update that changed nothing, as a non-admin's would", async () => {
+    state.featureRows = [];
+    expect(await setAiFeatureEnabled("story", true)).toEqual({
+      error: "Couldn't change that switch.",
+    });
+  });
+
+  it("keeps non-admins out", async () => {
+    state.admin = false;
+    expect((await setAiFeatureEnabled("quiz", true)).error).toBeDefined();
+    expect(state.featureUpdates).toEqual([]);
   });
 });
