@@ -31,6 +31,7 @@ export type Database = {
       ai_credit_ledger: {
         Row: {
           amount: number;
+          billable: boolean;
           created_at: string;
           created_by: string | null;
           feature: string | null;
@@ -42,6 +43,7 @@ export type Database = {
         };
         Insert: {
           amount: number;
+          billable?: boolean;
           created_at?: string;
           created_by?: string | null;
           feature?: string | null;
@@ -53,6 +55,7 @@ export type Database = {
         };
         Update: {
           amount?: number;
+          billable?: boolean;
           created_at?: string;
           created_by?: string | null;
           feature?: string | null;
@@ -69,6 +72,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_credit_ledger_feature_fkey";
+            columns: ["feature", "billable"];
+            isOneToOne: false;
+            referencedRelation: "ai_feature_settings";
+            referencedColumns: ["feature", "billable"];
           },
           {
             foreignKeyName: "ai_credit_ledger_refund_of_fkey";
@@ -112,6 +122,108 @@ export type Database = {
           monthly_refill?: number;
           quiz_credits_per_question?: number;
           story_credits_per_term?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ai_feature_allowlist: {
+        Row: {
+          created_at: string;
+          feature: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          feature: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          feature?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_feature_allowlist_feature_fkey";
+            columns: ["feature"];
+            isOneToOne: false;
+            referencedRelation: "ai_feature_settings";
+            referencedColumns: ["feature"];
+          },
+          {
+            foreignKeyName: "ai_feature_allowlist_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ai_feature_runs: {
+        Row: {
+          feature: string;
+          started_at: string;
+          token: string;
+          user_id: string;
+        };
+        Insert: {
+          feature: string;
+          started_at?: string;
+          token: string;
+          user_id: string;
+        };
+        Update: {
+          feature?: string;
+          started_at?: string;
+          token?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_feature_runs_feature_fkey";
+            columns: ["feature"];
+            isOneToOne: false;
+            referencedRelation: "ai_feature_settings";
+            referencedColumns: ["feature"];
+          },
+          {
+            foreignKeyName: "ai_feature_runs_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ai_feature_settings: {
+        Row: {
+          access_mode: string;
+          billable: boolean;
+          credit_cost: number | null;
+          daily_cap: number | null;
+          enabled: boolean;
+          feature: string;
+          unit: string;
+          updated_at: string;
+        };
+        Insert: {
+          access_mode?: string;
+          billable: boolean;
+          credit_cost?: number | null;
+          daily_cap?: number | null;
+          enabled?: boolean;
+          feature: string;
+          unit: string;
+          updated_at?: string;
+        };
+        Update: {
+          access_mode?: string;
+          billable?: boolean;
+          credit_cost?: number | null;
+          daily_cap?: number | null;
+          enabled?: boolean;
+          feature?: string;
+          unit?: string;
           updated_at?: string;
         };
         Relationships: [];
@@ -1118,6 +1230,10 @@ export type Database = {
           total: number;
         }[];
       };
+      begin_ai_run: {
+        Args: { p_feature: string; p_ttl_seconds?: number; p_user_id: string };
+        Returns: string;
+      };
       bump_streak: { Args: { p_user_id: string }; Returns: undefined };
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
@@ -1168,6 +1284,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      end_ai_run: {
+        Args: { p_feature: string; p_token: string; p_user_id: string };
+        Returns: undefined;
       };
       get_streak_history: {
         Args: { p_user_id: string };
