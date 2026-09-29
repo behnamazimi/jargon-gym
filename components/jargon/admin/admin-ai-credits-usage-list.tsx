@@ -1,9 +1,5 @@
+import { formatAdminDate } from "@/lib/admin/format";
 import type { AiCreditUsageRow } from "@/lib/ai-credits/admin";
-
-/** A fixed format, so the server and the browser print the same text. */
-function formatDay(iso: string): string {
-  return iso.slice(0, 10);
-}
 
 function RowActions({
   row,
@@ -57,7 +53,7 @@ export function UsageCards({
           <div className="min-w-0">
             <p className="m-0 truncate font-medium text-base-content">{row.email}</p>
             <p className="m-0 text-xs text-base-content/50">
-              Last activity {formatDay(row.lastActivity)}
+              Last activity {formatAdminDate(row.lastActivity)}
             </p>
           </div>
           <dl className="m-0 grid grid-cols-3 gap-2 text-center">
@@ -118,7 +114,7 @@ export function UsageTable({
               <td>
                 <p className="m-0 font-medium text-base-content">{row.email}</p>
                 <p className="m-0 text-xs text-base-content/50">
-                  Last activity {formatDay(row.lastActivity)}
+                  Last activity {formatAdminDate(row.lastActivity)}
                 </p>
               </td>
               <td className="text-right tabular-nums">{row.spent}</td>

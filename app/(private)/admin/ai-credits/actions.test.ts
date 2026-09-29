@@ -12,35 +12,38 @@ const state = vi.hoisted(() => ({
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: (path: string) => state.revalidated.push(path) }));
-vi.mock("@/lib/auth/require-session", () => ({
-  requireAdminClient: async () => {
-    if (!state.admin) throw new Error("Admins only.");
-    return {
-      supabase: {
-        from: () => ({
-          update: (values: unknown) => ({
-            eq: () => {
-              state.featureUpdates.push(values);
-              return Object.assign(Promise.resolve({ error: null }), {
-                select: () => Promise.resolve({ data: state.featureRows, error: null }),
-              });
-            },
+vi.mock("@/lib/auth/require-session", async () => {
+  const { AdminError } = await import("@/lib/admin/admin-error");
+  return {
+    requireAdminClient: async () => {
+      if (!state.admin) throw new AdminError("Admins only.");
+      return {
+        supabase: {
+          from: () => ({
+            update: (values: unknown) => ({
+              eq: () => {
+                state.featureUpdates.push(values);
+                return Object.assign(Promise.resolve({ error: null }), {
+                  select: () => Promise.resolve({ data: state.featureRows, error: null }),
+                });
+              },
+            }),
+            select: () => ({
+              ilike: (_column: string, pattern: string) => {
+                state.ilikeArgs.push(pattern);
+                return { maybeSingle: () => Promise.resolve({ data: state.account, error: null }) };
+              },
+            }),
           }),
-          select: () => ({
-            ilike: (_column: string, pattern: string) => {
-              state.ilikeArgs.push(pattern);
-              return { maybeSingle: () => Promise.resolve({ data: state.account, error: null }) };
-            },
-          }),
-        }),
-        rpc: (name: string, args: unknown) => {
-          state.rpcCalls.push({ name, args });
-          return Promise.resolve({ error: state.rpcError });
+          rpc: (name: string, args: unknown) => {
+            state.rpcCalls.push({ name, args });
+            return Promise.resolve({ error: state.rpcError });
+          },
         },
-      },
-    };
-  },
-}));
+      };
+    },
+  };
+});
 
 const {
   grantAiCredits,
@@ -70,7 +73,7 @@ describe("grantAiCredits", () => {
       note: "beta",
     });
 
-    expect(result).toEqual({});
+    expect(result).toEqual({ ok: true, data: undefined });
     expect(state.ilikeArgs).toEqual(["first\\_last@example.com"]);
     expect(state.rpcCalls).toEqual([
       {
@@ -83,11 +86,13 @@ describe("grantAiCredits", () => {
 
   it("returns readable messages for expected mistakes, without granting", async () => {
     expect(await grantAiCredits({ email: "a@example.com", amount: 0 })).toEqual({
+      ok: false,
       error: "Enter at least 1 credit.",
     });
 
     state.account = null;
     expect(await grantAiCredits({ email: "nobody@example.com", amount: 5 })).toEqual({
+      ok: false,
       error: "No account found for that email.",
     });
     expect(state.rpcCalls).toEqual([]);
@@ -97,6 +102,7 @@ describe("grantAiCredits", () => {
   it("hides database errors behind a generic message", async () => {
     state.rpcError = new Error("permission denied for table x");
     expect(await grantAiCredits({ email: "a@example.com", amount: 5 })).toEqual({
+      ok: false,
       error: "Something went wrong. Try again.",
     });
   });
@@ -110,15 +116,16 @@ describe("the other admin actions", () => {
       quizCreditsPerQuestion: 1,
       storyCreditsPerTerm: 1,
     };
-    expect(await saveAiCreditSettings(valid)).toEqual({});
+    expect(await saveAiCreditSettings(valid)).toMatchObject({ ok: true });
     expect(await saveAiCreditSettings({ ...valid, quizCreditsPerQuestion: 0 })).toEqual({
+      ok: false,
       error: "Check the numbers and try again.",
     });
   });
 
   it("switch credits on or off and reset usage", async () => {
-    expect(await setAiCreditsEnabled(false)).toEqual({});
-    expect(await resetAiCredits("u1")).toEqual({});
+    expect(await setAiCreditsEnabled(false)).toMatchObject({ ok: true });
+    expect(await resetAiCredits("u1")).toMatchObject({ ok: true });
     expect(state.rpcCalls).toEqual([
       { name: "admin_reset_ai_credits", args: { p_user_id: "u1", p_note: "" } },
     ]);
@@ -126,20 +133,21 @@ describe("the other admin actions", () => {
 
   it("refuse anyone who isn't an admin", async () => {
     state.admin = false;
-    expect(await setAiCreditsEnabled(true)).toEqual({ error: "Something went wrong. Try again." });
-    expect(await resetAiCredits("u1")).toEqual({ error: "Something went wrong. Try again." });
+    expect(await setAiCreditsEnabled(true)).toEqual({ ok: false, error: "Admins only." });
+    expect(await resetAiCredits("u1")).toEqual({ ok: false, error: "Admins only." });
     expect(state.rpcCalls).toEqual([]);
   });
 });
 
 describe("setAiFeatureEnabled", () => {
   it("writes only the switch for a known feature", async () => {
-    expect(await setAiFeatureEnabled("quiz", false)).toEqual({});
+    expect(await setAiFeatureEnabled("quiz", false)).toMatchObject({ ok: true });
     expect(state.featureUpdates).toEqual([{ enabled: false }]);
   });
 
   it("refuses features that aren't part of the card", async () => {
     expect(await setAiFeatureEnabled("narration_term", true)).toEqual({
+      ok: false,
       error: "Unknown feature.",
     });
     expect(state.featureUpdates).toEqual([]);
@@ -148,13 +156,14 @@ describe("setAiFeatureEnabled", () => {
   it("reports an update that changed nothing, as a non-admin's would", async () => {
     state.featureRows = [];
     expect(await setAiFeatureEnabled("story", true)).toEqual({
+      ok: false,
       error: "Couldn't change that switch.",
     });
   });
 
   it("keeps non-admins out", async () => {
     state.admin = false;
-    expect((await setAiFeatureEnabled("quiz", true)).error).toBeDefined();
+    expect(await setAiFeatureEnabled("quiz", true)).toMatchObject({ ok: false });
     expect(state.featureUpdates).toEqual([]);
   });
 });

@@ -1,12 +1,10 @@
+import { AdminSection } from "@/components/admin/admin-section";
 import type { AiCreditFailureReason } from "@/lib/ai-credits/admin";
 
 /** Why requests were refunded in the last 24 hours, most common first. */
 export function AdminAiCreditsFailures({ reasons }: { reasons: AiCreditFailureReason[] }) {
   return (
-    <section aria-labelledby="ai-credits-failures" className="flex flex-col gap-3">
-      <h2 id="ai-credits-failures" className="m-0 text-base font-semibold text-base-content">
-        Why requests failed
-      </h2>
+    <AdminSection id="ai-credits-failures" title="Why requests failed">
       {reasons.length === 0 ? (
         <p className="m-0 text-sm text-base-content/65">
           Nothing failed in the last 24 hours. When a request fails, its credits are refunded and
@@ -30,6 +28,6 @@ export function AdminAiCreditsFailures({ reasons }: { reasons: AiCreditFailureRe
           ))}
         </ul>
       )}
-    </section>
+    </AdminSection>
   );
 }

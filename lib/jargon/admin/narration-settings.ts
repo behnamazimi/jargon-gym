@@ -9,13 +9,13 @@ export type NarrationSettings = {
   enabled: boolean;
   /** Per-person daily caps; null means no cap. */
   caps: { term: number | null; story: number | null };
-  /** Provider calls made in the last 24 hours, failed ones included. */
-  usageLast24h: { term: number; story: number };
+  /** Provider calls made in the last 24 hours, failed ones included. Null when the count couldn't be read. */
+  usageLast24h: { term: number | null; story: number | null };
 };
 
-/** Only a number on the page, so a read that fails shows 0 rather than
+/** Only a number on the page, so a read that fails shows as unknown rather than
  *  taking the whole page down. */
-async function usageCount(client: Client, feature: string, since: string): Promise<number> {
+async function usageCount(client: Client, feature: string, since: string): Promise<number | null> {
   const { count, error } = await client
     .from("ai_usage_events")
     .select("id", { count: "exact", head: true })
@@ -23,7 +23,7 @@ async function usageCount(client: Client, feature: string, since: string): Promi
     .gte("created_at", since);
   if (error) {
     console.error("Couldn't count narration usage:", error);
-    return 0;
+    return null;
   }
   return count ?? 0;
 }

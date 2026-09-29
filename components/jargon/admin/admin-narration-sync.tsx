@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import {
   cancelNarrationSyncJob,
   getNarrationSyncCoverage,
@@ -8,7 +8,12 @@ import {
   resumeNarrationSync,
   startNarrationSync,
 } from "@/app/(private)/admin/narration/actions";
+import { AdminSection } from "@/components/admin/admin-section";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { JobPanel, SyncToolbar } from "@/components/jargon/admin/admin-narration-sync-parts";
+import { useAdminAction } from "@/hooks/use-admin-action";
 import { useInterval } from "@/hooks/use-interval";
+import { settleAdminAction } from "@/lib/admin/settle-action";
 import {
   canResumeNarrationSync,
   isActiveNarrationSyncStatus,
@@ -32,55 +37,48 @@ export function AdminNarrationSync({
   const [coverage, setCoverage] = useState(initialCoverage);
   const [selectedId, setSelectedId] = useState(initialCoverage[0]?.domainId ?? "");
   const [job, setJob] = useState(initialJob);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [pollError, setPollError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const { run, isPending, error, clearError } = useAdminAction();
 
   const selected = coverage.find((row) => row.domainId === selectedId);
   const active = Boolean(job && isActiveNarrationSyncStatus(job.status));
 
+  // The poller stays outside `useAdminAction`: it runs every two seconds and must not toast or flag pending.
   useInterval(
     () => {
       void (async () => {
-        try {
-          const status = await getNarrationSyncStatus();
-          if (!status.ok) {
-            setError(status.error);
-            return;
-          }
-          setError(null);
-          const next = status.data;
-          setJob(next);
-          if (!next || isActiveNarrationSyncStatus(next.status)) return;
-          const refreshed = await getNarrationSyncCoverage(
-            coverage.map((row) => ({ id: row.domainId, name: row.name })),
-          );
-          if (refreshed.ok) setCoverage(refreshed.data);
-          else setError(refreshed.error);
-        } catch {
-          setError("Failed to refresh status.");
+        const status = await settleAdminAction(getNarrationSyncStatus);
+        if (!status.ok) {
+          setPollError(status.error);
+          return;
         }
+        setPollError(null);
+        setJob(status.data);
+        if (!status.data || isActiveNarrationSyncStatus(status.data.status)) return;
+        const refreshed = await settleAdminAction(() =>
+          getNarrationSyncCoverage(coverage.map((row) => ({ id: row.domainId, name: row.name }))),
+        );
+        if (refreshed.ok) setCoverage(refreshed.data);
+        else setPollError(refreshed.error);
       })();
     },
     active ? POLL_MS : null,
   );
 
-  function run(work: () => Promise<{ ok: true } | { ok: false; error: string }>) {
-    setError(null);
-    startTransition(async () => {
-      const result = await work();
-      if (!result.ok) setError(result.error);
-    });
+  async function handleResume() {
+    const resumed = await run(resumeNarrationSync);
+    if (!resumed) return;
+    const status = await settleAdminAction(getNarrationSyncStatus);
+    if (status.ok) setJob(status.data);
   }
 
   return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h2 className="m-0 text-lg font-medium text-base-content">Audio sync</h2>
-        <p className="mt-1 text-sm text-base-content/65">
-          Generate missing term audio for one collection. Closing this page does not stop a run.
-        </p>
-      </div>
-
+    <AdminSection
+      id="narration-sync"
+      title="Audio sync"
+      description="Generate missing term audio for one collection. Closing this page does not stop a run."
+    >
       {narrationEnabled ? null : (
         <div role="alert" className="alert alert-warning">
           Turn narration on above before starting a sync.
@@ -96,122 +94,30 @@ export function AdminNarrationSync({
         showResume={canResumeNarrationSync(job)}
         isPending={isPending}
         onSelect={setSelectedId}
-        onStart={() =>
-          run(async () => {
-            if (!selectedId) return { ok: true };
-            const result = await startNarrationSync(selectedId);
-            if (result.ok) setJob(result.data);
-            return result;
-          })
-        }
-        onCancel={() =>
-          run(async () => {
-            const result = await cancelNarrationSyncJob();
-            if (result.ok) setJob(result.data);
-            return result;
-          })
-        }
-        onResume={() =>
-          run(async () => {
-            const resumed = await resumeNarrationSync();
-            if (!resumed.ok) return resumed;
-            const status = await getNarrationSyncStatus();
-            if (status.ok) setJob(status.data);
-            return status;
-          })
-        }
+        onStart={() => {
+          if (!selectedId) return;
+          clearError();
+          void run(() => startNarrationSync(selectedId), { onSuccess: setJob });
+        }}
+        onCancel={() => setCancelling(true)}
+        onResume={() => void handleResume()}
       />
 
-      {error ? <p className="m-0 text-sm text-error">{error}</p> : null}
-      {job ? <JobPanel job={job} /> : null}
-    </section>
-  );
-}
-
-function SyncToolbar({
-  coverage,
-  selectedId,
-  selected,
-  narrationEnabled,
-  active,
-  showResume,
-  isPending,
-  onSelect,
-  onStart,
-  onCancel,
-  onResume,
-}: {
-  coverage: CollectionNarrationCoverage[];
-  selectedId: string;
-  selected: CollectionNarrationCoverage | undefined;
-  narrationEnabled: boolean;
-  active: boolean;
-  showResume: boolean;
-  isPending: boolean;
-  onSelect: (id: string) => void;
-  onStart: () => void;
-  onCancel: () => void;
-  onResume: () => void;
-}) {
-  const startDisabled =
-    isPending || !narrationEnabled || !selected || selected.missingCount === 0 || active;
-
-  return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-      <label className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-sm font-medium text-base-content">Collection</span>
-        <select
-          className="select w-full"
-          value={selectedId}
-          disabled={isPending || active || coverage.length === 0}
-          onChange={(event) => onSelect(event.target.value)}
-        >
-          {coverage.length === 0 ? <option value="">No collections</option> : null}
-          {coverage.map((row) => (
-            <option key={row.domainId} value={row.domainId}>
-              {row.name} ({row.missingCount} missing)
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="flex gap-2">
-        <button type="button" className="btn" disabled={startDisabled} onClick={onStart}>
-          {isPending && !active ? "Starting…" : "Start"}
-        </button>
-        {active ? (
-          <button type="button" className="btn" disabled={isPending} onClick={onCancel}>
-            Cancel
-          </button>
-        ) : null}
-        {showResume ? (
-          <button type="button" className="btn" disabled={isPending} onClick={onResume}>
-            Resume
-          </button>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-function JobPanel({ job }: { job: NarrationSyncJobView }) {
-  const total = job.total;
-  const done = Math.min(job.cursor, total);
-
-  return (
-    <div className="flex flex-col gap-2 rounded-lg border border-base-300 px-4 py-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="m-0 font-medium text-base-content">{job.domainName}</p>
-        <span className="badge">{job.status}</span>
-      </div>
-      <progress className="progress" value={done} max={total || 1} />
-      <p className="m-0 text-sm text-base-content/65">
-        {done}/{total} · {job.generatedCount} generated · {job.failedCount} failed
-      </p>
-      {job.lastError ? (
-        <div role="alert" className="alert alert-error">
-          {job.lastError}
-        </div>
+      {error || pollError ? (
+        <p role="alert" className="m-0 text-sm text-error">
+          {error ?? pollError}
+        </p>
       ) : null}
-    </div>
+      {job ? <JobPanel job={job} /> : null}
+
+      <ConfirmDialog
+        isOpen={cancelling}
+        onOpenChange={setCancelling}
+        title="Cancel this sync?"
+        description="Clips already made are kept. You can start again later."
+        confirmLabel="Cancel sync"
+        onConfirm={() => void run(cancelNarrationSyncJob, { onSuccess: setJob })}
+      />
+    </AdminSection>
   );
 }

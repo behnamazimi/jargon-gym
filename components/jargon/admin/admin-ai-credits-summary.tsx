@@ -1,15 +1,7 @@
+import { AdminSection } from "@/components/admin/admin-section";
+import { AdminStat } from "@/components/admin/admin-stat";
 import { refundsLookHigh } from "@/lib/ai-credits/health";
 import type { AiCreditSummary } from "@/lib/ai-credits/admin";
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="rounded-lg border border-base-300 px-3 py-3">
-      <p className="m-0 text-xl font-semibold tabular-nums text-base-content">{value}</p>
-      <p className="m-0 text-xs text-base-content/65">{label}</p>
-      {hint ? <p className="m-0 mt-0.5 text-xs text-base-content/50">{hint}</p> : null}
-    </div>
-  );
-}
 
 function percent(part: number, whole: number): string {
   if (whole === 0 || part === 0) return "0%";
@@ -23,10 +15,7 @@ function people(count: number): string {
 
 export function AdminAiCreditsSummary({ summary }: { summary: AiCreditSummary }) {
   return (
-    <section aria-labelledby="ai-credits-summary" className="flex flex-col gap-3">
-      <h2 id="ai-credits-summary" className="m-0 text-base font-semibold text-base-content">
-        Is it working?
-      </h2>
+    <AdminSection id="ai-credits-summary" title="Is it working?">
       {refundsLookHigh(summary) ? (
         <p
           role="alert"
@@ -37,33 +26,33 @@ export function AdminAiCreditsSummary({ summary }: { summary: AiCreditSummary })
         </p>
       ) : null}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat
+        <AdminStat
           label="Used AI credits"
-          value={`${summary.usersWithUse}`}
+          value={summary.usersWithUse}
           hint={`${percent(summary.usersWithUse, summary.totalUsers)} of ${people(summary.totalUsers)}`}
         />
-        <Stat
+        <AdminStat
           label="Ran out"
-          value={`${summary.usersExhausted}`}
+          value={summary.usersExhausted}
           hint={`${percent(summary.usersExhausted, summary.usersWithUse)} of those who used them. Can't afford another request.`}
         />
-        <Stat
+        <AdminStat
           label="Saved their own key"
-          value={`${summary.usersWithOwnKey}`}
+          value={summary.usersWithOwnKey}
           hint={`${percent(summary.usersWithOwnKey, summary.usersWithUse)} of those who used credits`}
         />
-        <Stat
+        <AdminStat
           label="Credits spent"
-          value={`${summary.creditsSpent}`}
+          value={summary.creditsSpent}
           hint="All time, net of refunds"
         />
-        <Stat label="Requests, last 24 hours" value={`${summary.spends24h}`} />
-        <Stat
+        <AdminStat label="Requests, last 24 hours" value={summary.spends24h} />
+        <AdminStat
           label="Refunded, last 24 hours"
-          value={`${summary.refunds24h}`}
+          value={summary.refunds24h}
           hint="Failed requests"
         />
       </div>
-    </section>
+    </AdminSection>
   );
 }

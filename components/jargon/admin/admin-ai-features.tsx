@@ -1,78 +1,54 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { setAiFeatureEnabled } from "@/app/(private)/admin/ai-credits/actions";
+import { AdminSection } from "@/components/admin/admin-section";
+import { AdminSwitch } from "@/components/admin/admin-switch";
 
 export type AiFeatureRow = {
   feature: "quiz" | "story";
   label: string;
-  enabled: boolean;
-  /** False when the feature's settings row couldn't be read. */
-  available: boolean;
+  /** Null when the feature's settings row couldn't be read. */
+  enabled: boolean | null;
   healthNote: string | null;
 };
 
-function FeatureSwitch({ row }: { row: AiFeatureRow }) {
-  const [enabled, setEnabled] = useState(row.enabled);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function handleToggle(value: boolean) {
-    setError(null);
-    const previous = enabled;
-    setEnabled(value);
-    startTransition(async () => {
-      const result = await setAiFeatureEnabled(row.feature, value);
-      if (result.error) {
-        setEnabled(previous);
-        setError(result.error);
-      }
-    });
-  }
-
+function FeatureRow({ row }: { row: AiFeatureRow }) {
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div>
         <p className="m-0 font-medium text-base-content">{row.label}</p>
-        {row.available ? null : (
+        {row.enabled === null ? (
           <p className="m-0 text-sm text-warning">
             Couldn&apos;t read this feature&apos;s settings.
           </p>
-        )}
-        {row.healthNote ? <p className="m-0 text-sm text-warning">{row.healthNote}</p> : null}
-        {error ? (
-          <p role="alert" className="m-0 text-sm text-error">
-            {error}
-          </p>
         ) : null}
+        {row.healthNote ? <p className="m-0 text-sm text-warning">{row.healthNote}</p> : null}
       </div>
-      <input
-        type="checkbox"
-        className="toggle toggle-primary"
-        checked={enabled}
-        disabled={isPending || !row.available}
-        onChange={(event) => handleToggle(event.target.checked)}
-        aria-label={`Turn ${row.label} on`}
-      />
+      {row.enabled === null ? (
+        <span className="badge badge-warning">Unknown</span>
+      ) : (
+        <AdminSwitch
+          label={`Turn ${row.label} on`}
+          value={row.enabled}
+          save={(next) => setAiFeatureEnabled(row.feature, next)}
+        />
+      )}
     </li>
   );
 }
 
 export function AdminAiFeatures({ rows }: { rows: AiFeatureRow[] }) {
   return (
-    <section className="rounded-lg border border-base-300">
-      <div className="border-b border-base-300 px-4 py-3">
-        <h2 className="m-0 text-lg font-semibold text-base-content">Features</h2>
-        <p className="m-0 text-sm text-base-content/65">
-          A feature switched off is off for everyone, including people with their own key. The
-          credits switch above only stops use of the app&apos;s key.
-        </p>
-      </div>
-      <ul className="m-0 list-none divide-y divide-base-300 p-0">
+    <AdminSection
+      id="ai-features"
+      title="Features"
+      description="A feature switched off is off for everyone, including people with their own key. The credits switch above only stops use of the app's key."
+    >
+      <ul className="m-0 list-none divide-y divide-base-300 rounded-lg border border-base-300 p-0">
         {rows.map((row) => (
-          <FeatureSwitch key={row.feature} row={row} />
+          <FeatureRow key={row.feature} row={row} />
         ))}
       </ul>
-    </section>
+    </AdminSection>
   );
 }

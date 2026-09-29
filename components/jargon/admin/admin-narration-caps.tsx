@@ -1,78 +1,92 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, type FormEvent } from "react";
 import { setNarrationCaps } from "@/app/(private)/admin/narration/actions";
-import { Button } from "@/components/ui/button";
+import { AdminSection } from "@/components/admin/admin-section";
+import { useAdminAction } from "@/hooks/use-admin-action";
 import type { NarrationSettings } from "@/lib/jargon/admin/narration-settings";
+import { capsSchema } from "@/lib/narration/caps-schema";
 
 type Props = { caps: NarrationSettings["caps"]; usageLast24h: NarrationSettings["usageLast24h"] };
 
-function parseCap(value: string): number | null {
-  const trimmed = value.trim();
-  return trimmed === "" ? null : Number(trimmed);
+/** An empty field is not a zero. */
+function toNumber(value: string): number {
+  return value.trim() === "" ? Number.NaN : Number(value);
+}
+
+function usageLabel(count: number | null): string {
+  return count === null ? "unknown" : String(count);
 }
 
 export function AdminNarrationCaps({ caps, usageLast24h }: Props) {
   const [term, setTerm] = useState(caps.term?.toString() ?? "");
   const [story, setStory] = useState(caps.story?.toString() ?? "");
-  const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [invalid, setInvalid] = useState(false);
+  const { run, isPending, error, clearError } = useAdminAction();
 
-  function handleSave() {
-    setMessage(null);
-    startTransition(async () => {
-      const result = await setNarrationCaps({ term: parseCap(term), story: Number(story) });
-      setMessage(
-        result.ok ? { text: "Saved.", isError: false } : { text: result.error, isError: true },
-      );
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    const parsed = capsSchema.safeParse({
+      term: term.trim() === "" ? null : toNumber(term),
+      story: toNumber(story),
     });
+    setInvalid(!parsed.success);
+    if (!parsed.success) return;
+    void run(() => setNarrationCaps(parsed.data), { successMessage: "Limits saved." });
+  }
+
+  function edit(setter: (value: string) => void, value: string) {
+    setInvalid(false);
+    clearError();
+    setter(value);
   }
 
   return (
-    <section className="rounded-lg border border-base-300 px-4 py-3">
-      <h2 className="m-0 text-lg font-semibold text-base-content">Daily limits per person</h2>
-      <p className="m-0 text-sm text-base-content/65">
-        How many new clips one person can have made in 24 hours. Clips that already exist are free,
-        and failed attempts count. Leave the term limit blank for no limit.
-      </p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <label className="form-control">
-          <span className="label-text text-sm">Term clips (last 24 h: {usageLast24h.term})</span>
-          <input
-            type="number"
-            min={1}
-            max={1000}
-            className="input input-bordered w-full"
-            value={term}
-            placeholder="No limit"
-            onChange={(event) => setTerm(event.target.value)}
-          />
-        </label>
-        <label className="form-control">
-          <span className="label-text text-sm">Story clips (last 24 h: {usageLast24h.story})</span>
-          <input
-            type="number"
-            min={1}
-            max={1000}
-            className="input input-bordered w-full"
-            value={story}
-            onChange={(event) => setStory(event.target.value)}
-          />
-        </label>
-      </div>
-      <div className="mt-3 flex items-center gap-3">
-        <Button type="button" onPress={handleSave} isDisabled={isPending}>
-          Save limits
-        </Button>
-        {message ? (
-          <p
-            role={message.isError ? "alert" : "status"}
-            className={`m-0 text-sm ${message.isError ? "text-error" : "text-base-content/65"}`}
-          >
-            {message.text}
+    <AdminSection
+      id="narration-caps"
+      title="Daily limits per person"
+      description="How many new clips one person can have made in 24 hours. Clips that already exist are free, and failed attempts count. Leave the term limit blank for no limit."
+    >
+      <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm">Term clips (last 24 h: {usageLabel(usageLast24h.term)})</span>
+            <input
+              type="number"
+              className="input input-bordered w-full"
+              value={term}
+              placeholder="No limit"
+              onChange={(event) => edit(setTerm, event.target.value)}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm">
+              Story clips (last 24 h: {usageLabel(usageLast24h.story)})
+            </span>
+            <input
+              type="number"
+              className="input input-bordered w-full"
+              value={story}
+              onChange={(event) => edit(setStory, event.target.value)}
+            />
+          </label>
+        </div>
+        {invalid ? (
+          <p role="alert" className="m-0 text-sm text-error">
+            Enter whole numbers from 1 to 1000. Stories need a limit.
           </p>
         ) : null}
-      </div>
-    </section>
+        {error ? (
+          <p role="alert" className="m-0 text-sm text-error">
+            {error}
+          </p>
+        ) : null}
+        <div>
+          <button type="submit" className="btn btn-primary" disabled={isPending}>
+            {isPending ? "Saving…" : "Save limits"}
+          </button>
+        </div>
+      </form>
+    </AdminSection>
   );
 }

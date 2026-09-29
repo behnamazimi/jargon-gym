@@ -1,54 +1,54 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { addToNarrationAllowlist } from "@/app/(private)/admin/narration/actions";
+import { useState } from "react";
+import {
+  addToNarrationAllowlist,
+  removeFromNarrationAllowlist,
+} from "@/app/(private)/admin/narration/actions";
+import { AdminSection } from "@/components/admin/admin-section";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { useAdminAction } from "@/hooks/use-admin-action";
+import { formatAdminDate } from "@/lib/admin/format";
 import type { AdminNarrationAllowlistRow } from "@/lib/jargon/admin/list-narration-allowlist";
-import { cn } from "@/lib/utils";
 
-export function AllowlistManager({
-  allowlist,
-  removingId,
-  removeError,
-  onAdded,
-  onRemove,
-}: {
-  allowlist: AdminNarrationAllowlistRow[];
-  removingId: string | null;
-  removeError: string | null;
-  onAdded: (row: AdminNarrationAllowlistRow) => void;
-  onRemove: (userId: string) => void;
-}) {
+export function AllowlistManager({ allowlist }: { allowlist: AdminNarrationAllowlistRow[] }) {
   const [email, setEmail] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [removing, setRemoving] = useState<AdminNarrationAllowlistRow | null>(null);
+  const { run, isPending, error, clearError } = useAdminAction();
 
   function handleAdd() {
     const trimmed = email.trim();
     if (!trimmed) return;
-    setError(null);
-
-    startTransition(async () => {
-      const result = await addToNarrationAllowlist(trimmed);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      const { userId, email: addedEmail } = result.data;
-      onAdded({ userId, email: addedEmail, createdAt: new Date().toISOString() });
-      setEmail("");
+    void run(() => addToNarrationAllowlist(trimmed), {
+      onSuccess: () => setEmail(""),
+      successMessage: "Added.",
     });
   }
 
+  function handleRemove() {
+    if (!removing) return;
+    const { userId } = removing;
+    void run(() => removeFromNarrationAllowlist(userId), { successMessage: "Removed." });
+  }
+
   return (
-    <div className="flex flex-col gap-3">
+    <AdminSection
+      id="narration-access"
+      title="Who can use narration"
+      description="People on this list can play narration while it is switched on."
+    >
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
           type="email"
           className="input input-bordered flex-1"
           placeholder="user@example.com"
+          aria-label="Email to add"
           value={email}
-          disabled={isPending}
-          onChange={(event) => setEmail(event.target.value)}
+          readOnly={isPending}
+          onChange={(event) => {
+            clearError();
+            setEmail(event.target.value);
+          }}
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
@@ -62,11 +62,14 @@ export function AllowlistManager({
           disabled={isPending}
           onClick={handleAdd}
         >
-          {isPending ? "Adding…" : "Add"}
+          {isPending ? "Working…" : "Add"}
         </button>
       </div>
-      {error ? <p className="text-sm text-error">{error}</p> : null}
-      {removeError ? <p className="text-sm text-error">{removeError}</p> : null}
+      {error ? (
+        <p role="alert" className="m-0 text-sm text-error">
+          {error}
+        </p>
+      ) : null}
 
       <div className="overflow-x-auto rounded-lg border border-base-300">
         <table className="table">
@@ -74,28 +77,22 @@ export function AllowlistManager({
             <tr>
               <th>Email</th>
               <th>Added</th>
-              <th></th>
+              <th>
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {allowlist.map((row) => (
-              <tr
-                key={row.userId}
-                className={cn(
-                  "transition-[opacity,transform] duration-150 ease-out",
-                  removingId === row.userId && "-translate-y-1 opacity-0",
-                )}
-              >
+              <tr key={row.userId}>
                 <td className="font-medium text-base-content">{row.email}</td>
-                <td className="text-base-content/65">
-                  {new Date(row.createdAt).toLocaleDateString()}
-                </td>
+                <td className="text-base-content/65">{formatAdminDate(row.createdAt)}</td>
                 <td className="text-right">
                   <button
                     type="button"
                     className="btn btn-sm btn-ghost transition-transform active:scale-[0.96]"
-                    disabled={removingId === row.userId}
-                    onClick={() => onRemove(row.userId)}
+                    disabled={isPending}
+                    onClick={() => setRemoving(row)}
                   >
                     Remove
                   </button>
@@ -112,6 +109,15 @@ export function AllowlistManager({
           </tbody>
         </table>
       </div>
-    </div>
+
+      <ConfirmDialog
+        isOpen={removing !== null}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        title="Remove access?"
+        description={`${removing?.email ?? "This person"} can no longer play narration.`}
+        confirmLabel="Remove"
+        onConfirm={handleRemove}
+      />
+    </AdminSection>
   );
 }
