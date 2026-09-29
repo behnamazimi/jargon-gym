@@ -44,7 +44,7 @@ const LOGIN_ERROR = "Log in to continue.";
 const NOT_ENOUGH_TERMS_ERROR = `This collection needs at least ${STORY_MIN_TERMS} terms left to read.`;
 
 const generateInputSchema = z.object({
-  domainId: z.uuid(),
+  domainId: z.guid(),
   readingLevel: z.enum(READING_LEVELS),
   cefrLevel: z.enum(CEFR_LEVELS),
   pieceLength: z.enum(PIECE_LENGTHS),
