@@ -30,8 +30,8 @@ function SiteHeaderChrome({
             className="flex items-center gap-2 text-lg font-bold tracking-tight no-underline"
             aria-label="Jargon Gym"
           >
-            <BrandIcon className="md:hidden" />
-            <span className="hidden text-primary md:inline">Jargon Gym</span>
+            <BrandIcon className="lg:hidden" />
+            <span className="hidden whitespace-nowrap text-primary lg:inline">Jargon Gym</span>
           </Link>
           {leftNav ? <nav className="flex items-center gap-1">{leftNav}</nav> : null}
         </div>
@@ -56,6 +56,7 @@ function HeaderStudyLink({
   return (
     <Link
       href={href}
+      aria-label={label}
       data-tour={`nav-${label.toLowerCase()}`}
       className={cn("btn btn-ghost", className)}
     >
@@ -92,7 +93,6 @@ export function SiteHeader({
               href="/jargon"
               icon={LayoutList}
               label="Library"
-              className="hidden md:inline-flex"
             />
             <HeaderStudyLink href="/jargon/read" icon={Zap} label="Read" />
             <HeaderStudyLink href="/jargon/review" icon={BookOpen} label="Review" />

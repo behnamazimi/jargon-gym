@@ -146,7 +146,7 @@ export function InstallButton() {
       }}
     >
       <Download className="h-4 w-4" strokeWidth={1.5} />
-      <span className="hidden md:inline">Install</span>
+      <span className="hidden lg:inline">Install</span>
     </Button>
   );
 }
