@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import { getFeatureSettings } from "@/lib/ai/feature-settings";
+import { withRunGuard } from "@/lib/ai/run-guard";
 import { countRecentGenerations, recordUsage } from "@/lib/ai/usage";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import {
@@ -115,18 +116,29 @@ export async function POST(request: Request, { params }: RouteContext) {
   const cached = await getCachedNarration(admin, termId);
   if (cached.status === "ready") return NextResponse.json({ ready: true });
 
-  if (await overDailyCap(admin, userId)) {
-    return NextResponse.json({ ready: false, capped: true }, { status: 429 });
-  }
+  // One generation per person at a time, so the cap is checked against
+  // everything they have already made before the next one starts.
+  const guarded = await withRunGuard({ admin, userId, feature: "narration_term" }, async () => {
+    if (await overDailyCap(admin, userId)) return "capped" as const;
 
-  const result = await getOrGenerateNarration(admin, termId);
-  if (result.generation) {
-    await recordUsage(admin, {
-      userId,
-      feature: "narration_term",
-      units: result.generation.units,
-      outcome: result.status === "ready" ? "ok" : "failed",
-    });
+    const result = await getOrGenerateNarration(admin, termId);
+    if (result.generation) {
+      await recordUsage(admin, {
+        userId,
+        feature: "narration_term",
+        units: result.generation.units,
+        outcome: result.status === "ready" ? "ok" : "failed",
+      });
+    }
+    return result;
+  });
+
+  if (guarded.busy) {
+    return NextResponse.json({ ready: false, busy: true }, { status: 429 });
+  }
+  const result = guarded.value;
+  if (result === "capped") {
+    return NextResponse.json({ ready: false, capped: true }, { status: 429 });
   }
   if (result.status !== "ready") return NextResponse.json({ ready: false }, { status: 502 });
   return NextResponse.json({ ready: true });

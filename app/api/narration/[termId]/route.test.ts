@@ -10,6 +10,7 @@ const termRow = vi.fn();
 const getFeatureSettings = vi.fn();
 const countRecentGenerations = vi.fn();
 const recordUsage = vi.fn();
+const guard = vi.hoisted(() => ({ busy: false, inputs: [] as unknown[] }));
 
 vi.mock("@/lib/narration/access", () => ({ getNarrationAccessForUser }));
 vi.mock("@/lib/narration/service", () => ({
@@ -20,6 +21,13 @@ vi.mock("@/lib/narration/service", () => ({
 vi.mock("@/lib/narration/storage", () => ({
   downloadNarrationAudio,
   NarrationAudioMissingError: class NarrationAudioMissingError extends Error {},
+}));
+vi.mock("@/lib/ai/run-guard", () => ({
+  withRunGuard: async (input: unknown, run: () => Promise<unknown>) => {
+    guard.inputs.push(input);
+    if (guard.busy) return { busy: true };
+    return { busy: false, value: await run() };
+  },
 }));
 vi.mock("@/lib/ai/feature-settings", () => ({ getFeatureSettings }));
 vi.mock("@/lib/ai/usage", () => ({ countRecentGenerations, recordUsage }));
@@ -51,6 +59,8 @@ beforeEach(() => {
     storagePath: "term-1.mp3",
     contentHash: "abc",
   });
+  guard.busy = false;
+  guard.inputs = [];
   getFeatureSettings.mockResolvedValue({ dailyCap: 5 });
   countRecentGenerations.mockResolvedValue(0);
 });
@@ -174,6 +184,23 @@ describe("POST", () => {
     });
     await POST(request("POST"), ctx);
     expect(recordUsage).not.toHaveBeenCalled();
+  });
+
+  it("checks this person's count for term narration, under a guard for the same feature", async () => {
+    getOrGenerateNarration.mockResolvedValue(generated);
+    await POST(request("POST"), ctx);
+    expect(getFeatureSettings).toHaveBeenCalledWith({}, "narration_term");
+    expect(countRecentGenerations).toHaveBeenCalledWith({}, "user-1", "narration_term");
+    expect(guard.inputs).toEqual([{ admin: {}, userId: "user-1", feature: "narration_term" }]);
+  });
+
+  it("refuses a second generation while the first is still running", async () => {
+    guard.busy = true;
+    const res = await POST(request("POST"), ctx);
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ ready: false, busy: true });
+    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(countRecentGenerations).not.toHaveBeenCalled();
   });
 
   it("refuses with 429 and generates nothing once the cap is used up", async () => {

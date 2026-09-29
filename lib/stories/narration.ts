@@ -111,22 +111,23 @@ export async function getOrGenerateStoryNarration(
   if (!story) return { status: "unavailable" };
 
   const path = pathForStory(userId, storyId);
+  const script = `${story.title}\n\n${story.segments.map((segment) => segment.text).join("")}`;
   try {
-    const script = `${story.title}\n\n${story.segments.map((segment) => segment.text).join("")}`;
     const audio = await synthesizeNarrationAudio(script, story.language);
     await uploadNarrationAudio(path, audio);
     await setNarrationResult(admin, storyId, { status: "ready", path });
-    await recordUsage(admin, {
-      userId,
-      feature: "narration_story",
-      units: script.length,
-      outcome: "ok",
-    });
-    return { status: "ready", storagePath: path };
   } catch (err) {
     console.error("Story narration failed:", err);
     await setNarrationResult(admin, storyId, { status: "failed" });
     await recordUsage(admin, { userId, feature: "narration_story", units: 0, outcome: "failed" });
     return { status: "unavailable" };
   }
+
+  await recordUsage(admin, {
+    userId,
+    feature: "narration_story",
+    units: script.length,
+    outcome: "ok",
+  });
+  return { status: "ready", storagePath: path };
 }

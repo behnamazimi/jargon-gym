@@ -27,6 +27,19 @@ describe("recordUsage", () => {
     });
   });
 
+  it("never fails the request when the call itself throws", async () => {
+    const admin = {
+      from: () => ({
+        insert: () => {
+          throw new Error("fetch failed");
+        },
+      }),
+    } as unknown as Client;
+    await expect(
+      recordUsage(admin, { userId: "u1", feature: "narration_story", units: 5, outcome: "ok" }),
+    ).resolves.toBeUndefined();
+  });
+
   it("never fails the request when the write fails", async () => {
     const admin = {
       from: () => ({ insert: () => Promise.resolve({ error: new Error("db down") }) }),
@@ -47,7 +60,10 @@ describe("countRecentGenerations", () => {
         seen.push([column, value]);
         return chain;
       },
-      gte: () => Promise.resolve(result),
+      gte: (column: string, since: string) => {
+        seen.push([column, Date.now() - Date.parse(since) > 23.9 * 3600_000]);
+        return Promise.resolve(result);
+      },
     });
     return { admin: { from: () => chain } as unknown as Client, seen };
   }
@@ -58,6 +74,7 @@ describe("countRecentGenerations", () => {
     expect(seen).toEqual([
       ["user_id", "u1"],
       ["feature", "narration_term"],
+      ["created_at", true],
     ]);
   });
 

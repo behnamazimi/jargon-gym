@@ -13,13 +13,17 @@ export async function recordUsage(
   admin: Client,
   event: { userId: string; feature: FeatureId; units: number; outcome: "ok" | "failed" },
 ): Promise<void> {
-  const { error } = await admin.from("ai_usage_events").insert({
-    user_id: event.userId,
-    feature: event.feature,
-    units: event.units,
-    outcome: event.outcome,
-  });
-  if (error) console.error("Couldn't record AI usage:", error);
+  try {
+    const { error } = await admin.from("ai_usage_events").insert({
+      user_id: event.userId,
+      feature: event.feature,
+      units: event.units,
+      outcome: event.outcome,
+    });
+    if (error) console.error("Couldn't record AI usage:", error);
+  } catch (error) {
+    console.error("Couldn't record AI usage:", error);
+  }
 }
 
 /** Provider calls made for this person in the last 24 hours, failed ones
