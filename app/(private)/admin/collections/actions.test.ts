@@ -7,9 +7,8 @@ const state = vi.hoisted(() => ({
   terms: [] as { id: string; term: string; slug: string | null }[],
   publishResults: [] as RpcResult[],
   rpcCalls: [] as { name: string; args: unknown }[],
-  updates: [] as unknown[],
-  updateError: null as { code?: string } | null,
-  updatedSlug: "cooking" as string | null,
+  updates: [] as { table: string; values: unknown }[],
+  updateErrors: [] as ({ code?: string } | null)[],
   revalidated: [] as string[],
   termRangeCalls: [] as number[],
 }));
@@ -22,10 +21,13 @@ vi.spyOn(console, "error").mockImplementation(() => undefined);
 
 function chain(table: string) {
   const node: Record<string, unknown> = {};
-  const self = () => node;
-  for (const method of ["select", "eq", "order"]) node[method] = self;
+  let error: { code?: string } | null = null;
+  const settle = () => Object.assign(Promise.resolve({ data: [], error }), node);
+  for (const method of ["select", "order"]) node[method] = settle;
+  node.eq = () => settle();
   node.update = (values: unknown) => {
     state.updates.push({ table, values });
+    error = state.updateErrors.shift() ?? null;
     return node;
   };
   node.range = (from: number) => {
@@ -33,11 +35,7 @@ function chain(table: string) {
     return Promise.resolve({ data: state.terms.slice(from, from + 1000), error: null });
   };
   node.single = () =>
-    Promise.resolve(
-      state.updateError
-        ? { data: null, error: state.updateError }
-        : { data: { slug: state.updatedSlug, id: "d1" }, error: null },
-    );
+    Promise.resolve(error ? { data: null, error } : { data: { id: "d1" }, error: null });
   return node;
 }
 
@@ -57,7 +55,7 @@ vi.mock("@/lib/auth/require-session", () => ({
   }),
 }));
 
-const { setBuiltin, setPublic, updateDomainSlug } = await import("./actions");
+const { checkDomainSlug, setCollectionStatus, updateDomainSlug } = await import("./actions");
 
 const domain = (overrides: Record<string, unknown> = {}) => ({
   id: "d1",
@@ -69,6 +67,7 @@ const domain = (overrides: Record<string, unknown> = {}) => ({
   owner_email: "admin@example.test",
   visibility: "private",
   term_count: 2,
+  updated_at: "2026-09-29T00:00:00Z",
   ...overrides,
 });
 
@@ -77,6 +76,7 @@ const theirs = (overrides: Record<string, unknown> = {}) =>
 
 const publishCalls = () =>
   state.rpcCalls.filter((call) => call.name === "admin_publish_collection");
+const listCalls = () => state.rpcCalls.filter((call) => call.name === "admin_list_collections");
 
 beforeEach(() => {
   state.list = [domain(), domain({ id: "d2", name: "Baking", slug: "baking" })];
@@ -87,68 +87,31 @@ beforeEach(() => {
   state.publishResults = [];
   state.rpcCalls = [];
   state.updates = [];
-  state.updateError = null;
-  state.updatedSlug = "cooking";
+  state.updateErrors = [];
   state.revalidated = [];
   state.termRangeCalls = [];
 });
 
-describe("someone else's private collection", () => {
-  beforeEach(() => {
-    state.list = [theirs()];
-  });
-
-  it("can't be published, though the publish function would allow it", async () => {
-    expect(await setPublic("d1", true)).toEqual({ ok: false, error: "Collection not found." });
+describe("setCollectionStatus: moves, decided from the database's status", () => {
+  it("marks built-in with one update", async () => {
+    state.list = [domain({ is_builtin: false })];
+    expect(await setCollectionStatus("d1", "builtin")).toMatchObject({ ok: true });
+    expect(state.updates).toEqual([{ table: "domains", values: { is_builtin: true } }]);
     expect(publishCalls()).toEqual([]);
   });
 
-  it("can't be changed in any other way either", async () => {
-    const results = [
-      await setBuiltin("d1", true),
-      await setPublic("d1", false),
-      await updateDomainSlug("d1", "x"),
-    ];
-    for (const result of results) {
-      expect(result).toEqual({ ok: false, error: "Collection not found." });
-    }
-    expect(state.updates).toEqual([]);
-  });
-
-  it("can't be found when the id is unknown", async () => {
-    expect(await setBuiltin("missing", true)).toEqual({
-      ok: false,
-      error: "Collection not found.",
+  it("marks built-in first, then publishes, from not built-in", async () => {
+    state.list = [domain({ is_builtin: false })];
+    expect(await setCollectionStatus("d1", "published")).toEqual({
+      ok: true,
+      data: { slug: "cooking" },
     });
-  });
-});
-
-describe("a shared collection someone else owns", () => {
-  it("can be published, like main allowed", async () => {
-    state.list = [theirs({ visibility: "shared" })];
-    expect((await setPublic("d1", true)).ok).toBe(true);
-  });
-});
-
-describe("setBuiltin", () => {
-  it("takes the public page and sitemap offline when a collection stops being built-in", async () => {
-    expect(await setBuiltin("d1", false)).toMatchObject({ ok: true });
-    expect(state.updates).toEqual([
-      { table: "domains", values: { is_builtin: false, is_public: false } },
-    ]);
-    expect(state.revalidated).toEqual(["/admin/collections", "/j/cooking:layout", "/sitemap.xml"]);
+    expect(state.updates).toEqual([{ table: "domains", values: { is_builtin: true } }]);
+    expect(publishCalls()).toHaveLength(1);
   });
 
-  it("does not touch public pages when a collection becomes built-in", async () => {
-    state.updatedSlug = null;
-    await setBuiltin("d1", true);
-    expect(state.revalidated).toEqual(["/admin/collections"]);
-  });
-});
-
-describe("setPublic", () => {
   it("publishes with one call carrying the slugs it built", async () => {
-    expect(await setPublic("d1", true)).toEqual({ ok: true, data: { slug: "cooking" } });
+    await setCollectionStatus("d1", "published");
     expect(publishCalls()).toEqual([
       {
         name: "admin_publish_collection",
@@ -159,39 +122,65 @@ describe("setPublic", () => {
         },
       },
     ]);
-    expect(state.revalidated).toContain("/j/cooking:layout");
+    expect(listCalls()).toHaveLength(1);
   });
 
-  it("avoids slugs used by other collections, and keeps the domain's own slug", async () => {
-    state.list = [domain({ slug: "cooking" }), domain({ id: "d2", slug: "baking" })];
-    await setPublic("d1", true);
-    expect(publishCalls()[0]?.args).toMatchObject({ p_domain_slug: "cooking" });
-
-    state.rpcCalls = [];
-    state.list = [domain(), domain({ id: "d2", slug: "cooking" })];
-    await setPublic("d1", true);
-    expect(publishCalls()[0]?.args).toMatchObject({ p_domain_slug: "cooking-2" });
+  it("takes a published collection back to built-in without un-building it", async () => {
+    state.list = [domain({ slug: "cooking", is_public: true })];
+    await setCollectionStatus("d1", "builtin");
+    expect(state.updates).toEqual([{ table: "domains", values: { is_public: false } }]);
+    expect(state.revalidated).toEqual(
+      expect.arrayContaining(["/j/cooking:layout", "/j", "/sitemap.xml", "/admin/collections"]),
+    );
   });
 
-  it("only publishes built-in collections, with a message that survives production", async () => {
-    state.list = [domain({ is_builtin: false })];
-    expect(await setPublic("d1", true)).toEqual({
-      ok: false,
-      error: "Only built-in collections can be made public.",
-    });
+  it("un-builds and clears public in one update", async () => {
+    state.list = [domain({ slug: "cooking", is_public: true })];
+    await setCollectionStatus("d1", "none");
+    expect(state.updates).toEqual([
+      { table: "domains", values: { is_builtin: false, is_public: false } },
+    ]);
+  });
+
+  it("does nothing, and says ok, when the collection is already there", async () => {
+    state.list = [domain({ slug: "cooking", is_public: true })];
+    expect(await setCollectionStatus("d1", "published")).toMatchObject({ ok: true });
+    expect(state.updates).toEqual([]);
     expect(publishCalls()).toEqual([]);
   });
 
-  it("reads again and retries once when a slug was taken meanwhile", async () => {
-    state.publishResults = [{ data: null, error: { code: "23505" } }];
-    expect(await setPublic("d1", true)).toEqual({ ok: true, data: { slug: "cooking" } });
-    expect(publishCalls()).toHaveLength(2);
-    expect(state.rpcCalls.filter((call) => call.name === "admin_list_collections")).toHaveLength(2);
+  it("stays built-in, and reports the failure, when publishing fails after marking built-in", async () => {
+    state.list = [domain({ is_builtin: false })];
+    state.publishResults = [{ data: null, error: { code: "P0001", message: "internal" } }];
+    expect(await setCollectionStatus("d1", "published")).toEqual({
+      ok: false,
+      error: "Something went wrong. Try again.",
+    });
+    expect(state.updates).toEqual([{ table: "domains", values: { is_builtin: true } }]);
   });
 
-  it("reads again and retries once when a term appeared meanwhile", async () => {
+  it("stops before publishing when marking built-in fails", async () => {
+    state.list = [domain({ is_builtin: false })];
+    state.updateErrors = [{ code: "42501" }];
+    expect((await setCollectionStatus("d1", "published")).ok).toBe(false);
+    expect(publishCalls()).toEqual([]);
+  });
+
+  it("avoids slugs used by other collections", async () => {
+    state.list = [domain(), domain({ id: "d2", slug: "cooking" })];
+    await setCollectionStatus("d1", "published");
+    expect(publishCalls()[0]?.args).toMatchObject({ p_domain_slug: "cooking-2" });
+  });
+
+  it("reads again and retries once on a taken slug or a new term", async () => {
+    state.publishResults = [{ data: null, error: { code: "23505" } }];
+    expect((await setCollectionStatus("d1", "published")).ok).toBe(true);
+    expect(publishCalls()).toHaveLength(2);
+    expect(listCalls()).toHaveLength(2);
+
+    state.rpcCalls = [];
     state.publishResults = [{ data: null, error: { code: "40001" } }];
-    expect((await setPublic("d1", true)).ok).toBe(true);
+    expect((await setCollectionStatus("d1", "published")).ok).toBe(true);
     expect(publishCalls()).toHaveLength(2);
   });
 
@@ -200,20 +189,10 @@ describe("setPublic", () => {
       { data: null, error: { code: "23505" } },
       { data: null, error: { code: "23505" } },
     ];
-    expect(await setPublic("d1", true)).toEqual({
+    expect(await setCollectionStatus("d1", "published")).toEqual({
       ok: false,
       error: "Couldn't publish. Try again.",
     });
-    expect(publishCalls()).toHaveLength(2);
-  });
-
-  it("does not retry other errors, and shows a generic message", async () => {
-    state.publishResults = [{ data: null, error: { code: "P0001", message: "internal detail" } }];
-    expect(await setPublic("d1", true)).toEqual({
-      ok: false,
-      error: "Something went wrong. Try again.",
-    });
-    expect(publishCalls()).toHaveLength(1);
   });
 
   it("reads every page of terms", async () => {
@@ -222,39 +201,109 @@ describe("setPublic", () => {
       term: `word ${i}`,
       slug: null,
     }));
-    await setPublic("d1", true);
+    await setCollectionStatus("d1", "published");
     expect(state.termRangeCalls).toEqual([0, 1000]);
     const sent = publishCalls()[0]?.args as { p_term_slugs: object } | undefined;
     expect(Object.keys(sent?.p_term_slugs ?? {})).toHaveLength(1500);
   });
 
-  it("unpublishes with a direct update and takes the page offline", async () => {
-    expect(await setPublic("d1", false)).toEqual({ ok: true, data: { slug: "cooking" } });
-    expect(state.updates).toEqual([{ table: "domains", values: { is_public: false } }]);
+  it("refuses an unknown status", async () => {
+    expect((await setCollectionStatus("d1", "nope" as never)).ok).toBe(false);
+    expect(state.updates).toEqual([]);
+  });
+});
+
+describe("someone else's private collection", () => {
+  beforeEach(() => {
+    state.list = [theirs()];
+  });
+
+  it("can't be moved, checked or given an address, though the publish function would allow it", async () => {
+    for (const result of [
+      await setCollectionStatus("d1", "published"),
+      await setCollectionStatus("d1", "none"),
+      await checkDomainSlug("d1", "x"),
+      await updateDomainSlug("d1", "x", "x"),
+    ]) {
+      expect(result).toEqual({ ok: false, error: "Collection not found." });
+    }
+    expect(state.updates).toEqual([]);
     expect(publishCalls()).toEqual([]);
-    expect(state.revalidated).toContain("/j/cooking:layout");
+  });
+
+  it("can be moved when it is shared", async () => {
+    state.list = [theirs({ visibility: "shared" })];
+    expect((await setCollectionStatus("d1", "published")).ok).toBe(true);
+  });
+});
+
+describe("checkDomainSlug", () => {
+  it("says free, taken with a suggestion, or invalid, without saving", async () => {
+    expect(await checkDomainSlug("d1", "Fresh Name")).toMatchObject({
+      ok: true,
+      data: { slug: "fresh-name", taken: false },
+    });
+    expect(await checkDomainSlug("d1", "Baking")).toMatchObject({
+      data: { taken: true, suggestion: "baking-2" },
+    });
+    expect(await checkDomainSlug("d1", "!!!")).toMatchObject({ data: { valid: false } });
+    expect(state.updates).toEqual([]);
+  });
+
+  it("counts the collection's own slug as free", async () => {
+    state.list = [domain({ slug: "cooking" })];
+    expect(await checkDomainSlug("d1", "cooking")).toMatchObject({ data: { taken: false } });
   });
 });
 
 describe("updateDomainSlug", () => {
-  it("returns the slug it saved, never one another collection has", async () => {
-    const result = await updateDomainSlug("d1", "Baking");
-    expect(result).toEqual({ ok: true, data: { slug: "baking-2" } });
-  });
-
-  it("can keep its own slug", async () => {
-    state.list = [domain({ slug: "cooking" })];
-    expect(await updateDomainSlug("d1", "cooking")).toEqual({
+  it("saves exactly the address that was checked", async () => {
+    expect(await updateDomainSlug("d1", "Kitchen", "kitchen")).toEqual({
       ok: true,
-      data: { slug: "cooking" },
+      data: { slug: "kitchen" },
+    });
+    expect(state.updates).toEqual([{ table: "domains", values: { slug: "kitchen" } }]);
+  });
+
+  it("refuses, instead of suffixing, when the address was taken in the meantime", async () => {
+    expect(await updateDomainSlug("d1", "Baking", "baking")).toEqual({
+      ok: false,
+      error: "That address is taken. Check again.",
+    });
+    state.updateErrors = [{ code: "23505" }];
+    expect(await updateDomainSlug("d1", "Kitchen", "kitchen")).toEqual({
+      ok: false,
+      error: "That address is taken. Check again.",
     });
   });
 
-  it("says so when the slug was taken in between", async () => {
-    state.updateError = { code: "23505" };
-    expect(await updateDomainSlug("d1", "fresh")).toEqual({
+  it("refuses when the text isn't what was checked, or has no letters", async () => {
+    expect(await updateDomainSlug("d1", "Kitchen", "cooking")).toEqual({
       ok: false,
-      error: "That slug is taken. Try another.",
+      error: "The address changed. Check it again.",
     });
+    expect(await updateDomainSlug("d1", "!!!", "item")).toEqual({
+      ok: false,
+      error: "Use letters or numbers in the address.",
+    });
+    expect(state.updates).toEqual([]);
+  });
+
+  it("gives an address only to built-in collections, or ones that already have one", async () => {
+    state.list = [domain({ is_builtin: false })];
+    expect(await updateDomainSlug("d1", "kitchen", "kitchen")).toEqual({
+      ok: false,
+      error: "Only built-in collections have a public address.",
+    });
+    state.list = [domain({ is_builtin: false, slug: "old" })];
+    expect((await updateDomainSlug("d1", "kitchen", "kitchen")).ok).toBe(true);
+  });
+
+  it("refreshes the old and new public pages when the collection is public", async () => {
+    state.list = [domain({ slug: "cooking", is_public: true })];
+    await updateDomainSlug("d1", "kitchen", "kitchen");
+    expect(state.revalidated).toEqual(
+      expect.arrayContaining(["/j/cooking:layout", "/j/kitchen:layout", "/j"]),
+    );
   });
 });

@@ -11,12 +11,12 @@ export type PeopleParams = {
   person: string | null;
 };
 
-type RawParams = Record<string, string | string[] | undefined>;
+export type RawParams = Record<string, string | string[] | undefined>;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Drops control characters, then trims and caps the length. */
-function cleanSearch(value: string | undefined): string {
+export function cleanSearch(value: string | undefined): string {
   const printable = [...(value ?? "")].filter((char) => {
     const code = char.charCodeAt(0);
     return code > 31 && code !== 127;
@@ -24,7 +24,7 @@ function cleanSearch(value: string | undefined): string {
   return printable.join("").trim().slice(0, 100);
 }
 
-function first(value: string | string[] | undefined): string | undefined {
+export function first(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 

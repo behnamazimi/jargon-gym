@@ -13,6 +13,7 @@ export type AdminCollectionRow = {
   isPublic: boolean;
   slug: string | null;
   visibility: "private" | "shared";
+  updatedAt: string;
   /** Someone else's private collection: an admin can see it exists, not change it. */
   readOnly: boolean;
 };
@@ -55,6 +56,7 @@ export async function listAllCollectionsForAdmin(
     isPublic: row.is_public,
     slug: (row.slug as string | null) || null,
     visibility: row.visibility,
+    updatedAt: row.updated_at,
     readOnly: !canActOnCollection({ visibility: row.visibility, ownerId: row.owner_id }, adminId),
   }));
 }
