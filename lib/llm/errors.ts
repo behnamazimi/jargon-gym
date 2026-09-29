@@ -20,9 +20,16 @@ export function isKeyRejected(error: unknown): boolean {
   return status === 400 && inner instanceof Error && /api key/i.test(inner.message);
 }
 
-/** The key was refused or the provider has no quota left. For the app's own
- *  key that is our problem, not something the user can fix. */
+/** The provider doesn't offer the model to this key. Google answers 404 once a
+ *  model is retired for projects that started using it late. */
+export function isModelUnavailable(error: unknown): boolean {
+  return providerStatus(error) === 404;
+}
+
+/** The key was refused, the provider has no quota left, or it won't serve our
+ *  model to this key. For the app's own key that is our problem, not something
+ *  the user can fix. */
 export function isProviderKeyFault(error: unknown): boolean {
   const status = providerStatus(error);
-  return isKeyRejected(error) || status === 402 || status === 429;
+  return isKeyRejected(error) || isModelUnavailable(error) || status === 402 || status === 429;
 }

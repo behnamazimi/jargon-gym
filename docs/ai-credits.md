@@ -73,13 +73,19 @@ story. Credits only stay spent for a quiz or story the user actually received.
 Retries inside one attempt never charge twice. Refunding twice is harmless.
 
 Each refund records a short reason in the refund row's `note`, such as
-`Provider error 429: Quota exceeded` or `StoryGenerationError: ...`. The reason
+`Provider error 429: Quota exceeded` or `StoryGenerationError: ...`. When an
+error wraps another one as its `cause`, as Stories' errors do, the note
+describes the original. The reason
 comes from the error, is cut to about 200 characters, has anything that looks
 like a key removed, and never includes a prompt or what the user wrote. The
 first reason stays if a refund is attempted twice.
 
+Stories give up after 45 seconds, so a slow model is reported and refunded
+before the platform's 60-second limit ends the request. AI quizzes have no such
+limit of their own.
+
 One case isn't covered. If the server process dies between the charge and the
-refund, for example when a request runs past the platform's time limit, the
+refund, for example when a quiz runs past the platform's time limit, the
 credits stay spent. Nothing marks these spends, so they look the same as any
 other spend in the ledger. If this turns out to matter, a later change can add a
 "settled" marker to spends and a job that refunds ones that never settle.

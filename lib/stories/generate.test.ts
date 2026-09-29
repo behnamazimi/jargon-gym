@@ -40,9 +40,9 @@ const MISSING_TERMS_TEXT = `Title
 
 ${FILLER}`;
 
-function apiError(statusCode: number) {
+function apiError(statusCode: number, message = `HTTP ${statusCode}`) {
   return new APICallError({
-    message: `HTTP ${statusCode}`,
+    message,
     url: "https://example.test",
     requestBodyValues: {},
     statusCode,
@@ -55,8 +55,15 @@ function resolveWith(text: string) {
   return Promise.resolve({ text }) as unknown as ReturnType<typeof generateText>;
 }
 
+let logError: ReturnType<typeof vi.spyOn>;
+let logWarning: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
   mockedGenerate.mockReset();
+  logError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  logWarning = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  logError.mockClear();
+  logWarning.mockClear();
 });
 
 describe("generateStory", () => {
@@ -102,9 +109,54 @@ describe("generateStory", () => {
 
   it("gives up after the second failure", async () => {
     mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
-    vi.spyOn(console, "error").mockImplementation(() => undefined);
     await expect(generateStory(INPUT)).rejects.toBeInstanceOf(StoryProviderError);
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not retry a model the key can't use, and keeps the provider's reason", async () => {
+    const providerFailure = apiError(404, "This model is no longer available to new users");
+    mockedGenerate.mockRejectedValue(providerFailure);
+    await expect(generateStory(INPUT)).rejects.toMatchObject({
+      kind: "model-unavailable",
+      cause: providerFailure,
+    });
+    expect(mockedGenerate).toHaveBeenCalledTimes(1);
+    expect(logError).toHaveBeenCalledWith(
+      "Story generation failed (anthropic):",
+      "Provider error 404: This model is no longer available to new users",
+    );
+  });
+
+  it("logs a failed first attempt that a retry then recovers from", async () => {
+    mockedGenerate.mockRejectedValueOnce(apiError(503)).mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    await generateStory(INPUT);
+    expect(logWarning).toHaveBeenCalledWith(
+      "Story attempt failed, retrying (anthropic):",
+      "Provider error 503: HTTP 503",
+    );
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it("logs and wraps an error that isn't from the provider", async () => {
+    mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
+    await expect(generateStory(INPUT)).rejects.toMatchObject({ kind: "other" });
+    expect(logError).toHaveBeenCalledWith(
+      "Story generation failed (anthropic):",
+      expect.stringMatching(/^StoryGenerationError:/),
+    );
+  });
+
+  it("stops without retrying once the time limit has passed", async () => {
+    vi.spyOn(AbortSignal, "timeout").mockReturnValueOnce(AbortSignal.abort());
+    mockedGenerate.mockRejectedValue(new DOMException("aborted", "TimeoutError"));
+    await expect(generateStory(INPUT)).rejects.toMatchObject({ kind: "timeout" });
+    expect(mockedGenerate).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives the model the time limit as its abort signal", async () => {
+    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    await generateStory(INPUT);
+    expect(mockedGenerate.mock.calls[0]![0].abortSignal).toBeInstanceOf(AbortSignal);
   });
 
   it("sends the fixed rules as the system prompt and the story details as the prompt", async () => {
