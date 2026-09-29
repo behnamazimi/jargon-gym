@@ -102,32 +102,6 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
   return null;
 }
 
-function FreeKeyGuide() {
-  return (
-    <details className="collapse collapse-arrow rounded-lg border border-base-300/80 bg-base-100">
-      <summary className="collapse-title min-h-11 text-sm font-medium">
-        How to get a free Google key
-      </summary>
-      <ol className="collapse-content m-0 space-y-1 pl-9 text-sm text-base-content/60">
-        <li>
-          Open{" "}
-          <a
-            href="https://aistudio.google.com/apikey"
-            target="_blank"
-            rel="noreferrer"
-            className="link"
-          >
-            Google AI Studio
-          </a>{" "}
-          and sign in.
-        </li>
-        <li>Choose Create API key and copy it.</li>
-        <li>Pick Google as the provider below and paste the key.</li>
-      </ol>
-    </details>
-  );
-}
-
 export function LlmPanel({ initialSettings, ai }: LlmPanelProps) {
   const [settings, setSettings] = useState(initialSettings);
   const [provider, setProvider] = useState<LlmProvider>(initialSettings?.provider ?? "google");
@@ -216,8 +190,6 @@ export function LlmPanel({ initialSettings, ai }: LlmPanelProps) {
           creditsNote={creditsRemaining !== null}
         />
       </SettingsStack>
-
-      {llmConfigured ? null : <FreeKeyGuide />}
 
       {llmConfigured ? (
         <RemoveKeySection

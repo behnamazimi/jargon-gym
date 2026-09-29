@@ -64,7 +64,7 @@ function ChoiceField<T extends string>({
             onPress={() => onChange(option)}
             aria-pressed={value === option}
             className={cn(
-              "min-h-11 flex-1 px-2",
+              "flex-1 px-2",
               value === option && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
             )}
           >
