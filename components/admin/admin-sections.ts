@@ -3,6 +3,7 @@ import {
   Coins,
   LayoutDashboard,
   Library,
+  ScrollText,
   Sparkles,
   Users,
   Volume2,
@@ -43,7 +44,10 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
   },
   {
     title: "System",
-    sections: [{ href: "/admin/system/queue", label: "Queue debug", icon: Bug }],
+    sections: [
+      { href: "/admin/system/queue", label: "Queue debug", icon: Bug },
+      { href: "/admin/system/audit", label: "Audit log", icon: ScrollText },
+    ],
   },
 ];
 

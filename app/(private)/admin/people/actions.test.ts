@@ -4,6 +4,7 @@ type Result = { data?: unknown; error?: unknown };
 
 const state = vi.hoisted(() => ({
   lastId: "" as string,
+  auditError: null as Error | null,
   byId: {} as Record<string, Record<string, unknown>>,
   request: { id: "r1", email: "a@example.test", status: "pending" } as Record<string, unknown>,
   resendRequest: null as Record<string, unknown> | null,
@@ -14,6 +15,7 @@ const state = vi.hoisted(() => ({
   updates: [] as { table: string; values: unknown }[],
   ilikeArgs: [] as string[],
   sent: [] as { to: string; signupUrl: string }[],
+  audits: [] as { action: string; targetId?: string; details?: unknown }[],
 }));
 
 vi.mock("next/cache", () => ({
@@ -59,7 +61,18 @@ vi.mock("@/lib/auth/require-session", async () => {
     requireAdminClient: async () => ({
       user: { id: "admin-1" },
       supabase: {
-        rpc: async () => {
+        rpc: async (
+          name: string,
+          args: { p_action?: string; p_target_id?: string; p_details?: unknown },
+        ) => {
+          if (name === "admin_write_audit") {
+            state.audits.push({
+              action: args.p_action ?? "",
+              targetId: args.p_target_id,
+              details: args.p_details,
+            });
+            return { error: state.auditError };
+          }
           state.calls.push("code");
           return { data: { id: "c1", code: "ABC123" }, error: null };
         },
@@ -105,6 +118,8 @@ beforeEach(() => {
   state.updates = [];
   state.ilikeArgs = [];
   state.sent = [];
+  state.audits = [];
+  state.auditError = null;
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
@@ -118,6 +133,29 @@ describe("approveWaitlistRequest", () => {
         signupUrl: "https://app.test/signup?ref=ABC123&email=a%40example.test",
       },
     ]);
+  });
+
+  it("records the approval, including a failed email, and not a lost race", async () => {
+    await approveWaitlistRequest("r1");
+    expect(state.audits).toEqual([
+      { action: "app.waitlist_approve", targetId: "r1", details: { emailSent: true } },
+    ]);
+
+    state.audits = [];
+    state.emailError = new Error("down");
+    await approveWaitlistRequest("r1");
+    expect(state.audits[0]?.details).toEqual({ emailSent: false });
+
+    state.audits = [];
+    state.emailError = null;
+    state.claimed = [];
+    await approveWaitlistRequest("r1");
+    expect(state.audits).toEqual([]);
+  });
+
+  it("still approves when the audit row can't be written", async () => {
+    state.auditError = new Error("audit down");
+    expect(await approveWaitlistRequest("r1")).toEqual({ ok: true, data: { emailSent: true } });
   });
 
   it("sends existing accounts to finish signup, matching the email exactly", async () => {
@@ -233,6 +271,16 @@ describe("resendInvite", () => {
       error: "That invite code is no longer active.",
     });
     expect(state.sent).toEqual([]);
+  });
+
+  it("records a resend only after it was sent", async () => {
+    state.resendRequest = invited({ code: "ABC123", used_by: null, is_active: true });
+    await resendInvite("r1");
+    expect(state.audits).toEqual([{ action: "app.invite_resend", targetId: "r1", details: {} }]);
+    state.audits = [];
+    state.emailError = new Error("down");
+    await resendInvite("r1");
+    expect(state.audits).toEqual([]);
   });
 
   it("reports an email failure", async () => {

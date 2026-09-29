@@ -12,19 +12,23 @@ const state = vi.hoisted(() => ({
   deleted: [] as unknown[],
   enqueued: [] as string[],
   coverageFor: [] as { id: string; name: string }[],
+  audits: [] as { action: string; targetId?: string; details?: unknown }[],
+  member: 0,
+  lastJob: null as Record<string, unknown> | null,
+  canResume: false,
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: () => undefined }));
 vi.spyOn(console, "error").mockImplementation(() => undefined);
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/narration/sync", () => ({
-  cancelNarrationSync: async () => null,
-  canResumeNarrationSync: () => false,
+  cancelNarrationSync: async () => state.lastJob,
+  canResumeNarrationSync: () => state.canResume,
   enqueueNarrationSync: async (_client: unknown, domainId: string) => {
     state.enqueued.push(domainId);
     return { id: "job-1" };
   },
-  getLastNarrationSyncJob: async () => null,
+  getLastNarrationSyncJob: async () => state.lastJob,
   kickNarrationSyncWorker: () => undefined,
   listCollectionNarrationCoverage: async (
     _client: unknown,
@@ -42,7 +46,18 @@ vi.mock("@/lib/auth/require-session", async () => {
       return {
         user: { id: "admin-1" },
         supabase: {
-          rpc: (name: string, args: unknown) => {
+          rpc: (
+            name: string,
+            args: { p_action?: string; p_target_id?: string; p_details?: unknown },
+          ) => {
+            if (name === "admin_write_audit") {
+              state.audits.push({
+                action: args.p_action ?? "",
+                targetId: args.p_target_id,
+                details: args.p_details,
+              });
+              return Promise.resolve({ error: null });
+            }
             state.rpcCalls.push({ name, args });
             if (name === "admin_list_collections") {
               return Promise.resolve({ data: state.collections, error: null });
@@ -64,6 +79,15 @@ vi.mock("@/lib/auth/require-session", async () => {
             }
             if (table === "ai_feature_allowlist") {
               return {
+                select: () => ({
+                  eq: () => ({
+                    in: () =>
+                      Promise.resolve({
+                        data: Array.from({ length: state.member }, () => ({ feature: "x" })),
+                        error: null,
+                      }),
+                  }),
+                }),
                 upsert: (rows: unknown, options: unknown) => {
                   state.upserts.push(rows);
                   state.upsertOptions.push(options);
@@ -73,7 +97,13 @@ vi.mock("@/lib/auth/require-session", async () => {
                   in: (_column: string, features: unknown) => ({
                     eq: (_c: string, userId: string) => {
                       state.deleted.push({ features, userId });
-                      return Promise.resolve({ error: null });
+                      return {
+                        select: () =>
+                          Promise.resolve({
+                            data: Array.from({ length: state.member }, () => ({ feature: "x" })),
+                            error: null,
+                          }),
+                      };
                     },
                   }),
                 }),
@@ -89,8 +119,10 @@ vi.mock("@/lib/auth/require-session", async () => {
 
 const {
   addToNarrationAllowlist,
+  cancelNarrationSyncJob,
   getNarrationSyncCoverage,
   removeFromNarrationAllowlist,
+  resumeNarrationSync,
   setNarrationCaps,
   setNarrationEnabled,
   startNarrationSync,
@@ -123,6 +155,10 @@ beforeEach(() => {
   state.deleted = [];
   state.enqueued = [];
   state.coverageFor = [];
+  state.audits = [];
+  state.member = 0;
+  state.lastJob = null;
+  state.canResume = false;
 });
 
 describe("narration admin actions", () => {
@@ -173,8 +209,31 @@ describe("narration admin actions", () => {
   });
 
   it("removes a person from both features", async () => {
+    state.member = 2;
     await removeFromNarrationAllowlist("u1");
     expect(state.deleted).toEqual([{ features: BOTH, userId: "u1" }]);
+  });
+
+  it("records access changes only when something changed", async () => {
+    await addToNarrationAllowlist("a@example.test");
+    expect(state.audits).toEqual([
+      { action: "app.narration_access", targetId: "u1", details: { on: true } },
+    ]);
+
+    state.audits = [];
+    state.member = 2;
+    await addToNarrationAllowlist("a@example.test");
+    expect(state.audits).toEqual([]);
+
+    await removeFromNarrationAllowlist("u1");
+    expect(state.audits).toEqual([
+      { action: "app.narration_access", targetId: "u1", details: { on: false } },
+    ]);
+
+    state.audits = [];
+    state.member = 0;
+    await removeFromNarrationAllowlist("u1");
+    expect(state.audits).toEqual([]);
   });
 
   it("keeps non-admins out", async () => {
@@ -232,6 +291,34 @@ describe("narration sync collections", () => {
 
   it("allows a public collection even when it is someone else's private one", async () => {
     expect(await startNarrationSync("theirs-public")).toMatchObject({ ok: true });
+  });
+
+  it("records a started sync with its job", async () => {
+    await startNarrationSync("mine");
+    expect(state.audits).toEqual([
+      { action: "app.narration_sync_start", targetId: "mine", details: { job: "job-1" } },
+    ]);
+  });
+
+  it("records a cancel only when a sync was running, and a resume only when it could resume", async () => {
+    state.lastJob = { id: "j1", domainId: "mine", status: "completed" };
+    await cancelNarrationSyncJob();
+    expect(state.audits).toEqual([]);
+
+    state.lastJob = { id: "j1", domainId: "mine", status: "running" };
+    await cancelNarrationSyncJob();
+    expect(state.audits).toEqual([
+      { action: "app.narration_sync_cancel", targetId: "mine", details: { job: "j1" } },
+    ]);
+
+    state.audits = [];
+    expect(await resumeNarrationSync()).toEqual({ ok: false, error: "Nothing to resume." });
+    expect(state.audits).toEqual([]);
+    state.canResume = true;
+    await resumeNarrationSync();
+    expect(state.audits).toEqual([
+      { action: "app.narration_sync_resume", targetId: "mine", details: { job: "j1" } },
+    ]);
   });
 
   it("refuses another person's private collection, whatever the browser sends", async () => {

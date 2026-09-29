@@ -11,6 +11,7 @@ const state = vi.hoisted(() => ({
   updateErrors: [] as ({ code?: string } | null)[],
   revalidated: [] as string[],
   termRangeCalls: [] as number[],
+  audits: [] as { action: string; targetId?: string; details?: unknown }[],
 }));
 
 vi.mock("next/cache", () => ({
@@ -44,7 +45,18 @@ vi.mock("@/lib/auth/require-session", () => ({
     user: { id: "admin-1" },
     supabase: {
       from: (table: string) => chain(table),
-      rpc: (name: string, args: unknown) => {
+      rpc: (
+        name: string,
+        args: { p_action?: string; p_target_id?: string; p_details?: unknown },
+      ) => {
+        if (name === "admin_write_audit") {
+          state.audits.push({
+            action: args.p_action ?? "",
+            targetId: args.p_target_id,
+            details: args.p_details,
+          });
+          return Promise.resolve({ error: null });
+        }
         state.rpcCalls.push({ name, args });
         if (name === "admin_list_collections") {
           return Promise.resolve({ data: state.list, error: null });
@@ -90,6 +102,7 @@ beforeEach(() => {
   state.updateErrors = [];
   state.revalidated = [];
   state.termRangeCalls = [];
+  state.audits = [];
 });
 
 describe("setCollectionStatus: moves, decided from the database's status", () => {
@@ -212,6 +225,61 @@ describe("setCollectionStatus: moves, decided from the database's status", () =>
   it("refuses an unknown status", async () => {
     expect((await setCollectionStatus("d1", "nope" as never)).ok).toBe(false);
     expect(state.updates).toEqual([]);
+  });
+});
+
+describe("audit rows for status changes", () => {
+  it("records a change the database doesn't already record", async () => {
+    state.list = [domain({ is_builtin: false })];
+    await setCollectionStatus("d1", "builtin");
+    expect(state.audits).toEqual([
+      {
+        action: "app.collection_status",
+        targetId: "d1",
+        details: { from: "none", to: "builtin", slug: null },
+      },
+    ]);
+  });
+
+  it("leaves publishing alone to the database, and no-ops unrecorded", async () => {
+    await setCollectionStatus("d1", "published");
+    expect(state.audits).toEqual([]);
+
+    state.list = [domain({ slug: "cooking", is_public: true })];
+    await setCollectionStatus("d1", "published");
+    expect(state.audits).toEqual([]);
+  });
+
+  it("records what was reached when a later step failed", async () => {
+    state.list = [domain({ is_builtin: false })];
+    state.publishResults = [{ data: null, error: { code: "P0001" } }];
+    await setCollectionStatus("d1", "published");
+    expect(state.audits).toEqual([
+      {
+        action: "app.collection_status",
+        targetId: "d1",
+        details: { from: "none", to: "builtin", slug: null },
+      },
+    ]);
+  });
+
+  it("records an address change, but not saving the same address", async () => {
+    await updateDomainSlug("d1", "Kitchen", "kitchen");
+    expect(state.audits).toEqual([
+      { action: "app.collection_slug", targetId: "d1", details: { old: null, new: "kitchen" } },
+    ]);
+
+    state.audits = [];
+    state.list = [domain({ slug: "kitchen" })];
+    await updateDomainSlug("d1", "kitchen", "kitchen");
+    expect(state.audits).toEqual([]);
+  });
+
+  it("records nothing for refused calls", async () => {
+    state.list = [theirs()];
+    await setCollectionStatus("d1", "builtin");
+    await updateDomainSlug("d1", "x", "x");
+    expect(state.audits).toEqual([]);
   });
 });
 

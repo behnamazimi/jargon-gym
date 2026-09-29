@@ -2,6 +2,7 @@
 
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
+import { writeAudit } from "@/lib/admin/audit";
 import { exactEmailPattern } from "@/lib/admin/email-lookup";
 import {
   creditSettingsSchema,
@@ -18,6 +19,13 @@ export async function setAiCreditsEnabled(value: boolean) {
       .update({ enabled: value })
       .eq("id", true);
     if (error) throw error;
+
+    await writeAudit(supabase, {
+      action: "app.ai_credits_enabled",
+      targetType: "settings",
+      targetId: "ai_credits",
+      details: { enabled: value },
+    });
   }, REVALIDATE);
 }
 

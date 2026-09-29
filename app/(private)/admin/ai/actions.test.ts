@@ -4,6 +4,7 @@ const state = vi.hoisted(() => ({
   admin: true,
   featureRows: [{ feature: "quiz" }] as { feature: string }[],
   featureUpdates: [] as unknown[],
+  audits: [] as unknown[],
   revalidated: [] as string[],
 }));
 
@@ -16,6 +17,10 @@ vi.mock("@/lib/auth/require-session", async () => {
       if (!state.admin) throw new AdminError("Admins only.");
       return {
         supabase: {
+          rpc: (_name: string, args: unknown) => {
+            state.audits.push(args);
+            return Promise.resolve({ error: null });
+          },
           from: () => ({
             update: (values: unknown) => ({
               eq: () => {
@@ -38,6 +43,7 @@ beforeEach(() => {
   state.admin = true;
   state.featureRows = [{ feature: "quiz" }];
   state.featureUpdates = [];
+  state.audits = [];
   state.revalidated = [];
 });
 
@@ -46,6 +52,14 @@ describe("setAiFeatureEnabled", () => {
     expect(await setAiFeatureEnabled("quiz", false)).toMatchObject({ ok: true });
     expect(state.featureUpdates).toEqual([{ enabled: false }]);
     expect(state.revalidated).toEqual(["/admin", "/admin/ai", "/admin/ai/credits"]);
+    expect(state.audits).toEqual([
+      {
+        p_action: "app.ai_feature_enabled",
+        p_target_type: "feature",
+        p_target_id: "quiz",
+        p_details: { feature: "quiz", enabled: false },
+      },
+    ]);
   });
 
   it("refuses features that aren't switched here, term evaluation included", async () => {
@@ -56,6 +70,7 @@ describe("setAiFeatureEnabled", () => {
       });
     }
     expect(state.featureUpdates).toEqual([]);
+    expect(state.audits).toEqual([]);
   });
 
   it("reports an update that changed nothing, as a non-admin's would", async () => {
