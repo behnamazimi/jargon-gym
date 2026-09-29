@@ -2,11 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { setAiCreditsEnabled } from "@/app/(private)/admin/ai-credits/actions";
+import { AdminAiCreditsFailures } from "@/components/jargon/admin/admin-ai-credits-failures";
 import { AdminAiCreditsSettings } from "@/components/jargon/admin/admin-ai-credits-settings";
 import { AdminAiCreditsSummary } from "@/components/jargon/admin/admin-ai-credits-summary";
 import { AdminAiCreditsUsage } from "@/components/jargon/admin/admin-ai-credits-usage";
 import { AdminNav } from "@/components/jargon/admin/admin-nav";
 import type {
+  AiCreditFailureReason,
   AiCreditSettingsView,
   AiCreditSummary,
   AiCreditUsageRow,
@@ -16,12 +18,14 @@ type AdminAiCreditsPageClientProps = {
   settings: AiCreditSettingsView;
   usage: AiCreditUsageRow[];
   summary: AiCreditSummary;
+  failureReasons: AiCreditFailureReason[];
 };
 
 export function AdminAiCreditsPageClient({
   settings,
   usage,
   summary,
+  failureReasons,
 }: AdminAiCreditsPageClientProps) {
   const [enabled, setEnabled] = useState(settings.enabled);
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -76,6 +80,7 @@ export function AdminAiCreditsPageClient({
       </div>
 
       <AdminAiCreditsSummary summary={summary} />
+      <AdminAiCreditsFailures reasons={failureReasons} />
       <AdminAiCreditsSettings settings={settings} />
       <AdminAiCreditsUsage usage={usage} />
     </div>

@@ -46,7 +46,10 @@ describe("runWithCredits", () => {
     ).rejects.toBe(failure);
     expect(calls).toEqual([
       { name: "reserve_ai_credits", args: { p_user_id: "u1", p_feature: "quiz", p_cost: 8 } },
-      { name: "refund_ai_credits", args: { p_ledger_id: 7 } },
+      {
+        name: "refund_ai_credits",
+        args: { p_ledger_id: 7, p_reason: "Error: model returned garbage" },
+      },
     ]);
   });
 

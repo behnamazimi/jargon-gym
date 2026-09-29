@@ -269,5 +269,65 @@ begin
 end;
 $$;
 
+do $$
+declare
+  admin_id uuid := pg_temp.make_user('admin5@example.test', true);
+  u1 uuid := pg_temp.make_user('f1@example.test');
+  u2 uuid := pg_temp.make_user('f2@example.test');
+  v_ledger bigint;
+  r record;
+begin
+  -- The reason lands on the refund row, and a second refund keeps the first one.
+  select ledger_id into v_ledger from public.reserve_ai_credits(u1, 'quiz', 5);
+  perform public.refund_ai_credits(v_ledger, 'TEST reason A');
+  perform public.refund_ai_credits(v_ledger, 'something else');
+  assert (select note from public.ai_credit_ledger where refund_of = v_ledger) = 'TEST reason A',
+    'the first reason stays';
+  assert (select count(*) from public.ai_credit_ledger where refund_of = v_ledger) = 1, 'one refund';
+
+  -- Same reason from a second person, a different reason once, and one with none.
+  select ledger_id into v_ledger from public.reserve_ai_credits(u2, 'story', 5);
+  perform public.refund_ai_credits(v_ledger, 'TEST reason A');
+  select ledger_id into v_ledger from public.reserve_ai_credits(u2, 'story', 5);
+  perform public.refund_ai_credits(v_ledger, 'TEST reason B');
+  select ledger_id into v_ledger from public.reserve_ai_credits(u2, 'story', 5);
+  perform public.refund_ai_credits(v_ledger, '   ');
+  assert (select note from public.ai_credit_ledger where refund_of = v_ledger) is null,
+    'a blank reason is stored as nothing';
+
+  -- Long reasons are cut, not rejected.
+  select ledger_id into v_ledger from public.reserve_ai_credits(u1, 'quiz', 5);
+  perform public.refund_ai_credits(v_ledger, repeat('x', 1000));
+  assert (select length(note) from public.ai_credit_ledger where refund_of = v_ledger) = 300,
+    'reasons are cut to 300 characters';
+
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  select * into r from public.admin_ai_credit_failure_reasons(20) where reason = 'TEST reason A';
+  assert r.failures = 2 and r.people = 2, 'reason A: two failures from two people';
+  select * into r from public.admin_ai_credit_failure_reasons(20) where reason = 'TEST reason B';
+  assert r.failures = 1 and r.people = 1, 'reason B: one failure';
+  select * into r from public.admin_ai_credit_failure_reasons(20) where reason = 'Unknown reason';
+  assert r.failures >= 1, 'a refund with no reason is grouped as unknown';
+  execute 'reset role';
+
+  -- Members can't read the reasons or refund anything themselves.
+  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  begin
+    perform public.admin_ai_credit_failure_reasons(5);
+    raise exception 'member could read failure reasons';
+  exception when others then
+    if sqlerrm not like 'Only admins%' then raise; end if;
+  end;
+  begin
+    perform public.refund_ai_credits(v_ledger, 'nope');
+    raise exception 'member could refund';
+  exception when insufficient_privilege then null;
+  end;
+  execute 'reset role';
+end;
+$$;
+
 rollback;
 \echo ai_credits.sql: ok

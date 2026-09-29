@@ -4,6 +4,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import {
   getAiCreditSettingsForAdmin,
   getAiCreditSummaryForAdmin,
+  listAiCreditFailureReasonsForAdmin,
   listAiCreditUsageForAdmin,
 } from "./admin";
 
@@ -125,5 +126,36 @@ describe("getAiCreditSummaryForAdmin", () => {
   it("fails clearly when the function returns no row", async () => {
     const { client } = rpcClient({ data: [], error: null });
     await expect(getAiCreditSummaryForAdmin(client)).rejects.toThrow(/metrics/);
+  });
+});
+
+describe("listAiCreditFailureReasonsForAdmin", () => {
+  it("maps the reasons and asks for the top five", async () => {
+    const { client, calls } = rpcClient({
+      data: [
+        {
+          reason: "Provider error 429: Quota exceeded",
+          failures: 7,
+          people: 3,
+          last_seen: "2026-09-29T10:00:00Z",
+        },
+      ],
+      error: null,
+    });
+
+    expect(await listAiCreditFailureReasonsForAdmin(client)).toEqual([
+      {
+        reason: "Provider error 429: Quota exceeded",
+        failures: 7,
+        people: 3,
+        lastSeen: "2026-09-29T10:00:00Z",
+      },
+    ]);
+    expect(calls).toEqual([{ name: "admin_ai_credit_failure_reasons", args: { p_limit: 5 } }]);
+  });
+
+  it("returns an empty list when nothing failed", async () => {
+    const { client } = rpcClient({ data: null, error: null });
+    expect(await listAiCreditFailureReasonsForAdmin(client)).toEqual([]);
   });
 });

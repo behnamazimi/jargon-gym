@@ -1067,6 +1067,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      admin_ai_credit_failure_reasons: {
+        Args: { p_limit?: number };
+        Returns: {
+          failures: number;
+          last_seen: string;
+          people: number;
+          reason: string;
+        }[];
+      };
       admin_ai_credit_summary: {
         Args: never;
         Returns: {
@@ -1417,7 +1426,10 @@ export type Database = {
       };
       record_telegram_send: { Args: { p_user_id: string }; Returns: undefined };
       redeem_referral_code: { Args: { p_code: string }; Returns: undefined };
-      refund_ai_credits: { Args: { p_ledger_id: number }; Returns: undefined };
+      refund_ai_credits: {
+        Args: { p_ledger_id: number; p_reason?: string };
+        Returns: undefined;
+      };
       reserve_ai_credits: {
         Args: { p_cost: number; p_feature: string; p_user_id: string };
         Returns: {
