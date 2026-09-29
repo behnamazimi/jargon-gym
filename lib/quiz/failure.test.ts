@@ -22,6 +22,10 @@ describe("quizFailure with the user's own key", () => {
     }
   });
 
+  it("says so when the provider reports quota or rate limits", () => {
+    expect(quizFailure(apiError(429), false).error).toMatch(/quota/);
+  });
+
   it("never shows provider or database text", () => {
     expect(quizFailure(new Error("Quota exceeded"), false).error).toBe(
       "Couldn't generate the quiz. Try again.",

@@ -44,7 +44,7 @@ export function TermNarrationPlayer({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wantPlayingRef = useRef(false);
   const abortRetriedRef = useRef(false);
-  const preparedRef = useRef(false);
+  const prepareRef = useRef<"idle" | "running" | "done">("idle");
   const src = narrationSrc(termId);
 
   useMountEffect(() => {
@@ -67,22 +67,27 @@ export function TermNarrationPlayer({
   // Loading never generates audio. When the clip is not cached yet, ask the
   // server to make it once, then load it again.
   async function prepareThenPlay(audio: HTMLAudioElement) {
-    if (preparedRef.current) {
+    // An error event and a rejected play() can both land for one failed load.
+    if (prepareRef.current === "running") return;
+    if (prepareRef.current === "done") {
       giveUp(audio);
       return;
     }
-    preparedRef.current = true;
+    prepareRef.current = "running";
     setStatus("loading");
     try {
       const response = await fetch(src, { method: "POST" });
       if (!response.ok) {
+        prepareRef.current = "done";
         giveUp(audio);
         return;
       }
     } catch {
+      prepareRef.current = "done";
       giveUp(audio);
       return;
     }
+    prepareRef.current = "done";
     if (!wantPlayingRef.current) return;
     abortRetriedRef.current = false;
     audio.src = src;
@@ -138,13 +143,19 @@ export function TermNarrationPlayer({
     }
 
     abortRetriedRef.current = false;
-    preparedRef.current = false;
+    prepareRef.current = "idle";
     wantPlayingRef.current = true;
     const alreadySet = srcMatches(audio, src);
     const ready = alreadySet && canPlayThrough(audio);
     if (!alreadySet) audio.src = src;
 
     claimActiveAudio(audio);
+
+    // A preload that already failed will not retry on its own.
+    if (audio.error) {
+      void prepareThenPlay(audio);
+      return;
+    }
 
     if (ready) {
       setStatus("playing");

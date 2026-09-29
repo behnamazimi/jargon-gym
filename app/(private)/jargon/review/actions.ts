@@ -57,8 +57,8 @@ export async function getReviewFeedBatchAction(
     if (cards.length === 0) return { caughtUp: true, terms: [] };
     return { terms: cards.map(toReviewTerm) };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't load more terms. Try again.";
-    return { error: message, terms: [] };
+    console.error("Review queue failed:", err);
+    return { error: "Couldn't load more terms. Try again.", terms: [] };
   }
 }
 
@@ -78,7 +78,6 @@ export async function rateReviewTermAction(termId: string, grade: ReviewGrade) {
     return {};
   } catch (err) {
     console.error("rateReviewTermAction failed", { termId, grade, err });
-    const message = err instanceof Error ? err.message : "Couldn't save your rating. Try again.";
-    return { error: message };
+    return { error: "Couldn't save your rating. Try again." };
   }
 }
