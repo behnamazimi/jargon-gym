@@ -29,6 +29,14 @@ const FEATURE_LABELS: Record<FeatureId, string> = {
   narration_story: "Story narration",
 };
 
+const HEALTH_TITLES: Record<FeatureId, string> = {
+  quiz: "The app's AI key isn't set up",
+  story: "The app's AI key isn't set up",
+  term_evaluation: "Term evaluation isn't set up",
+  narration_term: "Narration isn't set up",
+  narration_story: "Narration isn't set up",
+};
+
 const FEATURE_HREFS: Record<FeatureId, string> = {
   quiz: "/admin/ai-credits",
   story: "/admin/ai-credits",
@@ -71,7 +79,7 @@ function healthItems(): AttentionItem[] {
     items.push({
       id: `health-${feature}`,
       tone: "error",
-      title: `${FEATURE_LABELS[feature]} isn't set up`,
+      title: HEALTH_TITLES[feature],
       detail: health.note,
       href: FEATURE_HREFS[feature],
     });
@@ -155,7 +163,7 @@ export function buildAttentionItems(input: OverviewInput): AttentionItem[] {
           {
             id: "sync",
             tone: "warning" as const,
-            title: "Narration sync needs a nudge",
+            title: "Narration sync needs attention",
             detail: input.syncNote,
             href: "/admin/narration",
           },

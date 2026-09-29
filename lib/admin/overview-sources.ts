@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { FEATURE_IDS, type FeatureId } from "@/lib/ai/registry";
 import { canResumeNarrationSync, isActiveNarrationSyncStatus } from "@/lib/narration/sync-shared";
 import { getLastNarrationSyncJob } from "@/lib/narration/sync";
-import { describeCron, getCronStatus } from "@/lib/narration/worker-status";
+import { describeCron, readCronStatus } from "@/lib/narration/worker-status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -41,7 +41,7 @@ export async function readSyncNote(client: Client): Promise<string | null> {
   const job = await getLastNarrationSyncJob(admin);
   const resumable = canResumeNarrationSync(job);
   const needsCron = resumable || Boolean(job && isActiveNarrationSyncStatus(job.status));
-  const cron = describeCron(await getCronStatus(client), needsCron);
+  const cron = describeCron(await readCronStatus(client), needsCron);
 
   if (resumable) return "A sync has stalled. Open Narration and press Resume.";
   return cron?.warning ? cron.text : null;

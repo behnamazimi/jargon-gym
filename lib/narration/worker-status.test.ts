@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
-import { describeCron, getCronStatus, recordWorkerTick } from "./worker-status";
+import { describeCron, getCronStatus, readCronStatus, recordWorkerTick } from "./worker-status";
 
 type Client = SupabaseClient<Database>;
 
@@ -73,6 +73,7 @@ describe("getCronStatus", () => {
       }),
     } as unknown as Client;
     expect(await getCronStatus(broken)).toBeNull();
+    await expect(readCronStatus(broken)).rejects.toThrow("x");
   });
 });
 

@@ -32,22 +32,22 @@ export async function recordWorkerTick(
 
 export type CronStatus = { lastTickAt: string } | null;
 
-/** The last call made by the cron job. Only a number for the admin page, so a
- *  failed read shows as "none yet". */
+/** The last call made by the cron job. Throws when the read fails. */
+export async function readCronStatus(client: Client): Promise<CronStatus> {
+  const { data, error } = await client
+    .from("ai_worker_status")
+    .select("last_tick_at")
+    .eq("worker", WORKER)
+    .eq("source", "cron")
+    .maybeSingle();
+  if (error) throw error;
+  return data ? { lastTickAt: data.last_tick_at } : null;
+}
+
+/** Only a number for the admin page, so a failed read shows as "none yet". */
 export async function getCronStatus(client: Client): Promise<CronStatus> {
   try {
-    const { data, error } = await client
-      .from("ai_worker_status")
-      .select("last_tick_at")
-      .eq("worker", WORKER)
-      .eq("source", "cron")
-      .maybeSingle();
-    if (error) {
-      console.error("Couldn't read the worker status:", error);
-      return null;
-    }
-    if (!data) return null;
-    return { lastTickAt: data.last_tick_at };
+    return await readCronStatus(client);
   } catch (error) {
     console.error("Couldn't read the worker status:", error);
     return null;
