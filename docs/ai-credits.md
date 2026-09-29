@@ -181,6 +181,19 @@ where kind = 'spend'
   and not exists (select 1 from public.ai_credit_ledger r where r.refund_of = l.id);
 ```
 
+## Feature settings (in progress)
+
+`ai_feature_settings` has one row per AI feature (`quiz`, `story`,
+`term_evaluation`, `narration_term`, `narration_story`): the on/off switch, who
+may use it (`everyone`, `allowlist`, `admin`), a rolling 24-hour cap, and the
+credit cost. Only billable features (those with a cost) can be written to the
+ledger; the ledger's foreign key and `reserve_ai_credits` both refuse the rest,
+so narration can never spend credits. Costs are still edited on the credits
+settings, and a trigger copies them to the feature rows. The app does not read
+these rows yet; `lib/ai/` holds the registry, the policy check and
+`runMetered`, which adds a one-request-at-a-time guard (`begin_ai_run`) around a
+charge. The guard frees itself after 120 seconds if a request is killed.
+
 ## Where things live
 
 - `supabase/migrations/20260929120000_ai_credits.sql`: tables, balance,
@@ -190,5 +203,7 @@ where kind = 'spend'
 - `lib/llm/central.ts`: reads the app's key from the environment.
 - `app/(private)/jargon/quiz/actions.ts` and
   `app/(private)/jargon/read/stories/actions.ts`: charge and generate.
+- `supabase/migrations/20260929170000_ai_feature_settings.sql` and
+  `lib/ai/`: feature settings, the billable rule, and the run guard.
 - `supabase/tests/`: SQL checks for the balance, permissions, and the
   concurrency guarantee. Run them against a local database.

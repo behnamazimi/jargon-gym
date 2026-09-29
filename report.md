@@ -2,6 +2,11 @@
 
 Date: 2026-09-29. Scope: everything in the app that calls an AI provider or serves AI output. Read-only review. No code was changed.
 
+**Status:**
+
+- Phase 0 (cheap fixes): merged in #102, 2026-09-29. Deferred: story narration still generates on GET (phase 4), admin score display, raw probability storage.
+- Phase 1 (`lib/ai`, `ai_feature_settings`, ledger generalization): in review.
+
 ## 1. What exists today
 
 Five features call a paid AI service. They share almost nothing.
