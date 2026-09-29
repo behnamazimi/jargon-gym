@@ -1,9 +1,9 @@
 import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getInternalApiSecret } from "@/lib/auth/internal-api";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import type { Database } from "@/lib/supabase/database.types";
 import { isNarrationEnabled } from "./feature";
+import { getNarrationSyncSecret, SYNC_SOURCE_HEADER } from "./sync-auth";
 import { getOrGenerateNarration } from "./service";
 import { isActiveNarrationSyncStatus, NARRATION_SYNC_ACTIVE_STATUSES } from "./sync-shared";
 
@@ -195,7 +195,10 @@ async function requestNarrationSyncTick() {
   const url = `${getPublicBaseUrl()}/api/internal/narration/sync`;
   const response = await fetch(url, {
     method: "POST",
-    headers: { Authorization: `Bearer ${getInternalApiSecret()}` },
+    headers: {
+      Authorization: `Bearer ${getNarrationSyncSecret()}`,
+      [SYNC_SOURCE_HEADER]: "app",
+    },
   });
   if (!response.ok) {
     console.error("Narration sync worker kick failed:", response.status);

@@ -18,6 +18,7 @@ import type {
 
 type AdminNarrationPageClientProps = {
   healthNote: string | null;
+  cronNote: { text: string; warning: boolean } | null;
   caps: NarrationSettings["caps"];
   usageLast24h: NarrationSettings["usageLast24h"];
   enabled: boolean;
@@ -28,6 +29,7 @@ type AdminNarrationPageClientProps = {
 
 export function AdminNarrationPageClient({
   healthNote,
+  cronNote,
   caps,
   usageLast24h,
   enabled: initialEnabled,
@@ -100,6 +102,13 @@ export function AdminNarrationPageClient({
             When off, no one can play narration regardless of the allowlist below.
           </p>
           {healthNote ? <p className="mt-1 text-sm text-warning">{healthNote}</p> : null}
+          {cronNote ? (
+            <p
+              className={`mt-1 text-sm ${cronNote.warning ? "text-warning" : "text-base-content/65"}`}
+            >
+              {cronNote.text}
+            </p>
+          ) : null}
           {toggleError ? <p className="mt-1 text-sm text-error">{toggleError}</p> : null}
         </div>
         <input

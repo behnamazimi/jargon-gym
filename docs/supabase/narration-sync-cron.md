@@ -27,9 +27,34 @@ lease is still held, the next tick claims nothing and returns.
 
 ## 1. Confirm Next.js secrets
 
-`TELEGRAM_INTERNAL_SECRET` and `APP_BASE_URL` must already be set on Vercel
-(the same values Telegram uses). `APP_BASE_URL` must be the public Next.js
-origin, for example `https://jargon-gym.vercel.app`.
+`APP_BASE_URL` must be set on Vercel to the public Next.js origin, for example
+`https://jargon-gym.vercel.app`, and at least one of these secrets:
+
+- `AI_INTERNAL_SECRET`: the secret for this route (the app's own kick and the
+  cron job below).
+- `TELEGRAM_INTERNAL_SECRET`: the older secret this route used to share with
+  Telegram. It is still accepted here so the cron job can be switched over
+  without a gap.
+
+Only this route accepts `AI_INTERNAL_SECRET`. The Telegram routes and the
+Telegram Edge Functions keep using `TELEGRAM_INTERNAL_SECRET`, and nothing
+about them changes.
+
+### Switching the cron job to the new secret
+
+1. Add `AI_INTERNAL_SECRET` (a new random value) on Vercel and deploy. The app
+   now calls its own route with it, and both secrets are accepted.
+2. In the Dashboard cron job, change the header to
+   `Authorization: Bearer <AI_INTERNAL_SECRET>`. The cron job header is the
+   only value to change; the Edge Functions are not involved.
+3. Open the admin Narration page. It shows when the cron job last called and
+   which secret it used. Once it says "It uses the AI secret", the old secret
+   is no longer needed for narration.
+4. A later release removes the old secret from this route. Do not remove
+   `TELEGRAM_INTERNAL_SECRET` itself: Telegram still uses it.
+
+If the cron job stops calling (a wrong header returns 401), the admin page
+warns when a sync needs it and none was seen in the last 5 minutes.
 
 ## 2. Create the Dashboard job
 
@@ -46,7 +71,8 @@ for this path.
 4. Set the HTTP request:
    - **URL:** `https://<your-app-host>/api/internal/narration/sync`
    - **Method:** `POST`
-   - **Header:** `Authorization: Bearer <TELEGRAM_INTERNAL_SECRET>`
+   - **Header:** `Authorization: Bearer <AI_INTERNAL_SECRET>` (the old
+     `TELEGRAM_INTERNAL_SECRET` still works while you switch over)
    - **Body:** `{}`
 
 Use the **History** tab on the job to confirm runs return 202 after saving.
@@ -72,7 +98,7 @@ fill a collection without Dashboard cron. To mimic a cron tick:
 
 ```bash
 curl -X POST http://localhost:3000/api/internal/narration/sync \
-  -H "Authorization: Bearer $TELEGRAM_INTERNAL_SECRET"
+  -H "Authorization: Bearer $AI_INTERNAL_SECRET"
 ```
 
 ## Next steps
