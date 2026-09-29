@@ -8,15 +8,13 @@
 --
 -- Narration is never billed: nothing here touches the credit ledger.
 
--- Nothing may write the old tables between the copy and the triggers below.
-lock table public.narration_settings, public.narration_allowlist in share row exclusive mode;
-
 -- ---------------------------------------------------------------------------
 -- Copy today's values (they may have changed since ai_feature_settings was seeded)
 -- ---------------------------------------------------------------------------
 
--- Kept as a function so the copy can be run (and tested) again. Only the
--- database owner can call it.
+-- Kept as a function so the copy can be run (and tested) again, for example
+-- once more when the app switches over, to catch anything written between this
+-- migration and the triggers below. Only the database owner can call it.
 create function public.sync_narration_features_from_old_tables()
 returns void
 language sql
