@@ -35,18 +35,23 @@ export type CronStatus = { lastTickAt: string; secret: "ai" | "legacy" } | null;
 /** The last call made by the cron job. Only a number for the admin page, so a
  *  failed read shows as "none yet". */
 export async function getCronStatus(client: Client): Promise<CronStatus> {
-  const { data, error } = await client
-    .from("ai_worker_status")
-    .select("last_tick_at, last_secret")
-    .eq("worker", WORKER)
-    .eq("source", "cron")
-    .maybeSingle();
-  if (error) {
+  try {
+    const { data, error } = await client
+      .from("ai_worker_status")
+      .select("last_tick_at, last_secret")
+      .eq("worker", WORKER)
+      .eq("source", "cron")
+      .maybeSingle();
+    if (error) {
+      console.error("Couldn't read the worker status:", error);
+      return null;
+    }
+    if (!data) return null;
+    return { lastTickAt: data.last_tick_at, secret: data.last_secret as "ai" | "legacy" };
+  } catch (error) {
     console.error("Couldn't read the worker status:", error);
     return null;
   }
-  if (!data) return null;
-  return { lastTickAt: data.last_tick_at, secret: data.last_secret as "ai" | "legacy" };
 }
 
 /** What the admin sees about the cron job, or null when nothing needs saying. */
@@ -64,6 +69,7 @@ export function describeCron(
       : null;
   }
 
+  if (!Number.isFinite(Date.parse(status.lastTickAt))) return null;
   const minutes = Math.max(0, Math.round((now - Date.parse(status.lastTickAt)) / 60_000));
   const secretNote =
     status.secret === "legacy"

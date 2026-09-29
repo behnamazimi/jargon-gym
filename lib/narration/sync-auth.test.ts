@@ -31,6 +31,14 @@ describe("authenticateNarrationSyncRequest", () => {
     });
   });
 
+  it("counts equal secrets as the old one, since the two can't be told apart", () => {
+    vi.stubEnv("TELEGRAM_INTERNAL_SECRET", "new-secret");
+    expect(authenticateNarrationSyncRequest(request("new-secret"))).toMatchObject({
+      ok: true,
+      secret: "legacy",
+    });
+  });
+
   it("treats a call marked as the app's own kick as the app", () => {
     expect(
       authenticateNarrationSyncRequest(request("new-secret", { "x-internal-source": "app" })),

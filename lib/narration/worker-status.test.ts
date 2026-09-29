@@ -18,6 +18,8 @@ describe("recordWorkerTick", () => {
       expect.objectContaining({ worker: "narration-sync", source: "cron", last_secret: "legacy" }),
       { onConflict: "worker,source" },
     );
+    const row = upsert.mock.calls[0]?.[0] as { last_tick_at: string };
+    expect(Math.abs(Date.now() - Date.parse(row.last_tick_at))).toBeLessThan(5000);
   });
 
   it("never fails the tick, whether the write errors or throws", async () => {
@@ -81,6 +83,17 @@ describe("getCronStatus", () => {
   });
 });
 
+describe("getCronStatus when the read throws", () => {
+  it("shows none instead of breaking the page", async () => {
+    const client = {
+      from: () => {
+        throw new Error("fetch failed");
+      },
+    } as unknown as Client;
+    expect(await getCronStatus(client)).toBeNull();
+  });
+});
+
 describe("describeCron", () => {
   const now = Date.parse("2026-09-29T10:10:00Z");
 
@@ -103,6 +116,10 @@ describe("describeCron", () => {
     const fresh = describeCron({ lastTickAt: "2026-09-29T10:09:00Z", secret: "ai" }, false, now);
     expect(fresh?.text).toMatch(/AI secret/);
     expect(fresh?.warning).toBe(false);
+  });
+
+  it("ignores a timestamp it can't read", () => {
+    expect(describeCron({ lastTickAt: "not a date", secret: "ai" }, true, now)).toBeNull();
   });
 
   it("warns when the cron went quiet while a sync needs it", () => {

@@ -50,6 +50,11 @@ about them changes.
 3. Open the admin Narration page. It shows when the cron job last called and
    which secret it used. Once it says "It uses the AI secret", the old secret
    is no longer needed for narration.
+   Give `AI_INTERNAL_SECRET` a **different** value from the old secret: if the
+   two are equal, the page cannot tell them apart and keeps saying "old".
+   A job made with `supabase/narration-cron-setup.sql` reads the header from
+   the Vault secret `telegram_internal_secret`; change it there with
+   `select vault.update_secret(id, 'NEW_VALUE') from vault.secrets where name = 'telegram_internal_secret';`.
 4. A later release removes the old secret from this route. Do not remove
    `TELEGRAM_INTERNAL_SECRET` itself: Telegram still uses it.
 

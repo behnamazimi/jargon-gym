@@ -9,7 +9,8 @@ type SyncSource = "cron" | "app";
 
 /** Compares digests, so a token of any length is checked without throwing and
  *  without revealing where it differs. */
-function sameSecret(token: string, secret: string): boolean {
+function sameSecret(token: string, secret: string | undefined): boolean {
+  if (!secret) return false;
   const a = createHash("sha256").update(token).digest();
   const b = createHash("sha256").update(secret).digest();
   return timingSafeEqual(a, b);
@@ -33,18 +34,18 @@ export function authenticateNarrationSyncRequest(request: Request): SyncAuthResu
   }
 
   const token = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1] ?? "";
-  const matchesAi = aiSecret ? sameSecret(token, aiSecret) : false;
-  const matchesLegacy = legacySecret ? sameSecret(token, legacySecret) : false;
+  const matchesAi = sameSecret(token, aiSecret);
+  const matchesLegacy = sameSecret(token, legacySecret);
   if (!matchesAi && !matchesLegacy) {
     return { error: NextResponse.json({ error: "Unauthorized." }, { status: 401 }) };
   }
 
   return {
-    ok: true as const,
-    secret: (matchesAi ? "ai" : "legacy") satisfies SyncSecret,
-    source: (request.headers.get(SYNC_SOURCE_HEADER) === "app"
-      ? "app"
-      : "cron") satisfies SyncSource,
+    ok: true,
+    // Equal values can't be told apart, so they count as the old secret: the
+    // admin page must not say the cron job moved when it may not have.
+    secret: matchesAi && aiSecret !== legacySecret ? "ai" : "legacy",
+    source: request.headers.get(SYNC_SOURCE_HEADER) === "app" ? "app" : "cron",
   };
 }
 
