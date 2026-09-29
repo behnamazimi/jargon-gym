@@ -9,6 +9,7 @@ import {
   isOnFeatureAllowlist,
 } from "@/lib/ai/feature-settings";
 import type { BillableFeatureId } from "@/lib/ai/registry";
+import { isSchemaMissing } from "@/lib/ai/schema-missing";
 import { getUserIsAdmin } from "@/lib/auth/require-session";
 import { getDecryptedApiKey, getUserSettings, UnreadableKeyError } from "./settings";
 import {
@@ -77,9 +78,10 @@ export type AiAccess =
     }
   | { kind: "unavailable"; reason: "none" | "exhausted" | "key-unreadable" | "feature-off" };
 
-/** The feature switch and who may use it. A settings read that fails lets the
- *  request through, so an app deployed ahead of its database keeps working;
- *  a missing row means the feature is off. */
+/** The feature switch and who may use it. If the database doesn't have the
+ *  settings table yet, the request goes through, so an app deployed ahead of
+ *  its migration keeps working. Any other read error fails the request, and a
+ *  missing row means the feature is off. */
 async function featureAllowed(
   client: Client,
   admin: Client,
@@ -90,7 +92,8 @@ async function featureAllowed(
   try {
     settings = await getFeatureSettings(client, feature);
   } catch (error) {
-    console.error("Couldn't read AI feature settings:", error);
+    if (!isSchemaMissing(error)) throw error;
+    console.error("The AI feature settings aren't in the database yet:", error);
     return true;
   }
   if (!settings) return false;

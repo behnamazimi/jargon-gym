@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { FeatureId } from "./registry";
+import { isSchemaMissing } from "./schema-missing";
 
 type Client = SupabaseClient<Database>;
 
@@ -10,9 +11,9 @@ export type GuardedOutcome<T> = { busy: true } | { busy: false; value: T };
  *  itself soon after the platform gives up on it. */
 const RUN_TTL_SECONDS = 70;
 
-/** Allows one running request per user and feature. If the guard itself can't
- *  be reached (for example the database is mid-deploy), the request runs
- *  unguarded rather than failing for everyone. */
+/** Allows one running request per user and feature. If the database doesn't
+ *  have the guard yet (an app deployed ahead of its migration), the request
+ *  runs unguarded. Any other guard error fails the request. */
 export async function withRunGuard<T>(
   input: { admin: Client; userId: string; feature: FeatureId },
   run: () => Promise<T>,
@@ -25,7 +26,8 @@ export async function withRunGuard<T>(
   });
 
   if (error) {
-    console.error("Couldn't start the AI run guard:", error);
+    if (!isSchemaMissing(error)) throw error;
+    console.error("The AI run guard isn't in the database yet:", error);
     return { busy: false, value: await run() };
   }
   if (!token) return { busy: true };

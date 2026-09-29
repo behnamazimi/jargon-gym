@@ -7,6 +7,8 @@ export type AiFeatureRow = {
   feature: "quiz" | "story";
   label: string;
   enabled: boolean;
+  /** False when the feature's settings row couldn't be read. */
+  available: boolean;
   healthNote: string | null;
 };
 
@@ -32,6 +34,11 @@ function FeatureSwitch({ row }: { row: AiFeatureRow }) {
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div>
         <p className="m-0 font-medium text-base-content">{row.label}</p>
+        {row.available ? null : (
+          <p className="m-0 text-sm text-warning">
+            Couldn&apos;t read this feature&apos;s settings.
+          </p>
+        )}
         {row.healthNote ? <p className="m-0 text-sm text-warning">{row.healthNote}</p> : null}
         {error ? (
           <p role="alert" className="m-0 text-sm text-error">
@@ -43,7 +50,7 @@ function FeatureSwitch({ row }: { row: AiFeatureRow }) {
         type="checkbox"
         className="toggle toggle-primary"
         checked={enabled}
-        disabled={isPending}
+        disabled={isPending || !row.available}
         onChange={(event) => handleToggle(event.target.checked)}
         aria-label={`Turn ${row.label} on`}
       />

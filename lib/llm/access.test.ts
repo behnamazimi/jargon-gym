@@ -140,9 +140,15 @@ describe("resolveAiAccess feature policy", () => {
     expect(await resolve()).toEqual({ kind: "unavailable", reason: "feature-off" });
   });
 
-  it("lets the request through when the settings can't be read", async () => {
-    feature.readError = new Error("relation does not exist");
+  it("lets the request through only when the settings table isn't there yet", async () => {
+    feature.readError = Object.assign(new Error("relation does not exist"), { code: "42P01" });
     expect(await resolve()).toMatchObject({ kind: "credits" });
+  });
+
+  it("does not let a restricted feature through because a read failed", async () => {
+    feature.settings = featureRow({ enabled: false });
+    feature.readError = Object.assign(new Error("permission denied"), { code: "42501" });
+    await expect(resolve()).rejects.toThrow("permission denied");
   });
 
   it("asks nothing extra when the feature is open to everyone", async () => {

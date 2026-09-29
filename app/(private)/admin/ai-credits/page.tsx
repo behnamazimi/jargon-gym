@@ -27,11 +27,16 @@ export default async function AdminAiCreditsPage() {
   const featureLabels = { quiz: "AI quiz", story: "Stories" } as const;
   const features: AiFeatureRow[] = await Promise.all(
     (["quiz", "story"] as const).map(async (feature) => {
-      const [row, health] = [await getFeatureSettings(supabase, feature), featureHealth(feature)];
+      const health = featureHealth(feature);
+      const row = await getFeatureSettings(supabase, feature).catch((error: unknown) => {
+        console.error("Couldn't read AI feature settings:", error);
+        return null;
+      });
       return {
         feature,
         label: featureLabels[feature],
         enabled: row?.enabled ?? false,
+        available: row !== null,
         healthNote: health.ok ? null : health.note,
       };
     }),

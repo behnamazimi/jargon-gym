@@ -50,8 +50,21 @@ describe("withRunGuard", () => {
     expect(calls.map((call) => call.name)).toEqual(["begin_ai_run", "end_ai_run"]);
   });
 
-  it("runs unguarded when the guard can't be reached", async () => {
-    const { admin, calls } = fakeAdmin({ data: null, error: new Error("function not found") });
+  it("fails the request on a guard error that isn't a missing function", async () => {
+    const { admin } = fakeAdmin({
+      data: null,
+      error: Object.assign(new Error("permission denied"), { code: "42501" }),
+    });
+    const run = vi.fn();
+    await expect(withRunGuard({ admin, ...base }, run)).rejects.toThrow("permission denied");
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("runs unguarded while the database doesn't have the guard yet", async () => {
+    const { admin, calls } = fakeAdmin({
+      data: null,
+      error: Object.assign(new Error("function not found"), { code: "PGRST202" }),
+    });
     expect(await withRunGuard({ admin, ...base }, async () => "ok")).toEqual({
       busy: false,
       value: "ok",
