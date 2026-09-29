@@ -1272,16 +1272,25 @@ export type Database = {
           user_id: string;
         }[];
       };
-      admin_domain_term_counts: {
-        Args: never;
-        Returns: {
-          domain_id: string;
-          term_count: number;
-        }[];
-      };
       admin_grant_ai_credits: {
         Args: { p_amount: number; p_note: string; p_user_id: string };
         Returns: undefined;
+      };
+      admin_list_collections: {
+        Args: never;
+        Returns: {
+          created_at: string;
+          id: string;
+          is_builtin: boolean;
+          is_public: boolean;
+          name: string;
+          owner_email: string;
+          owner_id: string;
+          slug: string;
+          term_count: number;
+          updated_at: string;
+          visibility: Database["public"]["Enums"]["domain_visibility"];
+        }[];
       };
       admin_publish_collection: {
         Args: { p_domain_id: string; p_domain_slug: string; p_term_slugs: Json };

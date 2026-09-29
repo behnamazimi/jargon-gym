@@ -56,7 +56,7 @@ begin
 
   -- Privileges: nothing here is callable by anon, and no client can write the audit log.
   assert not has_function_privilege('anon', 'public.admin_publish_collection(uuid,text,jsonb)', 'execute'), 'line 59';
-  assert not has_function_privilege('anon', 'public.admin_domain_term_counts()', 'execute'), 'line 60';
+  assert not has_function_privilege('anon', 'public.admin_list_collections()', 'execute'), 'line 60';
   assert not has_function_privilege('anon', 'public.admin_set_narration_enabled(boolean)', 'execute'), 'line 61';
   assert not has_function_privilege('anon', 'public.admin_set_narration_caps(integer,integer)', 'execute'), 'line 62';
   assert not has_function_privilege('anon', 'public.admin_set_ai_credit_settings(integer,integer,integer,integer)', 'execute'), 'line 63';
@@ -75,8 +75,8 @@ begin
   begin perform public.admin_publish_collection(d1, 'rpc-one', '{}'::jsonb); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could publish';
   v_failed := false;
-  begin perform public.admin_domain_term_counts(); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
-  assert v_failed, 'member could count terms';
+  begin perform public.admin_list_collections(); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  assert v_failed, 'member could list collections';
   v_failed := false;
   begin perform public.admin_set_narration_enabled(true); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could switch narration';
@@ -92,11 +92,18 @@ begin
   assert (select count(*) from public.admin_audit_log) = 0, 'a member can read audit rows';
   execute 'reset role';
 
-  -- Term counts.
+  -- The list shows everything, including a private collection someone else owns, with counts.
+  execute 'reset role';
+  update public.domains set visibility = 'private' where id = d1;
   perform pg_temp.act_as(admin_id);
-  assert (select term_count from public.admin_domain_term_counts() c where c.domain_id = d1) = 2, 'line 98';
-  assert (select term_count from public.admin_domain_term_counts() c where c.domain_id = d2) = 1, 'line 99';
-  assert not exists (select 1 from public.admin_domain_term_counts() c where c.domain_id = d3), 'no terms, no row';
+  assert not exists (select 1 from public.domains where id = d1), 'test setup: an admin normally cannot read this row';
+  assert (select term_count from public.admin_list_collections() c where c.id = d1) = 2, 'count for a private collection of someone else';
+  assert (select owner_email from public.admin_list_collections() c where c.id = d1) = 'rpc-other@example.test', 'owner email';
+  assert (select term_count from public.admin_list_collections() c where c.id = d2) = 1, 'count';
+  assert (select term_count from public.admin_list_collections() c where c.id = d3) = 0, 'no terms shows 0';
+  execute 'reset role';
+  update public.domains set visibility = 'shared' where id = d1;
+  perform pg_temp.act_as(admin_id);
 
   -- Publishing needs a built-in collection.
   v_failed := false;

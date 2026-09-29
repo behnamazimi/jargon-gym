@@ -95,12 +95,26 @@ revoke all on function public.admin_write_audit(text, text, text, jsonb) from pu
 grant execute on function public.admin_write_audit(text, text, text, jsonb) to authenticated;
 
 -- ---------------------------------------------------------------------------
--- Term counts per collection, grouped in the database. Collections with no
--- terms are absent.
+-- Every collection with its owner and term count, for the admin list. Reads
+-- go through here because the table's row level security only lets an admin
+-- see their own, shared and public collections, not other people's private
+-- ones. Counts are grouped in the database. Collections with no terms show 0.
 -- ---------------------------------------------------------------------------
 
-create function public.admin_domain_term_counts()
-returns table (domain_id uuid, term_count bigint)
+create function public.admin_list_collections()
+returns table (
+  id uuid,
+  name text,
+  owner_id uuid,
+  owner_email text,
+  visibility public.domain_visibility,
+  is_builtin boolean,
+  is_public boolean,
+  slug text,
+  term_count bigint,
+  created_at timestamptz,
+  updated_at timestamptz
+)
 language plpgsql
 stable
 security definer
@@ -108,18 +122,21 @@ set search_path = public
 as $$
 begin
   if auth.uid() is null or not public.is_admin() then
-    raise exception 'Only admins can count terms';
+    raise exception 'Only admins can list all collections';
   end if;
 
   return query
-  select t.domain_id, count(*)
-  from public.terms t
-  group by t.domain_id;
+  select d.id, d.name, d.owner_id, u.email, d.visibility, d.is_builtin, d.is_public, d.slug,
+         (select count(*) from public.terms t where t.domain_id = d.id),
+         d.created_at, d.updated_at
+  from public.domains d
+  left join public.users u on u.id = d.owner_id
+  order by d.name;
 end;
 $$;
 
-revoke all on function public.admin_domain_term_counts() from public, anon;
-grant execute on function public.admin_domain_term_counts() to authenticated;
+revoke all on function public.admin_list_collections() from public, anon;
+grant execute on function public.admin_list_collections() to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Publish a collection in one transaction. The app builds the slugs (one slug

@@ -21,7 +21,7 @@ All new functions are `security definer`, `set search_path = public`, check
 2. **`admin_write_audit(p_action, p_target_type, p_target_id, p_details)`**: the public writer used by the
    app for changes that are not RPCs (phase 9). Validates a non-empty action (max 100 chars) and that
    `p_details` is an object of at most 4 KB.
-3. **`admin_domain_term_counts()`** returns `(domain_id uuid, term_count bigint)` grouped from `terms`
+3. **`admin_list_collections()`** returns every collection with owner email and a grouped term count
    (replaces reading every term row, R7).
 4. **`admin_publish_collection(p_domain_id, p_domain_slug, p_term_slugs jsonb)`** returns the domain slug.
    One transaction: locks the domain row, requires it built-in, sets the domain slug only if it has none
@@ -109,3 +109,13 @@ Regenerate `lib/supabase/database.types.ts` (CI diffs it). `pnpm check` and `pnp
   null and boundary arguments (0, 1, 1000, 1001); `updated_at` fires; the existing `ai_credits.sql` test still
   passes. A concurrency script (two publishes of one domain; two domains racing for one slug) follows the
   `*_concurrency.sh` convention.
+
+## Found while building (applied)
+
+The `domains` select policy is "own, shared or public": an admin's session client **cannot read other
+people's private collections** today, so the Collections page never listed them even though admins are
+meant to see them. `admin_domain_term_counts()` was replaced by `admin_list_collections()`, a definer
+function returning every collection with owner email and term count (0 when none), which fixes both this and
+R7. Phase 5 switches the page to it; phase 8 builds the "All collections" view on it. The publish, list
+and settings functions are covered by `supabase/tests/admin_rpcs.sql` and
+`supabase/tests/admin_publish_concurrency.sh`, all run by hand against the local database.

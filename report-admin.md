@@ -23,6 +23,8 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 **Status:**
 
+- Phase 3: merged in #118, 2026-09-29. Accepted gaps: narration's enabled flag reaches the sync panel only when the refreshed page arrives (no lifted optimistic value); credit settings can flash "changed" for a frame after saving; the sync panel keeps local copies of coverage and job until the next poll.
+
 - Phase 2: merged in #117, 2026-09-29. `/jargon/debug` has no admin guard of its own (it shows the signed-in person's own queue); phase 6 moves it under `/admin` behind `requireAdminPage`. The overview reads `ai_feature_settings` and the credit RPC with the admin's own client.
 - Phase 1: merged in #116, 2026-09-29. Accepted gaps: a rejected server-action call (network drop, stale tab) is not caught per component and reaches `error.tsx` until phase 3's `useAdminAction`; the ai-credits actions keep their own private `runAdminAction` until phase 3.
 
