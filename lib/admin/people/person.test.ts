@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { getPerson, narrationAccess } from "./person";
 
 describe("narrationAccess", () => {
@@ -67,10 +67,12 @@ describe("getPerson", () => {
   });
 
   it("shows the balance as unknown, not zero, when it can't be read", async () => {
-    const spy = console.error;
-    console.error = () => undefined;
-    const { client, service } = clients({ user, balanceError: true });
-    expect((await getPerson(client, service, "u1"))?.credits).toBeNull();
-    console.error = spy;
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    try {
+      const { client, service } = clients({ user, balanceError: true });
+      expect((await getPerson(client, service, "u1"))?.credits).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

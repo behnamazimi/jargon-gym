@@ -89,7 +89,7 @@ const bulkSchema = z.object({ ids: z.array(z.string().uuid()).min(1).max(BULK_LI
 type BulkResult = {
   approved: number;
   emailFailed: string[];
-  failed: { id: string; error: string }[];
+  failed: { id: string; email: string | null; error: string }[];
 };
 
 export async function approveWaitlistRequests(ids: string[]) {
@@ -98,6 +98,12 @@ export async function approveWaitlistRequests(ids: string[]) {
     if (!parsed.success) {
       throw new AdminError(`Choose between 1 and ${BULK_LIMIT} requests.`);
     }
+
+    const { data: found } = await context.supabase
+      .from("waitlist_requests")
+      .select("id, email")
+      .in("id", parsed.data.ids);
+    const emails = new Map((found ?? []).map((row) => [row.id, row.email]));
 
     const result: BulkResult = { approved: 0, emailFailed: [], failed: [] };
     for (const id of parsed.data.ids) {
@@ -109,6 +115,7 @@ export async function approveWaitlistRequests(ids: string[]) {
         console.error("Bulk approval failed for one request:", err);
         result.failed.push({
           id,
+          email: emails.get(id) ?? null,
           error: err instanceof AdminError ? err.message : "Something went wrong.",
         });
       }

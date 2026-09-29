@@ -44,7 +44,7 @@ async function WaitlistView({
         label="Search by email"
         hidden={{ view: "waitlist", status: params.status }}
       />
-      <WaitlistTable key={`${params.status}:${params.q}:${page}`} rows={rows} />
+      <WaitlistTable key={`${params.status}:${params.q}:${params.page}`} rows={rows} />
       <AdminPagination
         page={page}
         total={total}
@@ -56,9 +56,11 @@ async function WaitlistView({
 
 async function MembersView({
   supabase,
+  adminId,
   params,
 }: {
   supabase: Awaited<ReturnType<typeof requireAdminPage>>["supabase"];
+  adminId: string;
   params: PeopleParams;
 }) {
   const [{ rows, total, page }, person] = await Promise.all([
@@ -73,11 +75,13 @@ async function MembersView({
         label="Search by email"
         hidden={{ view: "members" }}
       />
-      {person ? <PersonPanel key={person.id} person={person} /> : null}
+      {person ? (
+        <PersonPanel key={person.id} person={person} isYou={person.id === adminId} />
+      ) : null}
       <MembersTable
         rows={rows}
         selectedId={person?.id ?? null}
-        hrefFor={(id) => peopleHref({ ...params, page, person: id })}
+        hrefFor={(id) => `${peopleHref({ ...params, page, person: id })}#person`}
       />
       <AdminPagination
         page={page}
@@ -89,7 +93,7 @@ async function MembersView({
 }
 
 export default async function AdminPeoplePage({ searchParams }: PageProps) {
-  const { supabase } = await requireAdminPage();
+  const { supabase, user } = await requireAdminPage();
   const params = parsePeopleParams(await searchParams);
 
   return (
@@ -114,7 +118,7 @@ export default async function AdminPeoplePage({ searchParams }: PageProps) {
         ]}
       />
       {params.view === "members" ? (
-        <MembersView supabase={supabase} params={params} />
+        <MembersView supabase={supabase} adminId={user.id} params={params} />
       ) : (
         <WaitlistView supabase={supabase} params={params} />
       )}

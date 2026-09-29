@@ -32,7 +32,7 @@ vi.mock("@/lib/email/resend", () => ({
 function chain(table: string, list: () => Result, single: () => Result) {
   const node: Record<string, unknown> = {};
   const settle = () => Object.assign(Promise.resolve(list()), node);
-  for (const method of ["select", "neq", "limit"]) node[method] = settle;
+  for (const method of ["select", "neq", "limit", "in"]) node[method] = settle;
   node.eq = (column: string, value: string) => {
     if (column === "id") state.lastId = value;
     return settle();
@@ -171,7 +171,7 @@ describe("approveWaitlistRequests", () => {
       data: {
         approved: 2,
         emailFailed: [],
-        failed: [{ id: ID2, error: "Request already handled." }],
+        failed: [{ id: ID2, email: null, error: "Request already handled." }],
       },
     });
     expect(state.sent.map((mail) => mail.to)).toEqual(["one@example.test", "three@example.test"]);

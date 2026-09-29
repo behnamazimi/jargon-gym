@@ -62,7 +62,7 @@ function GrantForm({ person }: { person: AdminPerson }) {
   );
 }
 
-export function PersonPanel({ person }: { person: AdminPerson }) {
+export function PersonPanel({ person, isYou }: { person: AdminPerson; isYou: boolean }) {
   const [resetting, setResetting] = useState(false);
   const { run, isPending, error } = useAdminAction();
 
@@ -74,6 +74,7 @@ export function PersonPanel({ person }: { person: AdminPerson }) {
             {person.role}
           </span>
           Joined {formatAdminDate(person.createdAt)}
+          {isYou ? " · This is you." : null}
         </p>
 
         <div className="flex flex-col gap-2">
