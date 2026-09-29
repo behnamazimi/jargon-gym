@@ -24,6 +24,7 @@ export function useSlugEditor(collectionId: string, initial: string, onSaved: ()
     event.preventDefault();
     const asked = text;
     setChecked(null);
+    save.clearError();
     void check.run(() => checkDomainSlug(collectionId, asked), {
       onSuccess: (result) => setChecked({ text: asked, result }),
     });
@@ -31,6 +32,7 @@ export function useSlugEditor(collectionId: string, initial: string, onSaved: ()
 
   function handleSave() {
     if (!current) return;
+    check.clearError();
     void save.run(() => updateDomainSlug(collectionId, text, current.slug), {
       onSuccess: ({ slug }) => {
         toast(`The address is now /j/${slug}.`);

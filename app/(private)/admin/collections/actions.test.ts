@@ -154,9 +154,11 @@ describe("setCollectionStatus: moves, decided from the database's status", () =>
     state.publishResults = [{ data: null, error: { code: "P0001", message: "internal" } }];
     expect(await setCollectionStatus("d1", "published")).toEqual({
       ok: false,
-      error: "Something went wrong. Try again.",
+      error: "The collection was marked built-in, but publishing failed. Try again.",
     });
     expect(state.updates).toEqual([{ table: "domains", values: { is_builtin: true } }]);
+    // The page must show it as built-in now, not as it was.
+    expect(state.revalidated).toContain("/admin/collections");
   });
 
   it("stops before publishing when marking built-in fails", async () => {
@@ -234,6 +236,7 @@ describe("someone else's private collection", () => {
   it("can be moved when it is shared", async () => {
     state.list = [theirs({ visibility: "shared" })];
     expect((await setCollectionStatus("d1", "published")).ok).toBe(true);
+    expect(publishCalls()).toHaveLength(1);
   });
 });
 
@@ -265,7 +268,7 @@ describe("updateDomainSlug", () => {
     expect(state.updates).toEqual([{ table: "domains", values: { slug: "kitchen" } }]);
   });
 
-  it("refuses, instead of suffixing, when the address was taken in the meantime", async () => {
+  it("refuses, instead of suffixing, when the address is taken or was taken in the meantime", async () => {
     expect(await updateDomainSlug("d1", "Baking", "baking")).toEqual({
       ok: false,
       error: "That address is taken. Check again.",

@@ -48,7 +48,7 @@ export function CollectionRow({ collection }: { collection: AdminCollectionRow }
               Edit URL
             </button>
             {editing ? (
-              <EditUrlDialog collection={collection} isOpen onOpenChange={setEditing} />
+              <EditUrlDialog collection={collection} onClose={() => setEditing(false)} />
             ) : null}
           </>
         ) : null}

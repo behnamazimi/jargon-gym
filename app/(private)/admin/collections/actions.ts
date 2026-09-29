@@ -109,13 +109,31 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
     const from = statusOf(found.collection);
     let slug = found.collection.slug;
 
-    for (const step of stepsFor(from, to)) {
-      if (step.kind === "publish") {
-        slug = await publish(supabase, user.id, found);
-        continue;
+    let applied = 0;
+    try {
+      for (const step of stepsFor(from, to)) {
+        if (step.kind === "publish") {
+          slug = await publish(supabase, user.id, found);
+        } else {
+          const { error } = await supabase
+            .from("domains")
+            .update(step.values)
+            .eq("id", domainId)
+            .select("id")
+            .single();
+          if (error) throw error;
+        }
+        applied += 1;
       }
-      const { error } = await supabase.from("domains").update(step.values).eq("id", domainId);
-      if (error) throw error;
+    } catch (err) {
+      // The first step is already saved, so show the page as it is now and say so.
+      if (applied > 0) {
+        revalidateCollection(slug);
+        throw new AdminError(
+          "The collection was marked built-in, but publishing failed. Try again.",
+        );
+      }
+      throw err;
     }
 
     revalidateCollection(slug);
@@ -124,6 +142,7 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
 }
 
 const rawSlugSchema = z.string().max(300);
+const expectedSchema = z.string().max(120);
 
 /** What a typed address would become, and whether it is free. A read: nothing is saved. */
 export async function checkDomainSlug(domainId: string, raw: string) {
@@ -145,7 +164,8 @@ export async function updateDomainSlug(domainId: string, raw: string, expected: 
     const checked = resolveSlug(rawSlugSchema.parse(raw), takenSlugs(collections, domainId));
     if (!checked.valid) throw new AdminError("Use letters or numbers in the address.");
     if (checked.taken) throw new AdminError("That address is taken. Check again.");
-    if (checked.slug !== expected) throw new AdminError("The address changed. Check it again.");
+    if (checked.slug !== expectedSchema.parse(expected))
+      throw new AdminError("The address changed. Check it again.");
 
     const { error } = await supabase
       .from("domains")
@@ -158,8 +178,12 @@ export async function updateDomainSlug(domainId: string, raw: string, expected: 
       throw error;
     }
 
-    if (collection.isPublic) revalidateCollection(collection.slug);
-    revalidateCollection(checked.slug);
+    if (collection.isPublic) {
+      revalidateCollection(collection.slug);
+      revalidateCollection(checked.slug);
+    } else {
+      revalidatePath("/admin/collections");
+    }
     return { slug: checked.slug };
   });
 }

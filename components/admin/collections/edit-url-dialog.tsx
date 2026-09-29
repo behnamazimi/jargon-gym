@@ -8,8 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSlugEditor } from "@/hooks/use-slug-editor";
-import { slugify } from "@/lib/jargon/slug";
-import { describeSlugCheck } from "@/lib/jargon/admin/slug-check";
+import { describeSlugCheck, resolveSlug } from "@/lib/jargon/admin/slug-check";
 import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
 
 function PublishedWarning({ slug }: { slug: string | null }) {
@@ -23,13 +22,13 @@ function PublishedWarning({ slug }: { slug: string | null }) {
 
 function EditUrlForm({
   collection,
+  editor,
   onClose,
 }: {
   collection: AdminCollectionRow;
+  editor: ReturnType<typeof useSlugEditor>;
   onClose: () => void;
 }) {
-  const editor = useSlugEditor(collection.id, collection.slug ?? "", onClose);
-
   return (
     <form onSubmit={editor.handleCheck} className="flex flex-col gap-4">
       <DialogHeader>
@@ -50,7 +49,7 @@ function EditUrlForm({
           onChange={(event) => editor.setText(event.target.value)}
         />
         <span className="text-xs text-base-content/60">
-          Preview: /j/{slugify(editor.text).slice(0, 100) || "…"}
+          Preview: /j/{resolveSlug(editor.text, new Set()).slug || "…"}
         </span>
       </label>
 
@@ -92,16 +91,23 @@ function EditUrlForm({
 
 export function EditUrlDialog({
   collection,
-  isOpen,
-  onOpenChange,
+  onClose,
 }: {
   collection: AdminCollectionRow;
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
 }) {
+  const editor = useSlugEditor(collection.id, collection.slug ?? "", onClose);
+
   return (
-    <Dialog isOpen={isOpen} onOpenChange={onOpenChange} isDismissable={false} className="max-w-md">
-      <EditUrlForm collection={collection} onClose={() => onOpenChange(false)} />
+    <Dialog
+      isOpen
+      onOpenChange={(open) => !open && !editor.busy && onClose()}
+      isDismissable={false}
+      isKeyboardDismissDisabled={editor.busy}
+      showCloseButton={false}
+      className="max-w-md"
+    >
+      <EditUrlForm collection={collection} editor={editor} onClose={onClose} />
     </Dialog>
   );
 }
