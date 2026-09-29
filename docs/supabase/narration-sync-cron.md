@@ -28,35 +28,18 @@ lease is still held, the next tick claims nothing and returns.
 ## 1. Confirm Next.js secrets
 
 `APP_BASE_URL` must be set on Vercel to the public Next.js origin, for example
-`https://jargon-gym.vercel.app`, and at least one of these secrets:
+`https://jargon-gym.vercel.app`, and so must `AI_INTERNAL_SECRET`: the secret
+for this route (the app's own kick and the cron job below). Use a random value
+that differs from `TELEGRAM_INTERNAL_SECRET`. This route accepts only
+`AI_INTERNAL_SECRET`; a call with any other token gets 401. The Telegram routes
+and Edge Functions keep using `TELEGRAM_INTERNAL_SECRET`.
 
-- `AI_INTERNAL_SECRET`: the secret for this route (the app's own kick and the
-  cron job below).
-- `TELEGRAM_INTERNAL_SECRET`: the older secret this route used to share with
-  Telegram. It is still accepted here so the cron job can be switched over
-  without a gap.
-
-Only this route accepts `AI_INTERNAL_SECRET`. The Telegram routes and the
-Telegram Edge Functions keep using `TELEGRAM_INTERNAL_SECRET`, and nothing
-about them changes.
-
-### Switching the cron job to the new secret
-
-1. Add `AI_INTERNAL_SECRET` (a new random value) on Vercel and deploy. The app
-   now calls its own route with it, and both secrets are accepted.
-2. In the Dashboard cron job, change the header to
-   `Authorization: Bearer <AI_INTERNAL_SECRET>`. The cron job header is the
-   only value to change; the Edge Functions are not involved.
-3. Open the admin Narration page. It shows when the cron job last called and
-   which secret it used. Once it says "It uses the AI secret", the old secret
-   is no longer needed for narration.
-   Give `AI_INTERNAL_SECRET` a **different** value from the old secret: if the
-   two are equal, the page cannot tell them apart and keeps saying "old".
-   A job made with `supabase/narration-cron-setup.sql` reads the header from
-   the Vault secret `telegram_internal_secret`; change it there with
-   `select vault.update_secret(id, 'NEW_VALUE') from vault.secrets where name = 'telegram_internal_secret';`.
-4. A later release removes the old secret from this route. Do not remove
-   `TELEGRAM_INTERNAL_SECRET` itself: Telegram still uses it.
+To change the secret later, set the new value on Vercel, deploy, and change the
+cron job header at the same time. Calls made in between return 401 (the admin
+page warns, and **Resume** works). A job made with
+`supabase/narration-cron-setup.sql` reads the header from the Vault secret
+`telegram_internal_secret`; change it there with
+`select vault.update_secret(id, 'NEW_VALUE') from vault.secrets where name = 'telegram_internal_secret';`.
 
 If the cron job stops calling (a wrong header returns 401), the admin page
 warns when a sync needs it and none was seen in the last 5 minutes.
@@ -76,8 +59,7 @@ for this path.
 4. Set the HTTP request:
    - **URL:** `https://<your-app-host>/api/internal/narration/sync`
    - **Method:** `POST`
-   - **Header:** `Authorization: Bearer <AI_INTERNAL_SECRET>` (the old
-     `TELEGRAM_INTERNAL_SECRET` still works while you switch over)
+   - **Header:** `Authorization: Bearer <AI_INTERNAL_SECRET>`
    - **Body:** `{}`
 
 Use the **History** tab on the job to confirm runs return 202 after saving.
