@@ -9,7 +9,6 @@ import { getNarrationSettingsForAdmin } from "@/lib/jargon/admin/narration-setti
 import {
   canResumeNarrationSync,
   getLastNarrationSyncJob,
-  kickNarrationSyncWorker,
   listCollectionNarrationCoverage,
 } from "@/lib/narration/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -40,9 +39,6 @@ export default async function AdminNarrationPage() {
   );
 
   const resumable = canResumeNarrationSync(lastJob);
-  if (resumable) {
-    kickNarrationSyncWorker();
-  }
 
   const jobNeedsCron = resumable || lastJob?.status === "queued" || lastJob?.status === "running";
   const cronNote = describeCron(await getCronStatus(supabase), jobNeedsCron);

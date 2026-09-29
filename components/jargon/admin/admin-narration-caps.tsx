@@ -23,7 +23,7 @@ export function AdminNarrationCaps({ caps, usageLast24h }: Props) {
     startTransition(async () => {
       const result = await setNarrationCaps({ term: parseCap(term), story: Number(story) });
       setMessage(
-        result.error ? { text: result.error, isError: true } : { text: "Saved.", isError: false },
+        result.ok ? { text: "Saved.", isError: false } : { text: result.error, isError: true },
       );
     });
   }

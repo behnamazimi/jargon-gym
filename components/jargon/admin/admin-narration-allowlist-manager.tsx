@@ -28,13 +28,14 @@ export function AllowlistManager({
     setError(null);
 
     startTransition(async () => {
-      try {
-        const added = await addToNarrationAllowlist(trimmed);
-        onAdded({ userId: added.userId, email: added.email, createdAt: new Date().toISOString() });
-        setEmail("");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to add.");
+      const result = await addToNarrationAllowlist(trimmed);
+      if (!result.ok) {
+        setError(result.error);
+        return;
       }
+      const { userId, email: addedEmail } = result.data;
+      onAdded({ userId, email: addedEmail, createdAt: new Date().toISOString() });
+      setEmail("");
     });
   }
 

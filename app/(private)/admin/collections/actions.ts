@@ -1,19 +1,30 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminClient } from "@/lib/auth/require-session";
+import { AdminError } from "@/lib/admin/admin-error";
+import { runAdminAction } from "@/lib/admin/action";
+import type { requireAdminClient } from "@/lib/auth/require-session";
 import { generateUniqueSlug, slugify } from "@/lib/jargon/slug";
 
 export async function setBuiltin(domainId: string, value: boolean) {
-  const { supabase } = await requireAdminClient();
+  return runAdminAction(async ({ supabase }) => {
+    const update: { is_builtin: boolean; is_public?: boolean } = { is_builtin: value };
+    if (!value) update.is_public = false;
 
-  const update: { is_builtin: boolean; is_public?: boolean } = { is_builtin: value };
-  if (!value) update.is_public = false;
+    const { data: domain, error } = await supabase
+      .from("domains")
+      .update(update)
+      .eq("id", domainId)
+      .select("slug")
+      .single();
+    if (error) throw error;
 
-  const { error } = await supabase.from("domains").update(update).eq("id", domainId);
-  if (error) throw error;
-
-  revalidatePath("/admin/collections");
+    revalidatePath("/admin/collections");
+    if (!value && domain.slug) {
+      revalidatePath(`/j/${domain.slug}`, "layout");
+      revalidatePath("/sitemap.xml");
+    }
+  });
 }
 
 async function ensureDomainSlug(
@@ -39,65 +50,62 @@ async function ensureDomainSlug(
   return slug;
 }
 
-export async function setPublic(
-  domainId: string,
-  value: boolean,
-): Promise<{ slug: string | null }> {
-  const { supabase } = await requireAdminClient();
+export async function setPublic(domainId: string, value: boolean) {
+  return runAdminAction(async ({ supabase }): Promise<{ slug: string | null }> => {
+    const { data: domain, error: fetchError } = await supabase
+      .from("domains")
+      .select("id, name, slug, is_builtin")
+      .eq("id", domainId)
+      .single();
+    if (fetchError) throw fetchError;
+    if (value && !domain.is_builtin) {
+      throw new AdminError("Only built-in collections can be made public.");
+    }
 
-  const { data: domain, error: fetchError } = await supabase
-    .from("domains")
-    .select("id, name, slug, is_builtin")
-    .eq("id", domainId)
-    .single();
-  if (fetchError) throw fetchError;
-  if (value && !domain.is_builtin) {
-    throw new Error("Only built-in collections can be made public.");
-  }
+    const slug = value
+      ? await ensureDomainSlug(supabase, domainId, domain.name, domain.slug)
+      : domain.slug;
 
-  const slug = value
-    ? await ensureDomainSlug(supabase, domainId, domain.name, domain.slug)
-    : domain.slug;
+    if (value) {
+      await ensureTermSlugs(supabase, domainId);
+    }
 
-  if (value) {
-    await ensureTermSlugs(supabase, domainId);
-  }
+    const { error } = await supabase
+      .from("domains")
+      .update({ is_public: value })
+      .eq("id", domainId);
+    if (error) throw error;
 
-  const { error } = await supabase.from("domains").update({ is_public: value }).eq("id", domainId);
-  if (error) throw error;
+    if (slug) {
+      revalidatePath(`/j/${slug}`, "layout");
+    }
+    revalidatePath("/admin/collections");
+    revalidatePath("/sitemap.xml");
 
-  if (slug) {
-    revalidatePath(`/j/${slug}`, "layout");
-  }
-  revalidatePath("/admin/collections");
-  revalidatePath("/sitemap.xml");
-
-  return { slug };
+    return { slug };
+  });
 }
 
-export async function updateDomainSlug(
-  domainId: string,
-  rawSlug: string,
-): Promise<{ slug: string }> {
-  const { supabase } = await requireAdminClient();
+export async function updateDomainSlug(domainId: string, rawSlug: string) {
+  return runAdminAction(async ({ supabase }): Promise<{ slug: string }> => {
+    const { data: existingDomains, error: slugError } = await supabase
+      .from("domains")
+      .select("slug")
+      .not("slug", "is", null)
+      .neq("id", domainId);
+    if (slugError) throw slugError;
 
-  const { data: existingDomains, error: slugError } = await supabase
-    .from("domains")
-    .select("slug")
-    .not("slug", "is", null)
-    .neq("id", domainId);
-  if (slugError) throw slugError;
+    const existingSlugs = new Set((existingDomains ?? []).map((row) => row.slug!));
+    const slug = generateUniqueSlug(slugify(rawSlug), existingSlugs);
 
-  const existingSlugs = new Set((existingDomains ?? []).map((row) => row.slug!));
-  const slug = generateUniqueSlug(slugify(rawSlug), existingSlugs);
+    const { error } = await supabase.from("domains").update({ slug }).eq("id", domainId);
+    if (error) throw error;
 
-  const { error } = await supabase.from("domains").update({ slug }).eq("id", domainId);
-  if (error) throw error;
+    revalidatePath("/admin/collections");
+    revalidatePath("/sitemap.xml");
 
-  revalidatePath("/admin/collections");
-  revalidatePath("/sitemap.xml");
-
-  return { slug };
+    return { slug };
+  });
 }
 
 type AdminClient = Awaited<ReturnType<typeof requireAdminClient>>["supabase"];

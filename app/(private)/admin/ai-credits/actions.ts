@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { exactEmailPattern } from "@/lib/ai-credits/email-lookup";
+import { exactEmailPattern } from "@/lib/admin/email-lookup";
 import {
   creditSettingsSchema,
   grantCreditsSchema,
