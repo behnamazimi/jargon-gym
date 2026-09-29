@@ -151,7 +151,13 @@ export async function cancelNarrationSyncJob() {
     // Cancelling with nothing running returns the last job, so look first.
     const before = await getLastNarrationSyncJob(admin);
     const job = await cancelNarrationSync(admin);
-    if (before && isActiveNarrationSyncStatus(before.status)) {
+    // Only when this call ended it: the job may have finished or been cancelled elsewhere meanwhile.
+    if (
+      before &&
+      isActiveNarrationSyncStatus(before.status) &&
+      job?.id === before.id &&
+      job.status === "cancelled"
+    ) {
       await writeAudit(supabase, {
         action: "app.narration_sync_cancel",
         targetType: "domain",

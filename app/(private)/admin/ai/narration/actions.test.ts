@@ -15,6 +15,8 @@ const state = vi.hoisted(() => ({
   audits: [] as { action: string; targetId?: string; details?: unknown }[],
   member: 0,
   lastJob: null as Record<string, unknown> | null,
+  cancelResult: null as Record<string, unknown> | null,
+  auditError: null as { message: string } | null,
   canResume: false,
 }));
 
@@ -22,7 +24,7 @@ vi.mock("next/cache", () => ({ revalidatePath: () => undefined }));
 vi.spyOn(console, "error").mockImplementation(() => undefined);
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/narration/sync", () => ({
-  cancelNarrationSync: async () => state.lastJob,
+  cancelNarrationSync: async () => state.cancelResult ?? state.lastJob,
   canResumeNarrationSync: () => state.canResume,
   enqueueNarrationSync: async (_client: unknown, domainId: string) => {
     state.enqueued.push(domainId);
@@ -56,7 +58,7 @@ vi.mock("@/lib/auth/require-session", async () => {
                 targetId: args.p_target_id,
                 details: args.p_details,
               });
-              return Promise.resolve({ error: null });
+              return Promise.resolve({ error: state.auditError });
             }
             state.rpcCalls.push({ name, args });
             if (name === "admin_list_collections") {
@@ -158,6 +160,8 @@ beforeEach(() => {
   state.audits = [];
   state.member = 0;
   state.lastJob = null;
+  state.cancelResult = null;
+  state.auditError = null;
   state.canResume = false;
 });
 
@@ -212,6 +216,12 @@ describe("narration admin actions", () => {
     state.member = 2;
     await removeFromNarrationAllowlist("u1");
     expect(state.deleted).toEqual([{ features: BOTH, userId: "u1" }]);
+  });
+
+  it("still succeeds when the audit row can't be written", async () => {
+    state.auditError = { message: "audit down" };
+    expect(await addToNarrationAllowlist("a@example.test")).toMatchObject({ ok: true });
+    expect(await startNarrationSync("mine").catch(() => null)).toBeDefined();
   });
 
   it("records access changes only when something changed", async () => {
@@ -305,7 +315,13 @@ describe("narration sync collections", () => {
     await cancelNarrationSyncJob();
     expect(state.audits).toEqual([]);
 
+    // It finished, or another tab cancelled it, between looking and cancelling.
     state.lastJob = { id: "j1", domainId: "mine", status: "running" };
+    state.cancelResult = { id: "j1", domainId: "mine", status: "completed" };
+    await cancelNarrationSyncJob();
+    expect(state.audits).toEqual([]);
+
+    state.cancelResult = { id: "j1", domainId: "mine", status: "cancelled" };
     await cancelNarrationSyncJob();
     expect(state.audits).toEqual([
       { action: "app.narration_sync_cancel", targetId: "mine", details: { job: "j1" } },

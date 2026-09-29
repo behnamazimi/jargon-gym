@@ -12,6 +12,7 @@ const state = vi.hoisted(() => ({
   revalidated: [] as string[],
   termRangeCalls: [] as number[],
   audits: [] as { action: string; targetId?: string; details?: unknown }[],
+  auditError: null as { message: string } | null,
 }));
 
 vi.mock("next/cache", () => ({
@@ -55,7 +56,7 @@ vi.mock("@/lib/auth/require-session", () => ({
             targetId: args.p_target_id,
             details: args.p_details,
           });
-          return Promise.resolve({ error: null });
+          return Promise.resolve({ error: state.auditError });
         }
         state.rpcCalls.push({ name, args });
         if (name === "admin_list_collections") {
@@ -103,6 +104,7 @@ beforeEach(() => {
   state.revalidated = [];
   state.termRangeCalls = [];
   state.audits = [];
+  state.auditError = null;
 });
 
 describe("setCollectionStatus: moves, decided from the database's status", () => {
@@ -248,6 +250,26 @@ describe("audit rows for status changes", () => {
     state.list = [domain({ slug: "cooking", is_public: true })];
     await setCollectionStatus("d1", "published");
     expect(state.audits).toEqual([]);
+  });
+
+  it("records marking built-in on the way to published, next to the database's own publish row", async () => {
+    state.list = [domain({ is_builtin: false })];
+    await setCollectionStatus("d1", "published");
+    expect(state.audits).toEqual([
+      {
+        action: "app.collection_status",
+        targetId: "d1",
+        details: { from: "none", to: "published", slug: "cooking" },
+      },
+    ]);
+  });
+
+  it("never fails the change when the audit row can't be written", async () => {
+    state.auditError = { message: "audit down" };
+    state.list = [domain({ is_builtin: false })];
+    expect((await setCollectionStatus("d1", "builtin")).ok).toBe(true);
+    state.list = [domain()];
+    expect((await updateDomainSlug("d1", "Kitchen", "kitchen")).ok).toBe(true);
   });
 
   it("records what was reached when a later step failed", async () => {

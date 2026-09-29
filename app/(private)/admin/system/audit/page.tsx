@@ -13,7 +13,11 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
   const params = parseAuditParams(await searchParams);
 
   const { rows, total, page } = await listAudit(supabase, params);
-  const emails = await emailsForTargets(supabase, rows);
+  // Names are a courtesy: if they can't be read, the ids still show.
+  const emails = await emailsForTargets(supabase, rows).catch((error: unknown) => {
+    console.error("Couldn't read emails for the audit log:", error);
+    return new Map<string, string>();
+  });
 
   return (
     <>

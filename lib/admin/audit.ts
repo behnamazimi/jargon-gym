@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Json } from "@/lib/supabase/database.types";
-import type { Database } from "@/lib/supabase/database.types";
+import type { Database, Json } from "@/lib/supabase/database.types";
 import type { AppAuditAction } from "./audit-labels";
 
 type AuditEntry = {
