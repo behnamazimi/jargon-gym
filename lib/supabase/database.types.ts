@@ -270,6 +270,75 @@ export type Database = {
           },
         ];
       };
+      ai_worker_status: {
+        Row: {
+          last_secret: string;
+          last_tick_at: string;
+          source: string;
+          worker: string;
+        };
+        Insert: {
+          last_secret: string;
+          last_tick_at?: string;
+          source: string;
+          worker: string;
+        };
+        Update: {
+          last_secret?: string;
+          last_tick_at?: string;
+          source?: string;
+          worker?: string;
+        };
+        Relationships: [];
+      };
+      audio_jobs: {
+        Row: {
+          attempts: number;
+          content_hash: string;
+          created_at: string;
+          error: string | null;
+          hash_version: number;
+          id: string;
+          requested_at: string;
+          status: string;
+          storage_path: string | null;
+          subject_id: string;
+          subject_type: string;
+          updated_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          attempts?: number;
+          content_hash: string;
+          created_at?: string;
+          error?: string | null;
+          hash_version?: number;
+          id?: string;
+          requested_at?: string;
+          status: string;
+          storage_path?: string | null;
+          subject_id: string;
+          subject_type: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          attempts?: number;
+          content_hash?: string;
+          created_at?: string;
+          error?: string | null;
+          hash_version?: number;
+          id?: string;
+          requested_at?: string;
+          status?: string;
+          storage_path?: string | null;
+          subject_id?: string;
+          subject_type?: string;
+          updated_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [];
+      };
       domains: {
         Row: {
           created_at: string;
@@ -1272,6 +1341,7 @@ export type Database = {
           total: number;
         }[];
       };
+      backfill_audio_jobs: { Args: never; Returns: undefined };
       begin_ai_run: {
         Args: { p_feature: string; p_ttl_seconds?: number; p_user_id: string };
         Returns: string;
