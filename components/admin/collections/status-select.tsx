@@ -9,8 +9,8 @@ import {
   needsOfflineConfirm,
   statusOf,
   type CollectionStatus,
-} from "@/lib/jargon/admin/collection-status";
-import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
+} from "@/lib/admin/collections/collection-status";
+import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
 
 const OPTIONS: { value: CollectionStatus; label: string }[] = [
   { value: "none", label: "Not built-in" },

@@ -1,7 +1,7 @@
 import { clampPage, PAGE_SIZE } from "@/lib/admin/list-params";
-import type { CollectionParams } from "./collections-params";
-import { statusOf } from "@/lib/jargon/admin/collection-status";
-import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
+import type { CollectionParams } from "./params";
+import { statusOf } from "@/lib/admin/collections/collection-status";
+import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
 
 /** The function that lists collections returns at most this many, so more than this means some are missing. */
 export const COLLECTION_LIST_LIMIT = 1000;

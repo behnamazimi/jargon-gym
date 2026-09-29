@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { collectionsHref, parseCollectionParams } from "./collections-params";
+import { collectionsHref, parseCollectionParams } from "./params";
 
 describe("parseCollectionParams", () => {
   it("defaults to the built-in view, page one", () => {

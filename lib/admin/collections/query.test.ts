@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
-import { COLLECTION_LIST_LIMIT, queryCollections } from "./collections-query";
+import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
+import { COLLECTION_LIST_LIMIT, queryCollections } from "./query";
 
 const row = (id: string, overrides: Partial<AdminCollectionRow> = {}): AdminCollectionRow => ({
   id,

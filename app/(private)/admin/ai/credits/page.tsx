@@ -1,4 +1,4 @@
-import { AdminAiCreditsPageClient } from "@/components/jargon/admin/admin-ai-credits-page";
+import { AdminAiCreditsPageClient } from "@/components/admin/ai/credits/page";
 import {
   getAiCreditSettingsForAdmin,
   getAiCreditSummaryForAdmin,

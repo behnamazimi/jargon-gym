@@ -1,5 +1,5 @@
 import { CollectionRow } from "@/components/admin/collections/collection-row";
-import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
+import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
 
 export function CollectionsTable({ rows }: { rows: AdminCollectionRow[] }) {
   return (

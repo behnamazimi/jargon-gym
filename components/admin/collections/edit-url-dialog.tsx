@@ -8,8 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSlugEditor } from "@/hooks/use-slug-editor";
-import { describeSlugCheck, resolveSlug } from "@/lib/jargon/admin/slug-check";
-import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
+import { describeSlugCheck, resolveSlug } from "@/lib/admin/collections/slug-check";
+import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
 
 function PublishedWarning({ slug }: { slug: string | null }) {
   return (

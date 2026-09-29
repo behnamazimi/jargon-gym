@@ -4,11 +4,11 @@ import { setNarrationEnabled } from "@/app/(private)/admin/ai/narration/actions"
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminSettingRow } from "@/components/admin/admin-setting-row";
 import { AdminSwitch } from "@/components/admin/admin-switch";
-import { AllowlistManager } from "@/components/jargon/admin/admin-narration-allowlist-manager";
-import { AdminNarrationSync } from "@/components/jargon/admin/admin-narration-sync";
-import { AdminNarrationCaps } from "@/components/jargon/admin/admin-narration-caps";
-import type { NarrationSettings } from "@/lib/jargon/admin/narration-settings";
-import type { AdminNarrationAllowlistRow } from "@/lib/jargon/admin/list-narration-allowlist";
+import { AllowlistManager } from "@/components/admin/ai/narration/allowlist-manager";
+import { AdminNarrationSync } from "@/components/admin/ai/narration/sync";
+import { AdminNarrationCaps } from "@/components/admin/ai/narration/caps";
+import type { NarrationSettings } from "@/lib/admin/narration/narration-settings";
+import type { AdminNarrationAllowlistRow } from "@/lib/admin/narration/list-narration-allowlist";
 import type {
   CollectionNarrationCoverage,
   NarrationSyncJobView,

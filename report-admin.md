@@ -23,6 +23,8 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 **Status:**
 
+- Phase 10: merged in #125, 2026-09-29. Admin code consolidated: `lib/jargon/admin/*` to `lib/admin/collections/` and `lib/admin/narration/`, `components/jargon/admin/*` to `components/admin/ai/` (files renamed without the redundant prefix); `docs/admin.md`, an Admin panel section in `AGENTS.md`, and a test that keeps the old folders gone.
+- Phase 9: merged in #124, 2026-09-29. Direct writes record an audit row after the change, best effort (`lib/admin/audit.ts`); labels are one typed map plus a test against the migration; `/admin/system/audit` and an Overview activity feed; `formatAdminDateTime`. Accepted: a change and its entry are two calls, so an entry can be missing if saving it failed; no-op switch writes still record a row.
 - Phase 8: merged in #123, 2026-09-29. Deviations: "Updated" column instead of "published date" (no such column), owner search instead of an owner filter, a visibility badge next to a three-value status; the list is still capped at 1000 collections (a notice shows when it is reached).
 
 - Phase 7: merged in #122, 2026-09-29. Deferred: phone card layout for the people tables, a `signed_up` waitlist filter (it is a derived badge), page-number links beyond previous/next. The member panel shows remaining/total credits only (spent and granted stay on the credits page); "partly" narration access can only be cleared by switching on then off.
@@ -470,3 +472,48 @@ larger refactors.
   `/admin/ai/credits`, `/admin/ai/narration`. Narration's master switch moves onto the shared feature
   table with the rest; its access list, limits and audio sync stay on its sub-page. The sidebar shows AI
   as an expandable group with these three entries.
+
+---
+
+## Outcome
+
+Done in ten phases, one PR each (#116 to #124, and phase 10), 2026-09-29. The original findings are
+addressed as follows.
+
+| Phase    | Result                                                                                                                                     |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1 (#116) | Safe action results in production, exact email lookup, approve without double emails plus Resend, no page-load side effect, error boundary |
+| 2 (#117) | One admin layout and nav config, a guard on every page, an Overview                                                                        |
+| 3 (#118) | Shared blocks, `useAdminAction`/`useAdminToggle`, every page migrated, confirmations, unknown instead of off, one date format              |
+| 4 (#119) | Migration: audit log, atomic publish and settings functions, `admin_list_collections`                                                      |
+| 5 (#120) | The app uses them; other people's private collections listed read-only; every collection action checks ownership                           |
+| 6 (#121) | AI hub with sub-pages, Narration under AI, Queue debug under System, redirects                                                             |
+| 7 (#122) | People: waitlist with search, paging and bulk approve; members with credits and narration access                                           |
+| 8 (#123) | Collections: one status control, a checked address editor, search, paging, all-collections view                                            |
+| 9 (#124) | Audit rows, audit page, Overview activity feed                                                                                             |
+| 10       | Folder consolidation, `docs/admin.md`, `AGENTS.md`, cleanup                                                                                |
+
+Migrations: `20260930110000_admin_rpcs.sql` (phase 4). Nothing else in the database changed.
+
+### Deviations from the proposal
+
+- Folders are `lib/admin/collections` and `lib/admin/narration` (not `content`/`ai`), `lib/ai-credits/admin.ts` and the
+  `...ForAdmin` names stayed, and there is no `AdminTable` component: the tables share markup conventions
+  instead. The credits, narration and hub pages are still client page components (4.5 not done there).
+- Waitlist: no `signed_up` filter (a derived badge), bulk approve limited to 10, no phone card layout.
+- Collections: an "Updated" column instead of a published date, owner search instead of an owner filter,
+  visibility as a badge next to a three-value status.
+- Old addresses redirect with temporary (307) redirects.
+- The audit log for direct writes is written after the change and best effort, not in the same transaction.
+
+### Left, and why
+
+- Term evaluation has no switch because nothing reads its setting (needs a change to a live route).
+- The collection list is capped at 1000 by PostgREST (needs paging in a migration).
+- Queue debug's server actions still use the signed-in guard (they only return the caller's own queue).
+- `actor_email` in the audit log outlives an account by design.
+- No component tests: the test environment is node only, so behaviour lives in pure, tested modules.
+- Nothing was verified in a browser (no admin sign-in was available to the agent doing the work): open each
+  admin page once after deploy.
+- The phase plans (`report-admin-plan-phase-N.md`) stay in the repo root, like the AI redesign's did until
+  its cleanup PR.
