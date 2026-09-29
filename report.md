@@ -7,7 +7,7 @@ Date: 2026-09-29. Scope: everything in the app that calls an AI provider or serv
 - Phase 0 (cheap fixes): merged in #102, 2026-09-29. Deferred: story narration still generates on GET (phase 4), admin score display, raw probability storage.
 - Phase 1 (`lib/ai`, `ai_feature_settings`, ledger generalization): merged in #103, 2026-09-29. Migration applies to production through `deploy-migrations.yml`; the CI dry-run needed two re-runs for an unrelated Supabase 502. Nothing reads the new tables yet. Contract of the old cost columns is deferred to phase 5 (needs approval).
 - Phase 2 (Quiz and Stories onto `lib/ai`): merged in #104, 2026-09-29. Costs still read from the old columns (contract in phase 5); setup screens do not show 'feature off' ahead of Generate; E10 not built; no Stories action-level test.
-- Phase 3 (narration on the AI module, never billed): split into three PRs. 3a migration merged in #105 (resync function, old-to-new triggers, `has_feature_access`, `ai_usage_events`); CI caught a `LOCK TABLE` that fails under `db reset`, removed. 3b app cutover merged in #106 (access, worker E7 check, admin page on the feature tables; added_by no longer recorded); 3c caps and usage writes in progress. Admins still get no automatic narration access (same as before).
+- Phase 3 (narration on the AI module, never billed): done, 2026-09-29, in three PRs: #105 migration (resync function, old-to-new triggers, `has_feature_access`, `ai_usage_events`; CI caught a `LOCK TABLE` that fails under `db reset`, removed), #106 app cutover (access, worker E7 cancel, admin page on the feature tables), #107 caps and usage log (term generation runs under the per-person guard; story cap from settings). Accepted gaps: `added_by` no longer recorded, term player silent on 429, story cap race M9 not fixed, no single AI hub page. Old tables `narration_settings` / `narration_allowlist` are no longer read; dropped in phase 5.
 
 ## 1. What exists today
 
@@ -402,3 +402,5 @@ A second reviewer re-checked every claim in this report against the code. Result
 - F5 stays Medium, after F4, F2 and F8.
 - Split the main build into **expand migration, code release, contract migration** (D1, D6). Do **F14-A after F1-A**, not together.
 - E15 and E16 are the real bill and outage risks and need their dry-run checks (5.3). E20 (secret change) is low risk by comparison.
+
+- Phase 4 (audio jobs expand): in progress, split into 4a migration and 4b app (second secret, heartbeat, versioned hash).
