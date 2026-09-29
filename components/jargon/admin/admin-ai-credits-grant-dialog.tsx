@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { grantAiCredits } from "@/app/(private)/admin/ai-credits/actions";
+import { useAdminAction } from "@/hooks/use-admin-action";
 import {
   Dialog,
   DialogDescription,
@@ -14,20 +15,13 @@ function GrantForm({ initialEmail, onClose }: { initialEmail: string; onClose: (
   const [email, setEmail] = useState(initialEmail);
   const [amount, setAmount] = useState("25");
   const [note, setNote] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { run, isPending, error } = useAdminAction();
 
   function handleGrant(event: FormEvent) {
     event.preventDefault();
-    setError(null);
-
-    startTransition(async () => {
-      const result = await grantAiCredits({ email, amount: Number(amount), note });
-      if (result.error) {
-        setError(result.error);
-        return;
-      }
-      onClose();
+    void run(() => grantAiCredits({ email, amount: Number(amount), note }), {
+      onSuccess: onClose,
+      successMessage: "Credits granted.",
     });
   }
 

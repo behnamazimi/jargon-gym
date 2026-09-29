@@ -70,3 +70,46 @@ actions changes).
 - Focus: closing a confirm returns focus to its trigger (React Aria `AlertDialog` does this).
 - The grant dialog keeps its form; only its error handling moves to `useAdminAction`.
 - 250-line file cap (oxlint): split big components by section.
+
+## Review amendments (applied)
+
+The reviewer suggested splitting into 3a/3b/3c. The rule for this work is one PR per phase, so it stays one
+PR, trimmed:
+
+- **Cut from this PR:** `AdminTable` (phase 8 builds it with search and pagination; the usage list keeps its
+  cards + table layout), `formatAdminDateTime`, the `AdminClient` alias dedupe, the credit-settings save
+  confirm on every save.
+- **Hook design:** logic lives in a pure `settleAdminAction(action)` in `lib/admin/settle-action.ts` (no
+  `next/cache` import, unit-tested in the node env): returns the `ActionResult`, turning a rejected call
+  into `{ ok: false, error: "Couldn't reach the server. Reload the page and try again." }`.
+  `hooks/use-admin-action.ts` is a thin wrapper: `run<T>(action, { onSuccess?(data: T), successMessage? })`
+  creates its own promise inside the transition and resolves `true`/`false`; it does not call
+  `router.refresh()` (actions revalidate). Success toasts only; failures stay inline (a conscious
+  deviation from "toast every result", to keep errors next to what failed).
+  The narration sync poller keeps its own try/catch outside the hook (it would toast every 2 s).
+  Check `node_modules/next/dist/docs/` on async transitions before building.
+- **`AdminSwitch` is controlled** (`checked`, `onChange`, optional `size`, `hideLabel`), reusing
+  `components/ui/switch.tsx`. Owners keep the optimistic value (`useOptimistic` where the value is lifted,
+  e.g. narration's enabled flag feeding the sync panel). Collections keeps its own coupled Built-in/Public
+  handlers on top of the same switch. `AdminSettingRow` is the single name for the labelled row.
+- **Confirmations narrowed:** approve invite (names the address; button stays disabled while pending),
+  remove from allowlist, cancel a running sync, unpublish or un-build only while the collection is public,
+  credit settings only when a price changes or the allowance is lowered (with the number of people). The
+  confirm target is captured in state before opening (as the reset dialog does). Pending/error show in the
+  owner, since `AlertDialogAction` closes first. Focus return is verified manually, not asserted.
+- **R12:** `capsSchema` moves to `lib/narration/caps-schema.ts` (a `"use server"` file can't export it) and is
+  shared by the form and the action; the form is `<form noValidate onSubmit>` with inline field errors and
+  the `toNumber` blank-is-NaN pattern from the credits settings form.
+- **R14:** `usageLast24h` becomes `number | null` end to end (`narration-settings.ts`, page, client, caps form);
+  small test for `narration-settings`. The features list renders an "Unknown" badge instead of an "off"
+  toggle when the row couldn't be read.
+- **AI credits actions:** every action passes `{ revalidate: ["/admin/ai-credits"] }`; tests mock
+  `AdminError` for the non-admin case, expect `{ ok: true, data: undefined }` / `{ ok: false, error }`; the
+  two-write price save stays non-atomic until phase 5.
+- **Dates:** `formatAdminDate(iso)` = `new Date(iso).toISOString().slice(0, 10)` with an invalid/missing
+  input shown as "—"; UTC day, documented. `<AdminTime>` with a full timestamp in `title` is deferred.
+- **Line caps:** split `admin-narration-sync.tsx` (toolbar and job panel into their own file) and extract
+  the credit settings draft logic into a hook, before adding confirms.
+- `AdminStat` takes `string | number | null` and stays a server-safe component (no `"use client"`).
+- The "stale tab needs a reload" note is dropped: old clients reading `result.error` keep working.
+- The always-visible `<h1>` on phones is a deliberate design change (the nav row is the only other chrome).

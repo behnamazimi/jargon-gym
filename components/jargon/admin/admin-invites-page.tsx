@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { approveWaitlistRequest, resendInvite } from "@/app/(private)/admin/invites/actions";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { useAdminAction } from "@/hooks/use-admin-action";
+import { formatAdminDate } from "@/lib/admin/format";
 import type {
   AdminWaitlistRow,
   AdminWaitlistStatus,
 } from "@/lib/jargon/admin/list-waitlist-requests";
-import { cn } from "@/lib/utils";
-
-type AdminInvitesPageClientProps = {
-  requests: AdminWaitlistRow[];
-};
 
 const statusBadgeClass: Record<AdminWaitlistStatus, string> = {
   pending: "badge-neutral",
@@ -24,15 +23,13 @@ const statusLabel: Record<AdminWaitlistStatus, string> = {
   signed_up: "Signed up",
 };
 
-export function AdminInvitesPageClient({ requests }: AdminInvitesPageClientProps) {
+export function AdminInvitesPageClient({ requests }: { requests: AdminWaitlistRow[] }) {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="max-md:sr-only">
-        <h1 className="text-2xl font-semibold text-base-content">Invites</h1>
-        <p className="mt-1 text-base text-base-content/65">
-          Approve waitlist requests to generate a referral code and email a signup link.
-        </p>
-      </div>
+    <>
+      <AdminPageHeader
+        title="Invites"
+        description="Approve waitlist requests to generate a referral code and email a signup link."
+      />
 
       <div className="overflow-x-auto rounded-lg border border-base-300">
         <table className="table">
@@ -41,7 +38,9 @@ export function AdminInvitesPageClient({ requests }: AdminInvitesPageClientProps
               <th>Email</th>
               <th>Status</th>
               <th>Requested</th>
-              <th></th>
+              <th>
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -58,57 +57,36 @@ export function AdminInvitesPageClient({ requests }: AdminInvitesPageClientProps
           </tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 }
 
 function RequestRow({ request }: { request: AdminWaitlistRow }) {
-  const [status, setStatus] = useState(request.status);
-  const [error, setError] = useState<string | null>(null);
+  const { run, isPending, error, clearError } = useAdminAction();
   const [notice, setNotice] = useState<string | null>(null);
-  const [canResend, setCanResend] = useState(true);
-  const [isPending, startTransition] = useTransition();
-
-  const [isApproved, setIsApproved] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   function handleApprove() {
-    setError(null);
     setNotice(null);
-    startTransition(async () => {
-      const result = await approveWaitlistRequest(request.id);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      setIsApproved(true);
-      if (!result.data.emailSent) {
-        setError("Approved, but the email failed. Use Resend.");
-      }
-      setTimeout(() => setStatus("invited"), 150);
+    void run(() => approveWaitlistRequest(request.id), {
+      onSuccess: ({ emailSent }) => {
+        if (!emailSent) setNotice("Approved, but the email failed. Use Resend.");
+      },
     });
   }
 
-  function handleResend() {
-    setError(null);
+  async function handleResend() {
     setNotice(null);
-    startTransition(async () => {
-      const result = await resendInvite(request.id);
-      if (result.ok) {
-        setNotice("Sent again.");
-        return;
-      }
-      setError(result.error);
-      if (result.error.startsWith("They already") || result.error.includes("no longer active")) {
-        setCanResend(false);
-      }
-    });
+    if (await run(() => resendInvite(request.id))) setNotice("Sent again.");
   }
 
   return (
     <tr>
       <td className="font-medium text-base-content">{request.email}</td>
       <td>
-        <span className={`badge ${statusBadgeClass[status]}`}>{statusLabel[status]}</span>
+        <span className={`badge ${statusBadgeClass[request.status]}`}>
+          {statusLabel[request.status]}
+        </span>
         {error ? (
           <p role="alert" className="mt-1 text-sm text-error">
             {error}
@@ -120,32 +98,40 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
           </p>
         ) : null}
       </td>
-      <td className="text-base-content/65">{new Date(request.createdAt).toLocaleDateString()}</td>
+      <td className="text-base-content/65">{formatAdminDate(request.createdAt)}</td>
       <td className="text-right">
-        {status === "pending" ? (
+        {request.status === "pending" ? (
           <button
             type="button"
-            className={cn(
-              "btn btn-sm btn-primary transition-[opacity,transform] duration-150 ease-out active:scale-[0.96]",
-              isApproved && "-translate-y-1 opacity-0",
-            )}
+            className="btn btn-sm btn-primary transition-transform active:scale-[0.96]"
             disabled={isPending}
-            onClick={handleApprove}
+            onClick={() => {
+              clearError();
+              setConfirming(true);
+            }}
           >
             {isPending ? "Approving…" : "Approve"}
           </button>
         ) : null}
-        {status === "invited" && canResend ? (
+        {request.status === "invited" ? (
           <button
             type="button"
             className="btn btn-sm btn-ghost transition-transform active:scale-[0.96]"
             disabled={isPending}
-            onClick={handleResend}
+            onClick={() => void handleResend()}
           >
             {isPending ? "Sending…" : "Resend"}
           </button>
         ) : null}
       </td>
+      <ConfirmDialog
+        isOpen={confirming}
+        onOpenChange={setConfirming}
+        title="Approve this request?"
+        description={`This emails a signup link to ${request.email}.`}
+        confirmLabel="Approve and email"
+        onConfirm={handleApprove}
+      />
     </tr>
   );
 }

@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminSection } from "@/components/admin/admin-section";
+import { AdminStat } from "@/components/admin/admin-stat";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { loadAdminOverview } from "@/lib/admin/overview";
 import { cn } from "@/lib/utils";
@@ -10,33 +13,15 @@ const TONE_CLASS = {
   info: "border-base-300",
 } as const;
 
-function Stat({ label, value, hint }: { label: string; value: number | null; hint?: string }) {
-  return (
-    <div className="rounded-lg border border-base-300 px-3 py-3">
-      <p className="m-0 text-xl font-semibold tabular-nums text-base-content">{value ?? "—"}</p>
-      <p className="m-0 text-xs text-base-content/65">{label}</p>
-      {hint ? <p className="m-0 mt-0.5 text-xs text-base-content/50">{hint}</p> : null}
-    </div>
-  );
-}
-
 export default async function AdminOverviewPage() {
   const { supabase } = await requireAdminPage();
   const { attention, stats } = await loadAdminOverview(supabase);
 
   return (
     <>
-      <div className="max-md:sr-only">
-        <h1 className="text-2xl font-semibold text-base-content">Overview</h1>
-        <p className="mt-1 text-base text-base-content/65">
-          What needs you, and how the app is doing.
-        </p>
-      </div>
+      <AdminPageHeader title="Overview" description="What needs you, and how the app is doing." />
 
-      <section aria-labelledby="admin-attention" className="flex flex-col gap-3">
-        <h2 id="admin-attention" className="m-0 text-base font-semibold text-base-content">
-          Needs attention
-        </h2>
+      <AdminSection id="admin-attention" title="Needs attention">
         {attention.length === 0 ? (
           <p className="m-0 flex items-center gap-2 rounded-lg border border-base-300 px-4 py-3 text-sm text-base-content/65">
             <CheckCircle2 className="size-4 text-success" aria-hidden />
@@ -60,24 +45,25 @@ export default async function AdminOverviewPage() {
             ))}
           </ul>
         )}
-      </section>
+      </AdminSection>
 
-      <section aria-labelledby="admin-numbers" className="flex flex-col gap-3">
-        <h2 id="admin-numbers" className="m-0 text-base font-semibold text-base-content">
-          Numbers
-        </h2>
+      <AdminSection id="admin-numbers" title="Numbers">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <Stat label="People" value={stats.totalPeople} />
-          <Stat label="Used AI credits" value={stats.usedCredits} />
-          <Stat label="Credits spent" value={stats.creditsSpent} hint="All time, net of refunds" />
-          <Stat
+          <AdminStat label="People" value={stats.totalPeople} />
+          <AdminStat label="Used AI credits" value={stats.usedCredits} />
+          <AdminStat
+            label="Credits spent"
+            value={stats.creditsSpent}
+            hint="All time, net of refunds"
+          />
+          <AdminStat
             label="AI credit spends, last 24 hours"
             value={stats.spends24h}
             hint="Own-key, narration and evaluation calls aren't counted"
           />
-          <Stat label="Waiting for an invite" value={stats.waitlistPending} />
+          <AdminStat label="Waiting for an invite" value={stats.waitlistPending} />
         </div>
-      </section>
+      </AdminSection>
     </>
   );
 }

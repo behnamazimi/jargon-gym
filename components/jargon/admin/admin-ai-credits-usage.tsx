@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { resetAiCredits } from "@/app/(private)/admin/ai-credits/actions";
+import { AdminSection } from "@/components/admin/admin-section";
+import { useAdminAction } from "@/hooks/use-admin-action";
 import { AdminAiCreditsGrantDialog } from "@/components/jargon/admin/admin-ai-credits-grant-dialog";
 import { UsageCards, UsageTable } from "@/components/jargon/admin/admin-ai-credits-usage-list";
 import {
@@ -21,19 +23,13 @@ export function AdminAiCreditsUsage({ usage }: { usage: AiCreditUsageRow[] }) {
   const [grantEmail, setGrantEmail] = useState<string | null>(null);
   const [resetRow, setResetRow] = useState<AiCreditUsageRow | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const { run, isPending, error } = useAdminAction();
 
   function handleReset() {
     if (!resetRow) return;
     const userId = resetRow.userId;
-    setError(null);
     setResetOpen(false);
-
-    startTransition(async () => {
-      const result = await resetAiCredits(userId);
-      if (result.error) setError(result.error);
-    });
+    void run(() => resetAiCredits(userId), { successMessage: "Usage reset." });
   }
 
   function askToReset(row: AiCreditUsageRow) {
@@ -42,11 +38,10 @@ export function AdminAiCreditsUsage({ usage }: { usage: AiCreditUsageRow[] }) {
   }
 
   return (
-    <section aria-labelledby="ai-credits-usage" className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="ai-credits-usage" className="m-0 text-base font-semibold text-base-content">
-          Usage
-        </h2>
+    <AdminSection
+      id="ai-credits-usage"
+      title="Usage"
+      action={
         <button
           type="button"
           className="btn btn-outline min-h-11 transition-transform active:scale-[0.96] md:btn-sm md:min-h-8"
@@ -54,7 +49,8 @@ export function AdminAiCreditsUsage({ usage }: { usage: AiCreditUsageRow[] }) {
         >
           Grant credits
         </button>
-      </div>
+      }
+    >
       {error ? (
         <p role="alert" className="m-0 text-sm text-error">
           {error}
@@ -108,6 +104,6 @@ export function AdminAiCreditsUsage({ usage }: { usage: AiCreditUsageRow[] }) {
           <AlertDialogAction onPress={handleReset}>Reset usage</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialog>
-    </section>
+    </AdminSection>
   );
 }

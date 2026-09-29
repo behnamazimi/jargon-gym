@@ -31,8 +31,7 @@ export default async function AdminAiCreditsPage() {
       return {
         feature,
         label: featureLabels[feature],
-        enabled: row?.enabled ?? false,
-        available: row !== null,
+        enabled: row?.enabled ?? null,
         healthNote: health.ok ? null : health.note,
       };
     }),

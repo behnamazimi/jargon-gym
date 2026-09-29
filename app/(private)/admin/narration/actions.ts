@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
 import { exactEmailPattern } from "@/lib/admin/email-lookup";
@@ -12,6 +11,7 @@ import {
   kickNarrationSyncWorker,
   listCollectionNarrationCoverage,
 } from "@/lib/narration/sync";
+import { capsSchema, type CapsInput } from "@/lib/narration/caps-schema";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /** The admin page has one switch and one list; they apply to both narration features. */
@@ -36,13 +36,7 @@ export async function setNarrationEnabled(value: boolean) {
   );
 }
 
-const capsSchema = z.object({
-  // Blank (null) means no cap for terms; stories always keep a cap, since it is their only cost bound.
-  term: z.number().int().min(1).max(1000).nullable(),
-  story: z.number().int().min(1).max(1000),
-});
-
-export async function setNarrationCaps(input: { term: number | null; story: number }) {
+export async function setNarrationCaps(input: CapsInput) {
   return runAdminAction(
     async ({ supabase }) => {
       const parsed = capsSchema.safeParse(input);

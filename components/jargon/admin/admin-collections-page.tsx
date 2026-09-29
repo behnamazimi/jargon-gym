@@ -1,22 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { setBuiltin, setPublic, updateDomainSlug } from "@/app/(private)/admin/collections/actions";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminSwitch } from "@/components/admin/admin-switch";
+import { useAdminAction } from "@/hooks/use-admin-action";
 import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
 
-type AdminCollectionsPageClientProps = {
-  collections: AdminCollectionRow[];
-};
-
-export function AdminCollectionsPageClient({ collections }: AdminCollectionsPageClientProps) {
+export function AdminCollectionsPageClient({ collections }: { collections: AdminCollectionRow[] }) {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="max-md:sr-only">
-        <h1 className="text-2xl font-semibold text-base-content">Collections</h1>
-        <p className="mt-1 text-base text-base-content/65">
-          Mark collections as built-in, then publish the ones that should get a public page.
-        </p>
-      </div>
+    <>
+      <AdminPageHeader
+        title="Collections"
+        description="Mark collections as built-in, then publish the ones that should get a public page."
+      />
 
       <div className="overflow-x-auto rounded-lg border border-base-300">
         <table className="table">
@@ -33,7 +30,7 @@ export function AdminCollectionsPageClient({ collections }: AdminCollectionsPage
           </thead>
           <tbody>
             {collections.map((collection) => (
-              <CollectionRow key={collection.id} collection={collection} />
+              <CollectionRow key={`${collection.id}-${collection.slug}`} collection={collection} />
             ))}
             {collections.length === 0 ? (
               <tr>
@@ -45,62 +42,20 @@ export function AdminCollectionsPageClient({ collections }: AdminCollectionsPage
           </tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 }
 
 function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
-  const [isBuiltin, setIsBuiltin] = useState(collection.isBuiltin);
-  const [isPublic, setIsPublic] = useState(collection.isPublic);
   const [slug, setSlug] = useState(collection.slug ?? "");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
-
-  function handleBuiltinChange(value: boolean) {
-    setError(null);
-    const previousBuiltin = isBuiltin;
-    const previousPublic = isPublic;
-    setIsBuiltin(value);
-    if (!value) setIsPublic(false);
-
-    startTransition(async () => {
-      const result = await setBuiltin(collection.id, value);
-      if (!result.ok) {
-        setIsBuiltin(previousBuiltin);
-        setIsPublic(previousPublic);
-        setError(result.error);
-      }
-    });
-  }
-
-  function handlePublicChange(value: boolean) {
-    setError(null);
-    const previous = isPublic;
-    setIsPublic(value);
-
-    startTransition(async () => {
-      const result = await setPublic(collection.id, value);
-      if (!result.ok) {
-        setIsPublic(previous);
-        setError(result.error);
-        return;
-      }
-      if (result.data.slug) setSlug(result.data.slug);
-    });
-  }
+  const { run, isPending, error, clearError } = useAdminAction();
 
   function handleSlugBlur() {
     if (!slug.trim() || slug === collection.slug) return;
-    setError(null);
-
-    startTransition(async () => {
-      const result = await updateDomainSlug(collection.id, slug);
-      if (!result.ok) {
-        setSlug(collection.slug ?? "");
-        setError(result.error);
-        return;
-      }
-      setSlug(result.data.slug);
+    void run(() => updateDomainSlug(collection.id, slug), {
+      onSuccess: (result) => setSlug(result.slug),
+    }).then((ok) => {
+      if (!ok) setSlug(collection.slug ?? "");
     });
   }
 
@@ -113,33 +68,51 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
         {collection.visibility === "shared" ? "Shared" : "Private"}
       </td>
       <td>
-        <input
-          type="checkbox"
-          className="toggle toggle-sm toggle-primary"
-          checked={isBuiltin}
-          disabled={isPending}
-          onChange={(event) => handleBuiltinChange(event.target.checked)}
-          aria-label={`Mark ${collection.name} as built-in`}
+        <AdminSwitch
+          size="sm"
+          label={`Mark ${collection.name} as built-in`}
+          value={collection.isBuiltin}
+          save={(next) => setBuiltin(collection.id, next)}
+          confirm={(next) =>
+            !next && collection.isPublic
+              ? {
+                  title: "Take this collection offline?",
+                  description: `${collection.name} stops being built-in, so its public page goes offline.`,
+                  confirmLabel: "Take offline",
+                }
+              : null
+          }
         />
       </td>
       <td>
-        <input
-          type="checkbox"
-          className="toggle toggle-sm toggle-primary"
-          checked={isPublic}
-          disabled={isPending || !isBuiltin}
-          onChange={(event) => handlePublicChange(event.target.checked)}
-          aria-label={`Publish ${collection.name}`}
+        <AdminSwitch
+          size="sm"
+          label={`Publish ${collection.name}`}
+          value={collection.isPublic}
+          disabled={!collection.isBuiltin}
+          save={(next) => setPublic(collection.id, next).then(dropSlug)}
+          confirm={(next) =>
+            next
+              ? null
+              : {
+                  title: "Unpublish this collection?",
+                  description: `The public page for ${collection.name} goes offline.`,
+                  confirmLabel: "Unpublish",
+                }
+          }
         />
       </td>
       <td>
-        {isPublic ? (
+        {collection.isPublic ? (
           <input
             type="text"
             className="input input-sm input-bordered w-40"
             value={slug}
             disabled={isPending}
-            onChange={(event) => setSlug(event.target.value)}
+            onChange={(event) => {
+              clearError();
+              setSlug(event.target.value);
+            }}
             onBlur={handleSlugBlur}
             aria-label={`Slug for ${collection.name}`}
           />
@@ -150,4 +123,9 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
       </td>
     </tr>
   );
+}
+
+/** The switch only needs to know whether saving worked; the new slug arrives with the refreshed page. */
+function dropSlug(result: Awaited<ReturnType<typeof setPublic>>) {
+  return result.ok ? ({ ok: true, data: undefined } as const) : result;
 }
