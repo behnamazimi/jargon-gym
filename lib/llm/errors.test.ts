@@ -1,6 +1,6 @@
 import { APICallError, RetryError } from "ai";
 import { describe, expect, it } from "vitest";
-import { isKeyRejected, isModelUnavailable, isProviderKeyFault, providerStatus } from "./errors";
+import { isKeyRejected, isProviderKeyFault, providerStatus } from "./errors";
 
 function apiError(statusCode: number, message = "fail") {
   return new APICallError({
@@ -31,28 +31,12 @@ describe("providerStatus", () => {
 });
 
 describe("isProviderKeyFault", () => {
-  it.each([401, 402, 403, 404, 429])(
-    "treats %i as a key, quota or model access problem",
-    (status) => {
-      expect(isProviderKeyFault(apiError(status))).toBe(true);
-    },
-  );
+  it.each([401, 402, 403, 429])("treats %i as a key or quota problem", (status) => {
+    expect(isProviderKeyFault(apiError(status))).toBe(true);
+  });
 
   it.each([400, 500, 503])("does not treat %i as one", (status) => {
     expect(isProviderKeyFault(apiError(status))).toBe(false);
-  });
-});
-
-describe("isModelUnavailable", () => {
-  it("catches the 404 for a model the key can't use", () => {
-    expect(
-      isModelUnavailable(apiError(404, "This model is no longer available to new users")),
-    ).toBe(true);
-  });
-
-  it("is false for other failures", () => {
-    expect(isModelUnavailable(apiError(400))).toBe(false);
-    expect(isModelUnavailable(new Error("boom"))).toBe(false);
   });
 });
 

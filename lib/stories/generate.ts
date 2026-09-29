@@ -1,7 +1,7 @@
 import { generateText } from "ai";
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import { describeFailure } from "@/lib/ai-credits/failure-reason";
-import { isKeyRejected, isModelUnavailable, providerStatus } from "@/lib/llm/errors";
+import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
 import { storyLength } from "./length";
@@ -12,12 +12,7 @@ import { buildStoryPrompt } from "./prompt";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, PieceLength, ReadingLevel, StorySegment, StoryTerm } from "./types";
 
-export type StoryProviderErrorKind =
-  | "auth"
-  | "rate-limit"
-  | "model-unavailable"
-  | "timeout"
-  | "other";
+export type StoryProviderErrorKind = "auth" | "rate-limit" | "timeout" | "other";
 
 /** What the user is told, with the original failure kept as `cause`. */
 export class StoryProviderError extends Error {
@@ -77,13 +72,6 @@ function toProviderError(error: unknown, timedOut: boolean): StoryProviderError 
       cause,
     );
   }
-  if (isModelUnavailable(error)) {
-    return new StoryProviderError(
-      "Your provider isn't offering the AI model Stories use to your key right now. Try again later.",
-      "model-unavailable",
-      cause,
-    );
-  }
   return new StoryProviderError("Couldn't write a story this time. Try again.", "other", cause);
 }
 
@@ -112,7 +100,7 @@ function failed(input: GenerateStoryInput, error: unknown, deadline: AbortSignal
 
 /** One retry, only for failures a second attempt can plausibly fix: a
  *  story that missed too many terms, a server error, or a network error.
- *  A rejected key, a rate limit, an unavailable model or a timeout fails
+ *  A rejected key, a rate limit, another client error or a timeout fails
  *  straight away. Both attempts share one time limit. */
 export async function generateStory(input: GenerateStoryInput): Promise<GeneratedStory> {
   const deadline = AbortSignal.timeout(STORY_TIMEOUT_MS);

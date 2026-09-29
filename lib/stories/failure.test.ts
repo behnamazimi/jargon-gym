@@ -11,14 +11,6 @@ describe("storyFailure with the user's own key", () => {
     expect(storyFailure(err, false)).toEqual({ error: err.message, reason: "own-key" });
   });
 
-  it("explains that the model isn't available to their key, without blaming the key", () => {
-    const err = new StoryProviderError(
-      "The provider doesn't offer the model.",
-      "model-unavailable",
-    );
-    expect(storyFailure(err, false)).toEqual({ error: err.message, reason: undefined });
-  });
-
   it("does not blame the key for a rate limit or other failure", () => {
     const limited = new StoryProviderError(
       "Your provider is rate-limiting requests.",
@@ -30,7 +22,7 @@ describe("storyFailure with the user's own key", () => {
 
 describe("storyFailure on AI credits", () => {
   it("hides key and quota problems behind a generic message", () => {
-    for (const kind of ["auth", "rate-limit", "model-unavailable"] as const) {
+    for (const kind of ["auth", "rate-limit"] as const) {
       const err = new StoryProviderError("secret provider detail", kind);
       expect(storyFailure(err, true)).toEqual({
         error: AI_TEMPORARILY_UNAVAILABLE,

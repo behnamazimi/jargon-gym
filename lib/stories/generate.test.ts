@@ -113,11 +113,11 @@ describe("generateStory", () => {
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
   });
 
-  it("does not retry a model the key can't use, and keeps the provider's reason", async () => {
+  it("does not retry other client errors, and keeps the provider's reason", async () => {
     const providerFailure = apiError(404, "This model is no longer available to new users");
     mockedGenerate.mockRejectedValue(providerFailure);
     await expect(generateStory(INPUT)).rejects.toMatchObject({
-      kind: "model-unavailable",
+      kind: "other",
       cause: providerFailure,
     });
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
