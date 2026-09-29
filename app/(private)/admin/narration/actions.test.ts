@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   updatedFeatures: [] as unknown[],
   updateRows: [{ feature: "narration_term" }, { feature: "narration_story" }] as unknown[],
   upserts: [] as unknown[],
+  upsertOptions: [] as unknown[],
   deleted: [] as unknown[],
 }));
 
@@ -46,8 +47,9 @@ vi.mock("@/lib/auth/require-session", () => ({
           }
           if (table === "ai_feature_allowlist") {
             return {
-              upsert: (rows: unknown) => {
+              upsert: (rows: unknown, options: unknown) => {
                 state.upserts.push(rows);
+                state.upsertOptions.push(options);
                 return Promise.resolve({ error: null });
               },
               delete: () => ({
@@ -79,6 +81,7 @@ beforeEach(() => {
   state.updatedFeatures = [];
   state.updateRows = [{ feature: "narration_term" }, { feature: "narration_story" }];
   state.upserts = [];
+  state.upsertOptions = [];
   state.deleted = [];
 });
 
@@ -104,6 +107,10 @@ describe("narration admin actions", () => {
         { feature: "narration_term", user_id: "u1" },
         { feature: "narration_story", user_id: "u1" },
       ],
+    ]);
+    // Adding someone already on the list must be a no-op, not an update.
+    expect(state.upsertOptions).toEqual([
+      { onConflict: "feature,user_id", ignoreDuplicates: true },
     ]);
   });
 

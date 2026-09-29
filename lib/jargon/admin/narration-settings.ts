@@ -8,14 +8,14 @@ export type NarrationSettings = {
 };
 
 /** The one narration switch the admin page shows. It drives both narration
- *  features, so the term row stands for both. */
+ *  features, and shows as on only when both are, so a difference made outside
+ *  the page doesn't read as "on". */
 export async function getNarrationSettingsForAdmin(client: Client): Promise<NarrationSettings> {
   const { data, error } = await client
     .from("ai_feature_settings")
     .select("enabled")
-    .eq("feature", "narration_term")
-    .single();
+    .in("feature", ["narration_term", "narration_story"]);
 
   if (error) throw error;
-  return { enabled: data.enabled };
+  return { enabled: data.length === 2 && data.every((row) => row.enabled) };
 }
