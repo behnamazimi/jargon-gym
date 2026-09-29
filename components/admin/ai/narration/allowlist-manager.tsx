@@ -9,7 +9,7 @@ import { AdminSection } from "@/components/admin/admin-section";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { formatAdminDate } from "@/lib/admin/format";
-import type { AdminNarrationAllowlistRow } from "@/lib/jargon/admin/list-narration-allowlist";
+import type { AdminNarrationAllowlistRow } from "@/lib/admin/narration/list-narration-allowlist";
 
 export function AllowlistManager({ allowlist }: { allowlist: AdminNarrationAllowlistRow[] }) {
   const [email, setEmail] = useState("");

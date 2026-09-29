@@ -44,6 +44,14 @@ the model call and refunded on any failure. Read
 [docs/ai-credits.md](docs/ai-credits.md) before changing balances, costs or
 the charge flow.
 
+# Admin panel
+
+The admin area (`/admin`) is in `app/(private)/admin/`, `lib/admin/`,
+`components/admin/` and `hooks/use-admin-*`. Read [docs/admin.md](docs/admin.md)
+before adding an admin page or action: every page calls `requireAdminPage()`,
+every action goes through `runAdminAction`, and direct writes record an audit
+row through `writeAudit`.
+
 # Stories
 
 Read's Stories mode lives in `lib/stories/` (prompt, generation, parsing

@@ -4,8 +4,8 @@ import { useState } from "react";
 import { resetAiCredits } from "@/app/(private)/admin/ai/credits/actions";
 import { AdminSection } from "@/components/admin/admin-section";
 import { useAdminAction } from "@/hooks/use-admin-action";
-import { AdminAiCreditsGrantDialog } from "@/components/jargon/admin/admin-ai-credits-grant-dialog";
-import { UsageCards, UsageTable } from "@/components/jargon/admin/admin-ai-credits-usage-list";
+import { AdminAiCreditsGrantDialog } from "@/components/admin/ai/credits/grant-dialog";
+import { UsageCards, UsageTable } from "@/components/admin/ai/credits/usage-list";
 import {
   AlertDialog,
   AlertDialogAction,

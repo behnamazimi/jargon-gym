@@ -1,13 +1,13 @@
-import { AdminNarrationPageClient } from "@/components/jargon/admin/admin-narration-page";
+import { AdminNarrationPageClient } from "@/components/admin/ai/narration/page";
 import { describeCron, getCronStatus } from "@/lib/narration/worker-status";
 import { featureHealth } from "@/lib/ai/health";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import {
   canNarrateCollection,
   listAllCollectionsForAdmin,
-} from "@/lib/jargon/admin/list-all-collections";
-import { listNarrationAllowlistForAdmin } from "@/lib/jargon/admin/list-narration-allowlist";
-import { getNarrationSettingsForAdmin } from "@/lib/jargon/admin/narration-settings";
+} from "@/lib/admin/collections/list-all-collections";
+import { listNarrationAllowlistForAdmin } from "@/lib/admin/narration/list-narration-allowlist";
+import { getNarrationSettingsForAdmin } from "@/lib/admin/narration/narration-settings";
 import {
   canResumeNarrationSync,
   getLastNarrationSyncJob,

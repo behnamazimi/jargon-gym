@@ -1,4 +1,4 @@
-import { cleanSearch, first, type RawParams } from "./list-params";
+import { cleanSearch, first, type RawParams } from "@/lib/admin/list-params";
 
 export type CollectionParams = {
   view: "builtin" | "all";

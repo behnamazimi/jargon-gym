@@ -121,8 +121,8 @@ console as a backstop.
 
 ## Changing settings and helping a user
 
-Admins manage AI credits at `/admin/ai/credits`, which is also in the admin tabs
-and menus. There you can switch AI credits on or off and change the allowance,
+Admins manage AI credits at `/admin/ai/credits`, reached from AI in the admin
+sidebar (see [admin.md](admin.md)). There you can switch AI credits on or off and change the allowance,
 the monthly refill, and the costs. **Grant** adds credits to someone's starter
 pool by email, and **Reset** clears their usage from that point on. Both keep
 every record, and a reset keeps any grants. Users with their own key are not

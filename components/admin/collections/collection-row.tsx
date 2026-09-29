@@ -5,8 +5,8 @@ import { useState } from "react";
 import { EditUrlDialog } from "@/components/admin/collections/edit-url-dialog";
 import { StatusSelect } from "@/components/admin/collections/status-select";
 import { formatAdminDate } from "@/lib/admin/format";
-import { statusOf } from "@/lib/jargon/admin/collection-status";
-import type { AdminCollectionRow } from "@/lib/jargon/admin/list-all-collections";
+import { statusOf } from "@/lib/admin/collections/collection-status";
+import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
 
 const STATUS_LABEL = { none: "Not built-in", builtin: "Built-in", published: "Published" } as const;
 

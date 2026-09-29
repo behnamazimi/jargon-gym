@@ -1,4 +1,4 @@
-import { AdminAiHubClient } from "@/components/jargon/admin/admin-ai-hub";
+import { AdminAiHubClient } from "@/components/admin/ai/ai-hub";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { buildAiHubRows } from "@/lib/admin/ai-hub";
 import { featureHealth } from "@/lib/ai/health";

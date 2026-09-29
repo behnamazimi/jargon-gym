@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { checkDomainSlug, updateDomainSlug } from "@/app/(private)/admin/collections/actions";
 import { useToast } from "@/components/ui/toast";
 import { useAdminAction } from "@/hooks/use-admin-action";
-import type { SlugCheck } from "@/lib/jargon/admin/slug-check";
+import type { SlugCheck } from "@/lib/admin/collections/slug-check";
 
 type Checked = { text: string; result: SlugCheck };
 

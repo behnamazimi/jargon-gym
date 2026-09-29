@@ -11,13 +11,13 @@ import {
   stepsFor,
   type CollectionStatus,
   type StatusStep,
-} from "@/lib/jargon/admin/collection-status";
+} from "@/lib/admin/collections/collection-status";
 import {
   listAllCollectionsForAdmin,
   type AdminCollectionRow,
-} from "@/lib/jargon/admin/list-all-collections";
-import { buildPublishSlugs } from "@/lib/jargon/admin/publish-slugs";
-import { resolveSlug } from "@/lib/jargon/admin/slug-check";
+} from "@/lib/admin/collections/list-all-collections";
+import { buildPublishSlugs } from "@/lib/admin/collections/publish-slugs";
+import { resolveSlug } from "@/lib/admin/collections/slug-check";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Client = SupabaseClient<Database>;

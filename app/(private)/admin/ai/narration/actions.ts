@@ -18,7 +18,7 @@ import { isActiveNarrationSyncStatus } from "@/lib/narration/sync-shared";
 import {
   canNarrateCollection,
   listAllCollectionsForAdmin,
-} from "@/lib/jargon/admin/list-all-collections";
+} from "@/lib/admin/collections/list-all-collections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 

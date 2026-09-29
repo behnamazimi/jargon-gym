@@ -4,10 +4,10 @@ import { setAiCreditsEnabled } from "@/app/(private)/admin/ai/credits/actions";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminSettingRow } from "@/components/admin/admin-setting-row";
 import { AdminSwitch } from "@/components/admin/admin-switch";
-import { AdminAiCreditsFailures } from "@/components/jargon/admin/admin-ai-credits-failures";
-import { AdminAiCreditsSettings } from "@/components/jargon/admin/admin-ai-credits-settings";
-import { AdminAiCreditsSummary } from "@/components/jargon/admin/admin-ai-credits-summary";
-import { AdminAiCreditsUsage } from "@/components/jargon/admin/admin-ai-credits-usage";
+import { AdminAiCreditsFailures } from "@/components/admin/ai/credits/failures";
+import { AdminAiCreditsSettings } from "@/components/admin/ai/credits/settings";
+import { AdminAiCreditsSummary } from "@/components/admin/ai/credits/summary";
+import { AdminAiCreditsUsage } from "@/components/admin/ai/credits/usage";
 import type {
   AiCreditFailureReason,
   AiCreditSettingsView,

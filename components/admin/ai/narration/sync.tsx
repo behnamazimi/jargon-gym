@@ -10,7 +10,7 @@ import {
 } from "@/app/(private)/admin/ai/narration/actions";
 import { AdminSection } from "@/components/admin/admin-section";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { JobPanel, SyncToolbar } from "@/components/jargon/admin/admin-narration-sync-parts";
+import { JobPanel, SyncToolbar } from "@/components/admin/ai/narration/sync-parts";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { useInterval } from "@/hooks/use-interval";
 import { settleAdminAction } from "@/lib/admin/settle-action";

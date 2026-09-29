@@ -3,10 +3,10 @@ import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { CollectionsTable } from "@/components/admin/collections/collections-table";
-import { collectionsHref, parseCollectionParams } from "@/lib/admin/collections-params";
-import { COLLECTION_LIST_LIMIT, queryCollections } from "@/lib/admin/collections-query";
+import { collectionsHref, parseCollectionParams } from "@/lib/admin/collections/params";
+import { COLLECTION_LIST_LIMIT, queryCollections } from "@/lib/admin/collections/query";
 import { requireAdminPage } from "@/lib/admin/page-guard";
-import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
+import { listAllCollectionsForAdmin } from "@/lib/admin/collections/list-all-collections";
 
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
