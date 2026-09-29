@@ -119,3 +119,22 @@ function returning every collection with owner email and term count (0 when none
 R7. Phase 5 switches the page to it; phase 8 builds the "All collections" view on it. The publish, list
 and settings functions are covered by `supabase/tests/admin_rpcs.sql` and
 `supabase/tests/admin_publish_concurrency.sh`, all run by hand against the local database.
+
+## PR review amendments (applied)
+
+- The slug length limit in `admin_publish_collection` is 200, not 80 (a legacy long slug or a long term
+  name must not make a collection unpublishable); phase 5 truncates generated slugs well below that.
+  A null or non-string term slug is refused with a clear message.
+- "No slug yet" raises SQLSTATE `40001` so the app can retry on a code, not on message text.
+- Tests: signed-out callers, member calls to grant/reset, a member can't read an audit row that exists,
+  a term-slug collision after the domain slug was written leaves nothing behind, exact per-action audit
+  counts scoped to the test admin, old/new values in the credit settings audit row, 4000/5000-byte and
+  100-character audit boundaries. Atomicity is inherent to a plpgsql function, so the rollback assertions
+  cover the case where earlier writes happened before the failure.
+- The concurrency script checks the loser failed on `domains_slug_idx`, the winner printed exactly the
+  slug, the loser stayed private, and the same-collection double publish succeeds twice; cleanup is
+  trapped before anything is created and no longer needs `uuidgen`.
+- Known and accepted: `actor_email` snapshots outlive account deletion by design; grant notes in audit
+  details are bounded by the app's schema (200) rather than the database; PostgREST caps
+  `admin_list_collections` at 1000 rows; the generated types show nullable columns
+  (`owner_email`, `slug`) as non-null, so the app coalesces them.

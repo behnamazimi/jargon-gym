@@ -69,6 +69,20 @@ begin
   assert not has_table_privilege('service_role', 'public.admin_audit_log', 'insert'), 'line 70';
   assert has_table_privilege('authenticated', 'public.admin_audit_log', 'select'), 'line 71';
 
+  -- A signed-out caller (a role with no user) is refused too.
+  perform set_config('request.jwt.claims', '', true);
+  execute 'set local role authenticated';
+  v_failed := false;
+  begin perform public.admin_set_narration_enabled(true); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  assert v_failed, 'a caller with no user could switch narration';
+  v_failed := false;
+  begin perform public.admin_grant_ai_credits(member_id, 5, null); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  assert v_failed, 'a caller with no user could grant credits';
+  execute 'reset role';
+
+  -- One audit row exists before the member looks, so "sees none" means something.
+  insert into public.admin_audit_log (actor_id, action) values (admin_id, 'seed');
+
   -- A member is refused by every function.
   perform pg_temp.act_as(member_id);
   v_failed := false;
@@ -89,6 +103,12 @@ begin
   v_failed := false;
   begin perform public.admin_write_audit('app.test'); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could write the audit log';
+  v_failed := false;
+  begin perform public.admin_grant_ai_credits(member_id, 5, null); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  assert v_failed, 'member could grant credits';
+  v_failed := false;
+  begin perform public.admin_reset_ai_credits(member_id, null); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  assert v_failed, 'member could reset credits';
   assert (select count(*) from public.admin_audit_log) = 0, 'a member can read audit rows';
   execute 'reset role';
 
@@ -126,9 +146,33 @@ begin
   v_failed := false;
   begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t3::text, 'a', t1::text, 'b', t2::text, 'c')); exception when others then v_failed := sqlerrm like 'A slug was given%'; end;
   assert v_failed, 'a foreign term was accepted';
+  -- A term-slug collision happens after the domain slug was written: all of it must go.
+  execute 'reset role';
+  update public.terms set slug = 'dup' where id = t2;
+  perform pg_temp.act_as(admin_id);
+  v_state := null;
+  begin
+    perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, 'dup'));
+  exception when unique_violation then v_state := sqlstate;
+  end;
+  assert v_state = '23505', 'a term slug collision should be a unique violation';
+  assert (select slug is null and not is_public from public.domains where id = d1), 'the domain kept its slug after a term collision';
+  assert (select slug is null from public.terms where id = t1), 'a term kept its slug after a collision';
+  execute 'reset role';
+  update public.terms set slug = null where id = t2;
+  perform pg_temp.act_as(admin_id);
+
+  -- A null or numeric slug value is refused with a clear message.
+  v_failed := false;
+  begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, null)); exception when others then v_failed := sqlerrm like 'A term slug is not valid%'; end;
+  assert v_failed, 'a null term slug was accepted';
+  v_failed := false;
+  begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, 5)); exception when others then v_failed := sqlerrm like 'A term slug is not valid%'; end;
+  assert v_failed, 'a numeric term slug was accepted';
+
   -- A stale map: a term added after the app looked has no slug, so the publish fails as a whole.
   v_failed := false;
-  begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, 'alpha')); exception when others then v_failed := sqlerrm like 'Some terms have no slug%'; end;
+  begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, 'alpha')); exception when others then v_failed := sqlerrm like 'Some terms have no slug%' and sqlstate = '40001'; end;
   assert v_failed, 'published with an unslugged term';
   assert (select slug is null and not is_public from public.domains where id = d1), 'a failed publish left changes';
   assert (select count(*) from public.terms where domain_id = d1 and slug is not null) = 0, 'a failed publish left term slugs';
@@ -214,9 +258,9 @@ begin
   -- Grant and reset still work and now leave audit rows without emails.
   perform public.admin_grant_ai_credits(member_id, 25, 'beta');
   perform public.admin_reset_ai_credits(member_id, null);
-  assert (select count(*) from public.ai_credit_ledger where user_id = member_id) = 2, 'line 211';
-  assert (select details = jsonb_build_object('amount', 25, 'note', 'beta') from public.admin_audit_log where action = 'grant_ai_credits'), 'line 212';
-  assert (select target_id = member_id::text from public.admin_audit_log where action = 'reset_ai_credits'), 'line 213';
+  assert (select count(*) from public.ai_credit_ledger where user_id = member_id) = 2, 'grant and reset ledger rows';
+  assert (select details = jsonb_build_object('amount', 25, 'note', 'beta') from public.admin_audit_log where actor_id = admin_id and action = 'grant_ai_credits'), 'grant audit details';
+  assert (select target_id = member_id::text from public.admin_audit_log where actor_id = admin_id and action = 'reset_ai_credits'), 'reset audit target';
 
   -- App-written audit rows.
   perform public.admin_write_audit('app.set_slug', 'domain', d1::text, '{"slug":"x"}'::jsonb);
@@ -224,18 +268,25 @@ begin
   begin perform public.admin_write_audit('grant_ai_credits'); exception when others then v_failed := true; end;
   assert v_failed, 'an app audit row posed as an RPC one';
   v_failed := false;
+  begin perform public.admin_write_audit('app.' || repeat('a', 100)); exception when others then v_failed := true; end;
+  assert v_failed, 'an over-long audit action was accepted';
+  v_failed := false;
   begin perform public.admin_write_audit('app.big', null, null, jsonb_build_object('x', repeat('a', 5000))); exception when others then v_failed := true; end;
   assert v_failed, 'oversized audit details accepted';
+  perform public.admin_write_audit('app.edge', null, null, jsonb_build_object('x', repeat('a', 4000)));
   v_failed := false;
   begin perform public.admin_write_audit('app.array', null, null, '[]'::jsonb); exception when others then v_failed := true; end;
   assert v_failed, 'non-object audit details accepted';
 
-  -- The audit trail: who, what, in order, readable by the admin.
-  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and actor_email = 'rpc-admin@example.test') >= 8, 'line 228';
-  assert exists (select 1 from public.admin_audit_log where action = 'publish_collection' and target_id = d1::text and details->>'slug' = 'rpc-one'), 'line 229';
-  assert (select details->'old'->>'quiz_cost' from public.admin_audit_log where action = 'set_ai_credit_settings' order by id limit 1) is not null, 'line 230';
-  assert exists (select 1 from public.admin_audit_log where action = 'set_narration_enabled'), 'line 231';
-  assert exists (select 1 from public.admin_audit_log where action = 'set_narration_caps'), 'line 232';
+  -- The audit trail: exactly what this run did, by this admin, and nothing for refused calls.
+  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and actor_email = 'rpc-admin@example.test') = 11, 'unexpected number of audit rows';
+  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'publish_collection') = 3, 'publish audit rows';
+  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'set_narration_enabled') = 1, 'narration enabled audit rows';
+  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'set_narration_caps') = 2, 'narration caps audit rows';
+  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'set_ai_credit_settings') = 1, 'credit settings audit rows';
+  assert exists (select 1 from public.admin_audit_log where actor_id = admin_id and action = 'publish_collection' and target_id = d1::text and details->>'slug' = 'rpc-one'), 'publish audit details';
+  assert (select details->'new'->>'quiz_cost' = '3' and details->'old'->>'quiz_cost' = '1' and details->'old'->>'default_allowance' = '100'
+          from public.admin_audit_log where actor_id = admin_id and action = 'set_ai_credit_settings'), 'old and new values in the credit settings audit row';
   execute 'reset role';
 
   -- Clients still can't write the audit log directly.

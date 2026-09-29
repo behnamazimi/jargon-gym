@@ -180,7 +180,7 @@ begin
   end if;
 
   v_slug := coalesce(nullif(v_domain.slug, ''), p_domain_slug);
-  if v_slug is null or v_slug !~ '^[a-z0-9]+(-[a-z0-9]+)*$' or char_length(v_slug) > 80 then
+  if v_slug is null or v_slug !~ '^[a-z0-9]+(-[a-z0-9]+)*$' or char_length(v_slug) > 200 then
     raise exception 'The collection slug is not valid.';
   end if;
 
@@ -188,7 +188,8 @@ begin
     if v_pair.key !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' then
       raise exception 'Term ids must be uuids.';
     end if;
-    if v_pair.value !~ '^[a-z0-9]+(-[a-z0-9]+)*$' or char_length(v_pair.value) > 80 then
+    if jsonb_typeof(p_term_slugs -> v_pair.key) <> 'string'
+       or v_pair.value !~ '^[a-z0-9]+(-[a-z0-9]+)*$' or char_length(v_pair.value) > 200 then
       raise exception 'A term slug is not valid.';
     end if;
   end loop;
@@ -223,7 +224,8 @@ begin
   from public.terms t
   where t.domain_id = p_domain_id and (t.slug is null or t.slug = '');
   if v_missing > 0 then
-    raise exception 'Some terms have no slug yet. Try again.';
+    -- A serialization failure, so the app can tell "read again and retry" from real errors.
+    raise exception 'Some terms have no slug yet. Try again.' using errcode = '40001';
   end if;
 
   update public.domains set is_public = true where id = p_domain_id;
