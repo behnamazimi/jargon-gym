@@ -1071,6 +1071,7 @@ export type Database = {
         Args: never;
         Returns: {
           credits_spent: number;
+          refund_users_24h: number;
           refunds_24h: number;
           spends_24h: number;
           total_users: number;

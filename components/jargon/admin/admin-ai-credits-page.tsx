@@ -33,11 +33,10 @@ export function AdminAiCreditsPageClient({
     setEnabled(value);
 
     startTransition(async () => {
-      try {
-        await setAiCreditsEnabled(value);
-      } catch (err) {
+      const result = await setAiCreditsEnabled(value);
+      if (result.error) {
         setEnabled(previous);
-        setToggleError(err instanceof Error ? err.message : "Failed to update.");
+        setToggleError(result.error);
       }
     });
   }
@@ -60,7 +59,11 @@ export function AdminAiCreditsPageClient({
           <p className="m-0 text-sm text-base-content/65">
             When off, only people with their own key can use AI quizzes and Stories.
           </p>
-          {toggleError ? <p className="mt-1 text-sm text-error">{toggleError}</p> : null}
+          {toggleError ? (
+            <p role="alert" className="mt-1 text-sm text-error">
+              {toggleError}
+            </p>
+          ) : null}
         </div>
         <input
           type="checkbox"

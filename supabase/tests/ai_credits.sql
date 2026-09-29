@@ -224,5 +224,50 @@ begin
 end;
 $$;
 
+do $$
+declare
+  admin_id uuid := pg_temp.make_user('admin4@example.test', true);
+  u1 uuid := pg_temp.make_user('m1@example.test');
+  u2 uuid := pg_temp.make_user('m2@example.test');
+  u3 uuid := pg_temp.make_user('m3@example.test');
+  before_row record;
+  after_row record;
+  v_ledger bigint;
+begin
+  -- With every action costing 3, someone with 1 credit left can't do anything.
+  update public.ai_credit_settings set quiz_credits_per_question = 3, story_credits_per_term = 3;
+
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  select * into before_row from public.admin_ai_credit_summary();
+  execute 'reset role';
+
+  insert into public.ai_credit_ledger (user_id, kind, feature, amount)
+  values (u1, 'spend', 'quiz', 129), (u3, 'spend', 'quiz', 100);
+  insert into public.user_settings (user_id, provider, api_key_encrypted, api_key_last4)
+  values (u1, 'google', 'x', 'abcd');
+
+  -- Three failed requests from two different people.
+  select ledger_id into v_ledger from public.reserve_ai_credits(u2, 'quiz', 5);
+  perform public.refund_ai_credits(v_ledger);
+  select ledger_id into v_ledger from public.reserve_ai_credits(u2, 'quiz', 5);
+  perform public.refund_ai_credits(v_ledger);
+  select ledger_id into v_ledger from public.reserve_ai_credits(u3, 'story', 5);
+  perform public.refund_ai_credits(v_ledger);
+
+  execute 'set local role authenticated';
+  select * into after_row from public.admin_ai_credit_summary();
+  execute 'reset role';
+
+  assert after_row.users_with_use = before_row.users_with_use + 2, 'two people used credits';
+  assert after_row.users_exhausted = before_row.users_exhausted + 1,
+    'one credit left, at 3 per action, counts as ran out; 30 left does not';
+  assert after_row.users_with_own_key = before_row.users_with_own_key + 1, 'one saved a key';
+  assert after_row.refunds_24h = before_row.refunds_24h + 3, 'three refunds';
+  assert after_row.refund_users_24h = before_row.refund_users_24h + 2,
+    'refunds come from two different people';
+end;
+$$;
+
 rollback;
 \echo ai_credits.sql: ok
