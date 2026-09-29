@@ -182,5 +182,47 @@ begin
 end;
 $$;
 
+do $$
+declare
+  admin_id uuid := pg_temp.make_user('admin3@example.test', true);
+  u1 uuid := pg_temp.make_user('s1@example.test');
+  u2 uuid := pg_temp.make_user('s2@example.test');
+  before_row record;
+  after_row record;
+  v_ledger bigint;
+begin
+  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  select * into before_row from public.admin_ai_credit_summary();
+  execute 'reset role';
+
+  -- One kept spend, and one spend that failed and was refunded.
+  perform public.reserve_ai_credits(u1, 'quiz', 7);
+  select ledger_id into v_ledger from public.reserve_ai_credits(u2, 'story', 5);
+  perform public.refund_ai_credits(v_ledger);
+
+  execute 'set local role authenticated';
+  select * into after_row from public.admin_ai_credit_summary();
+  execute 'reset role';
+
+  assert after_row.total_users = before_row.total_users, 'users were created before the baseline';
+  assert after_row.users_with_use = before_row.users_with_use + 1, 'only the kept spend counts as use';
+  assert after_row.credits_spent = before_row.credits_spent + 7, 'refunded credits are not spent';
+  assert after_row.spends_24h = before_row.spends_24h + 2, 'both requests count as requests';
+  assert after_row.refunds_24h = before_row.refunds_24h + 1, 'the failure shows as a refund';
+
+  -- Members can't see it.
+  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  begin
+    perform public.admin_ai_credit_summary();
+    raise exception 'member could read the summary';
+  exception when others then
+    if sqlerrm not like 'Only admins%' then raise; end if;
+  end;
+  execute 'reset role';
+end;
+$$;
+
 rollback;
 \echo ai_credits.sql: ok

@@ -1,5 +1,6 @@
 import {
   Bug,
+  Coins,
   Compass,
   LayoutList,
   Mail,
@@ -53,6 +54,7 @@ export const ADMIN_NAV_ITEMS: AccountNavItem[] = [
   { href: "/jargon/debug", label: "Queue debug", icon: Bug },
   { href: "/admin/collections", label: "Manage collections", icon: SquareLibrary },
   { href: "/admin/invites", label: "Invites", icon: Mail },
+  { href: "/admin/ai-credits", label: "AI credits", icon: Coins },
 ];
 
 const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
@@ -67,6 +69,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/jargon/debug", "Queue debug"],
   ["/admin/collections", "Manage collections"],
   ["/admin/invites", "Invites"],
+  ["/admin/ai-credits", "AI credits"],
   ["/admin", "Admin"],
 ];
 
