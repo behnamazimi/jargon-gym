@@ -67,3 +67,32 @@ App only. Revert the commit to roll back. URLs are unchanged, so nothing to redi
 - The phone chrome (`isMorePath`) and dock behaviour for `/admin` are unchanged.
 - Server-only imports: the overview uses `createAdminClient()` only for the sync job read (same as the
   narration page); it never reaches a client component.
+
+## Review amendments (applied)
+
+- Nav: `menu menu-horizontal md:menu-vertical flex-nowrap overflow-x-auto`, `menu-active` class plus
+  `aria-current="page"` on the active link (DaisyUI does not style `aria-current`), group titles `max-md:hidden`.
+  Config entries accept extra `matchPrefixes` (the AI hub in phase 6 must highlight for several paths);
+  `isSectionActive` trims a trailing slash.
+- Layout: content column is a `minmax(0,1fr)` grid track so wide tables scroll inside their own wrapper;
+  the layout owns `px-5 py-7 pb-20`; width stays `max-w-6xl` like `pageContainerClass` (not 7xl).
+  `error.tsx` and `AdminPageSkeleton` lose their own width/padding wrappers.
+- `account-nav.ts`: one admin entry with a new icon (`LayoutDashboard`), unused icon imports removed,
+  `STUDY_SCREEN_TITLE_PREFIXES` gets `/admin/narration` (keep `/admin` last), profile menu keeps a
+  separator but drops the group wrapper and label. Queue debug loses its menu entry until phase 6 moves it
+  under System; it stays in the admin sidebar.
+- `requireAdminPage()` composes the already cached `getSessionUser` / `getUserIsAdmin`; no extra `cache()`.
+  It is for pages and the layout only; actions keep `requireAdminClient`.
+- Guard test recurses through `app/(private)/admin`, asserts the call `await requireAdminPage()` (not only
+  the import) and fails when it finds no pages.
+- Overview data: reuse `getAiCreditSummaryForAdmin` (total people, used credits, credits spent, spends 24 h,
+  refunds, exhausted) plus one waitlist `head` count. Label the 24 h number "AI credit spends" since own-key,
+  narration and evaluation calls are not in it. `Promise.allSettled`, each failure logged and shown as
+  unknown; reads that return `{ error }` are mapped to unknown explicitly.
+- Attention items also cover: `featureHealth` failures (quiz, story, narration_term, term_evaluation; a
+  missing key ranks above a switch being off), the credits master switch off, people who ran out of credits,
+  refunds high. Narration on/off is a light read of both `ai_feature_settings` rows, not
+  `getNarrationSettingsForAdmin` (which also runs usage counts). "Sync stalled" is `describeCron(...).warning`
+  with `jobNeedsCron` computed as in `narration/page.tsx`, reported once (no separate worker-note item);
+  the sync job read is try/caught.
+- Knip: export only what other files or tests import.

@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -91,18 +90,15 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
           {isAdmin ? (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Admin</DropdownMenuLabel>
-                {ADMIN_NAV_ITEMS.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <DropdownMenuItem key={item.href} href={item.href}>
-                      <Icon className="h-4 w-4" />
-                      {item.label}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuGroup>
+              {ADMIN_NAV_ITEMS.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <DropdownMenuItem key={item.href} href={item.href}>
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </DropdownMenuItem>
+                );
+              })}
             </>
           ) : null}
           <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>

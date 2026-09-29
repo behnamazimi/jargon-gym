@@ -7,7 +7,6 @@ import { AdminAiCreditsFailures } from "@/components/jargon/admin/admin-ai-credi
 import { AdminAiCreditsSettings } from "@/components/jargon/admin/admin-ai-credits-settings";
 import { AdminAiCreditsSummary } from "@/components/jargon/admin/admin-ai-credits-summary";
 import { AdminAiCreditsUsage } from "@/components/jargon/admin/admin-ai-credits-usage";
-import { AdminNav } from "@/components/jargon/admin/admin-nav";
 import type {
   AiCreditFailureReason,
   AiCreditSettingsView,
@@ -49,9 +48,7 @@ export function AdminAiCreditsPageClient({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8">
-      <AdminNav />
-
+    <div className="flex flex-col gap-6">
       <div className="max-md:sr-only">
         <h1 className="text-2xl font-semibold text-base-content">AI credits</h1>
         <p className="mt-1 text-base text-base-content/65">
