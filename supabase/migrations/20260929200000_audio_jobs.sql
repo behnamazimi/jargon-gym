@@ -11,7 +11,7 @@
 -- Table
 -- ---------------------------------------------------------------------------
 
-create table public.audio_jobs (
+create table if not exists public.audio_jobs (
   id uuid primary key default gen_random_uuid(),
   subject_type text not null check (subject_type in ('term', 'story')),
   subject_id uuid not null,
@@ -35,16 +35,17 @@ create table public.audio_jobs (
 
 -- One live job per subject. Superseded jobs are kept so their files can be
 -- cleaned up later.
-create unique index audio_jobs_live_subject_idx
+create unique index if not exists audio_jobs_live_subject_idx
   on public.audio_jobs (subject_type, subject_id)
   where status <> 'superseded';
 
-create index audio_jobs_user_requested_idx
+create index if not exists audio_jobs_user_requested_idx
   on public.audio_jobs (user_id, requested_at)
   where user_id is not null;
 
 alter table public.audio_jobs enable row level security;
 
+drop policy if exists "Admins read audio jobs" on public.audio_jobs;
 create policy "Admins read audio jobs"
   on public.audio_jobs for select
   to authenticated
@@ -59,7 +60,7 @@ grant select, insert, update, delete on public.audio_jobs to service_role;
 -- write the app made must never fail because of this table.
 -- ---------------------------------------------------------------------------
 
-create function public.mirror_term_narration()
+create or replace function public.mirror_term_narration()
 returns trigger
 language plpgsql
 security definer
@@ -88,7 +89,7 @@ exception when others then
 end;
 $$;
 
-create function public.mirror_term_narration_delete()
+create or replace function public.mirror_term_narration_delete()
 returns trigger
 language plpgsql
 security definer
@@ -105,9 +106,12 @@ exception when others then
 end;
 $$;
 
+-- `attempts` counts claims and is approximate: any later update of a pending
+-- row also adds one. It is informational.
+--
 -- Stories have no hash; they never change once written, so a constant stands in.
 -- A story marked ready without a path can't be served, so it counts as failed.
-create function public.mirror_story_narration()
+create or replace function public.mirror_story_narration()
 returns trigger
 language plpgsql
 security definer
@@ -131,7 +135,7 @@ begin
   values
     ('story', new.id, new.user_id, 'story-v1', 1, v_status,
      case when v_status = 'pending' then 1 else 0 end,
-     case when v_status = 'ready' then new.narration_path end,
+     case when v_status in ('ready', 'failed') then new.narration_path end,
      coalesce(new.narration_requested_at, 'epoch'), coalesce(new.narration_requested_at, 'epoch'))
   on conflict (subject_type, subject_id) where status <> 'superseded'
   do update set
@@ -147,7 +151,7 @@ exception when others then
 end;
 $$;
 
-create function public.mirror_story_narration_delete()
+create or replace function public.mirror_story_narration_delete()
 returns trigger
 language plpgsql
 security definer
@@ -169,21 +173,25 @@ revoke all on function public.mirror_term_narration_delete() from public, anon, 
 revoke all on function public.mirror_story_narration() from public, anon, authenticated, service_role;
 revoke all on function public.mirror_story_narration_delete() from public, anon, authenticated, service_role;
 
+drop trigger if exists term_narrations_mirror on public.term_narrations;
 create trigger term_narrations_mirror
   after insert or update on public.term_narrations
   for each row
   execute function public.mirror_term_narration();
 
+drop trigger if exists term_narrations_mirror_delete on public.term_narrations;
 create trigger term_narrations_mirror_delete
   after delete on public.term_narrations
   for each row
   execute function public.mirror_term_narration_delete();
 
+drop trigger if exists stories_narration_mirror on public.stories;
 create trigger stories_narration_mirror
-  after update of narration_status, narration_path, narration_requested_at on public.stories
+  after insert or update of narration_status, narration_path, narration_requested_at on public.stories
   for each row
   execute function public.mirror_story_narration();
 
+drop trigger if exists stories_narration_mirror_delete on public.stories;
 create trigger stories_narration_mirror_delete
   after delete on public.stories
   for each row
@@ -194,32 +202,52 @@ create trigger stories_narration_mirror_delete
 -- ---------------------------------------------------------------------------
 
 -- Run after the triggers exist, so a write made while this runs is still
--- mirrored. It only adds missing rows, so running it again changes nothing.
-create function public.backfill_audio_jobs()
+-- mirrored. It adds missing rows and also corrects a live row that has drifted
+-- from the old place (a mirror that failed only logs a warning). Only run it
+-- while the old places are still the source of truth: once the app writes
+-- audio_jobs itself, it would overwrite newer state.
+create or replace function public.backfill_audio_jobs()
 returns void
 language sql
 security definer
 set search_path = public
 as $$
   insert into public.audio_jobs
-    (subject_type, subject_id, content_hash, hash_version, status, storage_path,
+    (subject_type, subject_id, content_hash, hash_version, status, attempts, storage_path,
      requested_at, created_at, updated_at)
-  select 'term', t.term_id, t.content_hash, 1, t.status, t.storage_path,
+  select 'term', t.term_id, t.content_hash, 1, t.status,
+         case when t.status = 'pending' then 1 else 0 end, t.storage_path,
          t.updated_at, t.created_at, t.updated_at
   from public.term_narrations t
-  on conflict (subject_type, subject_id) where status <> 'superseded' do nothing;
+  on conflict (subject_type, subject_id) where status <> 'superseded'
+  do update set
+    content_hash = excluded.content_hash,
+    status = excluded.status,
+    storage_path = excluded.storage_path,
+    requested_at = excluded.requested_at,
+    updated_at = excluded.updated_at
+  where (public.audio_jobs.content_hash, public.audio_jobs.status, public.audio_jobs.storage_path)
+    is distinct from (excluded.content_hash, excluded.status, excluded.storage_path);
 
   insert into public.audio_jobs
-    (subject_type, subject_id, user_id, content_hash, hash_version, status, storage_path,
+    (subject_type, subject_id, user_id, content_hash, hash_version, status, attempts, storage_path,
      requested_at, updated_at)
   select 'story', s.id, s.user_id, 'story-v1', 1,
          case when s.narration_status = 'ready' and s.narration_path is null
               then 'failed' else s.narration_status end,
-         case when s.narration_status = 'ready' then s.narration_path end,
+         case when s.narration_status = 'pending' then 1 else 0 end,
+         case when s.narration_status in ('ready', 'failed') then s.narration_path end,
          coalesce(s.narration_requested_at, 'epoch'), coalesce(s.narration_requested_at, 'epoch')
   from public.stories s
   where s.narration_status <> 'none'
-  on conflict (subject_type, subject_id) where status <> 'superseded' do nothing;
+  on conflict (subject_type, subject_id) where status <> 'superseded'
+  do update set
+    status = excluded.status,
+    storage_path = excluded.storage_path,
+    requested_at = excluded.requested_at,
+    updated_at = excluded.updated_at
+  where (public.audio_jobs.status, public.audio_jobs.storage_path)
+    is distinct from (excluded.status, excluded.storage_path);
 $$;
 
 revoke all on function public.backfill_audio_jobs() from public, anon, authenticated, service_role;
@@ -232,7 +260,7 @@ select public.backfill_audio_jobs();
 
 -- The last authenticated call to a background worker, per caller: the cron job
 -- or the app itself. It shows whether the cron job still uses the old secret.
-create table public.ai_worker_status (
+create table if not exists public.ai_worker_status (
   worker text not null,
   source text not null check (source in ('cron', 'app')),
   last_tick_at timestamptz not null default now(),
@@ -242,6 +270,7 @@ create table public.ai_worker_status (
 
 alter table public.ai_worker_status enable row level security;
 
+drop policy if exists "Admins read ai worker status" on public.ai_worker_status;
 create policy "Admins read ai worker status"
   on public.ai_worker_status for select
   to authenticated

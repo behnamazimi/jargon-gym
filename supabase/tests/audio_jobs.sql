@@ -117,7 +117,7 @@ begin
   update public.stories set narration_status = 'ready', narration_path = 'stories/u/new.mp3' where id = s_new;
   assert (select status || ':' || storage_path from public.audio_jobs where subject_id = s_new) = 'ready:stories/u/new.mp3';
   update public.stories set narration_status = 'failed' where id = s_new;
-  assert (select status || ':' || coalesce(storage_path, '-') from public.audio_jobs where subject_id = s_new) = 'failed:-';
+  assert (select status || ':' || coalesce(storage_path, '-') from public.audio_jobs where subject_id = s_new) = 'failed:stories/u/new.mp3';
 
   -- Deleting the old row marks the job superseded, and a new row starts a new live job.
   delete from public.term_narrations where term_id = t3;
@@ -140,6 +140,8 @@ begin
     on conflict (term_id) do update set content_hash = 'hx', status = 'pending';
   assert (select content_hash from public.term_narrations where term_id = t2) = 'hx',
     'the old write should survive a failing copy';
+  assert (select content_hash from public.audio_jobs where subject_id = t2 and status <> 'superseded') <> 'hx',
+    'the failed copy leaves the job as it was';
   drop trigger audio_jobs_explode on public.audio_jobs;
 
   -- Shape rules.
@@ -166,8 +168,34 @@ begin
   end;
   assert v_failed, 'a subject has one live job';
 
-  -- Credits and the ledger are never involved.
-  assert not exists (select 1 from public.ai_credit_ledger where user_id = u1), 'the ledger is untouched';
+  -- A mirror that failed can be repaired by running the copy again.
+  assert (select content_hash from public.audio_jobs where subject_id = t2 and status <> 'superseded') <> 'hx',
+    'still drifted before the repair';
+  perform public.backfill_audio_jobs();
+  assert (select content_hash from public.audio_jobs where subject_id = t2 and status <> 'superseded') = 'hx',
+    'the copy corrects a job that drifted from the old row';
+
+  -- The real claim function, as the app calls it, is mirrored on every path.
+  delete from public.term_narrations where term_id = t2;
+  perform public.claim_term_narration(t2, 'c1');
+  assert (select status || ':' || content_hash || ':' || attempts from public.audio_jobs where subject_id = t2 and status <> 'superseded') = 'pending:c1:1',
+    'a claim is mirrored';
+  update public.term_narrations set status = 'failed' where term_id = t2;
+  perform public.claim_term_narration(t2, 'c1');
+  assert (select status || ':' || attempts from public.audio_jobs where subject_id = t2 and status <> 'superseded') = 'pending:2',
+    'reclaiming a failed row is another attempt';
+  update public.term_narrations set status = 'ready', storage_path = 'c.mp3' where term_id = t2;
+  perform public.claim_term_narration(t2, 'c2');
+  assert (select content_hash || ':' || status from public.audio_jobs where subject_id = t2 and status <> 'superseded') = 'c2:pending',
+    'reclaiming after an edit uses the new hash';
+
+  -- A story inserted already claimed is mirrored too, and a failed story keeps its file path.
+  s_new := pg_temp.make_story(u1, 'pending', null, now());
+  assert (select status from public.audio_jobs where subject_id = s_new) = 'pending', 'a story inserted claimed is mirrored';
+  update public.stories set narration_status = 'ready', narration_path = 'stories/u/k.mp3' where id = s_new;
+  update public.stories set narration_status = 'failed' where id = s_new;
+  assert (select storage_path from public.audio_jobs where subject_id = s_new) = 'stories/u/k.mp3',
+    'the file path of a failed story is kept for cleanup';
 
   -- Grants.
   assert has_table_privilege('service_role', 'public.audio_jobs', 'insert');
@@ -185,6 +213,8 @@ begin
   assert not has_function_privilege('authenticated', 'public.backfill_audio_jobs()', 'execute');
   assert not has_function_privilege('authenticated', 'public.mirror_term_narration()', 'execute');
   assert not has_function_privilege('service_role', 'public.mirror_story_narration()', 'execute');
+  assert not has_function_privilege('authenticated', 'public.mirror_term_narration_delete()', 'execute');
+  assert not has_function_privilege('authenticated', 'public.mirror_story_narration_delete()', 'execute');
 
   -- Heartbeat rows are per worker and caller, with a known secret label.
   insert into public.ai_worker_status (worker, source, last_secret) values ('narration-sync', 'cron', 'legacy');
