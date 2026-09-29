@@ -70,7 +70,9 @@ begin
   create trigger boom before update on public.audio_jobs for each row execute function pg_temp.boom();
   delete from public.terms where id = t1;
   assert not exists (select 1 from public.terms where id = t1), 'the delete still went through';
+  assert (select status from public.audio_jobs where content_hash = 'h1b') = 'ready', 'and the job is unchanged';
   drop trigger boom on public.audio_jobs;
+
 end;
 $$;
 
