@@ -27,7 +27,7 @@ temporary (307) redirects from `lib/redirects.ts`.
   enough. `app/(private)/admin/pages-guarded.test.ts` fails if a page under `/admin` doesn't call it.
 - **Server actions** run through `runAdminAction` (`lib/admin/action.ts`), which checks the role with
   `requireAdminClient()` first.
-- The database repeats the check: every admin function starts with `auth.uid()` and `is_admin()`.
+- The database repeats the check: every admin function the admin migration adds starts with `auth.uid()` and `is_admin()`.
 
 ## How an action works
 
@@ -55,7 +55,7 @@ temporary (307) redirects from `lib/redirects.ts`.
   security, so **every collection action checks ownership itself** (`findActable`).
 - Slugs are made in TypeScript (`lib/admin/collections/publish-slugs.ts`); the function checks and applies them.
 - SQL checks: `supabase/tests/admin_rpcs.sql` and `admin_publish_concurrency.sh`, run by hand against a local
-  database (never a reset).
+  database (don't use `supabase db reset` for this).
 
 ## The audit log
 

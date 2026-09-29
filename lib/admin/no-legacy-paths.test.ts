@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /** The admin code moved out of `lib/jargon` and `components/jargon`; this keeps the old folders gone. */
-const OLD_PATH = /@\/(lib|components)\/jargon\/admin\b/;
+const OLD_PATH = /(lib|components)\/jargon\/admin(\/|["'`])/;
 
 function sourceFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
