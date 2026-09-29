@@ -7,7 +7,7 @@ Date: 2026-09-29. Scope: everything in the app that calls an AI provider or serv
 - Phase 0 (cheap fixes): merged in #102, 2026-09-29. Deferred: story narration still generates on GET (phase 4), admin score display, raw probability storage.
 - Phase 1 (`lib/ai`, `ai_feature_settings`, ledger generalization): merged in #103, 2026-09-29. Migration applies to production through `deploy-migrations.yml`; the CI dry-run needed two re-runs for an unrelated Supabase 502. Nothing reads the new tables yet. Contract of the old cost columns is deferred to phase 5 (needs approval).
 - Phase 2 (Quiz and Stories onto `lib/ai`): merged in #104, 2026-09-29. Costs still read from the old columns (contract in phase 5); setup screens do not show 'feature off' ahead of Generate; E10 not built; no Stories action-level test.
-- Phase 3 (narration on the AI module, never billed): split into three PRs. 3a migration merged in #105 (resync function, old-to-new triggers, `has_feature_access`, `ai_usage_events`); CI caught a `LOCK TABLE` that fails under `db reset`, removed. 3b app cutover (access, worker check, admin page) in progress; 3c caps and usage writes next. Admins still get no automatic narration access (same as before).
+- Phase 3 (narration on the AI module, never billed): split into three PRs. 3a migration merged in #105 (resync function, old-to-new triggers, `has_feature_access`, `ai_usage_events`); CI caught a `LOCK TABLE` that fails under `db reset`, removed. 3b app cutover merged in #106 (access, worker E7 check, admin page on the feature tables; added_by no longer recorded); 3c caps and usage writes in progress. Admins still get no automatic narration access (same as before).
 
 ## 1. What exists today
 

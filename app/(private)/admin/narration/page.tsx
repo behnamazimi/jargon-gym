@@ -48,6 +48,8 @@ export default async function AdminNarrationPage() {
     <AdminNarrationPageClient
       healthNote={health.ok ? null : health.note}
       enabled={settings.enabled}
+      caps={settings.caps}
+      usageLast24h={settings.usageLast24h}
       allowlist={allowlist}
       coverage={coverage}
       lastJob={lastJob}

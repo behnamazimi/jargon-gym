@@ -4,7 +4,9 @@ const state = vi.hoisted(() => ({
   admin: true,
   account: { id: "u1", email: "a@example.test" } as { id: string; email: string } | null,
   updated: [] as unknown[],
+  updatedWhere: [] as unknown[],
   updatedFeatures: [] as unknown[],
+  capRows: {} as Record<string, unknown[]>,
   updateRows: [{ feature: "narration_term" }, { feature: "narration_story" }] as unknown[],
   upserts: [] as unknown[],
   upsertOptions: [] as unknown[],
@@ -35,6 +37,13 @@ vi.mock("@/lib/auth/require-session", () => ({
               update: (values: unknown) => {
                 state.updated.push(values);
                 return {
+                  eq: (_column: string, feature: string) => {
+                    state.updatedWhere.push(feature);
+                    return {
+                      select: () =>
+                        Promise.resolve({ data: state.capRows[feature] ?? [], error: null }),
+                    };
+                  },
                   in: (_column: string, features: unknown) => {
                     state.updatedFeatures.push(features);
                     return {
@@ -69,8 +78,12 @@ vi.mock("@/lib/auth/require-session", () => ({
   },
 }));
 
-const { addToNarrationAllowlist, removeFromNarrationAllowlist, setNarrationEnabled } =
-  await import("./actions");
+const {
+  addToNarrationAllowlist,
+  removeFromNarrationAllowlist,
+  setNarrationCaps,
+  setNarrationEnabled,
+} = await import("./actions");
 
 const BOTH = ["narration_term", "narration_story"];
 
@@ -78,6 +91,11 @@ beforeEach(() => {
   state.admin = true;
   state.account = { id: "u1", email: "a@example.test" };
   state.updated = [];
+  state.updatedWhere = [];
+  state.capRows = {
+    narration_term: [{ feature: "narration_term" }],
+    narration_story: [{ feature: "narration_story" }],
+  };
   state.updatedFeatures = [];
   state.updateRows = [{ feature: "narration_term" }, { feature: "narration_story" }];
   state.upserts = [];
@@ -123,5 +141,37 @@ describe("narration admin actions", () => {
     state.admin = false;
     await expect(setNarrationEnabled(true)).rejects.toThrow();
     expect(state.updated).toEqual([]);
+  });
+});
+
+describe("setNarrationCaps", () => {
+  it("saves both caps, a blank term cap meaning no limit", async () => {
+    expect(await setNarrationCaps({ term: null, story: 15 })).toEqual({});
+    expect(state.updated).toEqual([{ daily_cap: null }, { daily_cap: 15 }]);
+    expect(state.updatedWhere).toEqual(["narration_term", "narration_story"]);
+  });
+
+  it("keeps a cap on stories and refuses nonsense numbers", async () => {
+    for (const input of [
+      { term: null, story: 0 },
+      { term: 5, story: 1.5 },
+      { term: -1, story: 5 },
+      { term: 5, story: 5000 },
+    ]) {
+      expect(await setNarrationCaps(input)).toMatchObject({ error: expect.any(String) });
+    }
+    expect(state.updated).toEqual([]);
+  });
+
+  it("says so when a row didn't change, as a non-admin's update wouldn't", async () => {
+    state.capRows = {};
+    expect(await setNarrationCaps({ term: 5, story: 5 })).toEqual({
+      error: "Couldn't save the caps.",
+    });
+  });
+
+  it("keeps non-admins out", async () => {
+    state.admin = false;
+    await expect(setNarrationCaps({ term: 5, story: 5 })).rejects.toThrow();
   });
 });

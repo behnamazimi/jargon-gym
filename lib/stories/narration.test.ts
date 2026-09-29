@@ -4,6 +4,18 @@ import type { Database } from "@/lib/supabase/database.types";
 
 vi.mock("@/lib/narration/eleven-labs", () => ({ synthesizeNarrationAudio: vi.fn() }));
 vi.mock("@/lib/narration/storage", () => ({ uploadNarrationAudio: vi.fn() }));
+const cap = vi.hoisted(() => ({
+  settings: { dailyCap: 20 } as { dailyCap: number | null } | null,
+  error: null as Error | null,
+}));
+const recordUsage = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/ai/feature-settings", () => ({
+  getFeatureSettings: async () => {
+    if (cap.error) throw cap.error;
+    return cap.settings;
+  },
+}));
+vi.mock("@/lib/ai/usage", () => ({ recordUsage }));
 
 const { synthesizeNarrationAudio } = await import("@/lib/narration/eleven-labs");
 const { uploadNarrationAudio } = await import("@/lib/narration/storage");
@@ -89,6 +101,13 @@ beforeEach(() => {
   vi.mocked(uploadNarrationAudio).mockReset();
 });
 
+beforeEach(() => {
+  cap.settings = { dailyCap: 20 };
+  cap.error = null;
+  recordUsage.mockReset();
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+});
+
 describe("getOrGenerateStoryNarration", () => {
   it("returns cached audio without synthesizing", async () => {
     const client = makeClient({
@@ -149,5 +168,57 @@ describe("getOrGenerateStoryNarration", () => {
       status: "unavailable",
     });
     expect(updates.at(-1)).toEqual({ narration_status: "failed" });
+  });
+});
+
+describe("story narration cap and usage", () => {
+  it("takes the cap from the AI feature settings", async () => {
+    cap.settings = { dailyCap: 3 };
+    const client = makeClient({ row: NONE, recentCount: 3, claimWins: true });
+    expect(await getOrGenerateStoryNarration(client, "u1", "s1")).toEqual({ status: "capped" });
+  });
+
+  it("has no cap when the setting is blank", async () => {
+    cap.settings = { dailyCap: null };
+    vi.mocked(synthesizeNarrationAudio).mockResolvedValue(Buffer.from("x"));
+    const client = makeClient({ row: NONE, recentCount: 500, claimWins: true });
+    expect((await getOrGenerateStoryNarration(client, "u1", "s1")).status).toBe("ready");
+  });
+
+  it("falls back to 20 when the setting can't be read", async () => {
+    cap.error = new Error("db down");
+    const client = makeClient({ row: NONE, recentCount: 20, claimWins: true });
+    expect(await getOrGenerateStoryNarration(client, "u1", "s1")).toEqual({ status: "capped" });
+  });
+
+  it("records a usage event for a generation, and for a failed one", async () => {
+    vi.mocked(synthesizeNarrationAudio).mockResolvedValueOnce(Buffer.from("x"));
+    await getOrGenerateStoryNarration(makeClient({ row: NONE, claimWins: true }), "u1", "s1");
+    expect(recordUsage).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ userId: "u1", feature: "narration_story", outcome: "ok" }),
+    );
+
+    vi.mocked(synthesizeNarrationAudio).mockRejectedValueOnce(new Error("provider down"));
+    await getOrGenerateStoryNarration(makeClient({ row: NONE, claimWins: true }), "u1", "s1");
+    expect(recordUsage).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.objectContaining({ feature: "narration_story", outcome: "failed" }),
+    );
+  });
+
+  it("does not record usage for a cache hit or a capped request", async () => {
+    const ready = {
+      narration_status: "ready",
+      narration_path: "p.mp3",
+      narration_requested_at: null,
+    };
+    await getOrGenerateStoryNarration(makeClient({ row: ready }), "u1", "s1");
+    await getOrGenerateStoryNarration(
+      makeClient({ row: NONE, recentCount: 20, claimWins: true }),
+      "u1",
+      "s1",
+    );
+    expect(recordUsage).not.toHaveBeenCalled();
   });
 });

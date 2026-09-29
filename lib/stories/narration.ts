@@ -2,13 +2,17 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { synthesizeNarrationAudio } from "@/lib/narration/eleven-labs";
 import { uploadNarrationAudio } from "@/lib/narration/storage";
 import type { Database } from "@/lib/supabase/database.types";
+import { getFeatureSettings } from "@/lib/ai/feature-settings";
+import { recordUsage } from "@/lib/ai/usage";
 import { getStoryForUser } from "./repository";
-import { STORY_NARRATION_DAILY_CAP } from "./types";
 
 type Client = SupabaseClient<Database>;
 
 const PENDING_TIMEOUT_MS = 2 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Used only if the setting can't be read. */
+const FALLBACK_DAILY_CAP = 20;
 
 export type StoryNarrationResult =
   | { status: "ready"; storagePath: string }
@@ -28,6 +32,17 @@ async function countRecentNarrations(admin: Client, userId: string): Promise<num
     .gte("narration_requested_at", new Date(Date.now() - DAY_MS).toISOString());
   if (error) throw error;
   return count ?? 0;
+}
+
+/** The per-person daily cap from the AI feature settings; null means no cap. */
+async function dailyCapFor(admin: Client): Promise<number | null> {
+  try {
+    const settings = await getFeatureSettings(admin, "narration_story");
+    return settings ? settings.dailyCap : FALLBACK_DAILY_CAP;
+  } catch (err) {
+    console.error("Couldn't read the story narration cap:", err);
+    return FALLBACK_DAILY_CAP;
+  }
 }
 
 /** Only one caller wins: the row must still be unclaimed, failed, or stuck
@@ -85,7 +100,8 @@ export async function getOrGenerateStoryNarration(
     return { status: "pending" };
   }
 
-  if ((await countRecentNarrations(admin, userId)) >= STORY_NARRATION_DAILY_CAP) {
+  const cap = await dailyCapFor(admin);
+  if (cap !== null && (await countRecentNarrations(admin, userId)) >= cap) {
     return { status: "capped" };
   }
 
@@ -100,10 +116,17 @@ export async function getOrGenerateStoryNarration(
     const audio = await synthesizeNarrationAudio(script, story.language);
     await uploadNarrationAudio(path, audio);
     await setNarrationResult(admin, storyId, { status: "ready", path });
+    await recordUsage(admin, {
+      userId,
+      feature: "narration_story",
+      units: script.length,
+      outcome: "ok",
+    });
     return { status: "ready", storagePath: path };
   } catch (err) {
     console.error("Story narration failed:", err);
     await setNarrationResult(admin, storyId, { status: "failed" });
+    await recordUsage(admin, { userId, feature: "narration_story", units: 0, outcome: "failed" });
     return { status: "unavailable" };
   }
 }
