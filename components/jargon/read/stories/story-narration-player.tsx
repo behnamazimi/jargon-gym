@@ -21,9 +21,9 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Audio is generated on the first Listen tap, so the player asks the route
- *  to prepare it (retrying while another request is still generating), then
- *  hands the ready file to the story's audio controls. */
+/** Audio is made on the first Listen tap, so the player asks the route to
+ *  prepare it (retrying while another request is still making it), then hands
+ *  the ready file to the story's audio controls. */
 export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const cancelledRef = useRef(false);
@@ -42,12 +42,12 @@ export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
     while (!cancelledRef.current && Date.now() < deadline) {
       let response: Response;
       try {
-        response = await fetch(`${src}?prepare=1`);
+        response = await fetch(src, { method: "POST" });
       } catch {
         break;
       }
       if (cancelledRef.current) return;
-      if (response.status === 204) {
+      if (response.status === 200) {
         setStatus("ready");
         return;
       }

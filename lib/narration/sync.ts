@@ -15,7 +15,7 @@ export {
   type NarrationSyncJobView,
 } from "./sync-shared";
 export {
-  isCurrentNarration,
+  isCurrentAudio,
   listCollectionNarrationCoverage,
   listMissingNarrationTermIds,
 } from "./sync-missing";
