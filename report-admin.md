@@ -23,6 +23,8 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 **Status:**
 
+- Phase 7: merged in #122, 2026-09-29. Deferred: phone card layout for the people tables, a `signed_up` waitlist filter (it is a derived badge), page-number links beyond previous/next. The member panel shows remaining/total credits only (spent and granted stay on the credits page); "partly" narration access can only be cleared by switching on then off.
+
 - Phase 6: merged in #121, 2026-09-29. Term evaluation has no switch because nothing reads its setting (the evaluate route only checks the admin role); wiring it is a live-route change left for later. Queue debug's server actions still use the signed-in guard and return only the caller's own queue. Temporary (307) redirects for the three old addresses.
 
 - Phase 5: merged in #120, 2026-09-29. Accepted: `admin_list_collections` is capped at 1000 rows by PostgREST, so past that many collections the taken-slug set is incomplete and publish/slug can fail with a plain message; direct writes (`setBuiltin`, unpublish, slug) still have no audit rows (phase 9); every collection action now checks ownership itself, because the publish function bypasses row level security.
