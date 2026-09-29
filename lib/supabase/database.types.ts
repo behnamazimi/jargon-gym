@@ -451,7 +451,7 @@ export type Database = {
           id: string;
           last_error: string | null;
           lease_expires_at: string | null;
-          started_by: string;
+          started_by: string | null;
           status: string;
           term_ids: string[];
           updated_at: string;
@@ -466,7 +466,7 @@ export type Database = {
           id?: string;
           last_error?: string | null;
           lease_expires_at?: string | null;
-          started_by: string;
+          started_by?: string | null;
           status?: string;
           term_ids: string[];
           updated_at?: string;
@@ -481,7 +481,7 @@ export type Database = {
           id?: string;
           last_error?: string | null;
           lease_expires_at?: string | null;
-          started_by?: string;
+          started_by?: string | null;
           status?: string;
           term_ids?: string[];
           updated_at?: string;
@@ -1341,6 +1341,16 @@ export type Database = {
           total: number;
         }[];
       };
+      audio_job_object_path: {
+        Args: {
+          p_content_hash: string;
+          p_hash_version: number;
+          p_job_id: string;
+          p_subject_id: string;
+          p_subject_type: string;
+        };
+        Returns: string;
+      };
       backfill_audio_jobs: { Args: never; Returns: undefined };
       begin_ai_run: {
         Args: { p_feature: string; p_ttl_seconds?: number; p_user_id: string };
@@ -1349,6 +1359,37 @@ export type Database = {
       bump_streak: { Args: { p_user_id: string }; Returns: undefined };
       can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
+      claim_audio_job: {
+        Args: {
+          p_content_hash: string;
+          p_hash_version: number;
+          p_regenerate?: boolean;
+          p_subject_id: string;
+          p_subject_type: string;
+          p_user_id: string;
+        };
+        Returns: {
+          attempts: number;
+          content_hash: string;
+          created_at: string;
+          error: string | null;
+          hash_version: number;
+          id: string;
+          requested_at: string;
+          status: string;
+          storage_path: string | null;
+          subject_id: string;
+          subject_type: string;
+          updated_at: string;
+          user_id: string | null;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "audio_jobs";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       claim_narration_sync_tick: {
         Args: never;
         Returns: {
