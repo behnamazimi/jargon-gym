@@ -3,8 +3,8 @@ import {
   Coins,
   LayoutDashboard,
   Library,
-  Mail,
   Sparkles,
+  Users,
   Volume2,
   type LucideIcon,
 } from "lucide-react";
@@ -30,7 +30,7 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
     title: "Manage",
     sections: [
       { href: "/admin/collections", label: "Collections", icon: Library },
-      { href: "/admin/invites", label: "Invites", icon: Mail },
+      { href: "/admin/people", label: "People", icon: Users },
     ],
   },
   {

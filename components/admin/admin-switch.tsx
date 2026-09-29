@@ -14,7 +14,7 @@ type AdminSwitchProps = {
    *  revalidate the page, or the switch snaps back to this value when saving ends. */
   value: boolean;
   label: string;
-  save: (next: boolean) => Promise<ActionResult>;
+  save: (next: boolean) => Promise<ActionResult<unknown>>;
   disabled?: boolean;
   /** Set while something related to this switch is being saved. */
   busy?: boolean;

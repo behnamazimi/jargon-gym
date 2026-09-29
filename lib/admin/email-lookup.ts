@@ -4,3 +4,8 @@
 export function exactEmailPattern(email: string): string {
   return email.trim().replace(/[\\%_]/g, (char) => `\\${char}`);
 }
+
+/** An `ilike` pattern for "contains this text" in a search box. */
+export function containsPattern(query: string): string {
+  return `%${exactEmailPattern(query)}%`;
+}

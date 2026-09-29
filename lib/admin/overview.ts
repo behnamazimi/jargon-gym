@@ -132,7 +132,7 @@ function waitlistItems(pending: number | null): AttentionItem[] {
       tone: "info",
       title: `${pending} ${pending === 1 ? "person is" : "people are"} waiting for an invite`,
       detail: "Approve them to email a signup link.",
-      href: "/admin/invites",
+      href: "/admin/people",
     },
   ];
 }

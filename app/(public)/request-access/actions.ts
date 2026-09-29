@@ -82,6 +82,6 @@ async function notifyAdmins(requesterEmail: string): Promise<void> {
   await sendWaitlistRequestNotification({
     to: adminEmails,
     requesterEmail,
-    adminUrl: `${origin}/admin/invites`,
+    adminUrl: `${origin}/admin/people?view=waitlist`,
   });
 }

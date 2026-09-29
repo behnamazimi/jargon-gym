@@ -25,7 +25,7 @@ const NARRATION_FEATURES = ["narration_term", "narration_story"] as const;
 
 type Client = SupabaseClient<Database>;
 
-const REVALIDATE = ["/admin", "/admin/ai", "/admin/ai/narration"];
+const REVALIDATE = ["/admin", "/admin/ai", "/admin/ai/narration", "/admin/people"];
 
 export async function setNarrationEnabled(value: boolean) {
   return runAdminAction(

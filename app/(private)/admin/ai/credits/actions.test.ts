@@ -76,7 +76,12 @@ describe("grantAiCredits", () => {
         args: { p_user_id: "u1", p_amount: 25, p_note: "beta" },
       },
     ]);
-    expect(state.revalidated).toEqual(["/admin", "/admin/ai", "/admin/ai/credits"]);
+    expect(state.revalidated).toEqual([
+      "/admin",
+      "/admin/ai",
+      "/admin/ai/credits",
+      "/admin/people",
+    ]);
   });
 
   it("returns readable messages for expected mistakes, without granting", async () => {

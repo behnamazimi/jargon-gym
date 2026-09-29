@@ -9,7 +9,7 @@ import {
   type CreditSettingsInput,
 } from "@/lib/ai-credits/settings-schema";
 
-const REVALIDATE = { revalidate: ["/admin", "/admin/ai", "/admin/ai/credits"] };
+const REVALIDATE = { revalidate: ["/admin", "/admin/ai", "/admin/ai/credits", "/admin/people"] };
 
 export async function setAiCreditsEnabled(value: boolean) {
   return runAdminAction(async ({ supabase }) => {
