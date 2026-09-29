@@ -70,6 +70,11 @@ describe("buildAiHubRows", () => {
     expect(rowsById(partial).get("narration")?.state).toBe("unknown");
   });
 
+  it("shows a free feature's price instead of a dash", () => {
+    const free = settings.map((s) => (s.feature === "quiz" ? { ...s, credit_cost: 0 } : s));
+    expect(rowsById(buildAiHubRows(free, ok)).get("quiz")?.limit).toBe("0 credits per question");
+  });
+
   it("carries the health note of what each feature needs", () => {
     const rows = rowsById(
       buildAiHubRows(settings, (feature) =>

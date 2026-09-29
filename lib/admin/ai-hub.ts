@@ -24,7 +24,7 @@ export type AiHubRow = {
   manageHref: string;
 };
 
-function plural(count: number, unit: string): string {
+function creditPrice(count: number, unit: string): string {
   return `${count} ${count === 1 ? "credit" : "credits"} per ${unit}`;
 }
 
@@ -64,7 +64,7 @@ export function buildAiHubRows(
       billing: "credits",
       state: row ? (row.enabled ? "on" : "off") : "unknown",
       healthNote: note(feature),
-      limit: row?.credit_cost ? plural(row.credit_cost, def.unit) : "—",
+      limit: row?.credit_cost != null ? creditPrice(row.credit_cost, def.unit) : "—",
       manageHref: AI_FEATURE_META[feature].manageHref,
     };
   };
@@ -95,7 +95,7 @@ export function buildAiHubRows(
       sends: `${narration.sends} Stories too: ${FEATURES.narration_story.sends}`,
       billing: "none",
       state: narrationState(term, story),
-      healthNote: note("narration_term"),
+      healthNote: note("narration_term") ?? note("narration_story"),
       limit: narrationLimit(term, story),
       manageHref: AI_FEATURE_META.narration_term.manageHref,
     },

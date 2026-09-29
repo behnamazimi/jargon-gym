@@ -19,7 +19,7 @@ function Control({ row }: { row: AiHubRow }) {
   return (
     <div className="flex items-center gap-2">
       {row.state === "mixed" ? <span className="badge badge-warning">Mixed</span> : null}
-      <AdminSwitch label={`Turn ${row.label} on`} value={row.state === "on"} save={save} />
+      <AdminSwitch label={`${row.label} enabled`} value={row.state === "on"} save={save} />
     </div>
   );
 }
