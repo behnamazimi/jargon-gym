@@ -6,6 +6,9 @@ import {
   listAiCreditFailureReasonsForAdmin,
   listAiCreditUsageForAdmin,
 } from "@/lib/ai-credits/admin";
+import { featureHealth } from "@/lib/ai/health";
+import { getFeatureSettings } from "@/lib/ai/feature-settings";
+import type { AiFeatureRow } from "@/components/jargon/admin/admin-ai-features";
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 
 export default async function AdminAiCreditsPage() {
@@ -21,8 +24,27 @@ export default async function AdminAiCreditsPage() {
     listAiCreditFailureReasonsForAdmin(supabase),
   ]);
 
+  const featureLabels = { quiz: "AI quiz", story: "Stories" } as const;
+  const features: AiFeatureRow[] = await Promise.all(
+    (["quiz", "story"] as const).map(async (feature) => {
+      const health = featureHealth(feature);
+      const row = await getFeatureSettings(supabase, feature).catch((error: unknown) => {
+        console.error("Couldn't read AI feature settings:", error);
+        return null;
+      });
+      return {
+        feature,
+        label: featureLabels[feature],
+        enabled: row?.enabled ?? false,
+        available: row !== null,
+        healthNote: health.ok ? null : health.note,
+      };
+    }),
+  );
+
   return (
     <AdminAiCreditsPageClient
+      features={features}
       settings={settings}
       usage={usage}
       summary={summary}

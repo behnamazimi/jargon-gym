@@ -4,7 +4,7 @@ import type { FeatureId } from "./registry";
 
 type Client = SupabaseClient<Database>;
 
-export type AccessMode = "everyone" | "allowlist" | "admin";
+type AccessMode = "everyone" | "allowlist" | "admin";
 
 export type FeatureSettings = {
   feature: FeatureId;

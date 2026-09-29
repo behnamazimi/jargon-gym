@@ -5,7 +5,19 @@ export const AI_TEMPORARILY_UNAVAILABLE = "AI is unavailable right now. Try agai
 type Failure = { error: string; reason: AiFailureReason };
 
 /** No usable AI for this user: no key of their own, and no credits to fall back on. */
-export function noAiFailure(reason: "none" | "exhausted", activity: string): Failure {
+export function noAiFailure(
+  reason: "none" | "exhausted" | "key-unreadable" | "feature-off",
+  activity: string,
+): Failure {
+  if (reason === "feature-off") {
+    return { error: "This isn't available right now.", reason: "feature-off" };
+  }
+  if (reason === "key-unreadable") {
+    return {
+      error: `We couldn't read your saved API key. Enter it again in Settings to ${activity}.`,
+      reason: "no-ai",
+    };
+  }
   if (reason === "exhausted") {
     return {
       error: `You've used your AI credits for now. Add your own key in Settings to ${activity}.`,
@@ -29,5 +41,13 @@ export function creditsRefusedFailure(
   return {
     error: `This ${what} needs ${outcome.cost} credits and you have ${outcome.remaining}. Try a smaller one.`,
     reason: "credits",
+  };
+}
+
+/** Another request for the same thing is already running. */
+export function busyFailure(): Failure {
+  return {
+    error: "You already have one running. Give it a minute and try again.",
+    reason: "busy",
   };
 }

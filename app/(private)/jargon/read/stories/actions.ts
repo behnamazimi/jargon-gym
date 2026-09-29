@@ -4,9 +4,10 @@ import { after } from "next/server";
 import { z } from "zod";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/jargon/review-outcome";
-import { runWithCredits } from "@/lib/ai-credits/charge";
+import { withRunGuard } from "@/lib/ai/run-guard";
+import { runMetered } from "@/lib/ai/run-metered";
 import { storyCost } from "@/lib/ai-credits/costs";
-import { creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
+import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { resolveAiAccess } from "@/lib/llm/access";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { storyFailure } from "@/lib/stories/failure";
@@ -75,7 +76,7 @@ export async function generateStoryAction(input: {
   let usingCredits = false;
 
   try {
-    const access = await resolveAiAccess(auth.supabase, userId);
+    const access = await resolveAiAccess(auth.supabase, admin, userId, "story");
     if (access.kind === "unavailable") return noAiFailure(access.reason, "write stories");
     usingCredits = access.kind === "credits";
 
@@ -137,7 +138,7 @@ export async function generateStoryAction(input: {
 
     let produced: Awaited<ReturnType<typeof produce>>;
     if (access.kind === "credits") {
-      const outcome = await runWithCredits(
+      const outcome = await runMetered(
         {
           admin,
           userId,
@@ -146,10 +147,14 @@ export async function generateStoryAction(input: {
         },
         produce,
       );
-      if (!outcome.charged) return creditsRefusedFailure(outcome, "story");
+      if (!outcome.charged) {
+        return outcome.reason === "busy" ? busyFailure() : creditsRefusedFailure(outcome, "story");
+      }
       produced = outcome.value;
     } else {
-      produced = await produce();
+      const guarded = await withRunGuard({ admin, userId, feature: "story" }, produce);
+      if (guarded.busy) return busyFailure();
+      produced = guarded.value;
     }
 
     // The story already exists, so tidying older ones must not fail the request.

@@ -8,6 +8,7 @@ import {
   grantCreditsSchema,
   type CreditSettingsInput,
 } from "@/lib/ai-credits/settings-schema";
+import { z } from "zod";
 import { requireAdminClient } from "@/lib/auth/require-session";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -40,6 +41,29 @@ export async function setAiCreditsEnabled(value: boolean): Promise<AdminActionRe
       .update({ enabled: value })
       .eq("id", true);
     if (error) throw error;
+  });
+}
+
+const featureSwitchSchema = z.object({ feature: z.enum(["quiz", "story"]), value: z.boolean() });
+
+/** Switches a feature on or off for everyone, including people with their own
+ *  key. Only `enabled` is written; the update needs the signed-in admin's own
+ *  client, since the server role can't change these rows. */
+export async function setAiFeatureEnabled(
+  feature: string,
+  value: boolean,
+): Promise<AdminActionResult> {
+  return runAdminAction(async (supabase) => {
+    const parsed = featureSwitchSchema.safeParse({ feature, value });
+    if (!parsed.success) return { error: "Unknown feature." };
+
+    const { data, error } = await supabase
+      .from("ai_feature_settings")
+      .update({ enabled: parsed.data.value })
+      .eq("feature", parsed.data.feature)
+      .select("feature");
+    if (error) throw error;
+    if (!data || data.length !== 1) return { error: "Couldn't change that switch." };
   });
 }
 

@@ -5,6 +5,15 @@ import type { LlmProvider, UserSettings } from "./types";
 
 type Client = SupabaseClient<Database>;
 
+/** A saved key that can no longer be decrypted, for example after the
+ *  encryption secret changed. */
+export class UnreadableKeyError extends Error {
+  constructor() {
+    super("The saved API key can't be read.");
+    this.name = "UnreadableKeyError";
+  }
+}
+
 function mapRow(row: { provider: string | null; api_key_last4: string | null }): UserSettings {
   return {
     provider: (row.provider as LlmProvider | null) ?? null,
@@ -41,10 +50,15 @@ export async function getDecryptedApiKey(
   if (error) throw error;
   if (!data?.provider || !data.api_key_encrypted) return null;
 
-  return {
-    provider: data.provider as LlmProvider,
-    apiKey: decryptApiKey(data.api_key_encrypted),
-  };
+  try {
+    return {
+      provider: data.provider as LlmProvider,
+      apiKey: decryptApiKey(data.api_key_encrypted),
+    };
+  } catch (decryptError) {
+    console.error("Couldn't decrypt a saved API key:", decryptError);
+    throw new UnreadableKeyError();
+  }
 }
 
 export async function saveLlmSettings(

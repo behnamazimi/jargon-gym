@@ -181,18 +181,40 @@ where kind = 'spend'
   and not exists (select 1 from public.ai_credit_ledger r where r.refund_of = l.id);
 ```
 
-## Feature settings (in progress)
+## Feature settings
 
 `ai_feature_settings` has one row per AI feature (`quiz`, `story`,
 `term_evaluation`, `narration_term`, `narration_story`): the on/off switch, who
 may use it (`everyone`, `allowlist`, `admin`), a rolling 24-hour cap, and the
 credit cost. Only billable features (those with a cost) can be written to the
 ledger; the ledger's foreign key and `reserve_ai_credits` both refuse the rest,
-so narration can never spend credits. Costs are still edited on the credits
-settings, and a trigger copies them to the feature rows. The app does not read
-these rows yet; `lib/ai/` holds the registry, the policy check and
-`runMetered`, which adds a one-request-at-a-time guard (`begin_ai_run`) around a
-charge. The guard frees itself after 120 seconds if a request is killed.
+so narration can never spend credits.
+
+Quiz and Stories read their row before every request (`resolveAiAccess`). A
+feature that is switched off is off for everyone, people with their own key
+included, and admins can switch them on the AI credits admin page. This is a
+separate lever from the credits switch, which only stops use of the app's key.
+If the settings can't be read the request goes ahead, so an app deployed ahead
+of its database keeps working; a missing row means off.
+
+Costs are still edited on the credits settings, and a trigger copies them to
+the feature rows. Charging and the setup screens still read the old cost
+columns from `my_ai_credit_state`; moving them to the feature rows and then
+dropping the old columns is a later step.
+
+## Running one request at a time
+
+Both features take a per-user, per-feature guard (`begin_ai_run`) around the
+work, on the own-key path as well as the credits path (`lib/ai/run-guard.ts`).
+It is taken before credits are reserved, so a refused duplicate is never
+charged. It catches a second tab or a direct duplicate request; clicks in one
+tab are already queued by Next. A request killed by the platform frees the guard
+after 70 seconds, and the user sees "busy" until then. If the guard can't be
+reached the request runs without it.
+
+A saved own key that can't be decrypted (for example after the encryption
+secret changed) is never replaced by credits. The user is asked to enter it
+again in Settings.
 
 ## Where things live
 
