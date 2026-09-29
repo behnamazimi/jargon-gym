@@ -228,6 +228,48 @@ export type Database = {
         };
         Relationships: [];
       };
+      ai_usage_events: {
+        Row: {
+          created_at: string;
+          feature: string;
+          id: number;
+          outcome: string;
+          units: number;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          feature: string;
+          id?: never;
+          outcome: string;
+          units: number;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          feature?: string;
+          id?: never;
+          outcome?: string;
+          units?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_events_feature_fkey";
+            columns: ["feature"];
+            isOneToOne: false;
+            referencedRelation: "ai_feature_settings";
+            referencedColumns: ["feature"];
+          },
+          {
+            foreignKeyName: "ai_usage_events_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       domains: {
         Row: {
           created_at: string;
@@ -1368,6 +1410,10 @@ export type Database = {
           recall_stability: number;
           review_recall_count: number;
         }[];
+      };
+      has_feature_access: {
+        Args: { p_feature: string; p_user_id: string };
+        Returns: boolean;
       };
       has_narration_access: { Args: { p_user_id: string }; Returns: boolean };
       is_admin: { Args: never; Returns: boolean };
