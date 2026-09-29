@@ -403,4 +403,5 @@ A second reviewer re-checked every claim in this report against the code. Result
 - Split the main build into **expand migration, code release, contract migration** (D1, D6). Do **F14-A after F1-A**, not together.
 - E15 and E16 are the real bill and outage risks and need their dry-run checks (5.3). E20 (secret change) is low risk by comparison.
 
-- Phase 4 (audio jobs expand): split into 4a migration (merged in #108: `audio_jobs`, mirror triggers with exception handlers, repairable backfill, `ai_worker_status`) and 4b app prep (second internal secret, cron heartbeat, versioned hash): in progress. No claim function in phase 4 (phase 5 adds it with supersede semantics).
+- Phase 4 (audio jobs expand): done, 2026-09-29. 4a merged in #108 (`audio_jobs`, mirror triggers with exception handlers, repairable backfill, `ai_worker_status`; production migration deploy succeeded, after one re-run of a Supabase 502 flake on main's CI). 4b merged in #109 (`AI_INTERNAL_SECRET` accepted next to the Telegram secret on the narration sync route only, cron heartbeat shown on the admin page, hash v2 unused). No claim function in phase 4: phase 5 adds it with supersede semantics.
+- Phase 5 (F14-A cutover and cleanup): not started. Handoff written: `handoff.md` and `goal-prompt-phase-5.md`. Split into 5a migration, 5b app cutover, 5c contract (needs approval).
