@@ -3,9 +3,9 @@ import { requireAdminPage } from "@/lib/admin/page-guard";
 import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
 
 export default async function AdminCollectionsPage() {
-  const { supabase } = await requireAdminPage();
+  const { supabase, user } = await requireAdminPage();
 
-  const collections = await listAllCollectionsForAdmin(supabase);
+  const collections = await listAllCollectionsForAdmin(supabase, user.id);
 
   return <AdminCollectionsPageClient collections={collections} />;
 }

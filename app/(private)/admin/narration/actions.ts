@@ -1,5 +1,6 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
 import { exactEmailPattern } from "@/lib/admin/email-lookup";
@@ -12,25 +13,22 @@ import {
   listCollectionNarrationCoverage,
 } from "@/lib/narration/sync";
 import { capsSchema, type CapsInput } from "@/lib/narration/caps-schema";
+import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { Database } from "@/lib/supabase/database.types";
 
 /** The admin page has one switch and one list; they apply to both narration features. */
 const NARRATION_FEATURES = ["narration_term", "narration_story"] as const;
+
+type Client = SupabaseClient<Database>;
 
 const REVALIDATE = ["/admin/narration"];
 
 export async function setNarrationEnabled(value: boolean) {
   return runAdminAction(
     async ({ supabase }) => {
-      const { data, error } = await supabase
-        .from("ai_feature_settings")
-        .update({ enabled: value })
-        .in("feature", [...NARRATION_FEATURES])
-        .select("feature");
+      const { error } = await supabase.rpc("admin_set_narration_enabled", { p_enabled: value });
       if (error) throw error;
-      if (data?.length !== NARRATION_FEATURES.length) {
-        throw new AdminError("Couldn't change the switch.");
-      }
     },
     { revalidate: REVALIDATE },
   );
@@ -44,19 +42,12 @@ export async function setNarrationCaps(input: CapsInput) {
         throw new AdminError("Enter whole numbers from 1 to 1000. Stories need a cap.");
       }
 
-      const updates = [
-        { feature: "narration_term", dailyCap: parsed.data.term },
-        { feature: "narration_story", dailyCap: parsed.data.story },
-      ];
-      for (const update of updates) {
-        const { data, error } = await supabase
-          .from("ai_feature_settings")
-          .update({ daily_cap: update.dailyCap })
-          .eq("feature", update.feature)
-          .select("feature");
-        if (error) throw error;
-        if (data?.length !== 1) throw new AdminError("Couldn't save the caps.");
-      }
+      const { error } = await supabase.rpc("admin_set_narration_caps", {
+        // Null means no cap for terms; the generated type doesn't allow null.
+        p_term_cap: parsed.data.term as number,
+        p_story_cap: parsed.data.story,
+      });
+      if (error) throw error;
     },
     { revalidate: REVALIDATE },
   );
@@ -99,8 +90,20 @@ export async function removeFromNarrationAllowlist(userId: string) {
   );
 }
 
+/** Narration is generated with the server's own key for every term it is asked about, so only
+ *  collections an admin may act on are allowed, whatever the browser sends. */
+async function actableCollections(supabase: Client, adminId: string) {
+  const collections = await listAllCollectionsForAdmin(supabase, adminId);
+  return new Map(
+    collections.filter((collection) => !collection.readOnly).map((c) => [c.id, c.name] as const),
+  );
+}
+
 export async function startNarrationSync(domainId: string) {
-  return runAdminAction(async ({ user }) => {
+  return runAdminAction(async ({ supabase, user }) => {
+    if (!(await actableCollections(supabase, user.id)).has(domainId)) {
+      throw new AdminError("Collection not found.");
+    }
     const job = await enqueueNarrationSync(createAdminClient(), domainId, user.id);
     kickNarrationSyncWorker();
     return job;
@@ -126,5 +129,14 @@ export async function getNarrationSyncStatus() {
 }
 
 export async function getNarrationSyncCoverage(collections: { id: string; name: string }[]) {
-  return runAdminAction(() => listCollectionNarrationCoverage(createAdminClient(), collections));
+  return runAdminAction(async ({ supabase, user }) => {
+    const allowed = await actableCollections(supabase, user.id);
+    return listCollectionNarrationCoverage(
+      createAdminClient(),
+      collections.flatMap((collection) => {
+        const name = allowed.get(collection.id);
+        return name === undefined ? [] : [{ id: collection.id, name }];
+      }),
+    );
+  });
 }

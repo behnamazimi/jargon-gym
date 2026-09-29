@@ -117,6 +117,13 @@ describe("the other admin actions", () => {
       storyCreditsPerTerm: 1,
     };
     expect(await saveAiCreditSettings(valid)).toMatchObject({ ok: true });
+    expect(state.rpcCalls).toEqual([
+      {
+        name: "admin_set_ai_credit_settings",
+        args: { p_default_allowance: 100, p_monthly_refill: 30, p_quiz_cost: 1, p_story_cost: 1 },
+      },
+    ]);
+    state.rpcCalls = [];
     expect(await saveAiCreditSettings({ ...valid, quizCreditsPerQuestion: 0 })).toEqual({
       ok: false,
       error: "Check the numbers and try again.",

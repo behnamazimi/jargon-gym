@@ -12,7 +12,7 @@ export function AdminCollectionsPageClient({ collections }: { collections: Admin
     <>
       <AdminPageHeader
         title="Collections"
-        description="Mark collections as built-in, then publish the ones that should get a public page."
+        description="Mark collections as built-in, then publish the ones that should get a public page. Other people's private collections are listed but can't be changed."
       />
 
       <div className="overflow-x-auto rounded-lg border border-base-300">
@@ -46,7 +46,29 @@ export function AdminCollectionsPageClient({ collections }: { collections: Admin
   );
 }
 
+function ReadOnlyRow({ collection }: { collection: AdminCollectionRow }) {
+  return (
+    <tr>
+      <td className="font-medium text-base-content">{collection.name}</td>
+      <td className="text-base-content/65">{collection.ownerEmail ?? "—"}</td>
+      <td className="text-base-content/65">{collection.termCount}</td>
+      <td className="text-base-content/65">Private</td>
+      <td className="text-base-content/65">{collection.isBuiltin ? "Yes" : "No"}</td>
+      <td className="text-base-content/65">{collection.isPublic ? "Yes" : "No"}</td>
+      <td className="text-base-content/65">{collection.slug ?? "—"}</td>
+    </tr>
+  );
+}
+
 function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
+  return collection.readOnly ? (
+    <ReadOnlyRow collection={collection} />
+  ) : (
+    <EditableRow collection={collection} />
+  );
+}
+
+function EditableRow({ collection }: { collection: AdminCollectionRow }) {
   const [slug, setSlug] = useState(collection.slug ?? "");
   const [busy, setBusy] = useState(false);
   const { run, isPending, error, clearError } = useAdminAction();

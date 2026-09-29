@@ -1,10 +1,17 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
-import type { requireAdminClient } from "@/lib/auth/require-session";
+import { buildPublishSlugs } from "@/lib/jargon/admin/publish-slugs";
 import { generateUniqueSlug, slugify } from "@/lib/jargon/slug";
+import type { Database } from "@/lib/supabase/database.types";
+
+type Client = SupabaseClient<Database>;
+
+/** PostgREST returns at most this many rows per request. */
+const PAGE_SIZE = 1000;
 
 export async function setBuiltin(domainId: string, value: boolean) {
   return runAdminAction(async ({ supabase }) => {
@@ -27,58 +34,88 @@ export async function setBuiltin(domainId: string, value: boolean) {
   });
 }
 
-async function ensureDomainSlug(
-  supabase: AdminClient,
-  domainId: string,
-  domainName: string,
-  existingSlug: string | null,
-): Promise<string | null> {
-  if (existingSlug) return existingSlug;
+/** Every collection, including ones this session can't read, so slugs never clash with them. */
+async function listCollections(supabase: Client) {
+  const { data, error } = await supabase.rpc("admin_list_collections");
+  if (error) throw error;
+  return data ?? [];
+}
 
-  const { data: existingDomains, error: slugError } = await supabase
-    .from("domains")
-    .select("slug")
-    .not("slug", "is", null);
-  if (slugError) throw slugError;
+async function listTermsOf(supabase: Client, domainId: string) {
+  const terms: { id: string; term: string; slug: string | null }[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("terms")
+      .select("id, term, slug")
+      .eq("domain_id", domainId)
+      .order("id")
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    terms.push(...(data ?? []));
+    if (!data || data.length < PAGE_SIZE) break;
+  }
+  return terms;
+}
 
-  const existingSlugs = new Set((existingDomains ?? []).map((row) => row.slug!));
-  const slug = generateUniqueSlug(domainName, existingSlugs);
+/** A slug was taken, or a term was added, between reading and publishing. Reading again fixes it. */
+function shouldReadAgain(error: { code?: string }): boolean {
+  return error.code === "23505" || error.code === "40001";
+}
 
-  const { error: updateError } = await supabase.from("domains").update({ slug }).eq("id", domainId);
-  if (updateError) throw updateError;
+async function publishOnce(supabase: Client, domainId: string) {
+  const collections = await listCollections(supabase);
+  const domain = collections.find((row) => row.id === domainId);
+  if (!domain) throw new AdminError("Collection not found.");
+  if (!domain.is_builtin) {
+    throw new AdminError("Only built-in collections can be made public.");
+  }
 
-  return slug;
+  const { domainSlug, termSlugs } = buildPublishSlugs({
+    domainName: domain.name,
+    domainSlug: (domain.slug as string | null) || null,
+    takenDomainSlugs: new Set(
+      collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])),
+    ),
+    terms: await listTermsOf(supabase, domainId),
+  });
+
+  return supabase.rpc("admin_publish_collection", {
+    p_domain_id: domainId,
+    p_domain_slug: domainSlug,
+    p_term_slugs: termSlugs,
+  });
+}
+
+async function publish(supabase: Client, domainId: string): Promise<string> {
+  let result = await publishOnce(supabase, domainId);
+  if (result.error && shouldReadAgain(result.error)) {
+    result = await publishOnce(supabase, domainId);
+  }
+  if (result.error) {
+    if (shouldReadAgain(result.error)) throw new AdminError("Couldn't publish. Try again.");
+    throw result.error;
+  }
+  if (!result.data) throw new Error("Publishing returned no slug.");
+  return result.data;
 }
 
 export async function setPublic(domainId: string, value: boolean) {
   return runAdminAction(async ({ supabase }): Promise<{ slug: string | null }> => {
-    const { data: domain, error: fetchError } = await supabase
-      .from("domains")
-      .select("id, name, slug, is_builtin")
-      .eq("id", domainId)
-      .single();
-    if (fetchError) throw fetchError;
-    if (value && !domain.is_builtin) {
-      throw new AdminError("Only built-in collections can be made public.");
-    }
-
-    const slug = value
-      ? await ensureDomainSlug(supabase, domainId, domain.name, domain.slug)
-      : domain.slug;
-
+    let slug: string | null;
     if (value) {
-      await ensureTermSlugs(supabase, domainId);
+      slug = await publish(supabase, domainId);
+    } else {
+      const { data, error } = await supabase
+        .from("domains")
+        .update({ is_public: false })
+        .eq("id", domainId)
+        .select("slug")
+        .single();
+      if (error) throw error;
+      slug = data.slug;
     }
 
-    const { error } = await supabase
-      .from("domains")
-      .update({ is_public: value })
-      .eq("id", domainId);
-    if (error) throw error;
-
-    if (slug) {
-      revalidatePath(`/j/${slug}`, "layout");
-    }
+    if (slug) revalidatePath(`/j/${slug}`, "layout");
     revalidatePath("/admin/collections");
     revalidatePath("/sitemap.xml");
 
@@ -88,45 +125,26 @@ export async function setPublic(domainId: string, value: boolean) {
 
 export async function updateDomainSlug(domainId: string, rawSlug: string) {
   return runAdminAction(async ({ supabase }): Promise<{ slug: string }> => {
-    const { data: existingDomains, error: slugError } = await supabase
+    const collections = await listCollections(supabase);
+    const taken = new Set(
+      collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])),
+    );
+    const slug = generateUniqueSlug(slugify(rawSlug), taken);
+
+    const { error } = await supabase
       .from("domains")
-      .select("slug")
-      .not("slug", "is", null)
-      .neq("id", domainId);
-    if (slugError) throw slugError;
-
-    const existingSlugs = new Set((existingDomains ?? []).map((row) => row.slug!));
-    const slug = generateUniqueSlug(slugify(rawSlug), existingSlugs);
-
-    const { error } = await supabase.from("domains").update({ slug }).eq("id", domainId);
-    if (error) throw error;
+      .update({ slug })
+      .eq("id", domainId)
+      .select("id")
+      .single();
+    if (error) {
+      if (error.code === "23505") throw new AdminError("That slug is taken. Try another.");
+      throw error;
+    }
 
     revalidatePath("/admin/collections");
     revalidatePath("/sitemap.xml");
 
     return { slug };
   });
-}
-
-type AdminClient = Awaited<ReturnType<typeof requireAdminClient>>["supabase"];
-
-async function ensureTermSlugs(supabase: AdminClient, domainId: string) {
-  const { data: terms, error } = await supabase
-    .from("terms")
-    .select("id, term, slug")
-    .eq("domain_id", domainId);
-  if (error) throw error;
-
-  const existingSlugs = new Set(
-    (terms ?? []).filter((term) => term.slug).map((term) => term.slug!),
-  );
-
-  for (const term of terms ?? []) {
-    if (term.slug) continue;
-    const slug = generateUniqueSlug(term.term, existingSlugs);
-    existingSlugs.add(slug);
-
-    const { error: updateError } = await supabase.from("terms").update({ slug }).eq("id", term.id);
-    if (updateError) throw updateError;
-  }
 }

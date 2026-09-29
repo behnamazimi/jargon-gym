@@ -41,3 +41,17 @@ describe("generateUniqueSlug", () => {
     expect(generateUniqueSlug("!!!", new Set())).toBe("item");
   });
 });
+
+describe("generateUniqueSlug length", () => {
+  it("cuts a long name so the slug stays short, without a dangling dash", () => {
+    const slug = generateUniqueSlug(`${"word ".repeat(40)}end`, new Set());
+    expect(slug.length).toBeLessThanOrEqual(100);
+    expect(slug.endsWith("-")).toBe(false);
+  });
+
+  it("still makes cut names unique", () => {
+    const long = "a".repeat(150);
+    const first = generateUniqueSlug(long, new Set());
+    expect(generateUniqueSlug(long, new Set([first]))).toBe(`${first}-2`);
+  });
+});

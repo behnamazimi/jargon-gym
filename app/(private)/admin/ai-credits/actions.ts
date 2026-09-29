@@ -47,30 +47,13 @@ export async function saveAiCreditSettings(input: CreditSettingsInput) {
     const parsed = creditSettingsSchema.safeParse(input);
     if (!parsed.success) throw new AdminError("Check the numbers and try again.");
 
-    const { error } = await supabase
-      .from("ai_credit_settings")
-      .update({
-        default_allowance: parsed.data.defaultAllowance,
-        monthly_refill: parsed.data.monthlyRefill,
-      })
-      .eq("id", true);
+    const { error } = await supabase.rpc("admin_set_ai_credit_settings", {
+      p_default_allowance: parsed.data.defaultAllowance,
+      p_monthly_refill: parsed.data.monthlyRefill,
+      p_quiz_cost: parsed.data.quizCreditsPerQuestion,
+      p_story_cost: parsed.data.storyCreditsPerTerm,
+    });
     if (error) throw error;
-
-    // The prices live on the feature rows. Two writes, not atomic: a failure
-    // on the second leaves the first price changed, and saving again fixes it.
-    const prices = [
-      { feature: "quiz", cost: parsed.data.quizCreditsPerQuestion },
-      { feature: "story", cost: parsed.data.storyCreditsPerTerm },
-    ];
-    for (const { feature, cost } of prices) {
-      const { data, error: priceError } = await supabase
-        .from("ai_feature_settings")
-        .update({ credit_cost: cost })
-        .eq("feature", feature)
-        .select("feature");
-      if (priceError) throw priceError;
-      if (!data || data.length !== 1) throw new AdminError("Couldn't change that price.");
-    }
   }, REVALIDATE);
 }
 

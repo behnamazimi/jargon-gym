@@ -13,13 +13,13 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function AdminNarrationPage() {
-  const { supabase } = await requireAdminPage();
+  const { supabase, user } = await requireAdminPage();
 
   const admin = createAdminClient();
   const [settings, allowlist, collections] = await Promise.all([
     getNarrationSettingsForAdmin(supabase),
     listNarrationAllowlistForAdmin(supabase),
-    listAllCollectionsForAdmin(supabase),
+    listAllCollectionsForAdmin(supabase, user.id),
   ]);
 
   let lastJob = null;
@@ -31,7 +31,9 @@ export default async function AdminNarrationPage() {
 
   const coverage = await listCollectionNarrationCoverage(
     admin,
-    collections.map((collection) => ({ id: collection.id, name: collection.name })),
+    collections
+      .filter((collection) => !collection.readOnly)
+      .map((collection) => ({ id: collection.id, name: collection.name })),
   );
 
   const resumable = canResumeNarrationSync(lastJob);
