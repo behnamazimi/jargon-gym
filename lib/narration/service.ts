@@ -52,8 +52,9 @@ async function generateAndFinalize(
   language: DomainLanguage,
 ): Promise<NarrationResult> {
   const path = pathForTerm(termId);
+  let script = "";
   try {
-    const script = buildNarrationScript(fields, language);
+    script = buildNarrationScript(fields, language);
     const audio = await synthesizeNarrationAudio(script, language);
 
     await uploadNarrationAudio(path, audio);
@@ -64,7 +65,12 @@ async function generateAndFinalize(
       .eq("term_id", termId)
       .eq("content_hash", contentHash); // guard: don't clobber a newer claim
 
-    return { status: "ready", storagePath: path, contentHash };
+    return {
+      status: "ready",
+      storagePath: path,
+      contentHash,
+      generation: { units: script.length },
+    };
   } catch (err) {
     console.error("Narration generation failed:", err);
     await admin
@@ -72,7 +78,7 @@ async function generateAndFinalize(
       .update({ status: "failed" })
       .eq("term_id", termId)
       .eq("content_hash", contentHash);
-    return { status: "unavailable" };
+    return { status: "unavailable", generation: { units: script.length } };
   }
 }
 

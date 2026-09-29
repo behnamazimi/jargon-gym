@@ -129,7 +129,7 @@ describe("getOrGenerateNarration", () => {
 
     const result = await getOrGenerateNarration(client, TERM_ID);
 
-    expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
+    expect(result).toMatchObject({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
     expect(synthesizeNarrationAudio).toHaveBeenCalledTimes(1);
     expect(updates).toEqual([{ status: "ready", storage_path: "term-1.mp3" }]);
     expect(termSelects.some((columns) => columns.includes("domains"))).toBe(true);
@@ -146,7 +146,7 @@ describe("getOrGenerateNarration", () => {
 
     const result = await getOrGenerateNarration(client, TERM_ID);
 
-    expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
+    expect(result).toMatchObject({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
     expect(synthesizeNarrationAudio).toHaveBeenCalledTimes(1);
     expect(uploadNarrationAudio).toHaveBeenCalledWith("term-1.mp3", Buffer.from("audio"));
     expect(updates).toEqual([{ status: "ready", storage_path: "term-1.mp3" }]);
@@ -176,7 +176,7 @@ describe("getOrGenerateNarration", () => {
 
     const result = await getOrGenerateNarration(client, TERM_ID);
 
-    expect(result).toEqual({ status: "unavailable" });
+    expect(result).toMatchObject({ status: "unavailable" });
     expect(uploadNarrationAudio).not.toHaveBeenCalled();
     expect(updates).toEqual([{ status: "failed" }]);
   });
@@ -199,6 +199,45 @@ describe("getOrGenerateNarration", () => {
 
     expect(result).toEqual({ status: "ready", storagePath: "term-1.mp3", contentHash: HASH });
     expect(synthesizeNarrationAudio).not.toHaveBeenCalled();
+  });
+});
+
+describe("generation marker", () => {
+  it("is set when this request ran the provider, and not for a cache hit", async () => {
+    vi.mocked(synthesizeNarrationAudio).mockResolvedValue(Buffer.from("audio"));
+    const generated = await getOrGenerateNarration(
+      makeClient({
+        narrationRowQueue: [null],
+        claimResult: [{ status: "pending", content_hash: HASH, storage_path: null }],
+      }),
+      TERM_ID,
+    );
+    expect(generated).toMatchObject({ status: "ready", generation: { units: expect.any(Number) } });
+
+    const cached = await getOrGenerateNarration(
+      makeClient({
+        narrationRowQueue: [{ status: "ready", content_hash: HASH, storage_path: "term-1.mp3" }],
+        claimResult: [],
+      }),
+      TERM_ID,
+    );
+    expect(cached).not.toHaveProperty("generation");
+  });
+
+  it("is set, marking the attempt, when the provider fails", async () => {
+    vi.mocked(synthesizeNarrationAudio).mockRejectedValue(new Error("provider down"));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const result = await getOrGenerateNarration(
+      makeClient({
+        narrationRowQueue: [null],
+        claimResult: [{ status: "pending", content_hash: HASH, storage_path: null }],
+      }),
+      TERM_ID,
+    );
+    expect(result).toMatchObject({
+      status: "unavailable",
+      generation: { units: expect.any(Number) },
+    });
   });
 });
 

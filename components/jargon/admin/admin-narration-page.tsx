@@ -8,6 +8,8 @@ import {
 import { AdminNav } from "@/components/jargon/admin/admin-nav";
 import { AllowlistManager } from "@/components/jargon/admin/admin-narration-allowlist-manager";
 import { AdminNarrationSync } from "@/components/jargon/admin/admin-narration-sync";
+import { AdminNarrationCaps } from "@/components/jargon/admin/admin-narration-caps";
+import type { NarrationSettings } from "@/lib/jargon/admin/narration-settings";
 import type { AdminNarrationAllowlistRow } from "@/lib/jargon/admin/list-narration-allowlist";
 import type {
   CollectionNarrationCoverage,
@@ -16,6 +18,8 @@ import type {
 
 type AdminNarrationPageClientProps = {
   healthNote: string | null;
+  caps: NarrationSettings["caps"];
+  usageLast24h: NarrationSettings["usageLast24h"];
   enabled: boolean;
   allowlist: AdminNarrationAllowlistRow[];
   coverage: CollectionNarrationCoverage[];
@@ -24,6 +28,8 @@ type AdminNarrationPageClientProps = {
 
 export function AdminNarrationPageClient({
   healthNote,
+  caps,
+  usageLast24h,
   enabled: initialEnabled,
   allowlist: initialAllowlist,
   coverage,
@@ -105,6 +111,8 @@ export function AdminNarrationPageClient({
           aria-label="Enable narration"
         />
       </div>
+
+      <AdminNarrationCaps caps={caps} usageLast24h={usageLast24h} />
 
       <AllowlistManager
         allowlist={allowlist}

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { getFeatureSettings } from "@/lib/ai/feature-settings";
+import { withRunGuard } from "@/lib/ai/run-guard";
+import { countRecentGenerations, recordUsage } from "@/lib/ai/usage";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import {
   getCachedNarration,
@@ -91,14 +94,52 @@ export async function GET(request: Request, { params }: RouteContext) {
   });
 }
 
+/** True when this person has used up the term narration cap. A clip that is
+ *  already cached never counts against it. */
+async function overDailyCap(admin: ReturnType<typeof createAdminClient>, userId: string) {
+  const settings = await getFeatureSettings(admin, "narration_term");
+  if (settings?.dailyCap == null) return false;
+  return (await countRecentGenerations(admin, userId, "narration_term")) >= settings.dailyCap;
+}
+
 /** Explicit "prepare": generates the clip if it is not cached yet. Replies
- *  with JSON only; the audio itself is then fetched with GET. */
+ *  with JSON only; the audio itself is then fetched with GET. Only a request
+ *  that actually calls the speech provider is counted, failures included. */
 export async function POST(request: Request, { params }: RouteContext) {
   const { termId } = await params;
   const denied = await authorize(request, termId);
   if (denied) return denied;
 
-  const result = await getOrGenerateNarration(createAdminClient(), termId);
+  const admin = createAdminClient();
+  const userId = request.headers.get(VERIFIED_USER_HEADER)!;
+
+  const cached = await getCachedNarration(admin, termId);
+  if (cached.status === "ready") return NextResponse.json({ ready: true });
+
+  // One generation per person at a time, so the cap is checked against
+  // everything they have already made before the next one starts.
+  const guarded = await withRunGuard({ admin, userId, feature: "narration_term" }, async () => {
+    if (await overDailyCap(admin, userId)) return "capped" as const;
+
+    const result = await getOrGenerateNarration(admin, termId);
+    if (result.generation) {
+      await recordUsage(admin, {
+        userId,
+        feature: "narration_term",
+        units: result.generation.units,
+        outcome: result.status === "ready" ? "ok" : "failed",
+      });
+    }
+    return result;
+  });
+
+  if (guarded.busy) {
+    return NextResponse.json({ ready: false, busy: true }, { status: 429 });
+  }
+  const result = guarded.value;
+  if (result === "capped") {
+    return NextResponse.json({ ready: false, capped: true }, { status: 429 });
+  }
   if (result.status !== "ready") return NextResponse.json({ ready: false }, { status: 502 });
   return NextResponse.json({ ready: true });
 }

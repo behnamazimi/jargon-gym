@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requireAdminClient } from "@/lib/auth/require-session";
 import {
   cancelNarrationSync,
@@ -29,6 +30,39 @@ export async function setNarrationEnabled(value: boolean): Promise<void> {
   if (data?.length !== NARRATION_FEATURES.length) throw new Error("Couldn't change the switch.");
 
   revalidatePath("/admin/narration");
+}
+
+const capsSchema = z.object({
+  // Blank (null) means no cap for terms; stories always keep a cap, since it is their only cost bound.
+  term: z.number().int().min(1).max(1000).nullable(),
+  story: z.number().int().min(1).max(1000),
+});
+
+export async function setNarrationCaps(input: {
+  term: number | null;
+  story: number;
+}): Promise<{ error?: string }> {
+  const { supabase } = await requireAdminClient();
+
+  const parsed = capsSchema.safeParse(input);
+  if (!parsed.success) return { error: "Enter whole numbers from 1 to 1000. Stories need a cap." };
+
+  const updates = [
+    { feature: "narration_term", dailyCap: parsed.data.term },
+    { feature: "narration_story", dailyCap: parsed.data.story },
+  ];
+  for (const update of updates) {
+    const { data, error } = await supabase
+      .from("ai_feature_settings")
+      .update({ daily_cap: update.dailyCap })
+      .eq("feature", update.feature)
+      .select("feature");
+    if (error) throw error;
+    if (data?.length !== 1) return { error: "Couldn't save the caps." };
+  }
+
+  revalidatePath("/admin/narration");
+  return {};
 }
 
 export async function addToNarrationAllowlist(

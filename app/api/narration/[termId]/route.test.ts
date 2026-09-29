@@ -7,6 +7,10 @@ const getOrGenerateNarration = vi.fn();
 const markNarrationFileMissing = vi.fn();
 const downloadNarrationAudio = vi.fn();
 const termRow = vi.fn();
+const getFeatureSettings = vi.fn();
+const countRecentGenerations = vi.fn();
+const recordUsage = vi.fn();
+const guard = vi.hoisted(() => ({ busy: false, inputs: [] as unknown[] }));
 
 vi.mock("@/lib/narration/access", () => ({ getNarrationAccessForUser }));
 vi.mock("@/lib/narration/service", () => ({
@@ -18,6 +22,15 @@ vi.mock("@/lib/narration/storage", () => ({
   downloadNarrationAudio,
   NarrationAudioMissingError: class NarrationAudioMissingError extends Error {},
 }));
+vi.mock("@/lib/ai/run-guard", () => ({
+  withRunGuard: async (input: unknown, run: () => Promise<unknown>) => {
+    guard.inputs.push(input);
+    if (guard.busy) return { busy: true };
+    return { busy: false, value: await run() };
+  },
+}));
+vi.mock("@/lib/ai/feature-settings", () => ({ getFeatureSettings }));
+vi.mock("@/lib/ai/usage", () => ({ countRecentGenerations, recordUsage }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
@@ -46,6 +59,10 @@ beforeEach(() => {
     storagePath: "term-1.mp3",
     contentHash: "abc",
   });
+  guard.busy = false;
+  guard.inputs = [];
+  getFeatureSettings.mockResolvedValue({ dailyCap: 5 });
+  countRecentGenerations.mockResolvedValue(0);
 });
 
 describe("narration route authorization", () => {
@@ -113,15 +130,92 @@ describe("GET", () => {
 });
 
 describe("POST", () => {
+  beforeEach(() => {
+    getCachedNarration.mockResolvedValue({ status: "unavailable" });
+  });
+
+  const generated = {
+    status: "ready",
+    storagePath: "p",
+    contentHash: "h",
+    generation: { units: 120 },
+  };
+
   it("generates and replies with JSON only", async () => {
+    getOrGenerateNarration.mockResolvedValue(generated);
+    const res = await POST(request("POST"), ctx);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ ready: true });
+  });
+
+  it("serves a cached clip without counting it or checking the cap", async () => {
+    getCachedNarration.mockResolvedValue({ status: "ready", storagePath: "p", contentHash: "h" });
+    const res = await POST(request("POST"), ctx);
+    expect(await res.json()).toEqual({ ready: true });
+    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(countRecentGenerations).not.toHaveBeenCalled();
+    expect(recordUsage).not.toHaveBeenCalled();
+  });
+
+  it("counts a generation for the person who asked for it", async () => {
+    getOrGenerateNarration.mockResolvedValue(generated);
+    await POST(request("POST"), ctx);
+    expect(recordUsage).toHaveBeenCalledWith(
+      {},
+      { userId: "user-1", feature: "narration_term", units: 120, outcome: "ok" },
+    );
+  });
+
+  it("counts a failed generation too", async () => {
+    getOrGenerateNarration.mockResolvedValue({ status: "unavailable", generation: { units: 90 } });
+    const res = await POST(request("POST"), ctx);
+    expect(res.status).toBe(502);
+    expect(recordUsage).toHaveBeenCalledWith(
+      {},
+      { userId: "user-1", feature: "narration_term", units: 90, outcome: "failed" },
+    );
+  });
+
+  it("does not count a request that only waited for someone else's generation", async () => {
     getOrGenerateNarration.mockResolvedValue({
       status: "ready",
       storagePath: "p",
       contentHash: "h",
     });
+    await POST(request("POST"), ctx);
+    expect(recordUsage).not.toHaveBeenCalled();
+  });
+
+  it("checks this person's count for term narration, under a guard for the same feature", async () => {
+    getOrGenerateNarration.mockResolvedValue(generated);
+    await POST(request("POST"), ctx);
+    expect(getFeatureSettings).toHaveBeenCalledWith({}, "narration_term");
+    expect(countRecentGenerations).toHaveBeenCalledWith({}, "user-1", "narration_term");
+    expect(guard.inputs).toEqual([{ admin: {}, userId: "user-1", feature: "narration_term" }]);
+  });
+
+  it("refuses a second generation while the first is still running", async () => {
+    guard.busy = true;
     const res = await POST(request("POST"), ctx);
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ready: true });
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ ready: false, busy: true });
+    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(countRecentGenerations).not.toHaveBeenCalled();
+  });
+
+  it("refuses with 429 and generates nothing once the cap is used up", async () => {
+    countRecentGenerations.mockResolvedValue(5);
+    const res = await POST(request("POST"), ctx);
+    expect(res.status).toBe(429);
+    expect(await res.json()).toEqual({ ready: false, capped: true });
+    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+  });
+
+  it("has no limit when the cap is blank", async () => {
+    getFeatureSettings.mockResolvedValue({ dailyCap: null });
+    getOrGenerateNarration.mockResolvedValue(generated);
+    expect((await POST(request("POST"), ctx)).status).toBe(200);
+    expect(countRecentGenerations).not.toHaveBeenCalled();
   });
 
   it("reports a failed generation", async () => {

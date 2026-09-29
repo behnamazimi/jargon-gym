@@ -2,7 +2,6 @@ import type { DomainLanguage } from "@/lib/jargon/languages";
 
 export const STORY_MIN_TERMS = 3;
 export const STORY_OUTLINE_MAX = 280;
-export const STORY_NARRATION_DAILY_CAP = 20;
 
 export const READING_LEVELS = ["plain", "professional", "expert"] as const;
 export type ReadingLevel = (typeof READING_LEVELS)[number];
