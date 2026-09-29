@@ -213,7 +213,7 @@ as $$
   values (p_user_id, p_feature, gen_random_uuid())
   on conflict (user_id, feature) do update
     set token = excluded.token, started_at = now()
-    where r.started_at < now() - make_interval(secs => p_ttl_seconds)
+    where r.started_at < now() - make_interval(secs => least(greatest(coalesce(p_ttl_seconds, 120), 1), 3600))
   returning r.token;
 $$;
 

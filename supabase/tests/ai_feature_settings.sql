@@ -77,11 +77,17 @@ begin
   end;
   assert v_failed, 'a billable feature needs a credit cost';
 
+  -- A missing timeout falls back to the default rather than locking the user out.
+  v_token := public.begin_ai_run(u2, 'term_evaluation', null);
+  assert v_token is not null, 'a run with a null timeout should start';
+  update public.ai_feature_runs set started_at = now() - interval '5 minutes' where user_id = u2 and feature = 'term_evaluation';
+  assert public.begin_ai_run(u2, 'term_evaluation', null) is not null, 'a null timeout should still expire';
+
   -- Narration and other non-billable features can't be reserved or written to the ledger.
   begin
     perform public.reserve_ai_credits(u1, 'narration_term', 1);
     v_failed := false;
-  exception when others then
+  exception when raise_exception then
     v_failed := true;
   end;
   assert v_failed, 'reserve should refuse a non-billable feature';
@@ -89,7 +95,7 @@ begin
   begin
     perform public.reserve_ai_credits(u1, 'no_such_feature', 1);
     v_failed := false;
-  exception when others then
+  exception when raise_exception then
     v_failed := true;
   end;
   assert v_failed, 'reserve should refuse an unknown feature';

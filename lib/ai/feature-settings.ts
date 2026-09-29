@@ -44,6 +44,8 @@ export async function getFeatureSettings(
   };
 }
 
+/** Needs the admin (service) client: the allowlist table is only readable by
+ *  admins, so a user-scoped client always answers false. */
 export async function isOnFeatureAllowlist(
   client: Client,
   feature: FeatureId,
