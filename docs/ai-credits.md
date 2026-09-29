@@ -72,6 +72,12 @@ provider error, an unparseable reply, a timeout, and a failure while saving a
 story. Credits only stay spent for a quiz or story the user actually received.
 Retries inside one attempt never charge twice. Refunding twice is harmless.
 
+Each refund records a short reason in the refund row's `note`, such as
+`Provider error 429: Quota exceeded` or `StoryGenerationError: ...`. The reason
+comes from the error, is cut to about 200 characters, has anything that looks
+like a key removed, and never includes a prompt or what the user wrote. The
+first reason stays if a refund is attempted twice.
+
 One case isn't covered. If the server process dies between the charge and the
 refund, for example when a request runs past the platform's time limit, the
 credits stay spent. Nothing marks these spends, so they look the same as any
@@ -134,8 +140,10 @@ values ('<user id>', 'grant', 50, 'why');
 The **Is it working?** section of the admin page shows how many people used
 credits, ran out, or then saved their own key, how many credits were spent, and
 how many requests failed and were refunded in the last 24 hours. A warning
-appears when many recent requests failed, which usually means the app's key was
-revoked or ran out of quota. The same numbers, and more, come from SQL:
+appears when many recent requests failed for more than one person, which usually
+means the app's key was revoked or ran out of quota. **Why requests failed** lists
+the most common reasons from the last 24 hours, with how many times each happened
+and how many people it affected. The same numbers, and more, come from SQL:
 
 ```sql
 -- People who have had at least one quiz or story from credits.
@@ -154,6 +162,12 @@ where s.api_key_last4 is not null
     select 1 from public.ai_credit_ledger l
     where l.user_id = s.user_id and l.kind = 'spend'
   );
+
+-- The most common failure reasons in the last day.
+select coalesce(note, 'Unknown reason') as reason, count(*) as failures
+from public.ai_credit_ledger
+where kind = 'refund' and created_at > now() - interval '24 hours'
+group by 1 order by 2 desc limit 10;
 
 -- Total credits spent, leaving out refunds.
 select coalesce(sum(amount), 0) from public.ai_credit_ledger l

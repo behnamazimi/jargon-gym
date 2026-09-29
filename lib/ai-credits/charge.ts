@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { describeFailure } from "./failure-reason";
 import { refundCredits, reserveCredits } from "./repository";
 import type { CreditFeature } from "./types";
 
@@ -31,7 +32,7 @@ export async function runWithCredits<T>(
     return { charged: true, value, remaining: reservation.remaining };
   } catch (error) {
     try {
-      await refundCredits(admin, reservation.ledgerId);
+      await refundCredits(admin, reservation.ledgerId, describeFailure(error));
     } catch (refundError) {
       console.error("Couldn't refund AI credits:", refundError);
     }

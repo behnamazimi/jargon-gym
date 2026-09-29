@@ -26,6 +26,13 @@ export type AiCreditSummary = {
   refundUsers24h: number;
 };
 
+export type AiCreditFailureReason = {
+  reason: string;
+  failures: number;
+  people: number;
+  lastSeen: string;
+};
+
 export async function getAiCreditSettingsForAdmin(client: Client): Promise<AiCreditSettingsView> {
   const { data, error } = await client
     .from("ai_credit_settings")
@@ -76,4 +83,19 @@ export async function getAiCreditSummaryForAdmin(client: Client): Promise<AiCred
     refunds24h: row.refunds_24h,
     refundUsers24h: row.refund_users_24h,
   };
+}
+
+/** The most common reasons for refunds in the last 24 hours. */
+export async function listAiCreditFailureReasonsForAdmin(
+  client: Client,
+): Promise<AiCreditFailureReason[]> {
+  const { data, error } = await client.rpc("admin_ai_credit_failure_reasons", { p_limit: 5 });
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    reason: row.reason,
+    failures: row.failures,
+    people: row.people,
+    lastSeen: row.last_seen,
+  }));
 }

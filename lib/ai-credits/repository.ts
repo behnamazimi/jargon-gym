@@ -51,7 +51,14 @@ export async function reserveCredits(
   };
 }
 
-export async function refundCredits(admin: Client, ledgerId: number): Promise<void> {
-  const { error } = await admin.rpc("refund_ai_credits", { p_ledger_id: ledgerId });
+export async function refundCredits(
+  admin: Client,
+  ledgerId: number,
+  reason: string,
+): Promise<void> {
+  const { error } = await admin.rpc("refund_ai_credits", {
+    p_ledger_id: ledgerId,
+    p_reason: reason,
+  });
   if (error) throw error;
 }
