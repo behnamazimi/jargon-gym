@@ -23,6 +23,8 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 **Status:**
 
+- Phase 5: merged in #120, 2026-09-29. Accepted: `admin_list_collections` is capped at 1000 rows by PostgREST, so past that many collections the taken-slug set is incomplete and publish/slug can fail with a plain message; direct writes (`setBuiltin`, unpublish, slug) still have no audit rows (phase 9); every collection action now checks ownership itself, because the publish function bypasses row level security.
+
 - Phase 4: merged in #119, 2026-09-29 (migration `20260930110000_admin_rpcs.sql`, deployed by the "Deploy Supabase migrations" run after CI). Accepted: `actor_email` snapshots outlive account deletion; grant notes in audit details are bounded by the app schema only; PostgREST caps `admin_list_collections` at 1000 rows. Found on the way: admins could not read other people's private collections through RLS (now via `admin_list_collections`).
 
 - Phase 3: merged in #118, 2026-09-29. Accepted gaps: narration's enabled flag reaches the sync panel only when the refreshed page arrives (no lifted optimistic value); credit settings can flash "changed" for a frame after saving; the sync panel keeps local copies of coverage and job until the next poll.

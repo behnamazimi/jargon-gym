@@ -1,10 +1,8 @@
-import { Bug } from "lucide-react";
 import { Suspense } from "react";
-import { getDebugSetupData } from "@/app/(private)/jargon/debug/actions";
+import { getDebugSetupData } from "@/app/(private)/admin/system/queue/actions";
 import { DebugQueueEmpty } from "@/components/jargon/debug/debug-queue-page";
 import { DebugQueueShell } from "@/components/jargon/debug/debug-queue-shell";
-import { PageHeader } from "@/components/jargon/page-header";
-import { PageShell } from "@/components/page-container";
+import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { PanelSkeleton } from "@/components/page-skeleton";
 
 async function DebugLayoutBody({ children }: { children: React.ReactNode }) {
@@ -28,16 +26,14 @@ async function DebugLayoutBody({ children }: { children: React.ReactNode }) {
 
 export default function DebugLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PageShell innerClassName="space-y-8">
-      <PageHeader
-        icon={Bug}
+    <>
+      <AdminPageHeader
         title="Queue debug"
-        description="Every term's TRACE score and signals — for debugging the ranking, not for studying."
-        compactOnPhone
+        description="Every term's TRACE score and signals, for debugging the ranking, not for studying. Shows your own queue."
       />
       <Suspense fallback={<PanelSkeleton />}>
         <DebugLayoutBody>{children}</DebugLayoutBody>
       </Suspense>
-    </PageShell>
+    </>
   );
 }

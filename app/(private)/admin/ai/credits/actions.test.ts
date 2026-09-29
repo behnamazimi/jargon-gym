@@ -45,13 +45,8 @@ vi.mock("@/lib/auth/require-session", async () => {
   };
 });
 
-const {
-  grantAiCredits,
-  resetAiCredits,
-  saveAiCreditSettings,
-  setAiCreditsEnabled,
-  setAiFeatureEnabled,
-} = await import("./actions");
+const { grantAiCredits, resetAiCredits, saveAiCreditSettings, setAiCreditsEnabled } =
+  await import("./actions");
 
 beforeEach(() => {
   state.admin = true;
@@ -81,7 +76,7 @@ describe("grantAiCredits", () => {
         args: { p_user_id: "u1", p_amount: 25, p_note: "beta" },
       },
     ]);
-    expect(state.revalidated).toEqual(["/admin/ai-credits"]);
+    expect(state.revalidated).toEqual(["/admin", "/admin/ai", "/admin/ai/credits"]);
   });
 
   it("returns readable messages for expected mistakes, without granting", async () => {
@@ -143,34 +138,5 @@ describe("the other admin actions", () => {
     expect(await setAiCreditsEnabled(true)).toEqual({ ok: false, error: "Admins only." });
     expect(await resetAiCredits("u1")).toEqual({ ok: false, error: "Admins only." });
     expect(state.rpcCalls).toEqual([]);
-  });
-});
-
-describe("setAiFeatureEnabled", () => {
-  it("writes only the switch for a known feature", async () => {
-    expect(await setAiFeatureEnabled("quiz", false)).toMatchObject({ ok: true });
-    expect(state.featureUpdates).toEqual([{ enabled: false }]);
-  });
-
-  it("refuses features that aren't part of the card", async () => {
-    expect(await setAiFeatureEnabled("narration_term", true)).toEqual({
-      ok: false,
-      error: "Unknown feature.",
-    });
-    expect(state.featureUpdates).toEqual([]);
-  });
-
-  it("reports an update that changed nothing, as a non-admin's would", async () => {
-    state.featureRows = [];
-    expect(await setAiFeatureEnabled("story", true)).toEqual({
-      ok: false,
-      error: "Couldn't change that switch.",
-    });
-  });
-
-  it("keeps non-admins out", async () => {
-    state.admin = false;
-    expect(await setAiFeatureEnabled("quiz", true)).toMatchObject({ ok: false });
-    expect(state.featureUpdates).toEqual([]);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { saveAiCreditSettings } from "@/app/(private)/admin/ai-credits/actions";
+import { saveAiCreditSettings } from "@/app/(private)/admin/ai/credits/actions";
 import { AdminSection } from "@/components/admin/admin-section";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { useAdminAction } from "@/hooks/use-admin-action";

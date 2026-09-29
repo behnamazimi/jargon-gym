@@ -15,7 +15,6 @@ export function isMorePath(pathname: string): boolean {
     pathname.startsWith("/jargon/import") ||
     pathname.startsWith("/jargon/mastery") ||
     pathname.startsWith("/jargon/settings") ||
-    pathname.startsWith("/jargon/debug") ||
     pathname.startsWith("/admin")
   );
 }

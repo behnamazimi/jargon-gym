@@ -1,4 +1,4 @@
-import type { DebugEventRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugEventRow } from "@/app/(private)/admin/system/queue/actions";
 import { formatEventLine } from "./format";
 
 /** One term's full review_events history, oldest first — a reveal with no

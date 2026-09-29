@@ -15,7 +15,10 @@ import {
   type AttentionFlag,
   type TraceEventName,
 } from "@/lib/trace";
-import type { DebugScoredRow, PassFailCounts } from "@/app/(private)/jargon/debug/debug-row-types";
+import type {
+  DebugScoredRow,
+  PassFailCounts,
+} from "@/app/(private)/admin/system/queue/debug-row-types";
 
 type Client = SupabaseClient<Database>;
 

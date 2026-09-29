@@ -1,4 +1,4 @@
-import type { DebugScoredRow } from "@/app/(private)/jargon/debug/actions";
+import type { DebugScoredRow } from "@/app/(private)/admin/system/queue/actions";
 import type { PickContext } from "@/lib/trace-queue";
 import type { StudyCollection } from "@/lib/study/types";
 

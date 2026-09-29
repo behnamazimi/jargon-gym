@@ -9,8 +9,9 @@ import {
   getCalibrationSummaryAction,
   getDebugSetupData,
   listDebugScoredTermsAction,
-} from "@/app/(private)/jargon/debug/actions";
+} from "@/app/(private)/admin/system/queue/actions";
 import { PanelSkeleton } from "@/components/page-skeleton";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 import type { PickContext } from "@/lib/trace-queue";
 
 type DebugView = "queue" | "calibration";
@@ -73,7 +74,8 @@ async function DebugQueueTableContent({
   );
 }
 
-export default async function JargonDebugPage({ searchParams }: PageProps) {
+export default async function AdminQueuePage({ searchParams }: PageProps) {
+  await requireAdminPage();
   const [{ context: contextParam, domain: domainParam, view: viewParam }, setup] =
     await Promise.all([searchParams, getDebugSetupData()]);
 

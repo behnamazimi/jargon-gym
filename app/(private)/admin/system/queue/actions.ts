@@ -2,12 +2,12 @@ export {
   getDebugSetupData,
   listDebugScoredTermsAction,
   type DebugScoredRow,
-} from "@/app/(private)/jargon/debug/actions-queue";
+} from "@/app/(private)/admin/system/queue/actions-queue";
 export {
   getTermEventHistoryAction,
   type DebugEventRow,
-} from "@/app/(private)/jargon/debug/actions-events";
+} from "@/app/(private)/admin/system/queue/actions-events";
 export {
   getCalibrationSummaryAction,
   type CalibrationViewData,
-} from "@/app/(private)/jargon/debug/actions-calibration";
+} from "@/app/(private)/admin/system/queue/actions-calibration";

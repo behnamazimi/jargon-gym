@@ -1,4 +1,4 @@
-import type { CalibrationViewData } from "@/app/(private)/jargon/debug/actions";
+import type { CalibrationViewData } from "@/app/(private)/admin/system/queue/actions";
 import { ActivityTimeline } from "./debug-calibration-tables";
 import {
   AbandonedReveals,

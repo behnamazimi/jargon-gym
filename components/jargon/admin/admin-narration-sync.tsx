@@ -7,7 +7,7 @@ import {
   getNarrationSyncStatus,
   resumeNarrationSync,
   startNarrationSync,
-} from "@/app/(private)/admin/narration/actions";
+} from "@/app/(private)/admin/ai/narration/actions";
 import { AdminSection } from "@/components/admin/admin-section";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { JobPanel, SyncToolbar } from "@/components/jargon/admin/admin-narration-sync-parts";

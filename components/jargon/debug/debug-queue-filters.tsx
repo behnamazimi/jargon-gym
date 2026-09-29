@@ -51,7 +51,7 @@ export function debugQueueHref({ context, domainId }: { context: PickContext; do
   if (context !== "review") params.set("context", context);
   if (domainId !== "all") params.set("domain", domainId);
   const query = params.toString();
-  return query ? `/jargon/debug?${query}` : "/jargon/debug";
+  return query ? `/admin/system/queue?${query}` : "/admin/system/queue";
 }
 
 export function debugViewHref({
@@ -68,7 +68,7 @@ export function debugViewHref({
   if (context !== "review") params.set("context", context);
   if (domainId !== "all") params.set("domain", domainId);
   const query = params.toString();
-  return query ? `/jargon/debug?${query}` : "/jargon/debug";
+  return query ? `/admin/system/queue?${query}` : "/admin/system/queue";
 }
 
 /** Compact toolbar: which tier ranks these terms (Read/Review/Quiz, as a

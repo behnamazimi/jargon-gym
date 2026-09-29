@@ -24,13 +24,21 @@ describe("admin sections", () => {
     expect(isSectionActive("/admin/collections-archive", collections)).toBe(false);
   });
 
+  it("keeps the AI features page apart from its sub-pages", () => {
+    const hub = bySection("/admin/ai");
+    expect(isSectionActive("/admin/ai", hub)).toBe(true);
+    expect(isSectionActive("/admin/ai/credits", hub)).toBe(false);
+    expect(isSectionActive("/admin/ai/credits", bySection("/admin/ai/credits"))).toBe(true);
+    expect(isSectionActive("/admin/ai/narration", bySection("/admin/ai/narration"))).toBe(true);
+  });
+
   it("honours extra prefixes", () => {
     const section = {
-      href: "/admin/ai",
-      label: "AI",
+      href: "/admin/x",
+      label: "X",
       icon: sections[0]!.icon,
-      matchPrefixes: ["/admin/narration"],
+      matchPrefixes: ["/admin/y"],
     };
-    expect(isSectionActive("/admin/narration", section)).toBe(true);
+    expect(isSectionActive("/admin/y/z", section)).toBe(true);
   });
 });

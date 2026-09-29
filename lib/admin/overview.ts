@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAiCreditSummaryForAdmin, type AiCreditSummary } from "@/lib/ai-credits/admin";
 import { refundsLookHigh } from "@/lib/ai-credits/health";
 import { featureHealth } from "@/lib/ai/health";
+import { AI_FEATURE_META } from "./ai-features";
 import { FEATURE_IDS, type FeatureId } from "@/lib/ai/registry";
 import {
   readCreditsEnabled,
@@ -21,28 +22,12 @@ type AttentionItem = {
   href: string;
 };
 
-const FEATURE_LABELS: Record<FeatureId, string> = {
-  quiz: "AI quiz",
-  story: "Stories",
-  term_evaluation: "Term evaluation",
-  narration_term: "Term narration",
-  narration_story: "Story narration",
-};
-
 const HEALTH_TITLES: Record<FeatureId, string> = {
   quiz: "The app's AI key isn't set up",
   story: "The app's AI key isn't set up",
   term_evaluation: "Term evaluation isn't set up",
   narration_term: "Narration isn't set up",
   narration_story: "Narration isn't set up",
-};
-
-const FEATURE_HREFS: Record<FeatureId, string> = {
-  quiz: "/admin/ai-credits",
-  story: "/admin/ai-credits",
-  term_evaluation: "/admin/ai-credits",
-  narration_term: "/admin/narration",
-  narration_story: "/admin/narration",
 };
 
 /** What the Overview is built from. `null` means that source couldn't be read. */
@@ -81,7 +66,7 @@ function healthItems(): AttentionItem[] {
       tone: "error",
       title: HEALTH_TITLES[feature],
       detail: health.note,
-      href: FEATURE_HREFS[feature],
+      href: AI_FEATURE_META[feature].manageHref,
     });
   }
   return items;
@@ -98,7 +83,7 @@ function creditItems(input: OverviewInput): AttentionItem[] {
       tone: "error",
       title: "Many AI requests failed and were refunded",
       detail: "Check that the app's AI key is valid and has quota.",
-      href: "/admin/ai-credits",
+      href: "/admin/ai/credits",
     });
   }
 
@@ -110,7 +95,7 @@ function creditItems(input: OverviewInput): AttentionItem[] {
       tone: "warning",
       title: "AI credits are switched off",
       detail: "Only people with their own key can use AI quizzes and Stories.",
-      href: "/admin/ai-credits",
+      href: "/admin/ai/credits",
     });
   }
 
@@ -121,7 +106,7 @@ function creditItems(input: OverviewInput): AttentionItem[] {
       tone: "info",
       title: `${count} ${count === 1 ? "person has" : "people have"} run out of AI credits`,
       detail: "Grant more credits if that's not what you want.",
-      href: "/admin/ai-credits",
+      href: "/admin/ai/credits",
     });
   }
   return items;
@@ -132,9 +117,9 @@ function featureItems(featuresOff: FeatureId[] | null): AttentionItem[] {
   return featuresOff.map((feature) => ({
     id: `off-${feature}`,
     tone: "warning",
-    title: `${FEATURE_LABELS[feature]} is switched off`,
+    title: `${AI_FEATURE_META[feature].label} is switched off`,
     detail: "It is off for everyone.",
-    href: FEATURE_HREFS[feature],
+    href: AI_FEATURE_META[feature].manageHref,
   }));
 }
 
@@ -165,7 +150,7 @@ export function buildAttentionItems(input: OverviewInput): AttentionItem[] {
             tone: "warning" as const,
             title: "Narration sync needs attention",
             detail: input.syncNote,
-            href: "/admin/narration",
+            href: "/admin/ai/narration",
           },
         ]
       : []),

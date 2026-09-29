@@ -1,6 +1,6 @@
 "use client";
 
-import { setNarrationEnabled } from "@/app/(private)/admin/narration/actions";
+import { setNarrationEnabled } from "@/app/(private)/admin/ai/narration/actions";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminSettingRow } from "@/components/admin/admin-setting-row";
 import { AdminSwitch } from "@/components/admin/admin-switch";
