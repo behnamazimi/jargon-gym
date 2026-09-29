@@ -1,4 +1,4 @@
--- claim_audio_job: supersede then insert, version rule, path keys, mirror guard, M6.
+-- claim_audio_job: supersede then insert, version rule, path keys, M6.
 -- One transaction that rolls back:
 --   psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/audio_jobs_claim.sql
 begin;
@@ -14,24 +14,6 @@ begin
   insert into public.referral_codes (code) values (v_code);
   insert into auth.users (id, email, raw_user_meta_data, aud, role)
   values (v_id, p_email, jsonb_build_object('referral_code', v_code), 'authenticated', 'authenticated');
-  return v_id;
-end;
-$$;
-
-create function pg_temp.make_story(p_user uuid, p_status text, p_path text, p_requested timestamptz)
-returns uuid
-language plpgsql
-as $$
-declare
-  v_id uuid := gen_random_uuid();
-begin
-  insert into public.stories
-    (id, user_id, language, format, tone, reading_level, cefr_level, title, segments, term_ids,
-     narration_status, narration_path, narration_requested_at)
-  values
-    (v_id, p_user, 'en', 'email', 'neutral', 'plain', 'B1', 'T', '[]'::jsonb,
-     array[gen_random_uuid(), gen_random_uuid(), gen_random_uuid()],
-     p_status, p_path, p_requested);
   return v_id;
 end;
 $$;
@@ -217,34 +199,7 @@ begin
   assert (select storage_path from public.audio_jobs
           where subject_id = v_story and status = 'superseded') = 'stories/old.mp3';
 
-  -- The current app can save the same version-1 path again after a supersede.
   v_subject := gen_random_uuid();
-  insert into public.terms (id, term, category, definition, domain_id)
-  values (v_subject, 'Reuse', 'c', 'd', v_domain);
-  insert into public.term_narrations (term_id, content_hash, status, storage_path)
-  values (v_subject, 'h', 'ready', v_subject::text || '.mp3');
-  delete from public.term_narrations where term_id = v_subject;
-  perform public.claim_term_narration(v_subject, 'h2');
-  update public.term_narrations
-  set status = 'ready', storage_path = v_subject::text || '.mp3'
-  where term_id = v_subject;
-  assert (select status || ':' || storage_path from public.audio_jobs
-          where subject_id = v_subject and status <> 'superseded')
-    = 'ready:' || v_subject::text || '.mp3',
-    'a reused version-1 path is mirrored onto the new live job';
-  assert (select count(*) from public.audio_jobs
-          where subject_id = v_subject and storage_path = v_subject::text || '.mp3') = 2,
-    'the superseded job keeps that same path';
-
-  -- A story's version-2 job is not rewritten when the old columns change.
-  v_story := pg_temp.make_story(u_owner, 'none', null, null);
-  select * into r from public.claim_audio_job('story', v_story, u_owner, 'story-v2', 2, false);
-  update public.stories
-  set narration_status = 'ready', narration_path = 'stories/u/clash.mp3', narration_requested_at = now()
-  where id = v_story;
-  assert (select content_hash || ':' || status || ':' || hash_version::text
-          from public.audio_jobs where id = r.id) = 'story-v2:pending:2',
-    'a story mirror does not clobber a version-2 job';
 
   -- Path keys include the hash and the job id, and differ per attempt.
   v_new := gen_random_uuid();
@@ -254,29 +209,6 @@ begin
   assert v_path <> v_other;
   assert v_path = 'audio/term/' || v_subject::text || '/2/abc/' || v_new::text || '.mp3';
   assert v_path like 'audio/%';
-
-  -- A version-2 live job is not rewritten when the old table changes.
-  v_subject := gen_random_uuid();
-  insert into public.terms (id, term, category, definition, domain_id)
-  values (v_subject, 'Guarded', 'c', 'd', v_domain);
-  select * into r from public.claim_audio_job('term', v_subject, null, 'guarded', 2, false);
-  insert into public.term_narrations (term_id, content_hash, status, storage_path)
-  values (v_subject, 'from-old', 'ready', v_subject::text || '.mp3');
-  assert (select content_hash || ':' || status || ':' || hash_version::text
-          from public.audio_jobs where id = r.id) = 'guarded:pending:2',
-    'a mirror does not clobber a version-2 job';
-  assert (select storage_path from public.audio_jobs where id = r.id) is null;
-
-  -- A version-1 job still follows the old table.
-  update public.audio_jobs
-  set hash_version = 1, content_hash = 'from-old', status = 'ready',
-      storage_path = v_subject::text || '.mp3'
-  where id = r.id;
-  update public.term_narrations
-  set status = 'failed', content_hash = 'from-old-2', storage_path = v_subject::text || '.mp3'
-  where term_id = v_subject;
-  assert (select status || ':' || content_hash from public.audio_jobs where id = r.id) = 'failed:from-old-2',
-    'a version-1 job is still mirrored';
 
   -- Grants, and the claim never mentions the credit ledger.
   assert has_function_privilege('service_role', 'public.claim_audio_job(text,uuid,uuid,text,integer,boolean)', 'execute');

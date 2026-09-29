@@ -36,15 +36,12 @@ async function authorize(request: Request, params: RouteContext["params"]) {
 }
 
 /** Serves the story's audio once it exists. It never generates: the player
- *  prepares it with a POST first. `?prepare` is kept for one release for
- *  players opened before this change; it answers 204 when the audio is ready
- *  and 404 otherwise, without streaming. */
+ *  prepares it with a POST first. */
 export async function GET(request: Request, { params }: RouteContext) {
   const auth = await authorize(request, params);
   if (auth.denied) return auth.denied;
 
-  const probe = new URL(request.url).searchParams.has("prepare");
-  return serveAudio(request, auth.admin, auth.subject, { probe });
+  return serveAudio(request, auth.admin, auth.subject);
 }
 
 /** Explicit "prepare": makes the audio if it does not exist yet.

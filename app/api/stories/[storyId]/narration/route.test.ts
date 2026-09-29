@@ -68,13 +68,7 @@ describe("story narration authorization", () => {
 describe("GET", () => {
   it("serves through the shared handler and never generates", async () => {
     expect((await GET(request("GET"), ctx)).status).toBe(200);
-    expect(serveAudio).toHaveBeenCalledWith(expect.any(Request), {}, SUBJECT, { probe: false });
-    expect(getOrCreateAudio).not.toHaveBeenCalled();
-  });
-
-  it("keeps ?prepare as a probe for players opened before the change", async () => {
-    await GET(request("GET", "?prepare=1"), ctx);
-    expect(serveAudio).toHaveBeenCalledWith(expect.any(Request), {}, SUBJECT, { probe: true });
+    expect(serveAudio).toHaveBeenCalledWith(expect.any(Request), {}, SUBJECT);
     expect(getOrCreateAudio).not.toHaveBeenCalled();
   });
 });

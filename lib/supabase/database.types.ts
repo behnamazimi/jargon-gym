@@ -102,8 +102,6 @@ export type Database = {
           enabled: boolean;
           id: boolean;
           monthly_refill: number;
-          quiz_credits_per_question: number;
-          story_credits_per_term: number;
           updated_at: string;
         };
         Insert: {
@@ -111,8 +109,6 @@ export type Database = {
           enabled?: boolean;
           id?: boolean;
           monthly_refill?: number;
-          quiz_credits_per_question?: number;
-          story_credits_per_term?: number;
           updated_at?: string;
         };
         Update: {
@@ -120,8 +116,6 @@ export type Database = {
           enabled?: boolean;
           id?: boolean;
           monthly_refill?: number;
-          quiz_credits_per_question?: number;
-          story_credits_per_term?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -389,57 +383,6 @@ export type Database = {
           },
         ];
       };
-      narration_allowlist: {
-        Row: {
-          added_by: string | null;
-          created_at: string;
-          user_id: string;
-        };
-        Insert: {
-          added_by?: string | null;
-          created_at?: string;
-          user_id: string;
-        };
-        Update: {
-          added_by?: string | null;
-          created_at?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "narration_allowlist_added_by_fkey";
-            columns: ["added_by"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "narration_allowlist_user_id_fkey";
-            columns: ["user_id"];
-            isOneToOne: true;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      narration_settings: {
-        Row: {
-          enabled: boolean;
-          id: boolean;
-          updated_at: string;
-        };
-        Insert: {
-          enabled?: boolean;
-          id?: boolean;
-          updated_at?: string;
-        };
-        Update: {
-          enabled?: boolean;
-          id?: boolean;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
       narration_sync_jobs: {
         Row: {
           created_at: string;
@@ -680,9 +623,6 @@ export type Database = {
           format: string;
           id: string;
           language: string;
-          narration_path: string | null;
-          narration_requested_at: string | null;
-          narration_status: string;
           new_term_ids: string[];
           outline: string | null;
           piece_length: string;
@@ -703,9 +643,6 @@ export type Database = {
           format: string;
           id?: string;
           language: string;
-          narration_path?: string | null;
-          narration_requested_at?: string | null;
-          narration_status?: string;
           new_term_ids?: string[];
           outline?: string | null;
           piece_length?: string;
@@ -726,9 +663,6 @@ export type Database = {
           format?: string;
           id?: string;
           language?: string;
-          narration_path?: string | null;
-          narration_requested_at?: string | null;
-          narration_status?: string;
           new_term_ids?: string[];
           outline?: string | null;
           piece_length?: string;
@@ -900,41 +834,6 @@ export type Database = {
           },
           {
             foreignKeyName: "term_evaluations_term_id_fkey";
-            columns: ["term_id"];
-            isOneToOne: true;
-            referencedRelation: "terms";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      term_narrations: {
-        Row: {
-          content_hash: string;
-          created_at: string;
-          status: string;
-          storage_path: string | null;
-          term_id: string;
-          updated_at: string;
-        };
-        Insert: {
-          content_hash: string;
-          created_at?: string;
-          status?: string;
-          storage_path?: string | null;
-          term_id: string;
-          updated_at?: string;
-        };
-        Update: {
-          content_hash?: string;
-          created_at?: string;
-          status?: string;
-          storage_path?: string | null;
-          term_id?: string;
-          updated_at?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "term_narrations_term_id_fkey";
             columns: ["term_id"];
             isOneToOne: true;
             referencedRelation: "terms";
@@ -1335,9 +1234,7 @@ export type Database = {
         Args: { p_user_id: string };
         Returns: {
           enabled: boolean;
-          quiz_credits_per_question: number;
           remaining: number;
-          story_credits_per_term: number;
           total: number;
         }[];
       };
@@ -1351,7 +1248,6 @@ export type Database = {
         };
         Returns: string;
       };
-      backfill_audio_jobs: { Args: never; Returns: undefined };
       begin_ai_run: {
         Args: { p_feature: string; p_ttl_seconds?: number; p_user_id: string };
         Returns: string;
@@ -1398,23 +1294,6 @@ export type Database = {
           term_count: number;
           term_id: string;
         }[];
-      };
-      claim_term_narration: {
-        Args: { p_content_hash: string; p_term_id: string };
-        Returns: {
-          content_hash: string;
-          created_at: string;
-          status: string;
-          storage_path: string | null;
-          term_id: string;
-          updated_at: string;
-        }[];
-        SetofOptions: {
-          from: "*";
-          to: "term_narrations";
-          isOneToOne: false;
-          isSetofReturn: true;
-        };
       };
       complete_telegram_link: {
         Args: { p_chat_id: number; p_token_hash: string };
@@ -1526,7 +1405,6 @@ export type Database = {
         Args: { p_feature: string; p_user_id: string };
         Returns: boolean;
       };
-      has_narration_access: { Args: { p_user_id: string }; Returns: boolean };
       is_admin: { Args: never; Returns: boolean };
       is_domain_in_collection: {
         Args: { p_domain_id: string };
@@ -1543,9 +1421,7 @@ export type Database = {
         Args: never;
         Returns: {
           enabled: boolean;
-          quiz_credits_per_question: number;
           remaining: number;
-          story_credits_per_term: number;
           total: number;
         }[];
       };
@@ -1726,10 +1602,6 @@ export type Database = {
       };
       set_term_marked_known: {
         Args: { p_marked: boolean; p_term_id: string; p_user_id: string };
-        Returns: undefined;
-      };
-      sync_narration_features_from_old_tables: {
-        Args: never;
         Returns: undefined;
       };
       update_telegram_cadence: {

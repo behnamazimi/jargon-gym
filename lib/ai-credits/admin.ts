@@ -34,21 +34,31 @@ export type AiCreditFailureReason = {
 };
 
 export async function getAiCreditSettingsForAdmin(client: Client): Promise<AiCreditSettingsView> {
-  const { data, error } = await client
-    .from("ai_credit_settings")
-    .select(
-      "enabled, default_allowance, monthly_refill, quiz_credits_per_question, story_credits_per_term",
-    )
-    .eq("id", true)
-    .single();
+  const [{ data, error }, { data: prices, error: pricesError }] = await Promise.all([
+    client
+      .from("ai_credit_settings")
+      .select("enabled, default_allowance, monthly_refill")
+      .eq("id", true)
+      .single(),
+    client
+      .from("ai_feature_settings")
+      .select("feature, credit_cost")
+      .in("feature", ["quiz", "story"]),
+  ]);
   if (error) throw error;
+  if (pricesError) throw pricesError;
+
+  const price = (feature: string) => prices?.find((row) => row.feature === feature)?.credit_cost;
+  const quiz = price("quiz");
+  const story = price("story");
+  if (quiz == null || story == null) throw new Error("AI credit prices are not set.");
 
   return {
     enabled: data.enabled,
     defaultAllowance: data.default_allowance,
     monthlyRefill: data.monthly_refill,
-    quizCreditsPerQuestion: data.quiz_credits_per_question,
-    storyCreditsPerTerm: data.story_credits_per_term,
+    quizCreditsPerQuestion: quiz,
+    storyCreditsPerTerm: story,
   };
 }
 
