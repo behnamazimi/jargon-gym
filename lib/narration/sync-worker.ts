@@ -1,10 +1,11 @@
 import { after } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getOrCreateAudio } from "@/lib/ai/speech/audio";
+import { loadTermSubject } from "@/lib/ai/speech/subjects";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import type { Database } from "@/lib/supabase/database.types";
 import { isNarrationEnabled } from "./feature";
 import { getNarrationSyncSecret, SYNC_SOURCE_HEADER } from "./sync-auth";
-import { getOrGenerateNarration } from "./service";
 import { isActiveNarrationSyncStatus, NARRATION_SYNC_ACTIVE_STATUSES } from "./sync-shared";
 
 type AdminClient = SupabaseClient<Database>;
@@ -15,6 +16,8 @@ type WaveResult = { generated: boolean; lastError: string | null };
 const NARRATION_SYNC_INVOKE_BUDGET_MS = 45_000;
 const WAVE_CONCURRENCY = 4;
 const LEASE_MS = 120_000;
+/** A term another request is already generating is waited for this long. */
+const WAIT_FOR_OTHER_MS = 30_000;
 
 async function markJobFailed(admin: AdminClient, jobId: string, message: string) {
   await admin
@@ -138,8 +141,11 @@ async function peekSlice(
 }
 
 async function generateTerm(admin: AdminClient, termId: string): Promise<WaveResult> {
-  const result = await getOrGenerateNarration(admin, termId);
-  const generated = result.status === "ready";
+  const subject = await loadTermSubject(admin, termId);
+  const result = subject
+    ? await getOrCreateAudio(admin, subject, { waitMs: WAIT_FOR_OTHER_MS })
+    : null;
+  const generated = result?.status === "ready";
   return { generated, lastError: generated ? null : `Unavailable for term ${termId}` };
 }
 

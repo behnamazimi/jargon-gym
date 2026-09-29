@@ -1,38 +1,33 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { isCurrentJob } from "@/lib/ai/speech/audio";
+import type { AudioJob } from "@/lib/ai/speech/types";
+import { parseLanguage } from "@/lib/jargon/languages";
 import { computeContentHash } from "./content-hash";
+import { computeContentHashV2 } from "./content-hash-v2";
 import type { CollectionNarrationCoverage } from "./sync-shared";
 import type { NarratedTermFields } from "./types";
 
 type AdminClient = SupabaseClient<Database>;
 
-type TermRow = { id: string; domain_id: string } & NarratedTermFields;
+type TermRow = {
+  id: string;
+  domain_id: string;
+  domains: { language: string } | null;
+} & NarratedTermFields;
 
-type NarrationCacheRow = {
-  term_id: string;
-  status: string;
-  content_hash: string;
-  storage_path: string | null;
-};
+type JobRow = Pick<
+  AudioJob,
+  "subject_id" | "status" | "hash_version" | "content_hash" | "storage_path"
+>;
 
 const TERM_FIELD_COLUMNS =
-  "id, domain_id, term, definition, example, mental_model, discussion, anti_example, controversy";
+  "id, domain_id, term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)";
 
 /** PostgREST's default max-rows cap. */
 const PAGE_SIZE = 1000;
 /** Keep `.in()` query strings under Kong/PostgREST URL limits. */
 const IN_FILTER_CHUNK = 80;
-
-export function isCurrentNarration(
-  fields: NarratedTermFields,
-  row: { status: string; content_hash: string; storage_path: string | null } | null | undefined,
-): boolean {
-  return (
-    row?.status === "ready" &&
-    row.content_hash === computeContentHash(fields) &&
-    Boolean(row.storage_path)
-  );
-}
 
 function fieldsFromTerm(term: NarratedTermFields): NarratedTermFields {
   return {
@@ -44,6 +39,15 @@ function fieldsFromTerm(term: NarratedTermFields): NarratedTermFields {
     anti_example: term.anti_example,
     controversy: term.controversy,
   };
+}
+
+export function isCurrentAudio(term: TermRow, job: JobRow | undefined): boolean {
+  if (!job) return false;
+  const fields = fieldsFromTerm(term);
+  return isCurrentJob(job, {
+    contentHash: computeContentHashV2(fields, parseLanguage(term.domains?.language)),
+    legacyHash: computeContentHash(fields),
+  });
 }
 
 function chunkIds(ids: string[]): string[][] {
@@ -89,22 +93,19 @@ async function fetchAllTermsForDomains(
   return terms;
 }
 
-async function loadNarrationRows(
-  admin: AdminClient,
-  termIds: string[],
-): Promise<Map<string, NarrationCacheRow>> {
-  const byTermId = new Map<string, NarrationCacheRow>();
-  if (termIds.length === 0) return byTermId;
-
+async function loadLiveJobs(admin: AdminClient, termIds: string[]): Promise<Map<string, JobRow>> {
+  const byTermId = new Map<string, JobRow>();
   for (const chunk of chunkIds(termIds)) {
     const { data, error } = await admin
-      .from("term_narrations")
-      .select("term_id, status, content_hash, storage_path")
-      .in("term_id", chunk)
-      .range(0, chunk.length - 1);
+      .from("audio_jobs")
+      .select("subject_id, status, hash_version, content_hash, storage_path")
+      .eq("subject_type", "term")
+      .neq("status", "superseded")
+      .in("subject_id", chunk)
+      .range(0, chunk.length * 2 - 1);
     if (error) throw error;
     for (const row of data ?? []) {
-      byTermId.set(row.term_id, row);
+      byTermId.set(row.subject_id, row);
     }
   }
   return byTermId;
@@ -117,14 +118,12 @@ export async function listMissingNarrationTermIds(
   const terms = await fetchAllTermsForDomain(admin, domainId);
   if (terms.length === 0) return [];
 
-  const narrations = await loadNarrationRows(
+  const jobs = await loadLiveJobs(
     admin,
     terms.map((term) => term.id),
   );
 
-  return terms
-    .filter((term) => !isCurrentNarration(fieldsFromTerm(term), narrations.get(term.id)))
-    .map((term) => term.id);
+  return terms.filter((term) => !isCurrentAudio(term, jobs.get(term.id))).map((term) => term.id);
 }
 
 export async function listCollectionNarrationCoverage(
@@ -137,14 +136,14 @@ export async function listCollectionNarrationCoverage(
     admin,
     collections.map((collection) => collection.id),
   );
-  const narrations = await loadNarrationRows(
+  const jobs = await loadLiveJobs(
     admin,
     terms.map((term) => term.id),
   );
 
   const missingByDomain = new Map<string, number>();
   for (const term of terms) {
-    if (isCurrentNarration(fieldsFromTerm(term), narrations.get(term.id))) continue;
+    if (isCurrentAudio(term, jobs.get(term.id))) continue;
     missingByDomain.set(term.domain_id, (missingByDomain.get(term.domain_id) ?? 0) + 1);
   }
 

@@ -26,10 +26,7 @@ function getElevenLabsClient(): ElevenLabsClient {
   return new ElevenLabsClient({ apiKey });
 }
 
-export async function synthesizeNarrationAudio(
-  script: string,
-  language: DomainLanguage,
-): Promise<Buffer> {
+export async function synthesizeSpeech(script: string, language: DomainLanguage): Promise<Buffer> {
   const client = getElevenLabsClient();
   const voiceId = VOICE_BY_LANGUAGE[language] ?? DEFAULT_VOICE_ID;
 

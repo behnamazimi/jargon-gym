@@ -2,22 +2,27 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
 import { computeContentHash } from "./content-hash";
+import { computeContentHashV2 } from "./content-hash-v2";
 import type { NarratedTermFields } from "./types";
 
 vi.mock("next/server", () => ({
   after: (fn: () => unknown) => fn(),
 }));
 
-vi.mock("./service", () => ({
-  getOrGenerateNarration: vi.fn(),
+vi.mock("@/lib/ai/speech/audio", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/ai/speech/audio")>()),
+  getOrCreateAudio: vi.fn(),
+}));
+vi.mock("@/lib/ai/speech/subjects", () => ({
+  loadTermSubject: vi.fn(async () => ({ id: "subject" })),
 }));
 
-const { getOrGenerateNarration } = await import("./service");
+const { getOrCreateAudio } = await import("@/lib/ai/speech/audio");
 const {
   cancelNarrationSync,
   enqueueNarrationSync,
   getLastNarrationSyncJob,
-  isCurrentNarration,
+  isCurrentAudio,
   listCollectionNarrationCoverage,
   listMissingNarrationTermIds,
   processNarrationSyncBatch,
@@ -40,9 +45,33 @@ const FIELDS: NarratedTermFields = {
   controversy: null,
 };
 const HASH = computeContentHash(FIELDS);
+const HASH_V2 = computeContentHashV2(FIELDS, "en");
+const READY = { status: "ready", job: {} } as unknown as Awaited<
+  ReturnType<typeof getOrCreateAudio>
+>;
 
 function termRow(id: string, domainId = DOMAIN_ID) {
-  return { id, domain_id: domainId, ...FIELDS };
+  return { id, domain_id: domainId, domains: { language: "en" }, ...FIELDS };
+}
+
+function audioJob(
+  termId: string,
+  overrides: {
+    status?: string;
+    hash_version?: number;
+    content_hash?: string;
+    storage_path?: string | null;
+  } = {},
+) {
+  return {
+    subject_type: "term",
+    subject_id: termId,
+    status: "ready",
+    hash_version: 2,
+    content_hash: HASH_V2,
+    storage_path: `audio/term/${termId}.mp3`,
+    ...overrides,
+  };
 }
 
 function jobRow(overrides: Partial<JobRow> = {}): JobRow {
@@ -68,12 +97,7 @@ type Store = {
   enabled: boolean;
   jobs: JobRow[];
   terms: ReturnType<typeof termRow>[];
-  narrations: {
-    term_id: string;
-    status: string;
-    content_hash: string;
-    storage_path: string | null;
-  }[];
+  audioJobs: ReturnType<typeof audioJob>[];
   domains: { id: string; name: string }[];
   claim: { job_id: string; term_id: string; cursor: number; term_count: number }[];
   insertErrorCode?: string;
@@ -81,12 +105,14 @@ type Store = {
 
 function makeClient(store: Store): Client {
   function matches(row: Record<string, unknown>, filters: Record<string, unknown>) {
-    return Object.entries(filters).every(([key, value]) => row[key] === value);
+    return Object.entries(filters).every(([key, value]) =>
+      key.startsWith("!") ? row[key.slice(1)] !== value : row[key] === value,
+    );
   }
 
   function rowsFor(table: string) {
     if (table === "terms") return store.terms;
-    if (table === "term_narrations") return store.narrations;
+    if (table === "audio_jobs") return store.audioJobs;
     if (table === "domains") return store.domains;
     if (table === "narration_sync_jobs") return store.jobs;
     if (table === "ai_feature_settings") {
@@ -182,6 +208,10 @@ function makeClient(store: Store): Client {
           state.filters[column] = value;
           return builder;
         },
+        neq: (column: string, value: unknown) => {
+          state.filters[`!${column}`] = value;
+          return builder;
+        },
         in: (column: string, values: unknown[]) => {
           state.inFilters[column] = values;
           return builder;
@@ -203,7 +233,7 @@ function emptyStore(overrides: Partial<Store> = {}): Store {
     enabled: true,
     jobs: [],
     terms: [],
-    narrations: [],
+    audioJobs: [],
     domains: [{ id: DOMAIN_ID, name: "Product" }],
     claim: [],
     ...overrides,
@@ -211,55 +241,60 @@ function emptyStore(overrides: Partial<Store> = {}): Store {
 }
 
 beforeEach(() => {
-  vi.mocked(getOrGenerateNarration).mockReset();
+  vi.mocked(getOrCreateAudio).mockReset();
 });
 
 afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("isCurrentNarration", () => {
+describe("isCurrentAudio", () => {
+  const term = termRow("term-1");
+
   it("is true only for ready audio that matches the current hash", () => {
-    expect(isCurrentNarration(FIELDS, null)).toBe(false);
+    expect(isCurrentAudio(term, undefined)).toBe(false);
+    expect(isCurrentAudio(term, audioJob("term-1"))).toBe(true);
+    expect(isCurrentAudio(term, audioJob("term-1", { status: "failed", storage_path: null }))).toBe(
+      false,
+    );
     expect(
-      isCurrentNarration(FIELDS, {
-        status: "ready",
-        content_hash: HASH,
-        storage_path: "term-1.mp3",
-      }),
-    ).toBe(true);
-    expect(
-      isCurrentNarration(FIELDS, {
-        status: "failed",
-        content_hash: HASH,
-        storage_path: null,
-      }),
+      isCurrentAudio(term, audioJob("term-1", { status: "pending", storage_path: null })),
     ).toBe(false);
-    expect(
-      isCurrentNarration(FIELDS, {
-        status: "pending",
-        content_hash: HASH,
-        storage_path: null,
-      }),
-    ).toBe(false);
-    expect(
-      isCurrentNarration(FIELDS, {
-        status: "ready",
-        content_hash: "stale",
-        storage_path: "term-1.mp3",
-      }),
-    ).toBe(false);
+    expect(isCurrentAudio(term, audioJob("term-1", { content_hash: "stale" }))).toBe(false);
+  });
+
+  it("keeps a version 1 clip while its own hash still matches", () => {
+    const v1 = audioJob("term-1", { hash_version: 1, content_hash: HASH });
+    expect(isCurrentAudio(term, v1)).toBe(true);
+    expect(isCurrentAudio({ ...term, definition: "Edited." }, v1)).toBe(false);
+  });
+
+  it("makes a version 1 clip stale only through its fields, not the language", () => {
+    const v1 = audioJob("term-1", { hash_version: 1, content_hash: HASH });
+    expect(isCurrentAudio({ ...term, domains: { language: "nl" } }, v1)).toBe(true);
+    expect(isCurrentAudio({ ...term, domains: { language: "nl" } }, audioJob("term-1"))).toBe(
+      false,
+    );
   });
 });
 
 describe("listMissingNarrationTermIds", () => {
-  it("returns terms with no row, failed, pending, or a stale hash", async () => {
+  it("returns terms with no live job, a failed or pending one, or a stale hash; a version 1 clip that still matches is current", async () => {
     const store = emptyStore({
-      terms: [termRow("t-missing"), termRow("t-ready"), termRow("t-failed"), termRow("t-stale")],
-      narrations: [
-        { term_id: "t-ready", status: "ready", content_hash: HASH, storage_path: "t-ready.mp3" },
-        { term_id: "t-failed", status: "failed", content_hash: HASH, storage_path: null },
-        { term_id: "t-stale", status: "ready", content_hash: "old", storage_path: "t-stale.mp3" },
+      terms: [
+        termRow("t-missing"),
+        termRow("t-ready"),
+        termRow("t-failed"),
+        termRow("t-stale"),
+        termRow("t-old-version"),
+        termRow("t-superseded"),
+      ],
+      audioJobs: [
+        audioJob("t-ready"),
+        audioJob("t-failed", { status: "failed", storage_path: null }),
+        audioJob("t-stale", { content_hash: "old" }),
+        audioJob("t-old-version", { hash_version: 1, content_hash: HASH }),
+        audioJob("t-superseded", { status: "superseded" }),
       ],
     });
 
@@ -267,6 +302,7 @@ describe("listMissingNarrationTermIds", () => {
       "t-missing",
       "t-failed",
       "t-stale",
+      "t-superseded",
     ]);
   });
 });
@@ -275,7 +311,7 @@ describe("listCollectionNarrationCoverage", () => {
   it("counts missing terms per collection", async () => {
     const store = emptyStore({
       terms: [termRow("t1"), termRow("t2"), termRow("other", "dom-2")],
-      narrations: [{ term_id: "t1", status: "ready", content_hash: HASH, storage_path: "t1.mp3" }],
+      audioJobs: [audioJob("t1")],
     });
 
     await expect(
@@ -311,7 +347,7 @@ describe("enqueueNarrationSync", () => {
   it("rejects when every term already has current audio", async () => {
     const store = emptyStore({
       terms: [termRow("t1")],
-      narrations: [{ term_id: "t1", status: "ready", content_hash: HASH, storage_path: "t1.mp3" }],
+      audioJobs: [audioJob("t1")],
     });
     await expect(enqueueNarrationSync(makeClient(store), DOMAIN_ID, USER_ID)).rejects.toThrow(
       "No missing audio in that collection.",
@@ -334,11 +370,7 @@ describe("enqueueNarrationSync", () => {
 
 describe("processNarrationSyncTick", () => {
   it("increments generated_count and continues when more terms remain", async () => {
-    vi.mocked(getOrGenerateNarration).mockResolvedValue({
-      status: "ready",
-      storagePath: "t1.mp3",
-      contentHash: HASH,
-    });
+    vi.mocked(getOrCreateAudio).mockResolvedValue(READY);
     const job = jobRow({
       status: "running",
       cursor: 0,
@@ -358,7 +390,7 @@ describe("processNarrationSyncTick", () => {
   });
 
   it("counts a failed term and still continues", async () => {
-    vi.mocked(getOrGenerateNarration).mockResolvedValue({ status: "unavailable" });
+    vi.mocked(getOrCreateAudio).mockResolvedValue({ status: "unavailable" });
     const job = jobRow({ status: "running", cursor: 0 });
     const store = emptyStore({
       jobs: [job],
@@ -375,11 +407,7 @@ describe("processNarrationSyncTick", () => {
   });
 
   it("marks the job completed after the last term", async () => {
-    vi.mocked(getOrGenerateNarration).mockResolvedValue({
-      status: "ready",
-      storagePath: "t2.mp3",
-      contentHash: HASH,
-    });
+    vi.mocked(getOrCreateAudio).mockResolvedValue(READY);
     const job = jobRow({ status: "running", cursor: 1, term_ids: ["term-1", "term-2"] });
     const store = emptyStore({
       jobs: [job],
@@ -394,11 +422,7 @@ describe("processNarrationSyncTick", () => {
   });
 
   it("does not overwrite a cancelled job with running/completed", async () => {
-    vi.mocked(getOrGenerateNarration).mockResolvedValue({
-      status: "ready",
-      storagePath: "t1.mp3",
-      contentHash: HASH,
-    });
+    vi.mocked(getOrCreateAudio).mockResolvedValue(READY);
     const job = jobRow({ status: "cancelled", cursor: 0, finished_at: "2026-09-20T00:01:00.000Z" });
     const store = emptyStore({
       jobs: [job],
@@ -418,11 +442,11 @@ describe("processNarrationSyncTick", () => {
     await expect(processNarrationSyncTick(makeClient(store))).resolves.toEqual({
       shouldContinue: false,
     });
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
   });
 
   it("marks the job failed when generation throws", async () => {
-    vi.mocked(getOrGenerateNarration).mockRejectedValue(new Error("ElevenLabs is down"));
+    vi.mocked(getOrCreateAudio).mockRejectedValue(new Error("ElevenLabs is down"));
     const job = jobRow({ status: "running", cursor: 0 });
     const store = emptyStore({
       jobs: [job],
@@ -458,7 +482,7 @@ describe("switching narration off ends a running sync", () => {
   }
 
   it("cancels the job and generates nothing when the batch worker starts", async () => {
-    vi.mocked(getOrGenerateNarration).mockClear();
+    vi.mocked(getOrCreateAudio).mockClear();
     const job = runningJob();
     const store = emptyStore({
       enabled: false,
@@ -469,14 +493,14 @@ describe("switching narration off ends a running sync", () => {
     await expect(
       processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 }),
     ).resolves.toEqual({ shouldContinue: false });
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
     expect(job.status).toBe("cancelled");
     expect(job.lease_expires_at).toBeNull();
     expect(job.finished_at).not.toBeNull();
   });
 
   it("cancels the job on a single tick as well", async () => {
-    vi.mocked(getOrGenerateNarration).mockClear();
+    vi.mocked(getOrCreateAudio).mockClear();
     const job = runningJob();
     const store = emptyStore({
       enabled: false,
@@ -487,7 +511,7 @@ describe("switching narration off ends a running sync", () => {
     await expect(processNarrationSyncTick(makeClient(store))).resolves.toEqual({
       shouldContinue: false,
     });
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
     expect(job.status).toBe("cancelled");
   });
 
@@ -498,25 +522,21 @@ describe("switching narration off ends a running sync", () => {
       jobs: [job],
       claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 6 }],
     });
-    vi.mocked(getOrGenerateNarration).mockClear();
-    vi.mocked(getOrGenerateNarration).mockImplementation(async () => {
+    vi.mocked(getOrCreateAudio).mockClear();
+    vi.mocked(getOrCreateAudio).mockImplementation(async () => {
       store.enabled = false;
-      return { status: "ready", storagePath: "t.mp3", contentHash: HASH };
+      return READY;
     });
 
     await processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 });
-    expect(getOrGenerateNarration).toHaveBeenCalledTimes(4);
+    expect(getOrCreateAudio).toHaveBeenCalledTimes(4);
     expect(job.status).toBe("cancelled");
   });
 });
 
 describe("processNarrationSyncBatch", () => {
   it("processes a parallel wave then remaining terms in one invocation", async () => {
-    vi.mocked(getOrGenerateNarration).mockResolvedValue({
-      status: "ready",
-      storagePath: "t.mp3",
-      contentHash: HASH,
-    });
+    vi.mocked(getOrCreateAudio).mockResolvedValue(READY);
     const termIds = ["term-1", "term-2", "term-3", "term-4", "term-5"];
     const job = jobRow({
       status: "running",
@@ -532,18 +552,14 @@ describe("processNarrationSyncBatch", () => {
     await expect(
       processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 }),
     ).resolves.toEqual({ shouldContinue: false });
-    expect(getOrGenerateNarration).toHaveBeenCalledTimes(5);
+    expect(getOrCreateAudio).toHaveBeenCalledTimes(5);
     expect(job.cursor).toBe(5);
     expect(job.generated_count).toBe(5);
     expect(job.status).toBe("completed");
   });
 
   it("stops after the budget and leaves remaining terms for the next kick", async () => {
-    vi.mocked(getOrGenerateNarration).mockResolvedValue({
-      status: "ready",
-      storagePath: "t.mp3",
-      contentHash: HASH,
-    });
+    vi.mocked(getOrCreateAudio).mockResolvedValue(READY);
     const termIds = ["term-1", "term-2", "term-3", "term-4", "term-5", "term-6"];
     const job = jobRow({ status: "running", cursor: 0, term_ids: termIds });
     const store = emptyStore({
@@ -554,7 +570,7 @@ describe("processNarrationSyncBatch", () => {
     await expect(processNarrationSyncBatch(makeClient(store), { budgetMs: 0 })).resolves.toEqual({
       shouldContinue: true,
     });
-    expect(getOrGenerateNarration).toHaveBeenCalledTimes(4);
+    expect(getOrCreateAudio).toHaveBeenCalledTimes(4);
     expect(job.cursor).toBe(4);
     expect(job.status).toBe("running");
     expect(job.lease_expires_at).toBeNull();
@@ -566,10 +582,10 @@ describe("processNarrationSyncBatch", () => {
       cursor: 0,
       term_ids: ["term-1", "term-2", "term-3", "term-4"],
     });
-    vi.mocked(getOrGenerateNarration).mockImplementation(async () => {
+    vi.mocked(getOrCreateAudio).mockImplementation(async () => {
       job.status = "cancelled";
       job.finished_at = "2026-09-20T00:01:00.000Z";
-      return { status: "ready", storagePath: "t.mp3", contentHash: HASH };
+      return READY;
     });
     const store = emptyStore({
       jobs: [job],

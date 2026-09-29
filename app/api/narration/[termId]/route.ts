@@ -3,28 +3,19 @@ import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import { getFeatureSettings } from "@/lib/ai/feature-settings";
 import { withRunGuard } from "@/lib/ai/run-guard";
 import { countRecentGenerations, recordUsage } from "@/lib/ai/usage";
+import { getReadyAudio, getOrCreateAudio } from "@/lib/ai/speech/audio";
+import { serveAudio } from "@/lib/ai/speech/serve";
+import { loadTermSubject } from "@/lib/ai/speech/subjects";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
-import {
-  getCachedNarration,
-  getOrGenerateNarration,
-  markNarrationFileMissing,
-} from "@/lib/narration/service";
-import { downloadNarrationAudio, NarrationAudioMissingError } from "@/lib/narration/storage";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
 
-// `no-cache` makes the browser revalidate with the ETag (the narration's
-// content hash) on every play: a cheap 304 when the term is unchanged, fresh
-// audio right after an edit.
-const CACHE_CONTROL = "private, no-cache";
+/** A request that loses the claim waits this long for the winner's clip. */
+const WAIT_FOR_OTHER_MS = 30_000;
 
 type RouteContext = { params: Promise<{ termId: string }> };
-
-function etagFor(contentHash: string): string {
-  return `"${contentHash}"`;
-}
 
 async function userCanReadTerm(termId: string): Promise<boolean> {
   const supabase = await createClient();
@@ -54,44 +45,9 @@ export async function GET(request: Request, { params }: RouteContext) {
   if (denied) return denied;
 
   const admin = createAdminClient();
-  const result = await getCachedNarration(admin, termId);
-  if (result.status !== "ready") return new NextResponse(null, { status: 404 });
-
-  const etag = etagFor(result.contentHash);
-  if (request.headers.get("if-none-match") === etag) {
-    return new NextResponse(null, {
-      status: 304,
-      headers: { ETag: etag, "Cache-Control": CACHE_CONTROL },
-    });
-  }
-
-  const range = request.headers.get("range") ?? undefined;
-  let audio;
-  try {
-    audio = await downloadNarrationAudio(result.storagePath, range);
-  } catch (error) {
-    if (error instanceof NarrationAudioMissingError) {
-      console.error(error.message);
-      await markNarrationFileMissing(admin, termId, result.contentHash);
-      return new NextResponse(null, { status: 404 });
-    }
-    console.error("Narration download failed:", error);
-    return new NextResponse(null, { status: 502 });
-  }
-
-  const headers: HeadersInit = {
-    "Content-Type": "audio/mpeg",
-    "Cache-Control": CACHE_CONTROL,
-    "Accept-Ranges": "bytes",
-    ETag: etag,
-  };
-  if (audio.contentLength !== undefined) headers["Content-Length"] = String(audio.contentLength);
-  if (audio.contentRange) headers["Content-Range"] = audio.contentRange;
-
-  return new NextResponse(audio.stream, {
-    status: audio.partial ? 206 : 200,
-    headers,
-  });
+  const subject = await loadTermSubject(admin, termId);
+  if (!subject) return new NextResponse(null, { status: 404 });
+  return serveAudio(request, admin, subject);
 }
 
 /** True when this person has used up the term narration cap. A clip that is
@@ -113,16 +69,18 @@ export async function POST(request: Request, { params }: RouteContext) {
   const admin = createAdminClient();
   const userId = request.headers.get(VERIFIED_USER_HEADER)!;
 
-  const cached = await getCachedNarration(admin, termId);
-  if (cached.status === "ready") return NextResponse.json({ ready: true });
+  const subject = await loadTermSubject(admin, termId);
+  if (!subject) return new NextResponse(null, { status: 404 });
+
+  if (await getReadyAudio(admin, subject)) return NextResponse.json({ ready: true });
 
   // One generation per person at a time, so the cap is checked against
   // everything they have already made before the next one starts.
   const guarded = await withRunGuard({ admin, userId, feature: "narration_term" }, async () => {
     if (await overDailyCap(admin, userId)) return "capped" as const;
 
-    const result = await getOrGenerateNarration(admin, termId);
-    if (result.generation) {
+    const result = await getOrCreateAudio(admin, subject, { waitMs: WAIT_FOR_OTHER_MS });
+    if ("generation" in result && result.generation) {
       await recordUsage(admin, {
         userId,
         feature: "narration_term",

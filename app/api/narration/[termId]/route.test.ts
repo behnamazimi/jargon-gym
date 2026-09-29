@@ -2,26 +2,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 
 const getNarrationAccessForUser = vi.fn();
-const getCachedNarration = vi.fn();
-const getOrGenerateNarration = vi.fn();
-const markNarrationFileMissing = vi.fn();
-const downloadNarrationAudio = vi.fn();
+const getReadyAudio = vi.fn();
+const getOrCreateAudio = vi.fn();
+const loadTermSubject = vi.fn();
+const serveAudio = vi.fn();
 const termRow = vi.fn();
 const getFeatureSettings = vi.fn();
 const countRecentGenerations = vi.fn();
 const recordUsage = vi.fn();
 const guard = vi.hoisted(() => ({ busy: false, inputs: [] as unknown[] }));
+const SUBJECT = { type: "term", id: "term-1" };
 
 vi.mock("@/lib/narration/access", () => ({ getNarrationAccessForUser }));
-vi.mock("@/lib/narration/service", () => ({
-  getCachedNarration,
-  getOrGenerateNarration,
-  markNarrationFileMissing,
-}));
-vi.mock("@/lib/narration/storage", () => ({
-  downloadNarrationAudio,
-  NarrationAudioMissingError: class NarrationAudioMissingError extends Error {},
-}));
+vi.mock("@/lib/ai/speech/audio", () => ({ getReadyAudio, getOrCreateAudio }));
+vi.mock("@/lib/ai/speech/subjects", () => ({ loadTermSubject }));
+vi.mock("@/lib/ai/speech/serve", () => ({ serveAudio }));
 vi.mock("@/lib/ai/run-guard", () => ({
   withRunGuard: async (input: unknown, run: () => Promise<unknown>) => {
     guard.inputs.push(input);
@@ -39,7 +34,6 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 
 const { GET, POST } = await import("./route");
-const { NarrationAudioMissingError } = await import("@/lib/narration/storage");
 
 const ctx = { params: Promise.resolve({ termId: "term-1" }) };
 
@@ -54,11 +48,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   getNarrationAccessForUser.mockResolvedValue(true);
   termRow.mockResolvedValue({ data: { id: "term-1" } });
-  getCachedNarration.mockResolvedValue({
-    status: "ready",
-    storagePath: "term-1.mp3",
-    contentHash: "abc",
-  });
+  loadTermSubject.mockResolvedValue(SUBJECT);
+  getReadyAudio.mockResolvedValue({ id: "job-1" });
+  serveAudio.mockResolvedValue(new Response("audio", { status: 200 }));
   guard.busy = false;
   guard.inputs = [];
   getFeatureSettings.mockResolvedValue({ dailyCap: 5 });
@@ -75,90 +67,58 @@ describe("narration route authorization", () => {
     getNarrationAccessForUser.mockResolvedValue(false);
     expect((await GET(request("GET"), ctx)).status).toBe(403);
     expect((await POST(request("POST"), ctx)).status).toBe(403);
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
   });
 
   it("returns 404 for a term the user cannot read, on both methods", async () => {
     termRow.mockResolvedValue({ data: null });
     expect((await GET(request("GET"), ctx)).status).toBe(404);
     expect((await POST(request("POST"), ctx)).status).toBe(404);
-    expect(getCachedNarration).not.toHaveBeenCalled();
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(loadTermSubject).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
   });
 });
 
 describe("GET", () => {
-  it("returns 404 for uncached audio without generating", async () => {
-    getCachedNarration.mockResolvedValue({ status: "unavailable" });
-    expect((await GET(request("GET"), ctx)).status).toBe(404);
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
-  });
-
-  it("answers a matching ETag with 304 and keeps revalidating", async () => {
-    const res = await GET(request("GET", { "if-none-match": '"abc"' }), ctx);
-    expect(res.status).toBe(304);
-    expect(res.headers.get("ETag")).toBe('"abc"');
-    expect(res.headers.get("Cache-Control")).toBe("private, no-cache");
-    expect(downloadNarrationAudio).not.toHaveBeenCalled();
-  });
-
-  it("streams a range request as 206", async () => {
-    downloadNarrationAudio.mockResolvedValue({
-      stream: new ReadableStream(),
-      contentLength: 10,
-      contentRange: "bytes 0-9/100",
-      partial: true,
-    });
-    const res = await GET(request("GET", { range: "bytes=0-9" }), ctx);
-    expect(downloadNarrationAudio).toHaveBeenCalledWith("term-1.mp3", "bytes=0-9");
-    expect(res.status).toBe(206);
-    expect(res.headers.get("Content-Range")).toBe("bytes 0-9/100");
-  });
-
-  it("returns 404 and marks the row failed when the file is missing", async () => {
-    downloadNarrationAudio.mockRejectedValue(new NarrationAudioMissingError("gone"));
+  it("hands the subject to the shared audio handler", async () => {
     const res = await GET(request("GET"), ctx);
-    expect(res.status).toBe(404);
-    expect(markNarrationFileMissing).toHaveBeenCalledWith({}, "term-1", "abc");
+    expect(res.status).toBe(200);
+    expect(serveAudio).toHaveBeenCalledWith(expect.any(Request), {}, SUBJECT);
   });
 
-  it("returns 502 on other storage errors without touching the row", async () => {
-    downloadNarrationAudio.mockRejectedValue(new Error("s3 down"));
-    expect((await GET(request("GET"), ctx)).status).toBe(502);
-    expect(markNarrationFileMissing).not.toHaveBeenCalled();
+  it("returns 404 for a term that no longer exists, without generating", async () => {
+    loadTermSubject.mockResolvedValue(null);
+    expect((await GET(request("GET"), ctx)).status).toBe(404);
+    expect(serveAudio).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
   });
 });
 
 describe("POST", () => {
   beforeEach(() => {
-    getCachedNarration.mockResolvedValue({ status: "unavailable" });
+    getReadyAudio.mockResolvedValue(null);
   });
 
-  const generated = {
-    status: "ready",
-    storagePath: "p",
-    contentHash: "h",
-    generation: { units: 120 },
-  };
+  const generated = { status: "ready", job: {}, generation: { units: 120 } };
 
   it("generates and replies with JSON only", async () => {
-    getOrGenerateNarration.mockResolvedValue(generated);
+    getOrCreateAudio.mockResolvedValue(generated);
     const res = await POST(request("POST"), ctx);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ready: true });
   });
 
   it("serves a cached clip without counting it or checking the cap", async () => {
-    getCachedNarration.mockResolvedValue({ status: "ready", storagePath: "p", contentHash: "h" });
+    getReadyAudio.mockResolvedValue({ id: "job-1" });
     const res = await POST(request("POST"), ctx);
     expect(await res.json()).toEqual({ ready: true });
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
     expect(countRecentGenerations).not.toHaveBeenCalled();
     expect(recordUsage).not.toHaveBeenCalled();
   });
 
   it("counts a generation for the person who asked for it", async () => {
-    getOrGenerateNarration.mockResolvedValue(generated);
+    getOrCreateAudio.mockResolvedValue(generated);
     await POST(request("POST"), ctx);
     expect(recordUsage).toHaveBeenCalledWith(
       {},
@@ -167,7 +127,7 @@ describe("POST", () => {
   });
 
   it("counts a failed generation too", async () => {
-    getOrGenerateNarration.mockResolvedValue({ status: "unavailable", generation: { units: 90 } });
+    getOrCreateAudio.mockResolvedValue({ status: "unavailable", generation: { units: 90 } });
     const res = await POST(request("POST"), ctx);
     expect(res.status).toBe(502);
     expect(recordUsage).toHaveBeenCalledWith(
@@ -177,17 +137,13 @@ describe("POST", () => {
   });
 
   it("does not count a request that only waited for someone else's generation", async () => {
-    getOrGenerateNarration.mockResolvedValue({
-      status: "ready",
-      storagePath: "p",
-      contentHash: "h",
-    });
+    getOrCreateAudio.mockResolvedValue({ status: "ready", job: {} });
     await POST(request("POST"), ctx);
     expect(recordUsage).not.toHaveBeenCalled();
   });
 
   it("checks this person's count for term narration, under a guard for the same feature", async () => {
-    getOrGenerateNarration.mockResolvedValue(generated);
+    getOrCreateAudio.mockResolvedValue(generated);
     await POST(request("POST"), ctx);
     expect(getFeatureSettings).toHaveBeenCalledWith({}, "narration_term");
     expect(countRecentGenerations).toHaveBeenCalledWith({}, "user-1", "narration_term");
@@ -199,7 +155,7 @@ describe("POST", () => {
     const res = await POST(request("POST"), ctx);
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({ ready: false, busy: true });
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
     expect(countRecentGenerations).not.toHaveBeenCalled();
   });
 
@@ -208,18 +164,25 @@ describe("POST", () => {
     const res = await POST(request("POST"), ctx);
     expect(res.status).toBe(429);
     expect(await res.json()).toEqual({ ready: false, capped: true });
-    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
   });
 
   it("has no limit when the cap is blank", async () => {
     getFeatureSettings.mockResolvedValue({ dailyCap: null });
-    getOrGenerateNarration.mockResolvedValue(generated);
+    getOrCreateAudio.mockResolvedValue(generated);
     expect((await POST(request("POST"), ctx)).status).toBe(200);
     expect(countRecentGenerations).not.toHaveBeenCalled();
   });
 
+  it("waits for another request's generation and reports it as not ready if it never finishes", async () => {
+    getOrCreateAudio.mockResolvedValue({ status: "pending" });
+    expect((await POST(request("POST"), ctx)).status).toBe(502);
+    expect(recordUsage).not.toHaveBeenCalled();
+    expect(getOrCreateAudio).toHaveBeenCalledWith({}, SUBJECT, { waitMs: 30_000 });
+  });
+
   it("reports a failed generation", async () => {
-    getOrGenerateNarration.mockResolvedValue({ status: "unavailable" });
+    getOrCreateAudio.mockResolvedValue({ status: "unavailable" });
     expect((await POST(request("POST"), ctx)).status).toBe(502);
   });
 });

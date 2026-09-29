@@ -1,4 +1,9 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 function getBucket(): string {
   const bucket = process.env.SUPABASE_S3_BUCKET;
@@ -37,7 +42,7 @@ function getS3Client(): S3Client {
   return s3Client;
 }
 
-export async function uploadNarrationAudio(path: string, audio: Buffer): Promise<void> {
+export async function uploadAudio(path: string, audio: Buffer): Promise<void> {
   const client = getS3Client();
   await client.send(
     new PutObjectCommand({
@@ -49,10 +54,10 @@ export async function uploadNarrationAudio(path: string, audio: Buffer): Promise
   );
 }
 
-export class NarrationAudioMissingError extends Error {
+export class AudioMissingError extends Error {
   constructor(path: string) {
-    super(`Narration audio missing at ${path}.`);
-    this.name = "NarrationAudioMissingError";
+    super(`Audio missing at ${path}.`);
+    this.name = "AudioMissingError";
   }
 }
 
@@ -62,7 +67,7 @@ function isMissingObject(error: unknown): boolean {
   return error.name === "NoSuchKey" || error.name === "NotFound" || status === 404;
 }
 
-export type NarrationAudioStream = {
+export type AudioStream = {
   stream: ReadableStream<Uint8Array>;
   contentLength?: number;
   contentRange?: string;
@@ -73,10 +78,7 @@ export type NarrationAudioStream = {
  *  so the response can start flowing to the client immediately. `range` is
  *  the raw incoming `Range` header, passed through so the caller can serve
  *  partial content (and so `<audio>` seeking works). */
-export async function downloadNarrationAudio(
-  path: string,
-  range?: string,
-): Promise<NarrationAudioStream> {
+export async function downloadAudio(path: string, range?: string): Promise<AudioStream> {
   const client = getS3Client();
   let response;
   try {
@@ -84,15 +86,21 @@ export async function downloadNarrationAudio(
       new GetObjectCommand({ Bucket: getBucket(), Key: path, Range: range }),
     );
   } catch (error) {
-    if (isMissingObject(error)) throw new NarrationAudioMissingError(path);
+    if (isMissingObject(error)) throw new AudioMissingError(path);
     throw error;
   }
   const { Body, ContentLength, ContentRange, $metadata } = response;
-  if (!Body) throw new NarrationAudioMissingError(path);
+  if (!Body) throw new AudioMissingError(path);
   return {
     stream: Body.transformToWebStream(),
     contentLength: ContentLength,
     contentRange: ContentRange,
     partial: $metadata.httpStatusCode === 206,
   };
+}
+
+/** Removing a key that is already gone succeeds, so a repeated sweep is safe. */
+export async function deleteAudio(path: string): Promise<void> {
+  const client = getS3Client();
+  await client.send(new DeleteObjectCommand({ Bucket: getBucket(), Key: path }));
 }

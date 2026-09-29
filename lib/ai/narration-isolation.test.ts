@@ -10,14 +10,18 @@ const FORBIDDEN = [
   "runWithCredits",
 ];
 
-function narrationFiles(): string[] {
-  const dir = "lib/narration";
-  const inDir = readdirSync(dir)
+function sourceFiles(dir: string): string[] {
+  return readdirSync(dir)
     .filter((name) => name.endsWith(".ts") && !name.endsWith(".test.ts"))
     .map((name) => `${dir}/${name}`);
+}
+
+function narrationFiles(): string[] {
   return [
-    ...inDir,
-    "lib/stories/narration.ts",
+    ...sourceFiles("lib/narration"),
+    ...sourceFiles("lib/ai/speech"),
+    "app/api/narration/[termId]/route.ts",
+    "app/api/stories/[storyId]/narration/route.ts",
     "app/(private)/admin/narration/actions.ts",
     "lib/ai/usage.ts",
   ];

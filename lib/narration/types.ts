@@ -11,11 +11,3 @@ export type NarratedTermFields = Pick<
   TermRow,
   "term" | "definition" | "example" | "mental_model" | "discussion" | "anti_example" | "controversy"
 >;
-
-/** `generation` is set only when this request itself ran the speech provider
- *  (not for a cache hit, or for waiting on someone else's generation). */
-type Generation = { units: number };
-
-export type NarrationResult =
-  | { status: "ready"; storagePath: string; contentHash: string; generation?: Generation }
-  | { status: "unavailable"; generation?: Generation };

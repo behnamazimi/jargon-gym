@@ -3,7 +3,7 @@ import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { NarratedTermFields } from "./types";
 
 /** Bump when the wording in template.ts changes, so cached clips are remade. */
-export const NARRATION_TEMPLATE_VERSION = 1;
+const NARRATION_TEMPLATE_VERSION = 1;
 
 /**
  * Version 2 of the narration content hash: the narrated fields plus the
@@ -26,3 +26,6 @@ export function computeContentHashV2(fields: NarratedTermFields, language: Domai
   ]);
   return createHash("sha256").update(canonical).digest("hex");
 }
+
+/** The hash version new audio jobs are made with. */
+export const CURRENT_HASH_VERSION = 2;
