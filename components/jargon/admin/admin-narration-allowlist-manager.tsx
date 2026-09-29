@@ -44,7 +44,7 @@ export function AllowlistManager({ allowlist }: { allowlist: AdminNarrationAllow
           placeholder="user@example.com"
           aria-label="Email to add"
           value={email}
-          disabled={isPending}
+          readOnly={isPending}
           onChange={(event) => {
             clearError();
             setEmail(event.target.value);

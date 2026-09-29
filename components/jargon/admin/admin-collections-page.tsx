@@ -30,7 +30,7 @@ export function AdminCollectionsPageClient({ collections }: { collections: Admin
           </thead>
           <tbody>
             {collections.map((collection) => (
-              <CollectionRow key={`${collection.id}-${collection.slug}`} collection={collection} />
+              <CollectionRow key={collection.id} collection={collection} />
             ))}
             {collections.length === 0 ? (
               <tr>
@@ -48,10 +48,27 @@ export function AdminCollectionsPageClient({ collections }: { collections: Admin
 
 function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
   const [slug, setSlug] = useState(collection.slug ?? "");
+  const [busy, setBusy] = useState(false);
   const { run, isPending, error, clearError } = useAdminAction();
+  const locked = busy || isPending;
+
+  /** Built-in and Public affect each other, so only one save runs at a time. */
+  async function whileBusy<T>(save: () => Promise<T>): Promise<T> {
+    setBusy(true);
+    try {
+      return await save();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function handleSlugBlur() {
-    if (!slug.trim() || slug === collection.slug) return;
+    if (locked) return;
+    if (!slug.trim()) {
+      setSlug(collection.slug ?? "");
+      return;
+    }
+    if (slug === collection.slug) return;
     void run(() => updateDomainSlug(collection.id, slug), {
       onSuccess: (result) => setSlug(result.slug),
     }).then((ok) => {
@@ -72,7 +89,8 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
           size="sm"
           label={`Mark ${collection.name} as built-in`}
           value={collection.isBuiltin}
-          save={(next) => setBuiltin(collection.id, next)}
+          busy={locked}
+          save={(next) => whileBusy(() => setBuiltin(collection.id, next))}
           confirm={(next) =>
             !next && collection.isPublic
               ? {
@@ -90,7 +108,8 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
           label={`Publish ${collection.name}`}
           value={collection.isPublic}
           disabled={!collection.isBuiltin}
-          save={(next) => setPublic(collection.id, next).then(dropSlug)}
+          busy={locked}
+          save={(next) => whileBusy(() => setPublic(collection.id, next).then(dropSlug))}
           confirm={(next) =>
             next
               ? null
@@ -105,10 +124,11 @@ function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
       <td>
         {collection.isPublic ? (
           <input
+            key={collection.slug}
             type="text"
             className="input input-sm input-bordered w-40"
             value={slug}
-            disabled={isPending}
+            readOnly={locked}
             onChange={(event) => {
               clearError();
               setSlug(event.target.value);

@@ -10,11 +10,14 @@ import { cn } from "@/lib/utils";
 type Confirmation = { title: string; description: string; confirmLabel: string };
 
 type AdminSwitchProps = {
-  /** The server's value; the switch follows it after every refresh. */
+  /** The server's value; the switch follows it after every refresh. `save` must
+   *  revalidate the page, or the switch snaps back to this value when saving ends. */
   value: boolean;
   label: string;
   save: (next: boolean) => Promise<ActionResult>;
   disabled?: boolean;
+  /** Set while something related to this switch is being saved. */
+  busy?: boolean;
   size?: "sm" | "md";
   /** Ask first when this returns something for the position being switched to. */
   confirm?: (next: boolean) => Confirmation | null;
@@ -27,6 +30,7 @@ export function AdminSwitch({
   label,
   save,
   disabled,
+  busy,
   size = "md",
   confirm,
   hideError,
@@ -34,7 +38,11 @@ export function AdminSwitch({
   const { checked, change, error, isPending } = useAdminToggle(value, save);
   const [asking, setAsking] = useState<{ next: boolean; confirmation: Confirmation } | null>(null);
 
+  // Not `disabled` while saving, so the switch keeps keyboard focus.
+  const locked = isPending || busy;
+
   function handleChange(next: boolean) {
+    if (locked) return;
     const confirmation = confirm?.(next) ?? null;
     if (confirmation) setAsking({ next, confirmation });
     else change(next);
@@ -45,7 +53,8 @@ export function AdminSwitch({
       <Switch
         className={cn("toggle-primary", size === "sm" && "toggle-sm")}
         checked={checked}
-        disabled={disabled || isPending}
+        disabled={disabled}
+        aria-disabled={locked || undefined}
         onCheckedChange={handleChange}
         aria-label={label}
       />
