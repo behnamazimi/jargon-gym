@@ -28,6 +28,47 @@ export type Database = {
   };
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string;
+          actor_email: string | null;
+          actor_id: string | null;
+          created_at: string;
+          details: Json;
+          id: number;
+          target_id: string | null;
+          target_type: string | null;
+        };
+        Insert: {
+          action: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+          details?: Json;
+          id?: never;
+          target_id?: string | null;
+          target_type?: string | null;
+        };
+        Update: {
+          action?: string;
+          actor_email?: string | null;
+          actor_id?: string | null;
+          created_at?: string;
+          details?: Json;
+          id?: never;
+          target_id?: string | null;
+          target_type?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "admin_audit_log_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ai_credit_ledger: {
         Row: {
           amount: number;
@@ -1189,6 +1230,15 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      _admin_audit_insert: {
+        Args: {
+          p_action: string;
+          p_details: Json;
+          p_target_id: string;
+          p_target_type: string;
+        };
+        Returns: undefined;
+      };
       admin_ai_credit_failure_reasons: {
         Args: { p_limit?: number };
         Returns: {
@@ -1222,12 +1272,49 @@ export type Database = {
           user_id: string;
         }[];
       };
+      admin_domain_term_counts: {
+        Args: never;
+        Returns: {
+          domain_id: string;
+          term_count: number;
+        }[];
+      };
       admin_grant_ai_credits: {
         Args: { p_amount: number; p_note: string; p_user_id: string };
         Returns: undefined;
       };
+      admin_publish_collection: {
+        Args: { p_domain_id: string; p_domain_slug: string; p_term_slugs: Json };
+        Returns: string;
+      };
       admin_reset_ai_credits: {
         Args: { p_note: string; p_user_id: string };
+        Returns: undefined;
+      };
+      admin_set_ai_credit_settings: {
+        Args: {
+          p_default_allowance: number;
+          p_monthly_refill: number;
+          p_quiz_cost: number;
+          p_story_cost: number;
+        };
+        Returns: undefined;
+      };
+      admin_set_narration_caps: {
+        Args: { p_story_cap: number; p_term_cap: number };
+        Returns: undefined;
+      };
+      admin_set_narration_enabled: {
+        Args: { p_enabled: boolean };
+        Returns: undefined;
+      };
+      admin_write_audit: {
+        Args: {
+          p_action: string;
+          p_details?: Json;
+          p_target_id?: string;
+          p_target_type?: string;
+        };
         Returns: undefined;
       };
       ai_credit_balance: {
