@@ -35,7 +35,7 @@ export async function getReadSetupData() {
 
   const [{ active: collections, paused }, narrationAccess] = await Promise.all([
     listStudyCollectionState(auth.supabase, auth.user.id),
-    getNarrationAccessForUser(auth.supabase, auth.user.id),
+    getNarrationAccessForUser(createAdminClient(), auth.user.id),
   ]);
 
   return { collections, paused, narrationAccess };

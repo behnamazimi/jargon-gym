@@ -2,6 +2,7 @@
 
 import { JargonDataError, loadJargonPageData } from "@/lib/jargon/load-jargon-page-data";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import type { JargonPageData } from "@/lib/jargon/types";
 
@@ -26,7 +27,7 @@ export async function getJargonSetupData(selectedDomainId?: string): Promise<Jar
         userId: auth.user.id,
         selectedDomainId,
       }),
-      getNarrationAccessForUser(auth.supabase, auth.user.id),
+      getNarrationAccessForUser(createAdminClient(), auth.user.id),
     ]);
     return { data, narrationAccess };
   } catch (err) {

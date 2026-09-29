@@ -51,7 +51,7 @@ export async function getStoriesSetupData(
       getReadEligibleCountsByDomainForUser(admin, auth.user.id),
       loadPrefs(admin, auth.user.id),
       getAiAccessView(auth.supabase, auth.user.id),
-      getNarrationAccessForUser(auth.supabase, auth.user.id),
+      getNarrationAccessForUser(admin, auth.user.id, "narration_story"),
       getCurrentStory(admin, auth.user.id).catch((err: unknown) => {
         console.error("Failed to load the current story:", err);
         return null;

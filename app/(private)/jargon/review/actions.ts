@@ -19,7 +19,7 @@ export async function getReviewSetupData() {
 
   const [{ active: collections, paused }, narrationAccess, canEvaluateTerms] = await Promise.all([
     listStudyCollectionState(auth.supabase, auth.user.id),
-    getNarrationAccessForUser(auth.supabase, auth.user.id),
+    getNarrationAccessForUser(createAdminClient(), auth.user.id),
     getUserIsAdmin(auth.user.id),
   ]);
 

@@ -15,7 +15,7 @@ function narrationFiles(): string[] {
   const inDir = readdirSync(dir)
     .filter((name) => name.endsWith(".ts") && !name.endsWith(".test.ts"))
     .map((name) => `${dir}/${name}`);
-  return [...inDir, "lib/stories/narration.ts"];
+  return [...inDir, "lib/stories/narration.ts", "app/(private)/admin/narration/actions.ts"];
 }
 
 describe("narration is never billed", () => {

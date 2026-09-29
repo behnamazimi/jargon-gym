@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { isNarrationEnabled } from "./feature";
 import { listMissingNarrationTermIds } from "./sync-missing";
 import {
   isNarrationSyncLeaseStale,
@@ -74,16 +75,6 @@ export async function getLastNarrationSyncJob(
   return toJobView(row, await domainNameFor(client, row.domain_id), Date.now());
 }
 
-async function narrationIsEnabled(admin: AdminClient): Promise<boolean> {
-  const { data, error } = await admin
-    .from("narration_settings")
-    .select("enabled")
-    .eq("id", true)
-    .single();
-  if (error) throw error;
-  return data.enabled;
-}
-
 async function getActiveJob(admin: AdminClient) {
   const { data, error } = await admin
     .from("narration_sync_jobs")
@@ -99,7 +90,7 @@ export async function enqueueNarrationSync(
   domainId: string,
   startedBy: string,
 ): Promise<NarrationSyncJobView> {
-  if (!(await narrationIsEnabled(admin))) {
+  if (!(await isNarrationEnabled(admin))) {
     throw new Error("Narration is turned off.");
   }
 

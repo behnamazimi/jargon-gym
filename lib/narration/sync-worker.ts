@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getInternalApiSecret } from "@/lib/auth/internal-api";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import type { Database } from "@/lib/supabase/database.types";
+import { isNarrationEnabled } from "./feature";
 import { getOrGenerateNarration } from "./service";
 import { isActiveNarrationSyncStatus, NARRATION_SYNC_ACTIVE_STATUSES } from "./sync-shared";
 
@@ -28,6 +29,23 @@ async function markJobFailed(admin: AdminClient, jobId: string, message: string)
     .in("status", [...NARRATION_SYNC_ACTIVE_STATUSES])
     .select("id")
     .maybeSingle();
+}
+
+/** Switching narration off ends a running sync: the job is cancelled, so the
+ *  worker stops, the lease is freed and a new sync can be started later. A wave
+ *  already in flight still finishes. */
+async function cancelJobIfNarrationOff(admin: AdminClient, jobId: string): Promise<boolean> {
+  if (await isNarrationEnabled(admin)) return false;
+
+  const { error } = await admin
+    .from("narration_sync_jobs")
+    .update({ status: "cancelled", finished_at: new Date().toISOString(), lease_expires_at: null })
+    .eq("id", jobId)
+    .in("status", [...NARRATION_SYNC_ACTIVE_STATUSES])
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  return true;
 }
 
 async function releaseLease(admin: AdminClient, jobId: string) {
@@ -147,6 +165,7 @@ export async function processNarrationSyncTick(
 ): Promise<{ shouldContinue: boolean }> {
   const tick = await claimTick(admin);
   if (!tick) return { shouldContinue: false };
+  if (await cancelJobIfNarrationOff(admin, tick.job_id)) return { shouldContinue: false };
   const shouldContinue = await processWave(admin, tick.job_id, [tick.term_id], false);
   return { shouldContinue };
 }
@@ -160,6 +179,7 @@ export async function processNarrationSyncBatch(
   if (!claimed) return { shouldContinue: false };
 
   while (true) {
+    if (await cancelJobIfNarrationOff(admin, claimed.job_id)) return { shouldContinue: false };
     const slice = await peekSlice(admin, claimed.job_id, WAVE_CONCURRENCY);
     if (!slice || slice.length === 0) return { shouldContinue: false };
     const shouldContinue = await processWave(admin, claimed.job_id, slice, true);

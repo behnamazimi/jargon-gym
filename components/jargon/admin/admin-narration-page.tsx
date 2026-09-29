@@ -15,6 +15,7 @@ import type {
 } from "@/lib/narration/sync-shared";
 
 type AdminNarrationPageClientProps = {
+  healthNote: string | null;
   enabled: boolean;
   allowlist: AdminNarrationAllowlistRow[];
   coverage: CollectionNarrationCoverage[];
@@ -22,6 +23,7 @@ type AdminNarrationPageClientProps = {
 };
 
 export function AdminNarrationPageClient({
+  healthNote,
   enabled: initialEnabled,
   allowlist: initialAllowlist,
   coverage,
@@ -80,7 +82,8 @@ export function AdminNarrationPageClient({
       <div className="max-md:sr-only">
         <h1 className="text-2xl font-semibold text-base-content">Narration</h1>
         <p className="mt-1 text-base text-base-content/65">
-          Control the ElevenLabs term narration feature and who can use it.
+          Control ElevenLabs narration for terms and stories, and who can use it. Narration is never
+          charged in AI credits.
         </p>
       </div>
 
@@ -90,6 +93,7 @@ export function AdminNarrationPageClient({
           <p className="m-0 text-sm text-base-content/65">
             When off, no one can play narration regardless of the allowlist below.
           </p>
+          {healthNote ? <p className="mt-1 text-sm text-warning">{healthNote}</p> : null}
           {toggleError ? <p className="mt-1 text-sm text-error">{toggleError}</p> : null}
         </div>
         <input
