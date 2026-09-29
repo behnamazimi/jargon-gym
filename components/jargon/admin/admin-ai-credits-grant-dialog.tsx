@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { grantAiCredits } from "@/app/(private)/admin/ai-credits/actions";
 import {
   Dialog,
@@ -17,21 +17,22 @@ function GrantForm({ initialEmail, onClose }: { initialEmail: string; onClose: (
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  function handleGrant() {
+  function handleGrant(event: FormEvent) {
+    event.preventDefault();
     setError(null);
 
     startTransition(async () => {
-      try {
-        await grantAiCredits({ email, amount: Number(amount), note });
-        onClose();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to grant.");
+      const result = await grantAiCredits({ email, amount: Number(amount), note });
+      if (result.error) {
+        setError(result.error);
+        return;
       }
+      onClose();
     });
   }
 
   return (
-    <>
+    <form onSubmit={handleGrant} className="flex flex-col gap-4">
       <DialogHeader>
         <DialogTitle>Grant credits</DialogTitle>
         <DialogDescription>
@@ -75,22 +76,25 @@ function GrantForm({ initialEmail, onClose }: { initialEmail: string; onClose: (
           onChange={(event) => setNote(event.target.value)}
         />
       </label>
-      {error ? <p className="m-0 text-sm text-error">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="m-0 text-sm text-error">
+          {error}
+        </p>
+      ) : null}
 
       <DialogFooter>
         <button type="button" className="btn btn-ghost min-h-11" onClick={onClose}>
           Cancel
         </button>
         <button
-          type="button"
+          type="submit"
           className="btn btn-primary min-h-11"
           disabled={isPending || !email.trim() || !amount}
-          onClick={handleGrant}
         >
           {isPending ? "Granting…" : "Grant credits"}
         </button>
       </DialogFooter>
-    </>
+    </form>
   );
 }
 

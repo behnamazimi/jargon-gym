@@ -23,6 +23,7 @@ export type AiCreditSummary = {
   creditsSpent: number;
   spends24h: number;
   refunds24h: number;
+  refundUsers24h: number;
 };
 
 export async function getAiCreditSettingsForAdmin(client: Client): Promise<AiCreditSettingsView> {
@@ -73,5 +74,6 @@ export async function getAiCreditSummaryForAdmin(client: Client): Promise<AiCred
     creditsSpent: row.credits_spent,
     spends24h: row.spends_24h,
     refunds24h: row.refunds_24h,
+    refundUsers24h: row.refund_users_24h,
   };
 }

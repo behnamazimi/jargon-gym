@@ -12,7 +12,13 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 function percent(part: number, whole: number): string {
-  return whole === 0 ? "0%" : `${Math.round((part / whole) * 100)}%`;
+  if (whole === 0 || part === 0) return "0%";
+  const share = (part / whole) * 100;
+  return share < 1 ? "<1%" : `${Math.round(share)}%`;
+}
+
+function people(count: number): string {
+  return `${count} ${count === 1 ? "person" : "people"}`;
 }
 
 export function AdminAiCreditsSummary({ summary }: { summary: AiCreditSummary }) {
@@ -34,12 +40,12 @@ export function AdminAiCreditsSummary({ summary }: { summary: AiCreditSummary })
         <Stat
           label="Used AI credits"
           value={`${summary.usersWithUse}`}
-          hint={`${percent(summary.usersWithUse, summary.totalUsers)} of ${summary.totalUsers} people`}
+          hint={`${percent(summary.usersWithUse, summary.totalUsers)} of ${people(summary.totalUsers)}`}
         />
         <Stat
           label="Ran out"
           value={`${summary.usersExhausted}`}
-          hint={`${percent(summary.usersExhausted, summary.usersWithUse)} of those who used them`}
+          hint={`${percent(summary.usersExhausted, summary.usersWithUse)} of those who used them. Can't afford another request.`}
         />
         <Stat
           label="Saved their own key"
