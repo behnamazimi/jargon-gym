@@ -235,7 +235,7 @@ declare
   v_ledger bigint;
 begin
   -- With every action costing 3, someone with 1 credit left can't do anything.
-  update public.ai_credit_settings set quiz_credits_per_question = 3, story_credits_per_term = 3;
+  update public.ai_feature_settings set credit_cost = 3 where feature in ('quiz', 'story');
 
   perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
   execute 'set local role authenticated';

@@ -73,15 +73,4 @@ describe("serveAudio", () => {
     expect((await serveAudio(request(), admin, subject)).status).toBe(502);
     expect(markFileMissing).not.toHaveBeenCalled();
   });
-
-  it("answers a probe with 204 and no body, without downloading", async () => {
-    const res = await serveAudio(request(), admin, subject, { probe: true });
-    expect(res.status).toBe(204);
-    expect(downloadAudio).not.toHaveBeenCalled();
-  });
-
-  it("answers a probe for a missing clip with 404", async () => {
-    getReadyAudio.mockResolvedValue(null);
-    expect((await serveAudio(request(), admin, subject, { probe: true })).status).toBe(404);
-  });
 });

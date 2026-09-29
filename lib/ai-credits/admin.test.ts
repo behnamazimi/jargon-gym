@@ -21,27 +21,31 @@ function rpcClient(result: { data: unknown; error: Error | null }) {
   return { client, calls };
 }
 
-describe("getAiCreditSettingsForAdmin", () => {
-  it("maps the settings row", async () => {
-    const client = {
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            single: () =>
-              Promise.resolve({
-                data: {
-                  enabled: true,
-                  default_allowance: 100,
-                  monthly_refill: 30,
-                  quiz_credits_per_question: 1,
-                  story_credits_per_term: 2,
-                },
-                error: null,
+function settingsClient(prices: { feature: string; credit_cost: number | null }[]) {
+  return {
+    from: (table: string) => ({
+      select: () =>
+        table === "ai_feature_settings"
+          ? { in: () => Promise.resolve({ data: prices, error: null }) }
+          : {
+              eq: () => ({
+                single: () =>
+                  Promise.resolve({
+                    data: { enabled: true, default_allowance: 100, monthly_refill: 30 },
+                    error: null,
+                  }),
               }),
-          }),
-        }),
-      }),
-    } as unknown as Client;
+            },
+    }),
+  } as unknown as Client;
+}
+
+describe("getAiCreditSettingsForAdmin", () => {
+  it("maps the settings row and takes the prices from the feature rows", async () => {
+    const client = settingsClient([
+      { feature: "quiz", credit_cost: 1 },
+      { feature: "story", credit_cost: 2 },
+    ]);
 
     expect(await getAiCreditSettingsForAdmin(client)).toEqual({
       enabled: true,
@@ -50,6 +54,11 @@ describe("getAiCreditSettingsForAdmin", () => {
       quizCreditsPerQuestion: 1,
       storyCreditsPerTerm: 2,
     });
+  });
+
+  it("fails when a price is missing instead of guessing one", async () => {
+    const client = settingsClient([{ feature: "quiz", credit_cost: 1 }]);
+    await expect(getAiCreditSettingsForAdmin(client)).rejects.toThrow("prices are not set");
   });
 });
 

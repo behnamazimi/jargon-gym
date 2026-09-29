@@ -1,8 +1,24 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { CreditFeature, CreditState } from "./types";
+import type { CreditCosts, CreditFeature, CreditState } from "./types";
 
 type Client = SupabaseClient<Database>;
+
+/** Prices live on the feature rows. A missing price is an error: charging at
+ *  a guessed price is worse than not charging. */
+async function getCreditCosts(client: Client): Promise<CreditCosts> {
+  const { data, error } = await client
+    .from("ai_feature_settings")
+    .select("feature, credit_cost")
+    .in("feature", ["quiz", "story"]);
+  if (error) throw error;
+
+  const cost = (feature: string) => data?.find((row) => row.feature === feature)?.credit_cost;
+  const quiz = cost("quiz");
+  const story = cost("story");
+  if (quiz == null || story == null) throw new Error("AI credit prices are not set.");
+  return { quizPerQuestion: quiz, storyPerTerm: story };
+}
 
 export type ReserveResult =
   | { status: "ok"; remaining: number; ledgerId: number }
@@ -10,7 +26,10 @@ export type ReserveResult =
 
 /** The signed-in user's balance. Pass the user-scoped client. */
 export async function getMyCreditState(client: Client): Promise<CreditState | null> {
-  const { data, error } = await client.rpc("my_ai_credit_state");
+  const [{ data, error }, costs] = await Promise.all([
+    client.rpc("my_ai_credit_state"),
+    getCreditCosts(client),
+  ]);
   if (error) throw error;
 
   const row = data?.[0];
@@ -20,10 +39,7 @@ export async function getMyCreditState(client: Client): Promise<CreditState | nu
     enabled: row.enabled,
     total: row.total,
     remaining: row.remaining,
-    costs: {
-      quizPerQuestion: row.quiz_credits_per_question,
-      storyPerTerm: row.story_credits_per_term,
-    },
+    costs,
   };
 }
 

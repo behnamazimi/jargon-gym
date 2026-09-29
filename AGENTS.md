@@ -28,6 +28,11 @@ how it works — the memory traces, mastery blend, ranking rules, or which
 layer owns what — read [docs/trace.md](docs/trace.md) in detail rather than
 guessing from the code alone.
 
+# AI overview
+
+[docs/ai.md](docs/ai.md) is the single map of every AI feature: vendors,
+access rules, cost levers and narration. Start there.
+
 # AI credits
 
 AI Quiz and Stories run on the user's own key when they have one, and

@@ -21,11 +21,9 @@ export async function serveAudio(
   request: Request,
   admin: Client,
   subject: SpeechSubject,
-  options: { probe?: boolean } = {},
 ): Promise<NextResponse> {
   const job = await getReadyAudio(admin, subject);
   if (!job?.storage_path) return new NextResponse(null, { status: 404 });
-  if (options.probe) return new NextResponse(null, { status: 204 });
 
   const etag = `"${job.id}"`;
   if (request.headers.get("if-none-match") === etag) {

@@ -38,23 +38,13 @@ begin
     = array['narration_story', 'narration_term', 'quiz', 'story', 'term_evaluation'],
     'seeded features should match the registry';
 
-  -- Quiz and Stories keep today's behavior; costs come from the credit settings.
+  -- Quiz and Stories are open to everyone and priced on their feature rows.
   assert (select enabled and access_mode = 'everyone' from public.ai_feature_settings where feature = 'quiz'),
     'quiz should be enabled for everyone';
-  assert (select credit_cost from public.ai_feature_settings where feature = 'quiz')
-    = (select quiz_credits_per_question from public.ai_credit_settings where id),
-    'quiz cost should match the credit settings';
+  assert (select credit_cost is not null from public.ai_feature_settings where feature = 'quiz'),
+    'quiz has a price';
 
-  -- Narration: the toggle and allowlist are copied, not opened up or lost.
-  assert (select enabled from public.ai_feature_settings where feature = 'narration_term')
-    = (select enabled from public.narration_settings where id),
-    'narration toggle should be copied';
-  assert (select count(*) from public.ai_feature_allowlist where feature = 'narration_term')
-    = (select count(*) from public.narration_allowlist),
-    'term narration allowlist should match';
-  assert (select count(*) from public.ai_feature_allowlist where feature = 'narration_story')
-    = (select count(*) from public.narration_allowlist),
-    'story narration allowlist should match';
+  -- Narration keeps its cap.
   assert (select access_mode = 'allowlist' and daily_cap = 20 from public.ai_feature_settings where feature = 'narration_story'),
     'story narration keeps its cap of 20';
 
@@ -129,13 +119,20 @@ begin
   assert (select enabled from public.ai_feature_settings where feature = 'quiz'), 'feature row unchanged';
   update public.ai_credit_settings set enabled = true;
 
-  -- Costs edited on the old admin page flow to the feature rows, even as an admin.
+  -- An admin edits prices on the feature rows; a plain user cannot.
   perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
   execute 'set local role authenticated';
-  update public.ai_credit_settings set quiz_credits_per_question = 4, story_credits_per_term = 6;
+  update public.ai_feature_settings set credit_cost = 4 where feature = 'quiz';
+  update public.ai_feature_settings set credit_cost = 6 where feature = 'story';
   execute 'reset role';
-  assert (select credit_cost from public.ai_feature_settings where feature = 'quiz') = 4, 'quiz cost should follow';
-  assert (select credit_cost from public.ai_feature_settings where feature = 'story') = 6, 'story cost should follow';
+  assert (select credit_cost from public.ai_feature_settings where feature = 'quiz') = 4, 'quiz price saved';
+  assert (select credit_cost from public.ai_feature_settings where feature = 'story') = 6, 'story price saved';
+  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  update public.ai_feature_settings set credit_cost = 9 where feature = 'quiz';
+  execute 'reset role';
+  assert (select credit_cost from public.ai_feature_settings where feature = 'quiz') = 4, 'a plain user cannot change a price';
+  assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update'), 'other columns stay locked';
 
   -- Run guard.
   v_token := public.begin_ai_run(u1, 'quiz', 120);
@@ -164,7 +161,8 @@ begin
   assert has_table_privilege('authenticated', 'public.ai_feature_settings', 'select');
   assert not has_table_privilege('authenticated', 'public.ai_feature_settings', 'insert');
   assert has_column_privilege('authenticated', 'public.ai_feature_settings', 'enabled', 'update');
-  assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'credit_cost', 'update');
+  assert has_column_privilege('authenticated', 'public.ai_feature_settings', 'credit_cost', 'update');
+  assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update');
   assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update');
   assert has_table_privilege('service_role', 'public.ai_feature_allowlist', 'select');
   assert not has_table_privilege('service_role', 'public.ai_feature_allowlist', 'insert');
@@ -175,7 +173,6 @@ begin
   assert has_function_privilege('service_role', 'public.begin_ai_run(uuid, text, integer)', 'execute');
   assert not has_function_privilege('authenticated', 'public.begin_ai_run(uuid, text, integer)', 'execute');
   assert not has_function_privilege('anon', 'public.end_ai_run(uuid, text, uuid)', 'execute');
-  assert not has_function_privilege('authenticated', 'public.sync_ai_feature_costs()', 'execute');
 
   -- A non-admin cannot change settings through RLS.
   perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
@@ -186,20 +183,20 @@ begin
   assert v_count = 0, 'a non-admin update should touch no rows';
   assert (select enabled from public.ai_feature_settings where feature = 'quiz'), 'quiz should still be enabled';
 
-  -- An admin can switch a feature off, but cannot change its cost directly.
+  -- An admin can switch a feature off, but cannot change which features are billable.
   perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
   execute 'set local role authenticated';
   update public.ai_feature_settings set enabled = false where feature = 'quiz';
   get diagnostics v_count = row_count;
   assert v_count = 1, 'an admin update of the switch should change one row';
   begin
-    update public.ai_feature_settings set credit_cost = 9 where feature = 'quiz';
+    update public.ai_feature_settings set billable = false where feature = 'quiz';
     v_failed := false;
   exception when insufficient_privilege then
     v_failed := true;
   end;
   execute 'reset role';
-  assert v_failed, 'an admin should not be able to write credit_cost';
+  assert v_failed, 'an admin should not be able to write billable';
   assert not (select enabled from public.ai_feature_settings where feature = 'quiz'), 'quiz should now be off';
 end;
 $$;

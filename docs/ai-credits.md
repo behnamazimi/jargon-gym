@@ -128,14 +128,17 @@ pool by email, and **Reset** clears their usage from that point on. Both keep
 every record, and a reset keeps any grants. Users with their own key are not
 affected by the switch.
 
-The settings row and the ledger live in `ai_credit_settings` and
-`ai_credit_ledger`. If you ever need to work on them directly, use the Supabase
-SQL editor:
+The allowance and refill live in `ai_credit_settings`, the prices in
+`ai_feature_settings.credit_cost` (one row each for `quiz` and `story`), and the
+ledger in `ai_credit_ledger`. If you ever need to work on them directly, use the
+Supabase SQL editor:
 
 ```sql
 update public.ai_credit_settings
-set default_allowance = 100, monthly_refill = 30,
-    quiz_credits_per_question = 1, story_credits_per_term = 1;
+set default_allowance = 100, monthly_refill = 30;
+
+update public.ai_feature_settings set credit_cost = 1
+where feature in ('quiz', 'story');
 
 insert into public.ai_credit_ledger (user_id, kind, amount, note)
 values ('<user id>', 'grant', 50, 'why');
