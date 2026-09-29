@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
+import { writeAudit } from "@/lib/admin/audit";
 import { exactEmailPattern } from "@/lib/admin/email-lookup";
 import { getAppOrigin } from "@/lib/auth/app-origin";
 import { sendInviteEmail } from "@/lib/email/resend";
@@ -62,14 +63,22 @@ async function approveOne({ supabase, user }: Context, requestId: string) {
     throw new AdminError("Request already handled.");
   }
 
+  let emailSent = true;
   try {
     const signupUrl = await buildSignupUrl(supabase, request.email, referralCode.code);
     await sendInviteEmail({ to: request.email, signupUrl });
   } catch (err) {
     console.error("Invite email failed:", err);
-    return { email: request.email, emailSent: false };
+    emailSent = false;
   }
-  return { email: request.email, emailSent: true };
+
+  await writeAudit(supabase, {
+    action: "app.waitlist_approve",
+    targetType: "waitlist_request",
+    targetId: requestId,
+    details: { emailSent },
+  });
+  return { email: request.email, emailSent };
 }
 
 const REVALIDATE = { revalidate: ["/admin/people", "/admin"] };
@@ -159,5 +168,11 @@ export async function resendInvite(requestId: string) {
       console.error("Invite resend failed:", err);
       throw new AdminError("Couldn't send the email. Try again.");
     }
+
+    await writeAudit(supabase, {
+      action: "app.invite_resend",
+      targetType: "waitlist_request",
+      targetId: requestId,
+    });
   });
 }

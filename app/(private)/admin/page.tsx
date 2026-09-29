@@ -5,6 +5,8 @@ import { AdminSection } from "@/components/admin/admin-section";
 import { AdminStat } from "@/components/admin/admin-stat";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { loadAdminOverview } from "@/lib/admin/overview";
+import { describeAudit } from "@/lib/admin/audit-labels";
+import { formatAdminDateTime } from "@/lib/admin/format";
 import { cn } from "@/lib/utils";
 
 const TONE_CLASS = {
@@ -15,7 +17,7 @@ const TONE_CLASS = {
 
 export default async function AdminOverviewPage() {
   const { supabase } = await requireAdminPage();
-  const { attention, stats } = await loadAdminOverview(supabase);
+  const { attention, stats, recent } = await loadAdminOverview(supabase);
 
   return (
     <>
@@ -63,6 +65,36 @@ export default async function AdminOverviewPage() {
           />
           <AdminStat label="Waiting for an invite" value={stats.waitlistPending} />
         </div>
+      </AdminSection>
+      <AdminSection
+        id="admin-recent"
+        title="Recent activity"
+        action={
+          <Link href="/admin/system/audit" className="link text-sm">
+            Audit log
+          </Link>
+        }
+      >
+        {recent === null ? (
+          <p className="m-0 text-sm text-base-content/65">Couldn&apos;t load recent activity.</p>
+        ) : recent.length === 0 ? (
+          <p className="m-0 text-sm text-base-content/65">Nothing recorded yet.</p>
+        ) : (
+          <ul className="m-0 flex list-none flex-col gap-1 p-0">
+            {recent.map((entry) => {
+              const { label, summary } = describeAudit(entry.action, entry.details);
+              return (
+                <li key={entry.id} className="text-sm">
+                  <span className="text-base-content/50">
+                    {formatAdminDateTime(entry.createdAt)}
+                  </span>{" "}
+                  <span className="font-medium text-base-content">{label}</span>
+                  {summary ? <span className="text-base-content/65">: {summary}</span> : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </AdminSection>
     </>
   );

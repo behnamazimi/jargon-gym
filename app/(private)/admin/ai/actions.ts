@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
+import { writeAudit } from "@/lib/admin/audit";
 
 const REVALIDATE = { revalidate: ["/admin", "/admin/ai", "/admin/ai/credits"] };
 
@@ -23,5 +24,12 @@ export async function setAiFeatureEnabled(feature: string, value: boolean) {
       .select("feature");
     if (error) throw error;
     if (!data || data.length !== 1) throw new AdminError("Couldn't change that switch.");
+
+    await writeAudit(supabase, {
+      action: "app.ai_feature_enabled",
+      targetType: "feature",
+      targetId: parsed.data.feature,
+      details: { feature: parsed.data.feature, enabled: parsed.data.value },
+    });
   }, REVALIDATE);
 }

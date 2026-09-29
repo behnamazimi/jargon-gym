@@ -5,6 +5,7 @@ const state = vi.hoisted(() => ({
   account: { id: "u1" } as { id: string } | null,
   rpcError: null as Error | null,
   rpcCalls: [] as { name: string; args: unknown }[],
+  audits: [] as unknown[],
   ilikeArgs: [] as unknown[],
   revalidated: [] as string[],
   featureRows: [{ feature: "quiz" }] as { feature: string }[],
@@ -36,6 +37,10 @@ vi.mock("@/lib/auth/require-session", async () => {
             }),
           }),
           rpc: (name: string, args: unknown) => {
+            if (name === "admin_write_audit") {
+              state.audits.push(args);
+              return Promise.resolve({ error: null });
+            }
             state.rpcCalls.push({ name, args });
             return Promise.resolve({ error: state.rpcError });
           },
@@ -53,6 +58,7 @@ beforeEach(() => {
   state.account = { id: "u1" };
   state.rpcError = null;
   state.rpcCalls = [];
+  state.audits = [];
   state.ilikeArgs = [];
   state.revalidated = [];
   state.featureRows = [{ feature: "quiz" }];
@@ -132,6 +138,14 @@ describe("the other admin actions", () => {
 
   it("switch credits on or off and reset usage", async () => {
     expect(await setAiCreditsEnabled(false)).toMatchObject({ ok: true });
+    expect(state.audits).toEqual([
+      {
+        p_action: "app.ai_credits_enabled",
+        p_target_type: "settings",
+        p_target_id: "ai_credits",
+        p_details: { enabled: false },
+      },
+    ]);
     expect(await resetAiCredits("u1")).toMatchObject({ ok: true });
     expect(state.rpcCalls).toEqual([
       { name: "admin_reset_ai_credits", args: { p_user_id: "u1", p_note: "" } },

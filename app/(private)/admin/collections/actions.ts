@@ -5,7 +5,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
-import { statusOf, stepsFor, type CollectionStatus } from "@/lib/jargon/admin/collection-status";
+import { writeAudit } from "@/lib/admin/audit";
+import {
+  statusOf,
+  stepsFor,
+  type CollectionStatus,
+  type StatusStep,
+} from "@/lib/jargon/admin/collection-status";
 import {
   listAllCollectionsForAdmin,
   type AdminCollectionRow,
@@ -109,9 +115,10 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
     const from = statusOf(found.collection);
     let slug = found.collection.slug;
 
+    const steps = stepsFor(from, to);
     let applied = 0;
     try {
-      for (const step of stepsFor(from, to)) {
+      for (const step of steps) {
         if (step.kind === "publish") {
           slug = await publish(supabase, user.id, found);
         } else {
@@ -128,6 +135,7 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
     } catch (err) {
       // The first step is already saved, so show the page as it is now and say so.
       if (applied > 0) {
+        await auditStatus(supabase, domainId, from, "builtin", slug, steps);
         revalidateCollection(slug);
         throw new AdminError(
           "The collection was marked built-in, but publishing failed. Try again.",
@@ -136,8 +144,27 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
       throw err;
     }
 
+    await auditStatus(supabase, domainId, from, to, slug, steps);
     revalidateCollection(slug);
     return { slug };
+  });
+}
+
+/** Publishing alone is already recorded by the database; everything else the app records. */
+async function auditStatus(
+  supabase: Client,
+  domainId: string,
+  from: CollectionStatus,
+  reached: CollectionStatus,
+  slug: string | null,
+  steps: StatusStep[],
+) {
+  if (steps.length === 0 || (steps.length === 1 && steps[0]?.kind === "publish")) return;
+  await writeAudit(supabase, {
+    action: "app.collection_status",
+    targetType: "domain",
+    targetId: domainId,
+    details: { from, to: reached, slug },
   });
 }
 
@@ -176,6 +203,15 @@ export async function updateDomainSlug(domainId: string, raw: string, expected: 
     if (error) {
       if (error.code === "23505") throw new AdminError("That address is taken. Check again.");
       throw error;
+    }
+
+    if (checked.slug !== collection.slug) {
+      await writeAudit(supabase, {
+        action: "app.collection_slug",
+        targetType: "domain",
+        targetId: domainId,
+        details: { old: collection.slug, new: checked.slug },
+      });
     }
 
     if (collection.isPublic) {

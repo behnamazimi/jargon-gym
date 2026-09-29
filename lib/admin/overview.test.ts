@@ -124,5 +124,6 @@ describe("loadAdminOverview", () => {
       waitlistPending: null,
     });
     expect(overview.attention.length).toBeGreaterThan(0);
+    expect(overview.recent).toBeNull();
   });
 });

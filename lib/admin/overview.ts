@@ -3,6 +3,7 @@ import { getAiCreditSummaryForAdmin, type AiCreditSummary } from "@/lib/ai-credi
 import { refundsLookHigh } from "@/lib/ai-credits/health";
 import { featureHealth } from "@/lib/ai/health";
 import { AI_FEATURE_META } from "./ai-features";
+import { recentAudit, type AuditRow } from "./audit-query";
 import { FEATURE_IDS, type FeatureId } from "@/lib/ai/registry";
 import {
   readCreditsEnabled,
@@ -161,6 +162,8 @@ export function buildAttentionItems(input: OverviewInput): AttentionItem[] {
 
 export type AdminOverview = {
   attention: AttentionItem[];
+  /** The latest admin activity; null when it couldn't be read. */
+  recent: AuditRow[] | null;
   stats: {
     totalPeople: number | null;
     usedCredits: number | null;
@@ -178,13 +181,15 @@ function settled<T>(label: string, result: PromiseSettledResult<T>): T | null {
 
 /** One failing source never fails the page: it shows as unknown. */
 export async function loadAdminOverview(client: Client): Promise<AdminOverview> {
-  const [credits, creditsEnabled, waitlist, featuresOff, syncNote] = await Promise.allSettled([
-    getAiCreditSummaryForAdmin(client),
-    readCreditsEnabled(client),
-    readWaitlistPending(client),
-    readFeaturesOff(client),
-    readSyncNote(client),
-  ]);
+  const [credits, creditsEnabled, waitlist, featuresOff, syncNote, recent] =
+    await Promise.allSettled([
+      getAiCreditSummaryForAdmin(client),
+      readCreditsEnabled(client),
+      readWaitlistPending(client),
+      readFeaturesOff(client),
+      readSyncNote(client),
+      recentAudit(client, 8),
+    ]);
 
   const input: OverviewInput = {
     credits: settled("AI credit numbers", credits),
@@ -197,6 +202,7 @@ export async function loadAdminOverview(client: Client): Promise<AdminOverview> 
 
   return {
     attention: buildAttentionItems(input),
+    recent: settled("recent activity", recent),
     stats: {
       totalPeople: input.credits?.totalUsers ?? null,
       usedCredits: input.credits?.usersWithUse ?? null,

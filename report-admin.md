@@ -23,6 +23,8 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 **Status:**
 
+- Phase 8: merged in #123, 2026-09-29. Deviations: "Updated" column instead of "published date" (no such column), owner search instead of an owner filter, a visibility badge next to a three-value status; the list is still capped at 1000 collections (a notice shows when it is reached).
+
 - Phase 7: merged in #122, 2026-09-29. Deferred: phone card layout for the people tables, a `signed_up` waitlist filter (it is a derived badge), page-number links beyond previous/next. The member panel shows remaining/total credits only (spent and granted stay on the credits page); "partly" narration access can only be cleared by switching on then off.
 
 - Phase 6: merged in #121, 2026-09-29. Term evaluation has no switch because nothing reads its setting (the evaluate route only checks the admin role); wiring it is a live-route change left for later. Queue debug's server actions still use the signed-in guard and return only the caller's own queue. Temporary (307) redirects for the three old addresses.
