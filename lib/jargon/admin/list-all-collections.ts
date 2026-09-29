@@ -25,6 +25,15 @@ export function canActOnCollection(
   return collection.visibility === "shared" || collection.ownerId === adminId;
 }
 
+/** Narration is generated for whatever it is asked about, so it also covers public collections
+ *  (which anyone can read), but never someone else's private, unpublished one. */
+export function canNarrateCollection(collection: {
+  readOnly: boolean;
+  isPublic: boolean;
+}): boolean {
+  return !collection.readOnly || collection.isPublic;
+}
+
 /** Every collection, including other people's private ones: the table's row
  *  level security hides those from an admin's own session, so this reads
  *  through a function. */

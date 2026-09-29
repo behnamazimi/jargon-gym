@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { canActOnCollection, listAllCollectionsForAdmin } from "./list-all-collections";
+import {
+  canActOnCollection,
+  canNarrateCollection,
+  listAllCollectionsForAdmin,
+} from "./list-all-collections";
 
 const row = (overrides: Record<string, unknown>) => ({
   id: "d1",
@@ -60,5 +64,13 @@ describe("canActOnCollection", () => {
     expect(canActOnCollection({ visibility: "shared", ownerId: "x" }, "a")).toBe(true);
     expect(canActOnCollection({ visibility: "private", ownerId: "a" }, "a")).toBe(true);
     expect(canActOnCollection({ visibility: "private", ownerId: "x" }, "a")).toBe(false);
+  });
+});
+
+describe("canNarrateCollection", () => {
+  it("allows what an admin can act on, and public collections, but not other private ones", () => {
+    expect(canNarrateCollection({ readOnly: false, isPublic: false })).toBe(true);
+    expect(canNarrateCollection({ readOnly: true, isPublic: true })).toBe(true);
+    expect(canNarrateCollection({ readOnly: true, isPublic: false })).toBe(false);
   });
 });

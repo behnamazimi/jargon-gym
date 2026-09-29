@@ -216,12 +216,22 @@ describe("narration sync collections", () => {
       collection("mine"),
       collection("shared", { owner_id: "someone", visibility: "shared" }),
       collection("theirs", { owner_id: "someone", visibility: "private" }),
+      collection("theirs-public", {
+        owner_id: "someone",
+        visibility: "private",
+        is_builtin: true,
+        is_public: true,
+      }),
     ];
   });
 
   it("starts a sync for a collection an admin may act on", async () => {
     expect(await startNarrationSync("shared")).toMatchObject({ ok: true });
     expect(state.enqueued).toEqual(["shared"]);
+  });
+
+  it("allows a public collection even when it is someone else's private one", async () => {
+    expect(await startNarrationSync("theirs-public")).toMatchObject({ ok: true });
   });
 
   it("refuses another person's private collection, whatever the browser sends", async () => {

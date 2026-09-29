@@ -64,8 +64,16 @@ const domain = (overrides: Record<string, unknown> = {}) => ({
   name: "Cooking",
   slug: null,
   is_builtin: true,
+  is_public: false,
+  owner_id: "admin-1",
+  owner_email: "admin@example.test",
+  visibility: "private",
+  term_count: 2,
   ...overrides,
 });
+
+const theirs = (overrides: Record<string, unknown> = {}) =>
+  domain({ owner_id: "someone", visibility: "private", ...overrides });
 
 const publishCalls = () =>
   state.rpcCalls.filter((call) => call.name === "admin_publish_collection");
@@ -83,6 +91,43 @@ beforeEach(() => {
   state.updatedSlug = "cooking";
   state.revalidated = [];
   state.termRangeCalls = [];
+});
+
+describe("someone else's private collection", () => {
+  beforeEach(() => {
+    state.list = [theirs()];
+  });
+
+  it("can't be published, though the publish function would allow it", async () => {
+    expect(await setPublic("d1", true)).toEqual({ ok: false, error: "Collection not found." });
+    expect(publishCalls()).toEqual([]);
+  });
+
+  it("can't be changed in any other way either", async () => {
+    const results = [
+      await setBuiltin("d1", true),
+      await setPublic("d1", false),
+      await updateDomainSlug("d1", "x"),
+    ];
+    for (const result of results) {
+      expect(result).toEqual({ ok: false, error: "Collection not found." });
+    }
+    expect(state.updates).toEqual([]);
+  });
+
+  it("can't be found when the id is unknown", async () => {
+    expect(await setBuiltin("missing", true)).toEqual({
+      ok: false,
+      error: "Collection not found.",
+    });
+  });
+});
+
+describe("a shared collection someone else owns", () => {
+  it("can be published, like main allowed", async () => {
+    state.list = [theirs({ visibility: "shared" })];
+    expect((await setPublic("d1", true)).ok).toBe(true);
+  });
 });
 
 describe("setBuiltin", () => {

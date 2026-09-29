@@ -66,8 +66,8 @@ otherwise say in the PR that it was not browser-verified.
   `AdminError("Couldn't publish. Try again.")`. Other RPC errors are generic. `updateDomainSlug` maps `23505`
   to `AdminError("That slug is taken. Try another.")` (no retry). Tests mock `{ code, message }` shaped errors.
 - **Slug generation:** the term read is paginated with `.range()` (PostgREST `max_rows` is 1000, so a large
-  collection would never finish slugging); only terms without a slug are sent; the root is truncated to 70
-  characters before the `-N` suffix (the function rejects slugs over 80); the domain slug parameter is the
+  collection would never finish slugging); only terms without a slug are sent; the root is truncated to 100
+  characters before the `-N` suffix (the function's limit is 200); the domain slug parameter is the
   domain's own slug when it has one (the taken set excludes the domain itself); revalidation uses the slug
   the RPC returns; the list mapper coalesces nullable `slug` and `owner_email` (typed non-null by the
   generator). `admin_list_collections` is also capped at 1000 rows by PostgREST: accepted, noted in the PR.
@@ -77,3 +77,16 @@ otherwise say in the PR that it was not browser-verified.
 - **Deferred:** audit rows for the direct writes (`setBuiltin`, unpublish, slug change) come in phase 9 with
   `admin_write_audit`. `setAiCreditsEnabled` and `setAiFeatureEnabled` stay direct updates on purpose.
 - Delete the unused imports left behind (`requireAdminClient` type, `AdminClient`); knip must stay green.
+
+## PR review amendments (applied)
+
+- **Every collection action re-checks ownership** (`findActable`): the publish function bypasses row level
+  security, so publishing someone else's private collection (its terms unreadable, all already slugged)
+  would have made it public. `setBuiltin`, publish, unpublish and slug change all answer "Collection not
+  found." for another person's private collection. Tests cover each.
+- **Narration allows more than editing does:** `canNarrateCollection` = actable or public (main could read
+  public collections). Publish and edit use the stricter rule only.
+- `updateDomainSlug` refreshes the old and new public pages when the collection is public.
+- Accepted and noted: `admin_list_collections` is capped by PostgREST at 1000 rows, so past that many
+  collections the taken-slug set is incomplete and publish/slug can fail with "Couldn't publish. Try again."
+  The list would need paging (or a service-role read) to lift that.

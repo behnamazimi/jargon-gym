@@ -13,7 +13,10 @@ import {
   listCollectionNarrationCoverage,
 } from "@/lib/narration/sync";
 import { capsSchema, type CapsInput } from "@/lib/narration/caps-schema";
-import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
+import {
+  canNarrateCollection,
+  listAllCollectionsForAdmin,
+} from "@/lib/jargon/admin/list-all-collections";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -94,9 +97,7 @@ export async function removeFromNarrationAllowlist(userId: string) {
  *  collections an admin may act on are allowed, whatever the browser sends. */
 async function actableCollections(supabase: Client, adminId: string) {
   const collections = await listAllCollectionsForAdmin(supabase, adminId);
-  return new Map(
-    collections.filter((collection) => !collection.readOnly).map((c) => [c.id, c.name] as const),
-  );
+  return new Map(collections.filter(canNarrateCollection).map((c) => [c.id, c.name] as const));
 }
 
 export async function startNarrationSync(domainId: string) {

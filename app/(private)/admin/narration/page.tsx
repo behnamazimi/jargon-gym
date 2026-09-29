@@ -2,7 +2,10 @@ import { AdminNarrationPageClient } from "@/components/jargon/admin/admin-narrat
 import { describeCron, getCronStatus } from "@/lib/narration/worker-status";
 import { featureHealth } from "@/lib/ai/health";
 import { requireAdminPage } from "@/lib/admin/page-guard";
-import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
+import {
+  canNarrateCollection,
+  listAllCollectionsForAdmin,
+} from "@/lib/jargon/admin/list-all-collections";
 import { listNarrationAllowlistForAdmin } from "@/lib/jargon/admin/list-narration-allowlist";
 import { getNarrationSettingsForAdmin } from "@/lib/jargon/admin/narration-settings";
 import {
@@ -32,7 +35,7 @@ export default async function AdminNarrationPage() {
   const coverage = await listCollectionNarrationCoverage(
     admin,
     collections
-      .filter((collection) => !collection.readOnly)
+      .filter(canNarrateCollection)
       .map((collection) => ({ id: collection.id, name: collection.name })),
   );
 

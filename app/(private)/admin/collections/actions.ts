@@ -4,6 +4,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
+import {
+  listAllCollectionsForAdmin,
+  type AdminCollectionRow,
+} from "@/lib/jargon/admin/list-all-collections";
 import { buildPublishSlugs } from "@/lib/jargon/admin/publish-slugs";
 import { generateUniqueSlug, slugify } from "@/lib/jargon/slug";
 import type { Database } from "@/lib/supabase/database.types";
@@ -13,8 +17,25 @@ type Client = SupabaseClient<Database>;
 /** PostgREST returns at most this many rows per request. */
 const PAGE_SIZE = 1000;
 
+/** The collection, if an admin may change it. The browser only sends an id, and the
+ *  publish function bypasses row level security, so ownership is checked here. */
+async function findActable(supabase: Client, adminId: string, domainId: string) {
+  const collections = await listAllCollectionsForAdmin(supabase, adminId);
+  const collection = collections.find((row) => row.id === domainId);
+  if (!collection || collection.readOnly) throw new AdminError("Collection not found.");
+  return { collection, collections };
+}
+
+function revalidateCollection(slug: string | null) {
+  revalidatePath("/admin/collections");
+  if (slug) revalidatePath(`/j/${slug}`, "layout");
+  revalidatePath("/sitemap.xml");
+}
+
 export async function setBuiltin(domainId: string, value: boolean) {
-  return runAdminAction(async ({ supabase }) => {
+  return runAdminAction(async ({ supabase, user }) => {
+    await findActable(supabase, user.id, domainId);
+
     const update: { is_builtin: boolean; is_public?: boolean } = { is_builtin: value };
     if (!value) update.is_public = false;
 
@@ -32,13 +53,6 @@ export async function setBuiltin(domainId: string, value: boolean) {
       revalidatePath("/sitemap.xml");
     }
   });
-}
-
-/** Every collection, including ones this session can't read, so slugs never clash with them. */
-async function listCollections(supabase: Client) {
-  const { data, error } = await supabase.rpc("admin_list_collections");
-  if (error) throw error;
-  return data ?? [];
 }
 
 async function listTermsOf(supabase: Client, domainId: string) {
@@ -62,17 +76,15 @@ function shouldReadAgain(error: { code?: string }): boolean {
   return error.code === "23505" || error.code === "40001";
 }
 
-async function publishOnce(supabase: Client, domainId: string) {
-  const collections = await listCollections(supabase);
-  const domain = collections.find((row) => row.id === domainId);
-  if (!domain) throw new AdminError("Collection not found.");
-  if (!domain.is_builtin) {
+async function publishOnce(supabase: Client, adminId: string, domainId: string) {
+  const { collection, collections } = await findActable(supabase, adminId, domainId);
+  if (!collection.isBuiltin) {
     throw new AdminError("Only built-in collections can be made public.");
   }
 
   const { domainSlug, termSlugs } = buildPublishSlugs({
-    domainName: domain.name,
-    domainSlug: (domain.slug as string | null) || null,
+    domainName: collection.name,
+    domainSlug: collection.slug,
     takenDomainSlugs: new Set(
       collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])),
     ),
@@ -86,10 +98,10 @@ async function publishOnce(supabase: Client, domainId: string) {
   });
 }
 
-async function publish(supabase: Client, domainId: string): Promise<string> {
-  let result = await publishOnce(supabase, domainId);
+async function publish(supabase: Client, adminId: string, domainId: string): Promise<string> {
+  let result = await publishOnce(supabase, adminId, domainId);
   if (result.error && shouldReadAgain(result.error)) {
-    result = await publishOnce(supabase, domainId);
+    result = await publishOnce(supabase, adminId, domainId);
   }
   if (result.error) {
     if (shouldReadAgain(result.error)) throw new AdminError("Couldn't publish. Try again.");
@@ -100,11 +112,12 @@ async function publish(supabase: Client, domainId: string): Promise<string> {
 }
 
 export async function setPublic(domainId: string, value: boolean) {
-  return runAdminAction(async ({ supabase }): Promise<{ slug: string | null }> => {
+  return runAdminAction(async ({ supabase, user }): Promise<{ slug: string | null }> => {
     let slug: string | null;
     if (value) {
-      slug = await publish(supabase, domainId);
+      slug = await publish(supabase, user.id, domainId);
     } else {
+      await findActable(supabase, user.id, domainId);
       const { data, error } = await supabase
         .from("domains")
         .update({ is_public: false })
@@ -115,21 +128,19 @@ export async function setPublic(domainId: string, value: boolean) {
       slug = data.slug;
     }
 
-    if (slug) revalidatePath(`/j/${slug}`, "layout");
-    revalidatePath("/admin/collections");
-    revalidatePath("/sitemap.xml");
-
+    revalidateCollection(slug);
     return { slug };
   });
 }
 
+function takenSlugs(collections: AdminCollectionRow[], domainId: string) {
+  return new Set(collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])));
+}
+
 export async function updateDomainSlug(domainId: string, rawSlug: string) {
-  return runAdminAction(async ({ supabase }): Promise<{ slug: string }> => {
-    const collections = await listCollections(supabase);
-    const taken = new Set(
-      collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])),
-    );
-    const slug = generateUniqueSlug(slugify(rawSlug), taken);
+  return runAdminAction(async ({ supabase, user }): Promise<{ slug: string }> => {
+    const { collection, collections } = await findActable(supabase, user.id, domainId);
+    const slug = generateUniqueSlug(slugify(rawSlug), takenSlugs(collections, domainId));
 
     const { error } = await supabase
       .from("domains")
@@ -142,9 +153,8 @@ export async function updateDomainSlug(domainId: string, rawSlug: string) {
       throw error;
     }
 
-    revalidatePath("/admin/collections");
-    revalidatePath("/sitemap.xml");
-
+    if (collection.isPublic) revalidateCollection(collection.slug);
+    revalidateCollection(slug);
     return { slug };
   });
 }
