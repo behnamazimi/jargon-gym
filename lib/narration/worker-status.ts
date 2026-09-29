@@ -8,18 +8,18 @@ const WORKER = "narration-sync";
 /** The cron job should tick every minute; this much silence is a problem. */
 const CRON_SILENT_MS = 5 * 60 * 1000;
 
-/** Records that the worker was called, and which secret was used. Best effort:
+/** Records that the worker was called. Best effort:
  *  a failure is logged and never fails the tick. */
 export async function recordWorkerTick(
   admin: Client,
-  tick: { source: "cron" | "app"; secret: "ai" | "legacy" },
+  tick: { source: "cron" | "app" },
 ): Promise<void> {
   try {
     const { error } = await admin.from("ai_worker_status").upsert(
       {
         worker: WORKER,
         source: tick.source,
-        last_secret: tick.secret,
+        last_secret: "ai",
         last_tick_at: new Date().toISOString(),
       },
       { onConflict: "worker,source" },
@@ -30,7 +30,7 @@ export async function recordWorkerTick(
   }
 }
 
-export type CronStatus = { lastTickAt: string; secret: "ai" | "legacy" } | null;
+export type CronStatus = { lastTickAt: string } | null;
 
 /** The last call made by the cron job. Only a number for the admin page, so a
  *  failed read shows as "none yet". */
@@ -38,7 +38,7 @@ export async function getCronStatus(client: Client): Promise<CronStatus> {
   try {
     const { data, error } = await client
       .from("ai_worker_status")
-      .select("last_tick_at, last_secret")
+      .select("last_tick_at")
       .eq("worker", WORKER)
       .eq("source", "cron")
       .maybeSingle();
@@ -47,7 +47,7 @@ export async function getCronStatus(client: Client): Promise<CronStatus> {
       return null;
     }
     if (!data) return null;
-    return { lastTickAt: data.last_tick_at, secret: data.last_secret as "ai" | "legacy" };
+    return { lastTickAt: data.last_tick_at };
   } catch (error) {
     console.error("Couldn't read the worker status:", error);
     return null;
@@ -71,13 +71,9 @@ export function describeCron(
 
   if (!Number.isFinite(Date.parse(status.lastTickAt))) return null;
   const minutes = Math.max(0, Math.round((now - Date.parse(status.lastTickAt)) / 60_000));
-  const secretNote =
-    status.secret === "legacy"
-      ? "It still uses the old Telegram secret."
-      : "It uses the AI secret.";
   const silent = now - Date.parse(status.lastTickAt) > CRON_SILENT_MS;
   return {
-    text: `Last cron call ${minutes} min ago. ${secretNote}${silent && jobNeedsCron ? " It has gone quiet while a sync needs it." : ""}`,
+    text: `Last cron call ${minutes} min ago.${silent && jobNeedsCron ? " It has gone quiet while a sync needs it." : ""}`,
     warning: silent && jobNeedsCron,
   };
 }

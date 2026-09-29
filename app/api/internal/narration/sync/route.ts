@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   after(async () => {
     const admin = createAdminClient();
     // Recorded alongside the work, so a slow write can't eat into its time budget.
-    const tick = recordWorkerTick(admin, { source: auth.source, secret: auth.secret });
+    const tick = recordWorkerTick(admin, { source: auth.source });
     try {
       await processNarrationSyncBatch(admin);
     } catch (err) {
