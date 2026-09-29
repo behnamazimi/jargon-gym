@@ -14,14 +14,19 @@ import {
 } from "@/lib/narration/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+/** The admin page has one switch and one list; they apply to both narration features. */
+const NARRATION_FEATURES = ["narration_term", "narration_story"] as const;
+
 export async function setNarrationEnabled(value: boolean): Promise<void> {
   const { supabase } = await requireAdminClient();
 
-  const { error } = await supabase
-    .from("narration_settings")
+  const { data, error } = await supabase
+    .from("ai_feature_settings")
     .update({ enabled: value })
-    .eq("id", true);
+    .in("feature", [...NARRATION_FEATURES])
+    .select("feature");
   if (error) throw error;
+  if (data?.length !== NARRATION_FEATURES.length) throw new Error("Couldn't change the switch.");
 
   revalidatePath("/admin/narration");
 }
@@ -29,7 +34,7 @@ export async function setNarrationEnabled(value: boolean): Promise<void> {
 export async function addToNarrationAllowlist(
   email: string,
 ): Promise<{ userId: string; email: string }> {
-  const { supabase, user } = await requireAdminClient();
+  const { supabase } = await requireAdminClient();
 
   const { data: account, error: lookupError } = await supabase
     .from("users")
@@ -39,9 +44,10 @@ export async function addToNarrationAllowlist(
   if (lookupError) throw lookupError;
   if (!account) throw new Error("No account found for that email.");
 
-  const { error } = await supabase
-    .from("narration_allowlist")
-    .upsert({ user_id: account.id, added_by: user.id }, { onConflict: "user_id" });
+  const { error } = await supabase.from("ai_feature_allowlist").upsert(
+    NARRATION_FEATURES.map((feature) => ({ feature, user_id: account.id })),
+    { onConflict: "feature,user_id", ignoreDuplicates: true },
+  );
   if (error) throw error;
 
   revalidatePath("/admin/narration");
@@ -51,7 +57,11 @@ export async function addToNarrationAllowlist(
 export async function removeFromNarrationAllowlist(userId: string): Promise<void> {
   const { supabase } = await requireAdminClient();
 
-  const { error } = await supabase.from("narration_allowlist").delete().eq("user_id", userId);
+  const { error } = await supabase
+    .from("ai_feature_allowlist")
+    .delete()
+    .in("feature", [...NARRATION_FEATURES])
+    .eq("user_id", userId);
   if (error) throw error;
 
   revalidatePath("/admin/narration");

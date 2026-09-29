@@ -26,7 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ stor
   if (!z.uuid().safeParse(storyId).success) return new NextResponse(null, { status: 404 });
 
   const admin = createAdminClient();
-  const allowed = await getNarrationAccessForUser(admin, userId);
+  const allowed = await getNarrationAccessForUser(admin, userId, "narration_story");
   if (!allowed) return new NextResponse(null, { status: 403 });
 
   const result = await getOrGenerateStoryNarration(admin, userId, storyId);

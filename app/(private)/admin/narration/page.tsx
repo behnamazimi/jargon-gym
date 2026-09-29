@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { AdminNarrationPageClient } from "@/components/jargon/admin/admin-narration-page";
+import { featureHealth } from "@/lib/ai/health";
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { listAllCollectionsForAdmin } from "@/lib/jargon/admin/list-all-collections";
 import { listNarrationAllowlistForAdmin } from "@/lib/jargon/admin/list-narration-allowlist";
@@ -41,8 +42,11 @@ export default async function AdminNarrationPage() {
     kickNarrationSyncWorker();
   }
 
+  const health = featureHealth("narration_term");
+
   return (
     <AdminNarrationPageClient
+      healthNote={health.ok ? null : health.note}
       enabled={settings.enabled}
       allowlist={allowlist}
       coverage={coverage}

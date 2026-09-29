@@ -89,7 +89,9 @@ function makeClient(store: Store): Client {
     if (table === "term_narrations") return store.narrations;
     if (table === "domains") return store.domains;
     if (table === "narration_sync_jobs") return store.jobs;
-    if (table === "narration_settings") return [{ id: true, enabled: store.enabled }];
+    if (table === "ai_feature_settings") {
+      return [{ feature: "narration_term", enabled: store.enabled }];
+    }
     return [];
   }
 
@@ -441,6 +443,69 @@ describe("cancelNarrationSync", () => {
     const store = emptyStore({ jobs: [job] });
     const view = await cancelNarrationSync(makeClient(store));
     expect(view?.status).toBe("cancelled");
+    expect(job.status).toBe("cancelled");
+  });
+});
+
+describe("switching narration off ends a running sync", () => {
+  function runningJob() {
+    return jobRow({
+      status: "running",
+      cursor: 0,
+      term_ids: ["term-1", "term-2", "term-3"],
+      lease_expires_at: "2099-01-01T00:00:00.000Z",
+    });
+  }
+
+  it("cancels the job and generates nothing when the batch worker starts", async () => {
+    vi.mocked(getOrGenerateNarration).mockClear();
+    const job = runningJob();
+    const store = emptyStore({
+      enabled: false,
+      jobs: [job],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 3 }],
+    });
+
+    await expect(
+      processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 }),
+    ).resolves.toEqual({ shouldContinue: false });
+    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(job.status).toBe("cancelled");
+    expect(job.lease_expires_at).toBeNull();
+    expect(job.finished_at).not.toBeNull();
+  });
+
+  it("cancels the job on a single tick as well", async () => {
+    vi.mocked(getOrGenerateNarration).mockClear();
+    const job = runningJob();
+    const store = emptyStore({
+      enabled: false,
+      jobs: [job],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 3 }],
+    });
+
+    await expect(processNarrationSyncTick(makeClient(store))).resolves.toEqual({
+      shouldContinue: false,
+    });
+    expect(getOrGenerateNarration).not.toHaveBeenCalled();
+    expect(job.status).toBe("cancelled");
+  });
+
+  it("stops between waves when it is switched off part way through", async () => {
+    const job = runningJob();
+    job.term_ids = ["term-1", "term-2", "term-3", "term-4", "term-5", "term-6"];
+    const store = emptyStore({
+      jobs: [job],
+      claim: [{ job_id: job.id, term_id: "term-1", cursor: 0, term_count: 6 }],
+    });
+    vi.mocked(getOrGenerateNarration).mockClear();
+    vi.mocked(getOrGenerateNarration).mockImplementation(async () => {
+      store.enabled = false;
+      return { status: "ready", storagePath: "t.mp3", contentHash: HASH };
+    });
+
+    await processNarrationSyncBatch(makeClient(store), { budgetMs: 60_000 });
+    expect(getOrGenerateNarration).toHaveBeenCalledTimes(4);
     expect(job.status).toBe("cancelled");
   });
 });

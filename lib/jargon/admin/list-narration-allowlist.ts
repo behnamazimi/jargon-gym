@@ -13,8 +13,9 @@ export async function listNarrationAllowlistForAdmin(
   client: Client,
 ): Promise<AdminNarrationAllowlistRow[]> {
   const { data: allowlist, error } = await client
-    .from("narration_allowlist")
+    .from("ai_feature_allowlist")
     .select("user_id, created_at")
+    .eq("feature", "narration_term")
     .order("created_at", { ascending: false });
   if (error) throw error;
   if (!allowlist?.length) return [];
