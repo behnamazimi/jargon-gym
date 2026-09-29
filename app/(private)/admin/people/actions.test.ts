@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 type Result = { data?: unknown; error?: unknown };
 
 const state = vi.hoisted(() => ({
+  lastId: "" as string,
+  byId: {} as Record<string, Record<string, unknown>>,
   request: { id: "r1", email: "a@example.test", status: "pending" } as Record<string, unknown>,
   resendRequest: null as Record<string, unknown> | null,
   claimed: [{ id: "r1" }] as unknown[],
@@ -30,7 +32,11 @@ vi.mock("@/lib/email/resend", () => ({
 function chain(table: string, list: () => Result, single: () => Result) {
   const node: Record<string, unknown> = {};
   const settle = () => Object.assign(Promise.resolve(list()), node);
-  for (const method of ["select", "eq", "neq", "limit"]) node[method] = settle;
+  for (const method of ["select", "neq", "limit", "in"]) node[method] = settle;
+  node.eq = (column: string, value: string) => {
+    if (column === "id") state.lastId = value;
+    return settle();
+  };
   node.ilike = (_column: string, pattern: string) => {
     state.ilikeArgs.push(pattern);
     return settle();
@@ -74,7 +80,10 @@ vi.mock("@/lib/auth/require-session", async () => {
           return chain(
             table,
             () => ({ data: state.claimed, error: null }),
-            () => ({ data: state.resendRequest ?? state.request, error: null }),
+            () => ({
+              data: state.byId[state.lastId] ?? state.resendRequest ?? state.request,
+              error: null,
+            }),
           );
         },
       },
@@ -83,11 +92,12 @@ vi.mock("@/lib/auth/require-session", async () => {
   };
 });
 
-const { approveWaitlistRequest, resendInvite } = await import("./actions");
+const { approveWaitlistRequest, approveWaitlistRequests, resendInvite } = await import("./actions");
 
 beforeEach(() => {
   state.request = { id: "r1", email: "a@example.test", status: "pending" };
   state.resendRequest = null;
+  state.byId = {};
   state.claimed = [{ id: "r1" }];
   state.account = null;
   state.emailError = null;
@@ -101,7 +111,7 @@ beforeEach(() => {
 describe("approveWaitlistRequest", () => {
   it("creates a code, claims the request, then sends the email", async () => {
     expect(await approveWaitlistRequest("r1")).toEqual({ ok: true, data: { emailSent: true } });
-    expect(state.calls).toEqual(["code", "claim", "reval:/admin/invites", "email"]);
+    expect(state.calls).toEqual(["code", "claim", "email", "reval:/admin/people", "reval:/admin"]);
     expect(state.sent).toEqual([
       {
         to: "a@example.test",
@@ -141,6 +151,58 @@ describe("approveWaitlistRequest", () => {
     state.emailError = new Error("Resend is down");
     expect(await approveWaitlistRequest("r1")).toEqual({ ok: true, data: { emailSent: false } });
     expect(state.updates.filter((u) => u.table === "waitlist_requests")).toHaveLength(1);
+  });
+});
+
+const ID1 = "3f2b8c1e-0a4d-4c55-9d1e-7a6b5c4d3e2f";
+const ID2 = "4a3c9d2f-1b5e-4d66-8e2f-8b7c6d5e4f30";
+const ID3 = "5b4dae30-2c6f-4e77-9f30-9c8d7e6f5041";
+
+describe("approveWaitlistRequests", () => {
+  it("approves each request, reporting who was already handled and whose email failed", async () => {
+    state.byId = {
+      [ID1]: { id: ID1, email: "one@example.test", status: "pending" },
+      [ID2]: { id: ID2, email: "two@example.test", status: "invited" },
+      [ID3]: { id: ID3, email: "three@example.test", status: "pending" },
+    };
+    const result = await approveWaitlistRequests([ID1, ID2, ID3, ID1]);
+    expect(result).toEqual({
+      ok: true,
+      data: {
+        approved: 2,
+        emailFailed: [],
+        failed: [{ id: ID2, email: null, error: "Request already handled." }],
+      },
+    });
+    expect(state.sent.map((mail) => mail.to)).toEqual(["one@example.test", "three@example.test"]);
+    expect(state.calls.filter((call) => call.startsWith("reval"))).toEqual([
+      "reval:/admin/people",
+      "reval:/admin",
+    ]);
+  });
+
+  it("names whose email failed", async () => {
+    state.byId = { [ID1]: { id: ID1, email: "one@example.test", status: "pending" } };
+    state.emailError = new Error("Resend is down");
+    const result = await approveWaitlistRequests([ID1]);
+    expect(result).toMatchObject({
+      ok: true,
+      data: { approved: 1, emailFailed: ["one@example.test"] },
+    });
+  });
+
+  it("refuses an empty list, too many, and things that aren't ids", async () => {
+    expect((await approveWaitlistRequests([])).ok).toBe(false);
+    expect((await approveWaitlistRequests(["nope"])).ok).toBe(false);
+    const many = Array.from(
+      { length: 11 },
+      (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`,
+    );
+    expect(await approveWaitlistRequests(many)).toEqual({
+      ok: false,
+      error: "Choose between 1 and 10 requests.",
+    });
+    expect(state.calls).toEqual([]);
   });
 });
 

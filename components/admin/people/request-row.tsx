@@ -1,15 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { approveWaitlistRequest, resendInvite } from "@/app/(private)/admin/invites/actions";
-import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { approveWaitlistRequest, resendInvite } from "@/app/(private)/admin/people/actions";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { useToast } from "@/components/ui/toast";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import { formatAdminDate } from "@/lib/admin/format";
-import type {
-  AdminWaitlistRow,
-  AdminWaitlistStatus,
-} from "@/lib/jargon/admin/list-waitlist-requests";
+import type { AdminWaitlistRow, AdminWaitlistStatus } from "@/lib/admin/people/waitlist";
 
 const statusBadgeClass: Record<AdminWaitlistStatus, string> = {
   pending: "badge-neutral",
@@ -23,70 +20,55 @@ const statusLabel: Record<AdminWaitlistStatus, string> = {
   signed_up: "Signed up",
 };
 
-export function AdminInvitesPageClient({ requests }: { requests: AdminWaitlistRow[] }) {
-  return (
-    <>
-      <AdminPageHeader
-        title="Invites"
-        description="Approve waitlist requests to generate a referral code and email a signup link."
-      />
-
-      <div className="overflow-x-auto rounded-lg border border-base-300">
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Requested</th>
-              <th>
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((request) => (
-              <RequestRow key={request.id} request={request} />
-            ))}
-            {requests.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="text-center text-base-content/50">
-                  No waitlist requests yet.
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
-}
-
-function RequestRow({ request }: { request: AdminWaitlistRow }) {
+export function RequestRow({
+  row,
+  selected,
+  selectable,
+  onToggle,
+}: {
+  row: AdminWaitlistRow;
+  selected: boolean;
+  selectable: boolean;
+  onToggle: () => void;
+}) {
   const { run, isPending, error, clearError } = useAdminAction();
+  const { toast } = useToast();
   const [notice, setNotice] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
 
   function handleApprove() {
     setNotice(null);
-    void run(() => approveWaitlistRequest(request.id), {
+    void run(() => approveWaitlistRequest(row.id), {
+      // The row leaves the Pending list, so a note on it would vanish with it.
       onSuccess: ({ emailSent }) => {
-        if (!emailSent) setNotice("Approved, but the email failed. Use Resend.");
+        if (!emailSent)
+          toast(`Approved ${row.email}, but the email failed. Use Resend.`, "destructive");
       },
     });
   }
 
   async function handleResend() {
     setNotice(null);
-    if (await run(() => resendInvite(request.id))) setNotice("Sent again.");
+    if (await run(() => resendInvite(row.id))) setNotice("Sent again.");
   }
 
   return (
     <tr>
-      <td className="font-medium text-base-content">{request.email}</td>
       <td>
-        <span className={`badge ${statusBadgeClass[request.status]}`}>
-          {statusLabel[request.status]}
-        </span>
+        {row.status === "pending" ? (
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm"
+            aria-label={`Select ${row.email}`}
+            checked={selected}
+            disabled={!selectable}
+            onChange={onToggle}
+          />
+        ) : null}
+      </td>
+      <td className="font-medium text-base-content">{row.email}</td>
+      <td>
+        <span className={`badge ${statusBadgeClass[row.status]}`}>{statusLabel[row.status]}</span>
         {error ? (
           <p role="alert" className="mt-1 text-sm text-error">
             {error}
@@ -98,9 +80,9 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
           </p>
         ) : null}
       </td>
-      <td className="text-base-content/65">{formatAdminDate(request.createdAt)}</td>
+      <td className="text-base-content/65">{formatAdminDate(row.createdAt)}</td>
       <td className="text-right">
-        {request.status === "pending" ? (
+        {row.status === "pending" ? (
           <button
             type="button"
             className="btn btn-sm btn-primary transition-transform active:scale-[0.96]"
@@ -113,7 +95,7 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
             {isPending ? "Approving…" : "Approve"}
           </button>
         ) : null}
-        {request.status === "invited" ? (
+        {row.status === "invited" ? (
           <button
             type="button"
             className="btn btn-sm btn-ghost transition-transform active:scale-[0.96]"
@@ -128,7 +110,7 @@ function RequestRow({ request }: { request: AdminWaitlistRow }) {
         isOpen={confirming}
         onOpenChange={setConfirming}
         title="Approve this request?"
-        description={`This emails a signup link to ${request.email}.`}
+        description={`This emails a signup link to ${row.email}.`}
         confirmLabel="Approve and email"
         onConfirm={handleApprove}
       />

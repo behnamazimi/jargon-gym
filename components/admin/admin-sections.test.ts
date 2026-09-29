@@ -14,7 +14,7 @@ describe("admin sections", () => {
     const overview = bySection("/admin");
     expect(isSectionActive("/admin", overview)).toBe(true);
     expect(isSectionActive("/admin/", overview)).toBe(true);
-    expect(isSectionActive("/admin/invites", overview)).toBe(false);
+    expect(isSectionActive("/admin/people", overview)).toBe(false);
   });
 
   it("highlights a section for its own path and paths below it, not lookalikes", () => {

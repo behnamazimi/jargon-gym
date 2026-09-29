@@ -5,7 +5,7 @@ describe("isStudyPath", () => {
   it("treats jargon and admin as study chrome", () => {
     expect(isStudyPath("/jargon")).toBe(true);
     expect(isStudyPath("/jargon/read")).toBe(true);
-    expect(isStudyPath("/admin/invites")).toBe(true);
+    expect(isStudyPath("/admin/people")).toBe(true);
   });
 
   it("treats marketing, auth, and public glossary as the website", () => {
@@ -45,7 +45,7 @@ describe("isDockPath", () => {
   it("hides the dock on overflow sub-pages", () => {
     expect(isDockPath("/jargon/settings")).toBe(false);
     expect(isDockPath("/jargon/browse")).toBe(false);
-    expect(isDockPath("/admin/invites")).toBe(false);
+    expect(isDockPath("/admin/people")).toBe(false);
     expect(isDockPath("/login")).toBe(false);
   });
 });
@@ -61,7 +61,7 @@ describe("studyBackTarget", () => {
 
   it("never targets overflow or website pages", () => {
     expect(studyBackTarget("/jargon/settings", "tab=ai")).toBeNull();
-    expect(studyBackTarget("/admin/invites", "")).toBeNull();
+    expect(studyBackTarget("/admin/people", "")).toBeNull();
     expect(studyBackTarget("/how-terms-work", "")).toBeNull();
   });
 });

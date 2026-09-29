@@ -1,5 +1,5 @@
 import { AdminPageSkeleton } from "@/components/page-skeleton";
 
-export default function AdminInvitesLoading() {
+export default function AdminPeopleLoading() {
   return <AdminPageSkeleton />;
 }

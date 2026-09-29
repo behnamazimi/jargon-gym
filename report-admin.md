@@ -23,6 +23,8 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 **Status:**
 
+- Phase 6: merged in #121, 2026-09-29. Term evaluation has no switch because nothing reads its setting (the evaluate route only checks the admin role); wiring it is a live-route change left for later. Queue debug's server actions still use the signed-in guard and return only the caller's own queue. Temporary (307) redirects for the three old addresses.
+
 - Phase 5: merged in #120, 2026-09-29. Accepted: `admin_list_collections` is capped at 1000 rows by PostgREST, so past that many collections the taken-slug set is incomplete and publish/slug can fail with a plain message; direct writes (`setBuiltin`, unpublish, slug) still have no audit rows (phase 9); every collection action now checks ownership itself, because the publish function bypasses row level security.
 
 - Phase 4: merged in #119, 2026-09-29 (migration `20260930110000_admin_rpcs.sql`, deployed by the "Deploy Supabase migrations" run after CI). Accepted: `actor_email` snapshots outlive account deletion; grant notes in audit details are bounded by the app schema only; PostgREST caps `admin_list_collections` at 1000 rows. Found on the way: admins could not read other people's private collections through RLS (now via `admin_list_collections`).

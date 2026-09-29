@@ -5,7 +5,9 @@ import { LEGACY_ADMIN_REDIRECTS } from "./redirects";
 describe("legacy admin redirects", () => {
   it("send every old address to a page that exists", () => {
     for (const { destination } of LEGACY_ADMIN_REDIRECTS) {
-      expect(existsSync(`app/(private)${destination}/page.tsx`), destination).toBe(true);
+      expect(existsSync(`app/(private)${destination.split("?")[0]}/page.tsx`), destination).toBe(
+        true,
+      );
     }
   });
 

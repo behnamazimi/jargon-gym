@@ -65,3 +65,41 @@ pages-guarded (new page), `AdminTable`/pagination pure helpers (page window math
   request approved twice (the single approval's compare-and-set).
 - The credit line is only as complete as `admin_ai_credit_usage` (1000 most recently active people); others
   show "No credit use yet", which is accurate for people without ledger rows.
+
+## Review amendments (applied)
+
+One PR stays (rule), so it is trimmed instead of split:
+
+- **Manage is a routed view, not a lazy dialog:** `?view=members&person=<id>` renders a server-side detail
+  panel above the members table, so `revalidatePath("/admin/people")` refreshes it and switches don't snap
+  back (a switch's `value` must come from server data). No dialog state, no lazy load action, no nested
+  modals. Grant is a small inline form in the panel with the address shown read-only (it can only grant to
+  that person); Reset uses `ConfirmDialog` and states the consequence. The allowlist actions (and the
+  grant/reset actions) also revalidate `/admin/people`.
+- **Credit line:** `ai_credit_balance` (service role only) through `createAdminClient()` after the admin
+  check gives **remaining and total**; spent and granted are dropped from the panel (they stay on the credits
+  page). No migration. The old "No credit use yet" claim is removed.
+- **Waitlist filters:** `pending | invited | all`, each a plain `.eq` (no embed filters). `signed_up` stays a
+  derived badge from the `referral_codes(used_by)` embed and is not filterable in this cut. Order is
+  `created_at desc, id desc`. To avoid PostgREST's 416 on a page past the end, `listWaitlist`/`listMembers`
+  run a `head: true` count first, clamp the page, then `.range()`.
+- **Search:** `containsPattern(q)` wraps `exactEmailPattern` in `%…%`, strips control characters, trims to
+  100; passed to `.ilike("email", …)` (never through `.or()`). An empty query means no filter.
+- **Bulk approve:** the body of `approveWaitlistRequest` becomes `approveOne(supabase, user, id)` (throws
+  `AdminError`, returns `{ email, emailSent }`); the single and bulk actions wrap it (the wrapper is not called
+  in a loop). Bulk validates a deduped, non-empty uuid array of at most **10**, runs sequentially with a per-id
+  try/catch, revalidates once, and returns `{ approved, emailFailed, failed }`. The copy says plainly
+  "approved, email failed: use Resend". Selection is keyed to view, status, search and page, and select-all is
+  scoped to pending rows of the current page; checkboxes are plain DaisyUI inputs with `aria-label`s and a
+  live region announces the summary.
+- **Member panel rules:** narration access means both features (term AND story) and shows partial states as
+  "Partly"; an admin row shows the role badge and offers no Reset or Grant on yourself without a note.
+- **References to update:** `lib/admin/overview.ts` (waitlist href), `app/(public)/request-access/actions.ts`
+  (the admin email link), `account-nav.ts` (People title), `admin-sections.ts` and its test, `lib/redirects.ts`
+  (`/admin/invites` to `/admin/people?view=waitlist`) and its test, the `invites/actions.ts` revalidate path
+  and its test. The `invites` route folder and `admin-invites-page.tsx` are deleted; `people/loading.tsx` added.
+- **Deferred explicitly:** phone card layout for these tables (the usage list's card pattern can be reused
+  later), the `signed_up` filter, page-window math beyond prev/next and "Showing x to y of N".
+- **Tests:** everything logic-bearing is pure or mock-testable in the node environment (params, pattern,
+  page clamp incl. the count-first path, waitlist/member query shapes, approveOne/bulk cases, panel data
+  builder).

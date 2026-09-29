@@ -61,7 +61,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/jargon/mastery", "Mastery"],
   ["/jargon/settings", "Settings"],
   ["/admin/collections", "Manage collections"],
-  ["/admin/invites", "Invites"],
+  ["/admin/people", "People"],
   ["/admin/ai/credits", "AI credits"],
   ["/admin/ai/narration", "Narration"],
   ["/admin/ai", "AI features"],
