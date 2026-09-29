@@ -96,7 +96,7 @@ function OutlineField({ value, onChange }: { value: string; onChange: (value: st
         maxLength={STORY_OUTLINE_MAX}
         onChange={(event) => onChange(event.target.value)}
         placeholder="e.g. A late-night outage at a small startup"
-        className="min-h-20 text-sm"
+        className="min-h-8 text-sm"
       />
       <FieldDescription className="flex justify-between gap-2">
         <span>Sets the topic. Terms still come from your queue.</span>
