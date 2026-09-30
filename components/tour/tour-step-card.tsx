@@ -20,8 +20,6 @@ type TourStepCardProps = {
   stepNumber: number;
   stepCount: number;
   focusPrimary: boolean;
-  /** Dims the page around the target, not just rings it. */
-  dim: boolean;
   /** A pointer to the next page's link: no Next button, the user clicks the
    *  highlighted link itself. */
   nudge?: boolean;
@@ -47,7 +45,6 @@ export function TourStepCard({
   stepNumber,
   stepCount,
   focusPrimary,
-  dim,
   nudge = false,
   onNext,
   onDismiss,
@@ -87,7 +84,7 @@ export function TourStepCard({
 
   return (
     <>
-      <TargetSpotlight target={target} box={box} scrolling={scrolling} dim={dim} />
+      <TargetSpotlight target={target} box={box} scrolling={scrolling} />
       <TipAnchor box={anchor.box} onNode={setAnchorNode} />
       {scrolling || !anchorNode ? null : (
         <Popover

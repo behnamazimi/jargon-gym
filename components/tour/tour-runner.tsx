@@ -6,7 +6,6 @@ import { markTourChapterSeenAction, skipTourAction } from "@/app/(private)/actio
 import { useMediaQuery } from "@/hooks/use-platform";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import {
-  CHAINED_ROUTE,
   isSameProgress,
   resolveTourStep,
   tourTargetsOn,
@@ -68,12 +67,10 @@ function announcement(
 /** The pointer to the next page's link, shown after a page's last tip. */
 function NudgeCard({
   nudge,
-  dim,
   onDismiss,
   onSkip,
 }: {
   nudge: { stop: TourWalkStop; target: HTMLElement };
-  dim: boolean;
   onDismiss: () => void;
   onSkip: () => void;
 }) {
@@ -89,7 +86,6 @@ function NudgeCard({
       stepNumber={1}
       stepCount={1}
       focusPrimary={false}
-      dim={dim}
       nudge
       onNext={() => {}}
       onDismiss={onDismiss}
@@ -129,7 +125,6 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
   const showing = resolved && step && target ? { ...resolved, step, target } : null;
   // After a page's last tip, point at the next page's link; the user clicks it.
   const nudge = useTourNudge(pathname, state, !showing && !visit.hidden && visit.finished);
-  const dim = pathname === CHAINED_ROUTE;
 
   function finishChapter() {
     if (!showing) return;
@@ -178,13 +173,12 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
           stepNumber={showing.stepIndex + 1}
           stepCount={showing.chapter.steps.length}
           focusPrimary={shouldFocusCard(keyboardFlow)}
-          dim={dim}
           onNext={handleNext}
           onDismiss={hideTips}
           onSkip={handleSkip}
         />
       ) : nudge ? (
-        <NudgeCard nudge={nudge} dim={dim} onDismiss={hideTips} onSkip={handleSkip} />
+        <NudgeCard nudge={nudge} onDismiss={hideTips} onSkip={handleSkip} />
       ) : null}
     </>
   );
