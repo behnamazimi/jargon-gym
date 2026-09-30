@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LandingPage } from "@/components/landing/landing-page";
 
 export const metadata: Metadata = {
-  title: "Jargon you can actually use",
+  title: "Jargon and vocabulary you can actually use",
   description:
-    "Every job, industry, and hobby has words insiders throw around without explaining. Jargon Gym teaches you the specific vocabulary for any field, with real examples and a quiz that keeps testing what you're weakest on, so it actually sticks. Invite-only.",
+    "Learn a field's jargon or a language's vocabulary with real examples, AI stories, AI quizzes, and audio, and keep testing what you're weakest on so it actually sticks. Invite-only.",
 };
 
 export default function Page() {

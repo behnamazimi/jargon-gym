@@ -53,7 +53,7 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
           className="inline-flex items-center gap-1 text-sm text-base-content/55 no-underline hover:text-base-content hover:underline"
         >
           <ArrowLeft className="size-3.5" aria-hidden strokeWidth={1.5} />
-          All jargon collections
+          All public collections
         </Link>
         <h1 className="mt-2 text-3xl font-semibold text-base-content">{domain.name}</h1>
         {domain.description ? (

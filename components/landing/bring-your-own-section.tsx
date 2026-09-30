@@ -17,8 +17,9 @@ export function BringYourOwnSection() {
           collection
         </h2>
         <p className="mt-3 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">
-          Build a collection for whatever jargon you&apos;re learning, a new job, a technical field,
-          your team&apos;s acronyms. Collections you create are private by default.{" "}
+          Build a collection for whatever you&apos;re learning: a new job&apos;s jargon, a technical
+          field, your team&apos;s acronyms, or a language&apos;s vocabulary. Collections you create
+          are private by default.{" "}
           <Link href="/j" className={contentPageLinkClass}>
             Or start from a public one
           </Link>

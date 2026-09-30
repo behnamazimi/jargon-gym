@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth/require-session";
 export const metadata: Metadata = {
   title: "How terms are built",
   description:
-    "Why I split jargon into definition, example, mental model, in practice, anti-example, debated, and relationships, what knowing a term means, and how known and unknown work.",
+    "Why I split jargon and language vocabulary into definition, example, mental model, in practice, anti-example, debated, and relationships, what knowing a term means, and how known and unknown work.",
 };
 
 export default async function HowTermsWorkRoute() {

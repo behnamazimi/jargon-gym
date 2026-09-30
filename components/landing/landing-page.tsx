@@ -1,6 +1,7 @@
 import { pageContainerClass } from "@/components/page-container";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { cn } from "@/lib/utils";
+import { AiSection } from "./ai-section";
 import { BringYourOwnSection } from "./bring-your-own-section";
 import { FinalCtaSection } from "./final-cta-section";
 import { HeroSection } from "./hero-section";
@@ -28,6 +29,7 @@ export async function LandingPage() {
 
         <div className="mt-16 space-y-14 sm:mt-24 sm:space-y-20">
           <ThreeWaysSection />
+          <AiSection />
           <NotSrsSection />
           <BringYourOwnSection />
           <PlatformsSection />

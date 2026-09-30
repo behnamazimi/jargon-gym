@@ -7,8 +7,9 @@ export const dynamic = "force-static";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Jargon Collections | Jargon Gym",
-  description: "Browse public jargon collections and look up what terms actually mean.",
+  title: "Public collections | Jargon Gym",
+  description:
+    "Browse public collections of jargon and language vocabulary, and see what terms actually mean.",
   alternates: { canonical: `${getPublicBaseUrl()}/j` },
 };
 
@@ -18,14 +19,14 @@ export default async function PublicCollectionsIndexPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-10">
       <div>
-        <h1 className="text-3xl font-semibold text-base-content">Jargon Collections</h1>
+        <h1 className="text-3xl font-semibold text-base-content">Public collections</h1>
         <p className="mt-1 text-base text-base-content/65">
-          Public collections of jargon, explained in plain language.
+          Jargon and language vocabulary, explained in plain language.
         </p>
       </div>
 
       {domains.length === 0 ? (
-        <p className="text-base text-base-content/55">No public jargon yet.</p>
+        <p className="text-base text-base-content/55">No public collections yet.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {domains.map((domain) => (

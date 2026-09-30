@@ -4,7 +4,7 @@ import { BRAND_ICON } from "@/lib/brand-icon";
 export const PWA_NAME = "Jargon Gym";
 export const PWA_SHORT_NAME = "Jargon Gym";
 export const PWA_DESCRIPTION =
-  "Learn any field's terms well enough to actually use it — read, review, and quiz until it sticks.";
+  "Learn a field's jargon or a language's vocabulary well enough to actually use it — read, review, and quiz until it sticks.";
 export const PWA_START_URL = `${AUTHENTICATED_HOME_PATH}?source=pwa`;
 export const PWA_ID = "/jargon?source=pwa";
 export const PWA_THEME_COLOR = BRAND_ICON.background;

@@ -6,7 +6,7 @@ const WAYS: { icon: LucideIcon; label: string; body: string }[] = [
   {
     icon: Zap,
     label: "Read",
-    body: "See a term with real usage, not just a definition.",
+    body: "See a term with real usage, not just a definition. Or read an AI story built around your terms.",
   },
   {
     icon: BookOpen,
@@ -16,7 +16,7 @@ const WAYS: { icon: LucideIcon; label: string; body: string }[] = [
   {
     icon: Sparkles,
     label: "Quiz",
-    body: "A real check, sharper with free AI credits.",
+    body: "A real check, sharper with AI questions.",
   },
 ];
 
