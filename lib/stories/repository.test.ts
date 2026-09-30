@@ -147,8 +147,26 @@ describe("listStorySummaries", () => {
         calls.limit = count;
         return Promise.resolve({
           data: [
-            { id: "s1", title: "One", piece_length: "long", vote: 1, read_at: "2026-09-01" },
-            { id: "s2", title: "Two", piece_length: "bogus", vote: 7, read_at: null },
+            {
+              id: "s1",
+              title: "One",
+              format: "email",
+              tone: "casual",
+              reading_level: "plain",
+              cefr_level: "A2",
+              vote: 1,
+              read_at: "2026-09-01",
+            },
+            {
+              id: "s2",
+              title: "Two",
+              format: "blog-post",
+              tone: "formal",
+              reading_level: "bogus",
+              cefr_level: "bogus",
+              vote: 7,
+              read_at: null,
+            },
           ],
           error: null,
         });
@@ -164,8 +182,26 @@ describe("listStorySummaries", () => {
       order: ["created_at", { ascending: false }],
     });
     expect(result).toEqual([
-      { id: "s1", title: "One", pieceLength: "long", vote: 1, readAt: "2026-09-01" },
-      { id: "s2", title: "Two", pieceLength: "medium", vote: null, readAt: null },
+      {
+        id: "s1",
+        title: "One",
+        format: "email",
+        tone: "casual",
+        readingLevel: "plain",
+        cefrLevel: "A2",
+        vote: 1,
+        readAt: "2026-09-01",
+      },
+      {
+        id: "s2",
+        title: "Two",
+        format: "blog-post",
+        tone: "formal",
+        readingLevel: "professional",
+        cefrLevel: "B2",
+        vote: null,
+        readAt: null,
+      },
     ]);
   });
 });

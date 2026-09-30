@@ -124,7 +124,7 @@ export async function listStorySummaries(
 ): Promise<StorySummary[]> {
   const { data, error } = await admin
     .from("stories")
-    .select("id, title, piece_length, vote, read_at")
+    .select("id, title, format, tone, reading_level, cefr_level, vote, read_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -132,7 +132,10 @@ export async function listStorySummaries(
   return (data ?? []).map((row) => ({
     id: row.id,
     title: row.title,
-    pieceLength: parsePieceLength(row.piece_length),
+    format: row.format,
+    tone: row.tone,
+    readingLevel: parseReadingLevel(row.reading_level),
+    cefrLevel: parseCefrLevel(row.cefr_level),
     vote: toVote(row.vote),
     readAt: row.read_at,
   }));

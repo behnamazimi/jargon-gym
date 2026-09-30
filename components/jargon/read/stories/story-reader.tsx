@@ -11,10 +11,8 @@ import type { StorySession } from "@/components/jargon/read/stories/use-story-se
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toParagraphs } from "@/lib/stories/paragraphs";
-import { findFormat, findTone } from "@/lib/stories/styles";
+import { storyMetaLabels } from "@/lib/stories/meta";
 import type { Story, StoryTerm } from "@/lib/stories/types";
-
-const READING_LEVEL_LABELS = { plain: "Plain", professional: "Professional", expert: "Expert" };
 
 /** Each term's first wording in the piece, in reading order. */
 function firstOccurrences(story: Story): Map<string, string> {
@@ -44,12 +42,7 @@ function StoryHeader({
   narrationAccess: boolean;
   onDismiss: () => void;
 }) {
-  const meta = [
-    findFormat(story.format)?.label,
-    findTone(story.tone)?.label,
-    READING_LEVEL_LABELS[story.readingLevel],
-    story.cefrLevel,
-  ].filter(Boolean);
+  const meta = storyMetaLabels(story);
 
   return (
     <header className="shrink-0 space-y-1 border-b border-base-300/60 px-5 py-3 sm:px-6">

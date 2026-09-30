@@ -63,10 +63,9 @@ export type Story = {
 };
 
 /** One row of the story history list. */
-export type StorySummary = {
+export type StorySummary = Pick<Story, "format" | "tone" | "readingLevel" | "cefrLevel"> & {
   id: string;
   title: string;
-  pieceLength: PieceLength;
   vote: -1 | 1 | null;
   readAt: string | null;
 };
