@@ -81,7 +81,7 @@ async function approveOne({ supabase, user }: Context, requestId: string) {
   return { email: request.email, emailSent };
 }
 
-const REVALIDATE = { revalidate: ["/admin/people", "/admin"] };
+const REVALIDATE = { revalidate: ["/admin/people", "/admin/people/[id]", "/admin"] };
 
 export async function approveWaitlistRequest(requestId: string) {
   return runAdminAction(async (context): Promise<{ emailSent: boolean }> => {
@@ -130,6 +130,7 @@ export async function approveWaitlistRequests(ids: string[]) {
       }
     }
     revalidatePath("/admin/people");
+    revalidatePath("/admin/people/[id]", "page");
     revalidatePath("/admin");
     return result;
   });
@@ -174,5 +175,5 @@ export async function resendInvite(requestId: string) {
       targetType: "waitlist_request",
       targetId: requestId,
     });
-  });
+  }, REVALIDATE);
 }

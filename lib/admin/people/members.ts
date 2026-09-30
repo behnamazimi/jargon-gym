@@ -10,6 +10,7 @@ export type AdminMemberRow = {
   email: string;
   role: "admin" | "member";
   createdAt: string;
+  suspended: boolean;
 };
 
 /** One page of accounts, newest first. Admins can read every account row. */
@@ -25,7 +26,7 @@ export async function listMembers(
   const current = clampPage(page, total ?? 0);
   const from = (current - 1) * PAGE_SIZE;
 
-  let rows = client.from("users").select("id, email, role, created_at");
+  let rows = client.from("users").select("id, email, role, created_at, suspended_at");
   if (q) rows = rows.ilike("email", containsPattern(q));
   const { data, error } = await rows
     .order("created_at", { ascending: false })
@@ -41,6 +42,7 @@ export async function listMembers(
       email: row.email,
       role: row.role,
       createdAt: row.created_at,
+      suspended: row.suspended_at != null,
     })),
   };
 }

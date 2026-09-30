@@ -18,7 +18,11 @@ export async function runAdminAction<T = void>(
   try {
     const context = await requireAdminClient();
     const data = await work(context);
-    for (const path of options.revalidate ?? []) revalidatePath(path);
+    for (const path of options.revalidate ?? []) {
+      // A route pattern like /admin/people/[id] refreshes every page of that route.
+      if (path.includes("[")) revalidatePath(path, "page");
+      else revalidatePath(path);
+    }
     return { ok: true, data };
   } catch (err) {
     if (err instanceof AdminError) return { ok: false, error: err.message };

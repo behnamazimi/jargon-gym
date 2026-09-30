@@ -30,7 +30,20 @@ function fakeClient(total: number, rows: unknown[] = []) {
 describe("listMembers", () => {
   it("counts first, then reads one page, newest first with a tiebreaker", async () => {
     const { client, calls } = fakeClient(60, [
-      { id: "u1", email: "a@example.test", role: "admin", created_at: "2026-01-01T00:00:00Z" },
+      {
+        id: "u1",
+        email: "a@example.test",
+        role: "admin",
+        created_at: "2026-01-01T00:00:00Z",
+        suspended_at: null,
+      },
+      {
+        id: "u2",
+        email: "b@example.test",
+        role: "member",
+        created_at: "2026-01-02T00:00:00Z",
+        suspended_at: "2026-02-01T00:00:00Z",
+      },
     ]);
     const result = await listMembers(client, { q: "", page: 3 });
 
@@ -45,7 +58,20 @@ describe("listMembers", () => {
     ]);
     expect(result).toMatchObject({ total: 60, page: 3 });
     expect(result.rows).toEqual([
-      { id: "u1", email: "a@example.test", role: "admin", createdAt: "2026-01-01T00:00:00Z" },
+      {
+        id: "u1",
+        email: "a@example.test",
+        role: "admin",
+        createdAt: "2026-01-01T00:00:00Z",
+        suspended: false,
+      },
+      {
+        id: "u2",
+        email: "b@example.test",
+        role: "member",
+        createdAt: "2026-01-02T00:00:00Z",
+        suspended: true,
+      },
     ]);
   });
 

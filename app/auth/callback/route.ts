@@ -9,6 +9,10 @@ export async function GET(request: NextRequest) {
   const next = safeNextPath(searchParams.get("next"));
   const ref = normalizeReferralCode(searchParams.get("ref"));
 
+  if (searchParams.get("error_code") === "user_banned") {
+    return NextResponse.redirect(`${origin}/login?error=suspended`);
+  }
+
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
@@ -26,6 +30,10 @@ export async function GET(request: NextRequest) {
       }
 
       return NextResponse.redirect(`${origin}${next}`);
+    }
+
+    if (error.code === "user_banned") {
+      return NextResponse.redirect(`${origin}/login?error=suspended`);
     }
   }
 

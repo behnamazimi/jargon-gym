@@ -87,6 +87,7 @@ describe("grantAiCredits", () => {
       "/admin/ai",
       "/admin/ai/credits",
       "/admin/people",
+      "/admin/people/[id]",
     ]);
   });
 

@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { cache } from "react";
 import { AdminError } from "@/lib/admin/admin-error";
+import { isBanned } from "@/lib/auth/suspension";
 import { createClient } from "@/lib/supabase/server";
 
 export const getSessionUser = cache(async function getSessionUser() {
@@ -10,7 +11,7 @@ export const getSessionUser = cache(async function getSessionUser() {
     error,
   } = await supabase.auth.getUser();
 
-  return { supabase, user, error };
+  return { supabase, user: user && !isBanned(user) ? user : null, error };
 });
 
 export const getUserIsAdmin = cache(async function getUserIsAdmin(userId: string) {

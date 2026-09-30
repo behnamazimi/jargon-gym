@@ -1122,6 +1122,7 @@ export type Database = {
           id: string;
           referral_verified: boolean;
           role: Database["public"]["Enums"]["user_role"];
+          suspended_at: string | null;
         };
         Insert: {
           created_at?: string;
@@ -1129,6 +1130,7 @@ export type Database = {
           id: string;
           referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
+          suspended_at?: string | null;
         };
         Update: {
           created_at?: string;
@@ -1136,6 +1138,7 @@ export type Database = {
           id?: string;
           referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
+          suspended_at?: string | null;
         };
         Relationships: [];
       };
@@ -1239,6 +1242,28 @@ export type Database = {
         };
         Returns: undefined;
       };
+      _admin_clean_reason: { Args: { p_reason: string }; Returns: string };
+      _admin_manage_target: {
+        Args: { p_user_id: string };
+        Returns: {
+          created_at: string;
+          email: string;
+          id: string;
+          referral_verified: boolean;
+          role: Database["public"]["Enums"]["user_role"];
+          suspended_at: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "users";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      _admin_people_using_collections: {
+        Args: { p_owner: string };
+        Returns: number;
+      };
       admin_ai_credit_failure_reasons: {
         Args: { p_limit?: number };
         Returns: {
@@ -1272,6 +1297,10 @@ export type Database = {
           user_id: string;
         }[];
       };
+      admin_delete_user: {
+        Args: { p_confirm_email: string; p_reason: string; p_user_id: string };
+        Returns: undefined;
+      };
       admin_grant_ai_credits: {
         Args: { p_amount: number; p_note: string; p_user_id: string };
         Returns: undefined;
@@ -1292,9 +1321,28 @@ export type Database = {
           visibility: Database["public"]["Enums"]["domain_visibility"];
         }[];
       };
+      admin_person_detail: {
+        Args: { p_user_id: string };
+        Returns: {
+          ban_mismatch: boolean;
+          current_streak: number;
+          key_last4: string;
+          key_provider: string;
+          last_active_date: string;
+          longest_streak: number;
+          owned_collections: number;
+          people_using_collections: number;
+          referral_verified: boolean;
+          suspended_at: string;
+        }[];
+      };
       admin_publish_collection: {
         Args: { p_domain_id: string; p_domain_slug: string; p_term_slugs: Json };
         Returns: string;
+      };
+      admin_remove_user_api_key: {
+        Args: { p_reason: string; p_user_id: string };
+        Returns: undefined;
       };
       admin_reset_ai_credits: {
         Args: { p_note: string; p_user_id: string };
@@ -1315,6 +1363,10 @@ export type Database = {
       };
       admin_set_narration_enabled: {
         Args: { p_enabled: boolean };
+        Returns: undefined;
+      };
+      admin_set_user_suspended: {
+        Args: { p_reason: string; p_suspended: boolean; p_user_id: string };
         Returns: undefined;
       };
       admin_write_audit: {

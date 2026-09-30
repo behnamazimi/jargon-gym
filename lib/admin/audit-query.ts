@@ -66,6 +66,28 @@ export async function recentAudit(client: Client, limit: number): Promise<AuditR
   return (data ?? []).map(toRow);
 }
 
+/** What admins did to one person, or to their waitlist request, newest first. */
+export async function listAuditForPerson(
+  client: Client,
+  {
+    userId,
+    waitlistRequestId,
+    limit,
+  }: { userId: string; waitlistRequestId: string | null; limit: number },
+): Promise<AuditRow[]> {
+  const ids = waitlistRequestId ? [userId, waitlistRequestId] : [userId];
+  const { data, error } = await client
+    .from("admin_audit_log")
+    .select(COLUMNS)
+    .in("target_type", ["user", "waitlist_request"])
+    .in("target_id", ids)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map(toRow);
+}
+
 /** Emails for the people that entries are about, so the trail reads as names, not ids.
  *  They are looked up when shown and never copied into the log. */
 export async function emailsForTargets(

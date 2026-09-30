@@ -82,12 +82,13 @@ export async function resolveUserIdByChatId(
 ): Promise<string | null> {
   const { data, error } = await client
     .from("telegram_links")
-    .select("user_id")
+    .select("user_id, users!inner(suspended_at)")
     .eq("chat_id", chatId)
     .maybeSingle();
 
   if (error) throw error;
-  return data?.user_id ?? null;
+  if (!data || data.users.suspended_at != null) return null;
+  return data.user_id;
 }
 
 export { fetchTermCardForUser };

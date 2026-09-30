@@ -57,6 +57,16 @@ export async function listWidgetTokens(client: Client, userId: string): Promise<
   return data;
 }
 
+async function isSuspended(client: Client, userId: string): Promise<boolean> {
+  const { data, error } = await client
+    .from("users")
+    .select("suspended_at")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.suspended_at != null;
+}
+
 /** `widgetVersion` is whatever the calling widget reported on this request
  *  (via X-Widget-Version) — omitted entirely when absent, so we never
  *  overwrite a previously known version with null just because one request
@@ -76,6 +86,8 @@ export async function resolveUserFromToken(
 
   if (error) throw error;
   if (!data) return null;
+
+  if (await isSuspended(client, data.user_id)) return null;
 
   const update: { last_used_at: string; widget_version?: string } = {
     last_used_at: new Date().toISOString(),

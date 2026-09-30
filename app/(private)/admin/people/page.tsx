@@ -3,14 +3,11 @@ import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { MembersTable } from "@/components/admin/people/members-table";
-import { PersonPanel } from "@/components/admin/people/person-panel";
 import { WaitlistTable } from "@/components/admin/people/waitlist-table";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { parsePeopleParams, peopleHref, type PeopleParams } from "@/lib/admin/list-params";
 import { listMembers } from "@/lib/admin/people/members";
-import { getPerson } from "@/lib/admin/people/person";
 import { listWaitlist } from "@/lib/admin/people/waitlist";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
@@ -56,17 +53,12 @@ async function WaitlistView({
 
 async function MembersView({
   supabase,
-  adminId,
   params,
 }: {
   supabase: Awaited<ReturnType<typeof requireAdminPage>>["supabase"];
-  adminId: string;
   params: PeopleParams;
 }) {
-  const [{ rows, total, page }, person] = await Promise.all([
-    listMembers(supabase, params),
-    params.person ? getPerson(supabase, createAdminClient(), params.person) : null,
-  ]);
+  const { rows, total, page } = await listMembers(supabase, params);
   return (
     <>
       <AdminSearchBar
@@ -75,32 +67,25 @@ async function MembersView({
         label="Search by email"
         hidden={{ view: "members" }}
       />
-      {person ? (
-        <PersonPanel key={person.id} person={person} isYou={person.id === adminId} />
-      ) : null}
-      <MembersTable
-        rows={rows}
-        selectedId={person?.id ?? null}
-        hrefFor={(id) => `${peopleHref({ ...params, page, person: id })}#person`}
-      />
+      <MembersTable rows={rows} hrefFor={(id) => `/admin/people/${id}`} />
       <AdminPagination
         page={page}
         total={total}
-        hrefFor={(next) => peopleHref({ ...params, page: next, person: null })}
+        hrefFor={(next) => peopleHref({ ...params, page: next })}
       />
     </>
   );
 }
 
 export default async function AdminPeoplePage({ searchParams }: PageProps) {
-  const { supabase, user } = await requireAdminPage();
+  const { supabase } = await requireAdminPage();
   const params = parsePeopleParams(await searchParams);
 
   return (
     <>
       <AdminPageHeader
         title="People"
-        description="Approve waitlist requests, and manage the people who have accounts: AI credits and narration access."
+        description="Approve waitlist requests, and open a member to manage their account."
       />
       <AdminTabs
         label="People"
@@ -118,7 +103,7 @@ export default async function AdminPeoplePage({ searchParams }: PageProps) {
         ]}
       />
       {params.view === "members" ? (
-        <MembersView supabase={supabase} adminId={user.id} params={params} />
+        <MembersView supabase={supabase} params={params} />
       ) : (
         <WaitlistView supabase={supabase} params={params} />
       )}

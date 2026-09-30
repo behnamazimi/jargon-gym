@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
+import { isBanned } from "@/lib/auth/suspension";
 import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -154,8 +155,9 @@ export async function updateSession(request: NextRequest) {
   // Do not run code between createServerClient and supabase.auth.getUser().
   // A simple mistake can make users appear randomly logged out.
   const {
-    data: { user },
+    data: { user: verifiedUser },
   } = await supabase.auth.getUser();
+  const user = verifiedUser && !isBanned(verifiedUser) ? verifiedUser : null;
 
   const { pathname } = request.nextUrl;
 
