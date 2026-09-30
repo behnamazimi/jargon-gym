@@ -9,7 +9,7 @@ type DeckExclusions = {
 
 /** Terms still worth sorting, in Library order: anything the user hasn't
  *  marked known, TRACE doesn't already call known, and wasn't put aside
- *  as "Not yet" on this device. */
+ *  as "Not yet". */
 export function buildTriageDeck(terms: Term[], exclusions: DeckExclusions): Term[] {
   const { knownIds, markedKnownIds, notYetIds } = exclusions;
   return terms.filter(

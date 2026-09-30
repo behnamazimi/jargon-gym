@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getJargonSetupData } from "@/app/(private)/jargon/(collection)/actions";
 import { PageHeader } from "@/components/jargon/page-header";
 import { TriagePage } from "@/components/jargon/triage/triage-page";
+import { createClient } from "@/lib/supabase/server";
+import { fetchNotYetTermIds } from "@/lib/triage/repository";
 
 type PageProps = {
   searchParams: Promise<{ domain?: string }>;
@@ -18,6 +20,7 @@ export default async function JargonTriagePage({ searchParams }: PageProps) {
   }
 
   const { data, narrationAccess } = setup;
+  const notYetTermIds = await fetchNotYetTermIds(await createClient(), data.domain.id);
 
   return (
     <>
@@ -36,6 +39,7 @@ export default async function JargonTriagePage({ searchParams }: PageProps) {
           terms={data.terms}
           knownTermIds={data.knownTermIds}
           markedKnownTermIds={data.markedKnownTermIds}
+          notYetTermIds={notYetTermIds}
           narrationAccess={narrationAccess}
         />
       </div>

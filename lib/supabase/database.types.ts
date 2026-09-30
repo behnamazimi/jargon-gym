@@ -983,6 +983,32 @@ export type Database = {
           },
         ];
       };
+      triage_not_yet: {
+        Row: {
+          created_at: string;
+          term_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          term_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          term_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "triage_not_yet_term_id_fkey";
+            columns: ["term_id"];
+            isOneToOne: false;
+            referencedRelation: "terms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       user_active_domains: {
         Row: {
           domain_id: string;
@@ -1565,6 +1591,10 @@ export type Database = {
           user_id: string;
         }[];
       };
+      my_add_not_yet_terms: {
+        Args: { p_term_ids: string[] };
+        Returns: undefined;
+      };
       my_ai_credit_state: {
         Args: never;
         Returns: {
@@ -1574,6 +1604,10 @@ export type Database = {
         }[];
       };
       my_bump_streak: { Args: never; Returns: undefined };
+      my_clear_not_yet_domain: {
+        Args: { p_domain_id: string };
+        Returns: undefined;
+      };
       my_first_seen_at_by_term: {
         Args: { p_term_ids: string[] };
         Returns: {
@@ -1667,6 +1701,10 @@ export type Database = {
           p_retrievability_before?: number;
           p_term_id: string;
         };
+        Returns: undefined;
+      };
+      my_remove_not_yet_term: {
+        Args: { p_term_id: string };
         Returns: undefined;
       };
       my_reset_domain_progress: {

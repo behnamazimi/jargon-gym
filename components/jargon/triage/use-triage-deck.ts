@@ -1,17 +1,17 @@
 "use client";
 
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState } from "react";
 import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
+import {
+  addNotYetTermsAction,
+  clearNotYetDomainAction,
+  removeNotYetTermAction,
+} from "@/app/(private)/jargon/actions-triage";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useToast } from "@/components/ui/toast";
 import type { Term } from "@/lib/jargon/types";
-import { buildTriageDeck, parseNotYetIds } from "@/lib/triage/deck";
-import {
-  addNotYet,
-  clearNotYet,
-  loadNotYetSnapshot,
-  removeNotYet,
-  subscribeNotYet,
-} from "@/lib/triage/not-yet-store";
+import { buildTriageDeck } from "@/lib/triage/deck";
+import { clearLegacyNotYetIds, readLegacyNotYetIds } from "@/lib/triage/legacy-not-yet";
 
 type TriageChoice = { termId: string; kind: "knew" | "notYet" };
 
@@ -35,29 +35,26 @@ export function useTriageDeck({
   terms,
   knownTermIds,
   markedKnownTermIds,
+  notYetTermIds,
 }: {
   domainId: string;
   terms: Term[];
   knownTermIds: string[];
   markedKnownTermIds: string[];
+  notYetTermIds: string[];
 }) {
   const { toast } = useToast();
-  // null until the client can read localStorage, so hydration never mismatches.
-  const notYetSnapshot = useSyncExternalStore(
-    subscribeNotYet,
-    () => loadNotYetSnapshot(domainId),
-    () => null,
-  );
   const [markedKnown, setMarkedKnown] = useState<ReadonlySet<string>>(
     () => new Set(markedKnownTermIds),
   );
+  const [notYetIds, setNotYetIds] = useState<ReadonlySet<string>>(() => new Set(notYetTermIds));
   const [revealedId, setRevealedId] = useState<string | null>(null);
   const [history, setHistory] = useState<TriageChoice[]>([]);
   // Undo waits on the mark it reverses, or the two writes could race.
   const pendingMarksRef = useRef(new Map<string, MarkResult>());
+  const pendingNotYetRef = useRef(new Map<string, MarkResult>());
 
   const knownIds = useMemo(() => new Set(knownTermIds), [knownTermIds]);
-  const notYetIds = useMemo(() => new Set(parseNotYetIds(notYetSnapshot)), [notYetSnapshot]);
   const deck = useMemo(
     () => buildTriageDeck(terms, { knownIds, markedKnownIds: markedKnown, notYetIds }),
     [terms, knownIds, markedKnown, notYetIds],
@@ -68,6 +65,17 @@ export function useTriageDeck({
   // not act on the card that replaced it.
   const currentIdRef = useRef<string | null>(null);
   currentIdRef.current = current?.id ?? null;
+
+  // Picks saved in this browser before "Not yet" synced move to the account once.
+  useMountEffect(() => {
+    const legacyIds = readLegacyNotYetIds(domainId);
+    if (legacyIds.length === 0) return;
+    void addNotYetTermsAction(legacyIds).then(({ error }) => {
+      if (error) return;
+      clearLegacyNotYetIds(domainId);
+      setNotYetIds((ids) => new Set([...ids, ...legacyIds]));
+    });
+  });
 
   function writeMarked(term: Term, marked: boolean): MarkResult {
     setMarkedKnown((ids) => (marked ? withId(ids, term.id) : withoutId(ids, term.id)));
@@ -93,9 +101,22 @@ export function useTriageDeck({
     setHistory((prev) => [...prev, { termId, kind: "knew" }]);
   }
 
+  function writeNotYet(termId: string, notYet: boolean) {
+    setNotYetIds((ids) => (notYet ? withId(ids, termId) : withoutId(ids, termId)));
+    const previous = pendingNotYetRef.current.get(termId) ?? Promise.resolve({});
+    const result = previous.then(() =>
+      notYet ? addNotYetTermsAction([termId]) : removeNotYetTermAction(termId),
+    );
+    pendingNotYetRef.current.set(termId, result);
+    void result.then(({ error }) => {
+      if (!error) return;
+      setNotYetIds((ids) => (notYet ? withoutId(ids, termId) : withId(ids, termId)));
+    });
+  }
+
   function handleNotYet(termId: string) {
     if (termId !== currentIdRef.current) return;
-    addNotYet(domainId, termId);
+    writeNotYet(termId, true);
     setHistory((prev) => [...prev, { termId, kind: "notYet" }]);
   }
 
@@ -105,7 +126,7 @@ export function useTriageDeck({
     setHistory((prev) => prev.slice(0, -1));
     setRevealedId(null);
     if (last.kind === "notYet") {
-      removeNotYet(domainId, last.termId);
+      writeNotYet(last.termId, false);
       return;
     }
     const term = terms.find((t) => t.id === last.termId);
@@ -113,12 +134,15 @@ export function useTriageDeck({
   }
 
   function handleRevisitNotYet() {
-    clearNotYet(domainId);
+    const previousIds = notYetIds;
+    setNotYetIds(new Set());
     setHistory([]);
+    void clearNotYetDomainAction(domainId).then(({ error }) => {
+      if (error) setNotYetIds(previousIds);
+    });
   }
 
   return {
-    ready: notYetSnapshot !== null,
     deck,
     current,
     revealed,
