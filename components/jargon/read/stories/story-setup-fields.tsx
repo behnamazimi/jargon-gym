@@ -61,6 +61,7 @@ function ChoiceField<T extends string>({
             key={option}
             type="button"
             variant="outline"
+            size="sm"
             onPress={() => onChange(option)}
             aria-pressed={value === option}
             className={cn(

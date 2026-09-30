@@ -15,10 +15,11 @@ export function QuizQuestionStyleField({ value, onChange }: QuizQuestionStyleFie
         <Button
           type="button"
           variant="outline"
+          size="sm"
           onPress={() => onChange("simple")}
           aria-pressed={value === "simple"}
           className={cn(
-            "min-h-11 flex-1",
+            "flex-1",
             value === "simple" && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
           )}
         >
@@ -27,10 +28,11 @@ export function QuizQuestionStyleField({ value, onChange }: QuizQuestionStyleFie
         <Button
           type="button"
           variant="outline"
+          size="sm"
           onPress={() => onChange("ai")}
           aria-pressed={value === "ai"}
           className={cn(
-            "min-h-11 flex-1",
+            "flex-1",
             value === "ai" && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
           )}
         >
