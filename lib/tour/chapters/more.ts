@@ -9,13 +9,13 @@ export const MORE_CHAPTERS = [
       {
         target: "triage-card",
         title: "Sort what you know",
-        body: "Reveal a term if you need to, then press → if you knew it or ← if not yet.",
-        bodyTouch: "Swipe right if you knew it, left if not yet. Tap to reveal the definition.",
+        body: "Press → if you knew it, ← if not yet. Reveal it first if needed.",
+        bodyTouch: "Swipe right if you knew it, left if not yet. Tap to reveal.",
       },
       {
         target: "triage-actions",
         title: "Nothing is final",
-        body: "Terms you knew are marked known and skip practice. Not yet keeps them in your queue. Undo takes back your last choice.",
+        body: "Known terms skip practice. Not yet keeps them in your queue. Undo reverses your last choice.",
         placement: "top",
       },
     ],
@@ -27,12 +27,12 @@ export const MORE_CHAPTERS = [
       {
         target: "browse-filters",
         title: "Shared collections",
-        body: "Search and filter collections other people have shared.",
+        body: "Search collections other people have shared.",
       },
       {
         target: "browse-add",
         title: "Add one",
-        body: "Adding a collection puts its terms into your practice. You can remove it any time.",
+        body: "Adds its terms to your practice. You can remove it any time.",
       },
     ],
   },
@@ -43,12 +43,12 @@ export const MORE_CHAPTERS = [
       {
         target: "import-json",
         title: "Bring your own terms",
-        body: "Paste glossary JSON or upload a .json file. No file yet? The AI skill above can generate one.",
+        body: "Paste JSON or upload a .json file. No file? The AI skill above can make one.",
       },
       {
         target: "import-validate",
         title: "Check before importing",
-        body: "Validate the file and preview its terms. Nothing is saved until you confirm.",
+        body: "Preview the terms first. Nothing saves until you confirm.",
       },
     ],
   },
@@ -59,7 +59,7 @@ export const MORE_CHAPTERS = [
       {
         target: "settings-ai",
         title: "Unlock AI features",
-        body: "Use your AI credits for AI quizzes and Stories, or add your own provider and API key to keep going.",
+        body: "Use AI credits for AI quizzes and Stories, or add your own API key.",
       },
     ],
   },

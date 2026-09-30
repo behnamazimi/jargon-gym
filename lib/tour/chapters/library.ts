@@ -9,12 +9,12 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-browse",
         title: "Welcome to Jargon Gym",
-        body: "Start by adding a collection someone else shared. It takes one tap.",
+        body: "Add a shared collection to get started.",
       },
       {
         target: "library-import",
         title: "Or bring your own",
-        body: "Have your own list of terms? Import it as JSON.",
+        body: "Got your own terms? Import them as JSON.",
       },
     ],
   },
@@ -25,7 +25,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-collections",
         title: "Your collections",
-        body: "Everything you've added lives here. Pick one to see its terms and progress.",
+        body: "Pick one to see its terms and progress.",
       },
     ],
   },
@@ -36,21 +36,19 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-search",
         title: "Find any term",
-        body: "Search terms and definitions, or press / to jump here. Filters narrow by category or hide terms you know.",
-        bodyTouch:
-          "Search terms and definitions. Filters narrow by category or hide terms you know.",
+        body: "Search terms and definitions. Press / to jump here.",
+        bodyTouch: "Search terms and definitions.",
       },
       {
         target: "library-term",
         title: "Already know one?",
-        body: "Hover a term and click the check to mark it known, so practice skips it. Click a term to expand it.",
-        bodyTouch:
-          "Swipe a term left to mark it known, so practice skips it. Tap a term to expand it.",
+        body: "Click the check to mark a term known and skip it in practice.",
+        bodyTouch: "Swipe left to mark a term known and skip it in practice.",
       },
       {
         target: "library-actions",
         title: "Collection settings",
-        body: "Pause a collection to take it out of Read, Review, and Quiz for a while, export it as JSON, or remove it.",
+        body: "Pause, export, or remove this collection.",
       },
     ],
   },
@@ -61,12 +59,12 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "app-streak",
         title: "Your streak",
-        body: "It grows each day you practice. Open it to see your last week.",
+        body: "Practice daily to grow it. Open it to see your week.",
       },
       {
         target: "app-account",
         title: "Everything else",
-        body: "Browse shared collections, import your own, track Mastery, and open Settings from here.",
+        body: "Browse collections, import, check Mastery, and open Settings.",
       },
     ],
   },
