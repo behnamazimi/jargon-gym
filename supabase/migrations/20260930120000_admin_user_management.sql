@@ -7,8 +7,10 @@
 --   * referral_codes_used_pair rejected the row a deleted user leaves behind
 --     (used_by cleared by the foreign key, used_at still set).
 --
--- Deploy order: the app deploys before this runs, so nothing in the deployed
--- app depends on it yet; the app code that reads suspended_at ships with it.
+-- Deploy order: the app deploys before this runs, and the app code shipped with
+-- it reads users.suspended_at. Until this migration is applied, widget requests,
+-- Telegram messages and the admin people pages fail. Fine while nobody but the
+-- owner uses the app; otherwise ship this migration on its own first.
 --
 -- Rollback (as a new migration, history is append-only): drop the functions
 -- created here, restore list_due_telegram_users and complete_telegram_link from
@@ -39,6 +41,17 @@ alter table public.referral_codes
 -- The person page lists what admins did to one person.
 create index admin_audit_log_target_idx
   on public.admin_audit_log (target_type, target_id, created_at desc);
+
+-- The "who else uses these collections" check looks up by term or domain, which
+-- no existing index leads with. The cascade deletes benefit too.
+create index if not exists review_events_term_id_idx on public.review_events (term_id);
+create index if not exists review_state_term_id_idx on public.review_state (term_id);
+create index if not exists user_collection_domains_domain_id_idx
+  on public.user_collection_domains (domain_id);
+create index if not exists user_active_domains_domain_id_idx
+  on public.user_active_domains (domain_id);
+create index if not exists story_collection_prefs_domain_id_idx
+  on public.story_collection_prefs (domain_id);
 
 -- ---------------------------------------------------------------------------
 -- Helpers. Only the functions below call them.

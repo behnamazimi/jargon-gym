@@ -149,11 +149,11 @@ begin
   assert not exists (select 1 from auth.sessions where user_id = member_id), 'sessions kept';
   perform pg_temp.act_as(admin_id);
   assert (select details = '{"reason":"spam"}'::jsonb and target_type = 'user' and target_id = member_id::text
-          from public.admin_audit_log where action = 'suspend_user'), 'suspend audit row';
+          from public.admin_audit_log where target_id = member_id::text and action = 'suspend_user'), 'suspend audit row';
   assert (select not d.ban_mismatch and d.suspended_at is not null from public.admin_person_detail(member_id) d), 'detail after suspend';
   -- Doing it again changes nothing and adds no row.
   perform public.admin_set_user_suspended(member_id, true, 'spam again');
-  assert (select count(*) from public.admin_audit_log where action = 'suspend_user') = 1, 'a repeat suspend was audited';
+  assert (select count(*) from public.admin_audit_log where target_id = member_id::text and action = 'suspend_user') = 1, 'a repeat suspend was audited';
   -- Suspended people get no Telegram sends and can't link a chat.
   execute 'reset role';
   assert not exists (select 1 from public.list_due_telegram_users() where user_id = member_id), 'suspended person is due';
@@ -177,9 +177,9 @@ begin
   execute 'reset role';
   assert (select banned_until is null from auth.users where id = member_id), 'ban kept';
   perform pg_temp.act_as(admin_id);
-  assert (select count(*) from public.admin_audit_log where action = 'reactivate_user') = 1, 'reactivate audit row';
+  assert (select count(*) from public.admin_audit_log where target_id = member_id::text and action = 'reactivate_user') = 1, 'reactivate audit row';
   perform public.admin_set_user_suspended(member_id, false, 'again');
-  assert (select count(*) from public.admin_audit_log where action = 'reactivate_user') = 1, 'a repeat reactivate was audited';
+  assert (select count(*) from public.admin_audit_log where target_id = member_id::text and action = 'reactivate_user') = 1, 'a repeat reactivate was audited';
   execute 'reset role';
   assert exists (select 1 from public.list_due_telegram_users() where user_id = member_id), 'reactivated person not due';
   perform pg_temp.act_as(admin_id);
@@ -189,11 +189,11 @@ begin
   execute 'reset role';
   assert (select provider is null and api_key_encrypted is null and api_key_last4 is null from public.user_settings where user_id = member_id), 'key kept';
   perform pg_temp.act_as(admin_id);
-  assert (select details = '{"reason":"asked to","provider":"google"}'::jsonb from public.admin_audit_log where action = 'remove_user_api_key'), 'key audit row';
+  assert (select details = '{"reason":"asked to","provider":"google"}'::jsonb from public.admin_audit_log where target_id = member_id::text and action = 'remove_user_api_key'), 'key audit row';
   v_failed := false;
   begin perform public.admin_remove_user_api_key(member_id, 'again'); exception when sqlstate 'AD001' then v_failed := sqlerrm like 'No API key%'; end;
   assert v_failed, 'removed a key twice';
-  assert (select count(*) from public.admin_audit_log where action = 'remove_user_api_key') = 1, 'a failed removal was audited';
+  assert (select count(*) from public.admin_audit_log where target_id = member_id::text and action = 'remove_user_api_key') = 1, 'a failed removal was audited';
   assert (select d.key_provider is null and d.key_last4 is null from public.admin_person_detail(member_id) d), 'detail still shows a key';
 
   -- Delete is refused while another person uses the collections, one way at a time.
@@ -240,7 +240,7 @@ begin
   execute 'reset role';
   delete from public.story_collection_prefs where user_id = other_id;
   perform pg_temp.act_as(admin_id);
-  assert (select count(*) from public.admin_audit_log where action = 'delete_user') = 0, 'a refused delete was audited';
+  assert (select count(*) from public.admin_audit_log where target_id = member_id::text and action = 'delete_user') = 0, 'a refused delete was audited';
 
   -- Wrong email (case and spaces are forgiven, other text is not).
   v_failed := false;
@@ -274,8 +274,8 @@ begin
   assert (select used_by is null and used_at is not null from public.referral_codes where code = v_code), 'used code not kept as used';
   assert (select details = '{"reason":"requested by them"}'::jsonb and target_id = member_id::text and actor_id = admin_id
                  and not (details::text ilike '%example.test%') and actor_email = 'um-admin@example.test'
-          from public.admin_audit_log where action = 'delete_user'), 'delete audit row';
-  assert (select count(*) from public.admin_audit_log where action = 'delete_user') = 1, 'delete audited more than once';
+          from public.admin_audit_log where target_id = member_id::text and action = 'delete_user'), 'delete audit row';
+  assert (select count(*) from public.admin_audit_log where target_id = member_id::text and action = 'delete_user') = 1, 'delete audited more than once';
   -- The other person's own data is untouched.
   assert exists (select 1 from public.users where id = other_id), 'someone else was deleted';
 

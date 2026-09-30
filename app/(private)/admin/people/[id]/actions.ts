@@ -23,6 +23,9 @@ function revalidateFor(userId: string) {
   return { revalidate: ["/admin", "/admin/people", `/admin/people/${userId}`] };
 }
 
+/** The person's page is gone afterwards, so refreshing it would show a 404 before the redirect. */
+const REVALIDATE_AFTER_DELETE = { revalidate: ["/admin", "/admin/people"] };
+
 export async function setUserSuspended(input: {
   userId: string;
   suspended: boolean;
@@ -63,5 +66,5 @@ export async function deleteUser(input: { userId: string; reason: string; confir
       p_reason: reason,
     });
     if (error) throwRpcError(error);
-  }, revalidateFor(input.userId));
+  }, REVALIDATE_AFTER_DELETE);
 }

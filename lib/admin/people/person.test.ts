@@ -160,8 +160,8 @@ describe("getPerson", () => {
   });
 
   it("derives the waitlist state, and includes the request in the history", async () => {
-    const invited = { id: "w1", status: "invited", referral_codes: { used_by: null } };
-    const signedUp = { id: "w1", status: "invited", referral_codes: { used_by: "u1" } };
+    const invited = { id: "w1", status: "invited", referral_codes: { used_at: null } };
+    const signedUp = { id: "w1", status: "invited", referral_codes: { used_at: "2026-09-01" } };
     for (const [waitlist, expected] of [
       [invited, "invited"],
       [signedUp, "signed_up"],

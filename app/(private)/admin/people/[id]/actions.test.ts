@@ -105,6 +105,11 @@ describe("deleteUser", () => {
     ]);
   });
 
+  it("doesn't refresh the page of the person who no longer exists", async () => {
+    await deleteUser({ userId: ID, reason: "requested", confirmEmail: "a@example.test" });
+    expect(state.revalidated).toEqual(["/admin", "/admin/people"]);
+  });
+
   it("needs the email and a reason", async () => {
     expect((await deleteUser({ userId: ID, reason: "x", confirmEmail: " " })).ok).toBe(false);
     expect((await deleteUser({ userId: ID, reason: "", confirmEmail: "a@example.test" })).ok).toBe(

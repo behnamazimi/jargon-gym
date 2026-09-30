@@ -35,7 +35,7 @@ export async function listWaitlist(
 
   let rows = client
     .from("waitlist_requests")
-    .select("id, email, status, created_at, invited_at, referral_codes(used_by)");
+    .select("id, email, status, created_at, invited_at, referral_codes(used_at)");
   if (status !== "all") rows = rows.eq("status", status);
   if (q) rows = rows.ilike("email", containsPattern(q));
   const { data, error } = await rows
@@ -52,7 +52,7 @@ export async function listWaitlist(
       return {
         id: row.id,
         email: row.email,
-        status: base === "invited" && row.referral_codes?.used_by ? "signed_up" : base,
+        status: base === "invited" && row.referral_codes?.used_at ? "signed_up" : base,
         createdAt: row.created_at,
         invitedAt: row.invited_at,
       };

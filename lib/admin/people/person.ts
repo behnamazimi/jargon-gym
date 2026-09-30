@@ -62,7 +62,7 @@ export function canModifyPerson(person: Pick<AdminPerson, "id" | "role">, adminI
 async function findWaitlist(client: Client, email: string): Promise<PersonWaitlist | null> {
   const { data, error } = await client
     .from("waitlist_requests")
-    .select("id, status, referral_codes(used_by)")
+    .select("id, status, referral_codes(used_at)")
     .ilike("email", exactEmailPattern(email))
     .limit(1)
     .maybeSingle();
@@ -71,7 +71,7 @@ async function findWaitlist(client: Client, email: string): Promise<PersonWaitli
   const base = data.status as "pending" | "invited";
   return {
     id: data.id,
-    status: base === "invited" && data.referral_codes?.used_by ? "signed_up" : base,
+    status: base === "invited" && data.referral_codes?.used_at ? "signed_up" : base,
   };
 }
 
