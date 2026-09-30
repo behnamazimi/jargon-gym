@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import { CollectionSelect } from "@/components/jargon/collection-select";
-import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import type { Domain, Term } from "@/lib/jargon/types";
@@ -19,6 +18,7 @@ type TriagePageProps = {
   terms: Term[];
   knownTermIds: string[];
   markedKnownTermIds: string[];
+  notYetTermIds: string[];
   narrationAccess: boolean;
 };
 
@@ -28,11 +28,11 @@ export function TriagePage({
   terms,
   knownTermIds,
   markedKnownTermIds,
+  notYetTermIds,
   narrationAccess,
 }: TriagePageProps) {
   const reduceMotion = usePrefersReducedMotion();
   const {
-    ready,
     deck,
     current,
     revealed,
@@ -45,7 +45,13 @@ export function TriagePage({
     notYet: handleNotYet,
     undo: handleUndo,
     revisitNotYet: handleRevisitNotYet,
-  } = useTriageDeck({ domainId: domain.id, terms, knownTermIds, markedKnownTermIds });
+  } = useTriageDeck({
+    domainId: domain.id,
+    terms,
+    knownTermIds,
+    markedKnownTermIds,
+    notYetTermIds,
+  });
 
   const cardRef = useRef<TriageCardHandle>(null);
 
@@ -62,7 +68,7 @@ export function TriagePage({
     onNotYet: () => flyOut(-1),
     onUndo: handleUndo,
     revealed,
-    enabled: ready && current !== null,
+    enabled: current !== null,
   });
 
   const collectionPicker = (
@@ -87,20 +93,6 @@ export function TriagePage({
       ) : null}
     </div>
   );
-
-  if (!ready) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
-        {topRow}
-        <QuizPanel>
-          <div className="flex items-center gap-3 px-5 py-5 sm:px-6">
-            <span className="loading loading-spinner loading-sm text-base-content/60" />
-            <p className="m-0 text-sm text-base-content/60">Getting your terms ready.</p>
-          </div>
-        </QuizPanel>
-      </div>
-    );
-  }
 
   if (!current) {
     const markedCount = history.filter(
