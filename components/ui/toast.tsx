@@ -1,35 +1,20 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
-import { Alert, AlertAction, AlertDescription, type AlertVariant } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { createContext, useContext, useMemo, type CSSProperties, type ReactNode } from "react";
+import { Toaster, toast as sonnerToast } from "sonner";
 
-type ToastVariant = Extract<AlertVariant, "success" | "destructive">;
+type ToastVariant = "success" | "destructive";
 
 type ToastAction = { label: string; onPress: () => void };
 
 type ToastOptions = { action?: ToastAction };
 
-type ToastItem = {
-  id: number;
-  message: string;
-  variant: ToastVariant;
-  action?: ToastAction;
-};
+type ToastId = string | number;
 
 type ToastContextValue = {
   /** Returns the toast's id, for `dismiss`. */
-  toast: (message: string, variant?: ToastVariant, options?: ToastOptions) => number;
-  dismiss: (id: number) => void;
+  toast: (message: string, variant?: ToastVariant, options?: ToastOptions) => ToastId;
+  dismiss: (id: ToastId) => void;
 };
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -39,76 +24,57 @@ const TOAST_DURATION_MS = 3000;
 const ACTION_TOAST_DURATION_MS = 6000;
 const MAX_TOASTS = 3;
 
-function ToastView({ item, onDismiss }: { item: ToastItem; onDismiss: (id: number) => void }) {
-  const [paused, setPaused] = useState(false);
-  const duration = item.action ? ACTION_TOAST_DURATION_MS : TOAST_DURATION_MS;
+const toasterStyle = {
+  "--normal-bg": "var(--color-base-100)",
+  "--normal-text": "var(--color-base-content)",
+  "--normal-border": "var(--color-base-300)",
+  "--border-radius": "var(--radius-box)",
+} as CSSProperties;
 
-  useEffect(() => {
-    if (paused) return;
-    const timeout = setTimeout(() => onDismiss(item.id), duration);
-    return () => clearTimeout(timeout);
-  }, [paused, item.id, duration, onDismiss]);
-
-  return (
-    <Alert
-      variant={item.variant}
-      // Horizontal on every width so an action sits beside the message, not under it.
-      className={cn("alert-horizontal gap-3 px-4 py-2.5 shadow-lg", item.action && "py-1.5 pe-2")}
-      onPointerEnter={() => setPaused(true)}
-      onPointerLeave={() => setPaused(false)}
-      onFocus={() => setPaused(true)}
-      onBlur={() => setPaused(false)}
-    >
-      <AlertDescription>{item.message}</AlertDescription>
-      {item.action ? (
-        <AlertAction>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            className="font-semibold underline underline-offset-2"
-            onPress={() => {
-              onDismiss(item.id);
-              item.action?.onPress();
-            }}
-          >
-            {item.action.label}
-          </Button>
-        </AlertAction>
-      ) : null}
-    </Alert>
-  );
+function show(message: string, variant: ToastVariant, options?: ToastOptions): ToastId {
+  const action = options?.action;
+  const common = {
+    duration: action ? ACTION_TOAST_DURATION_MS : TOAST_DURATION_MS,
+    action: action && { label: action.label, onClick: action.onPress },
+  };
+  return variant === "destructive"
+    ? sonnerToast.error(message, common)
+    : sonnerToast.success(message, common);
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-  const nextId = useRef(0);
-
-  const dismiss = useCallback((id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  const toast = useCallback(
-    (message: string, variant: ToastVariant = "success", options?: ToastOptions) => {
-      const id = nextId.current++;
-      setToasts((prev) =>
-        [...prev, { id, message, variant, action: options?.action }].slice(-MAX_TOASTS),
-      );
-      return id;
-    },
+  const value = useMemo<ToastContextValue>(
+    () => ({
+      toast: (message, variant = "success", options) => show(message, variant, options),
+      dismiss: (id) => {
+        sonnerToast.dismiss(id);
+      },
+    }),
     [],
   );
 
   return (
-    <ToastContext.Provider value={{ toast, dismiss }}>
+    <ToastContext.Provider value={value}>
       {children}
-      {/* Phone: below the top bar, clear of the dock and study controls.
-          Above focus mode's z-[100] overlay. */}
-      <div className="toast toast-top toast-center z-[110] max-md:top-[calc(env(safe-area-inset-top,0px)+2.75rem)] md:toast-bottom md:toast-start">
-        {toasts.map((t) => (
-          <ToastView key={t.id} item={t} onDismiss={dismiss} />
-        ))}
-      </div>
+      {/* Bottom center, above the phone dock when there is one. Above focus mode's z-[100] overlay. */}
+      <Toaster
+        position="bottom-center"
+        visibleToasts={MAX_TOASTS}
+        offset={{ bottom: "1rem" }}
+        mobileOffset={{
+          bottom: "calc(var(--dock-bottom, env(safe-area-inset-bottom, 0px)) + 0.75rem)",
+        }}
+        style={{ ...toasterStyle, zIndex: 110 }}
+        toastOptions={{
+          classNames: {
+            toast: "!px-4 !py-2.5 !text-sm !shadow-md",
+            success: "[&_[data-icon]]:!text-success",
+            error: "[&_[data-icon]]:!text-error",
+            actionButton:
+              "!bg-transparent !text-base-content !font-semibold !underline !underline-offset-2",
+          },
+        }}
+      />
     </ToastContext.Provider>
   );
 }
