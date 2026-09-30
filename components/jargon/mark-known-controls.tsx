@@ -17,7 +17,7 @@ export function MarkKnownButton({ markedKnown, onPress }: MarkKnownButtonProps) 
       {markedKnown ? (
         <>
           <Undo2 className="size-4" aria-hidden strokeWidth={1.5} />
-          Add to learning
+          Mark unknown
         </>
       ) : (
         <>
@@ -37,7 +37,7 @@ export function QuickMarkKnownButton({ markedKnown, onPress }: MarkKnownButtonPr
       variant="ghost"
       size="icon-sm"
       onPress={onPress}
-      aria-label={markedKnown ? "Add to learning" : "Mark known"}
+      aria-label={markedKnown ? "Mark unknown" : "Mark known"}
       className="hidden opacity-0 group-hover:opacity-100 focus-visible:opacity-100 md:inline-flex coarse:hidden"
     >
       {markedKnown ? (
