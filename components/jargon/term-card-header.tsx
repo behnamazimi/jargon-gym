@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
 import type { ReviewTerm } from "@/lib/review/types";
 
@@ -11,11 +11,14 @@ export function TermCardHeader({
   term,
   narrationAccess,
   narrationPreload = false,
+  actions,
   style,
 }: {
   term: ReviewTerm;
   narrationAccess: boolean;
   narrationPreload?: boolean;
+  /** Extra controls shown beside the narration button. */
+  actions?: ReactNode;
   style?: CSSProperties;
 }) {
   return (
@@ -35,7 +38,14 @@ export function TermCardHeader({
           <span>{term.category}</span>
         </p>
       </div>
-      {narrationAccess ? <TermNarrationPlayer termId={term.id} preload={narrationPreload} /> : null}
+      {narrationAccess || actions ? (
+        <div className="flex items-center gap-1">
+          {actions}
+          {narrationAccess ? (
+            <TermNarrationPlayer termId={term.id} preload={narrationPreload} />
+          ) : null}
+        </div>
+      ) : null}
     </header>
   );
 }

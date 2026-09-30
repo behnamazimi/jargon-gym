@@ -1,6 +1,5 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
 import { useRef } from "react";
 import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
 import { Button } from "@/components/ui/button";
@@ -12,9 +11,9 @@ import { useToast } from "@/components/ui/toast";
  *  earned known label; only ever set by the user, here or on the jargon
  *  page.
  *
- *  Rendered as a bordered, tinted callout — not inline text — so it reads
- *  as a real secondary action next to Reveal/Next, not something to miss
- *  while skimming the definition.
+ *  Rendered as a button pinned to the bottom-right of the card's scrolling
+ *  area, so it stays reachable however long the definition is. Render it
+ *  inside that scroll container.
  *
  *  Marking moves straight on to the next term, so the confirmation and its
  *  Undo live in a toast that outlasts this card. */
@@ -63,23 +62,16 @@ export function FirstExposureKnownPrompt({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2.5">
-        <span className="inline-flex shrink-0 size-8 items-center justify-center rounded-full bg-primary/15 text-primary">
-          <Sparkles className="size-4" aria-hidden strokeWidth={2} />
-        </span>
-        <div>
-          <p className="m-0 text-sm font-semibold text-base-content">Already know it?</p>
-          <p className="m-0 text-xs text-base-content/60">
-            Mark it known and skip it going forward.
-          </p>
-        </div>
-      </div>
-      <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
-        <Button size="sm" variant="secondary" onPress={handleMarkKnown}>
-          Mark known
-        </Button>
-      </div>
+    <div className="pointer-events-none sticky bottom-3 flex justify-end pt-2">
+      <Button
+        size="sm"
+        variant="outline"
+        className="pointer-events-auto bg-base-100 shadow-none"
+        onPress={handleMarkKnown}
+      >
+        <span className="font-normal text-base-content/60">Already know it?</span>
+        <span className="font-semibold">Mark as known</span>
+      </Button>
     </div>
   );
 }
