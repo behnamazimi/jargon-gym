@@ -50,11 +50,7 @@ export function TermEvalButton({ termId }: { termId: string }) {
 
   return (
     <div
-      className={
-        showScore
-          ? "absolute right-3 bottom-3 z-10 flex items-center gap-1.5 rounded-full bg-base-100 py-0.5 ps-2.5 pe-0.5"
-          : "absolute right-3 bottom-3 z-10"
-      }
+      className="flex items-center gap-1.5"
       onClick={(event) => event.stopPropagation()}
       onTouchStart={(event) => event.stopPropagation()}
       onTouchEnd={(event) => event.stopPropagation()}
@@ -79,7 +75,6 @@ export function TermEvalButton({ termId }: { termId: string }) {
         onPress={() => {
           void onEvaluate();
         }}
-        className="min-h-11 min-w-11 bg-base-100"
       >
         <Scale className="size-4" aria-hidden strokeWidth={1.5} />
       </Button>

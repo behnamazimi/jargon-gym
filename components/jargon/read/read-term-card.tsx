@@ -68,16 +68,14 @@ function ReadCardRevealed({
     <>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
         <TermBody term={term} language={term.domainLanguage} />
-      </div>
-      {term.isNewToUser ? (
-        <div className="shrink-0 px-5 pb-3 sm:px-6">
+        {term.isNewToUser ? (
           <FirstExposureKnownPrompt
             termId={term.id}
             term={term.term}
             onMarkedKnown={onMarkedKnown}
           />
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </>
   );
 }

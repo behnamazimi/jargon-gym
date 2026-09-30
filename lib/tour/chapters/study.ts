@@ -9,20 +9,19 @@ export const STUDY_CHAPTERS = [
       {
         target: "review-collection",
         title: "Pick what to review",
-        body: "Review one collection or all of them. Turn on “Remember on this device” to keep your pick.",
+        body: "Review one collection or all of them.",
       },
       {
         target: "review-card",
         title: "Recall, then reveal",
-        body: "Think of what the term means, then click the card or press Enter. ← goes back, and → skips a card you haven't revealed.",
-        bodyTouch:
-          "Think of what the term means, then tap the card or swipe up. Swipe left or right to move between cards.",
+        body: "Recall the meaning, then click the card or press Enter.",
+        bodyTouch: "Recall the meaning, then tap the card or swipe up.",
         advanceOnTarget: "review-grades",
       },
       {
         target: "review-grades",
         title: "How well did you recall it?",
-        body: "Again if you blanked, Hard if it was a struggle, Good if it came back, Easy if it was instant. New terms come first, so Again is normal early on.",
+        body: "Again if you blanked, Hard if it was a struggle, Good if it came back, Easy if it was instant.",
       },
     ],
   },
@@ -33,17 +32,17 @@ export const STUDY_CHAPTERS = [
       {
         target: "read-card",
         title: "Read to get familiar",
-        body: "Read the term and its definition. There's nothing to get right here: every term you read builds familiarity and gives it a head start in Review.",
+        body: "Just read. Every term you read builds familiarity for Review.",
       },
       {
         target: "read-modes",
         title: "Cards or Stories",
-        body: "Cards shows one term at a time. Stories weaves your next terms into a short piece of reading.",
+        body: "Cards shows one term at a time. Stories weaves terms into a short read.",
       },
       {
         target: "read-options",
         title: "Read your way",
-        body: "Show definitions right away, hide the question, or open Stories by default.",
+        body: "Show definitions right away, or open Stories by default.",
       },
     ],
   },
@@ -54,7 +53,7 @@ export const STUDY_CHAPTERS = [
       {
         target: "read-collection",
         title: "Choose what to read",
-        body: "Read from one collection or all of them. The count shows how many terms are available.",
+        body: "Read one collection or all of them.",
       },
     ],
   },
@@ -65,14 +64,13 @@ export const STUDY_CHAPTERS = [
       {
         target: "stories-level",
         title: "Match your level",
-        body: "Pick the language level the story is written at. Term support above and Length below set how much help you get and how long it runs.",
+        body: "Pick the language level for the story.",
       },
       {
         target: "stories-write",
         title: "Write it",
-        body: "AI writes the piece, using your AI credits or your own key. Click a highlighted term for its definition, and mark the story read to count a read for every term in it.",
-        bodyTouch:
-          "AI writes the piece, using your AI credits or your own key. Tap a highlighted term for its definition, and mark the story read to count a read for every term in it.",
+        body: "Writes a short story with your next terms. Click one for its definition.",
+        bodyTouch: "Writes a short story with your next terms. Tap one for its definition.",
         placement: "top",
       },
     ],
@@ -84,7 +82,7 @@ export const STUDY_CHAPTERS = [
       {
         target: "quiz-style",
         title: "Simple or AI",
-        body: "Simple quizzes use the collection's definitions and examples. AI writes fresh questions, using your AI credits or your own key from Settings.",
+        body: "Simple uses your definitions. AI writes fresh questions.",
       },
     ],
   },

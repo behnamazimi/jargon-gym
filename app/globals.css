@@ -115,6 +115,13 @@
     --dock-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
   }
 
+  /* Tour targets scroll clear of the phone dock instead of landing behind it. */
+  @media (max-width: 47.99rem) {
+    .chrome-dock [data-tour] {
+      scroll-margin-bottom: calc(var(--dock-bottom) + 1rem);
+    }
+  }
+
   h1 {
     font-family: var(--font-heading);
     font-size: 2.25rem;

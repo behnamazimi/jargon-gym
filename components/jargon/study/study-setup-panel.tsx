@@ -19,15 +19,10 @@ export function StudySetupPanel({
   footerHint?: ReactNode;
 }) {
   return (
-    <>
-      <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">{children}</QuizPanelBody>
-      <QuizSetupFooter
-        className="sticky bottom-0 shrink-0 bg-base-100 px-5 py-4 sm:px-6"
-        hint={footerHint}
-      >
-        {footer}
-      </QuizSetupFooter>
-    </>
+    <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">
+      {children}
+      <QuizSetupFooter hint={footerHint}>{footer}</QuizSetupFooter>
+    </QuizPanelBody>
   );
 }
 

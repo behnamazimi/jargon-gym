@@ -130,7 +130,16 @@ export function ReviewCard({
           </div>
 
           <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            <TermCardHeader term={term} narrationAccess={narrationAccess} narrationPreload />
+            <TermCardHeader
+              term={term}
+              narrationAccess={narrationAccess}
+              narrationPreload
+              actions={
+                revealed && canEvaluateTerms ? (
+                  <TermEvalButton key={term.id} termId={term.id} />
+                ) : null
+              }
+            />
             <div
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
               onClick={(event) => event.stopPropagation()}
@@ -144,9 +153,6 @@ export function ReviewCard({
                 />
               ) : null}
             </div>
-            {revealed && canEvaluateTerms ? (
-              <TermEvalButton key={term.id} termId={term.id} />
-            ) : null}
           </div>
         </div>
       </div>
