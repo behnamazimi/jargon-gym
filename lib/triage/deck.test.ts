@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Term } from "@/lib/jargon/types";
-import { buildTriageDeck, parseNotYetIds, toTriageTerm } from "./deck";
+import { buildTriageDeck, toTriageTerm } from "./deck";
 
 function makeTerm(id: string): Term {
   return {
@@ -40,22 +40,5 @@ describe("toTriageTerm", () => {
     expect(term.domainName).toBe("Finance");
     expect(term.domainLanguage).toBe("en");
     expect(term.isNewToUser).toBeUndefined();
-  });
-});
-
-describe("parseNotYetIds", () => {
-  it("reads a stored list of ids", () => {
-    expect(parseNotYetIds(JSON.stringify(["a", "b"]))).toEqual(["a", "b"]);
-  });
-
-  it("treats empty, corrupt, or non-array values as empty", () => {
-    expect(parseNotYetIds(null)).toEqual([]);
-    expect(parseNotYetIds("")).toEqual([]);
-    expect(parseNotYetIds("{not json")).toEqual([]);
-    expect(parseNotYetIds(JSON.stringify({ a: 1 }))).toEqual([]);
-  });
-
-  it("drops non-string entries", () => {
-    expect(parseNotYetIds(JSON.stringify(["a", 3, null, "b"]))).toEqual(["a", "b"]);
   });
 });
