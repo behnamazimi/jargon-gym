@@ -18,15 +18,18 @@ const OVERLAY_Z = 100000;
  *  huge shadow leaves a cut-out over the target). It's drawn over the page,
  *  so only this one element is highlighted and the tour never touches markup
  *  React owns. Clicks pass straight through, so the page stays usable. It
- *  fades out while the page scrolls and back in once it settles. */
+ *  fades out while the page scrolls and back in once it settles. Without
+ *  `dim` it's just the ring, for someone who arrived mid-task. */
 export function TargetSpotlight({
   target,
   box,
   scrolling,
+  dim,
 }: {
   target: HTMLElement;
   box: TargetBox;
   scrolling: boolean;
+  dim: boolean;
 }) {
   const radius = getComputedStyle(target).borderRadius;
   return createPortal(
@@ -42,7 +45,7 @@ export function TargetSpotlight({
         width: box.width + RING_OFFSET_PX * 2,
         height: box.height + RING_OFFSET_PX * 2,
         borderRadius: radius === "0px" ? undefined : `calc(${radius} + ${RING_OFFSET_PX}px)`,
-        boxShadow: `0 0 0 100vmax ${DIM}`,
+        boxShadow: dim ? `0 0 0 100vmax ${DIM}` : undefined,
         zIndex: OVERLAY_Z,
       }}
     />,

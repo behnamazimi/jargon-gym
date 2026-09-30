@@ -130,6 +130,15 @@ export function resolveTourStep(
   };
 }
 
+/** Library is where the tour starts, so its tips run back to back. Every
+ *  other page shows one chapter per visit, so a link into Review or Read
+ *  never turns into a long sequence. */
+export const CHAINED_ROUTE = "/jargon";
+
+export function holdsChaptersForNextVisit(pathname: string, finishedOn: string | null): boolean {
+  return finishedOn === pathname && pathname !== CHAINED_ROUTE;
+}
+
 export function isSameProgress(a: TourProgress | null, b: TourProgress): boolean {
   return a?.chapterId === b.chapterId && a.step === b.step;
 }

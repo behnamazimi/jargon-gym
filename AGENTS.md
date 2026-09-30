@@ -83,7 +83,10 @@ Every account gets short per-page tips ("chapters") until it has seen them
 all or skipped them. The steps are plain data
 in `lib/tour/chapters/` (grouped by area); `lib/tour/state.ts` decides what
 shows, and `components/tour/` renders it (a React Aria `Popover` plus a
-ring). Chapters on the same page run back to back in the order listed. To
+ring). Chapters on the same page run in the order listed: back to back on
+Library, one per visit elsewhere. Once Library's tips are done, the tour
+points at the next page's nav link (`lib/tour/walk.ts`) and the user clicks
+it themselves. To
 add a chapter, add an entry to the matching area file, add any new target ids to
 `lib/tour/targets.ts`, and put `data-tour="<id>"` on the element. Feature
 components only carry that attribute and never import tour code. Progress

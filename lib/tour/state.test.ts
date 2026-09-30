@@ -5,6 +5,7 @@ import {
   isTourDone,
   pickChapter,
   resolveTourStep,
+  holdsChaptersForNextVisit,
   tourTargetsOn,
   withChapterSeen,
   withTourSkipped,
@@ -38,21 +39,6 @@ describe("TOUR_CHAPTERS", () => {
 });
 
 describe("pickChapter", () => {
-  it("opens with the overview on any of the four main pages", () => {
-    for (const pathname of ["/jargon", "/jargon/read", "/jargon/review", "/jargon/quiz"]) {
-      expect(
-        pickChapter(pathname, NEW_USER_TOUR_STATE, visible("nav-library", "library-browse"))?.id,
-      ).toBe("overview");
-    }
-  });
-
-  it("moves to the page's own chapters once the overview is seen", () => {
-    const state: TourState = { status: "pending", seen: ["overview"] };
-    expect(pickChapter("/jargon", state, visible("nav-library", "library-browse"))?.id).toBe(
-      "welcome",
-    );
-  });
-
   it("runs the welcome chapter on an empty Library", () => {
     expect(pickChapter("/jargon", NEW_USER_TOUR_STATE, visible("library-browse"))?.id).toBe(
       "welcome",
@@ -125,13 +111,12 @@ describe("tour completion", () => {
 
 describe("resolveTourStep", () => {
   const atReviewStep = (step: number) => ({ chapterId: "review" as const, step });
-  const overviewSeen: TourState = { status: "pending", seen: ["overview"] };
 
   it("starts a chapter at its first step", () => {
     expect(
       resolveTourStep(
         "/jargon/review",
-        overviewSeen,
+        NEW_USER_TOUR_STATE,
         null,
         visible("review-collection", "review-card"),
       ),
@@ -142,7 +127,7 @@ describe("resolveTourStep", () => {
     expect(
       resolveTourStep(
         "/jargon/review",
-        overviewSeen,
+        NEW_USER_TOUR_STATE,
         atReviewStep(1),
         visible("review-collection", "review-card", "review-grades"),
       ),
@@ -153,7 +138,7 @@ describe("resolveTourStep", () => {
     expect(
       resolveTourStep(
         "/jargon/review",
-        overviewSeen,
+        NEW_USER_TOUR_STATE,
         atReviewStep(2),
         visible("review-collection", "review-card"),
       ),
@@ -162,7 +147,7 @@ describe("resolveTourStep", () => {
 
   it("skips a step whose target is gone when a later one is on screen", () => {
     const progress = { chapterId: "library-terms" as const, step: 1 };
-    const state: TourState = { status: "pending", seen: ["overview", "library"] };
+    const state: TourState = { status: "pending", seen: ["library"] };
     expect(
       resolveTourStep("/jargon", state, progress, visible("library-search", "library-actions")),
     ).toMatchObject({ chapterId: "library-terms", stepIndex: 2 });
@@ -171,25 +156,8 @@ describe("resolveTourStep", () => {
   it("lets the page's other chapters run when a started one is stuck", () => {
     const progress = { chapterId: "welcome" as const, step: 1 };
     expect(
-      resolveTourStep(
-        "/jargon",
-        { status: "pending", seen: ["overview"] },
-        progress,
-        visible("library-collections"),
-      ),
+      resolveTourStep("/jargon", NEW_USER_TOUR_STATE, progress, visible("library-collections")),
     ).toMatchObject({ chapterId: "library", stepIndex: 0 });
-  });
-
-  it("carries the overview across the pages it runs on", () => {
-    const progress = { chapterId: "overview" as const, step: 2 };
-    expect(
-      resolveTourStep(
-        "/jargon/read",
-        NEW_USER_TOUR_STATE,
-        progress,
-        visible("nav-library", "nav-read", "nav-review", "nav-quiz"),
-      ),
-    ).toMatchObject({ chapterId: "overview", stepIndex: 2 });
   });
 
   it("shows nothing once skipped", () => {
@@ -206,7 +174,7 @@ describe("resolveTourStep", () => {
 
 describe("tourTargetsOn", () => {
   it("watches this page's remaining targets", () => {
-    const state: TourState = { status: "pending", seen: ["overview"] };
+    const state: TourState = NEW_USER_TOUR_STATE;
     expect(tourTargetsOn("/jargon/review", state)).toEqual([
       "review-collection",
       "review-card",
@@ -215,13 +183,19 @@ describe("tourTargetsOn", () => {
   });
 
   it("watches nothing once the page's chapters are seen or the tour is done", () => {
-    expect(
-      tourTargetsOn("/jargon/quiz", { status: "pending", seen: ["overview", "quiz"] }),
-    ).toEqual([]);
+    expect(tourTargetsOn("/jargon/quiz", { status: "pending", seen: ["quiz"] })).toEqual([]);
     expect(tourTargetsOn("/jargon/review", withTourSkipped(NEW_USER_TOUR_STATE))).toEqual([]);
   });
 
   it("never watches outside the app", () => {
     expect(tourTargetsOn("/", NEW_USER_TOUR_STATE)).toEqual([]);
+  });
+});
+
+describe("holdsChaptersForNextVisit", () => {
+  it("holds the page's other chapters after one finishes, except on Library", () => {
+    expect(holdsChaptersForNextVisit("/jargon/read", "/jargon/read")).toBe(true);
+    expect(holdsChaptersForNextVisit("/jargon", "/jargon")).toBe(false);
+    expect(holdsChaptersForNextVisit("/jargon/read", null)).toBe(false);
   });
 });

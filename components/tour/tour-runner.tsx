@@ -6,6 +6,7 @@ import { markTourChapterSeenAction, skipTourAction } from "@/app/(private)/actio
 import { useMediaQuery } from "@/hooks/use-platform";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import {
+  CHAINED_ROUTE,
   isSameProgress,
   resolveTourStep,
   tourTargetsOn,
@@ -14,9 +15,10 @@ import {
   type TourProgress,
   type TourState,
 } from "@/lib/tour/state";
+import type { TourWalkStop } from "@/lib/tour/walk";
 import { TourStepCard } from "./tour-step-card";
 import { useTargetBox, useTourTarget, useVisibleTourTargets } from "./use-tour-dom";
-import { useTourWalk } from "./use-tour-walk";
+import { useTourNudge, useTourVisit } from "./use-tour-visit";
 
 const targetIds = new WeakMap<HTMLElement, number>();
 let nextTargetId = 0;
@@ -50,10 +52,50 @@ function stepBody(step: Step, isTouch: boolean) {
 
 /** What screen readers hear when a tip appears; the card never takes focus
  *  away from the page, so this is how they learn it's there. */
-function announcement(shown: (Resolved & { step: Step }) | null, isTouch: boolean) {
+function announcement(
+  shown: (Resolved & { step: Step }) | null,
+  nudge: { stop: TourWalkStop } | null,
+  isTouch: boolean,
+) {
+  if (nudge) {
+    return `Next: ${nudge.stop.label}. ${nudge.stop.blurb} Press the highlighted link to open it.`;
+  }
   if (!shown) return "";
   const { stepIndex, chapter, step } = shown;
-  return `Tip ${stepIndex + 1} of ${chapter.steps.length}: ${step.title}. ${stepBody(step, isTouch)} Press Escape to dismiss.`;
+  return `Tip ${stepIndex + 1} of ${chapter.steps.length}: ${step.title}. ${stepBody(step, isTouch)} Press Escape to hide tips for now.`;
+}
+
+/** The pointer to the next page's link, shown after a page's last tip. */
+function NudgeCard({
+  nudge,
+  dim,
+  onDismiss,
+  onSkip,
+}: {
+  nudge: { stop: TourWalkStop; target: HTMLElement };
+  dim: boolean;
+  onDismiss: () => void;
+  onSkip: () => void;
+}) {
+  const { box, scrolling } = useTargetBox(nudge.target);
+  return (
+    <TourStepCard
+      key={nudge.stop.route}
+      target={nudge.target}
+      box={box}
+      scrolling={scrolling}
+      title={`Next: ${nudge.stop.label}`}
+      body={nudge.stop.blurb}
+      stepNumber={1}
+      stepCount={1}
+      focusPrimary={false}
+      dim={dim}
+      nudge
+      onNext={() => {}}
+      onDismiss={onDismiss}
+      onSkip={onSkip}
+    />
+  );
 }
 
 export function TourRunner({ initialState }: { initialState: TourState }) {
@@ -61,6 +103,7 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
   const [state, setState] = useState(initialState);
   const [progress, setProgress] = useState<TourProgress | null>(null);
   const [keyboardFlow, setKeyboardFlow] = useState(false);
+  const visit = useTourVisit(pathname);
   const watched = tourTargetsOn(pathname, state);
   const visible = useVisibleTourTargets(watched);
   // Same split the UI uses for its gestures (swipe rows, tap to reveal):
@@ -69,7 +112,9 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
 
   // While a sheet, menu, or focus mode covers the page, only targets inside
   // it count as visible, so the page's own step holds until it closes.
-  const resolved = resolveTourStep(pathname, state, progress, (target) => visible.has(target));
+  const resolved = visit.quiet
+    ? null
+    : resolveTourStep(pathname, state, progress, (target) => visible.has(target));
   const step = resolved ? resolved.chapter.steps[resolved.stepIndex] : null;
   const target = useTourTarget(step?.target ?? null);
   const { box, scrolling } = useTargetBox(target);
@@ -82,22 +127,16 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
   }
 
   const showing = resolved && step && target ? { ...resolved, step, target } : null;
-  const walk = useTourWalk(
-    pathname,
-    state,
-    visible,
-    showing && {
-      chapterId: showing.chapterId,
-      stepIndex: showing.stepIndex,
-      stepCount: showing.chapter.steps.length,
-    },
-  );
+  // After a page's last tip, point at the next page's link; the user clicks it.
+  const nudge = useTourNudge(pathname, state, !showing && !visit.hidden && visit.finished);
+  const dim = pathname === CHAINED_ROUTE;
 
   function finishChapter() {
     if (!showing) return;
     const { chapterId } = showing;
     setState((current) => withChapterSeen(current, chapterId));
     setProgress(null);
+    visit.markFinished();
     void markTourChapterSeenAction(chapterId);
   }
 
@@ -111,12 +150,9 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
     setProgress({ chapterId: showing.chapterId, step: showing.stepIndex + 1 });
   }
 
-  function handleContinue(viaKeyboard: boolean) {
-    const stop = walk.nextStop;
-    if (!stop) return;
-    setKeyboardFlow(viaKeyboard);
-    finishChapter();
-    walk.goTo(stop);
+  function hideTips() {
+    visit.hide();
+    setProgress(null);
   }
 
   function handleSkip() {
@@ -128,7 +164,7 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
   return (
     <>
       <div className="sr-only" aria-live="polite">
-        {announcement(showing, isTouch)}
+        {announcement(showing, nudge, isTouch)}
       </div>
       {showing ? (
         <TourStepCard
@@ -142,12 +178,13 @@ export function TourRunner({ initialState }: { initialState: TourState }) {
           stepNumber={showing.stepIndex + 1}
           stepCount={showing.chapter.steps.length}
           focusPrimary={shouldFocusCard(keyboardFlow)}
-          nextStopLabel={walk.nextStop?.label}
+          dim={dim}
           onNext={handleNext}
-          onContinue={handleContinue}
-          onDismiss={finishChapter}
+          onDismiss={hideTips}
           onSkip={handleSkip}
         />
+      ) : nudge ? (
+        <NudgeCard nudge={nudge} dim={dim} onDismiss={hideTips} onSkip={handleSkip} />
       ) : null}
     </>
   );
