@@ -2,6 +2,7 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { getAiAccessView } from "@/lib/llm/access";
 import type { AiAccessView } from "@/lib/llm/types";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
+import { DEFAULT_READ_OPTIONS, getReadOptions } from "@/lib/read/options";
 import { listStudyCollectionState } from "@/lib/study/collections";
 import type { PausedStudyCollection } from "@/lib/study/types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -19,6 +20,7 @@ export type StoriesSetupData = {
   levelsByDomain: Record<string, StoryLevels>;
   ai: AiAccessView;
   narrationAccess: boolean;
+  narrationHighlight: boolean;
   /** An unread piece to open straight into, instead of the setup screen. */
   currentStory: { story: Story; terms: StoryTerm[] } | null;
 };
@@ -58,13 +60,17 @@ export async function getStoriesSetupData(
   if ("error" in auth) return { error: "Log in to read stories." };
 
   const admin = createAdminClient();
-  const [collectionState, eligibleCounts, prefs, ai, narrationAccess, unreadStory] =
+  const [collectionState, eligibleCounts, prefs, ai, narrationAccess, readOptions, unreadStory] =
     await Promise.all([
       listStudyCollectionState(auth.supabase, auth.user.id),
       getReadEligibleCountsByDomainForUser(admin, auth.user.id),
       loadPrefs(admin, auth.user.id),
       getAiAccessView(auth.supabase, auth.user.id),
       getNarrationAccessForUser(admin, auth.user.id, "narration_story"),
+      getReadOptions(auth.supabase, auth.user.id).catch((err: unknown) => {
+        console.error("Failed to load Read options:", err);
+        return DEFAULT_READ_OPTIONS;
+      }),
       loadStoryToOpen(admin, auth.user.id, requestedStoryId).catch((err: unknown) => {
         console.error("Failed to load the current story:", err);
         return null;
@@ -84,6 +90,7 @@ export async function getStoriesSetupData(
     levelsByDomain: prefs.levelsByDomain,
     ai,
     narrationAccess,
+    narrationHighlight: readOptions.narrationHighlight,
     currentStory: unreadStory
       ? { story: unreadStory, terms: await getStoryTerms(admin, unreadStory.termIds) }
       : null,

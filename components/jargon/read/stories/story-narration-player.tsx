@@ -24,7 +24,13 @@ function sleep(ms: number) {
 /** Audio is made on the first Listen tap, so the player asks the route to
  *  prepare it (retrying while another request is still making it), then hands
  *  the ready file to the story's audio controls. */
-export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
+export function StoryNarrationPlayer({
+  storyId,
+  onProgress,
+}: {
+  storyId: string;
+  onProgress?: (fraction: number | null) => void;
+}) {
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const cancelledRef = useRef(false);
   const src = `/api/stories/${storyId}/narration`;
@@ -62,7 +68,16 @@ export function StoryNarrationPlayer({ storyId }: { storyId: string }) {
   }
 
   if (status === "ready") {
-    return <StoryAudioControls src={src} onError={() => setStatus("unavailable")} />;
+    return (
+      <StoryAudioControls
+        src={src}
+        onError={() => {
+          setStatus("unavailable");
+          onProgress?.(null);
+        }}
+        onProgress={onProgress}
+      />
+    );
   }
 
   const message = STATUS_MESSAGES[status];

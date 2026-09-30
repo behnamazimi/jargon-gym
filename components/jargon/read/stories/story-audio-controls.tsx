@@ -56,7 +56,16 @@ function SkipButton({
 
 /** One-line controls for a story's narration: ±10s skips, play/pause, a seek
  *  bar, the time, and a speed button that steps through the speeds. */
-export function StoryAudioControls({ src, onError }: { src: string; onError: () => void }) {
+export function StoryAudioControls({
+  src,
+  onError,
+  onProgress,
+}: {
+  src: string;
+  onError: () => void;
+  /** Where playback is, as a share of the clip; null once it has ended. */
+  onProgress?: (fraction: number | null) => void;
+}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -111,6 +120,11 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
     const end = Number.isFinite(audio.duration) ? audio.duration : seconds;
     audio.currentTime = Math.min(Math.max(seconds, 0), end);
     setCurrentTime(audio.currentTime);
+    reportProgress(audio);
+  }
+
+  function reportProgress(audio: HTMLAudioElement) {
+    onProgress?.(audio.currentTime / audio.duration);
   }
 
   function changeSpeed(next: number) {
@@ -142,8 +156,12 @@ export function StoryAudioControls({ src, onError }: { src: string; onError: () 
         onEnded={(event) => {
           releaseActiveAudio(event.currentTarget);
           setPlaying(false);
+          onProgress?.(null);
         }}
-        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+        onTimeUpdate={(event) => {
+          setCurrentTime(event.currentTarget.currentTime);
+          reportProgress(event.currentTarget);
+        }}
         onDurationChange={(event) => {
           const { duration: next } = event.currentTarget;
           if (Number.isFinite(next)) setDuration(next);

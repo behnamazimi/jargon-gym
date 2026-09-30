@@ -1,10 +1,11 @@
 "use client";
 
 import { Settings2, XIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog as AriaDialog, DialogTrigger, Popover } from "react-aria-components";
 import { saveReadOptionAction } from "@/app/(private)/jargon/read/actions";
+import { isStoriesPath } from "@/components/jargon/read/read-mode-tabs";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
@@ -29,6 +30,11 @@ const OPTION_ROWS: { key: ReadOptionKey; label: string; description: string }[] 
     key: "hideQuestion",
     label: "Hide “What is …?”",
     description: "The hidden card shows just the term.",
+  },
+  {
+    key: "narrationHighlight",
+    label: "Highlight text while listening",
+    description: "Stories follow the narration sentence by sentence.",
   },
 ];
 
@@ -83,14 +89,16 @@ function OptionRow({
 
 function OptionsList({
   options,
+  onStories,
   onChange,
 }: {
   options: ReadOptions;
+  onStories: boolean;
   onChange: (key: ReadOptionKey, value: boolean) => void;
 }) {
   return (
     <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
-      {OPTION_ROWS.map((row) => (
+      {OPTION_ROWS.filter((row) => onStories || row.key !== "narrationHighlight").map((row) => (
         <OptionRow
           key={row.key}
           id={`read-option-${row.key}`}
@@ -133,6 +141,7 @@ export function ReadOptionsMenu({ initialOptions }: { initialOptions: ReadOption
   const [options, setOptions] = useState(initialOptions);
   const isPhone = useMediaQuery(PLATFORM_MEDIA.phone, true);
   const router = useRouter();
+  const onStories = isStoriesPath(usePathname());
   const { toast } = useToast();
 
   async function update(key: ReadOptionKey, value: boolean) {
@@ -148,7 +157,13 @@ export function ReadOptionsMenu({ initialOptions }: { initialOptions: ReadOption
     if (key !== "storiesDefault") router.refresh();
   }
 
-  const list = <OptionsList options={options} onChange={(key, value) => void update(key, value)} />;
+  const list = (
+    <OptionsList
+      options={options}
+      onStories={onStories}
+      onChange={(key, value) => void update(key, value)}
+    />
+  );
 
   if (!isPhone) {
     return (

@@ -1091,6 +1091,7 @@ export type Database = {
           longest_streak: number;
           provider: string | null;
           read_hide_question: boolean;
+          read_narration_highlight: boolean;
           read_revealed_default: boolean;
           read_stories_default: boolean;
           story_last_domain_id: string | null;
@@ -1109,6 +1110,7 @@ export type Database = {
           longest_streak?: number;
           provider?: string | null;
           read_hide_question?: boolean;
+          read_narration_highlight?: boolean;
           read_revealed_default?: boolean;
           read_stories_default?: boolean;
           story_last_domain_id?: string | null;
@@ -1127,6 +1129,7 @@ export type Database = {
           longest_streak?: number;
           provider?: string | null;
           read_hide_question?: boolean;
+          read_narration_highlight?: boolean;
           read_revealed_default?: boolean;
           read_stories_default?: boolean;
           story_last_domain_id?: string | null;

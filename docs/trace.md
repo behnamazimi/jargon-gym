@@ -198,6 +198,14 @@ hide anything, so the piece carries a glossary of the definitions for every
 term in it, and the reads are recorded when you mark the piece read, not
 when it's generated.
 
+While a story's narration plays, the sentence being spoken is highlighted
+(the "Highlight text while listening" Read option, `read_narration_highlight`,
+on by default). The narration has no timings, so `lib/stories/highlight.ts`
+estimates them on the client: each sentence gets a share of the clip in
+proportion to its length, after the spoken title. The pause weights at the top
+of that file are the knobs if the highlight drifts. It changes nothing about
+scoring.
+
 ## How each tier decides what to show you
 
 All three tiers rank the exact same pool of terms — every term across your

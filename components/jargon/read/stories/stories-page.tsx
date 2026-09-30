@@ -104,10 +104,12 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
     case "reading":
       return session.story ? (
         <StoryReader
+          key={session.story.id}
           session={session}
           story={session.story}
           terms={session.terms}
           narrationAccess={setup.narrationAccess}
+          narrationHighlight={setup.narrationHighlight}
         />
       ) : null;
     default:
