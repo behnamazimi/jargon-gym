@@ -7,6 +7,9 @@ import { resolveReviewDomainIds } from "./known-state";
 
 type Client = SupabaseClient<Database>;
 
+/** Keeps the `.in("id", …)` request URL under PostgREST's length limit. */
+const TERM_ID_BATCH_SIZE = 100;
+
 /** Just enough to populate the term list's collection filter — the
  *  known/total/percentage breakdown per collection lives in
  *  collection-stats.ts's WebStatsSnapshot, which is what the overview card
@@ -155,11 +158,11 @@ export async function loadMasteryTermRows(
 
   const termIds = candidates.map((c) => c.termId);
   const termInfoById = new Map<string, { term: string; category: string }>();
-  if (termIds.length > 0) {
+  for (let i = 0; i < termIds.length; i += TERM_ID_BATCH_SIZE) {
     const { data: termData, error } = await client
       .from("terms")
       .select("id, term, category")
-      .in("id", termIds);
+      .in("id", termIds.slice(i, i + TERM_ID_BATCH_SIZE));
     if (error) throw error;
     for (const t of termData) termInfoById.set(t.id, { term: t.term, category: t.category });
   }
