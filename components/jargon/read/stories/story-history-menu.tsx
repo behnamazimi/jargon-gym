@@ -10,13 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-platform";
 import { PLATFORM_MEDIA } from "@/lib/platform";
-import type { PieceLength, StorySummary } from "@/lib/stories/types";
-
-const LENGTH_LABELS: Record<PieceLength, string> = {
-  short: "Short",
-  medium: "Medium",
-  long: "Long",
-};
+import { storyMetaLabels } from "@/lib/stories/meta";
+import type { StorySummary } from "@/lib/stories/types";
 
 type HistoryState =
   | { status: "loading" }
@@ -65,7 +60,7 @@ function HistoryRow({
             {story.title}
           </span>
           <span className="block text-xs text-base-content/60">
-            {LENGTH_LABELS[story.pieceLength]}
+            {storyMetaLabels(story).join(" · ")}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
