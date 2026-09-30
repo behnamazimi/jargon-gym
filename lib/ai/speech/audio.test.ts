@@ -270,6 +270,16 @@ describe("getOrCreateAudio", () => {
     expect(jobs.claimJob).toHaveBeenCalledWith(admin, expect.anything(), true);
   });
 
+  it("fails the job and records no provider calls when the switches can't be read", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(job({ id: "job-2", status: "pending", storage_path: null }));
+    getProviderSwitches.mockRejectedValue(new Error("no settings row"));
+    const result = await getOrCreateAudio(admin, subject());
+    expect(result).toEqual({ status: "unavailable", generation: { calls: [] } });
+    expect(jobs.markFailed).toHaveBeenCalledWith(admin, "job-2", "no settings row");
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+  });
+
   it("fails the job when the subject has nothing to narrate", async () => {
     jobs.getLiveJob.mockResolvedValue(null);
     jobs.claimJob.mockResolvedValue(job({ id: "job-2", status: "pending", storage_path: null }));

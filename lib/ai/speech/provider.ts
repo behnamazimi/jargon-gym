@@ -34,10 +34,6 @@ export async function synthesizeSpeech(
   const units = request.script.length;
   const errors: string[] = [];
 
-  console.log("================================================");
-  console.log("Synthesizing speech for:", request.script);
-  console.log("================================================");
-
   for (const adapter of PROVIDER_ORDER) {
     if (!switches[adapter.id] || !adapter.isConfigured()) continue;
     try {

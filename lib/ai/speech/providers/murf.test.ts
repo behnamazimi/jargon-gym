@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NARRATION_PAUSE } from "../pause";
-import { murfProvider } from "./murf";
+import { createMurfProvider, murfProvider } from "./murf";
 
 const fetchMock = vi.fn();
 
@@ -63,5 +63,38 @@ describe("murfProvider (Falcon 2)", () => {
 
     fetchMock.mockResolvedValue(new Response(null));
     await expect(murfProvider.synthesize(request)).rejects.toThrow("no audio");
+  });
+});
+
+describe("Murf Gen2", () => {
+  const gen2 = createMurfProvider("gen2");
+
+  it("calls the JSON endpoint and decodes the base64 audio", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ encodedAudio: Buffer.from("mp3").toString("base64") })),
+    );
+    const audio = await gen2.synthesize(request);
+    expect(audio.toString()).toBe("mp3");
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.murf.ai/v1/speech/generate");
+    expect(sentBody()).toMatchObject({
+      modelVersion: "GEN2",
+      style: "Narration",
+      pitch: -5,
+      rate: -5,
+      encodeAsBase64: true,
+    });
+  });
+
+  it("keeps the pauses, written in Murf's syntax", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ encodedAudio: Buffer.from("mp3").toString("base64") })),
+    );
+    await gen2.synthesize({ ...request, script: `Closure. ${NARRATION_PAUSE} For example, x.` });
+    expect(sentBody().text).toBe("Closure. [pause 1s] For example, x.");
+  });
+
+  it("fails when the reply has no audio", async () => {
+    fetchMock.mockResolvedValue(new Response("{}"));
+    await expect(gen2.synthesize(request)).rejects.toThrow("no audio");
   });
 });

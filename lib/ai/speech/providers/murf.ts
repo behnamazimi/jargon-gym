@@ -3,7 +3,8 @@ import { renderPauses, type PauseStyle } from "../pause";
 import type { SpeechProviderAdapter } from "./types";
 
 const MODEL: keyof typeof MODELS = "falcon-2";
-const REQUEST_TIMEOUT_MS = 60_000;
+// Short enough that the fallback still fits in the narration routes' 60 second limit.
+const REQUEST_TIMEOUT_MS = 25_000;
 
 // One voice for every language for now; Murf reads the locale below.
 const VOICE_ID = "en-US-miles";
@@ -35,38 +36,37 @@ const MODELS = {
   },
 } as const;
 
-export const murfProvider: SpeechProviderAdapter = {
-  id: "murf",
-  isConfigured: () => Boolean(process.env.MURF_API_KEY?.trim()),
-  async synthesize({ script, language }) {
-    const apiKey = process.env.MURF_API_KEY;
-    if (!apiKey) throw new Error("Missing MURF_API_KEY.");
+export function createMurfProvider(modelName: keyof typeof MODELS): SpeechProviderAdapter {
+  return {
+    id: "murf",
+    isConfigured: () => Boolean(process.env.MURF_API_KEY?.trim()),
+    async synthesize({ script, language }) {
+      const apiKey = process.env.MURF_API_KEY;
+      if (!apiKey) throw new Error("Missing MURF_API_KEY.");
 
-    const model = MODELS[MODEL];
-    console.log("================================================");
-    console.log("Model:", MODEL);
-    console.log("Pauses:", renderPauses(script, model.pauses));
-    console.log("================================================");
+      const model = MODELS[modelName];
+      const response = await fetch(model.endpoint, {
+        method: "POST",
+        headers: { "api-key": apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: renderPauses(script, model.pauses),
+          voiceId: VOICE_ID,
+          locale: LOCALE_BY_LANGUAGE[language],
+          format: "MP3",
+          ...model.body,
+        }),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+      if (!response.ok) {
+        const detail = (await response.text().catch(() => "")).slice(0, 300);
+        throw new Error(`Murf returned ${response.status}${detail ? `: ${detail}` : ""}`);
+      }
 
-    const response = await fetch(model.endpoint, {
-      method: "POST",
-      headers: { "api-key": apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: renderPauses(script, model.pauses),
-        voiceId: VOICE_ID,
-        locale: LOCALE_BY_LANGUAGE[language],
-        format: "MP3",
-        ...model.body,
-      }),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-    if (!response.ok) {
-      const detail = (await response.text().catch(() => "")).slice(0, 300);
-      throw new Error(`Murf returned ${response.status}${detail ? `: ${detail}` : ""}`);
-    }
+      const audio = await model.readAudio(response);
+      if (!audio || audio.length === 0) throw new Error("Murf returned no audio.");
+      return audio;
+    },
+  };
+}
 
-    const audio = await model.readAudio(response);
-    if (!audio || audio.length === 0) throw new Error("Murf returned no audio.");
-    return audio;
-  },
-};
+export const murfProvider = createMurfProvider(MODEL);
