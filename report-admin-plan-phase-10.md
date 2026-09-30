@@ -74,8 +74,7 @@ No behaviour change. A revert restores the old paths.
   no `AdminTable`). AGENTS.md's Admin panel section names `lib/admin/`, `components/admin/`,
   `app/(private)/admin/`, `hooks/use-admin-*` and links the doc.
 - **Final summary content:** what changed by phase (1 to 10), the migration list, accepted gaps and limits
-  (1000-row list cap, `actor_email` snapshots, term evaluation has no switch, Queue debug actions use the
-  signed-in guard, best-effort audit for direct writes, narration enabled flag reaches the sync panel after a
+  (1000-row list cap, `actor_email` snapshots, term evaluation has no switch, best-effort audit for direct writes, narration enabled flag reaches the sync panel after a
   refresh, deferred phase 7/8 items), deviations from the report (folders named `collections`/`narration`
   instead of `content`/`ai`; `lib/ai-credits/admin.ts` and the `...ForAdmin` names kept; no `AdminTable`;
   credits/narration/hub pages remain client page components (report 4.5 not done there); "Updated" column and

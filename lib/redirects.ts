@@ -4,5 +4,4 @@ export const LEGACY_ADMIN_REDIRECTS = [
   { source: "/admin/ai-credits", destination: "/admin/ai/credits" },
   { source: "/admin/invites", destination: "/admin/people?view=waitlist" },
   { source: "/admin/narration", destination: "/admin/ai/narration" },
-  { source: "/jargon/debug", destination: "/admin/system/queue" },
 ].map((redirect) => ({ ...redirect, permanent: false }));

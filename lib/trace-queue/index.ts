@@ -15,7 +15,6 @@ export {
   pickReviewTermsForUser,
   pickQuizTerms,
   pickQuizTermsForUser,
-  listTraceCandidates,
   getPoolStats,
   getPoolStatsForUser,
   getPoolStatsByDomainForUser,

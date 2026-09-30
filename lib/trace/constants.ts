@@ -74,8 +74,8 @@ export const KNOWN_MIN_TEST_COUNT = 3;
 
 /** §10 Read ranking — weight on the mastery-tempering nudge relative to
  *  decay-aware exposure (see rankReadQueue in queue.ts). A reasoned
- *  starting point, meant to be retuned by feel from the debug queue view
- *  once it's live, same as everything else in this file. */
+ *  starting point, meant to be retuned by feel once it's
+ *  live, same as everything else in this file. */
 export const READ_TEMPER_WEIGHT = 0.2;
 
 /** Per-collection "time to mastery" insight (Mastery page) — window-widening

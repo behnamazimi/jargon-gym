@@ -1,5 +1,4 @@
 import {
-  Bug,
   Coins,
   LayoutDashboard,
   Library,
@@ -44,10 +43,7 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
   },
   {
     title: "System",
-    sections: [
-      { href: "/admin/system/queue", label: "Queue debug", icon: Bug },
-      { href: "/admin/system/audit", label: "Audit log", icon: ScrollText },
-    ],
+    sections: [{ href: "/admin/system/audit", label: "Audit log", icon: ScrollText }],
   },
 ];
 

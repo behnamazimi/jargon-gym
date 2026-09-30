@@ -87,8 +87,8 @@ $$;
 -- No review_state is seeded directly for most terms — every term starts
 -- plain never-engaged, so read/review/quiz counts always agree with the
 -- review_events history behind them (a review_state row seeded directly,
--- without matching events, previously made the debug page's per-term event
--- history look broken for terms nobody had actually touched). The three
+-- without matching events, previously made a term's event history look
+-- broken for terms nobody had actually touched). The three
 -- exceptions below (Idempotency, Leader Election, OKR) follow that same
 -- rule the hard way: their review_state rows are the exact aggregate the
 -- real record_review_event RPC would have produced from the review_events

@@ -14,10 +14,9 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                   |
 | `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                      |
 | `/admin/ai/narration` | Narration access, limits, audio sync                                                                             |
-| `/admin/system/queue` | The signed-in person's own queue and calibration (debug)                                                         |
 | `/admin/system/audit` | What admins changed, and when                                                                                    |
 
-Old addresses (`/admin/invites`, `/admin/ai-credits`, `/admin/narration`, `/jargon/debug`) redirect with
+Old addresses (`/admin/invites`, `/admin/ai-credits`, `/admin/narration`) redirect with
 temporary (307) redirects from `lib/redirects.ts`.
 
 ## Who can get in
@@ -86,6 +85,5 @@ out of the narration actions).
 - The collection list is capped at 1000 by PostgREST; the page says so when it is reached.
 - The audit log's `actor_email` is a snapshot, so it outlives an account.
 - Term evaluation has no switch: nothing reads its setting.
-- Queue debug's server actions use the normal signed-in guard and only return the caller's own queue.
 - The people and collections tables have no phone card layout.
 - `lib/ai-credits/admin.ts` stays with the credits code it reads.
