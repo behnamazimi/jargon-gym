@@ -16,7 +16,7 @@ function readClient(row: Record<string, boolean> | null): Client {
 }
 
 describe("getReadOptions", () => {
-  it("falls back to all-off when the user has no settings row", async () => {
+  it("falls back to the defaults when the user has no settings row", async () => {
     expect(await getReadOptions(readClient(null), "u1")).toEqual(DEFAULT_READ_OPTIONS);
   });
 
@@ -26,10 +26,16 @@ describe("getReadOptions", () => {
         read_stories_default: true,
         read_hide_question: false,
         read_revealed_default: true,
+        read_narration_highlight: false,
       }),
       "u2",
     );
-    expect(options).toEqual({ storiesDefault: true, hideQuestion: false, revealedDefault: true });
+    expect(options).toEqual({
+      storiesDefault: true,
+      hideQuestion: false,
+      revealedDefault: true,
+      narrationHighlight: false,
+    });
   });
 });
 
@@ -57,6 +63,7 @@ describe("saveReadOption", () => {
 describe("isReadOptionKey", () => {
   it("accepts only known options", () => {
     expect(isReadOptionKey("revealedDefault")).toBe(true);
+    expect(isReadOptionKey("narrationHighlight")).toBe(true);
     expect(isReadOptionKey("read_hide_question")).toBe(false);
     expect(isReadOptionKey("toString")).toBe(false);
   });

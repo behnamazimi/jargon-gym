@@ -16,7 +16,7 @@ function hrefFor(path: string, params: Record<string, string>): string {
   return query ? `${path}?${query}` : path;
 }
 
-function isStoriesPath(pathname: string) {
+export function isStoriesPath(pathname: string) {
   return pathname.startsWith("/jargon/read/stories");
 }
 

@@ -2,15 +2,17 @@
 
 import { ArrowUpRight, ChevronDown, X } from "lucide-react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { StoryFooter } from "@/components/jargon/read/stories/story-footer";
 import { StoryMarkKnown } from "@/components/jargon/read/stories/story-mark-known";
 import { StoryNarrationPlayer } from "@/components/jargon/read/stories/story-narration-player";
-import { StoryTermPopover } from "@/components/jargon/read/stories/story-term-popover";
+import { StoryBody } from "@/components/jargon/read/stories/story-body";
+import { useNarrationAutoScroll } from "@/components/jargon/read/stories/use-narration-auto-scroll";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { toParagraphs } from "@/lib/stories/paragraphs";
+import { buildTimeline, sentenceAtFraction } from "@/lib/stories/highlight";
 import { storyMetaLabels } from "@/lib/stories/meta";
 import type { Story, StoryTerm } from "@/lib/stories/types";
 
@@ -36,10 +38,12 @@ function termHref(termId: string, story: Story): string {
 function StoryHeader({
   story,
   narrationAccess,
+  onNarrationProgress,
   onDismiss,
 }: {
   story: Story;
   narrationAccess: boolean;
+  onNarrationProgress?: (fraction: number | null) => void;
   onDismiss: () => void;
 }) {
   const meta = storyMetaLabels(story);
@@ -80,32 +84,14 @@ function StoryHeader({
       ) : null}
       {narrationAccess ? (
         <div className="pt-1">
-          <StoryNarrationPlayer key={story.id} storyId={story.id} />
+          <StoryNarrationPlayer
+            key={story.id}
+            storyId={story.id}
+            onProgress={onNarrationProgress}
+          />
         </div>
       ) : null}
     </header>
-  );
-}
-
-function StoryBody({ story, termById }: { story: Story; termById: Map<string, StoryTerm> }) {
-  return (
-    <div className="flex max-w-prose flex-col gap-4 text-[1.0625rem] leading-7 break-words text-base-content/90">
-      {toParagraphs(story.segments).map((paragraph, paragraphIndex) => (
-        <p key={paragraphIndex} className="m-0 whitespace-pre-line">
-          {paragraph.map((segment, index) =>
-            segment.termId ? (
-              <StoryTermPopover
-                key={index}
-                text={segment.text}
-                term={termById.get(segment.termId)}
-              />
-            ) : (
-              <span key={index}>{segment.text}</span>
-            ),
-          )}
-        </p>
-      ))}
-    </div>
   );
 }
 
@@ -170,23 +156,55 @@ export function StoryReader({
   story,
   terms,
   narrationAccess,
+  narrationHighlight,
 }: {
   session: StorySession;
   story: Story;
   terms: StoryTerm[];
   narrationAccess: boolean;
+  narrationHighlight: boolean;
 }) {
   const termById = new Map(terms.map((term) => [term.id, term]));
+  const timeline = useMemo(
+    () =>
+      narrationAccess && narrationHighlight
+        ? buildTimeline(story.title, story.segments, story.language)
+        : null,
+    [narrationAccess, narrationHighlight, story],
+  );
+  const [activeSentence, setActiveSentence] = useState<number | null>(null);
+  const { pause: pauseAutoScroll, keepInView } = useNarrationAutoScroll();
+
+  // Nothing is highlighted while the option is off, so a sentence picked
+  // before it was turned off doesn't come back when it is turned on.
+  if (!timeline && activeSentence !== null) setActiveSentence(null);
+
+  function showNarrationProgress(fraction: number | null) {
+    if (!timeline) return;
+    setActiveSentence(fraction === null ? null : sentenceAtFraction(timeline, fraction));
+  }
 
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <StoryHeader
         story={story}
         narrationAccess={narrationAccess}
+        onNarrationProgress={timeline ? showNarrationProgress : undefined}
         onDismiss={() => void session.dismiss()}
       />
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6">
-        <StoryBody story={story} termById={termById} />
+      <div
+        onWheel={pauseAutoScroll}
+        onTouchMove={pauseAutoScroll}
+        onKeyDown={pauseAutoScroll}
+        className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
+      >
+        <StoryBody
+          story={story}
+          termById={termById}
+          timeline={timeline}
+          activeSentence={activeSentence}
+          keepInView={keepInView}
+        />
         <StoryGlossary story={story} termById={termById} />
       </div>
       <StoryFooter session={session} story={story} />

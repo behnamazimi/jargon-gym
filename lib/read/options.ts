@@ -8,6 +8,7 @@ export type ReadOptions = {
   storiesDefault: boolean;
   hideQuestion: boolean;
   revealedDefault: boolean;
+  narrationHighlight: boolean;
 };
 
 export type ReadOptionKey = keyof ReadOptions;
@@ -16,12 +17,14 @@ export const DEFAULT_READ_OPTIONS: ReadOptions = {
   storiesDefault: false,
   hideQuestion: false,
   revealedDefault: false,
+  narrationHighlight: true,
 };
 
 const COLUMN_BY_KEY = {
   storiesDefault: "read_stories_default",
   hideQuestion: "read_hide_question",
   revealedDefault: "read_revealed_default",
+  narrationHighlight: "read_narration_highlight",
 } as const satisfies Record<ReadOptionKey, string>;
 
 export function isReadOptionKey(value: string): value is ReadOptionKey {
@@ -35,7 +38,9 @@ export const getReadOptions = cache(async function getReadOptions(
 ): Promise<ReadOptions> {
   const { data, error } = await client
     .from("user_settings")
-    .select("read_stories_default, read_hide_question, read_revealed_default")
+    .select(
+      "read_stories_default, read_hide_question, read_revealed_default, read_narration_highlight",
+    )
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -44,6 +49,7 @@ export const getReadOptions = cache(async function getReadOptions(
     storiesDefault: data.read_stories_default,
     hideQuestion: data.read_hide_question,
     revealedDefault: data.read_revealed_default,
+    narrationHighlight: data.read_narration_highlight,
   };
 });
 
