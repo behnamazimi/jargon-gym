@@ -66,7 +66,11 @@ export function MoreSheet() {
           const Icon = item.icon;
           return (
             <li key={item.href}>
-              <Link href={item.href} onClick={() => setMoreOpen(false)} className="min-h-11">
+              <Link
+                href={item.href}
+                onClick={() => setMoreOpen(false)}
+                className="content-center min-h-11"
+              >
                 <Icon className="size-4" strokeWidth={1.5} aria-hidden />
                 {item.label}
               </Link>
@@ -78,7 +82,11 @@ export function MoreSheet() {
               const Icon = item.icon;
               return (
                 <li key={item.href}>
-                  <Link href={item.href} onClick={() => setMoreOpen(false)} className="min-h-11">
+                  <Link
+                    href={item.href}
+                    onClick={() => setMoreOpen(false)}
+                    className="content-center min-h-11"
+                  >
                     <Icon className="size-4" strokeWidth={1.5} aria-hidden />
                     {item.label}
                   </Link>
@@ -89,7 +97,7 @@ export function MoreSheet() {
         <li>
           <button
             type="button"
-            className="min-h-11 text-error"
+            className="content-center min-h-11 text-error"
             disabled={isBusy}
             onClick={() => void handleLogout()}
           >
