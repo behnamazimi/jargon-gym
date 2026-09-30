@@ -7,11 +7,9 @@ import {
   clearNotYetDomainAction,
   removeNotYetTermAction,
 } from "@/app/(private)/jargon/actions-triage";
-import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useToast } from "@/components/ui/toast";
 import type { Term } from "@/lib/jargon/types";
 import { buildTriageDeck } from "@/lib/triage/deck";
-import { clearLegacyNotYetIds, readLegacyNotYetIds } from "@/lib/triage/legacy-not-yet";
 
 type TriageChoice = { termId: string; kind: "knew" | "notYet" };
 
@@ -65,17 +63,6 @@ export function useTriageDeck({
   // not act on the card that replaced it.
   const currentIdRef = useRef<string | null>(null);
   currentIdRef.current = current?.id ?? null;
-
-  // Picks saved in this browser before "Not yet" synced move to the account once.
-  useMountEffect(() => {
-    const legacyIds = readLegacyNotYetIds(domainId);
-    if (legacyIds.length === 0) return;
-    void addNotYetTermsAction(legacyIds).then(({ error }) => {
-      if (error) return;
-      clearLegacyNotYetIds(domainId);
-      setNotYetIds((ids) => new Set([...ids, ...legacyIds]));
-    });
-  });
 
   function writeMarked(term: Term, marked: boolean): MarkResult {
     setMarkedKnown((ids) => (marked ? withId(ids, term.id) : withoutId(ids, term.id)));

@@ -22,15 +22,3 @@ export function buildTriageDeck(terms: Term[], exclusions: DeckExclusions): Term
 export function toTriageTerm(term: Term, domain: Pick<Domain, "name" | "language">): ReviewTerm {
   return { ...term, domainName: domain.name, domainLanguage: domain.language };
 }
-
-/** Parses the stored "Not yet" list, treating anything malformed as empty. */
-export function parseNotYetIds(raw: string | null): string[] {
-  if (!raw) return [];
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((id): id is string => typeof id === "string");
-  } catch {
-    return [];
-  }
-}
