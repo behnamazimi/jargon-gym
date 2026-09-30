@@ -7,6 +7,7 @@ import {
   parseReadingLevel,
   type Story,
   type StoryLevels,
+  type StorySummary,
   type StoryTerm,
   type StorySegment,
 } from "./types";
@@ -112,6 +113,29 @@ export async function getStoryForUser(
     .maybeSingle();
   if (error) throw error;
   return data ? mapStory(data) : null;
+}
+
+const STORY_HISTORY_LIMIT = 20;
+
+export async function listStorySummaries(
+  admin: Client,
+  userId: string,
+  limit = STORY_HISTORY_LIMIT,
+): Promise<StorySummary[]> {
+  const { data, error } = await admin
+    .from("stories")
+    .select("id, title, piece_length, vote, read_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    pieceLength: parsePieceLength(row.piece_length),
+    vote: toVote(row.vote),
+    readAt: row.read_at,
+  }));
 }
 
 /** The story Read and Stories open into: the newest one the user hasn't

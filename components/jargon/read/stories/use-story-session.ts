@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
 import {
   generateStoryAction,
@@ -35,6 +35,7 @@ const DEFAULT_LEVELS: StoryLevels = {
 
 export function useStorySession(setup: StoriesSetupData) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [step, setStep] = useState<StoryStep>(setup.currentStory ? "reading" : "setup");
   const [domainId, setDomainId] = useState(setup.initialDomainId);
@@ -62,6 +63,16 @@ export function useStorySession(setup: StoriesSetupData) {
     setReadingLevel(levels.readingLevel);
     setCefrLevel(levels.cefrLevel);
     setPieceLength(levels.pieceLength);
+  }
+
+  // A story opened from the history is in the URL; once the user moves on,
+  // a refresh shouldn't bring it back.
+  function clearStoryParam() {
+    if (!searchParams.has("story")) return;
+    const params = new URLSearchParams(searchParams);
+    params.delete("story");
+    const query = params.toString();
+    router.replace(query ? `/jargon/read/stories?${query}` : "/jargon/read/stories");
   }
 
   function showStory(result: Extract<StoryResult, { story: Story }>) {
@@ -92,6 +103,7 @@ export function useStorySession(setup: StoriesSetupData) {
     }
     setLevelsByDomain((current) => ({ ...current, [domainId]: levels }));
     setOutline("");
+    clearStoryParam();
     showStory(result);
   }
 
@@ -141,6 +153,7 @@ export function useStorySession(setup: StoriesSetupData) {
   function backToSetup() {
     setErrorMessage(null);
     setStep("setup");
+    clearStoryParam();
     router.refresh();
   }
 

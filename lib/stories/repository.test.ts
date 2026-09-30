@@ -1,7 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
-import { dismissUnreadStories, hasCurrentStory, markStoryRead } from "./repository";
+import {
+  dismissUnreadStories,
+  hasCurrentStory,
+  listStorySummaries,
+  markStoryRead,
+} from "./repository";
 
 type Client = SupabaseClient<Database>;
 
@@ -120,5 +125,47 @@ describe("dismissUnreadStories", () => {
     await dismissUnreadStories(client, "u1", { onlyStoryId: "s1" });
     expect(calls).toContainEqual(["eq", "id", "s1"]);
     expect(calls).toContainEqual(["eq", "user_id", "u1"]);
+  });
+});
+
+describe("listStorySummaries", () => {
+  it("maps rows and asks for the newest first, capped at the limit", async () => {
+    const calls: Record<string, unknown> = {};
+    const chain = {
+      select() {
+        return chain;
+      },
+      eq(column: string, value: unknown) {
+        calls[column] = value;
+        return chain;
+      },
+      order(column: string, options: unknown) {
+        calls.order = [column, options];
+        return chain;
+      },
+      limit(count: number) {
+        calls.limit = count;
+        return Promise.resolve({
+          data: [
+            { id: "s1", title: "One", piece_length: "long", vote: 1, read_at: "2026-09-01" },
+            { id: "s2", title: "Two", piece_length: "bogus", vote: 7, read_at: null },
+          ],
+          error: null,
+        });
+      },
+    };
+    const client = { from: () => chain } as unknown as Client;
+
+    const result = await listStorySummaries(client, "u1", 5);
+
+    expect(calls).toMatchObject({
+      user_id: "u1",
+      limit: 5,
+      order: ["created_at", { ascending: false }],
+    });
+    expect(result).toEqual([
+      { id: "s1", title: "One", pieceLength: "long", vote: 1, readAt: "2026-09-01" },
+      { id: "s2", title: "Two", pieceLength: "medium", vote: null, readAt: null },
+    ]);
   });
 });

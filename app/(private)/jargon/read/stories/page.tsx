@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { getStoriesSetupData } from "@/lib/stories/setup";
 import { hasNoCollections } from "@/lib/study/collections";
 import { StoriesPage } from "@/components/jargon/read/stories/stories-page";
@@ -8,12 +9,13 @@ import { StoriesPage } from "@/components/jargon/read/stories/stories-page";
 export const maxDuration = 60;
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string }>;
+  searchParams: Promise<{ domain?: string; story?: string }>;
 };
 
 export default async function JargonReadStoriesPage({ searchParams }: PageProps) {
-  const { domain } = await searchParams;
-  const setup = await getStoriesSetupData(domain);
+  const { domain, story } = await searchParams;
+  const storyId = z.uuid().safeParse(story).success ? story : undefined;
+  const setup = await getStoriesSetupData(domain, storyId);
   if ("error" in setup) {
     return <p className="text-sm text-base-content/60">{setup.error}</p>;
   }
@@ -29,7 +31,7 @@ export default async function JargonReadStoriesPage({ searchParams }: PageProps)
 
   return (
     <StoriesPage
-      key={setup.collections.map((collection) => collection.id).join(",")}
+      key={`${setup.collections.map((collection) => collection.id).join(",")}:${storyId ?? ""}`}
       setup={setup}
     />
   );

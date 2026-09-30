@@ -7,7 +7,7 @@ import type { PausedStudyCollection } from "@/lib/study/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getReadEligibleCountsByDomainForUser } from "@/lib/trace-queue";
 import { loadPrefs } from "./prefs";
-import { getCurrentStory, getStoryTerms } from "./repository";
+import { getCurrentStory, getStoryForUser, getStoryTerms } from "./repository";
 import { STORY_MIN_TERMS, type Story, type StoryLevels, type StoryTerm } from "./types";
 
 export type StoryCollection = { id: string; name: string; eligibleCount: number };
@@ -38,8 +38,21 @@ function resolveInitialDomainId(
   return collections.find(isEligible)?.id ?? null;
 }
 
+/** A story picked from the history, or else the newest unread one. */
+async function loadStoryToOpen(
+  admin: ReturnType<typeof createAdminClient>,
+  userId: string,
+  requestedStoryId: string | undefined,
+): Promise<Story | null> {
+  const requested = requestedStoryId
+    ? await getStoryForUser(admin, userId, requestedStoryId)
+    : null;
+  return requested ?? getCurrentStory(admin, userId);
+}
+
 export async function getStoriesSetupData(
   requestedDomainId?: string,
+  requestedStoryId?: string,
 ): Promise<StoriesSetupData | { error: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: "Log in to read stories." };
@@ -52,7 +65,7 @@ export async function getStoriesSetupData(
       loadPrefs(admin, auth.user.id),
       getAiAccessView(auth.supabase, auth.user.id),
       getNarrationAccessForUser(admin, auth.user.id, "narration_story"),
-      getCurrentStory(admin, auth.user.id).catch((err: unknown) => {
+      loadStoryToOpen(admin, auth.user.id, requestedStoryId).catch((err: unknown) => {
         console.error("Failed to load the current story:", err);
         return null;
       }),
