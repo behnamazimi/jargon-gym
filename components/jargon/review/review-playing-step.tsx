@@ -31,6 +31,9 @@ export const SOFT_ACTION_BUTTON_CLASS = cn(
   "[color:var(--btn-fg)]",
 );
 
+const NAV_BUTTON_CLASS =
+  "min-h-11 min-w-11 transition-transform active:scale-[0.96] md:min-h-8 md:min-w-8";
+
 /** A clicked or tapped button keeps focus, and a focused button owns
  *  Enter — so the next Enter would press it again instead of revealing.
  *  Keyboard presses keep focus where the user put it. */
@@ -78,7 +81,39 @@ export function ReviewPlayingStep({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <div className="flex shrink-0 items-center">{collectionControl}</div>
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        {collectionControl}
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            onPress={(event) => {
+              releaseFocusAfterPointerPress(event);
+              onPrevious();
+            }}
+            isDisabled={!canGoBack}
+            className={NAV_BUTTON_CLASS}
+            aria-label="Previous term"
+          >
+            <ChevronLeft className="size-4" aria-hidden strokeWidth={1.5} />
+          </Button>
+          {showForward ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onPress={(event) => {
+                releaseFocusAfterPointerPress(event);
+                onNext();
+              }}
+              className={cn(NAV_BUTTON_CLASS, !currentRevealed && "gap-1 ps-3 pe-2")}
+              aria-label={currentRevealed ? "Next term" : "Skip this term"}
+            >
+              {currentRevealed ? null : <span className="text-sm">Skip</span>}
+              <ChevronRight className="size-4" aria-hidden strokeWidth={1.5} />
+            </Button>
+          ) : null}
+        </div>
+      </div>
 
       <ReviewCard
         key={currentCard.id}
@@ -95,64 +130,27 @@ export function ReviewPlayingStep({
       />
 
       <div className="shrink-0 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onPress={(event) => {
-              releaseFocusAfterPointerPress(event);
-              onPrevious();
-            }}
-            isDisabled={!canGoBack}
-            className="min-h-11 min-w-11 transition-transform active:scale-[0.96]"
-            aria-label="Previous term"
-          >
-            <ChevronLeft className="size-4" aria-hidden strokeWidth={1.5} />
-          </Button>
-
-          {currentRevealed ? (
-            <div data-tour="review-grades" className="grid flex-1 grid-cols-2 gap-2 sm:grid-cols-4">
-              {GRADE_BUTTONS.map(({ grade, variant }) => (
-                <Button
-                  key={grade}
-                  type="button"
-                  variant={variant}
-                  onPress={(event) => {
-                    releaseFocusAfterPointerPress(event);
-                    onRate(grade);
-                  }}
-                  className={cn(
-                    SOFT_ACTION_BUTTON_CLASS,
-                    currentRating?.grade === grade && "ring-2 ring-primary/50",
-                  )}
-                >
-                  {GRADE_LABELS[grade]}
-                </Button>
-              ))}
-            </div>
-          ) : (
-            <span className="flex-1" />
-          )}
-
-          {showForward ? (
-            <Button
-              type="button"
-              variant="ghost"
-              onPress={(event) => {
-                releaseFocusAfterPointerPress(event);
-                onNext();
-              }}
-              className={cn(
-                "min-h-11 min-w-11 transition-transform active:scale-[0.96]",
-                !currentRevealed && "gap-1 ps-3 pe-2",
-              )}
-              aria-label={currentRevealed ? "Next term" : "Skip this term"}
-            >
-              {currentRevealed ? null : <span className="text-sm">Skip</span>}
-              <ChevronRight className="size-4" aria-hidden strokeWidth={1.5} />
-            </Button>
-          ) : null}
-        </div>
+        {currentRevealed ? (
+          <div data-tour="review-grades" className="grid grid-cols-4 gap-2">
+            {GRADE_BUTTONS.map(({ grade, variant }) => (
+              <Button
+                key={grade}
+                type="button"
+                variant={variant}
+                onPress={(event) => {
+                  releaseFocusAfterPointerPress(event);
+                  onRate(grade);
+                }}
+                className={cn(
+                  SOFT_ACTION_BUTTON_CLASS,
+                  currentRating?.grade === grade && "ring-2 ring-primary/50",
+                )}
+              >
+                {GRADE_LABELS[grade]}
+              </Button>
+            ))}
+          </div>
+        ) : null}
 
         <ReviewKeyboardHints revealed={currentRevealed} rated={rated} />
       </div>
