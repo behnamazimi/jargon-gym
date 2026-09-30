@@ -127,6 +127,7 @@ const {
   resumeNarrationSync,
   setNarrationCaps,
   setNarrationEnabled,
+  setNarrationProvider,
   startNarrationSync,
 } = await import("./actions");
 
@@ -170,6 +171,13 @@ describe("narration admin actions", () => {
     expect(await setNarrationEnabled(true)).toEqual({ ok: true, data: undefined });
     expect(state.rpcCalls).toEqual([
       { name: "admin_set_narration_enabled", args: { p_enabled: true } },
+    ]);
+  });
+
+  it("switches one provider for both narration features in one call", async () => {
+    expect(await setNarrationProvider("murf", false)).toEqual({ ok: true, data: undefined });
+    expect(state.rpcCalls).toEqual([
+      { name: "admin_set_narration_provider", args: { p_provider: "murf", p_enabled: false } },
     ]);
   });
 

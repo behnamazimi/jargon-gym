@@ -81,12 +81,9 @@ export async function POST(request: Request, { params }: RouteContext) {
 
     const result = await getOrCreateAudio(admin, subject, { waitMs: WAIT_FOR_OTHER_MS });
     if ("generation" in result && result.generation) {
-      await recordUsage(admin, {
-        userId,
-        feature: "narration_term",
-        units: result.generation.units,
-        outcome: result.status === "ready" ? "ok" : "failed",
-      });
+      for (const call of result.generation.calls) {
+        await recordUsage(admin, { userId, feature: "narration_term", ...call });
+      }
     }
     return result;
   });

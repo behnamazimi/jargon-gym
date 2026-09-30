@@ -11,7 +11,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  *  never costs credits. A failed write is logged and never fails the request. */
 export async function recordUsage(
   admin: Client,
-  event: { userId: string; feature: FeatureId; units: number; outcome: "ok" | "failed" },
+  event: {
+    userId: string;
+    feature: FeatureId;
+    units: number;
+    outcome: "ok" | "failed";
+    provider?: string;
+  },
 ): Promise<void> {
   try {
     const { error } = await admin.from("ai_usage_events").insert({
@@ -19,6 +25,7 @@ export async function recordUsage(
       feature: event.feature,
       units: event.units,
       outcome: event.outcome,
+      provider: event.provider ?? null,
     });
     if (error) console.error("Couldn't record AI usage:", error);
   } catch (error) {

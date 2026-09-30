@@ -39,6 +39,9 @@ describe("describeAudit", () => {
     expect(describeAudit("grant_ai_credits", { amount: 25, note: "beta" }).summary).toBe(
       '25 credits, "beta"',
     );
+    expect(
+      describeAudit("set_narration_provider", { provider: "murf", enabled: false }).summary,
+    ).toBe("murf now off");
     expect(describeAudit("set_narration_caps", { term_cap: null, story_cap: 20 }).summary).toBe(
       "Terms no limit, stories 20",
     );

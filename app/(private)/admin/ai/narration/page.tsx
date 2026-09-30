@@ -1,6 +1,7 @@
 import { AdminNarrationPageClient } from "@/components/admin/ai/narration/page";
 import { describeCron, getCronStatus } from "@/lib/narration/worker-status";
 import { featureHealth } from "@/lib/ai/health";
+import { configuredProviders } from "@/lib/ai/speech/provider";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import {
   canNarrateCollection,
@@ -51,6 +52,8 @@ export default async function AdminNarrationPage() {
       healthNote={health.ok ? null : health.note}
       cronNote={cronNote}
       enabled={settings.enabled}
+      providers={settings.providers}
+      providerKeys={configuredProviders()}
       caps={settings.caps}
       usageLast24h={settings.usageLast24h}
       allowlist={allowlist}

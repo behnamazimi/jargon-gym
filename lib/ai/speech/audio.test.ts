@@ -14,13 +14,26 @@ const uploadAudio = vi.fn();
 const deleteAudio = vi.fn();
 
 vi.mock("./jobs", () => jobs);
-vi.mock("./provider", () => ({ synthesizeSpeech }));
+const getProviderSwitches = vi.fn();
+
+class SpeechSynthesisError extends Error {
+  constructor(
+    message: string,
+    readonly calls: unknown[],
+  ) {
+    super(message);
+  }
+}
+
+vi.mock("./provider", () => ({ synthesizeSpeech, SpeechSynthesisError }));
+vi.mock("./switches", () => ({ getProviderSwitches }));
 vi.mock("./storage", () => ({ uploadAudio, deleteAudio }));
 
 const { getOrCreateAudio, getReadyAudio, isCurrentJob } = await import("./audio");
 
 const admin = {} as never;
 const PATH = "audio/term/t1/2/h2/job-2.mp3";
+const MURF_OK = [{ provider: "murf", units: 20, outcome: "ok" }];
 
 function job(overrides: Partial<AudioJob> = {}): AudioJob {
   return {
@@ -33,6 +46,7 @@ function job(overrides: Partial<AudioJob> = {}): AudioJob {
     status: "ready",
     attempts: 1,
     error: null,
+    provider: "murf",
     storage_path: "audio/term/t1/2/h2/job-1.mp3",
     requested_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
@@ -58,7 +72,12 @@ beforeEach(() => {
   jobs.objectPathFor.mockResolvedValue(PATH);
   jobs.setJobPath.mockResolvedValue(true);
   jobs.markReady.mockResolvedValue(true);
-  synthesizeSpeech.mockResolvedValue(Buffer.from("mp3"));
+  getProviderSwitches.mockResolvedValue({ murf: true, elevenlabs: true });
+  synthesizeSpeech.mockResolvedValue({
+    audio: Buffer.from("mp3"),
+    provider: "murf",
+    calls: MURF_OK,
+  });
   uploadAudio.mockResolvedValue(undefined);
   deleteAudio.mockResolvedValue(undefined);
 });
@@ -125,7 +144,7 @@ describe("getOrCreateAudio", () => {
     );
     jobs.claimJob.mockResolvedValue(job({ id: "job-2", status: "pending", storage_path: null }));
     const result = await getOrCreateAudio(admin, subject({ legacyHash: "changed" }));
-    expect(result).toMatchObject({ status: "ready", generation: { units: 20 } });
+    expect(result).toMatchObject({ status: "ready", generation: { calls: MURF_OK } });
     expect(jobs.claimJob).toHaveBeenCalledWith(admin, expect.anything(), false);
   });
 
@@ -143,12 +162,27 @@ describe("getOrCreateAudio", () => {
     expect(result).toMatchObject({ status: "ready", job: { id: "job-2", storage_path: PATH } });
   });
 
-  it("marks the job failed and reports the units when the provider fails", async () => {
+  it("stores which provider made the clip and passes the kind and switches", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(job({ id: "job-2", status: "pending", storage_path: null }));
+    await getOrCreateAudio(admin, subject());
+    expect(synthesizeSpeech).toHaveBeenCalledWith(
+      { script: "Closure. A function.", language: "en", kind: "term" },
+      { murf: true, elevenlabs: true },
+    );
+    expect(jobs.markReady).toHaveBeenCalledWith(admin, "job-2", "murf");
+  });
+
+  it("marks the job failed and reports every provider call when all providers fail", async () => {
     jobs.getLiveJob.mockResolvedValue(job({ status: "failed" }));
     jobs.claimJob.mockResolvedValue(job({ id: "job-2", status: "pending", storage_path: null }));
-    synthesizeSpeech.mockRejectedValue(new Error("quota"));
+    const calls = [
+      { provider: "murf", units: 20, outcome: "failed" },
+      { provider: "elevenlabs", units: 20, outcome: "failed" },
+    ];
+    synthesizeSpeech.mockRejectedValue(new SpeechSynthesisError("quota", calls));
     const result = await getOrCreateAudio(admin, subject());
-    expect(result).toEqual({ status: "unavailable", generation: { units: 20 } });
+    expect(result).toEqual({ status: "unavailable", generation: { calls } });
     expect(jobs.markFailed).toHaveBeenCalledWith(admin, "job-2", "quota");
   });
 
@@ -236,11 +270,21 @@ describe("getOrCreateAudio", () => {
     expect(jobs.claimJob).toHaveBeenCalledWith(admin, expect.anything(), true);
   });
 
+  it("fails the job and records no provider calls when the switches can't be read", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(job({ id: "job-2", status: "pending", storage_path: null }));
+    getProviderSwitches.mockRejectedValue(new Error("no settings row"));
+    const result = await getOrCreateAudio(admin, subject());
+    expect(result).toEqual({ status: "unavailable", generation: { calls: [] } });
+    expect(jobs.markFailed).toHaveBeenCalledWith(admin, "job-2", "no settings row");
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+  });
+
   it("fails the job when the subject has nothing to narrate", async () => {
     jobs.getLiveJob.mockResolvedValue(null);
     jobs.claimJob.mockResolvedValue(job({ id: "job-2", status: "pending", storage_path: null }));
     const result = await getOrCreateAudio(admin, subject({ loadScript: async () => null }));
-    expect(result).toEqual({ status: "unavailable", generation: { units: 0 } });
+    expect(result).toEqual({ status: "unavailable", generation: { calls: [] } });
     expect(synthesizeSpeech).not.toHaveBeenCalled();
   });
 });

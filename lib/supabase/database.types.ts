@@ -236,8 +236,10 @@ export type Database = {
           billable: boolean;
           credit_cost: number | null;
           daily_cap: number | null;
+          elevenlabs_enabled: boolean;
           enabled: boolean;
           feature: string;
+          murf_enabled: boolean;
           unit: string;
           updated_at: string;
         };
@@ -246,8 +248,10 @@ export type Database = {
           billable: boolean;
           credit_cost?: number | null;
           daily_cap?: number | null;
+          elevenlabs_enabled?: boolean;
           enabled?: boolean;
           feature: string;
+          murf_enabled?: boolean;
           unit: string;
           updated_at?: string;
         };
@@ -256,8 +260,10 @@ export type Database = {
           billable?: boolean;
           credit_cost?: number | null;
           daily_cap?: number | null;
+          elevenlabs_enabled?: boolean;
           enabled?: boolean;
           feature?: string;
+          murf_enabled?: boolean;
           unit?: string;
           updated_at?: string;
         };
@@ -269,6 +275,7 @@ export type Database = {
           feature: string;
           id: number;
           outcome: string;
+          provider: string | null;
           units: number;
           user_id: string;
         };
@@ -277,6 +284,7 @@ export type Database = {
           feature: string;
           id?: never;
           outcome: string;
+          provider?: string | null;
           units: number;
           user_id: string;
         };
@@ -285,6 +293,7 @@ export type Database = {
           feature?: string;
           id?: never;
           outcome?: string;
+          provider?: string | null;
           units?: number;
           user_id?: string;
         };
@@ -334,6 +343,7 @@ export type Database = {
           error: string | null;
           hash_version: number;
           id: string;
+          provider: string | null;
           requested_at: string;
           status: string;
           storage_path: string | null;
@@ -349,6 +359,7 @@ export type Database = {
           error?: string | null;
           hash_version?: number;
           id?: string;
+          provider?: string | null;
           requested_at?: string;
           status: string;
           storage_path?: string | null;
@@ -364,6 +375,7 @@ export type Database = {
           error?: string | null;
           hash_version?: number;
           id?: string;
+          provider?: string | null;
           requested_at?: string;
           status?: string;
           storage_path?: string | null;
@@ -1391,6 +1403,10 @@ export type Database = {
         Args: { p_enabled: boolean };
         Returns: undefined;
       };
+      admin_set_narration_provider: {
+        Args: { p_enabled: boolean; p_provider: string };
+        Returns: undefined;
+      };
       admin_set_user_suspended: {
         Args: { p_reason: string; p_suspended: boolean; p_user_id: string };
         Returns: undefined;
@@ -1445,6 +1461,7 @@ export type Database = {
           error: string | null;
           hash_version: number;
           id: string;
+          provider: string | null;
           requested_at: string;
           status: string;
           storage_path: string | null;

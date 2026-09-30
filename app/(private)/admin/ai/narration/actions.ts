@@ -45,6 +45,19 @@ export async function setNarrationEnabled(value: boolean) {
   );
 }
 
+export async function setNarrationProvider(provider: "murf" | "elevenlabs", value: boolean) {
+  return runAdminAction(
+    async ({ supabase }) => {
+      const { error } = await supabase.rpc("admin_set_narration_provider", {
+        p_provider: provider,
+        p_enabled: value,
+      });
+      if (error) throw error;
+    },
+    { revalidate: REVALIDATE },
+  );
+}
+
 export async function setNarrationCaps(input: CapsInput) {
   return runAdminAction(
     async ({ supabase }) => {

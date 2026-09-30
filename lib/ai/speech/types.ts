@@ -1,5 +1,6 @@
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Database } from "@/lib/supabase/database.types";
+import type { ProviderCall } from "./provider";
 
 export type AudioJob = Database["public"]["Tables"]["audio_jobs"]["Row"];
 
@@ -19,7 +20,7 @@ export type SpeechSubject = {
 };
 
 export type AudioResult =
-  | { status: "ready"; job: AudioJob; generation?: { units: number } }
+  | { status: "ready"; job: AudioJob; generation?: { calls: ProviderCall[] } }
   | { status: "pending" }
   | { status: "capped" }
-  | { status: "unavailable"; generation?: { units: number } };
+  | { status: "unavailable"; generation?: { calls: ProviderCall[] } };

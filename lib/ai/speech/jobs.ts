@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { CURRENT_HASH_VERSION } from "@/lib/narration/content-hash-v2";
+import type { SpeechProvider } from "./provider";
 import type { AudioJob, SpeechSubject } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -65,10 +66,14 @@ export async function setJobPath(admin: Client, jobId: string, path: string): Pr
 }
 
 /** False when the job was superseded while the clip was being made. */
-export async function markReady(admin: Client, jobId: string): Promise<boolean> {
+export async function markReady(
+  admin: Client,
+  jobId: string,
+  provider: SpeechProvider,
+): Promise<boolean> {
   const { data, error } = await admin
     .from("audio_jobs")
-    .update({ status: "ready", error: null, updated_at: new Date().toISOString() })
+    .update({ status: "ready", provider, error: null, updated_at: new Date().toISOString() })
     .eq("id", jobId)
     .eq("status", "pending")
     .select("id");

@@ -59,6 +59,7 @@ begin
   assert not has_function_privilege('anon', 'public.admin_list_collections()', 'execute'), 'line 60';
   assert not has_function_privilege('anon', 'public.admin_set_narration_enabled(boolean)', 'execute'), 'line 61';
   assert not has_function_privilege('anon', 'public.admin_set_narration_caps(integer,integer)', 'execute'), 'line 62';
+  assert not has_function_privilege('anon', 'public.admin_set_narration_provider(text,boolean)', 'execute'), 'anon could switch a narration provider';
   assert not has_function_privilege('anon', 'public.admin_set_ai_credit_settings(integer,integer,integer,integer)', 'execute'), 'line 63';
   assert not has_function_privilege('anon', 'public.admin_write_audit(text,text,text,jsonb)', 'execute'), 'line 64';
   assert not has_function_privilege('authenticated', 'public._admin_audit_insert(text,text,text,jsonb)', 'execute'), 'line 65';
@@ -75,6 +76,9 @@ begin
   v_failed := false;
   begin perform public.admin_set_narration_enabled(true); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'a caller with no user could switch narration';
+  v_failed := false;
+  begin perform public.admin_set_narration_provider('murf', false); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  assert v_failed, 'a caller with no user could switch a narration provider';
   v_failed := false;
   begin perform public.admin_grant_ai_credits(member_id, 5, null); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'a caller with no user could grant credits';
@@ -94,6 +98,9 @@ begin
   v_failed := false;
   begin perform public.admin_set_narration_enabled(true); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could switch narration';
+  v_failed := false;
+  begin perform public.admin_set_narration_provider('murf', false); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  assert v_failed, 'member could switch a narration provider';
   v_failed := false;
   begin perform public.admin_set_narration_caps(null, 5); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could set caps';
@@ -216,6 +223,21 @@ begin
   begin perform public.admin_set_narration_enabled(null); exception when others then v_failed := true; end;
   assert v_failed, 'null enabled accepted';
 
+  assert (select bool_and(murf_enabled and elevenlabs_enabled) from public.ai_feature_settings where feature in ('narration_term', 'narration_story')), 'both providers start on';
+  perform public.admin_set_narration_provider('murf', false);
+  assert (select count(*) from public.ai_feature_settings where feature in ('narration_term', 'narration_story') and not murf_enabled and elevenlabs_enabled) = 2, 'murf switched off on both narration features only';
+  perform public.admin_set_narration_provider('elevenlabs', false);
+  assert (select count(*) from public.ai_feature_settings where feature in ('narration_term', 'narration_story') and not murf_enabled and not elevenlabs_enabled) = 2, 'elevenlabs switched off on both narration features';
+  perform public.admin_set_narration_provider('murf', true);
+  perform public.admin_set_narration_provider('elevenlabs', true);
+  assert exists (select 1 from public.admin_audit_log where action = 'set_narration_provider' and details = jsonb_build_object('provider', 'murf', 'enabled', false)), 'the provider switch is audited';
+  v_failed := false;
+  begin perform public.admin_set_narration_provider('polly', true); exception when others then v_failed := sqlerrm like 'Unknown narration provider%'; end;
+  assert v_failed, 'an unknown provider was accepted';
+  v_failed := false;
+  begin perform public.admin_set_narration_provider('murf', null); exception when others then v_failed := true; end;
+  assert v_failed, 'null provider switch accepted';
+
   perform public.admin_set_narration_caps(null, 15);
   assert (select daily_cap is null from public.ai_feature_settings where feature = 'narration_term'), 'line 170';
   assert (select daily_cap = 15 from public.ai_feature_settings where feature = 'narration_story'), 'line 171';
@@ -279,7 +301,7 @@ begin
   assert v_failed, 'non-object audit details accepted';
 
   -- The audit trail: exactly what this run did, by this admin, and nothing for refused calls.
-  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and actor_email = 'rpc-admin@example.test') = 11, 'unexpected number of audit rows';
+  assert (select count(*) from public.admin_audit_log where actor_id = admin_id and actor_email = 'rpc-admin@example.test') = 15, 'unexpected number of audit rows';
   assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'publish_collection') = 3, 'publish audit rows';
   assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'set_narration_enabled') = 1, 'narration enabled audit rows';
   assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'set_narration_caps') = 2, 'narration caps audit rows';
