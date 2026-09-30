@@ -16,6 +16,7 @@ import {
   dismissUnreadStories,
   getCollection,
   insertStory,
+  listStorySummaries,
   markStoryRead,
   setVote,
 } from "@/lib/stories/repository";
@@ -32,6 +33,7 @@ import {
   STORY_MIN_TERMS,
   STORY_OUTLINE_MAX,
   type Story,
+  type StorySummary,
   type StoryTerm,
 } from "@/lib/stories/types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -229,5 +231,19 @@ export async function dismissStoryAction(storyId: string): Promise<{ error?: str
   } catch (err) {
     console.error("dismissStoryAction failed:", err);
     return { error: "Couldn't close this story. Try again." };
+  }
+}
+
+export async function listStoryHistoryAction(): Promise<
+  { stories: StorySummary[] } | { error: string }
+> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: LOGIN_ERROR };
+
+  try {
+    return { stories: await listStorySummaries(createAdminClient(), auth.user.id) };
+  } catch (err) {
+    console.error("listStoryHistoryAction failed:", err);
+    return { error: "Couldn't load your stories. Try again." };
   }
 }

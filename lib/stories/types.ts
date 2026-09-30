@@ -62,6 +62,15 @@ export type Story = {
   readAt: string | null;
 };
 
+/** One row of the story history list. */
+export type StorySummary = {
+  id: string;
+  title: string;
+  pieceLength: PieceLength;
+  vote: -1 | 1 | null;
+  readAt: string | null;
+};
+
 /** What the reader needs to show a term's popover and glossary row. A term
  *  deleted after generation has no entry, and the UI shows it as gone. */
 export type StoryTerm = {
