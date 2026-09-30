@@ -6,7 +6,7 @@ import { useMountEffect } from "@/hooks/use-mount-effect";
  *  full-screen takeovers like Read's focus mode. */
 const SCROLLABLE_AREAS =
   '[data-tour-card], [aria-modal="true"], [role="dialog"], [data-tour-blocking]';
-const SCROLL_KEYS = new Set([" ", "PageUp", "PageDown", "Home", "End"]);
+const SCROLL_KEYS = new Set([" ", "PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"]);
 
 function isInScrollableArea(target: EventTarget | null) {
   return target instanceof Element && target.closest(SCROLLABLE_AREAS) !== null;
