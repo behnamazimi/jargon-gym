@@ -5,11 +5,9 @@ import type { AdminMemberRow } from "@/lib/admin/people/members";
 export function MembersTable({
   rows,
   hrefFor,
-  selectedId,
 }: {
   rows: AdminMemberRow[];
   hrefFor: (id: string) => string;
-  selectedId: string | null;
 }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-base-300">
@@ -26,12 +24,17 @@ export function MembersTable({
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={row.id} className={row.id === selectedId ? "bg-base-200" : undefined}>
-              <td className="font-medium text-base-content">{row.email}</td>
+            <tr key={row.id}>
+              <td className="font-medium text-base-content">
+                <Link href={hrefFor(row.id)} className="link link-hover">
+                  {row.email}
+                </Link>
+              </td>
               <td>
                 <span className={`badge ${row.role === "admin" ? "badge-primary" : "badge-ghost"}`}>
                   {row.role}
                 </span>
+                {row.suspended ? <span className="badge badge-error ml-2">suspended</span> : null}
               </td>
               <td className="text-base-content/65">{formatAdminDate(row.createdAt)}</td>
               <td className="text-right">

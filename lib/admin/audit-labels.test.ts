@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   APP_AUDIT_ACTIONS,
@@ -9,7 +9,10 @@ import {
 
 describe("audit labels", () => {
   it("cover exactly the actions the database writes", () => {
-    const sql = readFileSync("supabase/migrations/20260930110000_admin_rpcs.sql", "utf8");
+    const sql = readdirSync("supabase/migrations")
+      .filter((file) => file.endsWith(".sql"))
+      .map((file) => readFileSync(`supabase/migrations/${file}`, "utf8"))
+      .join("\n");
     const written = [...sql.matchAll(/_admin_audit_insert\(\s*'([a-z_]+)'/g)].map((m) => m[1]);
     expect(new Set(written)).toEqual(new Set(Object.keys(DB_AUDIT_ACTIONS)));
   });

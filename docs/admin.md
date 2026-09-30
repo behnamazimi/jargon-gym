@@ -9,7 +9,8 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | Address               | What it is                                                                                                       |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity |
-| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend) and members (AI credits, narration access)                 |
+| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend) and the members list                                       |
+| `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete        |
 | `/admin/collections`  | Built-in and all collections: status, public address                                                             |
 | `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                   |
 | `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                      |
@@ -56,13 +57,42 @@ temporary (307) redirects from `lib/redirects.ts`.
 - SQL checks: `supabase/tests/admin_rpcs.sql` and `admin_publish_concurrency.sh`, run by hand against a local
   database (don't use `supabase db reset` for this).
 
+## Managing one person
+
+`supabase/migrations/20260930120000_admin_user_management.sql` adds `admin_person_detail`,
+`admin_set_user_suspended`, `admin_remove_user_api_key` and `admin_delete_user`. Each write checks, changes and
+audits in one transaction, so nothing is half done. They share `_admin_manage_target`: the caller must be an
+admin, the target must exist, must not be the caller, and must be a `member` (admins are changed in the
+database). It also locks the person's row, so two admins can't act on one person at once. A reason of 1 to 200
+characters is required. Errors the admin should read use the database code `AD001`; `throwRpcError`
+(`lib/admin/rpc-error.ts`) turns those into `AdminError`s and rethrows everything else.
+
+- **Suspend** sets `users.suspended_at`, bans the auth record for 100 years and deletes the person's sessions.
+  The ban alone doesn't stop a token that is still valid; ending the session does. Doing it again changes
+  nothing and leaves no second audit row. The page warns when the flag and the ban disagree (a hand edit);
+  suspending again repairs it. Reactivating clears both.
+- **Where a suspended person is stopped:** sign-in, refresh and the Google callback (GoTrue's `user_banned`,
+  shown as "This account has been suspended."); `getSessionUser` and the proxy (`isBanned` on the verified user);
+  widget tokens (`resolveUserFromToken`); Telegram commands (`resolveUserIdByChatId`), scheduled sends
+  (`list_due_telegram_users`) and linking (`complete_telegram_link`). A new way in that doesn't go through a
+  session must check `users.suspended_at` too.
+- **Remove API key** clears provider, key and last four together. They fall back to the app's key and credits.
+- **Delete** removes the auth user; everything else cascades. It is refused while other people have something
+  hanging off the person's collections (added, studying, story preferences, review state or events), because
+  deleting the collections would delete that for them. The collections and their terms are locked first, so no
+  one can start using them between the check and the delete. The typed email is compared in the database. The
+  audit row keeps the id and the reason, not the email, so the audit page shows a deleted person by id.
+  The migration also made `domains.owner_id` cascade and let `referral_codes` keep `used_at` after its user is gone;
+  both used to make every delete fail. Their waitlist row stays.
+- SQL checks: `supabase/tests/admin_user_management.sql` and `admin_delete_concurrency.sh`, run by hand.
+
 ## The audit log
 
 The database records its own function calls. Changes the app makes directly are recorded by `writeAudit`
 (`lib/admin/audit.ts`) **after** the change and **best effort**: if the entry can't be written, that is logged
 and the change stands. To record a new action, add it to `APP_AUDIT_ACTIONS` in `lib/admin/audit-labels.ts`
 (a label and a sentence); the type of `writeAudit` only accepts those. `lib/admin/audit-labels.test.ts` checks
-the database's own action names against the migration. Details hold ids and setting values, never other
+the database's own action names against every migration. Details hold ids and setting values, never other
 people's emails; the page looks emails up when it shows them.
 
 ## Adding to it
@@ -86,4 +116,8 @@ out of the narration actions).
 - The audit log's `actor_email` is a snapshot, so it outlives an account.
 - Term evaluation has no switch: nothing reads its setting.
 - The people and collections tables have no phone card layout.
+- Suspension is enforced by the app and by GoTrue, not by row level security. A call made straight to the
+  database with a token that outlived the session can still touch that person's own rows until it expires.
+  It can't spend AI credits, which are charged server side.
+- Roles are changed in the database; admins can't be suspended or deleted from the page.
 - `lib/ai-credits/admin.ts` stays with the credits code it reads.

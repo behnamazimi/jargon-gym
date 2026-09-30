@@ -27,7 +27,9 @@ export async function signInWithGoogle(formData: FormData) {
   });
 
   if (error || !data.url) {
-    redirect("/login?error=oauth-failed");
+    redirect(
+      error?.code === "user_banned" ? "/login?error=suspended" : "/login?error=oauth-failed",
+    );
   }
 
   redirect(data.url);

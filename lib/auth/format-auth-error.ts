@@ -14,6 +14,7 @@ type AuthLikeError = {
 
 const GENERIC_ERROR = "We couldn't complete that. Try again in a moment.";
 const INVALID_LOGIN = "That email or password doesn't look right.";
+export const SUSPENDED_ERROR = "This account has been suspended.";
 const INVALID_REFERRAL = "That reference code isn't valid or was already used.";
 const RESET_FAILED = "Couldn't reset your password. Request a new reset link and try again.";
 const PASSWORD_FAILED =
@@ -123,6 +124,10 @@ type FailureRule = {
 };
 
 const FAILURE_RULES: FailureRule[] = [
+  {
+    matches: (error) => error.code === "user_banned",
+    result: SUSPENDED_ERROR,
+  },
   {
     matches: (error, message) => Boolean(message) && isLoginFailure(error, message),
     result: INVALID_LOGIN,

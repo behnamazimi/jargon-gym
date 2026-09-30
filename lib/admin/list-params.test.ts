@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clampPage, pageBounds, parsePeopleParams, peopleHref } from "./list-params";
+import { clampPage, isUuid, pageBounds, parsePeopleParams, peopleHref } from "./list-params";
 
 describe("parsePeopleParams", () => {
   it("defaults to the pending waitlist, page one", () => {
@@ -8,7 +8,6 @@ describe("parsePeopleParams", () => {
       status: "pending",
       q: "",
       page: 1,
-      person: null,
     });
   });
 
@@ -37,11 +36,16 @@ describe("parsePeopleParams", () => {
     expect(parsePeopleParams({ q: "x".repeat(300) }).q).toHaveLength(100);
   });
 
-  it("keeps an absurd page number bounded and only accepts a uuid as a person", () => {
+  it("keeps an absurd page number bounded", () => {
     expect(parsePeopleParams({ page: "99999999999" }).page).toBe(100_000);
-    expect(parsePeopleParams({ person: "nope" }).person).toBeNull();
-    const id = "3f2b8c1e-0a4d-4c55-9d1e-7a6b5c4d3e2f";
-    expect(parsePeopleParams({ person: id }).person).toBe(id);
+  });
+});
+
+describe("isUuid", () => {
+  it("accepts a uuid and nothing else", () => {
+    expect(isUuid("3f2b8c1e-0a4d-4c55-9d1e-7a6b5c4d3e2f")).toBe(true);
+    for (const value of ["nope", "", "3f2b8c1e-0a4d-4c55-9d1e-7a6b5c4d3e2f/x", "../admin"])
+      expect(isUuid(value)).toBe(false);
   });
 });
 

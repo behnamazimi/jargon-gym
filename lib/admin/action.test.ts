@@ -3,7 +3,10 @@ import { AdminError } from "./admin-error";
 
 const state = vi.hoisted(() => ({ admin: true, revalidated: [] as string[] }));
 
-vi.mock("next/cache", () => ({ revalidatePath: (path: string) => state.revalidated.push(path) }));
+vi.mock("next/cache", () => ({
+  revalidatePath: (path: string, type?: string) =>
+    state.revalidated.push(type ? `${path}:${type}` : path),
+}));
 vi.mock("@/lib/auth/require-session", async () => {
   const { AdminError } = await import("./admin-error");
   return {
@@ -29,6 +32,11 @@ describe("runAdminAction", () => {
     const result = await runAdminAction(async () => 42, { revalidate: ["/admin/x"] });
     expect(result).toEqual({ ok: true, data: 42 });
     expect(state.revalidated).toEqual(["/admin/x"]);
+  });
+
+  it("revalidates every page of a dynamic route", async () => {
+    await runAdminAction(async () => 1, { revalidate: ["/admin/people/[id]"] });
+    expect(state.revalidated).toEqual(["/admin/people/[id]:page"]);
   });
 
   it("passes an AdminError message through and does not revalidate", async () => {

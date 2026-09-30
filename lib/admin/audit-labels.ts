@@ -12,6 +12,8 @@ function text(value: Json | undefined): string | null {
   return typeof value === "number" || typeof value === "boolean" ? String(value) : null;
 }
 
+const reason = (d: Details) => (text(d.reason) ? `Reason: ${text(d.reason)}` : null);
+
 const onOff = (value: Json | undefined) => (value === true ? "on" : value === false ? "off" : "?");
 
 type AuditEntry = { label: string; describe: (details: Details) => string | null };
@@ -81,6 +83,13 @@ export const DB_AUDIT_ACTIONS = {
     label: "Collection published",
     describe: (d) => (text(d.slug) ? `/j/${text(d.slug)}` : null),
   },
+  suspend_user: { label: "Account suspended", describe: (d) => reason(d) },
+  reactivate_user: { label: "Account reactivated", describe: (d) => reason(d) },
+  remove_user_api_key: {
+    label: "API key removed",
+    describe: (d) => [text(d.provider), reason(d)].filter(Boolean).join(", ") || null,
+  },
+  delete_user: { label: "Account deleted", describe: (d) => reason(d) },
 } as const satisfies Record<string, AuditEntry>;
 
 const ALL_ACTIONS: Record<string, AuditEntry> = { ...APP_AUDIT_ACTIONS, ...DB_AUDIT_ACTIONS };

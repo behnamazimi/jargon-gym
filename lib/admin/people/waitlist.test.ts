@@ -78,8 +78,8 @@ describe("listWaitlist", () => {
 
   it("shows an invite whose code was used as signed up", async () => {
     const { client } = fakeClient(2, [
-      row({ id: "a", status: "invited", referral_codes: { used_by: "u1" } }),
-      row({ id: "b", status: "invited", referral_codes: { used_by: null } }),
+      row({ id: "a", status: "invited", referral_codes: { used_at: "2026-09-01" } }),
+      row({ id: "b", status: "invited", referral_codes: { used_at: null } }),
     ]);
     const { rows } = await listWaitlist(client, { status: "invited", q: "", page: 1 });
     expect(rows.map((r) => r.status)).toEqual(["signed_up", "invited"]);

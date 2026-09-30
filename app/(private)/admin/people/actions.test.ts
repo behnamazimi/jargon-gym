@@ -126,7 +126,14 @@ beforeEach(() => {
 describe("approveWaitlistRequest", () => {
   it("creates a code, claims the request, then sends the email", async () => {
     expect(await approveWaitlistRequest("r1")).toEqual({ ok: true, data: { emailSent: true } });
-    expect(state.calls).toEqual(["code", "claim", "email", "reval:/admin/people", "reval:/admin"]);
+    expect(state.calls).toEqual([
+      "code",
+      "claim",
+      "email",
+      "reval:/admin/people",
+      "reval:/admin/people/[id]",
+      "reval:/admin",
+    ]);
     expect(state.sent).toEqual([
       {
         to: "a@example.test",
@@ -215,6 +222,7 @@ describe("approveWaitlistRequests", () => {
     expect(state.sent.map((mail) => mail.to)).toEqual(["one@example.test", "three@example.test"]);
     expect(state.calls.filter((call) => call.startsWith("reval"))).toEqual([
       "reval:/admin/people",
+      "reval:/admin/people/[id]",
       "reval:/admin",
     ]);
   });

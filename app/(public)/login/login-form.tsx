@@ -9,18 +9,24 @@ import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { SUSPENDED_ERROR } from "@/lib/auth/format-auth-error";
 import { appendNextParam, safeNextPath } from "@/lib/auth/safe-next-path";
 import { login } from "./actions";
 
 const OAUTH_FAILED_ERROR = "Google sign-in didn't work. Try again or use your email instead.";
 
+const QUERY_ERRORS: Record<string, string> = {
+  "oauth-failed": OAUTH_FAILED_ERROR,
+  suspended: SUSPENDED_ERROR,
+};
+
 export default function LoginForm() {
   const searchParams = useSearchParams();
   const rawNext = searchParams.get("next");
   const next = safeNextPath(rawNext);
-  const oauthError = searchParams.get("error") === "oauth-failed" ? OAUTH_FAILED_ERROR : null;
+  const queryError = QUERY_ERRORS[searchParams.get("error") ?? ""] ?? null;
   const [state, action, pending] = useActionState(login, null);
-  const error = state?.error ?? oauthError;
+  const error = state?.error ?? queryError;
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-4">
