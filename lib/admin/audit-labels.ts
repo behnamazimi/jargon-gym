@@ -75,6 +75,10 @@ export const DB_AUDIT_ACTIONS = {
     label: "Narration switched",
     describe: (d) => `Now ${onOff(d.enabled)}`,
   },
+  set_narration_provider: {
+    label: "Narration provider switched",
+    describe: (d) => `${text(d.provider) ?? "?"} now ${onOff(d.enabled)}`,
+  },
   set_narration_caps: {
     label: "Narration limits changed",
     describe: (d) => `Terms ${text(d.term_cap) ?? "no limit"}, stories ${text(d.story_cap) ?? "?"}`,

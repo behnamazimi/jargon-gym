@@ -11,8 +11,20 @@ function client(usageError: boolean) {
         table === "ai_feature_settings"
           ? {
               data: [
-                { feature: "narration_term", enabled: true, daily_cap: null },
-                { feature: "narration_story", enabled: true, daily_cap: 20 },
+                {
+                  feature: "narration_term",
+                  enabled: true,
+                  daily_cap: null,
+                  murf_enabled: true,
+                  elevenlabs_enabled: false,
+                },
+                {
+                  feature: "narration_story",
+                  enabled: true,
+                  daily_cap: 20,
+                  murf_enabled: true,
+                  elevenlabs_enabled: true,
+                },
               ],
               error: null,
             }
@@ -28,6 +40,7 @@ describe("getNarrationSettingsForAdmin", () => {
   it("reports the caps and usage", async () => {
     expect(await getNarrationSettingsForAdmin(client(false))).toEqual({
       enabled: true,
+      providers: { murf: true, elevenlabs: false },
       caps: { term: null, story: 20 },
       usageLast24h: { term: 7, story: 7 },
     });

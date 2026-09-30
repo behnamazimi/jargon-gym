@@ -1,6 +1,9 @@
 "use client";
 
-import { setNarrationEnabled } from "@/app/(private)/admin/ai/narration/actions";
+import {
+  setNarrationEnabled,
+  setNarrationProvider,
+} from "@/app/(private)/admin/ai/narration/actions";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminSettingRow } from "@/components/admin/admin-setting-row";
 import { AdminSwitch } from "@/components/admin/admin-switch";
@@ -20,6 +23,8 @@ type AdminNarrationPageClientProps = {
   caps: NarrationSettings["caps"];
   usageLast24h: NarrationSettings["usageLast24h"];
   enabled: boolean;
+  providers: NarrationSettings["providers"];
+  providerKeys: NarrationSettings["providers"];
   allowlist: AdminNarrationAllowlistRow[];
   coverage: CollectionNarrationCoverage[];
   lastJob: NarrationSyncJobView | null;
@@ -31,6 +36,8 @@ export function AdminNarrationPageClient({
   caps,
   usageLast24h,
   enabled,
+  providers,
+  providerKeys,
   allowlist,
   coverage,
   lastJob,
@@ -39,7 +46,7 @@ export function AdminNarrationPageClient({
     <>
       <AdminPageHeader
         title="Narration"
-        description="Control ElevenLabs narration for terms and stories, and who can use it. Narration is never charged in AI credits."
+        description="Control narration for terms and stories, which providers make it, and who can use it. Narration is never charged in AI credits."
       />
 
       <AdminSettingRow
@@ -59,6 +66,41 @@ export function AdminNarrationPageClient({
         }
         control={
           <AdminSwitch label="Enable narration" value={enabled} save={setNarrationEnabled} />
+        }
+      />
+
+      <AdminSettingRow
+        title="Murf"
+        description="The main provider. Used first whenever it is on."
+        notes={
+          providerKeys.murf ? null : (
+            <p className="m-0 mt-1 text-sm text-warning">Missing MURF_API_KEY, so it is skipped.</p>
+          )
+        }
+        control={
+          <AdminSwitch
+            label="Enable Murf"
+            value={providers.murf}
+            save={(next) => setNarrationProvider("murf", next)}
+          />
+        }
+      />
+      <AdminSettingRow
+        title="ElevenLabs"
+        description="The fallback. Used when Murf is off, not set up or fails."
+        notes={
+          providerKeys.elevenlabs ? null : (
+            <p className="m-0 mt-1 text-sm text-warning">
+              Missing ELEVENLABS_API_KEY, so it is skipped.
+            </p>
+          )
+        }
+        control={
+          <AdminSwitch
+            label="Enable ElevenLabs"
+            value={providers.elevenlabs}
+            save={(next) => setNarrationProvider("elevenlabs", next)}
+          />
         }
       />
 

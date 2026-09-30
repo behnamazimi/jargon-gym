@@ -36,14 +36,14 @@ export const FEATURES = {
   narration_term: {
     capability: "speech",
     billing: "none",
-    vendor: "ElevenLabs",
+    vendor: "Murf or ElevenLabs",
     sends: "The spoken text of a term entry.",
     unit: "clip",
   },
   narration_story: {
     capability: "speech",
     billing: "none",
-    vendor: "ElevenLabs",
+    vendor: "Murf or ElevenLabs",
     sends: "The full text of a story.",
     unit: "clip",
   },

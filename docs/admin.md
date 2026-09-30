@@ -46,7 +46,7 @@ temporary (307) redirects from `lib/redirects.ts`.
 ## What the database does
 
 `supabase/migrations/20260930110000_admin_rpcs.sql` adds the audit log and the functions that must be atomic:
-`admin_list_collections`, `admin_publish_collection`, `admin_set_narration_enabled`, `admin_set_narration_caps`,
+`admin_list_collections`, `admin_publish_collection`, `admin_set_narration_enabled`, `admin_set_narration_provider` (added in `20260930140000_narration_providers.sql`), `admin_set_narration_caps`,
 `admin_set_ai_credit_settings`, `admin_write_audit`, and audit rows inside `admin_grant_ai_credits` and
 `admin_reset_ai_credits`.
 

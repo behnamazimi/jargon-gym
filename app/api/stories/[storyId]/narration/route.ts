@@ -58,12 +58,9 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ ready: false, capped: true }, { status: 429 });
   }
   if ("generation" in result && result.generation) {
-    await recordUsage(admin, {
-      userId,
-      feature: "narration_story",
-      units: result.generation.units,
-      outcome: result.status === "ready" ? "ok" : "failed",
-    });
+    for (const call of result.generation.calls) {
+      await recordUsage(admin, { userId, feature: "narration_story", ...call });
+    }
   }
   if (result.status === "pending") {
     return NextResponse.json({ ready: false, pending: true }, { status: 202 });

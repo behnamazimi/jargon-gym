@@ -18,12 +18,14 @@ describe("recordUsage", () => {
       feature: "narration_term",
       units: 120,
       outcome: "ok",
+      provider: "murf",
     });
     expect(insert).toHaveBeenCalledWith({
       user_id: "u1",
       feature: "narration_term",
       units: 120,
       outcome: "ok",
+      provider: "murf",
     });
   });
 

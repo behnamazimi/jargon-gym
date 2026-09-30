@@ -1,41 +1,59 @@
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import { elevenLabsProvider } from "./providers/elevenlabs";
+import { murfProvider } from "./providers/murf";
+import type { SpeechProvider, SpeechProviderAdapter, SynthesisRequest } from "./providers/types";
 
-const MODEL_ID = "eleven_v3";
-const OUTPUT_FORMAT = "mp3_44100_128";
+export type { SpeechProvider } from "./providers/types";
 
-// ElevenLabs' own long-standing default ("Rachel") voice — verify this id
-// exists in the target ElevenLabs account (dashboard, or
-// elevenlabs.voices.search()) before shipping.
-const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+export type ProviderSwitches = Record<SpeechProvider, boolean>;
 
-// TODO: "nl" reuses the English placeholder voice ID above — it hasn't been
-// swapped for a real Dutch voice because voice availability can't be
-// verified from this environment. Replace with an actual Dutch voice ID
-// from your ElevenLabs dashboard.
-const VOICE_BY_LANGUAGE: Record<DomainLanguage, string> = {
-  en: DEFAULT_VOICE_ID,
-  nl: DEFAULT_VOICE_ID,
-};
+export type ProviderCall = { provider: SpeechProvider; units: number; outcome: "ok" | "failed" };
 
-function getElevenLabsClient(): ElevenLabsClient {
-  const apiKey = process.env.ELEVENLABS_API_KEY;
-  if (!apiKey) {
-    throw new Error("Missing ELEVENLABS_API_KEY.");
+/** Murf first; ElevenLabs only when Murf is off, unconfigured or fails. */
+const PROVIDER_ORDER: SpeechProviderAdapter[] = [murfProvider, elevenLabsProvider];
+
+/** Carries every provider call made, so failed attempts are still counted. */
+export class SpeechSynthesisError extends Error {
+  constructor(
+    message: string,
+    readonly calls: ProviderCall[],
+  ) {
+    super(message);
   }
-  return new ElevenLabsClient({ apiKey });
 }
 
-export async function synthesizeSpeech(script: string, language: DomainLanguage): Promise<Buffer> {
-  const client = getElevenLabsClient();
-  const voiceId = VOICE_BY_LANGUAGE[language] ?? DEFAULT_VOICE_ID;
+/** Whether each provider's API key is set, regardless of the admin switches. */
+export function configuredProviders(): ProviderSwitches {
+  return { murf: murfProvider.isConfigured(), elevenlabs: elevenLabsProvider.isConfigured() };
+}
 
-  const audioStream = await client.textToSpeech.convert(voiceId, {
-    text: script,
-    modelId: MODEL_ID,
-    outputFormat: OUTPUT_FORMAT,
-    languageCode: language,
-  });
-  const arrayBuffer = await new Response(audioStream).arrayBuffer();
-  return Buffer.from(arrayBuffer);
+export async function synthesizeSpeech(
+  request: SynthesisRequest,
+  switches: ProviderSwitches,
+): Promise<{ audio: Buffer; provider: SpeechProvider; calls: ProviderCall[] }> {
+  const calls: ProviderCall[] = [];
+  const units = request.script.length;
+  const errors: string[] = [];
+
+  console.log("================================================");
+  console.log("Synthesizing speech for:", request.script);
+  console.log("================================================");
+
+  for (const adapter of PROVIDER_ORDER) {
+    if (!switches[adapter.id] || !adapter.isConfigured()) continue;
+    try {
+      const audio = await adapter.synthesize(request);
+      calls.push({ provider: adapter.id, units, outcome: "ok" });
+      return { audio, provider: adapter.id, calls };
+    } catch (err) {
+      calls.push({ provider: adapter.id, units, outcome: "failed" });
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`Narration provider ${adapter.id} failed:`, err);
+      errors.push(`${adapter.id}: ${message}`);
+    }
+  }
+
+  throw new SpeechSynthesisError(
+    errors.length > 0 ? errors.join("; ") : "No narration provider is available.",
+    calls,
+  );
 }

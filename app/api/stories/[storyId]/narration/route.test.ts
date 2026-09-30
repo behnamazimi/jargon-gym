@@ -75,13 +75,17 @@ describe("GET", () => {
 
 describe("POST", () => {
   it("prepares the audio, counts the generation and replies with JSON", async () => {
-    getOrCreateAudio.mockResolvedValue({ status: "ready", job: {}, generation: { units: 300 } });
+    getOrCreateAudio.mockResolvedValue({
+      status: "ready",
+      job: {},
+      generation: { calls: [{ provider: "murf", units: 300, outcome: "ok" }] },
+    });
     const res = await POST(request("POST"), ctx);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ready: true });
     expect(recordUsage).toHaveBeenCalledWith(
       {},
-      { userId: "user-1", feature: "narration_story", units: 300, outcome: "ok" },
+      { userId: "user-1", feature: "narration_story", provider: "murf", units: 300, outcome: "ok" },
     );
   });
 
@@ -92,11 +96,20 @@ describe("POST", () => {
   });
 
   it("counts a failed generation and answers 502", async () => {
-    getOrCreateAudio.mockResolvedValue({ status: "unavailable", generation: { units: 80 } });
+    getOrCreateAudio.mockResolvedValue({
+      status: "unavailable",
+      generation: { calls: [{ provider: "murf", units: 80, outcome: "failed" }] },
+    });
     expect((await POST(request("POST"), ctx)).status).toBe(502);
     expect(recordUsage).toHaveBeenCalledWith(
       {},
-      { userId: "user-1", feature: "narration_story", units: 80, outcome: "failed" },
+      {
+        userId: "user-1",
+        feature: "narration_story",
+        provider: "murf",
+        units: 80,
+        outcome: "failed",
+      },
     );
   });
 

@@ -7,6 +7,8 @@ const NARRATION_FEATURES = ["narration_term", "narration_story"] as const;
 
 export type NarrationSettings = {
   enabled: boolean;
+  /** Provider switches; on only when both narration features agree. */
+  providers: { murf: boolean; elevenlabs: boolean };
   /** Per-person daily caps; null means no cap. */
   caps: { term: number | null; story: number | null };
   /** Provider calls made in the last 24 hours, failed ones included. Null when the count couldn't be read. */
@@ -36,7 +38,7 @@ export async function getNarrationSettingsForAdmin(client: Client): Promise<Narr
   const [settings, term, story] = await Promise.all([
     client
       .from("ai_feature_settings")
-      .select("feature, enabled, daily_cap")
+      .select("feature, enabled, daily_cap, murf_enabled, elevenlabs_enabled")
       .in("feature", [...NARRATION_FEATURES]),
     usageCount(client, "narration_term", since),
     usageCount(client, "narration_story", since),
@@ -48,6 +50,10 @@ export async function getNarrationSettingsForAdmin(client: Client): Promise<Narr
 
   return {
     enabled: rows.length === 2 && rows.every((row) => row.enabled),
+    providers: {
+      murf: rows.length === 2 && rows.every((row) => row.murf_enabled),
+      elevenlabs: rows.length === 2 && rows.every((row) => row.elevenlabs_enabled),
+    },
     caps: { term: capOf("narration_term"), story: capOf("narration_story") },
     usageLast24h: { term, story },
   };

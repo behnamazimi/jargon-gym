@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { NARRATION_PAUSE } from "@/lib/ai/speech/pause";
 import { buildNarrationScript } from "./template";
 
 const BASE = {
@@ -65,10 +66,7 @@ describe("buildNarrationScript", () => {
     // language that isn't translated yet (e.g. a future addition to the type
     // without matching CONNECTOR_PHRASES entry).
     const script = buildNarrationScript({ ...BASE, example: "An example." }, "fr" as never);
-    // Stale expectation from before the pause marker changed from "[pause]"
-    // to "-- --" — matched loosely on whitespace since the exact spacing
-    // around the marker isn't this test's concern.
-    expect(script).toMatch(/--\s*--\s*An example\./);
+    expect(script).toContain(`${NARRATION_PAUSE} An example.`);
     expect(script).not.toContain("For example");
     expect(script).not.toContain("Bijvoorbeeld");
   });

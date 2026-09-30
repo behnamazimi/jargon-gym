@@ -18,10 +18,10 @@ describe("featureHealth", () => {
       ok: false,
       note: "Missing AI_GATEWAY_API_KEY.",
     });
-    vi.stubEnv("ELEVENLABS_API_KEY", "x");
+    vi.stubEnv("MURF_API_KEY", "x");
     const health = featureHealth("narration_term");
     expect(health.ok).toBe(false);
-    expect(health.ok === false && health.note).not.toContain("ELEVENLABS_API_KEY");
+    expect(health.ok === false && health.note).not.toContain("MURF_API_KEY");
   });
 
   it("covers every registered feature", () => {

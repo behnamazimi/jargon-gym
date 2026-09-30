@@ -24,14 +24,16 @@ export function featureHealth(feature: FeatureId): FeatureHealth {
     case "narration_term":
     case "narration_story": {
       const note = missing(
-        "ELEVENLABS_API_KEY",
         "SUPABASE_S3_ENDPOINT",
         "SUPABASE_S3_REGION",
         "SUPABASE_S3_ACCESS_KEY_ID",
         "SUPABASE_S3_SECRET_ACCESS_KEY",
         "SUPABASE_S3_BUCKET",
       );
-      return note ? { ok: false, note } : { ok: true };
+      if (note) return { ok: false, note };
+      return missing("MURF_API_KEY") && missing("ELEVENLABS_API_KEY")
+        ? { ok: false, note: "Missing MURF_API_KEY and ELEVENLABS_API_KEY." }
+        : { ok: true };
     }
   }
 }

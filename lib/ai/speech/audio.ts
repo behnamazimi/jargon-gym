@@ -2,7 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { CURRENT_HASH_VERSION } from "@/lib/narration/content-hash-v2";
 import { claimJob, getLiveJob, markFailed, markReady, objectPathFor, setJobPath } from "./jobs";
-import { synthesizeSpeech } from "./provider";
+import { SpeechSynthesisError, synthesizeSpeech, type ProviderCall } from "./provider";
+import { getProviderSwitches } from "./switches";
 import { deleteAudio, uploadAudio } from "./storage";
 import type { AudioJob, AudioResult, SpeechSubject } from "./types";
 
@@ -66,20 +67,24 @@ async function generate(
   subject: SpeechSubject,
   job: AudioJob,
 ): Promise<AudioResult> {
-  let units = 0;
+  let calls: ProviderCall[] = [];
   let path: string | null = null;
   try {
     const loaded = await subject.loadScript();
     if (!loaded) throw new Error("Nothing to narrate.");
-    units = loaded.script.length;
 
     path = await objectPathFor(admin, job);
     if (!(await setJobPath(admin, job.id, path))) return { status: "pending" };
 
-    const audio = await synthesizeSpeech(loaded.script, loaded.language);
-    await uploadAudio(path, audio);
+    const switches = await getProviderSwitches(admin, subject.type);
+    const result = await synthesizeSpeech(
+      { script: loaded.script, language: loaded.language, kind: subject.type },
+      switches,
+    );
+    calls = result.calls;
+    await uploadAudio(path, result.audio);
 
-    if (!(await markReady(admin, job.id))) {
+    if (!(await markReady(admin, job.id, result.provider))) {
       await deleteAudio(path).catch((err) =>
         console.error("Couldn't remove a superseded clip:", err),
       );
@@ -88,12 +93,13 @@ async function generate(
     return {
       status: "ready",
       job: { ...job, status: "ready", storage_path: path },
-      generation: { units },
+      generation: { calls },
     };
   } catch (err) {
+    if (err instanceof SpeechSynthesisError) calls = err.calls;
     console.error("Audio generation failed:", err);
     await markFailed(admin, job.id, err instanceof Error ? err.message : String(err));
-    return { status: "unavailable", generation: { units } };
+    return { status: "unavailable", generation: { calls } };
   }
 }
 

@@ -12,8 +12,8 @@ this page explains how the pieces fit. Credits and their ledger are covered in
 | `quiz`            | Writes quiz questions             | Google or Anthropic                   | Credits | question |
 | `story`           | Writes a story around due terms   | Google or Anthropic                   | Credits | term     |
 | `term_evaluation` | Checks a term entry (admins only) | TypeSafe (Jev) through Vercel Gateway | None    | term     |
-| `narration_term`  | Spoken clip for a term            | ElevenLabs                            | None    | clip     |
-| `narration_story` | Spoken clip for a story           | ElevenLabs                            | None    | clip     |
+| `narration_term`  | Spoken clip for a term            | Murf, ElevenLabs as fallback          | None    | clip     |
+| `narration_story` | Spoken clip for a story           | Murf, ElevenLabs as fallback          | None    | clip     |
 
 `billing: none` means the feature never touches credits or the ledger.
 `lib/ai/narration-isolation.test.ts` fails if narration code mentions them.
@@ -44,8 +44,19 @@ a time.
 
 ## Narration
 
-Audio is made by ElevenLabs and kept in the storage bucket. The shared code is
-`lib/ai/speech/`:
+Audio is made by Murf, with ElevenLabs as the fallback, and kept in the storage
+bucket. The shared code is `lib/ai/speech/`:
+
+- `provider.ts` is the router. It tries Murf, then ElevenLabs, skipping a
+  provider that the admin switched off (`murf_enabled`, `elevenlabs_enabled` on
+  the narration rows of `ai_feature_settings`, read by `switches.ts`) or that has
+  no API key. Any error from one provider moves on to the next. The adapters
+  are in `providers/` and are the only files that know a vendor.
+- Every provider call is recorded in `ai_usage_events` with its provider, so a
+  fallback counts as two calls. The job stores the provider that made the clip.
+- `pause.ts` is the one place that knows about pauses: the marker term scripts
+  carry (`NARRATION_PAUSE`), the pause length, and how each provider writes it.
+  Adapters call `renderPauses`; to change a pause, change it there.
 
 - `getOrCreateAudio` claims a job in `audio_jobs` (`claim_audio_job`), writes the
   file path on the job, uploads to a never-reused key
@@ -79,6 +90,7 @@ Bulk generation per collection is the narration sync job
 | ------------------------------------------------ | ------------------------------------- |
 | `CENTRAL_LLM_PROVIDER`, `CENTRAL_LLM_API_KEY`    | The app's key for Quiz and Stories    |
 | `LLM_SETTINGS_ENCRYPTION_KEY`                    | Encrypts people's own saved keys      |
-| `ELEVENLABS_API_KEY`, `SUPABASE_S3_*`            | Narration audio and its storage       |
+| `MURF_API_KEY`, `ELEVENLABS_API_KEY`             | Narration providers (main, fallback)  |
+| `SUPABASE_S3_*`                                  | Narration audio storage               |
 | `AI_GATEWAY_API_KEY`                             | Term evaluation                       |
 | `AI_INTERNAL_SECRET`, `TELEGRAM_INTERNAL_SECRET` | Narration sync route; Telegram routes |
