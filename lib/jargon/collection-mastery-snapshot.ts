@@ -8,7 +8,6 @@ import {
 } from "@/lib/trace-queue";
 import {
   AGAIN,
-  CALIBRATION_MIN_BUCKET_SAMPLE,
   EASY,
   GOOD,
   HARD,
@@ -61,17 +60,15 @@ function sumLifetimeTotals(candidates: TraceCandidate[]): LifetimeTotals {
   );
 }
 
+const MIN_GRADINGS_FOR_DISTRIBUTION = 5;
+
 export type GradeDistributionSummary = {
   counts: Record<ReviewGrade, number>;
   total: number;
 };
 
-/** Folds my_grade_distribution()'s one-row-per-grade result into the same
- *  Record<ReviewGrade, number> shape summarizeGradeDistribution produces
- *  from raw rows. Kept separate from summarizeGradeDistribution itself
- *  (lib/trace/calibration-activity.ts) since that function's raw-row input
- *  is still exactly what the debug page's getCalibrationSummaryAction
- *  needs — not safe to repoint at this pre-aggregated shape. */
+/** Folds my_grade_distribution()'s one-row-per-grade result into a
+ *  Record<ReviewGrade, number>. */
 function foldGradeDistributionCounts(
   rows: Array<{ grade: number; count: number }>,
 ): Record<ReviewGrade, number> {
@@ -90,15 +87,14 @@ function foldGradeDistributionCounts(
  *  up front alongside the rest of the snapshot (not lazily on expand) so
  *  the overview never re-flows once the panel opens. Grouped server-side
  *  via a GROUP BY grade RPC rather than pulling every graded event into JS.
- *  Null below CALIBRATION_MIN_BUCKET_SAMPLE total gradings — same "not
- *  enough data yet" bar the debug page's own buckets use. */
+ *  Null below MIN_GRADINGS_FOR_DISTRIBUTION total gradings. */
 async function fetchGradeDistribution(client: Client): Promise<GradeDistributionSummary | null> {
   const { data, error } = await client.rpc("my_grade_distribution");
   if (error) throw error;
 
   const counts = foldGradeDistributionCounts(data ?? []);
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
-  if (total < CALIBRATION_MIN_BUCKET_SAMPLE) return null;
+  if (total < MIN_GRADINGS_FOR_DISTRIBUTION) return null;
 
   return { counts, total };
 }

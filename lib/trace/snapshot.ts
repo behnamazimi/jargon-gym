@@ -5,7 +5,6 @@
  *  @see docs/trace-formula.md
  */
 
-import { RETRIEVABILITY_DECAY_SCALE, SESSION_COOLDOWN_RETRIEVABILITY } from "./constants";
 import { daysBetween } from "./decay";
 import { familiarityUsed, computeFamiliarity } from "./familiarity";
 import {
@@ -119,43 +118,4 @@ export function applyQuizAnswer(
 export function aggregateMastery(candidates: TraceCandidate[], now: Date): number {
   const values = candidates.map((c) => computeTraceSnapshot(c, now).masteryAdjusted);
   return aggregatePerTermMastery(values);
-}
-
-/** How many more days until a term's retrievability in one track decays
- *  back under the §6 session cooldown threshold — inverts the same R(t) =
- *  (1 + t/(9S))⁻¹ curve rankReviewQueue/rankQuizQueue use to exclude a
- *  just-graded term from the ranked queue, so callers (the debug page) can
- *  show why — and for how long — a term is missing from it. Mirrors those
- *  functions' own recall/recognition `r` derivation exactly, so there's one
- *  formula for "in cooldown" rather than a second one that could drift.
- *  Null when the track has no state yet (untested terms are never cooled
- *  down — queue.ts's UNTESTED_RETRIEVABILITY sentinel is always ≤
- *  threshold) or the term is already eligible (at/under threshold). */
-export function daysUntilCooldownClears(
-  candidate: Pick<
-    TraceCandidate,
-    "recallStability" | "lastReviewRecallAt" | "quizKnowledgePosterior" | "lastQuizTestedAt"
-  >,
-  track: "recall" | "recognition",
-  now: Date,
-): number | null {
-  const stability =
-    track === "recall"
-      ? candidate.recallStability
-      : candidate.quizKnowledgePosterior !== null
-        ? posteriorToStability(candidate.quizKnowledgePosterior)
-        : null;
-  if (stability === null) return null;
-
-  const lastAt = track === "recall" ? candidate.lastReviewRecallAt : candidate.lastQuizTestedAt;
-  const elapsedDays = daysBetween(lastAt ?? now, now);
-  const r =
-    track === "recall"
-      ? recallRetrievability(stability, elapsedDays)
-      : recognitionRetrievability(stability, elapsedDays);
-  if (r <= SESSION_COOLDOWN_RETRIEVABILITY) return null;
-
-  const targetElapsedDays =
-    RETRIEVABILITY_DECAY_SCALE * stability * (1 / SESSION_COOLDOWN_RETRIEVABILITY - 1);
-  return Math.max(0, targetElapsedDays - elapsedDays);
 }

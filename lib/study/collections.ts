@@ -5,16 +5,6 @@ import type { PausedStudyCollection, StudyCollection } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-/** Every tier ranks the same single term set now, so a collection's "terms
- *  available" is just its total term count — already computed by
- *  resolveReviewDomainIds's fetchUserCollection, no extra RPC needed. */
-export async function listStudyCollections(
-  client: Client,
-  userId: string,
-): Promise<StudyCollection[]> {
-  return (await listStudyCollectionState(client, userId)).active;
-}
-
 /** Active collections feed Read/Review/Quiz; paused ones are listed so a
  *  study page can offer to resume them instead of a dead end. Both empty
  *  means the user has no collections at all. */

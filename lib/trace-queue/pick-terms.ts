@@ -166,12 +166,3 @@ export async function pickQuizTermsForUser(
     ranked.map((c) => c.termId),
   );
 }
-
-/** Every candidate in scope, unsorted — debug/inspection only. */
-export async function listTraceCandidates(
-  client: Client,
-  userId: string,
-  scope: ReviewScope,
-): Promise<TraceCandidate[]> {
-  return fetchTraceCandidates(client, userId, scope);
-}

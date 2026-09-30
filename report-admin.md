@@ -29,7 +29,7 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 - Phase 7: merged in #122, 2026-09-29. Deferred: phone card layout for the people tables, a `signed_up` waitlist filter (it is a derived badge), page-number links beyond previous/next. The member panel shows remaining/total credits only (spent and granted stay on the credits page); "partly" narration access can only be cleared by switching on then off.
 
-- Phase 6: merged in #121, 2026-09-29. Term evaluation has no switch because nothing reads its setting (the evaluate route only checks the admin role); wiring it is a live-route change left for later. Queue debug's server actions still use the signed-in guard and return only the caller's own queue. Temporary (307) redirects for the old addresses (four with `/admin/invites`, added in phase 7).
+- Phase 6: merged in #121, 2026-09-29. Term evaluation has no switch because nothing reads its setting (the evaluate route only checks the admin role); wiring it is a live-route change left for later. Temporary (307) redirects for the old addresses (four with `/admin/invites`, added in phase 7).
 
 - Phase 5: merged in #120, 2026-09-29. Accepted: `admin_list_collections` is capped at 1000 rows by PostgREST, so past that many collections the taken-slug set is incomplete and publish/slug can fail with a plain message; direct writes (`setBuiltin`, unpublish, slug) still have no audit rows (phase 9); every collection action now checks ownership itself, because the publish function bypasses row level security.
 
@@ -37,7 +37,7 @@ needs a migration merges only after that migration's deploy run has succeeded.
 
 - Phase 3: merged in #118, 2026-09-29. Accepted gaps: narration's enabled flag reaches the sync panel only when the refreshed page arrives (no lifted optimistic value); credit settings can flash "changed" for a frame after saving; the sync panel keeps local copies of coverage and job until the next poll.
 
-- Phase 2: merged in #117, 2026-09-29. `/jargon/debug` has no admin guard of its own (it shows the signed-in person's own queue); phase 6 moves it under `/admin` behind `requireAdminPage`. The overview reads `ai_feature_settings` and the credit RPC with the admin's own client.
+- Phase 2: merged in #117, 2026-09-29. The overview reads `ai_feature_settings` and the credit RPC with the admin's own client.
 - Phase 1: merged in #116, 2026-09-29. Accepted gaps: a rejected server-action call (network drop, stale tab) is not caught per component and reaches `error.tsx` until phase 3's `useAdminAction`; the ai-credits actions keep their own private `runAdminAction` until phase 3.
 
 ---
@@ -57,9 +57,9 @@ The three biggest problems, in order:
    message of a thrown server action with a generic one in production. So "No account found for that
    email.", "Only built-in collections can be made public.", "Request already handled." are all seen
    in dev and lost in prod. The ai-credits page was fixed; the other three were not.
-2. **Navigation is duplicated in three places and has already drifted.** The tab bar has 4 items
-   (no Debug). The profile menu and phone sheet (`ADMIN_NAV_ITEMS` in `account-nav.ts`) have a
-   different 4 (no Narration, has Debug, names it "Manage collections"). An admin on desktop can't
+2. **Navigation is duplicated in three places and has already drifted.** The tab bar has 4 items.
+   The profile menu and phone sheet (`ADMIN_NAV_ITEMS` in `account-nav.ts`) have a
+   different 4 (no Narration, names it "Manage collections"). An admin on desktop can't
    reach Narration from the menu.
 3. **The page structure doesn't scale.** Every new admin feature means another page that copies
    ~20 lines of guard/shell and picks its own conventions. The AI credits page is already a 5-section
@@ -83,7 +83,6 @@ audit log (section 6).
 | S2  | No `/admin` index. Visiting `/admin` is a 404. There is no "what needs my attention" landing.                                                                                                                                                                                                                   | —                                 |
 | S3  | `<AdminNav />` is rendered inside each client page component, so the nav remounts on every navigation and the client page components must be `"use client"` just to host it. It would live in a layout and stay mounted.                                                                                        | `admin-*-page.tsx`                |
 | S4  | Three nav lists that disagree (see summary).                                                                                                                                                                                                                                                                    | `admin-nav.tsx`, `account-nav.ts` |
-| S5  | `/jargon/debug` (queue debug, calibration) is admin-only but lives under the learner app and has its own layout and page chrome. It is not reachable from the admin tabs.                                                                                                                                       | `app/(private)/jargon/debug`      |
 | S6  | Nav is a `role="tablist"` of `<Link role="tab">`. These are links, not tabs (no tabpanel, no arrow-key model). It is announced wrongly by screen readers. `pathname.startsWith` also means a future `/admin/collections-archive` would highlight Collections.                                                   | `admin-nav.tsx`                   |
 | S7  | Every page is `max-w-4xl` (896px). The Collections table has 7 columns and already needs horizontal scroll on a laptop. Admin surfaces want to be wider than a reading column.                                                                                                                                  | all pages                         |
 | S8  | Page title is `max-md:sr-only`, so on phones there is no visible title, just the tab strip. The active tab is the only clue. Fine for four tabs, breaks as soon as there are more than fit.                                                                                                                     | all pages                         |
@@ -221,7 +220,6 @@ Organize by what the admin manages, not by which feature was built first.
     /admin/ai/credits           Allowance, prices, usage, grants
     /admin/ai/narration         Access + limits + audio sync
 /admin/system
-    /admin/system/queue         Queue debug + calibration (moved from /jargon/debug)
     /admin/system/audit         Audit log
 ```
 
@@ -238,8 +236,6 @@ Rationale:
   usage. Credits and Narration become sub-pages for what is specific to them. This also means adding a
   sixth AI feature adds one row and no new page.
 - **Content** keeps Collections, but reframed (below).
-- **System** is where the debug page belongs. It is an admin diagnostic, and moving it under `/admin`
-  gives it the same guard, shell and nav (keep a redirect from `/jargon/debug`).
 
 I would not build all of this at once; section 8 gives the order.
 
@@ -387,7 +383,6 @@ in the app (sends real email); it deserves a confirm, idempotency and resend.
 
 ### 5.6 System
 
-- Move the queue debug and calibration pages under `/admin/system/queue`, redirect the old URL.
 - Add an audit log page (below).
 
 ---
@@ -437,8 +432,7 @@ Ordered by risk removed per unit of effort. Each step is independently shippable
 3. **Shared blocks and hooks:** `AdminPageHeader`, `AdminSection`, `AdminSwitch`, `useAdminAction`,
    `AdminTable`, `formatAdminDate`. Migrate the four existing pages onto them (mostly deletions).
 4. **`ActionResult` wrapper and the transactional RPCs** (publish collection, approve waitlist, settings).
-5. **Re-cut the IA:** AI hub with all registry features; People page merging waitlist/credits/allowlist;
-   move Queue debug into System.
+5. **Re-cut the IA:** AI hub with all registry features; People page merging waitlist/credits/allowlist.
 6. **Search, filters and pagination** via `searchParams`; grouped count for collections (R7).
 7. **Audit log** and the Overview activity feed (optional while there is a single admin).
 8. **Tests:** actions for Collections and Invites (slug collisions, publish, approve/idempotency/email
@@ -462,9 +456,6 @@ larger refactors.
 
 - **One admin for now.** Audit log and stale-state handling (R10) stay in the plan but move to the end
   and are optional; "invited by" is not worth showing yet. Don't build roles or multi-admin concurrency.
-- **Queue debug stays under admin**, at `/admin/system/queue`, listed in the System group at the
-  bottom of the sidebar. It is rarely used, so it gets no Overview card and no prominent slot. Redirect
-  the old `/jargon/debug` URL.
 - **Admins can see private user collections.** Keep them in the Collections list with owner email. They
   live under an "All collections" tab (read-only for private ones: no built-in/publish controls, since
   only the owner's content is involved); the default tab is built-in collections, which is the curation task.
@@ -487,7 +478,7 @@ addressed as follows.
 | 3 (#118) | Shared blocks, `useAdminAction`/`useAdminToggle`, every page migrated, confirmations, unknown instead of off, one date format              |
 | 4 (#119) | Migration: audit log, atomic publish and settings functions, `admin_list_collections`                                                      |
 | 5 (#120) | The app uses them; other people's private collections listed read-only; every collection action checks ownership                           |
-| 6 (#121) | AI hub with sub-pages, Narration under AI, Queue debug under System, redirects                                                             |
+| 6 (#121) | AI hub with sub-pages, Narration under AI, redirects                                                                                       |
 | 7 (#122) | People: waitlist with search, paging and bulk approve; members with credits and narration access                                           |
 | 8 (#123) | Collections: one status control, a checked address editor, search, paging, all-collections view                                            |
 | 9 (#124) | Audit rows, audit page, Overview activity feed                                                                                             |
@@ -510,7 +501,6 @@ Migrations: `20260930110000_admin_rpcs.sql` (phase 4). Nothing else in the datab
 
 - Term evaluation has no switch because nothing reads its setting (needs a change to a live route).
 - The collection list is capped at 1000 by PostgREST (needs paging in a migration).
-- Queue debug's server actions still use the signed-in guard (they only return the caller's own queue).
 - `actor_email` in the audit log outlives an account by design.
 - No component tests: the test environment is node only, so behaviour lives in pure, tested modules.
 - Nothing was verified in a browser (no admin sign-in was available to the agent doing the work): open each

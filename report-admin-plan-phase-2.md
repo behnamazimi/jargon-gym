@@ -19,8 +19,7 @@ does not protect later navigations, and layout and page render in parallel. So:
    layout, `max-w-7xl`, sidebar on `md+`, horizontally scrolling nav row on phones. Pages no longer
    render a wrapper or `<AdminNav />`.
 2. `components/admin/admin-sections.ts`: the single nav config (group, label, icon, href, match rule).
-   Groups: Overview; Manage (Collections, Invites); AI (AI credits, Narration); System (Queue debug, still
-   at `/jargon/debug` until phase 6). Helper `isSectionActive(pathname, href)`: exact for `/admin`,
+   Groups: Overview; Manage (Collections, Invites); AI (AI credits, Narration). Helper `isSectionActive(pathname, href)`: exact for `/admin`,
    segment-boundary prefix for the rest (`/admin/collections-x` does not match Collections).
 3. `components/admin/admin-nav.tsx` (client, replaces `components/jargon/admin/admin-nav.tsx`): a real
    `<nav aria-label="Admin">` with DaisyUI `menu` (`menu-vertical` on md+, `menu-horizontal` scroller on
@@ -79,8 +78,7 @@ App only. Revert the commit to roll back. URLs are unchanged, so nothing to redi
   `error.tsx` and `AdminPageSkeleton` lose their own width/padding wrappers.
 - `account-nav.ts`: one admin entry with a new icon (`LayoutDashboard`), unused icon imports removed,
   `STUDY_SCREEN_TITLE_PREFIXES` gets `/admin/narration` (keep `/admin` last), profile menu keeps a
-  separator but drops the group wrapper and label. Queue debug loses its menu entry until phase 6 moves it
-  under System; it stays in the admin sidebar.
+  separator but drops the group wrapper and label.
 - `requireAdminPage()` composes the already cached `getSessionUser` / `getUserIsAdmin`; no extra `cache()`.
   It is for pages and the layout only; actions keep `requireAdminClient`.
 - Guard test recurses through `app/(private)/admin`, asserts the call `await requireAdminPage()` (not only

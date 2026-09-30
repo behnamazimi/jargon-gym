@@ -377,8 +377,7 @@ writing:
 | Read mastery-temper weight                                 | 0.2                 | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
 
 These are reasoned starting points, not values fit to real usage data — this
-one in particular is meant to be tuned by feel from the debug queue view
-once it's live, the same way the rest of the scoring engine's constants
+one in particular is meant to be tuned by feel once it's live, the same way the rest of the scoring engine's constants
 get adjusted — see
 `trace-formula.md`'s "Open items to validate" section for what's still
 worth measuring once there's real pass/fail history to look at.
