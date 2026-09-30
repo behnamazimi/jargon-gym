@@ -2,6 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchAllRows } from "@/lib/supabase/fetch-all-rows";
 import type { TraceCandidate } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -101,12 +102,15 @@ export async function fetchTraceCandidates(
   _userId: string,
   scope: ReviewScope,
 ): Promise<TraceCandidate[]> {
-  const { data, error } = await client.rpc("my_get_trace_candidates", {
-    p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
-  });
-
-  if (error) throw error;
-  return mapCandidateRows(data ?? []);
+  const data = await fetchAllRows((from, to) =>
+    client
+      .rpc("my_get_trace_candidates", {
+        p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
+      })
+      .order("term_id")
+      .range(from, to),
+  );
+  return mapCandidateRows(data);
 }
 
 /** Service-role / admin client: candidates for an explicit userId. */
@@ -115,13 +119,16 @@ export async function fetchTraceCandidatesForUser(
   userId: string,
   scope: ReviewScope,
 ): Promise<TraceCandidate[]> {
-  const { data, error } = await client.rpc("get_trace_candidates", {
-    p_user_id: userId,
-    p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
-  });
-
-  if (error) throw error;
-  return mapCandidateRows(data ?? []);
+  const data = await fetchAllRows((from, to) =>
+    client
+      .rpc("get_trace_candidates", {
+        p_user_id: userId,
+        p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
+      })
+      .order("term_id")
+      .range(from, to),
+  );
+  return mapCandidateRows(data);
 }
 
 export {

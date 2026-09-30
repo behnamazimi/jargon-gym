@@ -1,6 +1,7 @@
 import { cache } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchAllRows } from "@/lib/supabase/fetch-all-rows";
 import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
 import { fetchUserCollection, fetchUserCollectionForUser } from "./collections";
 
@@ -54,11 +55,12 @@ export async function fetchProgressStateByDomain(
     return { knownTermIds: [], markedKnownTermIds: [], everMasteredTermIds: [] };
   }
 
-  const { data, error } = await client.rpc("my_progress_state_by_domain", {
-    p_domain_ids: domainIds,
-  });
-
-  if (error) throw error;
+  const data = await fetchAllRows((from, to) =>
+    client
+      .rpc("my_progress_state_by_domain", { p_domain_ids: domainIds })
+      .order("term_id")
+      .range(from, to),
+  );
 
   const now = new Date();
   const knownTermIds: string[] = [];
