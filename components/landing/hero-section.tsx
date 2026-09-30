@@ -15,8 +15,8 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
         </h1>
 
         <p className="mt-5 m-0 max-w-[40ch] text-lg leading-relaxed text-base-content/85">
-          Every field has its own shorthand insiders never stop to explain. Jargon Gym decodes it,
-          then drills you until it sticks.
+          Every field has shorthand insiders never explain, and every language has words you only
+          half know. Jargon Gym explains them, then drills you until they stick.
         </p>
 
         <div className="mt-8">

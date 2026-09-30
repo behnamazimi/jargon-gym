@@ -12,14 +12,29 @@ import {
 } from "@/components/content/content-page-shell";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+const AI_FEATURES = [
+  {
+    title: "Stories",
+    body: "A short story written around the terms you're due to read. Pick a style, a language level (A1 to C2), and how much help terms get.",
+  },
+  {
+    title: "AI quizzes",
+    body: "Quiz questions written from your terms, definitions, and examples.",
+  },
+  {
+    title: "Listen",
+    body: "Terms and stories read aloud. Stories highlight each sentence as it's spoken.",
+  },
+] as const;
+
 const SURFACES = [
   {
     title: "Web",
-    body: "Read, Review, and Quiz as their own pages, and where you import or browse collections.",
+    body: "Read (cards and Stories), Review, and Quiz as their own pages, and where you import or browse collections.",
   },
   {
     title: "Telegram bot",
-    body: "Same /read, /review, /quiz as the web, plus scheduled delivery for Read if you want terms pushed to you instead of opening the app.",
+    body: "Same /read, /review, /quiz as the web, plus scheduled delivery for Read if you want terms pushed to you instead of opening the app. Stories and audio are web-only.",
   },
   {
     title: "Desktop widget",
@@ -38,7 +53,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageHeader
           icon={Compass}
           title="Before you sign up"
-          description="A private app for learning jargon well enough to use it, not just recognize it. Here's the full picture before you ask for an invite."
+          description="A private app for learning a field's jargon or a language's vocabulary well enough to use it, not just recognize it. Here's the full picture before you ask for an invite."
           backHref={isLoggedIn ? JARGON_HOME_PATH : PUBLIC_HOME_PATH}
           backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
@@ -57,10 +72,25 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             term, so testing doesn&apos;t disappear, just stays secondary. Quiz comes every few
             days, when I want a harder check, recognizing a term among options is easier than
             recalling it cold, so a Quiz pass alone doesn&apos;t mean I&apos;m done with a term.
-            Testing is optional though, the rest of the app works fine if you only ever Read. Quiz
-            works out of the box, no setup needed, and gets sharper with free AI credits, or your
-            own AI API key (Google or Anthropic), so it can write better questions. When you use AI
-            credits, the terms, definitions and any outline you write are sent to our AI provider.
+            Testing is optional though, the rest of the app works fine if you only ever Read.
+          </p>
+        </ContentPageSection>
+
+        <ContentPageSection title="Where AI comes in">
+          <p className="m-0">
+            AI is optional and only ever works from your own terms. There are three features:
+          </p>
+          <ContentPageTitledBulletList items={AI_FEATURES} />
+          <p className="m-0">
+            Stories and AI quizzes run on free AI credits, or on your own AI API key (Google or
+            Anthropic) if you add one. Simple quizzes, Read, and Review never use credits, so the
+            app works fine without any of this. Some AI features may be switched off or limited at
+            times.
+          </p>
+          <p className="m-0">
+            What leaves the app: AI quizzes send term names, definitions, and examples, and Stories
+            send term names, definitions, and any outline you write, to Google or Anthropic. For
+            audio, the text being read aloud goes to a speech provider.
           </p>
         </ContentPageSection>
 
@@ -80,8 +110,9 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageSection title="Getting terms in">
           <p className="m-0">
             I use a skill that generates jargon lists for different fields, more on that once
-            you&apos;re in on the import page. You can also add terms one at a time, or skip
-            building anything and browse a shared collection instead.{" "}
+            you&apos;re in on the import page. There&apos;s a matching one for language vocabulary,
+            words, phrases, or grammar for a language and level. You can also add terms one at a
+            time, or skip building anything and browse a shared collection instead.{" "}
             <strong className="font-medium text-base-content">
               Any collection you build can be shared too
             </strong>
@@ -128,8 +159,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
             <Link href="/j" className={contentPageLinkClass}>
               public collections
             </Link>{" "}
-            — Agentic Development, Software Engineering, Standup, and more — and read real terms
-            before deciding whether to request access.
+            and read real terms before deciding whether to request access.
           </p>
           <p className="m-0">
             It&apos;s invite-only after that, and not an instant code. You{" "}

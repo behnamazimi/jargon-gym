@@ -102,8 +102,10 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
 
         <p className="m-0 mb-4 text-sm leading-relaxed text-base-content/80">
           This is for anyone who wants to understand how content is structured in the app, or who
-          plans to add terms of their own. You can import a JSON list, paste output from an LLM
-          prompt I prepared for generating a field&apos;s jargon, or add terms one at a time.
+          plans to add terms of their own. A term can be a piece of jargon or a word, phrase, or
+          grammar construction in a language you&apos;re learning. You can import a JSON list, paste
+          output from an LLM prompt I prepared for generating a field&apos;s jargon or a
+          language&apos;s vocabulary, or add terms one at a time.
         </p>
 
         <ContentPageSection title="Why not just a definition">
@@ -151,14 +153,14 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
 
         <ContentPageSection title="Known and unknown">
           <p className="m-0">
-            &ldquo;Known&rdquo; isn&apos;t something you set by hand anymore, it&apos;s read off how
-            well you&apos;ve actually retained the term: how much you&apos;ve read it, how
-            you&apos;ve done recalling it in Review, and how you&apos;ve done recognizing it in
-            Quiz. All three fade over time if you stop practicing, so the badge reflects where you
-            are right now, not a status you flip once and forget.
+            &ldquo;Known&rdquo; isn&apos;t something you set by hand, it&apos;s read off how well
+            you&apos;ve actually retained the term: how much you&apos;ve read it, how you&apos;ve
+            done recalling it in Review, and how you&apos;ve done recognizing it in Quiz. All three
+            fade over time if you stop practicing, so the badge reflects where you are right now,
+            not a status you flip once and forget.
           </p>
           <p className="m-0">
-            Read, Review, and Quiz all draw from the same set of terms now, each ranked by what
+            Read, Review, and Quiz all draw from the same set of terms, each ranked by what
             you&apos;re most at risk of forgetting in that mode. There&apos;s no separate known-only
             pool to graduate into, a term you haven&apos;t touched in a while can resurface in any
             of the three, and a strong run of practice is what moves the badge, not a manual toggle.
