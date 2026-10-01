@@ -1,13 +1,13 @@
 import { CircleCheck, Clock, Undo2, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type SwipeActionKind = "knew" | "markKnown" | "notYet" | "addToLearning";
+export type SwipeActionKind = "knew" | "markKnown" | "notYet" | "markUnknown";
 
 const SWIPE_ACTIONS: Record<SwipeActionKind, { label: string; icon: LucideIcon; tone: string }> = {
   knew: { label: "I knew this", icon: CircleCheck, tone: "bg-success/15 text-success" },
   markKnown: { label: "Mark known", icon: CircleCheck, tone: "bg-success/15 text-success" },
   notYet: { label: "Not yet", icon: Clock, tone: "bg-warning/15 text-warning" },
-  addToLearning: { label: "Add to learning", icon: Undo2, tone: "bg-info/15 text-info" },
+  markUnknown: { label: "Mark unknown", icon: Undo2, tone: "bg-info/15 text-info" },
 };
 
 /** Tinted label that fades in behind or over whatever is being swiped, so

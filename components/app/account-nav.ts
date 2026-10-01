@@ -42,10 +42,7 @@ export const ACCOUNT_OVERFLOW_NAV: AccountNavItem[] = [
   { href: "/jargon/settings", label: "Settings", icon: Settings },
 ];
 
-export const ACCOUNT_HOME_NAV: AccountNavItem[] = [
-  { href: "/jargon", label: "Library", icon: LayoutList },
-  ...ACCOUNT_OVERFLOW_NAV,
-];
+export const ACCOUNT_HOME_NAV: AccountNavItem[] = [...ACCOUNT_OVERFLOW_NAV];
 
 export const ADMIN_NAV_ITEMS: AccountNavItem[] = [
   { href: "/admin", label: "Admin panel", icon: LayoutDashboard },
