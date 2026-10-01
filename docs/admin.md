@@ -6,16 +6,17 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 
 ## Pages
 
-| Address               | What it is                                                                                                       |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity |
-| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend) and the members list                                       |
-| `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete        |
-| `/admin/collections`  | Built-in and all collections: status, public address                                                             |
-| `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                   |
-| `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                      |
-| `/admin/ai/narration` | Narration access, limits, audio sync                                                                             |
-| `/admin/system/audit` | What admins changed, and when                                                                                    |
+| Address               | What it is                                                                                                           |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity     |
+| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend) and the members list                                           |
+| `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete            |
+| `/admin/collections`  | Built-in and all collections: status, public address                                                                 |
+| `/admin/requests`     | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers |
+| `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                       |
+| `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                          |
+| `/admin/ai/narration` | Narration access, limits, audio sync                                                                                 |
+| `/admin/system/audit` | What admins changed, and when                                                                                        |
 
 Old addresses (`/admin/invites`, `/admin/ai-credits`, `/admin/narration`) redirect with
 temporary (307) redirects from `lib/redirects.ts`.
@@ -85,6 +86,17 @@ characters is required. Errors the admin should read use the database code `AD00
   The migration also made `domains.owner_id` cascade and let `referral_codes` keep `used_at` after its user is gone;
   both used to make every delete fail. Their waitlist row stays.
 - SQL checks: `supabase/tests/admin_user_management.sql` and `admin_delete_concurrency.sh`, run by hand.
+
+## Collection requests
+
+`/admin/requests` is the request desk (see [import.md](import.md#requests)). Simple
+changes (accept, ask, decline, merge, set a new date) are compare-and-set updates from
+`app/(private)/admin/requests/actions.ts` plus `writeAudit`, like the waitlist. Delivery
+writes into another person's account, so it is a database function
+(`admin_deliver_request`, `admin_deliver_existing_collection` in
+`20261002110000_collection_requests.sql`) that audits in the same transaction. Audit details
+hold ids and counts, never the topic, the terms or emails. SQL checks:
+`supabase/tests/collection_requests.sql` and `collection_requests_concurrency.sh`.
 
 ## The audit log
 

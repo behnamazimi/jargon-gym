@@ -69,3 +69,47 @@ keeps every `review_state` row attached to a finished term. Deleting an
 unfinished term loses nothing, because it has no history.
 
 Category is optional too. The category filter shows only with two or more.
+
+## Requests
+
+A person with only a topic can request a collection: `/jargon/import/request`,
+reached from the last row of the chooser's search and from Browse when a search
+finds nothing. The team builds the collection by hand and delivers it as a
+private collection the requester owns. Nothing here runs an AI model, and no
+screen says who does the work or implies automation.
+
+Requests ship switched off. `collection_request_settings.enabled` (one row,
+changed on `/admin/requests`) hides every entry point while off; open requests
+keep their cards and emails. `paused` shows a banner and gives new requests the
+longer estimate without touching the dates of requests already sent.
+
+- **Quota.** One open request at a time (a unique index) and three in 30 days.
+  Declined requests and requests cancelled before work started don't count.
+  `my_create_collection_request` enforces it; the form shows it first.
+- **States.** `requested` (shown as "In the queue"), `in_progress` ("Being
+  prepared", set only when the admin accepts), `needs_input` (one question, one
+  reply; the delivery clock pauses), `ready`, `declined`, `cancelled`, `merged`.
+  A merged request shows its primary's progress through
+  `my_list_collection_requests`. If a primary is cancelled or deleted, the oldest
+  merged request takes its place.
+- **Fulfil.** On `/admin/requests/[id]` the admin pastes the prepared list through
+  the same parser and Check screen as everyone else (`ImportFlow` with an
+  adapter). Every term needs a definition. `admin_deliver_request` runs
+  `_import_terms_for` once for the requester and once for each merged request, so
+  each person gets their own private, active copy; a taken name becomes
+  "Name (2)". A request a Browse collection already answers goes through
+  `admin_deliver_existing_collection`, which adds it to their Library.
+- **Email** (`lib/requests/email-copy.ts`, sent by `lib/admin/requests/notify.ts`):
+  Ready, a question, one delay notice ("Set new date"), and a decline. A failed
+  send never undoes the change; `email_failed` is set and the desk offers Resend.
+  There is no email on Accept. Everything people wrote is HTML-escaped.
+- **Copy rules.** `lib/requests/copy.ts` holds every user-facing string and
+  `copy.test.ts` scans it for the never-use list. The privacy line and the FAQ
+  answer (`REQUEST_COPY.public`) go into `before-you-sign-up` when requests are
+  switched on, not before.
+- **Metrics** come from request timestamps. For example, time to Ready against the
+  promise: `select avg(ready_at - created_at), avg(ready_at - due_at) from
+collection_requests where status = 'ready'`.
+
+A bad delivery is never cleaned up with SQL deletes: deleting a term removes its
+progress. The requester can delete a delivered collection they haven't used.
