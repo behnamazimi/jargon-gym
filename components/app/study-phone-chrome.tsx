@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Ellipsis } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode } from "react";
 import { STUDY_DOCK_TABS, emailInitials, studyScreenTitle } from "@/components/app/account-nav";
 import { BrandIcon } from "@/components/brand-icon";
@@ -11,7 +11,13 @@ import { StreakBadge } from "@/components/streak-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
-import { isDockPath, isLibraryPath, isMorePath } from "@/lib/chrome";
+import {
+  isDockPath,
+  isLibraryPath,
+  isMorePath,
+  isNestedFlowPath,
+  NESTED_FLOW_PARENT,
+} from "@/lib/chrome";
 import { cn } from "@/lib/utils";
 import { useStudyPhone } from "@/components/app/study-phone-context";
 
@@ -19,7 +25,9 @@ export { StudyPhoneProvider } from "@/components/app/study-phone-context";
 
 export function StudyPhoneTopBar() {
   const pathname = usePathname();
-  const { email, currentStreak, longestStreak, setMoreOpen, backHref } = useStudyPhone();
+  const { email, currentStreak, longestStreak, setMoreOpen, backHref, hasInAppHistory } =
+    useStudyPhone();
+  const router = useRouter();
   const initials = emailInitials(email);
   const subPage = isMorePath(pathname);
 
@@ -27,9 +35,18 @@ export function StudyPhoneTopBar() {
     <header className="sticky top-0 z-40 border-b border-base-300 bg-base-100/80 pt-safe backdrop-blur-sm md:hidden">
       <div className="navbar min-h-11 px-3 py-1">
         <div className="navbar-start">
-          {subPage ? (
+          {subPage && isNestedFlowPath(pathname) && hasInAppHistory ? (
+            <button
+              type="button"
+              className="btn btn-ghost btn-square min-h-11 min-w-11"
+              aria-label="Back"
+              onClick={() => router.back()}
+            >
+              <ArrowLeft className="size-5" strokeWidth={1.5} aria-hidden />
+            </button>
+          ) : subPage ? (
             <Link
-              href={backHref}
+              href={isNestedFlowPath(pathname) ? NESTED_FLOW_PARENT : backHref}
               className="btn btn-ghost btn-square min-h-11 min-w-11"
               aria-label="Back"
             >

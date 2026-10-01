@@ -1,8 +1,8 @@
 import { Braces } from "lucide-react";
+import { CopyJsonButton } from "@/components/jargon/import/copy-json-button";
 import { ImportCodePanel, ImportCard } from "@/components/jargon/import/import-ui";
 import { ImportLlmPrompt } from "@/components/jargon/import/import-llm-prompt";
 import { PageHeader } from "@/components/jargon/page-header";
-import { LinkButton } from "@/components/ui/button";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { listImportDestinations } from "@/lib/jargon/import/import-collections";
 import { IMPORT_SAMPLE_PAYLOAD, stringifyImportPayload } from "@/lib/jargon/import/sample-payload";
@@ -16,6 +16,8 @@ export default async function MoreImportOptionsPage() {
   const collections = await listImportDestinations(auth.supabase, auth.user.id)
     .then((result) => result.collections)
     .catch(() => []);
+
+  const sampleJson = stringifyImportPayload(IMPORT_SAMPLE_PAYLOAD);
 
   return (
     <>
@@ -31,11 +33,10 @@ export default async function MoreImportOptionsPage() {
         title="Choose a JSON file"
         description="JSON works in the same place as any list. Paste it or choose the file there. Term is the only required field. Definition, category, example, mental model, in practice, anti-example, debated, note and links to other terms are optional."
       >
-        <LinkButton href="/jargon/import/paste" className="min-h-11 w-full md:w-auto">
-          Paste or choose a file
-        </LinkButton>
         <h3 className="m-0 text-sm font-semibold">The JSON format</h3>
-        <ImportCodePanel>{stringifyImportPayload(IMPORT_SAMPLE_PAYLOAD)}</ImportCodePanel>
+        <ImportCodePanel actions={<CopyJsonButton value={sampleJson} />}>
+          {sampleJson}
+        </ImportCodePanel>
       </ImportCard>
       <ImportLlmPrompt collections={collections} />
     </>
