@@ -42,6 +42,24 @@ async function notifyTeam(topic: string, kind: string, language: string) {
   });
 }
 
+type Auth = Exclude<Awaited<ReturnType<typeof requireAuthenticatedClient>>, { error: string }>;
+
+/** An open request or a used-up quota gets the specific sentence; everything else is general. */
+async function explainFailure(auth: Auth, error: { message?: string } | null): Promise<string> {
+  const failure = failureFor(error);
+  if (failure.code === "closed") return REQUEST_COPY.form.closed;
+  if (failure.code === "open_exists" || failure.code === "quota") {
+    try {
+      const { timezone } = await getStudyPhoneUserSettings(auth.user.id);
+      const message = blockedMessage(entryFor(await fetchRequestQuota(auth.supabase), timezone));
+      if (message) return message;
+    } catch {
+      // Fall through to the general message.
+    }
+  }
+  return REQUEST_COPY.form.sendFailed;
+}
+
 /** Sends the request. The database enforces the switch, the one-open rule and
  *  the quota; this only turns what it says into plain words. */
 export async function createRequest(input: unknown): Promise<CreateRequestResult> {
@@ -67,18 +85,7 @@ export async function createRequest(input: unknown): Promise<CreateRequestResult
   });
 
   if (error || !created || typeof created !== "object" || Array.isArray(created)) {
-    const failure = failureFor(error);
-    if (failure.code === "open_exists" || failure.code === "quota") {
-      try {
-        const { timezone } = await getStudyPhoneUserSettings(auth.user.id);
-        const message = blockedMessage(entryFor(await fetchRequestQuota(auth.supabase), timezone));
-        if (message) return { ok: false, message };
-      } catch {
-        // Fall through to the general message.
-      }
-    }
-    if (failure.code === "closed") return { ok: false, message: REQUEST_COPY.form.closed };
-    return { ok: false, message: REQUEST_COPY.form.sendFailed };
+    return { ok: false, message: await explainFailure(auth, error) };
   }
 
   const row = created as { id: string; due_at: string; topic: string };

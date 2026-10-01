@@ -27,7 +27,7 @@ export function RequestRow({ entry, query }: { entry: RequestEntry; query: strin
   }
 
   return (
-    <div className="space-y-2" data-tour="import-request">
+    <div className="space-y-2">
       <LinkButton
         href={`/jargon/import/request?topic=${encodeURIComponent(trimmed.slice(0, 120))}`}
         variant="ghost"

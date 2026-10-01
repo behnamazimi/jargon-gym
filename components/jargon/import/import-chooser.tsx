@@ -8,7 +8,7 @@ import { Button, LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RequestRow } from "@/components/requests/request-row";
 import { useBrowseSearch } from "@/hooks/use-browse-search";
-import { SearchResults, type SearchState } from "@/components/jargon/import/chooser-search-results";
+import { SearchResults } from "@/components/jargon/import/chooser-search-results";
 import { OneTermDialog } from "@/components/jargon/import/one-term-dialog";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import type { RequestEntry } from "@/lib/requests/entry";

@@ -2,9 +2,13 @@ import { getJargonSetupData } from "@/app/(private)/jargon/(collection)/actions"
 import { JargonPage } from "@/components/jargon/jargon-page";
 import type { ImportedSummary } from "@/components/jargon/imported-banner";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
+import { RequestsSection } from "@/components/requests/requests-section";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 import { batchResultSchema } from "@/lib/jargon/import/commit-schema";
+import { getSessionUser } from "@/lib/auth/require-session";
+import { fetchMyRequests } from "@/lib/requests/repository";
+import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
@@ -38,15 +42,28 @@ async function loadImportedSummary(
   };
 }
 
+async function loadRequests() {
+  const { supabase, user } = await getSessionUser();
+  if (!user) return [];
+  try {
+    const { timezone } = await getStudyPhoneUserSettings(user.id);
+    return await fetchMyRequests(supabase, timezone);
+  } catch (error) {
+    console.error("Couldn't load collection requests:", error);
+    return [];
+  }
+}
+
 export default async function JargonListPage({ searchParams }: PageProps) {
   const { domain: selectedDomainId, added, add } = await searchParams;
-  const [setup, importedSummary] = await Promise.all([
+  const [setup, importedSummary, requests] = await Promise.all([
     getJargonSetupData(selectedDomainId),
     loadImportedSummary(added),
+    loadRequests(),
   ]);
 
   if ("emptyCollection" in setup) {
-    return <EmptyCollection />;
+    return <EmptyCollection requests={requests} />;
   }
 
   if ("error" in setup) {
@@ -65,6 +82,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
       narrationAccess={setup.narrationAccess}
       importedSummary={importedSummary}
       openAddTerm={add === "1"}
+      topSlot={<RequestsSection requests={requests} />}
     />
   );
 }
