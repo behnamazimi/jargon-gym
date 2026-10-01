@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { isDockPath, isLibraryPath, isMorePath, isStudyPath, studyBackTarget } from "./chrome";
+import {
+  isDockPath,
+  isLibraryPath,
+  isMorePath,
+  isNestedFlowPath,
+  isStudyPath,
+  studyBackTarget,
+} from "./chrome";
 
 describe("isStudyPath", () => {
   it("treats jargon and admin as study chrome", () => {
@@ -64,5 +71,22 @@ describe("studyBackTarget", () => {
     expect(studyBackTarget("/jargon/settings", "tab=ai")).toBeNull();
     expect(studyBackTarget("/admin/people", "")).toBeNull();
     expect(studyBackTarget("/how-terms-work", "")).toBeNull();
+  });
+});
+
+describe("isNestedFlowPath", () => {
+  it.each([
+    ["/jargon/import", false],
+    ["/jargon/import/paste", true],
+    ["/jargon/import/apps", true],
+    ["/jargon/import/apps/quizlet", true],
+    ["/jargon/import/more", true],
+    ["/jargon/import/request", true],
+    ["/jargon/capture", true],
+    ["/jargon/settings", false],
+    ["/jargon/read", false],
+    ["/jargon", false],
+  ])("%s -> %s", (path, expected) => {
+    expect(isNestedFlowPath(path)).toBe(expected);
   });
 });

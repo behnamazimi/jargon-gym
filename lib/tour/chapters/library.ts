@@ -14,7 +14,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-import",
         title: "Add your own",
-        body: "Paste a list, bring a deck from another app, or start empty.",
+        body: "Paste a list, export from another app and paste it, or start empty.",
       },
     ],
   },

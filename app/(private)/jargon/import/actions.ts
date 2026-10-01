@@ -12,6 +12,7 @@ import {
 } from "@/lib/jargon/import/commit-schema";
 import {
   findDestinationMatches,
+  listCollectionTermNames,
   listImportDestinations,
   type DestinationMatch,
 } from "@/lib/jargon/import/import-collections";
@@ -52,6 +53,24 @@ export async function checkImportAgainstDestination(
     return { matches };
   } catch {
     return { error: "We couldn't check what's already there. Try again." };
+  }
+}
+
+/** A collection's term names, for the "exclude terms" box of the developer command. */
+export async function getCollectionTermNames(
+  domainId: unknown,
+): Promise<{ terms: string[] } | { error: string }> {
+  const id = z.string().uuid().safeParse(domainId);
+  if (!id.success) return { error: "That collection isn't available." };
+
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: "Sign in to add terms." };
+
+  try {
+    const terms = await listCollectionTermNames(auth.supabase, auth.user.id, id.data);
+    return terms ? { terms } : { error: "That collection isn't available." };
+  } catch {
+    return { error: "We couldn't load that collection's terms. Try again." };
   }
 }
 

@@ -2,14 +2,16 @@ import { CollectionSelect } from "@/components/jargon/collection-select";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { OwnedCollectionForImport } from "@/lib/jargon/import/owned-collections";
+import type { ImportDestination } from "@/lib/jargon/import/import-collections";
 import {
   DEFAULT_COUNT,
   NEW_COLLECTION_KEY,
 } from "@/components/jargon/import/import-llm-prompt-helpers";
 
 type ImportLlmPromptFieldsProps = {
-  collections: OwnedCollectionForImport[];
+  collections: ImportDestination[];
+  loadError: string | null;
+  isLoadingTerms: boolean;
   selectedCollectionId: string;
   onCollectionChange: (key: string) => void;
   domain: string;
@@ -22,6 +24,8 @@ type ImportLlmPromptFieldsProps = {
 
 export function ImportLlmPromptFields({
   collections,
+  loadError,
+  isLoadingTerms,
   selectedCollectionId,
   onCollectionChange,
   domain,
@@ -44,12 +48,13 @@ export function ImportLlmPromptFields({
             collections={collections.map((collection) => ({
               id: collection.id,
               name: collection.name,
-              termCount: collection.terms.length > 0 ? collection.terms.length : undefined,
+              termCount: collection.termCount > 0 ? collection.termCount : undefined,
             }))}
             value={selectedCollectionId}
             leadingOption={{ id: NEW_COLLECTION_KEY, label: "New collection" }}
             onChange={onCollectionChange}
           />
+          {loadError ? <p className="m-0 mt-1 text-xs text-error">{loadError}</p> : null}
         </Field>
       ) : null}
 
@@ -86,7 +91,7 @@ export function ImportLlmPromptFields({
           id="import-skill-exclude"
           value={exclude}
           onChange={(event) => onExcludeChange(event.target.value)}
-          placeholder="e.g. Agile, Scrum, OKR"
+          placeholder={isLoadingTerms ? "Loading terms…" : "e.g. Agile, Scrum, OKR"}
           rows={2}
           className="min-h-11 text-sm"
         />

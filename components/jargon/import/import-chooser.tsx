@@ -1,9 +1,9 @@
 "use client";
 
-import { Layers, List, Plus, Search } from "lucide-react";
+import { FolderPlus, Layers, List, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { CreateCollectionDialog } from "@/components/jargon/create-collection-dialog";
-import { Button, LinkButton } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RequestRow } from "@/components/requests/request-row";
 import { useBrowseSearch } from "@/hooks/use-browse-search";
@@ -11,6 +11,8 @@ import { SearchResults } from "@/components/jargon/import/chooser-search-results
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import type { RequestEntry } from "@/lib/requests/entry";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
+
+const SECTION_HEADING = "m-0 text-xs font-semibold tracking-wider text-base-content/60 uppercase";
 
 const ROW_CLASS =
   "flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary";
@@ -48,8 +50,15 @@ export function ImportChooser({
   const [createOpen, setCreateOpen] = useState(false);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-2" data-tour="import-search">
+    <div className="space-y-8">
+      <section
+        className="flex flex-col gap-2"
+        data-tour="import-search"
+        aria-labelledby="find-shared"
+      >
+        <h2 id="find-shared" className={SECTION_HEADING}>
+          Find a shared collection
+        </h2>
         <div className="relative">
           <Search
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-base-content/60"
@@ -81,18 +90,15 @@ export function ImportChooser({
           entry={requestEntry}
           query={search.status === "done" || search.status === "error" ? query : ""}
         />
-      </div>
+      </section>
 
       <section
         className="flex flex-col gap-2"
         data-tour="import-routes"
         aria-labelledby="start-from"
       >
-        <h2
-          id="start-from"
-          className="m-0 text-xs font-semibold tracking-wider text-base-content/60 uppercase"
-        >
-          Or start from what you have
+        <h2 id="start-from" className={SECTION_HEADING}>
+          Or add your own
         </h2>
         <ul className="shadow-surface m-0 list-none divide-y divide-base-300/60 overflow-hidden rounded-2xl bg-base-100 p-0">
           <li>
@@ -116,8 +122,8 @@ export function ImportChooser({
             >
               <RowContent
                 icon={Layers}
-                title="A deck from another app"
-                description="Quizlet, Anki, Google Translate and more"
+                title="Export from another app"
+                description="How to copy your deck out of Quizlet, Anki and more"
               />
             </LinkButton>
           </li>
@@ -134,21 +140,17 @@ export function ImportChooser({
               />
             </LinkButton>
           </li>
+          <li>
+            <button type="button" className={ROW_CLASS} onClick={() => setCreateOpen(true)}>
+              <RowContent
+                icon={FolderPlus}
+                title="Start an empty collection"
+                description="Name it now and add terms later"
+              />
+            </button>
+          </li>
         </ul>
       </section>
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="m-0 text-sm text-base-content/60">Start empty and add terms later</p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="min-h-11"
-          onPress={() => setCreateOpen(true)}
-        >
-          New empty collection
-        </Button>
-      </div>
 
       <div className="flex justify-center">
         <LinkButton

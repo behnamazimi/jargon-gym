@@ -33,3 +33,13 @@ export function studyBackTarget(pathname: string, search: string): string | null
   if (!isDockPath(pathname)) return null;
   return search ? `${pathname}?${search}` : pathname;
 }
+
+/** Pages inside a multi-step flow (the paste, apps, more and request pages
+ *  under the import chooser, and capture). Their back arrow returns to the page
+ *  that opened them, not to the last dock page. */
+export function isNestedFlowPath(pathname: string): boolean {
+  return pathname.startsWith("/jargon/import/") || pathname === "/jargon/capture";
+}
+
+/** Where a nested page's back arrow goes when there's no earlier page in this visit. */
+export const NESTED_FLOW_PARENT = "/jargon/import";

@@ -8,7 +8,7 @@ export default function AppPickerPage() {
     <>
       <PageHeader
         icon={Layers}
-        title="From another app"
+        title="Export from another app"
         backHref="/jargon/import"
         backLabel="Add a collection"
         compactOnPhone

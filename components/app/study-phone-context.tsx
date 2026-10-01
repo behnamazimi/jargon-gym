@@ -23,6 +23,8 @@ type StudyPhoneContextValue = {
   aiCreditsLine: AiCreditsLine | null;
   /** Where the top bar's back arrow goes on overflow pages. */
   backHref: string;
+  /** True once the visitor has navigated inside the app, so "back" has somewhere to go. */
+  hasInAppHistory: boolean;
 };
 
 const StudyPhoneContext = createContext<StudyPhoneContextValue | null>(null);
@@ -66,6 +68,12 @@ export function StudyPhoneProvider({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [backHref, setBackHref] = useState("/jargon");
+  const [seenPath, setSeenPath] = useState(pathname);
+  const [hasInAppHistory, setHasInAppHistory] = useState(false);
+  if (pathname !== seenPath) {
+    setSeenPath(pathname);
+    setHasInAppHistory(true);
+  }
 
   // Remember the last dock page while the chrome stays mounted, so an
   // overflow page's back arrow returns there. A cold load of an overflow
@@ -84,6 +92,7 @@ export function StudyPhoneProvider({
       setMoreOpen,
       aiCreditsLine: aiCreditsLine(aiCreditsMode, aiCreditsLoad),
       backHref,
+      hasInAppHistory,
     }),
     [
       email,
@@ -96,6 +105,7 @@ export function StudyPhoneProvider({
       aiCreditsMode,
       aiCreditsLoad,
       backHref,
+      hasInAppHistory,
     ],
   );
 

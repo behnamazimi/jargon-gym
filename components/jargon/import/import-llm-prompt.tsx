@@ -1,7 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ImportCard } from "@/components/jargon/import/import-ui";
 import { CopyCommand } from "@/components/jargon/import/import-copy-command";
 import { ImportLlmPromptFields } from "@/components/jargon/import/import-llm-prompt-fields";
@@ -10,18 +10,25 @@ import {
   INSTALL_COMMAND,
   NEW_COLLECTION_KEY,
 } from "@/components/jargon/import/import-llm-prompt-helpers";
-import type { OwnedCollectionForImport } from "@/lib/jargon/import/owned-collections";
+import { getCollectionTermNames } from "@/app/(private)/jargon/import/actions";
+import type { ImportDestination } from "@/lib/jargon/import/import-collections";
 
-export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionForImport[] }) {
+export function ImportLlmPrompt({ collections }: { collections: ImportDestination[] }) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(NEW_COLLECTION_KEY);
   const [domain, setDomain] = useState("");
   const [count, setCount] = useState("");
   const [exclude, setExclude] = useState("");
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const latestPick = useRef(0);
+  const [isLoadingTerms, setIsLoadingTerms] = useState(false);
 
   const runCommand = buildRunCommand(domain, count, exclude);
 
-  function handleCollectionChange(key: string) {
+  async function handleCollectionChange(key: string) {
+    const pick = ++latestPick.current;
     setSelectedCollectionId(key);
+    setLoadError(null);
+    setIsLoadingTerms(false);
 
     if (key === NEW_COLLECTION_KEY) {
       setDomain("");
@@ -33,12 +40,21 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
     if (!collection) return;
 
     setDomain(collection.name);
-    setExclude(collection.terms.join(", "));
+    setExclude("");
+    setIsLoadingTerms(true);
+    const result = await getCollectionTermNames(key);
+    if (pick !== latestPick.current) return;
+    setIsLoadingTerms(false);
+    if ("error" in result) {
+      setLoadError(result.error);
+      return;
+    }
+    setExclude(result.terms.join(", "));
   }
 
   return (
     <ImportCard
-      icon={Sparkles}
+      icon={<Sparkles aria-hidden strokeWidth={1.5} />}
       title="Generate JSON with an AI skill (for developers)"
       description="Install the glossary skill once, generate JSON for your domain, then paste it on the Paste screen."
     >
@@ -57,8 +73,10 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
         >
           <ImportLlmPromptFields
             collections={collections}
+            loadError={loadError}
+            isLoadingTerms={isLoadingTerms}
             selectedCollectionId={selectedCollectionId}
-            onCollectionChange={handleCollectionChange}
+            onCollectionChange={(key) => void handleCollectionChange(key)}
             domain={domain}
             onDomainChange={setDomain}
             count={count}
