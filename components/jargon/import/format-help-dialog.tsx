@@ -66,15 +66,42 @@ export function FormatHelpButton({ className }: { className?: string }) {
             One word per line. Each is saved as a term to finish later, and stays out of study until
             it has a definition.
           </Format>
-          <Format title="A term, then its definition on the next line">
-            Works when the lines alternate short and long.
+          <Format
+            title="Alternating lines"
+            example={
+              "API\nA way for programs to talk to each other\nSLA\nA promise about the level of service"
+            }
+          >
+            No separator at all: a short term line (up to 40 characters), then a longer definition
+            line, repeated. Needs an even number of lines. If your list has a dash or colon, use
+            that instead; it&apos;s more reliable.
           </Format>
-          <Format title="A spreadsheet or CSV" example={"Term\tDefinition\tExample\tCategory"}>
+          <Format
+            title="A spreadsheet or CSV"
+            example={
+              "Term,Definition,Example,Category\nAPI,A way for programs to talk to each other,The app calls the API,Tech"
+            }
+          >
             Copy the cells from Sheets, Excel, Numbers or a Docs table and paste them, or choose a
-            CSV or TSV file. Two columns are the term and its definition. With three or more you
-            choose what each column is: Term, Definition, Example, Note, Category or Ignore. Headers
-            like &ldquo;example&rdquo;, &ldquo;notes&rdquo; and &ldquo;category&rdquo; are matched
-            for you. Without a header, the first two columns are used.
+            CSV or TSV file (commas, semicolons or tabs). Two columns are the term and its
+            definition. With three or more you choose what each column is on the next screen. A
+            header row is recognised only when every cell in it is one of these words:
+            <span className="mt-1 block">
+              <b>Term:</b> term, word, front, question, woord, begrip, vraag
+              <br />
+              <b>Definition:</b> definition, meaning, translation, back, answer, betekenis,
+              vertaling, antwoord
+              <br />
+              <b>Example:</b> example, voorbeeld
+              <br />
+              <b>Note:</b> note, notes, notitie, notities
+              <br />
+              <b>Category:</b> category, categorie, tag, tags, deck
+            </span>
+            <span className="mt-1 block">
+              Any other header word and the first row is read as a term, so rename it or pick the
+              columns yourself. With no header, the first two columns are used.
+            </span>
           </Format>
           <Format title="Exports from other apps">
             Quizlet exports (with the usual separators, or your own like <code>##</code>) and
