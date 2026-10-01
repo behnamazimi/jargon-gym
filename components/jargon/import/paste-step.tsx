@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { FormatHelpButton } from "@/components/jargon/import/format-help-dialog";
 import { ImportFailurePanel } from "@/components/jargon/import/import-errors";
 import { decodeFileBytes } from "@/lib/jargon/import/parse/decode";
 import type { PasteProblem } from "@/lib/jargon/import/read-input";
@@ -86,15 +87,18 @@ export function PasteStep({
 
   return (
     <div className="space-y-3">
-      <Textarea
-        ref={textareaRef}
-        value={draft}
-        aria-label="Your list"
-        placeholder={PLACEHOLDER}
-        className="min-h-64 text-base leading-relaxed"
-        onChange={(event) => onTextChange(event.target.value)}
-        onPaste={handlePaste}
-      />
+      <div className="relative">
+        <Textarea
+          ref={textareaRef}
+          value={draft}
+          aria-label="Your list"
+          placeholder={PLACEHOLDER}
+          className="min-h-64 pr-12 text-base leading-relaxed"
+          onChange={(event) => onTextChange(event.target.value)}
+          onPaste={handlePaste}
+        />
+        <FormatHelpButton className="absolute top-1 right-1" />
+      </div>
 
       {draft.trim() ? (
         <Button type="button" className="min-h-11 w-full" onPress={() => onCheck(draft)}>
