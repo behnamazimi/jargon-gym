@@ -11,7 +11,7 @@ export function computeTermEvalHash(term: EvalTerm): string {
     EVAL_VERSION,
     term.domainName.trim(),
     term.term.trim(),
-    term.category.trim(),
+    (term.category ?? "").trim(),
     term.definition.trim(),
     text(term.example),
     text(term.mentalModel),

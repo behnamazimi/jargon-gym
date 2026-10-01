@@ -29,7 +29,7 @@ export async function fetchWidgetState(
   const terms: WidgetTerm[] = cards.map((card) => ({
     id: card.id,
     term: card.term,
-    category: card.category,
+    category: card.category ?? "",
     definition: card.definition,
     domainId: card.domainId,
     domainName: card.domainName,

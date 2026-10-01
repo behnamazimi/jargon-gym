@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionRunner } from "@/hooks/use-action-runner";
-import { createTerm, deleteTerm, updateTerm } from "@/app/(private)/jargon/actions";
+import { createTerm, deleteTerm, finishTerm, updateTerm } from "@/app/(private)/jargon/actions";
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import type { TermInput } from "@/lib/jargon/term-schema";
 
@@ -29,6 +29,16 @@ export function useTermActions() {
       relationshipSync?: RelationshipSyncPayload,
       onSuccess?: () => void,
     ) => run(() => updateTerm(termId, input, relationshipSync), { busyKey: termId, onSuccess }),
+    finishTerm: (
+      termId: string,
+      input: { definition: string; category?: string | null },
+      onSuccess?: () => void,
+    ) =>
+      run(() => finishTerm(termId, input), {
+        busyKey: termId,
+        onSuccess,
+        skipRefresh: true,
+      }),
     deleteTerm: (termId: string) =>
       run(() => deleteTerm(termId), { busyKey: termId, skipRefresh: true }),
   };

@@ -13,8 +13,8 @@ export const LIBRARY_CHAPTERS = [
       },
       {
         target: "library-import",
-        title: "Or bring your own",
-        body: "Start an empty collection and add terms one by one, or import a JSON file.",
+        title: "Add your own",
+        body: "Paste a list, bring a deck from another app, or start empty.",
       },
     ],
   },

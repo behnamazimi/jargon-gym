@@ -36,7 +36,9 @@ function formatRelationships(relationships: TermCardRelationship[]): string {
 function buildTermHeader(term: TermCard): string {
   return (
     `<b>${escapeText(term.term)}</b>\n` +
-    `${escapeText(term.domainName)} · ${escapeText(term.category)}`
+    (term.category
+      ? `${escapeText(term.domainName)} · ${escapeText(term.category)}`
+      : escapeText(term.domainName))
   );
 }
 

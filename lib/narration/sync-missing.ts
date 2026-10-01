@@ -65,6 +65,7 @@ async function fetchAllTermsForDomain(admin: AdminClient, domainId: string): Pro
       .from("terms")
       .select(TERM_FIELD_COLUMNS)
       .eq("domain_id", domainId)
+      .not("definition", "is", null)
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
     terms.push(...((data ?? []) as TermRow[]));
@@ -84,6 +85,7 @@ async function fetchAllTermsForDomains(
         .from("terms")
         .select(TERM_FIELD_COLUMNS)
         .in("domain_id", domainChunk)
+        .not("definition", "is", null)
         .range(from, from + PAGE_SIZE - 1);
       if (error) throw error;
       terms.push(...((data ?? []) as TermRow[]));

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { attachRelationshipsToTerms, mapDomain, mapTerm } from "./mappers";
+import { attachRelationshipsToTerms, mapDomain, mapTermsByState } from "./mappers";
 import { fetchProgressStateByDomain, resolveReviewDomainIds } from "./known-state";
 import { fetchTermRelationshipsForDomain, fetchTermsByDomain } from "./terms";
 import type { JargonPageData } from "./types";
@@ -46,6 +46,7 @@ export async function loadJargonPageData(
         source: row.source,
         isActiveForReview: activeSet.has(row.id),
         termCount: row.termCount,
+        unfinishedCount: row.unfinishedCount,
         knownCount: row.knownCount,
         termsLearnedCount: row.termsLearnedCount,
         markedKnownCount: row.markedKnownCount,
@@ -61,6 +62,7 @@ export async function loadJargonPageData(
       source: selectedRow.source,
       isActiveForReview: activeSet.has(selectedRow.id),
       termCount: selectedRow.termCount,
+      unfinishedCount: selectedRow.unfinishedCount,
       knownCount: selectedRow.knownCount,
       termsLearnedCount: selectedRow.termsLearnedCount,
       markedKnownCount: selectedRow.markedKnownCount,
@@ -70,7 +72,7 @@ export async function loadJargonPageData(
     // selected collection even when it's paused — reviewDomainIds would omit
     // it and the collection page would paint every known term as unknown.
     const termRows = await fetchTermsByDomain(client, selectedRow.id);
-    const mappedTerms = termRows.map(mapTerm);
+    const { terms: mappedTerms, unfinishedTerms } = mapTermsByState(termRows);
     const [progressState, relationshipRows] = await Promise.all([
       fetchProgressStateByDomain(client, [selectedRow.id]),
       fetchTermRelationshipsForDomain(client, selectedRow.id),
@@ -82,6 +84,7 @@ export async function loadJargonPageData(
       domain,
       domains,
       terms,
+      unfinishedTerms,
       knownTermIds,
       markedKnownTermIds,
       everMasteredTermIds,

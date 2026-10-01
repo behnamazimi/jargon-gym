@@ -10,7 +10,9 @@ export function formatReviewQuestion(
 ): string {
   let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
   message += `${escapeText(term.definition)}\n\n`;
-  message += `<i>Category: ${escapeText(term.category)}</i> · ${escapeText(term.domainName)}`;
+  message += term.category
+    ? `<i>Category: ${escapeText(term.category)}</i> · ${escapeText(term.domainName)}`
+    : `<i>${escapeText(term.domainName)}</i>`;
   return message;
 }
 

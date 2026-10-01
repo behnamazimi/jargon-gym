@@ -3,12 +3,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TermRelationshipsEditor } from "@/components/jargon/term-relationships-editor";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
-import type { TermInput } from "@/lib/jargon/term-schema";
+import type { TermFormValues } from "@/lib/jargon/term-schema";
 import type { Term } from "@/lib/jargon/types";
 
 type TermFormFieldsProps = {
-  form: TermInput;
-  onFieldChange: <K extends keyof TermInput>(key: K, value: TermInput[K]) => void;
+  form: TermFormValues;
+  onFieldChange: <K extends keyof TermFormValues>(key: K, value: TermFormValues[K]) => void;
   canManageRelationships: boolean;
   relationshipDrafts: RelationshipDraft[];
   onRelationshipDraftsChange: (drafts: RelationshipDraft[]) => void;
@@ -17,8 +17,8 @@ type TermFormFieldsProps = {
 };
 
 type FieldsProps = {
-  form: TermInput;
-  onFieldChange: <K extends keyof TermInput>(key: K, value: TermInput[K]) => void;
+  form: TermFormValues;
+  onFieldChange: <K extends keyof TermFormValues>(key: K, value: TermFormValues[K]) => void;
 };
 
 export function CategoryField({
@@ -28,7 +28,7 @@ export function CategoryField({
 }: FieldsProps & { required?: boolean }) {
   return (
     <Field>
-      <FieldLabel htmlFor="term-category">Category</FieldLabel>
+      <FieldLabel htmlFor="term-category">Category (optional)</FieldLabel>
       <Input
         id="term-category"
         value={form.category}
@@ -91,7 +91,7 @@ export function TermFormFields({
         />
       </Field>
 
-      <CategoryField form={form} onFieldChange={onFieldChange} required />
+      <CategoryField form={form} onFieldChange={onFieldChange} />
 
       <Field>
         <FieldLabel htmlFor="term-definition">Definition</FieldLabel>

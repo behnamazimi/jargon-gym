@@ -28,8 +28,8 @@ export const TOUR_TARGETS = [
   "triage-actions",
   "browse-filters",
   "browse-add",
-  "import-json",
-  "import-validate",
+  "import-search",
+  "import-routes",
   "settings-ai",
 ] as const;
 

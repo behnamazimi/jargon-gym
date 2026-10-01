@@ -1,62 +1,107 @@
 "use client";
 
 import { ArrowRight, CheckCircle2, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
+import { useMountEffect } from "@/hooks/use-mount-effect";
+import { clearDraft } from "@/lib/jargon/import/draft-store";
 import { pluralize } from "@/lib/utils";
-import { dropImportedParamFromUrl } from "./jargon-page-helpers";
+import { dropSearchParamFromUrl } from "./jargon-page-helpers";
 
-type ImportedNotice = { count: number; domainId: string };
+export type ImportedSummary = {
+  domainId: string;
+  domainName: string;
+  created: number;
+  updated: number;
+  skipped: number;
+  unfinished: number;
+  relationshipsDropped: number;
+};
 
-/** Holds the post-import confirmation for the collection it was for, and
- *  drops ?imported= so a reload or shared link doesn't repeat it. */
-export function useImportedNotice(importedCount: number | undefined, domainId: string) {
-  const [notice, setNotice] = useState<ImportedNotice | null>(
-    importedCount === undefined ? null : { count: importedCount, domainId },
-  );
-  useEffect(() => {
-    if (importedCount !== undefined) dropImportedParamFromUrl();
-  }, [importedCount]);
-  return { notice, dismiss: () => setNotice(null) };
+/** Holds the confirmation for the import that just landed, and drops ?added=
+ *  so a reload or shared link doesn't repeat it. The pasted list is only
+ *  cleared once the import is known to have worked. */
+export function useImportedNotice(summary: ImportedSummary | undefined) {
+  const [dismissed, setDismissed] = useState(false);
+  useMountEffect(() => {
+    if (!summary) return;
+    dropSearchParamFromUrl("added");
+    clearDraft();
+  });
+  return { summary: dismissed ? undefined : summary, dismiss: () => setDismissed(true) };
+}
+
+function detailLine(summary: ImportedSummary) {
+  const parts: string[] = [];
+  if (summary.unfinished > 0) parts.push(`${summary.unfinished} to finish later`);
+  if (summary.skipped > 0) parts.push(`Skipped ${summary.skipped} already in this collection`);
+  if (summary.updated > 0 && summary.created > 0) parts.push(`Updated ${summary.updated}`);
+  if (summary.relationshipsDropped > 0)
+    parts.push(`${pluralize(summary.relationshipsDropped, "link")} left out`);
+  return parts.join(" · ");
 }
 
 /** One-time confirmation after an import lands on its collection. */
 export function ImportedBanner({
-  notice,
+  summary,
   domain,
+  onFinish,
   onDismiss,
 }: {
-  notice: ImportedNotice | null;
+  summary: ImportedSummary | undefined;
   domain: { id: string; name: string };
+  onFinish: () => void;
   onDismiss: () => void;
 }) {
-  if (!notice || notice.domainId !== domain.id) return null;
+  if (!summary || summary.domainId !== domain.id) return null;
+
+  const addedAny = summary.created > 0;
+  const title = addedAny
+    ? `Added ${pluralize(summary.created, "term")} to ${summary.domainName}`
+    : `Updated ${pluralize(summary.updated, "term")} in ${summary.domainName}`;
+  const studyable = summary.created - summary.unfinished + summary.updated > 0;
+  const details = detailLine(summary);
 
   return (
     <Alert variant="success">
       <CheckCircle2 className="size-4" aria-hidden strokeWidth={1.5} />
-      <AlertDescription>
-        Imported {pluralize(notice.count, "term")} into {domain.name}.
+      <AlertDescription role="status">
+        <p className="m-0 font-medium">{title}</p>
+        {details ? <p className="m-0">{details}</p> : null}
       </AlertDescription>
       <AlertAction>
-        {/* Imports always mark the collection active, so Read can open on it. */}
-        <LinkButton
-          href={`/jargon/read?domain=${domain.id}`}
-          size="sm"
-          className="min-h-11 gap-1.5 md:min-h-8"
-        >
-          Start reading
-          <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
-        </LinkButton>
-        <LinkButton
-          href={`/jargon/triage?domain=${domain.id}`}
-          size="sm"
-          variant="outline"
-          className="min-h-11 md:min-h-8"
-        >
-          Mark what you know
-        </LinkButton>
+        {studyable ? (
+          <LinkButton
+            href={`/jargon/read?domain=${domain.id}`}
+            size="sm"
+            className="min-h-11 gap-1.5 md:min-h-8"
+          >
+            Start reading
+            <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
+          </LinkButton>
+        ) : null}
+        {studyable ? (
+          <LinkButton
+            href={`/jargon/triage?domain=${domain.id}`}
+            size="sm"
+            variant="outline"
+            className="min-h-11 md:min-h-8"
+          >
+            Mark what you know
+          </LinkButton>
+        ) : null}
+        {summary.unfinished > 0 ? (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="min-h-11 md:min-h-8"
+            onPress={onFinish}
+          >
+            Finish {pluralize(summary.unfinished, "term")}
+          </Button>
+        ) : null}
         <Button
           type="button"
           size="icon-sm"

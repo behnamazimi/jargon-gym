@@ -19,7 +19,12 @@ type RouteContext = { params: Promise<{ termId: string }> };
 
 async function userCanReadTerm(termId: string): Promise<boolean> {
   const supabase = await createClient();
-  const { data } = await supabase.from("terms").select("id").eq("id", termId).maybeSingle();
+  const { data } = await supabase
+    .from("terms")
+    .select("id")
+    .eq("id", termId)
+    .not("definition", "is", null)
+    .maybeSingle();
   return data != null;
 }
 

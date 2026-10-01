@@ -81,6 +81,7 @@ function DomainSidebarSection({
                 >
                   {domain.termsLearnedCount}/{domain.termCount} learned
                   {isSelected && domain.termCount > 0 ? ` · ${pct}%` : ""}
+                  {domain.unfinishedCount > 0 ? ` · ${domain.unfinishedCount} to finish` : ""}
                 </span>
               </Button>
             </li>

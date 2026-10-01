@@ -1,138 +1,96 @@
 "use server";
 
-import { executeImport } from "@/lib/jargon/import/execute-import";
-import { formatImportFailure, ImportExecutionError } from "@/lib/jargon/import/errors";
-import { listOwnedCollectionsForImport } from "@/lib/jargon/import/owned-collections";
-import { buildImportPreview, parseImportJson } from "@/lib/jargon/import/validate-import";
-import type {
-  ImportFailure,
-  ImportOverrides,
-  ImportPreview,
-  ImportResult,
-} from "@/lib/jargon/import/types";
-import { DOMAIN_LANGUAGES, type DomainLanguage } from "@/lib/jargon/languages";
-import { pluralize } from "@/lib/utils";
-import { z } from "zod";
-import { getSessionUser, requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
+import { getSessionUser, requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { commitFailureFor } from "@/lib/jargon/import/commit-errors";
+import {
+  batchResultSchema,
+  commitImportSchema,
+  MAX_IMPORT_TERMS,
+} from "@/lib/jargon/import/commit-schema";
+import {
+  findDestinationMatches,
+  listImportDestinations,
+  type DestinationMatch,
+} from "@/lib/jargon/import/import-collections";
+import type { ImportFailure } from "@/lib/jargon/import/types";
 
-const NOT_SIGNED_IN_FAILURE: ImportFailure = {
-  title: "Not signed in",
-  message: "Sign in to add terms.",
-  hint: "Sign in, then come back to this page.",
-};
-
-const overridesSchema = z.object({
-  domainName: z.string().trim().min(1).optional(),
-  language: z.enum(DOMAIN_LANGUAGES).optional(),
-});
-
-function applyOverrides<T extends { domain: string }>(
-  data: T,
-  overrides: ImportOverrides | undefined,
-): { payload: T; language?: DomainLanguage } {
-  const parsed = overridesSchema.safeParse(overrides ?? {});
-  if (!parsed.success) return { payload: data };
-
-  return {
-    payload: parsed.data.domainName ? { ...data, domain: parsed.data.domainName } : data,
-    language: parsed.data.language,
-  };
-}
+const NOT_SIGNED_IN: ImportFailure = { title: "Not signed in", message: "Sign in to add terms." };
 
 export async function getImportSetupData() {
   const auth = await requireAuthenticatedClient();
-  if ("error" in auth) {
-    return { error: "Sign in to add terms." as const };
-  }
+  if ("error" in auth) return { error: "Sign in to add terms." as const };
 
-  const collections = await listOwnedCollectionsForImport(auth.supabase, auth.user.id);
-
-  return { collections };
+  return listImportDestinations(auth.supabase, auth.user.id);
 }
 
-export async function validateImportJson(
-  raw: string,
-  overrides?: ImportOverrides,
-): Promise<{ ok: true; preview: ImportPreview } | { ok: false; failure: ImportFailure }> {
-  const parsed = parseImportJson(raw);
-  if (!parsed.ok) return parsed;
+const checkSchema = z.object({
+  domainId: z.string().uuid(),
+  terms: z.array(z.string().max(200)).max(MAX_IMPORT_TERMS),
+});
 
-  const { supabase, user } = await getSessionUser();
-  if (!user) {
-    return { ok: false, failure: NOT_SIGNED_IN_FAILURE };
-  }
+/** Which of these terms the destination already has. */
+export async function checkImportAgainstDestination(
+  input: unknown,
+): Promise<{ matches: DestinationMatch[] } | { error: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: "Sign in to add terms." };
+
+  const parsed = checkSchema.safeParse(input);
+  if (!parsed.success) return { error: "We couldn't check that list. Try again." };
 
   try {
-    const { payload } = applyOverrides(parsed.data, overrides);
-    const preview = await buildImportPreview(supabase, user.id, payload);
-    return { ok: true, preview };
-  } catch (err) {
-    if (err instanceof ImportExecutionError) {
-      return { ok: false, failure: err.failure };
-    }
+    const matches = await findDestinationMatches(
+      auth.supabase,
+      auth.user.id,
+      parsed.data.domainId,
+      parsed.data.terms,
+    );
+    if (!matches) return { error: "That collection isn't available any more. Choose another." };
+    return { matches };
+  } catch {
+    return { error: "We couldn't check what's already there. Try again." };
+  }
+}
 
+/** Adds the terms in one transaction, then opens the collection. Returns only
+ *  when something went wrong, and nothing was added. */
+export async function commitImport(input: unknown): Promise<{ ok: false; failure: ImportFailure }> {
+  const parsed = commitImportSchema.safeParse(input);
+  if (!parsed.success) {
     return {
       ok: false,
-      failure: formatImportFailure(err, { step: "Couldn't check the terms" }),
+      failure: commitFailureFor({ message: parsed.error.issues.length > 0 ? "invalid" : "" }),
     };
   }
-}
-
-function conflictConfirmationFailure(
-  conflictingTerms: ImportPreview["conflictingTerms"],
-): ImportFailure {
-  return {
-    title: "Confirm before adding",
-    message: `${pluralize(conflictingTerms.length, "term")} already in this collection would be replaced.`,
-    details: conflictingTerms,
-    hint: "Tick the box in the preview to replace them, then add again.",
-  };
-}
-
-function handleImportError(err: unknown): { ok: false; failure: ImportFailure } {
-  if (err instanceof Error && err.message === "NEXT_REDIRECT") throw err;
-  if (err instanceof ImportExecutionError) {
-    return { ok: false, failure: err.failure };
-  }
-
-  return {
-    ok: false,
-    failure: formatImportFailure(err, { step: "Import didn't finish" }),
-  };
-}
-
-export async function confirmImport(
-  raw: string,
-  confirmReplace = false,
-  overrides?: ImportOverrides,
-): Promise<{ ok: true; result: ImportResult } | { ok: false; failure: ImportFailure }> {
-  const parsed = parseImportJson(raw);
-  if (!parsed.ok) return parsed;
 
   const { supabase, user } = await getSessionUser();
-  if (!user) {
-    return { ok: false, failure: NOT_SIGNED_IN_FAILURE };
+  if (!user) return { ok: false, failure: NOT_SIGNED_IN };
+
+  const data = parsed.data;
+  const name = "name" in data.destination ? data.destination.name : undefined;
+
+  const { data: raw, error } = await supabase.rpc("my_import_terms", {
+    p_import_id: data.importId,
+    p_destination:
+      "domainId" in data.destination
+        ? { domain_id: data.destination.domainId }
+        : { name: data.destination.name, language: data.destination.language },
+    p_terms: data.terms,
+    p_relationships: data.links,
+    p_policy: data.policy,
+    p_entry: data.entry,
+    p_source: data.source,
+    p_format: data.format,
+  });
+
+  const result = error ? null : batchResultSchema.safeParse(raw);
+  if (error || !result?.success) {
+    return { ok: false, failure: commitFailureFor(error, name) };
   }
 
-  try {
-    const { payload, language } = applyOverrides(parsed.data, overrides);
-    const preview = await buildImportPreview(supabase, user.id, payload);
-
-    if (preview.conflictingTerms.length > 0 && !confirmReplace) {
-      return { ok: false, failure: conflictConfirmationFailure(preview.conflictingTerms) };
-    }
-
-    const result = await executeImport(supabase, user.id, payload, {
-      isMerge: preview.isMerge,
-      language,
-    });
-
-    revalidatePath("/jargon");
-    const imported = result.termsCreated + result.termsUpdated;
-    redirect(`/jargon?domain=${result.domainId}&imported=${imported}`);
-  } catch (err) {
-    return handleImportError(err);
-  }
+  revalidatePath("/jargon");
+  redirect(`/jargon?domain=${result.data.domain_id}&added=${data.importId}`);
 }

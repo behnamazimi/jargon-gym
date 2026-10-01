@@ -1,4 +1,4 @@
-import type { TermInput } from "@/lib/jargon/term-schema";
+import type { TermFormValues } from "@/lib/jargon/term-schema";
 import type { Term } from "@/lib/jargon/types";
 
 export const emptyDetails = {
@@ -10,10 +10,10 @@ export const emptyDetails = {
   note: "",
 };
 
-export function termToForm(term: Term): TermInput {
+export function termToForm(term: Term): TermFormValues {
   return {
     term: term.term,
-    category: term.category,
+    category: term.category ?? "",
     definition: term.definition,
     example: term.example || "",
     mental_model: term.mentalModel || "",
@@ -28,7 +28,7 @@ function blankToNull(value: string | null | undefined): string | null {
   return value?.trim() ? value : null;
 }
 
-export function buildTermPayload(form: TermInput): TermInput {
+export function buildTermPayload(form: TermFormValues): TermFormValues {
   return {
     ...form,
     example: blankToNull(form.example),

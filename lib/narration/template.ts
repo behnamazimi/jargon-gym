@@ -46,7 +46,7 @@ const CONNECTOR_PHRASES: Partial<Record<DomainLanguage, ConnectorPhrases>> = {
  */
 export function buildNarrationScript(fields: NarratedTermFields, language: DomainLanguage): string {
   const phrases = CONNECTOR_PHRASES[language];
-  const parts = [`${fields.term}. ${fields.definition.trim()}`];
+  const parts = [`${fields.term}. ${(fields.definition ?? "").trim()}`];
 
   function addSection(value: string | null, phrase: keyof ConnectorPhrases) {
     if (!hasText(value)) return;

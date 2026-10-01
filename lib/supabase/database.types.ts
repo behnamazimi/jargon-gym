@@ -436,6 +436,54 @@ export type Database = {
           },
         ];
       };
+      import_batches: {
+        Row: {
+          created_at: string;
+          domain_id: string | null;
+          entry: string | null;
+          format: string | null;
+          id: string;
+          result: Json;
+          source: string | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          domain_id?: string | null;
+          entry?: string | null;
+          format?: string | null;
+          id: string;
+          result?: Json;
+          source?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          domain_id?: string | null;
+          entry?: string | null;
+          format?: string | null;
+          id?: string;
+          result?: Json;
+          source?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "import_batches_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "import_batches_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       narration_sync_jobs: {
         Row: {
           created_at: string;
@@ -939,10 +987,10 @@ export type Database = {
       terms: {
         Row: {
           anti_example: string | null;
-          category: string;
+          category: string | null;
           controversy: string | null;
           created_at: string;
-          definition: string;
+          definition: string | null;
           discussion: string | null;
           domain_id: string;
           example: string | null;
@@ -955,10 +1003,10 @@ export type Database = {
         };
         Insert: {
           anti_example?: string | null;
-          category: string;
+          category?: string | null;
           controversy?: string | null;
           created_at?: string;
-          definition: string;
+          definition?: string | null;
           discussion?: string | null;
           domain_id: string;
           example?: string | null;
@@ -971,10 +1019,10 @@ export type Database = {
         };
         Update: {
           anti_example?: string | null;
-          category?: string;
+          category?: string | null;
           controversy?: string | null;
           created_at?: string;
-          definition?: string;
+          definition?: string | null;
           discussion?: string | null;
           domain_id?: string;
           example?: string | null;
@@ -1686,6 +1734,19 @@ export type Database = {
           grade: number;
         }[];
       };
+      my_import_terms: {
+        Args: {
+          p_destination: Json;
+          p_entry?: string;
+          p_format?: string;
+          p_import_id: string;
+          p_policy: string;
+          p_relationships: Json;
+          p_source?: string;
+          p_terms: Json;
+        };
+        Returns: Json;
+      };
       my_mark_tour_chapter_seen: {
         Args: { p_all_chapters: string[]; p_chapter: string };
         Returns: undefined;
@@ -1746,6 +1807,13 @@ export type Database = {
           source_term_name: string;
           target_term_id: string;
           target_term_name: string;
+        }[];
+      };
+      my_unfinished_term_counts: {
+        Args: { p_domain_ids: string[] };
+        Returns: {
+          domain_id: string;
+          unfinished_count: number;
         }[];
       };
       owns_domain: { Args: { p_domain_id: string }; Returns: boolean };

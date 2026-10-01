@@ -41,14 +41,14 @@ export const MORE_CHAPTERS = [
     route: "/jargon/import",
     steps: [
       {
-        target: "import-json",
-        title: "Import from JSON",
-        body: "Paste JSON or choose a .json file with your terms.",
+        target: "import-search",
+        title: "Search first",
+        body: "Shared collections you can add in one tap.",
       },
       {
-        target: "import-validate",
-        title: "Check before adding",
-        body: "See what will be added first. Nothing saves until you confirm.",
+        target: "import-routes",
+        title: "Or start from what you have",
+        body: "Paste a list from Notes or a spreadsheet, or bring a deck from another app.",
       },
     ],
   },

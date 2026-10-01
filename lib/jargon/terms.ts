@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { type TermInput, termInputToRow, termInputToUpdateRow } from "@/lib/jargon/term-schema";
+import { type ParsedTerm, termInputToRow, termInputToUpdateRow } from "@/lib/jargon/term-schema";
 import type { TermRelationshipLink } from "@/lib/jargon/types";
 
 type Client = SupabaseClient<Database>;
@@ -20,7 +20,7 @@ export async function createTerm(
   client: Client,
   domainId: string,
   _ownerId: string,
-  input: TermInput,
+  input: ParsedTerm,
 ) {
   const row = termInputToRow(input, domainId);
 
@@ -38,7 +38,7 @@ export async function createTerm(
   return data;
 }
 
-export async function updateTerm(client: Client, termId: string, input: TermInput) {
+export async function updateTerm(client: Client, termId: string, input: ParsedTerm) {
   const row = termInputToUpdateRow(input);
 
   const { error } = await client.from("terms").update(row).eq("id", termId);
@@ -49,8 +49,32 @@ export async function updateTerm(client: Client, termId: string, input: TermInpu
         `A term named "${input.term.trim()}" already exists in this collection.`,
       );
     }
+    if (error.code === "23514") {
+      throw new TermMutationError(
+        "A term needs a definition once it has one. Change the text instead.",
+      );
+    }
     throw error;
   }
+}
+
+/** Gives an unfinished term its definition. Resolves false when the term was
+ *  already finished or removed, so a second tab can't overwrite the first. */
+export async function finishTerm(
+  client: Client,
+  termId: string,
+  input: { definition: string; category?: string | null },
+): Promise<boolean> {
+  const category = input.category?.trim();
+  const { data, error } = await client
+    .from("terms")
+    .update({ definition: input.definition.trim(), ...(category ? { category } : {}) })
+    .eq("id", termId)
+    .is("definition", null)
+    .select("id");
+
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }
 
 export async function deleteTerm(client: Client, termId: string) {

@@ -2,9 +2,9 @@
  *  Next.js navigation (which would remount the page). Every Library
  *  collection has a real id — unlike Read there's no "all" sentinel to
  *  special-case. */
-export function dropImportedParamFromUrl() {
+export function dropSearchParamFromUrl(name: string) {
   const url = new URL(window.location.href);
-  url.searchParams.delete("imported");
+  url.searchParams.delete(name);
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 

@@ -27,8 +27,8 @@ describe("findDuplicateTerm", () => {
 
 describe("mostUsedCategory", () => {
   it.each([
-    [[], "General"],
-    [[{ category: "" }, { category: "  " }], "General"],
+    [[], ""],
+    [[{ category: "" }, { category: "  " }, { category: null }], ""],
     [[{ category: "Legal" }], "Legal"],
     [[{ category: "A" }, { category: "B" }, { category: "B" }], "B"],
     [[{ category: "B" }, { category: "A" }], "A"],

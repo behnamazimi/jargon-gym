@@ -2,6 +2,7 @@ export {
   createTerm,
   updateTerm,
   deleteTerm,
+  finishTerm,
   recordTermReadAction,
   recordReviewRevealAction,
   setTermMarkedKnownAction,

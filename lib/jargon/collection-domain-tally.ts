@@ -42,15 +42,26 @@ function toTraceState(row: ProgressStateRow): TraceState {
  *  but counted into `knownCount`/`termsLearnedCount` too since it reduces
  *  what's left to learn regardless of how it happened; `markedKnownCount`
  *  tracks it on its own for the Mastery page's "N marked known by you" line. */
+type DomainStats = {
+  termCount: number;
+  unfinishedCount: number;
+  knownCount: number;
+  termsLearnedCount: number;
+  markedKnownCount: number;
+};
+
 function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
-  const stats = new Map<
-    string,
-    { termCount: number; knownCount: number; termsLearnedCount: number; markedKnownCount: number }
-  >();
+  const stats = new Map<string, DomainStats>();
   const now = new Date();
 
   for (const domainId of domainIds) {
-    stats.set(domainId, { termCount: 0, knownCount: 0, termsLearnedCount: 0, markedKnownCount: 0 });
+    stats.set(domainId, {
+      termCount: 0,
+      unfinishedCount: 0,
+      knownCount: 0,
+      termsLearnedCount: 0,
+      markedKnownCount: 0,
+    });
   }
 
   for (const row of data) {
@@ -75,12 +86,20 @@ function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
 export async function fetchDomainStats(client: Client, domainIds: string[]) {
   if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
 
-  const { data, error } = await client.rpc("my_progress_state_by_domain", {
-    p_domain_ids: domainIds,
-  });
+  const [progress, unfinished] = await Promise.all([
+    client.rpc("my_progress_state_by_domain", { p_domain_ids: domainIds }),
+    client.rpc("my_unfinished_term_counts", { p_domain_ids: domainIds }),
+  ]);
 
-  if (error) throw error;
-  return tallyDomainStats(domainIds, data);
+  if (progress.error) throw progress.error;
+  if (unfinished.error) throw unfinished.error;
+
+  const stats = tallyDomainStats(domainIds, progress.data);
+  for (const row of unfinished.data) {
+    const current = stats.get(row.domain_id);
+    if (current) current.unfinishedCount = row.unfinished_count;
+  }
+  return stats;
 }
 
 /** Service-role / admin client: stats for an explicit userId (no `auth.uid()` session). */
@@ -98,14 +117,12 @@ export async function fetchDomainStatsForUser(client: Client, userId: string, do
 
 export function applyDomainStats<T extends { id: string }>(
   rows: T[],
-  stats: Map<
-    string,
-    { termCount: number; knownCount: number; termsLearnedCount: number; markedKnownCount: number }
-  >,
+  stats: Map<string, DomainStats>,
 ): (T & CollectionDomainRow)[] {
   return rows.map((row) => {
     const domainStats = stats.get(row.id) ?? {
       termCount: 0,
+      unfinishedCount: 0,
       knownCount: 0,
       termsLearnedCount: 0,
       markedKnownCount: 0,
@@ -113,6 +130,7 @@ export function applyDomainStats<T extends { id: string }>(
     return {
       ...row,
       termCount: domainStats.termCount,
+      unfinishedCount: domainStats.unfinishedCount,
       knownCount: domainStats.knownCount,
       termsLearnedCount: domainStats.termsLearnedCount,
       markedKnownCount: domainStats.markedKnownCount,

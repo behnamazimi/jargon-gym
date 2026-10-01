@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,17 +20,22 @@ import { useToast } from "@/components/ui/toast";
 import { CategoryField, OptionalDetailFields } from "@/components/jargon/term-form-fields";
 import { TermRelationshipsEditor } from "@/components/jargon/term-relationships-editor";
 import { buildTermPayload, emptyDetails } from "@/components/jargon/term-form-dialog-helpers";
+import { PastedListPrompt } from "@/components/jargon/pasted-list-prompt";
 import { useTermActions } from "@/hooks/use-term-actions";
+import { writeDraft } from "@/lib/jargon/import/draft-store";
+import { classifyTermPaste } from "@/lib/jargon/import/term-paste";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
 import { buildRelationshipSync, validateRelationshipDrafts } from "@/lib/jargon/relationship-sync";
 import { findDuplicateTerm, mostUsedCategory } from "@/lib/jargon/term-duplicates";
-import type { TermInput } from "@/lib/jargon/term-schema";
-import type { Term } from "@/lib/jargon/types";
+import type { TermFormValues } from "@/lib/jargon/term-schema";
+import type { Term, UnfinishedTerm } from "@/lib/jargon/types";
 import { cn } from "@/lib/utils";
 
 type AddTermDialogProps = {
   domainId: string;
   domainTerms: Term[];
+  /** Saved without a definition. They still count as duplicates. */
+  unfinishedTerms: UnfinishedTerm[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenTerm: (term: string) => void;
@@ -37,11 +43,21 @@ type AddTermDialogProps = {
 
 type AddTermFormProps = Omit<AddTermDialogProps, "isOpen">;
 
-function AddTermForm({ domainId, domainTerms, onOpenChange, onOpenTerm }: AddTermFormProps) {
+function unfinishedToast(name: string) {
+  return `Saved "${name}". It stays out of study until you add a definition.`;
+}
+
+function AddTermForm({
+  domainId,
+  domainTerms,
+  unfinishedTerms,
+  onOpenChange,
+  onOpenTerm,
+}: AddTermFormProps) {
   const { createTerm, isBusy, error } = useTermActions();
   const { toast } = useToast();
   const termInputRef = useRef<HTMLInputElement>(null);
-  const [form, setForm] = useState<TermInput>(() => ({
+  const [form, setForm] = useState<TermFormValues>(() => ({
     term: "",
     definition: "",
     category: mostUsedCategory(domainTerms),
@@ -50,12 +66,31 @@ function AddTermForm({ domainId, domainTerms, onOpenChange, onOpenTerm }: AddTer
   const [relationshipDrafts, setRelationshipDrafts] = useState<RelationshipDraft[]>([]);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [pastedLines, setPastedLines] = useState<string[] | null>(null);
+  const router = useRouter();
 
-  const duplicate = findDuplicateTerm(form.term, domainTerms);
-  const canSave = form.term.trim().length > 0 && form.definition.trim().length > 0 && !duplicate;
+  function handleTermPaste(event: React.ClipboardEvent<HTMLInputElement>) {
+    const pasted = classifyTermPaste(event.clipboardData.getData("text/plain"));
+    if (pasted.kind === "single") return;
+    event.preventDefault();
+    if (pasted.kind === "term-and-definition") {
+      setForm((prev) => ({ ...prev, term: pasted.term, definition: pasted.definition }));
+      return;
+    }
+    setPastedLines(pasted.lines);
+  }
+
+  function addPastedAsList(lines: string[]) {
+    writeDraft(lines.join("\n"));
+    onOpenChange(false);
+    router.push(`/jargon/import/paste?to=${domainId}&from=term`);
+  }
+
+  const duplicate = findDuplicateTerm(form.term, [...domainTerms, ...unfinishedTerms]);
+  const canSave = form.term.trim().length > 0 && !duplicate;
   const displayError = validationError ?? error;
 
-  function updateField<K extends keyof TermInput>(key: K, value: TermInput[K]) {
+  function updateField<K extends keyof TermFormValues>(key: K, value: TermFormValues[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -82,12 +117,16 @@ function AddTermForm({ domainId, domainTerms, onOpenChange, onOpenTerm }: AddTer
     const saved = await createTerm(domainId, payload, { create: relationshipSync.create });
     if (!saved) return;
 
+    const name = payload.term.trim();
+    const unfinished = !form.definition.trim();
+
     if (!addAnother) {
+      if (unfinished) toast(unfinishedToast(name), "success");
       onOpenChange(false);
       return;
     }
 
-    toast(`Added "${payload.term.trim()}"`, "success");
+    toast(unfinished ? unfinishedToast(name) : `Added "${name}"`, "success");
     setForm({ term: "", definition: "", category: payload.category, ...emptyDetails });
     setRelationshipDrafts([]);
   }
@@ -117,8 +156,20 @@ function AddTermForm({ domainId, domainTerms, onOpenChange, onOpenTerm }: AddTer
             className="text-base"
             placeholder="e.g. Idempotent"
             onChange={(event) => updateField("term", event.target.value)}
+            onPaste={handleTermPaste}
           />
         </Field>
+
+        {pastedLines ? (
+          <PastedListPrompt
+            lines={pastedLines}
+            onAddAsList={() => addPastedAsList(pastedLines)}
+            onKeepAsOne={() => {
+              updateField("term", pastedLines.join(" "));
+              setPastedLines(null);
+            }}
+          />
+        ) : null}
 
         {duplicate ? (
           <Alert>
@@ -154,6 +205,7 @@ function AddTermForm({ domainId, domainTerms, onOpenChange, onOpenTerm }: AddTer
             placeholder="What does it mean?"
             onChange={(event) => updateField("definition", event.target.value)}
           />
+          <p className="m-0 mt-1 text-xs text-base-content/60">Leave it empty to finish later.</p>
         </Field>
 
         <Collapsible isExpanded={detailsOpen} onExpandedChange={setDetailsOpen}>

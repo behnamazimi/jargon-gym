@@ -21,7 +21,9 @@ function makeClient(domainTerms: { id: string; term: string; example?: string | 
         select: () => ({
           eq: () => ({
             not: () => ({
-              limit: () => Promise.resolve({ data: rows, error: null }),
+              not: () => ({
+                limit: () => Promise.resolve({ data: rows, error: null }),
+              }),
             }),
           }),
         }),

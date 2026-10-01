@@ -146,56 +146,6 @@ export async function deleteDomain(client: Client, domainId: string) {
   if (error) throw error;
 }
 
-export async function createOrGetOwnedDomain(
-  client: Client,
-  ownerId: string,
-  name: string,
-  description?: string | null,
-  language?: DomainLanguage,
-) {
-  const { data: existing, error: selectError } = await client
-    .from("domains")
-    .select("id, name, description, visibility, owner_id")
-    .eq("owner_id", ownerId)
-    .ilike("name", escapeLike(name))
-    .maybeSingle();
-
-  if (selectError) throw selectError;
-
-  const normalizedDescription = description?.trim() || null;
-
-  if (existing) {
-    if (normalizedDescription && normalizedDescription !== (existing.description ?? "")) {
-      const { data, error } = await client
-        .from("domains")
-        .update({ description: normalizedDescription })
-        .eq("id", existing.id)
-        .select("id, name, description, visibility, owner_id")
-        .single();
-
-      if (error) throw error;
-      return data;
-    }
-
-    return existing;
-  }
-
-  const { data, error } = await client
-    .from("domains")
-    .insert({
-      name,
-      owner_id: ownerId,
-      visibility: "private",
-      description: normalizedDescription,
-      ...(language ? { language } : {}),
-    })
-    .select("id, name, description, visibility, owner_id")
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
 function isUniqueViolation(error: { code?: string }) {
   return error.code === "23505";
 }

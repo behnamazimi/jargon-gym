@@ -110,9 +110,9 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageSection title="Getting terms in">
           <p className="m-0">
             I use a skill that generates jargon lists for different fields, more on that once
-            you&apos;re in on the import page. There&apos;s a matching one for language vocabulary,
-            words, phrases, or grammar for a language and level. You can also add terms one at a
-            time, or skip building anything and browse a shared collection instead.{" "}
+            you&apos;re in, under More import options. There&apos;s a matching one for language
+            vocabulary, words, phrases, or grammar for a language and level. You can also add terms
+            one at a time, or skip building anything and browse a shared collection instead.{" "}
             <strong className="font-medium text-base-content">
               Any collection you build can be shared too
             </strong>

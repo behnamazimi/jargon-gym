@@ -40,7 +40,7 @@ export function ImportLlmPrompt({ collections }: { collections: OwnedCollectionF
     <ImportCard
       icon={Sparkles}
       title="Generate JSON with an AI skill (for developers)"
-      description="Install the glossary skill once, generate JSON for your domain, then paste it above."
+      description="Install the glossary skill once, generate JSON for your domain, then paste it on the Paste screen."
     >
       <div className="space-y-5">
         <CopyCommand

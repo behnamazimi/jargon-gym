@@ -17,11 +17,12 @@ import {
   exportFilename,
 } from "@/lib/jargon/export/build-import-payload";
 import { stringifyImportPayload } from "@/lib/jargon/import/sample-payload";
-import type { Domain, Term } from "@/lib/jargon/types";
+import { collectionToCsv, collectionToText } from "@/lib/jargon/export/build-text-export";
+import type { Domain, Term, UnfinishedTerm } from "@/lib/jargon/types";
 
 type DomainExportDialogProps = {
   domain: Domain;
-  terms: Term[];
+  terms: (Term | UnfinishedTerm)[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 };
@@ -50,12 +51,30 @@ export function DomainExportDialog({
     window.setTimeout(() => setCopied(false), 2000);
   }
 
+  async function handleCopyText() {
+    await navigator.clipboard.writeText(collectionToText(terms));
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleDownloadCsv() {
+    download(
+      collectionToCsv(terms),
+      "text/csv",
+      exportFilename(domain.name).replace(/\.json$/, ".csv"),
+    );
+  }
+
   function handleDownload() {
-    const blob = new Blob([json], { type: "application/json" });
+    download(json, "application/json", exportFilename(domain.name));
+  }
+
+  function download(contents: string, type: string, filename: string) {
+    const blob = new Blob([contents], { type });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = exportFilename(domain.name);
+    anchor.download = filename;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -86,6 +105,17 @@ export function DomainExportDialog({
       <DialogFooter className="shrink-0">
         <Button type="button" variant="outline" onPress={() => onOpenChange(false)}>
           Close
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onPress={() => void handleCopyText()}
+          isDisabled={!json}
+        >
+          Copy as text
+        </Button>
+        <Button type="button" variant="outline" onPress={handleDownloadCsv} isDisabled={!json}>
+          Download CSV
         </Button>
         <Button type="button" onPress={handleDownload} isDisabled={!json}>
           <Download className="size-4" />

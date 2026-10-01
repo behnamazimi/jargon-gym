@@ -12,7 +12,7 @@ export type TermCardRelationship = {
 export type TermCard = {
   id: string;
   term: string;
-  category: string;
+  category: string | null;
   definition: string;
   example: string | null;
   mentalModel: string | null;

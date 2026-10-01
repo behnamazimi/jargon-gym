@@ -25,6 +25,7 @@ export type CollectionDomainRow = {
   owner_id: string;
   source: "owned" | "added";
   termCount: number;
+  unfinishedCount: number;
   knownCount: number;
   termsLearnedCount: number;
   markedKnownCount: number;

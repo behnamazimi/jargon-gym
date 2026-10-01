@@ -11,22 +11,33 @@ import { JargonListSkeleton } from "@/components/page-skeleton";
 import { useToast } from "@/components/ui/toast";
 import { DomainSidebar } from "./domain-sidebar";
 import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
-import { ImportedBanner, useImportedNotice } from "./imported-banner";
+import { ImportedBanner, useImportedNotice, type ImportedSummary } from "./imported-banner";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
-import { replaceLibraryDomainInUrl } from "./jargon-page-helpers";
+import { dropSearchParamFromUrl, replaceLibraryDomainInUrl } from "./jargon-page-helpers";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { AddTermDialog } from "./add-term-dialog";
+import { UnfinishedSection } from "./unfinished-section";
 import { TermList } from "./term-list";
 
 type JargonPageProps = {
   initialData: JargonPageData;
   narrationAccess: boolean;
-  /** Terms just imported into the collection on screen (from ?imported=). */
-  importedCount?: number;
+  /** What the import that just finished added (from ?added=). */
+  importedSummary?: ImportedSummary;
+  /** Open the Add term sheet right away (from ?add=1). */
+  openAddTerm?: boolean;
 };
 
-export function JargonPage({ initialData, narrationAccess, importedCount }: JargonPageProps) {
-  const [addTermOpen, setAddTermOpen] = useState(false);
+export function JargonPage({
+  initialData,
+  narrationAccess,
+  importedSummary,
+  openAddTerm = false,
+}: JargonPageProps) {
+  const [addTermOpen, setAddTermOpen] = useState(openAddTerm);
+  const [finishOpen, setFinishOpen] = useState(false);
+  useMountEffect(() => void (openAddTerm && dropSearchParamFromUrl("add")));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -36,10 +47,15 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
   // server-rendered `initialData` prop, so switching collections doesn't
   // require a route navigation (which would remount this whole page).
   const [activeData, setActiveData] = useState(initialData);
-  const importedNotice = useImportedNotice(importedCount, initialData.domain.id);
+  const importedNotice = useImportedNotice(importedSummary);
   const [activeNarrationAccess, setActiveNarrationAccess] = useState(narrationAccess);
   useEffect(() => setActiveData(initialData), [initialData]);
   useEffect(() => setActiveNarrationAccess(narrationAccess), [narrationAccess]);
+
+  async function refreshCurrentDomain() {
+    const result = await getJargonCollectionDataAction(activeData.domain.id);
+    if ("data" in result) setActiveData(result.data);
+  }
 
   const switchRequestIdRef = useRef(0);
   const [switchingDomainId, setSwitchingDomainId] = useState<string | null>(null);
@@ -59,6 +75,7 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
     const requestId = ++switchRequestIdRef.current;
     setSwitchingDomainId(domainId);
     setAddTermOpen(false); // dialog is scoped to the domain being left
+    setFinishOpen(false);
 
     const result = await getJargonCollectionDataAction(domainId);
     if (switchRequestIdRef.current !== requestId) return; // superseded by a newer switch
@@ -184,8 +201,9 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
           ) : (
             <div className="min-w-0 flex-1 space-y-4">
               <ImportedBanner
-                notice={importedNotice.notice}
+                summary={importedNotice.summary}
                 domain={domain}
+                onFinish={() => setFinishOpen(true)}
                 onDismiss={importedNotice.dismiss}
               />
               <JargonDomainHeader
@@ -198,6 +216,15 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
                 onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
                 onToggleActiveForReviewLocal={setDomainActiveForReview}
               />
+
+              {isOwner ? (
+                <UnfinishedSection
+                  terms={activeData.unfinishedTerms}
+                  isOpen={finishOpen}
+                  onOpenChange={setFinishOpen}
+                  onChanged={refreshCurrentDomain}
+                />
+              ) : null}
 
               <JargonFilters
                 searchQuery={searchQuery}
@@ -225,6 +252,7 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
                 domainId={domain.id}
                 language={domain.language}
                 domainTerms={terms}
+                hasUnfinished={activeData.unfinishedTerms.length > 0}
                 onAddTerm={() => setAddTermOpen(true)}
                 narrationAccess={activeNarrationAccess}
                 onToggleOpen={toggleOpen}
@@ -240,6 +268,7 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
         <AddTermDialog
           domainId={domain.id}
           domainTerms={terms}
+          unfinishedTerms={activeData.unfinishedTerms}
           isOpen={addTermOpen}
           onOpenChange={setAddTermOpen}
           onOpenTerm={setSearchQuery}

@@ -92,6 +92,14 @@ add a chapter, add an entry to the matching area file, add any new target ids to
 components only carry that attribute and never import tour code. Progress
 lives in `user_settings.tour_status` / `tour_seen`.
 
+# Import
+
+Adding terms (chooser, paste importer, commit, unfinished terms) is described
+in [docs/import.md](docs/import.md). Parsing lives in `lib/jargon/import/parse/`
+and stays pure. Nothing in this path may call an AI model. A term needs only
+its name; terms without a definition are excluded from everything TRACE and
+every delivery surface serve.
+
 # macOS widget
 
 The widget's source lives in `widget/jargon-gym.widget/` (`index.jsx` +
