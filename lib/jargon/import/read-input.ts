@@ -17,6 +17,12 @@ export type ReadInputResult =
   | { ok: true; kind: "json"; json: JsonImport; built: BuiltTerms }
   | { ok: true; kind: "list"; parsed: ParsedList; built: BuiltTerms };
 
+/** Past this, the browser would be parsing megabytes of text in one go. */
+export const MAX_INPUT_CHARS = 1_000_000;
+
+export const TOO_MUCH_TEXT_MESSAGE =
+  "That's too much to check at once. Split your list and add it in parts.";
+
 export const NO_TERMS_MESSAGE =
   "We couldn't find any terms. Put each term on its own line, with a dash or colon before its definition. For example: API – a way for programs to talk to each other.";
 
@@ -46,6 +52,9 @@ export function readImportInput(text: string, options: ParseOptions): ReadInputR
       problem: { message: "Nothing to check yet. Paste a list or choose a file." },
     };
   }
+
+  if (text.length > MAX_INPUT_CHARS)
+    return { ok: false, problem: { message: TOO_MUCH_TEXT_MESSAGE } };
 
   const result =
     looksLikeJson(text) && !options.treatAsText

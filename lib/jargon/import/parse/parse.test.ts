@@ -378,6 +378,13 @@ describe("duplicates inside a paste", () => {
   });
 });
 
+describe("leading apostrophe from a spreadsheet", () => {
+  it("drops one that guards a formula-looking cell, and keeps ordinary ones", () => {
+    const built = buildTerms(parseList("'=SLA – a promise\n'tis – old for it is"));
+    expect(built.terms.map((t) => t.term)).toEqual(["=SLA", "'tis"]);
+  });
+});
+
 describe("empty input", () => {
   it.each(["", "   ", "\n\n"])("%j has no terms", (input) => {
     expect(buildTerms(parseList(input)).terms).toEqual([]);

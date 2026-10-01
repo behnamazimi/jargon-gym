@@ -12,8 +12,12 @@ export function collectionToText(terms: ExportTerm[]): string {
     .join("\n");
 }
 
+/** A cell that starts with one of these is run as a formula by spreadsheet apps. */
+const FORMULA_START = /^[=+\-@\t\r]/;
+
 function csvCell(value: string | null): string {
-  const text = value ?? "";
+  const raw = value ?? "";
+  const text = FORMULA_START.test(raw) ? `'${raw}` : raw;
   return /[",\n\r]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 

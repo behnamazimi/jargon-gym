@@ -8,7 +8,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormatHelpButton } from "@/components/jargon/import/format-help-dialog";
 import { ImportFailurePanel } from "@/components/jargon/import/import-errors";
 import { decodeFileBytes } from "@/lib/jargon/import/parse/decode";
-import type { PasteProblem } from "@/lib/jargon/import/read-input";
+import { type PasteProblem } from "@/lib/jargon/import/read-input";
+
+const MAX_FILE_BYTES = 2 * 1024 * 1024;
 
 const PLACEHOLDER =
   "Put each term on its own line, with a dash or colon before its definition.\n\nFor example:\nAPI – a way for programs to talk to each other";
@@ -69,6 +71,10 @@ export function PasteStep({
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
+    if (file.size > MAX_FILE_BYTES) {
+      onProblem("That file is too big. Split it and add it in parts.");
+      return;
+    }
 
     const decoded = decodeFileBytes(new Uint8Array(await file.arrayBuffer()));
     if (decoded.kind === "package") {

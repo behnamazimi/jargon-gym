@@ -33,4 +33,29 @@ describe("csv export", () => {
       'Term,Definition,Category\nAPI,a way to talk,Tech\n"Cache, L2","a ""stored"" copy\nof data",\nMRR,,',
     );
   });
+
+  it.each(["=1+1", "+cmd", "-2+3", "@SUM(A1)", "\tx", '=HYPERLINK("http://x")'])(
+    "stops %j from running as a formula",
+    (cell) => {
+      const csv = collectionToCsv([{ term: "T", definition: cell, category: null }]);
+      expect(csv.split("\n")[1]).not.toMatch(/^T,"?[=+\-@\t]/);
+      expect(csv).toContain("'" + cell.replaceAll('"', '""'));
+    },
+  );
+
+  it("leaves ordinary cells alone", () => {
+    expect(collectionToCsv([{ term: "e-mail", definition: "it's fine", category: null }])).toBe(
+      "Term,Definition,Category\ne-mail,it's fine,",
+    );
+  });
+
+  it("round-trips a formula-looking term through the importer", () => {
+    const csv = collectionToCsv([
+      { term: "=SLA", definition: "a promise", category: "Tech" },
+      { term: "API", definition: "a way to talk", category: "Tech" },
+      { term: "Cache", definition: "a copy", category: "Tech" },
+    ]);
+    const built = buildTerms(parseList(csv));
+    expect(built.terms.map((t) => t.term)).toEqual(["=SLA", "API", "Cache"]);
+  });
 });

@@ -5,7 +5,7 @@ type Fields = Partial<Record<ColumnRole, string>>;
 function fieldsForRow(row: string[], roles: ColumnRole[]): Fields {
   const fields: Fields = {};
   roles.forEach((role, index) => {
-    const value = row[index]?.trim();
+    const value = row[index]?.trim().replace(/^'(?=[=+\-@])/, "");
     if (role !== "ignore" && value && fields[role] === undefined) fields[role] = value;
   });
   return fields;

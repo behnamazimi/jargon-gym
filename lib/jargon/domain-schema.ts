@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { cleanText } from "./text-clean";
 import { DOMAIN_LANGUAGES } from "./languages";
 
 const domainFieldsSchema = z.object({
-  name: z.string().trim().min(1, "Enter a collection name"),
-  description: z.string().nullable().optional(),
+  name: z.string().transform(cleanText).pipe(z.string().trim().min(1, "Enter a collection name")),
+  description: z.string().transform(cleanText).nullable().optional(),
   language: z.enum(DOMAIN_LANGUAGES).default("en"),
 });
 
@@ -31,9 +32,14 @@ export function domainInputToUpdateRow(input: DomainInput) {
 const newCollectionSchema = z.object({
   name: z
     .string()
-    .trim()
-    .min(1, "Enter a name for your collection.")
-    .max(100, "Keep the name under 100 characters."),
+    .transform(cleanText)
+    .pipe(
+      z
+        .string()
+        .trim()
+        .min(1, "Enter a name for your collection.")
+        .max(100, "Keep the name under 100 characters."),
+    ),
   language: z.enum(DOMAIN_LANGUAGES).default("en"),
 });
 

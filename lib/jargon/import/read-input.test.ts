@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { MAX_IMPORT_TERMS } from "./commit-schema";
-import { NO_TERMS_MESSAGE, overLimitMessage, readImportInput } from "./read-input";
+import {
+  MAX_INPUT_CHARS,
+  NO_TERMS_MESSAGE,
+  overLimitMessage,
+  readImportInput,
+  TOO_MUCH_TEXT_MESSAGE,
+} from "./read-input";
 
 describe("readImportInput", () => {
   it("says so when there is nothing", () => {
@@ -42,5 +48,17 @@ describe("readImportInput", () => {
   it("accepts exactly the cap", () => {
     const text = Array.from({ length: MAX_IMPORT_TERMS }, (_, i) => `t${i} – d${i}`).join("\n");
     expect(readImportInput(text, {}).ok).toBe(true);
+  });
+
+  it("refuses text that is far too long, without parsing it", () => {
+    const result = readImportInput("a – b\n".repeat(MAX_INPUT_CHARS / 6 + 10), {});
+    expect(!result.ok && result.problem.message).toBe(TOO_MUCH_TEXT_MESSAGE);
+  });
+
+  it("drops control and direction-override characters from what it reads", () => {
+    const result = readImportInput("AP\u0000I – a\u202E way", {});
+    expect(result.ok && result.built.terms.map((t) => [t.term, t.definition])).toEqual([
+      ["API", "a way"],
+    ]);
   });
 });
