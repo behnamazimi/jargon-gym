@@ -25,7 +25,7 @@ export type ImportAdapter = {
     links: JsonImport["links"];
     format: ImportFormat;
   }) => Promise<ImportFailure | null>;
-  commitLabel: (summary: CheckSummary) => string;
+  commitLabel: (summary: CheckSummary, committing: boolean) => string;
   requireAllDefinitions: boolean;
   /** Shown while a card still lacks a definition and one is required. */
   unfinishedNote: string;

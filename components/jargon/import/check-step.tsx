@@ -19,8 +19,8 @@ import { guessLanguage } from "@/lib/jargon/import/parse/dutch-hint";
 import { pluralize } from "@/lib/utils";
 
 function commitLabel(flow: ImportFlowState) {
+  if (flow.adapter) return flow.adapter.commitLabel(flow.summary, flow.isCommitting);
   if (flow.isCommitting) return "Adding…";
-  if (flow.adapter) return flow.adapter.commitLabel(flow.summary);
   const { toAdd, toFinish } = flow.summary;
   if (toAdd === 0) return "Add terms";
   const base = `Add ${pluralize(toAdd, "term")}`;

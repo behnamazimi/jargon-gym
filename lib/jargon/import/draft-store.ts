@@ -55,5 +55,4 @@ const personalDraft = createDraftStore(STORAGE_KEY, CHANGE_EVENT);
 export const readDraft = personalDraft.read;
 export const writeDraft = personalDraft.write;
 export const clearDraft = personalDraft.clear;
-export const subscribeToDraft = personalDraft.subscribe;
 export { personalDraft };

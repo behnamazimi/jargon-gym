@@ -3,7 +3,7 @@ import { DOMAIN_LANGUAGES } from "@/lib/jargon/languages";
 import { normalizeKnownTerms } from "./known-terms";
 import { REQUEST_KINDS, REQUEST_LEVELS, REQUEST_SIZES } from "./types";
 
-export const MIN_TOPIC_LENGTH = 3;
+const MIN_TOPIC_LENGTH = 3;
 export const MAX_TOPIC_LENGTH = 120;
 
 export const requestFormSchema = z
@@ -30,5 +30,3 @@ export const requestFormSchema = z
     const known = normalizeKnownTerms(value.knownTerms);
     if (!known.ok) ctx.addIssue({ code: "custom", path: ["knownTerms"], message: known.message });
   });
-
-export type RequestFormInput = z.input<typeof requestFormSchema>;

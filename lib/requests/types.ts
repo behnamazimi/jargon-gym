@@ -32,8 +32,6 @@ export type RequestStatus =
 /** What a person sees: a merged request shows the status of the one it follows. */
 export type DisplayStatus = "requested" | "in_progress" | "needs_input" | "ready" | "declined";
 
-export const REQUEST_QUOTA_LIMIT = 3;
-
 export type RequestQuota = {
   enabled: boolean;
   paused: boolean;

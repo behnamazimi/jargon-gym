@@ -87,10 +87,7 @@ export async function fetchMyRequests(
 
 /** Quota and the person's time zone, reduced to what the entry points need. A
  *  failed read hides the request row rather than breaking the page. */
-export async function loadRequestEntry(
-  client: Client,
-  timeZone: string | null,
-): Promise<RequestEntry> {
+async function loadRequestEntry(client: Client, timeZone: string | null): Promise<RequestEntry> {
   try {
     return entryFor(await fetchRequestQuota(client), timeZone);
   } catch (error) {

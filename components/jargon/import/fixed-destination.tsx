@@ -3,12 +3,14 @@ import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/jargon/languages";
 
 /** Shown instead of the destination choice when another screen fixes it. */
 export function FixedDestinationNote({ flow }: { flow: ImportFlowState }) {
+  const fixed = flow.adapter?.destination;
+  if (!fixed) return null;
   const language =
-    DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === flow.language)?.label ??
-    flow.language;
+    DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === fixed.language)?.label ??
+    fixed.language;
   return (
     <p className="m-0 text-sm text-base-content/70" role="status">
-      New collection · {flow.newName} · {language}
+      New collection · {fixed.name} · {language}
     </p>
   );
 }
