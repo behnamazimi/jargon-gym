@@ -49,7 +49,9 @@ export function FormatHelpButton({ className }: { className?: string }) {
       <Dialog isOpen={open} onOpenChange={setOpen}>
         <DialogHeader>
           <DialogTitle>What you can paste</DialogTitle>
-          <DialogDescription>Only the term is required.</DialogDescription>
+          <DialogDescription>
+            Only the term is required. Everything else is optional.
+          </DialogDescription>
         </DialogHeader>
         <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
           <Format title="A list" example="API – a way for programs to talk to each other">
