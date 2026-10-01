@@ -88,7 +88,26 @@ export default function manifest(): MetadataRoute.Manifest {
         label: "Quiz yourself on mobile",
       },
     ],
+    share_target: {
+      action: "/jargon/capture",
+      method: "GET",
+      params: { title: "title", text: "text", url: "url" },
+    },
     shortcuts: [
+      {
+        name: "Add a term",
+        short_name: "Add a term",
+        description: "Save a word you just came across.",
+        url: "/jargon/capture?source=pwa",
+        icons: [{ src: "/icon/192", sizes: "192x192", type: "image/png" }],
+      },
+      {
+        name: "Paste a list",
+        short_name: "Paste a list",
+        description: "Add terms from a list in Notes, a spreadsheet or a chat.",
+        url: "/jargon/import/paste?source=pwa",
+        icons: [{ src: "/icon/192", sizes: "192x192", type: "image/png" }],
+      },
       {
         name: "Read",
         short_name: "Read",
@@ -101,13 +120,6 @@ export default function manifest(): MetadataRoute.Manifest {
         short_name: "Review",
         description: "Review terms from your active collections.",
         url: "/jargon/review?source=pwa",
-        icons: [{ src: "/icon/192", sizes: "192x192", type: "image/png" }],
-      },
-      {
-        name: "Quiz",
-        short_name: "Quiz",
-        description: "Quiz yourself on terms from your active collections.",
-        url: "/jargon/quiz?source=pwa",
         icons: [{ src: "/icon/192", sizes: "192x192", type: "image/png" }],
       },
     ],

@@ -64,6 +64,15 @@ collection only (the unique index is per collection). Pasting several lines offe
 `import_batches` row. It lives under `/jargon` so it gets the app chrome and hides
 the dock while you type.
 
+On Android, the installed app is also a share target (`share_target` in
+`app/manifest.ts`, GET to `/jargon/capture`). A shared sentence is parsed by
+`parseSharedInput`: the link is dropped, a word or short phrase fills Term, several
+lines offer the paste importer, and a longer sentence shows its words as chips
+(`lib/jargon/capture/tokenize.ts`, `selection.ts`). The tapped words become the term
+and the sentence the example. iOS has no share target. The manifest shortcuts are Add
+a term, Paste a list, Read and Review (Android shows at most four). After a manifest
+change Android may need a reinstall, or a day for the WebAPK to update.
+
 ## Unfinished terms
 
 Only a term's name is required. A term with no definition (`definition is

@@ -3,14 +3,15 @@ import { Suspense } from "react";
 import { getImportSetupData } from "@/app/(private)/jargon/import/actions";
 import { CaptureFlow } from "@/components/jargon/capture/capture-flow";
 import { PageHeader } from "@/components/jargon/page-header";
+import { parseSharedInput } from "@/lib/jargon/capture/shared-input";
 import { CAPTURE_COPY } from "@/lib/jargon/capture/copy";
 
 type PageProps = {
-  searchParams: Promise<{ to?: string }>;
+  searchParams: Promise<{ to?: string; text?: string }>;
 };
 
 export default async function CapturePage({ searchParams }: PageProps) {
-  const { to } = await searchParams;
+  const { to, text } = await searchParams;
   const setup = await getImportSetupData();
 
   if ("error" in setup) {
@@ -27,7 +28,11 @@ export default async function CapturePage({ searchParams }: PageProps) {
         compactOnPhone
       />
       <Suspense>
-        <CaptureFlow collections={setup.collections} presetId={to ?? null} />
+        <CaptureFlow
+          collections={setup.collections}
+          presetId={to ?? null}
+          shared={parseSharedInput({ text })}
+        />
       </Suspense>
     </>
   );

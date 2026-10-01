@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { CaptureDuplicateNote } from "@/components/jargon/capture/capture-duplicate-note";
 import { CaptureSaved } from "@/components/jargon/capture/capture-saved";
+import { SharedSentenceChips } from "@/components/jargon/capture/shared-sentence-chips";
 import { FirstCollectionForm } from "@/components/jargon/capture/first-collection-form";
 import { CollectionSelect } from "@/components/jargon/collection-select";
 import { PastedListPrompt } from "@/components/jargon/pasted-list-prompt";
@@ -22,6 +23,9 @@ import {
   saveDestinationPref,
   subscribeDestinationPref,
 } from "@/lib/jargon/capture/destination-pref";
+import { toggleChip, termFromSelection, type Selection } from "@/lib/jargon/capture/selection";
+import { initialFromShared, type SharedIntake } from "@/lib/jargon/capture/shared-input";
+import { tokenize } from "@/lib/jargon/capture/tokenize";
 import { writeDraft } from "@/lib/jargon/import/draft-store";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
 import { classifyTermPaste } from "@/lib/jargon/import/term-paste";
@@ -31,9 +35,11 @@ type Saved = { term: string; unfinished: boolean; collectionId: string };
 export function CaptureFlow({
   collections,
   presetId,
+  shared = { kind: "none" },
 }: {
   collections: ImportDestination[];
   presetId: string | null;
+  shared?: SharedIntake;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -42,10 +48,16 @@ export function CaptureFlow({
   const termRef = useRef<HTMLInputElement>(null);
   const stored = useSyncExternalStore(subscribeDestinationPref, loadDestinationPref, () => null);
   const [chosenId, setChosenId] = useState<string | null>(null);
-  const [term, setTerm] = useState("");
-  const [definition, setDefinition] = useState("");
+  const initial = useMemo(() => initialFromShared(shared), [shared]);
+  const [term, setTerm] = useState(initial.term);
+  const [definition, setDefinition] = useState(initial.definition);
+  const sentence = initial.sentence;
+  const tokens = useMemo(() => (sentence ? tokenize(sentence) : []), [sentence]);
+  const [example, setExample] = useState(sentence ?? "");
+  const [selection, setSelection] = useState<Selection>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
-  const [pastedLines, setPastedLines] = useState<string[] | null>(null);
+  const [pastedLines, setPastedLines] = useState<string[] | null>(initial.lines);
+  const pasteSource = shared.kind === "lines" ? "shared" : "pasted";
 
   const destinationId = pickDestination({ preset: chosenId ?? presetId, stored, collections });
   const destination = collections.find((collection) => collection.id === destinationId);
@@ -62,6 +74,13 @@ export function CaptureFlow({
   function changeDestination(id: string) {
     setChosenId(id);
     check(id, term);
+  }
+
+  function toggleWord(index: number) {
+    if (!sentence) return;
+    const next = toggleChip(selection, index);
+    setSelection(next);
+    changeTerm(termFromSelection(sentence, tokens, next));
   }
 
   function handlePaste(event: React.ClipboardEvent<HTMLInputElement>) {
@@ -84,6 +103,7 @@ export function CaptureFlow({
   function reset() {
     setTerm("");
     setDefinition("");
+    setSelection(null);
     setSaved(null);
     check(null, "");
   }
@@ -95,7 +115,11 @@ export function CaptureFlow({
     // Focus before the request so the phone keyboard stays up between saves.
     if (addAnother) termRef.current?.focus();
 
-    const ok = await createTerm(destination.id, { term: name, definition });
+    const ok = await createTerm(destination.id, {
+      term: name,
+      definition,
+      example: example.trim() || null,
+    });
     if (!ok) return;
     saveDestinationPref(destination.id);
 
@@ -160,8 +184,18 @@ export function CaptureFlow({
         />
       </Field>
 
+      {sentence ? (
+        <SharedSentenceChips
+          tokens={tokens}
+          selection={selection}
+          term={term.trim()}
+          onToggle={toggleWord}
+        />
+      ) : null}
+
       {pastedLines ? (
         <PastedListPrompt
+          source={pasteSource}
           lines={pastedLines}
           onAddAsList={() => addPastedAsList(pastedLines)}
           onKeepAsOne={() => {
@@ -191,6 +225,18 @@ export function CaptureFlow({
         />
         <p className="m-0 mt-1 text-xs text-base-content/60">{CAPTURE_COPY.definitionHint}</p>
       </Field>
+
+      {sentence ? (
+        <Field>
+          <FieldLabel htmlFor="capture-example">{CAPTURE_COPY.example}</FieldLabel>
+          <Textarea
+            id="capture-example"
+            value={example}
+            className="min-h-20 text-base"
+            onChange={(event) => setExample(event.target.value)}
+          />
+        </Field>
+      ) : null}
 
       {error ? (
         <Alert variant="destructive">
