@@ -45,13 +45,13 @@ function Toggle({
 }
 
 /** The look of every choice in the app: single-choice groups and filter chips.
- *  Roomier on touch screens, with a hit area that reaches 44px either way. */
+ *  Roomier on touch screens, where the hit area reaches 44px. */
 export function choiceClassName(className?: string) {
   return cn(
-    "group relative inline-flex min-h-8 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-base-300 bg-base-100 px-3.5 text-center text-sm whitespace-normal text-base-content outline-none select-none coarse:min-h-10",
+    "group relative inline-flex min-h-8 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-base-300 bg-base-100 px-3.5 text-center text-sm whitespace-normal text-base-content outline-hidden select-none coarse:min-h-10",
     "after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']",
-    "transition-[background-color,border-color,transform] duration-150 hover:bg-base-200/60",
-    "data-selected:border-primary/60 data-selected:bg-primary/10 data-selected:font-semibold data-selected:text-[color-mix(in_oklab,var(--color-primary)_55%,var(--color-base-content))] data-selected:hover:bg-primary/15",
+    "transition-[background-color,border-color,scale] duration-150 motion-reduce:transition-none hover:bg-base-200/60",
+    "data-selected:border-primary/60 data-selected:bg-primary/10 data-selected:text-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-base-content))] data-selected:hover:bg-primary/15",
     "data-pressed:scale-[0.97] data-disabled:cursor-not-allowed data-disabled:opacity-50",
     "data-focus-visible:ring-2 data-focus-visible:ring-primary data-focus-visible:ring-offset-2 data-focus-visible:ring-offset-base-100",
     className,
