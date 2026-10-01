@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { signedUserHeaders } from "@/lib/auth/signed-user-headers";
 
 const getNarrationAccessForUser = vi.fn();
 const getReadyAudio = vi.fn();
@@ -37,10 +37,12 @@ const { GET, POST } = await import("./route");
 
 const ctx = { params: Promise.resolve({ termId: "term-1" }) };
 
+const USER_HEADERS = await signedUserHeaders("user-1");
+
 function request(method: string, headers: Record<string, string> = {}) {
   return new Request("http://localhost/api/narration/term-1", {
     method,
-    headers: { [VERIFIED_USER_HEADER]: "user-1", ...headers },
+    headers: { ...USER_HEADERS, ...headers },
   });
 }
 

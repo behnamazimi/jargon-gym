@@ -1,6 +1,8 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { VERIFIED_USER_EMAIL_HEADER, VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { readVerifiedUser } from "@/lib/auth/verified-user-header";
+
+process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-signing-secret";
 
 const auth = vi.hoisted(() => ({
   user: null as null | { id: string; email: string; banned_until: null },
@@ -14,16 +16,22 @@ vi.mock("@supabase/ssr", () => ({
 
 const { updateSession, REFERRAL_VERIFIED_COOKIE } = await import("./proxy");
 
-/** The value Next will forward to the app for a request header. */
-function forwarded(response: Response, name: string) {
-  return response.headers.get(`x-middleware-request-${name}`);
+/** The request headers Next will forward to the app. */
+function forwardedHeaders(response: Response) {
+  const forwarded = new Headers();
+  const prefix = "x-middleware-request-";
+  response.headers.forEach((value, name) => {
+    if (name.startsWith(prefix)) forwarded.set(name.slice(prefix.length), value);
+  });
+  return forwarded;
 }
 
 function request(path: string, cookie = "") {
   return new NextRequest(`http://localhost${path}`, {
     headers: {
-      [VERIFIED_USER_HEADER]: "forged-id",
-      [VERIFIED_USER_EMAIL_HEADER]: "forged@example.com",
+      "x-verified-user-id": "forged-id",
+      "x-verified-user-email": "forged%40example.com",
+      "x-verified-user-sig": "00",
       cookie,
     },
   });
@@ -35,15 +43,18 @@ describe("updateSession", () => {
   });
 
   it("drops forged user headers on a public page for a signed-out visitor", async () => {
-    const response = await updateSession(request("/"));
-    expect(forwarded(response, VERIFIED_USER_HEADER)).toBeNull();
-    expect(forwarded(response, VERIFIED_USER_EMAIL_HEADER)).toBeNull();
+    const forwarded = forwardedHeaders(await updateSession(request("/")));
+    expect(forwarded.get("x-verified-user-id")).toBeNull();
+    expect(forwarded.get("x-verified-user-sig")).toBeNull();
+    expect(await readVerifiedUser(forwarded)).toBeNull();
   });
 
-  it("forwards the verified user instead of what the client sent", async () => {
-    auth.user = { id: "real-id", email: "me@example.com", banned_until: null };
+  it("forwards the verified user, signed, instead of what the client sent", async () => {
+    auth.user = { id: "real-id", email: "mé@example.com", banned_until: null };
     const response = await updateSession(request("/jargon", `${REFERRAL_VERIFIED_COOKIE}=1`));
-    expect(forwarded(response, VERIFIED_USER_HEADER)).toBe("real-id");
-    expect(forwarded(response, VERIFIED_USER_EMAIL_HEADER)).toBe("me@example.com");
+    expect(await readVerifiedUser(forwardedHeaders(response))).toEqual({
+      id: "real-id",
+      email: "mé@example.com",
+    });
   });
 });

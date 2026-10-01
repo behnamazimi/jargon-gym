@@ -12,8 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/components/ui/toast";
-import { useTermActions } from "@/hooks/use-term-actions";
-import { clearTermDetails } from "@/lib/jargon/library/details-store";
+import { forgetTermDetails } from "@/lib/jargon/library/details-store";
 import type { LibraryTerm, Term } from "@/lib/jargon/types";
 
 const TermFormDialog = dynamic(() =>
@@ -27,8 +26,10 @@ type TermRowDialogsProps = {
   onEditingChange: (term: Term | null) => void;
   deleting: LibraryTerm | null;
   onDeletingChange: (term: LibraryTerm | null) => void;
-  onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (termId: string) => void;
+  /** The details snapshot to drop once a term is gone. */
+  detailsScope: string;
+  /** Deletes the term; resolves false if it couldn't. */
+  onRemove: (termId: string) => Promise<boolean>;
 };
 
 /** The edit and delete dialogs for whichever row asked, mounted once for
@@ -39,19 +40,18 @@ export function TermRowDialogs({
   onEditingChange,
   deleting,
   onDeletingChange,
-  onTermRemoved,
-  onTermRemoveFailed,
+  detailsScope,
+  onRemove,
 }: TermRowDialogsProps) {
-  const { deleteTerm } = useTermActions();
   const { toast } = useToast();
 
   async function confirmDelete(term: LibraryTerm) {
     onDeletingChange(null);
-    onTermRemoved(term.id);
-    if (await deleteTerm(term.id)) {
+    if (await onRemove(term.id)) {
+      // Other cards may still list it under related terms.
+      forgetTermDetails(detailsScope);
       toast(`"${term.term}" deleted`);
     } else {
-      onTermRemoveFailed(term.id);
       toast(`Couldn't delete "${term.term}" — it's back in the list.`, "destructive");
     }
   }
@@ -66,10 +66,7 @@ export function TermRowDialogs({
             initialTerm={editing}
             isOpen
             onOpenChange={(open) => {
-              if (open) return;
-              onEditingChange(null);
-              // Saved links show on both terms, so loaded details may be stale.
-              clearTermDetails();
+              if (!open) onEditingChange(null);
             }}
           />
         </Suspense>

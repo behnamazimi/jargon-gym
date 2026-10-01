@@ -2,10 +2,10 @@ import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { AdminError } from "@/lib/admin/admin-error";
 import { isBanned } from "@/lib/auth/suspension";
-import { VERIFIED_USER_EMAIL_HEADER, VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { readVerifiedUser, type VerifiedUser } from "@/lib/auth/verified-user-header";
 import { createClient } from "@/lib/supabase/server";
 
-export type SessionUser = { id: string; email: string | null };
+export type SessionUser = VerifiedUser;
 
 /** The signed-in user. The proxy has already verified the session (and
  *  checked for a ban) on every request it matches, and forwards the result
@@ -16,14 +16,8 @@ export const getSessionUser = cache(async function getSessionUser(): Promise<{
   error: Error | null;
 }> {
   const [supabase, requestHeaders] = await Promise.all([createClient(), headers()]);
-  const verifiedId = requestHeaders.get(VERIFIED_USER_HEADER);
-  if (verifiedId) {
-    return {
-      supabase,
-      user: { id: verifiedId, email: requestHeaders.get(VERIFIED_USER_EMAIL_HEADER) },
-      error: null,
-    };
-  }
+  const verified = await readVerifiedUser(requestHeaders);
+  if (verified) return { supabase, user: verified, error: null };
 
   const {
     data: { user },

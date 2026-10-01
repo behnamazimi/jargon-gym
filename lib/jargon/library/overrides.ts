@@ -4,18 +4,21 @@ import { useSyncExternalStore } from "react";
 
 /**
  * Edits made on this device that a server snapshot may not include yet:
- * marking a term known and deleting a term no longer re-render the page, and
- * the router can restore an older snapshot on back/forward. An edit wins over
- * any snapshot first seen before it was made; a snapshot first seen after it
- * already includes it. All times are this browser's clock.
+ * marking a term known and deleting a term don't re-render the page, and the
+ * router can restore an older snapshot on back/forward.
+ *
+ * Both sides carry server times: `savedAt` comes back from the action once the
+ * write is committed, and a snapshot's `loadedAt` is taken before it reads
+ * anything. A snapshot that started reading after the save includes it; any
+ * other snapshot gets the edit laid over it (at worst a no-op).
  */
-type TermOverride = { marked?: boolean; removed?: boolean; at: number };
+type TermOverride = { marked?: boolean; removed?: boolean; savedAt: number };
 
 export type CollectionCounts = {
   termCount: number;
   knownCount: number;
   termsLearnedCount: number;
-  at: number;
+  savedAt: number;
 };
 
 type State = {
@@ -26,7 +29,6 @@ type State = {
 const EMPTY: State = { terms: new Map(), counts: new Map() };
 let state: State = EMPTY;
 const listeners = new Set<() => void>();
-const firstSeen = new Map<string, number>();
 
 function emit(next: State) {
   state = next;
@@ -48,59 +50,47 @@ export function useLibraryOverrides(): State {
   );
 }
 
-/** When this browser first rendered the snapshot with this key. Recording it
- *  during render is safe: it is set once and never read by anything else. */
-export function snapshotSeenAt(key: string): number {
-  let seen = firstSeen.get(key);
-  if (seen === undefined) {
-    seen = Date.now();
-    firstSeen.set(key, seen);
-  }
-  return seen;
-}
-
-function setTerm(termId: string, change: Omit<TermOverride, "at">) {
+function setTerm(termId: string, change: Omit<TermOverride, "savedAt">, savedAt: number) {
   const terms = new Map(state.terms);
-  terms.set(termId, { ...terms.get(termId), ...change, at: Date.now() });
+  terms.set(termId, { ...terms.get(termId), ...change, savedAt });
   emit({ ...state, terms });
 }
 
-export function overrideMarkedKnown(termId: string, marked: boolean) {
-  setTerm(termId, { marked });
+export function overrideMarkedKnown(termId: string, marked: boolean, savedAt: number) {
+  setTerm(termId, { marked }, savedAt);
 }
 
-export function overrideRemoved(termId: string, removed: boolean) {
-  setTerm(termId, { removed });
+export function overrideRemoved(termId: string, savedAt: number) {
+  setTerm(termId, { removed: true }, savedAt);
 }
 
 /** The collection's live counts, for the sidebar next to the list. */
-export function overrideCollectionCounts(domainId: string, counts: Omit<CollectionCounts, "at">) {
+export function overrideCollectionCounts(domainId: string, counts: CollectionCounts) {
   const next = new Map(state.counts);
-  next.set(domainId, { ...counts, at: Date.now() });
+  next.set(domainId, counts);
   emit({ ...state, counts: next });
 }
 
-/** The term's override when it is newer than the snapshot, else undefined. */
+/** The term's override when the snapshot may not include it, else undefined. */
 export function termOverride(
   overrides: State,
   termId: string,
-  seenAt: number,
+  loadedAt: number,
 ): TermOverride | undefined {
   const override = overrides.terms.get(termId);
-  return override && override.at > seenAt ? override : undefined;
+  return override && override.savedAt >= loadedAt ? override : undefined;
 }
 
 export function collectionCountsOverride(
   overrides: State,
   domainId: string,
-  seenAt: number,
+  loadedAt: number,
 ): CollectionCounts | undefined {
   const counts = overrides.counts.get(domainId);
-  return counts && counts.at > seenAt ? counts : undefined;
+  return counts && counts.savedAt >= loadedAt ? counts : undefined;
 }
 
 /** Test-only reset. */
 export function resetLibraryOverrides() {
-  firstSeen.clear();
   emit(EMPTY);
 }

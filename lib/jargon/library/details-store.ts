@@ -1,23 +1,34 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 import type { Term } from "@/lib/jargon/types";
 
 /**
- * Full term details for the Library, kept for the browser session. Rows ask
- * for theirs as they come near the viewport; the ids are gathered for a
- * moment and fetched together, up to MAX_BATCH per request.
+ * Full term details for the Library. Rows ask for theirs as they come near
+ * the viewport; the ids are gathered for a moment and fetched together, up
+ * to MAX_BATCH per request.
+ *
+ * Details are kept per server snapshot of the collection (its scope). A new
+ * snapshot, after an edit, an import or a refresh, starts with nothing, so
+ * stale details never outlive the data they came with. A request writes into
+ * the scope it started in, so a late answer can't overwrite newer data.
  */
 const MAX_BATCH = 50;
 const FLUSH_DELAY_MS = 50;
+/** The current snapshot plus a couple the browser may go back to. */
+const KEPT_SCOPES = 3;
 
 type Entry = Term | "failed";
 
-const entries = new Map<string, Entry>();
-const inflight = new Map<string, Promise<void>>();
-const queued = new Set<string>();
+type Scope = {
+  entries: Map<string, Entry>;
+  inflight: Map<string, Promise<void>>;
+  queued: Set<string>;
+  flushTimer: ReturnType<typeof setTimeout> | null;
+};
+
+const scopes = new Map<string, Scope>();
 const listeners = new Set<() => void>();
-let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 function emit() {
   for (const listener of listeners) listener();
@@ -30,74 +41,109 @@ function subscribe(listener: () => void) {
   };
 }
 
-async function fetchBatch(ids: string[]): Promise<void> {
+function newScope(): Scope {
+  return { entries: new Map(), inflight: new Map(), queued: new Set(), flushTimer: null };
+}
+
+function scopeFor(key: string): Scope {
+  let scope = scopes.get(key);
+  if (!scope) {
+    scope = newScope();
+    scopes.set(key, scope);
+    for (const oldest of scopes.keys()) {
+      if (scopes.size <= KEPT_SCOPES) break;
+      scopes.delete(oldest);
+    }
+  }
+  return scope;
+}
+
+async function fetchBatch(scope: Scope, ids: string[]): Promise<void> {
   try {
     const response = await fetch(`/api/jargon/terms/details?ids=${ids.join(",")}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const { terms } = (await response.json()) as { terms: Term[] };
     const found = new Set<string>();
     for (const term of terms) {
-      entries.set(term.id, term);
+      scope.entries.set(term.id, term);
       found.add(term.id);
     }
-    for (const id of ids) if (!found.has(id)) entries.set(id, "failed");
+    for (const id of ids) if (!found.has(id)) scope.entries.set(id, "failed");
   } catch {
-    for (const id of ids) entries.set(id, "failed");
+    for (const id of ids) scope.entries.set(id, "failed");
   } finally {
-    for (const id of ids) inflight.delete(id);
+    for (const id of ids) scope.inflight.delete(id);
     emit();
   }
 }
 
-function startBatches(ids: string[]) {
+function startBatches(scope: Scope, ids: string[]) {
   for (let start = 0; start < ids.length; start += MAX_BATCH) {
     const batch = ids.slice(start, start + MAX_BATCH);
-    const promise = fetchBatch(batch);
-    for (const id of batch) inflight.set(id, promise);
+    const promise = fetchBatch(scope, batch);
+    for (const id of batch) scope.inflight.set(id, promise);
   }
 }
 
-function flush() {
-  flushTimer = null;
-  const ids = [...queued];
-  queued.clear();
-  startBatches(ids);
-}
-
-function needsFetch(id: string) {
-  const entry = entries.get(id);
-  return (entry === undefined || entry === "failed") && !inflight.has(id);
+/** Loaded, already loading or failed terms aren't asked for again; a failed
+ *  one waits for retryTermDetails. */
+function isNew(scope: Scope, id: string) {
+  return !scope.entries.has(id) && !scope.inflight.has(id);
 }
 
 /** Asks for these terms soon, together with any other rows asking now. */
-export function prefetchTermDetails(termIds: string[]) {
-  for (const id of termIds) if (needsFetch(id)) queued.add(id);
-  if (queued.size > 0 && flushTimer === null) flushTimer = setTimeout(flush, FLUSH_DELAY_MS);
+export function prefetchTermDetails(key: string, termIds: string[]) {
+  const scope = scopeFor(key);
+  for (const id of termIds) if (isNew(scope, id)) scope.queued.add(id);
+  if (scope.queued.size === 0 || scope.flushTimer !== null) return;
+  scope.flushTimer = setTimeout(() => {
+    scope.flushTimer = null;
+    const ids = [...scope.queued];
+    scope.queued.clear();
+    startBatches(scope, ids);
+  }, FLUSH_DELAY_MS);
 }
 
-/** Resolves once the term's details are loaded (or failed to load). */
-export async function loadTermDetails(termId: string): Promise<Term | undefined> {
-  if (needsFetch(termId)) {
-    queued.delete(termId);
-    startBatches([termId]);
+/** Tries a failed term again. */
+export function retryTermDetails(key: string, termId: string) {
+  const scope = scopeFor(key);
+  if (scope.entries.get(termId) !== "failed") return;
+  scope.entries.delete(termId);
+  emit();
+  prefetchTermDetails(key, [termId]);
+}
+
+/** Resolves once the term's details are loaded, or undefined if they can't be. */
+export async function loadTermDetails(key: string, termId: string): Promise<Term | undefined> {
+  const scope = scopeFor(key);
+  if (scope.entries.get(termId) === "failed") scope.entries.delete(termId);
+  if (isNew(scope, termId)) {
+    scope.queued.delete(termId);
+    startBatches(scope, [termId]);
   }
-  await inflight.get(termId);
-  const entry = entries.get(termId);
+  await scope.inflight.get(termId);
+  const entry = scope.entries.get(termId);
   return entry === "failed" ? undefined : entry;
 }
 
-/** Drops every loaded term, after an edit that may change several of them
- *  (a new link shows on both ends), so the rows on screen load again. */
-export function clearTermDetails() {
-  entries.clear();
+/** Drops this snapshot's details, e.g. after a term is deleted (its name may
+ *  still be listed under related terms). Requests already on their way land
+ *  in the dropped scope and are ignored. */
+export function forgetTermDetails(key: string) {
+  if (!scopes.has(key)) return;
+  scopes.set(key, newScope());
   emit();
 }
 
+/** The snapshot the rows below read details for. */
+export const TermDetailsScope = createContext("");
+
 /** The term's details: the term, "failed", or undefined while not loaded. */
 export function useTermDetails(termId: string): Entry | undefined {
+  const key = useContext(TermDetailsScope);
   return useSyncExternalStore(
     subscribe,
-    () => entries.get(termId),
+    () => scopes.get(key)?.entries.get(termId),
     () => undefined,
   );
 }

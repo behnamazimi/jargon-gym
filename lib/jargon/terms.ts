@@ -178,13 +178,14 @@ export async function fetchTermRelationshipsForDomain(
   client: Client,
   domainId: string,
 ): Promise<TermRelationshipLink[]> {
-  const { data, error } = await client.rpc("my_term_relationships_by_domain", {
-    p_domain_id: domainId,
-  });
+  const data = await fetchAllRows((from, to) =>
+    client
+      .rpc("my_term_relationships_by_domain", { p_domain_id: domainId })
+      .order("id")
+      .range(from, to),
+  );
 
-  if (error) throw error;
-
-  return (data ?? []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     relationship_type: row.relationship_type,
     description: row.description,

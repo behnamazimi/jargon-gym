@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { fetchCollectionForExport, isUuid } from "@/lib/jargon/library/details";
 import { createClient } from "@/lib/supabase/server";
 
@@ -7,7 +7,7 @@ const NO_STORE = { "Cache-Control": "private, no-store" };
 
 /** A collection's terms in full, loaded only when the export dialog opens. */
 export async function GET(request: Request, { params }: { params: Promise<{ domainId: string }> }) {
-  if (!request.headers.get(VERIFIED_USER_HEADER)) {
+  if (!(await readVerifiedUser(request.headers))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401, headers: NO_STORE });
   }
 

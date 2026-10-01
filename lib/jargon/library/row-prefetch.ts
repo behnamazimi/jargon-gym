@@ -7,16 +7,18 @@ import { prefetchTermDetails } from "./details-store";
 const PREFETCH_MARGIN = "600px 0px";
 
 let observer: IntersectionObserver | null = null;
-const termIds = new WeakMap<Element, string>();
+const rows = new WeakMap<Element, { termId: string; scope: string }>();
 
 function sharedObserver() {
   observer ??= new IntersectionObserver(
     (entries) => {
-      const near = entries.flatMap((entry) => {
-        const id = entry.isIntersecting ? termIds.get(entry.target) : undefined;
-        return id ? [id] : [];
-      });
-      if (near.length > 0) prefetchTermDetails(near);
+      const nearByScope = new Map<string, string[]>();
+      for (const entry of entries) {
+        const row = entry.isIntersecting ? rows.get(entry.target) : undefined;
+        if (!row) continue;
+        nearByScope.set(row.scope, [...(nearByScope.get(row.scope) ?? []), row.termId]);
+      }
+      for (const [scope, ids] of nearByScope) prefetchTermDetails(scope, ids);
     },
     { rootMargin: PREFETCH_MARGIN },
   );
@@ -25,8 +27,8 @@ function sharedObserver() {
 
 /** For a row's ref callback: loads the term's details once it nears the
  *  screen. Returns the cleanup React calls when the row unmounts. */
-export function observeRowForDetails(element: Element, termId: string) {
-  termIds.set(element, termId);
+export function observeRowForDetails(element: Element, termId: string, scope: string) {
+  rows.set(element, { termId, scope });
   const shared = sharedObserver();
   shared.observe(element);
   return () => shared.unobserve(element);

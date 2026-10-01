@@ -1,9 +1,14 @@
 "use client";
 
 import { Check, ChevronRight } from "lucide-react";
-import { memo, useCallback, useRef } from "react";
+import { memo, useCallback, useContext, useRef } from "react";
 import type { DomainLanguage } from "@/lib/jargon/languages";
-import { prefetchTermDetails, useTermDetails } from "@/lib/jargon/library/details-store";
+import {
+  prefetchTermDetails,
+  retryTermDetails,
+  TermDetailsScope,
+  useTermDetails,
+} from "@/lib/jargon/library/details-store";
 import { observeRowForDetails } from "@/lib/jargon/library/row-prefetch";
 import type { LibraryTerm } from "@/lib/jargon/types";
 import { Button } from "@/components/ui/button";
@@ -95,6 +100,7 @@ function CardBody({
   markedKnown: boolean;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
 }) {
+  const scope = useContext(TermDetailsScope);
   const details = useTermDetails(termId);
 
   if (details === "failed") {
@@ -105,7 +111,7 @@ function CardBody({
           type="button"
           size="sm"
           variant="outline"
-          onPress={() => prefetchTermDetails([termId])}
+          onPress={() => retryTermDetails(scope, termId)}
         >
           Try again
         </Button>
@@ -116,7 +122,7 @@ function CardBody({
   if (!details) {
     return (
       <div
-        ref={() => prefetchTermDetails([termId])}
+        ref={() => prefetchTermDetails(scope, [termId])}
         className="space-y-2 px-4 py-4"
         aria-busy="true"
         aria-label="Loading term"
@@ -153,13 +159,14 @@ export const TermCard = memo(function TermCard({
   onDelete,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const scope = useContext(TermDetailsScope);
 
   const watchRow = useCallback(
     (element: HTMLDivElement | null) => {
       cardRef.current = element;
-      return element ? observeRowForDetails(element, term.id) : undefined;
+      return element ? observeRowForDetails(element, term.id, scope) : undefined;
     },
-    [term.id],
+    [term.id, scope],
   );
 
   // The body mounts when the card opens, so this runs once per opening.

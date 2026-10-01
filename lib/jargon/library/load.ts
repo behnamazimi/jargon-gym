@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchProgressStateByDomain, resolveReviewDomainIds } from "@/lib/jargon/known-state";
+import { fetchDomainStats } from "@/lib/jargon/collection-domain-tally";
+import { fetchUserCollectionDomains } from "@/lib/jargon/collections";
+import { fetchProgressStateByDomain } from "@/lib/jargon/known-state";
 import { mapDomain } from "@/lib/jargon/mappers";
 import { fetchTermIndexByDomain } from "@/lib/jargon/terms";
 import type {
@@ -10,35 +12,49 @@ import type {
   LibraryTerm,
   UnfinishedLibraryTerm,
 } from "@/lib/jargon/types";
+import { isUuid } from "./details";
 import { pickLibraryDomainId } from "./pick-domain";
 
 type Client = SupabaseClient<Database>;
 
 export type LibraryCollections = {
   domains: Domain[];
-  /** Server time the counts were read, compared against local edits. */
+  /** Server time taken before the counts were read, compared against local
+   *  edits' save times (lib/jargon/library/overrides.ts). */
   loadedAt: number;
 };
 
-/** Every collection the user has, with its counts. Cached per request so
- *  the Library layout and page share one read. */
+/** The user's collections without counts: what the page needs to pick and
+ *  show one. Cached per request and shared with the layout's counts below. */
+const loadLibraryDomainList = cache(async function loadLibraryDomainList(
+  client: Client,
+  userId: string,
+) {
+  const [rows, reviewDomainIds] = await Promise.all([
+    fetchUserCollectionDomains(client, userId),
+    client.rpc("my_review_domain_ids").then(({ data, error }) => {
+      if (error) throw error;
+      return data ?? [];
+    }),
+  ]);
+  const active = new Set(reviewDomainIds);
+  return rows.map((row) => ({ row, isActiveForReview: active.has(row.id) }));
+});
+
+/** Every collection with its counts, for the sidebar. Reading the counts
+ *  means reading every term's progress, so the page doesn't wait on it. */
 export const loadLibraryCollections = cache(async function loadLibraryCollections(
   client: Client,
   userId: string,
 ): Promise<LibraryCollections> {
   const loadedAt = Date.now();
-  const { reviewDomainIds, collectionRows } = await resolveReviewDomainIds(client, userId);
-  const active = new Set(reviewDomainIds);
-  const domains = collectionRows.map((row) =>
-    mapDomain(row, {
-      source: row.source,
-      isActiveForReview: active.has(row.id),
-      termCount: row.termCount,
-      unfinishedCount: row.unfinishedCount,
-      knownCount: row.knownCount,
-      termsLearnedCount: row.termsLearnedCount,
-      markedKnownCount: row.markedKnownCount,
-    }),
+  const list = await loadLibraryDomainList(client, userId);
+  const stats = await fetchDomainStats(
+    client,
+    list.map(({ row }) => row.id),
+  );
+  const domains = list.map(({ row, isActiveForReview }) =>
+    mapDomain(row, { source: row.source, isActiveForReview, ...stats.get(row.id) }),
   );
   return { domains, loadedAt };
 });
@@ -74,14 +90,20 @@ export async function loadLibraryPage(
   userId: string,
   options: { requestedDomainId?: string; lastDomainId?: string },
 ): Promise<LibraryLoadResult> {
-  const collectionsPromise = loadLibraryCollections(client, userId);
-  const guess = options.requestedDomainId ?? options.lastDomainId;
+  // Only the list, not every collection's counts: the page works out the
+  // counts it shows from its own terms.
+  const listPromise = loadLibraryDomainList(client, userId);
+  const guess = [options.requestedDomainId, options.lastDomainId].find((id): id is string =>
+    Boolean(id && isUuid(id)),
+  );
   const guessed = guess ? loadDomainTerms(client, guess) : null;
   // A guess for a collection the user no longer has resolves to nothing; keep
   // it from surfacing as an unhandled rejection while the list loads.
   guessed?.catch(() => undefined);
 
-  const { domains } = await collectionsPromise;
+  const domains = (await listPromise).map(({ row, isActiveForReview }) =>
+    mapDomain(row, { source: row.source, isActiveForReview }),
+  );
   const domainId = pickLibraryDomainId(domains, options);
   if (!domainId) return { kind: "empty" };
 

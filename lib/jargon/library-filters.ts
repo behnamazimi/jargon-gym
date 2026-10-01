@@ -49,20 +49,25 @@ export function parseLibraryFilters(raw: string | null): LibraryFilters {
   }
 }
 
-/** Most recent collections whose category choice is kept, so the cookie
- *  stays well under the browser's 4 KB limit. */
+/** Most recent collections whose category choice is kept. */
 const MAX_REMEMBERED_DOMAINS = 20;
+/** Browsers drop a cookie over 4 KB, name and attributes included. */
+const MAX_COOKIE_VALUE_LENGTH = 3500;
 
-/** Serialized for the cookie: empty category choices are dropped and only
- *  the most recently changed collections are kept (last keys win). */
+/** The cookie value (URI-encoded JSON). Empty category choices are dropped,
+ *  and the least recently changed collections go first (last keys win) until
+ *  it fits, since category names can encode to many bytes each. */
 export function serializeLibraryFilters(filters: LibraryFilters): string {
-  const entries = Object.entries(filters.categoriesByDomain).filter(
-    ([, categories]) => categories.length > 0,
-  );
-  return JSON.stringify({
-    ...filters,
-    categoriesByDomain: Object.fromEntries(entries.slice(-MAX_REMEMBERED_DOMAINS)),
-  });
+  const entries = Object.entries(filters.categoriesByDomain)
+    .filter(([, categories]) => categories.length > 0)
+    .slice(-MAX_REMEMBERED_DOMAINS);
+  for (;;) {
+    const value = encodeURIComponent(
+      JSON.stringify({ ...filters, categoriesByDomain: Object.fromEntries(entries) }),
+    );
+    if (value.length <= MAX_COOKIE_VALUE_LENGTH || entries.length === 0) return value;
+    entries.shift();
+  }
 }
 
 /** Raw cookie value as stored (URI-encoded JSON). */
@@ -81,9 +86,13 @@ export function decodeLibraryFilters(raw: string): LibraryFilters {
   }
 }
 
-/** Raw cookie string, so useSyncExternalStore gets a stable snapshot. */
+/** This tab's choices once it has changed any. They stay complete even when
+ *  the cookie had to leave some collections out. */
+let changedInThisTab: string | null = null;
+
+/** A raw string, so useSyncExternalStore gets a stable snapshot. */
 export function loadLibraryFiltersSnapshot(): string {
-  return readLibraryFiltersCookie(document.cookie);
+  return changedInThisTab ?? readLibraryFiltersCookie(document.cookie);
 }
 
 export function subscribeLibraryFilters(onStoreChange: () => void): () => void {
@@ -95,7 +104,7 @@ export function subscribeLibraryFilters(onStoreChange: () => void): () => void {
 
 export function updateLibraryFilters(update: (prev: LibraryFilters) => LibraryFilters): void {
   const next = update(decodeLibraryFilters(loadLibraryFiltersSnapshot()));
-  const value = encodeURIComponent(serializeLibraryFilters(next));
-  document.cookie = `${LIBRARY_FILTERS_COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`;
+  changedInThisTab = encodeURIComponent(JSON.stringify(next));
+  document.cookie = `${LIBRARY_FILTERS_COOKIE}=${serializeLibraryFilters(next)}; path=/; max-age=31536000; samesite=lax`;
   for (const listener of listeners) listener();
 }

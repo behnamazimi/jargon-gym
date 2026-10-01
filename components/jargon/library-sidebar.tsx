@@ -2,11 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useMemo, useState, useSyncExternalStore } from "react";
-import {
-  collectionCountsOverride,
-  snapshotSeenAt,
-  useLibraryOverrides,
-} from "@/lib/jargon/library/overrides";
+import { collectionCountsOverride, useLibraryOverrides } from "@/lib/jargon/library/overrides";
 import { LIBRARY_LAST_DOMAIN_COOKIE, pickLibraryDomainId } from "@/lib/jargon/library/pick-domain";
 import type { Domain } from "@/lib/jargon/types";
 import { DomainSidebar } from "./domain-sidebar";
@@ -38,17 +34,16 @@ export function LibrarySidebar({ domains, loadedAt, lastDomainId }: LibrarySideb
   const requestedDomainId = useSearchParams().get("domain");
   const lastViewed = useSyncExternalStore(noSubscription, readLastDomainCookie, () => lastDomainId);
   const overrides = useLibraryOverrides();
-  const seenAt = snapshotSeenAt(`collections:${loadedAt}`);
 
   const liveDomains = useMemo(
     () =>
       domains.map((domain) => {
-        const counts = collectionCountsOverride(overrides, domain.id, seenAt);
+        const counts = collectionCountsOverride(overrides, domain.id, loadedAt);
         if (!counts) return domain;
         const { termCount, knownCount, termsLearnedCount } = counts;
         return { ...domain, termCount, knownCount, termsLearnedCount };
       }),
-    [domains, overrides, seenAt],
+    [domains, overrides, loadedAt],
   );
 
   const currentDomainId =

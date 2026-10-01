@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { fetchTermDetails, parseDetailIds } from "@/lib/jargon/library/details";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,7 +9,7 @@ const NO_STORE = { "Cache-Control": "private, no-store" };
  *  view and when a card opens. A GET, so it runs in parallel with other
  *  requests instead of queueing like a Server Action. */
 export async function GET(request: NextRequest) {
-  if (!request.headers.get(VERIFIED_USER_HEADER)) {
+  if (!(await readVerifiedUser(request.headers))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401, headers: NO_STORE });
   }
 

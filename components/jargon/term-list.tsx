@@ -13,7 +13,7 @@ const GROW_MARGIN = "800px 0px";
 
 type TermListProps = {
   terms: LibraryTerm[];
-  /** Changes whenever the filters do, which starts the list over from the top. */
+  /** Changes whenever the filters do, which starts the rows over from the first step. */
   windowKey: string;
   knownTerms: Set<string>;
   markedKnownTerms: Set<string>;
@@ -62,7 +62,7 @@ export function TermList({ windowKey, totalCount, hasUnfinished, ...props }: Ter
     );
   }
 
-  return <TermRows key={windowKey} {...props} />;
+  return <TermRows windowKey={windowKey} {...props} />;
 }
 
 function TermRows({
@@ -76,14 +76,21 @@ function TermRows({
   onToggleMarkedKnown,
   onEdit,
   onDelete,
-}: Omit<TermListProps, "windowKey" | "totalCount" | "hasUnfinished" | "onAddTerm">) {
-  const [limit, setLimit] = useState(ROWS_PER_STEP);
+  windowKey,
+}: Omit<TermListProps, "totalCount" | "hasUnfinished" | "onAddTerm">) {
+  // Back to the first rows whenever the filters change. Adjusted during
+  // render rather than by remounting, so rows still on screen keep their state.
+  const [rowWindow, setRowWindow] = useState({ key: windowKey, limit: ROWS_PER_STEP });
+  if (rowWindow.key !== windowKey) setRowWindow({ key: windowKey, limit: ROWS_PER_STEP });
+  const limit = rowWindow.key === windowKey ? rowWindow.limit : ROWS_PER_STEP;
 
   const watchEnd = useCallback((sentinel: HTMLDivElement | null) => {
     if (!sentinel) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) setLimit((current) => current + ROWS_PER_STEP);
+        if (entry?.isIntersecting) {
+          setRowWindow((current) => ({ ...current, limit: current.limit + ROWS_PER_STEP }));
+        }
       },
       { rootMargin: GROW_MARGIN },
     );

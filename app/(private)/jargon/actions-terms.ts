@@ -95,7 +95,9 @@ export async function finishTerm(
   }
 }
 
-export async function deleteTerm(termId: string): Promise<{ error?: string }> {
+/** `savedAt` is the server time the term was gone, for local edit precedence
+ *  (lib/jargon/library/overrides.ts). */
+export async function deleteTerm(termId: string): Promise<{ error?: string; savedAt?: number }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
@@ -103,7 +105,7 @@ export async function deleteTerm(termId: string): Promise<{ error?: string }> {
     // No revalidation: callers remove the term locally, and a full re-render
     // of the page would ship every term back for one deletion.
     await deleteTermRecord(auth.supabase, termId);
-    return {};
+    return { savedAt: Date.now() };
   } catch (err) {
     return { error: termMutationErrorMessage(err, "Couldn't delete that term. Try again.") };
   }
@@ -145,7 +147,7 @@ export async function recordReviewRevealAction(termId: string): Promise<{ error?
 export async function setTermMarkedKnownAction(
   termId: string,
   marked: boolean,
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; savedAt?: number }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
@@ -153,7 +155,7 @@ export async function setTermMarkedKnownAction(
     // No revalidation: every caller flips the mark locally (see
     // lib/jargon/library/overrides.ts), so re-rendering the page is waste.
     await setTermMarkedKnown(auth.supabase, auth.user.id, termId, marked);
-    return {};
+    return { savedAt: Date.now() };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't update that. Try again.";
     return { error: message };

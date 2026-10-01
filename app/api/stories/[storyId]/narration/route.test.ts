@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { signedUserHeaders } from "@/lib/auth/signed-user-headers";
 
 const getNarrationAccessForUser = vi.fn();
 const loadStorySubject = vi.fn();
@@ -22,10 +22,12 @@ const { GET, POST } = await import("./route");
 
 const ctx = { params: Promise.resolve({ storyId: STORY_ID }) };
 
+const USER_HEADERS = await signedUserHeaders("user-1");
+
 function request(method: string, query = "") {
   return new Request(`http://localhost/api/stories/${STORY_ID}/narration${query}`, {
     method,
-    headers: { [VERIFIED_USER_HEADER]: "user-1" },
+    headers: { ...USER_HEADERS },
   });
 }
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { getFeatureSettings } from "@/lib/ai/feature-settings";
 import { withRunGuard } from "@/lib/ai/run-guard";
 import { countRecentGenerations, recordUsage } from "@/lib/ai/usage";
@@ -31,23 +31,26 @@ async function userCanReadTerm(termId: string): Promise<boolean> {
 /** Trusts the proxy (lib/supabase/proxy.ts) to have verified the session and
  *  forwarded the user id. Still checks narration access and that the user can
  *  read the term, since the admin client below bypasses RLS. */
-async function authorize(request: Request, termId: string): Promise<NextResponse | null> {
-  const userId = request.headers.get(VERIFIED_USER_HEADER);
-  if (!userId) return new NextResponse(null, { status: 401 });
+async function authorize(
+  request: Request,
+  termId: string,
+): Promise<{ denied: NextResponse } | { userId: string }> {
+  const userId = (await readVerifiedUser(request.headers))?.id;
+  if (!userId) return { denied: new NextResponse(null, { status: 401 }) };
 
   const allowed = await getNarrationAccessForUser(createAdminClient(), userId);
-  if (!allowed) return new NextResponse(null, { status: 403 });
+  if (!allowed) return { denied: new NextResponse(null, { status: 403 }) };
 
-  if (!(await userCanReadTerm(termId))) return new NextResponse(null, { status: 404 });
-  return null;
+  if (!(await userCanReadTerm(termId))) return { denied: new NextResponse(null, { status: 404 }) };
+  return { userId };
 }
 
 /** Serves cached audio only. It never generates, so preloading a card costs
  *  nothing; generation is an explicit POST. */
 export async function GET(request: Request, { params }: RouteContext) {
   const { termId } = await params;
-  const denied = await authorize(request, termId);
-  if (denied) return denied;
+  const auth = await authorize(request, termId);
+  if ("denied" in auth) return auth.denied;
 
   const admin = createAdminClient();
   const subject = await loadTermSubject(admin, termId);
@@ -68,11 +71,11 @@ async function overDailyCap(admin: ReturnType<typeof createAdminClient>, userId:
  *  that actually calls the speech provider is counted, failures included. */
 export async function POST(request: Request, { params }: RouteContext) {
   const { termId } = await params;
-  const denied = await authorize(request, termId);
-  if (denied) return denied;
+  const auth = await authorize(request, termId);
+  if ("denied" in auth) return auth.denied;
 
   const admin = createAdminClient();
-  const userId = request.headers.get(VERIFIED_USER_HEADER)!;
+  const { userId } = auth;
 
   const subject = await loadTermSubject(admin, termId);
   if (!subject) return new NextResponse(null, { status: 404 });

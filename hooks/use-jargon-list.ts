@@ -1,35 +1,58 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import { recordTermReadAction, setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
+import {
+  deleteTerm,
+  recordTermReadAction,
+  setTermMarkedKnownAction,
+} from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
 import {
   overrideCollectionCounts,
   overrideMarkedKnown,
   overrideRemoved,
-  snapshotSeenAt,
   termOverride,
   useLibraryOverrides,
 } from "@/lib/jargon/library/overrides";
 import type { LibraryPageData } from "@/lib/jargon/types";
 import { useLibraryFilters } from "./use-library-filters";
 
+type PendingMark = { marked: boolean; tap: number };
+
+/** Numbers each tap, so an earlier tap finishing doesn't clear a later one. */
+let lastTap = 0;
+
+async function settle<T extends { error?: string; savedAt?: number }>(
+  action: Promise<T>,
+): Promise<T | { error: string; savedAt?: undefined }> {
+  try {
+    return await action;
+  } catch {
+    return { error: "Couldn't save that. Check your connection and try again." };
+  }
+}
+
 /**
  * One collection's list state. Terms and known marks come from the server
- * snapshot with this device's newer edits laid over it, so nothing is copied
- * into state and a fresh snapshot (after an edit elsewhere) simply wins. The
- * page remounts per collection, which resets search and open cards.
+ * snapshot with this device's edits laid over it (see overrides.ts), so
+ * nothing is copied into state and a newer snapshot simply wins. The page
+ * remounts per collection, which resets search and open cards.
  */
 export function useJargonList(data: LibraryPageData, filtersCookie: string) {
   const overrides = useLibraryOverrides();
-  const seenAt = snapshotSeenAt(`${data.domain.id}:${data.loadedAt}`);
-  // Marks still on their way to the server. They show at once and are
+  // Edits still on their way to the server. They show at once and are
   // undone if the save fails.
-  const [pendingMarks, setPendingMarks] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const [pendingMarks, setPendingMarks] = useState<ReadonlyMap<string, PendingMark>>(new Map());
+  const [pendingRemovals, setPendingRemovals] = useState<ReadonlySet<string>>(new Set());
 
   const terms = useMemo(
-    () => data.terms.filter((term) => !termOverride(overrides, term.id, seenAt)?.removed),
-    [data.terms, overrides, seenAt],
+    () =>
+      data.terms.filter(
+        (term) =>
+          !pendingRemovals.has(term.id) &&
+          !termOverride(overrides, term.id, data.loadedAt)?.removed,
+      ),
+    [data.terms, data.loadedAt, overrides, pendingRemovals],
   );
 
   const knownTerms = useMemo(() => new Set(data.knownTermIds), [data.knownTermIds]);
@@ -40,12 +63,14 @@ export function useJargonList(data: LibraryPageData, filtersCookie: string) {
   const markedKnownTerms = useMemo(() => {
     const marked = new Set(data.markedKnownTermIds);
     for (const term of data.terms) {
-      const local = pendingMarks.get(term.id) ?? termOverride(overrides, term.id, seenAt)?.marked;
+      const local =
+        pendingMarks.get(term.id)?.marked ??
+        termOverride(overrides, term.id, data.loadedAt)?.marked;
       if (local === true) marked.add(term.id);
       if (local === false) marked.delete(term.id);
     }
     return marked;
-  }, [data.markedKnownTermIds, data.terms, pendingMarks, overrides, seenAt]);
+  }, [data.markedKnownTermIds, data.terms, data.loadedAt, pendingMarks, overrides]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [openTerms, setOpenTerms] = useState<ReadonlySet<string>>(new Set());
@@ -83,7 +108,8 @@ export function useJargonList(data: LibraryPageData, filtersCookie: string) {
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 
-  // Read in event handlers only, so the callbacks below stay stable.
+  // Read in event handlers only, so the callbacks below stay stable for the
+  // memoized rows.
   const latest = useRef({
     terms,
     markedKnownTerms,
@@ -93,67 +119,76 @@ export function useJargonList(data: LibraryPageData, filtersCookie: string) {
   });
   latest.current = { terms, markedKnownTerms, knownTerms, everMasteredTerms, domain: data.domain };
 
-  /** Tells the sidebar this collection's counts after a local change. */
-  const publishCounts = useCallback((termIds: string[], marked: ReadonlySet<string>) => {
-    const { knownTerms, everMasteredTerms, domain } = latest.current;
-    let knownCount = 0;
-    let termsLearnedCount = 0;
-    for (const id of termIds) {
-      if (knownTerms.has(id) || marked.has(id)) knownCount += 1;
-      if (everMasteredTerms.has(id) || marked.has(id)) termsLearnedCount += 1;
-    }
-    overrideCollectionCounts(domain.id, {
-      termCount: termIds.length,
-      knownCount,
-      termsLearnedCount,
-    });
-  }, []);
+  /** Tells the sidebar this collection's counts after a saved change. */
+  const publishCounts = useCallback(
+    (termIds: string[], marked: ReadonlySet<string>, savedAt: number) => {
+      const { knownTerms, everMasteredTerms, domain } = latest.current;
+      let knownCount = 0;
+      let termsLearnedCount = 0;
+      for (const id of termIds) {
+        if (knownTerms.has(id) || marked.has(id)) knownCount += 1;
+        if (everMasteredTerms.has(id) || marked.has(id)) termsLearnedCount += 1;
+      }
+      overrideCollectionCounts(domain.id, {
+        termCount: termIds.length,
+        knownCount,
+        termsLearnedCount,
+        savedAt,
+      });
+    },
+    [],
+  );
 
   /** Resolves true once the change is saved, false if it was rolled back. */
   const toggleMarkedKnown = useCallback(
     async (termId: string): Promise<boolean> => {
       const marked = !latest.current.markedKnownTerms.has(termId);
-      setPendingMarks((prev) => new Map(prev).set(termId, marked));
+      const tap = ++lastTap;
+      setPendingMarks((prev) => new Map(prev).set(termId, { marked, tap }));
 
-      const { error } = await setTermMarkedKnownAction(termId, marked);
-      if (!error) {
-        overrideMarkedKnown(termId, marked);
+      const { savedAt } = await settle(setTermMarkedKnownAction(termId, marked));
+      if (savedAt) {
+        overrideMarkedKnown(termId, marked, savedAt);
         const next = new Set(latest.current.markedKnownTerms);
         if (marked) next.add(termId);
         else next.delete(termId);
         publishCounts(
           latest.current.terms.map((term) => term.id),
           next,
+          savedAt,
         );
       }
       setPendingMarks((prev) => {
+        if (prev.get(termId)?.tap !== tap) return prev;
         const next = new Map(prev);
         next.delete(termId);
         return next;
       });
-      return !error;
+      return Boolean(savedAt);
     },
     [publishCounts],
   );
 
-  const removeTermLocally = useCallback(
-    (termId: string) => {
-      overrideRemoved(termId, true);
-      publishCounts(
-        latest.current.terms.flatMap((term) => (term.id === termId ? [] : [term.id])),
-        latest.current.markedKnownTerms,
-      );
-    },
-    [publishCounts],
-  );
-
-  const restoreTermLocally = useCallback(
-    (termId: string) => {
-      overrideRemoved(termId, false);
-      publishCounts(
-        [...latest.current.terms.map((term) => term.id), termId],
-        latest.current.markedKnownTerms,
-      );
+  /** Hides the term at once and deletes it. Resolves false (and shows it
+   *  again) if the delete fails. */
+  const removeTerm = useCallback(
+    async (termId: string): Promise<boolean> => {
+      setPendingRemovals((prev) => new Set(prev).add(termId));
+      const { savedAt } = await settle(deleteTerm(termId));
+      if (savedAt) {
+        overrideRemoved(termId, savedAt);
+        publishCounts(
+          latest.current.terms.flatMap((term) => (term.id === termId ? [] : [term.id])),
+          latest.current.markedKnownTerms,
+          savedAt,
+        );
+      }
+      setPendingRemovals((prev) => {
+        const next = new Set(prev);
+        next.delete(termId);
+        return next;
+      });
+      return Boolean(savedAt);
     },
     [publishCounts],
   );
@@ -161,8 +196,7 @@ export function useJargonList(data: LibraryPageData, filtersCookie: string) {
   return {
     domain: data.domain,
     terms,
-    removeTermLocally,
-    restoreTermLocally,
+    removeTerm,
     categories,
     categoryCounts,
     filteredTerms,

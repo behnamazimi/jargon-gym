@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import type { LibraryPageData, LibraryTerm, Term } from "@/lib/jargon/types";
-import { clearTermDetails, loadTermDetails } from "@/lib/jargon/library/details-store";
+import { loadTermDetails, TermDetailsScope } from "@/lib/jargon/library/details-store";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
 import { useToast } from "@/components/ui/toast";
@@ -39,8 +39,7 @@ export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageP
   const {
     domain,
     terms,
-    removeTermLocally,
-    restoreTermLocally,
+    removeTerm,
     categories,
     categoryCounts,
     filteredTerms,
@@ -80,110 +79,112 @@ export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageP
   const isOwner = domain.source === "owned";
   const windowKey = [searchQuery, hideKnown, sortMode, [...activeCategories].join("|")].join("·");
 
+  // Details belong to this server snapshot; an edit's revalidation brings a
+  // new one, so nothing needs clearing by hand.
+  const detailsScope = `${domain.id}:${data.loadedAt}`;
+
   useSlashToFocus(searchInputRef);
 
   // Stable, so a dialog opening doesn't re-render every memoized row.
   const handleEdit = useCallback(
     async (termId: string) => {
-      const term = await loadTermDetails(termId);
+      const term = await loadTermDetails(detailsScope, termId);
       if (term) setEditing(term);
       else toast("Couldn't load that term. Try again.", "destructive");
     },
-    [toast],
+    [detailsScope, toast],
   );
   const openAddTerm = useCallback(() => setAddTermOpen(true), []);
 
   return (
-    <div className="min-w-0 flex-1 space-y-4">
-      <Suspense fallback={null}>
-        <ImportedNotice
-          summary={importedSummary}
-          domain={domain}
-          onFinish={() => setFinishOpen(true)}
-        />
-      </Suspense>
-      <JargonDomainHeader
-        domain={liveDomain}
-        categoryCount={categories.length}
-        isOwner={isOwner}
-        untriagedCount={untriagedCount}
-        onAddTerm={isOwner ? openAddTerm : undefined}
-      />
-
-      {isOwner ? (
+    <TermDetailsScope value={detailsScope}>
+      <div className="min-w-0 flex-1 space-y-4">
         <Suspense fallback={null}>
-          <UnfinishedSection
-            domainId={domain.id}
-            terms={data.unfinishedTerms}
-            isOpen={finishOpen}
-            onOpenChange={setFinishOpen}
-            onRemoved={() => router.refresh()}
+          <ImportedNotice
+            summary={importedSummary}
+            domain={domain}
+            onFinish={() => setFinishOpen(true)}
           />
         </Suspense>
-      ) : null}
-
-      <JargonFilters
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onSearchClear={clearSearch}
-        searchInputRef={searchInputRef}
-        categories={categories}
-        categoryCounts={categoryCounts}
-        totalCount={terms.length}
-        activeCategories={activeCategories}
-        onToggleCategory={toggleCategory}
-        hideKnown={hideKnown}
-        onHideKnownChange={setHideKnown}
-        sortMode={sortMode}
-        onSortChange={setSortMode}
-        visibleCount={filteredTerms.length}
-      />
-
-      <TermList
-        terms={filteredTerms}
-        windowKey={windowKey}
-        knownTerms={knownTerms}
-        markedKnownTerms={markedKnownTerms}
-        openTerms={openTerms}
-        isOwner={isOwner}
-        language={domain.language}
-        totalCount={terms.length}
-        hasUnfinished={data.unfinishedTerms.length > 0}
-        onAddTerm={openAddTerm}
-        onToggleOpen={toggleOpen}
-        onToggleMarkedKnown={toggleMarkedKnown}
-        onEdit={handleEdit}
-        onDelete={setDeleting}
-      />
-
-      {isOwner ? (
-        <TermRowDialogs
-          domainTerms={terms}
-          editing={editing}
-          onEditingChange={setEditing}
-          deleting={deleting}
-          onDeletingChange={setDeleting}
-          onTermRemoved={removeTermLocally}
-          onTermRemoveFailed={restoreTermLocally}
+        <JargonDomainHeader
+          domain={liveDomain}
+          categoryCount={categories.length}
+          isOwner={isOwner}
+          untriagedCount={untriagedCount}
+          onAddTerm={isOwner ? openAddTerm : undefined}
         />
-      ) : null}
 
-      {isOwner && addTermOpen ? (
-        <Suspense fallback={null}>
-          <AddTermDialog
-            domainId={domain.id}
+        {isOwner ? (
+          <Suspense fallback={null}>
+            <UnfinishedSection
+              domainId={domain.id}
+              terms={data.unfinishedTerms}
+              isOpen={finishOpen}
+              onOpenChange={setFinishOpen}
+              onRemoved={() => router.refresh()}
+            />
+          </Suspense>
+        ) : null}
+
+        <JargonFilters
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSearchClear={clearSearch}
+          searchInputRef={searchInputRef}
+          categories={categories}
+          categoryCounts={categoryCounts}
+          totalCount={terms.length}
+          activeCategories={activeCategories}
+          onToggleCategory={toggleCategory}
+          hideKnown={hideKnown}
+          onHideKnownChange={setHideKnown}
+          sortMode={sortMode}
+          onSortChange={setSortMode}
+          visibleCount={filteredTerms.length}
+        />
+
+        <TermList
+          terms={filteredTerms}
+          windowKey={windowKey}
+          knownTerms={knownTerms}
+          markedKnownTerms={markedKnownTerms}
+          openTerms={openTerms}
+          isOwner={isOwner}
+          language={domain.language}
+          totalCount={terms.length}
+          hasUnfinished={data.unfinishedTerms.length > 0}
+          onAddTerm={openAddTerm}
+          onToggleOpen={toggleOpen}
+          onToggleMarkedKnown={toggleMarkedKnown}
+          onEdit={handleEdit}
+          onDelete={setDeleting}
+        />
+
+        {isOwner ? (
+          <TermRowDialogs
             domainTerms={terms}
-            unfinishedTerms={data.unfinishedTerms}
-            isOpen
-            onOpenChange={(open) => {
-              setAddTermOpen(open);
-              // A new term's links show on the terms it links to.
-              if (!open) clearTermDetails();
-            }}
-            onOpenTerm={setSearchQuery}
+            editing={editing}
+            onEditingChange={setEditing}
+            deleting={deleting}
+            onDeletingChange={setDeleting}
+            detailsScope={detailsScope}
+            onRemove={removeTerm}
           />
-        </Suspense>
-      ) : null}
-    </div>
+        ) : null}
+
+        {isOwner && addTermOpen ? (
+          <Suspense fallback={null}>
+            <AddTermDialog
+              domainId={domain.id}
+              domainTerms={terms}
+              unfinishedTerms={data.unfinishedTerms}
+              isOpen
+              onOpenChange={setAddTermOpen}
+              onOpenTerm={setSearchQuery}
+            />
+          </Suspense>
+        ) : null}
+      </div>
+    </TermDetailsScope>
   );
 }

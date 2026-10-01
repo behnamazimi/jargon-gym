@@ -40,7 +40,12 @@ export function DomainActionsMenu({
   // Set when the export dialog opens; the dialog reads it.
   const [exportTerms, setExportTerms] = useState<Promise<CollectionExport> | null>(null);
   const [shareConfirmOpen, setShareConfirmOpen] = useState(false);
-  const [subscriberCheck, setSubscriberCheck] = useState<Promise<SubscriberCheck> | null>(null);
+  // The check stays set while the dialog closes, so its text doesn't change
+  // during the closing animation.
+  const [unshare, setUnshare] = useState<{
+    check: Promise<SubscriberCheck>;
+    open: boolean;
+  } | null>(null);
   const [resetProgressOpen, setResetProgressOpen] = useState(false);
   const {
     error,
@@ -67,7 +72,7 @@ export function DomainActionsMenu({
 
   function handleConfirmUnshare() {
     unshareDomain(domain.id);
-    setSubscriberCheck(null);
+    setUnshare((current) => current && { ...current, open: false });
   }
 
   function handleConfirmResetProgress() {
@@ -86,11 +91,12 @@ export function DomainActionsMenu({
         onEdit={() => setEditOpen(true)}
         onShare={() => setShareConfirmOpen(true)}
         onUnshare={() =>
-          setSubscriberCheck(
-            getDomainSubscriberCount(domain.id).catch(() => ({
+          setUnshare({
+            check: getDomainSubscriberCount(domain.id).catch(() => ({
               error: "Couldn't check who else uses this collection. Try again.",
             })),
-          )
+            open: true,
+          })
         }
         onDelete={() => setDeleteOpen(true)}
         onRemoveFromCollection={() => {
@@ -124,8 +130,9 @@ export function DomainActionsMenu({
         shareConfirmOpen={shareConfirmOpen}
         onShareConfirmOpenChange={setShareConfirmOpen}
         onConfirmShare={handleConfirmShare}
-        subscriberCheck={subscriberCheck}
-        onUnshareClose={() => setSubscriberCheck(null)}
+        subscriberCheck={unshare?.check ?? null}
+        unshareOpen={unshare?.open ?? false}
+        onUnshareClose={() => setUnshare((current) => current && { ...current, open: false })}
         onConfirmUnshare={handleConfirmUnshare}
         deleteOpen={deleteOpen}
         onDeleteOpenChange={setDeleteOpen}

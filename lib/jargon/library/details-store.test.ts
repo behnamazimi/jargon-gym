@@ -1,19 +1,31 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+const SCOPE = "domain:1";
 
-function termsFor(url: string) {
-  const ids = new URL(url, "http://test").searchParams.get("ids")!.split(",");
-  return ids.map((termId) => ({ id: termId, term: termId, relationships: [] }));
+function idsOf(url: string) {
+  return new URL(url, "http://test").searchParams.get("ids")!.split(",");
+}
+
+function reply(url: string, definition = "current") {
+  return Response.json({
+    terms: idsOf(url).map((termId) => ({
+      id: termId,
+      term: termId,
+      definition,
+      relationships: [],
+    })),
+  });
 }
 
 describe("term details store", () => {
-  const fetchMock = vi.fn(async (url: string) => Response.json({ terms: termsFor(url) }));
+  const fetchMock = vi.fn(async (url: string) => reply(url));
 
   beforeEach(() => {
     vi.resetModules();
     vi.useFakeTimers();
-    fetchMock.mockClear();
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(async (url: string) => reply(url));
     vi.stubGlobal("fetch", fetchMock);
   });
 
@@ -24,35 +36,75 @@ describe("term details store", () => {
 
   it("gathers rows asking at the same time into one request", async () => {
     const { prefetchTermDetails } = await import("./details-store");
-    prefetchTermDetails([id(1), id(2)]);
-    prefetchTermDetails([id(2), id(3)]);
+    prefetchTermDetails(SCOPE, [id(1), id(2)]);
+    prefetchTermDetails(SCOPE, [id(2), id(3)]);
     await vi.runAllTimersAsync();
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]![0]).toContain(`${id(1)},${id(2)},${id(3)}`);
+    expect(idsOf(fetchMock.mock.calls[0]![0])).toEqual([id(1), id(2), id(3)]);
   });
 
   it("splits a large batch and doesn't ask twice for loaded terms", async () => {
     const { prefetchTermDetails } = await import("./details-store");
-    prefetchTermDetails(Array.from({ length: 60 }, (_, i) => id(i)));
+    prefetchTermDetails(
+      SCOPE,
+      Array.from({ length: 60 }, (_, i) => id(i)),
+    );
     await vi.runAllTimersAsync();
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
-    prefetchTermDetails([id(1), id(59)]);
+    prefetchTermDetails(SCOPE, [id(1), id(59)]);
     await vi.runAllTimersAsync();
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("loads one term right away and resolves with it", async () => {
+  it("starts fresh for a new snapshot of the collection", async () => {
     const { loadTermDetails } = await import("./details-store");
-    const term = await loadTermDetails(id(7));
-    expect(term?.id).toBe(id(7));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await loadTermDetails(SCOPE, id(1));
+    await loadTermDetails("domain:2", id(1));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
-  it("resolves undefined when the request fails, and retries later", async () => {
+  it("ignores an answer that arrives after its snapshot was dropped", async () => {
+    let answerStale: () => void = () => {};
+    fetchMock.mockImplementationOnce(
+      (url: string) =>
+        new Promise((resolve) => {
+          answerStale = () => resolve(reply(url, "stale"));
+        }),
+    );
+    const { forgetTermDetails, loadTermDetails, prefetchTermDetails } =
+      await import("./details-store");
+    prefetchTermDetails(SCOPE, [id(1)]);
+    await vi.advanceTimersByTimeAsync(50);
+
+    forgetTermDetails(SCOPE);
+    expect((await loadTermDetails(SCOPE, id(1)))?.definition).toBe("current");
+    answerStale();
+    await vi.runAllTimersAsync();
+
+    expect((await loadTermDetails(SCOPE, id(1)))?.definition).toBe("current");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("leaves a failed term alone until it is retried", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 500 }));
+    const { prefetchTermDetails, retryTermDetails } = await import("./details-store");
+    prefetchTermDetails(SCOPE, [id(1)]);
+    await vi.runAllTimersAsync();
+
+    prefetchTermDetails(SCOPE, [id(1)]);
+    await vi.runAllTimersAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    retryTermDetails(SCOPE, id(1));
+    await vi.runAllTimersAsync();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("loads one term right away, and tries a failed one again", async () => {
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 500 }));
     const { loadTermDetails } = await import("./details-store");
-    expect(await loadTermDetails(id(1))).toBeUndefined();
-    expect((await loadTermDetails(id(1)))?.id).toBe(id(1));
+    expect(await loadTermDetails(SCOPE, id(7))).toBeUndefined();
+    expect((await loadTermDetails(SCOPE, id(7)))?.id).toBe(id(7));
   });
 });

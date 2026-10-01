@@ -82,8 +82,9 @@ type DomainActionsDialogsProps = {
   shareConfirmOpen: boolean;
   onShareConfirmOpenChange: (open: boolean) => void;
   onConfirmShare: () => void;
-  /** Set while the unshare dialog is open. */
+  /** Who else uses the collection, asked for when the unshare dialog opened. */
   subscriberCheck: Promise<SubscriberCheck> | null;
+  unshareOpen: boolean;
   onUnshareClose: () => void;
   onConfirmUnshare: () => void;
   deleteOpen: boolean;
@@ -100,6 +101,7 @@ export function DomainActionsDialogs({
   onShareConfirmOpenChange,
   onConfirmShare,
   subscriberCheck,
+  unshareOpen,
   onUnshareClose,
   onConfirmUnshare,
   deleteOpen,
@@ -126,7 +128,7 @@ export function DomainActionsDialogs({
       </AlertDialog>
 
       <AlertDialog
-        isOpen={subscriberCheck !== null}
+        isOpen={unshareOpen}
         onOpenChange={(open) => {
           if (!open) onUnshareClose();
         }}

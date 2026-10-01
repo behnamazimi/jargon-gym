@@ -31,8 +31,8 @@ export function StoryMarkKnown({ termId, term }: { termId: string; term: string 
       className="h-7 px-2 text-xs font-medium text-base-content/60 hover:text-base-content"
       onPress={async () => {
         setMarked(true);
-        const { error } = await setTermMarkedKnownAction(termId, true);
-        if (!error) overrideMarkedKnown(termId, true);
+        const { error, savedAt } = await setTermMarkedKnownAction(termId, true);
+        if (savedAt) overrideMarkedKnown(termId, true, savedAt);
         if (error) {
           setMarked(false);
           toast("Couldn't mark that term known — it may show up again.", "destructive");

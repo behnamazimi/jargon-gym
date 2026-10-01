@@ -49,7 +49,9 @@ describe("serializeLibraryFilters", () => {
       Array.from({ length: 25 }, (_, i) => [`d${i}`, ["Theory"]]),
     );
     const stored = JSON.parse(
-      serializeLibraryFilters({ hideKnown: true, sortMode: "az", categoriesByDomain }),
+      decodeURIComponent(
+        serializeLibraryFilters({ hideKnown: true, sortMode: "az", categoriesByDomain }),
+      ),
     );
     expect(Object.keys(stored.categoriesByDomain)).toEqual(
       Array.from({ length: 20 }, (_, i) => `d${i + 5}`),
@@ -60,13 +62,32 @@ describe("serializeLibraryFilters", () => {
 
   it("drops collections with no category chosen", () => {
     const stored = JSON.parse(
-      serializeLibraryFilters({
-        hideKnown: false,
-        sortMode: "default",
-        categoriesByDomain: { d1: [], d2: ["Design"] },
-      }),
+      decodeURIComponent(
+        serializeLibraryFilters({
+          hideKnown: false,
+          sortMode: "default",
+          categoriesByDomain: { d1: [], d2: ["Design"] },
+        }),
+      ),
     );
     expect(stored.categoriesByDomain).toEqual({ d2: ["Design"] });
+  });
+});
+
+describe("cookie size", () => {
+  it("drops the oldest collections until the cookie fits", () => {
+    const longNames = Array.from({ length: 8 }, (_, i) => `Категория номер ${i}`);
+    const categoriesByDomain = Object.fromEntries(
+      Array.from({ length: 20 }, (_, i) => [`domain-${i}`, longNames]),
+    );
+    const value = serializeLibraryFilters({ hideKnown: true, sortMode: "az", categoriesByDomain });
+    expect(value.length).toBeLessThanOrEqual(3500);
+
+    const kept = Object.keys(decodeLibraryFilters(value).categoriesByDomain);
+    expect(kept.length).toBeGreaterThan(0);
+    expect(kept.length).toBeLessThan(20);
+    expect(kept.at(-1)).toBe("domain-19");
+    expect(decodeLibraryFilters(value).hideKnown).toBe(true);
   });
 });
 
@@ -77,7 +98,7 @@ describe("reading the cookie", () => {
       sortMode: "unknown" as const,
       categoriesByDomain: { d1: ["A; B", "100%"] },
     };
-    const value = encodeURIComponent(serializeLibraryFilters(filters));
+    const value = serializeLibraryFilters(filters);
     const header = `other=1; jg_lib_filters=${value}; theme=dark`;
     expect(decodeLibraryFilters(readLibraryFiltersCookie(header))).toEqual(filters);
   });
