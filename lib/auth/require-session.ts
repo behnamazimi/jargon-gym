@@ -1,17 +1,34 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { cache } from "react";
 import { AdminError } from "@/lib/admin/admin-error";
 import { isBanned } from "@/lib/auth/suspension";
+import { readVerifiedUser, type VerifiedUser } from "@/lib/auth/verified-user-header";
 import { createClient } from "@/lib/supabase/server";
 
-export const getSessionUser = cache(async function getSessionUser() {
-  const supabase = await createClient();
+export type SessionUser = VerifiedUser;
+
+/** The signed-in user. The proxy has already verified the session (and
+ *  checked for a ban) on every request it matches, and forwards the result
+ *  in headers, so this only asks Supabase Auth itself when those are absent. */
+export const getSessionUser = cache(async function getSessionUser(): Promise<{
+  supabase: Awaited<ReturnType<typeof createClient>>;
+  user: SessionUser | null;
+  error: Error | null;
+}> {
+  const [supabase, requestHeaders] = await Promise.all([createClient(), headers()]);
+  const verified = await readVerifiedUser(requestHeaders);
+  if (verified) return { supabase, user: verified, error: null };
+
   const {
     data: { user },
     error,
   } = await supabase.auth.getUser();
 
-  return { supabase, user: user && !isBanned(user) ? user : null, error };
+  return {
+    supabase,
+    user: user && !isBanned(user) ? { id: user.id, email: user.email ?? null } : null,
+    error,
+  };
 });
 
 export const getUserIsAdmin = cache(async function getUserIsAdmin(userId: string) {

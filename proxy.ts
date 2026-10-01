@@ -15,8 +15,10 @@ export const config = {
      * - web app manifest (browsers fetch this without a session)
      * - Serwist service worker
      * - PWA screenshots
-     * - image assets
+     *
+     * Excluded by folder only, never by file extension: a dynamic page can be
+     * reached at a path ending in ".png", and it must still pass the proxy.
      */
-    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|serwist/|screenshots/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest\\.webmanifest|serwist/|screenshots/).*)",
   ],
 };

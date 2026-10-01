@@ -5,7 +5,7 @@ import { serveAudio } from "@/lib/ai/speech/serve";
 import { storyWithinDailyCap } from "@/lib/ai/speech/story-cap";
 import { loadStorySubject } from "@/lib/ai/speech/subjects";
 import { recordUsage } from "@/lib/ai/usage";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -17,7 +17,7 @@ type RouteContext = { params: Promise<{ storyId: string }> };
 /** Trusts the proxy-verified user header like app/api/narration/[termId]/route.ts,
  *  and re-checks narration access and story ownership itself. */
 async function authorize(request: Request, params: RouteContext["params"]) {
-  const userId = request.headers.get(VERIFIED_USER_HEADER);
+  const userId = (await readVerifiedUser(request.headers))?.id;
   if (!userId) return { denied: new NextResponse(null, { status: 401 }) };
 
   const { storyId } = await params;

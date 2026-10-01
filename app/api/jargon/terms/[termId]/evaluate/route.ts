@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserIsAdmin } from "@/lib/auth/require-session";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { computeTermEvalHash } from "@/lib/jargon/term-eval/content-hash";
 import { evaluateTermEntry } from "@/lib/jargon/term-eval/evaluate";
 import type { EvalTerm } from "@/lib/jargon/term-eval/rubric";
@@ -12,7 +12,7 @@ export const maxDuration = 60;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(request: Request, { params }: { params: Promise<{ termId: string }> }) {
-  const userId = request.headers.get(VERIFIED_USER_HEADER);
+  const userId = (await readVerifiedUser(request.headers))?.id;
   if (!userId) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   if (!(await getUserIsAdmin(userId))) {

@@ -155,8 +155,7 @@ export async function generateQuizAction(input: {
 }
 
 /** Record outcome for a single answer: updates the Bayesian recognition
- *  posterior. Revalidation of the jargon pages happens separately, once
- *  the client's write queue goes idle — see revalidateStudyPathsAction. */
+ *  posterior. Library and Review read fresh data on their next visit. */
 export async function recordQuizAnswerAction(input: {
   termId: string;
   passed: boolean;

@@ -2,22 +2,23 @@
 
 import { useCallback, useMemo, useSyncExternalStore } from "react";
 import {
+  decodeLibraryFilters,
   loadLibraryFiltersSnapshot,
-  parseLibraryFilters,
   subscribeLibraryFilters,
   updateLibraryFilters,
 } from "@/lib/jargon/library-filters";
 import type { SortMode } from "@/lib/jargon/types";
 
-/** Library filter choices, remembered on this device. The server render
- *  uses the defaults; the stored choices apply right after hydration. */
-export function useLibraryFilters(domainId: string, categories: string[]) {
+/** Library filter choices, remembered on this device in a cookie. The server
+ *  reads the same cookie (`serverSnapshot`), so the first render already
+ *  matches what the browser will show. */
+export function useLibraryFilters(domainId: string, categories: string[], serverSnapshot: string) {
   const snapshot = useSyncExternalStore(
     subscribeLibraryFilters,
     loadLibraryFiltersSnapshot,
-    () => "",
+    () => serverSnapshot,
   );
-  const stored = useMemo(() => parseLibraryFilters(snapshot), [snapshot]);
+  const stored = useMemo(() => decodeLibraryFilters(snapshot), [snapshot]);
 
   // A remembered category the collection no longer has would hide every term.
   const activeCategories = useMemo(
@@ -37,14 +38,15 @@ export function useLibraryFilters(domainId: string, categories: string[]) {
   const toggleCategory = useCallback(
     (category: string) => {
       updateLibraryFilters((prev) => {
-        const current = prev.categoriesByDomain[domainId] ?? [];
+        const { [domainId]: current = [], ...others } = prev.categoriesByDomain;
         const next =
           category === "All"
             ? []
             : current.includes(category)
               ? current.filter((c) => c !== category)
               : [...current, category];
-        return { ...prev, categoriesByDomain: { ...prev.categoriesByDomain, [domainId]: next } };
+        // Re-added last so this collection counts as the most recently used.
+        return { ...prev, categoriesByDomain: { ...others, [domainId]: next } };
       });
     },
     [domainId],

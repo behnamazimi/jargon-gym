@@ -3,7 +3,7 @@
 import { CheckCircle2, CircleCheck, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import type { Term } from "@/lib/jargon/types";
+import type { LibraryTerm } from "@/lib/jargon/types";
 import { SwipeActionLabel } from "./swipe-action";
 
 type MarkKnownButtonProps = {
@@ -70,7 +70,7 @@ export function RowSwipeLayer({
 
 /** Flips a row's marked-known state and confirms it in a toast with Undo. */
 export function useQuickToggleMarkedKnown(
-  term: Term,
+  term: Pick<LibraryTerm, "id" | "term">,
   markedKnown: boolean,
   onToggleMarkedKnown: (termId: string) => Promise<boolean>,
 ) {

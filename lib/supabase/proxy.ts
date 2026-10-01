@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import { isBanned } from "@/lib/auth/suspension";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { setVerifiedUser, VERIFIED_USER_HEADERS } from "@/lib/auth/verified-user-header";
 import type { Database } from "@/lib/supabase/database.types";
 
 // referral_verified only ever flips false -> true (during onboarding), so once
@@ -124,6 +124,9 @@ function redirectForSignedInUser(
 }
 
 export async function updateSession(request: NextRequest) {
+  // Drop any client-sent copies before anything forwards this request.
+  for (const name of VERIFIED_USER_HEADERS) request.headers.delete(name);
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -177,12 +180,10 @@ export async function updateSession(request: NextRequest) {
   const signedInRedirect = redirectForSignedInUser(request, pathname, referralVerified);
   if (signedInRedirect) return signedInRedirect;
 
-  // Forward the already-verified user id so route handlers behind this proxy
-  // don't need to call supabase.auth.getUser() again. .set() overwrites
-  // rather than merges, so any value the client sent under this header name
-  // is discarded here, not appended to.
+  // Forward the already-verified user so pages, actions and route handlers
+  // behind this proxy don't need to call supabase.auth.getUser() again.
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set(VERIFIED_USER_HEADER, user.id);
+  await setVerifiedUser(requestHeaders, { id: user.id, email: user.email ?? null });
   const responseWithHeader = NextResponse.next({ request: { headers: requestHeaders } });
   // NextResponse.next() returns a fresh response object, which would drop
   // any cookies already queued on supabaseResponse (session refresh,

@@ -7,6 +7,8 @@ import type { JargonPageData } from "./types";
 
 type Client = SupabaseClient<Database>;
 
+export const NO_COLLECTIONS_MESSAGE = "You don't have any collections yet.";
+
 export class JargonDataError extends Error {
   constructor(message: string) {
     super(message);
@@ -37,7 +39,7 @@ export async function loadJargonPageData(
     const { reviewDomainIds, collectionRows } = await resolveReviewDomainIds(client, userId);
 
     if (collectionRows.length === 0) {
-      throw new JargonDataError("You don't have any collections yet.");
+      throw new JargonDataError(NO_COLLECTIONS_MESSAGE);
     }
 
     const activeSet = new Set(reviewDomainIds);
@@ -71,12 +73,12 @@ export async function loadJargonPageData(
     // Known/unknown is stored per term, not per review pool. Fetch for the
     // selected collection even when it's paused — reviewDomainIds would omit
     // it and the collection page would paint every known term as unknown.
-    const termRows = await fetchTermsByDomain(client, selectedRow.id);
-    const { terms: mappedTerms, unfinishedTerms } = mapTermsByState(termRows);
-    const [progressState, relationshipRows] = await Promise.all([
+    const [termRows, progressState, relationshipRows] = await Promise.all([
+      fetchTermsByDomain(client, selectedRow.id),
       fetchProgressStateByDomain(client, [selectedRow.id]),
       fetchTermRelationshipsForDomain(client, selectedRow.id),
     ]);
+    const { terms: mappedTerms, unfinishedTerms } = mapTermsByState(termRows);
     const { knownTermIds, markedKnownTermIds, everMasteredTermIds } = progressState;
     const terms = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 

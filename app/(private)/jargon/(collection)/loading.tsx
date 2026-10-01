@@ -1,5 +1,7 @@
-import { JargonPageSkeleton } from "@/components/page-skeleton";
+import { JargonListSkeleton } from "@/components/page-skeleton";
 
+/** Shown below the sidebar while another collection loads; the sidebar
+ *  itself lives in the layout and stays put. */
 export default function JargonLoading() {
-  return <JargonPageSkeleton />;
+  return <JargonListSkeleton />;
 }

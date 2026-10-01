@@ -1,23 +1,22 @@
 "use client";
 
 import { BookOpen, Layers, Sparkles, Zap } from "lucide-react";
+import { useOptimistic, useTransition } from "react";
+import { toggleActiveForReview } from "@/app/(private)/jargon/actions";
 import { Button, LinkButton } from "@/components/ui/button";
-import { useReviewToggle } from "@/hooks/use-review-toggle";
+import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
-import type { Domain, Term } from "@/lib/jargon/types";
+import type { Domain } from "@/lib/jargon/types";
 import { DomainActionsMenu, DomainMeta } from "./domain-actions-menu";
 import { AddTermsMenu } from "./add-terms-menu";
 
 type JargonDomainHeaderProps = {
   domain: Domain;
-  domains: Domain[];
-  terms: Term[];
   categoryCount: number;
   isOwner?: boolean;
   /** Terms not yet known or marked known — Triage only shows while > 0. */
   untriagedCount: number;
   onAddTerm?: () => void;
-  onToggleActiveForReviewLocal: (domainId: string, active: boolean) => void;
 };
 
 const STUDY_LINKS = [
@@ -88,19 +87,28 @@ function CollectionStudyActions({
 }
 
 export function JargonDomainHeader({
-  domain,
-  domains,
-  terms,
+  domain: serverDomain,
   categoryCount,
   isOwner = false,
   untriagedCount,
   onAddTerm,
-  onToggleActiveForReviewLocal,
 }: JargonDomainHeaderProps) {
-  const { setActiveForReview, pendingId } = useReviewToggle(onToggleActiveForReviewLocal);
-  const togglePending = pendingId === domain.id;
+  const { toast } = useToast();
+  // Shows the new state at once; the action re-renders the page with the
+  // saved value, and a failed save falls back to it on its own.
+  const [isActiveForReview, setOptimisticActive] = useOptimistic(serverDomain.isActiveForReview);
+  const [togglePending, startToggle] = useTransition();
+  const domain = { ...serverDomain, isActiveForReview };
   const progressPct =
     domain.termCount > 0 ? Math.round((domain.termsLearnedCount / domain.termCount) * 100) : 0;
+
+  function setActiveForReview(active: boolean) {
+    startToggle(async () => {
+      setOptimisticActive(active);
+      const { error } = await toggleActiveForReview(domain.id, active);
+      if (error) toast(error, "destructive");
+    });
+  }
 
   return (
     <header className="shadow-surface space-y-4 rounded-2xl bg-base-100 p-4">
@@ -122,12 +130,8 @@ export function JargonDomainHeader({
           ) : null}
           <DomainActionsMenu
             domain={domain}
-            domains={domains}
-            terms={terms}
             togglePending={togglePending}
-            onToggleActiveForReview={() =>
-              void setActiveForReview(domain.id, !domain.isActiveForReview)
-            }
+            onToggleActiveForReview={() => setActiveForReview(!domain.isActiveForReview)}
           />
         </div>
       </div>
@@ -138,7 +142,7 @@ export function JargonDomainHeader({
         domain={domain}
         showTriage={untriagedCount > 0}
         resumePending={togglePending}
-        onResume={() => void setActiveForReview(domain.id, true)}
+        onResume={() => setActiveForReview(true)}
       />
     </header>
   );

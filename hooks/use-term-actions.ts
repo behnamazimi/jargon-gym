@@ -5,6 +5,8 @@ import { createTerm, deleteTerm, finishTerm, updateTerm } from "@/app/(private)/
 import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
 import type { TermInput } from "@/lib/jargon/term-schema";
 
+/** Create, update and finish revalidate the page in their own response, so
+ *  none of these asks the router to refresh again. */
 export function useTermActions() {
   const { run, error, busyId, isBusy, clearError } = useActionRunner();
 
@@ -22,13 +24,19 @@ export function useTermActions() {
       run(() => createTerm(domainId, input, relationshipSync), {
         busyKey: domainId,
         onSuccess,
+        skipRefresh: true,
       }),
     updateTerm: (
       termId: string,
       input: TermInput,
       relationshipSync?: RelationshipSyncPayload,
       onSuccess?: () => void,
-    ) => run(() => updateTerm(termId, input, relationshipSync), { busyKey: termId, onSuccess }),
+    ) =>
+      run(() => updateTerm(termId, input, relationshipSync), {
+        busyKey: termId,
+        onSuccess,
+        skipRefresh: true,
+      }),
     finishTerm: (
       termId: string,
       input: { definition: string; category?: string | null },

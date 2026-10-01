@@ -72,16 +72,20 @@ function combineOwnedAndAdded(
   return [...ownedRows, ...addedRows].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function fetchUserCollection(
-  client: Client,
-  userId: string,
-): Promise<CollectionDomainRow[]> {
+/** The user's collections without their counts, sorted by name. */
+export async function fetchUserCollectionDomains(client: Client, userId: string) {
   const [owned, added] = await Promise.all([
     fetchOwnedDomains(client, userId),
     fetchAddedDomains(client, userId),
   ]);
+  return combineOwnedAndAdded(owned, added);
+}
 
-  const combined = combineOwnedAndAdded(owned, added);
+export async function fetchUserCollection(
+  client: Client,
+  userId: string,
+): Promise<CollectionDomainRow[]> {
+  const combined = await fetchUserCollectionDomains(client, userId);
   const stats = await fetchDomainStats(
     client,
     combined.map((row) => row.id),

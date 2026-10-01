@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { VERIFIED_USER_HEADER } from "@/lib/auth/verified-user-header";
+import { signedUserHeaders } from "@/lib/auth/signed-user-headers";
 import { computeTermEvalHash } from "@/lib/jargon/term-eval/content-hash";
 
 const getUserIsAdmin = vi.fn();
@@ -37,10 +37,12 @@ const card = {
 };
 const currentHash = computeTermEvalHash(card);
 
+const USER_HEADERS = await signedUserHeaders("user-1");
+
 function request() {
   return new Request("http://localhost/x", {
     method: "POST",
-    headers: { [VERIFIED_USER_HEADER]: "user-1" },
+    headers: { ...USER_HEADERS },
   });
 }
 

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchAllRows } from "@/lib/supabase/fetch-all-rows";
 import { type ParsedTerm, termInputToRow, termInputToUpdateRow } from "@/lib/jargon/term-schema";
 import type { TermRelationshipLink } from "@/lib/jargon/types";
 
@@ -83,13 +84,36 @@ export async function deleteTerm(client: Client, termId: string) {
 }
 
 export async function fetchTermsByDomain(client: Client, domainId: string) {
-  const { data, error } = await client
-    .from("terms")
-    .select("*")
-    .eq("domain_id", domainId)
-    .order("created_at")
-    .order("term");
+  return fetchAllRows((from, to) =>
+    client
+      .from("terms")
+      .select("*")
+      .eq("domain_id", domainId)
+      .order("created_at")
+      .order("term")
+      .order("id")
+      .range(from, to),
+  );
+}
 
+/** Only what the Library list needs per term; see LibraryTerm. */
+export async function fetchTermIndexByDomain(client: Client, domainId: string) {
+  return fetchAllRows((from, to) =>
+    client
+      .from("terms")
+      .select("id, term, category, definition")
+      .eq("domain_id", domainId)
+      .order("created_at")
+      .order("term")
+      .order("id")
+      .range(from, to),
+  );
+}
+
+/** Full rows for the given terms. RLS limits them to what the caller can see. */
+export async function fetchTermsByIds(client: Client, termIds: string[]) {
+  if (termIds.length === 0) return [];
+  const { data, error } = await client.from("terms").select("*").in("id", termIds);
   if (error) throw error;
   return data;
 }
@@ -154,13 +178,14 @@ export async function fetchTermRelationshipsForDomain(
   client: Client,
   domainId: string,
 ): Promise<TermRelationshipLink[]> {
-  const { data, error } = await client.rpc("my_term_relationships_by_domain", {
-    p_domain_id: domainId,
-  });
+  const data = await fetchAllRows((from, to) =>
+    client
+      .rpc("my_term_relationships_by_domain", { p_domain_id: domainId })
+      .order("id")
+      .range(from, to),
+  );
 
-  if (error) throw error;
-
-  return (data ?? []).map((row) => ({
+  return data.map((row) => ({
     id: row.id,
     relationship_type: row.relationship_type,
     description: row.description,

@@ -1,3 +1,4 @@
+import { Suspense, use } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,17 +20,73 @@ function subscriberCountMessage(count: number) {
   return `${count} other people have added this collection.`;
 }
 
+/** Who else uses the collection, asked for when the unshare dialog opens. */
+export type SubscriberCheck = { count?: number; error?: string };
+
+function UnshareBody({
+  domain,
+  check,
+  onConfirmUnshare,
+}: {
+  domain: Domain;
+  check: Promise<SubscriberCheck> | null;
+  onConfirmUnshare: () => void;
+}) {
+  const result = check ? use(check) : null;
+  return <UnshareContent domain={domain} result={result} onConfirmUnshare={onConfirmUnshare} />;
+}
+
+function UnshareContent({
+  domain,
+  result,
+  onConfirmUnshare,
+}: {
+  domain: Domain;
+  /** Undefined while the check is still running. */
+  result: SubscriberCheck | null | undefined;
+  onConfirmUnshare: () => void;
+}) {
+  const loading = result === undefined;
+  const error = result?.error ?? null;
+  return (
+    <>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Unshare collection?</AlertDialogTitle>
+        <AlertDialogDescription>
+          {loading ? (
+            "Checking who else uses this collection…"
+          ) : error ? (
+            error
+          ) : result?.count === undefined ? (
+            "Unsharing will hide this collection from Browse shared collections."
+          ) : (
+            <>
+              {subscriberCountMessage(result.count)} Unsharing will hide &ldquo;{domain.name}
+              &rdquo; from Browse shared collections.
+            </>
+          )}
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction onPress={onConfirmUnshare} isDisabled={loading || error !== null}>
+          Unshare
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </>
+  );
+}
+
 type DomainActionsDialogsProps = {
   domain: Domain;
   shareConfirmOpen: boolean;
   onShareConfirmOpenChange: (open: boolean) => void;
   onConfirmShare: () => void;
-  unshareConfirmOpen: boolean;
-  onUnshareConfirmOpenChange: (open: boolean) => void;
+  /** Who else uses the collection, asked for when the unshare dialog opened. */
+  subscriberCheck: Promise<SubscriberCheck> | null;
+  unshareOpen: boolean;
+  onUnshareClose: () => void;
   onConfirmUnshare: () => void;
-  subscriberCount: number | null;
-  subscriberCountLoading: boolean;
-  subscriberCountError: string | null;
   deleteOpen: boolean;
   onDeleteOpenChange: (open: boolean) => void;
   onConfirmDelete: () => void;
@@ -43,12 +100,10 @@ export function DomainActionsDialogs({
   shareConfirmOpen,
   onShareConfirmOpenChange,
   onConfirmShare,
-  unshareConfirmOpen,
-  onUnshareConfirmOpenChange,
+  subscriberCheck,
+  unshareOpen,
+  onUnshareClose,
   onConfirmUnshare,
-  subscriberCount,
-  subscriberCountLoading,
-  subscriberCountError,
   deleteOpen,
   onDeleteOpenChange,
   onConfirmDelete,
@@ -72,33 +127,27 @@ export function DomainActionsDialogs({
         </AlertDialogFooter>
       </AlertDialog>
 
-      <AlertDialog isOpen={unshareConfirmOpen} onOpenChange={onUnshareConfirmOpenChange}>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Unshare collection?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {subscriberCountLoading ? (
-              "Checking who else uses this collection…"
-            ) : subscriberCountError ? (
-              subscriberCountError
-            ) : subscriberCount === null ? (
-              "Unsharing will hide this collection from Browse shared collections."
-            ) : (
-              <>
-                {subscriberCountMessage(subscriberCount)} Unsharing will hide &ldquo;{domain.name}
-                &rdquo; from Browse shared collections.
-              </>
-            )}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onPress={onConfirmUnshare}
-            isDisabled={subscriberCountLoading || subscriberCountError !== null}
-          >
-            Unshare
-          </AlertDialogAction>
-        </AlertDialogFooter>
+      <AlertDialog
+        isOpen={unshareOpen}
+        onOpenChange={(open) => {
+          if (!open) onUnshareClose();
+        }}
+      >
+        <Suspense
+          fallback={
+            <UnshareContent
+              domain={domain}
+              result={undefined}
+              onConfirmUnshare={onConfirmUnshare}
+            />
+          }
+        >
+          <UnshareBody
+            domain={domain}
+            check={subscriberCheck}
+            onConfirmUnshare={onConfirmUnshare}
+          />
+        </Suspense>
       </AlertDialog>
 
       <AlertDialog isOpen={deleteOpen} onOpenChange={onDeleteOpenChange}>

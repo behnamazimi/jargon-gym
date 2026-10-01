@@ -20,10 +20,10 @@ import {
 } from "@/lib/jargon/relationship-sync";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
 import type { TermFormValues } from "@/lib/jargon/term-schema";
-import type { Term } from "@/lib/jargon/types";
+import type { LibraryTerm, Term } from "@/lib/jargon/types";
 
 type TermFormDialogProps = {
-  domainTerms: Term[];
+  domainTerms: Pick<LibraryTerm, "id" | "term">[];
   initialTerm: Term;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;

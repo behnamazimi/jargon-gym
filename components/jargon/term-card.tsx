@@ -1,11 +1,20 @@
 "use client";
 
 import { Check, ChevronRight } from "lucide-react";
-import { memo, useEffect, useRef } from "react";
+import { memo, useCallback, useContext, useRef } from "react";
 import type { DomainLanguage } from "@/lib/jargon/languages";
-import type { Term } from "@/lib/jargon/types";
+import {
+  prefetchTermDetails,
+  retryTermDetails,
+  TermDetailsScope,
+  useTermDetails,
+} from "@/lib/jargon/library/details-store";
+import { observeRowForDetails } from "@/lib/jargon/library/row-prefetch";
+import type { LibraryTerm } from "@/lib/jargon/types";
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { TermNarrationPlayer } from "@/components/jargon/term-narration-player";
+import { SkeletonBar } from "@/components/page-skeleton";
+import { NarrationButton } from "@/components/jargon/library/narration-access";
 import { cn } from "@/lib/utils";
 import {
   MarkKnownButton,
@@ -18,21 +27,18 @@ import { TermBody } from "./term-body";
 import { useRowSwipe } from "./use-row-swipe";
 
 type TermCardProps = {
-  term: Term;
+  term: LibraryTerm;
   known: boolean;
   /** User-set "I already know this" override — separate from `known`
    *  (TRACE's earned label). Never conflated in the UI. */
   markedKnown: boolean;
   open: boolean;
   isOwner: boolean;
-  domainId: string;
   language: DomainLanguage;
-  domainTerms: Term[];
-  narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
-  onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
+  onEdit: (termId: string) => void;
+  onDelete: (term: LibraryTerm) => void;
 };
 
 function KnownBadge() {
@@ -59,7 +65,7 @@ function MarkedKnownBadge() {
 }
 
 type CardTitleProps = {
-  term: Term;
+  term: LibraryTerm;
   known: boolean;
   markedKnown: boolean;
 };
@@ -81,43 +87,62 @@ function CardTitle({ term, known, markedKnown }: CardTitleProps) {
   );
 }
 
-type CardToolsProps = {
-  term: Term;
-  domainId: string;
-  domainTerms: Term[];
-  isOwner: boolean;
-  narrationAccess: boolean;
-  markedKnown: boolean;
-  onQuickToggleMarkedKnown: () => void;
-  onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
-};
-
-function CardTools({
-  term,
-  domainId,
-  domainTerms,
-  isOwner,
-  narrationAccess,
+/** The open card's details, loaded on demand (usually already prefetched
+ *  while the row scrolled into view). */
+function CardBody({
+  termId,
+  language,
   markedKnown,
-  onQuickToggleMarkedKnown,
-  onTermRemoved,
-  onTermRemoveFailed,
-}: CardToolsProps) {
+  onToggleMarkedKnown,
+}: {
+  termId: string;
+  language: DomainLanguage;
+  markedKnown: boolean;
+  onToggleMarkedKnown: (termId: string) => Promise<boolean>;
+}) {
+  const scope = useContext(TermDetailsScope);
+  const details = useTermDetails(termId);
+
+  if (details === "failed") {
+    return (
+      <div className="flex items-center justify-between gap-3 px-4 py-4">
+        <p className="m-0 text-sm text-base-content/60">Couldn&apos;t load this term.</p>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onPress={() => retryTermDetails(scope, termId)}
+        >
+          Try again
+        </Button>
+      </div>
+    );
+  }
+
+  if (!details) {
+    return (
+      <div
+        ref={() => prefetchTermDetails(scope, [termId])}
+        className="space-y-2 px-4 py-4"
+        aria-busy="true"
+        aria-label="Loading term"
+      >
+        <SkeletonBar className="h-4 w-full" />
+        <SkeletonBar className="h-4 w-2/3" />
+      </div>
+    );
+  }
+
   return (
-    <div className="flex shrink-0 items-center gap-1 pe-1">
-      <QuickMarkKnownButton markedKnown={markedKnown} onPress={onQuickToggleMarkedKnown} />
-      {narrationAccess ? <TermNarrationPlayer termId={term.id} /> : null}
-      {isOwner ? (
-        <TermActionsMenu
-          term={term}
-          domainId={domainId}
-          domainTerms={domainTerms}
-          onTermRemoved={onTermRemoved}
-          onTermRemoveFailed={onTermRemoveFailed}
+    <>
+      <TermBody term={details} language={language} className="px-4 pt-4" />
+      <div className="px-4 pb-4 mt-4">
+        <MarkKnownButton
+          markedKnown={markedKnown}
+          onPress={() => void onToggleMarkedKnown(termId)}
         />
-      ) : null}
-    </div>
+      </div>
+    </>
   );
 }
 
@@ -127,28 +152,34 @@ export const TermCard = memo(function TermCard({
   markedKnown,
   open,
   isOwner,
-  domainId,
   language,
-  domainTerms,
-  narrationAccess,
   onToggleOpen,
   onToggleMarkedKnown,
-  onTermRemoved,
-  onTermRemoveFailed,
+  onEdit,
+  onDelete,
 }: TermCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const scope = useContext(TermDetailsScope);
 
-  useEffect(() => {
-    if (!open) return;
-    cardRef.current?.scrollIntoView({ block: "nearest" });
-  }, [open]);
+  const watchRow = useCallback(
+    (element: HTMLDivElement | null) => {
+      cardRef.current = element;
+      return element ? observeRowForDetails(element, term.id, scope) : undefined;
+    },
+    [term.id, scope],
+  );
+
+  // The body mounts when the card opens, so this runs once per opening.
+  const revealOpenedCard = useCallback((body: HTMLDivElement | null) => {
+    if (body) cardRef.current?.scrollIntoView({ block: "nearest" });
+  }, []);
 
   const quickToggleMarkedKnown = useQuickToggleMarkedKnown(term, markedKnown, onToggleMarkedKnown);
   const swipe = useRowSwipe({ enabled: !open, onCommit: quickToggleMarkedKnown });
 
   return (
     <div
-      ref={cardRef}
+      ref={watchRow}
       className={cn("relative scroll-mb-20", !open && "touch-pan-y")}
       {...swipe.handlers}
     >
@@ -192,26 +223,29 @@ export const TermCard = memo(function TermCard({
                 />
               </span>
             </CollapsibleTrigger>
-            <CardTools
-              term={term}
-              domainId={domainId}
-              domainTerms={domainTerms}
-              isOwner={isOwner}
-              narrationAccess={narrationAccess}
-              markedKnown={markedKnown}
-              onQuickToggleMarkedKnown={quickToggleMarkedKnown}
-              onTermRemoved={onTermRemoved}
-              onTermRemoveFailed={onTermRemoveFailed}
-            />
+            <div className="flex shrink-0 items-center gap-1 pe-1">
+              <QuickMarkKnownButton markedKnown={markedKnown} onPress={quickToggleMarkedKnown} />
+              <NarrationButton termId={term.id} />
+              {isOwner ? (
+                <TermActionsMenu
+                  termName={term.term}
+                  onEdit={() => onEdit(term.id)}
+                  onDelete={() => onDelete(term)}
+                />
+              ) : null}
+            </div>
           </div>
           <CollapsibleContent>
-            <TermBody term={term} language={language} className="px-4 pt-4" />
-            <div className="px-4 pb-4 mt-4">
-              <MarkKnownButton
-                markedKnown={markedKnown}
-                onPress={() => void onToggleMarkedKnown(term.id)}
-              />
-            </div>
+            {open ? (
+              <div ref={revealOpenedCard}>
+                <CardBody
+                  termId={term.id}
+                  language={language}
+                  markedKnown={markedKnown}
+                  onToggleMarkedKnown={onToggleMarkedKnown}
+                />
+              </div>
+            ) : null}
           </CollapsibleContent>
         </article>
       </Collapsible>

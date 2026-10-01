@@ -1,78 +1,106 @@
+"use client";
+
+import { useCallback, useState } from "react";
 import type { DomainLanguage } from "@/lib/jargon/languages";
-import type { Term } from "@/lib/jargon/types";
+import type { LibraryTerm } from "@/lib/jargon/types";
 import { EmptyTermsState } from "./empty-terms-state";
 import { TermCard } from "./term-card";
 
+/** Rows rendered up front (also on the server); more follow as the list
+ *  scrolls, so a long collection doesn't render and hydrate every row. */
+const ROWS_PER_STEP = 50;
+const GROW_MARGIN = "800px 0px";
+
 type TermListProps = {
-  terms: Term[];
+  terms: LibraryTerm[];
+  /** Changes whenever the filters do, which starts the rows over from the first step. */
+  windowKey: string;
   knownTerms: Set<string>;
   markedKnownTerms: Set<string>;
-  openTerms: Set<string>;
+  openTerms: ReadonlySet<string>;
   isOwner: boolean;
-  domainId: string;
   language: DomainLanguage;
-  domainTerms: Term[];
+  /** Studyable terms in the collection, before filters. */
+  totalCount: number;
   /** The owner has terms that are saved but not finished yet. */
   hasUnfinished: boolean;
   onAddTerm: () => void;
-  narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
-  onTermRemoved: (termId: string) => void;
-  onTermRemoveFailed: (term: Term, index: number, domainId: string) => void;
+  onEdit: (termId: string) => void;
+  onDelete: (term: LibraryTerm) => void;
 };
 
-export function TermList({
+function EmptyMessage({ title, detail }: { title: string; detail?: string }) {
+  return (
+    <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
+      <p className="text-sm text-base-content/60">{title}</p>
+      {detail ? <p className="mt-1 text-xs text-base-content/60">{detail}</p> : null}
+    </div>
+  );
+}
+
+export function TermList({ windowKey, totalCount, hasUnfinished, ...props }: TermListProps) {
+  if (totalCount === 0 && hasUnfinished) {
+    return <EmptyMessage title="Nothing to study yet. Add a definition to start." />;
+  }
+
+  if (totalCount === 0) {
+    return props.isOwner ? (
+      <EmptyTermsState onAddTerm={props.onAddTerm} />
+    ) : (
+      <EmptyMessage title="No terms in this collection yet." />
+    );
+  }
+
+  if (props.terms.length === 0) {
+    return (
+      <EmptyMessage
+        title="No terms match your filters."
+        detail="Clear your search or category filters, or turn off “Hide terms I know”."
+      />
+    );
+  }
+
+  return <TermRows windowKey={windowKey} {...props} />;
+}
+
+function TermRows({
   terms,
   knownTerms,
   markedKnownTerms,
   openTerms,
   isOwner,
-  domainId,
   language,
-  domainTerms,
-  hasUnfinished,
-  onAddTerm,
-  narrationAccess,
   onToggleOpen,
   onToggleMarkedKnown,
-  onTermRemoved,
-  onTermRemoveFailed,
-}: TermListProps) {
-  if (domainTerms.length === 0 && hasUnfinished) {
-    return (
-      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
-        <p className="text-sm text-base-content/60">
-          Nothing to study yet. Add a definition to start.
-        </p>
-      </div>
-    );
-  }
+  onEdit,
+  onDelete,
+  windowKey,
+}: Omit<TermListProps, "totalCount" | "hasUnfinished" | "onAddTerm">) {
+  // Back to the first rows whenever the filters change. Adjusted during
+  // render rather than by remounting, so rows still on screen keep their state.
+  const [rowWindow, setRowWindow] = useState({ key: windowKey, limit: ROWS_PER_STEP });
+  if (rowWindow.key !== windowKey) setRowWindow({ key: windowKey, limit: ROWS_PER_STEP });
+  const limit = rowWindow.key === windowKey ? rowWindow.limit : ROWS_PER_STEP;
 
-  if (domainTerms.length === 0) {
-    return isOwner ? (
-      <EmptyTermsState onAddTerm={onAddTerm} />
-    ) : (
-      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
-        <p className="text-sm text-base-content/60">No terms in this collection yet.</p>
-      </div>
+  const watchEnd = useCallback((sentinel: HTMLDivElement | null) => {
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setRowWindow((current) => ({ ...current, limit: current.limit + ROWS_PER_STEP }));
+        }
+      },
+      { rootMargin: GROW_MARGIN },
     );
-  }
-
-  if (terms.length === 0) {
-    return (
-      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
-        <p className="text-sm text-base-content/60">No terms match your filters.</p>
-        <p className="mt-1 text-xs text-base-content/60">
-          Clear your search or category filters, or turn off &ldquo;Hide terms I know&rdquo;.
-        </p>
-      </div>
-    );
-  }
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="flex flex-col gap-2">
-      {terms.map((term) => (
+      {terms.slice(0, limit).map((term) => (
         <div key={term.id} className="content-visibility-auto [contain-intrinsic-size:auto_4.5rem]">
           <TermCard
             term={term}
@@ -80,17 +108,19 @@ export function TermList({
             markedKnown={markedKnownTerms.has(term.id)}
             open={openTerms.has(term.id)}
             isOwner={isOwner}
-            domainId={domainId}
             language={language}
-            domainTerms={domainTerms}
-            narrationAccess={narrationAccess}
             onToggleOpen={onToggleOpen}
             onToggleMarkedKnown={onToggleMarkedKnown}
-            onTermRemoved={onTermRemoved}
-            onTermRemoveFailed={onTermRemoveFailed}
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
         </div>
       ))}
+      {/* Keyed by the limit so it is observed afresh after each step, even
+          when it is still inside the margin. */}
+      {limit < terms.length ? (
+        <div key={limit} ref={watchEnd} aria-hidden className="h-px" />
+      ) : null}
     </div>
   );
 }

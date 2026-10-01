@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { TermRelationshipsEditor } from "@/components/jargon/term-relationships-editor";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
 import type { TermFormValues } from "@/lib/jargon/term-schema";
-import type { Term } from "@/lib/jargon/types";
+import type { LibraryTerm } from "@/lib/jargon/types";
 
 type TermFormFieldsProps = {
   form: TermFormValues;
@@ -12,7 +12,7 @@ type TermFormFieldsProps = {
   canManageRelationships: boolean;
   relationshipDrafts: RelationshipDraft[];
   onRelationshipDraftsChange: (drafts: RelationshipDraft[]) => void;
-  domainTerms: Term[];
+  domainTerms: Pick<LibraryTerm, "id" | "term">[];
   sourceTermId: string | undefined;
 };
 
