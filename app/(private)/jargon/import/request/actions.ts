@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { z } from "zod";
 import { getAppOrigin } from "@/lib/auth/app-origin";
@@ -80,8 +79,8 @@ async function sendRequest(auth: Auth, args: CreateArgs): Promise<CreateRequestR
   }
 
   const row = created as { id: string; due_at: string; topic: string };
-  revalidatePath("/jargon");
-
+  // No revalidatePath here: it re-renders this page, which then shows the "request open"
+  // view and drops the "Request sent" screen.
   after(async () => {
     try {
       await notifyTeam(row.topic, args.p_kind, args.p_language);
