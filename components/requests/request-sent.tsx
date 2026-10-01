@@ -61,7 +61,7 @@ export function RequestSent({
       </div>
 
       <div className="flex flex-col gap-2 pb-4">
-        <LinkButton href="/jargon" className="min-h-12 w-full">
+        <LinkButton href="/jargon/import" className="min-h-12 w-full">
           {SENT.done}
         </LinkButton>
         <LinkButton href="/jargon/browse" variant="ghost" className="min-h-11 w-full">

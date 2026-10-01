@@ -71,8 +71,8 @@ export default async function RequestPage({ searchParams }: PageProps) {
             <AlertDescription role="status">{blocked}</AlertDescription>
           </Alert>
           <div className="flex flex-wrap gap-2">
-            <LinkButton href="/jargon" className="min-h-11">
-              {REQUEST_COPY.form.seeLibrary}
+            <LinkButton href="/jargon/import" className="min-h-11">
+              {REQUEST_COPY.form.seeRequests}
             </LinkButton>
             <LinkButton href="/jargon/browse" variant="outline" className="min-h-11">
               {REQUEST_COPY.card.browse}

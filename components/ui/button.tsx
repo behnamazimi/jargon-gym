@@ -108,7 +108,7 @@ function LinkButton({
     return <NextLink href={href} {...shared} {...props} />;
   }
 
-  return <a href={href} {...shared} {...props} />;
+  return <a href={href} target="_blank" rel="noopener noreferrer" {...shared} {...props} />;
 }
 
 export { Button, LinkButton };

@@ -461,3 +461,81 @@ begin
   );
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- Shared collections owned by a second user, so Browse and the Add a
+-- collection search have results for the admin to find and add.
+-- Author login: author@jargon.local / password123
+-- ---------------------------------------------------------------------------
+
+insert into public.referral_codes (code, created_by)
+values ('SEEDAUTHOR', '11111111-1111-1111-1111-111111111111');
+
+do $$
+declare
+  v_author_id uuid := '11111111-1111-1111-1111-111111111112';
+  v_domain_fin uuid := '22222222-2222-2222-2222-222222222223';
+  v_domain_ux uuid := '22222222-2222-2222-2222-222222222224';
+begin
+  insert into auth.users (
+    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, recovery_token, email_change_token_new, email_change
+  ) values (
+    '00000000-0000-0000-0000-000000000000',
+    v_author_id,
+    'authenticated',
+    'authenticated',
+    'author@jargon.local',
+    extensions.crypt('password123', extensions.gen_salt('bf')),
+    now(),
+    '{"provider":"email","providers":["email"]}'::jsonb,
+    '{"referral_code":"SEEDAUTHOR"}'::jsonb,
+    now(),
+    now(),
+    '', '', '', ''
+  );
+
+  insert into auth.identities (
+    id, user_id, identity_data, provider, provider_id,
+    last_sign_in_at, created_at, updated_at
+  ) values (
+    gen_random_uuid(),
+    v_author_id,
+    format(
+      '{"sub":"%s","email":"%s","email_verified":true,"phone_verified":false}',
+      v_author_id,
+      'author@jargon.local'
+    )::jsonb,
+    'email',
+    v_author_id::text,
+    now(), now(), now()
+  );
+
+  insert into public.domains (id, name, description, visibility, owner_id)
+  values
+    (
+      v_domain_fin,
+      'Startup Finance',
+      'Funding, equity and metrics vocabulary for early-stage companies.',
+      'shared',
+      v_author_id
+    ),
+    (
+      v_domain_ux,
+      'UX Research',
+      'Terms for planning and running user research.',
+      'shared',
+      v_author_id
+    );
+
+  insert into public.terms (domain_id, term, category, definition)
+  values
+    (v_domain_fin, 'Runway', 'Metrics', 'How many months a company can operate before it runs out of cash.'),
+    (v_domain_fin, 'Burn rate', 'Metrics', 'The amount of cash a company spends each month.'),
+    (v_domain_fin, 'Cap table', 'Equity', 'A table showing who owns how much of a company.'),
+    (v_domain_ux, 'Usability test', 'Methods', 'Watching people try to complete tasks with a product to find where they struggle.'),
+    (v_domain_ux, 'Affinity mapping', 'Methods', 'Grouping research notes by theme to find patterns.'),
+    (v_domain_ux, 'Screener', 'Recruiting', 'A short survey used to pick the right participants for a study.');
+end;
+$$;

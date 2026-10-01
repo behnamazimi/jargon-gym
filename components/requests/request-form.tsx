@@ -140,7 +140,7 @@ export function RequestForm({
         if (canSend) send();
       }}
     >
-      <p className="m-0 text-sm text-base-content/70">{FORM.quota(used)}</p>
+      <p className="text-sm text-base-content/70">{FORM.quota(used)}</p>
       {paused ? (
         <Alert>
           <AlertDescription role="status">{FORM.paused(estimateDays)}</AlertDescription>
@@ -257,7 +257,7 @@ export function RequestForm({
         </CollapsibleContent>
       </Collapsible>
 
-      <p className="m-0 text-sm text-base-content/60">{FORM.privacy}</p>
+      <p className="text-sm text-base-content/60">{FORM.privacy}</p>
 
       {error ? (
         <Alert variant="destructive">
