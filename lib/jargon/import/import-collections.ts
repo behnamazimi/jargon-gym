@@ -74,3 +74,24 @@ export async function findDestinationMatches(
     .filter((row) => wanted.has(row.term.trim().toLowerCase()))
     .map((row) => ({ name: row.term, definition: row.definition }));
 }
+
+/** Every term name in a collection the caller owns, or null when it isn't theirs. */
+export async function listCollectionTermNames(
+  client: Client,
+  userId: string,
+  domainId: string,
+): Promise<string[] | null> {
+  const { data: domain, error } = await client
+    .from("domains")
+    .select("id")
+    .eq("id", domainId)
+    .eq("owner_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!domain) return null;
+
+  const rows = await fetchAllRows((from, to) =>
+    client.from("terms").select("term").eq("domain_id", domainId).order("id").range(from, to),
+  );
+  return rows.map((row) => row.term);
+}
