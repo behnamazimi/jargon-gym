@@ -91,17 +91,10 @@ export function FormatHelpButton({ className }: { className?: string }) {
             </Link>
           </Format>
           <Format title="JSON">
-            The richest format: every field at once. Paste it or choose a .json file.
-            <span className="mt-1 block">
-              <b>Collection:</b> domain (the name), language (en or nl), description
-              <br />
-              <b>Each term:</b> term, definition, category, example, mental_model, discussion (in
-              practice), anti_example, controversy (debated), note
-              <br />
-              <b>Links between terms:</b> source, target, relationship_type, description
-            </span>
+            The only way to add mental model, in practice, anti-example, debated, links between
+            terms, and the language.{" "}
             <Link href="/jargon/import/more" className={linkClass}>
-              See a full example
+              See the format
             </Link>
           </Format>
         </div>
