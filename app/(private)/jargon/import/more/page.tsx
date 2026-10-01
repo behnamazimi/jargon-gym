@@ -1,5 +1,5 @@
 import { Braces } from "lucide-react";
-import { CopyJsonButton } from "@/components/jargon/import/copy-json-button";
+import { CopyIconButton } from "@/components/jargon/import/copy-icon-button";
 import { ImportCodePanel, ImportCard } from "@/components/jargon/import/import-ui";
 import { ImportLlmPrompt } from "@/components/jargon/import/import-llm-prompt";
 import { PageHeader } from "@/components/jargon/page-header";
@@ -34,7 +34,7 @@ export default async function MoreImportOptionsPage() {
         description="JSON works in the same place as any list. Paste it or choose the file there. Term is the only required field. Definition, category, example, mental model, in practice, anti-example, debated, note and links to other terms are optional."
       >
         <h3 className="m-0 text-sm font-semibold">The JSON format</h3>
-        <ImportCodePanel actions={<CopyJsonButton value={sampleJson} />}>
+        <ImportCodePanel actions={<CopyIconButton value={sampleJson} label="Copy JSON" />}>
           {sampleJson}
         </ImportCodePanel>
       </ImportCard>
