@@ -30,13 +30,7 @@ export function TelegramConnectRow({
       {deepLink ? (
         <div className="space-y-3">
           <CopyField value={deepLink} />
-          <LinkButton
-            href={deepLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outline"
-            className="min-h-11 w-full md:w-auto"
-          >
+          <LinkButton href={deepLink} variant="outline" className="min-h-11 w-full md:w-auto">
             Open bot
             <ExternalLink className="size-3.5" strokeWidth={1.5} />
           </LinkButton>

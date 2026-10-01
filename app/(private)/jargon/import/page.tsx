@@ -2,14 +2,31 @@ import { FolderPlus } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/jargon/import/actions";
 import { ImportChooser } from "@/components/jargon/import/import-chooser";
 import { PageHeader } from "@/components/jargon/page-header";
+import { RequestsSection } from "@/components/requests/requests-section";
 import { getSessionUser } from "@/lib/auth/require-session";
-import { loadRequestEntryFor } from "@/lib/requests/repository";
+import { fetchMyRequests, loadRequestEntryFor } from "@/lib/requests/repository";
+import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
+
+async function loadRequests() {
+  const { supabase, user } = await getSessionUser();
+  if (!user) return { requests: [], requestEntry: { state: "closed" as const } };
+  try {
+    const { timezone } = await getStudyPhoneUserSettings(user.id);
+    const [requests, requestEntry] = await Promise.all([
+      fetchMyRequests(supabase, timezone),
+      loadRequestEntryFor(supabase, user.id),
+    ]);
+    return { requests, requestEntry };
+  } catch (error) {
+    console.error("Couldn't load collection requests:", error);
+    return { requests: [], requestEntry: { state: "closed" as const } };
+  }
+}
 
 export default async function ImportPage() {
-  const { supabase, user } = await getSessionUser();
-  const [setup, requestEntry] = await Promise.all([
+  const [setup, { requests, requestEntry }] = await Promise.all([
     getImportSetupData(),
-    user ? loadRequestEntryFor(supabase, user.id) : Promise.resolve({ state: "closed" as const }),
+    loadRequests(),
   ]);
 
   if ("error" in setup) {
@@ -24,6 +41,7 @@ export default async function ImportPage() {
         description="Find a shared collection, or start from what you have."
         compactOnPhone
       />
+      <RequestsSection requests={requests} />
       <ImportChooser collections={setup.collections} requestEntry={requestEntry} />
     </>
   );

@@ -1,4 +1,4 @@
-import { Layers } from "lucide-react";
+import { Info, Layers } from "lucide-react";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/jargon/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -30,7 +30,7 @@ export default async function AppGuidePage({ params }: PageProps) {
         compactOnPhone
       />
       {steps.length > 0 ? (
-        <ol className="shadow-surface m-0 flex list-none flex-col gap-3 rounded-2xl bg-base-100 p-4">
+        <ol className="shadow-surface flex list-none flex-col gap-3 rounded-2xl bg-base-100 p-4">
           {steps.map((step, index) => (
             <li key={step} className="grid grid-cols-[1.75rem_1fr] gap-3 text-sm">
               <span className="flex size-7 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
@@ -42,7 +42,8 @@ export default async function AppGuidePage({ params }: PageProps) {
         </ol>
       ) : null}
       {guide.note ? (
-        <Alert>
+        <Alert className="alert-soft">
+          <Info className="size-5 text-info" aria-hidden strokeWidth={1.5} />
           <AlertDescription>{guide.note}</AlertDescription>
         </Alert>
       ) : null}

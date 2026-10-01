@@ -49,7 +49,7 @@ export function ImportChooser({
 
   return (
     <div className="space-y-5">
-      <div className="space-y-2" data-tour="import-search">
+      <div className="flex flex-col gap-2" data-tour="import-search">
         <div className="relative">
           <Search
             className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-base-content/60"
@@ -78,7 +78,11 @@ export function ImportChooser({
         <RequestRow entry={requestEntry} query={query} />
       </div>
 
-      <section className="space-y-2" data-tour="import-routes" aria-labelledby="start-from">
+      <section
+        className="flex flex-col gap-2"
+        data-tour="import-routes"
+        aria-labelledby="start-from"
+      >
         <h2
           id="start-from"
           className="m-0 text-xs font-semibold tracking-wider text-base-content/60 uppercase"

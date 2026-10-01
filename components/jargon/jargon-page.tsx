@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getJargonCollectionDataAction } from "@/app/(private)/jargon/(collection)/actions";
 import type { JargonPageData } from "@/lib/jargon/types";
@@ -24,15 +24,9 @@ type JargonPageProps = {
   narrationAccess: boolean;
   /** What the import that just finished added (from ?added=). */
   importedSummary?: ImportedSummary;
-  topSlot?: ReactNode;
 };
 
-export function JargonPage({
-  initialData,
-  narrationAccess,
-  importedSummary,
-  topSlot,
-}: JargonPageProps) {
+export function JargonPage({ initialData, narrationAccess, importedSummary }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -194,7 +188,6 @@ export function JargonPage({
             <JargonListSkeleton />
           ) : (
             <div className="min-w-0 flex-1 space-y-4">
-              {topSlot}
               <ImportedBanner
                 summary={importedNotice.summary}
                 domain={domain}

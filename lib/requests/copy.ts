@@ -55,7 +55,7 @@ export const REQUEST_COPY = {
     openRequest: (topic: string) => `You already have a request open: “${topic}”.`,
     capReached: (date: string) =>
       `You've used your 3 requests for now. You can ask again on ${date}.`,
-    seeLibrary: "See it in your Library",
+    seeRequests: "See your requests",
     openIt: "Open it",
     sendFailed: "We couldn't send your request. Try again.",
     signedOut: "Sign in to send a request.",
