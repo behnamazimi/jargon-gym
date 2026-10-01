@@ -1,19 +1,19 @@
 "use client";
 
-import { ChevronDown, type LucideIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 function ImportCardHeaderContent({
-  Icon,
+  icon,
   title,
   headerDescription,
   collapsible,
   expanded,
 }: {
-  Icon: LucideIcon;
+  icon: ReactNode;
   title: string;
   headerDescription?: string;
   collapsible: boolean;
@@ -21,8 +21,8 @@ function ImportCardHeaderContent({
 }) {
   return (
     <>
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-        <Icon className="size-5" aria-hidden strokeWidth={1.5} />
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary [&>svg]:size-5">
+        {icon}
       </div>
       <div className="min-w-0 flex-1 space-y-1 text-left">
         <h2 className="m-0 text-base font-semibold">{title}</h2>
@@ -111,7 +111,7 @@ function CollapsibleImportCard({
 }
 
 export function ImportCard({
-  icon: Icon,
+  icon,
   title,
   description,
   children,
@@ -119,7 +119,8 @@ export function ImportCard({
   collapsible = false,
   defaultExpanded = true,
 }: {
-  icon: LucideIcon;
+  /** An element, not a component, so server pages can pass it. */
+  icon: ReactNode;
   title: string;
   description?: string;
   children: ReactNode;
@@ -132,7 +133,7 @@ export function ImportCard({
 
   const header = (
     <ImportCardHeaderContent
-      Icon={Icon}
+      icon={icon}
       title={title}
       headerDescription={headerDescription}
       collapsible={collapsible}

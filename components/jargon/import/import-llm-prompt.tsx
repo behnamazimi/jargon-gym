@@ -54,7 +54,7 @@ export function ImportLlmPrompt({ collections }: { collections: ImportDestinatio
 
   return (
     <ImportCard
-      icon={Sparkles}
+      icon={<Sparkles aria-hidden strokeWidth={1.5} />}
       title="Generate JSON with an AI skill (for developers)"
       description="Install the glossary skill once, generate JSON for your domain, then paste it on the Paste screen."
     >

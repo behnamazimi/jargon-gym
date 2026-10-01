@@ -27,7 +27,7 @@ export default async function MoreImportOptionsPage() {
         compactOnPhone
       />
       <ImportCard
-        icon={Braces}
+        icon={<Braces aria-hidden strokeWidth={1.5} />}
         title="Choose a JSON file"
         description="JSON works in the same place as any list. Paste it or choose the file there. Term is the only required field. Definition, category, example, mental model, in practice, anti-example, debated, note and links to other terms are optional."
       >
