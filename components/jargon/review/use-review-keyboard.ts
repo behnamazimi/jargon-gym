@@ -24,6 +24,8 @@ function classifyTarget(target: EventTarget | null): ReviewKeyTarget {
 
 function handleReviewKeyDown(event: KeyboardEvent, handlers: ReviewKeyboardHandlers) {
   if (!handlers.enabled) return;
+  // Keys pressed inside an open dialog (like the help modal) belong to it.
+  if (event.target instanceof Element && event.target.closest("[role='dialog']")) return;
 
   const action = reviewKeyAction(
     {

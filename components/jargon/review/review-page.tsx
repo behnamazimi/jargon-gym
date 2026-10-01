@@ -6,6 +6,7 @@ import type { ReviewQueueSeed } from "@/app/(private)/jargon/review/actions";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { ReadErrorAlert } from "@/components/jargon/read/read-error-alert";
 import { ReviewCollectionSettings } from "@/components/jargon/review/review-collection-settings";
+import { ReviewHelpButton } from "@/components/jargon/review/review-help-button";
 import { ReviewPlayingStep } from "@/components/jargon/review/review-playing-step";
 import { useReviewKeyboard } from "@/components/jargon/review/use-review-keyboard";
 import { useReviewQueue } from "@/components/jargon/review/use-review-queue";
@@ -163,13 +164,16 @@ export function ReviewPage({
   }
 
   const collectionControl = (
-    <ReviewCollectionSettings
-      collections={collections}
-      selectedCollectionId={selectedCollectionId}
-      rememberOnDevice={rememberOnDevice}
-      onCollectionChange={handleCollectionChange}
-      onRememberChange={handleRememberChange}
-    />
+    <div className="flex min-w-0 items-center gap-1">
+      <ReviewCollectionSettings
+        collections={collections}
+        selectedCollectionId={selectedCollectionId}
+        rememberOnDevice={rememberOnDevice}
+        onCollectionChange={handleCollectionChange}
+        onRememberChange={handleRememberChange}
+      />
+      <ReviewHelpButton />
+    </div>
   );
 
   if (queue.status === "error" && !currentCard) {
