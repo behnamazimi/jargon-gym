@@ -122,8 +122,8 @@ export function ImportChooser({
             >
               <RowContent
                 icon={Layers}
-                title="A deck from another app"
-                description="Quizlet, Anki, Google Translate and more"
+                title="Export from another app"
+                description="How to copy your deck out of Quizlet, Anki and more"
               />
             </LinkButton>
           </li>

@@ -48,7 +48,7 @@ export const MORE_CHAPTERS = [
       {
         target: "import-routes",
         title: "Or add your own",
-        body: "Paste a list, bring a deck from another app, save one term, or start empty.",
+        body: "Paste a list, export from another app and paste it, save one term, or start empty.",
       },
     ],
   },
