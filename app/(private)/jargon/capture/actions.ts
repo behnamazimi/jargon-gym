@@ -5,7 +5,7 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { escapeLike } from "@/lib/jargon/like-escape";
 
 const inputSchema = z.object({
-  domainId: z.string().uuid(),
+  domainId: z.guid(),
   term: z.string().trim().min(1).max(200),
 });
 

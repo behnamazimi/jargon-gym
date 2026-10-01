@@ -40,6 +40,14 @@ describe("findCaptureDuplicate", () => {
     expect(await findCaptureDuplicate({ domainId, term: "   " })).toEqual({ ok: false });
   });
 
+  it("accepts the ids the seed data uses", async () => {
+    const seeded = "22222222-2222-2222-2222-222222222221";
+    expect(await findCaptureDuplicate({ domainId: seeded, term: "SLA" })).toEqual({
+      ok: true,
+      match: null,
+    });
+  });
+
   it("fails quietly when signed out", async () => {
     state.signedIn = false;
     expect(await findCaptureDuplicate({ domainId, term: "SLA" })).toEqual({ ok: false });

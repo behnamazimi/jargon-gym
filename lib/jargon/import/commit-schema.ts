@@ -27,7 +27,7 @@ export const linkSchema = z.object({
 });
 
 const destinationSchema = z.union([
-  z.object({ domainId: z.string().uuid() }),
+  z.object({ domainId: z.guid() }),
   z.object({ name: z.string().trim().min(1).max(100), language: z.enum(DOMAIN_LANGUAGES) }),
 ]);
 
