@@ -1,4 +1,4 @@
-import { Inbox } from "lucide-react";
+import { ArrowRight, Inbox } from "lucide-react";
 import { LinkButton } from "@/components/ui/button";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import type { RequestEntry } from "@/lib/requests/entry";
@@ -28,6 +28,9 @@ export function RequestRow({ entry, query }: { entry: RequestEntry; query: strin
 
   return (
     <div className="space-y-2">
+      <p className="m-0 text-xs font-semibold tracking-wider text-base-content/60 uppercase">
+        {CHOOSER.rowLabel}
+      </p>
       <LinkButton
         href={`/jargon/import/request?topic=${encodeURIComponent(trimmed.slice(0, 120))}`}
         variant="ghost"
@@ -44,6 +47,11 @@ export function RequestRow({ entry, query }: { entry: RequestEntry; query: strin
             {CHOOSER.rowSubtitle}
           </span>
         </span>
+        <ArrowRight
+          className="size-4 shrink-0 text-base-content/60"
+          aria-hidden
+          strokeWidth={1.5}
+        />
       </LinkButton>
       <p className="m-0 text-sm text-base-content/60">{CHOOSER.quotaLine}</p>
     </div>

@@ -1,4 +1,3 @@
-import { AlertCircle } from "lucide-react";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
@@ -15,7 +14,6 @@ export function ReadErrorAlert({
 }) {
   return (
     <Alert variant="destructive">
-      <AlertCircle className="size-4" aria-hidden strokeWidth={1.5} />
       <AlertDescription>{message}</AlertDescription>
       <AlertAction>
         <Button

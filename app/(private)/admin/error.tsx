@@ -1,5 +1,7 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 type AdminErrorProps = {
   error: Error & { digest?: string };
   reset?: () => void;
@@ -11,9 +13,9 @@ export default function AdminError({ reset, unstable_retry }: AdminErrorProps) {
 
   return (
     <div className="flex flex-col items-start gap-4">
-      <div role="alert" className="alert alert-error w-full">
-        Something went wrong loading this page.
-      </div>
+      <Alert variant="destructive" className="w-full">
+        <AlertDescription>Something went wrong loading this page.</AlertDescription>
+      </Alert>
       {retry ? (
         <button type="button" className="btn" onClick={retry}>
           Try again

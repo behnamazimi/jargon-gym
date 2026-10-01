@@ -2,7 +2,7 @@ import { Search, X } from "lucide-react";
 import type { RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { Toggle } from "@/components/ui/toggle";
+import { ToggleChip } from "@/components/ui/toggle";
 import type { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
 import type { BrowseCollectionFilter } from "@/lib/jargon/browse";
 import { cn, pluralize } from "@/lib/utils";
@@ -27,15 +27,6 @@ const FILTERS: Array<{
     countKey: "inCollection",
   },
 ];
-
-function chipClassName(selected: boolean) {
-  return cn(
-    "h-11 min-h-11 rounded-lg px-3 py-0 text-xs font-normal md:h-7 md:min-h-7",
-    selected
-      ? "border-primary bg-primary/10 text-primary hover:bg-primary/15 data-selected:border-primary data-selected:bg-primary/10 data-selected:text-primary"
-      : "border-base-300/80 text-base-content hover:bg-base-200/60",
-  );
-}
 
 type SharedDomainsFilterBarProps = {
   browse: ReturnType<typeof useSharedDomainsBrowse>;
@@ -87,25 +78,21 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
       </InputGroup>
 
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Collection status">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Collection status">
           {FILTERS.map((item) => {
             const selected = browse.filter === item.value;
             return (
-              <Toggle
+              <ToggleChip
                 key={item.value}
-                size="sm"
                 isSelected={selected}
                 onChange={() => browse.setFilter(item.value)}
                 aria-label={item.ariaLabel}
-                className={chipClassName(selected)}
               >
                 {item.label}{" "}
-                <span
-                  className={cn("tabular-nums opacity-55", selected && "text-primary opacity-80")}
-                >
+                <span className="tabular-nums opacity-55 group-data-selected:opacity-80">
                   {browse.counts[item.countKey]}
                 </span>
-              </Toggle>
+              </ToggleChip>
             );
           })}
         </div>

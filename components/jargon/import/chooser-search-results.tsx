@@ -34,7 +34,7 @@ export function SearchResults({
   if (state.status === "error") {
     return (
       <Alert variant="destructive">
-        <AlertDescription role="alert">Couldn&apos;t search right now. Try again.</AlertDescription>
+        <AlertDescription>Couldn&apos;t search right now. Try again.</AlertDescription>
       </Alert>
     );
   }

@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import {
+  composeRenderProps,
   ToggleButtonGroup as ToggleGroupPrimitive,
   ToggleButton as TogglePrimitive,
   type ToggleButtonGroupProps,
@@ -9,64 +9,30 @@ import {
 } from "react-aria-components";
 
 import { cn } from "@/lib/utils";
-import { toggleClassName, type ToggleSize, type ToggleVariant } from "@/components/ui/toggle";
+import { choiceClassName, renderChoiceChildren } from "@/components/ui/toggle";
 
-const ToggleGroupContext = React.createContext<{
-  variant?: ToggleVariant;
-  size?: ToggleSize;
-}>({
-  variant: "default",
-  size: "default",
-});
-
-function ToggleGroup({
-  className,
-  variant,
-  size,
-  orientation = "horizontal",
-  children,
-  ...props
-}: Omit<ToggleButtonGroupProps, "children"> & {
-  variant?: ToggleVariant;
-  size?: ToggleSize;
-  children?: React.ReactNode;
-}) {
+function ToggleGroup({ className, orientation = "horizontal", ...props }: ToggleButtonGroupProps) {
   return (
     <ToggleGroupPrimitive
       data-slot="toggle-group"
       orientation={orientation}
-      className={cn(
-        "join",
-        orientation === "vertical" ? "join-vertical" : "join-horizontal",
-        className,
-      )}
-      {...props}
-    >
-      <ToggleGroupContext.Provider value={{ variant, size }}>
-        {children}
-      </ToggleGroupContext.Provider>
-    </ToggleGroupPrimitive>
-  );
-}
-
-function ToggleGroupItem({
-  className,
-  variant = "default",
-  size = "default",
-  ...props
-}: ToggleButtonProps & { variant?: ToggleVariant; size?: ToggleSize }) {
-  const context = React.useContext(ToggleGroupContext);
-
-  return (
-    <TogglePrimitive
-      data-slot="toggle-group-item"
-      className={cn(
-        "join-item",
-        toggleClassName(context.variant ?? variant, context.size ?? size),
-        className,
+      className={composeRenderProps(className, (className) =>
+        cn("flex gap-2", orientation === "vertical" ? "flex-col" : "flex-wrap", className),
       )}
       {...props}
     />
+  );
+}
+
+function ToggleGroupItem({ className, children, ...props }: ToggleButtonProps) {
+  return (
+    <TogglePrimitive
+      data-slot="toggle-group-item"
+      className={composeRenderProps(className, (className) => choiceClassName(className))}
+      {...props}
+    >
+      {renderChoiceChildren(children)}
+    </TogglePrimitive>
   );
 }
 

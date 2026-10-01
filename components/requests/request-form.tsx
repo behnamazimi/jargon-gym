@@ -67,17 +67,15 @@ function Choice<T extends string | number>({
       <ToggleGroup
         aria-label={label}
         selectionMode="single"
-        variant="outline"
         isDisabled={isDisabled}
         selectedKeys={value === null ? [] : [String(value)]}
         onSelectionChange={(keys) => {
           const [key] = [...keys];
           onChange(options.find((option) => String(option) === key) ?? null);
         }}
-        className="flex-wrap"
       >
         {options.map((option) => (
-          <ToggleGroupItem key={String(option)} id={String(option)} className="min-h-11">
+          <ToggleGroupItem key={String(option)} id={String(option)}>
             {render(option)}
           </ToggleGroupItem>
         ))}
@@ -143,7 +141,7 @@ export function RequestForm({
       <p className="text-sm text-base-content/70">{FORM.quota(used)}</p>
       {paused ? (
         <Alert>
-          <AlertDescription role="status">{FORM.paused(estimateDays)}</AlertDescription>
+          <AlertDescription>{FORM.paused(estimateDays)}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -162,7 +160,7 @@ export function RequestForm({
 
       {repeat ? (
         <Alert>
-          <AlertDescription role="status">
+          <AlertDescription>
             {FORM.repeatTopic(repeat.topic, repeat.createdDate, repeat.sentence)}{" "}
             {repeat.collectionId ? (
               <LinkButton
@@ -261,7 +259,7 @@ export function RequestForm({
 
       {error ? (
         <Alert variant="destructive">
-          <AlertDescription role="alert">{error}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
 

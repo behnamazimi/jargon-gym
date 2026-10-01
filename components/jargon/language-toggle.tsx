@@ -19,7 +19,6 @@ export function LanguageToggle({ value, onChange, isDisabled }: LanguageTogglePr
       aria-label="Language"
       selectionMode="single"
       disallowEmptySelection
-      variant="outline"
       isDisabled={isDisabled}
       selectedKeys={[value]}
       onSelectionChange={(keys) => {
@@ -28,7 +27,7 @@ export function LanguageToggle({ value, onChange, isDisabled }: LanguageTogglePr
       }}
     >
       {DOMAIN_LANGUAGE_OPTIONS.map((option) => (
-        <ToggleGroupItem key={option.value} id={option.value} className="min-h-11 min-w-24">
+        <ToggleGroupItem key={option.value} id={option.value}>
           {option.label}
         </ToggleGroupItem>
       ))}

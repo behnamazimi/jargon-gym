@@ -34,8 +34,7 @@ export default function CompleteSignupForm({
         Almost there — enter your reference code to finish setting up your account.
       </p>
 
-      <Alert className="alert alert-soft">
-        <Mail aria-hidden className="size-10 shrink-0" />
+      <Alert variant="info" icon={<Mail strokeWidth={1.5} />}>
         <AlertDescription>
           You need a reference code to finish setting up your account. If you don&apos;t have one,{" "}
           <Link href="/request-access" className="underline underline-offset-2">

@@ -96,7 +96,7 @@ function NewCollectionFields({
       </Field>
       {similar && similarCollection ? (
         <Alert>
-          <AlertDescription role="status">
+          <AlertDescription>
             You already have &ldquo;{similar.name}&rdquo;. Add to it instead?
           </AlertDescription>
           <AlertAction>
@@ -104,7 +104,6 @@ function NewCollectionFields({
               type="button"
               size="sm"
               variant="outline"
-              className="min-h-11 md:min-h-8"
               onPress={() => onModeChange("existing", similarCollection.id)}
             >
               Add to it
@@ -155,7 +154,6 @@ export function DestinationBlock({
         aria-label="Where to add"
         selectionMode="single"
         disallowEmptySelection
-        variant="outline"
         isDisabled={disabled}
         selectedKeys={[mode]}
         onSelectionChange={(keys) => {
@@ -164,14 +162,10 @@ export function DestinationBlock({
         }}
         className="w-full"
       >
-        <ToggleGroupItem id="new" className="min-h-11 flex-1">
+        <ToggleGroupItem id="new" className="flex-1">
           New collection
         </ToggleGroupItem>
-        <ToggleGroupItem
-          id="existing"
-          className="min-h-11 flex-1"
-          isDisabled={collections.length === 0}
-        >
+        <ToggleGroupItem id="existing" className="flex-1" isDisabled={collections.length === 0}>
           Add to existing
         </ToggleGroupItem>
       </ToggleGroup>

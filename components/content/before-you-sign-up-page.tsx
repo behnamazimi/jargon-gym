@@ -182,8 +182,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
               if you don&apos;t have one yet.
             </p>
           ) : (
-            <Alert className="alert alert-soft">
-              <Mail aria-hidden className="size-10 shrink-0" />
+            <Alert variant="info" icon={<Mail strokeWidth={1.5} />}>
               <AlertDescription>
                 <Link href="/request-access" className="underline underline-offset-2">
                   Request access

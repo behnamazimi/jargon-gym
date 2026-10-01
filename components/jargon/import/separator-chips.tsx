@@ -46,8 +46,6 @@ export function SeparatorChips({
               aria-label="Split at"
               selectionMode="single"
               disallowEmptySelection
-              variant="outline"
-              size="sm"
               selectedKeys={selected ? [selected] : []}
               onSelectionChange={(keys) => {
                 const [key] = [...keys];
@@ -58,7 +56,7 @@ export function SeparatorChips({
               }}
             >
               {CHOICES.map((choice) => (
-                <ToggleGroupItem key={choice.id} id={choice.id} className="min-h-11 md:min-h-8">
+                <ToggleGroupItem key={choice.id} id={choice.id}>
                   {choice.label}
                 </ToggleGroupItem>
               ))}
@@ -110,20 +108,14 @@ export function SeparatorChips({
           aria-label="First line"
           selectionMode="single"
           disallowEmptySelection
-          variant="outline"
-          size="sm"
           selectedKeys={[(options.heading ?? parsed.headingDetected) ? "heading" : "term"]}
           onSelectionChange={(keys) => {
             const [key] = [...keys];
             if (key) onOptionsChange({ heading: key === "heading" });
           }}
         >
-          <ToggleGroupItem id="heading" className="min-h-11 md:min-h-8">
-            First line is a heading
-          </ToggleGroupItem>
-          <ToggleGroupItem id="term" className="min-h-11 md:min-h-8">
-            First line is a term
-          </ToggleGroupItem>
+          <ToggleGroupItem id="heading">First line is a heading</ToggleGroupItem>
+          <ToggleGroupItem id="term">First line is a term</ToggleGroupItem>
         </ToggleGroup>
       ) : null}
     </div>

@@ -141,16 +141,10 @@ export function PasteStep({
       {problem?.failure ? <ImportFailurePanel failure={problem.failure} /> : null}
       {problem && !problem.failure ? (
         <Alert variant="destructive">
-          <AlertDescription role="alert">{problem.message}</AlertDescription>
+          <AlertDescription>{problem.message}</AlertDescription>
           {problem.canTreatAsText ? (
             <AlertAction>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="min-h-11 md:min-h-8"
-                onPress={onTreatAsText}
-              >
+              <Button type="button" size="sm" variant="outline" onPress={onTreatAsText}>
                 Treat it as a list
               </Button>
             </AlertAction>

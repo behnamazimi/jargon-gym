@@ -74,7 +74,7 @@ function ReplyBox({ request }: { request: MyRequest }) {
       />
       {error ? (
         <Alert variant="destructive">
-          <AlertDescription role="alert">{error}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
       <Button

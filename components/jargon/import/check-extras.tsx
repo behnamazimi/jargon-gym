@@ -16,7 +16,7 @@ export function ConflictChooser({ flow }: { flow: ImportFlowState }) {
     <div className="space-y-2">
       {conflicts.map((conflict) => (
         <Alert key={conflict.termId}>
-          <AlertDescription role="status" className="space-y-2">
+          <AlertDescription className="space-y-2">
             <p className="m-0 font-medium">
               &ldquo;{conflict.term}&rdquo; appears twice with different definitions. Keep which?
             </p>
@@ -57,20 +57,14 @@ export function DuplicatePolicy({ flow }: { flow: ImportFlowState }) {
         aria-label="What to do with terms already there"
         selectionMode="single"
         disallowEmptySelection
-        variant="outline"
         selectedKeys={[flow.check.policy]}
         onSelectionChange={(keys) => {
           const [key] = [...keys];
           if (key === "skip" || key === "update") flow.setPolicy(key);
         }}
-        className="flex-wrap"
       >
-        <ToggleGroupItem id="skip" className="min-h-11">
-          Skip them
-        </ToggleGroupItem>
-        <ToggleGroupItem id="update" className="min-h-11">
-          Update their definitions
-        </ToggleGroupItem>
+        <ToggleGroupItem id="skip">Skip them</ToggleGroupItem>
+        <ToggleGroupItem id="update">Update their definitions</ToggleGroupItem>
       </ToggleGroup>
       <p className="m-0 text-xs text-base-content/60">
         Updating keeps your progress and never replaces a definition with an empty one. Different

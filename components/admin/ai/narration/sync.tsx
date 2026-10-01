@@ -8,6 +8,7 @@ import {
   resumeNarrationSync,
   startNarrationSync,
 } from "@/app/(private)/admin/ai/narration/actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AdminSection } from "@/components/admin/admin-section";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { JobPanel, SyncToolbar } from "@/components/admin/ai/narration/sync-parts";
@@ -80,9 +81,9 @@ export function AdminNarrationSync({
       description="Generate missing term audio for one collection. Closing this page does not stop a run."
     >
       {narrationEnabled ? null : (
-        <div role="alert" className="alert alert-warning">
-          Turn narration on above before starting a sync.
-        </div>
+        <Alert variant="warning">
+          <AlertDescription>Turn narration on above before starting a sync.</AlertDescription>
+        </Alert>
       )}
 
       <SyncToolbar

@@ -170,7 +170,7 @@ function AddTermForm({
 
         {duplicate ? (
           <Alert>
-            <AlertDescription role="status">
+            <AlertDescription>
               <p className="m-0">&ldquo;{duplicate.term}&rdquo; is already in this collection.</p>
               <p className="m-0 text-base-content/60">
                 Different meaning? Add a qualifier, like &ldquo;SLA (legal)&rdquo;.
@@ -181,7 +181,6 @@ function AddTermForm({
                 type="button"
                 size="sm"
                 variant="outline"
-                className="min-h-11 md:min-h-8"
                 onPress={() => {
                   onOpenTerm(duplicate.term);
                   onOpenChange(false);

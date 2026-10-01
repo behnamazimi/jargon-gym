@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, X } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { clearDraft } from "@/lib/jargon/import/draft-store";
@@ -64,12 +64,9 @@ export function ImportedBanner({
   const details = detailLine(summary);
 
   return (
-    <Alert variant="success">
-      <CheckCircle2 className="size-4" aria-hidden strokeWidth={1.5} />
-      <AlertDescription role="status">
-        <p className="m-0 font-medium">{title}</p>
-        {details ? <p className="m-0">{details}</p> : null}
-      </AlertDescription>
+    <Alert variant="success" onDismiss={onDismiss}>
+      <AlertTitle>{title}</AlertTitle>
+      {details ? <AlertDescription>{details}</AlertDescription> : null}
       <AlertAction>
         {studyable ? (
           <LinkButton
@@ -82,36 +79,15 @@ export function ImportedBanner({
           </LinkButton>
         ) : null}
         {studyable ? (
-          <LinkButton
-            href={`/jargon/triage?domain=${domain.id}`}
-            size="sm"
-            variant="outline"
-            className="min-h-11 md:min-h-8"
-          >
+          <LinkButton href={`/jargon/triage?domain=${domain.id}`} size="sm" variant="outline">
             Mark what you know
           </LinkButton>
         ) : null}
         {summary.unfinished > 0 ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="min-h-11 md:min-h-8"
-            onPress={onFinish}
-          >
+          <Button type="button" size="sm" variant="outline" onPress={onFinish}>
             Finish {pluralize(summary.unfinished, "term")}
           </Button>
         ) : null}
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          aria-label="Dismiss"
-          className="size-11 md:size-8"
-          onPress={onDismiss}
-        >
-          <X className="size-4" aria-hidden strokeWidth={1.5} />
-        </Button>
       </AlertAction>
     </Alert>
   );

@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -101,17 +102,23 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       {children}
       {showToast ? (
         <div className="toast toast-bottom toast-end z-50 standalone:hidden max-md:bottom-[calc(var(--dock-bottom)+1rem)]!">
-          <div role="status" className="alert sm:alert-horizontal">
-            <span>Install {PWA_NAME} for quicker access.</span>
-            <div className="flex gap-2">
+          <Alert
+            variant="info"
+            icon={<Download strokeWidth={1.5} />}
+            className="w-[min(24rem,calc(100vw-2rem))] shadow-md"
+          >
+            <AlertDescription className="text-base-content">
+              Install {PWA_NAME} for quicker access.
+            </AlertDescription>
+            <AlertAction>
               <Button size="sm" onPress={() => void promptInstall()}>
                 Install
               </Button>
               <Button size="sm" variant="ghost" onPress={dismissToast}>
                 Not now
               </Button>
-            </div>
-          </div>
+            </AlertAction>
+          </Alert>
         </div>
       ) : null}
       <Dialog isOpen={iosDialogOpen} onOpenChange={setIosDialogOpen}>

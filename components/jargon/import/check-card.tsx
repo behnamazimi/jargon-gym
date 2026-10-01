@@ -78,20 +78,14 @@ export function CheckCard({
             aria-label={`What to do with "${draft.term}"`}
             selectionMode="single"
             disallowEmptySelection
-            variant="outline"
-            size="sm"
             selectedKeys={[policy]}
             onSelectionChange={(keys) => {
               const [key] = [...keys];
               if (key === "skip" || key === "update") onPolicyChange(key);
             }}
           >
-            <ToggleGroupItem id="skip" className="min-h-11 md:min-h-8">
-              Skip
-            </ToggleGroupItem>
-            <ToggleGroupItem id="update" className="min-h-11 md:min-h-8">
-              Update
-            </ToggleGroupItem>
+            <ToggleGroupItem id="skip">Skip</ToggleGroupItem>
+            <ToggleGroupItem id="update">Update</ToggleGroupItem>
           </ToggleGroup>
         </div>
       ) : null}
