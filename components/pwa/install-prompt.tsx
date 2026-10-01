@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { usePlatform } from "@/hooks/use-platform";
 import { PWA_INSTALL_DISMISS_KEY, PWA_NAME } from "@/lib/pwa";
 
@@ -137,7 +138,11 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
 export function InstallButton() {
   const ctx = useContext(InstallContext);
-  if (!ctx || ctx.isStandalone || (!ctx.canInstall && !ctx.isIos)) return null;
+  // The phone top bar streams in and hydrates after the provider, which by
+  // then may already know the platform. Hydrate as the server rendered
+  // (nothing), then show.
+  const hydrated = useHydrated();
+  if (!hydrated || !ctx || ctx.isStandalone || (!ctx.canInstall && !ctx.isIos)) return null;
 
   return (
     <Button
