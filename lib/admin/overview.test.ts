@@ -42,6 +42,7 @@ const summary: AiCreditSummary = {
 
 const healthy: OverviewInput = {
   waitlistPending: 0,
+  requests: { waiting: 0, overdue: 0 },
   credits: summary,
   creditsEnabled: true,
   featuresOff: [],
@@ -68,6 +69,25 @@ describe("buildAttentionItems", () => {
     expect(items[2]?.title).toBe("3 people are waiting for an invite");
   });
 
+  it("asks for attention on requests, more urgently when some are late", () => {
+    const waiting = buildAttentionItems({ ...healthy, requests: { waiting: 2, overdue: 0 } });
+    expect(waiting).toEqual([
+      expect.objectContaining({
+        id: "requests",
+        tone: "info",
+        title: "2 collection requests need you",
+        detail: "2 waiting to be accepted.",
+      }),
+    ]);
+
+    const late = buildAttentionItems({ ...healthy, requests: { waiting: 1, overdue: 1 } });
+    expect(late[0]).toMatchObject({ tone: "warning", title: "1 collection request needs you" });
+    expect(late[0]?.detail).toBe("1 waiting to be accepted, 1 past its estimate.");
+
+    const lateOnly = buildAttentionItems({ ...healthy, requests: { waiting: 0, overdue: 3 } });
+    expect(lateOnly[0]).toMatchObject({ title: "3 collection requests need you" });
+  });
+
   it("reports one missing-key problem once when features share a note", () => {
     state.health = { quiz: "same note", story: "same note" };
     expect(buildAttentionItems(healthy).filter((i) => i.id.startsWith("health-"))).toHaveLength(1);
@@ -91,6 +111,7 @@ describe("buildAttentionItems", () => {
   it("says a source couldn't be read instead of pretending all is well", () => {
     const items = buildAttentionItems({
       waitlistPending: null,
+      requests: null,
       credits: null,
       creditsEnabled: null,
       featuresOff: null,
@@ -100,6 +121,7 @@ describe("buildAttentionItems", () => {
       "unreadable-credits",
       "unreadable-credits-switch",
       "unreadable-features",
+      "unreadable-requests",
       "unreadable-waitlist",
     ]);
   });

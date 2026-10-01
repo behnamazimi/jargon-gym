@@ -6,7 +6,7 @@ export const MAX_IMPORT_TERMS = 500;
 const shortText = z.string().max(200);
 const longText = z.string().max(4000);
 
-const commitTermSchema = z.object({
+export const commitTermSchema = z.object({
   term: shortText.trim().min(1),
   definition: longText.optional(),
   category: shortText.optional(),
@@ -19,7 +19,7 @@ const commitTermSchema = z.object({
   on_duplicate: z.enum(["skip", "update"]).optional(),
 });
 
-const linkSchema = z.object({
+export const linkSchema = z.object({
   source: shortText,
   target: shortText,
   relationship_type: shortText,

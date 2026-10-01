@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { FEATURE_IDS, type FeatureId } from "@/lib/ai/registry";
+import { readRequestAttention } from "./requests/queries";
 import { canResumeNarrationSync, isActiveNarrationSyncStatus } from "@/lib/narration/sync-shared";
 import { getLastNarrationSyncJob } from "@/lib/narration/sync";
 import { describeCron, readCronStatus } from "@/lib/narration/worker-status";
@@ -15,6 +16,10 @@ export async function readWaitlistPending(client: Client): Promise<number> {
     .eq("status", "pending");
   if (error) throw error;
   return count ?? 0;
+}
+
+export async function readRequestsAttention(client: Client) {
+  return readRequestAttention(client);
 }
 
 export async function readCreditsEnabled(client: Client): Promise<boolean> {

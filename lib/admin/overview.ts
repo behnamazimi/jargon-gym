@@ -8,6 +8,7 @@ import { FEATURE_IDS, type FeatureId } from "@/lib/ai/registry";
 import {
   readCreditsEnabled,
   readFeaturesOff,
+  readRequestsAttention,
   readSyncNote,
   readWaitlistPending,
 } from "./overview-sources";
@@ -34,6 +35,8 @@ const HEALTH_TITLES: Record<FeatureId, string> = {
 /** What the Overview is built from. `null` means that source couldn't be read. */
 export type OverviewInput = {
   waitlistPending: number | null;
+  /** Collection requests waiting to be accepted, and past their estimate. */
+  requests: { waiting: number; overdue: number } | null;
   credits: AiCreditSummary | null;
   creditsEnabled: boolean | null;
   /** Features whose switch is off. */
@@ -138,6 +141,26 @@ function waitlistItems(pending: number | null): AttentionItem[] {
   ];
 }
 
+function requestItems(requests: OverviewInput["requests"]): AttentionItem[] {
+  if (requests === null) return [unreadable("requests", "collection requests")];
+  const { waiting, overdue } = requests;
+  if (waiting === 0 && overdue === 0) return [];
+
+  const count = waiting > 0 ? waiting : overdue;
+  const parts = [];
+  if (waiting > 0) parts.push(`${waiting} waiting to be accepted`);
+  if (overdue > 0) parts.push(`${overdue} past ${overdue === 1 ? "its" : "their"} estimate`);
+  return [
+    {
+      id: "requests",
+      tone: overdue > 0 ? "warning" : "info",
+      title: `${count} collection ${count === 1 ? "request needs" : "requests need"} you`,
+      detail: `${parts.join(", ")}.`,
+      href: "/admin/requests",
+    },
+  ];
+}
+
 /** Everything that needs the admin's attention, most urgent first. */
 export function buildAttentionItems(input: OverviewInput): AttentionItem[] {
   const items = [
@@ -156,6 +179,7 @@ export function buildAttentionItems(input: OverviewInput): AttentionItem[] {
         ]
       : []),
     ...waitlistItems(input.waitlistPending),
+    ...requestItems(input.requests),
   ];
   return items.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]);
 }
@@ -181,11 +205,12 @@ function settled<T>(label: string, result: PromiseSettledResult<T>): T | null {
 
 /** One failing source never fails the page: it shows as unknown. */
 export async function loadAdminOverview(client: Client): Promise<AdminOverview> {
-  const [credits, creditsEnabled, waitlist, featuresOff, syncNote, recent] =
+  const [credits, creditsEnabled, waitlist, requests, featuresOff, syncNote, recent] =
     await Promise.allSettled([
       getAiCreditSummaryForAdmin(client),
       readCreditsEnabled(client),
       readWaitlistPending(client),
+      readRequestsAttention(client),
       readFeaturesOff(client),
       readSyncNote(client),
       recentAudit(client, 8),
@@ -195,6 +220,7 @@ export async function loadAdminOverview(client: Client): Promise<AdminOverview> 
     credits: settled("AI credit numbers", credits),
     creditsEnabled: settled("the credits switch", creditsEnabled),
     waitlistPending: settled("the waitlist", waitlist),
+    requests: settled("collection requests", requests),
     featuresOff: settled("the feature switches", featuresOff),
     // The sync note is a courtesy: when it can't be read, say nothing about it.
     syncNote: settled("the narration sync", syncNote),
