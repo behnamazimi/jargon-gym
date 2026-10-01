@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { CheckList } from "@/components/jargon/import/check-list";
 import { ConflictChooser, DuplicatePolicy, Notices } from "@/components/jargon/import/check-extras";
 import { DestinationBlock } from "@/components/jargon/import/destination-block";
+import { FixedDestinationNote, UnfinishedNote } from "@/components/jargon/import/fixed-destination";
 import { EditTermDialog } from "@/components/jargon/import/edit-term-dialog";
 import { ImportFailurePanel } from "@/components/jargon/import/import-errors";
 import { ColumnRoles } from "@/components/jargon/import/column-roles";
@@ -18,6 +19,7 @@ import { guessLanguage } from "@/lib/jargon/import/parse/dutch-hint";
 import { pluralize } from "@/lib/utils";
 
 function commitLabel(flow: ImportFlowState) {
+  if (flow.adapter) return flow.adapter.commitLabel(flow.summary, flow.isCommitting);
   if (flow.isCommitting) return "Adding…";
   const { toAdd, toFinish } = flow.summary;
   if (toAdd === 0) return "Add terms";
@@ -49,20 +51,24 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
         </h2>
       </div>
 
-      <DestinationBlock
-        collections={flow.collections}
-        addedNames={addedNames}
-        mode={flow.mode}
-        newName={flow.newName}
-        language={flow.language}
-        existingId={flow.existingId}
-        disabled={flow.isCommitting}
-        guessedLanguage={guessed}
-        fileLanguage={flow.json?.language ?? null}
-        onModeChange={flow.setDestination}
-        onNameChange={flow.setNewName}
-        onLanguageChange={flow.setLanguage}
-      />
+      {flow.adapter ? (
+        <FixedDestinationNote flow={flow} />
+      ) : (
+        <DestinationBlock
+          collections={flow.collections}
+          addedNames={addedNames}
+          mode={flow.mode}
+          newName={flow.newName}
+          language={flow.language}
+          existingId={flow.existingId}
+          disabled={flow.isCommitting}
+          guessedLanguage={guessed}
+          fileLanguage={flow.json?.language ?? null}
+          onModeChange={flow.setDestination}
+          onNameChange={flow.setNewName}
+          onLanguageChange={flow.setLanguage}
+        />
+      )}
 
       {flow.parsed ? (
         <SeparatorChips
@@ -97,6 +103,8 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
           onChange={(event) => flow.setCategory(event.target.value)}
         />
       </Field>
+
+      <UnfinishedNote flow={flow} />
 
       <Notices flow={flow} />
       <ConflictChooser flow={flow} />

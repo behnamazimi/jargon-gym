@@ -53,6 +53,24 @@ export const APP_AUDIT_ACTIONS = {
   },
   "app.narration_sync_cancel": { label: "Narration sync cancelled", describe: () => null },
   "app.narration_sync_resume": { label: "Narration sync resumed", describe: () => null },
+  "app.request_accept": { label: "Collection request accepted", describe: () => null },
+  "app.request_ask": { label: "Question sent about a collection request", describe: () => null },
+  "app.request_decline": {
+    label: "Collection request declined",
+    describe: (d) =>
+      `${text(d.reason) ?? "?"}${typeof d.merged === "number" && d.merged > 0 ? `, with ${d.merged} merged` : ""}`,
+  },
+  "app.request_merge": { label: "Collection request merged", describe: () => null },
+  "app.request_new_date": {
+    label: "New estimate set on a collection request",
+    describe: (d) => (d.emailSent === false ? "The email failed" : "Delay notice emailed"),
+  },
+  "app.request_settings": {
+    label: "Collection request settings changed",
+    describe: (d) =>
+      `Requests ${onOff(d.enabled)}, slower than usual ${onOff(d.paused)}, estimate ${text(d.estimateDays) ?? "?"} days (${text(d.pausedEstimateDays) ?? "?"} when slower)`,
+  },
+  "app.request_email_resend": { label: "Request email resent", describe: () => null },
 } as const satisfies Record<string, AuditEntry>;
 
 export type AppAuditAction = keyof typeof APP_AUDIT_ACTIONS;
@@ -94,6 +112,18 @@ export const DB_AUDIT_ACTIONS = {
     describe: (d) => [text(d.provider), reason(d)].filter(Boolean).join(", ") || null,
   },
   delete_user: { label: "Account deleted", describe: (d) => reason(d) },
+  deliver_collection_request: {
+    label: "Requested collection delivered",
+    describe: (d) => `${text(d.deliveries) ?? "?"} delivered, ${text(d.terms) ?? "?"} terms each`,
+  },
+  fill_request_definitions: {
+    label: "Definitions filled for a request",
+    describe: (d) => `${text(d.filled) ?? "?"} filled, ${text(d.skipped) ?? "?"} skipped`,
+  },
+  deliver_existing_collection: {
+    label: "Shared collection added for a request",
+    describe: (d) => `${text(d.deliveries) ?? "?"} added`,
+  },
 } as const satisfies Record<string, AuditEntry>;
 
 const ALL_ACTIONS: Record<string, AuditEntry> = { ...APP_AUDIT_ACTIONS, ...DB_AUDIT_ACTIONS };

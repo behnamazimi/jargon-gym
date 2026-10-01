@@ -2,17 +2,17 @@
 
 import { Layers, List, Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
-import { searchSharedDomains } from "@/app/(private)/jargon/browse/actions";
-import { addToCollection } from "@/app/(private)/jargon/actions";
+import { useState } from "react";
 import { CreateCollectionDialog } from "@/components/jargon/create-collection-dialog";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SearchResults, type SearchState } from "@/components/jargon/import/chooser-search-results";
+import { RequestRow } from "@/components/requests/request-row";
+import { useBrowseSearch } from "@/hooks/use-browse-search";
+import { SearchResults } from "@/components/jargon/import/chooser-search-results";
 import { OneTermDialog } from "@/components/jargon/import/one-term-dialog";
+import { REQUEST_COPY } from "@/lib/requests/copy";
+import type { RequestEntry } from "@/lib/requests/entry";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 const ROW_CLASS =
   "flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary";
@@ -39,50 +39,17 @@ function RowContent({
   );
 }
 
-export function ImportChooser({ collections }: { collections: ImportDestination[] }) {
+export function ImportChooser({
+  collections,
+  requestEntry,
+}: {
+  collections: ImportDestination[];
+  requestEntry: RequestEntry;
+}) {
   const router = useRouter();
-  const [query, setQuery] = useState("");
-  const [search, setSearch] = useState<SearchState>({ status: "idle" });
-  const [addingId, setAddingId] = useState<string | null>(null);
-  const [addedIds, setAddedIds] = useState<string[]>([]);
+  const { query, search, addingId, addedIds, handleQuery, add } = useBrowseSearch();
   const [createOpen, setCreateOpen] = useState(false);
   const [oneTermOpen, setOneTermOpen] = useState(false);
-  const timer = useRef<number | undefined>(undefined);
-  const requestId = useRef(0);
-
-  function handleQuery(value: string) {
-    setQuery(value);
-    window.clearTimeout(timer.current);
-    const trimmed = value.trim();
-    const id = ++requestId.current;
-
-    if (!trimmed) {
-      setSearch({ status: "idle" });
-      return;
-    }
-
-    setSearch({ status: "loading" });
-    timer.current = window.setTimeout(async () => {
-      const result = await searchSharedDomains({ search: trimmed, filter: "all", offset: 0 });
-      if (id !== requestId.current) return;
-      setSearch(
-        result.page
-          ? { status: "done", query: trimmed, domains: result.page.domains }
-          : { status: "error" },
-      );
-    }, SEARCH_DEBOUNCE_MS);
-  }
-
-  async function handleAdd(domainId: string) {
-    setAddingId(domainId);
-    const result = await addToCollection(domainId);
-    setAddingId(null);
-    if (result.error) {
-      setSearch({ status: "error" });
-      return;
-    }
-    setAddedIds((current) => [...current, domainId]);
-  }
 
   function handleOneTerm() {
     if (collections.length === 0) setCreateOpen(true);
@@ -113,8 +80,12 @@ export function ImportChooser({ collections }: { collections: ImportDestination[
           state={search}
           addingId={addingId}
           addedIds={addedIds}
-          onAdd={(id) => void handleAdd(id)}
+          onAdd={(id) => void add(id)}
+          noMatchMessage={
+            requestEntry.state === "available" ? REQUEST_COPY.chooser.noMatch : undefined
+          }
         />
+        <RequestRow entry={requestEntry} query={query} />
       </div>
 
       <section className="space-y-2" data-tour="import-routes" aria-labelledby="start-from">

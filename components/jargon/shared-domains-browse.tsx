@@ -14,13 +14,15 @@ import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
 import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
 import type { BrowsePageResult } from "@/lib/jargon/browse";
+import type { RequestEntry } from "@/lib/requests/entry";
 import { cn } from "@/lib/utils";
 
 type SharedDomainsBrowseProps = {
   initialPage: BrowsePageResult;
+  requestEntry: RequestEntry;
 };
 
-export function SharedDomainsBrowse({ initialPage }: SharedDomainsBrowseProps) {
+export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomainsBrowseProps) {
   const { error, busyId, addToCollection, removeFromCollection } = useCollectionActions();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const browse = useSharedDomainsBrowse({ initialPage });
@@ -76,6 +78,8 @@ export function SharedDomainsBrowse({ initialPage }: SharedDomainsBrowseProps) {
             searchInputRef.current?.focus();
           }}
           onRetry={browse.retry}
+          requestEntry={requestEntry}
+          search={browse.searchInput}
         />
       ) : (
         <ul className={cn("flex flex-col gap-3", browse.isRefreshing && "opacity-70")}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { getJargonCollectionDataAction } from "@/app/(private)/jargon/(collection)/actions";
 import type { JargonPageData } from "@/lib/jargon/types";
@@ -27,6 +27,7 @@ type JargonPageProps = {
   importedSummary?: ImportedSummary;
   /** Open the Add term sheet right away (from ?add=1). */
   openAddTerm?: boolean;
+  topSlot?: ReactNode;
 };
 
 export function JargonPage({
@@ -34,6 +35,7 @@ export function JargonPage({
   narrationAccess,
   importedSummary,
   openAddTerm = false,
+  topSlot,
 }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(openAddTerm);
   const [finishOpen, setFinishOpen] = useState(false);
@@ -43,9 +45,8 @@ export function JargonPage({
   const router = useRouter();
   const { toast } = useToast();
 
-  // Owns "the collection currently on screen," separate from the
-  // server-rendered `initialData` prop, so switching collections doesn't
-  // require a route navigation (which would remount this whole page).
+  // The collection on screen, separate from the server-rendered `initialData`,
+  // so switching collections doesn't need a route navigation (a remount).
   const [activeData, setActiveData] = useState(initialData);
   const importedNotice = useImportedNotice(importedSummary);
   const [activeNarrationAccess, setActiveNarrationAccess] = useState(narrationAccess);
@@ -65,8 +66,7 @@ export function JargonPage({
 
     if (domainId === activeData.domain.id) {
       if (!switchingDomainId) return;
-      // Clicking back to the collection already on screen cancels the
-      // in-flight switch so a slower B response can't overwrite A.
+      // Clicking back to the current collection cancels the in-flight switch to B.
       switchRequestIdRef.current++;
       setSwitchingDomainId(null);
       return;
@@ -82,9 +82,8 @@ export function JargonPage({
 
     setSwitchingDomainId(null);
     if ("emptyCollection" in result) {
-      // Rare: the target collection disappeared between click and response.
-      // The local model has no "empty" branch to render, so fall back to a
-      // real navigation and let the server component pick the right page.
+      // Rare: the target disappeared. There's no "empty" branch to render here,
+      // so navigate and let the server component pick the page.
       router.push("/jargon");
     } else if ("error" in result) {
       toast(result.error, "destructive");
@@ -200,6 +199,7 @@ export function JargonPage({
             <JargonListSkeleton />
           ) : (
             <div className="min-w-0 flex-1 space-y-4">
+              {topSlot}
               <ImportedBanner
                 summary={importedNotice.summary}
                 domain={domain}
@@ -219,6 +219,7 @@ export function JargonPage({
 
               {isOwner ? (
                 <UnfinishedSection
+                  domainId={domain.id}
                   terms={activeData.unfinishedTerms}
                   isOpen={finishOpen}
                   onOpenChange={setFinishOpen}

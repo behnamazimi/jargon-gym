@@ -1,20 +1,26 @@
 "use client";
 
 import { useReducer, useRef, useState, useSyncExternalStore, useTransition } from "react";
-import { checkImportAgainstDestination, commitImport } from "@/app/(private)/jargon/import/actions";
+import { checkImportAgainstDestination } from "@/app/(private)/jargon/import/actions";
 import {
   activeDrafts,
   checkReducer,
   initialCheckState,
   summarize,
   termKey,
-  toCommitTerms,
   type DestinationMatch,
-  type DuplicatePolicy,
 } from "@/lib/jargon/import/check-state";
-import { OFFLINE_FAILURE } from "@/lib/jargon/import/commit-errors";
+import {
+  canCommit,
+  initialDestination,
+  jsonDestination,
+  submitTerms,
+  type DestinationMode,
+  type ImportAdapter,
+} from "@/components/jargon/import/import-flow-helpers";
+import { checkActions } from "@/components/jargon/import/use-check-actions";
 import type { CommitImportInput } from "@/lib/jargon/import/commit-schema";
-import { readDraft, subscribeToDraft, writeDraft } from "@/lib/jargon/import/draft-store";
+import { personalDraft } from "@/lib/jargon/import/draft-store";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
 import type { JsonImport } from "@/lib/jargon/import/json-input";
 import { readLanguagePref, writeLanguagePref } from "@/lib/jargon/import/language-pref";
@@ -31,20 +37,22 @@ import { findSimilarName } from "@/lib/jargon/import/similar-name";
 import type { ImportFailure } from "@/lib/jargon/import/types";
 import type { DomainLanguage } from "@/lib/jargon/languages";
 
-export type DestinationMode = "new" | "existing";
+export type { DestinationMode };
 export type CardFilter = "all" | "attention" | "there";
 
 type FlowArgs = {
   collections: ImportDestination[];
   presetDomainId?: string;
   entry: CommitImportInput["entry"];
+  adapter?: ImportAdapter;
 };
 
 const newImportId = () => crypto.randomUUID();
 
 /** All of the paste, check and add state for one trip through the importer. */
-export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) {
-  const draft = useSyncExternalStore(subscribeToDraft, readDraft, () => "");
+export function useImportFlow({ collections, presetDomainId, entry, adapter }: FlowArgs) {
+  const store = adapter?.draftStore ?? personalDraft;
+  const draft = useSyncExternalStore(store.subscribe, store.read, () => "");
   const [step, setStep] = useState<"paste" | "check">("paste");
   const [html, setHtml] = useState<string | undefined>();
   const [problem, setProblem] = useState<PasteProblem | null>(null);
@@ -59,10 +67,11 @@ export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) 
   );
 
   const preset = collections.find((collection) => collection.id === presetDomainId);
-  const [mode, setMode] = useState<DestinationMode>(preset ? "existing" : "new");
-  const [newName, setNewName] = useState("");
-  const [language, setLanguage] = useState<DomainLanguage>("en");
-  const [existingId, setExistingId] = useState(preset?.id ?? collections[0]?.id ?? "");
+  const [start] = useState(() => initialDestination(adapter, preset, collections));
+  const [mode, setMode] = useState<DestinationMode>(start.mode);
+  const [newName, setNewName] = useState(start.name);
+  const [language, setLanguage] = useState<DomainLanguage>(start.language);
+  const [existingId, setExistingId] = useState(start.existingId);
   const [filter, setFilter] = useState<CardFilter>("all");
   const [reviewAll, setReviewAll] = useState(false);
   const [lastRemoved, setLastRemoved] = useState<string | null>(null);
@@ -82,7 +91,7 @@ export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) 
 
   async function refreshMatches(domainId: string | null, names: string[]) {
     const request = ++matchRequest.current;
-    if (!domainId || names.length === 0) {
+    if (adapter || !domainId || names.length === 0) {
       dispatch({ type: "setMatches", matches: {} });
       return;
     }
@@ -124,21 +133,22 @@ export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) 
 
     let domainId = mode === "existing" ? existingId : (preset?.id ?? null);
     if (result.kind === "json") {
-      const name = result.json.domain.trim().toLowerCase();
-      const owned = collections.find((c) => c.name.trim().toLowerCase() === name);
       setJson(result.json);
       setParsed(null);
-      setNewName(result.json.domain);
-      setLanguage(result.json.language ?? readLanguagePref());
-      if (owned) {
+      const target = adapter ? null : jsonDestination(result.json, collections);
+      if (target) {
+        setNewName(target.name);
+        setLanguage(target.language);
+      }
+      if (target?.owned) {
         setMode("existing");
-        setExistingId(owned.id);
-        domainId = owned.id;
+        setExistingId(target.owned.id);
+        domainId = target.owned.id;
       }
     } else {
       setJson(null);
       setParsed(result.parsed);
-      if (step === "paste") setLanguage(readLanguagePref());
+      if (step === "paste" && !adapter) setLanguage(readLanguagePref());
     }
 
     setStep("check");
@@ -176,8 +186,14 @@ export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) 
 
   const summary = summarize(check);
   const nameOk = newName.trim().length > 0 && similar?.kind !== "exact";
-  const canAdd =
-    summary.toAdd > 0 && !checking && (mode === "existing" ? Boolean(existing) : nameOk);
+  const canAdd = canCommit({
+    summary,
+    checking,
+    adapter,
+    mode,
+    hasExisting: Boolean(existing),
+    nameOk,
+  });
 
   function commit() {
     if (!canAdd) return;
@@ -188,28 +204,19 @@ export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) 
       mode === "existing" && existing
         ? { domainId: existing.id }
         : { name: newName.trim(), language };
-    if (mode === "new") writeLanguagePref(language);
+    if (mode === "new" && !adapter) writeLanguagePref(language);
 
     startCommit(async () => {
-      if (navigator.onLine === false) {
-        setFailure(OFFLINE_FAILURE);
-        return;
-      }
-      try {
-        const result = await commitImport({
-          importId: check.importId,
-          destination,
-          terms: toCommitTerms(check),
-          links: json?.links ?? [],
-          policy: check.policy,
-          entry,
-          source: json ? "json" : "paste",
-          format,
-        });
-        if (!result.ok) setFailure(result.failure);
-      } catch {
-        setFailure(OFFLINE_FAILURE);
-      }
+      const failed = await submitTerms({
+        adapter,
+        check,
+        json,
+        format,
+        destination,
+        entry,
+        onHandedOver: store.clear,
+      });
+      if (failed) setFailure(failed);
     });
   }
 
@@ -239,7 +246,8 @@ export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) 
     isCommitting,
     summary,
     canAdd,
-    setDraftText: (text: string) => writeDraft(text),
+    adapter,
+    setDraftText: (text: string) => store.write(text),
     clearProblem: () => setProblem(null),
     setProblem,
     checkText,
@@ -250,25 +258,8 @@ export function useImportFlow({ collections, presetDomainId, entry }: FlowArgs) 
     setLanguage,
     setFilter,
     setReviewAll,
-    removeCard: (id: string) => {
-      setLastRemoved(id);
-      dispatch({ type: "remove", id, importId: newImportId() });
-    },
-    restoreCard: (id: string) => {
-      setLastRemoved(null);
-      dispatch({ type: "restore", id, importId: newImportId() });
-    },
+    ...checkActions({ dispatch, setLastRemoved, setResolved, newImportId }),
     editCard,
-    chooseDefinition: (termId: string, definition: string | null) => {
-      dispatch({ type: "edit", id: termId, patch: { definition }, importId: newImportId() });
-      setResolved((current) => [...current, termId]);
-    },
-    setPolicy: (policy: DuplicatePolicy) =>
-      dispatch({ type: "setPolicy", policy, importId: newImportId() }),
-    setOverride: (id: string, policy: DuplicatePolicy | null) =>
-      dispatch({ type: "setOverride", id, policy, importId: newImportId() }),
-    setCategory: (category: string) =>
-      dispatch({ type: "setCategory", category, importId: newImportId() }),
     commit,
     backToPaste: () => {
       setStep("paste");

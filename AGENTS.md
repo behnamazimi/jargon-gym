@@ -100,6 +100,15 @@ and stays pure. Nothing in this path may call an AI model. A term needs only
 its name; terms without a definition are excluded from everything TRACE and
 every delivery surface serve.
 
+# Collection requests
+
+People can request a collection; the admin builds it by hand and delivers a private
+copy to each requester. It lives in `lib/requests/`, `lib/admin/requests/`,
+`components/requests/`, `components/admin/requests/` and `app/(private)/admin/requests/`.
+Read the Requests section of [docs/import.md](docs/import.md) before changing it. No AI
+runs in this path, and no user-facing string may name the admin or imply automation
+(`lib/requests/copy.ts` and its test enforce the list).
+
 # macOS widget
 
 The widget's source lives in `widget/jargon-gym.widget/` (`index.jsx` +

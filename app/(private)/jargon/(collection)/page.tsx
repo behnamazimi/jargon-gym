@@ -2,9 +2,14 @@ import { getJargonSetupData } from "@/app/(private)/jargon/(collection)/actions"
 import { JargonPage } from "@/components/jargon/jargon-page";
 import type { ImportedSummary } from "@/components/jargon/imported-banner";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
+import { RequestsAvailable } from "@/components/requests/requests-availability";
+import { RequestsSection } from "@/components/requests/requests-section";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 import { batchResultSchema } from "@/lib/jargon/import/commit-schema";
+import { getSessionUser } from "@/lib/auth/require-session";
+import { fetchMyRequests, loadRequestEntryFor } from "@/lib/requests/repository";
+import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
@@ -38,15 +43,32 @@ async function loadImportedSummary(
   };
 }
 
+async function loadRequests() {
+  const { supabase, user } = await getSessionUser();
+  if (!user) return { requests: [], canRequest: false };
+  try {
+    const { timezone } = await getStudyPhoneUserSettings(user.id);
+    const [requests, entry] = await Promise.all([
+      fetchMyRequests(supabase, timezone),
+      loadRequestEntryFor(supabase, user.id),
+    ]);
+    return { requests, canRequest: entry.state === "available" };
+  } catch (error) {
+    console.error("Couldn't load collection requests:", error);
+    return { requests: [], canRequest: false };
+  }
+}
+
 export default async function JargonListPage({ searchParams }: PageProps) {
   const { domain: selectedDomainId, added, add } = await searchParams;
-  const [setup, importedSummary] = await Promise.all([
+  const [setup, importedSummary, { requests, canRequest }] = await Promise.all([
     getJargonSetupData(selectedDomainId),
     loadImportedSummary(added),
+    loadRequests(),
   ]);
 
   if ("emptyCollection" in setup) {
-    return <EmptyCollection />;
+    return <EmptyCollection requests={requests} />;
   }
 
   if ("error" in setup) {
@@ -60,11 +82,14 @@ export default async function JargonListPage({ searchParams }: PageProps) {
   }
 
   return (
-    <JargonPage
-      initialData={setup.data}
-      narrationAccess={setup.narrationAccess}
-      importedSummary={importedSummary}
-      openAddTerm={add === "1"}
-    />
+    <RequestsAvailable available={canRequest}>
+      <JargonPage
+        initialData={setup.data}
+        narrationAccess={setup.narrationAccess}
+        importedSummary={importedSummary}
+        openAddTerm={add === "1"}
+        topSlot={<RequestsSection requests={requests} />}
+      />
+    </RequestsAvailable>
   );
 }

@@ -1,5 +1,6 @@
 import {
   Coins,
+  Inbox,
   LayoutDashboard,
   Library,
   ScrollText,
@@ -31,6 +32,7 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
     sections: [
       { href: "/admin/collections", label: "Collections", icon: Library },
       { href: "/admin/people", label: "People", icon: Users },
+      { href: "/admin/requests", label: "Requests", icon: Inbox },
     ],
   },
   {
