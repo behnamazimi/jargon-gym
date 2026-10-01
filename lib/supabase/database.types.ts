@@ -393,6 +393,7 @@ export type Database = {
           id: boolean;
           paused: boolean;
           paused_estimate_days: number;
+          push_enabled: boolean;
           updated_at: string;
         };
         Insert: {
@@ -401,6 +402,7 @@ export type Database = {
           id?: boolean;
           paused?: boolean;
           paused_estimate_days?: number;
+          push_enabled?: boolean;
           updated_at?: string;
         };
         Update: {
@@ -409,6 +411,7 @@ export type Database = {
           id?: boolean;
           paused?: boolean;
           paused_estimate_days?: number;
+          push_enabled?: boolean;
           updated_at?: string;
         };
         Relationships: [];
@@ -693,6 +696,47 @@ export type Database = {
           {
             foreignKeyName: "narration_sync_jobs_started_by_fkey";
             columns: ["started_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      push_subscriptions: {
+        Row: {
+          auth: string;
+          created_at: string;
+          endpoint: string;
+          id: string;
+          last_seen_at: string;
+          p256dh: string;
+          user_agent: string | null;
+          user_id: string;
+        };
+        Insert: {
+          auth: string;
+          created_at?: string;
+          endpoint: string;
+          id?: string;
+          last_seen_at?: string;
+          p256dh: string;
+          user_agent?: string | null;
+          user_id: string;
+        };
+        Update: {
+          auth?: string;
+          created_at?: string;
+          endpoint?: string;
+          id?: string;
+          last_seen_at?: string;
+          p256dh?: string;
+          user_agent?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -1954,6 +1998,7 @@ export type Database = {
           grade: number;
         }[];
       };
+      my_has_push_subscription: { Args: { p_endpoint: string }; Returns: boolean };
       my_import_terms: {
         Args: {
           p_destination: Json;
@@ -2040,6 +2085,11 @@ export type Database = {
         Returns: undefined;
       };
       my_review_domain_ids: { Args: never; Returns: string[] };
+      my_remove_push_subscription: { Args: { p_endpoint: string }; Returns: undefined };
+      my_save_push_subscription: {
+        Args: { p_auth: string; p_endpoint: string; p_p256dh: string; p_user_agent?: string };
+        Returns: undefined;
+      };
       my_set_request_notify: {
         Args: { p_id: string; p_notify: boolean };
         Returns: undefined;
