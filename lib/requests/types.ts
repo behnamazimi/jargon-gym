@@ -46,7 +46,7 @@ export type RequestQuota = {
 export type MyRequest = {
   id: string;
   topic: string;
-  kind: RequestKind;
+  kind: RequestKind | "definitions";
   language: DomainLanguage;
   status: RequestStatus;
   displayStatus: DisplayStatus;
@@ -55,7 +55,7 @@ export type MyRequest = {
   question: string | null;
   declineReason: DeclineReason | null;
   declineNote: string | null;
-  deliveryKind: "prepared" | "added_shared" | null;
+  deliveryKind: "prepared" | "added_shared" | "filled" | null;
   deliveredDomainId: string | null;
   deliveredDomainName: string | null;
   deliveredTerms: number | null;

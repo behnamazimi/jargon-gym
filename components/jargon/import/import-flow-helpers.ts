@@ -26,6 +26,8 @@ export type ImportAdapter = {
     format: ImportFormat;
   }) => Promise<ImportFailure | null>;
   commitLabel: (summary: CheckSummary, committing: boolean) => string;
+  /** Replaces the "New collection · name" line when the terms go somewhere else. */
+  destinationNote?: string;
   requireAllDefinitions: boolean;
   /** Shown while a card still lacks a definition and one is required. */
   unfinishedNote: string;

@@ -1,9 +1,12 @@
 import { Inbox } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/jargon/import/actions";
+import { DefinitionsForm } from "@/components/requests/definitions-form";
 import { RequestForm, type RecentRequest } from "@/components/requests/request-form";
 import { PageHeader } from "@/components/jargon/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LinkButton } from "@/components/ui/button";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import { blockedMessage, entryFor } from "@/lib/requests/entry";
@@ -11,10 +14,31 @@ import { fetchMyRequests, fetchRequestQuota } from "@/lib/requests/repository";
 import { statusSentence } from "@/lib/requests/status";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 
-type PageProps = { searchParams: Promise<{ topic?: string }> };
+type Client = SupabaseClient<Database>;
+
+type PageProps = { searchParams: Promise<{ topic?: string; definitions?: string }> };
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The collection and the words waiting for a definition, read as the person who owns it. */
+async function loadDefinitions(supabase: Client, userId: string, domainId: string | undefined) {
+  if (!domainId || !UUID.test(domainId)) return null;
+  const [{ data: domain }, { data: words }] = await Promise.all([
+    supabase.from("domains").select("name, owner_id").eq("id", domainId).maybeSingle(),
+    supabase
+      .from("terms")
+      .select("term")
+      .eq("domain_id", domainId)
+      .is("definition", null)
+      .order("term")
+      .limit(500),
+  ]);
+  if (!domain || domain.owner_id !== userId) return null;
+  return { name: domain.name, words: (words ?? []).map((row) => row.term) };
+}
 
 export default async function RequestPage({ searchParams }: PageProps) {
-  const { topic = "" } = await searchParams;
+  const { topic = "", definitions: definitionsId } = await searchParams;
   const { supabase, user } = await getSessionUser();
   if (!user) return <p className="text-sm text-base-content/60">{REQUEST_COPY.form.signedOut}</p>;
 
@@ -65,6 +89,33 @@ export default async function RequestPage({ searchParams }: PageProps) {
       sentence: statusSentence(request),
       collectionId: request.displayStatus === "ready" ? request.deliveredDomainId : null,
     }));
+    const found = await loadDefinitions(supabase, user.id, definitionsId);
+    if (definitionsId && (!found || found.words.length === 0)) {
+      return (
+        <>
+          {header}
+          <p className="text-sm text-base-content/60">
+            {found ? REQUEST_COPY.definitions.nothingToDefine : REQUEST_COPY.definitions.notYours}
+          </p>
+        </>
+      );
+    }
+    if (definitionsId && found) {
+      return (
+        <>
+          {header}
+          <DefinitionsForm
+            domainId={definitionsId}
+            name={found.name}
+            words={found.words}
+            count={found.words.length}
+            estimateDays={entry.estimateDays}
+            paused={entry.paused}
+            used={entry.used}
+          />
+        </>
+      );
+    }
     const ownedNames = "error" in setup ? [] : setup.collections.map((c) => c.name);
 
     return (

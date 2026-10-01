@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
+import { z } from "zod";
 import { getAppOrigin } from "@/lib/auth/app-origin";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { sendRequestEmail } from "@/lib/email/resend";
@@ -60,6 +61,43 @@ async function explainFailure(auth: Auth, error: { message?: string } | null): P
   return REQUEST_COPY.form.sendFailed;
 }
 
+type CreateArgs = {
+  p_topic: string;
+  p_kind: string;
+  p_language: string;
+  p_level?: string;
+  p_size?: number;
+  p_known_terms?: string;
+  p_notify_email: boolean;
+  p_target_domain_id?: string;
+};
+
+async function sendRequest(auth: Auth, args: CreateArgs): Promise<CreateRequestResult> {
+  const { data: created, error } = await auth.supabase.rpc("my_create_collection_request", args);
+
+  if (error || !created || typeof created !== "object" || Array.isArray(created)) {
+    return { ok: false, message: await explainFailure(auth, error) };
+  }
+
+  const row = created as { id: string; due_at: string; topic: string };
+  revalidatePath("/jargon");
+
+  after(async () => {
+    try {
+      await notifyTeam(row.topic, args.p_kind, args.p_language);
+    } catch (err) {
+      console.error("Couldn't email the team about a new collection request:", err);
+    }
+  });
+
+  return {
+    ok: true,
+    id: row.id,
+    topic: row.topic,
+    estimateDays: Math.max(1, Math.round((new Date(row.due_at).getTime() - Date.now()) / DAY_MS)),
+  };
+}
+
 /** Sends the request. The database enforces the switch, the one-open rule and
  *  the quota; this only turns what it says into plain words. */
 export async function createRequest(input: unknown): Promise<CreateRequestResult> {
@@ -74,7 +112,7 @@ export async function createRequest(input: unknown): Promise<CreateRequestResult
   const known = normalizeKnownTerms(data.knownTerms);
   if (!known.ok) return { ok: false, message: known.message };
 
-  const { data: created, error } = await auth.supabase.rpc("my_create_collection_request", {
+  return sendRequest(auth, {
     p_topic: data.topic,
     p_kind: data.kind,
     p_language: data.language,
@@ -83,26 +121,35 @@ export async function createRequest(input: unknown): Promise<CreateRequestResult
     p_known_terms: known.value ?? undefined,
     p_notify_email: data.notifyEmail,
   });
+}
 
-  if (error || !created || typeof created !== "object" || Array.isArray(created)) {
-    return { ok: false, message: await explainFailure(auth, error) };
+const definitionsSchema = z.object({
+  domainId: z.string().uuid(),
+  notifyEmail: z.boolean().default(true),
+});
+
+/** Asks for definitions for the words waiting in one of the person's own collections. */
+export async function createDefinitionsRequest(input: unknown): Promise<CreateRequestResult> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { ok: false, message: REQUEST_COPY.form.signedOut };
+
+  const parsed = definitionsSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: REQUEST_COPY.form.sendFailed };
+
+  const { data: domain } = await auth.supabase
+    .from("domains")
+    .select("name, language, owner_id")
+    .eq("id", parsed.data.domainId)
+    .maybeSingle();
+  if (!domain || domain.owner_id !== auth.user.id) {
+    return { ok: false, message: REQUEST_COPY.definitions.notYours };
   }
 
-  const row = created as { id: string; due_at: string; topic: string };
-  revalidatePath("/jargon");
-
-  after(async () => {
-    try {
-      await notifyTeam(row.topic, data.kind, data.language);
-    } catch (err) {
-      console.error("Couldn't email the team about a new collection request:", err);
-    }
+  return sendRequest(auth, {
+    p_topic: REQUEST_COPY.definitions.topic(domain.name),
+    p_kind: "definitions",
+    p_language: domain.language,
+    p_notify_email: parsed.data.notifyEmail,
+    p_target_domain_id: parsed.data.domainId,
   });
-
-  return {
-    ok: true,
-    id: row.id,
-    topic: row.topic,
-    estimateDays: Math.max(1, Math.round((new Date(row.due_at).getTime() - Date.now()) / DAY_MS)),
-  };
 }

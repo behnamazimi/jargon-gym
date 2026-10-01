@@ -5,6 +5,7 @@ import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
 import { writeAudit } from "@/lib/admin/audit";
 import {
+  assertMergeable,
   emailFailed,
   mergedChildren,
   parseId,
@@ -137,15 +138,10 @@ export async function mergeRequest(requestId: string, targetId: string) {
       .select("id, kind, language, status")
       .in("id", [id, target]);
     if (error) throw error;
-    const source = rows?.find((row) => row.id === id);
-    const primary = rows?.find((row) => row.id === target);
-    if (!source || !OPEN.includes(source.status)) throw new AdminError(HANDLED);
-    if (!primary || !["requested", "in_progress"].includes(primary.status)) {
-      throw new AdminError("The other request isn't open any more.");
-    }
-    if (source.kind !== primary.kind || source.language !== primary.language) {
-      throw new AdminError("Those two requests are for a different kind or language.");
-    }
+    assertMergeable(
+      rows?.find((row) => row.id === id),
+      rows?.find((row) => row.id === target),
+    );
 
     const { data: moved, error: moveError } = await supabase
       .from("collection_requests")

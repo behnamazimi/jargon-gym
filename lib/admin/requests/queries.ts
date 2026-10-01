@@ -36,6 +36,7 @@ export type AdminRequest = {
   declineReason: string | null;
   declineNote: string | null;
   mergedInto: string | null;
+  targetDomainId: string | null;
   deliveryKind: string | null;
   deliveredDomainId: string | null;
   deliveredTerms: number | null;
@@ -66,6 +67,7 @@ function mapRequest(row: RequestRow, now: number): AdminRequest {
     declineReason: row.decline_reason,
     declineNote: row.decline_note,
     mergedInto: row.merged_into,
+    targetDomainId: row.target_domain_id,
     deliveryKind: row.delivery_kind,
     deliveredDomainId: row.delivered_domain_id,
     deliveredTerms: row.delivered_terms,
@@ -213,6 +215,7 @@ export async function findSimilarRequests(
   client: Client,
   request: Pick<AdminRequest, "id" | "topic" | "language" | "kind">,
 ): Promise<{ id: string; topic: string; status: string }[]> {
+  if (request.kind === "definitions") return [];
   const { data, error } = await client
     .from("collection_requests")
     .select("id, topic, status")

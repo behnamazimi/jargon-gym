@@ -1,7 +1,17 @@
 import { REQUEST_COPY } from "./copy";
 
 export type RequestFailure =
-  | { code: "closed" | "open_exists" | "quota" | "invalid" | "not_found" | "not_waiting" | "other" }
+  | {
+      code:
+        | "closed"
+        | "open_exists"
+        | "quota"
+        | "invalid"
+        | "not_found"
+        | "not_waiting"
+        | "nothing_to_define"
+        | "other";
+    }
   | { code: "signed_out" };
 
 /** What the request functions raised, as a code. The text of a database error is never shown. */
@@ -18,6 +28,7 @@ export function failureFor(error: { message?: string } | null | undefined): Requ
     return { code: "not_found" };
   }
   if (text.includes("request_not_waiting")) return { code: "not_waiting" };
+  if (text.includes("nothing_to_define")) return { code: "nothing_to_define" };
   return { code: "other" };
 }
 
@@ -29,6 +40,8 @@ export function failureMessage(failure: RequestFailure): string {
       return REQUEST_COPY.form.signedOut;
     case "not_waiting":
       return REQUEST_COPY.card.notReplyable;
+    case "nothing_to_define":
+      return REQUEST_COPY.definitions.nothingToDefine;
     case "not_found":
     case "invalid":
       return REQUEST_COPY.card.actionFailed;

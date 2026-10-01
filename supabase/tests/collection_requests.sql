@@ -233,6 +233,7 @@ begin
   r3 := (public.my_create_collection_request('Promote me three', 'jargon', 'en')->>'id')::uuid;
   perform pg_temp.back_to_owner();
   update public.collection_requests set status = 'in_progress', accepted_at = now() where id = r1;
+  update public.collection_requests set created_at = now() - interval '1 hour' where id = r2;
   update public.collection_requests set status = 'merged', merged_into = r1 where id in (r2, r3);
   perform pg_temp.act_as(ann);
   perform public.my_cancel_collection_request(r1);

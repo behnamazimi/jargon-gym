@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { availableActions } from "./available";
 
 describe("availableActions", () => {
-  const cases: [string, string, string | null, string[]][] = [
+  const cases: [string, string, string | null, string[], string?][] = [
     ["queued", "requested", null, ["accept", "ask", "merge", "decline", "newDate"]],
     ["in progress", "in_progress", null, ["ask", "merge", "decline", "newDate"]],
     [
@@ -16,10 +16,11 @@ describe("availableActions", () => {
     ["ready", "ready", null, ["resend"]],
     ["declined", "declined", null, ["resend"]],
     ["cancelled", "cancelled", null, []],
+    ["definitions in progress", "in_progress", null, ["ask", "decline", "newDate"], "definitions"],
   ];
 
-  it.each(cases)("%s", (_name, status, delay, expected) => {
-    const result = availableActions({ status, delayNotifiedAt: delay });
+  it.each(cases)("%s", (_name, status, delay, expected, kind = "jargon") => {
+    const result = availableActions({ status, kind, delayNotifiedAt: delay });
     const on = Object.entries(result)
       .filter(([, value]) => value)
       .map(([key]) => key)

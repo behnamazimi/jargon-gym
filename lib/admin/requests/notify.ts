@@ -32,7 +32,10 @@ async function buildEmail(
       return buildReadyEmail({
         topic: row.topic,
         terms: row.delivered_terms ?? 0,
-        deliveryKind: row.delivery_kind === "added_shared" ? "added_shared" : "prepared",
+        deliveryKind:
+          row.delivery_kind === "added_shared" || row.delivery_kind === "filled"
+            ? row.delivery_kind
+            : "prepared",
         collectionName: domainName,
         url: row.delivered_domain_id
           ? `${origin}/jargon?domain=${row.delivered_domain_id}`

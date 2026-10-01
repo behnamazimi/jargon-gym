@@ -49,14 +49,16 @@ function build(subject: string, content: Layout): RequestEmail {
 export function buildReadyEmail(input: {
   topic: string;
   terms: number;
-  deliveryKind: "prepared" | "added_shared";
+  deliveryKind: "prepared" | "added_shared" | "filled";
   collectionName: string | null;
   url: string;
 }): RequestEmail {
   const line =
     input.deliveryKind === "added_shared" && input.collectionName
       ? REQUEST_COPY.card.addedShared(input.collectionName)
-      : `${pluralize(input.terms, "term")} ${input.terms === 1 ? "is" : "are"} in your Library, ready to read.`;
+      : input.deliveryKind === "filled"
+        ? REQUEST_COPY.card.filled(input.terms)
+        : `${pluralize(input.terms, "term")} ${input.terms === 1 ? "is" : "are"} in your Library, ready to read.`;
   return build(`"${input.topic}" is ready in your Library`, {
     heading: "Your collection is ready",
     paragraphs: [line],

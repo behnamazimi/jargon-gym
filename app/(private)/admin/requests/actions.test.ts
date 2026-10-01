@@ -65,8 +65,13 @@ vi.mock("@/lib/auth/require-session", async () => {
 
 const { acceptRequest, askRequest, declineRequest, mergeRequest, setNewDate } =
   await import("./actions");
-const { deliverRequest, addExistingCollection, resendRequestEmail, saveRequestSettings } =
-  await import("./delivery-actions");
+const {
+  deliverRequest,
+  addExistingCollection,
+  fillDefinitions,
+  resendRequestEmail,
+  saveRequestSettings,
+} = await import("./delivery-actions");
 
 const ID = "11111111-1111-4111-8111-111111111111";
 const OTHER = "22222222-2222-4222-8222-222222222222";
@@ -198,6 +203,13 @@ describe("mergeRequest", () => {
       "The other request isn't open any more.",
     ],
     [
+      "a request for definitions",
+      {
+        data: [row(ID, { kind: "definitions" }), row(OTHER, { kind: "definitions" })],
+      },
+      "A request for definitions can't be merged.",
+    ],
+    [
       "a source that is already handled",
       { data: [row(ID, { status: "ready" }), row(OTHER)] },
       "Request already handled.",
@@ -298,6 +310,38 @@ describe("deliverRequest", () => {
     ["a bad id", { ...input, requestId: "x" }],
   ])("refuses %s", async (_name, bad) => {
     expect((await deliverRequest(bad)).ok).toBe(false);
+  });
+});
+
+describe("fillDefinitions", () => {
+  const input = { requestId: ID, terms: [{ term: "het werkoverleg", definition: "the meeting" }] };
+
+  it("fills in and emails the requester", async () => {
+    state.rpcResult = { data: [{ request_id: ID }], error: null };
+    expect(await fillDefinitions(input)).toEqual({
+      ok: true,
+      data: { delivered: 1, emailFailed: 0 },
+    });
+    expect(state.notified).toEqual([{ id: ID, kind: "ready" }]);
+  });
+
+  it("shows the database's readable message", async () => {
+    state.rpcResult = {
+      data: null,
+      error: { code: "AD001", message: "None of those words are waiting for a definition." },
+    };
+    expect(await fillDefinitions(input)).toEqual({
+      ok: false,
+      error: "None of those words are waiting for a definition.",
+    });
+    expect(state.notified).toEqual([]);
+  });
+
+  it.each([
+    ["no terms", { ...input, terms: [] }],
+    ["a bad id", { ...input, requestId: "x" }],
+  ])("refuses %s", async (_name, bad) => {
+    expect((await fillDefinitions(bad)).ok).toBe(false);
   });
 });
 

@@ -116,6 +116,10 @@ export const DB_AUDIT_ACTIONS = {
     label: "Requested collection delivered",
     describe: (d) => `${text(d.deliveries) ?? "?"} delivered, ${text(d.terms) ?? "?"} terms each`,
   },
+  fill_request_definitions: {
+    label: "Definitions filled for a request",
+    describe: (d) => `${text(d.filled) ?? "?"} filled, ${text(d.skipped) ?? "?"} skipped`,
+  },
   deliver_existing_collection: {
     label: "Shared collection added for a request",
     describe: (d) => `${text(d.deliveries) ?? "?"} added`,

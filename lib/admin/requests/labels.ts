@@ -35,7 +35,8 @@ export function describeRequestShape(request: {
   const language =
     DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === request.language)?.label ??
     request.language;
-  const parts = [request.kind === "vocabulary" ? "Vocabulary" : "Jargon", language];
+  const kind = { vocabulary: "Vocabulary", definitions: "Definitions" }[request.kind] ?? "Jargon";
+  const parts = [kind, language];
   if (request.size) parts.push(`about ${request.size}`);
   return parts.join(" · ");
 }

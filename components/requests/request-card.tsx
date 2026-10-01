@@ -90,14 +90,20 @@ function ReplyBox({ request }: { request: MyRequest }) {
   );
 }
 
+function deliveredLine(request: MyRequest): string {
+  if (request.deliveryKind === "added_shared" && request.deliveredDomainName) {
+    return CARD.addedShared(request.deliveredDomainName);
+  }
+  if (request.deliveryKind === "filled") return CARD.filled(request.deliveredTerms ?? 0);
+  return CARD.ready(request.deliveredTerms ?? 0);
+}
+
 function Delivered({ request }: { request: MyRequest }) {
   const domainId = request.deliveredDomainId;
   return (
     <div className="space-y-3">
       <p className="m-0 text-sm" role="status">
-        {request.deliveryKind === "added_shared" && request.deliveredDomainName
-          ? CARD.addedShared(request.deliveredDomainName)
-          : CARD.ready(request.deliveredTerms ?? 0)}
+        {deliveredLine(request)}
       </p>
       {domainId ? (
         <div className="flex flex-wrap gap-2">

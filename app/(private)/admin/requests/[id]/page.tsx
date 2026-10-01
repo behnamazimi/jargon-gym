@@ -25,6 +25,11 @@ export default async function AdminRequestPage({ params }: PageProps) {
   const request = await getRequestDetail(supabase, id);
   if (!request) notFound();
 
+  const definitions = request.kind === "definitions";
+  const { data: waiting } =
+    definitions && request.status === "in_progress"
+      ? await supabase.rpc("admin_request_unfinished_terms", { p_request_id: request.id })
+      : { data: null };
   const open = ["requested", "in_progress", "needs_input", "merged"].includes(request.status);
   const [similarCollections, similarRequests] = open
     ? await Promise.all([
@@ -65,7 +70,11 @@ export default async function AdminRequestPage({ params }: PageProps) {
         <AdminSection
           id="request-fulfil"
           title="Fulfil"
-          description="Paste the collection you prepared. It's checked the same way people check their own lists."
+          description={
+            definitions
+              ? "Paste the definitions you wrote, one word per line. They're checked the same way people check their own lists."
+              : "Paste the collection you prepared. It's checked the same way people check their own lists."
+          }
         >
           <FulfilPanel
             requestId={request.id}
@@ -73,6 +82,7 @@ export default async function AdminRequestPage({ params }: PageProps) {
             language={parseLanguage(request.language)}
             people={request.merged.length + 1}
             knownTerms={request.knownTerms}
+            waitingWords={definitions ? (waiting ?? []).map((row) => row.term) : undefined}
           />
         </AdminSection>
       ) : null}

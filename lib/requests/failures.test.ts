@@ -15,6 +15,7 @@ describe("failureFor", () => {
     ["not found", "request_not_found", "not_found"],
     ["not cancellable", "request_not_cancellable", "not_found"],
     ["not waiting", "request_not_waiting", "not_waiting"],
+    ["nothing to define", "nothing_to_define", "nothing_to_define"],
     ["signed out", "Not authenticated", "signed_out"],
     ["anything else", "boom", "other"],
     ["nothing", undefined, "other"],

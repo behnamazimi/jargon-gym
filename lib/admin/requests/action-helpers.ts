@@ -28,3 +28,24 @@ export async function mergedChildren(supabase: AdminClient, id: string): Promise
 
 export const emailFailed = (results: NotifyResult[]) =>
   results.some((result) => result === "failed");
+
+type MergeSide = { kind: string; language: string; status: string };
+
+/** A request can follow another open one of the same kind and language. */
+export function assertMergeable(
+  source: MergeSide | undefined,
+  primary: MergeSide | undefined,
+): asserts source is MergeSide {
+  if (!source || !["requested", "in_progress", "needs_input"].includes(source.status)) {
+    throw new AdminError("Request already handled.");
+  }
+  if (!primary || !["requested", "in_progress"].includes(primary.status)) {
+    throw new AdminError("The other request isn't open any more.");
+  }
+  if (source.kind === "definitions") {
+    throw new AdminError("A request for definitions can't be merged.");
+  }
+  if (source.kind !== primary.kind || source.language !== primary.language) {
+    throw new AdminError("Those two requests are for a different kind or language.");
+  }
+}

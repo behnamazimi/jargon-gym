@@ -53,6 +53,26 @@ export async function deliverRequest(input: unknown) {
   }, REVALIDATE);
 }
 
+const fillSchema = z.object({
+  requestId: z.string().uuid(),
+  terms: z.array(commitTermSchema).min(1).max(500),
+});
+
+/** Fills the definitions into the requester's own collection, matching their waiting words by name. */
+export async function fillDefinitions(input: unknown) {
+  return runAdminAction(async ({ supabase }) => {
+    const parsed = fillSchema.safeParse(input);
+    if (!parsed.success) throw new AdminError("Check the terms.");
+
+    const { data, error } = await supabase.rpc("admin_fill_definitions", {
+      p_request_id: parsed.data.requestId,
+      p_terms: parsed.data.terms,
+    });
+    if (error) throwRpcError(error);
+    return emailDeliveries(supabase, asDeliveries(data));
+  }, REVALIDATE);
+}
+
 /** For a request a Browse collection already answers: adds it to the requester's library. */
 export async function addExistingCollection(requestId: string, domainId: string) {
   return runAdminAction(async ({ supabase }) => {

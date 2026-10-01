@@ -439,6 +439,7 @@ export type Database = {
           replied_at: string | null;
           size: number | null;
           status: string;
+          target_domain_id: string | null;
           topic: string;
           updated_at: string;
           user_id: string;
@@ -469,6 +470,7 @@ export type Database = {
           replied_at?: string | null;
           size?: number | null;
           status?: string;
+          target_domain_id?: string | null;
           topic: string;
           updated_at?: string;
           user_id: string;
@@ -499,6 +501,7 @@ export type Database = {
           replied_at?: string | null;
           size?: number | null;
           status?: string;
+          target_domain_id?: string | null;
           topic?: string;
           updated_at?: string;
           user_id?: string;
@@ -517,6 +520,13 @@ export type Database = {
             columns: ["merged_into"];
             isOneToOne: false;
             referencedRelation: "collection_requests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "collection_requests_target_domain_id_fkey";
+            columns: ["target_domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
             referencedColumns: ["id"];
           },
           {
@@ -1615,6 +1625,16 @@ export type Database = {
         Args: { p_note: string; p_user_id: string };
         Returns: undefined;
       };
+      admin_fill_definitions: {
+        Args: { p_request_id: string; p_terms: Json };
+        Returns: Json;
+      };
+      admin_request_unfinished_terms: {
+        Args: { p_request_id: string };
+        Returns: {
+          term: string;
+        }[];
+      };
       admin_set_ai_credit_settings: {
         Args: {
           p_default_allowance: number;
@@ -1864,6 +1884,7 @@ export type Database = {
           p_level?: string;
           p_notify_email?: boolean;
           p_size?: number;
+          p_target_domain_id?: string;
           p_topic: string;
         };
         Returns: Json;

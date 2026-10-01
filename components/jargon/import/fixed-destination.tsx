@@ -5,6 +5,13 @@ import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/jargon/languages";
 export function FixedDestinationNote({ flow }: { flow: ImportFlowState }) {
   const fixed = flow.adapter?.destination;
   if (!fixed) return null;
+  if (flow.adapter?.destinationNote) {
+    return (
+      <p className="m-0 text-sm text-base-content/70" role="status">
+        {flow.adapter.destinationNote}
+      </p>
+    );
+  }
   const language =
     DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === fixed.language)?.label ??
     fixed.language;

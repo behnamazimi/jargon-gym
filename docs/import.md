@@ -99,6 +99,16 @@ longer estimate without touching the dates of requests already sent.
   each person gets their own private, active copy; a taken name becomes
   "Name (2)". A request a Browse collection already answers goes through
   `admin_deliver_existing_collection`, which adds it to their Library.
+- **Definitions.** The "Request definitions" button on a collection's "N terms to
+  finish" banner (shown only while the person can send a request) opens
+  `/jargon/import/request?definitions=<collection id>`. That request has kind
+  `definitions` and a `target_domain_id`; it never creates a collection. The admin
+  pastes definitions on the desk and `admin_fill_definitions` fills them into the
+  requester's unfinished terms by name, in place by id, skipping everything else.
+  `admin_request_unfinished_terms` is how the admin sees the waiting words, because
+  they can't read a private collection. A trigger keeps the two ways of closing a
+  request apart. These can't be merged. There is no "language collection" kind, so
+  any owned collection with unfinished terms qualifies.
 - **Email** (`lib/requests/email-copy.ts`, sent by `lib/admin/requests/notify.ts`):
   Ready, a question, one delay notice ("Set new date"), and a decline. A failed
   send never undoes the change; `email_failed` is set and the desk offers Resend.

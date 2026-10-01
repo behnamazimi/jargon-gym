@@ -43,7 +43,7 @@ export async function fetchRequestQuota(client: Client): Promise<RequestQuota> {
   };
 }
 
-const KINDS: readonly string[] = REQUEST_KINDS;
+const KINDS: readonly string[] = [...REQUEST_KINDS, "definitions"];
 const REASONS: readonly string[] = DECLINE_REASONS;
 const LANGUAGES: readonly string[] = DOMAIN_LANGUAGES;
 

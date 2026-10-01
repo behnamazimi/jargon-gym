@@ -9,6 +9,7 @@ describe("describeRequestShape", () => {
       { kind: "jargon", language: "en", size: 50 },
       "Jargon · English · about 50",
     ],
+    ["definitions", { kind: "definitions", language: "nl", size: null }, "Definitions · Dutch"],
     [
       "vocabulary without a size",
       { kind: "vocabulary", language: "nl", size: null },

@@ -87,6 +87,8 @@ export const REQUEST_COPY = {
     ready: (terms: number) => `${pluralize(terms, "term")} added to your Library.`,
     addedShared: (name: string) =>
       `“${name}” was already in Browse, so we added it to your Library.`,
+    filled: (terms: number) =>
+      `${pluralize(terms, "term")} now ${terms === 1 ? "has a definition" : "have definitions"}.`,
     startReading: "Start reading",
     openCollection: "Open collection",
     declinedTitle: "We couldn't prepare this one",
@@ -102,6 +104,15 @@ export const REQUEST_COPY = {
     replySent: "Reply sent",
     actionFailed: "That didn't work. Try again.",
     notReplyable: "This request isn't waiting for a reply any more.",
+  },
+  definitions: {
+    link: "Request definitions",
+    title: "Request definitions",
+    intro: (name: string) => `We'll write definitions for the words waiting in “${name}”.`,
+    waiting: (count: number) => `${pluralize(count, "word")} waiting for a definition`,
+    topic: (name: string) => `Definitions: ${name}`.slice(0, 120),
+    nothingToDefine: "Every word in that collection already has a definition.",
+    notYours: "You can only request definitions for your own collections.",
   },
   declineReasons: {
     too_broad:

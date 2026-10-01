@@ -66,8 +66,7 @@ export function JargonPage({
 
     if (domainId === activeData.domain.id) {
       if (!switchingDomainId) return;
-      // Clicking back to the collection already on screen cancels the
-      // in-flight switch so a slower B response can't overwrite A.
+      // Clicking back to the current collection cancels the in-flight switch to B.
       switchRequestIdRef.current++;
       setSwitchingDomainId(null);
       return;
@@ -220,6 +219,7 @@ export function JargonPage({
 
               {isOwner ? (
                 <UnfinishedSection
+                  domainId={domain.id}
                   terms={activeData.unfinishedTerms}
                   isOpen={finishOpen}
                   onOpenChange={setFinishOpen}
