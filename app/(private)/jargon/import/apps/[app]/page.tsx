@@ -1,4 +1,4 @@
-import { Info, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/jargon/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -42,22 +42,25 @@ export default async function AppGuidePage({ params }: PageProps) {
         </ol>
       ) : null}
       {guide.note ? (
-        <Alert className="alert-soft">
-          <Info className="size-5 text-info" aria-hidden strokeWidth={1.5} />
+        <Alert variant="info">
           <AlertDescription>{guide.note}</AlertDescription>
         </Alert>
       ) : null}
-      <div className="flex flex-col gap-2">
-        <LinkButton href="/jargon/import/paste" className="min-h-12">
+      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
+        <LinkButton href="/jargon/import/paste" className="min-h-12 w-full md:min-h-11 md:w-auto">
           {guide.canExport ? `Paste from ${guide.name}` : "Paste a list"}
         </LinkButton>
         {!guide.canExport ? (
-          <LinkButton href="/jargon/browse" variant="outline" className="min-h-12">
+          <LinkButton
+            href="/jargon/browse"
+            variant="outline"
+            className="min-h-12 w-full md:min-h-11 md:w-auto"
+          >
             Browse shared collections
           </LinkButton>
         ) : null}
         {guide.link ? (
-          <LinkButton href={guide.link.href} variant="ghost" className="min-h-11">
+          <LinkButton href={guide.link.href} variant="ghost" className="min-h-11 w-full md:w-auto">
             {guide.link.label}
           </LinkButton>
         ) : null}

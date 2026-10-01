@@ -65,7 +65,9 @@ export function ImportChooser({
             onChange={(event) => handleQuery(event.target.value)}
           />
         </div>
-        <p className="m-0 text-sm text-base-content/60">Search shared collections.</p>
+        {query.trim() ? null : (
+          <p className="m-0 text-sm text-base-content/60">Search shared collections.</p>
+        )}
         <SearchResults
           state={search}
           addingId={addingId}
@@ -75,7 +77,7 @@ export function ImportChooser({
             requestEntry.state === "available" ? REQUEST_COPY.chooser.noMatch : undefined
           }
         />
-        <RequestRow entry={requestEntry} query={query} />
+        <RequestRow entry={requestEntry} query={search.status === "done" ? query : ""} />
       </div>
 
       <section

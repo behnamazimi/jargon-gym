@@ -6,14 +6,14 @@ import type { DeclineReason, RequestKind, RequestLevel } from "./types";
  *  checked against this file by copy.test.ts. */
 export const REQUEST_COPY = {
   chooser: {
+    rowLabel: "Can't find it?",
     rowTitle: (query: string) => `Request “${query}”`,
     rowSubtitle: "We'll prepare it and add it to your Library.",
     quotaLine: "You can have 1 request open at a time.",
     openRequest: (topic: string) => `You have a request open: “${topic}”. See it in your Library.`,
     capReached: (date: string) =>
       `You've used your 3 requests for now. You can ask again on ${date}.`,
-    noMatch: (query: string) =>
-      `Nothing shared matches “${query}”. Request it, try a list, or start an empty collection.`,
+    noMatch: (query: string) => `Nothing shared matches “${query}”.`,
   },
   form: {
     title: "Request a collection",
