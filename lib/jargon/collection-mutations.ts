@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { domainInputToUpdateRow, type DomainInput } from "@/lib/jargon/domain-schema";
 import { DomainMutationError } from "./collections";
+import { escapeLike } from "./like-escape";
+import type { DomainLanguage } from "./languages";
 
 type Client = SupabaseClient<Database>;
 type DomainVisibility = Database["public"]["Enums"]["domain_visibility"];
@@ -95,7 +97,7 @@ export async function updateOwnedDomain(
       .from("domains")
       .select("id")
       .eq("owner_id", userId)
-      .ilike("name", row.name)
+      .ilike("name", escapeLike(row.name))
       .neq("id", domainId)
       .maybeSingle();
 
@@ -149,12 +151,13 @@ export async function createOrGetOwnedDomain(
   ownerId: string,
   name: string,
   description?: string | null,
+  language?: DomainLanguage,
 ) {
   const { data: existing, error: selectError } = await client
     .from("domains")
     .select("id, name, description, visibility, owner_id")
     .eq("owner_id", ownerId)
-    .ilike("name", name)
+    .ilike("name", escapeLike(name))
     .maybeSingle();
 
   if (selectError) throw selectError;
@@ -184,10 +187,55 @@ export async function createOrGetOwnedDomain(
       owner_id: ownerId,
       visibility: "private",
       description: normalizedDescription,
+      ...(language ? { language } : {}),
     })
     .select("id, name, description, visibility, owner_id")
     .single();
 
   if (error) throw error;
+  return data;
+}
+
+function isUniqueViolation(error: { code?: string }) {
+  return error.code === "23505";
+}
+
+/** Creates a private, empty collection. Unlike `createOrGetOwnedDomain`, an
+ *  existing name is an error, never a merge. */
+export async function createOwnedDomain(
+  client: Client,
+  ownerId: string,
+  input: { name: string; language: DomainLanguage },
+) {
+  const name = input.name.trim();
+  const duplicate = new DomainMutationError(`You already have a collection named "${name}".`);
+
+  const { data: existing, error: selectError } = await client
+    .from("domains")
+    .select("id")
+    .eq("owner_id", ownerId)
+    .ilike("name", escapeLike(name))
+    .maybeSingle();
+
+  if (selectError) throw selectError;
+  if (existing) throw duplicate;
+
+  const { data, error } = await client
+    .from("domains")
+    .insert({ name, owner_id: ownerId, visibility: "private", language: input.language })
+    .select("id")
+    .single();
+
+  if (error) {
+    if (isUniqueViolation(error)) throw duplicate;
+    throw error;
+  }
+
+  try {
+    await setDomainActiveForReview(client, ownerId, data.id, true);
+  } catch (err) {
+    console.error("createOwnedDomain: could not mark the collection active", { err });
+  }
+
   return data;
 }

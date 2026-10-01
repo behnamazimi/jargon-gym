@@ -27,3 +27,24 @@ export function domainInputToUpdateRow(input: DomainInput) {
     language: input.language,
   };
 }
+
+const newCollectionSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Enter a name for your collection.")
+    .max(100, "Keep the name under 100 characters."),
+  language: z.enum(DOMAIN_LANGUAGES).default("en"),
+});
+
+export type NewCollectionInput = z.infer<typeof newCollectionSchema>;
+
+export function parseNewCollectionInput(
+  input: unknown,
+): { ok: true; data: NewCollectionInput } | { ok: false; error: string } {
+  const result = newCollectionSchema.safeParse(input);
+  if (!result.success) {
+    return { ok: false, error: result.error.issues[0]?.message ?? "Invalid collection." };
+  }
+  return { ok: true, data: result.data };
+}

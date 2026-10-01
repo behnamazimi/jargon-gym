@@ -2,7 +2,7 @@ import { AlertCircle } from "lucide-react";
 import { Alert, AlertContent, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type JargonErrorIssue = {
-  path: string;
+  path?: string;
   message: string;
   expected?: string;
   received?: string;
@@ -76,10 +76,12 @@ function ErrorIssuesList({ issues }: { issues: JargonErrorIssue[] | undefined })
     <ul className="mt-3 space-y-2">
       {issues.map((issue) => (
         <li
-          key={`${issue.path}-${issue.message}`}
+          key={`${issue.path ?? ""}-${issue.message}`}
           className="rounded-lg bg-base-100/70 px-3 py-2.5 ring-1 ring-base-content/10"
         >
-          <div className="font-mono text-xs break-all text-base-content/60">{issue.path}</div>
+          {issue.path ? (
+            <div className="font-mono text-xs break-all text-base-content/60">{issue.path}</div>
+          ) : null}
           <div className="mt-0.5">{issue.message}</div>
           <IssueExpectedReceived issue={issue} />
         </li>

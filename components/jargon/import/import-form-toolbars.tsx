@@ -28,7 +28,7 @@ export function ImportFormMobileToolbar({
         onPress={onUploadClick}
       >
         <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
-        Upload .json
+        Choose a .json file
       </Button>
       <DropdownMenuTrigger>
         <Button
@@ -92,7 +92,7 @@ export function ImportFormDesktopToolbar({
         </Button>
         <Button type="button" variant="outline" size="sm" onPress={onUploadClick}>
           <FileUp className="size-3.5" aria-hidden strokeWidth={1.5} />
-          Upload .json
+          Choose a .json file
         </Button>
         <Button
           type="button"

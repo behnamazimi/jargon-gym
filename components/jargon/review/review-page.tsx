@@ -212,7 +212,7 @@ export function ReviewPage({
                   Go to library
                 </LinkButton>
                 <LinkButton href="/jargon/import" variant="outline">
-                  Import jargon
+                  Add your own terms
                 </LinkButton>
               </div>
             ) : null

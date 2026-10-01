@@ -14,7 +14,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-import",
         title: "Or bring your own",
-        body: "Got your own terms? Import them as JSON.",
+        body: "Start an empty collection and add terms one by one, or import a JSON file.",
       },
     ],
   },
@@ -64,7 +64,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "app-account",
         title: "Everything else",
-        body: "Browse collections, import, check Mastery, and open Settings.",
+        body: "Browse collections, add your own, check Mastery, and open Settings.",
       },
     ],
   },

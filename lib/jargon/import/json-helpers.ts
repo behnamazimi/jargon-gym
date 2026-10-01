@@ -1,4 +1,4 @@
-import { formatJsonFailure } from "./errors";
+import { jsonSyntaxFailure } from "./errors";
 import type { ImportFailure } from "./types";
 
 export function formatImportJson(
@@ -10,7 +10,7 @@ export function formatImportJson(
       ok: false,
       failure: {
         title: "Nothing to format",
-        message: "Paste JSON before formatting.",
+        message: "Paste your JSON first, then format it.",
       },
     };
   }
@@ -20,7 +20,7 @@ export function formatImportJson(
     return { ok: true, formatted: `${JSON.stringify(parsed, null, 2)}\n` };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid JSON syntax";
-    return { ok: false, failure: formatJsonFailure(message) };
+    return { ok: false, failure: jsonSyntaxFailure(message, trimmed) };
   }
 }
 
@@ -32,8 +32,7 @@ export function readJsonFile(
       ok: false,
       failure: {
         title: "Unsupported file",
-        message: `"${file.name}" does not look like a JSON file.`,
-        hint: "Choose a .json file or paste the contents manually.",
+        message: `"${file.name}" isn't a JSON file. Choose a .json file or paste its contents.`,
       },
     });
   }
@@ -55,8 +54,8 @@ export function readJsonFile(
     () => ({
       ok: false,
       failure: {
-        title: "Could not read file",
-        message: `Couldn't read "${file.name}". Try another file or paste the JSON manually.`,
+        title: "Couldn't read the file",
+        message: `We couldn't read "${file.name}". Try another file or paste the contents.`,
       },
     }),
   );

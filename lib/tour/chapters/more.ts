@@ -42,13 +42,13 @@ export const MORE_CHAPTERS = [
     steps: [
       {
         target: "import-json",
-        title: "Bring your own terms",
-        body: "Paste JSON or upload a .json file. No file? The AI skill above can make one.",
+        title: "Import from JSON",
+        body: "Paste JSON or choose a .json file with your terms.",
       },
       {
         target: "import-validate",
-        title: "Check before importing",
-        body: "Preview the terms first. Nothing saves until you confirm.",
+        title: "Check before adding",
+        body: "See what will be added first. Nothing saves until you confirm.",
       },
     ],
   },

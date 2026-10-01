@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { parseLanguage } from "@/lib/jargon/languages";
+import { escapeLike } from "@/lib/jargon/like-escape";
 import { importPayloadSchema } from "./schema";
 import {
   emptyPayloadFailure,
@@ -8,38 +10,11 @@ import {
   jsonSyntaxFailure,
   validationFailure,
 } from "./errors";
+import { describeZodIssues } from "./issue-messages";
 import { collectRelationshipIssues, collectTermKeys } from "./validate-import-issues";
-import type { ImportFailure, ImportPreview, ImportValidationIssue } from "./types";
+import type { ImportFailure, ImportPreview } from "./types";
 
 type Client = SupabaseClient<Database>;
-
-function zodPath(path: PropertyKey[]): string {
-  if (path.length === 0) return "root";
-  return path.map(String).join(".");
-}
-
-function formatZodIssue(issue: {
-  path: PropertyKey[];
-  message: string;
-  code?: string;
-  expected?: unknown;
-  input?: unknown;
-}): ImportValidationIssue {
-  const formatted: ImportValidationIssue = {
-    path: zodPath(issue.path),
-    message: issue.message,
-  };
-
-  if (issue.expected !== undefined) {
-    formatted.expected = String(issue.expected);
-  }
-
-  if (issue.input !== undefined && issue.code === "invalid_type") {
-    formatted.received = Array.isArray(issue.input) ? "array" : typeof issue.input;
-  }
-
-  return formatted;
-}
 
 export function parseImportJson(
   raw: string,
@@ -57,13 +32,15 @@ export function parseImportJson(
     parsed = JSON.parse(trimmed);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Invalid JSON syntax";
-    return { ok: false, failure: jsonSyntaxFailure(message) };
+    return { ok: false, failure: jsonSyntaxFailure(message, trimmed) };
   }
 
   const result = importPayloadSchema.safeParse(parsed);
   if (!result.success) {
-    const issues = result.error.issues.map(formatZodIssue);
-    return { ok: false, failure: validationFailure(issues) };
+    return {
+      ok: false,
+      failure: validationFailure(describeZodIssues(result.error.issues, parsed)),
+    };
   }
 
   const { termKeys, duplicateIssues } = collectTermKeys(result.data.terms);
@@ -84,9 +61,9 @@ export async function buildImportPreview(
 ): Promise<ImportPreview> {
   const { data: existing, error } = await client
     .from("domains")
-    .select("id")
+    .select("id, language")
     .eq("owner_id", ownerId)
-    .ilike("name", payload.domain)
+    .ilike("name", escapeLike(payload.domain))
     .maybeSingle();
 
   if (error) {
@@ -127,6 +104,7 @@ export async function buildImportPreview(
 
   return {
     domain: payload.domain,
+    domainLanguage: existing ? parseLanguage(existing.language) : null,
     termCount: payload.terms.length,
     relationshipCount: payload.relationships?.length ?? 0,
     categories,

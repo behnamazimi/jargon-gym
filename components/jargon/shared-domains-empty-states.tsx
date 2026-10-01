@@ -15,11 +15,11 @@ export function SharedDomainsEmptyCatalog({ bannerError }: { bannerError: string
         <EmptyState
           icon={Compass}
           title="Nothing shared yet"
-          description="When someone shares a collection, it shows up here. Import your own jargon in the meantime, or head back to your library."
+          description="When someone shares a collection, it shows up here. Add your own terms in the meantime, or head back to your library."
         >
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
             <LinkButton href="/jargon/import" className="min-h-11">
-              Import jargon
+              Add your own terms
             </LinkButton>
             <LinkButton href="/jargon" variant="outline" className="min-h-11">
               Back to library

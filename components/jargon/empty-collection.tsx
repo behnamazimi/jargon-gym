@@ -1,6 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/jargon/empty-state";
 import { PageShell } from "@/components/page-container";
+import { StartCollectionButton } from "@/components/jargon/start-collection-button";
 import { LinkButton } from "@/components/ui/button";
 
 export function EmptyCollection() {
@@ -14,15 +15,16 @@ export function EmptyCollection() {
             <span className="text-primary">Your collection</span> is empty
           </>
         }
-        description="Add a collection others have shared in one tap, or import your own terms as JSON."
+        description="Add a collection others have shared in one tap, or start your own."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
           <LinkButton href="/jargon/browse" data-tour="library-browse">
             Browse shared collections
           </LinkButton>
           <LinkButton href="/jargon/import" variant="outline" data-tour="library-import">
-            Import jargon
+            Add your own terms
           </LinkButton>
+          <StartCollectionButton />
         </div>
       </EmptyState>
     </PageShell>

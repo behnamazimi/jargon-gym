@@ -1,5 +1,6 @@
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import type { Term } from "@/lib/jargon/types";
+import { EmptyTermsState } from "./empty-terms-state";
 import { TermCard } from "./term-card";
 
 type TermListProps = {
@@ -11,6 +12,7 @@ type TermListProps = {
   domainId: string;
   language: DomainLanguage;
   domainTerms: Term[];
+  onAddTerm: () => void;
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
@@ -27,12 +29,23 @@ export function TermList({
   domainId,
   language,
   domainTerms,
+  onAddTerm,
   narrationAccess,
   onToggleOpen,
   onToggleMarkedKnown,
   onTermRemoved,
   onTermRemoveFailed,
 }: TermListProps) {
+  if (domainTerms.length === 0) {
+    return isOwner ? (
+      <EmptyTermsState onAddTerm={onAddTerm} />
+    ) : (
+      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
+        <p className="text-sm text-base-content/60">No terms in this collection yet.</p>
+      </div>
+    );
+  }
+
   if (terms.length === 0) {
     return (
       <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">

@@ -1,3 +1,5 @@
+import type { DomainLanguage } from "@/lib/jargon/languages";
+
 type ImportTerm = {
   term: string;
   category: string;
@@ -25,10 +27,7 @@ export type ImportPayload = {
 };
 
 export type ImportValidationIssue = {
-  path: string;
   message: string;
-  expected?: string;
-  received?: string;
 };
 
 type ImportFailureContext = {
@@ -46,8 +45,15 @@ export type ImportFailure = {
   context?: ImportFailureContext;
 };
 
+export type ImportOverrides = {
+  domainName?: string;
+  language?: DomainLanguage;
+};
+
 export type ImportPreview = {
   domain: string;
+  /** The existing collection's language when this import merges into one. */
+  domainLanguage: DomainLanguage | null;
   termCount: number;
   relationshipCount: number;
   categories: string[];

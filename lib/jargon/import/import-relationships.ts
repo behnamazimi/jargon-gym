@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { escapeLike } from "@/lib/jargon/like-escape";
 import { formatImportFailure, ImportExecutionError } from "./errors";
 import { normalizeRelationshipKey } from "./relationship-key";
 import type { ImportPayload } from "./types";
@@ -98,7 +99,7 @@ async function upsertRelationship(
     .select("id, description")
     .eq("source_term_id", sourceId)
     .eq("target_term_id", targetId)
-    .ilike("relationship_type", relationshipType)
+    .ilike("relationship_type", escapeLike(relationshipType))
     .maybeSingle();
 
   if (existingRelError) {
