@@ -29,6 +29,7 @@ Written 2026-10-01. Paths were checked against `main` at commit `5c1d8da`; confi
   - **Admin desk:** the "generator command" step and "Also publish a copy to Browse" on the Fulfil panel are gone.
   - **Missing definitions:** cards without a definition are saved as unfinished terms, not "left out".
   - **Copy:** strings mentioning AI tools are gone.
+
 ## 1. Owner decisions (hard constraints)
 
 Treat these as fixed. Don't re-propose anything that contradicts them.
@@ -46,37 +47,39 @@ Treat these as fixed. Don't re-propose anything that contradicts them.
    - another app's deck (Quizlet, Anki, Memrise, Duolingo and similar).
 
    Photos, PDFs and pulling terms out of source material are out of scope.
+
 5. **Scope covers bulk import and quick single-term capture.** Capture means "I just heard this word, save it". Telegram capture stays dropped, as decided in August 2026.
 6. **Only the term name is required.** Definition and category are optional everywhere: import, capture and the edit form. A user can import a bare word list and fill in the rest later in the app. A term without a definition is "unfinished" and stays out of study until it has one (section 8.5).
 7. **No duplicate terms in a collection.** The unique `(domain_id, lower(term))` rule stays. One term can't have several senses; users who need that write a qualifier into the name, e.g. "SLA (legal)".
 8. **No Undo for imports.** It's overkill. The Check screen is the safety net, and a new collection can be deleted as a whole. The commit is still one transaction, so a failure never leaves a half-imported collection.
 9. **Phases 1 and 2 ship separately.** The request flow (phase 2) doesn't ship alongside the paste importer (phase 1).
 10. **Repo rules that apply to every phase:**
-   - DaisyUI components.
-   - No direct `useEffect` (the project's `no-use-effect` rule).
-   - Comments only when needed.
-   - `pnpm check` must pass.
-   - Read `node_modules/next/dist/docs/` before Next.js code (Next 16 has breaking changes).
-   - Read `docs/trace.md` before touching anything that feeds Read, Review or Quiz, and `docs/admin.md` before any admin page or action.
-   - Bump `widget/version.json` if widget logic changes.
-   - Tour changes follow the "Guided tour" section of `AGENTS.md`.
+
+- DaisyUI components.
+- No direct `useEffect` (the project's `no-use-effect` rule).
+- Comments only when needed.
+- `pnpm check` must pass.
+- Read `node_modules/next/dist/docs/` before Next.js code (Next 16 has breaking changes).
+- Read `docs/trace.md` before touching anything that feeds Read, Review or Quiz, and `docs/admin.md` before any admin page or action.
+- Bump `widget/version.json` if widget logic changes.
+- Tour changes follow the "Guided tour" section of `AGENTS.md`.
 
 ## 2. Current state
 
 ### The import flow
 
-| Piece | Where | What it does today |
-|---|---|---|
-| Route | `app/(private)/jargon/import/` (`page.tsx`, `actions.ts`, `layout.tsx`) | `getImportSetupData`, `validateImportJson`, `confirmImport`. It redirects to `/jargon?domain=…&imported=N` |
-| Page UI | `components/jargon/import/` | `import-page.tsx` (state), `import-form.tsx` (monospace JSON textarea, Upload .json, Load example/minimal, Format, Clear), `import-preview.tsx` (summary and the overwrite checkbox), `import-llm-prompt*.tsx` + `import-llm-prompt-helpers.ts` (the "Generate with an AI skill" card, `INSTALL_COMMAND`, `buildRunCommand`) |
-| Schema | `lib/jargon/import/schema.ts`, `lib/jargon/term-schema.ts` | zod. `term`, `category` and `definition` are required. `relationships` is optional |
-| Validation and preview | `lib/jargon/import/validate-import.ts`, `validate-import-issues.ts`, `errors.ts` | JSON parse, then zod, then duplicate and relationship checks. Errors cite paths such as `terms[3].category`. The preview finds the domain by case-insensitive name and lists conflicting term names |
-| Commit | `lib/jargon/import/execute-import.ts`, `import-relationships.ts` | `createOrGetOwnedDomain`, then **one select plus an insert or update per term, with no transaction and no batch record**, then relationships, then `markDomainActive` (`user_active_domains` upsert) |
-| Collections | `lib/jargon/collection-mutations.ts` (`createOrGetOwnedDomain`) | Matches an owned domain by `ilike(name)`, otherwise inserts a private one. **Import is the only way to create a collection** |
-| Export | `lib/jargon/export/build-import-payload.ts`, `components/jargon/domain-export-dialog.tsx` | JSON only, in the same shape as import |
-| Banner | `components/jargon/imported-banner.tsx` | "Imported N terms into X" with Start reading and Mark what you know |
-| Manual add | `components/jargon/term-form-dialog*.tsx`, `term-form-fields.tsx` | A 9-field dialog plus a relationships editor. Owner only, inside an existing collection |
-| Language | `lib/jargon/languages.ts` (`en`, `nl`) | `domains.language` defaults to `'en'` (migration `20260904200000_domain_language.sql`) and **is not in the import payload**. It drives narration templates, voices and term labels |
+| Piece                  | Where                                                                                     | What it does today                                                                                                                                                                                                                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Route                  | `app/(private)/jargon/import/` (`page.tsx`, `actions.ts`, `layout.tsx`)                   | `getImportSetupData`, `validateImportJson`, `confirmImport`. It redirects to `/jargon?domain=…&imported=N`                                                                                                                                                                                                                   |
+| Page UI                | `components/jargon/import/`                                                               | `import-page.tsx` (state), `import-form.tsx` (monospace JSON textarea, Upload .json, Load example/minimal, Format, Clear), `import-preview.tsx` (summary and the overwrite checkbox), `import-llm-prompt*.tsx` + `import-llm-prompt-helpers.ts` (the "Generate with an AI skill" card, `INSTALL_COMMAND`, `buildRunCommand`) |
+| Schema                 | `lib/jargon/import/schema.ts`, `lib/jargon/term-schema.ts`                                | zod. `term`, `category` and `definition` are required. `relationships` is optional                                                                                                                                                                                                                                           |
+| Validation and preview | `lib/jargon/import/validate-import.ts`, `validate-import-issues.ts`, `errors.ts`          | JSON parse, then zod, then duplicate and relationship checks. Errors cite paths such as `terms[3].category`. The preview finds the domain by case-insensitive name and lists conflicting term names                                                                                                                          |
+| Commit                 | `lib/jargon/import/execute-import.ts`, `import-relationships.ts`                          | `createOrGetOwnedDomain`, then **one select plus an insert or update per term, with no transaction and no batch record**, then relationships, then `markDomainActive` (`user_active_domains` upsert)                                                                                                                         |
+| Collections            | `lib/jargon/collection-mutations.ts` (`createOrGetOwnedDomain`)                           | Matches an owned domain by `ilike(name)`, otherwise inserts a private one. **Import is the only way to create a collection**                                                                                                                                                                                                 |
+| Export                 | `lib/jargon/export/build-import-payload.ts`, `components/jargon/domain-export-dialog.tsx` | JSON only, in the same shape as import                                                                                                                                                                                                                                                                                       |
+| Banner                 | `components/jargon/imported-banner.tsx`                                                   | "Imported N terms into X" with Start reading and Mark what you know                                                                                                                                                                                                                                                          |
+| Manual add             | `components/jargon/term-form-dialog*.tsx`, `term-form-fields.tsx`                         | A 9-field dialog plus a relationships editor. Owner only, inside an existing collection                                                                                                                                                                                                                                      |
+| Language               | `lib/jargon/languages.ts` (`en`, `nl`)                                                    | `domains.language` defaults to `'en'` (migration `20260904200000_domain_language.sql`) and **is not in the import payload**. It drives narration templates, voices and term labels                                                                                                                                           |
 
 ### Data constraints that shape the design
 
@@ -95,6 +98,7 @@ Treat these as fixed. Don't re-propose anything that contradicts them.
 ### Who reads `category` and `definition`
 
 Any phase that makes either field nullable or optional must audit these readers. About 25 files read `.category` and about 32 read `.definition`. Representative ones:
+
 - **UI:** `components/jargon/term-card*.tsx`, `category-chips.tsx`, `jargon-filters.tsx`, `read/read-term-card.tsx`, `review/review-card.tsx`, `mastery/mastery-term-row.tsx`, `public/domain-terms-list.tsx`.
 - **lib:**
   - `lib/jargon/mappers.ts`, `filter-terms.ts`, `mastery.ts`, `widget-projection.ts`;
@@ -129,17 +133,17 @@ Any phase that makes either field nullable or optional must audit these readers.
 
 ## 3. Problems the redesign must fix
 
-| Problem | Fix |
-|---|---|
-| The only help is `npx skills add …` in a terminal plus a slash command in Cursor or Claude, which doesn't work on a phone | Move it out of the user path, behind "More import options". Requests cover "just a topic" |
-| Hand-written JSON is the only way in | A paste box that accepts any list, with JSON detected automatically |
-| Errors cite `terms[3].category` | Plain messages that name the term, with fixes made on the preview card |
-| The name inside the payload decides merge vs create, so a typo silently forks | An explicit "New collection / Add to existing" choice plus a near-duplicate name guard |
-| No language field | English/Dutch on the same screen |
-| Category is required, though no importer studied asks for it | Make it nullable, show the filter only with 2+ categories |
-| Definition is required, so a bare word list fails | Make it nullable; terms without one are saved as unfinished and kept out of study |
-| Per-term writes, no transaction; a checkbox guards overwrites | One transactional commit, a clear Skip/Update choice on the Check screen, and a result summary |
-| A collection can only be created by importing | The chooser, empty collections, the request flow |
+| Problem                                                                                                                   | Fix                                                                                            |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| The only help is `npx skills add …` in a terminal plus a slash command in Cursor or Claude, which doesn't work on a phone | Move it out of the user path, behind "More import options". Requests cover "just a topic"      |
+| Hand-written JSON is the only way in                                                                                      | A paste box that accepts any list, with JSON detected automatically                            |
+| Errors cite `terms[3].category`                                                                                           | Plain messages that name the term, with fixes made on the preview card                         |
+| The name inside the payload decides merge vs create, so a typo silently forks                                             | An explicit "New collection / Add to existing" choice plus a near-duplicate name guard         |
+| No language field                                                                                                         | English/Dutch on the same screen                                                               |
+| Category is required, though no importer studied asks for it                                                              | Make it nullable, show the filter only with 2+ categories                                      |
+| Definition is required, so a bare word list fails                                                                         | Make it nullable; terms without one are saved as unfinished and kept out of study              |
+| Per-term writes, no transaction; a checkbox guards overwrites                                                             | One transactional commit, a clear Skip/Update choice on the Check screen, and a result summary |
+| A collection can only be created by importing                                                                             | The chooser, empty collections, the request flow                                               |
 
 ## 4. Target experience by route
 
@@ -166,6 +170,7 @@ Screen names match the artifact sections.
 ### 4.2 Paste a list: Paste → Check → Add [artifact: "Paste a list"]
 
 **Screen 1, Paste.** Full-screen, not a sheet.
+
 - A large textarea with text of at least 16px, so iOS doesn't zoom.
 - A one-line example as placeholder.
 - A secondary **Paste** button that calls `navigator.clipboard.readText()` inside the tap; if access is rejected, it focuses the field instead.
@@ -175,12 +180,14 @@ Screen names match the artifact sections.
 - Keep the draft in local storage so switching apps loses nothing, and clear it after a successful commit.
 
 **Files.**
+
 - `<input type="file">` with **no `accept` filter**, because iOS greys out valid files.
 - Identify the file by its first bytes: `{` or `[` means JSON, `PK` means a zip (future `.apkg`/`.xlsx`), anything else is text.
 - Decode as UTF-8, then fall back to UTF-16 when there's a BOM, otherwise Windows-1252.
 - Parse CSV/TSV with Papa Parse (MIT, about 7 KB gzipped).
 
 **Detection pipeline.** Deterministic, pure, and unit-testable.
+
 - Normalise first:
   - unify line endings;
   - turn NBSP into a space;
@@ -188,21 +195,22 @@ Screen names match the artifact sections.
   - keep smart quotes.
 - Then the first matching rule wins:
 
-| # | Input looks like | Handling |
-|---|---|---|
-| 1 | Starts with `{` or `[` | JSON path, same Check screen, schema errors translated to term names |
-| 2 | Clipboard HTML with `<table>` | Rows and cells from the table |
-| 3 | `#separator:` / `#html:` / `#… column:` headers | Anki "Notes in Plain Text". Apply the headers, strip HTML, drop `[sound:…]` and `<img>` |
-| 4 | Tabs on most lines | Spreadsheet copy (Excel and Sheets quote multi-line cells) |
-| 5 | Consistent `;` or `,` field counts | CSV. Dutch-locale Excel uses `;` |
-| 6 | One item per line | Strip bullets, numbering, checkbox marks and WhatsApp `[date, time] Name:` prefixes. Split at the **first** occurrence of the separator that covers the most lines: tab, " – ", " — ", " - ", ": ", " = ", comma last. Prefer the one that leaves short terms |
-| 7 | No separator, lines alternate short and long | Term line followed by definition line |
-| 8 | No separator on most lines | Words only: every row is a term with no definition (saved as unfinished) |
+| #   | Input looks like                                | Handling                                                                                                                                                                                                                                                      |
+| --- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Starts with `{` or `[`                          | JSON path, same Check screen, schema errors translated to term names                                                                                                                                                                                          |
+| 2   | Clipboard HTML with `<table>`                   | Rows and cells from the table                                                                                                                                                                                                                                 |
+| 3   | `#separator:` / `#html:` / `#… column:` headers | Anki "Notes in Plain Text". Apply the headers, strip HTML, drop `[sound:…]` and `<img>`                                                                                                                                                                       |
+| 4   | Tabs on most lines                              | Spreadsheet copy (Excel and Sheets quote multi-line cells)                                                                                                                                                                                                    |
+| 5   | Consistent `;` or `,` field counts              | CSV. Dutch-locale Excel uses `;`                                                                                                                                                                                                                              |
+| 6   | One item per line                               | Strip bullets, numbering, checkbox marks and WhatsApp `[date, time] Name:` prefixes. Split at the **first** occurrence of the separator that covers the most lines: tab, " – ", " — ", " - ", ": ", " = ", comma last. Prefer the one that leaves short terms |
+| 7   | No separator, lines alternate short and long    | Term line followed by definition line                                                                                                                                                                                                                         |
+| 8   | No separator on most lines                      | Words only: every row is a term with no definition (saved as unfinished)                                                                                                                                                                                      |
 
 - **Header row:** treat row one as a heading when it matches term/word/definition/meaning/translation/front/back, or the Dutch woord/betekenis/begrip/vertaling.
 - **Don't copy Anki's guesser**, which defaults to Space.
 
 **Screen 2, Check.**
+
 - **Destination.** "New collection" with a name, or "Add to existing" with a picker of owned collections only. It's preset when the user arrives from inside a collection.
 - **Name guard.** If the typed name equals or nearly equals an owned collection, show "You already have 'X'. Add to it instead?"
 - **Language.** English/Dutch. New collections default to the last-used language; an existing collection keeps its own.
@@ -229,41 +237,43 @@ Screen names match the artifact sections.
 - **Category.** Optional. There's one optional "Category for these terms" field, plus a Category column when the paste has one.
 
 **Commit.**
+
 - Cap one import at about 500 terms, with a friendly message.
 - A single RPC transaction writes all terms or none. It's idempotent on a client-generated import id, so a double tap or retry can't import twice. A small record of the id and counts is enough; there's no stored before-state, because there's no undo.
 
 **Done.**
+
 - Redirect to the collection.
 - The banner reads "Added 45 · 3 to finish later · Skipped 2 already in this collection", with Start reading, Mark what you know, and "Finish 3 terms" when there are unfinished ones.
 - No undo. If the import created a new collection, the existing "Delete collection" action is the way back.
 
 **Copy rewrites.**
 
-| Today | New |
-|---|---|
-| Validate & preview | Check 48 terms |
-| `terms[3].definition` required | (no error; "No definition yet · Add one" on the card) |
-| `terms[3].category` required | (no error; optional "Category for these terms") |
-| Invalid JSON at position 812 | We couldn't find any terms. Put each term on its own line, with a dash or colon before its definition. For example: API – a way for programs to talk to each other. |
-| Overwrite checkbox | 2 terms are already in this collection: **Skip them** · Update their definitions |
-| Tour: Import them as JSON | Paste a list from Notes, a spreadsheet or another app |
-| Wrong or empty file | The file must be a text, CSV or JSON file · The file is empty |
+| Today                          | New                                                                                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Validate & preview             | Check 48 terms                                                                                                                                                      |
+| `terms[3].definition` required | (no error; "No definition yet · Add one" on the card)                                                                                                               |
+| `terms[3].category` required   | (no error; optional "Category for these terms")                                                                                                                     |
+| Invalid JSON at position 812   | We couldn't find any terms. Put each term on its own line, with a dash or colon before its definition. For example: API – a way for programs to talk to each other. |
+| Overwrite checkbox             | 2 terms are already in this collection: **Skip them** · Update their definitions                                                                                    |
+| Tour: Import them as JSON      | Paste a list from Notes, a spreadsheet or another app                                                                                                               |
+| Wrong or empty file            | The file must be a text, CSV or JSON file · The file is empty                                                                                                       |
 
 ### 4.3 A deck from another app [artifact: "Other apps"]
 
 - An app picker leads to a short, honest guide for each app. Every guide ends on the Paste screen. There are no connectors.
 
-| Source | User steps on a phone | Phase |
-|---|---|---|
-| Quizlet | quizlet.com in the browser (export isn't in the app) → ••• → Export → Copy text. Only sets the user created; copied sets can't be exported. Default separators are Tab and New line; custom ones work too | 1 |
-| Anki (desktop) | Export → Notes in Plain Text | 1 |
-| Google Translate Saved | Saved → Export to Google Sheets (on a computer), then copy the columns | 1 |
-| Noji | Deck → Settings → Export deck → CSV | 1 |
-| Mochi, Brainscape | Mochi CSV; Brainscape export may need Pro, otherwise copy from the edit view | 1 |
-| Duolingo | No export. The guide says so and points to paste or request | 1 (copy only) |
-| Memrise | No official export. Copy from the course page in a browser | 1 (copy only) |
-| AnkiWeb shared decks, AnkiDroid, RemNote `.apkg` | Needs a package reader | 4, on demand |
-| Kindle, Reverso, Knowt | Skip | — |
+| Source                                           | User steps on a phone                                                                                                                                                                                     | Phase         |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| Quizlet                                          | quizlet.com in the browser (export isn't in the app) → ••• → Export → Copy text. Only sets the user created; copied sets can't be exported. Default separators are Tab and New line; custom ones work too | 1             |
+| Anki (desktop)                                   | Export → Notes in Plain Text                                                                                                                                                                              | 1             |
+| Google Translate Saved                           | Saved → Export to Google Sheets (on a computer), then copy the columns                                                                                                                                    | 1             |
+| Noji                                             | Deck → Settings → Export deck → CSV                                                                                                                                                                       | 1             |
+| Mochi, Brainscape                                | Mochi CSV; Brainscape export may need Pro, otherwise copy from the edit view                                                                                                                              | 1             |
+| Duolingo                                         | No export. The guide says so and points to paste or request                                                                                                                                               | 1 (copy only) |
+| Memrise                                          | No official export. Copy from the course page in a browser                                                                                                                                                | 1 (copy only) |
+| AnkiWeb shared decks, AnkiDroid, RemNote `.apkg` | Needs a package reader                                                                                                                                                                                    | 4, on demand  |
+| Kindle, Reverso, Knowt                           | Skip                                                                                                                                                                                                      | —             |
 
 - **Rejected: Quizlet link import.** Quizlet returns a Cloudflare challenge, its ToS bans scraping, and it has no public API.
 - **Deferred: Anki `.apkg`/`.colpkg`.**
@@ -287,6 +297,7 @@ Screen names match the artifact sections.
 **Entry.** Browse or the chooser search with no good match shows "Request '…'". The quota appears **before** the form ("You can have 1 request open at a time").
 
 **Form.**
+
 - **Required:**
   - Topic (one line), which keeps showing Browse matches as the user types;
   - Kind: "A field's jargon" or "Language vocabulary";
@@ -298,6 +309,7 @@ Screen names match the artifact sections.
 - Helper text: "Please leave out confidential company details and personal information."
 
 **Confirmation.**
+
 - "Request sent. We'll prepare 'X' and add it to your Library, usually within 2 days."
 - "How should we tell you?":
   - Email is on by default.
@@ -308,28 +320,31 @@ Screen names match the artifact sections.
 
 **Statuses.**
 
-| Internal state | User sees | When it's set |
-|---|---|---|
-| `requested` | In the queue · usually ready by {date} | On submit |
-| `in_progress` | Being prepared · choosing the key terms and writing definitions and examples | **Only when the admin accepts, meaning work actually starts** |
-| `needs_input` | We have a quick question about your request (with a reply box) | The admin asks. The delivery clock pauses |
-| `ready` | Ready · N terms added to your Library [Start reading] | On delivery |
-| `declined` | We couldn't prepare this one, with a reason and a self-serve alternative | The admin declines |
-| `cancelled` | Cancelled | The user cancels |
-| `merged` | Shows the linked request's status | The admin links duplicates |
+| Internal state | User sees                                                                    | When it's set                                                 |
+| -------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `requested`    | In the queue · usually ready by {date}                                       | On submit                                                     |
+| `in_progress`  | Being prepared · choosing the key terms and writing definitions and examples | **Only when the admin accepts, meaning work actually starts** |
+| `needs_input`  | We have a quick question about your request (with a reply box)               | The admin asks. The delivery clock pauses                     |
+| `ready`        | Ready · N terms added to your Library [Start reading]                        | On delivery                                                   |
+| `declined`     | We couldn't prepare this one, with a reason and a self-serve alternative     | The admin declines                                            |
+| `cancelled`    | Cancelled                                                                    | The user cancels                                              |
+| `merged`       | Shows the linked request's status                                            | The admin links duplicates                                    |
 
 **Expectations.**
+
 - Promise a window the admin reliably beats; the suggested default is "usually within 2 days".
 - Stretch the estimate when the admin is away (a pause switch with an honest banner).
 - If a request runs late, say so **once** with a new date. Never repeat "soon".
 
 **Notifications.**
+
 - Email (Resend) first: on Ready, on Needs input, on a delay, and on a decline.
 - Push comes in phase 3, for Ready and Needs input only, as a Declarative Web Push payload (`web_push: 8030`, title, `navigate` URL, optional `app_badge`). iOS 18.4+ shows it natively; the Serwist service worker parses the same JSON elsewhere.
 - Permission is asked only from the "Notify me" tap.
 - On iOS, push works only in the Home Screen app.
 
 **Admin desk: `/admin/requests`.**
+
 - Built on `requireAdminPage`, `runAdminAction` and `writeAudit`, and added to `components/admin/admin-sections.ts`.
 - **Queue:** oldest first, with a due badge, topic, kind, language, size, and suggested duplicates or similar Browse collections.
 - **Actions:**
@@ -378,15 +393,15 @@ Screen names match the artifact sections.
 
 ## 5. Platform facts (as of iOS/Safari 27, Chrome 154)
 
-| Capability | iOS Safari tab | iOS Home Screen app | Android tab | Android installed | Desktop |
-|---|---|---|---|---|---|
-| Paste event in a textarea | yes | yes | yes | yes | yes |
-| `clipboard.readText()` from a tap | "Paste" callout on every read | same | one-time permission | same | Chromium permission; Safari callout |
-| Web Share Target | no | no | no (needs install) | yes | Chromium unclear |
-| Manifest shortcuts | no | no | no | yes | Chromium, macOS Safari 17.4+ |
-| Web Push | no | yes (16.4+, asked from a tap) | yes | yes | yes |
-| Declarative Web Push | no | 18.4+ | via the service worker | via the service worker | macOS Safari 18.4+ |
-| Background Sync | no | no | yes | yes | Chromium only |
+| Capability                        | iOS Safari tab                | iOS Home Screen app           | Android tab            | Android installed      | Desktop                             |
+| --------------------------------- | ----------------------------- | ----------------------------- | ---------------------- | ---------------------- | ----------------------------------- |
+| Paste event in a textarea         | yes                           | yes                           | yes                    | yes                    | yes                                 |
+| `clipboard.readText()` from a tap | "Paste" callout on every read | same                          | one-time permission    | same                   | Chromium permission; Safari callout |
+| Web Share Target                  | no                            | no                            | no (needs install)     | yes                    | Chromium unclear                    |
+| Manifest shortcuts                | no                            | no                            | no                     | yes                    | Chromium, macOS Safari 17.4+        |
+| Web Push                          | no                            | yes (16.4+, asked from a tap) | yes                    | yes                    | yes                                 |
+| Declarative Web Push              | no                            | 18.4+                         | via the service worker | via the service worker | macOS Safari 18.4+                  |
+| Background Sync                   | no                            | no                            | yes                    | yes                    | Chromium only                       |
 
 ## 6. Copy rules for the request flow
 
@@ -503,6 +518,7 @@ Ordered by impact over effort. Each phase ships on its own; phase 2 doesn't ship
 ### Phase 4: On demand (medium each)
 
 Build each item only once there's evidence people ask for it:
+
 - the Anki package reader;
 - `.xlsx` via read-excel-file;
 - dictionary suggestions (tap-to-choose, self-hosted Wiktionary data with CC BY-SA attribution; poor fit for jargon senses);
@@ -550,7 +566,7 @@ Each phase plan must list which of these apply and how it handles them.
 ### 8.3 Destination and names (phases 0–1)
 
 - Near-duplicate names ("Startup Finance" vs "Startup finance " vs "Startup finanse"): show the guard.
-- A name that equals a shared or built-in collection the user only *added*, not owns: create the user's own collection and say so.
+- A name that equals a shared or built-in collection the user only _added_, not owns: create the user's own collection and say so.
 - Only owned collections are valid destinations. Built-in or public ones can't receive imports.
 - An existing destination's language wins. A soft hint when the content looks Dutch but the destination is English, and the other way round.
 - An imported collection's activation (`markDomainActive` / `user_active_domains`), and sliced activation if it exists.
@@ -579,6 +595,7 @@ Each phase plan must list which of these apply and how it handles them.
   - zod schemas in `term-schema.ts` and `import/schema.ts`.
 
   The generator skills keep sending categories.
+
 - **Unfinished terms (no definition):** exclude them from:
   - the TRACE candidate RPCs (`get_trace_candidates`, `my_get_trace_candidates`) and `lib/trace-queue/hydrate.ts`;
   - Stories (`lib/stories/repository.ts`) and quiz distractors (`lib/quiz/distractors.ts`);
@@ -652,20 +669,20 @@ Each phase plan must list which of these apply and how it handles them.
 
 All settled. Don't reopen them; ask the owner only about new questions.
 
-| Question | Decision |
-|---|---|
-| Category: nullable or a hidden default? | **Nullable.** Filter shown only with 2+ categories |
-| Which fields are required? | **Only the term name.** Definition and category are optional everywhere; terms without a definition are unfinished and stay out of study |
-| Several senses per term? | **No.** No duplicate terms in a collection; the unique index stays. Suggest a qualifier in the name |
-| Undo for imports? | **No undo.** Keep the one-transaction commit; make the Check screen show consequences clearly |
-| Delivered request: who owns it? | **The requester, private.** Not published to Browse; the requester can share it later |
-| Share-to-Browse toggle on the request form | **None** (follows from the above) |
-| How are requests fulfilled? | **Manually by the admin.** No automation and no AI pipeline in the app |
-| Admin AI account and request-text retention | **Not applicable** (no AI pipeline). Revisit if that changes |
-| Delivery estimate and quota | "Usually within 2 days"; 1 open request and 3 per 30 days (default accepted) |
-| "Request definitions for these words" route | Language collections only, counted against the quota (default accepted) |
-| Dictionary suggestions later | Only tap-to-choose, with visible attribution and self-hosted data (default accepted) |
-| Ship phase 2 alongside phase 1? | **No.** Separate releases |
+| Question                                    | Decision                                                                                                                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Category: nullable or a hidden default?     | **Nullable.** Filter shown only with 2+ categories                                                                                       |
+| Which fields are required?                  | **Only the term name.** Definition and category are optional everywhere; terms without a definition are unfinished and stay out of study |
+| Several senses per term?                    | **No.** No duplicate terms in a collection; the unique index stays. Suggest a qualifier in the name                                      |
+| Undo for imports?                           | **No undo.** Keep the one-transaction commit; make the Check screen show consequences clearly                                            |
+| Delivered request: who owns it?             | **The requester, private.** Not published to Browse; the requester can share it later                                                    |
+| Share-to-Browse toggle on the request form  | **None** (follows from the above)                                                                                                        |
+| How are requests fulfilled?                 | **Manually by the admin.** No automation and no AI pipeline in the app                                                                   |
+| Admin AI account and request-text retention | **Not applicable** (no AI pipeline). Revisit if that changes                                                                             |
+| Delivery estimate and quota                 | "Usually within 2 days"; 1 open request and 3 per 30 days (default accepted)                                                             |
+| "Request definitions for these words" route | Language collections only, counted against the quota (default accepted)                                                                  |
+| Dictionary suggestions later                | Only tap-to-choose, with visible attribution and self-hosted data (default accepted)                                                     |
+| Ship phase 2 alongside phase 1?             | **No.** Separate releases                                                                                                                |
 
 ## 10. Verify on real devices before writing final copy
 
@@ -677,6 +694,7 @@ All settled. Don't reopen them; ask the owner only about new questions.
   - Telegram.
 
   Test in the iOS Safari tab, the iOS Home Screen app, the Android tab and the installed Android app. Record `clipboardData.types` and the raw `text/plain`.
+
 - The Paste button's prompts on iOS and Android.
 - The keyboard vs the Add button on iPhone (iOS 26/27) and Android.
 - Scrolling 200 cards.
@@ -691,6 +709,7 @@ All settled. Don't reopen them; ask the owner only about new questions.
 ## 11. Rejected or out of scope
 
 Don't plan these:
+
 - Quizlet link import, and any scraping connector.
 - Per-app API connectors.
 - In-app AI import or "magic import".

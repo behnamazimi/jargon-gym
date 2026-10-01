@@ -4,6 +4,7 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
   addDomainToCollection,
   countDomainCollectionSubscribers,
+  createOwnedDomain,
   deleteDomain,
   DomainMutationError,
   removeDomainFromCollection,
@@ -11,7 +12,12 @@ import {
   setDomainVisibility,
   updateOwnedDomain as updateOwnedDomainRecord,
 } from "@/lib/jargon/collections";
-import { parseDomainInput, type DomainInput } from "@/lib/jargon/domain-schema";
+import {
+  parseDomainInput,
+  parseNewCollectionInput,
+  type DomainInput,
+  type NewCollectionInput,
+} from "@/lib/jargon/domain-schema";
 import { resetDomainProgress } from "@/lib/jargon/known-state";
 import { revalidatePath } from "next/cache";
 
@@ -176,5 +182,24 @@ export async function resetCollectionProgress(domainId: string): Promise<{ error
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't reset progress. Try again.";
     return { error: message };
+  }
+}
+
+export async function createEmptyCollection(
+  input: NewCollectionInput,
+): Promise<{ error?: string; domainId?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const parsed = parseNewCollectionInput(input);
+  if (!parsed.ok) return { error: parsed.error };
+
+  try {
+    const created = await createOwnedDomain(auth.supabase, auth.user.id, parsed.data);
+    revalidatePath("/jargon");
+    return { domainId: created.id };
+  } catch (err) {
+    if (err instanceof DomainMutationError) return { error: err.message };
+    return { error: "Couldn't create that collection. Try again." };
   }
 }

@@ -22,7 +22,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
     return (
       <PageCenter className={showImportLink ? "gap-3" : undefined}>
         <p className="text-sm text-base-content/60">{setup.error}</p>
-        {showImportLink ? <LinkButton href="/jargon/import">Import jargon</LinkButton> : null}
+        {showImportLink ? <LinkButton href="/jargon/import">Add your own terms</LinkButton> : null}
       </PageCenter>
     );
   }

@@ -75,8 +75,6 @@ export function TermActionsMenu({
       </DropdownMenuTrigger>
 
       <TermFormDialog
-        mode="edit"
-        domainId={domainId}
         domainTerms={domainTerms}
         initialTerm={term}
         isOpen={editOpen}

@@ -32,7 +32,7 @@ export default async function JargonMasteryPage({ searchParams }: PageProps) {
         <div className="flex flex-wrap items-center justify-center gap-3">
           <LinkButton href="/jargon/browse">Browse shared collections</LinkButton>
           <LinkButton href="/jargon/import" variant="outline">
-            Import jargon
+            Add your own terms
           </LinkButton>
         </div>
       </EmptyState>

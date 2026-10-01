@@ -94,8 +94,8 @@ export function ImportForm({
   return (
     <ImportCard
       icon={Braces}
-      title="Paste or upload JSON"
-      description="Add terms to a collection you own, or create a new one from the file."
+      title="Import from JSON"
+      description="Paste JSON or choose a .json file. Nothing is saved until you check it and confirm."
     >
       <ImportFormMobileToolbar {...toolbarProps} />
       <ImportFormDesktopToolbar {...toolbarProps} lineCount={lineCount} />
@@ -114,7 +114,7 @@ export function ImportForm({
           }}
           placeholder={`{\n  "domain": "Software Engineering",\n  "terms": [\n    {\n      "term": "Coupling",\n      "category": "Architecture",\n      "definition": "..."\n    }\n  ],\n  "relationships": [\n    {\n      "source": "Coupling",\n      "target": "Cohesion",\n      "relationship_type": "often confused with"\n    }\n  ]\n}`}
           spellCheck={false}
-          className="min-h-48 resize-y font-mono text-sm leading-5 sm:min-h-80"
+          className="min-h-48 resize-y font-mono text-base leading-5 sm:min-h-80 sm:text-sm"
         />
       </div>
 
@@ -125,7 +125,7 @@ export function ImportForm({
         isDisabled={isValidating || !hasContent}
         className="min-h-11 w-full md:w-auto"
       >
-        {isValidating ? "Validating…" : "Validate & preview"}
+        {isValidating ? "Checking…" : "Check terms"}
       </Button>
       {fileInput}
     </ImportCard>

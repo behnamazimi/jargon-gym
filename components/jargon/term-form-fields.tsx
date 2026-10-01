@@ -16,6 +16,58 @@ type TermFormFieldsProps = {
   sourceTermId: string | undefined;
 };
 
+type FieldsProps = {
+  form: TermInput;
+  onFieldChange: <K extends keyof TermInput>(key: K, value: TermInput[K]) => void;
+};
+
+export function CategoryField({
+  form,
+  onFieldChange,
+  required,
+}: FieldsProps & { required?: boolean }) {
+  return (
+    <Field>
+      <FieldLabel htmlFor="term-category">Category</FieldLabel>
+      <Input
+        id="term-category"
+        value={form.category}
+        onChange={(event) => onFieldChange("category", event.target.value)}
+        placeholder="e.g. Architecture"
+        className="text-base"
+        required={required}
+      />
+    </Field>
+  );
+}
+
+const OPTIONAL_FIELDS = [
+  { key: "example", id: "term-example", label: "Example (optional)" },
+  { key: "mental_model", id: "term-mental-model", label: "Mental model (optional)" },
+  { key: "discussion", id: "term-discussion", label: "In practice (optional)" },
+  { key: "anti_example", id: "term-anti-example", label: "Anti-example (optional)" },
+  { key: "controversy", id: "term-controversy", label: "Debated (optional)" },
+  { key: "note", id: "term-note", label: "Note (optional)" },
+] as const;
+
+export function OptionalDetailFields({ form, onFieldChange }: FieldsProps) {
+  return (
+    <>
+      {OPTIONAL_FIELDS.map((field) => (
+        <Field key={field.key}>
+          <FieldLabel htmlFor={field.id}>{field.label}</FieldLabel>
+          <Textarea
+            id={field.id}
+            value={form[field.key] ?? ""}
+            onChange={(event) => onFieldChange(field.key, event.target.value)}
+            className="min-h-20 text-base"
+          />
+        </Field>
+      ))}
+    </>
+  );
+}
+
 export function TermFormFields({
   form,
   onFieldChange,
@@ -34,20 +86,12 @@ export function TermFormFields({
           value={form.term}
           onChange={(event) => onFieldChange("term", event.target.value)}
           placeholder="e.g. Coupling"
+          className="text-base"
           required
         />
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="term-category">Category</FieldLabel>
-        <Input
-          id="term-category"
-          value={form.category}
-          onChange={(event) => onFieldChange("category", event.target.value)}
-          placeholder="e.g. Architecture"
-          required
-        />
-      </Field>
+      <CategoryField form={form} onFieldChange={onFieldChange} required />
 
       <Field>
         <FieldLabel htmlFor="term-definition">Definition</FieldLabel>
@@ -56,70 +100,12 @@ export function TermFormFields({
           value={form.definition}
           onChange={(event) => onFieldChange("definition", event.target.value)}
           placeholder="What does this term mean?"
-          className="min-h-24"
+          className="min-h-24 text-base"
           required
         />
       </Field>
 
-      <Field>
-        <FieldLabel htmlFor="term-example">Example (optional)</FieldLabel>
-        <Textarea
-          id="term-example"
-          value={form.example ?? ""}
-          onChange={(event) => onFieldChange("example", event.target.value)}
-          className="min-h-20"
-        />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="term-mental-model">Mental model (optional)</FieldLabel>
-        <Textarea
-          id="term-mental-model"
-          value={form.mental_model ?? ""}
-          onChange={(event) => onFieldChange("mental_model", event.target.value)}
-          className="min-h-20"
-        />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="term-discussion">In practice (optional)</FieldLabel>
-        <Textarea
-          id="term-discussion"
-          value={form.discussion ?? ""}
-          onChange={(event) => onFieldChange("discussion", event.target.value)}
-          className="min-h-20"
-        />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="term-anti-example">Anti-example (optional)</FieldLabel>
-        <Textarea
-          id="term-anti-example"
-          value={form.anti_example ?? ""}
-          onChange={(event) => onFieldChange("anti_example", event.target.value)}
-          className="min-h-20"
-        />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="term-controversy">Debated (optional)</FieldLabel>
-        <Textarea
-          id="term-controversy"
-          value={form.controversy ?? ""}
-          onChange={(event) => onFieldChange("controversy", event.target.value)}
-          className="min-h-20"
-        />
-      </Field>
-
-      <Field>
-        <FieldLabel htmlFor="term-note">Note (optional)</FieldLabel>
-        <Textarea
-          id="term-note"
-          value={form.note ?? ""}
-          onChange={(event) => onFieldChange("note", event.target.value)}
-          className="min-h-20"
-        />
-      </Field>
+      <OptionalDetailFields form={form} onFieldChange={onFieldChange} />
 
       {canManageRelationships ? (
         <TermRelationshipsEditor

@@ -8,6 +8,7 @@ export {
 } from "@/app/(private)/jargon/actions-terms";
 export {
   addToCollection,
+  createEmptyCollection,
   removeFromCollection,
   toggleActiveForReview,
   shareDomain,

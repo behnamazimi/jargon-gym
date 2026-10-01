@@ -1,6 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { createOrGetOwnedDomain } from "@/lib/jargon/collections";
+import type { DomainLanguage } from "@/lib/jargon/languages";
+import { escapeLike } from "@/lib/jargon/like-escape";
 import { formatImportFailure, ImportExecutionError } from "./errors";
 import { importRelationships } from "./import-relationships";
 import type { ImportPayload, ImportResult } from "./types";
@@ -24,7 +26,7 @@ async function domainExisted(client: Client, ownerId: string, domainName: string
     .from("domains")
     .select("id")
     .eq("owner_id", ownerId)
-    .ilike("name", domainName)
+    .ilike("name", escapeLike(domainName))
     .maybeSingle();
 
   if (error) {
@@ -34,10 +36,21 @@ async function domainExisted(client: Client, ownerId: string, domainName: string
   return Boolean(existingDomain);
 }
 
-async function resolveImportDomain(client: Client, ownerId: string, payload: ImportPayload) {
+async function resolveImportDomain(
+  client: Client,
+  ownerId: string,
+  payload: ImportPayload,
+  language?: DomainLanguage,
+) {
   let domain;
   try {
-    domain = await createOrGetOwnedDomain(client, ownerId, payload.domain, payload.description);
+    domain = await createOrGetOwnedDomain(
+      client,
+      ownerId,
+      payload.domain,
+      payload.description,
+      language,
+    );
   } catch (err) {
     throwStepError(err, "Could not create or open domain", { domain: payload.domain });
   }
@@ -82,7 +95,7 @@ async function upsertImportTerm(
     .from("terms")
     .select("id")
     .eq("domain_id", domainId)
-    .ilike("term", item.term)
+    .ilike("term", escapeLike(item.term.trim()))
     .maybeSingle();
 
   if (existingTermError) {
@@ -136,10 +149,10 @@ export async function executeImport(
   client: Client,
   ownerId: string,
   payload: ImportPayload,
-  options: { isMerge: boolean },
+  options: { isMerge: boolean; language?: DomainLanguage },
 ): Promise<ImportResult> {
   const hadExisting = await domainExisted(client, ownerId, payload.domain);
-  const domain = await resolveImportDomain(client, ownerId, payload);
+  const domain = await resolveImportDomain(client, ownerId, payload, options.language);
 
   let termsCreated = 0;
   let termsUpdated = 0;

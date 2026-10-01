@@ -8,13 +8,11 @@ export function collectTermKeys(terms: { term: string }[]): {
   const termKeys = new Set<string>();
   const duplicateIssues: ImportValidationIssue[] = [];
 
-  for (const [index, term] of terms.entries()) {
+  for (const term of terms) {
     const key = term.term.trim().toLowerCase();
     if (termKeys.has(key)) {
       duplicateIssues.push({
-        path: `terms[${index}].term`,
-        message: `Duplicate term "${term.term}" in import`,
-        expected: "unique term name within this import",
+        message: `"${term.term.trim()}" appears twice. Keep one of them.`,
       });
     }
     termKeys.add(key);
@@ -27,7 +25,6 @@ type Rel = { source: string; target: string; relationship_type: string };
 
 function relationshipIssuesFor(
   rel: Rel,
-  index: number,
   termKeys: Set<string>,
   relationshipKeys: Set<string>,
 ): ImportValidationIssue[] {
@@ -38,34 +35,25 @@ function relationshipIssuesFor(
 
   if (relationshipKeys.has(relationshipKey)) {
     issues.push({
-      path: `relationships[${index}]`,
-      message: `Duplicate relationship "${rel.source}" → "${rel.target}" (${rel.relationship_type}) in import`,
-      expected: "unique source, target, and relationship type within this import",
+      message: `The link from "${rel.source}" to "${rel.target}" (${rel.relationship_type}) is listed twice.`,
     });
   }
   relationshipKeys.add(relationshipKey);
 
   if (!termKeys.has(sourceKey)) {
     issues.push({
-      path: `relationships[${index}].source`,
-      message: `Source term "${rel.source}" not found in terms[]`,
-      expected: "term name that exists in terms[]",
+      message: `The link from "${rel.source}" to "${rel.target}" points to a term that isn't in your list: "${rel.source}".`,
     });
   }
 
   if (!termKeys.has(targetKey)) {
     issues.push({
-      path: `relationships[${index}].target`,
-      message: `Target term "${rel.target}" not found in terms[]`,
-      expected: "term name that exists in terms[]",
+      message: `The link from "${rel.source}" to "${rel.target}" points to a term that isn't in your list: "${rel.target}".`,
     });
   }
 
   if (sourceKey === targetKey) {
-    issues.push({
-      path: `relationships[${index}]`,
-      message: "A term cannot relate to itself",
-    });
+    issues.push({ message: `"${rel.source.trim()}" can't be linked to itself.` });
   }
 
   return issues;
@@ -78,8 +66,8 @@ export function collectRelationshipIssues(
   const relationshipKeys = new Set<string>();
   const issues: ImportValidationIssue[] = [];
 
-  for (const [index, rel] of relationships.entries()) {
-    issues.push(...relationshipIssuesFor(rel, index, termKeys, relationshipKeys));
+  for (const rel of relationships) {
+    issues.push(...relationshipIssuesFor(rel, termKeys, relationshipKeys));
   }
 
   return issues;

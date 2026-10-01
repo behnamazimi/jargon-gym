@@ -59,6 +59,8 @@ export function JargonFilters({
     [activeCategories, hideKnown, sortMode],
   );
 
+  if (totalCount === 0) return null;
+
   return (
     <section
       aria-label="Filter terms"

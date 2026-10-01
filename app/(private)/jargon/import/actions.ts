@@ -4,21 +4,47 @@ import { executeImport } from "@/lib/jargon/import/execute-import";
 import { formatImportFailure, ImportExecutionError } from "@/lib/jargon/import/errors";
 import { listOwnedCollectionsForImport } from "@/lib/jargon/import/owned-collections";
 import { buildImportPreview, parseImportJson } from "@/lib/jargon/import/validate-import";
-import type { ImportFailure, ImportPreview, ImportResult } from "@/lib/jargon/import/types";
+import type {
+  ImportFailure,
+  ImportOverrides,
+  ImportPreview,
+  ImportResult,
+} from "@/lib/jargon/import/types";
+import { DOMAIN_LANGUAGES, type DomainLanguage } from "@/lib/jargon/languages";
+import { pluralize } from "@/lib/utils";
+import { z } from "zod";
 import { getSessionUser, requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 const NOT_SIGNED_IN_FAILURE: ImportFailure = {
   title: "Not signed in",
-  message: "Log in to import jargon.",
+  message: "Sign in to add terms.",
   hint: "Sign in, then come back to this page.",
 };
+
+const overridesSchema = z.object({
+  domainName: z.string().trim().min(1).optional(),
+  language: z.enum(DOMAIN_LANGUAGES).optional(),
+});
+
+function applyOverrides<T extends { domain: string }>(
+  data: T,
+  overrides: ImportOverrides | undefined,
+): { payload: T; language?: DomainLanguage } {
+  const parsed = overridesSchema.safeParse(overrides ?? {});
+  if (!parsed.success) return { payload: data };
+
+  return {
+    payload: parsed.data.domainName ? { ...data, domain: parsed.data.domainName } : data,
+    language: parsed.data.language,
+  };
+}
 
 export async function getImportSetupData() {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "Log in to import jargon." as const };
+    return { error: "Sign in to add terms." as const };
   }
 
   const collections = await listOwnedCollectionsForImport(auth.supabase, auth.user.id);
@@ -28,6 +54,7 @@ export async function getImportSetupData() {
 
 export async function validateImportJson(
   raw: string,
+  overrides?: ImportOverrides,
 ): Promise<{ ok: true; preview: ImportPreview } | { ok: false; failure: ImportFailure }> {
   const parsed = parseImportJson(raw);
   if (!parsed.ok) return parsed;
@@ -38,7 +65,8 @@ export async function validateImportJson(
   }
 
   try {
-    const preview = await buildImportPreview(supabase, user.id, parsed.data);
+    const { payload } = applyOverrides(parsed.data, overrides);
+    const preview = await buildImportPreview(supabase, user.id, payload);
     return { ok: true, preview };
   } catch (err) {
     if (err instanceof ImportExecutionError) {
@@ -47,7 +75,7 @@ export async function validateImportJson(
 
     return {
       ok: false,
-      failure: formatImportFailure(err, { step: "Validation failed" }),
+      failure: formatImportFailure(err, { step: "Couldn't check the terms" }),
     };
   }
 }
@@ -56,10 +84,10 @@ function conflictConfirmationFailure(
   conflictingTerms: ImportPreview["conflictingTerms"],
 ): ImportFailure {
   return {
-    title: "Confirm before importing",
-    message: `This import would overwrite ${conflictingTerms.length} existing term${conflictingTerms.length === 1 ? "" : "s"}.`,
+    title: "Confirm before adding",
+    message: `${pluralize(conflictingTerms.length, "term")} already in this collection would be replaced.`,
     details: conflictingTerms,
-    hint: "Check the preview and confirm you want to replace the conflicting terms.",
+    hint: "Tick the box in the preview to replace them, then add again.",
   };
 }
 
@@ -71,13 +99,14 @@ function handleImportError(err: unknown): { ok: false; failure: ImportFailure } 
 
   return {
     ok: false,
-    failure: formatImportFailure(err, { step: "Import failed" }),
+    failure: formatImportFailure(err, { step: "Import didn't finish" }),
   };
 }
 
 export async function confirmImport(
   raw: string,
   confirmReplace = false,
+  overrides?: ImportOverrides,
 ): Promise<{ ok: true; result: ImportResult } | { ok: false; failure: ImportFailure }> {
   const parsed = parseImportJson(raw);
   if (!parsed.ok) return parsed;
@@ -88,14 +117,16 @@ export async function confirmImport(
   }
 
   try {
-    const preview = await buildImportPreview(supabase, user.id, parsed.data);
+    const { payload, language } = applyOverrides(parsed.data, overrides);
+    const preview = await buildImportPreview(supabase, user.id, payload);
 
     if (preview.conflictingTerms.length > 0 && !confirmReplace) {
       return { ok: false, failure: conflictConfirmationFailure(preview.conflictingTerms) };
     }
 
-    const result = await executeImport(supabase, user.id, parsed.data, {
+    const result = await executeImport(supabase, user.id, payload, {
       isMerge: preview.isMerge,
+      language,
     });
 
     revalidatePath("/jargon");

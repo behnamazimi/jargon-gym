@@ -3,6 +3,7 @@
 import { useActionRunner } from "@/hooks/use-action-runner";
 import {
   addToCollection,
+  createEmptyCollection,
   deleteOwnedDomain,
   removeFromCollection,
   resetCollectionProgress,
@@ -10,7 +11,7 @@ import {
   updateOwnedDomain,
   unshareDomain,
 } from "@/app/(private)/jargon/actions";
-import type { DomainInput } from "@/lib/jargon/domain-schema";
+import type { DomainInput, NewCollectionInput } from "@/lib/jargon/domain-schema";
 
 export function useCollectionActions() {
   const { run, error, busyId, isBusy, clearError } = useActionRunner();
@@ -24,6 +25,23 @@ export function useCollectionActions() {
     unshareDomain: (domainId: string) => run(() => unshareDomain(domainId), { busyKey: domainId }),
     updateOwnedDomain: (domainId: string, input: DomainInput, onSuccess?: () => void) =>
       run(() => updateOwnedDomain(domainId, input), { busyKey: domainId, onSuccess }),
+    createEmptyCollection: (input: NewCollectionInput, onSuccess?: (domainId: string) => void) => {
+      let createdId: string | undefined;
+      return run(
+        async () => {
+          const result = await createEmptyCollection(input);
+          createdId = result.domainId;
+          return result;
+        },
+        {
+          busyKey: "new-collection",
+          skipRefresh: true,
+          onSuccess: () => {
+            if (createdId) onSuccess?.(createdId);
+          },
+        },
+      );
+    },
     deleteOwnedDomain: (domainId: string, onSuccess?: () => void) =>
       run(() => deleteOwnedDomain(domainId), { busyKey: domainId, onSuccess }),
     removeFromCollection: (domainId: string, onSuccess?: () => void) =>

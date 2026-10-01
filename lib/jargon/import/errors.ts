@@ -1,3 +1,4 @@
+import { jsonSyntaxMessage } from "./issue-messages";
 import type { ImportFailure, ImportValidationIssue } from "./types";
 
 type SupabaseLikeError = {
@@ -25,20 +26,9 @@ function isSupabaseLikeError(err: unknown): err is SupabaseLikeError {
   );
 }
 
-function postgresCodeHint(code?: string): string | undefined {
-  switch (code) {
-    case "23505":
-      return "Looks like a duplicate term name in this collection.";
-    case "23503":
-      return "A linked term is missing. Make sure relationship source and target terms exist.";
-    case "42501":
-      return "You don't have permission to write to this collection.";
-    case "PGRST116":
-      return "That record wasn't found or isn't accessible.";
-    default:
-      return undefined;
-  }
-}
+const GENERIC_STOP = "The import stopped part way. Some terms may already be added.";
+const RETRY_HINT =
+  "Check the collection, then try again. Terms that were added will be updated, not duplicated.";
 
 type FailureContext = { step?: string; term?: string; domain?: string };
 
@@ -50,32 +40,31 @@ function failureContext(context?: FailureContext) {
   return { term: context?.term, domain: context?.domain };
 }
 
-function supabaseFailure(err: SupabaseLikeError, context?: FailureContext): ImportFailure {
-  const details = [err.details, err.hint].filter(Boolean) as string[];
-  const hint = postgresCodeHint(err.code) ?? err.hint ?? undefined;
-
-  return {
-    title: contextTitle(context),
-    message: err.message ?? "The database rejected this import.",
-    details: details.length > 0 ? details : undefined,
-    hint,
-    code: err.code,
-    context: failureContext(context),
-  };
+function stoppedMessage(context?: FailureContext): string {
+  return context?.term
+    ? `The import stopped at "${context.term}". Some terms before it may already be added.`
+    : GENERIC_STOP;
 }
 
-function errorFailure(err: Error, context?: FailureContext): ImportFailure {
-  return {
-    title: contextTitle(context),
-    message: err.message,
-    context: failureContext(context),
-  };
+function codeReason(code?: string): string | undefined {
+  switch (code) {
+    case "23505":
+      return "A term or collection with that name already exists.";
+    case "23503":
+      return "A linked term is missing.";
+    case "42501":
+      return "You don't have permission to change this collection.";
+    default:
+      return undefined;
+  }
 }
 
-function unknownFailure(context?: FailureContext): ImportFailure {
+function plainFailure(code: string | undefined, context?: FailureContext): ImportFailure {
   return {
     title: contextTitle(context),
-    message: "Something unexpected happened during import.",
+    message: stoppedMessage(context),
+    details: codeReason(code) ? [codeReason(code) as string] : undefined,
+    hint: RETRY_HINT,
     context: failureContext(context),
   };
 }
@@ -85,52 +74,35 @@ export function formatImportFailure(err: unknown, context?: FailureContext): Imp
     return err.failure;
   }
 
-  if (isSupabaseLikeError(err)) {
-    return supabaseFailure(err, context);
-  }
-
-  if (err instanceof Error) {
-    return errorFailure(err, context);
-  }
-
-  return unknownFailure(context);
+  const code = isSupabaseLikeError(err) ? err.code : undefined;
+  return plainFailure(code, context);
 }
 
-export function jsonSyntaxFailure(message: string): ImportFailure {
-  const positionMatch = message.match(/position\s+(\d+)/i);
-  const position = positionMatch ? Number(positionMatch[1]) : undefined;
-
+export function jsonSyntaxFailure(error: string, raw: string): ImportFailure {
   return {
     title: "Check your JSON",
-    message: "This isn't valid JSON.",
-    details: [message],
-    hint:
-      position !== undefined
-        ? `Check around character ${position} for a missing comma, quote, or bracket.`
-        : "Use Format JSON or Load example to start from a valid template.",
+    message: jsonSyntaxMessage(error, raw),
   };
 }
 
 export function emptyPayloadFailure(): ImportFailure {
   return {
-    title: "Nothing to import",
-    message: "Paste JSON or load an example first.",
-    hint: "Use Load example to insert a starter payload.",
+    title: "Nothing to check yet",
+    message: "Nothing to check yet. Paste JSON or choose a .json file.",
   };
 }
+
+const MAX_LISTED_ISSUES = 10;
 
 export function validationFailure(issues: ImportValidationIssue[]): ImportFailure {
-  return {
-    title: "Fix these issues",
-    message:
-      issues.length === 1
-        ? "Found 1 issue in the payload."
-        : `Found ${issues.length} issues in the payload.`,
-    issues,
-    hint: "Fix the paths listed below, then validate again.",
-  };
-}
+  const listed = issues.slice(0, MAX_LISTED_ISSUES);
+  const hidden = issues.length - listed.length;
 
-export function formatJsonFailure(message: string): ImportFailure {
-  return jsonSyntaxFailure(message);
+  return {
+    title: "Fix these first",
+    message:
+      issues.length === 1 ? "Found 1 thing to fix." : `Found ${issues.length} things to fix.`,
+    issues: hidden > 0 ? [...listed, { message: `…and ${hidden} more.` }] : listed,
+    hint: "Fix the items below, then check again.",
+  };
 }

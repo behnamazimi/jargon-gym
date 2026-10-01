@@ -1,12 +1,7 @@
-import { DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { termRelationshipsToDrafts } from "@/lib/jargon/relationship-sync";
 import type { TermInput } from "@/lib/jargon/term-schema";
 import type { Term } from "@/lib/jargon/types";
 
-export const emptyForm: TermInput = {
-  term: "",
-  category: "",
-  definition: "",
+export const emptyDetails = {
   example: "",
   mental_model: "",
   discussion: "",
@@ -15,7 +10,7 @@ export const emptyForm: TermInput = {
   note: "",
 };
 
-function termToForm(term: Term): TermInput {
+export function termToForm(term: Term): TermInput {
   return {
     term: term.term,
     category: term.category,
@@ -43,36 +38,4 @@ export function buildTermPayload(form: TermInput): TermInput {
     controversy: blankToNull(form.controversy),
     note: blankToNull(form.note),
   };
-}
-
-export function getResetState(mode: "create" | "edit", initialTerm: Term | undefined) {
-  const editingExisting = mode === "edit" && initialTerm;
-  return {
-    form: editingExisting ? termToForm(initialTerm) : emptyForm,
-    relationshipDrafts: editingExisting ? termRelationshipsToDrafts(initialTerm.relationships) : [],
-  };
-}
-
-export function DialogHeaderText({ mode }: { mode: "create" | "edit" }) {
-  return (
-    <DialogHeader>
-      <DialogTitle>{mode === "create" ? "Add term" : "Edit term"}</DialogTitle>
-      <DialogDescription>
-        {mode === "create"
-          ? "Add a term to this collection. Link it to others below if you like."
-          : "Update this term and its links to other terms."}
-      </DialogDescription>
-    </DialogHeader>
-  );
-}
-
-export function SubmitButtonLabel({
-  mode,
-  isSubmitting,
-}: {
-  mode: "create" | "edit";
-  isSubmitting: boolean;
-}) {
-  if (isSubmitting) return "Saving…";
-  return mode === "create" ? "Add term" : "Save changes";
 }

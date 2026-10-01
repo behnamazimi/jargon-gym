@@ -37,7 +37,7 @@ export const STUDY_DOCK_TABS = [
 
 export const ACCOUNT_OVERFLOW_NAV: AccountNavItem[] = [
   { href: "/jargon/browse", label: "Browse", icon: Compass },
-  { href: "/jargon/import", label: "Import", icon: Upload },
+  { href: "/jargon/import", label: "Add collection", icon: Upload },
   { href: "/jargon/mastery", label: "Mastery", icon: Signal },
   { href: "/jargon/settings", label: "Settings", icon: Settings },
 ];
@@ -57,7 +57,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/jargon/quiz", "Quiz"],
   ["/jargon/triage", "Triage"],
   ["/jargon/browse", "Browse"],
-  ["/jargon/import", "Import"],
+  ["/jargon/import", "Add collection"],
   ["/jargon/mastery", "Mastery"],
   ["/jargon/settings", "Settings"],
   ["/admin/collections", "Manage collections"],

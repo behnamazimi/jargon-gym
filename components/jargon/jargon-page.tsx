@@ -15,7 +15,7 @@ import { ImportedBanner, useImportedNotice } from "./imported-banner";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
 import { replaceLibraryDomainInUrl } from "./jargon-page-helpers";
-import { TermFormDialog } from "./term-form-dialog";
+import { AddTermDialog } from "./add-term-dialog";
 import { TermList } from "./term-list";
 
 type JargonPageProps = {
@@ -225,6 +225,7 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
                 domainId={domain.id}
                 language={domain.language}
                 domainTerms={terms}
+                onAddTerm={() => setAddTermOpen(true)}
                 narrationAccess={activeNarrationAccess}
                 onToggleOpen={toggleOpen}
                 onToggleMarkedKnown={toggleMarkedKnown}
@@ -236,12 +237,12 @@ export function JargonPage({ initialData, narrationAccess, importedCount }: Jarg
         </div>
       </PageShell>
       {isOwner ? (
-        <TermFormDialog
-          mode="create"
+        <AddTermDialog
           domainId={domain.id}
           domainTerms={terms}
           isOpen={addTermOpen}
           onOpenChange={setAddTermOpen}
+          onOpenTerm={setSearchQuery}
         />
       ) : null}
     </>
