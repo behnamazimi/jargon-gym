@@ -1578,6 +1578,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      admin_fill_definitions: {
+        Args: { p_request_id: string; p_terms: Json };
+        Returns: Json;
+      };
       admin_grant_ai_credits: {
         Args: { p_amount: number; p_note: string; p_user_id: string };
         Returns: undefined;
@@ -1621,19 +1625,15 @@ export type Database = {
         Args: { p_reason: string; p_user_id: string };
         Returns: undefined;
       };
-      admin_reset_ai_credits: {
-        Args: { p_note: string; p_user_id: string };
-        Returns: undefined;
-      };
-      admin_fill_definitions: {
-        Args: { p_request_id: string; p_terms: Json };
-        Returns: Json;
-      };
       admin_request_unfinished_terms: {
         Args: { p_request_id: string };
         Returns: {
           term: string;
         }[];
+      };
+      admin_reset_ai_credits: {
+        Args: { p_note: string; p_user_id: string };
+        Returns: undefined;
       };
       admin_set_ai_credit_settings: {
         Args: {
@@ -1870,7 +1870,10 @@ export type Database = {
         }[];
       };
       my_bump_streak: { Args: never; Returns: undefined };
-      my_cancel_collection_request: { Args: { p_id: string }; Returns: undefined };
+      my_cancel_collection_request: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
       my_clear_not_yet_domain: {
         Args: { p_domain_id: string };
         Returns: undefined;
@@ -1889,7 +1892,10 @@ export type Database = {
         };
         Returns: Json;
       };
-      my_dismiss_collection_request: { Args: { p_id: string }; Returns: undefined };
+      my_dismiss_collection_request: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
       my_first_seen_at_by_term: {
         Args: { p_term_ids: string[] };
         Returns: {
