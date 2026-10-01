@@ -3,6 +3,7 @@
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { CheckStep } from "@/components/jargon/import/check-step";
 import { PasteStep } from "@/components/jargon/import/paste-step";
+import type { ImportAdapter } from "@/components/jargon/import/import-flow-helpers";
 import { useImportFlow } from "@/components/jargon/import/use-import-flow";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
 import type { CommitImportInput } from "@/lib/jargon/import/commit-schema";
@@ -14,6 +15,7 @@ type ImportFlowProps = {
   entry: CommitImportInput["entry"];
   /** Go straight to Check, for a list that was pasted somewhere else. */
   autoCheck?: boolean;
+  adapter?: ImportAdapter;
 };
 
 /** Paste a list, check it, add it. */
@@ -23,8 +25,9 @@ export function ImportFlow({
   presetDomainId,
   entry,
   autoCheck = false,
+  adapter,
 }: ImportFlowProps) {
-  const flow = useImportFlow({ collections, presetDomainId, entry });
+  const flow = useImportFlow({ collections, presetDomainId, entry, adapter });
   useMountEffect(() => {
     if (autoCheck && flow.draft) flow.checkText(flow.draft, undefined);
   });

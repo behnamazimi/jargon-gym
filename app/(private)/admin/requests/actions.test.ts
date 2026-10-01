@@ -37,6 +37,8 @@ function query(table: string) {
   };
   node.single = () => Promise.resolve(next(table));
   node.maybeSingle = () => Promise.resolve(next(table));
+  // A query builder is awaited like a promise, so the mock has to be thenable.
+  // oxlint-disable-next-line unicorn/no-thenable
   node.then = (resolve: (value: Response) => unknown) => Promise.resolve(next(table)).then(resolve);
   return node;
 }

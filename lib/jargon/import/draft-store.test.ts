@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { clearDraft, readDraft, writeDraft } from "./draft-store";
+import { clearDraft, createDraftStore, readDraft, writeDraft } from "./draft-store";
 
 function fakeWindow(storage: Partial<Storage>) {
   vi.stubGlobal("window", { localStorage: storage, dispatchEvent: () => true });
@@ -33,5 +33,23 @@ describe("draft store", () => {
   it("works with no window at all", () => {
     expect(readDraft()).toBe("");
     expect(() => writeDraft("x")).not.toThrow();
+  });
+});
+
+describe("keyed draft stores", () => {
+  it("keeps separate drafts apart", () => {
+    const data = new Map<string, string>();
+    fakeWindow({
+      getItem: (key) => data.get(key) ?? null,
+      setItem: (key, value) => void data.set(key, value),
+      removeItem: (key) => void data.delete(key),
+    });
+    const a = createDraftStore("draft:a");
+    const b = createDraftStore("draft:b");
+    a.write("one");
+    b.write("two");
+    expect([a.read(), b.read(), readDraft()]).toEqual(["one", "two", ""]);
+    a.clear();
+    expect([a.read(), b.read()]).toEqual(["", "two"]);
   });
 });

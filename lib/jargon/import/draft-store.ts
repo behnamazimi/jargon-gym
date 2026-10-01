@@ -1,6 +1,13 @@
 const STORAGE_KEY = "jargon-gym:import-draft:v1";
 const CHANGE_EVENT = "jargon-gym:import-draft-change";
 
+export type DraftStore = {
+  read: () => string;
+  write: (text: string) => void;
+  clear: () => void;
+  subscribe: (callback: () => void) => () => void;
+};
+
 function storage(): Storage | null {
   if (typeof window === "undefined") return null;
   try {
@@ -10,39 +17,43 @@ function storage(): Storage | null {
   }
 }
 
-/** The pasted list saved on this phone, so switching apps loses nothing. */
-export function readDraft(): string {
-  try {
-    return storage()?.getItem(STORAGE_KEY) ?? "";
-  } catch {
-    return "";
+/** A pasted list saved on this phone under one key, so switching apps loses nothing.
+ *  Lists can be private, so callers clear it after a commit and on sign-out. */
+export function createDraftStore(key: string, changeEvent = `${CHANGE_EVENT}:${key}`): DraftStore {
+  function read(): string {
+    try {
+      return storage()?.getItem(key) ?? "";
+    } catch {
+      return "";
+    }
   }
-}
 
-function announce() {
-  if (typeof window !== "undefined") window.dispatchEvent(new Event(CHANGE_EVENT));
-}
-
-export function writeDraft(text: string): void {
-  try {
-    if (text) storage()?.setItem(STORAGE_KEY, text);
-    else storage()?.removeItem(STORAGE_KEY);
-  } catch {
-    // Private mode or a full disk: the list just isn't kept.
+  function write(text: string): void {
+    try {
+      if (text) storage()?.setItem(key, text);
+      else storage()?.removeItem(key);
+    } catch {
+      // Private mode or a full disk: the list just isn't kept.
+    }
+    if (typeof window !== "undefined") window.dispatchEvent(new Event(changeEvent));
   }
-  announce();
+
+  function subscribe(callback: () => void): () => void {
+    window.addEventListener(changeEvent, callback);
+    window.addEventListener("storage", callback);
+    return () => {
+      window.removeEventListener(changeEvent, callback);
+      window.removeEventListener("storage", callback);
+    };
+  }
+
+  return { read, write, clear: () => write(""), subscribe };
 }
 
-/** Lists can be private, so they're cleared after a commit and on sign-out. */
-export function clearDraft(): void {
-  writeDraft("");
-}
+const personalDraft = createDraftStore(STORAGE_KEY, CHANGE_EVENT);
 
-export function subscribeToDraft(callback: () => void): () => void {
-  window.addEventListener(CHANGE_EVENT, callback);
-  window.addEventListener("storage", callback);
-  return () => {
-    window.removeEventListener(CHANGE_EVENT, callback);
-    window.removeEventListener("storage", callback);
-  };
-}
+export const readDraft = personalDraft.read;
+export const writeDraft = personalDraft.write;
+export const clearDraft = personalDraft.clear;
+export const subscribeToDraft = personalDraft.subscribe;
+export { personalDraft };
