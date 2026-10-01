@@ -92,7 +92,7 @@ export function FormatHelpButton({ className }: { className?: string }) {
           </Format>
           <Format title="JSON">
             The only way to add other fields like mental model, in practice, anti-example, debated,
-            links between terms, and the language all together.{" "}
+            links between terms, and the language all together in bulk.{" "}
             <Link href="/jargon/import/more" className={linkClass}>
               See the format
             </Link>
