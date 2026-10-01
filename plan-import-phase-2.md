@@ -379,3 +379,15 @@ Defaults chosen; change any you disagree with:
 8. **A delivered collection must have a definition on every term.** Fulfil blocks otherwise. Say if you'd allow unfinished terms in a delivery.
 
 No question blocks starting 2a.
+
+## 14. Implementation notes (2026-10-01)
+
+Built on `claude/wonderful-mendel-b8e0yp` in four commits: 2a, 2b (several), 2c. Differences from the plan above:
+
+1. **Definitions entry point.** The "Request definitions" button sits on the collection's "N terms to finish" banner, not on the Check screen. The request fills terms that already exist as unfinished, and on Check they aren't saved yet. It shows only while the person can send a request (`RequestsAvailable` context fed by the server page).
+2. **"Language collections only" isn't enforced.** No collection kind exists, so any owned collection with an unfinished term qualifies. Say if you want a rule (for example, Dutch only).
+3. **Public copy is held back.** `REQUEST_COPY.public` (the privacy line and the FAQ answer) isn't on `before-you-sign-up` yet, because that page is static and would advertise requests while they're switched off. Add both lines when you turn requests on.
+4. **A database guard for the two delivery paths.** A trigger (2c migration) stops a definitions request from being delivered as a collection and a topic request from being "filled", instead of copying the delivery function.
+5. **`database.types.ts` was edited by hand** (no Docker here). CI regenerates it and diffs, so run `pnpm supabase:types` and commit any difference.
+6. **What was run.** All migrations apply to a stubbed Postgres 16 and every SQL test passes there, including the two parallel-write races (`collection_requests_concurrency.sh`, `import_terms_concurrency.sh`). `pnpm check` and `pnpm test` pass; `next build` compiles and type-checks but can't collect page data without Supabase. **Not done:** the browser flow at 375px and the device pass (section 10) need a real Supabase and phones.
+7. **File limits.** `use-import-flow.ts` was at the lint limit, so helpers moved to `import-flow-helpers.ts` and `use-check-actions.ts`; `jargon-page.tsx` takes a `topSlot` instead of the requests list.
