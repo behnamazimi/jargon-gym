@@ -2,12 +2,6 @@ import type { BuiltTerms, ColumnRole, DraftTerm, ParsedList, TermConflict } from
 
 type Fields = Partial<Record<ColumnRole, string>>;
 
-function swapRoles(roles: ColumnRole[]): ColumnRole[] {
-  return roles.map((role) =>
-    role === "term" ? "definition" : role === "definition" ? "term" : role,
-  );
-}
-
 function fieldsForRow(row: string[], roles: ColumnRole[]): Fields {
   const fields: Fields = {};
   roles.forEach((role, index) => {
@@ -19,17 +13,6 @@ function fieldsForRow(row: string[], roles: ColumnRole[]): Fields {
 
 function sameText(a: string | null, b: string | null): boolean {
   return (a ?? "").trim().toLowerCase() === (b ?? "").trim().toLowerCase();
-}
-
-const LONG_TERM = 40;
-
-function looksSwapped(terms: DraftTerm[]): boolean {
-  const withDefinition = terms.filter((term) => term.definition);
-  if (withDefinition.length === 0) return false;
-  const swapped = withDefinition.filter(
-    (term) => term.term.length > LONG_TERM && (term.definition?.length ?? 0) < term.term.length / 2,
-  );
-  return swapped.length / withDefinition.length >= 0.5;
 }
 
 type Folded = {
@@ -88,8 +71,8 @@ function draftFromFields(fields: Fields, id: string): DraftTerm {
 
 /** Turns parsed rows into terms. Identical rows fold into one. The same term
  *  with different definitions is kept once and reported as a conflict. */
-export function buildTerms(parsed: ParsedList, options: { swap?: boolean } = {}): BuiltTerms {
-  const roles = options.swap ? swapRoles(parsed.roles) : parsed.roles;
+export function buildTerms(parsed: ParsedList): BuiltTerms {
+  const roles = parsed.roles;
   const state: Folded = { terms: [], indexByKey: new Map(), conflicts: new Map(), collapsed: 0 };
   let withoutTerm = 0;
 
@@ -107,6 +90,5 @@ export function buildTerms(parsed: ParsedList, options: { swap?: boolean } = {})
     collapsed: state.collapsed,
     withoutTerm,
     conflicts: [...state.conflicts.values()],
-    swapHint: looksSwapped(state.terms),
   };
 }

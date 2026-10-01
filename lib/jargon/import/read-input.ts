@@ -39,11 +39,7 @@ function readJson(text: string): ReadInputResult {
 }
 
 /** Reads pasted or uploaded text into terms, or says what's wrong with it. */
-export function readImportInput(
-  text: string,
-  options: ParseOptions,
-  swap: boolean,
-): ReadInputResult {
+export function readImportInput(text: string, options: ParseOptions): ReadInputResult {
   if (!text.trim()) {
     return {
       ok: false,
@@ -56,7 +52,7 @@ export function readImportInput(
       ? readJson(text)
       : (() => {
           const parsed = parseList(text, options);
-          return { ok: true, kind: "list", parsed, built: buildTerms(parsed, { swap }) } as const;
+          return { ok: true, kind: "list", parsed, built: buildTerms(parsed) } as const;
         })();
   if (!result.ok) return result;
 

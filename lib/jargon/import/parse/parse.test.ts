@@ -306,11 +306,6 @@ describe("spreadsheet and CSV text", () => {
     });
     expect(buildTerms(parsed).terms[0]).toMatchObject({ category: "Tech" });
   });
-
-  it("swaps term and definition", () => {
-    const parsed = parseList("a way\tAPI\ncopy\tCache");
-    expect(buildTerms(parsed, { swap: true }).terms.map((t) => t.term)).toEqual(["API", "Cache"]);
-  });
 });
 
 describe("clipboard HTML tables", () => {
@@ -380,12 +375,6 @@ describe("duplicates inside a paste", () => {
     const built = buildTerms(parseList("– just a definition\nAPI – a way\nCache – copy"));
     expect(built.withoutTerm).toBe(1);
     expect(built.terms).toHaveLength(2);
-  });
-
-  it("hints at a swap when terms are long and definitions short", () => {
-    const long = "a statement that describes what it is in many many words";
-    const built = buildTerms(parseList(`${long}\tAPI\n${long} two\tCache`));
-    expect(built.swapHint).toBe(true);
   });
 });
 

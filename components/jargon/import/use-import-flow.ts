@@ -60,7 +60,6 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
   const [parsed, setParsed] = useState<ParsedList | null>(null);
   const [built, setBuilt] = useState<BuiltTerms | null>(null);
   const [json, setJson] = useState<JsonImport | null>(null);
-  const [swap, setSwap] = useState(false);
   const [resolved, setResolved] = useState<string[]>([]);
   const [check, dispatch] = useReducer(checkReducer, undefined, () =>
     initialCheckState(newImportId()),
@@ -125,7 +124,7 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     setOptions(nextOptions);
     setHtml(nextHtml);
 
-    const result = readImportInput(text, { ...nextOptions, html: nextHtml }, swap);
+    const result = readImportInput(text, { ...nextOptions, html: nextHtml });
     if (!result.ok) {
       setProblem(result.problem);
       return;
@@ -155,14 +154,13 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     loadTerms(result.built, domainId);
   }
 
-  function changeOptions(patch: Partial<ParseOptions>, nextSwap = swap) {
+  function changeOptions(patch: Partial<ParseOptions>) {
     if (json) return;
     const next = { ...options, ...patch };
     const list = parseList(draft, { ...next, html });
     setOptions(next);
-    setSwap(nextSwap);
     setParsed(list);
-    loadTerms(buildTerms(list, { swap: nextSwap }), mode === "existing" ? existingId : null);
+    loadTerms(buildTerms(list), mode === "existing" ? existingId : null);
   }
 
   function setDestination(nextMode: DestinationMode, nextExistingId = existingId) {
@@ -229,7 +227,6 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     parsed,
     built,
     json,
-    swap,
     resolved,
     check,
     collections,
@@ -252,7 +249,6 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     setProblem,
     checkText,
     changeOptions,
-    toggleSwap: () => changeOptions({}, !swap),
     setDestination,
     setNewName,
     setLanguage,
