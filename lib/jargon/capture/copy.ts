@@ -1,0 +1,38 @@
+export function unfinishedSavedMessage(name: string): string {
+  return `Saved “${name}”. It stays out of study until you add a definition.`;
+}
+
+export const CAPTURE_COPY = {
+  title: "Add a term",
+  term: "Term",
+  termPlaceholder: "e.g. Idempotent",
+  definition: "Definition",
+  definitionPlaceholder: "What does it mean?",
+  definitionHint: "Leave it empty to finish later.",
+  example: "Example",
+  collection: "Collection",
+  save: "Save",
+  saving: "Saving…",
+  saveAnother: "Save and add another",
+  addAnother: "Add another",
+  openCollection: "Open collection",
+  openIt: "Open it",
+  qualifierHint: "Different meaning? Add a qualifier, like “SLA (legal)”.",
+  saved: (term: string, collection: string) => `Saved “${term}” to ${collection}.`,
+  savedUnfinished: (term: string, collection: string) =>
+    `Saved “${term}” to ${collection}. It stays out of study until you add a definition.`,
+  duplicate: (term: string, collection: string) => `“${term}” is already in ${collection}.`,
+  duplicateUnfinished: (term: string, collection: string) =>
+    `“${term}” is already in ${collection} and needs a definition.`,
+  failed: "Couldn't add that term. Try again.",
+  firstTitle: "Name your first collection",
+  firstBody: "Terms live in a collection. Name one to start.",
+  firstName: "Name",
+  firstNamePlaceholder: "e.g. Startup finance",
+  language: "Language",
+  firstCreate: "Create and continue",
+  creating: "Creating…",
+  sharedHint: "Shared from another app.",
+  pickWords: "Tap the word or words you want to save.",
+  pickedWords: (term: string) => `Saving “${term}”. Tap another word to change it.`,
+};

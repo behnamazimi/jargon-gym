@@ -58,6 +58,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/jargon/triage", "Triage"],
   ["/jargon/browse", "Browse"],
   ["/jargon/import", "Add collection"],
+  ["/jargon/capture", "Add a term"],
   ["/jargon/mastery", "Mastery"],
   ["/jargon/settings", "Settings"],
   ["/admin/collections", "Manage collections"],

@@ -1,0 +1,274 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useMemo, useRef, useState } from "react";
+import { CaptureDuplicateNote } from "@/components/jargon/capture/capture-duplicate-note";
+import { CaptureSaved } from "@/components/jargon/capture/capture-saved";
+import { SharedSentenceChips } from "@/components/jargon/capture/shared-sentence-chips";
+import { FirstCollectionForm } from "@/components/jargon/capture/first-collection-form";
+import { CollectionSelect } from "@/components/jargon/collection-select";
+import { PastedListPrompt } from "@/components/jargon/pasted-list-prompt";
+import { PanelSkeleton } from "@/components/page-skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/components/ui/toast";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { useMountEffect } from "@/hooks/use-mount-effect";
+import { useCaptureDuplicate } from "@/hooks/use-capture-duplicate";
+import { useTermActions } from "@/hooks/use-term-actions";
+import { CAPTURE_COPY } from "@/lib/jargon/capture/copy";
+import { pickDestination } from "@/lib/jargon/capture/destination";
+import { loadDestinationPref, saveDestinationPref } from "@/lib/jargon/capture/destination-pref";
+import { toggleChip, termFromSelection, type Selection } from "@/lib/jargon/capture/selection";
+import { initialFromShared, type SharedIntake } from "@/lib/jargon/capture/shared-input";
+import { tokenize } from "@/lib/jargon/capture/tokenize";
+import { writeDraft } from "@/lib/jargon/import/draft-store";
+import type { ImportDestination } from "@/lib/jargon/import/import-collections";
+import { classifyTermPaste } from "@/lib/jargon/import/term-paste";
+
+type Saved = { term: string; unfinished: boolean; collectionId: string; collectionName: string };
+
+/** Waits for hydration so the remembered collection (read from this device)
+ *  never differs from what the server rendered. */
+export function CaptureFlow(props: CaptureFlowProps) {
+  return useHydrated() ? <CaptureForm {...props} /> : <PanelSkeleton />;
+}
+
+type CaptureFlowProps = {
+  collections: ImportDestination[];
+  presetId: string | null;
+  shared?: SharedIntake;
+};
+
+function CaptureForm({ collections, presetId, shared = { kind: "none" } }: CaptureFlowProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { createTerm, isBusy, error } = useTermActions();
+  const { match, check } = useCaptureDuplicate();
+  const termRef = useRef<HTMLInputElement>(null);
+  const [destinationId, setDestinationId] = useState(() =>
+    pickDestination({ preset: presetId, stored: loadDestinationPref(), collections }),
+  );
+  const initial = useMemo(() => initialFromShared(shared), [shared]);
+  const [term, setTerm] = useState(initial.term);
+  const [definition, setDefinition] = useState(initial.definition);
+  const sentence = initial.sentence;
+  const tokens = useMemo(() => (sentence ? tokenize(sentence) : []), [sentence]);
+  // Stays after saving, so another word from the same sentence keeps its example.
+  const [example, setExample] = useState(sentence ?? "");
+  const [selection, setSelection] = useState<Selection>(null);
+  const [saved, setSaved] = useState<Saved | null>(null);
+  const [pastedLines, setPastedLines] = useState<string[] | null>(initial.lines);
+  const pasteSource = shared.kind === "lines" ? "shared" : "pasted";
+
+  const destination = collections.find((collection) => collection.id === destinationId);
+  useMountEffect(() => check(destinationId, initial.term));
+
+  if (!destination) return <FirstCollectionForm />;
+
+  const canSave = term.trim().length > 0 && !match && !isBusy;
+
+  function changeTerm(value: string) {
+    setTerm(value);
+    check(destination?.id ?? null, value);
+  }
+
+  function changeDestination(id: string) {
+    setDestinationId(id);
+    check(id, term);
+  }
+
+  function toggleWord(index: number) {
+    if (!sentence) return;
+    const next = toggleChip(selection, index);
+    setSelection(next);
+    changeTerm(termFromSelection(sentence, tokens, next));
+  }
+
+  function handlePaste(event: React.ClipboardEvent<HTMLInputElement>) {
+    const pasted = classifyTermPaste(event.clipboardData.getData("text/plain"));
+    if (pasted.kind === "single") return;
+    event.preventDefault();
+    if (pasted.kind === "term-and-definition") {
+      changeTerm(pasted.term);
+      setDefinition(pasted.definition);
+      return;
+    }
+    setPastedLines(pasted.lines);
+  }
+
+  function addPastedAsList(lines: string[]) {
+    writeDraft(lines.join("\n"));
+    router.push(`/jargon/import/paste?to=${destination?.id}&from=term`);
+  }
+
+  function reset() {
+    setTerm("");
+    setDefinition("");
+    setSelection(null);
+    setPastedLines(null);
+    setSaved(null);
+    check(null, "");
+  }
+
+  async function save(addAnother: boolean) {
+    if (!canSave || !destination) return;
+    const name = term.trim();
+    const unfinished = !definition.trim();
+    // Focus before the request so the phone keyboard stays up between saves.
+    if (addAnother) termRef.current?.focus();
+
+    const ok = await createTerm(destination.id, {
+      term: name,
+      definition,
+      example: example.trim() || null,
+    });
+    if (!ok) return;
+    saveDestinationPref(destination.id);
+
+    if (addAnother) {
+      toast(
+        unfinished
+          ? CAPTURE_COPY.savedUnfinished(name, destination.name)
+          : CAPTURE_COPY.saved(name, destination.name),
+        "success",
+      );
+      reset();
+      return;
+    }
+    setSaved({
+      term: name,
+      unfinished,
+      collectionId: destination.id,
+      collectionName: destination.name,
+    });
+  }
+
+  if (saved) {
+    return (
+      <CaptureSaved
+        term={saved.term}
+        unfinished={saved.unfinished}
+        collectionName={saved.collectionName}
+        collectionId={saved.collectionId}
+        onAddAnother={reset}
+      />
+    );
+  }
+
+  return (
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save(false);
+      }}
+      className="space-y-4"
+    >
+      <Field>
+        <FieldLabel htmlFor="capture-collection">{CAPTURE_COPY.collection}</FieldLabel>
+        <CollectionSelect
+          mode="local"
+          id="capture-collection"
+          aria-label={CAPTURE_COPY.collection}
+          collections={collections.map(({ id, name }) => ({ id, name }))}
+          value={destination.id}
+          className="w-full"
+          onChange={changeDestination}
+        />
+      </Field>
+
+      <Field>
+        <FieldLabel htmlFor="capture-term">{CAPTURE_COPY.term}</FieldLabel>
+        <Input
+          id="capture-term"
+          ref={termRef}
+          value={term}
+          autoFocus
+          className="text-base"
+          placeholder={CAPTURE_COPY.termPlaceholder}
+          onChange={(event) => changeTerm(event.target.value)}
+          onPaste={handlePaste}
+        />
+      </Field>
+
+      {sentence ? (
+        <SharedSentenceChips
+          tokens={tokens}
+          selection={selection}
+          term={term.trim()}
+          onToggle={toggleWord}
+        />
+      ) : null}
+
+      {pastedLines ? (
+        <PastedListPrompt
+          source={pasteSource}
+          lines={pastedLines}
+          onAddAsList={() => addPastedAsList(pastedLines)}
+          onKeepAsOne={() => {
+            changeTerm(pastedLines.join(" "));
+            setPastedLines(null);
+          }}
+        />
+      ) : null}
+
+      {match ? (
+        <CaptureDuplicateNote
+          term={match.term}
+          finished={match.finished}
+          collectionName={destination.name}
+          collectionId={destination.id}
+        />
+      ) : null}
+
+      <Field>
+        <FieldLabel htmlFor="capture-definition">{CAPTURE_COPY.definition}</FieldLabel>
+        <Textarea
+          id="capture-definition"
+          value={definition}
+          className="min-h-20 text-base"
+          placeholder={CAPTURE_COPY.definitionPlaceholder}
+          onChange={(event) => setDefinition(event.target.value)}
+        />
+        <p className="m-0 mt-1 text-xs text-base-content/60">{CAPTURE_COPY.definitionHint}</p>
+      </Field>
+
+      {sentence ? (
+        <Field>
+          <FieldLabel htmlFor="capture-example">{CAPTURE_COPY.example}</FieldLabel>
+          <Textarea
+            id="capture-example"
+            value={example}
+            className="min-h-20 text-base"
+            onChange={(event) => setExample(event.target.value)}
+          />
+        </Field>
+      ) : null}
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <div className="flex flex-col gap-2">
+        <Button type="submit" className="min-h-12 w-full" isDisabled={!canSave}>
+          {isBusy ? CAPTURE_COPY.saving : CAPTURE_COPY.save}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 w-full"
+          isDisabled={!canSave}
+          onPress={() => void save(true)}
+        >
+          {CAPTURE_COPY.saveAnother}
+        </Button>
+      </div>
+    </form>
+  );
+}

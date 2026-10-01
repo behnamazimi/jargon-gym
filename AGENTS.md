@@ -100,6 +100,12 @@ and stays pure. Nothing in this path may call an AI model. A term needs only
 its name; terms without a definition are excluded from everything TRACE and
 every delivery surface serve.
 
+# Capture
+
+Saving one term (`/jargon/capture`, `lib/jargon/capture/`,
+`components/jargon/capture/`) is described in the Capture section of
+[docs/import.md](docs/import.md). It reuses `createTerm`; no AI runs in it.
+
 # Collection requests
 
 People can request a collection; the admin builds it by hand and delivers a private

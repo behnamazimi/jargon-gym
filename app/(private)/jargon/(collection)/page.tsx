@@ -13,7 +13,7 @@ import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { createClient } from "@/lib/supabase/server";
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string; added?: string; add?: string }>;
+  searchParams: Promise<{ domain?: string; added?: string }>;
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -60,7 +60,7 @@ async function loadRequests() {
 }
 
 export default async function JargonListPage({ searchParams }: PageProps) {
-  const { domain: selectedDomainId, added, add } = await searchParams;
+  const { domain: selectedDomainId, added } = await searchParams;
   const [setup, importedSummary, { requests, canRequest }] = await Promise.all([
     getJargonSetupData(selectedDomainId),
     loadImportedSummary(added),
@@ -87,7 +87,6 @@ export default async function JargonListPage({ searchParams }: PageProps) {
         initialData={setup.data}
         narrationAccess={setup.narrationAccess}
         importedSummary={importedSummary}
-        openAddTerm={add === "1"}
         topSlot={<RequestsSection requests={requests} />}
       />
     </RequestsAvailable>

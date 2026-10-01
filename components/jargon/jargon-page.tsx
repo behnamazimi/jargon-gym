@@ -14,8 +14,7 @@ import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
 import { ImportedBanner, useImportedNotice, type ImportedSummary } from "./imported-banner";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
-import { dropSearchParamFromUrl, replaceLibraryDomainInUrl } from "./jargon-page-helpers";
-import { useMountEffect } from "@/hooks/use-mount-effect";
+import { replaceLibraryDomainInUrl } from "./jargon-page-helpers";
 import { AddTermDialog } from "./add-term-dialog";
 import { UnfinishedSection } from "./unfinished-section";
 import { TermList } from "./term-list";
@@ -25,8 +24,6 @@ type JargonPageProps = {
   narrationAccess: boolean;
   /** What the import that just finished added (from ?added=). */
   importedSummary?: ImportedSummary;
-  /** Open the Add term sheet right away (from ?add=1). */
-  openAddTerm?: boolean;
   topSlot?: ReactNode;
 };
 
@@ -34,12 +31,10 @@ export function JargonPage({
   initialData,
   narrationAccess,
   importedSummary,
-  openAddTerm = false,
   topSlot,
 }: JargonPageProps) {
-  const [addTermOpen, setAddTermOpen] = useState(openAddTerm);
+  const [addTermOpen, setAddTermOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
-  useMountEffect(() => void (openAddTerm && dropSearchParamFromUrl("add")));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();

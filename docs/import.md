@@ -15,6 +15,7 @@ app, or one term. Everything else lives under it:
 | `/jargon/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination. |
 | `/jargon/import/apps`  | Per-app export guides (`lib/jargon/import/guides.ts`). |
 | `/jargon/import/more`  | The JSON format and the developer AI-skill card.       |
+| `/jargon/capture`      | Save one term. `?to=<id>` presets the collection.      |
 
 No AI runs anywhere in this path. Parsing is deterministic.
 
@@ -49,6 +50,28 @@ collection is undone by deleting the collection.
 
 The pasted list is kept in local storage while you work and cleared after a
 successful commit.
+
+## Capture
+
+`/jargon/capture` saves one term in a few seconds: Term, an optional Definition
+and a collection chip. The chip starts from `?to`, then the collection used last on
+this device (`lib/jargon/capture/destination-pref.ts`), then the first one. Someone
+with no collection is asked to name their first. It writes through the same
+`createTerm` action as the in-collection sheet, so a term without a definition is
+saved unfinished. While you type, `findCaptureDuplicate` checks the chosen
+collection only (the unique index is per collection). Pasting several lines offers
+"Add N terms", which hands off to the paste importer. Capture writes no
+`import_batches` row. It lives under `/jargon` so it gets the app chrome and hides
+the dock while you type.
+
+On Android, the installed app is also a share target (`share_target` in
+`app/manifest.ts`, GET to `/jargon/capture`). A shared sentence is parsed by
+`parseSharedInput`: the link is dropped, a word or short phrase fills Term, several
+lines offer the paste importer, and a longer sentence shows its words as chips
+(`lib/jargon/capture/tokenize.ts`, `selection.ts`). The tapped words become the term
+and the sentence the example. iOS has no share target. The manifest shortcuts are Add
+a term, Paste a list, Read and Review (Android shows at most four). After a manifest
+change Android may need a reinstall, or a day for the WebAPK to update.
 
 ## Unfinished terms
 
