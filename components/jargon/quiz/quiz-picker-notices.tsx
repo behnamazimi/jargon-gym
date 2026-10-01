@@ -45,12 +45,7 @@ function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
           : "AI quizzes need a provider and API key in Settings. Choose simple mode, or set up an LLM provider."}
       </AlertDescription>
       <AlertAction>
-        <LinkButton
-          href="/jargon/settings?tab=ai"
-          size="sm"
-          variant="outline"
-          className="max-md:min-h-11"
-        >
+        <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
           Go to Settings
         </LinkButton>
       </AlertAction>
@@ -88,22 +83,11 @@ function QuizPickerOverBalanceAlert({
       </AlertDescription>
       <AlertAction>
         {fitCount >= 1 ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="max-md:min-h-11"
-            onPress={() => onFit(fitCount)}
-          >
+          <Button type="button" size="sm" variant="outline" onPress={() => onFit(fitCount)}>
             Make it {fitCount} {fitCount === 1 ? "question" : "questions"}
           </Button>
         ) : (
-          <LinkButton
-            href="/jargon/settings?tab=ai"
-            size="sm"
-            variant="outline"
-            className="max-md:min-h-11"
-          >
+          <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
             Add your own key
           </LinkButton>
         )}

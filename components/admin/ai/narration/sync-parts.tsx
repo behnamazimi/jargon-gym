@@ -1,3 +1,4 @@
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type {
   CollectionNarrationCoverage,
   NarrationSyncJobView,
@@ -83,9 +84,9 @@ export function JobPanel({ job }: { job: NarrationSyncJobView }) {
         {done}/{total} · {job.generatedCount} generated · {job.failedCount} failed
       </p>
       {job.lastError ? (
-        <div role="alert" className="alert alert-error">
-          {job.lastError}
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>{job.lastError}</AlertDescription>
+        </Alert>
       ) : null}
     </div>
   );

@@ -1,4 +1,3 @@
-import { AlertCircle } from "lucide-react";
 import { Alert, AlertContent, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type JargonErrorIssue = {
@@ -107,7 +106,6 @@ export function JargonErrorAlert({ error, className }: JargonErrorAlertProps) {
 
   return (
     <Alert variant="destructive" className={className}>
-      <AlertCircle className="stroke-current h-5 w-5 shrink-0" strokeWidth={1.5} />
       <AlertContent>
         {failure.title ? <AlertTitle>{failure.title}</AlertTitle> : null}
         <AlertDescription>

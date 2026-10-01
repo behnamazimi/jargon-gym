@@ -51,7 +51,7 @@ export function DefinitionsForm({
       <p className="m-0 text-sm text-base-content/70">{FORM.quota(used)}</p>
       {paused ? (
         <Alert>
-          <AlertDescription role="status">{FORM.paused(estimateDays)}</AlertDescription>
+          <AlertDescription>{FORM.paused(estimateDays)}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -72,7 +72,7 @@ export function DefinitionsForm({
 
       {error ? (
         <Alert variant="destructive">
-          <AlertDescription role="alert">{error}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
 

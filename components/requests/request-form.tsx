@@ -143,7 +143,7 @@ export function RequestForm({
       <p className="text-sm text-base-content/70">{FORM.quota(used)}</p>
       {paused ? (
         <Alert>
-          <AlertDescription role="status">{FORM.paused(estimateDays)}</AlertDescription>
+          <AlertDescription>{FORM.paused(estimateDays)}</AlertDescription>
         </Alert>
       ) : null}
 
@@ -162,7 +162,7 @@ export function RequestForm({
 
       {repeat ? (
         <Alert>
-          <AlertDescription role="status">
+          <AlertDescription>
             {FORM.repeatTopic(repeat.topic, repeat.createdDate, repeat.sentence)}{" "}
             {repeat.collectionId ? (
               <LinkButton
@@ -261,7 +261,7 @@ export function RequestForm({
 
       {error ? (
         <Alert variant="destructive">
-          <AlertDescription role="alert">{error}</AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
 

@@ -68,7 +68,7 @@ export default async function RequestPage({ searchParams }: PageProps) {
         <>
           {header}
           <Alert>
-            <AlertDescription role="status">{blocked}</AlertDescription>
+            <AlertDescription>{blocked}</AlertDescription>
           </Alert>
           <div className="flex flex-wrap gap-2">
             <LinkButton href="/jargon/import" className="min-h-11">

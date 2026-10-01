@@ -90,18 +90,13 @@ function CreateCollectionForm({
 
       {similar && match ? (
         <Alert variant={isExact ? "destructive" : "default"}>
-          <AlertDescription role="status">
+          <AlertDescription>
             {isExact
               ? `You already have a collection named "${match.name}".`
               : `You already have "${match.name}". Open it instead?`}
           </AlertDescription>
           <AlertAction>
-            <LinkButton
-              href={`/jargon?domain=${match.id}`}
-              size="sm"
-              variant="outline"
-              className="min-h-11 md:min-h-8"
-            >
+            <LinkButton href={`/jargon?domain=${match.id}`} size="sm" variant="outline">
               Open it
             </LinkButton>
           </AlertAction>

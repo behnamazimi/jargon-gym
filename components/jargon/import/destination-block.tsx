@@ -96,7 +96,7 @@ function NewCollectionFields({
       </Field>
       {similar && similarCollection ? (
         <Alert>
-          <AlertDescription role="status">
+          <AlertDescription>
             You already have &ldquo;{similar.name}&rdquo;. Add to it instead?
           </AlertDescription>
           <AlertAction>
@@ -104,7 +104,6 @@ function NewCollectionFields({
               type="button"
               size="sm"
               variant="outline"
-              className="min-h-11 md:min-h-8"
               onPress={() => onModeChange("existing", similarCollection.id)}
             >
               Add to it

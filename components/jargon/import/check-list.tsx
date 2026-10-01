@@ -28,13 +28,12 @@ function RemovedNotice({ flow }: { flow: ImportFlowState }) {
 
   return (
     <Alert>
-      <AlertDescription role="status">Removed &ldquo;{removed.term}&rdquo;</AlertDescription>
+      <AlertDescription>Removed &ldquo;{removed.term}&rdquo;</AlertDescription>
       <AlertAction>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          className="min-h-11 md:min-h-8"
           onPress={() => flow.restoreCard(removed.id)}
         >
           Restore

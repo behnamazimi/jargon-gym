@@ -16,7 +16,7 @@ export function ConflictChooser({ flow }: { flow: ImportFlowState }) {
     <div className="space-y-2">
       {conflicts.map((conflict) => (
         <Alert key={conflict.termId}>
-          <AlertDescription role="status" className="space-y-2">
+          <AlertDescription className="space-y-2">
             <p className="m-0 font-medium">
               &ldquo;{conflict.term}&rdquo; appears twice with different definitions. Keep which?
             </p>

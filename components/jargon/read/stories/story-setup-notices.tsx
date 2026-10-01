@@ -53,28 +53,17 @@ export function StoryFooterHint({
 function NoLlmAlert({ ai }: { ai: AiAccessView }) {
   const exhausted = ai.kind === "unavailable" && ai.reason === "exhausted";
   return (
-    <Alert variant="destructive">
-      <KeyRound className="size-4" aria-hidden strokeWidth={1.5} />
+    <Alert variant="destructive" icon={<KeyRound strokeWidth={1.5} />}>
       <AlertDescription>
         {exhausted
           ? "You've used your AI credits for now. Add your own key in Settings to keep writing stories."
           : "Stories are written with an AI provider. Add a provider and API key in Settings."}
       </AlertDescription>
       <AlertAction>
-        <LinkButton
-          href="/jargon/settings?tab=ai"
-          size="sm"
-          variant="outline"
-          className="max-md:min-h-11"
-        >
+        <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
           Go to Settings
         </LinkButton>
-        <LinkButton
-          href="/jargon/read?view=cards"
-          size="sm"
-          variant="ghost"
-          className="max-md:min-h-11"
-        >
+        <LinkButton href="/jargon/read?view=cards" size="sm" variant="ghost">
           Read cards
         </LinkButton>
       </AlertAction>
@@ -101,31 +90,15 @@ function OverBalanceAlert({
       </AlertDescription>
       <AlertAction>
         {fitLength ? (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="max-md:min-h-11"
-            onPress={() => onFit(fitLength)}
-          >
+          <Button type="button" size="sm" variant="outline" onPress={() => onFit(fitLength)}>
             Try {PIECE_LENGTH_LABELS[fitLength]}
           </Button>
         ) : (
           <>
-            <LinkButton
-              href="/jargon/settings?tab=ai"
-              size="sm"
-              variant="outline"
-              className="max-md:min-h-11"
-            >
+            <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
               Add your own key
             </LinkButton>
-            <LinkButton
-              href="/jargon/read?view=cards"
-              size="sm"
-              variant="ghost"
-              className="max-md:min-h-11"
-            >
+            <LinkButton href="/jargon/read?view=cards" size="sm" variant="ghost">
               Read cards
             </LinkButton>
           </>

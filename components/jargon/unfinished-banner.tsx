@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import { pluralize } from "@/lib/utils";
@@ -18,24 +18,17 @@ export function UnfinishedBanner({ terms, onFinish, requestHref }: UnfinishedBan
   if (terms.length === 0) return null;
 
   return (
-    <Alert>
+    <Alert variant="warning">
+      <AlertTitle>{pluralize(terms.length, "term")} to finish</AlertTitle>
       <AlertDescription>
-        <p className="m-0 font-medium">{pluralize(terms.length, "term")} to finish</p>
-        <p className="m-0 text-base-content/60">
-          They stay out of Read, Review and Quiz until they have a definition.
-        </p>
+        They stay out of Read, Review and Quiz until they have a definition.
       </AlertDescription>
       <AlertAction>
-        <Button type="button" size="sm" className="min-h-11 md:min-h-8" onPress={onFinish}>
+        <Button type="button" size="sm" onPress={onFinish}>
           Finish {pluralize(terms.length, "term")}
         </Button>
         {requestHref ? (
-          <LinkButton
-            href={requestHref}
-            size="sm"
-            variant="outline"
-            className="min-h-11 md:min-h-8"
-          >
+          <LinkButton href={requestHref} size="sm" variant="outline">
             {REQUEST_COPY.definitions.link}
           </LinkButton>
         ) : null}

@@ -40,8 +40,7 @@ export function OfflineBanner() {
 
   return (
     <div className={cn(pageContainerClass, "pt-4")}>
-      <Alert>
-        <WifiOff className="stroke-current h-6 w-6 shrink-0" aria-hidden />
+      <Alert variant="warning" icon={<WifiOff strokeWidth={1.5} />}>
         <AlertContent>
           <AlertTitle>You&apos;re offline</AlertTitle>
           <AlertDescription>Quizzes and your collection need a connection.</AlertDescription>
