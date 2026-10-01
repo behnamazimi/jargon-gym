@@ -14,7 +14,7 @@ export type TermField = (typeof TERM_FIELDS)[number];
 export type EvalTerm = {
   domainName: string;
   term: string;
-  category: string;
+  category: string | null;
   definition: string;
   example: string | null;
   mentalModel: string | null;

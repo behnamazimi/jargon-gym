@@ -48,6 +48,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: PWA_THEME_COLOR,
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 export default async function RootLayout({

@@ -1,44 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { parseImportJson } from "./validate-import";
+import { readJsonImport } from "./json-input";
 
 function term(overrides: Record<string, unknown> = {}) {
   return { term: "Churn", category: "Growth", definition: "Customers who leave.", ...overrides };
 }
 
 function messagesFor(payload: unknown): string[] {
-  const result = parseImportJson(typeof payload === "string" ? payload : JSON.stringify(payload));
+  const result = readJsonImport(typeof payload === "string" ? payload : JSON.stringify(payload));
   if (result.ok) return [];
   return [result.failure.message, ...(result.failure.issues ?? []).map((issue) => issue.message)];
 }
 
 function issuesFor(payload: unknown): string[] {
-  const result = parseImportJson(typeof payload === "string" ? payload : JSON.stringify(payload));
+  const result = readJsonImport(typeof payload === "string" ? payload : JSON.stringify(payload));
   if (result.ok) return [];
   return (result.failure.issues ?? []).map((issue) => issue.message);
 }
 
 describe("plain-language import issues", () => {
   it.each([
-    [
-      "missing category",
-      { domain: "X", terms: [term({ category: undefined })] },
-      '"Churn" needs a category.',
-    ],
-    [
-      "null category",
-      { domain: "X", terms: [term({ category: null })] },
-      '"Churn" needs a category.',
-    ],
-    [
-      "empty category",
-      { domain: "X", terms: [term({ category: "  " })] },
-      '"Churn" needs a category.',
-    ],
-    [
-      "missing definition",
-      { domain: "X", terms: [term({ definition: undefined })] },
-      '"Churn" needs a definition.',
-    ],
     ["empty term name", { domain: "X", terms: [term({ term: " " })] }, "Term 1 has no name."],
     [
       "missing term name",
@@ -82,36 +62,6 @@ describe("plain-language import issues", () => {
     expect(issuesFor(payload)).toContain(expected);
   });
 
-  it("flags the same term twice", () => {
-    expect(issuesFor({ domain: "X", terms: [term(), term({ term: " churn " })] })).toEqual([
-      '"churn" appears twice. Keep one of them.',
-    ]);
-  });
-
-  it("flags links to terms that aren't in the list", () => {
-    const payload = {
-      domain: "X",
-      terms: [term()],
-      relationships: [{ source: "Churn", target: "Retention", relationship_type: "opposite of" }],
-    };
-    expect(issuesFor(payload)).toEqual([
-      'The link from "Churn" to "Retention" points to a term that isn\'t in your list: "Retention".',
-    ]);
-  });
-
-  it("flags duplicate and self links", () => {
-    const link = { source: "Churn", target: "Retention", relationship_type: "opposite of" };
-    const payload = {
-      domain: "X",
-      terms: [term(), term({ term: "Retention" })],
-      relationships: [link, link, { source: "Churn", target: "Churn", relationship_type: "is" }],
-    };
-    expect(issuesFor(payload)).toEqual([
-      'The link from "Churn" to "Retention" (opposite of) is listed twice.',
-      '"Churn" can\'t be linked to itself.',
-    ]);
-  });
-
   it("names the missing part of a link", () => {
     const payload = { domain: "X", terms: [term()], relationships: [{ source: "Churn" }] };
     expect(issuesFor(payload)).toEqual(
@@ -120,7 +70,7 @@ describe("plain-language import issues", () => {
   });
 
   it("lists at most 10 problems and counts the rest", () => {
-    const terms = Array.from({ length: 13 }, (_, i) => term({ term: `T${i}`, category: "" }));
+    const terms = Array.from({ length: 13 }, (_, i) => term({ term: `T${i}`, definition: 5 }));
     const issues = issuesFor({ domain: "X", terms });
     expect(issues).toHaveLength(11);
     expect(issues[10]).toBe("…and 3 more.");
@@ -129,7 +79,7 @@ describe("plain-language import issues", () => {
   it("never shows a path", () => {
     const payload = {
       domain: "X",
-      terms: [term({ category: "" }), term({ term: "" }), term({ definition: 1 })],
+      terms: [term({ category: 7 }), term({ term: "" }), term({ definition: 1 })],
       relationships: [{ source: "Churn" }],
     };
     for (const message of messagesFor(payload)) {
@@ -139,10 +89,6 @@ describe("plain-language import issues", () => {
 });
 
 describe("JSON problems", () => {
-  it("handles empty input", () => {
-    expect(messagesFor("   ")[0]).toBe("Nothing to check yet. Paste JSON or choose a .json file.");
-  });
-
   it("explains text that isn't JSON", () => {
     expect(messagesFor("Churn - customers who leave")[0]).toBe(
       "This doesn't look like JSON. It should start with { and list your terms.",
@@ -158,5 +104,26 @@ describe("JSON problems", () => {
   it("handles a trailing comma", () => {
     const message = messagesFor('{"domain": "X", "terms": [],}')[0];
     expect(message).toContain("We couldn't read this as JSON.");
+  });
+});
+
+describe("optional fields", () => {
+  it.each([
+    ["no category", { category: undefined }],
+    ["null category", { category: null }],
+    ["blank category", { category: "  " }],
+    ["no definition", { definition: undefined }],
+    ["blank definition", { definition: "" }],
+  ])("accepts %s", (_name, overrides) => {
+    const result = readJsonImport(JSON.stringify({ domain: "X", terms: [term(overrides)] }));
+    expect(result.ok).toBe(true);
+  });
+
+  it("turns blanks into none", () => {
+    const result = readJsonImport(
+      JSON.stringify({ domain: "X", terms: [term({ category: " ", definition: "" })] }),
+    );
+    if (!result.ok) throw new Error("expected ok");
+    expect(result.data.built.terms[0]).toMatchObject({ category: null, definition: null });
   });
 });

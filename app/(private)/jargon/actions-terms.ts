@@ -9,6 +9,7 @@ import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/r
 import {
   createTerm as createTermRecord,
   deleteTerm as deleteTermRecord,
+  finishTerm as finishTermRecord,
   TermMutationError,
   updateTerm as updateTermRecord,
 } from "@/lib/jargon/terms";
@@ -72,6 +73,25 @@ export async function updateTerm(
     return {};
   } catch (err) {
     return { error: termMutationErrorMessage(err, "Couldn't save that term. Try again.") };
+  }
+}
+
+export async function finishTerm(
+  termId: string,
+  input: { definition: string; category?: string | null },
+): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  if (!input.definition.trim()) return { error: "Enter a definition." };
+
+  try {
+    const finished = await finishTermRecord(auth.supabase, termId, input);
+    revalidatePath("/jargon");
+    if (!finished) return { error: "That term was already finished or removed." };
+    return {};
+  } catch (err) {
+    return { error: termMutationErrorMessage(err, "Couldn't save that definition. Try again.") };
   }
 }
 

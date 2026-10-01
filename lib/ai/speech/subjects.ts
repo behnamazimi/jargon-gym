@@ -28,7 +28,7 @@ export async function loadTermSubject(
     .eq("id", termId)
     .maybeSingle();
   if (error) throw error;
-  if (!data) return null;
+  if (!data || data.definition === null) return null;
 
   const { domains, ...fields } = data;
   const language = parseLanguage(domains?.language);

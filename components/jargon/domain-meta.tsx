@@ -11,7 +11,7 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
   }
 
   parts.push(pluralize(domain.termCount, "term"));
-  parts.push(pluralize(categoryCount, "category", "categories"));
+  if (categoryCount > 0) parts.push(pluralize(categoryCount, "category", "categories"));
 
   return (
     <div className="min-w-0 flex-1 space-y-2">

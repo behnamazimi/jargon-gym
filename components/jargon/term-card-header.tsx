@@ -32,10 +32,14 @@ export function TermCardHeader({
         </h2>
         <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/50">
           <span>{term.domainName}</span>
-          <span className="mx-1.5 text-base-content/35" aria-hidden>
-            ·
-          </span>
-          <span>{term.category}</span>
+          {term.category ? (
+            <>
+              <span className="mx-1.5 text-base-content/35" aria-hidden>
+                ·
+              </span>
+              <span>{term.category}</span>
+            </>
+          ) : null}
         </p>
       </div>
       {narrationAccess || actions ? (

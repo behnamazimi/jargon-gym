@@ -29,7 +29,7 @@ vi.mock("@/lib/ai/usage", () => ({ countRecentGenerations, recordUsage }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({
-    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: termRow }) }) }),
+    from: () => ({ select: () => ({ eq: () => ({ not: () => ({ maybeSingle: termRow }) }) }) }),
   }),
 }));
 

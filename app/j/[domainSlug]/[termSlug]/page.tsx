@@ -56,14 +56,19 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
           className="text-base-content/55 underline underline-offset-2 transition-colors hover:text-base-content"
         >
           {domain.name}
-        </Link>{" "}
-        ·{" "}
-        <Link
-          href={`/j/${domain.slug}?category=${encodeURIComponent(term.category)}`}
-          className="text-base-content/55 underline underline-offset-2 transition-colors hover:text-base-content"
-        >
-          {term.category}
         </Link>
+        {term.category ? (
+          <>
+            {" "}
+            ·{" "}
+            <Link
+              href={`/j/${domain.slug}?category=${encodeURIComponent(term.category)}`}
+              className="text-base-content/55 underline underline-offset-2 transition-colors hover:text-base-content"
+            >
+              {term.category}
+            </Link>
+          </>
+        ) : null}
       </p>
       <h1 className="text-3xl font-semibold text-base-content">{term.term}</h1>
       <TermBody

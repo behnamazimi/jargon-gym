@@ -23,7 +23,7 @@ export type TermRelationshipLink = {
 export type Term = {
   id: string;
   term: string;
-  category: string;
+  category: string | null;
   definition: string;
   example: string;
   mentalModel?: string;
@@ -33,6 +33,9 @@ export type Term = {
   note?: string;
   relationships: TermRelationship[];
 };
+
+/** A term with no definition yet. It is saved but stays out of study. */
+export type UnfinishedTerm = Omit<Term, "definition"> & { definition: null };
 
 export type DomainSource = "owned" | "added";
 
@@ -46,6 +49,8 @@ export type Domain = {
   source: DomainSource;
   isActiveForReview: boolean;
   termCount: number;
+  /** Terms without a definition. Only the owner ever sees a non-zero count. */
+  unfinishedCount: number;
   knownCount: number;
   termsLearnedCount: number;
   markedKnownCount: number;
@@ -55,6 +60,7 @@ export type JargonPageData = {
   domain: Domain;
   domains: Domain[];
   terms: Term[];
+  unfinishedTerms: UnfinishedTerm[];
   knownTermIds: string[];
   markedKnownTermIds: string[];
   everMasteredTermIds: string[];

@@ -62,7 +62,7 @@ export async function listPublicDomains(): Promise<PublicDomainSummary[]> {
 export type PublicTermSummary = {
   slug: string;
   term: string;
-  category: string;
+  category: string | null;
   definition: string;
 };
 
@@ -106,7 +106,7 @@ export const getPublicDomainPage = cache(async function getPublicDomainPage(
       slug: row.slug!,
       term: row.term,
       category: row.category,
-      definition: row.definition,
+      definition: row.definition ?? "",
     })),
   };
 });

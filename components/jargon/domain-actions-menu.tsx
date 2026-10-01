@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { getDomainSubscriberCount } from "@/app/(private)/jargon/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
-import type { Domain, Term } from "@/lib/jargon/types";
+import type { Domain, Term, UnfinishedTerm } from "@/lib/jargon/types";
 import { DomainExportDialog } from "./domain-export-dialog";
 import { DomainFormDialog } from "./domain-form-dialog";
 import { DomainActionsDialogs } from "./domain-actions-dialogs";
@@ -16,7 +16,7 @@ export { DomainMeta } from "./domain-meta";
 type DomainActionsMenuProps = {
   domain: Domain;
   domains: Domain[];
-  terms: Term[];
+  terms: (Term | UnfinishedTerm)[];
   onToggleActiveForReview: () => void;
   togglePending: boolean;
 };

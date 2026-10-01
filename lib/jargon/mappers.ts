@@ -1,5 +1,12 @@
 import type { Database } from "@/lib/supabase/database.types";
-import type { Domain, DomainSource, Term, TermRelationship, TermRelationshipLink } from "./types";
+import type {
+  Domain,
+  DomainSource,
+  Term,
+  TermRelationship,
+  TermRelationshipLink,
+  UnfinishedTerm,
+} from "./types";
 
 type DomainRow = Database["public"]["Tables"]["domains"]["Row"];
 type TermRow = Database["public"]["Tables"]["terms"]["Row"];
@@ -8,6 +15,7 @@ type MapDomainOptions = {
   source: DomainSource;
   isActiveForReview: boolean;
   termCount?: number;
+  unfinishedCount?: number;
   knownCount?: number;
   termsLearnedCount?: number;
   markedKnownCount?: number;
@@ -27,6 +35,7 @@ export function mapDomain(
     source: options.source,
     isActiveForReview: options.isActiveForReview,
     termCount: options.termCount ?? 0,
+    unfinishedCount: options.unfinishedCount ?? 0,
     knownCount: options.knownCount ?? 0,
     termsLearnedCount: options.termsLearnedCount ?? 0,
     markedKnownCount: options.markedKnownCount ?? 0,
@@ -38,7 +47,7 @@ export function mapTerm(row: TermRow): Term {
     id: row.id,
     term: row.term,
     category: row.category,
-    definition: row.definition,
+    definition: row.definition ?? "",
     example: row.example ?? "",
     mentalModel: row.mental_model ?? undefined,
     discussion: row.discussion ?? "",
@@ -47,6 +56,28 @@ export function mapTerm(row: TermRow): Term {
     note: row.note ?? undefined,
     relationships: [],
   };
+}
+
+function isUnfinishedRow(row: TermRow): boolean {
+  return row.definition === null;
+}
+
+/** Splits a collection's rows into terms ready to study and terms still
+ *  waiting for a definition. */
+export function mapTermsByState(rows: TermRow[]): {
+  terms: Term[];
+  unfinishedTerms: UnfinishedTerm[];
+} {
+  const terms: Term[] = [];
+  const unfinishedTerms: UnfinishedTerm[] = [];
+  for (const row of rows) {
+    if (isUnfinishedRow(row)) {
+      unfinishedTerms.push({ ...mapTerm(row), definition: null });
+    } else {
+      terms.push(mapTerm(row));
+    }
+  }
+  return { terms, unfinishedTerms };
 }
 
 export function attachRelationshipsToTerms(

@@ -1,11 +1,12 @@
 "use client";
 
-import { BookOpen, Layers, Plus, Sparkles, Zap } from "lucide-react";
+import { BookOpen, Layers, Sparkles, Zap } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useReviewToggle } from "@/hooks/use-review-toggle";
 import { cn } from "@/lib/utils";
 import type { Domain, Term } from "@/lib/jargon/types";
 import { DomainActionsMenu, DomainMeta } from "./domain-actions-menu";
+import { AddTermsMenu } from "./add-terms-menu";
 
 type JargonDomainHeaderProps = {
   domain: Domain;
@@ -117,16 +118,7 @@ export function JargonDomainHeader({
         </div>
         <div className="flex shrink-0 items-center gap-0.5">
           {isOwner && onAddTerm ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="text-base-content/60 hover:text-base-content"
-              aria-label="Add term"
-              onPress={onAddTerm}
-            >
-              <Plus className="size-5" strokeWidth={1.5} />
-            </Button>
+            <AddTermsMenu domainId={domain.id} onAddTerm={onAddTerm} />
           ) : null}
           <DomainActionsMenu
             domain={domain}

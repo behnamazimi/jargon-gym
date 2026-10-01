@@ -103,9 +103,11 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
         <p className="m-0 mb-4 text-sm leading-relaxed text-base-content/80">
           This is for anyone who wants to understand how content is structured in the app, or who
           plans to add terms of their own. A term can be a piece of jargon or a word, phrase, or
-          grammar construction in a language you&apos;re learning. You can import a JSON list, paste
-          output from an LLM prompt I prepared for generating a field&apos;s jargon or a
-          language&apos;s vocabulary, or add terms one at a time.
+          grammar construction in a language you&apos;re learning. You can paste a list from Notes
+          or a spreadsheet, bring a deck from another app, import JSON from an LLM prompt I prepared
+          for generating a field&apos;s jargon or a language&apos;s vocabulary, or add terms one at
+          a time. Only the term itself is required. A term without a definition waits in your
+          collection and stays out of Read, Review and Quiz until you add one.
         </p>
 
         <ContentPageSection title="Why not just a definition">

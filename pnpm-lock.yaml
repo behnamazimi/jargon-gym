@@ -44,6 +44,9 @@ dependencies:
   oxlint:
     specifier: ^1.75.0
     version: 1.75.0
+  papaparse:
+    specifier: ^5.7.0
+    version: 5.7.0
   react:
     specifier: 19.2.8
     version: 19.2.8
@@ -76,6 +79,9 @@ devDependencies:
   '@types/node':
     specifier: ^24
     version: 24.13.3
+  '@types/papaparse':
+    specifier: ^5.5.2
+    version: 5.5.2
   '@types/react':
     specifier: ^19
     version: 19.2.18
@@ -2504,6 +2510,12 @@ packages:
       undici-types: 7.18.2
     dev: true
 
+  /@types/papaparse@5.5.2:
+    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
+    dependencies:
+      '@types/node': 24.13.3
+    dev: true
+
   /@types/react-dom@19.2.3(@types/react@19.2.18):
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
     peerDependencies:
@@ -3350,6 +3362,10 @@ packages:
       '@oxlint/binding-win32-arm64-msvc': 1.75.0
       '@oxlint/binding-win32-ia32-msvc': 1.75.0
       '@oxlint/binding-win32-x64-msvc': 1.75.0
+    dev: false
+
+  /papaparse@5.7.0:
+    resolution: {integrity: sha512-qBGxg/7Q3Kl9Wfhrz2Z74UnvnHTXLNG6jmKJFeBvP2+y4lV7So+7SR62+Zd47JvdrCkX+nDcnr0ObPzek/+6RA==}
     dev: false
 
   /path-scurry@2.0.2:

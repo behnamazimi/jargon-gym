@@ -29,6 +29,8 @@ export function CategoryChips({
 }: CategoryChipsProps) {
   const allSelected = activeCategories.size === 0;
 
+  if (categories.length < 2) return null;
+
   return (
     <div className="flex flex-wrap gap-1.5">
       <Toggle

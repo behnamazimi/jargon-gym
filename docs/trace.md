@@ -255,6 +255,16 @@ once it does drop below 0.98 it re-enters the ranking sorted by its
 now-decayed retrievability like anything else — nothing special happens at
 that point, it's just no longer being held back.
 
+## Unfinished terms
+
+A term with no definition is "unfinished". It never enters any of the pools
+above: `get_trace_candidates` and `progress_state_by_domain` skip it, so it
+earns no exposure, adds nothing to mastery denominators or progress counts, and
+never reaches Read, Review, Quiz, Stories, the widget or Telegram. Finishing a
+term makes it eligible from that moment, with no history, like a newly
+imported term. A finished term can't go back, so no trace row ever belongs to
+an unfinished term. See [import.md](./import.md).
+
 ## Where the logic lives
 
 TRACE is built in layers, each one only reachable through the layer above

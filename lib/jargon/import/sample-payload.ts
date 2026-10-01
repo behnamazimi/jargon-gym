@@ -2,6 +2,7 @@ import type { ImportPayload } from "./types";
 
 export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
   domain: "Software Engineering",
+  language: "en",
   description: "Core vocabulary for software architecture, design, and delivery.",
   terms: [
     {
@@ -35,17 +36,6 @@ export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
       relationship_type: "often confused with",
       description:
         "High cohesion and low coupling often go together, but they describe different things.",
-    },
-  ],
-};
-
-export const IMPORT_MINIMAL_PAYLOAD: ImportPayload = {
-  domain: "My Domain",
-  terms: [
-    {
-      term: "Example term",
-      category: "General",
-      definition: "A short definition of the term.",
     },
   ],
 };

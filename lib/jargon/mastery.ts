@@ -42,7 +42,7 @@ export type MasteryTermRow = {
   term: string;
   domainId: string;
   domainName: string;
-  category: string;
+  category: string | null;
   /** Mastery_adjusted scaled to 0–100 for display. */
   score: number;
   tier: MasteryTier;
@@ -157,7 +157,7 @@ export async function loadMasteryTermRows(
   const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
 
   const termIds = candidates.map((c) => c.termId);
-  const termInfoById = new Map<string, { term: string; category: string }>();
+  const termInfoById = new Map<string, { term: string; category: string | null }>();
   for (let i = 0; i < termIds.length; i += TERM_ID_BATCH_SIZE) {
     const { data: termData, error } = await client
       .from("terms")

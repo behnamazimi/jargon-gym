@@ -40,7 +40,9 @@ export function DomainTermsList({ domainSlug, terms }: DomainTermsListProps) {
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-lg font-semibold text-base-content">{term.term}</span>
-                  <span className="shrink-0 text-sm text-base-content/55">{term.category}</span>
+                  {term.category ? (
+                    <span className="shrink-0 text-sm text-base-content/55">{term.category}</span>
+                  ) : null}
                 </div>
                 <p className="m-0 mt-1 line-clamp-2 text-sm text-base-content/65">
                   {term.definition}

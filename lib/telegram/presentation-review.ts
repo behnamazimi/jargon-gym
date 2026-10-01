@@ -7,7 +7,9 @@ import { buildTermDetails } from "./presentation-term";
 function buildReviewCardHeader(term: TermCard, currentIndex: number, totalTerms: number): string {
   let message = `<b>Review ${currentIndex + 1}/${totalTerms}</b>\n\n`;
   message += `<b>${escapeText(term.term)}</b>\n`;
-  message += `<i>${escapeText(term.category)}</i> · ${escapeText(term.domainName)}`;
+  message += term.category
+    ? `<i>${escapeText(term.category)}</i> · ${escapeText(term.domainName)}`
+    : `<i>${escapeText(term.domainName)}</i>`;
   return message;
 }
 

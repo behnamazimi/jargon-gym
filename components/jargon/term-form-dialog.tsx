@@ -19,7 +19,7 @@ import {
   validateRelationshipDrafts,
 } from "@/lib/jargon/relationship-sync";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
-import type { TermInput } from "@/lib/jargon/term-schema";
+import type { TermFormValues } from "@/lib/jargon/term-schema";
 import type { Term } from "@/lib/jargon/types";
 
 type TermFormDialogProps = {
@@ -35,7 +35,7 @@ function EditTermForm({
   onOpenChange,
 }: Omit<TermFormDialogProps, "isOpen">) {
   const { updateTerm, isBusy, busyId, error } = useTermActions();
-  const [form, setForm] = useState<TermInput>(() => termToForm(initialTerm));
+  const [form, setForm] = useState<TermFormValues>(() => termToForm(initialTerm));
   const [initialDrafts] = useState<RelationshipDraft[]>(() =>
     termRelationshipsToDrafts(initialTerm.relationships),
   );
@@ -45,7 +45,7 @@ function EditTermForm({
   const isSubmitting = isBusy && busyId === initialTerm.id;
   const displayError = validationError ?? error;
 
-  function updateField<K extends keyof TermInput>(key: K, value: TermInput[K]) {
+  function updateField<K extends keyof TermFormValues>(key: K, value: TermFormValues[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 

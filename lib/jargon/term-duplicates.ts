@@ -1,5 +1,3 @@
-const DEFAULT_CATEGORY = "General";
-
 function termKey(term: string) {
   return term.trim().toLowerCase();
 }
@@ -16,11 +14,11 @@ export function findDuplicateTerm<T extends { term: string }>(
 }
 
 /** The category most terms already use, so a new term lands in it by default.
- *  Ties go to the alphabetically first one. */
-export function mostUsedCategory(terms: { category: string }[]): string {
+ *  Ties go to the alphabetically first one. Empty when no term has a category. */
+export function mostUsedCategory(terms: { category: string | null }[]): string {
   const counts = new Map<string, number>();
   for (const { category } of terms) {
-    const name = category.trim();
+    const name = category?.trim() ?? "";
     if (name) counts.set(name, (counts.get(name) ?? 0) + 1);
   }
 
@@ -30,5 +28,5 @@ export function mostUsedCategory(terms: { category: string }[]): string {
     if (count > bestCount || (count === bestCount && best !== null && name < best)) best = name;
   }
 
-  return best ?? DEFAULT_CATEGORY;
+  return best ?? "";
 }

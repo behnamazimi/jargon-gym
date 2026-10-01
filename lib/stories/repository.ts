@@ -192,9 +192,10 @@ export async function getStoryTerms(admin: Client, termIds: string[]): Promise<S
   const { data, error } = await admin
     .from("terms")
     .select("id, term, definition")
-    .in("id", termIds);
+    .in("id", termIds)
+    .not("definition", "is", null);
   if (error) throw error;
-  return data ?? [];
+  return (data ?? []).map((row) => ({ ...row, definition: row.definition ?? "" }));
 }
 
 export async function getCollection(

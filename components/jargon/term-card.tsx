@@ -180,9 +180,11 @@ export const TermCard = memo(function TermCard({
             <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <CardTitle term={term} known={known} markedKnown={markedKnown} />
               <span className="inline-flex shrink-0 items-center gap-2">
-                <span className="hidden text-xs text-base-content/50 sm:inline">
-                  {term.category}
-                </span>
+                {term.category ? (
+                  <span className="hidden text-xs text-base-content/50 sm:inline">
+                    {term.category}
+                  </span>
+                ) : null}
                 <ChevronRight
                   className={cn("size-4 text-base-content/60", open && "rotate-90 text-primary")}
                   aria-hidden

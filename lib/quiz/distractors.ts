@@ -4,6 +4,7 @@ import type { Database } from "@/lib/supabase/database.types";
 type Client = SupabaseClient<Database>;
 
 type TermRef = { id: string; term: string; example: string | null };
+type RelatedTermRef = TermRef & { definition: string | null };
 
 async function fetchRelatedDistractors(
   client: Client,
@@ -17,8 +18,8 @@ async function fetchRelatedDistractors(
       `
       source_term_id,
       target_term_id,
-      source:terms!term_relationships_source_term_id_fkey(id, term, example),
-      target:terms!term_relationships_target_term_id_fkey(id, term, example)
+      source:terms!term_relationships_source_term_id_fkey(id, term, example, definition),
+      target:terms!term_relationships_target_term_id_fkey(id, term, example, definition)
     `,
     )
     .or(`source_term_id.eq.${termId},target_term_id.eq.${termId}`);
@@ -29,12 +30,13 @@ async function fetchRelatedDistractors(
   for (const rel of relatedTerms) {
     const relatedTerm =
       rel.source_term_id === termId
-        ? (rel.target as unknown as TermRef)
-        : (rel.source as unknown as TermRef);
+        ? (rel.target as unknown as RelatedTermRef)
+        : (rel.source as unknown as RelatedTermRef);
 
-    if (!relatedTerm || excludedIds.includes(relatedTerm.id)) continue;
+    if (!relatedTerm || relatedTerm.definition === null) continue;
+    if (excludedIds.includes(relatedTerm.id)) continue;
 
-    distractors.push(relatedTerm);
+    distractors.push({ id: relatedTerm.id, term: relatedTerm.term, example: relatedTerm.example });
     excludedIds.push(relatedTerm.id);
     if (distractors.length >= count) break;
   }
@@ -51,6 +53,7 @@ async function fetchRandomDistractors(
     .from("terms")
     .select("id, term, example")
     .eq("domain_id", domainId)
+    .not("definition", "is", null)
     .not("id", "in", `(${excludedIds.join(",")})`)
     .limit(needed * 3);
 

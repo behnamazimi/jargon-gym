@@ -1,12 +1,13 @@
 import type { FilterOptions, SortMode, Term } from "./types";
 
 export function getCategories(terms: Term[]): string[] {
-  return [...new Set(terms.map((t) => t.category))];
+  return [...new Set(terms.flatMap((t) => (t.category ? [t.category] : [])))];
 }
 
 export function getCategoryCounts(terms: Term[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const term of terms) {
+    if (!term.category) continue;
     counts[term.category] = (counts[term.category] ?? 0) + 1;
   }
   return counts;
@@ -17,7 +18,8 @@ export function filterTerms(terms: Term[], options: FilterOptions): Term[] {
     options;
 
   let list = terms.filter((t) => {
-    if (activeCategories.size > 0 && !activeCategories.has(t.category)) return false;
+    if (activeCategories.size > 0 && !(t.category && activeCategories.has(t.category)))
+      return false;
     if (hideKnown && (knownTerms.has(t.id) || markedKnownTerms.has(t.id))) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -32,6 +34,11 @@ export function filterTerms(terms: Term[], options: FilterOptions): Term[] {
   return list;
 }
 
+/** Terms without a category sort after every named one. */
+function categoryRank(category: string | null): string {
+  return category ? `0${category}` : "1";
+}
+
 function sortTerms(
   terms: Term[],
   sortMode: SortMode,
@@ -40,7 +47,9 @@ function sortTerms(
 ): Term[] {
   if (sortMode === "category") {
     return [...terms].sort(
-      (a, b) => a.category.localeCompare(b.category) || a.term.localeCompare(b.term),
+      (a, b) =>
+        categoryRank(a.category).localeCompare(categoryRank(b.category)) ||
+        a.term.localeCompare(b.term),
     );
   }
   if (sortMode === "az") {

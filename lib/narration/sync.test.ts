@@ -216,6 +216,7 @@ function makeClient(store: Store): Client {
           state.inFilters[column] = values;
           return builder;
         },
+        not: () => builder,
         order: () => builder,
         limit: (count: number) => (count <= 1 ? builder : finish("list")),
         range: () => finish("list"),

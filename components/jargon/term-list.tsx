@@ -12,6 +12,8 @@ type TermListProps = {
   domainId: string;
   language: DomainLanguage;
   domainTerms: Term[];
+  /** The owner has terms that are saved but not finished yet. */
+  hasUnfinished: boolean;
   onAddTerm: () => void;
   narrationAccess: boolean;
   onToggleOpen: (termId: string) => void;
@@ -29,6 +31,7 @@ export function TermList({
   domainId,
   language,
   domainTerms,
+  hasUnfinished,
   onAddTerm,
   narrationAccess,
   onToggleOpen,
@@ -36,6 +39,16 @@ export function TermList({
   onTermRemoved,
   onTermRemoveFailed,
 }: TermListProps) {
+  if (domainTerms.length === 0 && hasUnfinished) {
+    return (
+      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12 text-center">
+        <p className="text-sm text-base-content/60">
+          Nothing to study yet. Add a definition to start.
+        </p>
+      </div>
+    );
+  }
+
   if (domainTerms.length === 0) {
     return isOwner ? (
       <EmptyTermsState onAddTerm={onAddTerm} />

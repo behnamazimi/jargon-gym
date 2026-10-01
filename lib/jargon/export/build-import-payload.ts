@@ -1,14 +1,18 @@
 import type { ImportPayload } from "@/lib/jargon/import/types";
-import type { Domain, Term } from "@/lib/jargon/types";
+import type { Domain, Term, UnfinishedTerm } from "@/lib/jargon/types";
 
 function optionalText(value: string | undefined | null): string | undefined {
   const trimmed = value?.trim();
   return trimmed ? trimmed : undefined;
 }
 
-export function buildImportPayloadFromCollection(domain: Domain, terms: Term[]): ImportPayload {
+export function buildImportPayloadFromCollection(
+  domain: Domain,
+  terms: (Term | UnfinishedTerm)[],
+): ImportPayload {
   const payload: ImportPayload = {
     domain: domain.name,
+    language: domain.language,
     terms: terms.map((term) => {
       const example = optionalText(term.example);
       const mentalModel = optionalText(term.mentalModel);
@@ -19,8 +23,8 @@ export function buildImportPayloadFromCollection(domain: Domain, terms: Term[]):
 
       return {
         term: term.term,
-        category: term.category,
-        definition: term.definition,
+        ...(term.category ? { category: term.category } : {}),
+        ...(term.definition ? { definition: term.definition } : {}),
         ...(example ? { example } : {}),
         ...(mentalModel ? { mental_model: mentalModel } : {}),
         ...(discussion ? { discussion } : {}),
