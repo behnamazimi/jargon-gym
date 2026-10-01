@@ -152,7 +152,11 @@ export function DomainActionsMenu({
       />
 
       {error ? (
-        <Alert variant="destructive" className="absolute right-0 top-full z-10 mt-2 w-48">
+        <Alert
+          variant="destructive"
+          icon={false}
+          className="absolute right-0 top-full z-10 mt-2 w-56"
+        >
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}

@@ -77,7 +77,10 @@ export function ImportChooser({
             requestEntry.state === "available" ? REQUEST_COPY.chooser.noMatch : undefined
           }
         />
-        <RequestRow entry={requestEntry} query={search.status === "done" ? query : ""} />
+        <RequestRow
+          entry={requestEntry}
+          query={search.status === "done" || search.status === "error" ? query : ""}
+        />
       </div>
 
       <section

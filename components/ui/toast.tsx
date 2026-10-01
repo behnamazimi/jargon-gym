@@ -68,7 +68,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         toastOptions={{
           classNames: {
             toast: "!px-4 !py-2.5 !text-sm !shadow-md",
-            icon: "!mx-0 !me-3 !size-8 items-center justify-center rounded-full !bg-base-200",
+            icon: "!mx-0 !me-3 !size-8 !justify-center rounded-full !bg-base-200",
             success: "[&_[data-icon]]:!bg-success/20 [&_[data-icon]]:!text-success",
             error: "[&_[data-icon]]:!bg-error/20 [&_[data-icon]]:!text-error",
             actionButton:

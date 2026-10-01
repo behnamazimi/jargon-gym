@@ -16,7 +16,7 @@ const variants: Record<AlertVariant, VariantConfig> = {
   default: { color: "[--alert-color:var(--color-base-content)]", icon: Info, role: "status" },
   info: { color: "[--alert-color:var(--color-info)]", icon: Info, role: "status" },
   success: { color: "[--alert-color:var(--color-success)]", icon: CheckCircle2, role: "status" },
-  warning: { color: "[--alert-color:var(--color-warning)]", icon: AlertTriangle, role: "alert" },
+  warning: { color: "[--alert-color:var(--color-warning)]", icon: AlertTriangle, role: "status" },
   destructive: { color: "[--alert-color:var(--color-error)]", icon: AlertCircle, role: "alert" },
 };
 
@@ -27,6 +27,13 @@ type AlertProps = Omit<React.ComponentProps<"div">, "title"> & {
   /** Shows a close button in the corner. */
   onDismiss?: () => void;
 };
+
+function gridColumns(hasIcon: boolean, hasDismiss: boolean) {
+  if (hasIcon && hasDismiss) return "grid-cols-[auto_minmax(0,1fr)_auto]";
+  if (hasIcon) return "grid-cols-[auto_minmax(0,1fr)]";
+  if (hasDismiss) return "grid-cols-[minmax(0,1fr)_auto]";
+  return "grid-cols-[minmax(0,1fr)]";
+}
 
 /** Soft tinted notice. Children stack in one column next to the icon, so
  *  long text wraps and actions land under it on any width. */
@@ -51,7 +58,7 @@ function Alert({
         "[--alert-tint:8%] in-data-[theme=dim]:[--alert-tint:14%]",
         "border-[color-mix(in_oklab,var(--alert-color)_28%,var(--color-base-300))] border-s-(--alert-color)",
         "bg-[color-mix(in_oklab,var(--alert-color)_var(--alert-tint),var(--color-base-100))]",
-        showIcon ? "grid-cols-[auto_minmax(0,1fr)_auto]" : "grid-cols-[minmax(0,1fr)_auto]",
+        gridColumns(showIcon, Boolean(onDismiss)),
         config.color,
         className,
       )}
