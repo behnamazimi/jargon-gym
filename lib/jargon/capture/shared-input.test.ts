@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { MAX_SENTENCE_CHARS, parseSharedInput } from "./shared-input";
 
-const parse = (text: string | undefined) => parseSharedInput({ text });
+const parse = (text: string | string[] | undefined) => parseSharedInput({ text });
 
 describe("parseSharedInput", () => {
   it.each([
@@ -58,5 +58,28 @@ describe("parseSharedInput", () => {
       kind: "lines",
       lines: ["SLA", "Churn", "Runway"],
     });
+  });
+
+  it("uses the first value when the param is repeated", () => {
+    expect(parse(["idempotent", "other"])).toEqual({ kind: "term", term: "idempotent" });
+    expect(parse([])).toEqual({ kind: "none" });
+  });
+
+  it.each([
+    ["“synergy”", "synergy"],
+    ["synergy,", "synergy"],
+    ['"burn rate"', "burn rate"],
+    ["401(k)", "401(k)"],
+  ])("trims quotes and commas around a short term: %s", (text, expected) => {
+    expect(parse(text)).toEqual({ kind: "term", term: expected });
+  });
+
+  it("treats one word ending in a full stop as a sentence", () => {
+    expect(parse("Synergy.")).toEqual({ kind: "sentence", sentence: "Synergy." });
+  });
+
+  it("reads only the start of a huge share", () => {
+    const result = parse("word ".repeat(5000));
+    expect(result.kind).toBe("sentence");
   });
 });

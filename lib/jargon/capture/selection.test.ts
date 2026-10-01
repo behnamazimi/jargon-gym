@@ -33,6 +33,10 @@ describe("termFromSelection", () => {
     expect(termFromSelection(sentence, tokens, { start: 4, end: 5 })).toBe("the  SLA");
   });
 
+  it("is empty for indices outside the sentence", () => {
+    expect(termFromSelection(sentence, tokens, { start: 50, end: 51 })).toBe("");
+  });
+
   it("is empty without a selection", () => {
     expect(termFromSelection(sentence, tokens, null)).toBe("");
   });

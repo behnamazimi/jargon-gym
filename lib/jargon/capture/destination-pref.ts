@@ -1,7 +1,5 @@
 const KEY = "jargon-gym:capture-destination:v1";
 
-const listeners = new Set<() => void>();
-
 /** The collection a term was last captured into on this device. */
 export function loadDestinationPref(): string | null {
   try {
@@ -17,12 +15,4 @@ export function saveDestinationPref(domainId: string): void {
   } catch {
     // Not kept in private mode.
   }
-  for (const listener of listeners) listener();
-}
-
-export function subscribeDestinationPref(onChange: () => void): () => void {
-  listeners.add(onChange);
-  return () => {
-    listeners.delete(onChange);
-  };
 }

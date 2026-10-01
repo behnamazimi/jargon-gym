@@ -1,28 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CaptureDuplicateNote } from "@/components/jargon/capture/capture-duplicate-note";
 import { CaptureSaved } from "@/components/jargon/capture/capture-saved";
 import { SharedSentenceChips } from "@/components/jargon/capture/shared-sentence-chips";
 import { FirstCollectionForm } from "@/components/jargon/capture/first-collection-form";
 import { CollectionSelect } from "@/components/jargon/collection-select";
 import { PastedListPrompt } from "@/components/jargon/pasted-list-prompt";
+import { PanelSkeleton } from "@/components/page-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useCaptureDuplicate } from "@/hooks/use-capture-duplicate";
 import { useTermActions } from "@/hooks/use-term-actions";
 import { CAPTURE_COPY } from "@/lib/jargon/capture/copy";
 import { pickDestination } from "@/lib/jargon/capture/destination";
-import {
-  loadDestinationPref,
-  saveDestinationPref,
-  subscribeDestinationPref,
-} from "@/lib/jargon/capture/destination-pref";
+import { loadDestinationPref, saveDestinationPref } from "@/lib/jargon/capture/destination-pref";
 import { toggleChip, termFromSelection, type Selection } from "@/lib/jargon/capture/selection";
 import { initialFromShared, type SharedIntake } from "@/lib/jargon/capture/shared-input";
 import { tokenize } from "@/lib/jargon/capture/tokenize";
@@ -30,37 +29,43 @@ import { writeDraft } from "@/lib/jargon/import/draft-store";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
 import { classifyTermPaste } from "@/lib/jargon/import/term-paste";
 
-type Saved = { term: string; unfinished: boolean; collectionId: string };
+type Saved = { term: string; unfinished: boolean; collectionId: string; collectionName: string };
 
-export function CaptureFlow({
-  collections,
-  presetId,
-  shared = { kind: "none" },
-}: {
+/** Waits for hydration so the remembered collection (read from this device)
+ *  never differs from what the server rendered. */
+export function CaptureFlow(props: CaptureFlowProps) {
+  return useHydrated() ? <CaptureForm {...props} /> : <PanelSkeleton />;
+}
+
+type CaptureFlowProps = {
   collections: ImportDestination[];
   presetId: string | null;
   shared?: SharedIntake;
-}) {
+};
+
+function CaptureForm({ collections, presetId, shared = { kind: "none" } }: CaptureFlowProps) {
   const router = useRouter();
   const { toast } = useToast();
   const { createTerm, isBusy, error } = useTermActions();
   const { match, check } = useCaptureDuplicate();
   const termRef = useRef<HTMLInputElement>(null);
-  const stored = useSyncExternalStore(subscribeDestinationPref, loadDestinationPref, () => null);
-  const [chosenId, setChosenId] = useState<string | null>(null);
+  const [destinationId, setDestinationId] = useState(() =>
+    pickDestination({ preset: presetId, stored: loadDestinationPref(), collections }),
+  );
   const initial = useMemo(() => initialFromShared(shared), [shared]);
   const [term, setTerm] = useState(initial.term);
   const [definition, setDefinition] = useState(initial.definition);
   const sentence = initial.sentence;
   const tokens = useMemo(() => (sentence ? tokenize(sentence) : []), [sentence]);
+  // Stays after saving, so another word from the same sentence keeps its example.
   const [example, setExample] = useState(sentence ?? "");
   const [selection, setSelection] = useState<Selection>(null);
   const [saved, setSaved] = useState<Saved | null>(null);
   const [pastedLines, setPastedLines] = useState<string[] | null>(initial.lines);
   const pasteSource = shared.kind === "lines" ? "shared" : "pasted";
 
-  const destinationId = pickDestination({ preset: chosenId ?? presetId, stored, collections });
   const destination = collections.find((collection) => collection.id === destinationId);
+  useMountEffect(() => check(destinationId, initial.term));
 
   if (!destination) return <FirstCollectionForm />;
 
@@ -72,7 +77,7 @@ export function CaptureFlow({
   }
 
   function changeDestination(id: string) {
-    setChosenId(id);
+    setDestinationId(id);
     check(id, term);
   }
 
@@ -104,6 +109,7 @@ export function CaptureFlow({
     setTerm("");
     setDefinition("");
     setSelection(null);
+    setPastedLines(null);
     setSaved(null);
     check(null, "");
   }
@@ -133,7 +139,12 @@ export function CaptureFlow({
       reset();
       return;
     }
-    setSaved({ term: name, unfinished, collectionId: destination.id });
+    setSaved({
+      term: name,
+      unfinished,
+      collectionId: destination.id,
+      collectionName: destination.name,
+    });
   }
 
   if (saved) {
@@ -141,7 +152,7 @@ export function CaptureFlow({
       <CaptureSaved
         term={saved.term}
         unfinished={saved.unfinished}
-        collectionName={destination.name}
+        collectionName={saved.collectionName}
         collectionId={saved.collectionId}
         onAddAnother={reset}
       />
