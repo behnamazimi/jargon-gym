@@ -1,7 +1,6 @@
 "use client";
 
 import { Layers, List, Plus, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CreateCollectionDialog } from "@/components/jargon/create-collection-dialog";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { RequestRow } from "@/components/requests/request-row";
 import { useBrowseSearch } from "@/hooks/use-browse-search";
 import { SearchResults } from "@/components/jargon/import/chooser-search-results";
-import { OneTermDialog } from "@/components/jargon/import/one-term-dialog";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import type { RequestEntry } from "@/lib/requests/entry";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
@@ -46,16 +44,8 @@ export function ImportChooser({
   collections: ImportDestination[];
   requestEntry: RequestEntry;
 }) {
-  const router = useRouter();
   const { query, search, addingId, addedIds, handleQuery, add } = useBrowseSearch();
   const [createOpen, setCreateOpen] = useState(false);
-  const [oneTermOpen, setOneTermOpen] = useState(false);
-
-  function handleOneTerm() {
-    if (collections.length === 0) setCreateOpen(true);
-    else if (collections.length === 1) router.push(`/jargon?domain=${collections[0].id}&add=1`);
-    else setOneTermOpen(true);
-  }
 
   return (
     <div className="space-y-5">
@@ -123,13 +113,17 @@ export function ImportChooser({
             </LinkButton>
           </li>
           <li>
-            <button type="button" className={ROW_CLASS} onClick={handleOneTerm}>
+            <LinkButton
+              href="/jargon/capture"
+              variant="ghost"
+              className={`${ROW_CLASS} h-auto rounded-none`}
+            >
               <RowContent
                 icon={Plus}
                 title="Just one term"
                 description="Save a word you just came across"
               />
-            </button>
+            </LinkButton>
           </li>
         </ul>
       </section>
@@ -163,13 +157,6 @@ export function ImportChooser({
         onOpenChange={setCreateOpen}
         existingCollections={collections}
       />
-      {oneTermOpen ? (
-        <OneTermDialog
-          collections={collections}
-          isOpen={oneTermOpen}
-          onOpenChange={setOneTermOpen}
-        />
-      ) : null}
     </div>
   );
 }

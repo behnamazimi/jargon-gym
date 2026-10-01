@@ -21,6 +21,7 @@ import { CategoryField, OptionalDetailFields } from "@/components/jargon/term-fo
 import { TermRelationshipsEditor } from "@/components/jargon/term-relationships-editor";
 import { buildTermPayload, emptyDetails } from "@/components/jargon/term-form-dialog-helpers";
 import { PastedListPrompt } from "@/components/jargon/pasted-list-prompt";
+import { unfinishedSavedMessage } from "@/lib/jargon/capture/copy";
 import { useTermActions } from "@/hooks/use-term-actions";
 import { writeDraft } from "@/lib/jargon/import/draft-store";
 import { classifyTermPaste } from "@/lib/jargon/import/term-paste";
@@ -42,10 +43,6 @@ type AddTermDialogProps = {
 };
 
 type AddTermFormProps = Omit<AddTermDialogProps, "isOpen">;
-
-function unfinishedToast(name: string) {
-  return `Saved "${name}". It stays out of study until you add a definition.`;
-}
 
 function AddTermForm({
   domainId,
@@ -121,12 +118,12 @@ function AddTermForm({
     const unfinished = !form.definition.trim();
 
     if (!addAnother) {
-      if (unfinished) toast(unfinishedToast(name), "success");
+      if (unfinished) toast(unfinishedSavedMessage(name), "success");
       onOpenChange(false);
       return;
     }
 
-    toast(unfinished ? unfinishedToast(name) : `Added "${name}"`, "success");
+    toast(unfinished ? unfinishedSavedMessage(name) : `Added "${name}"`, "success");
     setForm({ term: "", definition: "", category: payload.category, ...emptyDetails });
     setRelationshipDrafts([]);
   }

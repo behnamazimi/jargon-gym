@@ -27,6 +27,7 @@ describe("isLibraryPath", () => {
 describe("isMorePath", () => {
   it("covers overflow destinations", () => {
     expect(isMorePath("/jargon/settings")).toBe(true);
+    expect(isMorePath("/jargon/capture")).toBe(true);
     expect(isMorePath("/admin/collections")).toBe(true);
     expect(isMorePath("/admin/system/audit")).toBe(true);
     expect(isMorePath("/jargon/read")).toBe(false);

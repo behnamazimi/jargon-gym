@@ -13,6 +13,7 @@ export function isMorePath(pathname: string): boolean {
   return (
     pathname.startsWith("/jargon/browse") ||
     pathname.startsWith("/jargon/import") ||
+    pathname.startsWith("/jargon/capture") ||
     pathname.startsWith("/jargon/mastery") ||
     pathname.startsWith("/jargon/settings") ||
     pathname.startsWith("/admin")
