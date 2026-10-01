@@ -18,11 +18,12 @@ describe("parseReviewFeedRequest", () => {
   it("rejects malformed bodies", () => {
     expect(parseReviewFeedRequest(null)).toBeNull();
     expect(parseReviewFeedRequest({ domainId: "nope", excludeTermIds: [] })).toBeNull();
+    expect(parseReviewFeedRequest({ domainId: "", excludeTermIds: [] })).toBeNull();
     expect(parseReviewFeedRequest({ domainId: "all" })).toBeNull();
     expect(parseReviewFeedRequest({ domainId: "all", excludeTermIds: ["x"] })).toBeNull();
     expect(parseReviewFeedRequest({ domainId: "all", excludeTermIds: [1] })).toBeNull();
     expect(
-      parseReviewFeedRequest({ domainId: "all", excludeTermIds: Array(5001).fill(ID) }),
+      parseReviewFeedRequest({ domainId: "all", excludeTermIds: Array(20_001).fill(ID) }),
     ).toBeNull();
   });
 });

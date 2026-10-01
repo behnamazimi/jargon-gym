@@ -16,7 +16,12 @@ async function fetchReviewFeed(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ domainId, excludeTermIds }),
+      // An expired session makes the proxy redirect to the login page.
+      redirect: "manual",
     });
+    if (response.status === 401 || response.type === "opaqueredirect") {
+      return { error: "Log in to continue.", terms: [] };
+    }
     if (!response.ok) return { error: FEED_ERROR, terms: [] };
     return (await response.json()) as ReviewQueueSeed;
   } catch {

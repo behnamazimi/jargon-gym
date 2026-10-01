@@ -6,7 +6,10 @@ import {
   REVIEW_COLLECTION_COOKIE,
 } from "@/lib/review/collection-preference";
 import { loadReviewFeed, loadReviewSetup } from "@/lib/review/feed";
-import { resolveStudyCollectionId } from "@/lib/study/collection-preference";
+import {
+  isCollectionPreference,
+  resolveStudyCollectionId,
+} from "@/lib/study/collection-preference";
 import { hasNoCollections } from "@/lib/study/collections";
 
 type PageProps = {
@@ -22,7 +25,9 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
   const rememberedId = parseReviewCollectionCookie(
     cookieStore.get(REVIEW_COLLECTION_COOKIE)?.value,
   );
-  const speculativeDomainId = params.domain ?? rememberedId ?? "all";
+  const speculativeDomainId = isCollectionPreference(params.domain)
+    ? params.domain
+    : (rememberedId ?? "all");
 
   const [setup, speculativeSeed] = await Promise.all([
     loadReviewSetup(),

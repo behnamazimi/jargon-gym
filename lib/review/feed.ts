@@ -1,5 +1,6 @@
 import { requireAuthenticatedClient, getUserIsAdmin } from "@/lib/auth/require-session";
 import { isUuid } from "@/lib/jargon/library/details";
+import { isCollectionPreference } from "@/lib/study/collection-preference";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listStudyCollectionState } from "@/lib/study/collections";
@@ -51,7 +52,8 @@ export async function loadReviewFeed(
   }
 }
 
-const MAX_EXCLUDED_TERMS = 5000;
+/** Only bounds the request size; a real session never gets near it. */
+const MAX_EXCLUDED_TERMS = 20_000;
 
 /** A refill request body: `{ domainId: "all" | uuid, excludeTermIds: uuid[] }`. */
 export function parseReviewFeedRequest(
@@ -59,7 +61,7 @@ export function parseReviewFeedRequest(
 ): { domainId: string; excludeTermIds: string[] } | null {
   if (!body || typeof body !== "object") return null;
   const { domainId, excludeTermIds } = body as Record<string, unknown>;
-  if (typeof domainId !== "string" || (domainId !== "all" && !isUuid(domainId))) return null;
+  if (!isCollectionPreference(domainId)) return null;
   if (!Array.isArray(excludeTermIds) || excludeTermIds.length > MAX_EXCLUDED_TERMS) return null;
   if (!excludeTermIds.every((id) => typeof id === "string" && isUuid(id))) return null;
   return { domainId, excludeTermIds };
