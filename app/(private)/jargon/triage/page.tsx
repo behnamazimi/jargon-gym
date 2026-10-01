@@ -1,6 +1,6 @@
 import { Layers } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getJargonSetupData } from "@/app/(private)/jargon/(collection)/actions";
+import { getJargonSetupData } from "@/lib/jargon/library/setup";
 import { PageHeader } from "@/components/jargon/page-header";
 import { TriagePage } from "@/components/jargon/triage/triage-page";
 import { createClient } from "@/lib/supabase/server";

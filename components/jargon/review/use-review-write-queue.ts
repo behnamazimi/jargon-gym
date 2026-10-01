@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { rateReviewTermAction } from "@/app/(private)/jargon/review/actions";
-import { revalidateStudyPathsAction } from "@/app/(private)/jargon/actions";
 import { useToast } from "@/components/ui/toast";
 import { useTraceWriteQueue } from "@/lib/study/trace-write-queue";
 import { upsertPendingWrite } from "@/lib/review/writes";
@@ -55,7 +54,6 @@ export function useReviewWriteQueue(options: {
             savePendingReviewWrites(next);
             return next;
           });
-          void revalidateStudyPathsAction("review");
         }
         if (result.error) {
           options.setErrorMessage(result.error);

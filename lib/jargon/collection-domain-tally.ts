@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchAllRows } from "@/lib/supabase/fetch-all-rows";
 import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
 import type { CollectionDomainRow } from "./collections";
 
@@ -87,14 +88,18 @@ export async function fetchDomainStats(client: Client, domainIds: string[]) {
   if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
 
   const [progress, unfinished] = await Promise.all([
-    client.rpc("my_progress_state_by_domain", { p_domain_ids: domainIds }),
+    fetchAllRows((from, to) =>
+      client
+        .rpc("my_progress_state_by_domain", { p_domain_ids: domainIds })
+        .order("term_id")
+        .range(from, to),
+    ),
     client.rpc("my_unfinished_term_counts", { p_domain_ids: domainIds }),
   ]);
 
-  if (progress.error) throw progress.error;
   if (unfinished.error) throw unfinished.error;
 
-  const stats = tallyDomainStats(domainIds, progress.data);
+  const stats = tallyDomainStats(domainIds, progress);
   for (const row of unfinished.data) {
     const current = stats.get(row.domain_id);
     if (current) current.unfinishedCount = row.unfinished_count;
@@ -106,12 +111,12 @@ export async function fetchDomainStats(client: Client, domainIds: string[]) {
 export async function fetchDomainStatsForUser(client: Client, userId: string, domainIds: string[]) {
   if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
 
-  const { data, error } = await client.rpc("progress_state_by_domain", {
-    p_user_id: userId,
-    p_domain_ids: domainIds,
-  });
-
-  if (error) throw error;
+  const data = await fetchAllRows((from, to) =>
+    client
+      .rpc("progress_state_by_domain", { p_user_id: userId, p_domain_ids: domainIds })
+      .order("term_id")
+      .range(from, to),
+  );
   return tallyDomainStats(domainIds, data);
 }
 

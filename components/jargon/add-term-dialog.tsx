@@ -29,14 +29,14 @@ import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
 import { buildRelationshipSync, validateRelationshipDrafts } from "@/lib/jargon/relationship-sync";
 import { findDuplicateTerm, mostUsedCategory } from "@/lib/jargon/term-duplicates";
 import type { TermFormValues } from "@/lib/jargon/term-schema";
-import type { Term, UnfinishedTerm } from "@/lib/jargon/types";
+import type { LibraryTerm, UnfinishedLibraryTerm } from "@/lib/jargon/types";
 import { cn } from "@/lib/utils";
 
 type AddTermDialogProps = {
   domainId: string;
-  domainTerms: Term[];
+  domainTerms: LibraryTerm[];
   /** Saved without a definition. They still count as duplicates. */
-  unfinishedTerms: UnfinishedTerm[];
+  unfinishedTerms: UnfinishedLibraryTerm[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenTerm: (term: string) => void;

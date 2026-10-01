@@ -2,7 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import type { RelationshipDraft } from "@/lib/jargon/relationship-schema";
-import type { Term } from "@/lib/jargon/types";
+import type { LibraryTerm } from "@/lib/jargon/types";
 import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 type TermRelationshipsEditorProps = {
   drafts: RelationshipDraft[];
   onChange: (drafts: RelationshipDraft[]) => void;
-  domainTerms: Term[];
+  domainTerms: Pick<LibraryTerm, "id" | "term">[];
   sourceTermId?: string;
 };
 

@@ -1,16 +1,21 @@
 "use client";
 
-import { FinishTermsDialog } from "@/components/jargon/finish-terms-dialog";
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
 import { UnfinishedBanner } from "@/components/jargon/unfinished-banner";
 import { useRequestsAvailable } from "@/components/requests/requests-availability";
-import type { UnfinishedTerm } from "@/lib/jargon/types";
+import type { UnfinishedLibraryTerm } from "@/lib/jargon/types";
+
+const FinishTermsDialog = dynamic(() =>
+  import("@/components/jargon/finish-terms-dialog").then((mod) => mod.FinishTermsDialog),
+);
 
 type UnfinishedSectionProps = {
   domainId: string;
-  terms: UnfinishedTerm[];
+  terms: UnfinishedLibraryTerm[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onChanged: () => void | Promise<void>;
+  onRemoved: () => void;
 };
 
 /** The "N terms to finish" prompt and the sheet that fills them in. */
@@ -19,7 +24,7 @@ export function UnfinishedSection({
   terms,
   isOpen,
   onOpenChange,
-  onChanged,
+  onRemoved,
 }: UnfinishedSectionProps) {
   const canRequest = useRequestsAvailable();
   return (
@@ -29,12 +34,16 @@ export function UnfinishedSection({
         onFinish={() => onOpenChange(true)}
         requestHref={canRequest ? `/jargon/import/request?definitions=${domainId}` : undefined}
       />
-      <FinishTermsDialog
-        terms={terms}
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        onChanged={onChanged}
-      />
+      {isOpen ? (
+        <Suspense fallback={null}>
+          <FinishTermsDialog
+            terms={terms}
+            isOpen={isOpen}
+            onOpenChange={onOpenChange}
+            onRemoved={onRemoved}
+          />
+        </Suspense>
+      ) : null}
     </>
   );
 }

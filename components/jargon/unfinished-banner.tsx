@@ -4,10 +4,10 @@ import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/u
 import { Button, LinkButton } from "@/components/ui/button";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import { pluralize } from "@/lib/utils";
-import type { UnfinishedTerm } from "@/lib/jargon/types";
+import type { UnfinishedLibraryTerm } from "@/lib/jargon/types";
 
 type UnfinishedBannerProps = {
-  terms: UnfinishedTerm[];
+  terms: UnfinishedLibraryTerm[];
   onFinish: () => void;
   /** Where to ask for definitions, when that's possible right now. */
   requestHref?: string;

@@ -3,6 +3,7 @@
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
+import { overrideMarkedKnown } from "@/lib/jargon/library/overrides";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -31,6 +32,7 @@ export function StoryMarkKnown({ termId, term }: { termId: string; term: string 
       onPress={async () => {
         setMarked(true);
         const { error } = await setTermMarkedKnownAction(termId, true);
+        if (!error) overrideMarkedKnown(termId, true);
         if (error) {
           setMarked(false);
           toast("Couldn't mark that term known — it may show up again.", "destructive");

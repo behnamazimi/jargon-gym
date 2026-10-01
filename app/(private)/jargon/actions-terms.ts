@@ -100,8 +100,9 @@ export async function deleteTerm(termId: string): Promise<{ error?: string }> {
   if ("error" in auth) return { error: auth.error };
 
   try {
+    // No revalidation: callers remove the term locally, and a full re-render
+    // of the page would ship every term back for one deletion.
     await deleteTermRecord(auth.supabase, termId);
-    revalidatePath("/jargon");
     return {};
   } catch (err) {
     return { error: termMutationErrorMessage(err, "Couldn't delete that term. Try again.") };
@@ -149,8 +150,9 @@ export async function setTermMarkedKnownAction(
   if ("error" in auth) return { error: auth.error };
 
   try {
+    // No revalidation: every caller flips the mark locally (see
+    // lib/jargon/library/overrides.ts), so re-rendering the page is waste.
     await setTermMarkedKnown(auth.supabase, auth.user.id, termId, marked);
-    revalidatePath("/jargon");
     return {};
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't update that. Try again.";

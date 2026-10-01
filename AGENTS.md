@@ -92,6 +92,19 @@ add a chapter, add an entry to the matching area file, add any new target ids to
 components only carry that attribute and never import tour code. Progress
 lives in `user_settings.tour_status` / `tour_seen`.
 
+# Library (/jargon)
+
+The Library's layout (`app/(private)/jargon/(collection)/layout.tsx`) holds the
+collection sidebar, and the page loads one collection. Switching collections
+is a plain `?domain=` link, so only the page reloads. The page sends a lean
+row per term (`LibraryTerm`, from `lib/jargon/library/load.ts`). Full details
+load in batches from `GET /api/jargon/terms/details` as rows near the screen
+(`lib/jargon/library/details-store.ts`). Marking known and deleting don't
+revalidate the page. They record a local edit in
+`lib/jargon/library/overrides.ts`, which wins over any older server snapshot,
+so call `overrideMarkedKnown` wherever a term is marked known. Filters live in
+the `jg_lib_filters` cookie so the server renders them.
+
 # Import
 
 Adding terms (chooser, paste importer, commit, unfinished terms) is described

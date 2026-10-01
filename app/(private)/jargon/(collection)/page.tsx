@@ -1,14 +1,23 @@
-import { getJargonSetupData } from "@/app/(private)/jargon/(collection)/actions";
+import { cookies, headers } from "next/headers";
 import { JargonPage } from "@/components/jargon/jargon-page";
 import type { ImportedSummary } from "@/components/jargon/imported-banner";
 import { EmptyCollection } from "@/components/jargon/empty-collection";
+import { NarrationAccess } from "@/components/jargon/library/narration-access";
 import { RequestsAvailable } from "@/components/requests/requests-availability";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { batchResultSchema } from "@/lib/jargon/import/commit-schema";
-import { getSessionUser } from "@/lib/auth/require-session";
+import { readLibraryFiltersCookie } from "@/lib/jargon/library-filters";
+import { loadLibraryPage } from "@/lib/jargon/library/load";
+import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/jargon/library/pick-domain";
+import { LOAD_FAILED_MESSAGE } from "@/lib/jargon/library/setup";
+import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { loadRequestEntryFor } from "@/lib/requests/repository";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { createClient } from "@/lib/supabase/server";
+
+type Client = Awaited<ReturnType<typeof createClient>>;
 
 type PageProps = {
   searchParams: Promise<{ domain?: string; added?: string }>;
@@ -17,11 +26,11 @@ type PageProps = {
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function loadImportedSummary(
+  supabase: Client,
   batchId: string | undefined,
 ): Promise<ImportedSummary | undefined> {
   if (!batchId || !UUID.test(batchId)) return undefined;
 
-  const supabase = await createClient();
   const { data } = await supabase
     .from("import_batches")
     .select("result")
@@ -41,11 +50,9 @@ async function loadImportedSummary(
   };
 }
 
-async function loadCanRequest() {
-  const { supabase, user } = await getSessionUser();
-  if (!user) return false;
+async function loadCanRequest(supabase: Client, userId: string) {
   try {
-    const entry = await loadRequestEntryFor(supabase, user.id);
+    const entry = await loadRequestEntryFor(supabase, userId);
     return entry.state === "available";
   } catch (error) {
     console.error("Couldn't load collection requests:", error);
@@ -53,35 +60,55 @@ async function loadCanRequest() {
   }
 }
 
+function LoadError({ message }: { message: string }) {
+  return (
+    <PageCenter className="gap-3">
+      <p className="text-sm text-base-content/60">{message}</p>
+      <LinkButton href="/jargon/import">Add your own terms</LinkButton>
+    </PageCenter>
+  );
+}
+
 export default async function JargonListPage({ searchParams }: PageProps) {
-  const { domain: selectedDomainId, added } = await searchParams;
-  const [setup, importedSummary, canRequest] = await Promise.all([
-    getJargonSetupData(selectedDomainId),
-    loadImportedSummary(added),
-    loadCanRequest(),
-  ]);
+  const [{ domain: requestedDomainId, added }, cookieStore, requestHeaders, auth] =
+    await Promise.all([searchParams, cookies(), headers(), requireAuthenticatedClient()]);
 
-  if ("emptyCollection" in setup) {
-    return <EmptyCollection />;
-  }
-
-  if ("error" in setup) {
-    const showImportLink = "showImportLink" in setup;
+  if ("error" in auth) {
     return (
-      <PageCenter className={showImportLink ? "gap-3" : undefined}>
-        <p className="text-sm text-base-content/60">{setup.error}</p>
-        {showImportLink ? <LinkButton href="/jargon/import">Add your own terms</LinkButton> : null}
+      <PageCenter>
+        <p className="text-sm text-base-content/60">Log in to view your collection.</p>
       </PageCenter>
     );
   }
+  const { supabase, user } = auth;
+
+  // Not awaited: each is read where it's shown, so none of them holds up the list.
+  const importedSummary = loadImportedSummary(supabase, added);
+  const canRequest = loadCanRequest(supabase, user.id);
+  const narrationAccess = getNarrationAccessForUser(createAdminClient(), user.id);
+
+  let result;
+  try {
+    result = await loadLibraryPage(supabase, user.id, {
+      requestedDomainId,
+      lastDomainId: cookieStore.get(LIBRARY_LAST_DOMAIN_COOKIE)?.value,
+    });
+  } catch (error) {
+    console.error("Couldn't load the Library:", error);
+    return <LoadError message={LOAD_FAILED_MESSAGE} />;
+  }
+
+  if (result.kind === "empty") return <EmptyCollection />;
 
   return (
     <RequestsAvailable available={canRequest}>
-      <JargonPage
-        initialData={setup.data}
-        narrationAccess={setup.narrationAccess}
-        importedSummary={importedSummary}
-      />
+      <NarrationAccess access={narrationAccess}>
+        <JargonPage
+          data={result.data}
+          filtersCookie={readLibraryFiltersCookie(requestHeaders.get("cookie") ?? "")}
+          importedSummary={importedSummary}
+        />
+      </NarrationAccess>
     </RequestsAvailable>
   );
 }

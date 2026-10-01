@@ -23,23 +23,18 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import { useTermActions } from "@/hooks/use-term-actions";
-import type { UnfinishedTerm } from "@/lib/jargon/types";
+import type { UnfinishedLibraryTerm } from "@/lib/jargon/types";
 
 type FinishTermsDialogProps = {
-  terms: UnfinishedTerm[];
+  terms: UnfinishedLibraryTerm[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Called after a term is finished or removed, so the page can reload. */
-  onChanged: () => void | Promise<void>;
+  /** Called after a term is removed, so the page can reload. Finishing one
+   *  reloads the page by itself (the action revalidates it). */
+  onRemoved: () => void;
 };
 
-function FinishRow({
-  term,
-  onChanged,
-}: {
-  term: UnfinishedTerm;
-  onChanged: () => void | Promise<void>;
-}) {
+function FinishRow({ term, onRemoved }: { term: UnfinishedLibraryTerm; onRemoved: () => void }) {
   const { finishTerm, deleteTerm, isBusy, error } = useTermActions();
   const { toast } = useToast();
   const [definition, setDefinition] = useState("");
@@ -50,14 +45,12 @@ function FinishRow({
     if (!definition.trim() || isBusy) return;
     await finishTerm(term.id, { definition }, () => {
       toast(`Saved "${term.term}"`, "success");
-      void onChanged();
     });
   }
 
   async function handleRemove() {
     setConfirmRemove(false);
-    await deleteTerm(term.id);
-    void onChanged();
+    if (await deleteTerm(term.id)) onRemoved();
   }
 
   return (
@@ -119,7 +112,7 @@ export function FinishTermsDialog({
   terms,
   isOpen,
   onOpenChange,
-  onChanged,
+  onRemoved,
 }: FinishTermsDialogProps) {
   return (
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -135,7 +128,7 @@ export function FinishTermsDialog({
       ) : (
         <ul className="m-0 flex min-h-0 list-none flex-col gap-3 overflow-y-auto p-0">
           {terms.map((term) => (
-            <FinishRow key={term.id} term={term} onChanged={onChanged} />
+            <FinishRow key={term.id} term={term} onRemoved={onRemoved} />
           ))}
         </ul>
       )}

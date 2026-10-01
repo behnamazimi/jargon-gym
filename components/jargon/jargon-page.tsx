@@ -1,92 +1,43 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { getJargonCollectionDataAction } from "@/app/(private)/jargon/(collection)/actions";
-import type { JargonPageData } from "@/lib/jargon/types";
+import { Suspense, useCallback, useMemo, useRef, useState } from "react";
+import type { LibraryPageData, LibraryTerm, Term } from "@/lib/jargon/types";
+import { clearTermDetails, loadTermDetails } from "@/lib/jargon/library/details-store";
 import { useJargonList } from "@/hooks/use-jargon-list";
 import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
-import { PageShell } from "@/components/page-container";
-import { JargonListSkeleton } from "@/components/page-skeleton";
 import { useToast } from "@/components/ui/toast";
-import { DomainSidebar } from "./domain-sidebar";
-import { DomainSidebarDrawer } from "./domain-sidebar-drawer";
-import { ImportedBanner, useImportedNotice, type ImportedSummary } from "./imported-banner";
+import { ImportedNotice, type ImportedSummary } from "./imported-banner";
 import { JargonDomainHeader } from "./jargon-domain-header";
 import { JargonFilters } from "./jargon-filters";
-import { replaceLibraryDomainInUrl } from "./jargon-page-helpers";
-import { AddTermDialog } from "./add-term-dialog";
 import { UnfinishedSection } from "./unfinished-section";
 import { TermList } from "./term-list";
+import { TermRowDialogs } from "./term-row-dialogs";
+
+const AddTermDialog = dynamic(() => import("./add-term-dialog").then((mod) => mod.AddTermDialog));
 
 type JargonPageProps = {
-  initialData: JargonPageData;
-  narrationAccess: boolean;
+  data: LibraryPageData;
+  /** The filters cookie as the server read it, so both renders agree. */
+  filtersCookie: string;
   /** What the import that just finished added (from ?added=). */
-  importedSummary?: ImportedSummary;
+  importedSummary: Promise<ImportedSummary | undefined>;
 };
 
-export function JargonPage({ initialData, narrationAccess, importedSummary }: JargonPageProps) {
+/** One collection in the Library: header, filters and the term list. The
+ *  sidebar lives in the layout; switching collections is a navigation. */
+export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageProps) {
   const [addTermOpen, setAddTermOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [editing, setEditing] = useState<Term | null>(null);
+  const [deleting, setDeleting] = useState<LibraryTerm | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { toast } = useToast();
 
-  // The collection on screen, separate from the server-rendered `initialData`,
-  // so switching collections doesn't need a route navigation (a remount).
-  const [activeData, setActiveData] = useState(initialData);
-  const importedNotice = useImportedNotice(importedSummary);
-  const [activeNarrationAccess, setActiveNarrationAccess] = useState(narrationAccess);
-  useEffect(() => setActiveData(initialData), [initialData]);
-  useEffect(() => setActiveNarrationAccess(narrationAccess), [narrationAccess]);
-
-  async function refreshCurrentDomain() {
-    const result = await getJargonCollectionDataAction(activeData.domain.id);
-    if ("data" in result) setActiveData(result.data);
-  }
-
-  const switchRequestIdRef = useRef(0);
-  const [switchingDomainId, setSwitchingDomainId] = useState<string | null>(null);
-
-  async function handleSelectDomain(domainId: string) {
-    if (domainId === switchingDomainId) return;
-
-    if (domainId === activeData.domain.id) {
-      if (!switchingDomainId) return;
-      // Clicking back to the current collection cancels the in-flight switch to B.
-      switchRequestIdRef.current++;
-      setSwitchingDomainId(null);
-      return;
-    }
-
-    const requestId = ++switchRequestIdRef.current;
-    setSwitchingDomainId(domainId);
-    setAddTermOpen(false); // dialog is scoped to the domain being left
-    setFinishOpen(false);
-
-    const result = await getJargonCollectionDataAction(domainId);
-    if (switchRequestIdRef.current !== requestId) return; // superseded by a newer switch
-
-    setSwitchingDomainId(null);
-    if ("emptyCollection" in result) {
-      // Rare: the target disappeared. There's no "empty" branch to render here,
-      // so navigate and let the server component pick the page.
-      router.push("/jargon");
-    } else if ("error" in result) {
-      toast(result.error, "destructive");
-    } else {
-      setActiveData(result.data);
-      setActiveNarrationAccess(result.narrationAccess);
-      replaceLibraryDomainInUrl(domainId);
-    }
-  }
-
   const {
     domain,
-    domains,
-    setDomainActiveForReview,
     terms,
     removeTermLocally,
     restoreTermLocally,
@@ -108,161 +59,131 @@ export function JargonPage({ initialData, narrationAccess, importedSummary }: Ja
     toggleOpen,
     toggleMarkedKnown,
     clearSearch,
-  } = useJargonList(activeData);
+  } = useJargonList(data, filtersCookie);
 
-  const liveKnownCount = useMemo(
-    () => new Set([...knownTerms, ...markedKnownTerms]).size,
-    [knownTerms, markedKnownTerms],
-  );
-
-  const untriagedCount = useMemo(
-    () => terms.filter((t) => !knownTerms.has(t.id) && !markedKnownTerms.has(t.id)).length,
-    [terms, knownTerms, markedKnownTerms],
-  );
-
-  const liveTermsLearnedCount = useMemo(
-    () => new Set([...everMasteredTerms, ...markedKnownTerms]).size,
-    [everMasteredTerms, markedKnownTerms],
-  );
-
-  const domainWithLiveCount = useMemo(
-    () => ({
+  const liveDomain = useMemo(() => {
+    const known = new Set<string>();
+    const learned = new Set<string>();
+    for (const term of terms) {
+      if (knownTerms.has(term.id) || markedKnownTerms.has(term.id)) known.add(term.id);
+      if (everMasteredTerms.has(term.id) || markedKnownTerms.has(term.id)) learned.add(term.id);
+    }
+    return {
       ...domain,
-      knownCount: liveKnownCount,
-      termsLearnedCount: liveTermsLearnedCount,
+      knownCount: known.size,
+      termsLearnedCount: learned.size,
       termCount: terms.length,
-    }),
-    [domain, liveKnownCount, liveTermsLearnedCount, terms.length],
-  );
+    };
+  }, [domain, terms, knownTerms, markedKnownTerms, everMasteredTerms]);
 
+  const untriagedCount = terms.length - liveDomain.knownCount;
   const isOwner = domain.source === "owned";
-
-  const domainsWithLiveCounts = useMemo(
-    () =>
-      domains.map((d) =>
-        d.id === domain.id
-          ? {
-              ...d,
-              knownCount: liveKnownCount,
-              termsLearnedCount: liveTermsLearnedCount,
-              termCount: terms.length,
-            }
-          : d,
-      ),
-    [domains, domain.id, liveKnownCount, liveTermsLearnedCount, terms.length],
-  );
-
-  // While a switch is pending, reflect the target collection in the
-  // sidebar/drawer immediately instead of waiting for its data to land.
-  const displayedDomain = switchingDomainId
-    ? (domainsWithLiveCounts.find((d) => d.id === switchingDomainId) ?? domainWithLiveCount)
-    : domainWithLiveCount;
+  const windowKey = [searchQuery, hideKnown, sortMode, [...activeCategories].join("|")].join("·");
 
   useSlashToFocus(searchInputRef);
 
+  // Stable, so a dialog opening doesn't re-render every memoized row.
+  const handleEdit = useCallback(
+    async (termId: string) => {
+      const term = await loadTermDetails(termId);
+      if (term) setEditing(term);
+      else toast("Couldn't load that term. Try again.", "destructive");
+    },
+    [toast],
+  );
+  const openAddTerm = useCallback(() => setAddTermOpen(true), []);
+
   return (
-    <>
-      <PageShell>
-        <div className="flex flex-col gap-6 md:flex-row md:items-start">
-          <DomainSidebarDrawer
-            domains={domainsWithLiveCounts}
-            currentDomain={displayedDomain}
-            currentDomainId={displayedDomain.id}
-            onSelectDomain={handleSelectDomain}
-            open={drawerOpen}
-            onOpenChange={setDrawerOpen}
-          />
+    <div className="min-w-0 flex-1 space-y-4">
+      <Suspense fallback={null}>
+        <ImportedNotice
+          summary={importedSummary}
+          domain={domain}
+          onFinish={() => setFinishOpen(true)}
+        />
+      </Suspense>
+      <JargonDomainHeader
+        domain={liveDomain}
+        categoryCount={categories.length}
+        isOwner={isOwner}
+        untriagedCount={untriagedCount}
+        onAddTerm={isOwner ? openAddTerm : undefined}
+      />
 
-          <aside className="hidden md:flex md:w-68 md:shrink-0">
-            <div className="shadow-surface sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-2xl bg-base-100 p-2">
-              <DomainSidebar
-                domains={domainsWithLiveCounts}
-                currentDomainId={displayedDomain.id}
-                onSelectDomain={handleSelectDomain}
-                className="min-h-0 flex-1"
-              />
-            </div>
-          </aside>
-
-          {switchingDomainId ? (
-            <JargonListSkeleton />
-          ) : (
-            <div className="min-w-0 flex-1 space-y-4">
-              <ImportedBanner
-                summary={importedNotice.summary}
-                domain={domain}
-                onFinish={() => setFinishOpen(true)}
-                onDismiss={importedNotice.dismiss}
-              />
-              <JargonDomainHeader
-                domain={domainWithLiveCount}
-                domains={domainsWithLiveCounts}
-                terms={terms}
-                categoryCount={categories.length}
-                isOwner={isOwner}
-                untriagedCount={untriagedCount}
-                onAddTerm={isOwner ? () => setAddTermOpen(true) : undefined}
-                onToggleActiveForReviewLocal={setDomainActiveForReview}
-              />
-
-              {isOwner ? (
-                <UnfinishedSection
-                  domainId={domain.id}
-                  terms={activeData.unfinishedTerms}
-                  isOpen={finishOpen}
-                  onOpenChange={setFinishOpen}
-                  onChanged={refreshCurrentDomain}
-                />
-              ) : null}
-
-              <JargonFilters
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-                onSearchClear={clearSearch}
-                searchInputRef={searchInputRef}
-                categories={categories}
-                categoryCounts={categoryCounts}
-                totalCount={terms.length}
-                activeCategories={activeCategories}
-                onToggleCategory={toggleCategory}
-                hideKnown={hideKnown}
-                onHideKnownChange={setHideKnown}
-                sortMode={sortMode}
-                onSortChange={setSortMode}
-                visibleCount={filteredTerms.length}
-              />
-
-              <TermList
-                terms={filteredTerms}
-                knownTerms={knownTerms}
-                markedKnownTerms={markedKnownTerms}
-                openTerms={openTerms}
-                isOwner={isOwner}
-                domainId={domain.id}
-                language={domain.language}
-                domainTerms={terms}
-                hasUnfinished={activeData.unfinishedTerms.length > 0}
-                onAddTerm={() => setAddTermOpen(true)}
-                narrationAccess={activeNarrationAccess}
-                onToggleOpen={toggleOpen}
-                onToggleMarkedKnown={toggleMarkedKnown}
-                onTermRemoved={removeTermLocally}
-                onTermRemoveFailed={restoreTermLocally}
-              />
-            </div>
-          )}
-        </div>
-      </PageShell>
       {isOwner ? (
-        <AddTermDialog
-          domainId={domain.id}
+        <Suspense fallback={null}>
+          <UnfinishedSection
+            domainId={domain.id}
+            terms={data.unfinishedTerms}
+            isOpen={finishOpen}
+            onOpenChange={setFinishOpen}
+            onRemoved={() => router.refresh()}
+          />
+        </Suspense>
+      ) : null}
+
+      <JargonFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSearchClear={clearSearch}
+        searchInputRef={searchInputRef}
+        categories={categories}
+        categoryCounts={categoryCounts}
+        totalCount={terms.length}
+        activeCategories={activeCategories}
+        onToggleCategory={toggleCategory}
+        hideKnown={hideKnown}
+        onHideKnownChange={setHideKnown}
+        sortMode={sortMode}
+        onSortChange={setSortMode}
+        visibleCount={filteredTerms.length}
+      />
+
+      <TermList
+        terms={filteredTerms}
+        windowKey={windowKey}
+        knownTerms={knownTerms}
+        markedKnownTerms={markedKnownTerms}
+        openTerms={openTerms}
+        isOwner={isOwner}
+        language={domain.language}
+        totalCount={terms.length}
+        hasUnfinished={data.unfinishedTerms.length > 0}
+        onAddTerm={openAddTerm}
+        onToggleOpen={toggleOpen}
+        onToggleMarkedKnown={toggleMarkedKnown}
+        onEdit={handleEdit}
+        onDelete={setDeleting}
+      />
+
+      {isOwner ? (
+        <TermRowDialogs
           domainTerms={terms}
-          unfinishedTerms={activeData.unfinishedTerms}
-          isOpen={addTermOpen}
-          onOpenChange={setAddTermOpen}
-          onOpenTerm={setSearchQuery}
+          editing={editing}
+          onEditingChange={setEditing}
+          deleting={deleting}
+          onDeletingChange={setDeleting}
+          onTermRemoved={removeTermLocally}
+          onTermRemoveFailed={restoreTermLocally}
         />
       ) : null}
-    </>
+
+      {isOwner && addTermOpen ? (
+        <Suspense fallback={null}>
+          <AddTermDialog
+            domainId={domain.id}
+            domainTerms={terms}
+            unfinishedTerms={data.unfinishedTerms}
+            isOpen
+            onOpenChange={(open) => {
+              setAddTermOpen(open);
+              // A new term's links show on the terms it links to.
+              if (!open) clearTermDetails();
+            }}
+            onOpenTerm={setSearchQuery}
+          />
+        </Suspense>
+      ) : null}
+    </div>
   );
 }

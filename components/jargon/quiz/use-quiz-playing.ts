@@ -1,7 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { generateQuizAction } from "@/app/(private)/jargon/quiz/actions";
-import { revalidateStudyPathsAction } from "@/app/(private)/jargon/actions";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { missedQuestions, missedTermIds } from "@/lib/quiz/results";
 import type { QuizAnswer, QuizQuestion, QuizTerm } from "@/lib/quiz/types";
@@ -57,10 +56,6 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     onSessionIdleAfterComplete: () => {
       clearQuizSession();
       setSavedSession(null);
-      void revalidateStudyPathsAction("quiz");
-    },
-    onReplacedSessionIdle: () => {
-      void revalidateStudyPathsAction("quiz");
     },
   });
 

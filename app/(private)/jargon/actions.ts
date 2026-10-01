@@ -19,4 +19,3 @@ export {
   deleteOwnedDomain,
   resetCollectionProgress,
 } from "@/app/(private)/jargon/actions-collections";
-export { revalidateStudyPathsAction } from "@/app/(private)/jargon/actions-study";

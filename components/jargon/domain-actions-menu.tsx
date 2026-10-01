@@ -1,43 +1,47 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { getDomainSubscriberCount } from "@/app/(private)/jargon/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
-import type { Domain, Term, UnfinishedTerm } from "@/lib/jargon/types";
-import { DomainExportDialog } from "./domain-export-dialog";
-import { DomainFormDialog } from "./domain-form-dialog";
-import { DomainActionsDialogs } from "./domain-actions-dialogs";
+import {
+  fetchCollectionExport,
+  type CollectionExport,
+} from "@/lib/jargon/export/fetch-collection-export";
+import type { Domain } from "@/lib/jargon/types";
+import { DomainActionsDialogs, type SubscriberCheck } from "./domain-actions-dialogs";
 import { DomainActionsDropdown } from "./domain-actions-dropdown";
 
 export { DomainMeta } from "./domain-meta";
 
+const DomainExportDialog = dynamic(() =>
+  import("./domain-export-dialog").then((mod) => mod.DomainExportDialog),
+);
+const DomainFormDialog = dynamic(() =>
+  import("./domain-form-dialog").then((mod) => mod.DomainFormDialog),
+);
+
 type DomainActionsMenuProps = {
   domain: Domain;
-  domains: Domain[];
-  terms: (Term | UnfinishedTerm)[];
   onToggleActiveForReview: () => void;
   togglePending: boolean;
 };
 
 export function DomainActionsMenu({
   domain,
-  domains,
-  terms,
   onToggleActiveForReview,
   togglePending,
 }: DomainActionsMenuProps) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
+  // Set when the export dialog opens; the dialog reads it.
+  const [exportTerms, setExportTerms] = useState<Promise<CollectionExport> | null>(null);
   const [shareConfirmOpen, setShareConfirmOpen] = useState(false);
-  const [unshareConfirmOpen, setUnshareConfirmOpen] = useState(false);
+  const [subscriberCheck, setSubscriberCheck] = useState<Promise<SubscriberCheck> | null>(null);
   const [resetProgressOpen, setResetProgressOpen] = useState(false);
-  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
-  const [subscriberCountLoading, setSubscriberCountLoading] = useState(false);
-  const [subscriberCountError, setSubscriberCountError] = useState<string | null>(null);
   const {
     error,
     isBusy,
@@ -63,43 +67,13 @@ export function DomainActionsMenu({
 
   function handleConfirmUnshare() {
     unshareDomain(domain.id);
-    setUnshareConfirmOpen(false);
+    setSubscriberCheck(null);
   }
 
   function handleConfirmResetProgress() {
     resetProgress(domain.id);
     setResetProgressOpen(false);
   }
-
-  useEffect(() => {
-    if (!unshareConfirmOpen) {
-      setSubscriberCount(null);
-      setSubscriberCountError(null);
-      setSubscriberCountLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setSubscriberCountLoading(true);
-    setSubscriberCountError(null);
-
-    getDomainSubscriberCount(domain.id).then((result) => {
-      if (cancelled) return;
-
-      setSubscriberCountLoading(false);
-
-      if (result.error) {
-        setSubscriberCountError(result.error);
-        return;
-      }
-
-      setSubscriberCount(result.count ?? 0);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [unshareConfirmOpen, domain.id]);
 
   return (
     <div className="relative shrink-0">
@@ -108,41 +82,51 @@ export function DomainActionsMenu({
         disabled={disabled}
         onToggleActiveForReview={onToggleActiveForReview}
         onResetProgress={() => setResetProgressOpen(true)}
-        onExport={() => setExportOpen(true)}
+        onExport={() => setExportTerms(fetchCollectionExport(domain.id))}
         onEdit={() => setEditOpen(true)}
         onShare={() => setShareConfirmOpen(true)}
-        onUnshare={() => setUnshareConfirmOpen(true)}
+        onUnshare={() =>
+          setSubscriberCheck(
+            getDomainSubscriberCount(domain.id).catch(() => ({
+              error: "Couldn't check who else uses this collection. Try again.",
+            })),
+          )
+        }
         onDelete={() => setDeleteOpen(true)}
         onRemoveFromCollection={() => {
-          const fallback = domains.find((item) => item.id !== domain.id);
-          removeFromCollection(domain.id, () => {
-            router.push(fallback ? `/jargon?domain=${fallback.id}` : "/jargon");
-          });
+          // The Library picks the next collection to show.
+          removeFromCollection(domain.id, () => router.push("/jargon"));
         }}
       />
 
-      {domain.source === "owned" ? (
-        <DomainFormDialog domain={domain} isOpen={editOpen} onOpenChange={setEditOpen} />
+      {/* Their own boundaries, so loading a dialog's code doesn't suspend the page. */}
+      {domain.source === "owned" && editOpen ? (
+        <Suspense fallback={null}>
+          <DomainFormDialog domain={domain} isOpen={editOpen} onOpenChange={setEditOpen} />
+        </Suspense>
       ) : null}
 
-      <DomainExportDialog
-        domain={domain}
-        terms={terms}
-        isOpen={exportOpen}
-        onOpenChange={setExportOpen}
-      />
+      {exportTerms ? (
+        <Suspense fallback={null}>
+          <DomainExportDialog
+            domain={domain}
+            terms={exportTerms}
+            isOpen
+            onOpenChange={(open) => {
+              if (!open) setExportTerms(null);
+            }}
+          />
+        </Suspense>
+      ) : null}
 
       <DomainActionsDialogs
         domain={domain}
         shareConfirmOpen={shareConfirmOpen}
         onShareConfirmOpenChange={setShareConfirmOpen}
         onConfirmShare={handleConfirmShare}
-        unshareConfirmOpen={unshareConfirmOpen}
-        onUnshareConfirmOpenChange={setUnshareConfirmOpen}
+        subscriberCheck={subscriberCheck}
+        onUnshareClose={() => setSubscriberCheck(null)}
         onConfirmUnshare={handleConfirmUnshare}
-        subscriberCount={subscriberCount}
-        subscriberCountLoading={subscriberCountLoading}
-        subscriberCountError={subscriberCountError}
         deleteOpen={deleteOpen}
         onDeleteOpenChange={setDeleteOpen}
         onConfirmDelete={handleConfirmDelete}

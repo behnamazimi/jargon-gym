@@ -1,10 +1,10 @@
-import type { FilterOptions, SortMode, Term } from "./types";
+import type { FilterOptions, LibraryTerm, SortMode } from "./types";
 
-export function getCategories(terms: Term[]): string[] {
+export function getCategories(terms: Pick<LibraryTerm, "category">[]): string[] {
   return [...new Set(terms.flatMap((t) => (t.category ? [t.category] : [])))];
 }
 
-export function getCategoryCounts(terms: Term[]): Record<string, number> {
+export function getCategoryCounts(terms: Pick<LibraryTerm, "category">[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const term of terms) {
     if (!term.category) continue;
@@ -13,7 +13,7 @@ export function getCategoryCounts(terms: Term[]): Record<string, number> {
   return counts;
 }
 
-export function filterTerms(terms: Term[], options: FilterOptions): Term[] {
+export function filterTerms<T extends LibraryTerm>(terms: T[], options: FilterOptions): T[] {
   const { searchQuery, activeCategories, hideKnown, sortMode, knownTerms, markedKnownTerms } =
     options;
 
@@ -39,12 +39,12 @@ function categoryRank(category: string | null): string {
   return category ? `0${category}` : "1";
 }
 
-function sortTerms(
-  terms: Term[],
+function sortTerms<T extends LibraryTerm>(
+  terms: T[],
   sortMode: SortMode,
   knownTerms: Set<string>,
   markedKnownTerms: Set<string>,
-): Term[] {
+): T[] {
   if (sortMode === "category") {
     return [...terms].sort(
       (a, b) =>

@@ -1,109 +1,60 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { recordTermReadAction, setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
-import type { JargonPageData, Term } from "@/lib/jargon/types";
+import {
+  overrideCollectionCounts,
+  overrideMarkedKnown,
+  overrideRemoved,
+  snapshotSeenAt,
+  termOverride,
+  useLibraryOverrides,
+} from "@/lib/jargon/library/overrides";
+import type { LibraryPageData } from "@/lib/jargon/types";
 import { useLibraryFilters } from "./use-library-filters";
 
-export function useJargonList(initialData: JargonPageData) {
-  const [terms, setTerms] = useState(initialData.terms);
+/**
+ * One collection's list state. Terms and known marks come from the server
+ * snapshot with this device's newer edits laid over it, so nothing is copied
+ * into state and a fresh snapshot (after an edit elsewhere) simply wins. The
+ * page remounts per collection, which resets search and open cards.
+ */
+export function useJargonList(data: LibraryPageData, filtersCookie: string) {
+  const overrides = useLibraryOverrides();
+  const seenAt = snapshotSeenAt(`${data.domain.id}:${data.loadedAt}`);
+  // Marks still on their way to the server. They show at once and are
+  // undone if the save fails.
+  const [pendingMarks, setPendingMarks] = useState<ReadonlyMap<string, boolean>>(new Map());
 
-  // Sync terms when initialData changes (e.g., after router.refresh() or a
-  // collection switch), same pattern as knownTerms/markedKnownTerms below.
-  useEffect(() => {
-    setTerms(initialData.terms);
-  }, [initialData.terms]);
-
-  const removeTermLocally = useCallback((termId: string) => {
-    setTerms((prev) => prev.filter((t) => t.id !== termId));
-  }, []);
-
-  // The delete this is rolling back was scoped to whichever domain was on
-  // screen when it started. If the user has since switched collections
-  // (the page no longer remounts on switch — see jargon-page.tsx), `terms`
-  // now belongs to a different domain, and splicing the old term back in
-  // would corrupt that domain's list. Bail if the domain has moved on.
-  const restoreTermLocally = useCallback((term: Term, index: number, domainId: string) => {
-    if (domainId !== domainIdRef.current) return;
-    setTerms((prev) => {
-      const next = [...prev];
-      next.splice(Math.min(index, next.length), 0, term);
-      return next;
-    });
-  }, []);
-
-  const [domains, setDomains] = useState(initialData.domains);
-
-  // Sync domains when initialData changes (e.g., after router.refresh() or a
-  // collection switch), same pattern as knownTerms/markedKnownTerms below.
-  useEffect(() => {
-    setDomains(initialData.domains);
-  }, [initialData.domains]);
-
-  const domain = useMemo(
-    () => domains.find((d) => d.id === initialData.domain.id) ?? initialData.domain,
-    [domains, initialData.domain],
+  const terms = useMemo(
+    () => data.terms.filter((term) => !termOverride(overrides, term.id, seenAt)?.removed),
+    [data.terms, overrides, seenAt],
   );
-  const domainIdRef = useRef(domain.id);
-  domainIdRef.current = domain.id;
 
-  const setDomainActiveForReview = useCallback((domainId: string, active: boolean) => {
-    setDomains((prev) =>
-      prev.map((d) => (d.id === domainId ? { ...d, isActiveForReview: active } : d)),
-    );
-  }, []);
+  const knownTerms = useMemo(() => new Set(data.knownTermIds), [data.knownTermIds]);
+  const everMasteredTerms = useMemo(
+    () => new Set(data.everMasteredTermIds),
+    [data.everMasteredTermIds],
+  );
+  const markedKnownTerms = useMemo(() => {
+    const marked = new Set(data.markedKnownTermIds);
+    for (const term of data.terms) {
+      const local = pendingMarks.get(term.id) ?? termOverride(overrides, term.id, seenAt)?.marked;
+      if (local === true) marked.add(term.id);
+      if (local === false) marked.delete(term.id);
+    }
+    return marked;
+  }, [data.markedKnownTermIds, data.terms, pendingMarks, overrides, seenAt]);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [openTerms, setOpenTerms] = useState<Set<string>>(new Set());
-  const [knownTerms, setKnownTerms] = useState<Set<string>>(
-    () => new Set(initialData.knownTermIds),
-  );
-  const [markedKnownTerms, setMarkedKnownTerms] = useState<Set<string>>(
-    () => new Set(initialData.markedKnownTermIds),
-  );
-  const [everMasteredTerms, setEverMasteredTerms] = useState<Set<string>>(
-    () => new Set(initialData.everMasteredTermIds),
-  );
+  const [openTerms, setOpenTerms] = useState<ReadonlySet<string>>(new Set());
   const countedShownRef = useRef(new Set<string>());
-  const openTermsRef = useRef(openTerms);
-  openTermsRef.current = openTerms;
-  const markedKnownTermsRef = useRef(markedKnownTerms);
-  markedKnownTermsRef.current = markedKnownTerms;
-
-  // Sync knownTerms when initialData changes (e.g., after router.refresh())
-  useEffect(() => {
-    setKnownTerms(new Set(initialData.knownTermIds));
-  }, [initialData.knownTermIds]);
-
-  // Sync markedKnownTerms the same way, plus optimistically right after a
-  // toggle succeeds (see setTermMarkedKnown below) so the UI updates before
-  // the next router.refresh() lands.
-  useEffect(() => {
-    setMarkedKnownTerms(new Set(initialData.markedKnownTermIds));
-  }, [initialData.markedKnownTermIds]);
-
-  // Sync everMasteredTerms when initialData changes. Read-only/display-only:
-  // no action in this hook mutates it directly.
-  useEffect(() => {
-    setEverMasteredTerms(new Set(initialData.everMasteredTermIds));
-  }, [initialData.everMasteredTermIds]);
-
-  // Search and open cards are local to whichever collection is on screen —
-  // switching collections starts them fresh. The other filters are
-  // remembered on this device (useLibraryFilters).
-  const previousDomainIdRef = useRef(initialData.domain.id);
-  useEffect(() => {
-    if (previousDomainIdRef.current === initialData.domain.id) return;
-    previousDomainIdRef.current = initialData.domain.id;
-    setSearchQuery("");
-    setOpenTerms(new Set());
-  }, [initialData.domain.id]);
 
   const categories = useMemo(() => getCategories(terms), [terms]);
   const categoryCounts = useMemo(() => getCategoryCounts(terms), [terms]);
   const { hideKnown, setHideKnown, sortMode, setSortMode, activeCategories, toggleCategory } =
-    useLibraryFilters(domain.id, categories);
+    useLibraryFilters(data.domain.id, categories, filtersCookie);
 
   const filteredTerms = useMemo(
     () =>
@@ -118,61 +69,97 @@ export function useJargonList(initialData: JargonPageData) {
     [terms, searchQuery, activeCategories, hideKnown, sortMode, knownTerms, markedKnownTerms],
   );
 
-  const recordReadOnce = useCallback((termId: string) => {
+  const toggleOpen = useCallback((termId: string) => {
+    setOpenTerms((prev) => {
+      const next = new Set(prev);
+      if (next.has(termId)) next.delete(termId);
+      else next.add(termId);
+      return next;
+    });
     if (countedShownRef.current.has(termId)) return;
     countedShownRef.current.add(termId);
     void recordTermReadAction(termId);
   }, []);
 
-  const toggleOpen = useCallback(
-    (termId: string) => {
-      const wasOpen = openTermsRef.current.has(termId);
-
-      setOpenTerms((prev) => {
-        const next = new Set(prev);
-        if (wasOpen) next.delete(termId);
-        else next.add(termId);
-        return next;
-      });
-
-      if (!wasOpen) recordReadOnce(termId);
-    },
-    [recordReadOnce],
-  );
-
   const clearSearch = useCallback(() => setSearchQuery(""), []);
 
-  /** Resolves true once the change is saved, false if it was rolled back. */
-  const toggleMarkedKnown = useCallback(async (termId: string): Promise<boolean> => {
-    const wasMarked = markedKnownTermsRef.current.has(termId);
-    const marked = !wasMarked;
+  // Read in event handlers only, so the callbacks below stay stable.
+  const latest = useRef({
+    terms,
+    markedKnownTerms,
+    knownTerms,
+    everMasteredTerms,
+    domain: data.domain,
+  });
+  latest.current = { terms, markedKnownTerms, knownTerms, everMasteredTerms, domain: data.domain };
 
-    // Optimistic: flip immediately, no confirmation step.
-    setMarkedKnownTerms((prev) => {
-      const next = new Set(prev);
-      if (marked) next.add(termId);
-      else next.delete(termId);
-      return next;
-    });
-
-    const { error } = await setTermMarkedKnownAction(termId, marked);
-    if (error) {
-      // Roll back on failure.
-      setMarkedKnownTerms((prev) => {
-        const next = new Set(prev);
-        if (marked) next.delete(termId);
-        else next.add(termId);
-        return next;
-      });
-      return false;
+  /** Tells the sidebar this collection's counts after a local change. */
+  const publishCounts = useCallback((termIds: string[], marked: ReadonlySet<string>) => {
+    const { knownTerms, everMasteredTerms, domain } = latest.current;
+    let knownCount = 0;
+    let termsLearnedCount = 0;
+    for (const id of termIds) {
+      if (knownTerms.has(id) || marked.has(id)) knownCount += 1;
+      if (everMasteredTerms.has(id) || marked.has(id)) termsLearnedCount += 1;
     }
-    return true;
+    overrideCollectionCounts(domain.id, {
+      termCount: termIds.length,
+      knownCount,
+      termsLearnedCount,
+    });
   }, []);
 
+  /** Resolves true once the change is saved, false if it was rolled back. */
+  const toggleMarkedKnown = useCallback(
+    async (termId: string): Promise<boolean> => {
+      const marked = !latest.current.markedKnownTerms.has(termId);
+      setPendingMarks((prev) => new Map(prev).set(termId, marked));
+
+      const { error } = await setTermMarkedKnownAction(termId, marked);
+      if (!error) {
+        overrideMarkedKnown(termId, marked);
+        const next = new Set(latest.current.markedKnownTerms);
+        if (marked) next.add(termId);
+        else next.delete(termId);
+        publishCounts(
+          latest.current.terms.map((term) => term.id),
+          next,
+        );
+      }
+      setPendingMarks((prev) => {
+        const next = new Map(prev);
+        next.delete(termId);
+        return next;
+      });
+      return !error;
+    },
+    [publishCounts],
+  );
+
+  const removeTermLocally = useCallback(
+    (termId: string) => {
+      overrideRemoved(termId, true);
+      publishCounts(
+        latest.current.terms.flatMap((term) => (term.id === termId ? [] : [term.id])),
+        latest.current.markedKnownTerms,
+      );
+    },
+    [publishCounts],
+  );
+
+  const restoreTermLocally = useCallback(
+    (termId: string) => {
+      overrideRemoved(termId, false);
+      publishCounts(
+        [...latest.current.terms.map((term) => term.id), termId],
+        latest.current.markedKnownTerms,
+      );
+    },
+    [publishCounts],
+  );
+
   return {
-    domain,
-    domains,
-    setDomainActiveForReview,
+    domain: data.domain,
     terms,
     removeTermLocally,
     restoreTermLocally,

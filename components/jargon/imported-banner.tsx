@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { useState } from "react";
+import { use, useState } from "react";
 import { Alert, AlertAction, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
@@ -22,7 +22,7 @@ export type ImportedSummary = {
 /** Holds the confirmation for the import that just landed, and drops ?added=
  *  so a reload or shared link doesn't repeat it. The pasted list is only
  *  cleared once the import is known to have worked. */
-export function useImportedNotice(summary: ImportedSummary | undefined) {
+function useImportedNotice(summary: ImportedSummary | undefined) {
   const [dismissed, setDismissed] = useState(false);
   useMountEffect(() => {
     if (!summary) return;
@@ -42,8 +42,30 @@ function detailLine(summary: ImportedSummary) {
   return parts.join(" · ");
 }
 
-/** One-time confirmation after an import lands on its collection. */
-export function ImportedBanner({
+/** One-time confirmation after an import lands on its collection. The
+ *  server loads the summary in parallel and passes the promise; wrap this in
+ *  <Suspense> so the list never waits for it. */
+export function ImportedNotice({
+  summary: summaryPromise,
+  domain,
+  onFinish,
+}: {
+  summary: Promise<ImportedSummary | undefined>;
+  domain: { id: string; name: string };
+  onFinish: () => void;
+}) {
+  const notice = useImportedNotice(use(summaryPromise));
+  return (
+    <ImportedBanner
+      summary={notice.summary}
+      domain={domain}
+      onFinish={onFinish}
+      onDismiss={notice.dismiss}
+    />
+  );
+}
+
+function ImportedBanner({
   summary,
   domain,
   onFinish,

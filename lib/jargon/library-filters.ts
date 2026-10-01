@@ -1,10 +1,11 @@
 import type { SortMode } from "./types";
 
-const STORAGE_KEY = "jargon-gym:library-filters:v1";
+/** Read by the server too, so the first render is already filtered. */
+const LIBRARY_FILTERS_COOKIE = "jg_lib_filters";
 
 const SORT_MODES: readonly SortMode[] = ["default", "category", "az", "unknown"];
 
-/** Library filter choices remembered on this device. Categories are kept
+/** Library filter choices remembered on this device (in a cookie). Categories are kept
  *  per collection, since each collection has its own. */
 export type LibraryFilters = {
   hideKnown: boolean;
@@ -48,35 +49,53 @@ export function parseLibraryFilters(raw: string | null): LibraryFilters {
   }
 }
 
-/** Raw stored string, so useSyncExternalStore gets a stable snapshot. */
-export function loadLibraryFiltersSnapshot(): string {
+/** Most recent collections whose category choice is kept, so the cookie
+ *  stays well under the browser's 4 KB limit. */
+const MAX_REMEMBERED_DOMAINS = 20;
+
+/** Serialized for the cookie: empty category choices are dropped and only
+ *  the most recently changed collections are kept (last keys win). */
+export function serializeLibraryFilters(filters: LibraryFilters): string {
+  const entries = Object.entries(filters.categoriesByDomain).filter(
+    ([, categories]) => categories.length > 0,
+  );
+  return JSON.stringify({
+    ...filters,
+    categoriesByDomain: Object.fromEntries(entries.slice(-MAX_REMEMBERED_DOMAINS)),
+  });
+}
+
+/** Raw cookie value as stored (URI-encoded JSON). */
+export function readLibraryFiltersCookie(cookieHeader: string): string {
+  const prefix = `${LIBRARY_FILTERS_COOKIE}=`;
+  const entry = cookieHeader.split("; ").find((part) => part.startsWith(prefix));
+  return entry ? entry.slice(prefix.length) : "";
+}
+
+export function decodeLibraryFilters(raw: string): LibraryFilters {
+  if (!raw) return DEFAULT_LIBRARY_FILTERS;
   try {
-    return window.localStorage.getItem(STORAGE_KEY) ?? "";
+    return parseLibraryFilters(decodeURIComponent(raw));
   } catch {
-    return "";
+    return DEFAULT_LIBRARY_FILTERS;
   }
+}
+
+/** Raw cookie string, so useSyncExternalStore gets a stable snapshot. */
+export function loadLibraryFiltersSnapshot(): string {
+  return readLibraryFiltersCookie(document.cookie);
 }
 
 export function subscribeLibraryFilters(onStoreChange: () => void): () => void {
   listeners.add(onStoreChange);
-
-  function onStorage(event: StorageEvent) {
-    if (event.key === STORAGE_KEY || event.key === null) onStoreChange();
-  }
-
-  window.addEventListener("storage", onStorage);
   return () => {
     listeners.delete(onStoreChange);
-    window.removeEventListener("storage", onStorage);
   };
 }
 
 export function updateLibraryFilters(update: (prev: LibraryFilters) => LibraryFilters): void {
-  const next = update(parseLibraryFilters(loadLibraryFiltersSnapshot()));
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    // Ignore quota errors or private browsing restrictions.
-  }
+  const next = update(decodeLibraryFilters(loadLibraryFiltersSnapshot()));
+  const value = encodeURIComponent(serializeLibraryFilters(next));
+  document.cookie = `${LIBRARY_FILTERS_COOKIE}=${value}; path=/; max-age=31536000; samesite=lax`;
   for (const listener of listeners) listener();
 }

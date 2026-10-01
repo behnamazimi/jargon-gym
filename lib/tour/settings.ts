@@ -1,17 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { getRequestUserSettingsRow } from "@/lib/streak/settings";
 import { TOUR_CHAPTERS, isTourChapterId, type TourChapterId } from "./chapters";
 import { NEW_USER_TOUR_STATE, type TourState } from "./state";
 
 type Client = SupabaseClient<Database>;
 
-export async function getTourState(client: Client, userId: string): Promise<TourState> {
-  const { data, error } = await client
-    .from("user_settings")
-    .select("tour_status, tour_seen")
-    .eq("user_id", userId)
-    .maybeSingle();
-  if (error) throw error;
+/** Shares the request's one user_settings read with the rest of the chrome. */
+export async function getTourState(userId: string): Promise<TourState> {
+  const data = await getRequestUserSettingsRow(userId);
   if (!data) return NEW_USER_TOUR_STATE;
   return {
     status: data.tour_status === "done" ? "done" : "pending",

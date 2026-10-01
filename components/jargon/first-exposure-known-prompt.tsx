@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
+import { overrideMarkedKnown } from "@/lib/jargon/library/overrides";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
@@ -35,6 +36,7 @@ export function FirstExposureKnownPrompt({
       const markResult = await marked;
       if (markResult.error) return;
       const { error } = await setTermMarkedKnownAction(termId, false);
+      if (!error) overrideMarkedKnown(termId, false);
       toast(
         error
           ? `Couldn't undo — "${term}" is still marked known.`
@@ -55,7 +57,10 @@ export function FirstExposureKnownPrompt({
     });
 
     void marked.then(({ error }) => {
-      if (!error) return;
+      if (!error) {
+        overrideMarkedKnown(termId, true);
+        return;
+      }
       dismiss(toastId);
       toast("Couldn't mark that term known — it may show up again.", "destructive");
     });

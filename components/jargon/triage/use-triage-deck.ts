@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
+import { overrideMarkedKnown } from "@/lib/jargon/library/overrides";
 import {
   addNotYetTermsAction,
   clearNotYetDomainAction,
@@ -70,7 +71,10 @@ export function useTriageDeck({
     const result = previous.then(() => setTermMarkedKnownAction(term.id, marked));
     pendingMarksRef.current.set(term.id, result);
     void result.then(({ error }) => {
-      if (!error) return;
+      if (!error) {
+        overrideMarkedKnown(term.id, marked);
+        return;
+      }
       setMarkedKnown((ids) => (marked ? withoutId(ids, term.id) : withId(ids, term.id)));
       toast(
         marked

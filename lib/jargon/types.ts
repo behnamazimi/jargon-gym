@@ -37,6 +37,12 @@ export type Term = {
 /** A term with no definition yet. It is saved but stays out of study. */
 export type UnfinishedTerm = Omit<Term, "definition"> & { definition: null };
 
+/** The Library's lightweight row: enough to list, search, filter and sort.
+ *  The rest of a term is fetched when its card is about to be shown. */
+export type LibraryTerm = Pick<Term, "id" | "term" | "category" | "definition">;
+
+export type UnfinishedLibraryTerm = Pick<UnfinishedTerm, "id" | "term" | "category">;
+
 export type DomainSource = "owned" | "added";
 
 export type Domain = {
@@ -65,6 +71,18 @@ export type JargonPageData = {
   markedKnownTermIds: string[];
   everMasteredTermIds: string[];
   activeDomainIds: string[];
+};
+
+/** One collection as the Library shows it. `loadedAt` (server time) lets
+ *  newer local edits win over this snapshot and older ones lose to it. */
+export type LibraryPageData = {
+  domain: Domain;
+  terms: LibraryTerm[];
+  unfinishedTerms: UnfinishedLibraryTerm[];
+  knownTermIds: string[];
+  markedKnownTermIds: string[];
+  everMasteredTermIds: string[];
+  loadedAt: number;
 };
 
 export type SortMode = "default" | "category" | "az" | "unknown";

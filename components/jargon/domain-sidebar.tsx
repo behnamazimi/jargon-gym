@@ -1,19 +1,28 @@
 "use client";
 
 import { PauseCircle, Plus, Search, X } from "lucide-react";
+import { useLinkStatus } from "next/link";
 import { useMemo, useState } from "react";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { rememberLibraryDomain } from "@/lib/jargon/library/pick-domain";
 import type { Domain } from "@/lib/jargon/types";
 import { cn } from "@/lib/utils";
 
 type DomainSidebarProps = {
   domains: Domain[];
   currentDomainId: string;
-  onSelectDomain: (domainId: string) => void;
   onDomainSelect?: () => void;
   className?: string;
 };
+
+/** Shown on the collection being opened until its list arrives. */
+function OpeningIndicator() {
+  const { pending } = useLinkStatus();
+  return pending ? (
+    <span className="loading loading-spinner loading-xs ml-auto shrink-0" aria-label="Opening" />
+  ) : null;
+}
 
 function DomainSidebarSection({
   label,
@@ -24,7 +33,7 @@ function DomainSidebarSection({
   label: string;
   domains: Domain[];
   currentDomainId: string;
-  onSelect: (domainId: string) => void;
+  onSelect: () => void;
 }) {
   if (domains.length === 0) return null;
 
@@ -43,8 +52,8 @@ function DomainSidebarSection({
 
           return (
             <li key={domain.id}>
-              <Button
-                type="button"
+              <LinkButton
+                href={`/jargon?domain=${domain.id}`}
                 variant="ghost"
                 aria-current={isSelected ? "page" : undefined}
                 aria-label={
@@ -52,7 +61,10 @@ function DomainSidebarSection({
                     ? `${domain.name} (added to your collection)`
                     : domain.name
                 }
-                onPress={() => onSelect(domain.id)}
+                onPress={() => {
+                  rememberLibraryDomain(domain.id);
+                  onSelect();
+                }}
                 className={cn(
                   "h-auto w-full flex-col items-start gap-0.5 rounded-lg px-3 py-2 text-left",
                   isSelected
@@ -72,6 +84,7 @@ function DomainSidebarSection({
                       strokeWidth={1.5}
                     />
                   ) : null}
+                  <OpeningIndicator />
                 </span>
                 <span
                   className={cn(
@@ -83,7 +96,7 @@ function DomainSidebarSection({
                   {isSelected && domain.termCount > 0 ? ` · ${pct}%` : ""}
                   {domain.unfinishedCount > 0 ? ` · ${domain.unfinishedCount} to finish` : ""}
                 </span>
-              </Button>
+              </LinkButton>
             </li>
           );
         })}
@@ -95,7 +108,6 @@ function DomainSidebarSection({
 export function DomainSidebar({
   domains,
   currentDomainId,
-  onSelectDomain,
   onDomainSelect,
   className,
 }: DomainSidebarProps) {
@@ -116,10 +128,7 @@ export function DomainSidebar({
     [filteredDomains],
   );
 
-  function handleSelect(domainId: string) {
-    if (domainId !== currentDomainId) {
-      onSelectDomain(domainId);
-    }
+  function handleSelect() {
     onDomainSelect?.();
   }
 
