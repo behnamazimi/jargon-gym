@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import type { RequestEmail } from "@/lib/requests/email-copy";
 
 const FROM = "Jargon Gym <jargon-gym@bhnmzm.com>";
 
@@ -81,4 +82,16 @@ export async function sendWaitlistRequestNotification({
       </div>
     `,
   });
+}
+
+/** A status email about a collection request, or the notice that tells the team about a new one. */
+export async function sendRequestEmail({
+  to,
+  email,
+}: {
+  to: string | string[];
+  email: RequestEmail;
+}): Promise<void> {
+  if (Array.isArray(to) && to.length === 0) return;
+  await sendEmail({ to, ...email });
 }

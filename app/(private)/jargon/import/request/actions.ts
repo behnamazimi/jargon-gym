@@ -1,0 +1,101 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { getAppOrigin } from "@/lib/auth/app-origin";
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { sendRequestEmail } from "@/lib/email/resend";
+import { REQUEST_COPY } from "@/lib/requests/copy";
+import { buildAdminNoticeEmail } from "@/lib/requests/email-copy";
+import { blockedMessage, entryFor } from "@/lib/requests/entry";
+import { failureFor } from "@/lib/requests/failures";
+import { normalizeKnownTerms } from "@/lib/requests/known-terms";
+import { fetchRequestQuota } from "@/lib/requests/repository";
+import { requestFormSchema } from "@/lib/requests/schema";
+import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
+import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/jargon/languages";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export type CreateRequestResult =
+  | { ok: true; id: string; topic: string; estimateDays: number }
+  | { ok: false; message: string };
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+async function notifyTeam(topic: string, kind: string, language: string) {
+  const admin = createAdminClient();
+  const { data: admins, error } = await admin.from("users").select("email").eq("role", "admin");
+  if (error) throw error;
+
+  const to = (admins ?? []).map((row) => row.email);
+  if (to.length === 0) return;
+
+  const origin = await getAppOrigin();
+  await sendRequestEmail({
+    to,
+    email: buildAdminNoticeEmail({
+      topic,
+      kindLabel: kind === "vocabulary" ? "Vocabulary" : "Jargon",
+      languageLabel: DOMAIN_LANGUAGE_OPTIONS.find((o) => o.value === language)?.label ?? language,
+      adminUrl: `${origin}/admin/requests`,
+    }),
+  });
+}
+
+/** Sends the request. The database enforces the switch, the one-open rule and
+ *  the quota; this only turns what it says into plain words. */
+export async function createRequest(input: unknown): Promise<CreateRequestResult> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { ok: false, message: REQUEST_COPY.form.signedOut };
+
+  const parsed = requestFormSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? REQUEST_COPY.form.sendFailed };
+  }
+  const data = parsed.data;
+  const known = normalizeKnownTerms(data.knownTerms);
+  if (!known.ok) return { ok: false, message: known.message };
+
+  const { data: created, error } = await auth.supabase.rpc("my_create_collection_request", {
+    p_topic: data.topic,
+    p_kind: data.kind,
+    p_language: data.language,
+    p_level: data.level,
+    p_size: data.size,
+    p_known_terms: known.value ?? undefined,
+    p_notify_email: data.notifyEmail,
+  });
+
+  if (error || !created || typeof created !== "object" || Array.isArray(created)) {
+    const failure = failureFor(error);
+    if (failure.code === "open_exists" || failure.code === "quota") {
+      try {
+        const { timezone } = await getStudyPhoneUserSettings(auth.user.id);
+        const message = blockedMessage(entryFor(await fetchRequestQuota(auth.supabase), timezone));
+        if (message) return { ok: false, message };
+      } catch {
+        // Fall through to the general message.
+      }
+    }
+    if (failure.code === "closed") return { ok: false, message: REQUEST_COPY.form.closed };
+    return { ok: false, message: REQUEST_COPY.form.sendFailed };
+  }
+
+  const row = created as { id: string; due_at: string; topic: string };
+  revalidatePath("/jargon");
+
+  after(async () => {
+    try {
+      await notifyTeam(row.topic, data.kind, data.language);
+    } catch (err) {
+      console.error("Couldn't email the team about a new collection request:", err);
+    }
+  });
+
+  return {
+    ok: true,
+    id: row.id,
+    topic: row.topic,
+    estimateDays: Math.max(1, Math.round((new Date(row.due_at).getTime() - Date.now()) / DAY_MS)),
+  };
+}
