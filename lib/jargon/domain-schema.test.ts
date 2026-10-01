@@ -37,4 +37,9 @@ describe("parseNewCollectionInput", () => {
   it("rejects an unsupported language", () => {
     expect(parseNewCollectionInput({ name: "X", language: "fr" }).ok).toBe(false);
   });
+
+  it("cleans control and override characters from the name", () => {
+    const result = parseNewCollectionInput({ name: " Fi\u0000ne\u202E ", language: "en" });
+    expect(result.ok && result.data.name).toBe("Fine");
+  });
 });

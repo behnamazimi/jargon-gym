@@ -306,11 +306,6 @@ describe("spreadsheet and CSV text", () => {
     });
     expect(buildTerms(parsed).terms[0]).toMatchObject({ category: "Tech" });
   });
-
-  it("swaps term and definition", () => {
-    const parsed = parseList("a way\tAPI\ncopy\tCache");
-    expect(buildTerms(parsed, { swap: true }).terms.map((t) => t.term)).toEqual(["API", "Cache"]);
-  });
 });
 
 describe("clipboard HTML tables", () => {
@@ -381,11 +376,12 @@ describe("duplicates inside a paste", () => {
     expect(built.withoutTerm).toBe(1);
     expect(built.terms).toHaveLength(2);
   });
+});
 
-  it("hints at a swap when terms are long and definitions short", () => {
-    const long = "a statement that describes what it is in many many words";
-    const built = buildTerms(parseList(`${long}\tAPI\n${long} two\tCache`));
-    expect(built.swapHint).toBe(true);
+describe("leading apostrophe from a spreadsheet", () => {
+  it("drops one that guards a formula-looking cell, and keeps ordinary ones", () => {
+    const built = buildTerms(parseList("'=SLA – a promise\n'tis – old for it is"));
+    expect(built.terms.map((t) => t.term)).toEqual(["=SLA", "'tis"]);
   });
 });
 

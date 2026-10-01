@@ -1,21 +1,24 @@
 import { z } from "zod";
+import { cleanText } from "@/lib/jargon/text-clean";
 
 /** Blank means "none": the term is saved without it. */
 const optionalTrimmed = z
   .string()
   .nullish()
-  .transform((value) => value?.trim() || null);
+  .transform((value) => cleanText(value ?? "").trim() || null);
+
+const detail = z.string().transform(cleanText).nullable().optional();
 
 export const termFieldsSchema = z.object({
-  term: z.string().trim().min(1, "Enter a term"),
+  term: z.string().transform(cleanText).pipe(z.string().trim().min(1, "Enter a term")),
   category: optionalTrimmed,
   definition: optionalTrimmed,
-  example: z.string().nullable().optional(),
-  mental_model: z.string().nullable().optional(),
-  discussion: z.string().nullable().optional(),
-  anti_example: z.string().nullable().optional(),
-  controversy: z.string().nullable().optional(),
-  note: z.string().nullable().optional(),
+  example: detail,
+  mental_model: detail,
+  discussion: detail,
+  anti_example: detail,
+  controversy: detail,
+  note: detail,
 });
 
 /** What a form or action sends in. */

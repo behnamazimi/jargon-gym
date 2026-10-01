@@ -17,6 +17,12 @@ export type ReadInputResult =
   | { ok: true; kind: "json"; json: JsonImport; built: BuiltTerms }
   | { ok: true; kind: "list"; parsed: ParsedList; built: BuiltTerms };
 
+/** Past this, the browser would be parsing megabytes of text in one go. */
+export const MAX_INPUT_CHARS = 1_000_000;
+
+export const TOO_MUCH_TEXT_MESSAGE =
+  "That's too much to check at once. Split your list and add it in parts.";
+
 export const NO_TERMS_MESSAGE =
   "We couldn't find any terms. Put each term on its own line, with a dash or colon before its definition. For example: API – a way for programs to talk to each other.";
 
@@ -39,11 +45,7 @@ function readJson(text: string): ReadInputResult {
 }
 
 /** Reads pasted or uploaded text into terms, or says what's wrong with it. */
-export function readImportInput(
-  text: string,
-  options: ParseOptions,
-  swap: boolean,
-): ReadInputResult {
+export function readImportInput(text: string, options: ParseOptions): ReadInputResult {
   if (!text.trim()) {
     return {
       ok: false,
@@ -51,12 +53,15 @@ export function readImportInput(
     };
   }
 
+  if (text.length > MAX_INPUT_CHARS)
+    return { ok: false, problem: { message: TOO_MUCH_TEXT_MESSAGE } };
+
   const result =
     looksLikeJson(text) && !options.treatAsText
       ? readJson(text)
       : (() => {
           const parsed = parseList(text, options);
-          return { ok: true, kind: "list", parsed, built: buildTerms(parsed, { swap }) } as const;
+          return { ok: true, kind: "list", parsed, built: buildTerms(parsed) } as const;
         })();
   if (!result.ok) return result;
 

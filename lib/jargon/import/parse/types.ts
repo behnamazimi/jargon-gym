@@ -79,6 +79,4 @@ export type BuiltTerms = {
   /** Rows that had a definition but no term. */
   withoutTerm: number;
   conflicts: TermConflict[];
-  /** The term column looks like it holds the definitions. */
-  swapHint: boolean;
 };

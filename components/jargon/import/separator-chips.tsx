@@ -1,8 +1,6 @@
 "use client";
 
-import { ArrowLeftRight } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -20,18 +18,10 @@ const CHOICES: { id: SeparatorChoice; label: string }[] = [
 type SeparatorChipsProps = {
   parsed: ParsedList;
   options: ParseOptions;
-  swap: boolean;
   onOptionsChange: (patch: Partial<ParseOptions>) => void;
-  onSwap: () => void;
 };
 
-export function SeparatorChips({
-  parsed,
-  options,
-  swap,
-  onOptionsChange,
-  onSwap,
-}: SeparatorChipsProps) {
+export function SeparatorChips({ parsed, options, onOptionsChange }: SeparatorChipsProps) {
   const [otherOpen, setOtherOpen] = useState(options.separator === "custom");
   const selected = options.separator ?? parsed.separator;
   const showSeparators = parsed.format === "lines" || parsed.format === "tsv";
@@ -63,17 +53,6 @@ export function SeparatorChips({
             </ToggleGroup>
           </>
         ) : null}
-        <Button
-          type="button"
-          variant={swap ? "default" : "outline"}
-          size="sm"
-          aria-pressed={swap}
-          className="min-h-11 gap-1.5 md:min-h-8"
-          onPress={onSwap}
-        >
-          <ArrowLeftRight className="size-4" aria-hidden strokeWidth={1.5} />
-          Swap term and definition
-        </Button>
       </div>
 
       {otherOpen && showSeparators ? (

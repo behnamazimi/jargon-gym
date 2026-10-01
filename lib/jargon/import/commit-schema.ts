@@ -1,13 +1,16 @@
 import { z } from "zod";
+import { cleanText } from "@/lib/jargon/text-clean";
 import { DOMAIN_LANGUAGES } from "@/lib/jargon/languages";
 
 export const MAX_IMPORT_TERMS = 500;
 
-const shortText = z.string().max(200);
-const longText = z.string().max(4000);
+/** Control and direction-override characters are removed before the length rules. */
+const text = (max: number) => z.string().transform(cleanText).pipe(z.string().max(max));
+const shortText = text(200);
+const longText = text(4000);
 
 export const commitTermSchema = z.object({
-  term: shortText.trim().min(1),
+  term: z.string().transform(cleanText).pipe(z.string().trim().min(1).max(200)),
   definition: longText.optional(),
   category: shortText.optional(),
   example: longText.optional(),
@@ -28,7 +31,10 @@ export const linkSchema = z.object({
 
 const destinationSchema = z.union([
   z.object({ domainId: z.string().uuid() }),
-  z.object({ name: z.string().trim().min(1).max(100), language: z.enum(DOMAIN_LANGUAGES) }),
+  z.object({
+    name: z.string().transform(cleanText).pipe(z.string().trim().min(1).max(100)),
+    language: z.enum(DOMAIN_LANGUAGES),
+  }),
 ]);
 
 const IMPORT_FORMATS = [

@@ -74,9 +74,7 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
         <SeparatorChips
           parsed={flow.parsed}
           options={flow.options}
-          swap={flow.swap}
           onOptionsChange={flow.changeOptions}
-          onSwap={flow.toggleSwap}
         />
       ) : null}
 
@@ -85,12 +83,6 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
           parsed={flow.parsed}
           onRolesChange={(roles) => flow.changeOptions({ roles })}
         />
-      ) : null}
-
-      {flow.built?.swapHint && !flow.swap ? (
-        <p className="m-0 text-sm text-base-content/60" role="status">
-          The terms look like definitions. Try Swap term and definition.
-        </p>
       ) : null}
 
       <Field>
