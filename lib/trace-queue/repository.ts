@@ -1,8 +1,7 @@
 /** Trace-queue DB repository — RPC only. */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/database.types";
-import { fetchAllRows } from "@/lib/supabase/fetch-all-rows";
+import type { Database, Json } from "@/lib/supabase/database.types";
 import type { TraceCandidate } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -11,26 +10,29 @@ export type ReviewScope = {
   domainIds: string[] | "all";
 };
 
-function mapCandidateRows(
-  data: Array<{
-    term_id: string;
-    domain_id: string;
-    created_at: string;
-    read_count: number;
-    last_read_at: string | null;
-    recall_stability: number | null;
-    recall_difficulty: number | null;
-    review_recall_count: number;
-    last_review_recall_at: string | null;
-    quiz_knowledge_posterior: number | null;
-    quiz_test_count: number;
-    last_quiz_tested_at: string | null;
-    ever_mastered_at: string | null;
-    ever_learning_at: string | null;
-    marked_known_at: string | null;
-  }>,
-): TraceCandidate[] {
-  return data.map((row) => ({
+type CandidateRow = {
+  term_id: string;
+  domain_id: string;
+  created_at: string;
+  read_count: number;
+  last_read_at: string | null;
+  recall_stability: number | null;
+  recall_difficulty: number | null;
+  review_recall_count: number;
+  last_review_recall_at: string | null;
+  quiz_knowledge_posterior: number | null;
+  quiz_test_count: number;
+  last_quiz_tested_at: string | null;
+  ever_mastered_at: string | null;
+  ever_learning_at: string | null;
+  marked_known_at: string | null;
+};
+
+/** The candidate RPCs return every row as one JSON array, ordered by term_id,
+ *  so a large collection is one call instead of a page per 1000 rows. */
+function mapCandidateRows(data: Json): TraceCandidate[] {
+  if (!Array.isArray(data)) throw new Error("Trace candidates must be a JSON array.");
+  return (data as CandidateRow[]).map((row) => ({
     termId: row.term_id,
     domainId: row.domain_id,
     createdAt: new Date(row.created_at),
@@ -102,14 +104,10 @@ export async function fetchTraceCandidates(
   _userId: string,
   scope: ReviewScope,
 ): Promise<TraceCandidate[]> {
-  const data = await fetchAllRows((from, to) =>
-    client
-      .rpc("my_get_trace_candidates", {
-        p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
-      })
-      .order("term_id")
-      .range(from, to),
-  );
+  const { data, error } = await client.rpc("my_get_trace_candidates_json", {
+    p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
+  });
+  if (error) throw error;
   return mapCandidateRows(data);
 }
 
@@ -119,15 +117,11 @@ export async function fetchTraceCandidatesForUser(
   userId: string,
   scope: ReviewScope,
 ): Promise<TraceCandidate[]> {
-  const data = await fetchAllRows((from, to) =>
-    client
-      .rpc("get_trace_candidates", {
-        p_user_id: userId,
-        p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
-      })
-      .order("term_id")
-      .range(from, to),
-  );
+  const { data, error } = await client.rpc("get_trace_candidates_json", {
+    p_user_id: userId,
+    p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
+  });
+  if (error) throw error;
   return mapCandidateRows(data);
 }
 

@@ -284,9 +284,14 @@ it:
    term's current stored state for a user, hands it to `lib/trace`'s
    ranking functions, and loads the winning terms' full content. Entry
    points: `pickReadTerms(ForUser)`, `pickReviewTerms(ForUser)`,
-   `pickQuizTerms(ForUser)` in `lib/trace-queue/service.ts` — the `ForUser`
-   variants are for Telegram and the widget, which act on a user's behalf
-   without a browser session.
+   `pickQuizTerms(ForUser)` in `lib/trace-queue/service.ts`. The `ForUser`
+   variants take an explicit user id and the service-role client. Telegram
+   and the widget need them because they have no browser session. The web
+   Read and Review feeds use them too, after checking the session, because
+   they load the winning cards in one batched `get_term_cards` call.
+   Candidates come from `get_trace_candidates_json` (or
+   `my_get_trace_candidates_json`): every row in one JSON array, ordered by
+   `term_id`, so a large collection is one call instead of a page per 1000 rows.
 3. **`lib/jargon/review-outcome.ts`** — the only code in the app allowed to
    record an outcome. Loads a term's current state, asks `lib/trace` to
    compute what it becomes after a read, a review grade, or a quiz answer,
@@ -295,9 +300,11 @@ it:
    every surface in the app calls into; nothing else is allowed to write to
    the underlying table directly.
 4. **Server actions** — the UI-facing entry points, one set per tier:
-   `getNextReadTermAction` / `recordReadRevealAction` in
-   `app/(private)/jargon/read/actions.ts`, `startReviewAction` /
-   `rateReviewTermAction` in `app/(private)/jargon/review/actions.ts`, and
+   `getReadFeedBatchAction` / `recordReadRevealAction` in
+   `app/(private)/jargon/read/actions.ts`, `rateReviewTermAction` in
+   `app/(private)/jargon/review/actions.ts` (Review's cards load through
+   `lib/review/feed.ts`: on the page itself, and on refills through
+   `POST /api/review/feed`, so a refill never waits behind a grade), and
    `generateQuizAction` / `recordQuizAnswerAction` in
    `app/(private)/jargon/quiz/actions.ts`. Telegram has its own equivalents
    in `lib/telegram/` that call the same `lib/jargon/review-outcome.ts`

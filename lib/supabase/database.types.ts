@@ -1798,6 +1798,7 @@ export type Database = {
           definition: string;
           discussion: string;
           domain_id: string;
+          domain_language: string;
           domain_name: string;
           example: string;
           id: string;
@@ -1826,6 +1827,10 @@ export type Database = {
           review_recall_count: number;
           term_id: string;
         }[];
+      };
+      get_trace_candidates_json: {
+        Args: { p_domain_ids?: string[]; p_user_id: string };
+        Returns: Json;
       };
       get_trace_state_for_term: {
         Args: { p_term_id: string; p_user_id: string };
@@ -1932,6 +1937,10 @@ export type Database = {
           review_recall_count: number;
           term_id: string;
         }[];
+      };
+      my_get_trace_candidates_json: {
+        Args: { p_domain_ids?: string[] };
+        Returns: Json;
       };
       my_get_trace_state_for_term: {
         Args: { p_term_id: string };
@@ -2047,6 +2056,13 @@ export type Database = {
       my_set_term_marked_known: {
         Args: { p_marked: boolean; p_term_id: string };
         Returns: undefined;
+      };
+      my_study_collection_term_counts: {
+        Args: never;
+        Returns: {
+          domain_id: string;
+          term_count: number;
+        }[];
       };
       my_term_relationships_by_domain: {
         Args: { p_domain_id: string };

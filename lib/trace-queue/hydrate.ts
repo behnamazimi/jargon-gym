@@ -54,7 +54,7 @@ function mapTermCardRow(
     domain_name: string;
     relationships: Json;
   },
-  languageByDomainId: Map<string, DomainLanguage>,
+  language: DomainLanguage,
 ): TermCard {
   return {
     id: row.id,
@@ -69,7 +69,7 @@ function mapTermCardRow(
     note: row.note,
     domainId: row.domain_id,
     domainName: row.domain_name,
-    domainLanguage: languageByDomainId.get(row.domain_id) ?? "en",
+    domainLanguage: language,
     relationships: mapRelationshipsJson(row.relationships),
     isNewToUser: false,
   };
@@ -88,7 +88,8 @@ export async function fetchTermCardForUser(
   if (error) throw error;
   const row = data?.[0];
   if (!row) return null;
-  return mapTermCardRow(row, await fetchDomainLanguages(client, [row.domain_id]));
+  const languages = await fetchDomainLanguages(client, [row.domain_id]);
+  return mapTermCardRow(row, languages.get(row.domain_id) ?? "en");
 }
 
 /** Session-client hydrate: full term join → TermCard[] in scored order. */
@@ -172,12 +173,9 @@ export async function hydrateTermCardsForUser(
   });
   if (error) throw error;
 
-  const rows = data ?? [];
-  const languageByDomainId = await fetchDomainLanguages(
-    client,
-    rows.map((row) => row.domain_id),
+  const cardById = new Map(
+    (data ?? []).map((row) => [row.id, mapTermCardRow(row, parseLanguage(row.domain_language))]),
   );
-  const cardById = new Map(rows.map((row) => [row.id, mapTermCardRow(row, languageByDomainId)]));
   return termIds.map((termId) => {
     const card = cardById.get(termId);
     if (!card) throw new Error(`Term card missing for ${termId}`);
