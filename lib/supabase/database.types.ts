@@ -386,6 +386,148 @@ export type Database = {
         };
         Relationships: [];
       };
+      collection_request_settings: {
+        Row: {
+          enabled: boolean;
+          estimate_days: number;
+          id: boolean;
+          paused: boolean;
+          paused_estimate_days: number;
+          updated_at: string;
+        };
+        Insert: {
+          enabled?: boolean;
+          estimate_days?: number;
+          id?: boolean;
+          paused?: boolean;
+          paused_estimate_days?: number;
+          updated_at?: string;
+        };
+        Update: {
+          enabled?: boolean;
+          estimate_days?: number;
+          id?: boolean;
+          paused?: boolean;
+          paused_estimate_days?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      collection_requests: {
+        Row: {
+          accepted_at: string | null;
+          created_at: string;
+          decline_note: string | null;
+          decline_reason: string | null;
+          delay_notified_at: string | null;
+          delivered_domain_id: string | null;
+          delivered_terms: number | null;
+          delivery_kind: string | null;
+          dismissed_at: string | null;
+          due_at: string;
+          email_failed: boolean;
+          id: string;
+          kind: string;
+          known_terms: string | null;
+          language: string;
+          level: string | null;
+          merged_into: string | null;
+          needs_input_since: string | null;
+          notify_email: boolean;
+          question: string | null;
+          ready_at: string | null;
+          replied_at: string | null;
+          size: number | null;
+          status: string;
+          topic: string;
+          updated_at: string;
+          user_id: string;
+          user_reply: string | null;
+        };
+        Insert: {
+          accepted_at?: string | null;
+          created_at?: string;
+          decline_note?: string | null;
+          decline_reason?: string | null;
+          delay_notified_at?: string | null;
+          delivered_domain_id?: string | null;
+          delivered_terms?: number | null;
+          delivery_kind?: string | null;
+          dismissed_at?: string | null;
+          due_at: string;
+          email_failed?: boolean;
+          id?: string;
+          kind: string;
+          known_terms?: string | null;
+          language: string;
+          level?: string | null;
+          merged_into?: string | null;
+          needs_input_since?: string | null;
+          notify_email?: boolean;
+          question?: string | null;
+          ready_at?: string | null;
+          replied_at?: string | null;
+          size?: number | null;
+          status?: string;
+          topic: string;
+          updated_at?: string;
+          user_id: string;
+          user_reply?: string | null;
+        };
+        Update: {
+          accepted_at?: string | null;
+          created_at?: string;
+          decline_note?: string | null;
+          decline_reason?: string | null;
+          delay_notified_at?: string | null;
+          delivered_domain_id?: string | null;
+          delivered_terms?: number | null;
+          delivery_kind?: string | null;
+          dismissed_at?: string | null;
+          due_at?: string;
+          email_failed?: boolean;
+          id?: string;
+          kind?: string;
+          known_terms?: string | null;
+          language?: string;
+          level?: string | null;
+          merged_into?: string | null;
+          needs_input_since?: string | null;
+          notify_email?: boolean;
+          question?: string | null;
+          ready_at?: string | null;
+          replied_at?: string | null;
+          size?: number | null;
+          status?: string;
+          topic?: string;
+          updated_at?: string;
+          user_id?: string;
+          user_reply?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "collection_requests_delivered_domain_id_fkey";
+            columns: ["delivered_domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "collection_requests_merged_into_fkey";
+            columns: ["merged_into"];
+            isOneToOne: false;
+            referencedRelation: "collection_requests";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "collection_requests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       domains: {
         Row: {
           created_at: string;
@@ -1353,6 +1495,28 @@ export type Database = {
         Args: { p_owner: string };
         Returns: number;
       };
+      _counted_requests: {
+        Args: { p_user: string };
+        Returns: {
+          created_at: string;
+        }[];
+      };
+      _import_terms_for: {
+        Args: {
+          p_destination: Json;
+          p_entry?: string;
+          p_format?: string;
+          p_import_id: string;
+          p_name_collision?: string;
+          p_policy: string;
+          p_relationships: Json;
+          p_source?: string;
+          p_terms: Json;
+          p_user: string;
+        };
+        Returns: Json;
+      };
+      _promote_merged_children: { Args: { p_id: string }; Returns: undefined };
       admin_ai_credit_failure_reasons: {
         Args: { p_limit?: number };
         Returns: {
@@ -1389,6 +1553,20 @@ export type Database = {
       admin_delete_user: {
         Args: { p_confirm_email: string; p_reason: string; p_user_id: string };
         Returns: undefined;
+      };
+      admin_deliver_existing_collection: {
+        Args: { p_domain_id: string; p_request_id: string };
+        Returns: Json;
+      };
+      admin_deliver_request: {
+        Args: {
+          p_format: string;
+          p_name: string;
+          p_relationships: Json;
+          p_request_id: string;
+          p_terms: Json;
+        };
+        Returns: Json;
       };
       admin_grant_ai_credits: {
         Args: { p_amount: number; p_note: string; p_user_id: string };
@@ -1672,10 +1850,25 @@ export type Database = {
         }[];
       };
       my_bump_streak: { Args: never; Returns: undefined };
+      my_cancel_collection_request: { Args: { p_id: string }; Returns: undefined };
       my_clear_not_yet_domain: {
         Args: { p_domain_id: string };
         Returns: undefined;
       };
+      my_collection_request_quota: { Args: never; Returns: Json };
+      my_create_collection_request: {
+        Args: {
+          p_kind: string;
+          p_known_terms?: string;
+          p_language: string;
+          p_level?: string;
+          p_notify_email?: boolean;
+          p_size?: number;
+          p_topic: string;
+        };
+        Returns: Json;
+      };
+      my_dismiss_collection_request: { Args: { p_id: string }; Returns: undefined };
       my_first_seen_at_by_term: {
         Args: { p_term_ids: string[] };
         Returns: {
@@ -1747,6 +1940,29 @@ export type Database = {
         };
         Returns: Json;
       };
+      my_list_collection_requests: {
+        Args: never;
+        Returns: {
+          accepted_at: string;
+          created_at: string;
+          decline_note: string;
+          decline_reason: string;
+          delay_notified_at: string;
+          delivered_domain_id: string;
+          delivered_domain_name: string;
+          delivered_terms: number;
+          delivery_kind: string;
+          display_due_at: string;
+          display_status: string;
+          id: string;
+          kind: string;
+          language: string;
+          notify_email: boolean;
+          question: string;
+          status: string;
+          topic: string;
+        }[];
+      };
       my_mark_tour_chapter_seen: {
         Args: { p_all_chapters: string[]; p_chapter: string };
         Returns: undefined;
@@ -1788,11 +2004,19 @@ export type Database = {
         Args: { p_term_id: string };
         Returns: undefined;
       };
+      my_reply_collection_request: {
+        Args: { p_id: string; p_reply: string };
+        Returns: undefined;
+      };
       my_reset_domain_progress: {
         Args: { p_domain_id: string };
         Returns: undefined;
       };
       my_review_domain_ids: { Args: never; Returns: string[] };
+      my_set_request_notify: {
+        Args: { p_id: string; p_notify: boolean };
+        Returns: undefined;
+      };
       my_set_term_marked_known: {
         Args: { p_marked: boolean; p_term_id: string };
         Returns: undefined;
