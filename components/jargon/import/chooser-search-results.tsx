@@ -16,11 +16,16 @@ export function SearchResults({
   addingId,
   addedIds,
   onAdd,
+  hideWhenEmpty = false,
+  noMatchMessage,
 }: {
   state: SearchState;
   addingId: string | null;
   addedIds: string[];
   onAdd: (domainId: string) => void;
+  /** The request form shows close matches only when there are some. */
+  hideWhenEmpty?: boolean;
+  noMatchMessage?: (query: string) => string;
 }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
@@ -34,10 +39,12 @@ export function SearchResults({
     );
   }
   if (state.domains.length === 0) {
+    if (hideWhenEmpty) return null;
     return (
       <p className="m-0 text-sm text-base-content/60" role="status">
-        Nothing shared matches &ldquo;{state.query}&rdquo;. Try a list, or start an empty
-        collection.
+        {noMatchMessage
+          ? noMatchMessage(state.query)
+          : `Nothing shared matches “${state.query}”. Try a list, or start an empty collection.`}
       </p>
     );
   }

@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/lib/supabase/database.types";
 import { DOMAIN_LANGUAGES } from "@/lib/jargon/languages";
+import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { formatRequestDate } from "./dates";
 import { entryFor, type RequestEntry } from "./entry";
 import {
@@ -96,4 +97,15 @@ export async function loadRequestEntry(
     console.error("Couldn't load the request quota:", error);
     return { state: "closed" };
   }
+}
+
+/** The same, for the signed-in person: their time zone is looked up here. */
+export async function loadRequestEntryFor(client: Client, userId: string): Promise<RequestEntry> {
+  let timeZone: string | null = null;
+  try {
+    timeZone = (await getStudyPhoneUserSettings(userId)).timezone;
+  } catch {
+    // Dates fall back to UTC.
+  }
+  return loadRequestEntry(client, timeZone);
 }
