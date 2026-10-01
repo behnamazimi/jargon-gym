@@ -67,17 +67,15 @@ function Choice<T extends string | number>({
       <ToggleGroup
         aria-label={label}
         selectionMode="single"
-        variant="outline"
         isDisabled={isDisabled}
         selectedKeys={value === null ? [] : [String(value)]}
         onSelectionChange={(keys) => {
           const [key] = [...keys];
           onChange(options.find((option) => String(option) === key) ?? null);
         }}
-        className="flex-wrap"
       >
         {options.map((option) => (
-          <ToggleGroupItem key={String(option)} id={String(option)} className="min-h-11">
+          <ToggleGroupItem key={String(option)} id={String(option)}>
             {render(option)}
           </ToggleGroupItem>
         ))}

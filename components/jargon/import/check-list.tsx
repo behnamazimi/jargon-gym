@@ -91,23 +91,15 @@ export function CheckList({
           aria-label="Show"
           selectionMode="single"
           disallowEmptySelection
-          variant="outline"
-          size="sm"
           selectedKeys={[flow.filter]}
           onSelectionChange={(keys) => {
             const [key] = [...keys];
             if (key) flow.setFilter(String(key) as CardFilter);
           }}
         >
-          <ToggleGroupItem id="all" className="min-h-11 md:min-h-8">
-            All
-          </ToggleGroupItem>
-          <ToggleGroupItem id="attention" className="min-h-11 md:min-h-8">
-            Needs a look
-          </ToggleGroupItem>
-          <ToggleGroupItem id="there" className="min-h-11 md:min-h-8">
-            Already there
-          </ToggleGroupItem>
+          <ToggleGroupItem id="all">All</ToggleGroupItem>
+          <ToggleGroupItem id="attention">Needs a look</ToggleGroupItem>
+          <ToggleGroupItem id="there">Already there</ToggleGroupItem>
         </ToggleGroup>
       </div>
 

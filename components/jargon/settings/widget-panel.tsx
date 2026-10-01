@@ -64,14 +64,13 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
           const next = keys.values().next().value;
           if (next === "install" || next === "update") setMode(next);
         }}
-        variant="outline"
         aria-label="Widget setup mode"
-        className="flex w-full"
+        className="w-full"
       >
-        <ToggleGroupItem id="install" className="min-h-11 min-w-0 flex-1">
+        <ToggleGroupItem id="install" className="flex-1">
           New install
         </ToggleGroupItem>
-        <ToggleGroupItem id="update" className="min-h-11 min-w-0 flex-1">
+        <ToggleGroupItem id="update" className="flex-1">
           Update
         </ToggleGroupItem>
       </ToggleGroup>
