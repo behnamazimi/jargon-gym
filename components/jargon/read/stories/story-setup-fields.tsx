@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { termsUsedNote } from "@/lib/stories/length";
 import {
   PIECE_LENGTHS,
@@ -8,7 +8,6 @@ import {
   type PieceLength,
   type ReadingLevel,
 } from "@/lib/stories/types";
-import { cn } from "@/lib/utils";
 
 type Choice = { label: string; hint: string };
 
@@ -46,25 +45,23 @@ function ChoiceField<T extends string>({
   return (
     <fieldset className="flex flex-col gap-2 border-0 p-0">
       <legend className="mb-2 text-sm font-medium leading-none">{legend}</legend>
-      <div className="flex gap-2">
+      <ToggleGroup
+        aria-label={legend}
+        selectionMode="single"
+        disallowEmptySelection
+        selectedKeys={[value]}
+        onSelectionChange={(keys) => {
+          const [key] = [...keys];
+          if (key) onChange(key as T);
+        }}
+        className="flex-nowrap"
+      >
         {options.map((option) => (
-          <Button
-            key={option}
-            type="button"
-            variant="outline"
-            size="sm"
-            onPress={() => onChange(option)}
-            aria-pressed={value === option}
-            className={cn(
-              "flex-1 px-2",
-              value === option &&
-                "border-primary bg-primary/10 text-primary-text hover:bg-primary/15",
-            )}
-          >
+          <ToggleGroupItem key={option} id={option} className="flex-1 px-2">
             {choices[option].label}
-          </Button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
       <p className="m-0 text-xs text-base-content/70">{choices[value].hint}</p>
     </fieldset>
   );

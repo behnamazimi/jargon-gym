@@ -119,7 +119,7 @@
 
 /* Long-form reading text sits a touch heavier than UI text. */
 @utility reading-text {
-  font-weight: 450;
+  font-weight: 400;
 }
 
 @utility pb-dock {

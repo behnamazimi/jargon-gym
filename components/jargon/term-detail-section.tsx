@@ -23,7 +23,7 @@ export function TermDetailSection({
 }) {
   return (
     <p className="reading-text m-0 max-w-prose text-base whitespace-pre-line text-base-content/90">
-      <span className={cn("inline-flex items-baseline gap-2 font-medium", LABEL_CLASS[variant])}>
+      <span className={cn("inline-flex items-baseline gap-2 font-semibold", LABEL_CLASS[variant])}>
         <Icon className="size-4 shrink-0 self-center" aria-hidden strokeWidth={2} />
         {label}:
       </span>{" "}

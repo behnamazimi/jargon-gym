@@ -43,7 +43,7 @@ export const LIBRARY_CHAPTERS = [
         target: "library-term",
         title: "Already know one?",
         body: "Click the check to mark a term known and skip it in practice.",
-        bodyTouch: "Swipe left to mark a term known and skip it in practice.",
+        bodyTouch: "Swipe right to mark a term known and skip it in practice.",
       },
       {
         target: "library-actions",

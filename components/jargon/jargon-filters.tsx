@@ -63,7 +63,7 @@ export function JargonFilters({
 
   return (
     <section aria-label="Filter terms" data-tour="library-search" className="space-y-3">
-      <div className="flex items-start gap-2">
+      <div className="flex items-stretch gap-2">
         <div className="min-w-0 flex-1">
           <SearchBar
             value={searchQuery}
@@ -78,12 +78,15 @@ export function JargonFilters({
           aria-expanded={expanded}
           aria-controls="jargon-advanced-filters"
           onPress={() => setExpanded((value) => !value)}
-          className={cn("min-h-11 shrink-0 gap-2 md:min-h-10", expanded && "bg-base-200")}
+          className={cn("min-h-10 shrink-0 gap-2", expanded && "bg-base-200")}
         >
           <SlidersHorizontal className="size-3.5" aria-hidden strokeWidth={1.5} />
           Filters
-          {!expanded && activeFilterCount > 0 ? (
-            <Badge variant="secondary" className="min-w-5 px-1.5 py-0 text-xs tabular-nums">
+          {activeFilterCount > 0 ? (
+            <Badge
+              variant="secondary"
+              className={cn("min-w-5 px-1.5 py-0 text-xs tabular-nums", expanded && "invisible")}
+            >
               {activeFilterCount}
             </Badge>
           ) : null}

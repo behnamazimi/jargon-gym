@@ -85,7 +85,11 @@ export function ReadPage({ seed, collections, domainId, narrationAccess, options
         onCollectionChange={handleCollectionChange}
       />
 
-      <div key={term?.id ?? "empty"} ref={bindCard} className="flex min-h-0 flex-1 flex-col">
+      <div
+        key={term?.id ?? "empty"}
+        ref={bindCard}
+        className="flex min-h-0 flex-1 scroll-mt-[calc(env(safe-area-inset-top)+3.75rem)] flex-col md:scroll-mt-4"
+      >
         <ReadQueueContent
           queue={queue}
           term={term}

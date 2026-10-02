@@ -10,7 +10,7 @@ const SWIPE_GUARD_MS = 300;
 
 type SwipeState = { startX: number; startY: number; dx: number; axis: "x" | "y" | null };
 
-/** Swipe-left on a Library row, touch only. The row slides over a layer
+/** Swipe-right on a Library row, touch only. The row slides over a layer
  *  behind it and commits past COMMIT_PX; styles go straight to the DOM so
  *  a drag never re-renders the list. */
 export function useRowSwipe({ enabled, onCommit }: { enabled: boolean; onCommit: () => void }) {
@@ -53,9 +53,9 @@ export function useRowSwipe({ enabled, onCommit }: { enabled: boolean; onCommit:
     }
     if (state.axis !== "x") return;
 
-    state.dx = Math.min(dx, 0);
+    state.dx = Math.max(dx, 0);
     const shown =
-      state.dx < -COMMIT_PX ? -COMMIT_PX + (state.dx + COMMIT_PX) * OVERDRAG_RESISTANCE : state.dx;
+      state.dx > COMMIT_PX ? COMMIT_PX + (state.dx - COMMIT_PX) * OVERDRAG_RESISTANCE : state.dx;
     paint(shown, false);
   }
 
@@ -68,7 +68,7 @@ export function useRowSwipe({ enabled, onCommit }: { enabled: boolean; onCommit:
       justSwipedRef.current = false;
     }, SWIPE_GUARD_MS);
     paint(0, true);
-    if (state.dx <= -COMMIT_PX) onCommit();
+    if (state.dx >= COMMIT_PX) onCommit();
   }
 
   function onTouchCancel() {

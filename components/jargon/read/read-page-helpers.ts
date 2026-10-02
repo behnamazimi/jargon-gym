@@ -1,16 +1,19 @@
-import { PLATFORM_MEDIA } from "@/lib/platform";
 import { countTermsForSelection } from "@/lib/study/count";
 import type { StudyCollection } from "@/lib/study/types";
 
+/** Jumps to the top of the new card. Instant, because a smooth scroll gets
+ *  cut short when the freshly shown card is still laying out, which left the
+ *  view on the footer. Repeats once after layout settles. */
 export function scrollToTop(cardEl: HTMLElement | null) {
-  const behavior = window.matchMedia(PLATFORM_MEDIA.reducedMotion).matches ? "instant" : "smooth";
-
-  if (cardEl) {
-    cardEl.scrollIntoView({ behavior, block: "start" });
-    return;
-  }
-
-  window.scrollTo({ top: 0, behavior });
+  const jump = () => {
+    if (cardEl) {
+      cardEl.scrollIntoView({ behavior: "instant", block: "start" });
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
+  jump();
+  requestAnimationFrame(jump);
 }
 
 export function allTermCount(collections: StudyCollection[]) {
