@@ -118,7 +118,7 @@ export function JargonDomainHeader({
           </h1>
           {domain.termCount > 0 ? (
             <p className="text-sm tabular-nums text-base-content/70">
-              {domain.termsLearnedCount} of {domain.termCount} mastered
+              {domain.termsLearnedCount} of {domain.termCount} mastered or marked known
             </p>
           ) : null}
         </div>
