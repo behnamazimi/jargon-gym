@@ -73,7 +73,7 @@ describe("generateSimpleQuiz", () => {
     expect(new Set(questions.map((q) => q.termId)).size).toBe(terms.length);
 
     const illustrationQuestions = questions.filter((q) =>
-      q.prompt.startsWith("What does this illustrate?"),
+      q.prompt.startsWith("Which term does this show, or none?"),
     );
 
     // Only terms a, b, c are eligible (have example or anti_example).
@@ -87,7 +87,7 @@ describe("generateSimpleQuiz", () => {
     // prompt is the term's own definition, not an illustration prompt.
     const ineligibleQuestions = questions.filter((q) => ["d", "e", "f"].includes(q.termId));
     for (const q of ineligibleQuestions) {
-      expect(q.prompt.startsWith("What does this illustrate?")).toBe(false);
+      expect(q.prompt.startsWith("Which term does this show, or none?")).toBe(false);
     }
   });
 
@@ -103,7 +103,7 @@ describe("generateSimpleQuiz", () => {
 
     const questions = await generateSimpleQuiz(terms, client);
     const illustrationCount = questions.filter((q) =>
-      q.prompt.startsWith("What does this illustrate?"),
+      q.prompt.startsWith("Which term does this show, or none?"),
     ).length;
 
     expect(illustrationCount).toBe(10);
@@ -133,11 +133,13 @@ describe("generateSimpleQuiz", () => {
     expect(antiQ?.type).toBe("multiple_choice");
     if (exampleQ?.type === "multiple_choice") {
       expect(exampleQ.correctOptionIds).toEqual(["only-example"]);
-      expect(exampleQ.prompt).toBe("What does this illustrate?\nA real example.");
+      expect(exampleQ.prompt).toBe("Which term does this show, or none?\nA real example.");
     }
     if (antiQ?.type === "multiple_choice") {
       expect(antiQ.correctOptionIds).toEqual(["none"]);
-      expect(antiQ.prompt).toBe("What does this illustrate?\nA tempting but wrong example.");
+      expect(antiQ.prompt).toBe(
+        "Which term does this show, or none?\nA tempting but wrong example.",
+      );
       expect(antiQ.options.at(-1)).toEqual({ id: "none", text: "None of these" });
     }
   });

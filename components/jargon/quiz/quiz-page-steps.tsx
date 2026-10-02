@@ -65,8 +65,6 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         key={`${question.termId}-${quiz.currentIndex}`}
         question={question}
         termLabel={quiz.termById.get(question.termId)?.term ?? "Term"}
-        current={quiz.currentIndex + 1}
-        total={quiz.questions.length}
         correct={quiz.correctSoFar}
         isLast={quiz.currentIndex + 1 === quiz.questions.length}
         onAnswer={quiz.handleQuestionAnswer}

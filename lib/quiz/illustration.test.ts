@@ -186,6 +186,6 @@ describe("buildIllustrationQuestions", () => {
 
 describe("ILLUSTRATION_QUESTION_LINE", () => {
   it("is a generic line that doesn't name the term", () => {
-    expect(ILLUSTRATION_QUESTION_LINE).toBe("What does this illustrate?");
+    expect(ILLUSTRATION_QUESTION_LINE).toBe("Which term does this show, or none?");
   });
 });

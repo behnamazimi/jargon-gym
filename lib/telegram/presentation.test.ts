@@ -96,7 +96,7 @@ describe("presentation HTML escaping", () => {
     const message = formatIllustrationQuestion(0, 1, `<img src=x onerror=alert(1)>`);
     expect(message).not.toContain("<img");
     expect(message).toContain("&lt;img");
-    expect(message).toContain("What does this illustrate?");
+    expect(message).toContain("Which term does this show, or none?");
   });
 
   it("produces well-formed output for formatIllustrationQuestionWithAnswer", () => {

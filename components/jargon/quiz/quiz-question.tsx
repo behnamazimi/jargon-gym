@@ -6,6 +6,7 @@ import { QuizAnswerChoices } from "@/components/jargon/quiz/quiz-answer-choices"
 import { QuizQuestionFooter } from "@/components/jargon/quiz/quiz-question-footer";
 import type { QuizQuestion } from "@/lib/quiz/types";
 import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
+import { quizFeedbackLine } from "@/lib/quiz/feedback";
 import { quizChoiceForKey } from "@/lib/quiz/keyboard";
 import {
   canSubmitAnswer,
@@ -26,22 +27,12 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 type QuizQuestionViewProps = {
   question: QuizQuestion;
   termLabel: string;
-  current: number;
-  total: number;
   correct: number;
   isLast: boolean;
   onAnswer: (passed: boolean) => void;
 };
 
-export function QuizQuestionView({
-  question,
-  current,
-  total,
-  correct,
-  isLast,
-  onAnswer,
-}: QuizQuestionViewProps) {
-  const progressPercent = total > 0 ? Math.round((current / total) * 100) : 0;
+export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQuestionViewProps) {
   const [state, dispatch] = useReducer(quizAnswerReducer, initialAnswerState);
   // Brief pop when the advance button unlocks, so the lockout reads as
   // "getting ready" instead of an unresponsive click. Pure animation timing,
@@ -144,6 +135,7 @@ export function QuizQuestionView({
 
   const submitted = state.phase !== "answering";
   const canAdvance = state.phase === "ready";
+  const feedbackLine = submitted ? quizFeedbackLine(question, state.passed) : null;
   const { question: promptQuestion, quote: promptQuote } = splitPromptQuote(question.prompt);
 
   return (
@@ -166,11 +158,16 @@ export function QuizQuestionView({
           onSelectOption={(optionId) => dispatch({ type: "SELECT_MCQ_OPTION", optionId })}
           onSelectTrueFalse={(value) => dispatch({ type: "SELECT_TRUE_FALSE", value })}
         />
+
+        {feedbackLine ? (
+          <p role="status" className="m-0 mt-4 text-sm text-base-content/70">
+            {feedbackLine}
+          </p>
+        ) : null}
       </div>
 
       <QuizQuestionFooter
         correct={correct}
-        progressPercent={progressPercent}
         submitted={submitted}
         isLast={isLast}
         canSubmit={canSubmit}
