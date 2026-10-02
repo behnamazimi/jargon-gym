@@ -131,27 +131,29 @@ export function ReviewPlayingStep({
       />
 
       <div className="shrink-0 space-y-3">
-        {currentRevealed ? (
-          <div data-tour="review-grades" className="grid grid-cols-4 gap-2">
-            {GRADE_BUTTONS.map(({ grade, variant }) => (
-              <Button
-                key={grade}
-                type="button"
-                variant={variant}
-                onPress={(event) => {
-                  releaseFocusAfterPointerPress(event);
-                  onRate(grade);
-                }}
-                className={cn(
-                  SOFT_ACTION_BUTTON_CLASS,
-                  currentRating?.grade === grade && "ring-2 ring-primary/50",
-                )}
-              >
-                {GRADE_LABELS[grade]}
-              </Button>
-            ))}
-          </div>
-        ) : null}
+        <div
+          data-tour={currentRevealed ? "review-grades" : undefined}
+          inert={!currentRevealed}
+          className={cn("grid grid-cols-4 gap-2", !currentRevealed && "invisible")}
+        >
+          {GRADE_BUTTONS.map(({ grade, variant }) => (
+            <Button
+              key={grade}
+              type="button"
+              variant={variant}
+              onPress={(event) => {
+                releaseFocusAfterPointerPress(event);
+                onRate(grade);
+              }}
+              className={cn(
+                SOFT_ACTION_BUTTON_CLASS,
+                currentRating?.grade === grade && "ring-2 ring-primary/50",
+              )}
+            >
+              {GRADE_LABELS[grade]}
+            </Button>
+          ))}
+        </div>
 
         <ReviewKeyboardHints revealed={currentRevealed} rated={rated} />
       </div>

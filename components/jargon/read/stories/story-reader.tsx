@@ -49,9 +49,9 @@ function StoryHeader({
   const meta = storyMetaLabels(story);
 
   return (
-    <header className="shrink-0 space-y-1 border-b border-base-300/60 px-5 py-3 sm:px-6">
-      <div className="flex items-start justify-between gap-2">
-        <h2 className="font-heading m-0 min-w-0 text-xl font-medium text-balance text-base-content sm:text-2xl sm:leading-tight">
+    <header className="relative shrink-0 space-y-1 border-b border-base-300/60 px-5 py-3 sm:px-6">
+      <div>
+        <h2 className="font-heading m-0 min-w-0 pe-10 text-xl font-medium text-balance text-base-content sm:text-2xl sm:leading-tight">
           {story.title}
         </h2>
         {story.readAt ? null : (
@@ -61,7 +61,7 @@ function StoryHeader({
             size="icon-sm"
             aria-label="Dismiss story"
             onPress={onDismiss}
-            className="-me-2 -mt-1 size-11 shrink-0 text-base-content/70 md:size-9"
+            className="absolute top-1 right-3 size-11 text-base-content/70 sm:right-4 md:top-2 md:size-9"
           >
             <X className="size-4" aria-hidden strokeWidth={1.5} />
           </Button>
