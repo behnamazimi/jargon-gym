@@ -89,13 +89,9 @@ function ImportedBanner({
     <Alert variant="success" onDismiss={onDismiss}>
       <AlertTitle>{title}</AlertTitle>
       {details ? <AlertDescription>{details}</AlertDescription> : null}
-      <AlertAction>
+      <AlertAction className="flex-row flex-wrap items-center max-md:[&>*]:min-h-0">
         {studyable ? (
-          <LinkButton
-            href={`/jargon/read?domain=${domain.id}`}
-            size="sm"
-            className="min-h-11 gap-1.5 md:min-h-8"
-          >
+          <LinkButton href={`/jargon/read?domain=${domain.id}`} size="sm" className="gap-1.5">
             Start reading
             <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
           </LinkButton>
