@@ -134,7 +134,7 @@ export function StudyCountField({
           value={inputValue}
           onChange={(event) => onInputChange(event.target.value)}
           disabled={availableCount === 0}
-          className="min-h-11 min-w-16 flex-1 tabular-nums"
+          className="min-h-11 w-20 flex-none tabular-nums"
         />
       </div>
       {error ? (
