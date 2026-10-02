@@ -72,7 +72,7 @@ export function QuizSetupFooter({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col gap-3 border-t border-base-300/60 pt-6", className)}>
+    <div className={cn("flex flex-col gap-3 border-t border-base-300/60 pt-4", className)}>
       {hint ? <p className="m-0 text-xs text-base-content/70">{hint}</p> : null}
       <div className="w-full">{children}</div>
     </div>
