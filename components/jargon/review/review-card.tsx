@@ -148,7 +148,7 @@ export function ReviewCard({
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-8 [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
-              <TermBody key={term.id} term={term} language={term.domainLanguage} collapseExtras />
+              <TermBody key={term.id} term={term} language={term.domainLanguage} />
               {term.isNewToUser ? (
                 <FirstExposureKnownPrompt
                   termId={term.id}
