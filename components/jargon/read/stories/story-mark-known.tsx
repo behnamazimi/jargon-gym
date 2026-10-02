@@ -35,7 +35,7 @@ export function StoryMarkKnown({ termId, term }: { termId: string; term: string 
         if (savedAt) overrideMarkedKnown(termId, true, savedAt);
         if (error) {
           setMarked(false);
-          toast("Couldn't mark that term known — it may show up again.", "destructive");
+          toast("Couldn't mark that term known. It may show up again.", "destructive");
         }
       }}
     >

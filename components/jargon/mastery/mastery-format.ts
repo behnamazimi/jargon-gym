@@ -28,7 +28,7 @@ function formatMilestone(estimate: MilestoneEstimate, label: string): string | n
     }
     case "insufficientData": {
       const noun = estimate.remaining === 1 ? "term" : "terms";
-      return `${estimate.remaining} ${noun} away from ${label} — not enough history yet`;
+      return `${estimate.remaining} ${noun} away from ${label}, not enough history yet`;
     }
     case "estimate": {
       const noun = estimate.remaining === 1 ? "term" : "terms";

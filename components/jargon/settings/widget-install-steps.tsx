@@ -47,7 +47,7 @@ export function WidgetInstallSteps({
       <SetupStep
         step={2}
         title="Create an API token"
-        description="You'll only see this token once — copy it straight into step 3."
+        description="You'll only see this token once. Copy it straight into step 3."
       >
         <Button
           type="button"

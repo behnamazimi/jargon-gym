@@ -36,7 +36,7 @@ export function StoryFooterHint({
       <>
         This story uses <span className="tabular-nums">{use.cost}</span> credits ·{" "}
         <span className="tabular-nums">{use.credits.remaining}</span> left
-        {use.credits.remaining <= AI_CREDITS_LOW_THRESHOLD ? " — running low." : "."}
+        {use.credits.remaining <= AI_CREDITS_LOW_THRESHOLD ? ", running low." : "."}
       </>
     );
   }

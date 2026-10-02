@@ -87,7 +87,7 @@ function DomainSidebarSection({
                     isSelected ? "text-primary-text" : "text-base-content/70",
                   )}
                 >
-                  {domain.termsLearnedCount} of {domain.termCount} mastered or marked known
+                  {domain.termsLearnedCount} of {domain.termCount} mastered or known
                   {domain.unfinishedCount > 0 ? ` · ${domain.unfinishedCount} to finish` : ""}
                 </span>
               </LinkButton>

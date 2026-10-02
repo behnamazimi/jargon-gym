@@ -44,7 +44,7 @@ function CollectionStudyActions({
     return (
       <div className="flex flex-col gap-2 rounded-field bg-base-200/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="m-0 text-sm text-base-content/70">
-          Paused — left out of Read, Review and Quiz.
+          Paused: left out of Read, Review and Quiz.
         </p>
         <Button
           type="button"
@@ -116,7 +116,7 @@ export function JargonDomainHeader({
           </h1>
           {domain.termCount > 0 ? (
             <p className="text-sm tabular-nums text-base-content/70">
-              {domain.termsLearnedCount} of {domain.termCount} mastered or marked known
+              {domain.termsLearnedCount} of {domain.termCount} mastered or known
             </p>
           ) : null}
         </div>

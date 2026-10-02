@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { HeaderIsland } from "@/components/header-island";
 import { HeaderSkeleton } from "@/components/page-skeleton";
 import { StudyPhoneChromeIsland } from "@/components/app/study-phone-chrome-island";
+import { StudyPhoneDockSkeleton } from "@/components/app/study-phone-dock-skeleton";
 import { StudyPhoneTopBarSkeleton } from "@/components/app/study-phone-topbar-skeleton";
 import { TimezoneSyncIsland } from "@/components/timezone-sync-island";
 import { TourIsland } from "@/components/tour/tour-island";
@@ -85,7 +86,14 @@ export default async function RootLayout({
               }
               footer={<SiteFooter />}
               studyPhoneChrome={
-                <Suspense fallback={<StudyPhoneTopBarSkeleton />}>
+                <Suspense
+                  fallback={
+                    <>
+                      <StudyPhoneTopBarSkeleton />
+                      <StudyPhoneDockSkeleton />
+                    </>
+                  }
+                >
                   <StudyPhoneChromeIsland initialIsDark={initialIsDark} />
                 </Suspense>
               }

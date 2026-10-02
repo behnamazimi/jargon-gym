@@ -61,7 +61,7 @@ function HeaderStudyLink({
       className={cn("btn btn-ghost", className)}
     >
       <Icon className="h-4 w-4" strokeWidth={1.5} />
-      <span className="hidden md:inline">{label}</span>
+      <span className="hidden sm:inline">{label}</span>
     </Link>
   );
 }

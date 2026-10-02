@@ -52,7 +52,7 @@ export function TermRowDialogs({
       forgetTermDetails(detailsScope);
       toast(`"${term.term}" deleted`);
     } else {
-      toast(`Couldn't delete "${term.term}" — it's back in the list.`, "destructive");
+      toast(`Couldn't delete "${term.term}". It's back in the list.`, "destructive");
     }
   }
 

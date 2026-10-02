@@ -86,7 +86,7 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
       ) : hasTokens ? (
         <div className="space-y-3 rounded-field bg-base-200/60 p-4">
           <p className="m-0 text-sm text-base-content/70">
-            Already have the widget running? This refreshes it to the latest version in place — it
+            Already have the widget running? This refreshes it to the latest version in place. It
             keeps your existing token, so there's nothing to generate.
           </p>
           <CopyField label="Update" value={updateCommand} />

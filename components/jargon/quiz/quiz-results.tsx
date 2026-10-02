@@ -90,7 +90,7 @@ export function QuizResults({
         icon={practice ? Dumbbell : Trophy}
         title={practice ? "Practice complete" : "Quiz complete"}
         description={
-          practice ? "Practice round — not counted toward mastery." : scoreMessage(score, total)
+          practice ? "Practice round: not counted toward mastery." : scoreMessage(score, total)
         }
       />
       <QuizPanelBody className="min-h-0 flex-1 space-y-6 overflow-y-auto">

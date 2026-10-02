@@ -26,10 +26,13 @@ function RollupRow({
   today: number;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2 text-sm">
+    <div className="flex items-baseline justify-between gap-3 py-2 text-sm">
       <span className="font-medium text-base-content">{label}</span>
-      <span className="text-base-content/70">
-        {formatUnseenLine(unseen)} · {today} {verb} today
+      <span className="flex flex-col items-end text-base-content/70">
+        <span className="tabular-nums">{formatUnseenLine(unseen)}</span>
+        <span className="tabular-nums">
+          {today} {verb} today
+        </span>
       </span>
     </div>
   );
@@ -45,18 +48,20 @@ const GRADE_ORDER: ReviewGrade[] = [AGAIN, HARD, GOOD, EASY];
 
 /** Plain distribution, no verdict — what's "too generous" is subjective,
  *  this just shows the grading habit itself. */
-function formatGradeDistribution(summary: GradeDistributionSummary): string {
-  return GRADE_ORDER.map((grade) => {
-    const percent = Math.round((summary.counts[grade] / summary.total) * 100);
-    return `${GRADE_LABEL[grade]} ${percent}%`;
-  }).join(" · ");
-}
-
 function GradeDistributionRow({ summary }: { summary: GradeDistributionSummary }) {
   return (
-    <div className="flex flex-col gap-1 py-2 text-sm">
+    <div className="flex flex-col gap-2 py-2 text-sm">
       <span className="font-medium text-base-content">Grading</span>
-      <span className="text-base-content/70">{formatGradeDistribution(summary)}</span>
+      <dl className="m-0 grid grid-cols-4 gap-2">
+        {GRADE_ORDER.map((grade) => (
+          <div key={grade} className="flex flex-col">
+            <dt className="text-xs text-base-content/70">{GRADE_LABEL[grade]}</dt>
+            <dd className="m-0 tabular-nums text-base-content">
+              {Math.round((summary.counts[grade] / summary.total) * 100)}%
+            </dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }
