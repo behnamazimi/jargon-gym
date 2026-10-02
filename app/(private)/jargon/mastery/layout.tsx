@@ -1,5 +1,6 @@
 import { Signal } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
+import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
 
 export default function MasteryLayout({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function MasteryLayout({ children }: { children: React.ReactNode 
         description="How well you remember your terms."
         compactOnPhone
       />
+      <PromoVisit target="mastery" />
       {children}
     </PageShell>
   );

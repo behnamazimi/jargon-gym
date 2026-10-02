@@ -128,6 +128,12 @@ Read the Requests section of [docs/import.md](docs/import.md) before changing it
 runs in this path, and no user-facing string may name the admin or imply automation
 (`lib/requests/copy.ts` and its test enforce the list).
 
+# Page promos
+
+Banners that point at a page the user hasn't visited live in `lib/promos/`
+and `components/promos/`. Read [docs/promos.md](docs/promos.md) before adding
+a promo or mounting the slot on a page.
+
 # macOS widget
 
 The widget's source lives in `widget/jargon-gym.widget/` (`index.jsx` +

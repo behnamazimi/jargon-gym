@@ -374,6 +374,7 @@ declare
   v_idempotency uuid := '33333333-3333-3333-3333-333333333303';
   v_leader_election uuid := '33333333-3333-3333-3333-333333333305';
   v_okr uuid := '44444444-4444-4444-4444-444444444405';
+  v_cap uuid := '33333333-3333-3333-3333-333333333301';
 begin
   -- Idempotency — mastered today, first seen 14 days ago.
   insert into public.review_events (
@@ -458,6 +459,26 @@ begin
     v_admin_id, v_okr, 1, now() - interval '5 days',
     18.223968588221556, 4.681075550345074, 2, now(),
     0.878345498783455, 2, now(), null
+  );
+
+  -- CAP Theorem — one first review, so the admin has the 10 reviews the
+  -- Mastery promo waits for. Same history shape as the first review above.
+  insert into public.review_events (
+    user_id, term_id, event, grade, question_type, retrievability_before,
+    recall_stability, recall_difficulty, quiz_knowledge_posterior, created_at
+  )
+  values
+    (v_admin_id, v_cap, 'read', null, null, null, null, null, null, now() - interval '4 days'),
+    (v_admin_id, v_cap, 'reveal', null, null, null, null, null, null, now() - interval '4 days'),
+    (v_admin_id, v_cap, 'review_pass', 3, null, null, 3.5951299999999997, 4.714577829570867, null, now() - interval '4 days');
+
+  insert into public.review_state (
+    user_id, term_id, read_count, last_read_at,
+    recall_stability, recall_difficulty, review_recall_count, last_review_recall_at
+  )
+  values (
+    v_admin_id, v_cap, 1, now() - interval '4 days',
+    3.5951299999999997, 4.714577829570867, 1, now() - interval '4 days'
   );
 end;
 $$;

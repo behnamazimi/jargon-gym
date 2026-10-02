@@ -6,6 +6,7 @@ import { ReadModeTabs } from "@/components/jargon/read/read-mode-tabs";
 import { StoryHistoryMenu } from "@/components/jargon/read/stories/story-history-menu";
 import { ReadOptionsMenu } from "@/components/jargon/read/read-options-menu";
 import { PageShell } from "@/components/page-container";
+import { PromoSlot } from "@/components/promos/promo-slot";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { DEFAULT_READ_OPTIONS, getReadOptions } from "@/lib/read/options";
 
@@ -29,6 +30,7 @@ export default async function ReadLayout({ children }: { children: React.ReactNo
           showBack={false}
         />
         <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+          <PromoSlot route="read" />
           <div className="flex items-center justify-between gap-2">
             <ReadModeTabs />
             {user ? (

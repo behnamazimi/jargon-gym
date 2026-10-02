@@ -1,5 +1,6 @@
 import { Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
+import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
 
 export default function QuizLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export default function QuizLayout({ children }: { children: React.ReactNode }) 
         showBack={false}
       />
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+        <PromoVisit target="quiz" />
         {children}
       </div>
     </PageShell>
