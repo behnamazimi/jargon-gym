@@ -45,7 +45,8 @@ function KnownBadge() {
   return (
     <span
       className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-primary/15 text-primary-text ml-2"
-      title="Known"
+      title="Mastered"
+      aria-label="Mastered"
     >
       <Check className="size-3" strokeWidth={2.5} />
     </span>

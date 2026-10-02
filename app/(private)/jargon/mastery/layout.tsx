@@ -8,7 +8,7 @@ export default function MasteryLayout({ children }: { children: React.ReactNode 
       <PageHeader
         icon={Signal}
         title="Mastery"
-        description="Your known-term progress across every collection, at a glance."
+        description="How well you remember your terms."
         compactOnPhone
       />
       {children}

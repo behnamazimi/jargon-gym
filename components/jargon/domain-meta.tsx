@@ -10,7 +10,7 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
     parts.push("Added");
   }
 
-  parts.push(pluralize(domain.termCount, "term"));
+  if (domain.termCount === 0) parts.push(pluralize(0, "term"));
   if (categoryCount > 0) parts.push(pluralize(categoryCount, "category", "categories"));
 
   return (

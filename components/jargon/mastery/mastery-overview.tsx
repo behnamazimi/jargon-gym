@@ -4,6 +4,7 @@ import type { WebStatsSnapshot } from "@/lib/jargon/collection-stats";
 import { CollectionCard, PausedCollectionCard } from "./collection-card";
 import { formatLifetimeTotals } from "./mastery-format";
 import { MasteryPracticeActivity } from "./mastery-practice-activity";
+import { pluralize } from "@/lib/utils";
 
 type MasteryOverviewProps = {
   stats: WebStatsSnapshot;
@@ -26,8 +27,8 @@ function OverviewHeader({
   return (
     <div className="space-y-1">
       <p className="text-sm font-medium text-base-content">
-        Learning <span className="tabular-nums">{termsLearning}</span> terms · Mastered{" "}
-        <span className="tabular-nums">{termsLearned}</span> terms
+        Learning <span className="tabular-nums">{pluralize(termsLearning, "term")}</span> · Mastered{" "}
+        <span className="tabular-nums">{pluralize(termsLearned, "term")}</span>
       </p>
       {lifetimeTotalsLine ? (
         <p className="m-0 text-xs text-base-content/70">{lifetimeTotalsLine}</p>

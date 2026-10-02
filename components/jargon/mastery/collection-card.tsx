@@ -4,7 +4,7 @@ import { LinkButton } from "@/components/ui/button";
 import type { CollectionStatBreakdown } from "@/lib/jargon/collection-stats";
 import type { MasteryBucketCounts } from "@/lib/trace";
 import { formatPaceLine, formatUnseenFootnote } from "./mastery-format";
-import { cn } from "@/lib/utils";
+import { cn, pluralize } from "@/lib/utils";
 
 type CollectionCardData = {
   id: string;
@@ -94,7 +94,15 @@ function CollectionCardShell({
         </div>
       )}
       {strengthPercent !== undefined ? (
-        <p className="text-sm font-medium text-base-content">{strengthPercent}% strength</p>
+        <p className="text-sm font-medium text-base-content">
+          {strengthPercent}% recall strength
+          {buckets ? (
+            <span className="font-normal text-base-content/70">
+              {" "}
+              across {pluralize(buckets.mastered + buckets.learningNotMastered, "started term")}
+            </span>
+          ) : null}
+        </p>
       ) : null}
       {footnote ? <p className="text-xs text-base-content/70">{footnote}</p> : null}
       {paceLine ? <p className="text-xs text-base-content/70">{paceLine}</p> : null}
@@ -141,7 +149,11 @@ export function CollectionCard({
       collection={collection}
       buckets={collection.paceInsight.buckets}
       strengthPercent={Math.round(collection.currentStrength * 100)}
-      footnote={formatUnseenFootnote(collection)}
+      footnote={
+        collection.unseenCount === collection.paceInsight.buckets.neverLearning
+          ? undefined
+          : formatUnseenFootnote(collection)
+      }
       paceLine={formatPaceLine(collection.paceInsight)}
       onSelect={() => onSelect(collection.id)}
       footer={
@@ -153,7 +165,7 @@ export function CollectionCard({
           aria-label={`Practice ${collection.name} in Review`}
         >
           <BookOpen className="size-4" aria-hidden strokeWidth={1.5} />
-          Practice
+          Review
         </LinkButton>
       }
     />

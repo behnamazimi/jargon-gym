@@ -24,8 +24,8 @@ function JourneyLine({ journey }: { journey: MasteryTermJourney }) {
   const days = pluralize(journey.learnedInDays, "day");
   return (
     <Collapsible>
-      <CollapsibleTrigger className="m-0 mt-0.5 cursor-pointer rounded border-none bg-transparent p-0 text-left text-xs text-success/80 underline decoration-dotted underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        Learned in {days}.
+      <CollapsibleTrigger className="m-0 mt-0.5 cursor-pointer rounded border-none bg-transparent p-0 text-left text-xs text-success-text underline decoration-dotted underline-offset-2 outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        Mastered in {days}.
       </CollapsibleTrigger>
       <CollapsibleContent>
         <p className="m-0 mt-0.5 text-xs text-base-content/70">
@@ -48,7 +48,7 @@ export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: Maste
           {row.known ? (
             <Check
               className="size-4 shrink-0 text-success-text"
-              aria-label="Known"
+              aria-label="Mastered"
               strokeWidth={2.5}
             />
           ) : null}

@@ -99,8 +99,6 @@ export function JargonDomainHeader({
   const [isActiveForReview, setOptimisticActive] = useOptimistic(serverDomain.isActiveForReview);
   const [togglePending, startToggle] = useTransition();
   const domain = { ...serverDomain, isActiveForReview };
-  const progressPct =
-    domain.termCount > 0 ? Math.round((domain.termsLearnedCount / domain.termCount) * 100) : 0;
 
   function setActiveForReview(active: boolean) {
     startToggle(async () => {
@@ -120,7 +118,7 @@ export function JargonDomainHeader({
           </h1>
           {domain.termCount > 0 ? (
             <p className="text-sm tabular-nums text-base-content/70">
-              {domain.termsLearnedCount} of {domain.termCount} learned · {progressPct}%
+              {domain.termsLearnedCount} of {domain.termCount} mastered
             </p>
           ) : null}
         </div>

@@ -5,21 +5,31 @@ import { ChevronRight } from "lucide-react";
 import type { GradeDistributionSummary, WebStatsSnapshot } from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
-import { cn } from "@/lib/utils";
+import { cn, pluralize } from "@/lib/utils";
 
 /** TRACE has no backlog to clear — a term with no history just ranks first
  *  next time this tier comes up. This is a snapshot of current exposure,
  *  not a queue count. */
 function formatUnseenLine(unseen: number): string {
-  return unseen === 0 ? "Everything started" : `${unseen} never started`;
+  return unseen === 0 ? "Everything started" : `${pluralize(unseen, "term")} not started`;
 }
 
-function RollupRow({ label, unseen, today }: { label: string; unseen: number; today: number }) {
+function RollupRow({
+  label,
+  verb,
+  unseen,
+  today,
+}: {
+  label: string;
+  verb: string;
+  unseen: number;
+  today: number;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 py-2 text-sm">
       <span className="font-medium text-base-content">{label}</span>
       <span className="text-base-content/70">
-        {formatUnseenLine(unseen)} · {today} today
+        {formatUnseenLine(unseen)} · {today} {verb} today
       </span>
     </div>
   );
@@ -76,13 +86,24 @@ export function MasteryPracticeActivity({ stats }: { stats: WebStatsSnapshot }) 
 
       <CollapsibleContent>
         <div className="mt-3 divide-y divide-base-content/10">
-          <RollupRow label="Read" unseen={stats.rollup.read.unseen} today={stats.today.read} />
+          <RollupRow
+            label="Read"
+            verb="read"
+            unseen={stats.rollup.read.unseen}
+            today={stats.today.read}
+          />
           <RollupRow
             label="Review"
+            verb="reviewed"
             unseen={stats.rollup.review.unseen}
             today={stats.today.review}
           />
-          <RollupRow label="Quiz" unseen={stats.rollup.quiz.unseen} today={stats.today.quiz} />
+          <RollupRow
+            label="Quiz"
+            verb="quizzed"
+            unseen={stats.rollup.quiz.unseen}
+            today={stats.today.quiz}
+          />
           {stats.gradeDistribution ? (
             <GradeDistributionRow summary={stats.gradeDistribution} />
           ) : null}
