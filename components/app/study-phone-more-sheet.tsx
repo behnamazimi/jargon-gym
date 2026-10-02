@@ -111,7 +111,7 @@ export function MoreSheet() {
             </button>
           </li>
         ) : null}
-        <li>
+        <li className="mt-2 border-t border-base-300 pt-2">
           <button
             type="button"
             className="content-center min-h-11 text-error-text"

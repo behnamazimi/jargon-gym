@@ -39,8 +39,8 @@ export function FirstExposureKnownPrompt({
       if (savedAt) overrideMarkedKnown(termId, false, savedAt);
       toast(
         error
-          ? `Couldn't undo — "${term}" is still marked known.`
-          : "Undone — it'll come back in your queue.",
+          ? `Couldn't undo: "${term}" is still marked known.`
+          : "Undone. It'll come back in your queue.",
         error ? "destructive" : "success",
       );
     })();
@@ -63,7 +63,7 @@ export function FirstExposureKnownPrompt({
       }
       if (!error) return;
       dismiss(toastId);
-      toast("Couldn't mark that term known — it may show up again.", "destructive");
+      toast("Couldn't mark that term known. It may show up again.", "destructive");
     });
   }
 

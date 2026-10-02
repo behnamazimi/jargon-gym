@@ -12,7 +12,7 @@ import {
 type Choice = { label: string; hint: string };
 
 const READING_LEVEL_CHOICES: Record<ReadingLevel, Choice> = {
-  plain: { label: "A lot", hint: "Sentences make each term easy to guess." },
+  plain: { label: "Plenty", hint: "Sentences make each term easy to guess." },
   professional: { label: "Some", hint: "Help only where a term would be unclear." },
   expert: { label: "None", hint: "Terms used as an insider would, no extra help." },
 };

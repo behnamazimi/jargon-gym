@@ -122,6 +122,11 @@
   font-weight: 400;
 }
 
+/* DaisyUI's disabled label (20% of base content) is close to unreadable. */
+.btn:is(:disabled, [disabled], [aria-disabled="true"]) {
+  color: color-mix(in oklch, var(--color-base-content) 55%, transparent);
+}
+
 @utility pb-dock {
   padding-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom));
 }

@@ -47,7 +47,7 @@ export function LandingCtas({ isLoggedIn }: { isLoggedIn: boolean }) {
         </LinkButton>
       </div>
       <p className="mt-3 m-0 text-sm leading-relaxed text-base-content/70">
-        Invite-only — request access, or use the code you were given.
+        Invite-only: request access, or use the code you were given.
       </p>
     </div>
   );

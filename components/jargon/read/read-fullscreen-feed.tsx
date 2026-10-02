@@ -41,7 +41,7 @@ export function ReadFullscreenFeed({
       style={{ scrollSnapType: "y mandatory" }}
     >
       <span className="sr-only" role="status">
-        Focus mode — scroll to read, press Escape to exit.
+        Focus mode: scroll to read, press Escape to exit.
       </span>
 
       {queue.terms.map((term, index) => (

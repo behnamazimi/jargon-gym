@@ -9,11 +9,11 @@ export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
       term: "Coupling",
       category: "Architecture",
       definition:
-        "The degree to which one component depends on another's internals — the tighter the coupling, the more a change on one side risks breaking the other.",
+        "The degree to which one component depends on another's internals: the tighter the coupling, the more a change on one side risks breaking the other.",
       example:
         "Billing code that directly reads fields from the user-profile table breaks if that table changes.",
       mental_model:
-        "Think of it like two people sharing a single house key — convenient until one of them changes the lock.",
+        "Think of it like two people sharing a single house key. Convenient until one of them changes the lock.",
       discussion:
         "Teams usually reduce coupling by communicating through a stable API or event contract instead of reaching into another service's internal data model directly.",
       note: "The word is borrowed from physics, where coupling is how strongly two systems influence each other.",
@@ -26,7 +26,7 @@ export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
       example:
         "A module that only sends emails is more cohesive than one that also handles payments.",
       anti_example:
-        "A 'utils' file that handles date formatting, API calls, and validation isn't cohesive — those are unrelated concerns bundled together.",
+        "A 'utils' file that handles date formatting, API calls, and validation isn't cohesive. Those are unrelated concerns bundled together.",
     },
   ],
   relationships: [

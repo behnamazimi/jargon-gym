@@ -16,7 +16,7 @@ export function TelegramConnectRow({
   return (
     <SettingsRow
       title="Connect"
-      description="Generate a link, open it in Telegram, and tap Start. Don't share the link — it expires in 5 minutes."
+      description="Generate a link, open it in Telegram, and tap Start. Don't share the link, it expires in 5 minutes."
     >
       <Button
         type="button"

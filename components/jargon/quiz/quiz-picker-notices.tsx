@@ -5,7 +5,7 @@ import { AI_CREDITS_LOW_THRESHOLD, type AiAccessView, type CreditUse } from "@/l
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 
 function creditHint(ai: AiAccessView, cost: number) {
-  if (ai.kind === "own") return <>Uses {ai.providerLabel} — this may take a moment.</>;
+  if (ai.kind === "own") return <>Uses {ai.providerLabel}. This may take a moment.</>;
   if (ai.kind !== "credits") return null;
 
   if (cost > ai.remaining) {
@@ -21,7 +21,7 @@ function creditHint(ai: AiAccessView, cost: number) {
     <>
       This quiz uses <span className="tabular-nums">{cost}</span> credits ·{" "}
       <span className="tabular-nums">{ai.remaining}</span> left
-      {isLow ? " — running low." : "."}
+      {isLow ? ", running low." : "."}
     </>
   );
 }
