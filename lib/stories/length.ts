@@ -49,6 +49,15 @@ export function termsForLength(pieceLength: PieceLength): number {
   return PIECE_LENGTH_SPEC[pieceLength].terms;
 }
 
+/** How many of the collection's terms a piece of this length will use, like
+ *  "Uses 8 of your 9 terms." or "Uses all 6 of your terms." */
+export function termsUsedNote(pieceLength: PieceLength, available: number): string {
+  const cap = termsForLength(pieceLength);
+  if (available <= 0) return "";
+  if (available <= cap) return `Uses all ${available} of your terms.`;
+  return `Uses ${cap} of your ${available} terms.`;
+}
+
 /** The length to ask for: the user's pick, with a bit more room at beginner
  *  levels. */
 export function storyLength(

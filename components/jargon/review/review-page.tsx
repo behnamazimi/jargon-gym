@@ -41,13 +41,13 @@ function stripReviewDomainParam() {
 
 function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
   if (domainId === "all") {
-    return "Nothing left to recall in your active collections right now. Come back later, or import more terms.";
+    return "No terms in your active collections. Import some terms or turn a collection back on to start reviewing.";
   }
   const name = collections.find((collection) => collection.id === domainId)?.name;
   if (!name) {
-    return "Nothing left to recall in this collection. Pick another to keep reviewing.";
+    return "No terms in this collection. Pick another to keep reviewing.";
   }
-  return `Nothing left to recall in ${name} right now. Pick another collection, or come back later.`;
+  return `No terms in ${name}. Pick another collection to keep reviewing.`;
 }
 
 export function ReviewPage({
@@ -190,8 +190,8 @@ export function ReviewPage({
         <div className="flex shrink-0 items-center">{collectionControl}</div>
         <QuizPanel>
           <div className="flex items-center gap-3 px-5 py-5 sm:px-6">
-            <span className="loading loading-spinner loading-sm text-base-content/60" />
-            <p className="m-0 text-sm text-base-content/60">Finding terms to review.</p>
+            <span className="loading loading-spinner loading-sm text-base-content/70" />
+            <p className="m-0 text-sm text-base-content/70">Finding terms to review.</p>
           </div>
         </QuizPanel>
       </div>
@@ -203,6 +203,7 @@ export function ReviewPage({
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <div className="flex shrink-0 items-center">{collectionControl}</div>
         <ReadCaughtUp
+          title="No terms to review"
           description={caughtUpDescription(selectedCollectionId, collections)}
           actions={
             selectedCollectionId === "all" ? (

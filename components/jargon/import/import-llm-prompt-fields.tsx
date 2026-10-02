@@ -54,7 +54,7 @@ export function ImportLlmPromptFields({
             leadingOption={{ id: NEW_COLLECTION_KEY, label: "New collection" }}
             onChange={onCollectionChange}
           />
-          {loadError ? <p className="m-0 mt-1 text-xs text-error">{loadError}</p> : null}
+          {loadError ? <p className="m-0 mt-1 text-xs text-error-text">{loadError}</p> : null}
         </Field>
       ) : null}
 

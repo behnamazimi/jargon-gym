@@ -4,12 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
 import { ReadQueueContent } from "@/components/jargon/read/read-page-content";
 import { ReadFullscreenFeed } from "@/components/jargon/read/read-fullscreen-feed";
+import { useReadFocus } from "@/components/jargon/read/read-focus";
 import { ReadToolbar } from "@/components/jargon/read/read-toolbar";
 import { useReadEnterKey } from "@/components/jargon/read/use-read-enter-key";
 import { useReadQueue } from "@/components/jargon/read/use-read-queue";
-import { requestFullscreenOnDocument } from "@/hooks/use-fullscreen-exit";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { useReadFullscreenPreference } from "@/hooks/use-read-fullscreen-preference";
 import { saveReadCollectionPreference } from "@/lib/read/collection-preference";
 import type { ReadOptions } from "@/lib/read/options";
 import type { StudyCollection } from "@/lib/study/types";
@@ -29,8 +28,7 @@ type ReadPageProps = {
 
 export function ReadPage({ seed, collections, domainId, narrationAccess, options }: ReadPageProps) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
-  const [fullscreenActive, setFullscreenActive] = useState(false);
-  const { preferenceOn, setPreference } = useReadFullscreenPreference();
+  const { active: fullscreenActive, exit: handleExitFullscreen } = useReadFocus();
   const queue = useReadQueue({ domainId: selectedCollectionId, seed });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
 
@@ -68,11 +66,6 @@ export function ReadPage({ seed, collections, domainId, narrationAccess, options
     if (node) scrollToTop(node);
   }, []);
 
-  const handleExitFullscreen = useCallback(() => {
-    setFullscreenActive(false);
-    setPreference(false);
-  }, [setPreference]);
-
   if (fullscreenActive) {
     return (
       <ReadFullscreenFeed
@@ -89,16 +82,7 @@ export function ReadPage({ seed, collections, domainId, narrationAccess, options
         collections={collections}
         selectedCollectionId={selectedCollectionId}
         isFetchingMore={queue.isFetchingMore}
-        preferenceOn={preferenceOn}
         onCollectionChange={handleCollectionChange}
-        onEnterFullscreen={() => {
-          // Must happen synchronously in this click handler — deferring
-          // it into an effect after ReadFullscreenFeed mounts loses the
-          // user gesture and silently falls back to the CSS overlay.
-          requestFullscreenOnDocument();
-          setFullscreenActive(true);
-          setPreference(true);
-        }}
       />
 
       <div key={term?.id ?? "empty"} ref={bindCard} className="flex min-h-0 flex-1 flex-col">

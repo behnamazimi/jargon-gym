@@ -99,7 +99,7 @@ export function PasteStep({
           value={draft}
           aria-label="Your list"
           placeholder={PLACEHOLDER}
-          className="min-h-64 pr-12 text-base leading-relaxed"
+          className="min-h-64 pr-12 text-base"
           onChange={(event) => onTextChange(event.target.value)}
           onPaste={handlePaste}
         />
@@ -143,7 +143,7 @@ export function PasteStep({
       </div>
 
       {pasteBlocked ? (
-        <p className="m-0 text-sm text-base-content/60" role="status">
+        <p className="m-0 text-sm text-base-content/70" role="status">
           Paste isn&apos;t available here. Tap the box and choose Paste.
         </p>
       ) : null}
@@ -162,7 +162,7 @@ export function PasteStep({
         </Alert>
       ) : null}
 
-      <p className="m-0 text-sm text-base-content/60">
+      <p className="m-0 text-sm text-base-content/70">
         Works with lists from Notes, Google Sheets, Excel, Docs and WhatsApp, and with exports from
         Quizlet and Anki.
       </p>
@@ -172,7 +172,7 @@ export function PasteStep({
           href="/jargon/import/more"
           variant="ghost"
           size="sm"
-          className="min-h-11 text-base-content/60"
+          className="min-h-11 text-base-content/70"
         >
           More import options
         </LinkButton>

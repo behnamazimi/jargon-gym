@@ -1,10 +1,11 @@
 "use client";
 
-import { LogOut, Sparkles } from "lucide-react";
+import { Download, LogOut, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { ACCOUNT_HOME_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { AppRouterProvider } from "@/components/app-router-provider";
+import { INSTALL_MENU_LABEL, useInstallAction } from "@/components/pwa/install-prompt";
 import { useAiCredits } from "@/hooks/use-ai-credits";
 import { aiCreditsLine, type AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
   const { load: aiCreditsLoad, refresh: refreshAiCredits } = useAiCredits(aiCreditsMode);
   const creditsLine = aiCreditsLine(aiCreditsMode, aiCreditsLoad);
   const initials = emailInitials(email);
+  const install = useInstallAction();
 
   async function handleLogout() {
     setIsBusy(true);
@@ -41,25 +43,25 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
         <Button
           variant="ghost"
           size="sm"
-          className="btn-circle size-8 shrink-0 overflow-hidden p-0 text-[11px] font-semibold text-primary bg-primary/15 hover:bg-primary/25"
+          className="btn-circle size-8 shrink-0 overflow-hidden p-0 text-xs font-semibold text-primary-text bg-primary/15 hover:bg-primary/25"
           aria-label="Account menu"
           data-tour="app-account"
         >
           <Avatar className="size-8">
-            <AvatarFallback className="bg-transparent text-[11px] font-semibold leading-none text-primary">
+            <AvatarFallback className="bg-transparent text-xs font-semibold leading-none text-primary-text">
               {initials}
             </AvatarFallback>
           </Avatar>
         </Button>
         <DropdownMenu className="min-w-[220px]">
-          <DropdownMenuLabel className="flex items-start gap-2.5 px-3 py-2.5 font-normal">
+          <DropdownMenuLabel className="flex items-start gap-3 px-3 py-3 font-normal">
             <Avatar>
-              <AvatarFallback className="text-xs font-semibold text-primary">
+              <AvatarFallback className="text-xs font-semibold text-primary-text">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="m-0 text-xs font-medium uppercase tracking-wide text-base-content/60">
+              <p className="m-0 text-xs font-medium uppercase tracking-wider text-base-content/70">
                 Signed in as
               </p>
               <p className="mt-0.5 truncate text-sm font-medium text-base-content">{email}</p>
@@ -72,7 +74,7 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
               textValue={creditsLine.label}
             >
               <Sparkles className="h-4 w-4" aria-hidden />
-              <span className={cn(creditsLine.tone === "error" && "text-error")}>
+              <span className={cn(creditsLine.tone === "error" && "text-error-text")}>
                 {creditsLine.label}
               </span>
             </DropdownMenuItem>
@@ -100,6 +102,12 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
                 );
               })}
             </>
+          ) : null}
+          {install ? (
+            <DropdownMenuItem onAction={install}>
+              <Download className="h-4 w-4" />
+              {INSTALL_MENU_LABEL}
+            </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>
             <LogOut className="h-4 w-4" />

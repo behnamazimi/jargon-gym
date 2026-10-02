@@ -28,7 +28,7 @@ function parseTab(value: string | undefined): SettingsTabId | null {
 async function LlmPanelServer() {
   const setup = await getLlmSettingsData();
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
   return <LlmPanel initialSettings={setup.initialSettings} ai={setup.ai} />;
 }
@@ -36,7 +36,7 @@ async function LlmPanelServer() {
 async function TelegramPanelServer() {
   const setup = await getTelegramSettingsData();
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
   return <TelegramPanel initialStatus={setup.telegramStatus} />;
 }
@@ -44,7 +44,7 @@ async function TelegramPanelServer() {
 async function WidgetPanelServer() {
   const setup = await getWidgetSettingsData();
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
   return (
     <WidgetPanel initialTokens={setup.widgetTokens} latestWidgetVersion={LATEST_WIDGET_VERSION} />
@@ -55,7 +55,7 @@ export default async function JargonSettingsPage({ searchParams }: PageProps) {
   const [{ tab: tabParam }, auth] = await Promise.all([searchParams, requireAuthenticatedClient()]);
 
   if ("error" in auth) {
-    return <p className="text-sm text-base-content/60">{auth.error}</p>;
+    return <p className="text-sm text-base-content/70">{auth.error}</p>;
   }
 
   const tab = parseTab(tabParam);

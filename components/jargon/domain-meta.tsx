@@ -10,17 +10,15 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
     parts.push("Added");
   }
 
-  parts.push(pluralize(domain.termCount, "term"));
+  if (domain.termCount === 0) parts.push(pluralize(0, "term"));
   if (categoryCount > 0) parts.push(pluralize(categoryCount, "category", "categories"));
 
   return (
     <div className="min-w-0 flex-1 space-y-2">
       {domain.description ? (
-        <p className="max-w-prose text-base leading-relaxed text-base-content/85">
-          {domain.description}
-        </p>
+        <p className="max-w-prose text-base text-base-content/85">{domain.description}</p>
       ) : null}
-      <p className="m-0 text-xs text-base-content/60">{parts.join(" · ")}</p>
+      <p className="m-0 text-xs text-base-content/70">{parts.join(" · ")}</p>
     </div>
   );
 }

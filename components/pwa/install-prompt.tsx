@@ -136,26 +136,37 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function InstallButton() {
+/** Starts the install, or null when there is nothing to install: already
+ *  installed, or a browser that can't. Server-rendered output has no install
+ *  action, so it shows only after hydration. */
+export function useInstallAction(): (() => void) | null {
   const ctx = useContext(InstallContext);
-  // The phone top bar streams in and hydrates after the provider, which by
-  // then may already know the platform. Hydrate as the server rendered
-  // (nothing), then show.
   const hydrated = useHydrated();
   if (!hydrated || !ctx || ctx.isStandalone || (!ctx.canInstall && !ctx.isIos)) return null;
+
+  return () => {
+    if (ctx.canInstall) {
+      void ctx.promptInstall();
+      return;
+    }
+    ctx.openIosDialog();
+  };
+}
+
+/** Install label shared by the profile menu and the phone menu. */
+export const INSTALL_MENU_LABEL = `Install ${PWA_NAME}`;
+
+/** For signed-out pages; signed-in users find Install in their account menu. */
+export function InstallButton() {
+  const install = useInstallAction();
+  if (!install) return null;
 
   return (
     <Button
       variant="ghost"
-      className="standalone:hidden"
-      aria-label={`Install ${PWA_NAME}`}
-      onPress={() => {
-        if (ctx.canInstall) {
-          void ctx.promptInstall();
-          return;
-        }
-        ctx.openIosDialog();
-      }}
+      className="min-h-11 min-w-11 standalone:hidden md:min-h-0 md:min-w-0"
+      aria-label={INSTALL_MENU_LABEL}
+      onPress={install}
     >
       <Download className="h-4 w-4" strokeWidth={1.5} />
       <span className="hidden lg:inline">Install</span>

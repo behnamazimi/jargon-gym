@@ -39,9 +39,10 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
       id="widget"
       icon={Monitor}
       title="Desktop widget"
+      collapsibleOnPhone
       description="Show live terms on your Mac with the Übersicht widget."
       status={
-        <Badge variant="outline" className="gap-1.5 text-xs font-medium">
+        <Badge variant="outline" className="gap-2 text-xs font-medium">
           <span
             className={cn(
               "size-1.5 shrink-0 rounded-full",
@@ -83,18 +84,18 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
           installWithTokenCommand={installWithTokenCommand}
         />
       ) : hasTokens ? (
-        <div className="space-y-3 rounded-xl bg-base-200/50 p-4">
+        <div className="space-y-3 rounded-field bg-base-200/60 p-4">
           <p className="m-0 text-sm text-base-content/70">
             Already have the widget running? This refreshes it to the latest version in place — it
             keeps your existing token, so there's nothing to generate.
           </p>
           <CopyField label="Update" value={updateCommand} />
-          <p className="m-0 text-sm text-base-content/60">
+          <p className="m-0 text-sm text-base-content/70">
             Refresh Übersicht (or restart it) once it finishes.
           </p>
         </div>
       ) : (
-        <div className="space-y-3 rounded-xl bg-base-200/50 p-4">
+        <div className="space-y-3 rounded-field bg-base-200/60 p-4">
           <p className="m-0 text-sm text-base-content/70">
             You don&apos;t have a token yet, so there&apos;s nothing installed to update.
           </p>

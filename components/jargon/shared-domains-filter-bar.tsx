@@ -39,7 +39,7 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
       aria-label="Filter shared collections"
       data-tour="browse-filters"
       className={cn(
-        "shadow-surface space-y-3 rounded-2xl bg-base-100 p-4",
+        "shadow-surface space-y-3 rounded-box bg-base-100 p-5",
         "max-md:sticky max-md:z-30 max-md:top-0",
         "in-[.chrome-study]:max-md:top-[calc(2.75rem+env(safe-area-inset-top,0px))]",
       )}
@@ -58,13 +58,13 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
           className="h-11 min-w-0 text-sm"
         />
         {browse.isRefreshing ? (
-          <span className="loading loading-spinner loading-sm me-2 text-base-content/60" />
+          <span className="loading loading-spinner loading-sm me-2 text-base-content/70" />
         ) : browse.searchInput ? (
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="me-1 min-h-11 min-w-11 text-base-content/60 hover:text-base-content"
+            className="me-1 min-h-11 min-w-11 text-base-content/70 hover:text-base-content"
             onPress={() => browse.setSearchInput("")}
             aria-label="Clear search"
           >
@@ -97,7 +97,7 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
           })}
         </div>
         <p
-          className="text-sm tabular-nums text-base-content/60 max-md:text-center"
+          className="text-sm tabular-nums text-base-content/70 max-md:text-start"
           aria-live="polite"
         >
           {pluralize(browse.matchingCount, "collection")}

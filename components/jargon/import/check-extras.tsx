@@ -49,7 +49,7 @@ export function DuplicatePolicy({ flow }: { flow: ImportFlowState }) {
   const name = flow.existing?.name ?? "this collection";
 
   return (
-    <div className="space-y-2 rounded-xl bg-warning/10 p-3">
+    <div className="space-y-2 rounded-field bg-warning/10 p-3">
       <p className="m-0 text-sm font-medium" role="status">
         {pluralize(count, "term")} {count === 1 ? "is" : "are"} already in {name}
       </p>
@@ -66,7 +66,7 @@ export function DuplicatePolicy({ flow }: { flow: ImportFlowState }) {
         <ToggleGroupItem id="skip">Skip them</ToggleGroupItem>
         <ToggleGroupItem id="update">Update their definitions</ToggleGroupItem>
       </ToggleGroup>
-      <p className="m-0 text-xs text-base-content/60">
+      <p className="m-0 text-xs text-base-content/70">
         Updating keeps your progress and never replaces a definition with an empty one. Different
         meaning? Add a qualifier, like &ldquo;SLA (legal)&rdquo;.
       </p>
@@ -86,7 +86,7 @@ export function Notices({ flow }: { flow: ImportFlowState }) {
   }
   if (notes.length === 0) return null;
   return (
-    <p className="m-0 text-sm text-base-content/60" role="status">
+    <p className="m-0 text-sm text-base-content/70" role="status">
       {notes.join(" ")}
     </p>
   );

@@ -50,7 +50,7 @@ export function TermEvalButton({ termId }: { termId: string }) {
 
   return (
     <div
-      className="flex items-center gap-1.5"
+      className="flex items-center gap-2"
       onClick={(event) => event.stopPropagation()}
       onTouchStart={(event) => event.stopPropagation()}
       onTouchEnd={(event) => event.stopPropagation()}
@@ -60,7 +60,7 @@ export function TermEvalButton({ termId }: { termId: string }) {
           className={
             result.plain
               ? "text-sm font-medium tabular-nums text-base-content"
-              : "text-sm font-medium tabular-nums text-warning"
+              : "text-sm font-medium tabular-nums text-warning-text"
           }
         >
           {scoreText}
@@ -70,6 +70,7 @@ export function TermEvalButton({ termId }: { termId: string }) {
         type="button"
         variant="ghost"
         size="icon-sm"
+        className="hit-area"
         aria-label={scoreText ? `Schema fit ${scoreText}` : "Evaluate this term"}
         isDisabled={status === "loading"}
         onPress={() => {

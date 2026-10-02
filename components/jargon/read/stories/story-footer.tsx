@@ -77,7 +77,7 @@ export function StoryFooter({ session, story }: { session: StorySession; story: 
           <>
             <span
               role="status"
-              className="inline-flex items-center gap-1 px-1 text-sm font-semibold text-success"
+              className="inline-flex items-center gap-1 px-1 text-sm font-semibold text-success-text"
             >
               <Check className="size-4" aria-hidden strokeWidth={2.5} />
               Read

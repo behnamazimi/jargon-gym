@@ -99,7 +99,7 @@ export function StoryNarrationPlayer({
         Listen
       </Button>
       {message ? (
-        <p className="m-0 text-xs text-base-content/60" role="status">
+        <p className="m-0 text-xs text-base-content/70" role="status">
           {message}
         </p>
       ) : null}

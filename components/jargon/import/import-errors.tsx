@@ -6,5 +6,5 @@ type ImportFailurePanelProps = {
 };
 
 export function ImportFailurePanel({ failure }: ImportFailurePanelProps) {
-  return <JargonErrorAlert error={failure} className="shadow-surface rounded-2xl" />;
+  return <JargonErrorAlert error={failure} className="shadow-surface rounded-box" />;
 }

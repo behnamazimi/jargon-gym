@@ -16,7 +16,6 @@ type JargonDomainHeaderProps = {
   isOwner?: boolean;
   /** Terms not yet known or marked known — Triage only shows while > 0. */
   untriagedCount: number;
-  onAddTerm?: () => void;
 };
 
 const STUDY_LINKS = [
@@ -43,7 +42,7 @@ function CollectionStudyActions({
 }) {
   if (!domain.isActiveForReview) {
     return (
-      <div className="flex flex-col gap-2 rounded-xl bg-base-200/60 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 rounded-field bg-base-200/60 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="m-0 text-sm text-base-content/70">
           Paused — left out of Read, Review and Quiz.
         </p>
@@ -74,9 +73,9 @@ function CollectionStudyActions({
         <LinkButton
           key={path}
           href={`${path}?domain=${domain.id}`}
-          variant="outline"
+          variant={path === "/jargon/read" ? "default" : "outline"}
           size="sm"
-          className="min-h-11 gap-1.5 md:min-h-8"
+          className="min-h-11 gap-2 md:min-h-8"
         >
           <Icon className="size-4" aria-hidden strokeWidth={1.5} />
           {label}
@@ -91,7 +90,6 @@ export function JargonDomainHeader({
   categoryCount,
   isOwner = false,
   untriagedCount,
-  onAddTerm,
 }: JargonDomainHeaderProps) {
   const { toast } = useToast();
   // Shows the new state at once; the action re-renders the page with the
@@ -99,8 +97,6 @@ export function JargonDomainHeader({
   const [isActiveForReview, setOptimisticActive] = useOptimistic(serverDomain.isActiveForReview);
   const [togglePending, startToggle] = useTransition();
   const domain = { ...serverDomain, isActiveForReview };
-  const progressPct =
-    domain.termCount > 0 ? Math.round((domain.termsLearnedCount / domain.termCount) * 100) : 0;
 
   function setActiveForReview(active: boolean) {
     startToggle(async () => {
@@ -111,23 +107,21 @@ export function JargonDomainHeader({
   }
 
   return (
-    <header className="shadow-surface space-y-4 rounded-2xl bg-base-100 p-4">
+    <header className="shadow-surface space-y-4 rounded-box bg-base-100 p-5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1">
-          <h1 className="font-heading truncate text-xl font-semibold tracking-tight">
+          <h1 className="font-heading line-clamp-2 text-xl font-medium">
             {domain.icon ? `${domain.icon} ` : ""}
             {domain.name}
           </h1>
           {domain.termCount > 0 ? (
-            <p className="text-sm tabular-nums text-base-content/60">
-              {domain.termsLearnedCount} of {domain.termCount} learned · {progressPct}%
+            <p className="text-sm tabular-nums text-base-content/70">
+              {domain.termsLearnedCount} of {domain.termCount} mastered or marked known
             </p>
           ) : null}
         </div>
-        <div className="flex shrink-0 items-center gap-0.5">
-          {isOwner && onAddTerm ? (
-            <AddTermsMenu domainId={domain.id} onAddTerm={onAddTerm} />
-          ) : null}
+        <div className="flex shrink-0 items-center gap-1">
+          {isOwner ? <AddTermsMenu domainId={domain.id} /> : null}
           <DomainActionsMenu
             domain={domain}
             togglePending={togglePending}

@@ -30,7 +30,7 @@ function VoteIcon({ vote }: { vote: StorySummary["vote"] }) {
   }
   if (vote === -1) {
     return (
-      <ThumbsDown className="size-4 text-base-content/50" aria-label="Disliked" strokeWidth={1.5} />
+      <ThumbsDown className="size-4 text-base-content/70" aria-label="Disliked" strokeWidth={1.5} />
     );
   }
   return null;
@@ -53,20 +53,20 @@ function HistoryRow({
         href={href}
         onClick={onOpen}
         aria-current={isCurrent ? "true" : undefined}
-        className="flex min-h-14 items-center justify-between gap-3 px-4 py-2.5 shadow-[inset_2px_0_0_transparent] outline-none hover:bg-base-200 focus-visible:bg-base-200 aria-[current=true]:bg-primary/10 aria-[current=true]:shadow-[inset_2px_0_0_var(--color-primary)] aria-[current=true]:hover:bg-primary/15"
+        className="flex min-h-14 items-center justify-between gap-3 px-4 py-3 shadow-[inset_2px_0_0_transparent] outline-none hover:bg-base-200 focus-visible:bg-base-200 aria-[current=true]:bg-primary/10 aria-[current=true]:shadow-[inset_2px_0_0_var(--color-primary)] aria-[current=true]:hover:bg-primary/15"
       >
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-base-content">
             {story.title}
           </span>
-          <span className="block text-xs text-base-content/60">
+          <span className="block text-xs text-base-content/70">
             {storyMetaLabels(story).join(" · ")}
           </span>
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <VoteIcon vote={story.vote} />
           {story.readAt ? (
-            <CheckCheck className="size-4 text-success" aria-label="Read" strokeWidth={1.5} />
+            <CheckCheck className="size-4 text-success-text" aria-label="Read" strokeWidth={1.5} />
           ) : null}
         </span>
       </Link>
@@ -88,15 +88,15 @@ function HistoryList({
   if (state.status === "loading") {
     return (
       <div className="flex justify-center px-4 py-6">
-        <span className="loading loading-spinner loading-sm text-base-content/50" role="status" />
+        <span className="loading loading-spinner loading-sm text-base-content/70" role="status" />
       </div>
     );
   }
   if (state.status === "error") {
-    return <p className="m-0 px-4 py-4 text-sm text-error">{state.message}</p>;
+    return <p className="m-0 px-4 py-4 text-sm text-error-text">{state.message}</p>;
   }
   if (state.stories.length === 0) {
-    return <p className="m-0 px-4 py-4 text-sm text-base-content/60">No stories yet.</p>;
+    return <p className="m-0 px-4 py-4 text-sm text-base-content/70">No stories yet.</p>;
   }
   return (
     <ul className="m-0 max-h-96 list-none divide-y divide-base-300/60 overflow-y-auto p-0">
@@ -176,7 +176,7 @@ export function StoryHistoryMenu() {
           className="dropdown-content z-50 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-box bg-base-100 shadow-md ring-1 ring-base-content/10"
         >
           <AriaDialog aria-label="Story history" className="outline-none">
-            <p className="m-0 border-b border-base-300/60 px-4 py-2.5 text-sm font-medium">
+            <p className="m-0 border-b border-base-300/60 px-4 py-3 text-sm font-medium">
               Recent stories
             </p>
             {list}

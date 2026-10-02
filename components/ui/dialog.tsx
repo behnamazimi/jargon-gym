@@ -118,7 +118,7 @@ function DialogTitle({ className, ...props }: Omit<React.ComponentProps<typeof H
     <Heading
       slot="title"
       data-slot="dialog-title"
-      className={cn("font-heading text-base font-semibold", className)}
+      className={cn("font-heading text-base font-medium", className)}
       {...props}
     />
   );
@@ -128,7 +128,7 @@ function DialogDescription({ className, ...props }: Omit<React.ComponentProps<"d
   return (
     <div
       data-slot="dialog-description"
-      className={cn("text-sm text-base-content/60", className)}
+      className={cn("text-sm text-base-content/70", className)}
       {...props}
     />
   );

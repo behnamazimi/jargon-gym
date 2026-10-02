@@ -52,14 +52,14 @@ export function TriageActions({ canUndo, onUndo, onNotYet, onKnew }: TriageActio
             }}
             className={SOFT_ACTION_BUTTON_CLASS}
           >
-            I knew this
+            I know this
           </Button>
         </div>
       </div>
 
-      <p className="m-0 hidden text-center text-xs text-base-content/50 md:block coarse:hidden">
+      <p className="m-0 hidden text-center text-xs text-base-content/70 md:block coarse:hidden">
         <kbd className="kbd kbd-xs">Space</kbd> reveal · <kbd className="kbd kbd-xs">←</kbd> not yet
-        · <kbd className="kbd kbd-xs">→</kbd> knew it · <kbd className="kbd kbd-xs">Z</kbd> undo
+        · <kbd className="kbd kbd-xs">→</kbd> know it · <kbd className="kbd kbd-xs">Z</kbd> undo
       </p>
     </div>
   );

@@ -37,7 +37,7 @@ export const STUDY_CHAPTERS = [
       {
         target: "read-modes",
         title: "Cards or Stories",
-        body: "Cards shows one term at a time. Stories weaves terms into a short read.",
+        body: "Cards: one term at a time. Stories: terms in a short read.",
       },
       {
         target: "read-options",
@@ -63,8 +63,8 @@ export const STUDY_CHAPTERS = [
     steps: [
       {
         target: "stories-level",
-        title: "Match your level",
-        body: "Pick the language level for the story.",
+        title: "Sentence difficulty",
+        body: "Pick how hard the sentences are.",
       },
       {
         target: "stories-write",

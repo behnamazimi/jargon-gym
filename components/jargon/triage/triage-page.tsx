@@ -85,11 +85,25 @@ export function TriagePage({
     />
   );
 
+  const knownCount = terms.filter((t) => knownIds.has(t.id) || markedKnown.has(t.id)).length;
+  const setAsideCount = terms.filter(
+    (t) => notYetIds.has(t.id) && !knownIds.has(t.id) && !markedKnown.has(t.id),
+  ).length;
+  const sortedNote = [
+    knownCount > 0 ? `${knownCount} known` : null,
+    setAsideCount > 0 ? `${setAsideCount} set aside` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const topRow = (
     <div className="flex shrink-0 items-center justify-between gap-3">
       {collectionPicker}
       {current ? (
-        <p className="m-0 shrink-0 text-sm tabular-nums text-base-content/60">{deck.length} left</p>
+        <div className="shrink-0 text-end text-sm tabular-nums text-base-content/70">
+          <p className="m-0">{deck.length} left to sort</p>
+          {sortedNote ? <p className="m-0 text-xs">{sortedNote}</p> : null}
+        </div>
       ) : null}
     </div>
   );
@@ -116,10 +130,11 @@ export function TriagePage({
           />
         ) : (
           <ReadCaughtUp
+            title="All terms sorted"
             description={
               notYetIds.size > 0
                 ? `You've sorted every term in ${domain.name}. The ones you set aside as "Not yet" stay in your learning pile.`
-                : `Every term in ${domain.name} is already known or marked known.`
+                : `Every term in ${domain.name} is already mastered or marked known.`
             }
             actions={
               <TriageNextSteps

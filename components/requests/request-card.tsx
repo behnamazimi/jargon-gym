@@ -56,7 +56,7 @@ function ReplyBox({ request }: { request: MyRequest }) {
     <div className="space-y-2">
       <p className="m-0 text-sm">{CARD.question}</p>
       {request.question ? (
-        <p className="m-0 rounded-lg bg-base-200 px-3 py-2 text-sm break-words whitespace-pre-line">
+        <p className="m-0 rounded-field bg-base-200 px-3 py-2 text-sm break-words whitespace-pre-line">
           {request.question}
         </p>
       ) : null}
@@ -185,11 +185,11 @@ export function RequestCard({ request }: { request: MyRequest }) {
 
   return (
     <section
-      className="shadow-surface space-y-3 rounded-2xl bg-base-100 p-4"
+      className="shadow-surface space-y-3 rounded-box bg-base-100 p-4"
       aria-label={request.topic}
     >
       <div className="flex items-start gap-3">
-        <h2 className="m-0 min-w-0 flex-1 text-base font-semibold break-words">{request.topic}</h2>
+        <h2 className="m-0 min-w-0 flex-1 text-base font-medium break-words">{request.topic}</h2>
         {pill ? (
           <Badge variant="outline" className={cn("shrink-0", PILL_CLASS[pill.tone])}>
             {pill.label}

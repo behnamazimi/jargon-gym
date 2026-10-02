@@ -58,14 +58,14 @@ export function DefinitionsForm({
       <div className="space-y-2">
         <p className="m-0">{DEFS.intro(name)}</p>
         <p className="m-0 text-sm font-medium">{DEFS.waiting(count)}</p>
-        <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+        <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
           {words.slice(0, SHOWN_WORDS).map((word) => (
-            <li key={word} className="rounded-lg bg-base-200 px-2 py-1 text-sm">
+            <li key={word} className="rounded-field bg-base-200 px-2 py-1 text-sm">
               {word}
             </li>
           ))}
           {count > SHOWN_WORDS ? (
-            <li className="px-1 py-1 text-sm text-base-content/60">+{count - SHOWN_WORDS}</li>
+            <li className="px-1 py-1 text-sm text-base-content/70">+{count - SHOWN_WORDS}</li>
           ) : null}
         </ul>
       </div>
@@ -80,7 +80,7 @@ export function DefinitionsForm({
         <Button type="button" className="min-h-12 w-full" isDisabled={isSending} onPress={send}>
           {isSending ? FORM.sending : FORM.submit}
         </Button>
-        <p className="m-0 text-center text-sm text-base-content/60">{FORM.eta(estimateDays)}</p>
+        <p className="m-0 text-center text-sm text-base-content/70">{FORM.eta(estimateDays)}</p>
       </div>
     </div>
   );

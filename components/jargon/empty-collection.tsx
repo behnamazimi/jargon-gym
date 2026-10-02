@@ -12,7 +12,7 @@ export function EmptyCollection() {
         titleAs="h1"
         title={
           <>
-            <span className="text-primary">Your collection</span> is empty
+            <span className="text-primary-text">Your collection</span> is empty
           </>
         }
         description="Add a collection others have shared in one tap, or start your own."

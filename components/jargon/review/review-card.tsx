@@ -64,7 +64,7 @@ export function ReviewCard({
     <div
       ref={cardRef}
       data-tour="review-card"
-      className="relative min-h-0 flex-1 rounded-2xl [perspective:1200px]"
+      className="relative min-h-0 flex-1 rounded-box [perspective:1200px]"
       onTouchStart={swipe.onTouchStart}
       onTouchEnd={swipe.onTouchEnd}
     >
@@ -93,7 +93,7 @@ export function ReviewCard({
             revealed && "[transform:rotateY(180deg)]",
           )}
         >
-          <div className="shadow-surface absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden]">
+          <div className="shadow-surface absolute inset-0 flex flex-col overflow-hidden rounded-box bg-base-100 [backface-visibility:hidden]">
             {showRevealHint ? (
               <div
                 className="flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm sm:px-6"
@@ -104,14 +104,14 @@ export function ReviewCard({
               </div>
             ) : null}
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden px-5 text-center sm:px-6">
-              <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
+              <h2 className="font-heading m-0 max-w-full text-[1.75rem] font-medium text-balance text-base-content sm:text-3xl sm:leading-tight">
                 {term.term}
               </h2>
-              <p className="m-0 text-xs tracking-wide text-base-content/50">
+              <p className="m-0 text-xs text-base-content/70">
                 <span>{term.domainName}</span>
                 {term.category ? (
                   <>
-                    <span className="mx-1.5 text-base-content/35" aria-hidden>
+                    <span className="mx-1.5 text-base-content/50" aria-hidden>
                       ·
                     </span>
                     <span>{term.category}</span>
@@ -122,7 +122,7 @@ export function ReviewCard({
             {showRevealHint ? (
               <div
                 className={cn(
-                  "flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm text-base-content/60 sm:px-6",
+                  "flex shrink-0 items-center justify-center gap-2 px-5 pb-6 text-sm text-base-content/70 sm:px-6",
                   revealed && "pointer-events-none opacity-0",
                 )}
                 aria-hidden={revealed}
@@ -133,7 +133,7 @@ export function ReviewCard({
             ) : null}
           </div>
 
-          <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-2xl bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-box bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
             <TermCardHeader
               term={term}
               narrationAccess={narrationAccess}
@@ -145,10 +145,10 @@ export function ReviewCard({
               }
             />
             <div
-              className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-4 sm:px-6"
+              className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-8 [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
-              <TermBody key={term.id} term={term} language={term.domainLanguage} />
+              <TermBody key={term.id} term={term} language={term.domainLanguage} collapseExtras />
               {term.isNewToUser ? (
                 <FirstExposureKnownPrompt
                   termId={term.id}

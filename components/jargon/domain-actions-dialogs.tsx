@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Domain } from "@/lib/jargon/types";
+import { pluralize } from "@/lib/utils";
 
 function subscriberCountMessage(count: number) {
   if (count === 0) {
@@ -169,9 +170,7 @@ export function DomainActionsDialogs({
         <AlertDialogHeader>
           <AlertDialogTitle>Reset progress?</AlertDialogTitle>
           <AlertDialogDescription>
-            Reset all progress for &ldquo;{domain.name}&rdquo;? This will mark all{" "}
-            {domain.knownCount} {domain.knownCount === 1 ? "term" : "terms"} as unknown. This
-            can&apos;t be undone.
+            {`Erase your learning progress for all ${pluralize(domain.termCount, "term")} in “${domain.name}”? Mastered and marked-known terms start over, and Triage choices are cleared. This can't be undone.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

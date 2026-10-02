@@ -176,13 +176,13 @@ export function RequestForm({
         </Alert>
       ) : null}
       {owned ? (
-        <p className="m-0 text-sm text-base-content/60" role="status">
+        <p className="m-0 text-sm text-base-content/70" role="status">
           {FORM.existingName(owned)}
         </p>
       ) : null}
 
       {browse.search.status === "done" && browse.search.domains.length > 0 ? (
-        <p className="m-0 text-xs font-semibold tracking-wider text-base-content/60 uppercase">
+        <p className="m-0 text-xs font-semibold tracking-wider text-base-content/70 uppercase">
           {FORM.closeMatches}
         </p>
       ) : null}
@@ -213,7 +213,7 @@ export function RequestForm({
       </Field>
 
       <Collapsible isExpanded={detailsOpen} onExpandedChange={setDetailsOpen}>
-        <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between text-left text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between text-left text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-primary">
           {FORM.detailsToggle}
           <ChevronDown
             className={`size-4 transition-transform ${detailsOpen ? "rotate-180" : ""}`}
@@ -249,13 +249,13 @@ export function RequestForm({
                 className="min-h-24 text-base"
                 onChange={(event) => setKnown(event.target.value)}
               />
-              <p className="m-0 text-sm text-base-content/60">{FORM.knownHelp}</p>
+              <p className="m-0 text-sm text-base-content/70">{FORM.knownHelp}</p>
             </Field>
           </div>
         </CollapsibleContent>
       </Collapsible>
 
-      <p className="text-sm text-base-content/60">{FORM.privacy}</p>
+      <p className="text-sm text-base-content/70">{FORM.privacy}</p>
 
       {error ? (
         <Alert variant="destructive">
@@ -267,7 +267,7 @@ export function RequestForm({
         <Button type="submit" className="min-h-12 w-full" isDisabled={!canSend}>
           {isSending ? FORM.sending : FORM.submit}
         </Button>
-        <p className="m-0 text-center text-sm text-base-content/60">{FORM.eta(estimateDays)}</p>
+        <p className="m-0 text-center text-sm text-base-content/70">{FORM.eta(estimateDays)}</p>
       </div>
     </form>
   );

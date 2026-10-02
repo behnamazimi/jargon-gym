@@ -23,7 +23,7 @@ function SiteHeaderChrome({
 }) {
   return (
     <header className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm">
-      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
+      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-4")}>
         <div className="flex items-center gap-4">
           <Link
             href={homeHref}
@@ -31,7 +31,7 @@ function SiteHeaderChrome({
             aria-label="Jargon Gym"
           >
             <BrandIcon className="lg:hidden" />
-            <span className="hidden whitespace-nowrap text-primary lg:inline">Jargon Gym</span>
+            <span className="hidden whitespace-nowrap text-primary-text lg:inline">Jargon Gym</span>
           </Link>
           {leftNav ? <nav className="flex items-center gap-1">{leftNav}</nav> : null}
         </div>
@@ -101,7 +101,7 @@ export function SiteHeader({
           {user ? (
             <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
           ) : null}
-          <InstallButton />
+          {user ? null : <InstallButton />}
           <ThemeToggle initialIsDark={initialIsDark} />
           {user ? (
             <ProfileMenu

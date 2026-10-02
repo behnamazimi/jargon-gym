@@ -119,14 +119,6 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     flushPendingWrites(savedSession.pendingWrites);
   }
 
-  function handleDiscardSession() {
-    // Discarding the session UI must not discard answers the user already
-    // submitted — give any unconfirmed write one more shot before clearing.
-    if (savedSession) flushPendingWrites(savedSession.pendingWrites);
-    clearQuizSession();
-    setSavedSession(null);
-  }
-
   function resetQuizState() {
     setPractice(false);
     resetSession();
@@ -231,7 +223,6 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     termById,
     correctSoFar,
     handleResumeSession,
-    handleDiscardSession,
     resetQuizState,
     handleStartQuiz,
     handleQuestionAnswer,

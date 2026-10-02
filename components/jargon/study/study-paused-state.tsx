@@ -64,7 +64,7 @@ export function StudyNoActiveCollectionsState({
         }
         description={`Resume one to start ${activity} again.`}
       >
-        <ul className="m-0 w-full list-none divide-y divide-base-300/60 rounded-xl p-0 ring-1 ring-base-content/10">
+        <ul className="m-0 w-full list-none divide-y divide-base-300/60 rounded-field p-0 ring-1 ring-base-content/10">
           {paused.slice(0, MAX_LISTED).map((collection) => (
             <li key={collection.id} className="flex items-center justify-between gap-3 px-3 py-2">
               <span className="min-w-0 truncate text-start text-sm font-medium">
@@ -84,7 +84,7 @@ export function StudyNoActiveCollectionsState({
           ))}
         </ul>
         {hidden > 0 ? (
-          <p className="m-0 text-xs text-base-content/60">{hidden} more paused in your library.</p>
+          <p className="m-0 text-xs text-base-content/70">{hidden} more paused in your library.</p>
         ) : null}
         <LinkButton href="/jargon" variant="ghost" className="min-h-11">
           Go to library

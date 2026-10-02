@@ -65,26 +65,26 @@ export function StreakModal({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <Flame className="size-6 shrink-0 text-streak" strokeWidth={2} aria-hidden />
-            <p className="m-0 text-lg leading-none font-bold tracking-tight">
+            <p className="m-0 text-lg leading-none font-semibold">
               <span className="tabular-nums">{currentStreak}</span> day streak
             </p>
           </div>
-          <p className="m-0 ml-8 text-xs leading-none text-base-content/50">
+          <p className="m-0 ml-8 text-xs leading-none text-base-content/70">
             Longest {longestStreak}
           </p>
         </div>
       </DialogHeader>
 
-      <div className="flex gap-1.5">
+      <div className="flex gap-2">
         {showSkeleton
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-1 flex-col items-center gap-1 rounded-lg bg-base-200/50 py-2"
+                className="flex flex-1 flex-col items-center gap-1 rounded-field bg-base-200/60 py-2"
                 aria-hidden
               >
-                <span className="h-4 w-6 animate-pulse rounded bg-base-300/70" />
-                <span className="size-4 animate-pulse rounded-full bg-base-300/70" />
+                <span className="h-4 w-6 animate-pulse rounded bg-base-300/60" />
+                <span className="size-4 animate-pulse rounded-full bg-base-300/60" />
               </div>
             ))
           : days.map((day) => (
@@ -94,11 +94,11 @@ export function StreakModal({
                 onClick={() => setSelectedDate(day.date)}
                 aria-pressed={day.date === selectedDate}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-xs font-medium transition-colors",
+                  "flex flex-1 flex-col items-center gap-1 rounded-field py-2 text-xs font-medium transition-colors",
                   day.date === selectedDate && "ring-2 ring-primary",
                   day.isActive
                     ? "bg-streak/10 text-base-content"
-                    : "bg-base-200/50 text-base-content/40",
+                    : "bg-base-200/60 text-base-content/40",
                 )}
               >
                 <span>{weekdayLabel(day.date)}</span>
@@ -111,28 +111,26 @@ export function StreakModal({
             ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 rounded-lg bg-base-200/50 p-3 text-center">
+      <div className="grid grid-cols-3 gap-2 rounded-field bg-base-200/60 p-3 text-center">
         <div>
-          <p className="text-xl font-bold tracking-tight tabular-nums">
-            {selected?.readCount ?? 0}
-          </p>
-          <p className="text-xs text-base-content/50">Read</p>
+          <p className="text-xl font-semibold tabular-nums">{selected?.readCount ?? 0}</p>
+          <p className="text-xs text-base-content/70">Terms read</p>
         </div>
         <div>
-          <p className="text-xl font-bold tracking-tight tabular-nums">
-            {selected?.reviewedCount ?? 0}
-          </p>
-          <p className="text-xs text-base-content/50">Reviewed</p>
+          <p className="text-xl font-semibold tabular-nums">{selected?.reviewedCount ?? 0}</p>
+          <p className="text-xs text-base-content/70">Reviewed</p>
         </div>
         <div>
-          <p className="text-xl font-bold tracking-tight tabular-nums">
-            {selected?.quizzedCount ?? 0}
-          </p>
-          <p className="text-xs text-base-content/50">Quizzed</p>
+          <p className="text-xl font-semibold tabular-nums">{selected?.quizzedCount ?? 0}</p>
+          <p className="text-xs text-base-content/70">Quizzed</p>
         </div>
       </div>
 
-      {error ? <p className="text-sm text-error">{error}</p> : null}
+      <p className="m-0 text-xs text-base-content/70">
+        A day counts when you read, review or quiz at least one term.
+      </p>
+
+      {error ? <p className="text-sm text-error-text">{error}</p> : null}
     </Dialog>
   );
 }

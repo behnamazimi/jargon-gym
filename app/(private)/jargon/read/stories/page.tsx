@@ -17,7 +17,7 @@ export default async function JargonReadStoriesPage({ searchParams }: PageProps)
   const storyId = z.uuid().safeParse(story).success ? story : undefined;
   const setup = await getStoriesSetupData(domain, storyId);
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
 
   // A story already in progress still opens; only a user with nothing to

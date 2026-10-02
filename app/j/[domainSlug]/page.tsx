@@ -50,19 +50,19 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
       <div>
         <Link
           href="/j"
-          className="inline-flex items-center gap-1 text-sm text-base-content/55 no-underline hover:text-base-content hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-base-content/70 no-underline hover:text-base-content hover:underline"
         >
           <ArrowLeft className="size-3.5" aria-hidden strokeWidth={1.5} />
           All public collections
         </Link>
-        <h1 className="mt-2 text-3xl font-semibold text-base-content">{domain.name}</h1>
+        <h1 className="mt-2 text-3xl font-medium text-base-content">{domain.name}</h1>
         {domain.description ? (
-          <p className="mt-1 text-base text-base-content/65">{domain.description}</p>
+          <p className="mt-1 text-base text-base-content/70">{domain.description}</p>
         ) : null}
       </div>
 
       {terms.length === 0 ? (
-        <p className="text-base text-base-content/55">No public terms yet.</p>
+        <p className="text-base text-base-content/70">No public terms yet.</p>
       ) : (
         <Suspense fallback={<PublicTermsListSkeleton />}>
           <DomainTermsList domainSlug={domain.slug} terms={terms} />
@@ -75,9 +75,9 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
 function PublicTermsListSkeleton() {
   return (
     <div className="flex flex-col gap-3" aria-busy="true" aria-label="Loading terms">
-      <div className="skeleton h-20 w-full rounded-lg bg-base-200" />
-      <div className="skeleton h-20 w-full rounded-lg bg-base-200" />
-      <div className="skeleton h-20 w-full rounded-lg bg-base-200" />
+      <div className="skeleton h-20 w-full rounded-field bg-base-200" />
+      <div className="skeleton h-20 w-full rounded-field bg-base-200" />
+      <div className="skeleton h-20 w-full rounded-field bg-base-200" />
     </div>
   );
 }

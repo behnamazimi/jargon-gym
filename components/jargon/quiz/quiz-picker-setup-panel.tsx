@@ -1,4 +1,4 @@
-import { QuizPanelLabel, QuizStat } from "@/components/jargon/quiz/quiz-ui";
+import { QuizPanelLabel } from "@/components/jargon/quiz/quiz-ui";
 import {
   StudyCollectionField,
   StudyCountField,
@@ -26,7 +26,6 @@ export type QuizPickerStepProps = {
   aiFellBack: boolean;
   savedSession: QuizSessionState | null;
   onResumeSession: () => void;
-  onDiscardSession: () => void;
   questionStyle: QuizQuestionStyle;
   onQuestionStyleChange: (style: QuizQuestionStyle) => void;
   aiRequiresSetup: boolean;
@@ -37,7 +36,6 @@ export type QuizPickerStepProps = {
   questionCount: number;
   questionCountInput: string;
   questionCountError: string | null;
-  maxQuestionCount: number;
   questionCountPresets: number[];
   onApplyQuestionCount: (value: number) => void;
   onQuestionCountInputChange: (value: string) => void;
@@ -47,23 +45,21 @@ export type QuizPickerStepProps = {
 function QuizPickerResumeBanner({
   savedSession,
   onResumeSession,
-  onDiscardSession,
 }: {
   savedSession: QuizSessionState;
   onResumeSession: () => void;
-  onDiscardSession: () => void;
 }) {
   return (
     <StudyResumeBanner
       message={
         <>
-          You have a quiz in progress — question{" "}
+          Quiz in progress: question{" "}
           <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
-          <span className="tabular-nums">{savedSession.questions.length}</span>.
+          <span className="tabular-nums">{savedSession.questions.length}</span>. Starting a new quiz
+          replaces it.
         </>
       }
       onResume={onResumeSession}
-      onDiscard={onDiscardSession}
     />
   );
 }
@@ -75,7 +71,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
     aiFellBack,
     savedSession,
     onResumeSession,
-    onDiscardSession,
     questionStyle,
     onQuestionStyleChange,
     aiRequiresSetup,
@@ -86,7 +81,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
     questionCount,
     questionCountInput,
     questionCountError,
-    maxQuestionCount,
     questionCountPresets,
     onApplyQuestionCount,
     onQuestionCountInputChange,
@@ -111,16 +105,9 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
       }
       footerHint={<QuizPickerFooterHint questionStyle={questionStyle} ai={ai} cost={use.cost} />}
     >
-      <QuizPanelLabel
-        title="Set up your quiz"
-        description="Pick which collection to pull from — Quiz surfaces the terms most at risk of slipping first."
-      />
+      <QuizPanelLabel title="Set up your quiz" />
       {savedSession ? (
-        <QuizPickerResumeBanner
-          savedSession={savedSession}
-          onResumeSession={onResumeSession}
-          onDiscardSession={onDiscardSession}
-        />
+        <QuizPickerResumeBanner savedSession={savedSession} onResumeSession={onResumeSession} />
       ) : null}
 
       <QuizQuestionStyleField value={questionStyle} onChange={onQuestionStyleChange} />
@@ -145,12 +132,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         onChange={onSelectedCollectionIdChange}
       />
 
-      <QuizStat
-        value={
-          availableTermCount === 1 ? "1 term available" : `${availableTermCount} terms available`
-        }
-      />
-
       <StudyCountField
         id="quiz-question-count"
         label="How many questions"
@@ -158,7 +139,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         selectedValue={questionCount}
         inputValue={questionCountInput}
         error={questionCountError}
-        max={maxQuestionCount}
         availableCount={availableTermCount}
         perUnitLabel="quiz"
         onPresetSelect={onApplyQuestionCount}

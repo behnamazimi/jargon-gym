@@ -26,7 +26,7 @@ export function FixedDestinationNote({ flow }: { flow: ImportFlowState }) {
 export function UnfinishedNote({ flow }: { flow: ImportFlowState }) {
   if (!flow.adapter?.requireAllDefinitions || flow.summary.toFinish === 0) return null;
   return (
-    <p className="m-0 text-sm text-warning" role="status">
+    <p className="m-0 text-sm text-warning-text" role="status">
       {flow.adapter.unfinishedNote}
     </p>
   );

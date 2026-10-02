@@ -17,16 +17,17 @@ import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { DARK_THEME } from "@/lib/theme";
 import { getTheme } from "@/lib/theme-server";
 import { cn } from "@/lib/utils";
-import { Geist, Inter, JetBrains_Mono } from "next/font/google";
+import { Figtree, Fraunces, JetBrains_Mono } from "next/font/google";
 
-const geist = Geist({
+const figtree = Figtree({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-figtree",
 });
 
-const inter = Inter({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-fraunces",
+  axes: ["opsz", "SOFT"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -67,8 +68,8 @@ export default async function RootLayout({
       className={cn(
         "h-full",
         "antialiased",
-        geist.variable,
-        inter.variable,
+        figtree.variable,
+        fraunces.variable,
         jetbrainsMono.variable,
         "font-sans",
       )}

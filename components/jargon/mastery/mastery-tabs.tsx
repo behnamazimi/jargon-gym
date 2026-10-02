@@ -30,7 +30,7 @@ export function MasteryTabs({
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(option.value)}
-            className={cn("tab grow gap-1.5", selected && "tab-active")}
+            className={cn("tab grow gap-2", selected && "tab-active")}
           >
             <Icon className="size-3.5" aria-hidden strokeWidth={1.5} />
             {option.label}

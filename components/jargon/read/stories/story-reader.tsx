@@ -51,7 +51,7 @@ function StoryHeader({
   return (
     <header className="shrink-0 space-y-1 border-b border-base-300/60 px-5 py-3 sm:px-6">
       <div className="flex items-start justify-between gap-2">
-        <h2 className="font-heading m-0 min-w-0 text-xl font-semibold tracking-tight text-balance text-base-content sm:text-2xl sm:leading-tight">
+        <h2 className="font-heading m-0 min-w-0 text-xl font-medium text-balance text-base-content sm:text-2xl sm:leading-tight">
           {story.title}
         </h2>
         {story.readAt ? null : (
@@ -61,17 +61,17 @@ function StoryHeader({
             size="icon-sm"
             aria-label="Dismiss story"
             onPress={onDismiss}
-            className="-me-2 -mt-1 size-11 shrink-0 text-base-content/60 md:size-9"
+            className="-me-2 -mt-1 size-11 shrink-0 text-base-content/70 md:size-9"
           >
             <X className="size-4" aria-hidden strokeWidth={1.5} />
           </Button>
         )}
       </div>
-      <p className="m-0 text-xs tracking-wide text-base-content/50">
+      <p className="m-0 text-xs text-base-content/70">
         {meta.map((item, index) => (
           <span key={item}>
             {index > 0 ? (
-              <span className="mx-1.5 text-base-content/35" aria-hidden>
+              <span className="mx-1.5 text-base-content/50" aria-hidden>
                 ·
               </span>
             ) : null}
@@ -80,7 +80,7 @@ function StoryHeader({
         ))}
       </p>
       {story.outline ? (
-        <p className="m-0 line-clamp-2 text-xs text-base-content/50">Outline: {story.outline}</p>
+        <p className="m-0 line-clamp-2 text-xs text-base-content/70">Outline: {story.outline}</p>
       ) : null}
       {narrationAccess ? (
         <div className="pt-1">
@@ -101,12 +101,12 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
 
   return (
     <Collapsible className="group border-t border-base-300/60 pt-2">
-      <CollapsibleTrigger className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] cursor-pointer items-center justify-between gap-3 rounded-lg border-none bg-transparent px-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <span className="text-xs font-semibold tracking-wide text-base-content/50 uppercase">
+      <CollapsibleTrigger className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] cursor-pointer items-center justify-between gap-3 rounded-field border-none bg-transparent px-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span className="text-xs font-semibold tracking-wider text-base-content/70 uppercase">
           Terms in this piece ({occurrences.length})
         </span>
         <ChevronDown
-          className="size-4 shrink-0 text-base-content/50 transition-transform duration-200 group-data-[expanded]:rotate-180"
+          className="size-4 shrink-0 text-base-content/70 transition-transform duration-200 group-data-[expanded]:rotate-180"
           aria-hidden
           strokeWidth={1.5}
         />
@@ -117,31 +117,29 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
             const term = termById.get(termId);
             if (!term) {
               return (
-                <li key={termId} className="py-3 text-sm text-base-content/50">
-                  <span className="font-semibold">{surface}</span> · No longer available
+                <li key={termId} className="py-3 text-sm text-base-content/70">
+                  <span className="font-medium">{surface}</span> · No longer available
                 </li>
               );
             }
             return (
-              <li key={termId} className="py-2.5">
+              <li key={termId} className="py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="m-0 min-w-0 text-sm font-semibold text-base-content">{term.term}</p>
-                  <div className="-me-1.5 flex shrink-0 items-center gap-0.5">
+                  <p className="m-0 min-w-0 text-sm font-medium text-base-content">{term.term}</p>
+                  <div className="-me-1.5 flex shrink-0 items-center gap-1">
                     {newTermIds.has(termId) ? (
                       <StoryMarkKnown termId={termId} term={term.term} />
                     ) : null}
                     <Link
                       href={termHref(termId, story)}
                       aria-label={`Open ${term.term}`}
-                      className="btn btn-ghost btn-square btn-xs size-11 text-base-content/50 md:size-8"
+                      className="btn btn-ghost btn-square btn-xs size-11 text-base-content/70 md:size-8"
                     >
                       <ArrowUpRight className="size-4" aria-hidden strokeWidth={1.5} />
                     </Link>
                   </div>
                 </div>
-                <p className="m-0 text-sm leading-relaxed text-base-content/65">
-                  {term.definition}
-                </p>
+                <p className="m-0 text-sm text-base-content/70">{term.definition}</p>
               </li>
             );
           })}

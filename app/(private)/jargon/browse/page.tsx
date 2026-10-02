@@ -11,7 +11,7 @@ export default async function BrowseSharedDomainsPage() {
   ]);
 
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
 
   return <SharedDomainsBrowse initialPage={setup.initialPage} requestEntry={requestEntry} />;

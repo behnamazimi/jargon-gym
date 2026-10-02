@@ -10,29 +10,29 @@
   default: true;
   prefersdark: false;
   color-scheme: light;
-  --color-base-100: oklch(100% 0 0);
-  --color-base-200: oklch(93% 0 0);
-  --color-base-300: oklch(86% 0 0);
-  --color-base-content: oklch(35.519% 0.032 262.988);
+  --color-base-100: oklch(99% 0.005 85);
+  --color-base-200: oklch(96.5% 0.011 85);
+  --color-base-300: oklch(91% 0.016 82);
+  --color-base-content: oklch(31% 0.022 60);
   --color-primary: oklch(76.662% 0.135 153.45);
-  --color-primary-content: oklch(33.387% 0.04 162.24);
-  --color-secondary: oklch(61.302% 0.202 261.294);
-  --color-secondary-content: oklch(100% 0 0);
-  --color-accent: oklch(72.772% 0.149 33.2);
-  --color-accent-content: oklch(0% 0 0);
-  --color-neutral: oklch(35.519% 0.032 262.988);
-  --color-neutral-content: oklch(98.462% 0.001 247.838);
-  --color-info: oklch(72.06% 0.191 231.6);
-  --color-info-content: oklch(0% 0 0);
-  --color-success: oklch(64.8% 0.15 160);
-  --color-success-content: oklch(0% 0 0);
-  --color-warning: oklch(84.71% 0.199 83.87);
-  --color-warning-content: oklch(0% 0 0);
-  --color-error: oklch(71.76% 0.221 22.18);
-  --color-error-content: oklch(0% 0 0);
+  --color-primary-content: oklch(30% 0.05 160);
+  --color-secondary: oklch(56% 0.1 255);
+  --color-secondary-content: oklch(99% 0 0);
+  --color-accent: oklch(72% 0.14 50);
+  --color-accent-content: oklch(22% 0.04 50);
+  --color-neutral: oklch(31% 0.022 60);
+  --color-neutral-content: oklch(98% 0.006 85);
+  --color-info: oklch(72% 0.09 235);
+  --color-info-content: oklch(22% 0.03 235);
+  --color-success: oklch(70% 0.12 155);
+  --color-success-content: oklch(22% 0.04 155);
+  --color-warning: oklch(82% 0.12 85);
+  --color-warning-content: oklch(25% 0.05 85);
+  --color-error: oklch(68% 0.15 25);
+  --color-error-content: oklch(22% 0.05 25);
   --radius-selector: 0.5rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.5rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -45,29 +45,29 @@
   default: false;
   prefersdark: false;
   color-scheme: dark;
-  --color-base-100: oklch(30.857% 0.023 264.149);
-  --color-base-200: oklch(28.036% 0.019 264.182);
-  --color-base-300: oklch(26.346% 0.018 262.177);
-  --color-base-content: oklch(82.901% 0.031 222.959);
-  --color-primary: oklch(86.133% 0.141 139.549);
-  --color-primary-content: oklch(17.226% 0.028 139.549);
-  --color-secondary: oklch(73.375% 0.165 35.353);
-  --color-secondary-content: oklch(14.675% 0.033 35.353);
-  --color-accent: oklch(74.229% 0.133 311.379);
-  --color-accent-content: oklch(14.845% 0.026 311.379);
-  --color-neutral: oklch(24.731% 0.02 264.094);
-  --color-neutral-content: oklch(82.901% 0.031 222.959);
-  --color-info: oklch(86.078% 0.142 206.182);
-  --color-info-content: oklch(17.215% 0.028 206.182);
-  --color-success: oklch(86.171% 0.142 166.534);
-  --color-success-content: oklch(17.234% 0.028 166.534);
-  --color-warning: oklch(86.163% 0.142 94.818);
-  --color-warning-content: oklch(17.232% 0.028 94.818);
-  --color-error: oklch(82.418% 0.099 33.756);
-  --color-error-content: oklch(16.483% 0.019 33.756);
+  --color-base-100: oklch(27% 0.014 65);
+  --color-base-200: oklch(23.5% 0.013 65);
+  --color-base-300: oklch(33% 0.015 65);
+  --color-base-content: oklch(90% 0.014 85);
+  --color-primary: oklch(80% 0.13 153);
+  --color-primary-content: oklch(18% 0.03 153);
+  --color-secondary: oklch(74% 0.09 255);
+  --color-secondary-content: oklch(18% 0.03 255);
+  --color-accent: oklch(78% 0.12 50);
+  --color-accent-content: oklch(20% 0.04 50);
+  --color-neutral: oklch(22% 0.012 65);
+  --color-neutral-content: oklch(90% 0.014 85);
+  --color-info: oklch(80% 0.08 235);
+  --color-info-content: oklch(20% 0.03 235);
+  --color-success: oklch(80% 0.11 155);
+  --color-success-content: oklch(20% 0.04 155);
+  --color-warning: oklch(86% 0.12 88);
+  --color-warning-content: oklch(22% 0.05 88);
+  --color-error: oklch(78% 0.13 25);
+  --color-error-content: oklch(20% 0.05 25);
   --radius-selector: 0.5rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.5rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -75,15 +75,23 @@
   --noise: 0;
 }
 
+@theme {
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.55;
+  --text-base--line-height: 1.6;
+}
+
 @theme inline {
-  --font-sans: var(--font-geist);
-  --font-heading: var(--font-inter);
+  --font-sans: var(--font-figtree);
+  --font-heading: var(--font-fraunces);
   --font-mono: var(--font-jetbrains-mono);
-  /* Vivid flame orange for the streak feature — deliberately outside the
-     daisyUI semantic palette (primary/accent/etc. shift per theme, and
-     accent goes purple under "dim") so the streak flame reads the same
-     warm orange in both themes. */
-  --color-streak: #f97316;
+  /* The streak flame is the warm accent in both themes. */
+  --color-streak: var(--color-accent);
+  --color-primary-text: var(--primary-text);
+  --color-error-text: var(--error-text);
+  --color-success-text: var(--success-text);
+  --color-warning-text: var(--warning-text);
+  --color-info-text: var(--info-text);
 }
 
 /* Must match PLATFORM_MEDIA in lib/platform.ts */
@@ -98,6 +106,22 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Grows the tappable area past the visible box without changing layout. */
+@utility hit-area {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -0.375rem;
+  }
+}
+
+/* Long-form reading text sits a touch heavier than UI text. */
+@utility reading-text {
+  font-weight: 450;
+}
+
 @utility pb-dock {
   padding-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom));
 }
@@ -108,11 +132,25 @@
   }
 
   :root {
-    --font-heading: var(--font-inter);
-    --font-body: var(--font-geist);
+    --font-heading: var(--font-fraunces);
+    --font-body: var(--font-figtree);
     --font-mono: var(--font-jetbrains-mono);
     --dock-height: 4.5rem;
     --dock-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
+    /* Text-safe variants: the fill colours are too light to read as text on white. */
+    --primary-text: oklch(45% 0.12 153);
+    --error-text: oklch(50% 0.16 25);
+    --success-text: oklch(42% 0.1 155);
+    --warning-text: oklch(45% 0.1 75);
+    --info-text: oklch(44% 0.09 235);
+  }
+
+  [data-theme="dim"] {
+    --primary-text: var(--color-primary);
+    --error-text: var(--color-error);
+    --success-text: var(--color-success);
+    --warning-text: var(--color-warning);
+    --info-text: var(--color-info);
   }
 
   /* Tour targets scroll clear of the phone dock instead of landing behind it. */
@@ -126,40 +164,40 @@
     font-family: var(--font-heading);
     font-size: 2.25rem;
     line-height: 1.2;
-    letter-spacing: -0.025em;
-    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-weight: 600;
   }
 
   h2 {
     font-family: var(--font-heading);
     font-size: 1.875rem;
     line-height: 1.25;
-    letter-spacing: -0.02em;
-    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-weight: 500;
   }
 
   h3 {
     font-family: var(--font-heading);
     font-size: 1.5rem;
     line-height: 1.3;
-    letter-spacing: -0.015em;
-    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-weight: 500;
   }
 
   h4 {
     font-family: var(--font-heading);
     font-size: 1.25rem;
     line-height: 1.4;
-    letter-spacing: -0.01em;
-    font-weight: 600;
+    letter-spacing: 0;
+    font-weight: 500;
   }
 
   h5 {
     font-family: var(--font-heading);
     font-size: 1.125rem;
     line-height: 1.5;
-    letter-spacing: -0.01em;
-    font-weight: 600;
+    letter-spacing: 0;
+    font-weight: 500;
   }
 
   h6 {
@@ -167,7 +205,7 @@
     font-size: 1rem;
     line-height: 1.5;
     letter-spacing: 0;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   body {
@@ -181,26 +219,36 @@
   }
 }
 
+/* Outline buttons get a soft tinted edge instead of a full-strength ink line.
+   Unlayered so it wins over daisyUI's own layer. */
+.btn-outline {
+  --btn-border: color-mix(in oklab, var(--btn-color, var(--color-base-content)) 35%, transparent);
+}
+
 @layer utilities {
+  :where(.btn) {
+    font-weight: 500;
+  }
+
   .shadow-surface {
     box-shadow:
-      0 0 0 1px oklch(0 0 0 / 0.06),
-      0 1px 2px -1px oklch(0 0 0 / 0.06),
-      0 2px 4px 0 oklch(0 0 0 / 0.04);
+      0 0 0 1px oklch(35% 0.04 60 / 0.07),
+      0 1px 2px oklch(35% 0.04 60 / 0.06),
+      0 6px 16px -8px oklch(35% 0.04 60 / 0.1);
   }
 
   .shadow-surface-hover {
     box-shadow:
-      0 0 0 1px oklch(0 0 0 / 0.08),
-      0 1px 2px -1px oklch(0 0 0 / 0.08),
-      0 2px 4px 0 oklch(0 0 0 / 0.06);
+      0 0 0 1px oklch(35% 0.04 60 / 0.1),
+      0 1px 2px oklch(35% 0.04 60 / 0.08),
+      0 8px 20px -8px oklch(35% 0.04 60 / 0.14);
   }
 
   .shadow-surface-raised {
     box-shadow:
-      0 0 0 1px oklch(0 0 0 / 0.08),
-      0 2px 4px -1px oklch(0 0 0 / 0.08),
-      0 4px 8px 0 oklch(0 0 0 / 0.06);
+      0 0 0 1px oklch(35% 0.04 60 / 0.1),
+      0 2px 4px oklch(35% 0.04 60 / 0.08),
+      0 12px 28px -10px oklch(35% 0.04 60 / 0.18);
   }
 
   [data-theme="dim"] .shadow-surface {

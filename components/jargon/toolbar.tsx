@@ -32,14 +32,14 @@ export function Toolbar({
       <Separator />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <Field orientation="horizontal" className="w-auto items-center gap-1.5">
+          <Field orientation="horizontal" className="w-auto items-center gap-2">
             <Checkbox
               id="hide-known"
               isSelected={hideKnown}
               onChange={onHideKnownChange}
               className="checkbox-xs"
             />
-            <FieldLabel htmlFor="hide-known" className="text-xs font-normal text-base-content/60">
+            <FieldLabel htmlFor="hide-known" className="text-xs font-normal text-base-content/70">
               Hide terms I know
             </FieldLabel>
           </Field>
@@ -48,7 +48,7 @@ export function Toolbar({
             onChange={(value) => onSortChange(value as SortMode)}
             aria-label="Sort terms"
           >
-            <SelectTrigger size="sm" className="rounded-lg text-xs">
+            <SelectTrigger size="sm" className="rounded-field text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -59,9 +59,9 @@ export function Toolbar({
             </SelectContent>
           </Select>
         </div>
-        <span className="text-sm tabular-nums text-base-content/60">{visibleCount} shown</span>
+        <span className="text-sm tabular-nums text-base-content/70">{visibleCount} shown</span>
       </div>
-      <p className="text-xs text-base-content/60">
+      <p className="text-xs text-base-content/70">
         <span className="md:hidden coarse:inline">
           Tap a term to expand · swipe it left to mark it known
         </span>

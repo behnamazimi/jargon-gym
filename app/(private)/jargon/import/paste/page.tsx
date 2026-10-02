@@ -12,7 +12,7 @@ export default async function PasteListPage({ searchParams }: PageProps) {
   const setup = await getImportSetupData();
 
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
 
   const preset = setup.collections.some((collection) => collection.id === to) ? to : undefined;

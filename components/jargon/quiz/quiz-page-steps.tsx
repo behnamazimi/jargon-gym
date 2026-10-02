@@ -52,7 +52,7 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         unitLabel={quiz.practice ? "Practice" : "Question"}
       />
       {quiz.practice ? (
-        <p className="m-0 shrink-0 text-xs text-base-content/60">
+        <p className="m-0 shrink-0 text-xs text-base-content/70">
           Practice round — answers aren&apos;t counted toward mastery.
         </p>
       ) : null}
@@ -65,8 +65,6 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         key={`${question.termId}-${quiz.currentIndex}`}
         question={question}
         termLabel={quiz.termById.get(question.termId)?.term ?? "Term"}
-        current={quiz.currentIndex + 1}
-        total={quiz.questions.length}
         correct={quiz.correctSoFar}
         isLast={quiz.currentIndex + 1 === quiz.questions.length}
         onAnswer={quiz.handleQuestionAnswer}
@@ -104,7 +102,6 @@ export function QuizPickerStepSection({
       aiFellBack={aiFellBack}
       savedSession={quiz.savedSession}
       onResumeSession={quiz.handleResumeSession}
-      onDiscardSession={quiz.handleDiscardSession}
       questionStyle={quiz.questionStyle}
       onQuestionStyleChange={(style) => {
         quiz.setQuestionStyle(style);
@@ -118,7 +115,6 @@ export function QuizPickerStepSection({
       questionCount={quiz.questionCount}
       questionCountInput={quiz.questionCountInput}
       questionCountError={quiz.questionCountError}
-      maxQuestionCount={quiz.maxQuestionCount}
       questionCountPresets={quiz.questionCountPresets}
       onApplyQuestionCount={quiz.applyQuestionCount}
       onQuestionCountInputChange={quiz.handleQuestionCountInputChange}

@@ -17,7 +17,7 @@ export const NONE_OF_THESE_OPTION_TEXT = "None of these";
 
 /** The question line shown above the quoted scenario, on every surface. Not
  *  parameterized by term name — the term is the thing being guessed. */
-export const ILLUSTRATION_QUESTION_LINE = "What does this illustrate?";
+export const ILLUSTRATION_QUESTION_LINE = "Which term does this show, or none?";
 
 export type IllustrationPick = {
   scenarioText: string;
@@ -86,7 +86,7 @@ async function buildPick(term: EligibleTerm, client: Client): Promise<Illustrati
 }
 
 /**
- * Builds a "What does this illustrate?" multiple-choice pick for every term
+ * Builds a "Which term does this show, or none?" multiple-choice pick for every term
  * with its own example or anti_example text — no cap, no cross-term
  * borrowing. Terms with neither are left out of the returned map entirely;
  * callers fall back to another question type for those. Shared by every

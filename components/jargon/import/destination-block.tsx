@@ -112,7 +112,7 @@ function NewCollectionFields({
         </Alert>
       ) : null}
       {addedMatch ? (
-        <p className="m-0 text-sm text-base-content/60" role="status">
+        <p className="m-0 text-sm text-base-content/70" role="status">
           You added a shared collection called &ldquo;{addedMatch}&rdquo;. This creates your own.
         </p>
       ) : null}
@@ -121,7 +121,7 @@ function NewCollectionFields({
         <LanguageToggle value={language} onChange={onLanguageChange} isDisabled={disabled} />
       </div>
       {fileLanguage && fileLanguage !== language ? (
-        <p className="m-0 text-sm text-base-content/60" role="status">
+        <p className="m-0 text-sm text-base-content/70" role="status">
           The file says {languageLabel(fileLanguage)}, you chose {languageLabel(language)}.
           We&apos;ll use your choice.
         </p>
@@ -203,7 +203,7 @@ export function DestinationBlock({
             />
           </Field>
           {existing ? (
-            <p className="m-0 text-sm text-base-content/60">
+            <p className="m-0 text-sm text-base-content/70">
               Language: {languageLabel(existing.language)} (set by this collection)
             </p>
           ) : null}
@@ -211,7 +211,7 @@ export function DestinationBlock({
       )}
 
       {hint ? (
-        <p className="m-0 text-sm text-base-content/60" role="status">
+        <p className="m-0 text-sm text-base-content/70" role="status">
           {hint}
         </p>
       ) : null}

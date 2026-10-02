@@ -58,7 +58,7 @@ export function CheckList({
 
   if (!flow.reviewAll && quiet && drafts.length > 0) {
     return (
-      <div className="shadow-surface flex items-center justify-between gap-3 rounded-xl bg-base-100 p-3">
+      <div className="shadow-surface flex items-center justify-between gap-3 rounded-field bg-base-100 p-3">
         <p className="m-0 font-medium" role="status">
           {pluralize(toAdd, "term")} ready
         </p>

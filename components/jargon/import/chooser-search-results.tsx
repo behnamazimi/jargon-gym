@@ -29,7 +29,7 @@ export function SearchResults({
 }) {
   if (state.status === "idle") return null;
   if (state.status === "loading") {
-    return <p className="m-0 text-sm text-base-content/60">Searching…</p>;
+    return <p className="m-0 text-sm text-base-content/70">Searching…</p>;
   }
   if (state.status === "error") {
     return (
@@ -41,7 +41,7 @@ export function SearchResults({
   if (state.domains.length === 0) {
     if (hideWhenEmpty) return null;
     return (
-      <p className="m-0 text-sm text-base-content/60" role="status">
+      <p className="m-0 text-sm text-base-content/70" role="status">
         {noMatchMessage
           ? noMatchMessage(state.query)
           : `Nothing shared matches “${state.query}”. Try a list, or start an empty collection.`}
@@ -56,11 +56,11 @@ export function SearchResults({
         return (
           <li
             key={domain.id}
-            className="shadow-surface flex items-center gap-3 rounded-xl bg-base-100 p-3"
+            className="shadow-surface flex items-center gap-3 rounded-field bg-base-100 p-3"
           >
             <div className="min-w-0 flex-1">
-              <p className="m-0 truncate font-semibold">{domain.name}</p>
-              <p className="m-0 text-sm text-base-content/60">
+              <p className="m-0 truncate font-medium">{domain.name}</p>
+              <p className="m-0 text-sm text-base-content/70">
                 {pluralize(domain.termCount, "term")} · Shared
               </p>
             </div>

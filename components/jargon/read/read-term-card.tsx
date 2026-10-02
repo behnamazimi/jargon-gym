@@ -32,7 +32,7 @@ function ReadCardMasked({
       }}
       aria-label={`${hideQuestion ? `${term.term}.` : `What is ${term.term}?`} Tap to reveal the definition.`}
     >
-      <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
+      <h2 className="font-heading m-0 max-w-full text-[1.75rem] font-medium text-balance text-base-content sm:text-3xl sm:leading-tight">
         {hideQuestion ? (
           term.term
         ) : (
@@ -41,22 +41,17 @@ function ReadCardMasked({
           </>
         )}
       </h2>
-      <p className="m-0 text-xs tracking-wide text-base-content/50">
+      <p className="m-0 text-xs text-base-content/70">
         <span>{term.domainName}</span>
         {term.category ? (
           <>
-            <span className="mx-1.5 text-base-content/35" aria-hidden>
+            <span className="mx-1.5 text-base-content/50" aria-hidden>
               ·
             </span>
             <span>{term.category}</span>
           </>
         ) : null}
       </p>
-      <div className="mt-1 flex items-center gap-2 text-sm text-base-content/60">
-        <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
-        <span className="inline md:hidden coarse:inline">Tap to reveal</span>
-        <span className="hidden md:inline coarse:hidden">Click or press Enter to reveal</span>
-      </div>
     </div>
   );
 }
@@ -155,7 +150,7 @@ export const ReadTermCard = memo(function ReadTermCard({
               onPress={() => onReveal(term.id)}
               className={`min-h-11 flex-1 ps-4 pe-3.5 md:flex-none ${PRESS_CLASS}`}
             >
-              Reveal
+              Show definition
               <Eye className="size-4" aria-hidden strokeWidth={1.5} />
             </Button>
           )}

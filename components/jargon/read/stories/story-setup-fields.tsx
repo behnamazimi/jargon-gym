@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { termsForLength } from "@/lib/stories/length";
+import { termsUsedNote } from "@/lib/stories/length";
 import {
   PIECE_LENGTHS,
   READING_LEVELS,
@@ -13,30 +13,21 @@ import { cn } from "@/lib/utils";
 type Choice = { label: string; hint: string };
 
 const READING_LEVEL_CHOICES: Record<ReadingLevel, Choice> = {
-  plain: { label: "Plain", hint: "Context makes each term guessable." },
-  professional: { label: "Professional", hint: "Help only where a term would be unclear." },
-  expert: { label: "Expert", hint: "Terms used as an insider would, no extra help." },
+  plain: { label: "A lot", hint: "Sentences make each term easy to guess." },
+  professional: { label: "Some", hint: "Help only where a term would be unclear." },
+  expert: { label: "None", hint: "Terms used as an insider would, no extra help." },
 };
 
-const PIECE_LENGTH_CHOICES: Record<PieceLength, Choice> = {
-  short: {
-    label: "Short",
-    hint: `A quick read of a paragraph or two, with up to ${termsForLength("short")} terms.`,
-  },
-  medium: {
-    label: "Medium",
-    hint: `A few short paragraphs, with up to ${termsForLength("medium")} terms.`,
-  },
-  long: {
-    label: "Long",
-    hint: `A fuller piece of several paragraphs, with up to ${termsForLength("long")} terms.`,
-  },
+const PIECE_LENGTH_BASE: Record<PieceLength, Choice> = {
+  short: { label: "Short", hint: "A quick read of a paragraph or two." },
+  medium: { label: "Medium", hint: "A few short paragraphs." },
+  long: { label: "Long", hint: "A fuller piece of several paragraphs." },
 };
 
 export const PIECE_LENGTH_LABELS: Record<PieceLength, string> = {
-  short: PIECE_LENGTH_CHOICES.short.label,
-  medium: PIECE_LENGTH_CHOICES.medium.label,
-  long: PIECE_LENGTH_CHOICES.long.label,
+  short: PIECE_LENGTH_BASE.short.label,
+  medium: PIECE_LENGTH_BASE.medium.label,
+  long: PIECE_LENGTH_BASE.long.label,
 };
 
 function ChoiceField<T extends string>({
@@ -66,14 +57,15 @@ function ChoiceField<T extends string>({
             aria-pressed={value === option}
             className={cn(
               "flex-1 px-2",
-              value === option && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
+              value === option &&
+                "border-primary bg-primary/10 text-primary-text hover:bg-primary/15",
             )}
           >
             {choices[option].label}
           </Button>
         ))}
       </div>
-      <p className="m-0 text-xs leading-relaxed text-base-content/60">{choices[value].hint}</p>
+      <p className="m-0 text-xs text-base-content/70">{choices[value].hint}</p>
     </fieldset>
   );
 }
@@ -84,7 +76,7 @@ export function ReadingLevelField(props: {
 }) {
   return (
     <ChoiceField
-      legend="Term support"
+      legend="How much to explain each term"
       options={READING_LEVELS}
       choices={READING_LEVEL_CHOICES}
       {...props}
@@ -92,16 +84,23 @@ export function ReadingLevelField(props: {
   );
 }
 
-export function PieceLengthField(props: {
+export function PieceLengthField({
+  termsAvailable,
+  ...props
+}: {
   value: PieceLength;
+  termsAvailable: number;
   onChange: (length: PieceLength) => void;
 }) {
-  return (
-    <ChoiceField
-      legend="Length"
-      options={PIECE_LENGTHS}
-      choices={PIECE_LENGTH_CHOICES}
-      {...props}
-    />
-  );
+  const choices = Object.fromEntries(
+    PIECE_LENGTHS.map((length) => [
+      length,
+      {
+        label: PIECE_LENGTH_BASE[length].label,
+        hint: `${PIECE_LENGTH_BASE[length].hint} ${termsUsedNote(length, termsAvailable)}`.trim(),
+      },
+    ]),
+  ) as Record<PieceLength, Choice>;
+
+  return <ChoiceField legend="Length" options={PIECE_LENGTHS} choices={choices} {...props} />;
 }

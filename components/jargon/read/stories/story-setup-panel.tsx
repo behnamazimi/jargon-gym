@@ -50,7 +50,7 @@ function collectionLabel(collection: CollectionSelectOption) {
   const count = collection.termCount ?? 0;
   return count < STORY_MIN_TERMS
     ? `${collection.name} (needs ${STORY_MIN_TERMS}+ terms)`
-    : `${collection.name} (${count})`;
+    : `${collection.name} · ${count} to read`;
 }
 
 function CefrLevelField({
@@ -62,7 +62,7 @@ function CefrLevelField({
 }) {
   return (
     <Field data-tour="stories-level">
-      <FieldLabel htmlFor="story-cefr">Language level</FieldLabel>
+      <FieldLabel htmlFor="story-cefr">Sentence difficulty</FieldLabel>
       <Select
         value={value}
         onChange={(key) => {
@@ -81,7 +81,6 @@ function CefrLevelField({
           ))}
         </SelectContent>
       </Select>
-      <FieldDescription>How complex the sentences and everyday words are.</FieldDescription>
     </Field>
   );
 }
@@ -143,7 +142,7 @@ export function StorySetupPanel({
     >
       <QuizPanelLabel
         title="Set up your story"
-        description="A short piece of reading built around the next terms in your Read queue. Mark it read to count a read for every term in it."
+        description="Mark it read to count a read for every term in it. A short piece built around the next terms in your Read queue."
       />
 
       <StoryNoAiNotice ai={ai} />
@@ -171,7 +170,11 @@ export function StorySetupPanel({
 
       <ReadingLevelField value={session.readingLevel} onChange={session.setReadingLevel} />
       <CefrLevelField value={session.cefrLevel} onChange={session.setCefrLevel} />
-      <PieceLengthField value={session.pieceLength} onChange={session.setPieceLength} />
+      <PieceLengthField
+        value={session.pieceLength}
+        termsAvailable={eligibleCount}
+        onChange={session.setPieceLength}
+      />
       <StoryOverBalance
         use={use}
         pieceLength={session.pieceLength}

@@ -1,10 +1,11 @@
 "use client";
 
-import { LogOut, XIcon } from "lucide-react";
+import { Download, LogOut, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { ACCOUNT_OVERFLOW_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
+import { INSTALL_MENU_LABEL, useInstallAction } from "@/components/pwa/install-prompt";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -15,6 +16,7 @@ export function MoreSheet() {
   const { email, isAdmin, initialIsDark, moreOpen, setMoreOpen, aiCreditsLine } = useStudyPhone();
   const [isBusy, setIsBusy] = useState(false);
   const initials = emailInitials(email);
+  const install = useInstallAction();
 
   async function handleLogout() {
     setIsBusy(true);
@@ -40,7 +42,7 @@ export function MoreSheet() {
         </div>
         <div className="flex items-center gap-3 pt-1">
           <Avatar>
-            <AvatarFallback className="text-xs font-semibold text-primary">
+            <AvatarFallback className="text-xs font-semibold text-primary-text">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -52,7 +54,7 @@ export function MoreSheet() {
                 onClick={() => setMoreOpen(false)}
                 className={cn(
                   "-my-1.5 flex min-h-11 items-center text-xs no-underline",
-                  aiCreditsLine.tone === "error" ? "text-error" : "text-base-content/60",
+                  aiCreditsLine.tone === "error" ? "text-error-text" : "text-base-content/70",
                 )}
               >
                 {aiCreditsLine.label}
@@ -94,10 +96,25 @@ export function MoreSheet() {
               );
             })
           : null}
+        {install ? (
+          <li>
+            <button
+              type="button"
+              className="content-center min-h-11"
+              onClick={() => {
+                setMoreOpen(false);
+                install();
+              }}
+            >
+              <Download className="size-4" strokeWidth={1.5} aria-hidden />
+              {INSTALL_MENU_LABEL}
+            </button>
+          </li>
+        ) : null}
         <li>
           <button
             type="button"
-            className="content-center min-h-11 text-error"
+            className="content-center min-h-11 text-error-text"
             disabled={isBusy}
             onClick={() => void handleLogout()}
           >

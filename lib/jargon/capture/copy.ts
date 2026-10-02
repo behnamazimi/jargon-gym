@@ -1,7 +1,3 @@
-export function unfinishedSavedMessage(name: string): string {
-  return `Saved “${name}”. It stays out of study until you add a definition.`;
-}
-
 export const CAPTURE_COPY = {
   title: "Add a term",
   term: "Term",
@@ -9,7 +5,8 @@ export const CAPTURE_COPY = {
   definition: "Definition",
   definitionPlaceholder: "What does it mean?",
   definitionHint: "Leave it empty to finish later.",
-  example: "Example",
+  moreDetails: "More details",
+  moreDetailsHint: "Category, example, notes and links to other terms",
   collection: "Collection",
   save: "Save",
   saving: "Saving…",

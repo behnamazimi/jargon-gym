@@ -29,16 +29,14 @@ export function StudySetupPanel({
 export function StudyResumeBanner({
   message,
   onResume,
-  onDiscard,
 }: {
   message: ReactNode;
   onResume: () => void;
-  onDiscard: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2.5">
-        <span className="inline-flex shrink-0 size-8 items-center justify-center rounded-full bg-primary/15 text-primary">
+    <div className="flex flex-col gap-3 rounded-field border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex shrink-0 size-8 items-center justify-center rounded-full bg-primary/15 text-primary-text">
           <History className="size-4" aria-hidden strokeWidth={2} />
         </span>
         <p className="m-0 text-sm text-base-content">{message}</p>
@@ -46,9 +44,6 @@ export function StudyResumeBanner({
       <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
         <Button type="button" size="sm" onPress={onResume}>
           Resume
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onPress={onDiscard}>
-          Start new
         </Button>
       </div>
     </div>
@@ -93,7 +88,6 @@ export function StudyCountField({
   selectedValue,
   inputValue,
   error,
-  max,
   availableCount,
   perUnitLabel,
   onPresetSelect,
@@ -105,7 +99,6 @@ export function StudyCountField({
   selectedValue: number;
   inputValue: string;
   error: string | null;
-  max: number;
   availableCount: number;
   perUnitLabel: string;
   onPresetSelect: (value: number) => void;
@@ -127,7 +120,7 @@ export function StudyCountField({
               aria-pressed={selected}
               className={cn(
                 "min-h-11 tabular-nums",
-                selected && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
+                selected && "border-primary bg-primary/10 text-primary-text hover:bg-primary/15",
               )}
             >
               {preset}
@@ -144,18 +137,15 @@ export function StudyCountField({
           className="min-h-11 min-w-16 flex-1 tabular-nums"
         />
       </div>
-      <FieldDescription>
-        {error ? (
-          <span className="text-error">{error}</span>
-        ) : (
-          <>
-            Choose 1–{max || 1}
-            {availableCount > MAX_STUDY_TERMS
-              ? ` (${MAX_STUDY_TERMS} max per ${perUnitLabel}).`
-              : "."}
-          </>
-        )}
-      </FieldDescription>
+      {error ? (
+        <FieldDescription>
+          <span className="text-error-text">{error}</span>
+        </FieldDescription>
+      ) : availableCount > MAX_STUDY_TERMS ? (
+        <FieldDescription>
+          Up to {MAX_STUDY_TERMS} per {perUnitLabel}.
+        </FieldDescription>
+      ) : null}
     </Field>
   );
 }

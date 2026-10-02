@@ -7,7 +7,7 @@ export function QuizPanel({ children, className, ...props }: ComponentProps<"div
     <div
       {...props}
       className={cn(
-        "shadow-surface overflow-hidden rounded-2xl bg-base-100 ring-1 ring-base-content/5",
+        "shadow-surface overflow-hidden rounded-box bg-base-100 ring-1 ring-base-content/5",
         className,
       )}
     >
@@ -29,17 +29,15 @@ export function QuizPanelHeader({
 }) {
   return (
     <div className="flex items-start gap-4 border-b border-base-300/60 px-5 py-5 sm:px-6">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-field bg-primary/10 text-primary">
         <Icon className="size-5" aria-hidden strokeWidth={1.5} />
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="m-0 text-base font-semibold">{title}</h2>
+          <h2 className="m-0 text-base font-medium">{title}</h2>
           {aside}
         </div>
-        {description ? (
-          <p className="m-0 text-sm leading-relaxed text-base-content/60">{description}</p>
-        ) : null}
+        {description ? <p className="m-0 text-sm text-base-content/70">{description}</p> : null}
       </div>
     </div>
   );
@@ -48,10 +46,8 @@ export function QuizPanelHeader({
 export function QuizPanelLabel({ title, description }: { title: string; description?: string }) {
   return (
     <div className="mb-5 space-y-1">
-      <p className="m-0 text-sm font-semibold text-base-content/80">{title}</p>
-      {description ? (
-        <p className="m-0 text-xs leading-relaxed text-base-content/50">{description}</p>
-      ) : null}
+      <p className="m-0 text-sm font-medium text-base-content/80">{title}</p>
+      {description ? <p className="m-0 text-xs text-base-content/70">{description}</p> : null}
     </div>
   );
 }
@@ -77,7 +73,7 @@ export function QuizSetupFooter({
 }) {
   return (
     <div className={cn("flex flex-col gap-3 border-t border-base-300/60 pt-6", className)}>
-      {hint ? <p className="m-0 text-xs leading-relaxed text-base-content/60">{hint}</p> : null}
+      {hint ? <p className="m-0 text-xs text-base-content/70">{hint}</p> : null}
       <div className="w-full">{children}</div>
     </div>
   );
@@ -95,13 +91,13 @@ export function QuizStat({
   return (
     <div
       className={cn(
-        "rounded-xl px-4 py-3",
+        "rounded-field px-4 py-3",
         variant === "primary"
           ? "bg-primary/8 ring-1 ring-primary/20"
-          : "bg-base-200/50 ring-1 ring-base-content/5",
+          : "bg-base-200/60 ring-1 ring-base-content/5",
       )}
     >
-      {label ? <dt className="text-xs text-base-content/60">{label}</dt> : null}
+      {label ? <dt className="text-xs text-base-content/70">{label}</dt> : null}
       <dd className={cn("text-sm font-semibold tabular-nums", label && "mt-0.5")}>{value}</dd>
     </div>
   );
@@ -130,14 +126,12 @@ export function QuizCenteredState({
 }) {
   return (
     <div className="mx-auto flex max-w-sm flex-col items-center gap-3 py-2 text-center">
-      <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <div className="flex size-10 items-center justify-center rounded-field bg-primary/10 text-primary">
         <Icon className={cn("size-5", iconClassName)} aria-hidden strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
-        <h2 className="m-0 text-sm font-semibold text-base-content/80">{title}</h2>
-        {description ? (
-          <p className="m-0 text-sm leading-relaxed text-base-content/60">{description}</p>
-        ) : null}
+        <h2 className="m-0 text-sm font-medium text-base-content/80">{title}</h2>
+        {description ? <p className="m-0 text-sm text-base-content/70">{description}</p> : null}
       </div>
       {children}
     </div>

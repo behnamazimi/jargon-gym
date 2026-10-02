@@ -26,7 +26,11 @@ export function StreakBadge({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={cn("btn btn-ghost gap-1.5", currentStreak === 0 && "opacity-50", className)}
+        className={cn(
+          "btn btn-ghost min-h-11 gap-2 md:min-h-0",
+          currentStreak === 0 && "opacity-50",
+          className,
+        )}
         aria-label={`${currentStreak} day streak. View streak history.`}
         data-tour="app-streak"
       >

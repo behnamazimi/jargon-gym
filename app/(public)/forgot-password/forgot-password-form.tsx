@@ -21,7 +21,7 @@ export default function ForgotPasswordForm() {
         label={PUBLIC_HOME_BACK_LABEL}
         className="-ml-2 self-start"
       />
-      <h1 className="text-2xl font-semibold tracking-tight">Forgot password</h1>
+      <h1 className="text-2xl font-medium">Forgot password</h1>
 
       <AuthFormError error={state && "error" in state ? state.error : null} />
 
@@ -33,7 +33,7 @@ export default function ForgotPasswordForm() {
         </Alert>
       ) : (
         <>
-          <p className="text-sm text-base-content/60">
+          <p className="text-sm text-base-content/70">
             Enter your email and we'll send you a link to choose a new password.
           </p>
 
@@ -56,7 +56,7 @@ export default function ForgotPasswordForm() {
         </>
       )}
 
-      <p className="text-center text-sm text-base-content/60">
+      <p className="text-center text-sm text-base-content/70">
         Remembered your password?{" "}
         <Link href="/login" className="underline underline-offset-2">
           Log in

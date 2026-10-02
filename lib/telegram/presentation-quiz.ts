@@ -1,6 +1,6 @@
 import { escapeText } from "entities";
 import type { TermCard } from "@/lib/jargon/term-card";
-import { ILLUSTRATION_QUESTION_LINE } from "@/lib/quiz/illustration";
+import { ILLUSTRATION_QUESTION_LINE, NONE_OF_THESE_OPTION_TEXT } from "@/lib/quiz/illustration";
 import type { InlineKeyboardMarkup } from "./actions";
 
 export function formatReviewQuestion(
@@ -64,6 +64,10 @@ export function formatIllustrationQuestionWithAnswer(
     message += `\n\n✅ <b>Correct!</b>`;
   } else {
     message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeText(correctLabel)}</b>`;
+  }
+
+  if (correctLabel === NONE_OF_THESE_OPTION_TEXT) {
+    message += `\n\nThis scenario is an anti-example: it shows what a term is not.`;
   }
 
   message += `\n\nScore: ${currentScore}/${totalQuestions}`;

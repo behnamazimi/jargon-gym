@@ -13,7 +13,7 @@ export function PageShell({ children, className, innerClassName, ...aria }: Page
   return (
     <div
       className={cn(
-        "min-h-full bg-gradient-to-b from-primary/[0.06] via-background to-background text-base-content",
+        "min-h-full flex-1 bg-gradient-to-b from-primary/[0.07] to-base-200 text-base-content",
         className,
       )}
       {...aria}
@@ -21,7 +21,7 @@ export function PageShell({ children, className, innerClassName, ...aria }: Page
       <div
         className={cn(
           pageContainerClass,
-          "space-y-5 py-7 pb-20 in-[.chrome-dock]:max-md:pb-dock",
+          "space-y-6 py-7 pb-20 in-[.chrome-dock]:max-md:pb-dock",
           innerClassName,
         )}
       >

@@ -71,7 +71,7 @@ function OptionRow({
         >
           {label}
         </label>
-        <p id={`${id}-description`} className="m-0 text-xs leading-relaxed text-base-content/60">
+        <p id={`${id}-description`} className="m-0 text-xs text-base-content/70">
           {disabledNote ?? description}
         </p>
       </div>
@@ -175,7 +175,7 @@ export function ReadOptionsMenu({ initialOptions }: { initialOptions: ReadOption
           className="dropdown-content z-50 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-box bg-base-100 shadow-md ring-1 ring-base-content/10"
         >
           <AriaDialog aria-label="Read options" className="outline-none">
-            <p className="m-0 border-b border-base-300/60 px-4 py-2.5 text-sm font-medium">
+            <p className="m-0 border-b border-base-300/60 px-4 py-3 text-sm font-medium">
               Read options
             </p>
             {list}

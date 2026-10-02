@@ -18,7 +18,7 @@ export function BrandIcon({ className, size = "md" }: BrandIconProps) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded bg-primary/15 text-primary",
+        "inline-flex shrink-0 items-center justify-center rounded bg-primary/15 text-primary-text",
         className,
       )}
       style={brandIconShellStyle(boxSize)}

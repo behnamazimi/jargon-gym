@@ -5,21 +5,31 @@ import { ChevronRight } from "lucide-react";
 import type { GradeDistributionSummary, WebStatsSnapshot } from "@/lib/jargon/collection-stats";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
-import { cn } from "@/lib/utils";
+import { cn, pluralize } from "@/lib/utils";
 
 /** TRACE has no backlog to clear — a term with no history just ranks first
  *  next time this tier comes up. This is a snapshot of current exposure,
  *  not a queue count. */
 function formatUnseenLine(unseen: number): string {
-  return unseen === 0 ? "Everything started" : `${unseen} never started`;
+  return unseen === 0 ? "Everything started" : `${pluralize(unseen, "term")} not started`;
 }
 
-function RollupRow({ label, unseen, today }: { label: string; unseen: number; today: number }) {
+function RollupRow({
+  label,
+  verb,
+  unseen,
+  today,
+}: {
+  label: string;
+  verb: string;
+  unseen: number;
+  today: number;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 py-2 text-sm">
       <span className="font-medium text-base-content">{label}</span>
-      <span className="text-base-content/60">
-        {formatUnseenLine(unseen)} · {today} today
+      <span className="text-base-content/70">
+        {formatUnseenLine(unseen)} · {today} {verb} today
       </span>
     </div>
   );
@@ -44,9 +54,9 @@ function formatGradeDistribution(summary: GradeDistributionSummary): string {
 
 function GradeDistributionRow({ summary }: { summary: GradeDistributionSummary }) {
   return (
-    <div className="flex items-center justify-between gap-3 py-2 text-sm">
+    <div className="flex flex-col gap-1 py-2 text-sm">
       <span className="font-medium text-base-content">Grading</span>
-      <span className="text-base-content/60">{formatGradeDistribution(summary)}</span>
+      <span className="text-base-content/70">{formatGradeDistribution(summary)}</span>
     </div>
   );
 }
@@ -63,10 +73,10 @@ export function MasteryPracticeActivity({ stats }: { stats: WebStatsSnapshot }) 
     <Collapsible
       isExpanded={open}
       onExpandedChange={setOpen}
-      className="shadow-surface rounded-2xl bg-base-100 p-4"
+      className="shadow-surface rounded-box bg-base-100 p-5"
     >
-      <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <span className="text-sm font-semibold text-base-content">Practice activity</span>
+      <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-field border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <span className="text-sm font-medium text-base-content">Practice activity</span>
         <ChevronRight
           className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")}
           aria-hidden
@@ -76,13 +86,24 @@ export function MasteryPracticeActivity({ stats }: { stats: WebStatsSnapshot }) 
 
       <CollapsibleContent>
         <div className="mt-3 divide-y divide-base-content/10">
-          <RollupRow label="Read" unseen={stats.rollup.read.unseen} today={stats.today.read} />
+          <RollupRow
+            label="Read"
+            verb="read"
+            unseen={stats.rollup.read.unseen}
+            today={stats.today.read}
+          />
           <RollupRow
             label="Review"
+            verb="reviewed"
             unseen={stats.rollup.review.unseen}
             today={stats.today.review}
           />
-          <RollupRow label="Quiz" unseen={stats.rollup.quiz.unseen} today={stats.today.quiz} />
+          <RollupRow
+            label="Quiz"
+            verb="quizzed"
+            unseen={stats.rollup.quiz.unseen}
+            today={stats.today.quiz}
+          />
           {stats.gradeDistribution ? (
             <GradeDistributionRow summary={stats.gradeDistribution} />
           ) : null}

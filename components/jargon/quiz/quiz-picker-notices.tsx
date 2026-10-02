@@ -13,7 +13,7 @@ export function QuizPickerFooterHint({
   ai: AiAccessView;
   cost: number;
 }) {
-  if (questionStyle === "simple") return <>Uses terms from your collections — no AI needed.</>;
+  if (questionStyle === "simple") return null;
   if (ai.kind === "own") return <>Uses {ai.providerLabel} — this may take a moment.</>;
   if (ai.kind !== "credits") return null;
 
@@ -56,7 +56,7 @@ function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
 function QuizPickerFallbackNotice({ ai }: { ai: AiAccessView }) {
   const exhausted = ai.kind === "unavailable" && ai.reason === "exhausted";
   return (
-    <p className="max-w-md text-xs text-base-content/60">
+    <p className="max-w-md text-xs text-base-content/70">
       {exhausted
         ? "You're out of AI credits, so we switched to a simple quiz."
         : "AI quizzes aren't available right now, so we switched to a simple quiz."}

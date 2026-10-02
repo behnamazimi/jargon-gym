@@ -30,16 +30,16 @@ type JargonErrorAlertProps = {
 function ErrorContext({ context }: { context: JargonErrorContext | undefined }) {
   if (!context?.domain && !context?.term) return null;
   return (
-    <dl className="mt-3 grid gap-1.5 rounded-lg bg-error/5 px-3 py-2.5 ring-1 ring-error/15">
+    <dl className="mt-3 grid gap-2 rounded-field bg-error/5 px-3 py-3 ring-1 ring-error/15">
       {context.domain ? (
         <div className="flex gap-2 text-sm">
-          <dt className="text-base-content/60">Collection</dt>
+          <dt className="text-base-content/70">Collection</dt>
           <dd className="font-medium">{context.domain}</dd>
         </div>
       ) : null}
       {context.term ? (
         <div className="flex gap-2 text-sm">
-          <dt className="text-base-content/60">Term</dt>
+          <dt className="text-base-content/70">Term</dt>
           <dd className="font-medium">{context.term}</dd>
         </div>
       ) : null}
@@ -61,7 +61,7 @@ function ErrorDetailsList({ details }: { details: string[] | undefined }) {
 function IssueExpectedReceived({ issue }: { issue: JargonErrorIssue }) {
   if (!issue.expected && !issue.received) return null;
   return (
-    <div className="mt-1 text-xs text-base-content/60">
+    <div className="mt-1 text-xs text-base-content/70">
       {issue.expected ? `Expected: ${issue.expected}` : null}
       {issue.expected && issue.received ? " · " : null}
       {issue.received ? `Received: ${issue.received}` : null}
@@ -76,10 +76,10 @@ function ErrorIssuesList({ issues }: { issues: JargonErrorIssue[] | undefined })
       {issues.map((issue) => (
         <li
           key={`${issue.path ?? ""}-${issue.message}`}
-          className="rounded-lg bg-base-100/70 px-3 py-2.5 ring-1 ring-base-content/10"
+          className="rounded-field bg-base-100/70 px-3 py-3 ring-1 ring-base-content/10"
         >
           {issue.path ? (
-            <div className="font-mono text-xs break-all text-base-content/60">{issue.path}</div>
+            <div className="font-mono text-xs break-all text-base-content/70">{issue.path}</div>
           ) : null}
           <div className="mt-0.5">{issue.message}</div>
           <IssueExpectedReceived issue={issue} />
@@ -92,7 +92,7 @@ function ErrorIssuesList({ issues }: { issues: JargonErrorIssue[] | undefined })
 function ErrorHint({ hint }: { hint: string | undefined }) {
   if (!hint) return null;
   return (
-    <p className="mt-3 rounded-lg bg-base-100/50 px-3 py-2.5 text-sm ring-1 ring-base-content/10">
+    <p className="mt-3 rounded-field bg-base-100/50 px-3 py-3 text-sm ring-1 ring-base-content/10">
       <span className="font-medium">Hint:</span> {hint}
     </p>
   );

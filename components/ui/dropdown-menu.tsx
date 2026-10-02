@@ -77,7 +77,7 @@ function DropdownMenuLabel({
     <HeaderPrimitive
       data-slot="dropdown-menu-label"
       data-inset={inset}
-      className={cn("px-2 py-1.5 text-xs text-base-content/60 data-inset:pl-7.5", className)}
+      className={cn("px-2 py-1.5 text-xs text-base-content/70 data-inset:pl-7.5", className)}
       {...props}
     />
   );
@@ -87,7 +87,7 @@ function dropdownMenuItemClassName(selectionMode: "none" | "single" | "multiple"
   return cn(
     "group/dropdown-menu-item relative flex min-h-8 cursor-default items-center gap-2 rounded-field px-2 py-1 text-sm outline-hidden select-none data-focused:bg-base-200 data-disabled:pointer-events-none data-disabled:opacity-50 data-inset:pl-7.5",
     selectionMode !== "none" && "pr-8",
-    "data-[variant=destructive]:text-error data-[variant=destructive]:data-focused:bg-error/10",
+    "data-[variant=destructive]:text-error-text data-[variant=destructive]:data-focused:bg-error/10",
   );
 }
 
@@ -202,7 +202,7 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
   return (
     <span
       data-slot="dropdown-menu-shortcut"
-      className={cn("ml-auto text-xs tracking-widest text-base-content/60", className)}
+      className={cn("ml-auto text-xs tracking-widest text-base-content/70", className)}
       {...props}
     />
   );

@@ -60,8 +60,8 @@ async function buildQuestionForTerm(
 
 /**
  * Generate a simple quiz without AI - deterministic, no LLM calls. Mixes two
- * question flavors: illustration multiple_choice ("What does this
- * illustrate?", for terms with example/anti_example) and definition
+ * question flavors: illustration multiple_choice ("Which term does this
+ * show, or none?", for terms with example/anti_example) and definition
  * multiple_choice (definition -> pick the term) for everything else. Every
  * term's question is built concurrently — none of the per-term work depends
  * on another term.

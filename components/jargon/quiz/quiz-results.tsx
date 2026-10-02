@@ -20,10 +20,10 @@ type QuizResultsProps = {
 function scoreMessage(score: number, total: number) {
   if (total === 0) return "No questions answered.";
   const ratio = score / total;
-  if (ratio === 1) return "Perfect score — nice work.";
-  if (ratio >= 0.8) return "Strong round. Keep it up.";
-  if (ratio >= 0.5) return "Solid effort — review the ones you missed.";
-  return "Good practice — keep at the terms that tripped you up.";
+  if (ratio === 1) return "All correct.";
+  if (ratio >= 0.8) return "Strong round.";
+  if (ratio >= 0.5) return "Review the terms you missed.";
+  return "Review the terms you missed.";
 }
 
 /** Expands in place: a finished quiz can't be restored after navigating
@@ -33,34 +33,34 @@ function MissedTerms({ terms }: { terms: QuizTerm[] }) {
     <section aria-labelledby="quiz-missed-heading" className="space-y-2">
       <h3
         id="quiz-missed-heading"
-        className="m-0 text-xs font-semibold tracking-wide text-base-content/50 uppercase"
+        className="m-0 text-xs font-semibold tracking-wider text-base-content/70 uppercase"
       >
         Missed ({terms.length})
       </h3>
-      <ul className="m-0 list-none divide-y divide-base-300/60 rounded-xl p-0 ring-1 ring-base-content/10">
+      <ul className="m-0 list-none divide-y divide-base-300/60 rounded-field p-0 ring-1 ring-base-content/10">
         {terms.map((term) => (
           <li key={term.id}>
             <Collapsible className="group">
-              <CollapsibleTrigger className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-xl border-none bg-transparent px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+              <CollapsibleTrigger className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-field border-none bg-transparent px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-base-content">
+                  <span className="block truncate text-sm font-medium text-base-content">
                     {term.term}
                   </span>
-                  <span className="block truncate text-xs text-base-content/50">
+                  <span className="block truncate text-xs text-base-content/70">
                     {term.domainName}
                   </span>
                 </span>
                 <ChevronDown
-                  className="size-4 shrink-0 text-base-content/50 transition-transform duration-200 group-data-[expanded]:rotate-180"
+                  className="size-4 shrink-0 text-base-content/70 transition-transform duration-200 group-data-[expanded]:rotate-180"
                   aria-hidden
                   strokeWidth={1.5}
                 />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="space-y-2 px-3 pb-3 text-sm leading-relaxed text-base-content/75">
+                <div className="space-y-2 px-3 pb-3 text-sm text-base-content/75">
                   <p className="m-0">{term.definition}</p>
                   {term.example ? (
-                    <p className="m-0 text-base-content/60 italic">{term.example}</p>
+                    <p className="m-0 text-base-content/70 italic">{term.example}</p>
                   ) : null}
                 </div>
               </CollapsibleContent>
@@ -113,11 +113,11 @@ export function QuizResults({
             <span className="text-base font-semibold tabular-nums">{percent}%</span>
           </div>
           <div>
-            <p className="m-0 text-3xl font-bold tabular-nums tracking-tight">
+            <p className="m-0 text-3xl font-semibold tabular-nums">
               {score}
-              <span className="text-lg font-semibold text-base-content/40">/{total}</span>
+              <span className="text-lg font-medium text-base-content/40">/{total}</span>
             </p>
-            <p className="mt-1 mb-0 text-sm text-base-content/60">questions answered correctly</p>
+            <p className="mt-1 mb-0 text-sm text-base-content/70">questions answered correctly</p>
           </div>
         </div>
 

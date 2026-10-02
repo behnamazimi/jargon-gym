@@ -1,5 +1,6 @@
 import {
   Ban,
+  ChevronDown,
   ExternalLink,
   Lightbulb,
   MessagesSquare,
@@ -10,7 +11,9 @@ import {
 import Link from "next/link";
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import { TERM_LABELS, type TermLabels as Labels } from "@/lib/jargon/term-labels";
+import { relationshipLabel } from "@/lib/jargon/relationship-label";
 import type { Term } from "@/lib/jargon/types";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { TermDetailSection } from "./term-detail-section";
 
@@ -18,6 +21,8 @@ type TermBodyProps = {
   term: Term;
   className?: string;
   showSearchLink?: boolean;
+  /** Keep the definition and example up front; the rest sits behind "More". */
+  collapseExtras?: boolean;
   language?: DomainLanguage;
   getRelationshipHref?: (relatedTermId: string) => string | undefined;
 };
@@ -44,6 +49,20 @@ function getTermDetails(term: Term): TermDetails {
     controversy: hasText(term.controversy) ? term.controversy.trim() : null,
     note: hasText(term.note) ? term.note.trim() : null,
   };
+}
+
+function hasExtras(details: TermDetails, term: Term, showSearchLink: boolean): boolean {
+  return (
+    showSearchLink ||
+    term.relationships.length > 0 ||
+    Boolean(
+      details.mentalModel ||
+      details.antiExample ||
+      details.discussion ||
+      details.controversy ||
+      details.note,
+    )
+  );
 }
 
 function TermDetailSections({ details, labels }: { details: TermDetails; labels: Labels }) {
@@ -90,12 +109,12 @@ type RelatedTermLinkProps = {
 
 function RelatedTermLink({ relationship, href }: RelatedTermLinkProps) {
   if (!href) {
-    return <span className="font-semibold text-base-content">{relationship.relatedTermName}</span>;
+    return <span className="font-medium text-base-content">{relationship.relatedTermName}</span>;
   }
   return (
     <Link
       href={href}
-      className="font-semibold text-base-content underline decoration-base-content/30 underline-offset-2 hover:decoration-base-content"
+      className="font-medium text-base-content underline decoration-base-content/30 underline-offset-2 hover:decoration-base-content"
     >
       {relationship.relatedTermName}
     </Link>
@@ -113,7 +132,7 @@ function RelationshipsList({ term, labels, getRelationshipHref }: RelationshipsL
   return (
     <ul
       aria-label={labels.relatedTerms}
-      className="m-0 mt-2 max-w-prose list-disc space-y-2 ps-5 text-base leading-relaxed text-base-content/85"
+      className="m-0 mt-2 reading-text max-w-prose list-disc space-y-2 ps-5 text-base text-base-content/90"
     >
       {term.relationships.map((relationship) => {
         const description = relationship.description?.trim() ?? "";
@@ -121,11 +140,11 @@ function RelationshipsList({ term, labels, getRelationshipHref }: RelationshipsL
         return (
           <li key={`${relationship.id}-${relationship.direction}`}>
             <span>
-              {relationship.relationshipType}{" "}
+              {relationshipLabel(relationship.relationshipType)}{" "}
               <RelatedTermLink relationship={relationship} href={href} />
             </span>
             {description ? (
-              <span className="mt-1 block whitespace-pre-line text-base-content/65">
+              <span className="mt-1 block whitespace-pre-line text-base-content/70">
                 {description}
               </span>
             ) : null}
@@ -140,7 +159,7 @@ function SearchLink({ term, labels }: { term: Term; labels: Labels }) {
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${term.term} definition`)}`;
   return (
     <a
-      className="inline-flex items-center gap-1.5 text-base text-base-content/55 no-underline transition-colors duration-150 hover:text-base-content hover:underline"
+      className="inline-flex items-center gap-2 text-base text-base-content/70 no-underline transition-colors duration-150 hover:text-base-content hover:underline"
       href={searchUrl}
       target="_blank"
       rel="noopener noreferrer"
@@ -155,6 +174,7 @@ export function TermBody({
   term,
   className,
   showSearchLink = true,
+  collapseExtras = false,
   language = "en",
   getRelationshipHref,
 }: TermBodyProps) {
@@ -163,15 +183,53 @@ export function TermBody({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <p className="m-0 max-w-prose text-base leading-relaxed whitespace-pre-line text-base-content/85">
+      <p className="reading-text m-0 max-w-prose text-base whitespace-pre-line text-base-content/90">
         {term.definition}
       </p>
 
-      <TermDetailSections details={details} labels={labels} />
+      {collapseExtras ? (
+        <>
+          {details.example ? (
+            <TermDetailSection icon={Quote} label={labels.example}>
+              {details.example}
+            </TermDetailSection>
+          ) : null}
+          {hasExtras(details, term, showSearchLink) ? (
+            <Collapsible className="group">
+              <CollapsibleTrigger className="-mx-2 flex min-h-11 cursor-pointer items-center gap-2 rounded-field border-none bg-transparent px-2 text-sm font-medium text-base-content/70 outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                More
+                <ChevronDown
+                  className="size-4 transition-transform duration-200 group-data-[expanded]:rotate-180"
+                  aria-hidden
+                />
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="flex flex-col gap-4 pt-2">
+                  <TermDetailSections details={{ ...details, example: null }} labels={labels} />
+                  <RelationshipsList
+                    term={term}
+                    labels={labels}
+                    getRelationshipHref={getRelationshipHref}
+                  />
+                  {showSearchLink ? <SearchLink term={term} labels={labels} /> : null}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          ) : null}
+        </>
+      ) : (
+        <>
+          <TermDetailSections details={details} labels={labels} />
 
-      <RelationshipsList term={term} labels={labels} getRelationshipHref={getRelationshipHref} />
+          <RelationshipsList
+            term={term}
+            labels={labels}
+            getRelationshipHref={getRelationshipHref}
+          />
 
-      {showSearchLink ? <SearchLink term={term} labels={labels} /> : null}
+          {showSearchLink ? <SearchLink term={term} labels={labels} /> : null}
+        </>
+      )}
     </div>
   );
 }

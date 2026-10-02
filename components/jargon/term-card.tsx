@@ -44,8 +44,9 @@ type TermCardProps = {
 function KnownBadge() {
   return (
     <span
-      className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-primary/15 text-primary ml-2"
-      title="Known"
+      className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-primary/15 text-primary-text ml-2"
+      title="Mastered"
+      aria-label="Mastered"
     >
       <Check className="size-3" strokeWidth={2.5} />
     </span>
@@ -55,7 +56,7 @@ function KnownBadge() {
 function MarkedKnownBadge() {
   return (
     <span
-      className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-info/15 text-info ml-2"
+      className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-info/15 text-info-text ml-2"
       title="Marked known"
       aria-label="Marked known"
     >
@@ -74,9 +75,9 @@ function CardTitle({ term, known, markedKnown }: CardTitleProps) {
   return (
     <span
       className={cn(
-        "font-heading min-w-0 text-base font-semibold tracking-tight text-pretty",
+        "font-heading min-w-0 text-lg font-medium text-pretty",
         known || markedKnown
-          ? "text-base-content/60 decoration-primary/60 decoration-2"
+          ? "text-base-content/70 decoration-primary/60 decoration-2"
           : "text-base-content",
       )}
     >
@@ -106,7 +107,7 @@ function CardBody({
   if (details === "failed") {
     return (
       <div className="flex items-center justify-between gap-3 px-4 py-4">
-        <p className="m-0 text-sm text-base-content/60">Couldn&apos;t load this term.</p>
+        <p className="m-0 text-sm text-base-content/70">Couldn&apos;t load this term.</p>
         <Button
           type="button"
           size="sm"
@@ -197,10 +198,7 @@ export const TermCard = memo(function TermCard({
         <article
           ref={swipe.rowRef}
           data-tour="library-term"
-          className={cn(
-            "group relative overflow-hidden rounded-xl bg-base-100",
-            open ? "shadow-surface-raised" : "shadow-surface",
-          )}
+          className={cn("group relative overflow-hidden bg-base-100", open && "bg-primary/[0.04]")}
         >
           <div
             className={cn(
@@ -208,16 +206,19 @@ export const TermCard = memo(function TermCard({
               open && "border-b border-base-300/60 bg-primary/[0.04]",
             )}
           >
-            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer items-center justify-between gap-3 rounded-lg border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <CollapsibleTrigger className="flex min-h-14 min-w-0 flex-1 cursor-pointer transition-transform active:scale-[0.99] motion-reduce:transition-none items-center justify-between gap-3 rounded-field border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <CardTitle term={term} known={known} markedKnown={markedKnown} />
               <span className="inline-flex shrink-0 items-center gap-2">
                 {term.category ? (
-                  <span className="hidden text-xs text-base-content/50 sm:inline">
+                  <span className="hidden text-xs text-base-content/70 sm:inline">
                     {term.category}
                   </span>
                 ) : null}
                 <ChevronRight
-                  className={cn("size-4 text-base-content/60", open && "rotate-90 text-primary")}
+                  className={cn(
+                    "size-4 text-base-content/70",
+                    open && "rotate-90 text-primary-text",
+                  )}
                   aria-hidden
                   strokeWidth={1.5}
                 />

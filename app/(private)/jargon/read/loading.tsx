@@ -1,7 +1,7 @@
 export default function ReadLoading() {
   return (
     <div
-      className="shadow-surface flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl bg-base-100 ring-1 ring-base-content/5"
+      className="shadow-surface flex min-h-0 flex-1 flex-col overflow-hidden rounded-box bg-base-100 ring-1 ring-base-content/5"
       aria-busy="true"
       aria-label="Loading term"
     >

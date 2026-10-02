@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 
 type QuizQuestionFooterProps = {
   correct: number;
-  progressPercent: number;
   submitted: boolean;
   isLast: boolean;
   canSubmit: boolean;
@@ -17,7 +16,6 @@ type QuizQuestionFooterProps = {
 
 export function QuizQuestionFooter({
   correct,
-  progressPercent,
   submitted,
   isLast,
   canSubmit,
@@ -29,10 +27,8 @@ export function QuizQuestionFooter({
   return (
     <footer className="flex shrink-0 flex-col gap-2 border-t border-base-300/60 px-5 py-3 sm:px-6">
       <div className="flex items-center justify-between gap-3">
-        <p className="m-0 text-xs tabular-nums text-base-content/60">
-          {correct} correct · {progressPercent}%
-        </p>
-        <p className="m-0 hidden text-xs text-base-content/60 md:block coarse:hidden">
+        <p className="m-0 text-xs tabular-nums text-base-content/70">{correct} correct</p>
+        <p className="m-0 hidden text-xs text-base-content/70 md:block coarse:hidden">
           <QuizKeyboardHint action={!submitted ? "check" : isLast ? "see results" : "continue"} />
         </p>
       </div>
@@ -51,13 +47,13 @@ export function QuizQuestionFooter({
           onPress={onAdvance}
           isDisabled={!canAdvance}
           className={cn(
-            "min-h-11 w-full gap-1.5 transition-transform active:scale-[0.96]",
+            "min-h-11 w-full gap-2 transition-transform active:scale-[0.96]",
             justUnlocked && "quiz-advance-ready",
           )}
         >
           <span
             key={isLast ? "results" : "next"}
-            className="quiz-advance-label-enter inline-flex items-center gap-1.5"
+            className="quiz-advance-label-enter inline-flex items-center gap-2"
           >
             {isLast ? "See results" : "Next question"}
             {isLast ? (

@@ -62,7 +62,7 @@ export function LibrarySidebar({ domains, loadedAt, lastDomainId }: LibrarySideb
       />
 
       <aside className="hidden md:flex md:w-68 md:shrink-0">
-        <div className="shadow-surface sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-2xl bg-base-100 p-2">
+        <div className="shadow-surface sticky top-4 flex max-h-[calc(100dvh-2rem)] w-full flex-col rounded-box bg-base-100 p-2">
           <DomainSidebar
             domains={liveDomains}
             currentDomainId={currentDomainId}

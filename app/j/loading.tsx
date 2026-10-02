@@ -10,9 +10,9 @@ export default function PublicCollectionsLoading() {
         <div className="skeleton mt-2 h-5 w-full max-w-md bg-base-200" />
       </div>
       <ul className="flex flex-col gap-3">
-        <li className="skeleton h-24 w-full rounded-lg bg-base-200" />
-        <li className="skeleton h-24 w-full rounded-lg bg-base-200" />
-        <li className="skeleton h-24 w-full rounded-lg bg-base-200" />
+        <li className="skeleton h-24 w-full rounded-field bg-base-200" />
+        <li className="skeleton h-24 w-full rounded-field bg-base-200" />
+        <li className="skeleton h-24 w-full rounded-field bg-base-200" />
       </ul>
     </div>
   );

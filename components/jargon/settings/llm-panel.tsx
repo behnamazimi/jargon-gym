@@ -55,7 +55,7 @@ function RemoveKeySection({ onClear, isClearing, creditsRemaining }: RemoveKeySe
         variant="outline"
         onPress={onClear}
         isDisabled={isClearing}
-        className="min-h-11 w-full text-error hover:bg-error/10 md:w-auto"
+        className="min-h-11 w-full text-error-text hover:bg-error/10 md:w-auto"
       >
         <Trash2 className="size-3.5" strokeWidth={1.5} />
         {isClearing ? "Removing…" : "Remove API key"}
@@ -76,12 +76,12 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
             max={ai.total}
             aria-label={label}
           />
-          <p className="m-0 text-sm text-base-content/60">
-            <span className="tabular-nums">{ai.remaining}</span> credits left. Used for AI quizzes
-            and Stories until you add your own key.
+          <p className="m-0 text-sm text-base-content/70">
+            <span className="tabular-nums">{ai.remaining}</span> credits left. Add your own key to
+            use AI without spending them.
           </p>
         </div>
-        <p className="m-0 text-xs text-base-content/60">
+        <p className="m-0 text-xs text-base-content/70">
           When you use AI credits, the terms, definitions and any outline you write are sent to our
           AI provider.
         </p>
@@ -92,7 +92,7 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
   if (ai.kind === "unavailable" && ai.reason === "exhausted") {
     return (
       <HighlightPanel label="AI credits">
-        <p className="m-0 text-sm text-base-content/60">
+        <p className="m-0 text-sm text-base-content/70">
           You&apos;ve used your AI credits for now. Add your own key below to keep going.
         </p>
       </HighlightPanel>
@@ -164,7 +164,7 @@ export function LlmPanel({ initialSettings, ai }: LlmPanelProps) {
       id="ai"
       icon={Sparkles}
       title="AI provider"
-      description="Use AI credits, or connect your own LLM provider to power AI quizzes and Stories."
+      description="Powers AI quizzes and Stories."
       status={
         <StatusPill
           variant={llmConfigured ? "connected" : showCredits ? "credits" : "disconnected"}

@@ -24,7 +24,7 @@ export function BackLink({
     <LinkButton
       href={href}
       variant={variant}
-      className={cn("shrink-0 text-base-content/60 hover:text-base-content", className)}
+      className={cn("shrink-0 text-base-content/70 hover:text-base-content", className)}
     >
       <ArrowLeft className="size-3.5" aria-hidden />
       <span className="hidden md:inline">{label}</span>

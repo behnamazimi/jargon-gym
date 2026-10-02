@@ -30,7 +30,7 @@ export default async function ImportPage() {
   ]);
 
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
 
   return (

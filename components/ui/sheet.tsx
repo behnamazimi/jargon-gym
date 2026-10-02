@@ -115,11 +115,7 @@ function SheetContent({
 
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
-    <div
-      data-slot="sheet-header"
-      className={cn("flex flex-col gap-1.5 p-6", className)}
-      {...props}
-    />
+    <div data-slot="sheet-header" className={cn("flex flex-col gap-2 p-6", className)} {...props} />
   );
 }
 
@@ -148,7 +144,7 @@ function SheetDescription({ className, ...props }: Omit<React.ComponentProps<"di
   return (
     <div
       data-slot="sheet-description"
-      className={cn("text-xs text-base-content/60", className)}
+      className={cn("text-xs text-base-content/70", className)}
       {...props}
     />
   );

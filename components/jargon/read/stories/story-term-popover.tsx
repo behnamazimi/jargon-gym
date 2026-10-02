@@ -29,10 +29,10 @@ export function StoryTermPopover({ text, term }: { text: string; term: StoryTerm
         className="z-50 w-72 max-w-[calc(100vw-2rem)] rounded-box bg-base-100 p-4 shadow-lg ring-1 ring-base-content/10"
       >
         <Dialog className="space-y-1 outline-none" aria-label={term.term}>
-          <Heading slot="title" className="m-0 text-sm font-semibold">
+          <Heading slot="title" className="m-0 text-sm font-medium">
             {term.term}
           </Heading>
-          <p className="m-0 text-sm leading-relaxed text-base-content/70">{term.definition}</p>
+          <p className="m-0 text-sm text-base-content/70">{term.definition}</p>
         </Dialog>
       </Popover>
     </DialogTrigger>
