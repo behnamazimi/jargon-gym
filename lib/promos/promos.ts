@@ -95,9 +95,9 @@ export const PROMOS = [
     condition: ({ reviews, reads }) => reviews + reads > 0,
     snoozeDays: 14,
     title: "Already know some terms?",
-    body: "Sort them in a minute and skip what you know.",
+    body: "Triage them in a minute and skip what you know.",
     href: "/jargon/triage",
-    cta: "Sort terms",
+    cta: "Try Triage",
   },
 ] as const satisfies readonly Promo[];
 
