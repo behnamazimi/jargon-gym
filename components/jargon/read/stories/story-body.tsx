@@ -68,7 +68,7 @@ export function StoryBody({
   keepInView: (node: HTMLElement | null) => void;
 }) {
   return (
-    <div className="flex max-w-prose flex-col gap-4 text-[1.0625rem] leading-7 break-words text-base-content/90">
+    <div className="reading-text flex max-w-prose flex-col gap-4 text-[1.0625rem] leading-7 break-words text-base-content/90">
       {timeline ? (
         <HighlightedParagraphs
           timeline={timeline}

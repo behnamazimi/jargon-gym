@@ -117,6 +117,11 @@
   }
 }
 
+/* Long-form reading text sits a touch heavier than UI text. */
+@utility reading-text {
+  font-weight: 450;
+}
+
 @utility pb-dock {
   padding-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom));
 }

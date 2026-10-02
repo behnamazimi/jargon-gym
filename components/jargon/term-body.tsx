@@ -113,7 +113,7 @@ function RelationshipsList({ term, labels, getRelationshipHref }: RelationshipsL
   return (
     <ul
       aria-label={labels.relatedTerms}
-      className="m-0 mt-2 max-w-prose list-disc space-y-2 ps-5 text-base text-base-content/85"
+      className="m-0 mt-2 reading-text max-w-prose list-disc space-y-2 ps-5 text-base text-base-content/90"
     >
       {term.relationships.map((relationship) => {
         const description = relationship.description?.trim() ?? "";
@@ -163,7 +163,7 @@ export function TermBody({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <p className="m-0 max-w-prose text-base whitespace-pre-line text-base-content/85">
+      <p className="reading-text m-0 max-w-prose text-base whitespace-pre-line text-base-content/90">
         {term.definition}
       </p>
 
