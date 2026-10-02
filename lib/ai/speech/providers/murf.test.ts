@@ -44,9 +44,9 @@ describe("murfProvider (Falcon 2)", () => {
     expect(sentBody()).not.toHaveProperty("modelVersion");
   });
 
-  it("asks for the Dutch locale for Dutch collections", async () => {
+  it("uses a Dutch voice and locale for Dutch collections", async () => {
     await murfProvider.synthesize({ ...request, language: "nl" });
-    expect(sentBody().locale).toBe("nl-NL");
+    expect(sentBody()).toMatchObject({ voiceId: "nl-NL-dirk", locale: "nl-NL" });
   });
 
   it("sends no pause markers to Falcon 2", async () => {

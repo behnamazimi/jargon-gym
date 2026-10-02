@@ -6,11 +6,10 @@ const MODEL: keyof typeof MODELS = "falcon-2";
 // Short enough that the fallback still fits in the narration routes' 60 second limit.
 const REQUEST_TIMEOUT_MS = 25_000;
 
-// One voice for every language for now; Murf reads the locale below.
-const VOICE_ID = "en-US-miles";
-const LOCALE_BY_LANGUAGE: Record<DomainLanguage, string> = {
-  en: "en-US",
-  nl: "nl-NL",
+// Each voice is native to one language; an English voice reading Dutch mixes the pronunciations.
+const VOICE_BY_LANGUAGE: Record<DomainLanguage, { voiceId: string; locale: string }> = {
+  en: { voiceId: "en-US-miles", locale: "en-US" },
+  nl: { voiceId: "nl-NL-dirk", locale: "nl-NL" },
 };
 
 const MODELS = {
@@ -50,8 +49,7 @@ export function createMurfProvider(modelName: keyof typeof MODELS): SpeechProvid
         headers: { "api-key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({
           text: renderPauses(script, model.pauses),
-          voiceId: VOICE_ID,
-          locale: LOCALE_BY_LANGUAGE[language],
+          ...VOICE_BY_LANGUAGE[language],
           format: "MP3",
           ...model.body,
         }),
