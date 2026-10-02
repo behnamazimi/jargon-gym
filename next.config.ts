@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 import { LEGACY_ADMIN_REDIRECTS } from "./lib/redirects";
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   experimental: {
     optimizePackageImports: ["react-aria-components", "lucide-react"],
   },

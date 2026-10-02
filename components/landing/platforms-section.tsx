@@ -11,7 +11,7 @@ const PLATFORMS: { icon: LucideIcon; label: string }[] = [
 export function PlatformsSection() {
   return (
     <div>
-      <h2 className="m-0 text-3xl font-bold tracking-tight text-base-content sm:text-4xl">
+      <h2 className="m-0 text-3xl font-semibold tracking-tight text-balance text-base-content sm:text-4xl">
         Same queue, <span className="italic">everywhere</span>
       </h2>
       <p className="mt-3 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">

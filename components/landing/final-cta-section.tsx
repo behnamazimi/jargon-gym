@@ -5,7 +5,7 @@ import { LandingCtas } from "./landing-ctas";
 export function FinalCtaSection({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
     <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/[0.03] p-8 sm:p-12">
-      <h2 className="m-0 text-4xl font-bold tracking-tight text-base-content sm:text-5xl">
+      <h2 className="m-0 text-4xl font-semibold tracking-tight text-balance text-base-content sm:text-4xl md:text-5xl">
         <span className="text-primary">Free.</span> Invite-only.
       </h2>
       <p className="mt-3 m-0 max-w-[48ch] text-base leading-relaxed text-base-content/85">

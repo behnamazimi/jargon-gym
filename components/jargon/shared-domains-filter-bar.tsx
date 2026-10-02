@@ -55,7 +55,7 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
           onChange={(event) => browse.setSearchInput(event.target.value)}
           placeholder="Search collections…"
           aria-label="Search shared collections"
-          className="h-11 min-w-0 text-sm"
+          className="h-11 min-w-0 text-base sm:text-sm"
         />
         {browse.isRefreshing ? (
           <span className="loading loading-spinner loading-sm me-2 text-base-content/70" />

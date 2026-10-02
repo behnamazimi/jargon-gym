@@ -29,8 +29,8 @@ export async function LandingPage() {
 
         <div className="mt-16 space-y-14 sm:mt-24 sm:space-y-20">
           <ThreeWaysSection />
-          <AiSection />
           <NotSrsSection />
+          <AiSection />
           <BringYourOwnSection />
           <PlatformsSection />
           <FinalCtaSection isLoggedIn={isLoggedIn} />

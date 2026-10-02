@@ -10,7 +10,7 @@ function Textarea({ className, ...props }: React.ComponentProps<typeof TextareaP
     <TextareaPrimitive
       data-slot="textarea"
       className={composeRenderProps(className, (className) =>
-        cn("textarea w-full aria-invalid:textarea-error", className),
+        cn("textarea w-full text-base aria-invalid:textarea-error sm:text-sm", className),
       )}
       {...props}
     />

@@ -6,11 +6,11 @@ const JARGON_GYM_ROWS = ["Burn rate", "ARR", "Vesting"];
 function SrsComparison() {
   return (
     <div className="grid grid-cols-2 gap-3" aria-hidden>
-      <div className="rounded-xl border border-base-300 bg-base-200/40 p-4">
+      <div className="rounded-2xl border border-base-300 bg-base-200/40 p-5">
         <p className="m-0 text-xs font-semibold tracking-wide text-base-content/50">
-          Spaced repetition apps
+          Spaced repetition apps (example)
         </p>
-        <p className="font-heading m-0 mt-2 text-2xl font-bold text-error">47</p>
+        <p className="font-heading m-0 mt-2 text-4xl font-bold text-error">47</p>
         <p className="m-0 text-xs text-base-content/50">cards overdue</p>
         <div className="mt-3 space-y-1.5">
           {SRS_ROWS.map((label) => (
@@ -23,9 +23,9 @@ function SrsComparison() {
           ))}
         </div>
       </div>
-      <div className="rounded-xl border border-primary/25 bg-primary/[0.06] p-4">
+      <div className="rounded-2xl border border-primary/25 bg-primary/[0.06] p-5">
         <p className="m-0 text-xs font-semibold tracking-wide text-primary">Jargon Gym</p>
-        <p className="font-heading m-0 mt-2 text-2xl font-bold text-primary">0</p>
+        <p className="font-heading m-0 mt-2 text-4xl font-bold text-primary">0</p>
         <p className="m-0 text-xs text-base-content/50">due dates</p>
         <div className="mt-3 space-y-1.5">
           {JARGON_GYM_ROWS.map((label) => (
@@ -42,9 +42,9 @@ function SrsComparison() {
 
 export function NotSrsSection() {
   return (
-    <div className="grid max-w-4xl grid-cols-1 items-center gap-8 sm:grid-cols-[1.2fr_1fr] sm:gap-10">
+    <div className="grid max-w-5xl grid-cols-1 items-center gap-8 sm:grid-cols-[1fr_1fr] sm:gap-12">
       <div>
-        <h2 className="m-0 max-w-[14ch] text-4xl font-bold tracking-tight text-balance text-base-content sm:text-5xl">
+        <h2 className="m-0 max-w-[14ch] text-4xl font-semibold tracking-tight text-balance text-base-content sm:text-4xl md:text-5xl">
           No{" "}
           <span className="relative inline-block">
             due dates

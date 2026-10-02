@@ -13,7 +13,10 @@ export function StudyPhoneDockSkeleton() {
   return (
     <nav
       aria-hidden
-      className={cn("dock dock-md pb-safe md:hidden", !isDockPath(pathname) && "hidden")}
+      className={cn(
+        "dock dock-md bg-base-100/80 pb-safe backdrop-blur-sm md:hidden",
+        !isDockPath(pathname) && "hidden",
+      )}
     >
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex min-h-11 items-center justify-center">

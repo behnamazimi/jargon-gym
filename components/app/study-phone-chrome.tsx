@@ -97,7 +97,7 @@ function DockItemLabel({ active, children }: { active: boolean; children: ReactN
   return (
     <span
       className={cn(
-        "dock-label grid overflow-hidden text-center font-medium leading-none transition-[grid-template-rows,opacity] duration-300 ease-out",
+        "dock-label grid overflow-hidden text-center text-xs font-medium leading-none transition-[grid-template-rows,opacity] duration-300 ease-out",
         active ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
       )}
     >
@@ -114,7 +114,10 @@ export function StudyPhoneDock() {
   return (
     <nav
       aria-label="Primary"
-      className={cn("dock dock-md pb-safe md:hidden", !isDockPath(pathname) && "hidden")}
+      className={cn(
+        "dock dock-md bg-base-100/80 pb-safe backdrop-blur-sm md:hidden",
+        !isDockPath(pathname) && "hidden",
+      )}
     >
       {STUDY_DOCK_TABS.map((tab) => {
         const active =
