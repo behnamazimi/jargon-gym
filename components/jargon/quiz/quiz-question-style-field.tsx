@@ -1,5 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 
 type QuizQuestionStyleFieldProps = {
@@ -11,35 +10,24 @@ export function QuizQuestionStyleField({ value, onChange }: QuizQuestionStyleFie
   return (
     <fieldset data-tour="quiz-style" className="flex flex-col gap-2 border-0 p-0">
       <legend className="mb-2 text-sm font-medium leading-none">Question style</legend>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onPress={() => onChange("simple")}
-          aria-pressed={value === "simple"}
-          className={cn(
-            "flex-1",
-            value === "simple" &&
-              "border-primary bg-primary/10 text-primary-text hover:bg-primary/15",
-          )}
-        >
+      <ToggleGroup
+        aria-label="Question style"
+        selectionMode="single"
+        disallowEmptySelection
+        selectedKeys={[value]}
+        onSelectionChange={(keys) => {
+          const [key] = [...keys];
+          if (key) onChange(key as QuizQuestionStyle);
+        }}
+        className="flex-nowrap"
+      >
+        <ToggleGroupItem id="simple" className="flex-1 px-2">
           Simple
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onPress={() => onChange("ai")}
-          aria-pressed={value === "ai"}
-          className={cn(
-            "flex-1",
-            value === "ai" && "border-primary bg-primary/10 text-primary-text hover:bg-primary/15",
-          )}
-        >
+        </ToggleGroupItem>
+        <ToggleGroupItem id="ai" className="flex-1 px-2">
           AI
-        </Button>
-      </div>
+        </ToggleGroupItem>
+      </ToggleGroup>
       <p className="m-0 text-xs text-base-content/70">
         {value === "simple"
           ? "See a definition or example, and pick the correct term."
