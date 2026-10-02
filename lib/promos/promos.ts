@@ -43,7 +43,7 @@ export const PROMOS = [
     priority: 40,
     condition: ({ reviews }) => reviews >= REVIEWS_FOR_QUIZ,
     snoozeDays: 14,
-    title: "Ready for a quick quiz?"
+    title: "Ready for a quick quiz?",
     body: "You've been busy reviewing. See which terms have really stuck.",
     href: "/jargon/quiz",
     cta: "Take a quiz",
@@ -56,7 +56,7 @@ export const PROMOS = [
     priority: 30,
     condition: ({ reads }) => reads >= READS_FOR_STORIES,
     snoozeDays: 14,
-    title: "Meet your terms in a story"
+    title: "Meet your terms in a story",
     body: "A short read built from the terms you've been learning.",
     href: "/jargon/read/stories",
     cta: "Read a story",
@@ -68,7 +68,7 @@ export const PROMOS = [
     priority: 20,
     condition: ({ reviews }) => reviews >= REVIEWS_FOR_MASTERY,
     snoozeDays: 14,
-    title: "How well do you remember?"
+    title: "How well do you remember?",
     body: "See where each term stands, from new to solid.",
     href: "/jargon/mastery",
     cta: "See my mastery",
@@ -81,7 +81,7 @@ export const PROMOS = [
     priority: 10,
     condition: ({ accountAgeDays }) => accountAgeDays >= DAYS_BEFORE_BROWSE,
     snoozeDays: 14,
-    title: "Looking for more to learn?"
+    title: "Looking for more to learn?",
     body: "Browse collections others have shared and add your favorites.",
     href: "/jargon/browse",
     cta: "Browse",
@@ -94,7 +94,7 @@ export const PROMOS = [
     priority: 5,
     condition: ({ reviews, reads }) => reviews + reads > 0,
     snoozeDays: 14,
-    title: "Already know some terms?"
+    title: "Already know some terms?",
     body: "Sort them in a minute and skip what you know.",
     href: "/jargon/triage",
     cta: "Sort terms",
