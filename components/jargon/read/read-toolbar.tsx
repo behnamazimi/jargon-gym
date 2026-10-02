@@ -44,7 +44,7 @@ export function ReadToolbar({
             }}
             onChange={onCollectionChange}
           />
-          <span className="shrink-0 text-xs text-base-content/50 tabular-nums">
+          <span className="shrink-0 text-xs text-base-content/70 tabular-nums">
             {termCountForSelection(selectedCollectionId, collections)} available
           </span>
         </div>

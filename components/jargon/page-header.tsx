@@ -34,7 +34,7 @@ export function PageHeader({
           <h1 className="font-heading text-xl font-bold tracking-tight text-base-content">
             {title}
           </h1>
-          {description ? <p className="mt-1 text-sm text-base-content/60">{description}</p> : null}
+          {description ? <p className="mt-1 text-sm text-base-content/70">{description}</p> : null}
         </div>
       </div>
       {showBack ? <BackLink href={backHref} label={backLabel} /> : null}

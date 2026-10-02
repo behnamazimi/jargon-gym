@@ -75,7 +75,7 @@ export function FirstExposureKnownPrompt({
         className="pointer-events-auto bg-base-100 shadow-none"
         onPress={handleMarkKnown}
       >
-        <span className="font-normal text-base-content/60">Already know it?</span>
+        <span className="font-normal text-base-content/70">Already know it?</span>
         <span className="font-semibold">Mark as known</span>
       </Button>
     </div>

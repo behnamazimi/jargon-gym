@@ -38,7 +38,7 @@ export function QuizChoice({
       <RadioButton
         className={({ isSelected, isFocusVisible, isDisabled }) =>
           cn(
-            "flex min-h-11 w-full items-start gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm outline-none transition-[color,background-color,box-shadow,transform] duration-150",
+            "flex min-h-11 w-full items-start gap-2.5 rounded-field px-3.5 py-2.5 text-left text-sm outline-none transition-[color,background-color,box-shadow,transform] duration-150",
             result !== "default"
               ? cn(RESULT_STATE_CLASS[result], "quiz-choice-reveal")
               : isSelected

@@ -89,7 +89,7 @@ export function TriagePage({
     <div className="flex shrink-0 items-center justify-between gap-3">
       {collectionPicker}
       {current ? (
-        <p className="m-0 shrink-0 text-sm tabular-nums text-base-content/60">{deck.length} left</p>
+        <p className="m-0 shrink-0 text-sm tabular-nums text-base-content/70">{deck.length} left</p>
       ) : null}
     </div>
   );

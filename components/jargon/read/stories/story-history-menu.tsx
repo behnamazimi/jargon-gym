@@ -30,7 +30,7 @@ function VoteIcon({ vote }: { vote: StorySummary["vote"] }) {
   }
   if (vote === -1) {
     return (
-      <ThumbsDown className="size-4 text-base-content/50" aria-label="Disliked" strokeWidth={1.5} />
+      <ThumbsDown className="size-4 text-base-content/70" aria-label="Disliked" strokeWidth={1.5} />
     );
   }
   return null;
@@ -59,7 +59,7 @@ function HistoryRow({
           <span className="block truncate text-sm font-medium text-base-content">
             {story.title}
           </span>
-          <span className="block text-xs text-base-content/60">
+          <span className="block text-xs text-base-content/70">
             {storyMetaLabels(story).join(" · ")}
           </span>
         </span>
@@ -88,7 +88,7 @@ function HistoryList({
   if (state.status === "loading") {
     return (
       <div className="flex justify-center px-4 py-6">
-        <span className="loading loading-spinner loading-sm text-base-content/50" role="status" />
+        <span className="loading loading-spinner loading-sm text-base-content/70" role="status" />
       </div>
     );
   }
@@ -96,7 +96,7 @@ function HistoryList({
     return <p className="m-0 px-4 py-4 text-sm text-error">{state.message}</p>;
   }
   if (state.stories.length === 0) {
-    return <p className="m-0 px-4 py-4 text-sm text-base-content/60">No stories yet.</p>;
+    return <p className="m-0 px-4 py-4 text-sm text-base-content/70">No stories yet.</p>;
   }
   return (
     <ul className="m-0 max-h-96 list-none divide-y divide-base-300/60 overflow-y-auto p-0">

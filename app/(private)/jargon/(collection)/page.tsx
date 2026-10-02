@@ -63,7 +63,7 @@ async function loadCanRequest(supabase: Client, userId: string) {
 function LoadError({ message }: { message: string }) {
   return (
     <PageCenter className="gap-3">
-      <p className="text-sm text-base-content/60">{message}</p>
+      <p className="text-sm text-base-content/70">{message}</p>
       <LinkButton href="/jargon/import">Add your own terms</LinkButton>
     </PageCenter>
   );
@@ -76,7 +76,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
   if ("error" in auth) {
     return (
       <PageCenter>
-        <p className="text-sm text-base-content/60">Log in to view your collection.</p>
+        <p className="text-sm text-base-content/70">Log in to view your collection.</p>
       </PageCenter>
     );
   }

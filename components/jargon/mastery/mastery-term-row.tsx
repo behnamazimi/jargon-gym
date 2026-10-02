@@ -28,7 +28,7 @@ function JourneyLine({ journey }: { journey: MasteryTermJourney }) {
         Learned in {days}.
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <p className="m-0 mt-0.5 text-xs text-base-content/50">
+        <p className="m-0 mt-0.5 text-xs text-base-content/70">
           First seen {formatShortDate(journey.firstSeenAt)} → mastered{" "}
           {formatShortDate(journey.masteredAt)} ({days})
         </p>
@@ -39,7 +39,7 @@ function JourneyLine({ journey }: { journey: MasteryTermJourney }) {
 
 export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: MasteryTermRowData }) {
   return (
-    <li className="shadow-surface flex items-center justify-between gap-4 rounded-2xl bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
+    <li className="shadow-surface flex items-center justify-between gap-4 rounded-box bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="truncate font-heading text-sm font-semibold text-base-content">
@@ -49,7 +49,7 @@ export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: Maste
             <Check className="size-4 shrink-0 text-success" aria-label="Known" strokeWidth={2.5} />
           ) : null}
         </div>
-        <p className="m-0 mt-0.5 truncate text-xs text-base-content/60">
+        <p className="m-0 mt-0.5 truncate text-xs text-base-content/70">
           {row.category ? `${row.domainName} · ${row.category}` : row.domainName}
         </p>
         {row.known && row.journey ? <JourneyLine journey={row.journey} /> : null}
@@ -62,7 +62,7 @@ export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: Maste
         ) : (
           <>
             <MasteryBars score={row.score} tier={row.tier} />
-            <span className="text-xs text-base-content/60 tabular-nums">
+            <span className="text-xs text-base-content/70 tabular-nums">
               {TIER_LABEL[row.tier]} ({row.score}/100)
             </span>
           </>

@@ -33,7 +33,7 @@ export function RequestSent({
 
   return (
     <div className="space-y-5 pt-2">
-      <div className="flex size-12 items-center justify-center rounded-2xl bg-success/15 text-success">
+      <div className="flex size-12 items-center justify-center rounded-box bg-success/15 text-success">
         <Check className="size-6" aria-hidden strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
@@ -45,12 +45,12 @@ export function RequestSent({
         </p>
       </div>
 
-      <div className="shadow-surface space-y-3 rounded-2xl bg-base-100 p-4">
+      <div className="shadow-surface space-y-3 rounded-box bg-base-100 p-4">
         <h3 className="m-0 text-sm font-semibold">{SENT.howTitle}</h3>
         <label className="flex min-h-11 items-center justify-between gap-3">
           <span>
             <span className="block font-medium">{SENT.email}</span>
-            <span className="block text-sm text-base-content/60">{SENT.emailHint}</span>
+            <span className="block text-sm text-base-content/70">{SENT.emailHint}</span>
           </span>
           <Switch
             aria-label={SENT.email}

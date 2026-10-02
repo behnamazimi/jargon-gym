@@ -190,8 +190,8 @@ export function ReviewPage({
         <div className="flex shrink-0 items-center">{collectionControl}</div>
         <QuizPanel>
           <div className="flex items-center gap-3 px-5 py-5 sm:px-6">
-            <span className="loading loading-spinner loading-sm text-base-content/60" />
-            <p className="m-0 text-sm text-base-content/60">Finding terms to review.</p>
+            <span className="loading loading-spinner loading-sm text-base-content/70" />
+            <p className="m-0 text-sm text-base-content/70">Finding terms to review.</p>
           </div>
         </QuizPanel>
       </div>

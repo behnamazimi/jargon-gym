@@ -78,13 +78,13 @@ export function CopyField({
       {label || hint ? (
         <div className="space-y-0.5">
           {label ? <p className="m-0 text-sm font-medium">{label}</p> : null}
-          {hint ? <p className="m-0 text-xs leading-relaxed text-base-content/60">{hint}</p> : null}
+          {hint ? <p className="m-0 text-xs leading-relaxed text-base-content/70">{hint}</p> : null}
         </div>
       ) : null}
       <div className="flex flex-col gap-2 md:flex-row md:items-start">
         <pre
           className={cn(
-            "m-0 min-w-0 flex-1 overflow-x-auto rounded-lg bg-base-200/40 px-3 py-2.5 text-xs leading-5 break-all whitespace-pre-wrap text-base-content",
+            "m-0 min-w-0 flex-1 overflow-x-auto rounded-field bg-base-200/40 px-3 py-2.5 text-xs leading-5 break-all whitespace-pre-wrap text-base-content",
             monospace && "font-mono",
           )}
         >
@@ -110,7 +110,7 @@ export function AlertBanner({ message }: { message: string }) {
 
 export function HighlightPanel({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="space-y-3 rounded-lg border border-base-300/80 bg-base-200/40 px-3 py-3">
+    <div className="space-y-3 rounded-field bg-base-200/50 px-3 py-3">
       <p className="m-0 text-sm font-medium">{label}</p>
       <div className="space-y-3">{children}</div>
     </div>
@@ -132,7 +132,7 @@ export function TokenRow({
     <li className="flex flex-col gap-3 py-3 first:pt-0 last:pb-0 md:flex-row md:items-center md:justify-between">
       <div className="min-w-0">
         <p className="m-0 text-sm font-medium">{label}</p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-base-content/60">
+        <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-base-content/70">
           <span>{meta}</span>
           {badge}
         </p>

@@ -25,7 +25,7 @@ function Format({
       <p className="m-0 text-sm text-base-content/70">{children}</p>
       {example ? (
         <div className="relative">
-          <pre className="m-0 rounded-lg bg-base-200/60 px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap">
+          <pre className="m-0 rounded-field bg-base-200/60 px-3 py-2 font-mono text-xs leading-5 whitespace-pre-wrap">
             {example}
           </pre>
           {copyLabel ? (
@@ -52,7 +52,7 @@ export function FormatHelpButton({ className }: { className?: string }) {
         variant="ghost"
         size="icon-sm"
         aria-label="What formats can I paste?"
-        className={`min-h-11 min-w-11 text-base-content/60 md:min-h-8 md:min-w-8 ${className ?? ""}`}
+        className={`min-h-11 min-w-11 text-base-content/70 md:min-h-8 md:min-w-8 ${className ?? ""}`}
         onPress={() => setOpen(true)}
       >
         <CircleHelp className="size-5" aria-hidden strokeWidth={1.5} />

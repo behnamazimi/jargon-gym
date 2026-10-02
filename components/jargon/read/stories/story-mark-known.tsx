@@ -28,7 +28,7 @@ export function StoryMarkKnown({ termId, term }: { termId: string; term: string 
       size="xs"
       variant="ghost"
       aria-label={`Mark ${term} as known`}
-      className="h-7 px-2 text-xs font-medium text-base-content/60 hover:text-base-content"
+      className="h-7 px-2 text-xs font-medium text-base-content/70 hover:text-base-content"
       onPress={async () => {
         setMarked(true);
         const { error, savedAt } = await setTermMarkedKnownAction(termId, true);

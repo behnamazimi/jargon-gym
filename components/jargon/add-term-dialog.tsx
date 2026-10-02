@@ -172,7 +172,7 @@ function AddTermForm({
           <Alert>
             <AlertDescription>
               <p className="m-0">&ldquo;{duplicate.term}&rdquo; is already in this collection.</p>
-              <p className="m-0 text-base-content/60">
+              <p className="m-0 text-base-content/70">
                 Different meaning? Add a qualifier, like &ldquo;SLA (legal)&rdquo;.
               </p>
             </AlertDescription>
@@ -201,20 +201,20 @@ function AddTermForm({
             placeholder="What does it mean?"
             onChange={(event) => updateField("definition", event.target.value)}
           />
-          <p className="m-0 mt-1 text-xs text-base-content/60">Leave it empty to finish later.</p>
+          <p className="m-0 mt-1 text-xs text-base-content/70">Leave it empty to finish later.</p>
         </Field>
 
         <Collapsible isExpanded={detailsOpen} onExpandedChange={setDetailsOpen}>
           <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between gap-2 text-left text-sm">
             <span>
               <span className="font-medium">More details</span>
-              <span className="block text-xs text-base-content/60">
+              <span className="block text-xs text-base-content/70">
                 Category, example, notes and links to other terms
               </span>
             </span>
             <ChevronDown
               className={cn(
-                "size-4 shrink-0 text-base-content/60 transition-transform motion-reduce:transition-none",
+                "size-4 shrink-0 text-base-content/70 transition-transform motion-reduce:transition-none",
                 detailsOpen && "rotate-180",
               )}
               aria-hidden

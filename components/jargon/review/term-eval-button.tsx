@@ -70,6 +70,7 @@ export function TermEvalButton({ termId }: { termId: string }) {
         type="button"
         variant="ghost"
         size="icon-sm"
+        className="hit-area"
         aria-label={scoreText ? `Schema fit ${scoreText}` : "Evaluate this term"}
         isDisabled={status === "loading"}
         onPress={() => {

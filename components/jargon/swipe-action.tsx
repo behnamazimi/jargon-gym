@@ -27,7 +27,7 @@ export function SwipeActionLabel({
       ref={ref}
       aria-hidden
       className={cn(
-        "pointer-events-none inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold",
+        "pointer-events-none inline-flex items-center gap-1.5 rounded-field px-3 py-2 text-sm font-semibold",
         tone,
         className,
       )}

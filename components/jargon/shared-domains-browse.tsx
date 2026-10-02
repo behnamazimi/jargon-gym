@@ -103,7 +103,7 @@ export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomains
           className="flex min-h-11 items-center justify-center py-3"
         >
           {browse.isLoadingMore ? (
-            <span className="loading loading-spinner loading-sm text-base-content/60" />
+            <span className="loading loading-spinner loading-sm text-base-content/70" />
           ) : (
             <span className="sr-only">Loading more collections</span>
           )}

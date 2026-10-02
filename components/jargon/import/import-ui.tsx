@@ -21,19 +21,19 @@ function ImportCardHeaderContent({
 }) {
   return (
     <>
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary [&>svg]:size-5">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-field bg-primary/10 text-primary [&>svg]:size-5">
         {icon}
       </div>
       <div className="min-w-0 flex-1 space-y-1 text-left">
         <h2 className="m-0 text-base font-semibold">{title}</h2>
         {headerDescription ? (
-          <p className="m-0 text-sm leading-relaxed text-base-content/60">{headerDescription}</p>
+          <p className="m-0 text-sm leading-relaxed text-base-content/70">{headerDescription}</p>
         ) : null}
       </div>
       {collapsible ? (
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 text-base-content/60 transition-transform duration-200 ease-out motion-reduce:transition-none",
+            "size-4 shrink-0 text-base-content/70 transition-transform duration-200 ease-out motion-reduce:transition-none",
             expanded && "rotate-180",
           )}
           aria-hidden
@@ -56,7 +56,7 @@ function ImportCardBody({
   return (
     <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
       {collapsible && description ? (
-        <p className="m-0 text-sm leading-relaxed text-base-content/60">{description}</p>
+        <p className="m-0 text-sm leading-relaxed text-base-content/70">{description}</p>
       ) : null}
       {children}
     </div>
@@ -64,7 +64,7 @@ function ImportCardBody({
 }
 
 const cardShellClassName = (className?: string) =>
-  cn("shadow-surface overflow-hidden rounded-2xl ring-1 ring-base-content/5", className);
+  cn("shadow-surface overflow-hidden rounded-box ring-1 ring-base-content/5", className);
 
 type ImportCardShellProps = {
   className?: string;
@@ -184,8 +184,8 @@ export function ImportCodePanel({
 }) {
   return (
     <div className="relative">
-      <div className="shadow-surface max-h-[320px] overflow-auto rounded-xl bg-base-200/30 p-1">
-        <pre className="m-0 rounded-lg bg-base-100 p-3 text-xs leading-5 whitespace-pre-wrap text-base-content ring-1 ring-base-content/[0.06] dark:ring-base-100/[0.06]">
+      <div className="shadow-surface max-h-[320px] overflow-auto rounded-field bg-base-200/30 p-1">
+        <pre className="m-0 rounded-field bg-base-100 p-3 text-xs leading-5 whitespace-pre-wrap text-base-content ring-1 ring-base-content/[0.06] dark:ring-base-100/[0.06]">
           {children}
         </pre>
       </div>

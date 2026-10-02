@@ -66,14 +66,15 @@ function ChoiceField<T extends string>({
             aria-pressed={value === option}
             className={cn(
               "flex-1 px-2",
-              value === option && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
+              value === option &&
+                "border-primary bg-primary/10 text-primary-text hover:bg-primary/15",
             )}
           >
             {choices[option].label}
           </Button>
         ))}
       </div>
-      <p className="m-0 text-xs leading-relaxed text-base-content/60">{choices[value].hint}</p>
+      <p className="m-0 text-xs leading-relaxed text-base-content/70">{choices[value].hint}</p>
     </fieldset>
   );
 }

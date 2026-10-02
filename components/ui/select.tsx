@@ -45,7 +45,7 @@ function SelectValue<T extends object>({ className, children, ...props }: Select
   return (
     <SelectValuePrimitive
       data-slot="select-value"
-      className={cn("flex flex-1 text-left data-placeholder:text-base-content/60", className)}
+      className={cn("flex flex-1 text-left data-placeholder:text-base-content/70", className)}
       {...props}
     >
       {typeof children === "function"
@@ -70,7 +70,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "select w-full items-center justify-between gap-1.5",
+        "select w-full items-center justify-between gap-1.5 bg-none",
         size === "sm" && "select-sm",
         "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5",
         className,
@@ -174,7 +174,7 @@ function SelectLabel({ className, ...props }: React.ComponentProps<typeof Header
   return (
     <HeaderPrimitive
       data-slot="select-label"
-      className={cn("px-2 py-1.5 text-xs text-base-content/60", className)}
+      className={cn("px-2 py-1.5 text-xs text-base-content/70", className)}
       {...props}
     />
   );
@@ -223,7 +223,7 @@ function SelectEmpty({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="select-empty"
       className={cn(
-        "hidden w-full justify-center py-2 text-center text-sm text-base-content/60 group-data-empty/select-list:flex",
+        "hidden w-full justify-center py-2 text-center text-sm text-base-content/70 group-data-empty/select-list:flex",
         className,
       )}
       {...props}

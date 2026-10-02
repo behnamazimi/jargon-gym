@@ -125,7 +125,7 @@ function RelationshipsList({ term, labels, getRelationshipHref }: RelationshipsL
               <RelatedTermLink relationship={relationship} href={href} />
             </span>
             {description ? (
-              <span className="mt-1 block whitespace-pre-line text-base-content/65">
+              <span className="mt-1 block whitespace-pre-line text-base-content/70">
                 {description}
               </span>
             ) : null}
@@ -140,7 +140,7 @@ function SearchLink({ term, labels }: { term: Term; labels: Labels }) {
   const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(`${term.term} definition`)}`;
   return (
     <a
-      className="inline-flex items-center gap-1.5 text-base text-base-content/55 no-underline transition-colors duration-150 hover:text-base-content hover:underline"
+      className="inline-flex items-center gap-1.5 text-base text-base-content/70 no-underline transition-colors duration-150 hover:text-base-content hover:underline"
       href={searchUrl}
       target="_blank"
       rel="noopener noreferrer"

@@ -41,18 +41,18 @@ function ReadCardMasked({
           </>
         )}
       </h2>
-      <p className="m-0 text-xs tracking-wide text-base-content/50">
+      <p className="m-0 text-xs tracking-wide text-base-content/70">
         <span>{term.domainName}</span>
         {term.category ? (
           <>
-            <span className="mx-1.5 text-base-content/35" aria-hidden>
+            <span className="mx-1.5 text-base-content/50" aria-hidden>
               ·
             </span>
             <span>{term.category}</span>
           </>
         ) : null}
       </p>
-      <div className="mt-1 flex items-center gap-2 text-sm text-base-content/60">
+      <div className="mt-1 flex items-center gap-2 text-sm text-base-content/70">
         <Eye className="size-4 shrink-0" aria-hidden strokeWidth={1.5} />
         <span className="inline md:hidden coarse:inline">Tap to reveal</span>
         <span className="hidden md:inline coarse:hidden">Click or press Enter to reveal</span>

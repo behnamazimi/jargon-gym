@@ -196,7 +196,7 @@ export function StoryAudioControls({
         onChange={(event) => seekTo(Number(event.target.value))}
         className="range range-sm range-primary mx-1.5 min-w-0 flex-1 sm:range-xs"
       />
-      <span className="shrink-0 text-xs text-base-content/60 tabular-nums max-[359px]:hidden">
+      <span className="shrink-0 text-xs text-base-content/70 tabular-nums max-[359px]:hidden">
         {formatPlaybackTime(currentTime)}
         <span className="max-sm:hidden"> / {formatPlaybackTime(duration)}</span>
       </span>

@@ -18,7 +18,7 @@ export function TermActionsMenu({ termName, onEdit, onDelete }: TermActionsMenuP
       <Button
         variant="ghost"
         size="icon-sm"
-        className="text-base-content/60 hover:text-base-content"
+        className="hit-area text-base-content/70 hover:text-base-content"
         aria-label={`Actions for ${termName}`}
       >
         <MoreVertical className="size-4" />

@@ -76,7 +76,7 @@ function activeCollectionsKey(collections: StudyCollection[]): string {
 }
 
 function LoginPrompt() {
-  return <p className="text-sm text-base-content/60">Log in to read terms.</p>;
+  return <p className="text-sm text-base-content/70">Log in to read terms.</p>;
 }
 
 export default async function JargonReadPage({ searchParams }: PageProps) {

@@ -12,7 +12,7 @@ export function StudyProgress({ current, total, unitLabel, className }: StudyPro
 
   return (
     <div className={cn("min-w-0 w-full space-y-2", className)}>
-      <div className="flex items-center justify-between gap-3 text-xs text-base-content/60">
+      <div className="flex items-center justify-between gap-3 text-xs text-base-content/70">
         <span className="font-medium tabular-nums">
           {unitLabel} {current} of {total}
         </span>

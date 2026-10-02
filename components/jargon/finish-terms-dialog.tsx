@@ -54,7 +54,7 @@ function FinishRow({ term, onRemoved }: { term: UnfinishedLibraryTerm; onRemoved
   }
 
   return (
-    <li className="space-y-2 rounded-xl bg-base-200/60 p-3">
+    <li className="space-y-2 rounded-field bg-base-200/60 p-3">
       <Field>
         <FieldLabel htmlFor={inputId}>{term.term}</FieldLabel>
         <Textarea
@@ -124,7 +124,7 @@ export function FinishTermsDialog({
       </DialogHeader>
 
       {terms.length === 0 ? (
-        <p className="m-0 py-6 text-center text-sm text-base-content/60">All terms finished.</p>
+        <p className="m-0 py-6 text-center text-sm text-base-content/70">All terms finished.</p>
       ) : (
         <ul className="m-0 flex min-h-0 list-none flex-col gap-3 overflow-y-auto p-0">
           {terms.map((term) => (

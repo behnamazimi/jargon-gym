@@ -20,7 +20,7 @@ function InputGroupAddon({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="input-group-addon"
-      className={cn("flex items-center gap-1 text-base-content/60", className)}
+      className={cn("flex items-center gap-1 text-base-content/70", className)}
       {...props}
     />
   );

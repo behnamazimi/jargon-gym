@@ -31,8 +31,8 @@
   --color-error: oklch(71.76% 0.221 22.18);
   --color-error-content: oklch(0% 0 0);
   --radius-selector: 0.5rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.5rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -66,8 +66,8 @@
   --color-error: oklch(82.418% 0.099 33.756);
   --color-error-content: oklch(16.483% 0.019 33.756);
   --radius-selector: 0.5rem;
-  --radius-field: 0.5rem;
-  --radius-box: 0.5rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
   --size-selector: 0.25rem;
   --size-field: 0.25rem;
   --border: 1px;
@@ -84,6 +84,8 @@
      accent goes purple under "dim") so the streak flame reads the same
      warm orange in both themes. */
   --color-streak: #f97316;
+  --color-primary-text: var(--primary-text);
+  --color-error-text: var(--error-text);
 }
 
 /* Must match PLATFORM_MEDIA in lib/platform.ts */
@@ -96,6 +98,17 @@
 
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Grows the tappable area past the visible box without changing layout. */
+@utility hit-area {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -0.375rem;
+  }
 }
 
 @utility pb-dock {
@@ -113,6 +126,14 @@
     --font-mono: var(--font-jetbrains-mono);
     --dock-height: 4.5rem;
     --dock-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
+    /* Text-safe variants: the fill colours are too light to read as text on white. */
+    --primary-text: oklch(45% 0.12 153);
+    --error-text: oklch(50% 0.19 25);
+  }
+
+  [data-theme="dim"] {
+    --primary-text: var(--color-primary);
+    --error-text: var(--color-error);
   }
 
   /* Tour targets scroll clear of the phone dock instead of landing behind it. */

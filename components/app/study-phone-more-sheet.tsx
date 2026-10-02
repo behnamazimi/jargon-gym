@@ -40,7 +40,7 @@ export function MoreSheet() {
         </div>
         <div className="flex items-center gap-3 pt-1">
           <Avatar>
-            <AvatarFallback className="text-xs font-semibold text-primary">
+            <AvatarFallback className="text-xs font-semibold text-primary-text">
               {initials}
             </AvatarFallback>
           </Avatar>
@@ -52,7 +52,7 @@ export function MoreSheet() {
                 onClick={() => setMoreOpen(false)}
                 className={cn(
                   "-my-1.5 flex min-h-11 items-center text-xs no-underline",
-                  aiCreditsLine.tone === "error" ? "text-error" : "text-base-content/60",
+                  aiCreditsLine.tone === "error" ? "text-error" : "text-base-content/70",
                 )}
               >
                 {aiCreditsLine.label}

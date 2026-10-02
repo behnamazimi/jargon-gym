@@ -36,9 +36,9 @@ export function StudyResumeBanner({
   onDiscard: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-field border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2.5">
-        <span className="inline-flex shrink-0 size-8 items-center justify-center rounded-full bg-primary/15 text-primary">
+        <span className="inline-flex shrink-0 size-8 items-center justify-center rounded-full bg-primary/15 text-primary-text">
           <History className="size-4" aria-hidden strokeWidth={2} />
         </span>
         <p className="m-0 text-sm text-base-content">{message}</p>
@@ -127,7 +127,7 @@ export function StudyCountField({
               aria-pressed={selected}
               className={cn(
                 "min-h-11 tabular-nums",
-                selected && "border-primary bg-primary/10 text-primary hover:bg-primary/15",
+                selected && "border-primary bg-primary/10 text-primary-text hover:bg-primary/15",
               )}
             >
               {preset}

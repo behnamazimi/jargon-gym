@@ -70,7 +70,7 @@ export default function ResetPasswordForm() {
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
           {confirmPassword.length > 0 ? (
-            <p className={cn("text-xs", passwordsMatch ? "text-success" : "text-base-content/60")}>
+            <p className={cn("text-xs", passwordsMatch ? "text-success" : "text-base-content/70")}>
               {passwordsMatch ? "Passwords match" : "Passwords don't match"}
             </p>
           ) : null}

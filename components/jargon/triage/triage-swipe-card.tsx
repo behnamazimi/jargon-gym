@@ -149,7 +149,7 @@ export function TriageSwipeCard({
       // Every descendant too: the revealed definition scrolls on its own, and a
       // scroll area would otherwise let the browser take horizontal pans.
       data-tour="triage-card"
-      className="relative flex min-h-0 flex-1 touch-pan-y flex-col rounded-2xl select-none [&_*]:touch-pan-y"
+      className="relative flex min-h-0 flex-1 touch-pan-y flex-col rounded-box select-none [&_*]:touch-pan-y"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

@@ -30,7 +30,7 @@ export default function CompleteSignupForm({
     <form action={action} className="flex w-full max-w-sm flex-col gap-4">
       <input type="hidden" name="next" value={next} />
       <h1 className="text-2xl font-semibold tracking-tight">Complete sign up</h1>
-      <p className="text-sm text-base-content/60">
+      <p className="text-sm text-base-content/70">
         Almost there — enter your reference code to finish setting up your account.
       </p>
 

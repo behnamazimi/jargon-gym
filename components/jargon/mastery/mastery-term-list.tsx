@@ -51,7 +51,7 @@ export function MasteryTermList({
 
   return (
     <div className="space-y-3">
-      <div className="shadow-surface space-y-3 rounded-2xl bg-base-100 p-4">
+      <div className="shadow-surface space-y-3 rounded-box bg-base-100 p-4">
         <div className="flex flex-col gap-2 sm:flex-row">
           <div className="min-w-0 flex-1">
             <SearchBar
@@ -80,7 +80,7 @@ export function MasteryTermList({
           onChange={setActiveTier}
         />
 
-        <p className="m-0 text-xs text-base-content/50">
+        <p className="m-0 text-xs text-base-content/70">
           {visibleRows.length} of {collectionFiltered.length} shown
         </p>
       </div>
@@ -92,7 +92,7 @@ export function MasteryTermList({
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-base-content/60">No terms match your filters.</p>
+        <p className="text-sm text-base-content/70">No terms match your filters.</p>
       )}
     </div>
   );

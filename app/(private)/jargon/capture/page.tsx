@@ -21,7 +21,7 @@ export default async function CapturePage({ searchParams }: PageProps) {
   const setup = await getImportSetupData();
 
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
 
   return (

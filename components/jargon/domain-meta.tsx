@@ -20,7 +20,7 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
           {domain.description}
         </p>
       ) : null}
-      <p className="m-0 text-xs text-base-content/60">{parts.join(" · ")}</p>
+      <p className="m-0 text-xs text-base-content/70">{parts.join(" · ")}</p>
     </div>
   );
 }

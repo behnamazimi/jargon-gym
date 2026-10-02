@@ -17,7 +17,7 @@ type PageProps = {
 };
 
 function LoginPrompt({ message }: { message: string }) {
-  return <p className="text-sm text-base-content/60">{message}</p>;
+  return <p className="text-sm text-base-content/70">{message}</p>;
 }
 
 export default async function JargonReviewPage({ searchParams }: PageProps) {

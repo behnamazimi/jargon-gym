@@ -13,7 +13,7 @@ export function SharedDomainsEmptyCatalog({ bannerError }: { bannerError: string
           <AlertDescription>{bannerError}</AlertDescription>
         </Alert>
       ) : null}
-      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-14">
+      <div className="shadow-surface rounded-box bg-base-100 px-6 py-14">
         <EmptyState
           icon={Compass}
           title="Nothing shared yet"
@@ -48,7 +48,7 @@ export function SharedDomainsNoMatches({
 }) {
   return (
     <div className="space-y-3">
-      <div className="shadow-surface rounded-2xl bg-base-100 px-6 py-12">
+      <div className="shadow-surface rounded-box bg-base-100 px-6 py-12">
         <EmptyState
           icon={SearchX}
           title="No collections match"

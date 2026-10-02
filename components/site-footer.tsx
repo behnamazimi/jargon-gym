@@ -13,24 +13,24 @@ export function SiteFooter() {
         >
           <Link
             href="/before-you-sign-up"
-            className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
+            className="text-xs text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content"
           >
             Before you sign up
           </Link>
           <Link
             href="/how-terms-work"
-            className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
+            className="text-xs text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content"
           >
             How terms are built
           </Link>
           <Link
             href="/j"
-            className="text-xs text-base-content/60 underline underline-offset-2 transition-colors hover:text-base-content"
+            className="text-xs text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content"
           >
             Public collections
           </Link>
         </nav>
-        <p className="m-0 flex items-center justify-center gap-1.5 text-center text-xs leading-relaxed text-base-content/60">
+        <p className="m-0 flex items-center justify-center gap-1.5 text-center text-xs leading-relaxed text-base-content/70">
           <BrandIcon size="sm" />
           <span>Jargon Gym — private app, shared by invitation.</span>
         </p>

@@ -36,7 +36,7 @@ function BucketProgress({ buckets, name }: { buckets: MasteryBucketCounts; name:
           style={{ width: `${pct(buckets.learningNotMastered)}%` }}
         />
       </div>
-      <p className="text-xs text-base-content/60">
+      <p className="text-xs text-base-content/70">
         <span className="tabular-nums">{buckets.mastered}</span> mastered ·{" "}
         <span className="tabular-nums">{buckets.learningNotMastered}</span> learning ·{" "}
         <span className="tabular-nums">{buckets.neverLearning}</span> not started
@@ -69,11 +69,11 @@ function CollectionCardShell({
       <div className="flex items-center justify-between gap-3 text-sm">
         <span className="flex min-w-0 items-center gap-1.5 font-medium text-base-content">
           {paused ? (
-            <PauseCircle className="size-3.5 shrink-0 text-base-content/50" aria-label="Paused" />
+            <PauseCircle className="size-3.5 shrink-0 text-base-content/70" aria-label="Paused" />
           ) : null}
           <span className="truncate">{collection.name}</span>
         </span>
-        <span className="shrink-0 tabular-nums text-base-content/60">
+        <span className="shrink-0 tabular-nums text-base-content/70">
           {collection.totalCount} terms
         </span>
       </div>
@@ -87,7 +87,7 @@ function CollectionCardShell({
             max={100}
             aria-label={`${collection.name} mastered ${collection.percentage}%`}
           />
-          <p className="text-xs text-base-content/60">
+          <p className="text-xs text-base-content/70">
             <span className="tabular-nums">{collection.termsLearnedCount}</span>/
             <span className="tabular-nums">{collection.totalCount}</span> mastered
           </p>
@@ -96,17 +96,17 @@ function CollectionCardShell({
       {strengthPercent !== undefined ? (
         <p className="text-sm font-semibold text-base-content">{strengthPercent}% strength</p>
       ) : null}
-      {footnote ? <p className="text-xs text-base-content/50">{footnote}</p> : null}
-      {paceLine ? <p className="text-xs text-base-content/50">{paceLine}</p> : null}
+      {footnote ? <p className="text-xs text-base-content/70">{footnote}</p> : null}
+      {paceLine ? <p className="text-xs text-base-content/70">{paceLine}</p> : null}
       {collection.markedKnownCount > 0 ? (
-        <p className="text-xs text-base-content/50">
+        <p className="text-xs text-base-content/70">
           <span className="tabular-nums">{collection.markedKnownCount}</span> marked known by you
         </p>
       ) : null}
     </div>
   );
 
-  const surface = cn("shadow-surface rounded-2xl bg-base-100 text-left", paused && "opacity-60");
+  const surface = cn("shadow-surface rounded-box bg-base-100 text-left", paused && "opacity-60");
 
   if (!onSelect) {
     return <div className={cn(surface, "p-4")}>{content}</div>;
@@ -118,7 +118,7 @@ function CollectionCardShell({
       <button
         type="button"
         onClick={onSelect}
-        className="w-full cursor-pointer rounded-2xl p-4 text-left transition-colors hover:bg-base-200/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="w-full cursor-pointer rounded-box p-4 text-left transition-colors hover:bg-base-200/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {content}
       </button>

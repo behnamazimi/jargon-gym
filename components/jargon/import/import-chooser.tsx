@@ -12,10 +12,10 @@ import { REQUEST_COPY } from "@/lib/requests/copy";
 import type { RequestEntry } from "@/lib/requests/entry";
 import type { ImportDestination } from "@/lib/jargon/import/import-collections";
 
-const SECTION_HEADING = "m-0 text-xs font-semibold tracking-wider text-base-content/60 uppercase";
+const SECTION_HEADING = "m-0 text-xs font-semibold tracking-wider text-base-content/70 uppercase";
 
 const ROW_CLASS =
-  "flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary";
+  "flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left text-base font-normal outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary";
 
 function RowContent({
   icon: Icon,
@@ -28,12 +28,12 @@ function RowContent({
 }) {
   return (
     <>
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-primary/10 text-primary">
         <Icon className="size-5" aria-hidden strokeWidth={1.5} />
       </span>
       <span className="min-w-0 flex-1 text-left">
         <span className="block font-semibold">{title}</span>
-        <span className="block text-sm text-base-content/60">{description}</span>
+        <span className="block text-sm text-base-content/70">{description}</span>
       </span>
     </>
   );
@@ -61,7 +61,7 @@ export function ImportChooser({
         </h2>
         <div className="relative">
           <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-base-content/60"
+            className="pointer-events-none absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-base-content/70"
             aria-hidden
             strokeWidth={1.5}
           />
@@ -75,7 +75,7 @@ export function ImportChooser({
           />
         </div>
         {query.trim() ? null : (
-          <p className="m-0 text-sm text-base-content/60">Search shared collections.</p>
+          <p className="m-0 text-sm text-base-content/70">Search shared collections.</p>
         )}
         <SearchResults
           state={search}
@@ -100,7 +100,7 @@ export function ImportChooser({
         <h2 id="start-from" className={SECTION_HEADING}>
           Or add your own
         </h2>
-        <ul className="shadow-surface m-0 list-none divide-y divide-base-300/60 overflow-hidden rounded-2xl bg-base-100 p-0">
+        <ul className="shadow-surface m-0 list-none divide-y divide-base-300/60 overflow-hidden rounded-box bg-base-100 p-0">
           <li>
             <LinkButton
               href="/jargon/import/paste"
@@ -141,7 +141,11 @@ export function ImportChooser({
             </LinkButton>
           </li>
           <li>
-            <button type="button" className={ROW_CLASS} onClick={() => setCreateOpen(true)}>
+            <button
+              type="button"
+              className={`btn btn-ghost ${ROW_CLASS} h-auto rounded-none`}
+              onClick={() => setCreateOpen(true)}
+            >
               <RowContent
                 icon={FolderPlus}
                 title="Start an empty collection"
@@ -157,7 +161,7 @@ export function ImportChooser({
           href="/jargon/import/more"
           variant="ghost"
           size="sm"
-          className="min-h-11 text-base-content/60"
+          className="min-h-11 text-base-content/70"
         >
           More import options
         </LinkButton>

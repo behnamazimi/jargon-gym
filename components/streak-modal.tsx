@@ -69,7 +69,7 @@ export function StreakModal({
               <span className="tabular-nums">{currentStreak}</span> day streak
             </p>
           </div>
-          <p className="m-0 ml-8 text-xs leading-none text-base-content/50">
+          <p className="m-0 ml-8 text-xs leading-none text-base-content/70">
             Longest {longestStreak}
           </p>
         </div>
@@ -80,7 +80,7 @@ export function StreakModal({
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-1 flex-col items-center gap-1 rounded-lg bg-base-200/50 py-2"
+                className="flex flex-1 flex-col items-center gap-1 rounded-field bg-base-200/50 py-2"
                 aria-hidden
               >
                 <span className="h-4 w-6 animate-pulse rounded bg-base-300/70" />
@@ -94,7 +94,7 @@ export function StreakModal({
                 onClick={() => setSelectedDate(day.date)}
                 aria-pressed={day.date === selectedDate}
                 className={cn(
-                  "flex flex-1 flex-col items-center gap-1 rounded-lg py-2 text-xs font-medium transition-colors",
+                  "flex flex-1 flex-col items-center gap-1 rounded-field py-2 text-xs font-medium transition-colors",
                   day.date === selectedDate && "ring-2 ring-primary",
                   day.isActive
                     ? "bg-streak/10 text-base-content"
@@ -111,24 +111,24 @@ export function StreakModal({
             ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 rounded-lg bg-base-200/50 p-3 text-center">
+      <div className="grid grid-cols-3 gap-2 rounded-field bg-base-200/50 p-3 text-center">
         <div>
           <p className="text-xl font-bold tracking-tight tabular-nums">
             {selected?.readCount ?? 0}
           </p>
-          <p className="text-xs text-base-content/50">Read</p>
+          <p className="text-xs text-base-content/70">Read</p>
         </div>
         <div>
           <p className="text-xl font-bold tracking-tight tabular-nums">
             {selected?.reviewedCount ?? 0}
           </p>
-          <p className="text-xs text-base-content/50">Reviewed</p>
+          <p className="text-xs text-base-content/70">Reviewed</p>
         </div>
         <div>
           <p className="text-xl font-bold tracking-tight tabular-nums">
             {selected?.quizzedCount ?? 0}
           </p>
-          <p className="text-xs text-base-content/50">Quizzed</p>
+          <p className="text-xs text-base-content/70">Quizzed</p>
         </div>
       </div>
 

@@ -41,7 +41,7 @@ export default function LoginForm() {
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-base-content/10" />
-        <span className="text-xs text-base-content/60">or log in with email</span>
+        <span className="text-xs text-base-content/70">or log in with email</span>
         <div className="h-px flex-1 bg-base-content/10" />
       </div>
 
@@ -60,7 +60,7 @@ export default function LoginForm() {
               <FieldLabel htmlFor="login-password">Password</FieldLabel>
               <Link
                 href="/forgot-password"
-                className="text-xs text-base-content/60 underline underline-offset-2"
+                className="text-xs text-base-content/70 underline underline-offset-2"
               >
                 Forgot password?
               </Link>
@@ -80,7 +80,7 @@ export default function LoginForm() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-base-content/60">
+      <p className="text-center text-sm text-base-content/70">
         Need an account?{" "}
         <Link href={appendNextParam("/signup", rawNext)} className="underline underline-offset-2">
           Sign up

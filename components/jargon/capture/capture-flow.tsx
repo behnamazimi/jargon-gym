@@ -166,7 +166,7 @@ function CaptureForm({ collections, presetId, shared = { kind: "none" } }: Captu
         event.preventDefault();
         void save(false);
       }}
-      className="space-y-4"
+      className="shadow-surface space-y-4 rounded-box bg-base-100 p-4"
     >
       <Field>
         <FieldLabel htmlFor="capture-collection">{CAPTURE_COPY.collection}</FieldLabel>
@@ -234,7 +234,7 @@ function CaptureForm({ collections, presetId, shared = { kind: "none" } }: Captu
           placeholder={CAPTURE_COPY.definitionPlaceholder}
           onChange={(event) => setDefinition(event.target.value)}
         />
-        <p className="m-0 mt-1 text-xs text-base-content/60">{CAPTURE_COPY.definitionHint}</p>
+        <p className="m-0 mt-1 text-xs text-base-content/70">{CAPTURE_COPY.definitionHint}</p>
       </Field>
 
       {sentence ? (

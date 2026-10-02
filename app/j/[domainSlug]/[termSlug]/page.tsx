@@ -50,10 +50,10 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-10">
-      <p className="text-sm font-medium tracking-wide text-base-content/55 uppercase">
+      <p className="text-sm font-medium tracking-wide text-base-content/70 uppercase">
         <Link
           href={`/j/${domain.slug}`}
-          className="text-base-content/55 underline underline-offset-2 transition-colors hover:text-base-content"
+          className="text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content"
         >
           {domain.name}
         </Link>
@@ -63,7 +63,7 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
             ·{" "}
             <Link
               href={`/j/${domain.slug}?category=${encodeURIComponent(term.category)}`}
-              className="text-base-content/55 underline underline-offset-2 transition-colors hover:text-base-content"
+              className="text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content"
             >
               {term.category}
             </Link>

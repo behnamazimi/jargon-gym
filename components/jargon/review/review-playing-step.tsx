@@ -25,7 +25,7 @@ const GRADE_BUTTONS: { grade: ReviewGrade; variant: ButtonVariant }[] = [
 
 /** Tinted study-action buttons (Review grades, Triage choices). */
 export const SOFT_ACTION_BUTTON_CLASS = cn(
-  "btn-soft min-h-11 transition-transform active:scale-[0.96]",
+  "btn-soft min-h-11 font-semibold transition-transform active:scale-[0.96]",
   "[--btn-bg:color-mix(in_oklab,var(--btn-color)_45%,var(--color-base-100))]",
   "[--btn-border:color-mix(in_oklab,var(--btn-color)_55%,var(--color-base-100))]",
   "[color:var(--btn-fg)]",
@@ -84,19 +84,20 @@ export function ReviewPlayingStep({
       <div className="flex shrink-0 items-center justify-between gap-2">
         {collectionControl}
         <div className="flex items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            onPress={(event) => {
-              releaseFocusAfterPointerPress(event);
-              onPrevious();
-            }}
-            isDisabled={!canGoBack}
-            className={NAV_BUTTON_CLASS}
-            aria-label="Previous term"
-          >
-            <ChevronLeft className="size-4" aria-hidden strokeWidth={1.5} />
-          </Button>
+          {canGoBack ? (
+            <Button
+              type="button"
+              variant="ghost"
+              onPress={(event) => {
+                releaseFocusAfterPointerPress(event);
+                onPrevious();
+              }}
+              className={NAV_BUTTON_CLASS}
+              aria-label="Previous term"
+            >
+              <ChevronLeft className="size-4" aria-hidden strokeWidth={1.5} />
+            </Button>
+          ) : null}
           {showForward ? (
             <Button
               type="button"
@@ -166,7 +167,7 @@ export function ReviewPlayingStep({
 
 function ReviewKeyboardHints({ revealed, rated }: { revealed: boolean; rated: boolean }) {
   return (
-    <p className="m-0 hidden text-center text-xs text-base-content/50 md:block coarse:hidden">
+    <p className="m-0 hidden text-center text-xs text-base-content/70 md:block coarse:hidden">
       {revealed ? (
         <>
           <kbd className="kbd kbd-xs">1</kbd>–<kbd className="kbd kbd-xs">4</kbd> grade ·{" "}

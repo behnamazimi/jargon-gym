@@ -16,7 +16,7 @@ export function SharedSentenceChips({
 }) {
   return (
     <section className="space-y-2" aria-label={CAPTURE_COPY.sharedHint}>
-      <p className="m-0 text-sm text-base-content/60" role="status">
+      <p className="m-0 text-sm text-base-content/70" role="status">
         {term ? CAPTURE_COPY.pickedWords(term) : CAPTURE_COPY.pickWords}
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -29,7 +29,7 @@ export function SharedSentenceChips({
               aria-pressed={on}
               onClick={() => onToggle(index)}
               className={cn(
-                "btn btn-sm min-h-11 rounded-lg px-3 text-base font-normal md:min-h-8",
+                "btn btn-sm min-h-11 rounded-field px-3 text-base font-normal md:min-h-8",
                 on ? "btn-primary" : "btn-soft",
               )}
             >

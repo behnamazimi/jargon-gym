@@ -148,7 +148,7 @@ function SheetDescription({ className, ...props }: Omit<React.ComponentProps<"di
   return (
     <div
       data-slot="sheet-description"
-      className={cn("text-xs text-base-content/60", className)}
+      className={cn("text-xs text-base-content/70", className)}
       {...props}
     />
   );

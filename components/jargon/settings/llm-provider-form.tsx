@@ -72,7 +72,7 @@ export function LlmProviderForm({
 
       {llmConfigured && !replacingKey ? (
         <div className="space-y-2">
-          <p className="m-0 text-sm text-base-content/60">Key saved.</p>
+          <p className="m-0 text-sm text-base-content/70">Key saved.</p>
           <Button
             type="button"
             variant="outline"

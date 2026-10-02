@@ -26,18 +26,18 @@ export function CheckCard({
   const updating = match && policy === "update";
 
   return (
-    <li className="shadow-surface content-visibility-auto rounded-xl bg-base-100 [contain-intrinsic-size:auto_5rem]">
+    <li className="shadow-surface content-visibility-auto rounded-field bg-base-100 [contain-intrinsic-size:auto_5rem]">
       <div className="flex items-start gap-1 p-1">
         <button
           type="button"
-          className="min-h-11 min-w-0 flex-1 rounded-lg p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="min-h-11 min-w-0 flex-1 rounded-field p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary"
           aria-label={`Edit "${draft.term}"`}
           onClick={onEdit}
         >
           <span className="block truncate font-semibold">{draft.term}</span>
           {updating ? (
             <span className="mt-1 grid gap-1 text-sm">
-              <span className="text-base-content/60">
+              <span className="text-base-content/70">
                 <span className="font-medium">Now: </span>
                 {match.definition ?? "No definition yet"}
               </span>
@@ -56,7 +56,7 @@ export function CheckCard({
             </span>
           )}
           {match ? (
-            <span className="mt-1 block text-xs text-base-content/60">
+            <span className="mt-1 block text-xs text-base-content/70">
               Already in this collection
             </span>
           ) : null}

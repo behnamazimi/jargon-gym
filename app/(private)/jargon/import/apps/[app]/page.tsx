@@ -30,10 +30,10 @@ export default async function AppGuidePage({ params }: PageProps) {
         compactOnPhone
       />
       {steps.length > 0 ? (
-        <ol className="shadow-surface flex list-none flex-col gap-3 rounded-2xl bg-base-100 p-4">
+        <ol className="shadow-surface flex list-none flex-col gap-3 rounded-box bg-base-100 p-4">
           {steps.map((step, index) => (
             <li key={step} className="grid grid-cols-[1.75rem_1fr] gap-3 text-sm">
-              <span className="flex size-7 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary">
+              <span className="flex size-7 items-center justify-center rounded-full bg-primary/15 text-xs font-bold text-primary-text">
                 {index + 1}
               </span>
               <span className="pt-0.5">{step}</span>

@@ -20,7 +20,7 @@ export function AddTermsMenu({ domainId, onAddTerm }: AddTermsMenuProps) {
         type="button"
         variant="ghost"
         size="icon-sm"
-        className="text-base-content/60 hover:text-base-content"
+        className="min-h-11 min-w-11 text-base-content/70 hover:text-base-content md:min-h-8 md:min-w-8"
         aria-label="Add terms"
       >
         <Plus className="size-5" strokeWidth={1.5} />

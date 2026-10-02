@@ -154,7 +154,7 @@ export function QuizQuestionView({
         </h2>
 
         {promptQuote ? (
-          <blockquote className="mt-3 rounded-xl border-l-4 border-primary/40 bg-base-200/60 px-4 py-3 text-base-content/80">
+          <blockquote className="mt-3 rounded-field border-l-4 border-primary/40 bg-base-200/60 px-4 py-3 text-base-content/80">
             <span className="text-base leading-snug">{promptQuote}</span>
           </blockquote>
         ) : null}

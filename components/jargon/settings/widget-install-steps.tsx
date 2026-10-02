@@ -21,7 +21,7 @@ export function WidgetInstallSteps({
         title="Install Übersicht"
         description="The widget runs on Übersicht, a macOS app for desktop widgets. Install it first."
       >
-        <p className="m-0 text-sm text-base-content/60">
+        <p className="m-0 text-sm text-base-content/70">
           Get it from the{" "}
           <a
             href="https://tracesof.net/uebersicht/"
@@ -78,11 +78,11 @@ export function WidgetInstallSteps({
             value={installWithTokenCommand}
           />
         ) : (
-          <p className="m-0 text-sm text-base-content/60">
+          <p className="m-0 text-sm text-base-content/70">
             Generate a token in step 2 to get the one-command install script.
           </p>
         )}
-        <p className="m-0 text-sm leading-relaxed text-base-content/60">
+        <p className="m-0 text-sm leading-relaxed text-base-content/70">
           Or{" "}
           <a href="/downloads/jargon-gym.widget.zip" download className="link link-hover">
             download the zip

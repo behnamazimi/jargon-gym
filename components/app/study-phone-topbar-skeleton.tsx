@@ -12,11 +12,11 @@ export function StudyPhoneTopBarSkeleton() {
       aria-busy="true"
       aria-label="Loading"
     >
-      <div className="navbar min-h-11 px-3 py-1">
-        <div className="navbar-start">
-          <SkeletonBar className="h-8 w-8 rounded-lg" />
+      <div className="grid min-h-11 grid-cols-[1fr_auto_1fr] items-center px-3 py-1">
+        <div className="flex items-center justify-start">
+          <SkeletonBar className="h-8 w-8 rounded-field" />
         </div>
-        <div className="navbar-end gap-2">
+        <div className="col-start-3 flex items-center justify-end gap-2">
           <SkeletonBar className="h-8 w-8 rounded-full" />
         </div>
       </div>

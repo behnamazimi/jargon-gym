@@ -57,7 +57,7 @@ export function TriageActions({ canUndo, onUndo, onNotYet, onKnew }: TriageActio
         </div>
       </div>
 
-      <p className="m-0 hidden text-center text-xs text-base-content/50 md:block coarse:hidden">
+      <p className="m-0 hidden text-center text-xs text-base-content/70 md:block coarse:hidden">
         <kbd className="kbd kbd-xs">Space</kbd> reveal · <kbd className="kbd kbd-xs">←</kbd> not yet
         · <kbd className="kbd kbd-xs">→</kbd> knew it · <kbd className="kbd kbd-xs">Z</kbd> undo
       </p>

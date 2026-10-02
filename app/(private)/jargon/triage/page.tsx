@@ -16,7 +16,7 @@ export default async function JargonTriagePage({ searchParams }: PageProps) {
 
   if ("emptyCollection" in setup) redirect("/jargon");
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
 
   const { data, narrationAccess } = setup;

@@ -76,12 +76,12 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
             max={ai.total}
             aria-label={label}
           />
-          <p className="m-0 text-sm text-base-content/60">
+          <p className="m-0 text-sm text-base-content/70">
             <span className="tabular-nums">{ai.remaining}</span> credits left. Used for AI quizzes
             and Stories until you add your own key.
           </p>
         </div>
-        <p className="m-0 text-xs text-base-content/60">
+        <p className="m-0 text-xs text-base-content/70">
           When you use AI credits, the terms, definitions and any outline you write are sent to our
           AI provider.
         </p>
@@ -92,7 +92,7 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
   if (ai.kind === "unavailable" && ai.reason === "exhausted") {
     return (
       <HighlightPanel label="AI credits">
-        <p className="m-0 text-sm text-base-content/60">
+        <p className="m-0 text-sm text-base-content/70">
           You&apos;ve used your AI credits for now. Add your own key below to keep going.
         </p>
       </HighlightPanel>

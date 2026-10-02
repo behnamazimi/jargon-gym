@@ -56,7 +56,7 @@ function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
 function QuizPickerFallbackNotice({ ai }: { ai: AiAccessView }) {
   const exhausted = ai.kind === "unavailable" && ai.reason === "exhausted";
   return (
-    <p className="max-w-md text-xs text-base-content/60">
+    <p className="max-w-md text-xs text-base-content/70">
       {exhausted
         ? "You're out of AI credits, so we switched to a simple quiz."
         : "AI quizzes aren't available right now, so we switched to a simple quiz."}

@@ -62,7 +62,7 @@ export function TermRelationshipsEditor({
       <div className="flex items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-medium">Relationships</h3>
-          <p className="text-xs text-base-content/60">
+          <p className="text-xs text-base-content/70">
             Link this term to others in the collection.
           </p>
         </div>
@@ -79,22 +79,22 @@ export function TermRelationshipsEditor({
       </div>
 
       {targetOptions.length === 0 ? (
-        <p className="text-xs text-base-content/60">
+        <p className="text-xs text-base-content/70">
           Add another term first, then you can link them.
         </p>
       ) : null}
 
       {drafts.length === 0 ? (
-        <p className="text-xs text-base-content/60">No relationships yet.</p>
+        <p className="text-xs text-base-content/70">No relationships yet.</p>
       ) : (
         <ul className="space-y-3">
           {drafts.map((draft) => (
             <li
               key={draft.key}
-              className="space-y-2 rounded-lg border border-base-300/70 bg-base-200/20 p-3"
+              className="space-y-2 rounded-field border border-base-300/70 bg-base-200/20 p-3"
             >
               {draft.direction === "incoming" ? (
-                <p className="text-sm text-base-content/60">
+                <p className="text-sm text-base-content/70">
                   <span className="font-medium text-base-content">{draft.relatedTermName}</span>{" "}
                   <span className="italic">{draft.relationshipType}</span> this term
                 </p>

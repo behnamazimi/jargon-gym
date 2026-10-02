@@ -33,8 +33,8 @@ export function StudyPhoneTopBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-base-300 bg-base-100/80 pt-safe backdrop-blur-sm md:hidden">
-      <div className="navbar min-h-11 px-3 py-1">
-        <div className="navbar-start">
+      <div className="grid min-h-11 grid-cols-[1fr_auto_1fr] items-center px-3 py-1">
+        <div className="flex items-center justify-start">
           {subPage && isNestedFlowPath(pathname) && hasInAppHistory ? (
             <button
               type="button"
@@ -55,31 +55,31 @@ export function StudyPhoneTopBar() {
           ) : (
             <Link
               href={AUTHENTICATED_HOME_PATH}
-              className="btn btn-ghost btn-square btn-sm"
+              className="btn btn-ghost btn-square min-h-11 min-w-11"
               aria-label="Jargon Gym"
             >
               <BrandIcon />
             </Link>
           )}
         </div>
-        <div className="navbar-center">
+        <div className="flex justify-center">
           <p className="m-0 font-heading text-sm font-semibold tracking-tight">
             {studyScreenTitle(pathname)}
           </p>
         </div>
-        <div className="navbar-end gap-2">
+        <div className="flex items-center justify-end gap-2">
           <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
           <InstallButton />
           <Button
             variant="ghost"
             size="sm"
-            className="btn-circle size-8 shrink-0 overflow-hidden p-0 text-[11px] font-semibold text-primary bg-primary/15 hover:bg-primary/25"
+            className="hit-area btn-circle size-8 shrink-0 overflow-hidden p-0 text-xs font-semibold text-primary-text bg-primary/15 hover:bg-primary/25"
             aria-label="More"
             data-tour="app-account"
             onPress={() => setMoreOpen(true)}
           >
             <Avatar className="size-8">
-              <AvatarFallback className="bg-transparent text-[11px] font-semibold leading-none text-primary">
+              <AvatarFallback className="bg-transparent text-xs font-semibold leading-none text-primary-text">
                 {initials}
               </AvatarFallback>
             </Avatar>
@@ -92,8 +92,8 @@ export function StudyPhoneTopBar() {
 
 function dockItemClass(active: boolean) {
   return cn(
-    "mb-0! min-h-11 items-center justify-center gap-0.5 after:content-none",
-    active && "dock-active font-medium text-primary",
+    "mb-0! min-h-11 items-center justify-center gap-0.5 transition-transform after:content-none active:scale-95 motion-reduce:transition-none",
+    active && "dock-active font-medium text-primary-text",
   );
 }
 

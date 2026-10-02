@@ -50,7 +50,7 @@ export function DomainExportDialog({
       <Suspense
         fallback={
           <div className="space-y-2 py-4" aria-busy="true" aria-label="Loading collection">
-            <SkeletonBar className="h-40 w-full rounded-lg" />
+            <SkeletonBar className="h-40 w-full rounded-field" />
           </div>
         }
       >

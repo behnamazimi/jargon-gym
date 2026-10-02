@@ -17,14 +17,14 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
   return (
     <article
       className={cn(
-        "shadow-surface flex flex-col gap-4 rounded-2xl bg-base-100 p-4 transition-shadow duration-150 md:flex-row md:items-center md:justify-between md:gap-6",
+        "shadow-surface flex flex-col gap-4 rounded-box bg-base-100 p-4 transition-shadow duration-150 md:flex-row md:items-center md:justify-between md:gap-6",
         "hover:shadow-surface-hover",
         domain.inCollection && "bg-primary/[0.03]",
       )}
     >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <div
-          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-base-200/70 text-xl leading-none"
+          className="flex size-11 shrink-0 items-center justify-center rounded-field bg-primary/10 text-xl leading-none"
           aria-hidden
         >
           {domain.icon || "📚"}
@@ -42,11 +42,11 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
             ) : null}
           </div>
           {domain.description ? (
-            <p className="line-clamp-2 text-sm leading-relaxed text-base-content/60">
+            <p className="line-clamp-2 text-sm leading-relaxed text-base-content/70">
               {domain.description}
             </p>
           ) : null}
-          <p className="text-sm tabular-nums text-base-content/60">
+          <p className="text-sm tabular-nums text-base-content/70">
             {pluralize(domain.termCount, "term")}
           </p>
         </div>

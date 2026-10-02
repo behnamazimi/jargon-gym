@@ -147,7 +147,7 @@ export function InstallButton() {
   return (
     <Button
       variant="ghost"
-      className="standalone:hidden"
+      className="min-h-11 min-w-11 standalone:hidden md:min-h-0 md:min-w-0"
       aria-label={`Install ${PWA_NAME}`}
       onPress={() => {
         if (ctx.canInstall) {

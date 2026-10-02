@@ -30,7 +30,7 @@ function OverviewHeader({
         <span className="tabular-nums">{termsLearned}</span> terms
       </p>
       {lifetimeTotalsLine ? (
-        <p className="m-0 text-xs text-base-content/50">{lifetimeTotalsLine}</p>
+        <p className="m-0 text-xs text-base-content/70">{lifetimeTotalsLine}</p>
       ) : null}
     </div>
   );

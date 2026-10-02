@@ -15,7 +15,7 @@ export default async function JargonMasteryPage({ searchParams }: PageProps) {
   if ("error" in setup) {
     return (
       <PageCenter>
-        <p className="text-sm text-base-content/60">{setup.error}</p>
+        <p className="text-sm text-base-content/70">{setup.error}</p>
       </PageCenter>
     );
   }

@@ -55,16 +55,16 @@ export function SettingsPanel({
       id={`settings-panel-${id}`}
       data-tour={`settings-${id}`}
       aria-labelledby={headingId}
-      className="scroll-mt-4 rounded-2xl max-md:scroll-mt-[calc(3.5rem+env(safe-area-inset-top,0px))]"
+      className="scroll-mt-4 rounded-box max-md:scroll-mt-[calc(3.5rem+env(safe-area-inset-top,0px))]"
     >
-      <Card className="shadow-surface overflow-hidden rounded-2xl ring-1 ring-base-content/5">
+      <Card className="shadow-surface overflow-hidden rounded-box">
         <div
           className={cn(
             "flex gap-3 border-b border-base-300/60 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5",
             description ? "items-start" : "items-center",
           )}
         >
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-field bg-primary/10 text-primary">
             <Icon className="size-5" aria-hidden strokeWidth={1.5} />
           </div>
           <div className="min-w-0 flex-1 space-y-1">
@@ -75,7 +75,7 @@ export function SettingsPanel({
               {status}
             </div>
             {description ? (
-              <p className="m-0 text-sm leading-relaxed text-base-content/60">{description}</p>
+              <p className="m-0 text-sm leading-relaxed text-base-content/70">{description}</p>
             ) : null}
           </div>
         </div>
@@ -118,7 +118,7 @@ export function SettingsRow({
     <div className="min-w-0 space-y-1">
       {heading}
       {description ? (
-        <div className="text-sm leading-relaxed text-base-content/60">{description}</div>
+        <div className="text-sm leading-relaxed text-base-content/70">{description}</div>
       ) : null}
     </div>
   );
@@ -150,11 +150,11 @@ export function DangerZone({
   children: ReactNode;
 }) {
   return (
-    <div className="space-y-3 rounded-xl border border-error/20 bg-error/5 px-4 py-4">
+    <div className="space-y-3 rounded-field border border-error/20 bg-error/5 px-4 py-4">
       <div>
         <h3 className="m-0 text-sm font-semibold">{title}</h3>
         {description ? (
-          <p className="mt-1 text-sm leading-relaxed text-base-content/60">{description}</p>
+          <p className="mt-1 text-sm leading-relaxed text-base-content/70">{description}</p>
         ) : null}
       </div>
       {children}
@@ -184,7 +184,7 @@ export function SetupStep({
         />
       ) : null}
       <span
-        className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-lg bg-secondary text-xs font-semibold tabular-nums text-secondary-content"
+        className="relative z-10 flex size-6 shrink-0 items-center justify-center rounded-field bg-secondary text-xs font-semibold tabular-nums text-secondary-content"
         aria-hidden
       >
         {step}
@@ -193,7 +193,7 @@ export function SetupStep({
         <div>
           <h3 className="m-0 text-sm font-semibold">{title}</h3>
           {description ? (
-            <p className="mt-1 text-sm leading-relaxed text-base-content/60">{description}</p>
+            <p className="mt-1 text-sm leading-relaxed text-base-content/70">{description}</p>
           ) : null}
         </div>
         {children}

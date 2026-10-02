@@ -34,15 +34,18 @@ export function DomainSidebarDrawer({
         data-tour="library-collections"
         onPress={() => onOpenChange(true)}
         className={cn(
-          "shadow-surface h-auto w-full justify-between gap-2 rounded-xl px-3 py-2.5 text-left md:hidden",
+          "shadow-surface h-auto w-full justify-between gap-2 rounded-field px-3 py-2.5 text-left md:hidden",
           className,
         )}
       >
-        <span className="min-w-0 truncate text-sm font-medium">
-          {currentDomain.icon ? `${currentDomain.icon} ` : ""}
-          {currentDomain.name}
+        <span className="shrink-0 text-sm font-normal text-base-content/70">Collection</span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="min-w-0 truncate text-sm font-medium">
+            {currentDomain.icon ? `${currentDomain.icon} ` : ""}
+            {currentDomain.name}
+          </span>
+          <ChevronDown className="size-4 shrink-0 text-base-content/70" aria-hidden />
         </span>
-        <ChevronDown className="size-4 shrink-0 text-base-content/60" aria-hidden />
       </Button>
 
       <Sheet

@@ -24,7 +24,7 @@ export default async function JargonQuizPage({ searchParams }: PageProps) {
   ]);
 
   if ("error" in setup) {
-    return <p className="text-sm text-base-content/60">{setup.error}</p>;
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
   if (hasNoCollections({ active: setup.collections, paused: setup.paused })) redirect("/jargon");
 

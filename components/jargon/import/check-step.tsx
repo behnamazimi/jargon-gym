@@ -115,7 +115,7 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
           {commitLabel(flow)}
         </Button>
         {flow.summary.toAdd === 0 && drafts.length > 0 ? (
-          <p className="m-0 text-center text-sm text-base-content/60" role="status">
+          <p className="m-0 text-center text-sm text-base-content/70" role="status">
             Every term is already in this collection.
           </p>
         ) : null}

@@ -52,7 +52,7 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         unitLabel={quiz.practice ? "Practice" : "Question"}
       />
       {quiz.practice ? (
-        <p className="m-0 shrink-0 text-xs text-base-content/60">
+        <p className="m-0 shrink-0 text-xs text-base-content/70">
           Practice round — answers aren&apos;t counted toward mastery.
         </p>
       ) : null}

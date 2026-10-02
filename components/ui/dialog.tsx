@@ -128,7 +128,7 @@ function DialogDescription({ className, ...props }: Omit<React.ComponentProps<"d
   return (
     <div
       data-slot="dialog-description"
-      className={cn("text-sm text-base-content/60", className)}
+      className={cn("text-sm text-base-content/70", className)}
       {...props}
     />
   );

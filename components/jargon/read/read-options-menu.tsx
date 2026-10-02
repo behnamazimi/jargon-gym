@@ -71,7 +71,7 @@ function OptionRow({
         >
           {label}
         </label>
-        <p id={`${id}-description`} className="m-0 text-xs leading-relaxed text-base-content/60">
+        <p id={`${id}-description`} className="m-0 text-xs leading-relaxed text-base-content/70">
           {disabledNote ?? description}
         </p>
       </div>

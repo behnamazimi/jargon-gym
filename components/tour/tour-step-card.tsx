@@ -144,7 +144,7 @@ export function TourStepCard({
             </div>
             <div className="flex items-center gap-2">
               {!nudge && stepCount > 1 ? (
-                <span className="text-xs tabular-nums text-base-content/50">
+                <span className="text-xs tabular-nums text-base-content/70">
                   {stepNumber} of {stepCount}
                 </span>
               ) : null}

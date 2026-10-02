@@ -40,7 +40,7 @@ async function loadDefinitions(supabase: Client, userId: string, domainId: strin
 export default async function RequestPage({ searchParams }: PageProps) {
   const { topic = "", definitions: definitionsId } = await searchParams;
   const { supabase, user } = await getSessionUser();
-  if (!user) return <p className="text-sm text-base-content/60">{REQUEST_COPY.form.signedOut}</p>;
+  if (!user) return <p className="text-sm text-base-content/70">{REQUEST_COPY.form.signedOut}</p>;
 
   const header = (
     <PageHeader
@@ -94,7 +94,7 @@ export default async function RequestPage({ searchParams }: PageProps) {
       return (
         <>
           {header}
-          <p className="text-sm text-base-content/60">
+          <p className="text-sm text-base-content/70">
             {found ? REQUEST_COPY.definitions.nothingToDefine : REQUEST_COPY.definitions.notYours}
           </p>
         </>
@@ -136,7 +136,7 @@ export default async function RequestPage({ searchParams }: PageProps) {
     return (
       <>
         {header}
-        <p className="text-sm text-base-content/60">{REQUEST_COPY.form.sendFailed}</p>
+        <p className="text-sm text-base-content/70">{REQUEST_COPY.form.sendFailed}</p>
       </>
     );
   }

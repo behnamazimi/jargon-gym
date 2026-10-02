@@ -53,7 +53,7 @@ export default function SignupForm({
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-base-content/10" />
-        <span className="text-xs text-base-content/60">or sign up with email</span>
+        <span className="text-xs text-base-content/70">or sign up with email</span>
         <div className="h-px flex-1 bg-base-content/10" />
       </div>
 
@@ -118,14 +118,14 @@ export default function SignupForm({
         </Button>
       </form>
 
-      <p className="text-center text-sm text-base-content/60">
+      <p className="text-center text-sm text-base-content/70">
         Already have an account?{" "}
         <Link href={appendNextParam("/login", rawNext)} className="underline underline-offset-2">
           Log in
         </Link>
       </p>
 
-      <p className="text-center text-sm text-base-content/60">
+      <p className="text-center text-sm text-base-content/70">
         Don&apos;t have a code?{" "}
         <Link href="/request-access" className="underline underline-offset-2">
           Request access

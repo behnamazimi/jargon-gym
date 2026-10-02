@@ -39,7 +39,7 @@ function DomainSidebarSection({
 
   return (
     <div className="space-y-1">
-      <p className="px-2 text-xs font-semibold tracking-wider text-base-content/60 uppercase">
+      <p className="px-2 text-xs font-semibold tracking-wider text-base-content/70 uppercase">
         {label}
       </p>
       <ul className="space-y-0.5">
@@ -66,7 +66,7 @@ function DomainSidebarSection({
                   onSelect();
                 }}
                 className={cn(
-                  "h-auto w-full flex-col items-start gap-0.5 rounded-lg px-3 py-2 text-left",
+                  "h-auto w-full flex-col items-start gap-0.5 rounded-field px-3 py-2 text-left",
                   isSelected
                     ? "bg-base-200 text-base-content hover:bg-base-200"
                     : "hover:bg-base-200/60",
@@ -89,7 +89,7 @@ function DomainSidebarSection({
                 <span
                   className={cn(
                     "text-xs tabular-nums",
-                    isSelected ? "text-primary" : "text-base-content/60",
+                    isSelected ? "text-primary-text" : "text-base-content/70",
                   )}
                 >
                   {domain.termsLearnedCount}/{domain.termCount} learned
@@ -142,7 +142,7 @@ export function DomainSidebar({
     >
       <div className="relative shrink-0">
         <Search
-          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-base-content/60"
+          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-base-content/70"
           aria-hidden
           strokeWidth={1.5}
         />
@@ -152,14 +152,14 @@ export function DomainSidebar({
           onChange={(event) => setFilterQuery(event.target.value)}
           placeholder="Search collections…"
           aria-label="Search collections"
-          className="rounded-lg py-2 pr-8 pl-8 text-sm"
+          className="rounded-field py-2 pr-8 pl-8 text-sm"
         />
         {filterQuery ? (
           <Button
             type="button"
             variant="ghost"
             size="icon-sm"
-            className="absolute top-1/2 right-1.5 -translate-y-1/2 text-base-content/60 hover:text-base-content"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 text-base-content/70 hover:text-base-content"
             onPress={() => setFilterQuery("")}
             aria-label="Clear filter"
           >
@@ -170,7 +170,7 @@ export function DomainSidebar({
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
         {filteredDomains.length === 0 ? (
-          <p className="px-2 text-sm text-base-content/60">No collections match your search.</p>
+          <p className="px-2 text-sm text-base-content/70">No collections match your search.</p>
         ) : (
           <>
             <DomainSidebarSection
