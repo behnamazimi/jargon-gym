@@ -12,7 +12,8 @@ export async function PromoVisit({ target }: { target: PromoTarget }) {
   try {
     const state = await getPromoState(user.id);
     return hasVisitedTarget(state, target) ? null : <VisitTimer target={target} />;
-  } catch {
+  } catch (err) {
+    console.error("Failed to load promo:", err);
     return null;
   }
 }

@@ -27,7 +27,8 @@ export async function PromoSlot({ route }: { route: PromoRoute }) {
         cta={promo.cta}
       />
     );
-  } catch {
+  } catch (err) {
+    console.error("Failed to load promo:", err);
     return null;
   }
 }
