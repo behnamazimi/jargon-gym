@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import type { DomainLanguage } from "@/lib/jargon/languages";
 import { TERM_LABELS, type TermLabels as Labels } from "@/lib/jargon/term-labels";
+import { relationshipLabel } from "@/lib/jargon/relationship-label";
 import type { Term } from "@/lib/jargon/types";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -139,7 +140,7 @@ function RelationshipsList({ term, labels, getRelationshipHref }: RelationshipsL
         return (
           <li key={`${relationship.id}-${relationship.direction}`}>
             <span>
-              {relationship.relationshipType}{" "}
+              {relationshipLabel(relationship.relationshipType)}{" "}
               <RelatedTermLink relationship={relationship} href={href} />
             </span>
             {description ? (

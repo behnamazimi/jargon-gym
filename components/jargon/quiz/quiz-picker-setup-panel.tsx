@@ -26,7 +26,6 @@ export type QuizPickerStepProps = {
   aiFellBack: boolean;
   savedSession: QuizSessionState | null;
   onResumeSession: () => void;
-  onDiscardSession: () => void;
   questionStyle: QuizQuestionStyle;
   onQuestionStyleChange: (style: QuizQuestionStyle) => void;
   aiRequiresSetup: boolean;
@@ -46,23 +45,21 @@ export type QuizPickerStepProps = {
 function QuizPickerResumeBanner({
   savedSession,
   onResumeSession,
-  onDiscardSession,
 }: {
   savedSession: QuizSessionState;
   onResumeSession: () => void;
-  onDiscardSession: () => void;
 }) {
   return (
     <StudyResumeBanner
       message={
         <>
-          You have a quiz in progress — question{" "}
+          Quiz in progress: question{" "}
           <span className="tabular-nums">{savedSession.currentIndex + 1}</span> of{" "}
-          <span className="tabular-nums">{savedSession.questions.length}</span>.
+          <span className="tabular-nums">{savedSession.questions.length}</span>. Starting a new quiz
+          replaces it.
         </>
       }
       onResume={onResumeSession}
-      onDiscard={onDiscardSession}
     />
   );
 }
@@ -74,7 +71,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
     aiFellBack,
     savedSession,
     onResumeSession,
-    onDiscardSession,
     questionStyle,
     onQuestionStyleChange,
     aiRequiresSetup,
@@ -111,11 +107,7 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
     >
       <QuizPanelLabel title="Set up your quiz" />
       {savedSession ? (
-        <QuizPickerResumeBanner
-          savedSession={savedSession}
-          onResumeSession={onResumeSession}
-          onDiscardSession={onDiscardSession}
-        />
+        <QuizPickerResumeBanner savedSession={savedSession} onResumeSession={onResumeSession} />
       ) : null}
 
       <QuizQuestionStyleField value={questionStyle} onChange={onQuestionStyleChange} />

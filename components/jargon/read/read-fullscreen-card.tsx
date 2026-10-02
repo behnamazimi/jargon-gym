@@ -72,6 +72,11 @@ export function ReadFullscreenCard({
           />
         ) : null}
       </div>
+      {index === 0 ? (
+        <p className="m-0 shrink-0 px-5 pb-3 text-center text-xs text-base-content/70">
+          Scroll for the next term. ✕ to exit.
+        </p>
+      ) : null}
     </div>
   );
 }

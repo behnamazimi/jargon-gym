@@ -34,11 +34,9 @@ export function StudySetupPanel({
 export function StudyResumeBanner({
   message,
   onResume,
-  onDiscard,
 }: {
   message: ReactNode;
   onResume: () => void;
-  onDiscard: () => void;
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-field border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -51,9 +49,6 @@ export function StudyResumeBanner({
       <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">
         <Button type="button" size="sm" onPress={onResume}>
           Resume
-        </Button>
-        <Button type="button" size="sm" variant="ghost" onPress={onDiscard}>
-          Start new
         </Button>
       </div>
     </div>

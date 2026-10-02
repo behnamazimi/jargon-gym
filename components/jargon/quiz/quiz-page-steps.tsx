@@ -102,7 +102,6 @@ export function QuizPickerStepSection({
       aiFellBack={aiFellBack}
       savedSession={quiz.savedSession}
       onResumeSession={quiz.handleResumeSession}
-      onDiscardSession={quiz.handleDiscardSession}
       questionStyle={quiz.questionStyle}
       onQuestionStyleChange={(style) => {
         quiz.setQuestionStyle(style);

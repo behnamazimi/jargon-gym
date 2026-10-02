@@ -32,7 +32,6 @@ export function useQuizSession(collections: StudyCollection[], initialSetup: Ini
     termById: playing.termById,
     correctSoFar: playing.correctSoFar,
     handleResumeSession: playing.handleResumeSession,
-    handleDiscardSession: playing.handleDiscardSession,
     resetQuizState: playing.resetQuizState,
     handleStartQuiz: playing.handleStartQuiz,
     handleQuestionAnswer: playing.handleQuestionAnswer,

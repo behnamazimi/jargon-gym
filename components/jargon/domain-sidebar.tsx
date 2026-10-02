@@ -45,11 +45,6 @@ function DomainSidebarSection({
       <ul className="space-y-1">
         {domains.map((domain) => {
           const isSelected = domain.id === currentDomainId;
-          const pct =
-            domain.termCount > 0
-              ? Math.round((domain.termsLearnedCount / domain.termCount) * 100)
-              : 0;
-
           return (
             <li key={domain.id}>
               <LinkButton
@@ -92,8 +87,7 @@ function DomainSidebarSection({
                     isSelected ? "text-primary-text" : "text-base-content/70",
                   )}
                 >
-                  {domain.termsLearnedCount}/{domain.termCount} learned
-                  {isSelected && domain.termCount > 0 ? ` · ${pct}%` : ""}
+                  {domain.termsLearnedCount} of {domain.termCount} mastered or marked known
                   {domain.unfinishedCount > 0 ? ` · ${domain.unfinishedCount} to finish` : ""}
                 </span>
               </LinkButton>
