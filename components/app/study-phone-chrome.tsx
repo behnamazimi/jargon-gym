@@ -97,7 +97,7 @@ function DockItemLabel({ active, children }: { active: boolean; children: ReactN
   return (
     <span
       className={cn(
-        "dock-label grid overflow-hidden text-center font-medium leading-none transition-[grid-template-rows,opacity] duration-300 ease-out",
+        "dock-label grid overflow-hidden text-center text-xs font-medium leading-none transition-[grid-template-rows,opacity] duration-300 ease-out",
         active ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
       )}
     >

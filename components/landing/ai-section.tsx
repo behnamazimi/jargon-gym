@@ -22,7 +22,7 @@ const AI_FEATURES: { icon: LucideIcon; label: string; body: string }[] = [
 export function AiSection() {
   return (
     <div>
-      <h2 className="m-0 max-w-[22ch] text-2xl font-bold tracking-tight text-balance text-base-content sm:text-3xl">
+      <h2 className="m-0 max-w-[22ch] text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl">
         AI that works from{" "}
         <span className="underline decoration-primary decoration-2 underline-offset-4">
           your terms

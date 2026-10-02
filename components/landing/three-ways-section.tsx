@@ -43,7 +43,7 @@ function WaysList() {
 export function ThreeWaysSection() {
   return (
     <div>
-      <h2 className="m-0 max-w-[20ch] text-2xl font-bold tracking-tight text-balance text-base-content sm:text-3xl">
+      <h2 className="m-0 max-w-[20ch] text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl">
         Three ways to learn a term,{" "}
         <span className="font-normal text-base-content/45">no required order</span>
       </h2>

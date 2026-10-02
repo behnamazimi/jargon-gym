@@ -104,7 +104,7 @@ function CollectionCardShell({
           ) : null}
         </p>
       ) : null}
-      {footnote ? <p className="text-xs text-base-content/70">{footnote}</p> : null}
+      {footnote ? <p className="text-xs tabular-nums text-base-content/70">{footnote}</p> : null}
       {paceLine ? <p className="text-xs text-base-content/70">{paceLine}</p> : null}
       {collection.markedKnownCount > 0 ? (
         <p className="text-xs text-base-content/70">

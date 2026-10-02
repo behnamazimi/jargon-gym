@@ -44,7 +44,7 @@ export function NotSrsSection() {
   return (
     <div className="grid max-w-5xl grid-cols-1 items-center gap-8 sm:grid-cols-[1fr_1fr] sm:gap-12">
       <div>
-        <h2 className="m-0 max-w-[14ch] text-4xl font-bold tracking-tight text-balance text-base-content sm:text-6xl">
+        <h2 className="m-0 max-w-[14ch] text-4xl font-semibold tracking-tight text-balance text-base-content sm:text-4xl md:text-5xl">
           No{" "}
           <span className="relative inline-block">
             due dates

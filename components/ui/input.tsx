@@ -11,7 +11,7 @@ function Input({ className, type, ...props }: React.ComponentProps<typeof InputP
       type={type}
       data-slot="input"
       className={composeRenderProps(className, (className) =>
-        cn("input w-full aria-invalid:input-error", className),
+        cn("input w-full text-base aria-invalid:input-error sm:text-sm", className),
       )}
       {...props}
     />

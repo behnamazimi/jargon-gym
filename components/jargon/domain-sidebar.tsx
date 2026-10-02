@@ -146,7 +146,7 @@ export function DomainSidebar({
           onChange={(event) => setFilterQuery(event.target.value)}
           placeholder="Search collections…"
           aria-label="Search collections"
-          className="rounded-field py-2 pr-8 pl-8 text-sm"
+          className="rounded-field py-2 pr-8 pl-8 text-base sm:text-sm"
         />
         {filterQuery ? (
           <Button

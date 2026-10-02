@@ -9,7 +9,7 @@ export function BringYourOwnSection() {
         <FolderPlus aria-hidden className="size-6" strokeWidth={1.75} />
       </div>
       <div>
-        <h2 className="m-0 text-2xl font-bold tracking-tight text-base-content sm:text-3xl">
+        <h2 className="m-0 text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl">
           Bring{" "}
           <span className="underline decoration-primary decoration-2 underline-offset-4">
             your own
