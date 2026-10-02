@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getStoriesSetupData } from "@/lib/stories/setup";
 import { hasNoCollections } from "@/lib/study/collections";
+import { PromoVisit } from "@/components/promos/promo-visit";
 import { StoriesPage } from "@/components/jargon/read/stories/stories-page";
 
 // Writing a story can take two model calls; this raises the Server Action
@@ -30,9 +31,12 @@ export default async function JargonReadStoriesPage({ searchParams }: PageProps)
   }
 
   return (
-    <StoriesPage
-      key={`${setup.collections.map((collection) => collection.id).join(",")}:${storyId ?? ""}`}
-      setup={setup}
-    />
+    <>
+      <PromoVisit target="stories" />
+      <StoriesPage
+        key={`${setup.collections.map((collection) => collection.id).join(",")}:${storyId ?? ""}`}
+        setup={setup}
+      />
+    </>
   );
 }

@@ -1289,6 +1289,8 @@ export type Database = {
           current_streak: number;
           last_active_date: string | null;
           longest_streak: number;
+          promo_dismissed: Json;
+          promo_seen: string[];
           provider: string | null;
           read_hide_question: boolean;
           read_narration_highlight: boolean;
@@ -1308,6 +1310,8 @@ export type Database = {
           current_streak?: number;
           last_active_date?: string | null;
           longest_streak?: number;
+          promo_dismissed?: Json;
+          promo_seen?: string[];
           provider?: string | null;
           read_hide_question?: boolean;
           read_narration_highlight?: boolean;
@@ -1327,6 +1331,8 @@ export type Database = {
           current_streak?: number;
           last_active_date?: string | null;
           longest_streak?: number;
+          promo_dismissed?: Json;
+          promo_seen?: string[];
           provider?: string | null;
           read_hide_question?: boolean;
           read_narration_highlight?: boolean;
@@ -1999,6 +2005,14 @@ export type Database = {
           topic: string;
         }[];
       };
+      my_dismiss_promo: {
+        Args: { p_id: string };
+        Returns: undefined;
+      };
+      my_mark_promos_seen: {
+        Args: { p_keys: string[] };
+        Returns: undefined;
+      };
       my_mark_tour_chapter_seen: {
         Args: { p_all_chapters: string[]; p_chapter: string };
         Returns: undefined;
@@ -2019,6 +2033,13 @@ export type Database = {
           recall_stability: number;
           review_recall_count: number;
           term_id: string;
+        }[];
+      };
+      my_promo_usage: {
+        Args: { p_cap: number };
+        Returns: {
+          reads: number;
+          reviews: number;
         }[];
       };
       my_record_review_event: {

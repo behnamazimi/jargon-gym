@@ -1,5 +1,6 @@
 import { Compass } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
+import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
 
 export default function BrowseLayout({ children }: { children: React.ReactNode }) {
@@ -11,6 +12,7 @@ export default function BrowseLayout({ children }: { children: React.ReactNode }
         description="Find collections others have shared and add them to yours."
         compactOnPhone
       />
+      <PromoVisit target="browse" />
       {children}
     </PageShell>
   );

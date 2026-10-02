@@ -1,5 +1,6 @@
 import { BookOpen } from "lucide-react";
 import { PageHeader } from "@/components/jargon/page-header";
+import { PromoSlot } from "@/components/promos/promo-slot";
 import { PageShell } from "@/components/page-container";
 
 export default function ReviewLayout({ children }: { children: React.ReactNode }) {
@@ -16,6 +17,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
         showBack={false}
       />
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+        <PromoSlot route="review" />
         {children}
       </div>
     </PageShell>

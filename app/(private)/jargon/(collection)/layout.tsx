@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { LibrarySidebar } from "@/components/jargon/library-sidebar";
+import { PromoSlot } from "@/components/promos/promo-slot";
 import { PageShell } from "@/components/page-container";
 import { JargonPageSkeleton } from "@/components/page-skeleton";
 import { getSessionUser } from "@/lib/auth/require-session";
@@ -35,6 +36,9 @@ async function LibraryFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <PageShell>
+      <div className="mb-6 empty:hidden">
+        <PromoSlot route="library" />
+      </div>
       <div className="flex flex-col gap-6 md:flex-row md:items-start">
         <LibrarySidebar
           domains={collections.domains}
