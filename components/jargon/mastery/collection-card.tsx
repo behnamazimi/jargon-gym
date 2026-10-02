@@ -118,7 +118,7 @@ function CollectionCardShell({
       <button
         type="button"
         onClick={onSelect}
-        className="w-full cursor-pointer rounded-box p-4 text-left transition-colors hover:bg-base-200/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="w-full cursor-pointer rounded-box p-4 text-left transition-colors hover:bg-base-200/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {content}
       </button>

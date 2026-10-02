@@ -86,7 +86,7 @@ export function SettingsPanel({
 }
 
 export function SettingsStack({ children }: { children: ReactNode }) {
-  return <div className="divide-y divide-base-300/70">{children}</div>;
+  return <div className="divide-y divide-base-300/60">{children}</div>;
 }
 
 export function SettingsRow({

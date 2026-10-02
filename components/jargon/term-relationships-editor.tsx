@@ -91,7 +91,7 @@ export function TermRelationshipsEditor({
           {drafts.map((draft) => (
             <li
               key={draft.key}
-              className="space-y-2 rounded-field border border-base-300/70 bg-base-200/20 p-3"
+              className="space-y-2 rounded-field border border-base-300/60 bg-base-200/60 p-3"
             >
               {draft.direction === "incoming" ? (
                 <p className="text-sm text-base-content/70">

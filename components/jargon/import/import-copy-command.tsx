@@ -33,7 +33,7 @@ export function CopyCommand({
       {children}
 
       <div className="flex flex-col gap-2 md:flex-row md:items-start">
-        <pre className="m-0 min-w-0 flex-1 overflow-x-auto rounded-field bg-base-200/40 px-3 py-2.5 font-mono text-xs leading-5 whitespace-pre-wrap text-base-content">
+        <pre className="m-0 min-w-0 flex-1 overflow-x-auto rounded-field bg-base-200/60 px-3 py-2.5 font-mono text-xs leading-5 whitespace-pre-wrap text-base-content">
           {prefix ? (
             <span className="select-none text-base-content/40" aria-hidden>
               {prefix}{" "}

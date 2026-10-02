@@ -98,7 +98,7 @@ export function QuizStat({
         "rounded-field px-4 py-3",
         variant === "primary"
           ? "bg-primary/8 ring-1 ring-primary/20"
-          : "bg-base-200/50 ring-1 ring-base-content/5",
+          : "bg-base-200/60 ring-1 ring-base-content/5",
       )}
     >
       {label ? <dt className="text-xs text-base-content/70">{label}</dt> : null}

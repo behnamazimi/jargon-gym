@@ -96,7 +96,7 @@ function CollapsibleImportCard({
         <CollapsibleTrigger
           className={cn(
             headerClassName,
-            "w-full text-left transition-colors hover:bg-base-200/40 motion-reduce:transition-none",
+            "w-full text-left transition-colors hover:bg-base-200/60 motion-reduce:transition-none",
           )}
           aria-expanded={expanded}
         >
@@ -184,7 +184,7 @@ export function ImportCodePanel({
 }) {
   return (
     <div className="relative">
-      <div className="shadow-surface max-h-[320px] overflow-auto rounded-field bg-base-200/30 p-1">
+      <div className="shadow-surface max-h-[320px] overflow-auto rounded-field bg-base-200/60 p-1">
         <pre className="m-0 rounded-field bg-base-100 p-3 text-xs leading-5 whitespace-pre-wrap text-base-content ring-1 ring-base-content/[0.06] dark:ring-base-100/[0.06]">
           {children}
         </pre>

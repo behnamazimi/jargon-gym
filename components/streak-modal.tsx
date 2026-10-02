@@ -80,11 +80,11 @@ export function StreakModal({
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-1 flex-col items-center gap-1 rounded-field bg-base-200/50 py-2"
+                className="flex flex-1 flex-col items-center gap-1 rounded-field bg-base-200/60 py-2"
                 aria-hidden
               >
-                <span className="h-4 w-6 animate-pulse rounded bg-base-300/70" />
-                <span className="size-4 animate-pulse rounded-full bg-base-300/70" />
+                <span className="h-4 w-6 animate-pulse rounded bg-base-300/60" />
+                <span className="size-4 animate-pulse rounded-full bg-base-300/60" />
               </div>
             ))
           : days.map((day) => (
@@ -98,7 +98,7 @@ export function StreakModal({
                   day.date === selectedDate && "ring-2 ring-primary",
                   day.isActive
                     ? "bg-streak/10 text-base-content"
-                    : "bg-base-200/50 text-base-content/40",
+                    : "bg-base-200/60 text-base-content/40",
                 )}
               >
                 <span>{weekdayLabel(day.date)}</span>
@@ -111,7 +111,7 @@ export function StreakModal({
             ))}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 rounded-field bg-base-200/50 p-3 text-center">
+      <div className="grid grid-cols-3 gap-2 rounded-field bg-base-200/60 p-3 text-center">
         <div>
           <p className="text-xl font-bold tracking-tight tabular-nums">
             {selected?.readCount ?? 0}

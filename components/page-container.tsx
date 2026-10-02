@@ -13,7 +13,7 @@ export function PageShell({ children, className, innerClassName, ...aria }: Page
   return (
     <div
       className={cn(
-        "min-h-full bg-gradient-to-b from-primary/[0.06] via-background to-background text-base-content",
+        "min-h-full bg-gradient-to-b from-primary/[0.07] to-base-200 text-base-content",
         className,
       )}
       {...aria}
