@@ -89,6 +89,7 @@ export function DomainActionsMenu({
         onResetProgress={() => setResetProgressOpen(true)}
         onExport={() => setExportTerms(fetchCollectionExport(domain.id))}
         onEdit={() => setEditOpen(true)}
+        onImport={() => router.push(`/jargon/import/paste?to=${domain.id}`)}
         onShare={() => setShareConfirmOpen(true)}
         onUnshare={() =>
           setUnshare({

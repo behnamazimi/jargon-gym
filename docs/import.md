@@ -10,12 +10,12 @@ them.
 Add), then offers three starting points: a pasted list, a deck from another
 app, or one term. Everything else lives under it:
 
-| Route                  | What it does                                           |
-| ---------------------- | ------------------------------------------------------ |
-| `/jargon/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination. |
-| `/jargon/import/apps`  | Per-app export guides (`lib/jargon/import/guides.ts`). |
-| `/jargon/import/more`  | The JSON format and the developer AI-skill card.       |
-| `/jargon/capture`      | Save one term. `?to=<id>` presets the collection.      |
+| Route                  | What it does                                                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `/jargon/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination; the collection menu's "Import terms in bulk" links here. |
+| `/jargon/import/apps`  | Per-app export guides (`lib/jargon/import/guides.ts`).                                                          |
+| `/jargon/import/more`  | The JSON format and the developer AI-skill card.                                                                |
+| `/jargon/capture`      | Save one term. `?to=<id>` presets the collection.                                                               |
 
 No AI runs anywhere in this path. Parsing is deterministic.
 

@@ -28,7 +28,7 @@ export async function getImportSetupData() {
 }
 
 const checkSchema = z.object({
-  domainId: z.string().uuid(),
+  domainId: z.guid(),
   terms: z.array(z.string().max(200)).max(MAX_IMPORT_TERMS),
 });
 
@@ -60,7 +60,7 @@ export async function checkImportAgainstDestination(
 export async function getCollectionTermNames(
   domainId: unknown,
 ): Promise<{ terms: string[] } | { error: string }> {
-  const id = z.string().uuid().safeParse(domainId);
+  const id = z.guid().safeParse(domainId);
   if (!id.success) return { error: "That collection isn't available." };
 
   const auth = await requireAuthenticatedClient();
