@@ -74,7 +74,7 @@ function ChoiceField<T extends string>({
           </Button>
         ))}
       </div>
-      <p className="m-0 text-xs leading-relaxed text-base-content/70">{choices[value].hint}</p>
+      <p className="m-0 text-xs text-base-content/70">{choices[value].hint}</p>
     </fieldset>
   );
 }

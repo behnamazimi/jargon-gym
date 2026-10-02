@@ -82,7 +82,7 @@ export function WidgetInstallSteps({
             Generate a token in step 2 to get the one-command install script.
           </p>
         )}
-        <p className="m-0 text-sm leading-relaxed text-base-content/70">
+        <p className="m-0 text-sm text-base-content/70">
           Or{" "}
           <a href="/downloads/jargon-gym.widget.zip" download className="link link-hover">
             download the zip

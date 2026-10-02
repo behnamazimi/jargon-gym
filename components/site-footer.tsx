@@ -30,7 +30,7 @@ export function SiteFooter() {
             Public collections
           </Link>
         </nav>
-        <p className="m-0 flex items-center justify-center gap-1.5 text-center text-xs leading-relaxed text-base-content/70">
+        <p className="m-0 flex items-center justify-center gap-2 text-center text-xs text-base-content/70">
           <BrandIcon size="sm" />
           <span>Jargon Gym — private app, shared by invitation.</span>
         </p>

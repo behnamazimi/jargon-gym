@@ -44,7 +44,13 @@ function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>)
 }
 
 function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return <p data-slot="field-description" className={cn("label text-xs", className)} {...props} />;
+  return (
+    <p
+      data-slot="field-description"
+      className={cn("label text-xs text-base-content/70", className)}
+      {...props}
+    />
+  );
 }
 
 export { Field, FieldLabel, FieldDescription, FieldGroup };

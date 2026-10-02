@@ -23,7 +23,7 @@ function SiteHeaderChrome({
 }) {
   return (
     <header className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm">
-      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
+      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-4")}>
         <div className="flex items-center gap-4">
           <Link
             href={homeHref}

@@ -21,7 +21,7 @@ export default function ForgotPasswordForm() {
         label={PUBLIC_HOME_BACK_LABEL}
         className="-ml-2 self-start"
       />
-      <h1 className="text-2xl font-semibold tracking-tight">Forgot password</h1>
+      <h1 className="text-2xl font-medium">Forgot password</h1>
 
       <AuthFormError error={state && "error" in state ? state.error : null} />
 

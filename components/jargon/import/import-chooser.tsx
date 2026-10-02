@@ -32,7 +32,7 @@ function RowContent({
         <Icon className="size-5" aria-hidden strokeWidth={1.5} />
       </span>
       <span className="min-w-0 flex-1 text-left">
-        <span className="block font-semibold">{title}</span>
+        <span className="block font-medium">{title}</span>
         <span className="block text-sm text-base-content/70">{description}</span>
       </span>
     </>

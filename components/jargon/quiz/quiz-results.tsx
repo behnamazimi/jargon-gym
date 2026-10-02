@@ -33,7 +33,7 @@ function MissedTerms({ terms }: { terms: QuizTerm[] }) {
     <section aria-labelledby="quiz-missed-heading" className="space-y-2">
       <h3
         id="quiz-missed-heading"
-        className="m-0 text-xs font-semibold tracking-wide text-base-content/70 uppercase"
+        className="m-0 text-xs font-semibold tracking-wider text-base-content/70 uppercase"
       >
         Missed ({terms.length})
       </h3>
@@ -43,7 +43,7 @@ function MissedTerms({ terms }: { terms: QuizTerm[] }) {
             <Collapsible className="group">
               <CollapsibleTrigger className="flex min-h-11 w-full cursor-pointer items-center justify-between gap-3 rounded-field border-none bg-transparent px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-base-content">
+                  <span className="block truncate text-sm font-medium text-base-content">
                     {term.term}
                   </span>
                   <span className="block truncate text-xs text-base-content/70">
@@ -57,7 +57,7 @@ function MissedTerms({ terms }: { terms: QuizTerm[] }) {
                 />
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="space-y-2 px-3 pb-3 text-sm leading-relaxed text-base-content/75">
+                <div className="space-y-2 px-3 pb-3 text-sm text-base-content/75">
                   <p className="m-0">{term.definition}</p>
                   {term.example ? (
                     <p className="m-0 text-base-content/70 italic">{term.example}</p>
@@ -113,9 +113,9 @@ export function QuizResults({
             <span className="text-base font-semibold tabular-nums">{percent}%</span>
           </div>
           <div>
-            <p className="m-0 text-3xl font-bold tabular-nums tracking-tight">
+            <p className="m-0 text-3xl font-semibold tabular-nums">
               {score}
-              <span className="text-lg font-semibold text-base-content/40">/{total}</span>
+              <span className="text-lg font-medium text-base-content/40">/{total}</span>
             </p>
             <p className="mt-1 mb-0 text-sm text-base-content/70">questions answered correctly</p>
           </div>

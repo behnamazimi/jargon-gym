@@ -40,7 +40,7 @@ export function RequestRow({ entry, query }: { entry: RequestEntry; query: strin
           <Inbox className="size-5" aria-hidden strokeWidth={1.5} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block font-semibold break-words whitespace-normal">
+          <span className="block font-medium break-words whitespace-normal">
             {CHOOSER.rowTitle(trimmed)}
           </span>
           <span className="block text-sm font-normal whitespace-normal text-base-content/70">

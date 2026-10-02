@@ -133,7 +133,7 @@ export function TelegramPanel({ initialStatus }: TelegramPanelProps) {
             variant="outline"
             onPress={handleDisconnect}
             isDisabled={isDisconnecting}
-            className="min-h-11 w-full text-error hover:bg-error/10 md:w-auto"
+            className="min-h-11 w-full text-error-text hover:bg-error/10 md:w-auto"
           >
             <Unlink className="size-3.5" strokeWidth={1.5} />
             {isDisconnecting ? "Disconnecting…" : "Disconnect Telegram"}

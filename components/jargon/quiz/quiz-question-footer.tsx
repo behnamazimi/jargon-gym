@@ -51,13 +51,13 @@ export function QuizQuestionFooter({
           onPress={onAdvance}
           isDisabled={!canAdvance}
           className={cn(
-            "min-h-11 w-full gap-1.5 transition-transform active:scale-[0.96]",
+            "min-h-11 w-full gap-2 transition-transform active:scale-[0.96]",
             justUnlocked && "quiz-advance-ready",
           )}
         >
           <span
             key={isLast ? "results" : "next"}
-            className="quiz-advance-label-enter inline-flex items-center gap-1.5"
+            className="quiz-advance-label-enter inline-flex items-center gap-2"
           >
             {isLast ? "See results" : "Next question"}
             {isLast ? (

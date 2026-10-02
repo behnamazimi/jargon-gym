@@ -48,7 +48,7 @@ function Toggle({
  *  Roomier on touch screens, where the hit area reaches 44px. */
 export function choiceClassName(className?: string) {
   return cn(
-    "group relative inline-flex min-h-8 min-w-0 cursor-pointer items-center justify-center gap-1.5 rounded-field border border-base-300 bg-base-100 px-3.5 text-center text-sm whitespace-normal text-base-content outline-hidden select-none coarse:min-h-10",
+    "group relative inline-flex min-h-8 min-w-0 cursor-pointer items-center justify-center gap-2 rounded-field border border-base-300 bg-base-100 px-4 text-center text-sm whitespace-normal text-base-content outline-hidden select-none coarse:min-h-10",
     "after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']",
     "transition-[background-color,border-color,scale] duration-150 motion-reduce:transition-none hover:bg-base-200/60",
     "data-selected:border-primary/60 data-selected:bg-primary/10 data-selected:text-[color-mix(in_oklab,var(--color-primary)_35%,var(--color-base-content))] data-selected:hover:bg-primary/15",

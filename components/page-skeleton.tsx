@@ -13,7 +13,7 @@ export function HeaderSkeleton({ hasLikelySession }: { hasLikelySession: boolean
       aria-busy="true"
       aria-label="Loading"
     >
-      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-3.5")}>
+      <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-4")}>
         <div className="flex items-center gap-4">
           <SkeletonBar className="h-7 w-7 rounded-full md:hidden" />
           <SkeletonBar className="hidden h-6 w-28 md:block" />

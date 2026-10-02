@@ -27,7 +27,7 @@ export default function RequestAccessForm({
           label={PUBLIC_HOME_BACK_LABEL}
           className="-ml-2 self-start"
         />
-        <h1 className="text-2xl font-semibold tracking-tight">You&apos;re on the list</h1>
+        <h1 className="text-2xl font-medium">You&apos;re on the list</h1>
         <p className="text-sm text-base-content/70">
           I&apos;ll email you the moment there&apos;s room — keep an eye on your inbox.
         </p>
@@ -42,7 +42,7 @@ export default function RequestAccessForm({
         label={PUBLIC_HOME_BACK_LABEL}
         className="-ml-2 self-start"
       />
-      <h1 className="text-2xl font-semibold tracking-tight">Request access</h1>
+      <h1 className="text-2xl font-medium">Request access</h1>
       <p className="text-sm text-base-content/70">
         Jargon Gym is invite-only right now. Leave your email and I&apos;ll send you a signup link
         when there&apos;s room.

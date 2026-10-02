@@ -17,7 +17,7 @@ export function CaptureSaved({
 }) {
   return (
     <div className="space-y-5 pt-2">
-      <div className="flex size-12 items-center justify-center rounded-box bg-success/15 text-success">
+      <div className="flex size-12 items-center justify-center rounded-box bg-success/15 text-success-text">
         <Check className="size-6" aria-hidden strokeWidth={1.5} />
       </div>
       <p className="m-0 text-base-content/80" role="status">

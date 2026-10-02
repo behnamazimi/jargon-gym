@@ -117,7 +117,7 @@ function AlertDialogTitle({
     <Heading
       slot="title"
       data-slot="alert-dialog-title"
-      className={cn("font-heading text-base font-semibold", className)}
+      className={cn("font-heading text-base font-medium", className)}
       {...props}
     />
   );

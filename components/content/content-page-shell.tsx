@@ -73,8 +73,8 @@ type ContentPageSectionProps = {
 export function ContentPageSection({ id, title, children, className }: ContentPageSectionProps) {
   return (
     <section id={id} className={cn("scroll-mt-24", className)}>
-      <h2 className="m-0 text-lg font-semibold tracking-tight text-base-content">{title}</h2>
-      <div className="content-page-body mt-4 flex flex-col gap-4 text-sm leading-relaxed text-base-content/80">
+      <h2 className="m-0 text-lg font-medium text-base-content">{title}</h2>
+      <div className="content-page-body mt-4 flex flex-col gap-4 text-sm text-base-content/80">
         {children}
       </div>
     </section>

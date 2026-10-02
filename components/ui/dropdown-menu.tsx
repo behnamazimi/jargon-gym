@@ -87,7 +87,7 @@ function dropdownMenuItemClassName(selectionMode: "none" | "single" | "multiple"
   return cn(
     "group/dropdown-menu-item relative flex min-h-8 cursor-default items-center gap-2 rounded-field px-2 py-1 text-sm outline-hidden select-none data-focused:bg-base-200 data-disabled:pointer-events-none data-disabled:opacity-50 data-inset:pl-7.5",
     selectionMode !== "none" && "pr-8",
-    "data-[variant=destructive]:text-error data-[variant=destructive]:data-focused:bg-error/10",
+    "data-[variant=destructive]:text-error-text data-[variant=destructive]:data-focused:bg-error/10",
   );
 }
 

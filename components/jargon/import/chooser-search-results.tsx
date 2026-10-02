@@ -59,7 +59,7 @@ export function SearchResults({
             className="shadow-surface flex items-center gap-3 rounded-field bg-base-100 p-3"
           >
             <div className="min-w-0 flex-1">
-              <p className="m-0 truncate font-semibold">{domain.name}</p>
+              <p className="m-0 truncate font-medium">{domain.name}</p>
               <p className="m-0 text-sm text-base-content/70">
                 {pluralize(domain.termCount, "term")} · Shared
               </p>

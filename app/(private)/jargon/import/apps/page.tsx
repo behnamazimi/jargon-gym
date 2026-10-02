@@ -23,11 +23,11 @@ export default function AppPickerPage() {
               href={`/jargon/import/apps/${guide.slug}`}
               className="flex min-h-16 items-center gap-3 px-4 py-3 no-underline outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-base-200 font-semibold">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-base-200 font-medium">
                 {guide.name.charAt(0)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-semibold text-base-content">{guide.name}</span>
+                <span className="block font-medium text-base-content">{guide.name}</span>
                 <span className="block text-sm text-base-content/70">{guide.summary}</span>
               </span>
               <ChevronRight className="size-4 text-base-content/70" aria-hidden strokeWidth={1.5} />

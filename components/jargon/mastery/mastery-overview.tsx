@@ -25,7 +25,7 @@ function OverviewHeader({
 }) {
   return (
     <div className="space-y-1">
-      <p className="text-sm font-semibold text-base-content">
+      <p className="text-sm font-medium text-base-content">
         Learning <span className="tabular-nums">{termsLearning}</span> terms · Mastered{" "}
         <span className="tabular-nums">{termsLearned}</span> terms
       </p>

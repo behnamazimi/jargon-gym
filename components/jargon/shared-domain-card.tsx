@@ -17,7 +17,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
   return (
     <article
       className={cn(
-        "shadow-surface flex flex-col gap-4 rounded-box bg-base-100 p-4 transition-shadow duration-150 md:flex-row md:items-center md:justify-between md:gap-6",
+        "shadow-surface flex flex-col gap-4 rounded-box bg-base-100 p-5 transition-shadow duration-150 md:flex-row md:items-center md:justify-between md:gap-6",
         "hover:shadow-surface-hover",
         domain.inCollection && "bg-primary/[0.03]",
       )}
@@ -31,9 +31,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
         </div>
         <div className="min-w-0 flex-1 space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-heading truncate text-base font-semibold tracking-tight">
-              {domain.name}
-            </h2>
+            <h2 className="font-heading truncate text-base font-medium">{domain.name}</h2>
             {domain.inCollection ? (
               <Badge className="badge-soft badge-primary gap-1 border-0">
                 <CheckCircle2 className="size-3" aria-hidden strokeWidth={1.5} />
@@ -42,9 +40,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
             ) : null}
           </div>
           {domain.description ? (
-            <p className="line-clamp-2 text-sm leading-relaxed text-base-content/70">
-              {domain.description}
-            </p>
+            <p className="line-clamp-2 text-sm text-base-content/70">{domain.description}</p>
           ) : null}
           <p className="text-sm tabular-nums text-base-content/70">
             {pluralize(domain.termCount, "term")}
@@ -58,7 +54,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
             <LinkButton
               href={`/jargon?domain=${domain.id}`}
               variant="ghost"
-              className="w-full min-h-11 gap-1.5 md:w-auto"
+              className="w-full min-h-11 gap-2 md:w-auto"
             >
               View in collection
               <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
@@ -68,7 +64,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
               variant="outline"
               onPress={onRemove}
               isDisabled={busy}
-              className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
+              className="w-full min-h-11 gap-2 transition-transform active:scale-[0.96] md:w-auto"
             >
               <BookmarkMinus className="size-4" aria-hidden strokeWidth={1.5} />
               Remove
@@ -80,7 +76,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
             data-tour="browse-add"
             onPress={onAdd}
             isDisabled={busy}
-            className="w-full min-h-11 gap-1.5 transition-transform active:scale-[0.96] md:w-auto"
+            className="w-full min-h-11 gap-2 transition-transform active:scale-[0.96] md:w-auto"
           >
             <Plus className="size-4" aria-hidden strokeWidth={1.5} />
             Add to collection

@@ -75,14 +75,23 @@
   --noise: 0;
 }
 
+@theme {
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.55;
+  --text-base--line-height: 1.6;
+}
+
 @theme inline {
-  --font-sans: var(--font-geist);
-  --font-heading: var(--font-inter);
+  --font-sans: var(--font-figtree);
+  --font-heading: var(--font-fraunces);
   --font-mono: var(--font-jetbrains-mono);
   /* The streak flame is the warm accent in both themes. */
   --color-streak: var(--color-accent);
   --color-primary-text: var(--primary-text);
   --color-error-text: var(--error-text);
+  --color-success-text: var(--success-text);
+  --color-warning-text: var(--warning-text);
+  --color-info-text: var(--info-text);
 }
 
 /* Must match PLATFORM_MEDIA in lib/platform.ts */
@@ -118,19 +127,25 @@
   }
 
   :root {
-    --font-heading: var(--font-inter);
-    --font-body: var(--font-geist);
+    --font-heading: var(--font-fraunces);
+    --font-body: var(--font-figtree);
     --font-mono: var(--font-jetbrains-mono);
     --dock-height: 4.5rem;
     --dock-bottom: calc(var(--dock-height) + env(safe-area-inset-bottom, 0px));
     /* Text-safe variants: the fill colours are too light to read as text on white. */
     --primary-text: oklch(45% 0.12 153);
-    --error-text: oklch(50% 0.19 25);
+    --error-text: oklch(50% 0.16 25);
+    --success-text: oklch(42% 0.1 155);
+    --warning-text: oklch(45% 0.1 75);
+    --info-text: oklch(44% 0.09 235);
   }
 
   [data-theme="dim"] {
     --primary-text: var(--color-primary);
     --error-text: var(--color-error);
+    --success-text: var(--color-success);
+    --warning-text: var(--color-warning);
+    --info-text: var(--color-info);
   }
 
   /* Tour targets scroll clear of the phone dock instead of landing behind it. */
@@ -144,40 +159,40 @@
     font-family: var(--font-heading);
     font-size: 2.25rem;
     line-height: 1.2;
-    letter-spacing: -0.025em;
-    font-weight: 700;
+    letter-spacing: -0.01em;
+    font-weight: 600;
   }
 
   h2 {
     font-family: var(--font-heading);
     font-size: 1.875rem;
     line-height: 1.25;
-    letter-spacing: -0.02em;
-    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-weight: 500;
   }
 
   h3 {
     font-family: var(--font-heading);
     font-size: 1.5rem;
     line-height: 1.3;
-    letter-spacing: -0.015em;
-    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-weight: 500;
   }
 
   h4 {
     font-family: var(--font-heading);
     font-size: 1.25rem;
     line-height: 1.4;
-    letter-spacing: -0.01em;
-    font-weight: 600;
+    letter-spacing: 0;
+    font-weight: 500;
   }
 
   h5 {
     font-family: var(--font-heading);
     font-size: 1.125rem;
     line-height: 1.5;
-    letter-spacing: -0.01em;
-    font-weight: 600;
+    letter-spacing: 0;
+    font-weight: 500;
   }
 
   h6 {
@@ -185,7 +200,7 @@
     font-size: 1rem;
     line-height: 1.5;
     letter-spacing: 0;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   body {
@@ -206,6 +221,10 @@
 }
 
 @layer utilities {
+  :where(.btn) {
+    font-weight: 500;
+  }
+
   .shadow-surface {
     box-shadow:
       0 0 0 1px oklch(35% 0.04 60 / 0.07),

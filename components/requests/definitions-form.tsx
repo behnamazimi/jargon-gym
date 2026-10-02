@@ -58,7 +58,7 @@ export function DefinitionsForm({
       <div className="space-y-2">
         <p className="m-0">{DEFS.intro(name)}</p>
         <p className="m-0 text-sm font-medium">{DEFS.waiting(count)}</p>
-        <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+        <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
           {words.slice(0, SHOWN_WORDS).map((word) => (
             <li key={word} className="rounded-field bg-base-200 px-2 py-1 text-sm">
               {word}

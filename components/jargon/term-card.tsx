@@ -55,7 +55,7 @@ function KnownBadge() {
 function MarkedKnownBadge() {
   return (
     <span
-      className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-info/15 text-info ml-2"
+      className="inline-flex shrink-0 size-5 items-center justify-center rounded-full bg-info/15 text-info-text ml-2"
       title="Marked known"
       aria-label="Marked known"
     >
@@ -74,7 +74,7 @@ function CardTitle({ term, known, markedKnown }: CardTitleProps) {
   return (
     <span
       className={cn(
-        "font-heading min-w-0 text-base font-semibold tracking-tight text-pretty",
+        "font-heading min-w-0 text-lg font-medium text-pretty",
         known || markedKnown
           ? "text-base-content/70 decoration-primary/60 decoration-2"
           : "text-base-content",
@@ -205,7 +205,7 @@ export const TermCard = memo(function TermCard({
               open && "border-b border-base-300/60 bg-primary/[0.04]",
             )}
           >
-            <CollapsibleTrigger className="flex min-h-11 min-w-0 flex-1 cursor-pointer transition-transform active:scale-[0.99] motion-reduce:transition-none items-center justify-between gap-3 rounded-field border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <CollapsibleTrigger className="flex min-h-14 min-w-0 flex-1 cursor-pointer transition-transform active:scale-[0.99] motion-reduce:transition-none items-center justify-between gap-3 rounded-field border-none bg-transparent p-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <CardTitle term={term} known={known} markedKnown={markedKnown} />
               <span className="inline-flex shrink-0 items-center gap-2">
                 {term.category ? (

@@ -32,7 +32,7 @@ export function Toolbar({
       <Separator />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <Field orientation="horizontal" className="w-auto items-center gap-1.5">
+          <Field orientation="horizontal" className="w-auto items-center gap-2">
             <Checkbox
               id="hide-known"
               isSelected={hideKnown}

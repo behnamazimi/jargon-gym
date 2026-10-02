@@ -44,7 +44,7 @@ function formatGradeDistribution(summary: GradeDistributionSummary): string {
 
 function GradeDistributionRow({ summary }: { summary: GradeDistributionSummary }) {
   return (
-    <div className="flex flex-col gap-0.5 py-2 text-sm">
+    <div className="flex flex-col gap-1 py-2 text-sm">
       <span className="font-medium text-base-content">Grading</span>
       <span className="text-base-content/70">{formatGradeDistribution(summary)}</span>
     </div>
@@ -63,10 +63,10 @@ export function MasteryPracticeActivity({ stats }: { stats: WebStatsSnapshot }) 
     <Collapsible
       isExpanded={open}
       onExpandedChange={setOpen}
-      className="shadow-surface rounded-box bg-base-100 p-4"
+      className="shadow-surface rounded-box bg-base-100 p-5"
     >
       <CollapsibleTrigger className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-field border-none bg-transparent p-0 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <span className="text-sm font-semibold text-base-content">Practice activity</span>
+        <span className="text-sm font-medium text-base-content">Practice activity</span>
         <ChevronRight
           className={cn("size-3.5 shrink-0 transition-transform", open && "rotate-90")}
           aria-hidden

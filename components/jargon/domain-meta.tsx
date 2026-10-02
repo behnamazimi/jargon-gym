@@ -16,9 +16,7 @@ export function DomainMeta({ domain, categoryCount }: { domain: Domain; category
   return (
     <div className="min-w-0 flex-1 space-y-2">
       {domain.description ? (
-        <p className="max-w-prose text-base leading-relaxed text-base-content/85">
-          {domain.description}
-        </p>
+        <p className="max-w-prose text-base text-base-content/85">{domain.description}</p>
       ) : null}
       <p className="m-0 text-xs text-base-content/70">{parts.join(" · ")}</p>
     </div>

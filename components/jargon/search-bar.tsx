@@ -26,7 +26,7 @@ export function SearchBar({ value, onChange, onClear, inputRef }: SearchBarProps
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={isTouch ? "Search terms" : "Search terms  (press / to focus)"}
-        className="rounded-field px-3.5 py-2.5 pr-10 text-sm"
+        className="rounded-field px-4 py-3 pr-10 text-sm"
       />
       {value ? (
         <TooltipTrigger>

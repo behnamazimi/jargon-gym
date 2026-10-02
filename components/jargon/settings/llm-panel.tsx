@@ -55,7 +55,7 @@ function RemoveKeySection({ onClear, isClearing, creditsRemaining }: RemoveKeySe
         variant="outline"
         onPress={onClear}
         isDisabled={isClearing}
-        className="min-h-11 w-full text-error hover:bg-error/10 md:w-auto"
+        className="min-h-11 w-full text-error-text hover:bg-error/10 md:w-auto"
       >
         <Trash2 className="size-3.5" strokeWidth={1.5} />
         {isClearing ? "Removing…" : "Remove API key"}

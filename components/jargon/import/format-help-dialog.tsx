@@ -21,7 +21,7 @@ function Format({
 }) {
   return (
     <section className="space-y-1">
-      <h3 className="m-0 text-sm font-semibold">{title}</h3>
+      <h3 className="m-0 text-sm font-medium">{title}</h3>
       <p className="m-0 text-sm text-base-content/70">{children}</p>
       {example ? (
         <div className="relative">

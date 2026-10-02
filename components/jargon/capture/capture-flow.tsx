@@ -166,7 +166,7 @@ function CaptureForm({ collections, presetId, shared = { kind: "none" } }: Captu
         event.preventDefault();
         void save(false);
       }}
-      className="shadow-surface space-y-4 rounded-box bg-base-100 p-4"
+      className="shadow-surface space-y-4 rounded-box bg-base-100 p-5"
     >
       <Field>
         <FieldLabel htmlFor="capture-collection">{CAPTURE_COPY.collection}</FieldLabel>

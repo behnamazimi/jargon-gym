@@ -46,7 +46,7 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
         >
           <ArrowLeft className="size-5" aria-hidden strokeWidth={1.5} />
         </Button>
-        <h2 tabIndex={-1} className="m-0 text-lg font-semibold outline-none">
+        <h2 tabIndex={-1} className="m-0 text-lg font-medium outline-none">
           Check {pluralize(drafts.length, "term")}
         </h2>
       </div>

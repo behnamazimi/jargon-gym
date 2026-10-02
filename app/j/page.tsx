@@ -19,7 +19,7 @@ export default async function PublicCollectionsIndexPage() {
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-10">
       <div>
-        <h1 className="text-3xl font-semibold text-base-content">Public collections</h1>
+        <h1 className="text-3xl font-medium text-base-content">Public collections</h1>
         <p className="mt-1 text-base text-base-content/70">
           Jargon and language vocabulary, explained in plain language.
         </p>
@@ -36,7 +36,7 @@ export default async function PublicCollectionsIndexPage() {
                 className="block rounded-field border border-base-300 bg-base-100 px-4 py-3 no-underline transition-colors duration-150 hover:border-primary/50"
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-lg font-semibold text-base-content">{domain.name}</span>
+                  <span className="text-lg font-medium text-base-content">{domain.name}</span>
                   <span className="shrink-0 text-sm text-base-content/70">
                     {domain.termCount} term{domain.termCount === 1 ? "" : "s"}
                   </span>

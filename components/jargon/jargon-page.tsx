@@ -98,7 +98,7 @@ export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageP
 
   return (
     <TermDetailsScope value={detailsScope}>
-      <div className="min-w-0 flex-1 space-y-4">
+      <div className="min-w-0 flex-1 space-y-6">
         <Suspense fallback={null}>
           <ImportedNotice
             summary={importedSummary}

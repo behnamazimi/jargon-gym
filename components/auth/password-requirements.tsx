@@ -22,8 +22,8 @@ export function PasswordRequirements({ password, visible = true }: PasswordRequi
         <li
           key={requirement.id}
           className={cn(
-            "flex items-center gap-1.5 text-xs",
-            requirement.met ? "text-success" : "text-base-content/70",
+            "flex items-center gap-2 text-xs",
+            requirement.met ? "text-success-text" : "text-base-content/70",
           )}
         >
           <Check

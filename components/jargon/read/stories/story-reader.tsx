@@ -51,7 +51,7 @@ function StoryHeader({
   return (
     <header className="shrink-0 space-y-1 border-b border-base-300/60 px-5 py-3 sm:px-6">
       <div className="flex items-start justify-between gap-2">
-        <h2 className="font-heading m-0 min-w-0 text-xl font-semibold tracking-tight text-balance text-base-content sm:text-2xl sm:leading-tight">
+        <h2 className="font-heading m-0 min-w-0 text-xl font-medium text-balance text-base-content sm:text-2xl sm:leading-tight">
           {story.title}
         </h2>
         {story.readAt ? null : (
@@ -67,7 +67,7 @@ function StoryHeader({
           </Button>
         )}
       </div>
-      <p className="m-0 text-xs tracking-wide text-base-content/70">
+      <p className="m-0 text-xs text-base-content/70">
         {meta.map((item, index) => (
           <span key={item}>
             {index > 0 ? (
@@ -102,7 +102,7 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
   return (
     <Collapsible className="group border-t border-base-300/60 pt-2">
       <CollapsibleTrigger className="-mx-2 flex min-h-11 w-[calc(100%+1rem)] cursor-pointer items-center justify-between gap-3 rounded-field border-none bg-transparent px-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary">
-        <span className="text-xs font-semibold tracking-wide text-base-content/70 uppercase">
+        <span className="text-xs font-semibold tracking-wider text-base-content/70 uppercase">
           Terms in this piece ({occurrences.length})
         </span>
         <ChevronDown
@@ -118,15 +118,15 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
             if (!term) {
               return (
                 <li key={termId} className="py-3 text-sm text-base-content/70">
-                  <span className="font-semibold">{surface}</span> · No longer available
+                  <span className="font-medium">{surface}</span> · No longer available
                 </li>
               );
             }
             return (
-              <li key={termId} className="py-2.5">
+              <li key={termId} className="py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="m-0 min-w-0 text-sm font-semibold text-base-content">{term.term}</p>
-                  <div className="-me-1.5 flex shrink-0 items-center gap-0.5">
+                  <p className="m-0 min-w-0 text-sm font-medium text-base-content">{term.term}</p>
+                  <div className="-me-1.5 flex shrink-0 items-center gap-1">
                     {newTermIds.has(termId) ? (
                       <StoryMarkKnown termId={termId} term={term.term} />
                     ) : null}
@@ -139,9 +139,7 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
                     </Link>
                   </div>
                 </div>
-                <p className="m-0 text-sm leading-relaxed text-base-content/70">
-                  {term.definition}
-                </p>
+                <p className="m-0 text-sm text-base-content/70">{term.definition}</p>
               </li>
             );
           })}

@@ -25,9 +25,9 @@ function ImportCardHeaderContent({
         {icon}
       </div>
       <div className="min-w-0 flex-1 space-y-1 text-left">
-        <h2 className="m-0 text-base font-semibold">{title}</h2>
+        <h2 className="m-0 text-base font-medium">{title}</h2>
         {headerDescription ? (
-          <p className="m-0 text-sm leading-relaxed text-base-content/70">{headerDescription}</p>
+          <p className="m-0 text-sm text-base-content/70">{headerDescription}</p>
         ) : null}
       </div>
       {collapsible ? (
@@ -56,7 +56,7 @@ function ImportCardBody({
   return (
     <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
       {collapsible && description ? (
-        <p className="m-0 text-sm leading-relaxed text-base-content/70">{description}</p>
+        <p className="m-0 text-sm text-base-content/70">{description}</p>
       ) : null}
       {children}
     </div>

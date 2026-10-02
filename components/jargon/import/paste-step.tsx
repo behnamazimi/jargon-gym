@@ -99,7 +99,7 @@ export function PasteStep({
           value={draft}
           aria-label="Your list"
           placeholder={PLACEHOLDER}
-          className="min-h-64 pr-12 text-base leading-relaxed"
+          className="min-h-64 pr-12 text-base"
           onChange={(event) => onTextChange(event.target.value)}
           onPaste={handlePaste}
         />

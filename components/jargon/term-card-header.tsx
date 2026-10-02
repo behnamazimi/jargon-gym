@@ -27,10 +27,10 @@ export function TermCardHeader({
       style={style}
     >
       <div>
-        <h2 className="font-heading m-0 text-xl font-semibold tracking-tight text-base-content sm:text-2xl sm:leading-tight">
+        <h2 className="font-heading m-0 text-xl font-medium text-base-content sm:text-2xl sm:leading-tight">
           {term.term}
         </h2>
-        <p className="mt-1 mb-0 text-xs tracking-wide text-base-content/70">
+        <p className="mt-1 mb-0 text-xs text-base-content/70">
           <span>{term.domainName}</span>
           {term.category ? (
             <>

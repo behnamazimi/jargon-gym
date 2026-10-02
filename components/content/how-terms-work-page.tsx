@@ -100,7 +100,7 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
           backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
 
-        <p className="m-0 mb-4 text-sm leading-relaxed text-base-content/80">
+        <p className="m-0 mb-4 text-sm text-base-content/80">
           This is for anyone who wants to understand how content is structured in the app, or who
           plans to add terms of their own. A term can be a piece of jargon or a word, phrase, or
           grammar construction in a language you&apos;re learning. You can paste a list from Notes

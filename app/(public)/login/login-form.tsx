@@ -35,7 +35,7 @@ export default function LoginForm() {
         label={PUBLIC_HOME_BACK_LABEL}
         className="-ml-2 self-start"
       />
-      <h1 className="text-2xl font-semibold tracking-tight">Log in</h1>
+      <h1 className="text-2xl font-medium">Log in</h1>
 
       <GoogleSignInButton next={next} />
 

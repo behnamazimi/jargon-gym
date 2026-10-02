@@ -63,9 +63,7 @@ export function StudyPhoneTopBar() {
           )}
         </div>
         <div className="flex justify-center">
-          <p className="m-0 font-heading text-sm font-semibold tracking-tight">
-            {studyScreenTitle(pathname)}
-          </p>
+          <p className="m-0 font-heading text-sm font-medium">{studyScreenTitle(pathname)}</p>
         </div>
         <div className="flex items-center justify-end gap-2">
           <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
@@ -92,7 +90,7 @@ export function StudyPhoneTopBar() {
 
 function dockItemClass(active: boolean) {
   return cn(
-    "mb-0! min-h-11 items-center justify-center gap-0.5 transition-transform after:content-none active:scale-95 motion-reduce:transition-none",
+    "mb-0! min-h-11 items-center justify-center gap-1 transition-transform after:content-none active:scale-95 motion-reduce:transition-none",
     active && "dock-active font-medium text-primary-text",
   );
 }

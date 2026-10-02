@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 export type SwipeActionKind = "knew" | "markKnown" | "notYet" | "markUnknown";
 
 const SWIPE_ACTIONS: Record<SwipeActionKind, { label: string; icon: LucideIcon; tone: string }> = {
-  knew: { label: "I knew this", icon: CircleCheck, tone: "bg-success/15 text-success" },
-  markKnown: { label: "Mark known", icon: CircleCheck, tone: "bg-success/15 text-success" },
-  notYet: { label: "Not yet", icon: Clock, tone: "bg-warning/15 text-warning" },
-  markUnknown: { label: "Mark unknown", icon: Undo2, tone: "bg-info/15 text-info" },
+  knew: { label: "I knew this", icon: CircleCheck, tone: "bg-success/15 text-success-text" },
+  markKnown: { label: "Mark known", icon: CircleCheck, tone: "bg-success/15 text-success-text" },
+  notYet: { label: "Not yet", icon: Clock, tone: "bg-warning/15 text-warning-text" },
+  markUnknown: { label: "Mark unknown", icon: Undo2, tone: "bg-info/15 text-info-text" },
 };
 
 /** Tinted label that fades in behind or over whatever is being swiped, so
@@ -27,7 +27,7 @@ export function SwipeActionLabel({
       ref={ref}
       aria-hidden
       className={cn(
-        "pointer-events-none inline-flex items-center gap-1.5 rounded-field px-3 py-2 text-sm font-semibold",
+        "pointer-events-none inline-flex items-center gap-2 rounded-field px-3 py-2 text-sm font-semibold",
         tone,
         className,
       )}

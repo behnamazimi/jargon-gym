@@ -65,7 +65,7 @@ export function StreakModal({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <Flame className="size-6 shrink-0 text-streak" strokeWidth={2} aria-hidden />
-            <p className="m-0 text-lg leading-none font-bold tracking-tight">
+            <p className="m-0 text-lg leading-none font-semibold">
               <span className="tabular-nums">{currentStreak}</span> day streak
             </p>
           </div>
@@ -75,7 +75,7 @@ export function StreakModal({
         </div>
       </DialogHeader>
 
-      <div className="flex gap-1.5">
+      <div className="flex gap-2">
         {showSkeleton
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
@@ -113,26 +113,20 @@ export function StreakModal({
 
       <div className="grid grid-cols-3 gap-2 rounded-field bg-base-200/60 p-3 text-center">
         <div>
-          <p className="text-xl font-bold tracking-tight tabular-nums">
-            {selected?.readCount ?? 0}
-          </p>
+          <p className="text-xl font-semibold tabular-nums">{selected?.readCount ?? 0}</p>
           <p className="text-xs text-base-content/70">Read</p>
         </div>
         <div>
-          <p className="text-xl font-bold tracking-tight tabular-nums">
-            {selected?.reviewedCount ?? 0}
-          </p>
+          <p className="text-xl font-semibold tabular-nums">{selected?.reviewedCount ?? 0}</p>
           <p className="text-xs text-base-content/70">Reviewed</p>
         </div>
         <div>
-          <p className="text-xl font-bold tracking-tight tabular-nums">
-            {selected?.quizzedCount ?? 0}
-          </p>
+          <p className="text-xl font-semibold tabular-nums">{selected?.quizzedCount ?? 0}</p>
           <p className="text-xs text-base-content/70">Quizzed</p>
         </div>
       </div>
 
-      {error ? <p className="text-sm text-error">{error}</p> : null}
+      {error ? <p className="text-sm text-error-text">{error}</p> : null}
     </Dialog>
   );
 }

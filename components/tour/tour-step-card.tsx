@@ -124,13 +124,10 @@ export function TourStepCard({
           >
             <div className="flex items-start gap-2">
               <div className="min-w-0 flex-1">
-                <p
-                  id={titleId}
-                  className="m-0 font-heading text-sm font-semibold text-base-content"
-                >
+                <p id={titleId} className="m-0 font-heading text-sm font-medium text-base-content">
                   {title}
                 </p>
-                <p className="m-0 mt-1 text-sm leading-relaxed text-base-content/70">{body}</p>
+                <p className="m-0 mt-1 text-sm text-base-content/70">{body}</p>
               </div>
               <Button
                 variant="ghost"

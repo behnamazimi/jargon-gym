@@ -39,7 +39,7 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
       aria-label="Filter shared collections"
       data-tour="browse-filters"
       className={cn(
-        "shadow-surface space-y-3 rounded-box bg-base-100 p-4",
+        "shadow-surface space-y-3 rounded-box bg-base-100 p-5",
         "max-md:sticky max-md:z-30 max-md:top-0",
         "in-[.chrome-study]:max-md:top-[calc(2.75rem+env(safe-area-inset-top,0px))]",
       )}

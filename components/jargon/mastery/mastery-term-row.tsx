@@ -41,12 +41,16 @@ export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: Maste
   return (
     <li className="shadow-surface flex items-center justify-between gap-4 rounded-box bg-base-100 px-4 py-3 ring-1 ring-base-content/5">
       <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="truncate font-heading text-sm font-semibold text-base-content">
+        <div className="flex items-center gap-2">
+          <span className="truncate font-heading text-sm font-medium text-base-content">
             {row.term}
           </span>
           {row.known ? (
-            <Check className="size-4 shrink-0 text-success" aria-label="Known" strokeWidth={2.5} />
+            <Check
+              className="size-4 shrink-0 text-success-text"
+              aria-label="Known"
+              strokeWidth={2.5}
+            />
           ) : null}
         </div>
         <p className="m-0 mt-0.5 truncate text-xs text-base-content/70">

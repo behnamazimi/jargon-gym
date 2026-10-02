@@ -34,7 +34,7 @@ export function CheckCard({
           aria-label={`Edit "${draft.term}"`}
           onClick={onEdit}
         >
-          <span className="block truncate font-semibold">{draft.term}</span>
+          <span className="block truncate font-medium">{draft.term}</span>
           {updating ? (
             <span className="mt-1 grid gap-1 text-sm">
               <span className="text-base-content/70">

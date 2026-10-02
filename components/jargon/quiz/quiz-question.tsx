@@ -149,7 +149,7 @@ export function QuizQuestionView({
   return (
     <QuizPanel className="quiz-feedback-enter flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
-        <h2 className="m-0 text-lg font-semibold leading-snug tracking-tight text-base-content sm:text-xl">
+        <h2 className="m-0 text-lg font-medium leading-snug text-base-content sm:text-xl">
           {promptQuestion}
         </h2>
 

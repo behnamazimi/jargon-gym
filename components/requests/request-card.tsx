@@ -189,7 +189,7 @@ export function RequestCard({ request }: { request: MyRequest }) {
       aria-label={request.topic}
     >
       <div className="flex items-start gap-3">
-        <h2 className="m-0 min-w-0 flex-1 text-base font-semibold break-words">{request.topic}</h2>
+        <h2 className="m-0 min-w-0 flex-1 text-base font-medium break-words">{request.topic}</h2>
         {pill ? (
           <Badge variant="outline" className={cn("shrink-0", PILL_CLASS[pill.tone])}>
             {pill.label}

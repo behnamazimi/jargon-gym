@@ -27,7 +27,7 @@ export function StreakBadge({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cn(
-          "btn btn-ghost min-h-11 gap-1.5 md:min-h-0",
+          "btn btn-ghost min-h-11 gap-2 md:min-h-0",
           currentStreak === 0 && "opacity-50",
           className,
         )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
-import { Geist, Inter } from "next/font/google";
+import { Figtree, Fraunces } from "next/font/google";
 import { useEffect } from "react";
 import { StatusPageBody } from "@/components/status-page";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -9,14 +9,15 @@ import { DARK_THEME, LIGHT_THEME, THEME_COOKIE_NAME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
-const geist = Geist({
+const figtree = Figtree({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-figtree",
 });
 
-const inter = Inter({
+const fraunces = Fraunces({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-fraunces",
+  axes: ["opsz", "SOFT"],
 });
 
 const themeScript = `(function(){var m=document.cookie.match(/${THEME_COOKIE_NAME}=([^;]+)/);document.documentElement.setAttribute("data-theme",m&&m[1]==="${DARK_THEME}"?"${DARK_THEME}":"${LIGHT_THEME}")})()`;
@@ -39,7 +40,7 @@ export default function GlobalError({ error, reset, unstable_retry }: GlobalErro
       lang="en"
       data-theme={LIGHT_THEME}
       suppressHydrationWarning
-      className={cn("h-full antialiased font-sans", geist.variable, inter.variable)}
+      className={cn("h-full antialiased font-sans", figtree.variable, fraunces.variable)}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />

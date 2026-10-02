@@ -52,14 +52,14 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
           </Avatar>
         </Button>
         <DropdownMenu className="min-w-[220px]">
-          <DropdownMenuLabel className="flex items-start gap-2.5 px-3 py-2.5 font-normal">
+          <DropdownMenuLabel className="flex items-start gap-3 px-3 py-3 font-normal">
             <Avatar>
               <AvatarFallback className="text-xs font-semibold text-primary-text">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="m-0 text-xs font-medium uppercase tracking-wide text-base-content/70">
+              <p className="m-0 text-xs font-medium uppercase tracking-wider text-base-content/70">
                 Signed in as
               </p>
               <p className="mt-0.5 truncate text-sm font-medium text-base-content">{email}</p>
@@ -72,7 +72,7 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
               textValue={creditsLine.label}
             >
               <Sparkles className="h-4 w-4" aria-hidden />
-              <span className={cn(creditsLine.tone === "error" && "text-error")}>
+              <span className={cn(creditsLine.tone === "error" && "text-error-text")}>
                 {creditsLine.label}
               </span>
             </DropdownMenuItem>

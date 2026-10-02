@@ -34,7 +34,7 @@ export function DomainSidebarDrawer({
         data-tour="library-collections"
         onPress={() => onOpenChange(true)}
         className={cn(
-          "shadow-surface h-auto w-full justify-between gap-2 rounded-field px-3 py-2.5 text-left md:hidden",
+          "shadow-surface h-auto w-full justify-between gap-2 rounded-field px-3 py-3 text-left md:hidden",
           className,
         )}
       >

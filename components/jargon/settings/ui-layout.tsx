@@ -69,14 +69,12 @@ export function SettingsPanel({
           </div>
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 id={headingId} className="m-0 text-base font-semibold">
+              <h2 id={headingId} className="m-0 text-base font-medium">
                 {title}
               </h2>
               {status}
             </div>
-            {description ? (
-              <p className="m-0 text-sm leading-relaxed text-base-content/70">{description}</p>
-            ) : null}
+            {description ? <p className="m-0 text-sm text-base-content/70">{description}</p> : null}
           </div>
         </div>
         <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">{children}</div>
@@ -105,11 +103,11 @@ export function SettingsRow({
   titleId?: string;
 }) {
   const heading = htmlFor ? (
-    <Label htmlFor={htmlFor} className="m-0 text-sm font-semibold">
+    <Label htmlFor={htmlFor} className="m-0 text-sm font-medium">
       {title}
     </Label>
   ) : (
-    <h3 id={titleId} className="m-0 text-sm font-semibold">
+    <h3 id={titleId} className="m-0 text-sm font-medium">
       {title}
     </h3>
   );
@@ -117,9 +115,7 @@ export function SettingsRow({
   const copy = (
     <div className="min-w-0 space-y-1">
       {heading}
-      {description ? (
-        <div className="text-sm leading-relaxed text-base-content/70">{description}</div>
-      ) : null}
+      {description ? <div className="text-sm text-base-content/70">{description}</div> : null}
     </div>
   );
 
@@ -152,10 +148,8 @@ export function DangerZone({
   return (
     <div className="space-y-3 rounded-field border border-error/20 bg-error/5 px-4 py-4">
       <div>
-        <h3 className="m-0 text-sm font-semibold">{title}</h3>
-        {description ? (
-          <p className="mt-1 text-sm leading-relaxed text-base-content/70">{description}</p>
-        ) : null}
+        <h3 className="m-0 text-sm font-medium">{title}</h3>
+        {description ? <p className="mt-1 text-sm text-base-content/70">{description}</p> : null}
       </div>
       {children}
     </div>
@@ -191,10 +185,8 @@ export function SetupStep({
       </span>
       <div className="min-w-0 flex-1 space-y-3">
         <div>
-          <h3 className="m-0 text-sm font-semibold">{title}</h3>
-          {description ? (
-            <p className="mt-1 text-sm leading-relaxed text-base-content/70">{description}</p>
-          ) : null}
+          <h3 className="m-0 text-sm font-medium">{title}</h3>
+          {description ? <p className="mt-1 text-sm text-base-content/70">{description}</p> : null}
         </div>
         {children}
       </div>

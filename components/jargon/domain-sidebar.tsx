@@ -42,7 +42,7 @@ function DomainSidebarSection({
       <p className="px-2 text-xs font-semibold tracking-wider text-base-content/70 uppercase">
         {label}
       </p>
-      <ul className="space-y-0.5">
+      <ul className="space-y-1">
         {domains.map((domain) => {
           const isSelected = domain.id === currentDomainId;
           const pct =
@@ -66,13 +66,13 @@ function DomainSidebarSection({
                   onSelect();
                 }}
                 className={cn(
-                  "h-auto w-full flex-col items-start gap-0.5 rounded-field px-3 py-2 text-left",
+                  "h-auto w-full flex-col items-start gap-1 rounded-field px-3 py-2 text-left",
                   isSelected
                     ? "bg-base-200 text-base-content hover:bg-base-200"
                     : "hover:bg-base-200/60",
                 )}
               >
-                <span className="flex w-full min-w-0 items-center gap-1.5">
+                <span className="flex w-full min-w-0 items-center gap-2">
                   <span className="truncate text-sm font-medium">
                     {domain.icon ? `${domain.icon} ` : ""}
                     {domain.name}

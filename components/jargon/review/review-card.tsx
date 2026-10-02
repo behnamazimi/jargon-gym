@@ -104,10 +104,10 @@ export function ReviewCard({
               </div>
             ) : null}
             <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 overflow-hidden px-5 text-center sm:px-6">
-              <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
+              <h2 className="font-heading m-0 max-w-full text-[1.75rem] font-medium text-balance text-base-content sm:text-3xl sm:leading-tight">
                 {term.term}
               </h2>
-              <p className="m-0 text-xs tracking-wide text-base-content/70">
+              <p className="m-0 text-xs text-base-content/70">
                 <span>{term.domainName}</span>
                 {term.category ? (
                   <>

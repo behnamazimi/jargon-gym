@@ -34,12 +34,10 @@ export function QuizPanelHeader({
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="m-0 text-base font-semibold">{title}</h2>
+          <h2 className="m-0 text-base font-medium">{title}</h2>
           {aside}
         </div>
-        {description ? (
-          <p className="m-0 text-sm leading-relaxed text-base-content/70">{description}</p>
-        ) : null}
+        {description ? <p className="m-0 text-sm text-base-content/70">{description}</p> : null}
       </div>
     </div>
   );
@@ -48,10 +46,8 @@ export function QuizPanelHeader({
 export function QuizPanelLabel({ title, description }: { title: string; description?: string }) {
   return (
     <div className="mb-5 space-y-1">
-      <p className="m-0 text-sm font-semibold text-base-content/80">{title}</p>
-      {description ? (
-        <p className="m-0 text-xs leading-relaxed text-base-content/70">{description}</p>
-      ) : null}
+      <p className="m-0 text-sm font-medium text-base-content/80">{title}</p>
+      {description ? <p className="m-0 text-xs text-base-content/70">{description}</p> : null}
     </div>
   );
 }
@@ -77,7 +73,7 @@ export function QuizSetupFooter({
 }) {
   return (
     <div className={cn("flex flex-col gap-3 border-t border-base-300/60 pt-6", className)}>
-      {hint ? <p className="m-0 text-xs leading-relaxed text-base-content/70">{hint}</p> : null}
+      {hint ? <p className="m-0 text-xs text-base-content/70">{hint}</p> : null}
       <div className="w-full">{children}</div>
     </div>
   );
@@ -134,10 +130,8 @@ export function QuizCenteredState({
         <Icon className={cn("size-5", iconClassName)} aria-hidden strokeWidth={1.5} />
       </div>
       <div className="space-y-1">
-        <h2 className="m-0 text-sm font-semibold text-base-content/80">{title}</h2>
-        {description ? (
-          <p className="m-0 text-sm leading-relaxed text-base-content/70">{description}</p>
-        ) : null}
+        <h2 className="m-0 text-sm font-medium text-base-content/80">{title}</h2>
+        {description ? <p className="m-0 text-sm text-base-content/70">{description}</p> : null}
       </div>
       {children}
     </div>

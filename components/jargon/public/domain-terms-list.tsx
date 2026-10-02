@@ -39,7 +39,7 @@ export function DomainTermsList({ domainSlug, terms }: DomainTermsListProps) {
                 className="block rounded-field border border-base-300 bg-base-100 px-4 py-3 no-underline transition-colors duration-150 hover:border-primary/50"
               >
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-lg font-semibold text-base-content">{term.term}</span>
+                  <span className="text-lg font-medium text-base-content">{term.term}</span>
                   {term.category ? (
                     <span className="shrink-0 text-sm text-base-content/70">{term.category}</span>
                   ) : null}

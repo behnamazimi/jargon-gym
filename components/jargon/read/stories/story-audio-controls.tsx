@@ -46,7 +46,7 @@ function SkipButton({
       <Icon className="size-6" aria-hidden strokeWidth={1.25} />
       <span
         aria-hidden
-        className="absolute inset-0 flex items-center justify-center pt-px text-[0.5625rem] font-bold tabular-nums"
+        className="absolute inset-0 flex items-center justify-center pt-px text-[0.5625rem] font-semibold tabular-nums"
       >
         {SKIP_SECONDS}
       </span>
@@ -138,7 +138,7 @@ export function StoryAudioControls({
   }
 
   return (
-    <div className="flex items-center gap-0.5 rounded-box bg-base-200/60 py-1 px-1 sm:gap-1">
+    <div className="flex items-center gap-1 rounded-box bg-base-200/60 py-1 px-1 sm:gap-1">
       <audio
         ref={audioRef}
         src={src}

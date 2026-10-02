@@ -19,7 +19,7 @@ export function SharedSentenceChips({
       <p className="m-0 text-sm text-base-content/70" role="status">
         {term ? CAPTURE_COPY.pickedWords(term) : CAPTURE_COPY.pickWords}
       </p>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-2">
         {tokens.map((token, index) => {
           const on = selection !== null && index >= selection.start && index <= selection.end;
           return (

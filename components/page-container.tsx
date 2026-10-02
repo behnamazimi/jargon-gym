@@ -21,7 +21,7 @@ export function PageShell({ children, className, innerClassName, ...aria }: Page
       <div
         className={cn(
           pageContainerClass,
-          "space-y-5 py-7 pb-20 in-[.chrome-dock]:max-md:pb-dock",
+          "space-y-6 py-7 pb-20 in-[.chrome-dock]:max-md:pb-dock",
           innerClassName,
         )}
       >

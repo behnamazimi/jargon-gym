@@ -103,7 +103,7 @@ function AlertContent({ className, ...props }: React.ComponentProps<"div">) {
 
 function AlertTitle({ className, ...props }: React.ComponentProps<"h3">) {
   return (
-    <h3 data-slot="alert-title" className={cn("m-0 text-sm font-semibold", className)} {...props} />
+    <h3 data-slot="alert-title" className={cn("m-0 text-sm font-medium", className)} {...props} />
   );
 }
 

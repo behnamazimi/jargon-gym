@@ -52,7 +52,7 @@ export function MoreSheet() {
                 onClick={() => setMoreOpen(false)}
                 className={cn(
                   "-my-1.5 flex min-h-11 items-center text-xs no-underline",
-                  aiCreditsLine.tone === "error" ? "text-error" : "text-base-content/70",
+                  aiCreditsLine.tone === "error" ? "text-error-text" : "text-base-content/70",
                 )}
               >
                 {aiCreditsLine.label}
@@ -97,7 +97,7 @@ export function MoreSheet() {
         <li>
           <button
             type="button"
-            className="content-center min-h-11 text-error"
+            className="content-center min-h-11 text-error-text"
             disabled={isBusy}
             onClick={() => void handleLogout()}
           >

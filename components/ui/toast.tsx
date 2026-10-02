@@ -67,10 +67,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         style={{ ...toasterStyle, zIndex: 110 }}
         toastOptions={{
           classNames: {
-            toast: "!px-4 !py-2.5 !text-sm !shadow-md",
+            toast: "!px-4 !py-3 !text-sm !shadow-md",
             icon: "!mx-0 !me-3 !size-8 !justify-center rounded-full !bg-base-200",
-            success: "[&_[data-icon]]:!bg-success/20 [&_[data-icon]]:!text-success",
-            error: "[&_[data-icon]]:!bg-error/20 [&_[data-icon]]:!text-error",
+            success: "[&_[data-icon]]:!bg-success/20 [&_[data-icon]]:!text-success-text",
+            error: "[&_[data-icon]]:!bg-error/20 [&_[data-icon]]:!text-error-text",
             actionButton:
               "!bg-transparent !text-base-content !font-semibold !underline !underline-offset-2",
           },

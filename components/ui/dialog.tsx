@@ -118,7 +118,7 @@ function DialogTitle({ className, ...props }: Omit<React.ComponentProps<typeof H
     <Heading
       slot="title"
       data-slot="dialog-title"
-      className={cn("font-heading text-base font-semibold", className)}
+      className={cn("font-heading text-base font-medium", className)}
       {...props}
     />
   );

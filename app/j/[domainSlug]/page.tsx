@@ -55,7 +55,7 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
           <ArrowLeft className="size-3.5" aria-hidden strokeWidth={1.5} />
           All public collections
         </Link>
-        <h1 className="mt-2 text-3xl font-semibold text-base-content">{domain.name}</h1>
+        <h1 className="mt-2 text-3xl font-medium text-base-content">{domain.name}</h1>
         {domain.description ? (
           <p className="mt-1 text-base text-base-content/70">{domain.description}</p>
         ) : null}

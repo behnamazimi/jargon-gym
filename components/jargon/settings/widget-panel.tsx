@@ -41,7 +41,7 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
       title="Desktop widget"
       description="Show live terms on your Mac with the Übersicht widget."
       status={
-        <Badge variant="outline" className="gap-1.5 text-xs font-medium">
+        <Badge variant="outline" className="gap-2 text-xs font-medium">
           <span
             className={cn(
               "size-1.5 shrink-0 rounded-full",

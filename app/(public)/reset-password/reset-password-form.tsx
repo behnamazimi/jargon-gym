@@ -35,7 +35,7 @@ export default function ResetPasswordForm() {
         label={PUBLIC_HOME_BACK_LABEL}
         className="-ml-2 self-start"
       />
-      <h1 className="text-2xl font-semibold tracking-tight">Reset password</h1>
+      <h1 className="text-2xl font-medium">Reset password</h1>
 
       <AuthFormError error={state?.error} />
 
@@ -70,7 +70,12 @@ export default function ResetPasswordForm() {
             onChange={(event) => setConfirmPassword(event.target.value)}
           />
           {confirmPassword.length > 0 ? (
-            <p className={cn("text-xs", passwordsMatch ? "text-success" : "text-base-content/70")}>
+            <p
+              className={cn(
+                "text-xs",
+                passwordsMatch ? "text-success-text" : "text-base-content/70",
+              )}
+            >
               {passwordsMatch ? "Passwords match" : "Passwords don't match"}
             </p>
           ) : null}

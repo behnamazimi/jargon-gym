@@ -78,7 +78,7 @@ export function JargonFilters({
           aria-expanded={expanded}
           aria-controls="jargon-advanced-filters"
           onPress={() => setExpanded((value) => !value)}
-          className={cn("min-h-11 shrink-0 gap-1.5 md:min-h-10", expanded && "bg-base-200")}
+          className={cn("min-h-11 shrink-0 gap-2 md:min-h-10", expanded && "bg-base-200")}
         >
           <SlidersHorizontal className="size-3.5" aria-hidden strokeWidth={1.5} />
           Filters

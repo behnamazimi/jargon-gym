@@ -15,7 +15,7 @@ export function StoryMarkKnown({ termId, term }: { termId: string; term: string 
 
   if (marked) {
     return (
-      <span className="inline-flex items-center gap-1 text-xs font-medium text-success">
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-success-text">
         <Check className="size-3.5" aria-hidden strokeWidth={2.5} />
         Known
       </span>

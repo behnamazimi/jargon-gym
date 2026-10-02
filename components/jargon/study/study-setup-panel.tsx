@@ -37,7 +37,7 @@ export function StudyResumeBanner({
 }) {
   return (
     <div className="flex flex-col gap-3 rounded-field border border-primary/30 bg-primary/[0.07] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
         <span className="inline-flex shrink-0 size-8 items-center justify-center rounded-full bg-primary/15 text-primary-text">
           <History className="size-4" aria-hidden strokeWidth={2} />
         </span>
@@ -146,7 +146,7 @@ export function StudyCountField({
       </div>
       <FieldDescription>
         {error ? (
-          <span className="text-error">{error}</span>
+          <span className="text-error-text">{error}</span>
         ) : (
           <>
             Choose 1–{max || 1}

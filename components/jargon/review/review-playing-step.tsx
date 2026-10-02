@@ -25,7 +25,7 @@ const GRADE_BUTTONS: { grade: ReviewGrade; variant: ButtonVariant }[] = [
 
 /** Tinted study-action buttons (Review grades, Triage choices). */
 export const SOFT_ACTION_BUTTON_CLASS = cn(
-  "btn-soft min-h-11 font-semibold transition-transform active:scale-[0.96]",
+  "btn-soft min-h-11 text-base-content transition-transform active:scale-[0.96]",
   "[--btn-bg:color-mix(in_oklab,var(--btn-color)_45%,var(--color-base-100))]",
   "[--btn-border:color-mix(in_oklab,var(--btn-color)_55%,var(--color-base-100))]",
   "[color:var(--btn-fg)]",

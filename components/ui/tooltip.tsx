@@ -43,7 +43,7 @@ function Tooltip({
       offset={offset}
       crossOffset={crossOffset}
       className={cn(
-        "z-50 inline-flex w-fit max-w-xs items-center gap-1.5 rounded-field bg-neutral px-3 py-1.5 text-xs text-neutral-content",
+        "z-50 inline-flex w-fit max-w-xs items-center gap-2 rounded-field bg-neutral px-3 py-1.5 text-xs text-neutral-content",
         className,
       )}
       {...props}

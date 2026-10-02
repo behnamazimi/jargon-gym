@@ -33,7 +33,7 @@ export default async function MoreImportOptionsPage() {
         title="Choose a JSON file"
         description="JSON works in the same place as any list. Paste it or choose the file there. Term is the only required field. Definition, category, example, mental model, in practice, anti-example, debated, note and links to other terms are optional."
       >
-        <h3 className="m-0 text-sm font-semibold">The JSON format</h3>
+        <h3 className="m-0 text-sm font-medium">The JSON format</h3>
         <ImportCodePanel actions={<CopyIconButton value={sampleJson} label="Copy JSON" />}>
           {sampleJson}
         </ImportCodePanel>

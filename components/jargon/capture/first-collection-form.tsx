@@ -33,7 +33,7 @@ export function FirstCollectionForm() {
   return (
     <form onSubmit={submit} className="space-y-4">
       <div className="space-y-1">
-        <h2 className="m-0 text-lg font-semibold">{CAPTURE_COPY.firstTitle}</h2>
+        <h2 className="m-0 text-lg font-medium">{CAPTURE_COPY.firstTitle}</h2>
         <p className="m-0 text-sm text-base-content/70">{CAPTURE_COPY.firstBody}</p>
       </div>
       <Field>

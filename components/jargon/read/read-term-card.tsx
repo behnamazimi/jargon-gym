@@ -32,7 +32,7 @@ function ReadCardMasked({
       }}
       aria-label={`${hideQuestion ? `${term.term}.` : `What is ${term.term}?`} Tap to reveal the definition.`}
     >
-      <h2 className="font-heading m-0 max-w-full text-2xl font-semibold tracking-tight text-balance text-base-content sm:text-3xl sm:leading-tight">
+      <h2 className="font-heading m-0 max-w-full text-[1.75rem] font-medium text-balance text-base-content sm:text-3xl sm:leading-tight">
         {hideQuestion ? (
           term.term
         ) : (
@@ -41,7 +41,7 @@ function ReadCardMasked({
           </>
         )}
       </h2>
-      <p className="m-0 text-xs tracking-wide text-base-content/70">
+      <p className="m-0 text-xs text-base-content/70">
         <span>{term.domainName}</span>
         {term.category ? (
           <>
