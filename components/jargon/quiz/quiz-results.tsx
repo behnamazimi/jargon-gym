@@ -20,10 +20,10 @@ type QuizResultsProps = {
 function scoreMessage(score: number, total: number) {
   if (total === 0) return "No questions answered.";
   const ratio = score / total;
-  if (ratio === 1) return "Perfect score — nice work.";
-  if (ratio >= 0.8) return "Strong round. Keep it up.";
-  if (ratio >= 0.5) return "Solid effort — review the ones you missed.";
-  return "Good practice — keep at the terms that tripped you up.";
+  if (ratio === 1) return "All correct.";
+  if (ratio >= 0.8) return "Strong round.";
+  if (ratio >= 0.5) return "Review the terms you missed.";
+  return "Review the terms you missed.";
 }
 
 /** Expands in place: a finished quiz can't be restored after navigating

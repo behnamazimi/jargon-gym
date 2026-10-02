@@ -114,7 +114,7 @@ export function StreakModal({
       <div className="grid grid-cols-3 gap-2 rounded-field bg-base-200/60 p-3 text-center">
         <div>
           <p className="text-xl font-semibold tabular-nums">{selected?.readCount ?? 0}</p>
-          <p className="text-xs text-base-content/70">Read</p>
+          <p className="text-xs text-base-content/70">Terms read</p>
         </div>
         <div>
           <p className="text-xl font-semibold tabular-nums">{selected?.reviewedCount ?? 0}</p>
@@ -125,6 +125,10 @@ export function StreakModal({
           <p className="text-xs text-base-content/70">Quizzed</p>
         </div>
       </div>
+
+      <p className="m-0 text-xs text-base-content/70">
+        A day counts when you read, review or quiz at least one term.
+      </p>
 
       {error ? <p className="text-sm text-error-text">{error}</p> : null}
     </Dialog>

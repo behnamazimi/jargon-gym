@@ -209,7 +209,7 @@ export function TermNarrationPlayer({
           size="icon-sm"
           onPress={handlePress}
           isDisabled={status === "loading"}
-          aria-label={status === "playing" ? "Pause narration" : "Play narration"}
+          aria-label={status === "playing" ? "Pause" : "Listen"}
         >
           {status === "loading" ? (
             <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />
