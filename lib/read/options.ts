@@ -15,7 +15,7 @@ export type ReadOptionKey = keyof ReadOptions;
 
 export const DEFAULT_READ_OPTIONS: ReadOptions = {
   storiesDefault: false,
-  hideQuestion: false,
+  hideQuestion: true,
   revealedDefault: false,
   narrationHighlight: true,
 };

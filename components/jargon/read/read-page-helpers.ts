@@ -17,11 +17,6 @@ export function allTermCount(collections: StudyCollection[]) {
   return countTermsForSelection(collections, "all");
 }
 
-export function termCountForSelection(domainId: string, collections: StudyCollection[]) {
-  if (domainId === "all") return allTermCount(collections);
-  return collections.find((collection) => collection.id === domainId)?.termCount ?? 0;
-}
-
 /** `null` state (not `window.history.state`) is what lets Next sync
  *  `useSearchParams`, so the Cards/Stories tabs see the new collection.
  *  Next copies its own history state over by itself. */

@@ -61,7 +61,7 @@ export function ReadFullscreenFeed({
       {queue.status === "caughtUp" ? (
         <ReadFullscreenSlide slideRef={endSlideRef}>
           <ReadCaughtUp
-            description="Nothing left to read right now — check back later."
+            description="No terms in this collection. Pick another to keep reading."
             actions={
               <Button type="button" variant="outline" onPress={requestExit}>
                 Exit focus mode

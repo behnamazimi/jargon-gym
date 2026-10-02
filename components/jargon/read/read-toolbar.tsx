@@ -3,7 +3,7 @@ import { CollectionSelect } from "@/components/jargon/collection-select";
 import { Button } from "@/components/ui/button";
 import type { StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
-import { allTermCount, termCountForSelection } from "@/components/jargon/read/read-page-helpers";
+import { allTermCount } from "@/components/jargon/read/read-page-helpers";
 
 const PRESS_CLASS = "transition-transform duration-150 ease-out active:scale-[0.96]";
 
@@ -44,9 +44,6 @@ export function ReadToolbar({
             }}
             onChange={onCollectionChange}
           />
-          <span className="shrink-0 text-xs text-base-content/70 tabular-nums">
-            {termCountForSelection(selectedCollectionId, collections)} available
-          </span>
         </div>
       ) : (
         <div className="flex-1" />
