@@ -18,3 +18,9 @@ export type PendingReviewWrite = {
   termId: string;
   grade: ReviewGrade;
 };
+
+export type ReviewQueueSeed = {
+  error?: string;
+  caughtUp?: boolean;
+  terms: ReviewTerm[];
+};

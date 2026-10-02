@@ -1,13 +1,33 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import {
-  getReviewFeedBatchAction,
-  type ReviewQueueSeed,
-} from "@/app/(private)/jargon/review/actions";
 import { REVIEW_QUEUE_PREFETCH_REMAINING } from "@/lib/review/queue";
-import type { ReviewTerm } from "@/lib/review/types";
+import type { ReviewQueueSeed, ReviewTerm } from "@/lib/review/types";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+
+const FEED_ERROR = "Couldn't load more terms. Try again.";
+
+async function fetchReviewFeed(
+  domainId: string,
+  excludeTermIds: string[],
+): Promise<ReviewQueueSeed> {
+  try {
+    const response = await fetch("/api/review/feed", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ domainId, excludeTermIds }),
+      // An expired session makes the proxy redirect to the login page.
+      redirect: "manual",
+    });
+    if (response.status === 401 || response.type === "opaqueredirect") {
+      return { error: "Log in to continue.", terms: [] };
+    }
+    if (!response.ok) return { error: FEED_ERROR, terms: [] };
+    return (await response.json()) as ReviewQueueSeed;
+  } catch {
+    return { error: FEED_ERROR, terms: [] };
+  }
+}
 
 type ReviewQueueStatus = "ready" | "caughtUp" | "error" | "loading";
 
@@ -44,7 +64,7 @@ export function useReviewQueue({ domainId, seed }: UseReviewQueueArgs) {
     setIsFetchingMore(true);
     const requestId = ++requestIdRef.current;
     try {
-      const result = await getReviewFeedBatchAction(domainIdRef.current, [...loadedIdsRef.current]);
+      const result = await fetchReviewFeed(domainIdRef.current, [...loadedIdsRef.current]);
       if (requestId !== requestIdRef.current) return;
 
       if (result.error) {

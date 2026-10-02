@@ -2,14 +2,14 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReviewPage } from "@/components/jargon/review/review-page";
 import {
-  getReviewFeedBatchAction,
-  getReviewSetupData,
-} from "@/app/(private)/jargon/review/actions";
-import {
   parseReviewCollectionCookie,
   REVIEW_COLLECTION_COOKIE,
 } from "@/lib/review/collection-preference";
-import { resolveStudyCollectionId } from "@/lib/study/collection-preference";
+import { loadReviewFeed, loadReviewSetup } from "@/lib/review/feed";
+import {
+  isCollectionPreference,
+  resolveStudyCollectionId,
+} from "@/lib/study/collection-preference";
 import { hasNoCollections } from "@/lib/study/collections";
 
 type PageProps = {
@@ -25,11 +25,13 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
   const rememberedId = parseReviewCollectionCookie(
     cookieStore.get(REVIEW_COLLECTION_COOKIE)?.value,
   );
-  const speculativeDomainId = params.domain ?? rememberedId ?? "all";
+  const speculativeDomainId = isCollectionPreference(params.domain)
+    ? params.domain
+    : (rememberedId ?? "all");
 
   const [setup, speculativeSeed] = await Promise.all([
-    getReviewSetupData(),
-    getReviewFeedBatchAction(speculativeDomainId, []),
+    loadReviewSetup(),
+    loadReviewFeed(speculativeDomainId, []),
   ]);
 
   if ("error" in setup) {
@@ -43,9 +45,7 @@ export default async function JargonReviewPage({ searchParams }: PageProps) {
     setup.collections.map((collection) => collection.id),
   );
   const seed =
-    domainId === speculativeDomainId
-      ? speculativeSeed
-      : await getReviewFeedBatchAction(domainId, []);
+    domainId === speculativeDomainId ? speculativeSeed : await loadReviewFeed(domainId, []);
 
   if (seed.error === "Log in to continue.") {
     return <LoginPrompt message={seed.error} />;

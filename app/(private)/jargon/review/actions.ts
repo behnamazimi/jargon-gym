@@ -1,66 +1,8 @@
 "use server";
 
 import { applyReviewGrade } from "@/lib/jargon/review-outcome";
-import { getNarrationAccessForUser } from "@/lib/narration/access";
-import { toReviewTerm } from "@/lib/review/mappers";
-import { REVIEW_QUEUE_BUFFER_SIZE } from "@/lib/review/queue";
-import type { ReviewTerm } from "@/lib/review/types";
-import { getUserIsAdmin, requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { listStudyCollectionState } from "@/lib/study/collections";
-import { pickReviewTermsForUser } from "@/lib/trace-queue";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import type { ReviewGrade } from "@/lib/trace";
-
-export async function getReviewSetupData() {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) {
-    return { error: "Log in to review terms." as const };
-  }
-
-  const [{ active: collections, paused }, narrationAccess, canEvaluateTerms] = await Promise.all([
-    listStudyCollectionState(auth.supabase, auth.user.id),
-    getNarrationAccessForUser(createAdminClient(), auth.user.id),
-    getUserIsAdmin(auth.user.id),
-  ]);
-
-  return { collections, paused, narrationAccess, canEvaluateTerms };
-}
-
-export type ReviewQueueSeed = {
-  error?: string;
-  caughtUp?: boolean;
-  terms: ReviewTerm[];
-};
-
-function domainIdsForReview(domainId: string | undefined): string[] | "all" {
-  return domainId && domainId !== "all" ? [domainId] : "all";
-}
-
-export async function getReviewFeedBatchAction(
-  domainId: string,
-  excludeTermIds: string[],
-): Promise<ReviewQueueSeed> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error, terms: [] };
-
-  try {
-    const admin = createAdminClient();
-    const scope = { domainIds: domainIdsForReview(domainId) };
-    const cards = await pickReviewTermsForUser(
-      admin,
-      auth.user.id,
-      scope,
-      REVIEW_QUEUE_BUFFER_SIZE,
-      excludeTermIds,
-    );
-
-    if (cards.length === 0) return { caughtUp: true, terms: [] };
-    return { terms: cards.map(toReviewTerm) };
-  } catch (err) {
-    console.error("Review queue failed:", err);
-    return { error: "Couldn't load more terms. Try again.", terms: [] };
-  }
-}
 
 export async function rateReviewTermAction(termId: string, grade: ReviewGrade) {
   const auth = await requireAuthenticatedClient();

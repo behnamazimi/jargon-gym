@@ -2,7 +2,6 @@
 
 import { useCallback, useRef, useState } from "react";
 import { recordReviewRevealAction } from "@/app/(private)/jargon/actions";
-import type { ReviewQueueSeed } from "@/app/(private)/jargon/review/actions";
 import { ReadCaughtUp } from "@/components/jargon/read/read-caught-up";
 import { ReadErrorAlert } from "@/components/jargon/read/read-error-alert";
 import { ReviewCollectionSettings } from "@/components/jargon/review/review-collection-settings";
@@ -20,7 +19,7 @@ import {
 } from "@/lib/review/collection-preference";
 import { canMoveForward } from "@/lib/review/keyboard";
 import { upsertRating } from "@/lib/review/writes";
-import type { ReviewRating } from "@/lib/review/types";
+import type { ReviewQueueSeed, ReviewRating } from "@/lib/review/types";
 import type { PausedStudyCollection, StudyCollection } from "@/lib/study/types";
 import type { ReviewGrade } from "@/lib/trace";
 
