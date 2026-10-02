@@ -43,10 +43,10 @@ export const PROMOS = [
     priority: 40,
     condition: ({ reviews }) => reviews >= REVIEWS_FOR_QUIZ,
     snoozeDays: 14,
-    title: "Check what stuck",
-    body: "Quiz asks you about the terms you've been reviewing, so you can see which ones you really know.",
+    title: "Ready for a quick quiz?"
+    body: "You've been busy reviewing. See which terms have really stuck.",
     href: "/jargon/quiz",
-    cta: "Try Quiz",
+    cta: "Take a quiz",
   },
   {
     id: "stories",
@@ -56,10 +56,10 @@ export const PROMOS = [
     priority: 30,
     condition: ({ reads }) => reads >= READS_FOR_STORIES,
     snoozeDays: 14,
-    title: "See your terms in a story",
-    body: "Stories puts the terms you've been reading into a short piece, so you meet them in context.",
+    title: "Meet your terms in a story"
+    body: "A short read built from the terms you've been learning.",
     href: "/jargon/read/stories",
-    cta: "Try Stories",
+    cta: "Read a story",
   },
   {
     id: "mastery",
@@ -68,10 +68,10 @@ export const PROMOS = [
     priority: 20,
     condition: ({ reviews }) => reviews >= REVIEWS_FOR_MASTERY,
     snoozeDays: 14,
-    title: "See how well you remember",
-    body: "Mastery shows where each of your terms stands, from new to solid.",
+    title: "How well do you remember?"
+    body: "See where each term stands, from new to solid.",
     href: "/jargon/mastery",
-    cta: "Open Mastery",
+    cta: "See my mastery",
   },
   {
     id: "browse",
@@ -81,10 +81,10 @@ export const PROMOS = [
     priority: 10,
     condition: ({ accountAgeDays }) => accountAgeDays >= DAYS_BEFORE_BROWSE,
     snoozeDays: 14,
-    title: "Find more collections",
-    body: "Browse collections other people have shared and add the ones you want to practice.",
+    title: "Looking for more to learn?"
+    body: "Browse collections others have shared and add your favorites.",
     href: "/jargon/browse",
-    cta: "Browse collections",
+    cta: "Browse",
   },
   {
     id: "triage",
@@ -94,10 +94,10 @@ export const PROMOS = [
     priority: 5,
     condition: ({ reviews, reads }) => reviews + reads > 0,
     snoozeDays: 14,
-    title: "Skip what you already know",
-    body: "Triage lets you sort terms quickly. The ones you know drop out of practice.",
+    title: "Already know some terms?"
+    body: "Sort them in a minute and skip what you know.",
     href: "/jargon/triage",
-    cta: "Open Triage",
+    cta: "Sort terms",
   },
 ] as const satisfies readonly Promo[];
 
