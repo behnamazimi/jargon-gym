@@ -76,12 +76,19 @@ describe("pickPromo", () => {
   const candidates = eligiblePromos("library", ready, NOW);
 
   it("picks the highest priority promo whose condition holds", () => {
-    expect(pickPromo(candidates, busy)?.id).toBe("mastery");
+    expect(pickPromo(candidates, busy)?.id).toBe("triage");
   });
 
   it("falls back to a lower priority promo", () => {
-    expect(pickPromo(candidates, { reviews: 0, reads: 1, accountAgeDays: 0 })?.id).toBe("triage");
+    const seen = { ...ready, seen: [visitKey("triage")] };
+    const withoutTriage = eligiblePromos("library", seen, NOW);
+    expect(pickPromo(withoutTriage, busy)?.id).toBe("browse");
     expect(pickPromo(candidates, { reviews: 0, reads: 0, accountAgeDays: 2 })?.id).toBe("browse");
+  });
+
+  it("shows Mastery last", () => {
+    const seen = { ...ready, seen: [visitKey("triage"), visitKey("browse")] };
+    expect(pickPromo(eligiblePromos("library", seen, NOW), busy)?.id).toBe("mastery");
   });
 
   it("returns null when no condition holds", () => {
