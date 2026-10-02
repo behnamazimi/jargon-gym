@@ -36,8 +36,8 @@ export default async function ReadLayout({ children }: { children: React.ReactNo
                 <Suspense>
                   <StoryHistoryMenu />
                 </Suspense>
-                <ReadFocusButton />
                 <ReadOptionsMenu initialOptions={options} />
+                <ReadFocusButton />
               </div>
             ) : null}
           </div>
