@@ -14,20 +14,11 @@ export async function LandingPage() {
   const isLoggedIn = Boolean(user);
 
   return (
-    <section className="relative flex flex-1 flex-col overflow-hidden">
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/[0.08] via-transparent to-transparent" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,var(--color-primary)/0.16,transparent_60%)]" />
-      </div>
-      <div
-        className={cn(
-          pageContainerClass,
-          "relative flex flex-1 flex-col justify-start py-8 sm:py-16 lg:py-20",
-        )}
-      >
+    <section className="flex flex-1 flex-col overflow-x-clip">
+      <div className={cn(pageContainerClass, "flex flex-1 flex-col py-10 sm:py-16 lg:py-24")}>
         <HeroSection isLoggedIn={isLoggedIn} />
 
-        <div className="mt-16 space-y-14 sm:mt-24 sm:space-y-20">
+        <div className="mt-20 space-y-16 sm:mt-28 sm:space-y-24">
           <ThreeWaysSection />
           <NotSrsSection />
           <AiSection />
