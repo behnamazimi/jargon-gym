@@ -145,7 +145,7 @@ export function ReviewCard({
               }
             />
             <div
-              className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-8 [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] sm:px-6"
+              className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-8 has-[[data-known-prompt]]:pb-0 [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
               <TermBody key={term.id} term={term} language={term.domainLanguage} />

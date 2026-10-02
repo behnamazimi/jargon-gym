@@ -59,7 +59,7 @@ export function Toolbar({
       </div>
       <p className="text-xs text-base-content/70">
         <span className="md:hidden coarse:inline">
-          Tap a term to expand · swipe it left to mark it known
+          Tap a term to expand · swipe it right to mark it known
         </span>
         <span className="hidden md:inline coarse:hidden">
           Click a term to expand · ✓ on a row marks it known

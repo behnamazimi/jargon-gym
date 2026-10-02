@@ -49,7 +49,7 @@ export function QuickMarkKnownButton({ markedKnown, onPress }: MarkKnownButtonPr
   );
 }
 
-/** What a Library row reveals as it's swiped left. */
+/** What a Library row reveals as it's swiped right. */
 export function RowSwipeLayer({
   markedKnown,
   ref,
@@ -61,7 +61,7 @@ export function RowSwipeLayer({
     <div
       ref={ref}
       aria-hidden
-      className="absolute inset-0 flex items-center justify-end pe-2 opacity-0"
+      className="absolute inset-0 flex items-center justify-start ps-2 opacity-0"
     >
       <SwipeActionLabel kind={markedKnown ? "markUnknown" : "markKnown"} />
     </div>

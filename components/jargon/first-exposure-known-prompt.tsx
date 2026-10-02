@@ -68,7 +68,10 @@ export function FirstExposureKnownPrompt({
   }
 
   return (
-    <div className="pointer-events-none sticky bottom-3 flex justify-end pt-2">
+    <div
+      data-known-prompt
+      className="pointer-events-none sticky bottom-0 flex justify-end pt-2 pb-5 sm:pb-6"
+    >
       <Button
         size="sm"
         variant="outline"

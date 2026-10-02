@@ -62,7 +62,7 @@ export function ReadFullscreenCard({
         narrationPreload={narrationPreload}
         style={{ paddingInlineEnd: "calc(env(safe-area-inset-right) + 3.25rem)" }}
       />
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 has-[[data-known-prompt]]:pb-0 sm:px-6">
         <TermBody term={term} language={term.domainLanguage} />
         {term.isNewToUser ? (
           <FirstExposureKnownPrompt
