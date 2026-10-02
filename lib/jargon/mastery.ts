@@ -54,6 +54,9 @@ export type MasteryTermRow = {
    *  "Marked known" badge instead of a score, since there's no earned
    *  score to show. */
   markedKnown: boolean;
+  /** True once the term has any Read, Review or Quiz activity. Untouched
+   *  terms show "Not started" instead of a score band. */
+  started: boolean;
   /** Null unless known — and, as an edge case, if a mastered term somehow
    *  has no review_events row to date its first touch from. */
   journey: MasteryTermJourney | null;
@@ -202,6 +205,7 @@ export async function loadMasteryTermRows(
           tier: tierFromLabel(snapshot.knownLabel),
           known: snapshot.knownLabel === "known",
           markedKnown: candidate.markedKnownAt !== null,
+          started: hasTraceActivity(candidate),
           journey,
         },
       ];

@@ -63,6 +63,8 @@ export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: Maste
           <span className="badge badge-outline badge-sm" title="You marked this known">
             Marked known
           </span>
+        ) : !row.started ? (
+          <span className="text-xs text-base-content/70">Not started</span>
         ) : (
           <>
             <MasteryBars score={row.score} tier={row.tier} />

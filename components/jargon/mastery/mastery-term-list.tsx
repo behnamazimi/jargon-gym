@@ -1,11 +1,16 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import type { MasteryTermRow as MasteryTermRowData, MasteryTier } from "@/lib/jargon/mastery";
+import type { MasteryTermRow as MasteryTermRowData } from "@/lib/jargon/mastery";
 import { CollectionSelect } from "@/components/jargon/collection-select";
 import { SearchBar } from "@/components/jargon/search-bar";
 import { MasteryTermRow } from "./mastery-term-row";
-import { MasteryTierChips, type MasteryTierFilter } from "./mastery-tier-chips";
+import {
+  MasteryTierChips,
+  rowGroup,
+  type MasteryGroup,
+  type MasteryTierFilter,
+} from "./mastery-tier-chips";
 
 type MasteryTermListProps = {
   termRows: MasteryTermRowData[];
@@ -14,9 +19,15 @@ type MasteryTermListProps = {
   onCollectionChange: (collectionId: string) => void;
 };
 
-function tierCounts(rows: MasteryTermRowData[]): Record<MasteryTier, number> {
-  const counts: Record<MasteryTier, number> = { weak: 0, medium: 0, strong: 0 };
-  for (const row of rows) counts[row.tier] += 1;
+function groupCounts(rows: MasteryTermRowData[]): Record<MasteryGroup, number> {
+  const counts: Record<MasteryGroup, number> = {
+    notStarted: 0,
+    weak: 0,
+    medium: 0,
+    strong: 0,
+    markedKnown: 0,
+  };
+  for (const row of rows) counts[rowGroup(row)] += 1;
   return counts;
 }
 
@@ -36,12 +47,12 @@ export function MasteryTermList({
     [termRows, collectionId],
   );
 
-  const counts = useMemo(() => tierCounts(collectionFiltered), [collectionFiltered]);
+  const counts = useMemo(() => groupCounts(collectionFiltered), [collectionFiltered]);
 
   const visibleRows = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     return collectionFiltered.filter((row) => {
-      if (activeTier !== "all" && row.tier !== activeTier) return false;
+      if (activeTier !== "all" && rowGroup(row) !== activeTier) return false;
       if (query && !row.term.toLowerCase().includes(query)) return false;
       return true;
     });

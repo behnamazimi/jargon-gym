@@ -3,15 +3,29 @@
 import type { MasteryTier } from "@/lib/jargon/mastery";
 import { ToggleChip } from "@/components/ui/toggle";
 
-export type MasteryTierFilter = "all" | MasteryTier;
+/** Every term sits in exactly one group, so the chip counts add up to All. */
+export type MasteryGroup = "notStarted" | MasteryTier | "markedKnown";
+export type MasteryTierFilter = "all" | MasteryGroup;
 
-const TIERS: MasteryTier[] = ["weak", "medium", "strong"];
+const GROUPS: MasteryGroup[] = ["notStarted", "weak", "medium", "strong", "markedKnown"];
 
-const TIER_LABEL: Record<MasteryTier, string> = {
+const GROUP_LABEL: Record<MasteryGroup, string> = {
+  notStarted: "Not started",
   weak: "Weak",
   medium: "Medium",
   strong: "Strong",
+  markedKnown: "Marked known",
 };
+
+export function rowGroup(row: {
+  markedKnown: boolean;
+  started: boolean;
+  tier: MasteryTier;
+}): MasteryGroup {
+  if (row.markedKnown) return "markedKnown";
+  if (!row.started) return "notStarted";
+  return row.tier;
+}
 
 /** Single-select — one tier (or "all") active at a time, unlike the
  *  multi-select category chips this is visually modeled on. */
@@ -21,7 +35,7 @@ export function MasteryTierChips({
   activeTier,
   onChange,
 }: {
-  counts: Record<MasteryTier, number>;
+  counts: Record<MasteryGroup, number>;
   totalCount: number;
   activeTier: MasteryTierFilter;
   onChange: (tier: MasteryTierFilter) => void;
@@ -36,18 +50,18 @@ export function MasteryTierChips({
         All{" "}
         <span className="tabular-nums opacity-55 group-data-selected:opacity-80">{totalCount}</span>
       </ToggleChip>
-      {TIERS.map((tier) => {
-        const selected = activeTier === tier;
+      {GROUPS.filter((group) => counts[group] > 0 || group === activeTier).map((group) => {
+        const selected = activeTier === group;
         return (
           <ToggleChip
-            key={tier}
+            key={group}
             isSelected={selected}
-            onChange={() => onChange(tier)}
-            aria-label={`Filter by ${TIER_LABEL[tier]}`}
+            onChange={() => onChange(group)}
+            aria-label={`Filter by ${GROUP_LABEL[group]}`}
           >
-            {TIER_LABEL[tier]}{" "}
+            {GROUP_LABEL[group]}{" "}
             <span className="tabular-nums opacity-55 group-data-selected:opacity-80">
-              {counts[tier]}
+              {counts[group]}
             </span>
           </ToggleChip>
         );
