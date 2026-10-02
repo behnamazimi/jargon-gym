@@ -89,7 +89,9 @@ export function TriagePage({
     <div className="flex shrink-0 items-center justify-between gap-3">
       {collectionPicker}
       {current ? (
-        <p className="m-0 shrink-0 text-sm tabular-nums text-base-content/70">{deck.length} left</p>
+        <p className="m-0 shrink-0 text-sm tabular-nums text-base-content/70">
+          {deck.length} left to sort
+        </p>
       ) : null}
     </div>
   );
@@ -116,10 +118,11 @@ export function TriagePage({
           />
         ) : (
           <ReadCaughtUp
+            title="All terms sorted"
             description={
               notYetIds.size > 0
                 ? `You've sorted every term in ${domain.name}. The ones you set aside as "Not yet" stay in your learning pile.`
-                : `Every term in ${domain.name} is already known or marked known.`
+                : `Every term in ${domain.name} is already mastered or marked known.`
             }
             actions={
               <TriageNextSteps
