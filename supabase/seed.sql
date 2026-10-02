@@ -462,6 +462,12 @@ begin
 end;
 $$;
 
+-- Tour finished, so promo banners can show. The Triage promo appears on the
+-- Library because the admin already has review and read history.
+insert into public.user_settings (user_id, tour_status)
+values ('11111111-1111-1111-1111-111111111111', 'done')
+on conflict (user_id) do update set tour_status = 'done';
+
 -- ---------------------------------------------------------------------------
 -- Shared collections owned by a second user, so Browse and the Add a
 -- collection search have results for the admin to find and add.
