@@ -4,16 +4,7 @@ import { largestQuizCount } from "@/lib/ai-credits/costs";
 import { AI_CREDITS_LOW_THRESHOLD, type AiAccessView, type CreditUse } from "@/lib/llm/types";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 
-export function QuizPickerFooterHint({
-  questionStyle,
-  ai,
-  cost,
-}: {
-  questionStyle: QuizQuestionStyle;
-  ai: AiAccessView;
-  cost: number;
-}) {
-  if (questionStyle === "simple") return null;
+function creditHint(ai: AiAccessView, cost: number) {
   if (ai.kind === "own") return <>Uses {ai.providerLabel} — this may take a moment.</>;
   if (ai.kind !== "credits") return null;
 
@@ -33,6 +24,21 @@ export function QuizPickerFooterHint({
       {isLow ? " — running low." : "."}
     </>
   );
+}
+
+/** Simple quizzes keep the line's space (hidden) so switching style doesn't move the page. */
+export function QuizPickerFooterHint({
+  questionStyle,
+  ai,
+  cost,
+}: {
+  questionStyle: QuizQuestionStyle;
+  ai: AiAccessView;
+  cost: number;
+}) {
+  const hint = creditHint(ai, cost);
+  if (questionStyle === "simple" && hint) return <span className="invisible">{hint}</span>;
+  return hint;
 }
 
 function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
