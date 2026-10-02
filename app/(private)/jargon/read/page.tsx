@@ -8,7 +8,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
 import { ReadPage } from "@/components/jargon/read/read-page";
-import { PromoSlot } from "@/components/promos/promo-slot";
 import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { DEFAULT_READ_OPTIONS, getReadOptions, type ReadOptions } from "@/lib/read/options";
@@ -80,7 +79,7 @@ function LoginPrompt() {
   return <p className="text-sm text-base-content/70">Log in to read terms.</p>;
 }
 
-async function ReadCardsPage({ searchParams }: PageProps) {
+export default async function JargonReadPage({ searchParams }: PageProps) {
   const params = await searchParams;
 
   const { options, hasStory } = await loadLandingState();
@@ -154,14 +153,5 @@ async function ReadCardsPage({ searchParams }: PageProps) {
       narrationAccess={setup.narrationAccess}
       options={options}
     />
-  );
-}
-
-export default function JargonReadPage(props: PageProps) {
-  return (
-    <>
-      <PromoSlot route="read" />
-      <ReadCardsPage {...props} />
-    </>
   );
 }

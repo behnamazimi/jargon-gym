@@ -30,7 +30,8 @@ chosen pages, only once the guided tour is done, and only when a condition holds
 - Dismissing stamps `promo_dismissed[id]`; the promo returns after `snoozeDays`.
 - Accounts that existed when promos shipped had `promo_seen` backfilled from
   their history (Quiz, Stories) or fully (Mastery, Browse, Triage).
-- The slot is mounted in layouts (Library, Review) and the Read Cards page, not
+- The slot is mounted in layouts (Library, Review) and the Read layout, not
   in its own `Suspense`, so it can't pop in. Visit markers sit in the Quiz,
   Mastery, Browse and Triage layouts and the Stories page.
+- A banner hides itself on the page it links to (the Read layout also covers Stories).
 - Copy must not mention the admin, automation or AI; `copy.test.ts` enforces it.

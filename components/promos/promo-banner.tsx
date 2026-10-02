@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { dismissPromoAction } from "@/app/(private)/actions";
 import {
@@ -20,8 +21,9 @@ type PromoBannerProps = {
 };
 
 export function PromoBanner({ id, title, body, href, cta }: PromoBannerProps) {
+  const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
-  if (dismissed) return null;
+  if (dismissed || pathname === href) return null;
 
   function dismiss() {
     setDismissed(true);
