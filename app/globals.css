@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes:
-    emerald --default,
-    dim;
+  themes: false;
 }
 
 @plugin "daisyui/theme" {

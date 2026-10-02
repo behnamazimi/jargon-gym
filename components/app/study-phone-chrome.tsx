@@ -114,7 +114,10 @@ export function StudyPhoneDock() {
   return (
     <nav
       aria-label="Primary"
-      className={cn("dock dock-md pb-safe md:hidden", !isDockPath(pathname) && "hidden")}
+      className={cn(
+        "dock dock-md bg-base-100/80 pb-safe backdrop-blur-sm md:hidden",
+        !isDockPath(pathname) && "hidden",
+      )}
     >
       {STUDY_DOCK_TABS.map((tab) => {
         const active =

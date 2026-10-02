@@ -34,7 +34,7 @@ export function TriageActions({ canUndo, onUndo, onNotYet, onKnew }: TriageActio
         <div className="grid flex-1 grid-cols-2 gap-2">
           <Button
             type="button"
-            variant="warning"
+            variant="outline"
             onPress={(event) => {
               releaseFocusAfterPointerPress(event);
               onNotYet();

@@ -84,7 +84,7 @@ export function JargonFilters({
           Filters
           {activeFilterCount > 0 ? (
             <Badge
-              variant="secondary"
+              variant="default"
               className={cn("min-w-5 px-1.5 py-0 text-xs tabular-nums", expanded && "invisible")}
             >
               {activeFilterCount}
