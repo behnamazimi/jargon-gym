@@ -101,7 +101,7 @@ export function SiteHeader({
           {user ? (
             <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
           ) : null}
-          <InstallButton />
+          {user ? null : <InstallButton />}
           <ThemeToggle initialIsDark={initialIsDark} />
           {user ? (
             <ProfileMenu

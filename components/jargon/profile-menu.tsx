@@ -1,10 +1,11 @@
 "use client";
 
-import { LogOut, Sparkles } from "lucide-react";
+import { Download, LogOut, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { ACCOUNT_HOME_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { AppRouterProvider } from "@/components/app-router-provider";
+import { INSTALL_MENU_LABEL, useInstallAction } from "@/components/pwa/install-prompt";
 import { useAiCredits } from "@/hooks/use-ai-credits";
 import { aiCreditsLine, type AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,7 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
   const { load: aiCreditsLoad, refresh: refreshAiCredits } = useAiCredits(aiCreditsMode);
   const creditsLine = aiCreditsLine(aiCreditsMode, aiCreditsLoad);
   const initials = emailInitials(email);
+  const install = useInstallAction();
 
   async function handleLogout() {
     setIsBusy(true);
@@ -100,6 +102,12 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
                 );
               })}
             </>
+          ) : null}
+          {install ? (
+            <DropdownMenuItem onAction={install}>
+              <Download className="h-4 w-4" />
+              {INSTALL_MENU_LABEL}
+            </DropdownMenuItem>
           ) : null}
           <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>
             <LogOut className="h-4 w-4" />

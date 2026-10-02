@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode } from "react";
 import { STUDY_DOCK_TABS, emailInitials, studyScreenTitle } from "@/components/app/account-nav";
 import { BrandIcon } from "@/components/brand-icon";
-import { InstallButton } from "@/components/pwa/install-prompt";
 import { StreakBadge } from "@/components/streak-badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -67,7 +66,6 @@ export function StudyPhoneTopBar() {
         </div>
         <div className="flex items-center justify-end gap-2">
           <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
-          <InstallButton />
           <Button
             variant="ghost"
             size="sm"
