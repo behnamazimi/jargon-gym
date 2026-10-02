@@ -66,22 +66,13 @@ export function QuizSetupFooter({
   hint,
   children,
   className,
-  sticky = false,
 }: {
   hint?: ReactNode;
   children: ReactNode;
   className?: string;
-  sticky?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-3 border-t border-base-300/60 pt-6",
-        sticky &&
-          "sticky bottom-0 z-10 -mx-5 -mb-5 bg-base-100 px-5 pt-4 pb-5 sm:-mx-6 sm:px-6 in-[.chrome-dock]:max-md:bottom-(--dock-bottom)",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-col gap-3 border-t border-base-300/60 pt-6", className)}>
       {hint ? <p className="m-0 text-xs text-base-content/70">{hint}</p> : null}
       <div className="w-full">{children}</div>
     </div>

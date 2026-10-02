@@ -125,7 +125,6 @@ export function StorySetupPanel({
 
   return (
     <StudySetupPanel
-      stickyFooter
       footer={
         <Button
           type="button"
