@@ -16,7 +16,6 @@ type JargonDomainHeaderProps = {
   isOwner?: boolean;
   /** Terms not yet known or marked known — Triage only shows while > 0. */
   untriagedCount: number;
-  onAddTerm?: () => void;
 };
 
 const STUDY_LINKS = [
@@ -91,7 +90,6 @@ export function JargonDomainHeader({
   categoryCount,
   isOwner = false,
   untriagedCount,
-  onAddTerm,
 }: JargonDomainHeaderProps) {
   const { toast } = useToast();
   // Shows the new state at once; the action re-renders the page with the
@@ -123,9 +121,7 @@ export function JargonDomainHeader({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          {isOwner && onAddTerm ? (
-            <AddTermsMenu domainId={domain.id} onAddTerm={onAddTerm} />
-          ) : null}
+          {isOwner ? <AddTermsMenu domainId={domain.id} /> : null}
           <DomainActionsMenu
             domain={domain}
             togglePending={togglePending}

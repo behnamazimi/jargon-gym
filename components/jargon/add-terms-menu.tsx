@@ -7,11 +7,10 @@ import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/component
 
 type AddTermsMenuProps = {
   domainId: string;
-  onAddTerm: () => void;
 };
 
 /** Add terms to this collection: one at a time, or a pasted list. */
-export function AddTermsMenu({ domainId, onAddTerm }: AddTermsMenuProps) {
+export function AddTermsMenu({ domainId }: AddTermsMenuProps) {
   const router = useRouter();
 
   return (
@@ -26,7 +25,9 @@ export function AddTermsMenu({ domainId, onAddTerm }: AddTermsMenuProps) {
         <Plus className="size-5" strokeWidth={1.5} />
       </Button>
       <DropdownMenu className="min-w-[180px]">
-        <DropdownMenuItem onAction={onAddTerm}>One term</DropdownMenuItem>
+        <DropdownMenuItem onAction={() => router.push(`/jargon/capture?to=${domainId}`)}>
+          One term
+        </DropdownMenuItem>
         <DropdownMenuItem onAction={() => router.push(`/jargon/import/paste?to=${domainId}`)}>
           Paste a list
         </DropdownMenuItem>

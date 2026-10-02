@@ -10,12 +10,12 @@ them.
 Add), then offers three starting points: a pasted list, a deck from another
 app, or one term. Everything else lives under it:
 
-| Route                  | What it does                                                                                                    |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `/jargon/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination; the collection menu's "Import terms in bulk" links here. |
-| `/jargon/import/apps`  | Per-app export guides (`lib/jargon/import/guides.ts`).                                                          |
-| `/jargon/import/more`  | The JSON format and the developer AI-skill card.                                                                |
-| `/jargon/capture`      | Save one term. `?to=<id>` presets the collection.                                                               |
+| Route                  | What it does                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `/jargon/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination; the Library's `+` menu "Paste a list" links here. |
+| `/jargon/import/apps`  | Per-app export guides (`lib/jargon/import/guides.ts`).                                                   |
+| `/jargon/import/more`  | The JSON format and the developer AI-skill card.                                                         |
+| `/jargon/capture`      | Save one term. `?to=<id>` presets the collection.                                                        |
 
 No AI runs anywhere in this path. Parsing is deterministic.
 
@@ -54,10 +54,14 @@ successful commit.
 ## Capture
 
 `/jargon/capture` saves one term in a few seconds: Term, an optional Definition
-and a collection chip. The chip starts from `?to`, then the collection used last on
+and a collection chip. "More details" holds the rest on demand: category (defaults
+to the one most terms in the collection use), example, mental model, in practice,
+anti-example, debated, note and links to other terms (`loadCaptureTerms` fetches the
+collection's finished terms for the picker). The Library's `+` menu "One term" and the
+empty-collection button link here with `?to=<id>`; there is no add-term dialog. The chip starts from `?to`, then the collection used last on
 this device (`lib/jargon/capture/destination-pref.ts`), then the first one. Someone
 with no collection is asked to name their first. It writes through the same
-`createTerm` action as the in-collection sheet, so a term without a definition is
+`createTerm` action as the term editor, so a term without a definition is
 saved unfinished. While you type, `findCaptureDuplicate` checks the chosen
 collection only (the unique index is per collection). Pasting several lines offers
 "Add N terms", which hands off to the paste importer. Capture writes no

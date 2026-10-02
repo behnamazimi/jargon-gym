@@ -1,7 +1,6 @@
 import {
   BookmarkMinus,
   Download,
-  ListPlus,
   Lock,
   Pencil,
   RotateCcw,
@@ -27,7 +26,6 @@ type DomainActionsDropdownProps = {
   onResetProgress: () => void;
   onExport: () => void;
   onEdit: () => void;
-  onImport: () => void;
   onShare: () => void;
   onUnshare: () => void;
   onDelete: () => void;
@@ -41,7 +39,6 @@ export function DomainActionsDropdown({
   onResetProgress,
   onExport,
   onEdit,
-  onImport,
   onShare,
   onUnshare,
   onDelete,
@@ -81,10 +78,6 @@ export function DomainActionsDropdown({
 
         {domain.source === "owned" ? (
           <>
-            <DropdownMenuItem isDisabled={disabled} onAction={onImport}>
-              <ListPlus className="h-4 w-4" />
-              Import terms in bulk
-            </DropdownMenuItem>
             <DropdownMenuItem isDisabled={disabled} onAction={onEdit}>
               <Pencil className="h-4 w-4" />
               Edit collection

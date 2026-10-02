@@ -1,8 +1,8 @@
 import { FilePlus } from "lucide-react";
 import { EmptyState } from "@/components/jargon/empty-state";
-import { Button, LinkButton } from "@/components/ui/button";
+import { LinkButton } from "@/components/ui/button";
 
-export function EmptyTermsState({ onAddTerm }: { onAddTerm: () => void }) {
+export function EmptyTermsState({ domainId }: { domainId: string }) {
   return (
     <EmptyState
       icon={FilePlus}
@@ -11,9 +11,7 @@ export function EmptyTermsState({ onAddTerm }: { onAddTerm: () => void }) {
       className="py-10"
     >
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <Button type="button" onPress={onAddTerm}>
-          Add a term
-        </Button>
+        <LinkButton href={`/jargon/capture?to=${domainId}`}>Add a term</LinkButton>
         <LinkButton href="/jargon/import" variant="outline">
           Import terms
         </LinkButton>

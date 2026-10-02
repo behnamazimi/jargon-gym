@@ -24,7 +24,7 @@ type TermListProps = {
   totalCount: number;
   /** The owner has terms that are saved but not finished yet. */
   hasUnfinished: boolean;
-  onAddTerm: () => void;
+  domainId: string;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
   onEdit: (termId: string) => void;
@@ -47,7 +47,7 @@ export function TermList({ windowKey, totalCount, hasUnfinished, ...props }: Ter
 
   if (totalCount === 0) {
     return props.isOwner ? (
-      <EmptyTermsState onAddTerm={props.onAddTerm} />
+      <EmptyTermsState domainId={props.domainId} />
     ) : (
       <EmptyMessage title="No terms in this collection yet." />
     );
@@ -77,7 +77,7 @@ function TermRows({
   onEdit,
   onDelete,
   windowKey,
-}: Omit<TermListProps, "totalCount" | "hasUnfinished" | "onAddTerm">) {
+}: Omit<TermListProps, "totalCount" | "hasUnfinished" | "domainId">) {
   // Back to the first rows whenever the filters change. Adjusted during
   // render rather than by remounting, so rows still on screen keep their state.
   const [rowWindow, setRowWindow] = useState({ key: windowKey, limit: ROWS_PER_STEP });

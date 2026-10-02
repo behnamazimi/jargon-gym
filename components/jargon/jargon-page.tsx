@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import type { LibraryPageData, LibraryTerm, Term } from "@/lib/jargon/types";
@@ -15,8 +14,6 @@ import { UnfinishedSection } from "./unfinished-section";
 import { TermList } from "./term-list";
 import { TermRowDialogs } from "./term-row-dialogs";
 
-const AddTermDialog = dynamic(() => import("./add-term-dialog").then((mod) => mod.AddTermDialog));
-
 type JargonPageProps = {
   data: LibraryPageData;
   /** The filters cookie as the server read it, so both renders agree. */
@@ -28,7 +25,6 @@ type JargonPageProps = {
 /** One collection in the Library: header, filters and the term list. The
  *  sidebar lives in the layout; switching collections is a navigation. */
 export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageProps) {
-  const [addTermOpen, setAddTermOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
   const [editing, setEditing] = useState<Term | null>(null);
   const [deleting, setDeleting] = useState<LibraryTerm | null>(null);
@@ -94,7 +90,6 @@ export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageP
     },
     [detailsScope, toast],
   );
-  const openAddTerm = useCallback(() => setAddTermOpen(true), []);
 
   return (
     <TermDetailsScope value={detailsScope}>
@@ -111,7 +106,6 @@ export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageP
           categoryCount={categories.length}
           isOwner={isOwner}
           untriagedCount={untriagedCount}
-          onAddTerm={isOwner ? openAddTerm : undefined}
         />
 
         {isOwner ? (
@@ -153,7 +147,7 @@ export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageP
           language={domain.language}
           totalCount={terms.length}
           hasUnfinished={data.unfinishedTerms.length > 0}
-          onAddTerm={openAddTerm}
+          domainId={domain.id}
           onToggleOpen={toggleOpen}
           onToggleMarkedKnown={toggleMarkedKnown}
           onEdit={handleEdit}
@@ -170,19 +164,6 @@ export function JargonPage({ data, filtersCookie, importedSummary }: JargonPageP
             detailsScope={detailsScope}
             onRemove={removeTerm}
           />
-        ) : null}
-
-        {isOwner && addTermOpen ? (
-          <Suspense fallback={null}>
-            <AddTermDialog
-              domainId={domain.id}
-              domainTerms={terms}
-              unfinishedTerms={data.unfinishedTerms}
-              isOpen
-              onOpenChange={setAddTermOpen}
-              onOpenTerm={setSearchQuery}
-            />
-          </Suspense>
         ) : null}
       </div>
     </TermDetailsScope>
