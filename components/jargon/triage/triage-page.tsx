@@ -85,13 +85,25 @@ export function TriagePage({
     />
   );
 
+  const knownCount = terms.filter((t) => knownIds.has(t.id) || markedKnown.has(t.id)).length;
+  const setAsideCount = terms.filter(
+    (t) => notYetIds.has(t.id) && !knownIds.has(t.id) && !markedKnown.has(t.id),
+  ).length;
+  const sortedNote = [
+    knownCount > 0 ? `${knownCount} known` : null,
+    setAsideCount > 0 ? `${setAsideCount} set aside` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const topRow = (
     <div className="flex shrink-0 items-center justify-between gap-3">
       {collectionPicker}
       {current ? (
-        <p className="m-0 shrink-0 text-sm tabular-nums text-base-content/70">
-          {deck.length} left to sort
-        </p>
+        <div className="shrink-0 text-end text-sm tabular-nums text-base-content/70">
+          <p className="m-0">{deck.length} left to sort</p>
+          {sortedNote ? <p className="m-0 text-xs">{sortedNote}</p> : null}
+        </div>
       ) : null}
     </div>
   );

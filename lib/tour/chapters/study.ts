@@ -63,8 +63,8 @@ export const STUDY_CHAPTERS = [
     steps: [
       {
         target: "stories-level",
-        title: "Match your level",
-        body: "Pick the language level for the story.",
+        title: "Sentence difficulty",
+        body: "Pick how hard the sentences are.",
       },
       {
         target: "stories-write",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { acceptedLength, countLength, storyLength, termsForLength } from "./length";
+import { acceptedLength, countLength, storyLength, termsForLength, termsUsedNote } from "./length";
 
 describe("storyLength", () => {
   it("follows the picked length", () => {
@@ -40,5 +40,19 @@ describe("countLength", () => {
 
   it("counts characters without spaces or punctuation", () => {
     expect(countLength("今日は 寒い。", "characters")).toBe(5);
+  });
+});
+
+describe("termsUsedNote", () => {
+  it("says how many terms a piece uses", () => {
+    expect(termsUsedNote("medium", 9)).toBe("Uses 8 of your 9 terms.");
+  });
+
+  it("says all when the collection fits", () => {
+    expect(termsUsedNote("long", 6)).toBe("Uses all 6 of your terms.");
+  });
+
+  it("stays quiet with no terms", () => {
+    expect(termsUsedNote("short", 0)).toBe("");
   });
 });

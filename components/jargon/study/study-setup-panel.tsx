@@ -13,15 +13,20 @@ export function StudySetupPanel({
   children,
   footer,
   footerHint,
+  stickyFooter = false,
 }: {
   children: ReactNode;
   footer: ReactNode;
   footerHint?: ReactNode;
+  /** Keep the action in view while long setup forms scroll. */
+  stickyFooter?: boolean;
 }) {
   return (
     <QuizPanelBody className="min-h-0 flex-1 overflow-y-auto">
       {children}
-      <QuizSetupFooter hint={footerHint}>{footer}</QuizSetupFooter>
+      <QuizSetupFooter hint={footerHint} sticky={stickyFooter}>
+        {footer}
+      </QuizSetupFooter>
     </QuizPanelBody>
   );
 }

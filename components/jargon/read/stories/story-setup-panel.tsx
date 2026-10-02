@@ -50,7 +50,7 @@ function collectionLabel(collection: CollectionSelectOption) {
   const count = collection.termCount ?? 0;
   return count < STORY_MIN_TERMS
     ? `${collection.name} (needs ${STORY_MIN_TERMS}+ terms)`
-    : `${collection.name} (${count})`;
+    : `${collection.name} · ${count} to read`;
 }
 
 function CefrLevelField({
@@ -62,7 +62,7 @@ function CefrLevelField({
 }) {
   return (
     <Field data-tour="stories-level">
-      <FieldLabel htmlFor="story-cefr">Language level</FieldLabel>
+      <FieldLabel htmlFor="story-cefr">Sentence difficulty</FieldLabel>
       <Select
         value={value}
         onChange={(key) => {
@@ -125,6 +125,7 @@ export function StorySetupPanel({
 
   return (
     <StudySetupPanel
+      stickyFooter
       footer={
         <Button
           type="button"
@@ -170,7 +171,11 @@ export function StorySetupPanel({
 
       <ReadingLevelField value={session.readingLevel} onChange={session.setReadingLevel} />
       <CefrLevelField value={session.cefrLevel} onChange={session.setCefrLevel} />
-      <PieceLengthField value={session.pieceLength} onChange={session.setPieceLength} />
+      <PieceLengthField
+        value={session.pieceLength}
+        termsAvailable={eligibleCount}
+        onChange={session.setPieceLength}
+      />
       <StoryOverBalance
         use={use}
         pieceLength={session.pieceLength}
