@@ -123,7 +123,7 @@ export async function createRequest(input: unknown): Promise<CreateRequestResult
 }
 
 const definitionsSchema = z.object({
-  domainId: z.string().uuid(),
+  domainId: z.guid(),
   notifyEmail: z.boolean().default(true),
 });
 

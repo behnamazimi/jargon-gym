@@ -39,3 +39,10 @@ describe("commitImportSchema text cleaning", () => {
     expect(parse([{ term: "a", definition: "b".repeat(4001) }], dest).success).toBe(false);
   });
 });
+
+describe("collection ids", () => {
+  it("accepts ids whose version and variant bits are not RFC 4122", () => {
+    const destination = { domainId: "22222222-2222-2222-2222-222222222222" };
+    expect(commitImportSchema.safeParse({ ...base, destination }).success).toBe(true);
+  });
+});

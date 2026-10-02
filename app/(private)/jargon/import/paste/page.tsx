@@ -22,8 +22,8 @@ export default async function PasteListPage({ searchParams }: PageProps) {
       <PageHeader
         icon={ClipboardPaste}
         title="Paste a list"
-        backHref="/jargon/import"
-        backLabel="Add a collection"
+        backHref={preset ? `/jargon?domain=${preset}` : "/jargon/import"}
+        backLabel={preset ? "Back to collection" : "Add a collection"}
         compactOnPhone
       />
       <ImportFlow
