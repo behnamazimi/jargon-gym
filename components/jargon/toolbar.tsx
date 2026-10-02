@@ -1,8 +1,7 @@
 "use client";
 
 import type { SortMode } from "@/lib/jargon/types";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -32,17 +31,14 @@ export function Toolbar({
       <Separator />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-3">
-          <Field orientation="horizontal" className="w-auto items-center gap-2">
-            <Checkbox
-              id="hide-known"
-              isSelected={hideKnown}
-              onChange={onHideKnownChange}
-              className="checkbox-xs"
+          <label className="flex min-h-8 cursor-pointer items-center gap-2 text-xs text-base-content/70">
+            <Switch
+              checked={hideKnown}
+              onCheckedChange={onHideKnownChange}
+              className="toggle-primary toggle-xs"
             />
-            <FieldLabel htmlFor="hide-known" className="text-xs font-normal text-base-content/70">
-              Hide terms I know
-            </FieldLabel>
-          </Field>
+            Hide terms I know
+          </label>
           <Select
             value={sortMode}
             onChange={(value) => onSortChange(value as SortMode)}
@@ -51,7 +47,7 @@ export function Toolbar({
             <SelectTrigger size="sm" className="rounded-field text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="w-auto **:data-[slot=select-item]:pe-8">
               <SelectItem id="default">Sort: default</SelectItem>
               <SelectItem id="category">Sort: category order</SelectItem>
               <SelectItem id="az">Sort: A–Z</SelectItem>
