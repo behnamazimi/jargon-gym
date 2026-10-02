@@ -108,7 +108,6 @@ export function useQuizSetup(collections: StudyCollection[], initial: InitialQui
     questionCountError,
     domainIds,
     availableTermCount,
-    maxQuestionCount,
     questionCountPresets,
     applyQuestionCount,
     handleQuestionCountInputChange,

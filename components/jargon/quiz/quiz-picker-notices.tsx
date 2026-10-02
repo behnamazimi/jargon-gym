@@ -13,7 +13,7 @@ export function QuizPickerFooterHint({
   ai: AiAccessView;
   cost: number;
 }) {
-  if (questionStyle === "simple") return <>Uses terms from your collections — no AI needed.</>;
+  if (questionStyle === "simple") return null;
   if (ai.kind === "own") return <>Uses {ai.providerLabel} — this may take a moment.</>;
   if (ai.kind !== "credits") return null;
 

@@ -1,7 +1,8 @@
 "use client";
 
 import { type LucideIcon } from "lucide-react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { PLATFORM_MEDIA } from "@/lib/platform";
@@ -39,6 +40,7 @@ export function SettingsPanel({
   title,
   description,
   status,
+  collapsibleOnPhone = false,
   children,
 }: {
   id: SettingsTabId;
@@ -46,9 +48,13 @@ export function SettingsPanel({
   title: string;
   description?: ReactNode;
   status?: ReactNode;
+  /** Setup-heavy panels show only their header on phones until opened. */
+  collapsibleOnPhone?: boolean;
   children: ReactNode;
 }) {
   const headingId = `settings-heading-${id}`;
+  const bodyId = useId();
+  const [phoneOpen, setPhoneOpen] = useState(false);
 
   return (
     <section
@@ -77,7 +83,30 @@ export function SettingsPanel({
             {description ? <p className="m-0 text-sm text-base-content/70">{description}</p> : null}
           </div>
         </div>
-        <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">{children}</div>
+        {collapsibleOnPhone ? (
+          <div className="px-4 py-3 md:hidden">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="min-h-11 w-full"
+              aria-expanded={phoneOpen}
+              aria-controls={bodyId}
+              onPress={() => setPhoneOpen((open) => !open)}
+            >
+              {phoneOpen ? "Hide setup" : "Show setup"}
+            </Button>
+          </div>
+        ) : null}
+        <div
+          id={bodyId}
+          className={cn(
+            "space-y-4 px-4 py-4 sm:px-6 sm:py-5",
+            collapsibleOnPhone && !phoneOpen && "max-md:hidden",
+          )}
+        >
+          {children}
+        </div>
       </Card>
     </section>
   );

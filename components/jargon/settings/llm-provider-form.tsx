@@ -42,11 +42,11 @@ export function LlmProviderForm({
 }: LlmProviderFormProps) {
   return (
     <SettingsRow
-      title="LLM provider"
+      title="Your own key"
       description={
         llmConfigured
-          ? `${providerLabel} key ending in ${settings?.apiKeyLast4}. Keys stay encrypted and are only used for AI quizzes and Stories.${creditsNote ? " Your key is used, so no AI credits are spent." : ""}`
-          : "Your key stays encrypted and is only used for AI quizzes and Stories."
+          ? `${providerLabel} key ending in ${settings?.apiKeyLast4}. Stored encrypted.${creditsNote ? " No AI credits are spent." : ""}`
+          : "Stored encrypted. Used only for AI quizzes and Stories."
       }
     >
       <Field>

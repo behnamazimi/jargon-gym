@@ -77,8 +77,8 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
             aria-label={label}
           />
           <p className="m-0 text-sm text-base-content/70">
-            <span className="tabular-nums">{ai.remaining}</span> credits left. Used for AI quizzes
-            and Stories until you add your own key.
+            <span className="tabular-nums">{ai.remaining}</span> credits left. Add your own key to
+            use AI without spending them.
           </p>
         </div>
         <p className="m-0 text-xs text-base-content/70">
@@ -164,7 +164,7 @@ export function LlmPanel({ initialSettings, ai }: LlmPanelProps) {
       id="ai"
       icon={Sparkles}
       title="AI provider"
-      description="Use AI credits, or connect your own LLM provider to power AI quizzes and Stories."
+      description="Powers AI quizzes and Stories."
       status={
         <StatusPill
           variant={llmConfigured ? "connected" : showCredits ? "credits" : "disconnected"}

@@ -81,7 +81,6 @@ function CefrLevelField({
           ))}
         </SelectContent>
       </Select>
-      <FieldDescription>How complex the sentences and everyday words are.</FieldDescription>
     </Field>
   );
 }
@@ -143,7 +142,7 @@ export function StorySetupPanel({
     >
       <QuizPanelLabel
         title="Set up your story"
-        description="A short piece of reading built around the next terms in your Read queue. Mark it read to count a read for every term in it."
+        description="Mark it read to count a read for every term in it. A short piece built around the next terms in your Read queue."
       />
 
       <StoryNoAiNotice ai={ai} />

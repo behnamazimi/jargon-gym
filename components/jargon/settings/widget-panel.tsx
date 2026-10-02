@@ -39,6 +39,7 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
       id="widget"
       icon={Monitor}
       title="Desktop widget"
+      collapsibleOnPhone
       description="Show live terms on your Mac with the Übersicht widget."
       status={
         <Badge variant="outline" className="gap-2 text-xs font-medium">

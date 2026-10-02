@@ -116,7 +116,6 @@ export function QuizPickerStepSection({
       questionCount={quiz.questionCount}
       questionCountInput={quiz.questionCountInput}
       questionCountError={quiz.questionCountError}
-      maxQuestionCount={quiz.maxQuestionCount}
       questionCountPresets={quiz.questionCountPresets}
       onApplyQuestionCount={quiz.applyQuestionCount}
       onQuestionCountInputChange={quiz.handleQuestionCountInputChange}

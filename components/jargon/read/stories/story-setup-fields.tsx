@@ -85,7 +85,7 @@ export function ReadingLevelField(props: {
 }) {
   return (
     <ChoiceField
-      legend="Term support"
+      legend="Term help"
       options={READING_LEVELS}
       choices={READING_LEVEL_CHOICES}
       {...props}

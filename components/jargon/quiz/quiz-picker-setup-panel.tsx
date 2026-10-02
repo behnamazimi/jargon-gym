@@ -1,4 +1,4 @@
-import { QuizPanelLabel, QuizStat } from "@/components/jargon/quiz/quiz-ui";
+import { QuizPanelLabel } from "@/components/jargon/quiz/quiz-ui";
 import {
   StudyCollectionField,
   StudyCountField,
@@ -37,7 +37,6 @@ export type QuizPickerStepProps = {
   questionCount: number;
   questionCountInput: string;
   questionCountError: string | null;
-  maxQuestionCount: number;
   questionCountPresets: number[];
   onApplyQuestionCount: (value: number) => void;
   onQuestionCountInputChange: (value: string) => void;
@@ -86,7 +85,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
     questionCount,
     questionCountInput,
     questionCountError,
-    maxQuestionCount,
     questionCountPresets,
     onApplyQuestionCount,
     onQuestionCountInputChange,
@@ -111,10 +109,7 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
       }
       footerHint={<QuizPickerFooterHint questionStyle={questionStyle} ai={ai} cost={use.cost} />}
     >
-      <QuizPanelLabel
-        title="Set up your quiz"
-        description="Pick which collection to pull from — Quiz surfaces the terms most at risk of slipping first."
-      />
+      <QuizPanelLabel title="Set up your quiz" />
       {savedSession ? (
         <QuizPickerResumeBanner
           savedSession={savedSession}
@@ -145,12 +140,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         onChange={onSelectedCollectionIdChange}
       />
 
-      <QuizStat
-        value={
-          availableTermCount === 1 ? "1 term available" : `${availableTermCount} terms available`
-        }
-      />
-
       <StudyCountField
         id="quiz-question-count"
         label="How many questions"
@@ -158,7 +147,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         selectedValue={questionCount}
         inputValue={questionCountInput}
         error={questionCountError}
-        max={maxQuestionCount}
         availableCount={availableTermCount}
         perUnitLabel="quiz"
         onPresetSelect={onApplyQuestionCount}

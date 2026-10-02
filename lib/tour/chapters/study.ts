@@ -37,7 +37,7 @@ export const STUDY_CHAPTERS = [
       {
         target: "read-modes",
         title: "Cards or Stories",
-        body: "Cards shows one term at a time. Stories weaves terms into a short read.",
+        body: "Cards: one term at a time. Stories: terms in a short read.",
       },
       {
         target: "read-options",

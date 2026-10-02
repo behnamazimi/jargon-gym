@@ -20,7 +20,6 @@ export function useQuizSession(collections: StudyCollection[], initialSetup: Ini
     questionCountError: setup.questionCountError,
     domainIds: setup.domainIds,
     availableTermCount: setup.availableTermCount,
-    maxQuestionCount: setup.maxQuestionCount,
     questionCountPresets: setup.questionCountPresets,
     applyQuestionCount: setup.applyQuestionCount,
     handleQuestionCountInputChange: setup.handleQuestionCountInputChange,

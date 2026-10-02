@@ -93,7 +93,6 @@ export function StudyCountField({
   selectedValue,
   inputValue,
   error,
-  max,
   availableCount,
   perUnitLabel,
   onPresetSelect,
@@ -105,7 +104,6 @@ export function StudyCountField({
   selectedValue: number;
   inputValue: string;
   error: string | null;
-  max: number;
   availableCount: number;
   perUnitLabel: string;
   onPresetSelect: (value: number) => void;
@@ -144,18 +142,15 @@ export function StudyCountField({
           className="min-h-11 min-w-16 flex-1 tabular-nums"
         />
       </div>
-      <FieldDescription>
-        {error ? (
+      {error ? (
+        <FieldDescription>
           <span className="text-error-text">{error}</span>
-        ) : (
-          <>
-            Choose 1–{max || 1}
-            {availableCount > MAX_STUDY_TERMS
-              ? ` (${MAX_STUDY_TERMS} max per ${perUnitLabel}).`
-              : "."}
-          </>
-        )}
-      </FieldDescription>
+        </FieldDescription>
+      ) : availableCount > MAX_STUDY_TERMS ? (
+        <FieldDescription>
+          Up to {MAX_STUDY_TERMS} per {perUnitLabel}.
+        </FieldDescription>
+      ) : null}
     </Field>
   );
 }
