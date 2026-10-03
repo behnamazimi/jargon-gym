@@ -3,7 +3,7 @@ import { upsertPendingWrite } from "./writes";
 
 const STORAGE_KEY = "lobyas:review-pending-writes:v1";
 // Old key from before pending writes got their own storage; kept so leftovers can still be read.
-const LEGACY_SESSION_KEY = "jargon-gym:review-session:v1";
+const LEGACY_SESSION_KEY = "lobyas:review-session:v1";
 
 function isPendingWrite(value: unknown): value is PendingReviewWrite {
   if (!value || typeof value !== "object") return false;

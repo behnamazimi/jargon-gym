@@ -11,7 +11,7 @@ function getEncryptionKey(): Buffer {
     throw new Error("Missing LLM_SETTINGS_ENCRYPTION_KEY environment variable.");
   }
 
-  return scryptSync(secret, "jargon-gym-llm-settings", KEY_LENGTH);
+  return scryptSync(secret, "lobyas-llm-settings", KEY_LENGTH);
 }
 
 export function encryptApiKey(plaintext: string): string {

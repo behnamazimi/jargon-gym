@@ -1,5 +1,5 @@
 -- Local bootstrap: one admin + spare referral codes for manual testing.
--- Admin login: admin@jargon.local / password123
+-- Admin login: admin@lobyas.local / password123
 
 create extension if not exists pgcrypto with schema extensions;
 
@@ -32,7 +32,7 @@ begin
     v_admin_id,
     'authenticated',
     'authenticated',
-    'admin@jargon.local',
+    'admin@lobyas.local',
     extensions.crypt('password123', extensions.gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
@@ -60,7 +60,7 @@ begin
     format(
       '{"sub":"%s","email":"%s","email_verified":true,"phone_verified":false}',
       v_admin_id,
-      'admin@jargon.local'
+      'admin@lobyas.local'
     )::jsonb,
     'email',
     v_admin_id::text,
@@ -486,7 +486,7 @@ $$;
 -- ---------------------------------------------------------------------------
 -- Shared collections owned by a second user, so Browse and the Add a
 -- collection search have results for the admin to find and add.
--- Author login: author@jargon.local / password123
+-- Author login: author@lobyas.local / password123
 -- ---------------------------------------------------------------------------
 
 insert into public.referral_codes (code, created_by)
@@ -507,7 +507,7 @@ begin
     v_author_id,
     'authenticated',
     'authenticated',
-    'author@jargon.local',
+    'author@lobyas.local',
     extensions.crypt('password123', extensions.gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
@@ -526,7 +526,7 @@ begin
     format(
       '{"sub":"%s","email":"%s","email_verified":true,"phone_verified":false}',
       v_author_id,
-      'author@jargon.local'
+      'author@lobyas.local'
     )::jsonb,
     'email',
     v_author_id::text,

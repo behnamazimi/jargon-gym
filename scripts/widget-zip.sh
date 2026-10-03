@@ -2,9 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WIDGET_SRC="$ROOT/widget/jargon-gym.widget"
+WIDGET_SRC="$ROOT/widget/lobyas.widget"
 OUT_DIR="$ROOT/public/downloads"
-OUT_ZIP="$OUT_DIR/jargon-gym.widget.zip"
+OUT_ZIP="$OUT_DIR/lobyas.widget.zip"
 INSTALL_SCRIPT_SRC="$ROOT/scripts/widget-install.sh"
 INSTALL_SCRIPT_OUT="$ROOT/public/install-widget.sh"
 PRODUCTION_URL="${1:-${WIDGET_PRODUCTION_URL:-}}"
@@ -42,7 +42,7 @@ cleanup() {
 trap cleanup EXIT
 
 mkdir -p "$OUT_DIR"
-cp -R "$WIDGET_SRC" "$TMP/jargon-gym.widget"
+cp -R "$WIDGET_SRC" "$TMP/lobyas.widget"
 
 /usr/bin/python3 - <<PY
 import json
@@ -51,7 +51,7 @@ import pathlib
 version_path = pathlib.Path("$ROOT/widget/version.json")
 widget_version = json.loads(version_path.read_text())["version"] if version_path.exists() else None
 
-path = pathlib.Path("$TMP/jargon-gym.widget/config.json")
+path = pathlib.Path("$TMP/lobyas.widget/config.json")
 if path.exists():
     data = json.loads(path.read_text())
 else:
@@ -69,10 +69,10 @@ PY
 rm -f "$OUT_ZIP"
 (
   cd "$TMP"
-  zip -qr "$OUT_ZIP" jargon-gym.widget
+  zip -qr "$OUT_ZIP" lobyas.widget
 )
 
-sed "s|BAKED_BASE_URL=\"__JARGON_BASE_URL__\"|BAKED_BASE_URL=\"$PRODUCTION_URL\"|" "$INSTALL_SCRIPT_SRC" > "$INSTALL_SCRIPT_OUT"
+sed "s|BAKED_BASE_URL=\"__LOBYAS_BASE_URL__\"|BAKED_BASE_URL=\"$PRODUCTION_URL\"|" "$INSTALL_SCRIPT_SRC" > "$INSTALL_SCRIPT_OUT"
 chmod +x "$INSTALL_SCRIPT_OUT"
 
 echo "Created $OUT_ZIP"

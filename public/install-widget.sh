@@ -3,27 +3,27 @@ set -euo pipefail
 
 # Production URL is baked in by scripts/widget-zip.sh (see BAKED_BASE_URL below).
 BAKED_BASE_URL="http://localhost:3000"
-if [[ -n "${JARGON_BASE_URL:-}" ]]; then
-  BASE_URL="$JARGON_BASE_URL"
-elif [[ "$BAKED_BASE_URL" != "__JARGON_BASE_URL__" ]]; then
+if [[ -n "${LOBYAS_BASE_URL:-}" ]]; then
+  BASE_URL="$LOBYAS_BASE_URL"
+elif [[ "$BAKED_BASE_URL" != "__LOBYAS_BASE_URL__" ]]; then
   BASE_URL="$BAKED_BASE_URL"
 else
-  BASE_URL="${1:-https://jargon-gym.vercel.app}"
+  BASE_URL="${1:-https://lobyas.com}"
 fi
 
 if [[ -z "$BASE_URL" ]]; then
   echo "error: base URL required" >&2
   echo "usage: curl -fsSL <site>/install-widget.sh | bash" >&2
-  echo "  or:  JARGON_BASE_URL=https://example.com bash install-widget.sh" >&2
+  echo "  or:  LOBYAS_BASE_URL=https://example.com bash install-widget.sh" >&2
   exit 1
 fi
 
 BASE_URL="${BASE_URL%/}"
-WIDGET_NAME="jargon-gym.widget"
+WIDGET_NAME="lobyas.widget"
 WIDGETS_DIR="${HOME}/Library/Application Support/Übersicht/widgets"
 INSTALL_DIR="${WIDGETS_DIR}/${WIDGET_NAME}"
-ZIP_URL="${BASE_URL}/downloads/jargon-gym.widget.zip"
-API_TOKEN="${JARGON_WIDGET_TOKEN:-}"
+ZIP_URL="${BASE_URL}/downloads/lobyas.widget.zip"
+API_TOKEN="${LOBYAS_WIDGET_TOKEN:-}"
 
 inject_api_token() {
   local config="${INSTALL_DIR}/config.json"
@@ -122,6 +122,6 @@ else
   echo ""
   echo "Next steps:"
   echo "  1. Open ${BASE_URL}/jargon/settings and generate a widget API token"
-  echo "  2. Re-run install with JARGON_WIDGET_TOKEN set, or paste the token into ${INSTALL_DIR}/config.json"
+  echo "  2. Re-run install with LOBYAS_WIDGET_TOKEN set, or paste the token into ${INSTALL_DIR}/config.json"
   echo "  3. Refresh Übersicht (or restart it)"
 fi

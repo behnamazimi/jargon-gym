@@ -167,7 +167,7 @@ Keep new ones consistent with the existing scenes:
 
 # macOS widget
 
-The widget's source lives in `widget/jargon-gym.widget/` (`index.jsx` +
+The widget's source lives in `widget/lobyas.widget/` (`index.jsx` +
 `read-state.sh` / `reveal-term.sh` / `advance-term.sh`), with its app-side
 counterparts in `lib/widget/` and `app/api/widget/`. Any change to the
 widget's logic must bump the version in [widget/version.json](widget/version.json) —

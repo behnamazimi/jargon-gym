@@ -25,7 +25,7 @@
         "components/ui/**",
         "**/*.test.ts",
         "**/*.test.tsx",
-        "widget/jargon-gym.widget/index.jsx"
+        "widget/lobyas.widget/index.jsx"
       ],
       "rules": {
         "max-lines": "off"

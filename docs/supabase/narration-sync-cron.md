@@ -28,7 +28,7 @@ lease is still held, the next tick claims nothing and returns.
 ## 1. Confirm Next.js secrets
 
 `APP_BASE_URL` must be set on Vercel to the public Next.js origin, for example
-`https://jargon-gym.vercel.app`, and so must `AI_INTERNAL_SECRET`: the secret
+`https://lobyas.com`, and so must `AI_INTERNAL_SECRET`: the secret
 for this route (the app's own kick and the cron job below). Use a random value
 that differs from `TELEGRAM_INTERNAL_SECRET`. This route accepts only
 `AI_INTERNAL_SECRET`; a call with any other token gets 401. The Telegram routes

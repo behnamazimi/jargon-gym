@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-WIDGET_SRC="$ROOT/widget/jargon-gym.widget"
-WIDGET_NAME="jargon-gym.widget"
+WIDGET_SRC="$ROOT/widget/lobyas.widget"
+WIDGET_NAME="lobyas.widget"
 WIDGETS_DIR="${HOME}/Library/Application Support/Übersicht/widgets"
 INSTALL_DIR="${WIDGETS_DIR}/${WIDGET_NAME}"
 
