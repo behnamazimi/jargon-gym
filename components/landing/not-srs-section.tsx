@@ -1,41 +1,4 @@
-const SRS_ROWS = ["Runway", "TAM", "Churn"];
-const JARGON_GYM_ROWS = ["Burn rate", "ARR", "Vesting"];
-
-function SrsComparison() {
-  return (
-    <div
-      className="grid grid-cols-2 divide-x divide-base-content/15 border-y border-base-content/15"
-      aria-hidden
-    >
-      <div className="py-6 pe-5 sm:pe-8">
-        <p className="m-0 text-sm text-base-content/70">Spaced repetition apps</p>
-        <p className="font-heading m-0 mt-3 text-6xl font-medium leading-none">47</p>
-        <p className="m-0 mt-1 text-sm text-base-content/70">cards overdue</p>
-        <ul className="m-0 mt-5 list-none space-y-1.5 p-0 text-base-content/70">
-          {SRS_ROWS.map((label) => (
-            <li key={label} className="text-sm line-through decoration-base-content/50">
-              {label}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="py-6 ps-5 sm:ps-8">
-        <p className="m-0 text-sm font-medium text-primary-text">Jargon Gym</p>
-        <p className="font-heading m-0 mt-3 text-6xl font-medium leading-none text-primary-text">
-          0
-        </p>
-        <p className="m-0 mt-1 text-sm text-base-content/70">due dates</p>
-        <ul className="m-0 mt-5 list-none space-y-1.5 p-0">
-          {JARGON_GYM_ROWS.map((label) => (
-            <li key={label} className="text-sm">
-              {label}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-}
+import { NoDueDatesScene } from "@/components/illustrations/scenes/no-due-dates";
 
 export function NotSrsSection() {
   return (
@@ -55,7 +18,7 @@ export function NotSrsSection() {
           whenever, nothing&apos;s overdue.
         </p>
       </div>
-      <SrsComparison />
+      <NoDueDatesScene className="mx-auto max-w-md lg:max-w-none" />
     </div>
   );
 }
