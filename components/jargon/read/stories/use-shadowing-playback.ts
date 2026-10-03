@@ -83,6 +83,8 @@ export function useShadowingPlayback({
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The sentence just heard while the pause runs, for previous and next.
   const heardDuringPause = useRef<number | null>(null);
+  // Set when one sentence is played on its own, so the clip stops after it.
+  const playingAlone = useRef(false);
 
   const clearPause = useCallback(() => {
     if (resumeTimer.current !== null) clearTimeout(resumeTimer.current);
@@ -93,6 +95,7 @@ export function useShadowingPlayback({
 
   const resume = useCallback(() => {
     clearPause();
+    playingAlone.current = false;
     void audioRef.current?.play().catch(() => undefined);
   }, [audioRef, clearPause]);
 
@@ -110,6 +113,11 @@ export function useShadowingPlayback({
         sentenceSeconds: (bounds.end - bounds.start) * audio.duration,
         speed: rate,
       });
+      if (playingAlone.current && step.type !== "repeat") {
+        playingAlone.current = false;
+        audio.pause();
+        return false;
+      }
       if (step.type === "finish") return false;
 
       const repeating = step.type === "repeat";
@@ -179,16 +187,19 @@ export function useShadowingPlayback({
   /** The listener moved the playhead themselves, so follow the clip afresh. */
   const forgetSentence = useCallback(() => {
     watched.current = null;
+    playingAlone.current = false;
     clearPause();
   }, [clearPause]);
 
   const playSentence = useCallback(
-    (index: number) => {
+    (index: number, alone = false) => {
       const audio = audioRef.current;
       const setup = latest.current.shadowing;
       if (!audio || !setup || !sentenceBounds(setup.timeline, index)) return;
       if (!Number.isFinite(audio.duration)) return;
+      const shadowingActive = !audio.paused || resumeTimer.current !== null;
       clearPause();
+      playingAlone.current = alone && !shadowingActive;
       watched.current = { index, plays: 0 };
       audio.currentTime = replayFrom(setup.timeline, index, audio.duration);
       void audio.play().catch(() => undefined);
@@ -233,6 +244,7 @@ export function useShadowingPlayback({
     stopWatching,
     forgetSentence,
     playSentence,
+    pressSentence: (index: number) => playSentence(index, true),
     previousSentence,
     nextSentence,
   };

@@ -68,8 +68,8 @@ export function StoryAudioControls({
   const [speedAnnouncement, setSpeedAnnouncement] = useState("");
   const sentences = useShadowingPlayback({ audioRef, shadowing, speed });
 
-  useImperativeHandle(handleRef, () => ({ playSentence: sentences.playSentence }), [
-    sentences.playSentence,
+  useImperativeHandle(handleRef, () => ({ playSentence: sentences.pressSentence }), [
+    sentences.pressSentence,
   ]);
 
   useMountEffect(() => {
