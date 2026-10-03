@@ -28,6 +28,10 @@ export function useWakeLock(active: boolean): void {
           return;
         }
         lockRef.current = lock;
+        // The OS releases it when the page is hidden; forget it so it can be requested again.
+        lock.addEventListener("release", () => {
+          if (lockRef.current === lock) lockRef.current = null;
+        });
       } catch {
         // Unsupported, denied, or the page went hidden again before the
         // request resolved — nothing to do, screen just won't be held awake.

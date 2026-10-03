@@ -11,7 +11,10 @@ import { StoryShadowingToggle } from "@/components/jargon/read/stories/story-sha
 import { StoryNarrationPlayer } from "@/components/jargon/read/stories/story-narration-player";
 import { StoryBody } from "@/components/jargon/read/stories/story-body";
 import { useNarrationAutoScroll } from "@/components/jargon/read/stories/use-narration-auto-scroll";
-import type { ShadowingSetup } from "@/components/jargon/read/stories/use-shadowing-playback";
+import {
+  PLAIN_PLAYBACK,
+  type ShadowingSetup,
+} from "@/components/jargon/read/stories/use-shadowing-playback";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { buildTimeline, sentenceAtFraction } from "@/lib/stories/highlight";
@@ -45,6 +48,7 @@ function StoryHeader({
   narrationAccess,
   onNarrationProgress,
   shadowing,
+  sentencePlayback,
   playerRef,
   onClipPauses,
 }: {
@@ -52,6 +56,7 @@ function StoryHeader({
   narrationAccess: boolean;
   onNarrationProgress?: (fraction: number | null) => void;
   shadowing: ShadowingSetup | null;
+  sentencePlayback: ShadowingSetup | null;
   playerRef: Ref<StoryPlayerHandle>;
   onClipPauses?: (clip: ClipPauses) => void;
 }) {
@@ -87,6 +92,7 @@ function StoryHeader({
             storyId={story.id}
             onProgress={onNarrationProgress}
             shadowing={shadowing}
+            sentencePlayback={sentencePlayback}
             handleRef={playerRef}
             onClipPauses={onClipPauses}
           />
@@ -156,6 +162,7 @@ export function StoryReader({
   terms,
   narrationAccess,
   narrationHighlight,
+  tapToPlay,
   shadowingSettings,
 }: {
   session: StorySession;
@@ -163,16 +170,17 @@ export function StoryReader({
   terms: StoryTerm[];
   narrationAccess: boolean;
   narrationHighlight: boolean;
+  tapToPlay: boolean;
   /** Set while Shadowing is on. It needs the highlight, so it turns that on. */
   shadowingSettings: ShadowingSettings | null;
 }) {
   const termById = new Map(terms.map((term) => [term.id, term]));
   const estimatedTimeline = useMemo(
     () =>
-      narrationAccess && (narrationHighlight || shadowingSettings)
+      narrationAccess && (narrationHighlight || shadowingSettings || tapToPlay)
         ? buildTimeline(story.title, story.segments, story.language)
         : null,
-    [narrationAccess, narrationHighlight, shadowingSettings, story],
+    [narrationAccess, narrationHighlight, shadowingSettings, tapToPlay, story],
   );
   // Once the clip has been measured, sentences move onto its real pauses.
   const [clipPauses, setClipPauses] = useState<ClipPauses | null>(null);
@@ -187,12 +195,20 @@ export function StoryReader({
     () => (timeline && shadowingSettings ? { timeline, settings: shadowingSettings } : null),
     [timeline, shadowingSettings],
   );
+  const showHighlight = narrationHighlight || shadowingSettings !== null;
+  const sentencePlayback = useMemo<ShadowingSetup | null>(
+    () =>
+      timeline && (shadowingSettings || tapToPlay)
+        ? { timeline, settings: shadowingSettings ?? PLAIN_PLAYBACK }
+        : null,
+    [timeline, shadowingSettings, tapToPlay],
+  );
   const playerRef = useRef<StoryPlayerHandle | null>(null);
   const [activeSentence, setActiveSentence] = useState<number | null>(null);
   const { pause: pauseAutoScroll, followAgain, keepInView } = useNarrationAutoScroll();
 
-  // Nothing is highlighted while the option is off, so a sentence picked
-  // before it was turned off doesn't come back when it is turned on.
+  // Without a timeline there are no sentences, so one picked before the
+  // timeline went away doesn't come back when it returns.
   if (!timeline && activeSentence !== null) setActiveSentence(null);
 
   function showNarrationProgress(fraction: number | null) {
@@ -200,9 +216,9 @@ export function StoryReader({
     setActiveSentence(fraction === null ? null : sentenceAtFraction(timeline, fraction));
   }
 
-  function playSentence(index: number) {
+  function pressSentence(index: number) {
     followAgain();
-    playerRef.current?.playSentence(index);
+    playerRef.current?.pressSentence(index);
   }
 
   return (
@@ -212,6 +228,7 @@ export function StoryReader({
         narrationAccess={narrationAccess}
         onNarrationProgress={timeline ? showNarrationProgress : undefined}
         shadowing={shadowing}
+        sentencePlayback={sentencePlayback}
         playerRef={playerRef}
         onClipPauses={timeline ? setClipPauses : undefined}
       />
@@ -225,9 +242,9 @@ export function StoryReader({
           story={story}
           termById={termById}
           timeline={timeline}
-          activeSentence={activeSentence}
+          activeSentence={showHighlight ? activeSentence : null}
           keepInView={keepInView}
-          onSentencePress={shadowing ? playSentence : undefined}
+          onSentencePress={tapToPlay && sentencePlayback ? pressSentence : undefined}
         />
         <StoryGlossary story={story} termById={termById} />
       </div>

@@ -33,12 +33,14 @@ export function StoryNarrationPlayer({
   storyId,
   onProgress,
   shadowing,
+  sentencePlayback,
   handleRef,
   onClipPauses,
 }: {
   storyId: string;
   onProgress?: (fraction: number | null) => void;
   shadowing?: ShadowingSetup | null;
+  sentencePlayback?: ShadowingSetup | null;
   handleRef?: Ref<StoryPlayerHandle>;
   onClipPauses?: (clip: ClipPauses) => void;
 }) {
@@ -88,6 +90,7 @@ export function StoryNarrationPlayer({
         }}
         onProgress={onProgress}
         shadowing={shadowing}
+        sentencePlayback={sentencePlayback}
         handleRef={handleRef}
         onClipPauses={onClipPauses}
       />

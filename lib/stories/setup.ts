@@ -22,6 +22,7 @@ export type StoriesSetupData = {
   ai: AiAccessView;
   narrationAccess: boolean;
   narrationHighlight: boolean;
+  tapToPlay: boolean;
   /** Set while the Shadowing option is on. */
   shadowing: ShadowingSettings | null;
   /** An unread piece to open straight into, instead of the setup screen. */
@@ -94,6 +95,7 @@ export async function getStoriesSetupData(
     ai,
     narrationAccess,
     narrationHighlight: readOptions.narrationHighlight,
+    tapToPlay: readOptions.tapToPlay,
     shadowing: readOptions.shadowing
       ? {
           pause: readOptions.shadowingPause,

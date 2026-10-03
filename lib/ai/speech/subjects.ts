@@ -68,7 +68,9 @@ export async function loadStorySubject(
     loadScript: async () => {
       const story = await getStoryForUser(admin, userId, storyId);
       if (!story) return null;
-      const script = `${story.title}\n\n${story.segments.map((segment) => segment.text).join("")}`;
+      const storyTitle = story.title.trim();
+      const title = /[.!?…]$/.test(storyTitle) ? storyTitle : `${storyTitle}.`;
+      const script = `${title}\n\n${story.segments.map((segment) => segment.text).join("")}`;
       return { script, language: story.language };
     },
   };
