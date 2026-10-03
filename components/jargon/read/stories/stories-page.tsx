@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, BookOpenText, Loader2 } from "lucide-react";
+import { AlertCircle, BookOpenText } from "lucide-react";
+import { PreparingScene } from "@/components/illustrations/scenes/preparing";
 import type { StoriesSetupData } from "@/lib/stories/setup";
 import { CreditsInsteadButton } from "@/components/jargon/ai-credits/credits-instead-button";
 import { JargonErrorAlert } from "@/components/jargon/shared/error-alert";
@@ -49,8 +50,7 @@ function StoriesGeneratingStep() {
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <QuizPanelBody className="flex min-h-0 flex-1 items-center justify-center">
         <QuizCenteredState
-          icon={Loader2}
-          iconClassName="animate-spin"
+          illustration={<PreparingScene className="w-48" />}
           title="Writing your story"
           description="Weaving your next terms into a short piece… This usually takes a few seconds."
         />

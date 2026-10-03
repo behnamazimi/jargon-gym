@@ -1,4 +1,5 @@
 import { FileQuestion } from "lucide-react";
+import { NotFoundScene } from "@/components/illustrations/scenes/not-found";
 import { StatusPage } from "@/components/status-page";
 import { LinkButton } from "@/components/ui/button";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
@@ -10,6 +11,7 @@ export default async function NotFound() {
   return (
     <StatusPage
       icon={FileQuestion}
+      illustration={<NotFoundScene className="w-72 sm:w-96" />}
       title="Page not found"
       description="The page you're looking for doesn't exist or may have moved."
     >

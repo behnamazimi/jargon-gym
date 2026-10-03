@@ -161,6 +161,137 @@
   animation: ill-steam var(--ill-duration, 1.8s) ease-out var(--ill-delay, 0s) infinite;
 }
 
+/* Preparing: writes three lines along a card, then starts a fresh one. The
+   ill-write-* lines draw in under the pencil (needs Line with `drawable`). */
+.ill-scribe,
+.ill-write-1,
+.ill-write-2,
+.ill-write-3,
+.ill-done-flash {
+  animation: var(--ill-duration, 6s) linear var(--ill-delay, 0s) infinite;
+}
+
+.ill-write-1,
+.ill-write-2,
+.ill-write-3 {
+  stroke-dasharray: 1 2;
+}
+
+.ill-scribe {
+  animation-name: ill-scribe;
+}
+.ill-write-1 {
+  animation-name: ill-write-1;
+}
+.ill-write-2 {
+  animation-name: ill-write-2;
+}
+.ill-write-3 {
+  animation-name: ill-write-3;
+}
+.ill-done-flash {
+  animation-name: ill-done-flash;
+  animation-timing-function: ease-out;
+}
+
+/* Not found: sweeps a flashlight, is surprised to find nothing, and shrugs. */
+.ill-search,
+.ill-shrug,
+.ill-shrug-arm-rest,
+.ill-shrug-arm-up,
+.ill-face-turn,
+.ill-surprise-eyes,
+.ill-surprise-brows,
+.ill-surprise-marks {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-search {
+  animation-name: ill-search;
+}
+.ill-shrug {
+  animation-name: ill-shrug;
+}
+.ill-shrug-arm-rest {
+  animation-name: ill-shrug-arm-rest;
+}
+.ill-shrug-arm-up {
+  animation-name: ill-shrug-arm-up;
+}
+.ill-face-turn {
+  animation-name: ill-face-turn;
+}
+.ill-surprise-eyes {
+  animation-name: ill-surprise-eyes;
+}
+.ill-surprise-brows {
+  animation-name: ill-surprise-brows;
+}
+.ill-surprise-marks {
+  animation-name: ill-surprise-marks;
+}
+
+/* Offline: on tiptoe waving the phone for a signal; the bars light up one by
+   one, fade, and it sinks back with a sigh. */
+.ill-wave-search {
+  animation: ill-wave-search var(--ill-duration, 1.25s) ease-in-out var(--ill-delay, 0s) infinite
+    alternate;
+}
+
+.ill-reach,
+.ill-signal-1,
+.ill-signal-2,
+.ill-signal-3 {
+  animation: var(--ill-duration, 5s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-reach {
+  animation-name: ill-reach;
+}
+.ill-signal-1 {
+  animation-name: ill-signal-1;
+}
+.ill-signal-2 {
+  animation-name: ill-signal-2;
+}
+.ill-signal-3 {
+  animation-name: ill-signal-3;
+}
+
+/* Something went wrong: the house of cards wobbles, its top floor falls, the
+   builder flinches, and it's built back up for another try. */
+.ill-topple,
+.ill-fall-top,
+.ill-fall-next,
+.ill-fall-dashes,
+.ill-flinch,
+.ill-flinch-arm,
+.ill-flinch-eyes {
+  animation: var(--ill-duration, 5s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-topple {
+  animation-name: ill-topple;
+}
+.ill-fall-top {
+  animation-name: ill-fall-top;
+}
+.ill-fall-next {
+  animation-name: ill-fall-next;
+}
+.ill-fall-dashes {
+  animation-name: ill-fall-dashes;
+}
+.ill-flinch {
+  animation-name: ill-flinch;
+}
+.ill-flinch-arm {
+  animation-name: ill-flinch-arm;
+}
+.ill-flinch-eyes {
+  animation-name: ill-flinch-eyes;
+}
+
 /* Invite: sneaks a peek over the rim, then climbs out with the card overhead,
    shows it off, and ducks back in. All share one beat. */
 .ill-emerge,
@@ -833,6 +964,504 @@
   76%,
   100% {
     transform: none;
+  }
+}
+
+/* The pencil: along a line, a quick carriage return down to the next, three
+   lines, then a hop back to the top. Offsets match PreparingScene's lines. */
+@keyframes ill-scribe {
+  0%,
+  4% {
+    transform: none;
+  }
+  28% {
+    transform: translateX(150px);
+    animation-timing-function: ease-in-out;
+  }
+  31% {
+    transform: translate(75px, -10px);
+    animation-timing-function: ease-in-out;
+  }
+  34% {
+    transform: translateY(32px);
+  }
+  58% {
+    transform: translate(150px, 32px);
+    animation-timing-function: ease-in-out;
+  }
+  61% {
+    transform: translate(75px, 22px);
+    animation-timing-function: ease-in-out;
+  }
+  64% {
+    transform: translateY(64px);
+  }
+  80% {
+    transform: translate(80px, 64px);
+    animation-timing-function: ease-in-out;
+  }
+  88% {
+    transform: translate(40px, 16px);
+    animation-timing-function: ease-in-out;
+  }
+  94%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Each line draws in while the pencil crosses it; all fade when the card is done. */
+@keyframes ill-write-1 {
+  0%,
+  4% {
+    stroke-dashoffset: 1.05;
+  }
+  28%,
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes ill-write-2 {
+  0%,
+  34% {
+    stroke-dashoffset: 1.05;
+  }
+  58%,
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes ill-write-3 {
+  0%,
+  64% {
+    stroke-dashoffset: 1.05;
+  }
+  80%,
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes ill-done-flash {
+  0%,
+  80% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  83% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+/*
+ * One beat for the whole reaction, shared by every ill-shrug* and
+ * ill-surprise* kind and the flashlight's droop: at 46% the jolt, landing
+ * straight into the shrug at 50%, held to 70%, all back down by 76%.
+ */
+
+/* The flashlight arm: sweeps up and down, settles on the empty spot, droops
+   toward the floor through the shrug, then starts again. Pivot at the shoulder. */
+@keyframes ill-search {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  18% {
+    transform: rotate(9deg);
+  }
+  30% {
+    transform: rotate(-5deg);
+  }
+  40%,
+  46% {
+    transform: none;
+  }
+  52%,
+  70% {
+    transform: rotate(14deg);
+  }
+  76% {
+    transform: none;
+  }
+}
+
+/* The body: a startled hop that lands straight into raised shoulders and a
+   head tilt. Bottom origin. */
+@keyframes ill-shrug {
+  0%,
+  44%,
+  76%,
+  100% {
+    transform: none;
+  }
+  47% {
+    transform: translateY(-12px) scale(0.96, 1.06);
+    animation-timing-function: ease-in;
+  }
+  50% {
+    transform: scale(1.04, 0.96);
+    animation-timing-function: ease-out;
+  }
+  53%,
+  70% {
+    transform: translateY(-4px) rotate(-4deg) scale(1.02, 1.04);
+  }
+}
+
+/* The free arm's resting pose, hidden while it shrugs. */
+@keyframes ill-shrug-arm-rest {
+  0%,
+  46%,
+  72%,
+  100% {
+    opacity: 1;
+  }
+  47%,
+  71% {
+    opacity: 0;
+  }
+}
+
+/* The shrug pose: swings up into place on the jolt, holds, drops away. Pivot
+   at the shoulder. */
+@keyframes ill-shrug-arm-up {
+  0%,
+  46%,
+  72%,
+  100% {
+    opacity: 0;
+    transform: rotate(-40deg);
+  }
+  47% {
+    opacity: 1;
+    transform: rotate(-40deg);
+    animation-timing-function: ease-out;
+  }
+  52%,
+  70% {
+    opacity: 1;
+    transform: none;
+  }
+  71% {
+    opacity: 1;
+    transform: rotate(-20deg);
+  }
+}
+
+/* Eyes pop wide on the jolt, settle as the shrug starts. */
+@keyframes ill-surprise-eyes {
+  0%,
+  45%,
+  54%,
+  100% {
+    transform: none;
+  }
+  47%,
+  50% {
+    transform: scale(1.7);
+  }
+}
+
+/* Brows shoot up on the jolt and stay up through the shrug. */
+@keyframes ill-surprise-brows {
+  0%,
+  45%,
+  76%,
+  100% {
+    transform: none;
+  }
+  47%,
+  70% {
+    transform: translateY(-7px);
+  }
+}
+
+/* Shock marks above the head, only during the jolt. */
+@keyframes ill-surprise-marks {
+  0%,
+  45%,
+  54%,
+  100% {
+    transform: none;
+    opacity: 0;
+  }
+  47% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+  51% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* The face turns from the beam to look straight out at you through the shrug. */
+@keyframes ill-face-turn {
+  0%,
+  48%,
+  74%,
+  100% {
+    transform: none;
+  }
+  53%,
+  70% {
+    transform: translateX(-26px);
+  }
+}
+
+/* Waving the phone overhead. Pivot at the shoulder. */
+@keyframes ill-wave-search {
+  from {
+    transform: rotate(-9deg);
+  }
+  to {
+    transform: rotate(9deg);
+  }
+}
+
+/* Up on tiptoe while hoping, then a sigh as it sinks back. Bottom origin. */
+@keyframes ill-reach {
+  0%,
+  8%,
+  80%,
+  100% {
+    transform: none;
+  }
+  22%,
+  54% {
+    transform: translateY(-8px) scale(0.98, 1.05);
+  }
+  64%,
+  70% {
+    transform: scale(1.05, 0.94);
+  }
+}
+
+/* Signal bars: dim, then lighting up from the smallest out, then all fading. */
+@keyframes ill-signal-1 {
+  0%,
+  16%,
+  60%,
+  100% {
+    opacity: 0.2;
+  }
+  20%,
+  54% {
+    opacity: 1;
+  }
+}
+
+@keyframes ill-signal-2 {
+  0%,
+  28%,
+  60%,
+  100% {
+    opacity: 0.2;
+  }
+  32%,
+  54% {
+    opacity: 1;
+  }
+}
+
+/* The last bar only flickers on before the whole signal drops. */
+@keyframes ill-signal-3 {
+  0%,
+  42%,
+  48%,
+  100% {
+    opacity: 0.2;
+  }
+  44%,
+  46% {
+    opacity: 1;
+  }
+}
+
+/* The house of cards wobbling before the fall. Bottom origin. */
+@keyframes ill-topple {
+  0%,
+  28%,
+  44%,
+  100% {
+    transform: none;
+  }
+  32% {
+    transform: rotate(-2deg);
+  }
+  36% {
+    transform: rotate(3deg);
+  }
+  40% {
+    transform: rotate(-2deg);
+  }
+}
+
+/* The top floor's right card: tips over, tumbles off to the right, lands on
+   its side, bounces, lies there, then is back in place (faded in) for the
+   next try. Rotation adds to the card's own lean. */
+@keyframes ill-fall-top {
+  0%,
+  42% {
+    transform: none;
+    opacity: 1;
+  }
+  46% {
+    transform: translate(18px, 4px) rotate(24deg);
+  }
+  52% {
+    transform: translate(110px, 30px) rotate(70deg);
+    animation-timing-function: ease-in;
+  }
+  58% {
+    transform: translate(228px, 114px) rotate(106deg);
+    animation-timing-function: ease-out;
+  }
+  61% {
+    transform: translate(228px, 106px) rotate(100deg);
+    animation-timing-function: ease-in;
+  }
+  64%,
+  84% {
+    transform: translate(228px, 114px) rotate(106deg);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(228px, 114px) rotate(106deg);
+    opacity: 0;
+  }
+  91% {
+    transform: none;
+    opacity: 0;
+  }
+  96%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Its partner loses its support a beat later and follows it down. */
+@keyframes ill-fall-next {
+  0%,
+  45% {
+    transform: none;
+    opacity: 1;
+  }
+  50% {
+    transform: translate(20px, 6px) rotate(30deg);
+  }
+  56% {
+    transform: translate(100px, 50px) rotate(56deg);
+    animation-timing-function: ease-in;
+  }
+  61% {
+    transform: translate(180px, 114px) rotate(74deg);
+    animation-timing-function: ease-out;
+  }
+  64% {
+    transform: translate(180px, 108px) rotate(70deg);
+    animation-timing-function: ease-in;
+  }
+  67%,
+  84% {
+    transform: translate(180px, 114px) rotate(74deg);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(180px, 114px) rotate(74deg);
+    opacity: 0;
+  }
+  91% {
+    transform: none;
+    opacity: 0;
+  }
+  98%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Speed lines, only while the cards fall. */
+@keyframes ill-fall-dashes {
+  0%,
+  45%,
+  62%,
+  100% {
+    opacity: 0;
+  }
+  48%,
+  58% {
+    opacity: 1;
+  }
+}
+
+/* Shrinks back as the cards fall. Bottom origin. */
+@keyframes ill-flinch {
+  0%,
+  46%,
+  70%,
+  100% {
+    transform: none;
+  }
+  50%,
+  62% {
+    transform: scale(1.05, 0.92);
+  }
+}
+
+/* Hands fly up to the cheeks, then drop. Pivot at the shoulder. */
+@keyframes ill-flinch-arm {
+  0%,
+  45%,
+  74%,
+  100% {
+    transform: none;
+  }
+  50%,
+  64% {
+    transform: rotate(calc(var(--ill-dir, 1) * -140deg));
+  }
+}
+
+/* Eyes squeezed shut through the crash. */
+@keyframes ill-flinch-eyes {
+  0%,
+  46%,
+  66%,
+  100% {
+    transform: none;
+  }
+  49%,
+  62% {
+    transform: scaleY(0.15);
   }
 }
 

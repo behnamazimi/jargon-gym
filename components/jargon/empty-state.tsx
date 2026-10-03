@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 
 type EmptyStateProps = {
   icon: LucideIcon;
+  /** Shown instead of the icon, e.g. a scene from components/illustrations. */
+  illustration?: ReactNode;
   title: ReactNode;
   description?: string;
   children?: ReactNode;
@@ -13,6 +15,7 @@ type EmptyStateProps = {
 
 export function EmptyState({
   icon: Icon,
+  illustration,
   title,
   description,
   children,
@@ -21,9 +24,11 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className={cn("flex flex-col items-center gap-5 text-center", className)}>
-      <div className="flex size-14 items-center justify-center rounded-full bg-primary/15 text-primary">
-        <Icon className="size-6" aria-hidden />
-      </div>
+      {illustration ?? (
+        <div className="flex size-14 items-center justify-center rounded-full bg-primary/15 text-primary">
+          <Icon className="size-6" aria-hidden />
+        </div>
+      )}
       <div>
         <TitleTag className="font-heading text-2xl font-medium">{title}</TitleTag>
         {description ? (

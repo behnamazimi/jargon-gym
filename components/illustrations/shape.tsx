@@ -34,17 +34,28 @@ export function Shape({
   );
 }
 
-/** An open ink stroke: limbs, rails, handles. */
+/**
+ * An open ink stroke: limbs, rails, handles. `drawable` measures the path as
+ * length 1, so a Motion around it can draw the line in (see ill-write-* kinds).
+ */
 export function Line({
   d,
   stroke = STROKE.bold,
   color = INK,
+  drawable = false,
 }: {
   d: string;
   stroke?: number;
   color?: string;
+  drawable?: boolean;
 }) {
-  return <path d={d} style={{ fill: "none", stroke: color, strokeWidth: stroke }} />;
+  return (
+    <path
+      d={d}
+      pathLength={drawable ? 1 : undefined}
+      style={{ fill: "none", stroke: color, strokeWidth: stroke }}
+    />
+  );
 }
 
 /** A patch of hatching for texture. Draw it inside a shape, after its fill. */
