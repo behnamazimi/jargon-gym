@@ -32,7 +32,7 @@ export function RequestRow({ entry, query }: { entry: RequestEntry; query: strin
         {CHOOSER.rowLabel}
       </p>
       <LinkButton
-        href={`/jargon/import/request?topic=${encodeURIComponent(trimmed.slice(0, 120))}`}
+        href={`/app/import/request?topic=${encodeURIComponent(trimmed.slice(0, 120))}`}
         variant="ghost"
         className="shadow-surface flex h-auto min-h-16 w-full items-center justify-start gap-3 rounded-field bg-base-100 px-4 py-3 text-left"
       >

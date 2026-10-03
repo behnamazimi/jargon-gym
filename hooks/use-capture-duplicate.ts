@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { findCaptureDuplicate } from "@/app/(private)/jargon/capture/actions";
+import { findCaptureDuplicate } from "@/app/(private)/app/capture/actions";
 import { createDuplicateChecker, type DuplicateMatch } from "@/lib/capture/duplicate-checker";
 
 const DEBOUNCE_MS = 300;

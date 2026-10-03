@@ -51,7 +51,7 @@ describe("updateSession", () => {
 
   it("forwards the verified user, signed, instead of what the client sent", async () => {
     auth.user = { id: "real-id", email: "mé@example.com", banned_until: null };
-    const response = await updateSession(request("/jargon", `${REFERRAL_VERIFIED_COOKIE}=1`));
+    const response = await updateSession(request("/app/library", `${REFERRAL_VERIFIED_COOKIE}=1`));
     expect(await readVerifiedUser(forwardedHeaders(response))).toEqual({
       id: "real-id",
       email: "mé@example.com",

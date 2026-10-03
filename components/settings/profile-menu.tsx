@@ -69,7 +69,7 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
           </DropdownMenuLabel>
           {creditsLine ? (
             <DropdownMenuItem
-              href={creditsLine.pending ? undefined : "/jargon/settings?tab=ai"}
+              href={creditsLine.pending ? undefined : "/app/settings?tab=ai"}
               isDisabled={creditsLine.pending}
               textValue={creditsLine.label}
             >

@@ -1,4 +1,4 @@
-const KEY = "jargon-gym:capture-destination:v1";
+const KEY = "lobyas:capture-destination:v1";
 
 /** The collection a term was last captured into on this device. */
 export function loadDestinationPref(): string | null {

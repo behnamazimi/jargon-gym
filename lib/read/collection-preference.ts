@@ -1,6 +1,6 @@
 import { createCollectionPreference } from "@/lib/study/collection-preference";
 
-const readCollection = createCollectionPreference("jg-read-collection");
+const readCollection = createCollectionPreference("lb-read-collection");
 
 export const READ_COLLECTION_COOKIE = readCollection.cookieName;
 export const parseReadCollectionCookie = readCollection.parse;

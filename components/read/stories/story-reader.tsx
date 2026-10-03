@@ -40,7 +40,7 @@ function firstOccurrences(story: Story): Map<string, string> {
 function termHref(termId: string, story: Story): string {
   const params = new URLSearchParams({ termId, alreadyRead: "true" });
   if (story.domainId) params.set("domain", story.domainId);
-  return `/jargon/read?${params.toString()}`;
+  return `/app/read?${params.toString()}`;
 }
 
 function StoryHeader({

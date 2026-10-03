@@ -4,7 +4,7 @@ import type { TourChapter } from "./types";
 export const MORE_CHAPTERS = [
   {
     id: "triage",
-    route: "/jargon/triage",
+    route: "/app/triage",
     steps: [
       {
         target: "triage-card",
@@ -22,7 +22,7 @@ export const MORE_CHAPTERS = [
   },
   {
     id: "browse",
-    route: "/jargon/browse",
+    route: "/app/browse",
     steps: [
       {
         target: "browse-filters",
@@ -38,7 +38,7 @@ export const MORE_CHAPTERS = [
   },
   {
     id: "import",
-    route: "/jargon/import",
+    route: "/app/import",
     steps: [
       {
         target: "import-search",
@@ -54,7 +54,7 @@ export const MORE_CHAPTERS = [
   },
   {
     id: "settings",
-    route: "/jargon/settings",
+    route: "/app/settings",
     steps: [
       {
         target: "settings-ai",

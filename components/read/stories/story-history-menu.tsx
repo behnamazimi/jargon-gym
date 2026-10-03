@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Dialog as AriaDialog, DialogTrigger, Popover } from "react-aria-components";
-import { listStoryHistoryAction } from "@/app/(private)/jargon/read/stories/actions";
+import { listStoryHistoryAction } from "@/app/(private)/app/read/stories/actions";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-platform";
@@ -21,7 +21,7 @@ type HistoryState =
 function storyHref(storyId: string, domain: string | null): string {
   const params = new URLSearchParams({ story: storyId });
   if (domain) params.set("domain", domain);
-  return `/jargon/read/stories?${params.toString()}`;
+  return `/app/read/stories?${params.toString()}`;
 }
 
 function VoteIcon({ vote }: { vote: StorySummary["vote"] }) {
@@ -137,7 +137,7 @@ export function StoryHistoryMenu() {
   const [open, setOpen] = useState(false);
   const [state, setState] = useState<HistoryState>({ status: "loading" });
 
-  if (!pathname.startsWith("/jargon/read/stories")) return null;
+  if (!pathname.startsWith("/app/read/stories")) return null;
 
   const domain = searchParams.get("domain");
   const currentStoryId = searchParams.get("story");

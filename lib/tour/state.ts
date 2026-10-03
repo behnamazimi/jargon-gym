@@ -133,7 +133,7 @@ export function resolveTourStep(
 /** Library is where the tour starts, so its tips run back to back. Every
  *  other page shows one chapter per visit, so a link into Review or Read
  *  never turns into a long sequence. */
-const CHAINED_ROUTE = "/jargon";
+const CHAINED_ROUTE = "/app/library";
 
 export function holdsChaptersForNextVisit(pathname: string, finishedOn: string | null): boolean {
   return finishedOn === pathname && pathname !== CHAINED_ROUTE;

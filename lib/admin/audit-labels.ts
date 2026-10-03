@@ -24,11 +24,12 @@ export const APP_AUDIT_ACTIONS = {
   "app.collection_status": {
     label: "Collection status changed",
     describe: (d) =>
-      `${text(d.from) ?? "?"} to ${text(d.to) ?? "?"}${d.slug ? `, /j/${text(d.slug)}` : ""}`,
+      `${text(d.from) ?? "?"} to ${text(d.to) ?? "?"}${d.slug ? `, /collections/${text(d.slug)}` : ""}`,
   },
   "app.collection_slug": {
     label: "Collection address changed",
-    describe: (d) => `${text(d.old) ? `/j/${text(d.old)}` : "none"} to /j/${text(d.new) ?? "?"}`,
+    describe: (d) =>
+      `${text(d.old) ? `/collections/${text(d.old)}` : "none"} to /collections/${text(d.new) ?? "?"}`,
   },
   "app.ai_credits_enabled": {
     label: "AI credits switched",
@@ -103,7 +104,7 @@ export const DB_AUDIT_ACTIONS = {
   },
   publish_collection: {
     label: "Collection published",
-    describe: (d) => (text(d.slug) ? `/j/${text(d.slug)}` : null),
+    describe: (d) => (text(d.slug) ? `/collections/${text(d.slug)}` : null),
   },
   suspend_user: { label: "Account suspended", describe: (d) => reason(d) },
   reactivate_user: { label: "Account reactivated", describe: (d) => reason(d) },

@@ -5,7 +5,7 @@ import {
   cancelRequest,
   dismissRequest,
   replyToRequest,
-} from "@/app/(private)/jargon/actions-requests";
+} from "@/app/(private)/app/actions-requests";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -108,14 +108,14 @@ function Delivered({ request }: { request: MyRequest }) {
       {domainId ? (
         <div className="flex flex-wrap gap-2">
           <LinkButton
-            href={`/jargon/read?domain=${domainId}`}
+            href={`/app/read?domain=${domainId}`}
             size="sm"
             className="min-h-11 md:min-h-8"
           >
             {CARD.startReading}
           </LinkButton>
           <LinkButton
-            href={`/jargon?domain=${domainId}`}
+            href={`/app/library?domain=${domainId}`}
             size="sm"
             variant="outline"
             className="min-h-11 md:min-h-8"
@@ -140,19 +140,14 @@ function Declined({ request }: { request: MyRequest }) {
       ) : null}
       <div className="flex flex-wrap gap-2">
         <LinkButton
-          href="/jargon/import/paste"
+          href="/app/import/paste"
           size="sm"
           variant="outline"
           className="min-h-11 md:min-h-8"
         >
           {CARD.pasteList}
         </LinkButton>
-        <LinkButton
-          href="/jargon/browse"
-          size="sm"
-          variant="outline"
-          className="min-h-11 md:min-h-8"
-        >
+        <LinkButton href="/app/browse" size="sm" variant="outline" className="min-h-11 md:min-h-8">
           {CARD.browse}
         </LinkButton>
       </div>

@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { recordReadRevealAction } from "@/app/(private)/jargon/read/actions";
+import { recordReadRevealAction } from "@/app/(private)/app/read/actions";
 
 export function useReadRevealTracking(initialRevealedTermIds: string[] | undefined) {
   const [revealedIds, setRevealedIds] = useState<Set<string>>(

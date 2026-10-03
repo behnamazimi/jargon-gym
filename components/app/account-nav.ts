@@ -29,17 +29,17 @@ export type AccountNavItem = {
 };
 
 export const STUDY_DOCK_TABS = [
-  { href: "/jargon", label: "Library", icon: LayoutList, match: "library" },
-  { href: "/jargon/read", label: "Read", icon: Zap, match: "prefix" },
-  { href: "/jargon/review", label: "Review", icon: BookOpen, match: "prefix" },
-  { href: "/jargon/quiz", label: "Quiz", icon: Sparkles, match: "prefix" },
+  { href: "/app/library", label: "Library", icon: LayoutList, match: "library" },
+  { href: "/app/read", label: "Read", icon: Zap, match: "prefix" },
+  { href: "/app/review", label: "Review", icon: BookOpen, match: "prefix" },
+  { href: "/app/quiz", label: "Quiz", icon: Sparkles, match: "prefix" },
 ] as const;
 
 export const ACCOUNT_OVERFLOW_NAV: AccountNavItem[] = [
-  { href: "/jargon/browse", label: "Browse", icon: Compass },
-  { href: "/jargon/import", label: "Add collection", icon: Upload },
-  { href: "/jargon/mastery", label: "Mastery", icon: Signal },
-  { href: "/jargon/settings", label: "Settings", icon: Settings },
+  { href: "/app/browse", label: "Browse", icon: Compass },
+  { href: "/app/import", label: "Add collection", icon: Upload },
+  { href: "/app/mastery", label: "Mastery", icon: Signal },
+  { href: "/app/settings", label: "Settings", icon: Settings },
 ];
 
 export const ACCOUNT_HOME_NAV: AccountNavItem[] = [...ACCOUNT_OVERFLOW_NAV];
@@ -49,15 +49,15 @@ export const ADMIN_NAV_ITEMS: AccountNavItem[] = [
 ];
 
 const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
-  ["/jargon/read", "Read"],
-  ["/jargon/review", "Review"],
-  ["/jargon/quiz", "Quiz"],
-  ["/jargon/triage", "Triage"],
-  ["/jargon/browse", "Browse"],
-  ["/jargon/import", "Add collection"],
-  ["/jargon/capture", "Add a term"],
-  ["/jargon/mastery", "Mastery"],
-  ["/jargon/settings", "Settings"],
+  ["/app/read", "Read"],
+  ["/app/review", "Review"],
+  ["/app/quiz", "Quiz"],
+  ["/app/triage", "Triage"],
+  ["/app/browse", "Browse"],
+  ["/app/import", "Add collection"],
+  ["/app/capture", "Add a term"],
+  ["/app/mastery", "Mastery"],
+  ["/app/settings", "Settings"],
   ["/admin/collections", "Manage collections"],
   ["/admin/people", "People"],
   ["/admin/requests", "Requests"],
@@ -69,7 +69,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
 ];
 
 export function studyScreenTitle(pathname: string): string {
-  if (pathname === "/jargon") return "Library";
+  if (pathname === "/app/library") return "Library";
 
   const match = STUDY_SCREEN_TITLE_PREFIXES.find(([prefix]) => pathname.startsWith(prefix));
   return match ? match[1] : "Jargon Gym";

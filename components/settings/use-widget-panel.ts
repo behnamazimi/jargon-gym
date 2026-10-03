@@ -2,7 +2,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
   generateWidgetTokenAction,
   revokeWidgetTokenAction,
-} from "@/app/(private)/jargon/settings/actions";
+} from "@/app/(private)/app/settings/actions";
 import type { WidgetTokenRow } from "@/lib/widget/types";
 
 function shellQuote(value: string) {

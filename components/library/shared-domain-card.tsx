@@ -52,7 +52,7 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
         {domain.inCollection ? (
           <>
             <LinkButton
-              href={`/jargon?domain=${domain.id}`}
+              href={`/app/library?domain=${domain.id}`}
               variant="ghost"
               className="w-full min-h-11 gap-2 md:w-auto"
             >

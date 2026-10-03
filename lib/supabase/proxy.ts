@@ -9,7 +9,7 @@ import type { Database } from "@/lib/supabase/database.types";
 // we've confirmed it we can skip the DB round-trip on every subsequent
 // navigation and trust this cookie instead. This removes a query from the
 // proxy's critical path for essentially every request from an onboarded user.
-export const REFERRAL_VERIFIED_COOKIE = "jg_rv";
+export const REFERRAL_VERIFIED_COOKIE = "lb_rv";
 const REFERRAL_VERIFIED_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 const PUBLIC_EXACT_PATHS = new Set([
@@ -21,13 +21,13 @@ const PUBLIC_EXACT_PATHS = new Set([
   "/install-widget.sh",
   "/sitemap.xml",
   "/robots.txt",
-  "/j",
+  "/collections",
 ]);
 
 const PUBLIC_PATH_PREFIXES = [
   "/icon/",
   "/screenshots/",
-  "/j/",
+  "/collections/",
   "/login",
   "/signup",
   "/request-access",

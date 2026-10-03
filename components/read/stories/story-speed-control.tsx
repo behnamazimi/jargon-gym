@@ -13,7 +13,7 @@ import {
   PLAYBACK_SPEED_STEP,
 } from "@/lib/stories/playback";
 
-const SPEED_STORAGE_KEY = "jargon-gym:story-audio-speed:v1";
+const SPEED_STORAGE_KEY = "lobyas:story-audio-speed:v1";
 const LONG_PRESS_MS = 450;
 
 export function loadSavedSpeed(): number {

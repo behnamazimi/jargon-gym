@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
+import { setTermMarkedKnownAction } from "@/app/(private)/app/actions";
 import { overrideMarkedKnown } from "@/lib/library/overrides";
 import {
   addNotYetTermsAction,
   clearNotYetDomainAction,
   removeNotYetTermAction,
-} from "@/app/(private)/jargon/actions-triage";
+} from "@/app/(private)/app/actions-triage";
 import { useToast } from "@/components/ui/toast";
 import type { Term } from "@/lib/terms/types";
 import { buildTriageDeck } from "@/lib/triage/deck";

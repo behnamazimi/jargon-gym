@@ -103,7 +103,7 @@ export function ImportChooser({
         <ul className="shadow-surface m-0 list-none divide-y divide-base-300/60 overflow-hidden rounded-box bg-base-100 p-0">
           <li>
             <LinkButton
-              href="/jargon/import/paste"
+              href="/app/import/paste"
               variant="ghost"
               className={`${ROW_CLASS} h-auto rounded-none`}
             >
@@ -116,7 +116,7 @@ export function ImportChooser({
           </li>
           <li>
             <LinkButton
-              href="/jargon/import/apps"
+              href="/app/import/apps"
               variant="ghost"
               className={`${ROW_CLASS} h-auto rounded-none`}
             >
@@ -129,7 +129,7 @@ export function ImportChooser({
           </li>
           <li>
             <LinkButton
-              href="/jargon/capture"
+              href="/app/capture"
               variant="ghost"
               className={`${ROW_CLASS} h-auto rounded-none`}
             >
@@ -158,7 +158,7 @@ export function ImportChooser({
 
       <div className="flex justify-center">
         <LinkButton
-          href="/jargon/import/more"
+          href="/app/import/more"
           variant="ghost"
           size="sm"
           className="min-h-11 text-base-content/70"

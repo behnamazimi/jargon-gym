@@ -32,7 +32,7 @@ export function UnfinishedSection({
       <UnfinishedBanner
         terms={terms}
         onFinish={() => onOpenChange(true)}
-        requestHref={canRequest ? `/jargon/import/request?definitions=${domainId}` : undefined}
+        requestHref={canRequest ? `/app/import/request?definitions=${domainId}` : undefined}
       />
       {isOpen ? (
         <Suspense fallback={null}>

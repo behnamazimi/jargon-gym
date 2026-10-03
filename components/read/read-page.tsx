@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
+import type { ReadQueueSeed } from "@/app/(private)/app/read/actions";
 import { ReadQueueContent } from "@/components/read/read-page-content";
 import { ReadFullscreenFeed } from "@/components/read/read-fullscreen-feed";
 import { useReadFocus } from "@/components/read/read-focus";

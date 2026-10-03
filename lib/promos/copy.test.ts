@@ -17,6 +17,6 @@ describe("promo copy", () => {
   });
 
   it("links every promo to an app page", () => {
-    for (const promo of PROMOS) expect(promo.href).toMatch(/^\/jargon\//);
+    for (const promo of PROMOS) expect(promo.href).toMatch(/^\/app\//);
   });
 });

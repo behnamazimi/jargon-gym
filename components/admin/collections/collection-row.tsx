@@ -18,7 +18,7 @@ export function CollectionRow({ collection }: { collection: AdminCollectionRow }
     <tr>
       <td className="font-medium text-base-content">
         {collection.isPublic && collection.slug ? (
-          <Link href={`/j/${collection.slug}`} className="link">
+          <Link href={`/collections/${collection.slug}`} className="link">
             {collection.name}
           </Link>
         ) : (
@@ -40,7 +40,7 @@ export function CollectionRow({ collection }: { collection: AdminCollectionRow }
         )}
       </td>
       <td className="whitespace-nowrap text-base-content/65">
-        {collection.slug ? `/j/${collection.slug}` : "—"}
+        {collection.slug ? `/collections/${collection.slug}` : "—"}
         {canEditUrl ? (
           <>
             {" "}

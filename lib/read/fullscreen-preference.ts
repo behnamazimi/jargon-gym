@@ -1,4 +1,4 @@
-const STORAGE_KEY = "jargon-gym:read-fullscreen-preference:v1";
+const STORAGE_KEY = "lobyas:read-fullscreen-preference:v1";
 
 const listeners = new Set<() => void>();
 

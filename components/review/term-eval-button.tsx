@@ -29,7 +29,7 @@ export function TermEvalButton({ termId }: { termId: string }) {
     setStatus("loading");
     setResult(null);
     try {
-      const response = await fetch(`/api/jargon/terms/${termId}/evaluate`, { method: "POST" });
+      const response = await fetch(`/api/terms/${termId}/evaluate`, { method: "POST" });
       if (!response.ok) {
         setStatus("error");
         return;

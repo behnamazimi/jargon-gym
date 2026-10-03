@@ -20,7 +20,7 @@ export function DomainTermsList({ domainSlug, terms }: DomainTermsListProps) {
         <div className="flex items-center gap-2 text-sm text-base-content/70">
           Filtered by <span className="font-medium text-base-content">{category}</span>
           <Link
-            href={`/j/${domainSlug}`}
+            href={`/collections/${domainSlug}`}
             className="text-base-content/70 no-underline hover:text-base-content hover:underline"
           >
             Clear
@@ -35,7 +35,7 @@ export function DomainTermsList({ domainSlug, terms }: DomainTermsListProps) {
           {visibleTerms.map((term) => (
             <li key={term.slug}>
               <Link
-                href={`/j/${domainSlug}/${term.slug}`}
+                href={`/collections/${domainSlug}/${term.slug}`}
                 className="block rounded-field border border-base-300 bg-base-100 px-4 py-3 no-underline transition-colors duration-150 hover:border-primary/50"
               >
                 <div className="flex items-baseline justify-between gap-3">

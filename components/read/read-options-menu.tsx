@@ -4,7 +4,7 @@ import { Settings2, XIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dialog as AriaDialog, DialogTrigger, Popover } from "react-aria-components";
-import { saveReadOptionAction } from "@/app/(private)/jargon/read/actions";
+import { saveReadOptionAction } from "@/app/(private)/app/read/actions";
 import { OptionRow } from "@/components/read/read-option-row";
 import { ShadowingOptionRows } from "@/components/read/shadowing-option-rows";
 import { isStoriesPath } from "@/components/read/read-mode-tabs";

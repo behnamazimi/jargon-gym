@@ -35,7 +35,7 @@ export function useSlugEditor(collectionId: string, initial: string, onSaved: ()
     check.clearError();
     void save.run(() => updateDomainSlug(collectionId, text, current.slug), {
       onSuccess: ({ slug }) => {
-        toast(`The address is now /j/${slug}.`);
+        toast(`The address is now /collections/${slug}.`);
         onSaved();
       },
     });

@@ -50,3 +50,11 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// Cached pages are keyed by URL. After the routes moved, drop them so an offline visit
+// can't show an old /jargon page. They refill from the network as the user browses.
+const PAGE_CACHES = ["pages", "pages-rsc", "pages-rsc-prefetch", "others"];
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(Promise.all(PAGE_CACHES.map((name) => caches.delete(name))));
+});

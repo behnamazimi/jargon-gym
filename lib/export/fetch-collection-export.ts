@@ -6,7 +6,7 @@ export type CollectionExport = { terms: Term[] } | { error: string };
  *  rejects, so the dialog can read it with use(). */
 export async function fetchCollectionExport(domainId: string): Promise<CollectionExport> {
   try {
-    const response = await fetch(`/api/jargon/collections/${domainId}/export`);
+    const response = await fetch(`/api/collections/${domainId}/export`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const { terms } = (await response.json()) as { terms: Term[] };
     return { terms };

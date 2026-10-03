@@ -25,10 +25,10 @@ export function AddTermsMenu({ domainId }: AddTermsMenuProps) {
         <Plus className="size-5" strokeWidth={1.5} />
       </Button>
       <DropdownMenu className="min-w-[180px]">
-        <DropdownMenuItem onAction={() => router.push(`/jargon/capture?to=${domainId}`)}>
+        <DropdownMenuItem onAction={() => router.push(`/app/capture?to=${domainId}`)}>
           One term
         </DropdownMenuItem>
-        <DropdownMenuItem onAction={() => router.push(`/jargon/import/paste?to=${domainId}`)}>
+        <DropdownMenuItem onAction={() => router.push(`/app/import/paste?to=${domainId}`)}>
           Paste a list
         </DropdownMenuItem>
       </DropdownMenu>

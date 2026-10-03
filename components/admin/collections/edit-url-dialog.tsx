@@ -15,7 +15,9 @@ function PublishedWarning({ slug }: { slug: string | null }) {
   return (
     <p className="m-0 text-sm text-warning">
       This collection is published.
-      {slug ? ` /j/${slug} and the term pages under it stop working when you save.` : null}
+      {slug
+        ? ` /collections/${slug} and the term pages under it stop working when you save.`
+        : null}
     </p>
   );
 }
@@ -49,7 +51,7 @@ function EditUrlForm({
           onChange={(event) => editor.setText(event.target.value)}
         />
         <span className="text-xs text-base-content/60">
-          Preview: /j/{resolveSlug(editor.text, new Set()).slug || "…"}
+          Preview: /collections/{resolveSlug(editor.text, new Set()).slug || "…"}
         </span>
       </label>
 

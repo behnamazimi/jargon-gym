@@ -18,8 +18,8 @@ export function TriageNextSteps({
 }: Pick<TriageSummaryProps, "domainId" | "hasNotYet" | "onRevisitNotYet">) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-      <LinkButton href={`/jargon/read?domain=${domainId}`}>Start reading</LinkButton>
-      <LinkButton href={`/jargon?domain=${domainId}`} variant="outline">
+      <LinkButton href={`/app/read?domain=${domainId}`}>Start reading</LinkButton>
+      <LinkButton href={`/app/library?domain=${domainId}`} variant="outline">
         Back to library
       </LinkButton>
       {hasNotYet ? (

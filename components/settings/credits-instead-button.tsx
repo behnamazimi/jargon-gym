@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { clearLlmSettingsAction } from "@/app/(private)/jargon/settings/actions";
+import { clearLlmSettingsAction } from "@/app/(private)/app/settings/actions";
 import { Button } from "@/components/ui/button";
 import type { AiAccessView, AiFailureReason } from "@/lib/llm/types";
 

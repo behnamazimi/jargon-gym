@@ -13,8 +13,8 @@ export function EmptyTermsState({ domainId }: { domainId: string }) {
       className="py-10"
     >
       <div className="flex flex-wrap items-center justify-center gap-3">
-        <LinkButton href={`/jargon/capture?to=${domainId}`}>Add a term</LinkButton>
-        <LinkButton href="/jargon/import" variant="outline">
+        <LinkButton href={`/app/capture?to=${domainId}`}>Add a term</LinkButton>
+        <LinkButton href="/app/import" variant="outline">
           Import terms
         </LinkButton>
       </div>

@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import type { CaptureTerm } from "@/app/(private)/jargon/capture/actions";
+import type { CaptureTerm } from "@/app/(private)/app/capture/actions";
 import { CategoryField, OptionalDetailFields } from "@/components/terms/term-form-fields";
 import { TermRelationshipsEditor } from "@/components/terms/term-relationships-editor";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";

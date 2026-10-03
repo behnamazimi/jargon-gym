@@ -41,8 +41,8 @@ function takenSlugs(collections: AdminCollectionRow[], domainId: string) {
 /** The public pages, the public list (cached for an hour) and the sitemap. */
 function revalidateCollection(slug: string | null) {
   revalidatePath("/admin/collections");
-  if (slug) revalidatePath(`/j/${slug}`, "layout");
-  revalidatePath("/j");
+  if (slug) revalidatePath(`/collections/${slug}`, "layout");
+  revalidatePath("/collections");
   revalidatePath("/sitemap.xml");
 }
 

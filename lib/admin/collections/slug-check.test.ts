@@ -32,9 +32,11 @@ describe("resolveSlug", () => {
 
 describe("describeSlugCheck", () => {
   it("tells free, taken and invalid apart", () => {
-    expect(describeSlugCheck(resolveSlug("kitchen", new Set()))).toBe("/j/kitchen is free.");
+    expect(describeSlugCheck(resolveSlug("kitchen", new Set()))).toBe(
+      "/collections/kitchen is free.",
+    );
     expect(describeSlugCheck(resolveSlug("kitchen", new Set(["kitchen"])))).toBe(
-      "/j/kitchen is taken. Try /j/kitchen-2.",
+      "/collections/kitchen is taken. Try /collections/kitchen-2.",
     );
     expect(describeSlugCheck(resolveSlug("!!", new Set()))).toBe(
       "Use letters or numbers in the address.",

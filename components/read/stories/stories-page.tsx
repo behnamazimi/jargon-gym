@@ -20,7 +20,7 @@ import { Button, LinkButton } from "@/components/ui/button";
 import type { AiAccessView } from "@/lib/llm/types";
 import { STORY_MIN_TERMS } from "@/lib/stories/types";
 
-const CARDS_HREF = "/jargon/read?view=cards";
+const CARDS_HREF = "/app/read?view=cards";
 
 function StoriesNoTerms() {
   return (
@@ -31,7 +31,7 @@ function StoriesNoTerms() {
         description={`Stories need a collection with at least ${STORY_MIN_TERMS} terms you haven't marked known.`}
       >
         <div className="flex flex-wrap justify-center gap-2">
-          <LinkButton href="/jargon" variant="outline" className="min-h-11">
+          <LinkButton href="/app/library" variant="outline" className="min-h-11">
             Go to library
           </LinkButton>
           <LinkButton href={CARDS_HREF} variant="ghost" className="min-h-11">

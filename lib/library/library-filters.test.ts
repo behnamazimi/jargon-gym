@@ -99,7 +99,7 @@ describe("reading the cookie", () => {
       categoriesByDomain: { d1: ["A; B", "100%"] },
     };
     const value = serializeLibraryFilters(filters);
-    const header = `other=1; jg_lib_filters=${value}; theme=dark`;
+    const header = `other=1; lb_lib_filters=${value}; theme=dark`;
     expect(decodeLibraryFilters(readLibraryFiltersCookie(header))).toEqual(filters);
   });
 

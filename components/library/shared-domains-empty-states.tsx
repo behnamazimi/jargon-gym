@@ -20,10 +20,10 @@ export function SharedDomainsEmptyCatalog({ bannerError }: { bannerError: string
           description="When someone shares a collection, it shows up here. Add your own terms in the meantime, or head back to your library."
         >
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
-            <LinkButton href="/jargon/import" className="min-h-11">
+            <LinkButton href="/app/import" className="min-h-11">
               Add your own terms
             </LinkButton>
-            <LinkButton href="/jargon" variant="outline" className="min-h-11">
+            <LinkButton href="/app/library" variant="outline" className="min-h-11">
               Back to library
             </LinkButton>
           </div>

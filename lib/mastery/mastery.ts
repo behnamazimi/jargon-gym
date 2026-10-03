@@ -121,7 +121,7 @@ async function loadActiveMasteryCollections(
   return { collections, activeCollectionRows };
 }
 
-/** Overview numbers for /jargon/mastery — no per-term rows. Paused
+/** Overview numbers for /app/mastery — no per-term rows. Paused
  *  collections are excluded throughout. */
 export async function loadMasteryCounts(
   client: Client,

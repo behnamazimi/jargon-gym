@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ImportDestination } from "@/lib/import/import-collections";
 
-vi.mock("@/app/(private)/jargon/import/actions", () => ({ commitImport: vi.fn() }));
+vi.mock("@/app/(private)/app/import/actions", () => ({ commitImport: vi.fn() }));
 
 const { initialDestination } = await import("./import-flow-helpers");
 

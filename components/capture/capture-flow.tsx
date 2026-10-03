@@ -111,7 +111,7 @@ function CaptureForm({ collections, presetId, shared = { kind: "none" } }: Captu
 
   function addPastedAsList(lines: string[]) {
     writeDraft(lines.join("\n"));
-    router.push(`/jargon/import/paste?to=${destination?.id}&from=term`);
+    router.push(`/app/import/paste?to=${destination?.id}&from=term`);
   }
 
   function reset() {

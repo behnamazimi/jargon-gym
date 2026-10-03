@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { searchSharedDomains } from "@/app/(private)/jargon/browse/actions";
+import { searchSharedDomains } from "@/app/(private)/app/browse/actions";
 import type { BrowseCollectionFilter, BrowseCounts, BrowsePageResult } from "@/lib/library/browse";
 
 const SEARCH_DEBOUNCE_MS = 300;

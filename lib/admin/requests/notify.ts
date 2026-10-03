@@ -38,22 +38,22 @@ async function buildEmail(
             : "prepared",
         collectionName: domainName,
         url: row.delivered_domain_id
-          ? `${origin}/jargon?domain=${row.delivered_domain_id}`
-          : `${origin}/jargon`,
+          ? `${origin}/app/library?domain=${row.delivered_domain_id}`
+          : `${origin}/app/library`,
       });
     case "needs_input":
       return row.question
         ? buildNeedsInputEmail({
             topic: row.topic,
             question: row.question,
-            url: `${origin}/jargon`,
+            url: `${origin}/app/library`,
           })
         : null;
     case "delay":
       return buildDelayEmail({
         topic: row.topic,
         date: formatRequestDate(row.due_at, timeZone),
-        url: `${origin}/jargon`,
+        url: `${origin}/app/library`,
       });
     case "declined": {
       const reason = (DECLINE_REASONS as readonly string[]).includes(row.decline_reason ?? "")
@@ -64,7 +64,7 @@ async function buildEmail(
             topic: row.topic,
             reason,
             note: row.decline_note,
-            pasteUrl: `${origin}/jargon/import/paste`,
+            pasteUrl: `${origin}/app/import/paste`,
           })
         : null;
     }

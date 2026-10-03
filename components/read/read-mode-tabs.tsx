@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 
 // Cards passes view=cards so an unread story doesn't redirect it back to Stories.
 const READ_MODES: { href: string; label: string; params: Record<string, string> }[] = [
-  { href: "/jargon/read", label: "Cards", params: { view: "cards" } },
-  { href: "/jargon/read/stories", label: "Stories", params: {} },
+  { href: "/app/read", label: "Cards", params: { view: "cards" } },
+  { href: "/app/read/stories", label: "Stories", params: {} },
 ];
 
 function hrefFor(path: string, params: Record<string, string>): string {
@@ -17,12 +17,12 @@ function hrefFor(path: string, params: Record<string, string>): string {
 }
 
 export function isStoriesPath(pathname: string) {
-  return pathname.startsWith("/jargon/read/stories");
+  return pathname.startsWith("/app/read/stories");
 }
 
 function ReadModeTabList({ domain }: { domain: string | null }) {
   const pathname = usePathname();
-  const activeHref = isStoriesPath(pathname) ? "/jargon/read/stories" : "/jargon/read";
+  const activeHref = isStoriesPath(pathname) ? "/app/read/stories" : "/app/read";
   const domainParam: Record<string, string> = domain && domain !== "all" ? { domain } : {};
 
   return (

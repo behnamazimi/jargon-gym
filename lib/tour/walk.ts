@@ -15,27 +15,27 @@ export type TourWalkStop = {
 
 export const TOUR_WALK: readonly TourWalkStop[] = [
   {
-    route: "/jargon",
+    route: "/app/library",
     label: "Library",
     target: "nav-library",
     blurb: "Every collection you've added and all its terms.",
   },
   {
-    route: "/jargon/read",
+    route: "/app/read",
     label: "Read",
     target: "nav-read",
     blurb:
       "Read terms and their definitions. It's input, not a test: every term you read builds familiarity and gives it a head start in Review.",
   },
   {
-    route: "/jargon/review",
+    route: "/app/review",
     label: "Review",
     target: "nav-review",
     blurb:
       "See a term, recall its meaning from memory, then rate how well you did. New terms come first, then the ones you're closest to forgetting.",
   },
   {
-    route: "/jargon/quiz",
+    route: "/app/quiz",
     label: "Quiz",
     target: "nav-quiz",
     blurb:

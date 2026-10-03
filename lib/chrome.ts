@@ -1,4 +1,4 @@
-const STUDY_PREFIXES = ["/jargon", "/admin"] as const;
+const STUDY_PREFIXES = ["/app", "/admin"] as const;
 
 /** Logged-in study/admin surfaces get app chrome on phone. Everything else is the website. */
 export function isStudyPath(pathname: string): boolean {
@@ -6,16 +6,16 @@ export function isStudyPath(pathname: string): boolean {
 }
 
 export function isLibraryPath(pathname: string): boolean {
-  return pathname === "/jargon";
+  return pathname === "/app/library";
 }
 
 export function isMorePath(pathname: string): boolean {
   return (
-    pathname.startsWith("/jargon/browse") ||
-    pathname.startsWith("/jargon/import") ||
-    pathname.startsWith("/jargon/capture") ||
-    pathname.startsWith("/jargon/mastery") ||
-    pathname.startsWith("/jargon/settings") ||
+    pathname.startsWith("/app/browse") ||
+    pathname.startsWith("/app/import") ||
+    pathname.startsWith("/app/capture") ||
+    pathname.startsWith("/app/mastery") ||
+    pathname.startsWith("/app/settings") ||
     pathname.startsWith("/admin")
   );
 }
@@ -38,8 +38,8 @@ export function studyBackTarget(pathname: string, search: string): string | null
  *  under the import chooser, and capture). Their back arrow returns to the page
  *  that opened them, not to the last dock page. */
 export function isNestedFlowPath(pathname: string): boolean {
-  return pathname.startsWith("/jargon/import/") || pathname === "/jargon/capture";
+  return pathname.startsWith("/app/import/") || pathname === "/app/capture";
 }
 
 /** Where a nested page's back arrow goes when there's no earlier page in this visit. */
-export const NESTED_FLOW_PARENT = "/jargon/import";
+export const NESTED_FLOW_PARENT = "/app/import";

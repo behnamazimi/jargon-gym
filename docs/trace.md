@@ -182,7 +182,7 @@ the estimate's target recede on its own.
 
 ### Stories, a second way to read
 
-Read has a Stories mode (`/jargon/read/stories`, logic in `lib/stories/`)
+Read has a Stories mode (`/app/read/stories`, logic in `lib/stories/`)
 that writes a short AI piece around the top of a collection's Read queue —
 the same `rankReadQueue` order Cards uses, minus marked-known terms. It
 doesn't add a trace or a weight of its own. Marking a piece read writes one
@@ -335,12 +335,12 @@ it:
    the underlying table directly.
 4. **Server actions** — the UI-facing entry points, one set per tier:
    `getReadFeedBatchAction` / `recordReadRevealAction` in
-   `app/(private)/jargon/read/actions.ts`, `rateReviewTermAction` in
-   `app/(private)/jargon/review/actions.ts` (Review's cards load through
+   `app/(private)/app/read/actions.ts`, `rateReviewTermAction` in
+   `app/(private)/app/review/actions.ts` (Review's cards load through
    `lib/review/feed.ts`: on the page itself, and on refills through
    `POST /api/review/feed`, so a refill never waits behind a grade), and
    `generateQuizAction` / `recordQuizAnswerAction` in
-   `app/(private)/jargon/quiz/actions.ts`. Telegram has its own equivalents
+   `app/(private)/app/quiz/actions.ts`. Telegram has its own equivalents
    in `lib/telegram/` that call the same `lib/terms/review-outcome.ts`
    and `lib/trace-queue` functions underneath.
 5. **The database** — two tables. `review_state` holds one row per (user,

@@ -54,7 +54,7 @@ function CreateCollectionForm({
 
     await createEmptyCollection({ name: name.trim(), language }, (domainId) => {
       onClose();
-      router.push(`/jargon?domain=${domainId}`);
+      router.push(`/app/library?domain=${domainId}`);
     });
   }
 
@@ -96,7 +96,7 @@ function CreateCollectionForm({
               : `You already have "${match.name}". Open it instead?`}
           </AlertDescription>
           <AlertAction>
-            <LinkButton href={`/jargon?domain=${match.id}`} size="sm" variant="outline">
+            <LinkButton href={`/app/library?domain=${match.id}`} size="sm" variant="outline">
               Open it
             </LinkButton>
           </AlertAction>

@@ -58,9 +58,7 @@ export function FulfilPanel({
 }: FulfilPanelProps) {
   const { toast } = useToast();
   const [name, setName] = useState(topic);
-  const [store] = useState(() =>
-    createDraftStore(`jargon-gym:import-draft:v1:request:${requestId}`),
-  );
+  const [store] = useState(() => createDraftStore(`lobyas:import-draft:v1:request:${requestId}`));
   const [pending, setPending] = useState<Pending | null>(null);
   const [delivering, setDelivering] = useState(false);
   const forDefinitions = waitingWords !== undefined;

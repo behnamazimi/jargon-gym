@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { useState } from "react";
-import { setRequestNotify } from "@/app/(private)/jargon/actions-requests";
+import { setRequestNotify } from "@/app/(private)/app/actions-requests";
 import { LinkButton } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/toast";
@@ -61,10 +61,10 @@ export function RequestSent({
       </div>
 
       <div className="flex flex-col gap-2 pb-4">
-        <LinkButton href="/jargon/import" className="min-h-12 w-full">
+        <LinkButton href="/app/import" className="min-h-12 w-full">
           {SENT.done}
         </LinkButton>
-        <LinkButton href="/jargon/browse" variant="ghost" className="min-h-11 w-full">
+        <LinkButton href="/app/browse" variant="ghost" className="min-h-11 w-full">
           {SENT.browse}
         </LinkButton>
       </div>

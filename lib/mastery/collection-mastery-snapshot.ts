@@ -147,7 +147,7 @@ const EMPTY_WEB_STATS_SNAPSHOT: WebStatsSnapshot = {
   gradeDistribution: null,
 };
 
-/** Web `/jargon/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
+/** Web `/app/mastery`: session-scoped client, RLS via `auth.uid()`. Layers
  *  momentum (today) numbers on top of the base snapshot. */
 export async function fetchStatsSnapshot(
   client: Client,
