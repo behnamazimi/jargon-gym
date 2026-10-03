@@ -2,7 +2,7 @@
 
 import { Check } from "lucide-react";
 import { useState } from "react";
-import { setTermMarkedKnownAction } from "@/app/(private)/jargon/actions";
+import { setTermMarkedKnownAction } from "@/app/(private)/app/actions";
 import { overrideMarkedKnown } from "@/lib/library/overrides";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";

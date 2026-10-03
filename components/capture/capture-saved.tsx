@@ -30,7 +30,7 @@ export function CaptureSaved({
           {CAPTURE_COPY.addAnother}
         </Button>
         <LinkButton
-          href={`/jargon?domain=${collectionId}`}
+          href={`/app/library?domain=${collectionId}`}
           variant="outline"
           className="min-h-11 w-full"
         >

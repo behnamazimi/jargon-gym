@@ -45,7 +45,7 @@ export const PROMOS = [
     snoozeDays: 14,
     title: "Ready for a quick quiz?",
     body: "You've been busy reviewing. See which terms have really stuck.",
-    href: "/jargon/quiz",
+    href: "/app/quiz",
     cta: "Take a quiz",
   },
   {
@@ -58,7 +58,7 @@ export const PROMOS = [
     snoozeDays: 14,
     title: "Meet your terms in a story",
     body: "A short read built from the terms you've been learning.",
-    href: "/jargon/read/stories",
+    href: "/app/read/stories",
     cta: "Read a story",
   },
   {
@@ -70,7 +70,7 @@ export const PROMOS = [
     snoozeDays: 14,
     title: "How well do you remember?",
     body: "See where each term stands, from new to solid.",
-    href: "/jargon/mastery",
+    href: "/app/mastery",
     cta: "See my mastery",
   },
   {
@@ -83,7 +83,7 @@ export const PROMOS = [
     snoozeDays: 14,
     title: "Looking for more to learn?",
     body: "Browse collections others have shared and add your favorites.",
-    href: "/jargon/browse",
+    href: "/app/browse",
     cta: "Browse",
   },
   {
@@ -96,7 +96,7 @@ export const PROMOS = [
     snoozeDays: 14,
     title: "Already know some terms?",
     body: "Triage them in a minute and skip what you know.",
-    href: "/jargon/triage",
+    href: "/app/triage",
     cta: "Try Triage",
   },
 ] as const satisfies readonly Promo[];

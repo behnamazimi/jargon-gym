@@ -1,6 +1,6 @@
 import { parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
 
-const KEY = "jargon-gym:import-language";
+const KEY = "lobyas:import-language";
 
 /** The language last used for a new collection on this device. */
 export function readLanguagePref(): DomainLanguage {

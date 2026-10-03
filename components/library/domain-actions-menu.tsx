@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
-import { getDomainSubscriberCount } from "@/app/(private)/jargon/actions";
+import { getDomainSubscriberCount } from "@/app/(private)/app/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { fetchCollectionExport, type CollectionExport } from "@/lib/export/fetch-collection-export";
@@ -58,7 +58,7 @@ export function DomainActionsMenu({
   const disabled = togglePending || (isBusy && busyId === domain.id);
 
   function handleConfirmDelete() {
-    deleteOwnedDomain(domain.id, () => router.push("/jargon"));
+    deleteOwnedDomain(domain.id, () => router.push("/app/library"));
     setDeleteOpen(false);
   }
 
@@ -98,7 +98,7 @@ export function DomainActionsMenu({
         onDelete={() => setDeleteOpen(true)}
         onRemoveFromCollection={() => {
           // The Library picks the next collection to show.
-          removeFromCollection(domain.id, () => router.push("/jargon"));
+          removeFromCollection(domain.id, () => router.push("/app/library"));
         }}
       />
 

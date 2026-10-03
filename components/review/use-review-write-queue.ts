@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { rateReviewTermAction } from "@/app/(private)/jargon/review/actions";
+import { rateReviewTermAction } from "@/app/(private)/app/review/actions";
 import { useToast } from "@/components/ui/toast";
 import { useTraceWriteQueue } from "@/lib/study/trace-write-queue";
 import { upsertPendingWrite } from "@/lib/review/writes";

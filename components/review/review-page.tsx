@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { recordReviewRevealAction } from "@/app/(private)/jargon/actions";
+import { recordReviewRevealAction } from "@/app/(private)/app/actions";
 import { ReadCaughtUp } from "@/components/read/read-caught-up";
 import { ReadErrorAlert } from "@/components/read/read-error-alert";
 import { ReviewCollectionSettings } from "@/components/review/review-collection-settings";
@@ -208,10 +208,10 @@ export function ReviewPage({
           actions={
             selectedCollectionId === "all" ? (
               <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                <LinkButton href="/jargon" variant="outline">
+                <LinkButton href="/app/library" variant="outline">
                   Go to library
                 </LinkButton>
-                <LinkButton href="/jargon/import" variant="outline">
+                <LinkButton href="/app/import" variant="outline">
                   Add your own terms
                 </LinkButton>
               </div>

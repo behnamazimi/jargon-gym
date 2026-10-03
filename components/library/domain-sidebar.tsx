@@ -48,7 +48,7 @@ function DomainSidebarSection({
           return (
             <li key={domain.id}>
               <LinkButton
-                href={`/jargon?domain=${domain.id}`}
+                href={`/app/library?domain=${domain.id}`}
                 variant="ghost"
                 aria-current={isSelected ? "page" : undefined}
                 aria-label={
@@ -184,7 +184,7 @@ export function DomainSidebar({
       </div>
 
       <LinkButton
-        href="/jargon/import"
+        href="/app/import"
         variant="outline"
         className="w-full shrink-0 justify-start gap-2 border-dashed"
         onPress={onDomainSelect}

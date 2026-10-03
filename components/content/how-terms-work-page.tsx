@@ -1,5 +1,5 @@
 import { BookOpen } from "lucide-react";
-import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
+import { LIBRARY_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
 import {
   ContentPageBulletList,
   ContentPageHeader,
@@ -96,7 +96,7 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
           icon={BookOpen}
           title="How terms are built"
           description="I kept learning jargon the wrong way, memorizing definitions I couldn't use. This is the shape that came out of that."
-          backHref={isLoggedIn ? JARGON_HOME_PATH : PUBLIC_HOME_PATH}
+          backHref={isLoggedIn ? LIBRARY_HOME_PATH : PUBLIC_HOME_PATH}
           backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
 

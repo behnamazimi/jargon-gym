@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer, useRef, useState, useSyncExternalStore, useTransition } from "react";
-import { checkImportAgainstDestination } from "@/app/(private)/jargon/import/actions";
+import { checkImportAgainstDestination } from "@/app/(private)/app/import/actions";
 import {
   activeDrafts,
   checkReducer,

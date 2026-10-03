@@ -10,7 +10,7 @@ import {
   INSTALL_COMMAND,
   NEW_COLLECTION_KEY,
 } from "@/components/import/import-llm-prompt-helpers";
-import { getCollectionTermNames } from "@/app/(private)/jargon/import/actions";
+import { getCollectionTermNames } from "@/app/(private)/app/import/actions";
 import type { ImportDestination } from "@/lib/import/import-collections";
 
 export function ImportLlmPrompt({ collections }: { collections: ImportDestination[] }) {

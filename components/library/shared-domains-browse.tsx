@@ -43,7 +43,7 @@ export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomains
     toast(name ? `Added "${name}"` : "Added to your library", "success", {
       action: {
         label: "Start reading",
-        onPress: () => router.push(`/jargon/read?domain=${domainId}`),
+        onPress: () => router.push(`/app/read?domain=${domainId}`),
       },
     });
   }

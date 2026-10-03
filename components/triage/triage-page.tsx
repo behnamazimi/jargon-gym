@@ -81,7 +81,7 @@ export function TriagePage({
       size="sm"
       collections={domains.map((d) => ({ id: d.id, name: d.name, termCount: d.termCount }))}
       value={domain.id}
-      hrefBuilder={(id) => `/jargon/triage?domain=${id}`}
+      hrefBuilder={(id) => `/app/triage?domain=${id}`}
     />
   );
 

@@ -10,7 +10,7 @@ import {
   shareDomain,
   updateOwnedDomain,
   unshareDomain,
-} from "@/app/(private)/jargon/actions";
+} from "@/app/(private)/app/actions";
 import type { DomainInput, NewCollectionInput } from "@/lib/library/domain-schema";
 
 export function useCollectionActions() {

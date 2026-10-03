@@ -50,7 +50,7 @@ export function MoreSheet() {
             <p className="m-0 truncate text-sm">{email}</p>
             {aiCreditsLine ? (
               <Link
-                href="/jargon/settings?tab=ai"
+                href="/app/settings?tab=ai"
                 onClick={() => setMoreOpen(false)}
                 className={cn(
                   "-my-1.5 flex min-h-11 items-center text-xs no-underline",

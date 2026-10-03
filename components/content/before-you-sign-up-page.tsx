@@ -1,6 +1,6 @@
 import { Compass, Mail } from "lucide-react";
 import Link from "next/link";
-import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
+import { LIBRARY_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
 import {
   ContentPageHeader,
   ContentPageIntro,
@@ -54,7 +54,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
           icon={Compass}
           title="Before you sign up"
           description="A private app for learning a field's jargon or a language's vocabulary well enough to use it, not just recognize it. Here's the full picture before you ask for an invite."
-          backHref={isLoggedIn ? JARGON_HOME_PATH : PUBLIC_HOME_PATH}
+          backHref={isLoggedIn ? LIBRARY_HOME_PATH : PUBLIC_HOME_PATH}
           backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
       </ContentPageIntro>
@@ -156,7 +156,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageSection title="Getting in">
           <p className="m-0">
             You don&apos;t need an account to see if the content is any good first. Browse the{" "}
-            <Link href="/j" className={contentPageLinkClass}>
+            <Link href="/collections" className={contentPageLinkClass}>
               public collections
             </Link>{" "}
             and read real terms before deciding whether to request access.
@@ -172,11 +172,11 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
           {isLoggedIn ? (
             <p className="m-0">
               Jump into your{" "}
-              <Link href="/jargon" className={contentPageLinkClass}>
+              <Link href="/app/library" className={contentPageLinkClass}>
                 collection
               </Link>
               , or{" "}
-              <Link href="/jargon/import" className={contentPageLinkClass}>
+              <Link href="/app/import" className={contentPageLinkClass}>
                 import a list
               </Link>{" "}
               if you don&apos;t have one yet.

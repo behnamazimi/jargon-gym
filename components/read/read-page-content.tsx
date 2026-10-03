@@ -13,10 +13,10 @@ function ReadCaughtUpActions({ selectedCollectionId }: { selectedCollectionId: s
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-      <LinkButton href="/jargon" variant="outline">
+      <LinkButton href="/app/library" variant="outline">
         Go to library
       </LinkButton>
-      <LinkButton href="/jargon/import" variant="outline">
+      <LinkButton href="/app/import" variant="outline">
         Add your own terms
       </LinkButton>
     </div>

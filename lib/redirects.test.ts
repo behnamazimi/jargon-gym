@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { LEGACY_ADMIN_REDIRECTS } from "./redirects";
+import { LEGACY_ADMIN_REDIRECTS, LEGACY_APP_REDIRECTS } from "./redirects";
 
 describe("legacy admin redirects", () => {
   it("send every old address to a page that exists", () => {
@@ -24,6 +24,31 @@ describe("legacy admin redirects", () => {
   it("don't send anything to another old address", () => {
     const sources = new Set(LEGACY_ADMIN_REDIRECTS.map((redirect) => redirect.source));
     for (const { destination } of LEGACY_ADMIN_REDIRECTS)
+      expect(sources.has(destination)).toBe(false);
+  });
+});
+
+describe("legacy app redirects", () => {
+  it("are temporary", () => {
+    expect(LEGACY_APP_REDIRECTS.every((redirect) => !redirect.permanent)).toBe(true);
+  });
+
+  it("list the bare /jargon address before the catch-all", () => {
+    const sources = LEGACY_APP_REDIRECTS.map((redirect) => redirect.source);
+    expect(sources.indexOf("/jargon")).toBeLessThan(sources.indexOf("/jargon/:path*"));
+  });
+
+  it("send the index addresses to a library page that exists", () => {
+    expect(existsSync("app/(private)/app/library/page.tsx")).toBe(true);
+    for (const { source, destination } of LEGACY_APP_REDIRECTS.filter(
+      (r) => !r.source.includes(":"),
+    ))
+      expect(destination, source).toBe("/app/library");
+  });
+
+  it("don't send anything to another old address", () => {
+    const sources = new Set(LEGACY_APP_REDIRECTS.map((redirect) => redirect.source));
+    for (const { destination } of LEGACY_APP_REDIRECTS)
       expect(sources.has(destination)).toBe(false);
   });
 });

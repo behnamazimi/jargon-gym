@@ -7,7 +7,7 @@ import {
   markStoryReadAction,
   voteStoryAction,
   type StoryResult,
-} from "@/app/(private)/jargon/read/stories/actions";
+} from "@/app/(private)/app/read/stories/actions";
 import { useToast } from "@/components/ui/toast";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { voteFeedback } from "@/lib/stories/feedback";
@@ -71,7 +71,7 @@ export function useStorySession(setup: StoriesSetupData) {
     const params = new URLSearchParams(searchParams);
     params.delete("story");
     const query = params.toString();
-    router.replace(query ? `/jargon/read/stories?${query}` : "/jargon/read/stories");
+    router.replace(query ? `/app/read/stories?${query}` : "/app/read/stories");
   }
 
   function showStory(result: Extract<StoryResult, { story: Story }>) {

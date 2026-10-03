@@ -10,13 +10,13 @@ describe("readLandingRedirect", () => {
 
   it("goes to Stories when a story is in progress", () => {
     expect(readLandingRedirect({ params: {}, storiesDefault: false, hasCurrentStory: true })).toBe(
-      "/jargon/read/stories",
+      "/app/read/stories",
     );
   });
 
   it("goes to Stories when it's the default", () => {
     expect(readLandingRedirect({ params: {}, storiesDefault: true, hasCurrentStory: false })).toBe(
-      "/jargon/read/stories",
+      "/app/read/stories",
     );
   });
 
@@ -39,6 +39,6 @@ describe("readLandingRedirect", () => {
         storiesDefault: true,
         hasCurrentStory: false,
       }),
-    ).toBe("/jargon/read/stories?domain=d1&source=pwa");
+    ).toBe("/app/read/stories?domain=d1&source=pwa");
   });
 });

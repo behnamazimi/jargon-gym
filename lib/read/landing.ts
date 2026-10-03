@@ -1,9 +1,9 @@
-const STORIES_PATH = "/jargon/read/stories";
+const STORIES_PATH = "/app/read/stories";
 
 // Params that only mean something on Cards and aren't carried to Stories.
 const CARDS_ONLY_PARAMS = new Set(["view", "termId", "alreadyRead"]);
 
-/** Where a plain visit to /jargon/read should go instead of Cards, or null to
+/** Where a plain visit to /app/read should go instead of Cards, or null to
  *  stay. Stories wins when the user made it the default or has a story in
  *  progress; an explicit `view=cards` or a single-term link always stays. */
 export function readLandingRedirect(input: {

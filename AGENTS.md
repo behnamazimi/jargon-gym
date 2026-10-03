@@ -57,7 +57,7 @@ row through `writeAudit`.
 Read's Stories mode lives in `lib/stories/` (prompt, generation, parsing
 the model's plain-text reply in `markup.ts`, style and setting pickers,
 repository, narration) with its page, actions, and components under
-`app/(private)/jargon/read/stories/` and `components/read/stories/`.
+`app/(private)/app/read/stories/` and `components/read/stories/`.
 It credits reads through `recordRead` like Cards; see the Stories section in
 [docs/trace.md](docs/trace.md).
 
@@ -92,18 +92,18 @@ add a chapter, add an entry to the matching area file, add any new target ids to
 components only carry that attribute and never import tour code. Progress
 lives in `user_settings.tour_status` / `tour_seen`.
 
-# Library (/jargon)
+# Library (/app/library)
 
-The Library's layout (`app/(private)/jargon/(collection)/layout.tsx`) holds the
+The Library's layout (`app/(private)/app/library/layout.tsx`) holds the
 collection sidebar, and the page loads one collection. Switching collections
 is a plain `?domain=` link, so only the page reloads. The page sends a lean
 row per term (`LibraryTerm`, from `lib/library/load.ts`). Full details
-load in batches from `GET /api/jargon/terms/details` as rows near the screen
+load in batches from `GET /api/terms/details` as rows near the screen
 (`lib/library/details-store.ts`). Marking known and deleting don't
 revalidate the page. They record a local edit in
 `lib/library/overrides.ts`, which wins over any older server snapshot,
 so call `overrideMarkedKnown` wherever a term is marked known. Filters live in
-the `jg_lib_filters` cookie so the server renders them.
+the `lb_lib_filters` cookie so the server renders them.
 
 # Import
 
@@ -115,7 +115,7 @@ every delivery surface serve.
 
 # Capture
 
-Saving one term (`/jargon/capture`, `lib/capture/`,
+Saving one term (`/app/capture`, `lib/capture/`,
 `components/capture/`) is described in the Capture section of
 [docs/import.md](docs/import.md). It reuses `createTerm`; no AI runs in it.
 

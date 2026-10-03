@@ -89,10 +89,10 @@ export function SiteHeader({
           <>
             {/* Desktop only: phones reach the Library from the dock, and a
                 fourth icon would crowd the public-page header. */}
-            <HeaderStudyLink href="/jargon" icon={LayoutList} label="Library" />
-            <HeaderStudyLink href="/jargon/read" icon={Zap} label="Read" />
-            <HeaderStudyLink href="/jargon/review" icon={BookOpen} label="Review" />
-            <HeaderStudyLink href="/jargon/quiz" icon={Sparkles} label="Quiz" />
+            <HeaderStudyLink href="/app/library" icon={LayoutList} label="Library" />
+            <HeaderStudyLink href="/app/read" icon={Zap} label="Read" />
+            <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
+            <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
           </>
         ) : null
       }

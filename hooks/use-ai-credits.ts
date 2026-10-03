@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { getMyAiCreditsAction } from "@/app/(private)/jargon/actions-ai-credits";
+import { getMyAiCreditsAction } from "@/app/(private)/app/actions-ai-credits";
 import {
   toAiCreditsLoad,
   type AiCreditsLoad,

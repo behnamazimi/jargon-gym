@@ -34,7 +34,7 @@ describe("describeAudit", () => {
       describeAudit("app.collection_status", { from: "builtin", to: "published", slug: "cooking" }),
     ).toEqual({
       label: "Collection status changed",
-      summary: "builtin to published, /j/cooking",
+      summary: "builtin to published, /collections/cooking",
     });
     expect(describeAudit("grant_ai_credits", { amount: 25, note: "beta" }).summary).toBe(
       '25 credits, "beta"',

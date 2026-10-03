@@ -29,7 +29,7 @@ export type QuizSessionState = {
   complete?: boolean;
 };
 
-const STORAGE_KEY = "jargon-gym:quiz-session:v1";
+const STORAGE_KEY = "lobyas:quiz-session:v1";
 
 export function saveQuizSession(state: QuizSessionState): void {
   if (typeof window === "undefined") return;

@@ -66,7 +66,7 @@ export function SearchResults({
             </div>
             {added ? (
               <LinkButton
-                href={`/jargon?domain=${domain.id}`}
+                href={`/app/library?domain=${domain.id}`}
                 variant="outline"
                 size="sm"
                 className="min-h-11 md:min-h-8"

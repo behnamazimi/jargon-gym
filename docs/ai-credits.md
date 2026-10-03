@@ -226,8 +226,8 @@ again in Settings.
 - `lib/ai-credits/`: costs, the charge wrapper, and the database calls.
 - `lib/llm/access.ts`: picks own key, credits, or unavailable.
 - `lib/llm/central.ts`: reads the app's key from the environment.
-- `app/(private)/jargon/quiz/actions.ts` and
-  `app/(private)/jargon/read/stories/actions.ts`: charge and generate.
+- `app/(private)/app/quiz/actions.ts` and
+  `app/(private)/app/read/stories/actions.ts`: charge and generate.
 - `supabase/migrations/20260929170000_ai_feature_settings.sql` and
   `lib/ai/`: feature settings, the billable rule, and the run guard.
 - `supabase/tests/`: SQL checks for the balance, permissions, and the

@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState, useTransition } from "react";
-import { createRequest } from "@/app/(private)/jargon/import/request/actions";
+import { createRequest } from "@/app/(private)/app/import/request/actions";
 import { SearchResults } from "@/components/import/chooser-search-results";
 import { RequestSent } from "@/components/requests/request-sent";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -164,7 +164,7 @@ export function RequestForm({
             {FORM.repeatTopic(repeat.topic, repeat.createdDate, repeat.sentence)}{" "}
             {repeat.collectionId ? (
               <LinkButton
-                href={`/jargon?domain=${repeat.collectionId}`}
+                href={`/app/library?domain=${repeat.collectionId}`}
                 variant="outline"
                 size="sm"
                 className="min-h-11 md:min-h-8"

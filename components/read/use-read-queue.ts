@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { getReadFeedBatchAction, type ReadQueueSeed } from "@/app/(private)/jargon/read/actions";
+import { getReadFeedBatchAction, type ReadQueueSeed } from "@/app/(private)/app/read/actions";
 import type { ReviewTerm } from "@/lib/review/types";
 import { useReadRevealTracking } from "@/components/read/use-read-reveal-tracking";
 import { useMountEffect } from "@/hooks/use-mount-effect";

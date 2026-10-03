@@ -7,25 +7,25 @@ const libraryDone: TourState = { status: "pending", seen: ["library"] };
 
 describe("nextWalkStop", () => {
   it("leads from Library to Read", () => {
-    expect(nextWalkStop("/jargon", libraryDone)?.label).toBe("Read");
+    expect(nextWalkStop("/app/library", libraryDone)?.label).toBe("Read");
   });
 
   it("skips pages whose tips are all seen", () => {
     const state: TourState = { status: "pending", seen: ["library", "read", "read-more"] };
-    expect(nextWalkStop("/jargon", state)?.label).toBe("Review");
+    expect(nextWalkStop("/app/library", state)?.label).toBe("Review");
   });
 
   it("ends after the last page", () => {
-    expect(nextWalkStop("/jargon/quiz", libraryDone)).toBeNull();
+    expect(nextWalkStop("/app/quiz", libraryDone)).toBeNull();
   });
 
   it("waits until Library's tips have been seen", () => {
-    expect(nextWalkStop("/jargon/review", NEW_USER_TOUR_STATE)).toBeNull();
+    expect(nextWalkStop("/app/review", NEW_USER_TOUR_STATE)).toBeNull();
   });
 
   it("isn't offered off the walk or once the tour is done", () => {
-    expect(nextWalkStop("/jargon/mastery", libraryDone)).toBeNull();
-    expect(nextWalkStop("/jargon", withTourSkipped(libraryDone))).toBeNull();
+    expect(nextWalkStop("/app/mastery", libraryDone)).toBeNull();
+    expect(nextWalkStop("/app/library", withTourSkipped(libraryDone))).toBeNull();
   });
 
   it("only stops on pages that have tips", () => {

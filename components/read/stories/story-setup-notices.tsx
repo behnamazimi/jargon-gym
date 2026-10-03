@@ -60,10 +60,10 @@ function NoLlmAlert({ ai }: { ai: AiAccessView }) {
           : "Stories are written with an AI provider. Add a provider and API key in Settings."}
       </AlertDescription>
       <AlertAction>
-        <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
+        <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
           Go to Settings
         </LinkButton>
-        <LinkButton href="/jargon/read?view=cards" size="sm" variant="ghost">
+        <LinkButton href="/app/read?view=cards" size="sm" variant="ghost">
           Read cards
         </LinkButton>
       </AlertAction>
@@ -95,10 +95,10 @@ function OverBalanceAlert({
           </Button>
         ) : (
           <>
-            <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
+            <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
               Add your own key
             </LinkButton>
-            <LinkButton href="/jargon/read?view=cards" size="sm" variant="ghost">
+            <LinkButton href="/app/read?view=cards" size="sm" variant="ghost">
               Read cards
             </LinkButton>
           </>

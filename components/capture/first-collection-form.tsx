@@ -26,7 +26,7 @@ export function FirstCollectionForm() {
     await createEmptyCollection({ name: name.trim(), language }, (domainId) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set("to", domainId);
-      router.replace(`/jargon/capture?${params.toString()}`);
+      router.replace(`/app/capture?${params.toString()}`);
     });
   }
 

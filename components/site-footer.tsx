@@ -24,7 +24,7 @@ export function SiteFooter() {
             How terms are built
           </Link>
           <Link
-            href="/j"
+            href="/collections"
             className="text-xs text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content"
           >
             Public collections

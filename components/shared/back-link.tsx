@@ -2,8 +2,8 @@ import { ArrowLeft } from "lucide-react";
 import { LinkButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const JARGON_HOME_PATH = "/jargon";
-export const JARGON_HOME_BACK_LABEL = "Back to library";
+export const LIBRARY_HOME_PATH = "/app/library";
+export const LIBRARY_HOME_BACK_LABEL = "Back to library";
 export const PUBLIC_HOME_PATH = "/";
 export const PUBLIC_HOME_BACK_LABEL = "Back to home";
 
@@ -15,8 +15,8 @@ type BackLinkProps = {
 };
 
 export function BackLink({
-  href = JARGON_HOME_PATH,
-  label = JARGON_HOME_BACK_LABEL,
+  href = LIBRARY_HOME_PATH,
+  label = LIBRARY_HOME_BACK_LABEL,
   variant = "ghost",
   className,
 }: BackLinkProps) {

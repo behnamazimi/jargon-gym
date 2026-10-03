@@ -67,7 +67,7 @@ export function StudyPhoneProvider({
   );
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [backHref, setBackHref] = useState("/jargon");
+  const [backHref, setBackHref] = useState("/app/library");
   const [seenPath, setSeenPath] = useState(pathname);
   const [hasInAppHistory, setHasInAppHistory] = useState(false);
   if (pathname !== seenPath) {

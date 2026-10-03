@@ -60,7 +60,7 @@ function scopeFor(key: string): Scope {
 
 async function fetchBatch(scope: Scope, ids: string[]): Promise<void> {
   try {
-    const response = await fetch(`/api/jargon/terms/details?ids=${ids.join(",")}`);
+    const response = await fetch(`/api/terms/details?ids=${ids.join(",")}`);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const { terms } = (await response.json()) as { terms: Term[] };
     const found = new Set<string>();

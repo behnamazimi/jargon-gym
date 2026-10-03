@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toggleActiveForReview } from "@/app/(private)/jargon/actions";
+import { toggleActiveForReview } from "@/app/(private)/app/actions";
 import { useToast } from "@/components/ui/toast";
 
 /** Pauses or resumes a collection for Read, Review and Quiz.

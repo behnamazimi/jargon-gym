@@ -6,7 +6,7 @@ import {
   disconnectTelegramAction,
   generateTelegramLinkAction,
   updateTelegramCadenceAction,
-} from "@/app/(private)/jargon/settings/actions";
+} from "@/app/(private)/app/settings/actions";
 import {
   AlertBanner,
   DangerZone,

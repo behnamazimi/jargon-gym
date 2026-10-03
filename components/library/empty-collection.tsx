@@ -20,10 +20,10 @@ export function EmptyCollection() {
         description="Add a collection others have shared in one tap, or start your own."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <LinkButton href="/jargon/browse" data-tour="library-browse">
+          <LinkButton href="/app/browse" data-tour="library-browse">
             Browse shared collections
           </LinkButton>
-          <LinkButton href="/jargon/import" variant="outline" data-tour="library-import">
+          <LinkButton href="/app/import" variant="outline" data-tour="library-import">
             Add your own terms
           </LinkButton>
           <StartCollectionButton />

@@ -4,7 +4,7 @@ import type { TourChapter } from "./types";
 export const LIBRARY_CHAPTERS = [
   {
     id: "welcome",
-    route: "/jargon",
+    route: "/app/library",
     steps: [
       {
         target: "library-browse",
@@ -20,7 +20,7 @@ export const LIBRARY_CHAPTERS = [
   },
   {
     id: "library",
-    route: "/jargon",
+    route: "/app/library",
     steps: [
       {
         target: "library-collections",
@@ -31,7 +31,7 @@ export const LIBRARY_CHAPTERS = [
   },
   {
     id: "library-terms",
-    route: "/jargon",
+    route: "/app/library",
     steps: [
       {
         target: "library-search",
@@ -54,7 +54,7 @@ export const LIBRARY_CHAPTERS = [
   },
   {
     id: "app",
-    route: "/jargon",
+    route: "/app/library",
     steps: [
       {
         target: "app-streak",

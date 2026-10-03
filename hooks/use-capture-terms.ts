@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { loadCaptureTerms, type CaptureTerm } from "@/app/(private)/jargon/capture/actions";
+import { loadCaptureTerms, type CaptureTerm } from "@/app/(private)/app/capture/actions";
 
 type Loaded = { domainId: string; terms: CaptureTerm[] };
 

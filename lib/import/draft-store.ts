@@ -1,5 +1,5 @@
-const STORAGE_KEY = "jargon-gym:import-draft:v1";
-const CHANGE_EVENT = "jargon-gym:import-draft-change";
+const STORAGE_KEY = "lobyas:import-draft:v1";
+const CHANGE_EVENT = "lobyas:import-draft-change";
 
 export type DraftStore = {
   read: () => string;

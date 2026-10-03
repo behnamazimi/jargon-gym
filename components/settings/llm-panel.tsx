@@ -5,7 +5,7 @@ import { useState, useTransition } from "react";
 import {
   clearLlmSettingsAction,
   saveLlmSettingsAction,
-} from "@/app/(private)/jargon/settings/actions";
+} from "@/app/(private)/app/settings/actions";
 import {
   AlertBanner,
   DangerZone,

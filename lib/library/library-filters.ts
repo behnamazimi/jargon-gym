@@ -1,7 +1,7 @@
 import type { SortMode } from "@/lib/terms/types";
 
 /** Read by the server too, so the first render is already filtered. */
-const LIBRARY_FILTERS_COOKIE = "jg_lib_filters";
+const LIBRARY_FILTERS_COOKIE = "lb_lib_filters";
 
 const SORT_MODES: readonly SortMode[] = ["default", "category", "az", "unknown"];
 

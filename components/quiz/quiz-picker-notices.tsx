@@ -51,7 +51,7 @@ function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
           : "AI quizzes need a provider and API key in Settings. Choose simple mode, or set up an LLM provider."}
       </AlertDescription>
       <AlertAction>
-        <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
+        <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
           Go to Settings
         </LinkButton>
       </AlertAction>
@@ -93,7 +93,7 @@ function QuizPickerOverBalanceAlert({
             Make it {fitCount} {fitCount === 1 ? "question" : "questions"}
           </Button>
         ) : (
-          <LinkButton href="/jargon/settings?tab=ai" size="sm" variant="outline">
+          <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
             Add your own key
           </LinkButton>
         )}

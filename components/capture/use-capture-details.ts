@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { buildTermPayload, emptyDetails } from "@/components/terms/term-form-dialog-helpers";
-import type { CaptureTerm } from "@/app/(private)/jargon/capture/actions";
+import type { CaptureTerm } from "@/app/(private)/app/capture/actions";
 import type { RelationshipDraft } from "@/lib/terms/relationship-schema";
 import { buildRelationshipSync, validateRelationshipDrafts } from "@/lib/terms/relationship-sync";
 import { mostUsedCategory } from "@/lib/terms/term-duplicates";

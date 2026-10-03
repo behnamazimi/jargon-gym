@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createDefinitionsRequest } from "@/app/(private)/jargon/import/request/actions";
+import { createDefinitionsRequest } from "@/app/(private)/app/import/request/actions";
 import { RequestSent } from "@/components/requests/request-sent";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";

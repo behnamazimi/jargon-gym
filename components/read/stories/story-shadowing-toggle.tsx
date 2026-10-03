@@ -3,7 +3,7 @@
 import { Speech } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
-import { saveReadOptionAction } from "@/app/(private)/jargon/read/actions";
+import { saveReadOptionAction } from "@/app/(private)/app/read/actions";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/components/ui/toast";

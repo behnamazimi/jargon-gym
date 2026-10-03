@@ -158,7 +158,7 @@ export function QuizErrorStep({ quiz, ai }: { quiz: UseQuizSessionResult; ai: Ai
           {quiz.errorReason === "unavailable" ||
           quiz.errorReason === "busy" ||
           quiz.errorReason === "feature-off" ? null : (
-            <LinkButton href="/jargon/settings?tab=ai" variant="ghost" className="min-h-11">
+            <LinkButton href="/app/settings?tab=ai" variant="ghost" className="min-h-11">
               {quiz.errorReason === "credits" ? "Add your own key" : "Check settings"}
             </LinkButton>
           )}

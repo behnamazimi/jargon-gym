@@ -1,6 +1,10 @@
 import { type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { BackLink, JARGON_HOME_BACK_LABEL, JARGON_HOME_PATH } from "@/components/shared/back-link";
+import {
+  BackLink,
+  LIBRARY_HOME_BACK_LABEL,
+  LIBRARY_HOME_PATH,
+} from "@/components/shared/back-link";
 import { cn } from "@/lib/utils";
 
 type PageHeaderProps = {
@@ -17,8 +21,8 @@ export function PageHeader({
   icon: Icon,
   title,
   description,
-  backHref = JARGON_HOME_PATH,
-  backLabel = JARGON_HOME_BACK_LABEL,
+  backHref = LIBRARY_HOME_PATH,
+  backLabel = LIBRARY_HOME_BACK_LABEL,
   showBack = true,
   compactOnPhone = false,
 }: PageHeaderProps) {

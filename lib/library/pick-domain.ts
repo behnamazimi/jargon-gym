@@ -1,8 +1,8 @@
 import type { Domain } from "@/lib/terms/types";
 
 /** Cookie holding the collection last opened in the Library, so a plain
- *  /jargon visit can start loading its terms right away. */
-export const LIBRARY_LAST_DOMAIN_COOKIE = "jg_lib_domain";
+ *  /app/library visit can start loading its terms right away. */
+export const LIBRARY_LAST_DOMAIN_COOKIE = "lb_lib_domain";
 
 /** The collection the Library shows: the one asked for, else the one last
  *  viewed, else the first active one, else the first. Shared by the server

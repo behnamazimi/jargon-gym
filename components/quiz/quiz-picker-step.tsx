@@ -15,7 +15,7 @@ function QuizPickerNoTerms() {
         title="No terms yet"
         description="Add some terms to a collection, then come back to quiz yourself."
       >
-        <LinkButton href="/jargon" variant="outline" className="min-h-11">
+        <LinkButton href="/app/library" variant="outline" className="min-h-11">
           Go to library
         </LinkButton>
       </QuizCenteredState>

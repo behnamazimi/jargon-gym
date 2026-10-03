@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionRunner } from "@/hooks/use-action-runner";
-import { createTerm, deleteTerm, finishTerm, updateTerm } from "@/app/(private)/jargon/actions";
+import { createTerm, deleteTerm, finishTerm, updateTerm } from "@/app/(private)/app/actions";
 import type { RelationshipSyncPayload } from "@/lib/terms/relationship-schema";
 import type { TermInput } from "@/lib/terms/term-schema";
 

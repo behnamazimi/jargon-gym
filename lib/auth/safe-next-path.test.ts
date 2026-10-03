@@ -8,13 +8,13 @@ describe("safeNextPath", () => {
   });
 
   it("passes through plain in-app paths", () => {
-    expect(safeNextPath("/jargon")).toBe("/jargon");
-    expect(safeNextPath("/jargon/collections/abc")).toBe("/jargon/collections/abc");
+    expect(safeNextPath("/app/library")).toBe("/app/library");
+    expect(safeNextPath("/app/collections/abc")).toBe("/app/collections/abc");
   });
 
   it("preserves search and hash", () => {
-    expect(safeNextPath("/jargon?tab=quiz")).toBe("/jargon?tab=quiz");
-    expect(safeNextPath("/jargon?tab=quiz#top")).toBe("/jargon?tab=quiz#top");
+    expect(safeNextPath("/app/library?tab=quiz")).toBe("/app/library?tab=quiz");
+    expect(safeNextPath("/app/library?tab=quiz#top")).toBe("/app/library?tab=quiz#top");
   });
 
   it("rejects protocol-relative URLs", () => {
@@ -40,14 +40,14 @@ describe("safeNextPath", () => {
   it("honors a custom fallback", () => {
     expect(safeNextPath(null, "/complete-signup")).toBe("/complete-signup");
     expect(safeNextPath("//evil.com", "/complete-signup")).toBe("/complete-signup");
-    expect(safeNextPath("/jargon", "/complete-signup")).toBe("/jargon");
+    expect(safeNextPath("/app/library", "/complete-signup")).toBe("/app/library");
   });
 });
 
 describe("appendNextParam", () => {
   it("appends a sanitized next param", () => {
-    expect(appendNextParam("/signup", "/jargon?tab=quiz")).toBe(
-      "/signup?next=%2Fjargon%3Ftab%3Dquiz",
+    expect(appendNextParam("/signup", "/app/library?tab=quiz")).toBe(
+      "/signup?next=%2Fapp%2Flibrary%3Ftab%3Dquiz",
     );
     expect(appendNextParam("/signup", "//evil.com")).toBe(
       `/signup?next=${encodeURIComponent(AUTHENTICATED_HOME_PATH)}`,
@@ -60,6 +60,8 @@ describe("appendNextParam", () => {
   });
 
   it("preserves existing query params on the path", () => {
-    expect(appendNextParam("/signup?ref=abc", "/jargon")).toBe("/signup?ref=abc&next=%2Fjargon");
+    expect(appendNextParam("/signup?ref=abc", "/app/library")).toBe(
+      "/signup?ref=abc&next=%2Fapp%2Flibrary",
+    );
   });
 });

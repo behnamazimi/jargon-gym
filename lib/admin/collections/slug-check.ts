@@ -33,6 +33,7 @@ export function resolveSlug(raw: string, taken: ReadonlySet<string>): SlugCheck 
 /** What to tell the admin about a check. */
 export function describeSlugCheck(check: SlugCheck): string {
   if (!check.valid) return "Use letters or numbers in the address.";
-  if (check.taken) return `/j/${check.slug} is taken. Try /j/${check.suggestion}.`;
-  return `/j/${check.slug} is free.${check.cut ? " It was cut to fit." : ""}`;
+  if (check.taken)
+    return `/collections/${check.slug} is taken. Try /collections/${check.suggestion}.`;
+  return `/collections/${check.slug} is free.${check.cut ? " It was cut to fit." : ""}`;
 }

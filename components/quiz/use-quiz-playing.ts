@@ -1,6 +1,6 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { generateQuizAction } from "@/app/(private)/jargon/quiz/actions";
+import { generateQuizAction } from "@/app/(private)/app/quiz/actions";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { missedQuestions, missedTermIds } from "@/lib/quiz/results";
 import type { QuizAnswer, QuizQuestion, QuizTerm } from "@/lib/quiz/types";

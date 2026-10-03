@@ -5,7 +5,7 @@ import {
   deleteTerm,
   recordTermReadAction,
   setTermMarkedKnownAction,
-} from "@/app/(private)/jargon/actions";
+} from "@/app/(private)/app/actions";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/library/filter-terms";
 import {
   overrideCollectionCounts,

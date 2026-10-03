@@ -6,7 +6,7 @@ import {
 import { MAX_STUDY_TERMS } from "@/lib/study/types";
 import type { QuizQuestionStyle } from "./types";
 
-export const QUIZ_SETUP_COOKIE = "jg-quiz-setup";
+export const QUIZ_SETUP_COOKIE = "lb-quiz-setup";
 
 const DEFAULT_QUIZ_QUESTION_COUNT = 10;
 

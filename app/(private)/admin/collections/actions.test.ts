@@ -145,7 +145,12 @@ describe("setCollectionStatus: moves, decided from the database's status", () =>
     await setCollectionStatus("d1", "builtin");
     expect(state.updates).toEqual([{ table: "domains", values: { is_public: false } }]);
     expect(state.revalidated).toEqual(
-      expect.arrayContaining(["/j/cooking:layout", "/j", "/sitemap.xml", "/admin/collections"]),
+      expect.arrayContaining([
+        "/collections/cooking:layout",
+        "/collections",
+        "/sitemap.xml",
+        "/admin/collections",
+      ]),
     );
   });
 
@@ -396,7 +401,11 @@ describe("updateDomainSlug", () => {
     state.list = [domain({ slug: "cooking", is_public: true })];
     await updateDomainSlug("d1", "kitchen", "kitchen");
     expect(state.revalidated).toEqual(
-      expect.arrayContaining(["/j/cooking:layout", "/j/kitchen:layout", "/j"]),
+      expect.arrayContaining([
+        "/collections/cooking:layout",
+        "/collections/kitchen:layout",
+        "/collections",
+      ]),
     );
   });
 });

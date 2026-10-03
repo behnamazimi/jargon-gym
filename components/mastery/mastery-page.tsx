@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getMasteryTermRowsAction } from "@/app/(private)/jargon/mastery/actions";
+import { getMasteryTermRowsAction } from "@/app/(private)/app/mastery/actions";
 import type { WebStatsSnapshot } from "@/lib/mastery/collection-stats";
 import type { MasteryCollectionOption, MasteryTermRow } from "@/lib/mastery/mastery";
 import { PanelSkeleton } from "@/components/page-skeleton";

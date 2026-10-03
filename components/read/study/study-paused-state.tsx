@@ -34,7 +34,7 @@ export function StudyNoActiveCollectionsState({
           title="No active collections"
           description={`Add a collection to your library to start ${activity}.`}
         >
-          <LinkButton href="/jargon" variant="outline" className="min-h-11">
+          <LinkButton href="/app/library" variant="outline" className="min-h-11">
             Go to library
           </LinkButton>
         </QuizCenteredState>
@@ -86,7 +86,7 @@ export function StudyNoActiveCollectionsState({
         {hidden > 0 ? (
           <p className="m-0 text-xs text-base-content/70">{hidden} more paused in your library.</p>
         ) : null}
-        <LinkButton href="/jargon" variant="ghost" className="min-h-11">
+        <LinkButton href="/app/library" variant="ghost" className="min-h-11">
           Go to library
         </LinkButton>
       </QuizCenteredState>

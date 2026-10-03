@@ -2,7 +2,7 @@
 
 import { BookOpen, Layers, Sparkles, Zap } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
-import { toggleActiveForReview } from "@/app/(private)/jargon/actions";
+import { toggleActiveForReview } from "@/app/(private)/app/actions";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
@@ -20,13 +20,13 @@ type LibraryDomainHeaderProps = {
 };
 
 const STUDY_LINKS = [
-  { path: "/jargon/read", label: "Read", icon: Zap },
-  { path: "/jargon/review", label: "Review", icon: BookOpen },
-  { path: "/jargon/quiz", label: "Quiz", icon: Sparkles },
+  { path: "/app/read", label: "Read", icon: Zap },
+  { path: "/app/review", label: "Review", icon: BookOpen },
+  { path: "/app/quiz", label: "Quiz", icon: Sparkles },
 ] as const;
 
 /** Only while the collection still has terms that aren't known or marked known. */
-const TRIAGE_LINK = { path: "/jargon/triage", label: "Triage", icon: Layers } as const;
+const TRIAGE_LINK = { path: "/app/triage", label: "Triage", icon: Layers } as const;
 
 function StudyLinkButton({
   link,
@@ -41,7 +41,7 @@ function StudyLinkButton({
   return (
     <LinkButton
       href={`${link.path}?domain=${domainId}`}
-      variant={link.path === "/jargon/read" ? "default" : "outline"}
+      variant={link.path === "/app/read" ? "default" : "outline"}
       size="sm"
       className={cn("min-h-11 gap-2 md:min-h-8", className)}
     >
@@ -124,7 +124,7 @@ export function LibraryDomainHeader({
   const domain = { ...serverDomain, isActiveForReview };
 
   function setActiveForReview(active: boolean) {
-    // A plain /jargon visit shows the first active collection without
+    // A plain /app/library visit shows the first active collection without
     // remembering it, so pausing that one would move on to the next. Pin it.
     rememberLibraryDomain(domain.id);
     startToggle(async () => {

@@ -4,7 +4,7 @@ import type { TourChapter } from "./types";
 export const STUDY_CHAPTERS = [
   {
     id: "review",
-    route: "/jargon/review",
+    route: "/app/review",
     steps: [
       {
         target: "review-collection",
@@ -27,7 +27,7 @@ export const STUDY_CHAPTERS = [
   },
   {
     id: "read",
-    route: "/jargon/read",
+    route: "/app/read",
     steps: [
       {
         target: "read-card",
@@ -48,7 +48,7 @@ export const STUDY_CHAPTERS = [
   },
   {
     id: "read-more",
-    route: "/jargon/read",
+    route: "/app/read",
     steps: [
       {
         target: "read-collection",
@@ -59,7 +59,7 @@ export const STUDY_CHAPTERS = [
   },
   {
     id: "stories",
-    route: "/jargon/read/stories",
+    route: "/app/read/stories",
     steps: [
       {
         target: "stories-level",
@@ -77,7 +77,7 @@ export const STUDY_CHAPTERS = [
   },
   {
     id: "quiz",
-    route: "/jargon/quiz",
+    route: "/app/quiz",
     steps: [
       {
         target: "quiz-style",

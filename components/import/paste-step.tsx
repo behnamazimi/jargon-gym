@@ -169,7 +169,7 @@ export function PasteStep({
 
       <div className="flex justify-center">
         <LinkButton
-          href="/jargon/import/more"
+          href="/app/import/more"
           variant="ghost"
           size="sm"
           className="min-h-11 text-base-content/70"

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { recordQuizAnswerAction } from "@/app/(private)/jargon/quiz/actions";
+import { recordQuizAnswerAction } from "@/app/(private)/app/quiz/actions";
 import { useToast } from "@/components/ui/toast";
 import { hasInflightTraceWrites, useTraceWriteQueue } from "@/lib/study/trace-write-queue";
 import { dropPendingQuizWrite, type PendingQuizWrite } from "@/lib/quiz/session-storage";

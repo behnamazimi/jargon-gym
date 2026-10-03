@@ -6,16 +6,16 @@ them.
 
 ## The routes
 
-`/jargon/import` is the chooser. It searches shared collections first (one-tap
+`/app/import` is the chooser. It searches shared collections first (one-tap
 Add), then offers three starting points: a pasted list, a deck from another
 app, or one term. Everything else lives under it:
 
-| Route                  | What it does                                                                                             |
-| ---------------------- | -------------------------------------------------------------------------------------------------------- |
-| `/jargon/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination; the Library's `+` menu "Paste a list" links here. |
-| `/jargon/import/apps`  | Per-app export guides (`lib/import/guides.ts`).                                                          |
-| `/jargon/import/more`  | The JSON format and the developer AI-skill card.                                                         |
-| `/jargon/capture`      | Save one term. `?to=<id>` presets the collection.                                                        |
+| Route               | What it does                                                                                             |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| `/app/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination; the Library's `+` menu "Paste a list" links here. |
+| `/app/import/apps`  | Per-app export guides (`lib/import/guides.ts`).                                                          |
+| `/app/import/more`  | The JSON format and the developer AI-skill card.                                                         |
+| `/app/capture`      | Save one term. `?to=<id>` presets the collection.                                                        |
 
 No AI runs anywhere in this path. Parsing is deterministic.
 
@@ -53,7 +53,7 @@ successful commit.
 
 ## Capture
 
-`/jargon/capture` saves one term in a few seconds: Term, an optional Definition
+`/app/capture` saves one term in a few seconds: Term, an optional Definition
 and a collection chip. "More details" holds the rest on demand: category (defaults
 to the one most terms in the collection use), example, mental model, in practice,
 anti-example, debated, note and links to other terms (`loadCaptureTerms` fetches the
@@ -65,11 +65,11 @@ with no collection is asked to name their first. It writes through the same
 saved unfinished. While you type, `findCaptureDuplicate` checks the chosen
 collection only (the unique index is per collection). Pasting several lines offers
 "Add N terms", which hands off to the paste importer. Capture writes no
-`import_batches` row. It lives under `/jargon` so it gets the app chrome and hides
+`import_batches` row. It lives under `/app/library` so it gets the app chrome and hides
 the dock while you type.
 
 On Android, the installed app is also a share target (`share_target` in
-`app/manifest.ts`, GET to `/jargon/capture`). A shared sentence is parsed by
+`app/manifest.ts`, GET to `/app/capture`). A shared sentence is parsed by
 `parseSharedInput`: the link is dropped, a word or short phrase fills Term, several
 lines offer the paste importer, and a longer sentence shows its words as chips
 (`lib/capture/tokenize.ts`, `selection.ts`). The tapped words become the term
@@ -99,7 +99,7 @@ Category is optional too. The category filter shows only with two or more.
 
 ## Requests
 
-A person with only a topic can request a collection: `/jargon/import/request`,
+A person with only a topic can request a collection: `/app/import/request`,
 reached from the last row of the chooser's search and from Browse when a search
 finds nothing. The team builds the collection by hand and delivers it as a
 private collection the requester owns. Nothing here runs an AI model, and no
@@ -128,7 +128,7 @@ longer estimate without touching the dates of requests already sent.
   `admin_deliver_existing_collection`, which adds it to their Library.
 - **Definitions.** The "Request definitions" button on a collection's "N terms to
   finish" banner (shown only while the person can send a request) opens
-  `/jargon/import/request?definitions=<collection id>`. That request has kind
+  `/app/import/request?definitions=<collection id>`. That request has kind
   `definitions` and a `target_domain_id`; it never creates a collection. The admin
   pastes definitions on the desk and `admin_fill_definitions` fills them into the
   requester's unfinished terms by name, in place by id, skipping everything else.

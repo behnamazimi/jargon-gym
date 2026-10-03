@@ -6,6 +6,8 @@ export const PWA_SHORT_NAME = "Jargon Gym";
 export const PWA_DESCRIPTION =
   "Learn a field's jargon or a language's vocabulary well enough to actually use it: read, review, and quiz until it sticks.";
 export const PWA_START_URL = `${AUTHENTICATED_HOME_PATH}?source=pwa`;
+/** Identifies the installed app. Kept at its old value on purpose: a changed id makes browsers
+ *  treat existing installs as a different app. */
 export const PWA_ID = "/jargon?source=pwa";
 export const PWA_THEME_COLOR = BRAND_ICON.background;
 export const PWA_BACKGROUND_COLOR = "#ffffff";

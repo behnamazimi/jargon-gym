@@ -1,4 +1,4 @@
-import { commitImport } from "@/app/(private)/jargon/import/actions";
+import { commitImport } from "@/app/(private)/app/import/actions";
 import type { CheckState, CheckSummary, CommitTerm } from "@/lib/import/check-state";
 import { toCommitTerms } from "@/lib/import/check-state";
 import { OFFLINE_FAILURE } from "@/lib/import/commit-errors";

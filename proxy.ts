@@ -1,7 +1,16 @@
-import type { NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { legacyHostRedirect } from "@/lib/legacy-host";
 import { updateSession } from "@/lib/supabase/proxy";
 
 export async function proxy(request: NextRequest) {
+  const redirectTo = legacyHostRedirect({
+    host: request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
+    method: request.method,
+    pathname: request.nextUrl.pathname,
+    search: request.nextUrl.search,
+    target: process.env.LEGACY_HOST_REDIRECT_TO,
+  });
+  if (redirectTo) return NextResponse.redirect(redirectTo, 307);
   return updateSession(request);
 }
 
