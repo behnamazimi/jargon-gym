@@ -15,11 +15,15 @@ export function useNarrationAutoScroll() {
     pausedUntil.current = Date.now() + PAUSE_AFTER_USER_SCROLL_MS;
   }, []);
 
+  const followAgain = useCallback(() => {
+    pausedUntil.current = 0;
+  }, []);
+
   const keepInView = useCallback((node: HTMLElement | null) => {
     if (!node || Date.now() < pausedUntil.current) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     node.scrollIntoView({ block: "nearest", behavior: reduceMotion ? "auto" : "smooth" });
   }, []);
 
-  return { pause, keepInView };
+  return { pause, followAgain, keepInView };
 }

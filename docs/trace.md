@@ -203,8 +203,34 @@ While a story's narration plays, the sentence being spoken is highlighted
 on by default). The narration has no timings, so `lib/stories/highlight.ts`
 estimates them on the client: each sentence gets a share of the clip in
 proportion to its length, after the spoken title. The pause weights at the top
-of that file are the knobs if the highlight drifts. It changes nothing about
-scoring.
+of that file are the knobs if the highlight drifts. Once the player has the
+clip, the browser also downloads and decodes it (`lib/stories/clip-pauses.ts`),
+finds the quiet stretches (`lib/stories/silence.ts`) and moves each sentence
+boundary onto the pause nearest where it was expected
+(`lib/stories/pause-alignment.ts`), so the highlight and
+Shadowing follow the real audio. The pauses are matched in order, all at once.
+A sentence that starts with a speaker label such as "Elena:" gets an extra,
+lighter-weighted slot for the pause after the label, so that pause isn't taken
+for the end of the previous sentence; stories without labels have no such
+slots. Each pause also records its near-silent core, so playback never stops
+or starts inside a soft last or first sound. Where no pause is found, or the
+clip can't be decoded, the estimates stay. None of this changes scoring.
+
+Shadowing (the "Shadowing" Read option, `read_shadowing*` columns, also
+switched by the icon at the top right of a story) is an
+optional playback mode for the same narration, for repeating each sentence
+aloud after the voice. It turns the ±10s skips into previous and next sentence,
+lets you tap a sentence to play it, can loop a sentence, and can pause after
+each one for as long as the sentence took (times a multiplier). It forces the
+highlight on while it is on and reuses the same timings (measured from the
+clip's pauses, or estimated until they are known), through `sentenceBounds` in
+`lib/stories/highlight.ts`; the rules for a finished sentence are in
+`lib/stories/shadowing.ts`, and the playback hook is
+`components/jargon/read/stories/use-shadowing-playback.ts`. If the pauses can't
+be found, boundaries are only as accurate as the estimates, so a pause can land
+a little early or late.
+It is playback only: nothing is recorded or graded, and replays add no reads.
+Marking the piece read works exactly as before.
 
 ## How each tier decides what to show you
 

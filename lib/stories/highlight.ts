@@ -18,7 +18,12 @@ export type StoryTimeline = {
   ends: number[];
   /** Where the spoken title ends; nothing is highlighted before it. */
   titleEnd: number;
+  /** When each sentence is actually spoken, without the quiet around it. Until
+   *  the clip has been measured this is the whole stretch up to the next one. */
+  speech: ShareOfClip[];
 };
+
+type ShareOfClip = { start: number; end: number };
 
 /** Sentence starts within the paragraph's text, never inside a term. */
 function sentenceCuts(paragraph: StorySegment[], language: DomainLanguage): number[] {
@@ -96,7 +101,13 @@ export function buildTimeline(
   const total = titleWeight + weights.reduce((sum, weight) => sum + weight, 0);
   let spoken = titleWeight;
   const ends = weights.map((weight) => (spoken += weight) / total);
-  return { paragraphs, ends, titleEnd: titleWeight / total };
+  const titleEnd = titleWeight / total;
+  return {
+    paragraphs,
+    ends,
+    titleEnd,
+    speech: ends.map((end, index) => ({ start: index === 0 ? titleEnd : ends[index - 1]!, end })),
+  };
 }
 
 /** The sentence being spoken at this share of the clip, or null while the
@@ -113,4 +124,18 @@ export function sentenceAtFraction(timeline: StoryTimeline, fraction: number): n
     else low = middle + 1;
   }
   return low;
+}
+
+/** The stretch of the clip a sentence owns: from where the one before it ends
+ *  to where it ends, quiet included. This is what the highlight follows. */
+export function sentenceRegion(timeline: StoryTimeline, index: number): ShareOfClip | null {
+  const end = timeline.ends[index];
+  if (end === undefined) return null;
+  return { start: index === 0 ? timeline.titleEnd : timeline.ends[index - 1]!, end };
+}
+
+/** Where a sentence is spoken, as shares of the clip from 0 to 1. This is where
+ *  playback pauses and replays from. */
+export function sentenceBounds(timeline: StoryTimeline, index: number): ShareOfClip | null {
+  return timeline.speech[index] ?? null;
 }

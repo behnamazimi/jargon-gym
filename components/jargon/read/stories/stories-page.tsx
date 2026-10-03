@@ -110,6 +110,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
           terms={session.terms}
           narrationAccess={setup.narrationAccess}
           narrationHighlight={setup.narrationHighlight}
+          shadowingSettings={setup.shadowing}
         />
       ) : null;
     default:

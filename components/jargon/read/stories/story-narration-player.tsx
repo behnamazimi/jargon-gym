@@ -1,8 +1,13 @@
 "use client";
 
 import { Headphones, Loader2 } from "lucide-react";
-import { useRef, useState } from "react";
-import { StoryAudioControls } from "@/components/jargon/read/stories/story-audio-controls";
+import { useRef, useState, type Ref } from "react";
+import {
+  StoryAudioControls,
+  type StoryPlayerHandle,
+} from "@/components/jargon/read/stories/story-audio-controls";
+import type { ShadowingSetup } from "@/components/jargon/read/stories/use-shadowing-playback";
+import type { ClipPauses } from "@/lib/stories/silence";
 import { Button } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
@@ -27,9 +32,15 @@ function sleep(ms: number) {
 export function StoryNarrationPlayer({
   storyId,
   onProgress,
+  shadowing,
+  handleRef,
+  onClipPauses,
 }: {
   storyId: string;
   onProgress?: (fraction: number | null) => void;
+  shadowing?: ShadowingSetup | null;
+  handleRef?: Ref<StoryPlayerHandle>;
+  onClipPauses?: (clip: ClipPauses) => void;
 }) {
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const cancelledRef = useRef(false);
@@ -76,6 +87,9 @@ export function StoryNarrationPlayer({
           onProgress?.(null);
         }}
         onProgress={onProgress}
+        shadowing={shadowing}
+        handleRef={handleRef}
+        onClipPauses={onClipPauses}
       />
     );
   }
@@ -96,7 +110,7 @@ export function StoryNarrationPlayer({
         ) : (
           <Headphones className="size-4" aria-hidden strokeWidth={1.5} />
         )}
-        Listen
+        {shadowing ? "Listen and shadow" : "Listen"}
       </Button>
       {message ? (
         <p className="m-0 text-xs text-base-content/70" role="status">

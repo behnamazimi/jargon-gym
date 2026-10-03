@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildTimeline, sentenceAtFraction } from "./highlight";
+import { buildTimeline, sentenceAtFraction, sentenceBounds } from "./highlight";
 import type { StorySegment } from "./types";
 
 function sentenceTexts(segments: StorySegment[], language: "en" | "nl" = "en"): string[][] {
@@ -118,5 +118,38 @@ describe("sentenceAtFraction", () => {
 
   it("shows nothing when there is nothing to time", () => {
     expect(sentenceAtFraction(buildTimeline("Title", [], "en"), 0.5)).toBeNull();
+  });
+});
+
+describe("sentenceBounds", () => {
+  const timeline = buildTimeline(
+    "Title",
+    [{ text: "First sentence here. Second sentence here.\n\nThird sentence here." }],
+    "en",
+  );
+
+  it("starts the first sentence where the title ends", () => {
+    expect(sentenceBounds(timeline, 0)).toEqual({
+      start: timeline.titleEnd,
+      end: timeline.ends[0],
+    });
+  });
+
+  it("starts each later sentence where the one before ends", () => {
+    expect(sentenceBounds(timeline, 1)).toEqual({ start: timeline.ends[0], end: timeline.ends[1] });
+    expect(sentenceBounds(timeline, 2)).toEqual({ start: timeline.ends[1], end: 1 });
+  });
+
+  it("agrees with sentenceAtFraction inside every sentence", () => {
+    for (const index of [0, 1, 2]) {
+      const { start, end } = sentenceBounds(timeline, index)!;
+      expect(sentenceAtFraction(timeline, (start + end) / 2)).toBe(index);
+    }
+  });
+
+  it("has no bounds for a sentence that doesn't exist", () => {
+    expect(sentenceBounds(timeline, 3)).toBeNull();
+    expect(sentenceBounds(timeline, -1)).toBeNull();
+    expect(sentenceBounds(buildTimeline("Title", [], "en"), 0)).toBeNull();
   });
 });
