@@ -9,49 +9,49 @@ import { Hatch, Line, Shape, STROKE } from "../shape";
 export function ReadReviewQuizScene({ className, title }: { className?: string; title?: string }) {
   return (
     <Illustration className={className} title={title}>
-      <Squiggle x={70} y={150} width={80} rotate={-12} seed={4} />
+      <Squiggle x={18} y={128} width={80} rotate={-12} seed={4} />
       <Motion kind="twinkle">
-        <Spark x={95} y={265} r={18} rotate={10} />
+        <Spark x={32} y={300} r={18} rotate={10} />
       </Motion>
-      <Dot x={170} y={175} r={7} color={YELLOW} />
+      <Dot x={122} y={176} r={7} color={YELLOW} />
       <Dot x={745} y={470} r={9} color={BLUE} ring />
       <Dot x={700} y={95} r={6} color={CORAL} />
 
       <Shape
         d={quad(
           [
-            [268, 126],
+            [198, 126],
             [602, 138],
             [598, 418],
-            [256, 410],
+            [186, 410],
           ],
           { seed: 9 },
         )}
       />
       <Hatch d={blob({ cx: 572, cy: 170, rx: 18, ry: 24, seed: 2 })} />
 
-      <g transform="translate(18 0)">
+      <g transform="translate(-52 0)">
         <Ladder />
       </g>
 
       <Shape
         d={quad(
           [
-            [232, 158],
+            [162, 158],
             [568, 146],
             [580, 440],
-            [224, 448],
+            [154, 448],
           ],
           { seed: 3, bow: 5 },
         )}
         color={YELLOW}
       />
-      <Line d={wave(300, 212, 170, { amp: 3, period: 30, seed: 5 })} stroke={9} />
-      <ScribbleLines x={384} y={262} width={160} lines={4} gap={24} seed={11} />
-      <Shape d={box(258, 388, 78, 26, { seed: 6, bow: 2 })} color={BLUE} stroke={STROKE.regular} />
+      <Line d={wave(242, 212, 220, { amp: 3, period: 30, seed: 5 })} stroke={9} />
+      <ScribbleLines x={330} y={262} width={214} lines={4} gap={24} seed={11} />
+      <Shape d={box(190, 388, 78, 26, { seed: 6, bow: 2 })} color={BLUE} stroke={STROKE.regular} />
       <Hatch d={blob({ cx: 528, cy: 402, rx: 30, ry: 17, seed: 8 })} cross />
 
-      <g transform="translate(18 0)">
+      <g transform="translate(-52 0)">
         <Reader />
       </g>
       <QuizFigure />
