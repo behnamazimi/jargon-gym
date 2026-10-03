@@ -25,6 +25,7 @@ import { formatPlaybackTime } from "@/lib/stories/playback";
 import type { ClipPauses } from "@/lib/stories/silence";
 import { cn } from "@/lib/utils";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { useWakeLock } from "@/hooks/use-wake-lock";
 
 /** What the story reader can ask the player to do. */
 export type StoryPlayerHandle = { playSentence: (index: number) => void };
@@ -45,6 +46,7 @@ export function StoryAudioControls({
   onError,
   onProgress,
   shadowing = null,
+  sentencePlayback = null,
   handleRef,
   onClipPauses,
 }: {
@@ -53,6 +55,8 @@ export function StoryAudioControls({
   /** Where playback is, as a share of the clip; null once it has ended. */
   onProgress?: (fraction: number | null) => void;
   shadowing?: ShadowingSetup | null;
+  /** What tapping a sentence follows: the Shadowing setup, or plain timings. */
+  sentencePlayback?: ShadowingSetup | null;
   handleRef?: Ref<StoryPlayerHandle>;
   /** When given, the clip is measured for its pauses and they are passed here. */
   onClipPauses?: (clip: ClipPauses) => void;
@@ -66,7 +70,9 @@ export function StoryAudioControls({
   const [speed, setSpeed] = useState(loadSavedSpeed);
   // Only filled in when the user changes speed, so nothing is read out on load.
   const [speedAnnouncement, setSpeedAnnouncement] = useState("");
-  const sentences = useShadowingPlayback({ audioRef, shadowing, speed });
+  const sentences = useShadowingPlayback({ audioRef, setup: sentencePlayback, speed });
+  // The pause after a sentence is part of shadowing, so the screen stays on through it.
+  useWakeLock(shadowing !== null && (playing || sentences.pauseMs !== null));
 
   useImperativeHandle(handleRef, () => ({ playSentence: sentences.pressSentence }), [
     sentences.pressSentence,
@@ -153,7 +159,7 @@ export function StoryAudioControls({
         onPlay={(event) => {
           claimActiveAudio(event.currentTarget);
           setPlaying(true);
-          if (shadowing) sentences.startWatching();
+          if (sentencePlayback) sentences.startWatching();
         }}
         onPause={(event) => {
           releaseActiveAudio(event.currentTarget);

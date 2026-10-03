@@ -110,6 +110,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
           terms={session.terms}
           narrationAccess={setup.narrationAccess}
           narrationHighlight={setup.narrationHighlight}
+          tapToPlay={setup.tapToPlay}
           shadowingSettings={setup.shadowing}
         />
       ) : null;

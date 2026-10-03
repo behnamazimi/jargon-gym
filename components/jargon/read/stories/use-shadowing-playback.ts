@@ -15,6 +15,9 @@ import {
 
 export type ShadowingSetup = { timeline: StoryTimeline; settings: ShadowingSettings };
 
+/** Used for tapping a sentence while Shadowing is off: no pauses or repeats. */
+export const PLAIN_PLAYBACK: ShadowingSettings = { pause: false, gap: 1, repeats: 2 };
+
 /** The audio is a hair short of a sentence's end when it is judged finished,
  *  so a frame that lands late still catches it. */
 const END_MARGIN_SECONDS = 0.04;
@@ -65,19 +68,19 @@ function replayFrom(timeline: StoryTimeline, index: number, duration: number): n
  *  timings, so everything here follows the estimates in lib/stories/highlight.ts. */
 export function useShadowingPlayback({
   audioRef,
-  shadowing,
+  setup,
   speed,
 }: {
   audioRef: RefObject<HTMLAudioElement | null>;
-  shadowing: ShadowingSetup | null;
+  setup: ShadowingSetup | null;
   speed: number;
 }) {
   const [loop, setLoop] = useState(false);
   // Set while waiting out the pause after a sentence, to show the countdown.
   const [pauseMs, setPauseMs] = useState<number | null>(null);
 
-  const latest = useRef({ shadowing, speed, loop });
-  latest.current = { shadowing, speed, loop };
+  const latest = useRef({ setup, speed, loop });
+  latest.current = { setup, speed, loop };
   const watched = useRef<Watched | null>(null);
   const frame = useRef(0);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,7 +106,7 @@ export function useShadowingPlayback({
    *  whether to keep watching the clip. */
   const handleSentenceEnd = useCallback(
     (audio: HTMLAudioElement, current: Watched, bounds: { start: number; end: number }) => {
-      const { shadowing: setup, speed: rate, loop: looping } = latest.current;
+      const { setup, speed: rate, loop: looping } = latest.current;
       if (!setup) return false;
       const step = stepAtSentenceEnd({
         settings: setup.settings,
@@ -140,7 +143,7 @@ export function useShadowingPlayback({
 
   const tick = useCallback(() => {
     const audio = audioRef.current;
-    const setup = latest.current.shadowing;
+    const setup = latest.current.setup;
     if (!audio || !setup || audio.paused) return;
     // Playing can start before the clip's length is known.
     if (!Number.isFinite(audio.duration)) {
@@ -165,7 +168,7 @@ export function useShadowingPlayback({
    *  sentence is going to play again. */
   const handleEnded = useCallback(() => {
     const audio = audioRef.current;
-    const setup = latest.current.shadowing;
+    const setup = latest.current.setup;
     const current = watched.current;
     if (!audio || !setup || !current) return false;
     if (current.index !== setup.timeline.ends.length - 1) return false;
@@ -194,7 +197,7 @@ export function useShadowingPlayback({
   const playSentence = useCallback(
     (index: number, alone = false) => {
       const audio = audioRef.current;
-      const setup = latest.current.shadowing;
+      const setup = latest.current.setup;
       if (!audio || !setup || !sentenceBounds(setup.timeline, index)) return;
       if (!Number.isFinite(audio.duration)) return;
       const shadowingActive = !audio.paused || resumeTimer.current !== null;
@@ -211,7 +214,7 @@ export function useShadowingPlayback({
   /** The sentence being spoken, or the one just heard while the pause runs. */
   const sentenceNow = useCallback((): { index: number | null; secondsIn: number } => {
     const audio = audioRef.current;
-    const setup = latest.current.shadowing;
+    const setup = latest.current.setup;
     if (!audio || !setup || !Number.isFinite(audio.duration)) return { index: null, secondsIn: 0 };
     const index =
       heardDuringPause.current ??
@@ -227,7 +230,7 @@ export function useShadowingPlayback({
   }, [playSentence, sentenceNow]);
 
   const nextSentence = useCallback(() => {
-    const setup = latest.current.shadowing;
+    const setup = latest.current.setup;
     if (!setup) return;
     const { index } = sentenceNow();
     const target = index === null ? 0 : index + 1;

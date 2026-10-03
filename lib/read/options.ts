@@ -15,6 +15,7 @@ export type ReadOptions = {
   hideQuestion: boolean;
   revealedDefault: boolean;
   narrationHighlight: boolean;
+  tapToPlay: boolean;
   shadowing: boolean;
   shadowingPause: boolean;
   shadowingGap: ShadowingGap;
@@ -28,6 +29,7 @@ export const DEFAULT_READ_OPTIONS: ReadOptions = {
   hideQuestion: true,
   revealedDefault: false,
   narrationHighlight: true,
+  tapToPlay: true,
   shadowing: false,
   shadowingPause: true,
   shadowingGap: 1,
@@ -39,6 +41,7 @@ const COLUMN_BY_KEY = {
   hideQuestion: "read_hide_question",
   revealedDefault: "read_revealed_default",
   narrationHighlight: "read_narration_highlight",
+  tapToPlay: "read_tap_to_play",
   shadowing: "read_shadowing",
   shadowingPause: "read_shadowing_pause",
   shadowingGap: "read_shadowing_gap",
@@ -65,7 +68,7 @@ export const getReadOptions = cache(async function getReadOptions(
   const { data, error } = await client
     .from("user_settings")
     .select(
-      "read_stories_default, read_hide_question, read_revealed_default, read_narration_highlight, read_shadowing, read_shadowing_pause, read_shadowing_gap, read_shadowing_repeats",
+      "read_stories_default, read_hide_question, read_revealed_default, read_narration_highlight, read_tap_to_play, read_shadowing, read_shadowing_pause, read_shadowing_gap, read_shadowing_repeats",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -76,6 +79,7 @@ export const getReadOptions = cache(async function getReadOptions(
     hideQuestion: data.read_hide_question,
     revealedDefault: data.read_revealed_default,
     narrationHighlight: data.read_narration_highlight,
+    tapToPlay: data.read_tap_to_play,
     shadowing: data.read_shadowing,
     shadowingPause: data.read_shadowing_pause,
     shadowingGap: isShadowingGap(data.read_shadowing_gap)

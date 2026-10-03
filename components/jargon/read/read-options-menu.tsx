@@ -15,7 +15,7 @@ import { useMediaQuery } from "@/hooks/use-platform";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReadOptionKey, ReadOptions } from "@/lib/read/options";
 
-type SwitchOptionKey = "storiesDefault" | "revealedDefault" | "hideQuestion" | "narrationHighlight";
+type SwitchOptionKey = "storiesDefault" | "revealedDefault" | "hideQuestion" | "narrationHighlight" | "tapToPlay";
 
 const OPTION_ROWS: { key: SwitchOptionKey; label: string; description: string }[] = [
   {
@@ -38,7 +38,14 @@ const OPTION_ROWS: { key: SwitchOptionKey; label: string; description: string }[
     label: "Highlight text while listening",
     description: "Stories follow the narration sentence by sentence.",
   },
+  {
+    key: "tapToPlay",
+    label: "Tap a sentence to play it",
+    description: "Plays that sentence, then pauses unless the narration is already playing.",
+  },
 ];
+
+const STORIES_ONLY_KEYS = new Set<SwitchOptionKey>(["narrationHighlight", "tapToPlay"]);
 
 function disabledNoteFor(key: SwitchOptionKey, options: ReadOptions): string | undefined {
   if (key === "hideQuestion" && options.revealedDefault) {
@@ -61,7 +68,7 @@ function OptionsList({
 }) {
   return (
     <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
-      {OPTION_ROWS.filter((row) => onStories || row.key !== "narrationHighlight").map((row) => (
+      {OPTION_ROWS.filter((row) => onStories || !STORIES_ONLY_KEYS.has(row.key)).map((row) => (
         <OptionRow
           key={row.key}
           id={`read-option-${row.key}`}
