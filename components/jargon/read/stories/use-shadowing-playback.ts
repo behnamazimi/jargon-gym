@@ -96,11 +96,16 @@ export function useShadowingPlayback({
     setPauseMs(null);
   }, []);
 
-  const resume = useCallback(() => {
+  const resumeAfterGap = useCallback(() => {
     clearPause();
-    playingAlone.current = false;
     void audioRef.current?.play().catch(() => undefined);
   }, [audioRef, clearPause]);
+
+  /** The listener pressed play, so what follows is no longer one sentence alone. */
+  const resume = useCallback(() => {
+    playingAlone.current = false;
+    resumeAfterGap();
+  }, [resumeAfterGap]);
 
   /** Applies the rules for a sentence that has just been spoken. Returns
    *  whether to keep watching the clip. */
@@ -118,6 +123,8 @@ export function useShadowingPlayback({
       });
       if (playingAlone.current && step.type !== "repeat") {
         playingAlone.current = false;
+        // Play carries on into the next sentence rather than ending this one again.
+        watched.current = { index: current.index + 1, plays: 0 };
         audio.pause();
         return false;
       }
@@ -132,13 +139,13 @@ export function useShadowingPlayback({
         audio.pause();
         heardDuringPause.current = current.index;
         setPauseMs(step.gapMs);
-        resumeTimer.current = setTimeout(resume, step.gapMs);
+        resumeTimer.current = setTimeout(resumeAfterGap, step.gapMs);
       } else if (audio.paused) {
         void audio.play().catch(() => undefined);
       }
       return true;
     },
-    [resume],
+    [resumeAfterGap],
   );
 
   const tick = useCallback(() => {
@@ -200,9 +207,10 @@ export function useShadowingPlayback({
       const setup = latest.current.setup;
       if (!audio || !setup || !sentenceBounds(setup.timeline, index)) return;
       if (!Number.isFinite(audio.duration)) return;
-      const shadowingActive = !audio.paused || resumeTimer.current !== null;
+      const alreadyRunning = !audio.paused || resumeTimer.current !== null;
       clearPause();
-      playingAlone.current = alone && !shadowingActive;
+      // A tap while another sentence plays alone stays alone.
+      playingAlone.current = alone && (playingAlone.current || !alreadyRunning);
       watched.current = { index, plays: 0 };
       audio.currentTime = replayFrom(setup.timeline, index, audio.duration);
       void audio.play().catch(() => undefined);

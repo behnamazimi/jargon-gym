@@ -28,7 +28,7 @@ import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useWakeLock } from "@/hooks/use-wake-lock";
 
 /** What the story reader can ask the player to do. */
-export type StoryPlayerHandle = { playSentence: (index: number) => void };
+export type StoryPlayerHandle = { pressSentence: (index: number) => void };
 
 /** Slower and faster playback keeps the voice's pitch. */
 function applySpeed(audio: HTMLAudioElement, speed: number) {
@@ -74,7 +74,7 @@ export function StoryAudioControls({
   // The pause after a sentence is part of shadowing, so the screen stays on through it.
   useWakeLock(shadowing !== null && (playing || sentences.pauseMs !== null));
 
-  useImperativeHandle(handleRef, () => ({ playSentence: sentences.pressSentence }), [
+  useImperativeHandle(handleRef, () => ({ pressSentence: sentences.pressSentence }), [
     sentences.pressSentence,
   ]);
 

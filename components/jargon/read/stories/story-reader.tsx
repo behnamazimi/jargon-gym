@@ -207,8 +207,8 @@ export function StoryReader({
   const [activeSentence, setActiveSentence] = useState<number | null>(null);
   const { pause: pauseAutoScroll, followAgain, keepInView } = useNarrationAutoScroll();
 
-  // Nothing is highlighted while the option is off, so a sentence picked
-  // before it was turned off doesn't come back when it is turned on.
+  // Without a timeline there are no sentences, so one picked before the
+  // timeline went away doesn't come back when it returns.
   if (!timeline && activeSentence !== null) setActiveSentence(null);
 
   function showNarrationProgress(fraction: number | null) {
@@ -216,9 +216,9 @@ export function StoryReader({
     setActiveSentence(fraction === null ? null : sentenceAtFraction(timeline, fraction));
   }
 
-  function playSentence(index: number) {
+  function pressSentence(index: number) {
     followAgain();
-    playerRef.current?.playSentence(index);
+    playerRef.current?.pressSentence(index);
   }
 
   return (
@@ -244,7 +244,7 @@ export function StoryReader({
           timeline={timeline}
           activeSentence={showHighlight ? activeSentence : null}
           keepInView={keepInView}
-          onSentencePress={tapToPlay && sentencePlayback ? playSentence : undefined}
+          onSentencePress={tapToPlay && sentencePlayback ? pressSentence : undefined}
         />
         <StoryGlossary story={story} termById={termById} />
       </div>
