@@ -1,5 +1,5 @@
 import { escapeText } from "entities";
-import type { TermCard } from "@/lib/jargon/term-card";
+import type { TermCard } from "@/lib/terms/term-card";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import type { InlineKeyboardMarkup } from "./actions";
 import { buildTermDetails } from "./presentation-term";

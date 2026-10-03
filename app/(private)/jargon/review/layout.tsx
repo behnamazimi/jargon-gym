@@ -1,5 +1,5 @@
 import { BookOpen } from "lucide-react";
-import { PageHeader } from "@/components/jargon/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { PromoSlot } from "@/components/promos/promo-slot";
 import { PageShell } from "@/components/page-container";
 

@@ -1,4 +1,4 @@
-import { generateUniqueSlug, slugify } from "@/lib/jargon/slug";
+import { generateUniqueSlug, slugify } from "@/lib/terms/slug";
 
 export type SlugCheck = {
   valid: boolean;

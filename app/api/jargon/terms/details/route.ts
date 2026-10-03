@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { readVerifiedUser } from "@/lib/auth/verified-user-header";
-import { fetchTermDetails, parseDetailIds } from "@/lib/jargon/library/details";
+import { fetchTermDetails, parseDetailIds } from "@/lib/library/details";
 import { createClient } from "@/lib/supabase/server";
 
 const NO_STORE = { "Cache-Control": "private, no-store" };

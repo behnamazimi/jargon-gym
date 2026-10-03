@@ -1,10 +1,10 @@
 import { Plus } from "lucide-react";
 import { Suspense } from "react";
 import { getImportSetupData } from "@/app/(private)/jargon/import/actions";
-import { CaptureFlow } from "@/components/jargon/capture/capture-flow";
-import { PageHeader } from "@/components/jargon/page-header";
-import { parseSharedInput } from "@/lib/jargon/capture/shared-input";
-import { CAPTURE_COPY } from "@/lib/jargon/capture/copy";
+import { CaptureFlow } from "@/components/capture/capture-flow";
+import { PageHeader } from "@/components/shared/page-header";
+import { parseSharedInput } from "@/lib/capture/shared-input";
+import { CAPTURE_COPY } from "@/lib/capture/copy";
 
 type PageProps = {
   searchParams: Promise<{ to?: string | string[]; text?: string | string[] }>;

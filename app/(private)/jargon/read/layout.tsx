@@ -1,10 +1,10 @@
 import { Zap } from "lucide-react";
 import { Suspense } from "react";
-import { PageHeader } from "@/components/jargon/page-header";
-import { ReadFocusButton, ReadFocusProvider } from "@/components/jargon/read/read-focus";
-import { ReadModeTabs } from "@/components/jargon/read/read-mode-tabs";
-import { StoryHistoryMenu } from "@/components/jargon/read/stories/story-history-menu";
-import { ReadOptionsMenu } from "@/components/jargon/read/read-options-menu";
+import { PageHeader } from "@/components/shared/page-header";
+import { ReadFocusButton, ReadFocusProvider } from "@/components/read/read-focus";
+import { ReadModeTabs } from "@/components/read/read-mode-tabs";
+import { StoryHistoryMenu } from "@/components/read/stories/story-history-menu";
+import { ReadOptionsMenu } from "@/components/read/read-options-menu";
 import { PageShell } from "@/components/page-container";
 import { PromoSlot } from "@/components/promos/promo-slot";
 import { getSessionUser } from "@/lib/auth/require-session";

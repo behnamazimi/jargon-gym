@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listPublicDomains } from "@/lib/jargon/public/public-terms";
+import { listPublicDomains } from "@/lib/terms/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 
 export const dynamic = "force-static";

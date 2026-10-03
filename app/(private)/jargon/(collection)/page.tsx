@@ -1,17 +1,17 @@
 import { cookies, headers } from "next/headers";
-import { JargonPage } from "@/components/jargon/jargon-page";
-import type { ImportedSummary } from "@/components/jargon/imported-banner";
-import { EmptyCollection } from "@/components/jargon/empty-collection";
-import { NarrationAccess } from "@/components/jargon/library/narration-access";
+import { LibraryPage } from "@/components/library/library-page";
+import type { ImportedSummary } from "@/components/import/imported-banner";
+import { EmptyCollection } from "@/components/library/empty-collection";
+import { NarrationAccess } from "@/components/library/narration-access";
 import { RequestsAvailable } from "@/components/requests/requests-availability";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { batchResultSchema } from "@/lib/jargon/import/commit-schema";
-import { readLibraryFiltersCookie } from "@/lib/jargon/library-filters";
-import { loadLibraryPage } from "@/lib/jargon/library/load";
-import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/jargon/library/pick-domain";
-import { LOAD_FAILED_MESSAGE } from "@/lib/jargon/library/setup";
+import { batchResultSchema } from "@/lib/import/commit-schema";
+import { readLibraryFiltersCookie } from "@/lib/library/library-filters";
+import { loadLibraryPage } from "@/lib/library/load";
+import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/library/pick-domain";
+import { LOAD_FAILED_MESSAGE } from "@/lib/library/setup";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { loadRequestEntryFor } from "@/lib/requests/repository";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -103,7 +103,7 @@ export default async function JargonListPage({ searchParams }: PageProps) {
   return (
     <RequestsAvailable available={canRequest}>
       <NarrationAccess access={narrationAccess}>
-        <JargonPage
+        <LibraryPage
           data={result.data}
           filtersCookie={readLibraryFiltersCookie(requestHeaders.get("cookie") ?? "")}
           importedSummary={importedSummary}

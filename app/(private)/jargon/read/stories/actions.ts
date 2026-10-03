@@ -3,7 +3,7 @@
 import { after } from "next/server";
 import { z } from "zod";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { recordRead } from "@/lib/jargon/review-outcome";
+import { recordRead } from "@/lib/terms/review-outcome";
 import { withRunGuard } from "@/lib/ai/run-guard";
 import { runMetered } from "@/lib/ai/run-metered";
 import { storyCost } from "@/lib/ai-credits/costs";

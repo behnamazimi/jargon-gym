@@ -13,7 +13,7 @@ import { normalizeKnownTerms } from "@/lib/requests/known-terms";
 import { fetchRequestQuota } from "@/lib/requests/repository";
 import { requestFormSchema } from "@/lib/requests/schema";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
-import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/jargon/languages";
+import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CreateRequestResult =

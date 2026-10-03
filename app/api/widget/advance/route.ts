@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { fetchWidgetState } from "@/lib/jargon/widget-projection";
-import { recordRead } from "@/lib/jargon/review-outcome";
+import { fetchWidgetState } from "@/lib/widget/widget-projection";
+import { recordRead } from "@/lib/terms/review-outcome";
 import { authenticateWidgetRequest } from "@/lib/widget/auth-request";
 import { LATEST_WIDGET_VERSION } from "@/lib/widget/version";
 

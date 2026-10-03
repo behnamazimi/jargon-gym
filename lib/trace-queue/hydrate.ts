@@ -2,10 +2,10 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
-import { parseLanguage, type DomainLanguage } from "@/lib/jargon/languages";
-import { attachRelationshipsToTerms, mapTerm } from "@/lib/jargon/mappers";
-import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
-import { fetchTermRelationshipsForTerms } from "@/lib/jargon/terms";
+import { parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
+import { attachRelationshipsToTerms, mapTerm } from "@/lib/terms/mappers";
+import type { TermCard, TermCardRelationship } from "@/lib/terms/term-card";
+import { fetchTermRelationshipsForTerms } from "@/lib/terms/terms";
 
 type Client = SupabaseClient<Database>;
 

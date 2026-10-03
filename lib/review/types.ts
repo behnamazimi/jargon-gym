@@ -1,5 +1,5 @@
-import type { DomainLanguage } from "@/lib/jargon/languages";
-import type { Term } from "@/lib/jargon/types";
+import type { DomainLanguage } from "@/lib/terms/languages";
+import type { Term } from "@/lib/terms/types";
 import type { ReviewGrade } from "@/lib/trace";
 
 export type ReviewTerm = Term & {

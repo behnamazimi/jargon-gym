@@ -1,4 +1,4 @@
-import { generateUniqueSlug } from "@/lib/jargon/slug";
+import { generateUniqueSlug } from "@/lib/terms/slug";
 
 type TermForSlug = { id: string; term: string; slug: string | null };
 

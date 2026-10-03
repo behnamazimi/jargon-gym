@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DOMAIN_LANGUAGES } from "@/lib/jargon/languages";
+import { DOMAIN_LANGUAGES } from "@/lib/terms/languages";
 import { normalizeKnownTerms } from "./known-terms";
 import { REQUEST_KINDS, REQUEST_LEVELS, REQUEST_SIZES } from "./types";
 

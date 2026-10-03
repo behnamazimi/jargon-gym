@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { escapeLike } from "@/lib/jargon/like-escape";
+import { escapeLike } from "@/lib/terms/like-escape";
 
 const inputSchema = z.object({
   domainId: z.guid(),

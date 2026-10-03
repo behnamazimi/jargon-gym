@@ -1,5 +1,5 @@
 import { requireAuthenticatedClient, getUserIsAdmin } from "@/lib/auth/require-session";
-import { isUuid } from "@/lib/jargon/library/details";
+import { isUuid } from "@/lib/library/details";
 import { isCollectionPreference } from "@/lib/study/collection-preference";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { createAdminClient } from "@/lib/supabase/admin";

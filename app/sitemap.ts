@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { listPublicDomains } from "@/lib/jargon/public/public-terms";
+import { listPublicDomains } from "@/lib/terms/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { createPublicClient } from "@/lib/supabase/public";
 

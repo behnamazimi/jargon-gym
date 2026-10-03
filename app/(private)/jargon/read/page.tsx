@@ -6,9 +6,9 @@ import {
 } from "@/app/(private)/jargon/read/actions";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
-import { ReadPage } from "@/components/jargon/read/read-page";
-import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
+import { QuizPanel } from "@/components/quiz/quiz-ui";
+import { ReadPage } from "@/components/read/read-page";
+import { StudyNoActiveCollectionsState } from "@/components/read/study/study-paused-state";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { DEFAULT_READ_OPTIONS, getReadOptions, type ReadOptions } from "@/lib/read/options";
 import {

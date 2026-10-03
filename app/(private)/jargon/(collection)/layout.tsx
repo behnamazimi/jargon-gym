@@ -1,12 +1,12 @@
 import { cookies } from "next/headers";
 import { Suspense } from "react";
-import { LibrarySidebar } from "@/components/jargon/library-sidebar";
+import { LibrarySidebar } from "@/components/library/library-sidebar";
 import { PromoSlot } from "@/components/promos/promo-slot";
 import { PageShell } from "@/components/page-container";
-import { JargonPageSkeleton } from "@/components/page-skeleton";
+import { LibraryPageSkeleton } from "@/components/page-skeleton";
 import { getSessionUser } from "@/lib/auth/require-session";
-import { loadLibraryCollections } from "@/lib/jargon/library/load";
-import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/jargon/library/pick-domain";
+import { loadLibraryCollections } from "@/lib/library/load";
+import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/library/pick-domain";
 
 /**
  * The Library's frame and collection sidebar. Layouts don't re-render when
@@ -15,7 +15,7 @@ import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/jargon/library/pick-domain";
  */
 export default function LibraryLayout({ children }: { children: React.ReactNode }) {
   return (
-    <Suspense fallback={<JargonPageSkeleton />}>
+    <Suspense fallback={<LibraryPageSkeleton />}>
       <LibraryFrame>{children}</LibraryFrame>
     </Suspense>
   );

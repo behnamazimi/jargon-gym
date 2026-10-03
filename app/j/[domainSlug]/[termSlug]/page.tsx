@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { TermBody } from "@/components/jargon/term-body";
-import { getPublicTermPage, listPublicTermPaths } from "@/lib/jargon/public/public-terms";
+import { TermBody } from "@/components/terms/term-body";
+import { getPublicTermPage, listPublicTermPaths } from "@/lib/terms/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 
 export const revalidate = 3600;

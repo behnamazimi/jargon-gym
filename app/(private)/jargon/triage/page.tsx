@@ -1,8 +1,8 @@
 import { Layers } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getJargonSetupData } from "@/lib/jargon/library/setup";
-import { PageHeader } from "@/components/jargon/page-header";
-import { TriagePage } from "@/components/jargon/triage/triage-page";
+import { getJargonSetupData } from "@/lib/library/setup";
+import { PageHeader } from "@/components/shared/page-header";
+import { TriagePage } from "@/components/triage/triage-page";
 import { createClient } from "@/lib/supabase/server";
 import { fetchNotYetTermIds } from "@/lib/triage/repository";
 

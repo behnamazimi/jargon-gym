@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getStoriesSetupData } from "@/lib/stories/setup";
 import { hasNoCollections } from "@/lib/study/collections";
 import { PromoVisit } from "@/components/promos/promo-visit";
-import { StoriesPage } from "@/components/jargon/read/stories/stories-page";
+import { StoriesPage } from "@/components/read/stories/stories-page";
 
 // Writing a story can take two model calls; this raises the Server Action
 // timeout for the page's actions.

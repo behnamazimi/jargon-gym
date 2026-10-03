@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { getUserIsAdmin } from "@/lib/auth/require-session";
 import { readVerifiedUser } from "@/lib/auth/verified-user-header";
-import { computeTermEvalHash } from "@/lib/jargon/term-eval/content-hash";
-import { evaluateTermEntry } from "@/lib/jargon/term-eval/evaluate";
-import type { EvalTerm } from "@/lib/jargon/term-eval/rubric";
+import { computeTermEvalHash } from "@/lib/terms/term-eval/content-hash";
+import { evaluateTermEntry } from "@/lib/terms/term-eval/evaluate";
+import type { EvalTerm } from "@/lib/terms/term-eval/rubric";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { fetchTermCardForUser } from "@/lib/trace-queue/hydrate";
 

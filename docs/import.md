@@ -13,7 +13,7 @@ app, or one term. Everything else lives under it:
 | Route                  | What it does                                                                                             |
 | ---------------------- | -------------------------------------------------------------------------------------------------------- |
 | `/jargon/import/paste` | Paste, Check, Add. `?to=<id>` presets the destination; the Library's `+` menu "Paste a list" links here. |
-| `/jargon/import/apps`  | Per-app export guides (`lib/jargon/import/guides.ts`).                                                   |
+| `/jargon/import/apps`  | Per-app export guides (`lib/import/guides.ts`).                                                          |
 | `/jargon/import/more`  | The JSON format and the developer AI-skill card.                                                         |
 | `/jargon/capture`      | Save one term. `?to=<id>` presets the collection.                                                        |
 
@@ -21,7 +21,7 @@ No AI runs anywhere in this path. Parsing is deterministic.
 
 ## Parsing
 
-`lib/jargon/import/parse/` is pure: the same text and options always give the
+`lib/import/parse/` is pure: the same text and options always give the
 same rows. `detect.ts` runs the rules in a fixed order and the first match wins:
 clipboard HTML table, Anki plain-text headers, tabs, consistent `;` or `,`
 fields, one item per line (split at the first occurrence of the separator that
@@ -59,7 +59,7 @@ to the one most terms in the collection use), example, mental model, in practice
 anti-example, debated, note and links to other terms (`loadCaptureTerms` fetches the
 collection's finished terms for the picker). The Library's `+` menu "One term" and the
 empty-collection button link here with `?to=<id>`; there is no add-term dialog. The chip starts from `?to`, then the collection used last on
-this device (`lib/jargon/capture/destination-pref.ts`), then the first one. Someone
+this device (`lib/capture/destination-pref.ts`), then the first one. Someone
 with no collection is asked to name their first. It writes through the same
 `createTerm` action as the term editor, so a term without a definition is
 saved unfinished. While you type, `findCaptureDuplicate` checks the chosen
@@ -72,7 +72,7 @@ On Android, the installed app is also a share target (`share_target` in
 `app/manifest.ts`, GET to `/jargon/capture`). A shared sentence is parsed by
 `parseSharedInput`: the link is dropped, a word or short phrase fills Term, several
 lines offer the paste importer, and a longer sentence shows its words as chips
-(`lib/jargon/capture/tokenize.ts`, `selection.ts`). The tapped words become the term
+(`lib/capture/tokenize.ts`, `selection.ts`). The tapped words become the term
 and the sentence the example. iOS has no share target. The manifest shortcuts are Add
 a term, Paste a list, Read and Review (Android shows at most four). After a manifest
 change Android may need a reinstall, or a day for the WebAPK to update.

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
+import { applyQuizAnswer } from "@/lib/terms/review-outcome";
 import { NONE_OF_THESE_OPTION_TEXT } from "@/lib/quiz/illustration";
 import type { TelegramAction } from "./actions";
 import {

@@ -1,4 +1,4 @@
-import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/jargon/languages";
+import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
 
 export const ADMIN_STATUS: Record<string, { label: string; badge: string }> = {
   requested: { label: "In the queue", badge: "badge-ghost" },

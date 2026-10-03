@@ -1,5 +1,5 @@
 import { generateText } from "ai";
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 import { describeFailure } from "@/lib/ai-credits/failure-reason";
 import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
 import { createModel } from "@/lib/llm/model";

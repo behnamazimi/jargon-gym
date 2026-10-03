@@ -1,18 +1,18 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { setTermMarkedKnown } from "@/lib/jargon/known-state";
-import { recordReveal, recordRead } from "@/lib/jargon/review-outcome";
-import { parseTermInput, type TermInput } from "@/lib/jargon/term-schema";
-import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
-import { RelationshipMutationError, syncTermRelationships } from "@/lib/jargon/relationships";
+import { setTermMarkedKnown } from "@/lib/mastery/known-state";
+import { recordReveal, recordRead } from "@/lib/terms/review-outcome";
+import { parseTermInput, type TermInput } from "@/lib/terms/term-schema";
+import type { RelationshipSyncPayload } from "@/lib/terms/relationship-schema";
+import { RelationshipMutationError, syncTermRelationships } from "@/lib/terms/relationships";
 import {
   createTerm as createTermRecord,
   deleteTerm as deleteTermRecord,
   finishTerm as finishTermRecord,
   TermMutationError,
   updateTerm as updateTermRecord,
-} from "@/lib/jargon/terms";
+} from "@/lib/terms/terms";
 import { revalidatePath } from "next/cache";
 
 function termMutationErrorMessage(err: unknown, fallback: string) {
@@ -96,7 +96,7 @@ export async function finishTerm(
 }
 
 /** `savedAt` is the server time the term was gone, for local edit precedence
- *  (lib/jargon/library/overrides.ts). */
+ *  (lib/library/overrides.ts). */
 export async function deleteTerm(termId: string): Promise<{ error?: string; savedAt?: number }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
@@ -153,7 +153,7 @@ export async function setTermMarkedKnownAction(
 
   try {
     // No revalidation: every caller flips the mark locally (see
-    // lib/jargon/library/overrides.ts), so re-rendering the page is waste.
+    // lib/library/overrides.ts), so re-rendering the page is waste.
     await setTermMarkedKnown(auth.supabase, auth.user.id, termId, marked);
     return { savedAt: Date.now() };
   } catch (err) {

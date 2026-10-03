@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { signedUserHeaders } from "@/lib/auth/signed-user-headers";
-import { computeTermEvalHash } from "@/lib/jargon/term-eval/content-hash";
+import { computeTermEvalHash } from "@/lib/terms/term-eval/content-hash";
 
 const getUserIsAdmin = vi.fn();
 const fetchTermCardForUser = vi.fn();
@@ -10,7 +10,7 @@ const upsert = vi.fn();
 
 vi.mock("@/lib/auth/require-session", () => ({ getUserIsAdmin }));
 vi.mock("@/lib/trace-queue/hydrate", () => ({ fetchTermCardForUser }));
-vi.mock("@/lib/jargon/term-eval/evaluate", () => ({ evaluateTermEntry }));
+vi.mock("@/lib/terms/term-eval/evaluate", () => ({ evaluateTermEntry }));
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
     from: () => ({

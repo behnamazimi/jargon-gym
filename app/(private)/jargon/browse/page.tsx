@@ -1,5 +1,5 @@
 import { getBrowseSetupData } from "@/app/(private)/jargon/browse/actions";
-import { SharedDomainsBrowse } from "@/components/jargon/shared-domains-browse";
+import { SharedDomainsBrowse } from "@/components/library/shared-domains-browse";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { loadRequestEntryFor } from "@/lib/requests/repository";
 

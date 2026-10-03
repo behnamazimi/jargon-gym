@@ -1,5 +1,5 @@
 import { escapeText } from "entities";
-import type { TermCard } from "@/lib/jargon/term-card";
+import type { TermCard } from "@/lib/terms/term-card";
 import { ILLUSTRATION_QUESTION_LINE, NONE_OF_THESE_OPTION_TEXT } from "@/lib/quiz/illustration";
 import type { InlineKeyboardMarkup } from "./actions";
 

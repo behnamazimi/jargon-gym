@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { recordReveal } from "@/lib/jargon/review-outcome";
+import { recordReveal } from "@/lib/terms/review-outcome";
 import type { TelegramAction } from "./actions";
 import { NO_REVIEW_TERMS_MESSAGE, REVIEW_REVEAL_FAILED_SUFFIX } from "./copy";
 import {

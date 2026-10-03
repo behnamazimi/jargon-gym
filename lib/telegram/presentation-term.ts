@@ -1,5 +1,5 @@
 import { escapeText } from "entities";
-import type { TermCard, TermCardRelationship } from "@/lib/jargon/term-card";
+import type { TermCard, TermCardRelationship } from "@/lib/terms/term-card";
 import type { InlineKeyboardMarkup } from "./actions";
 
 const TELEGRAM_MESSAGE_LIMIT = 4096;

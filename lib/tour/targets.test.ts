@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { STUDY_DOCK_TABS } from "@/components/app/account-nav";
-import type { SettingsTabId } from "@/components/jargon/settings/ui-layout";
+import type { SettingsTabId } from "@/components/settings/ui-layout";
 import { TOUR_TARGETS } from "./targets";
 
 // Some anchors are built from other names (`nav-${label}`, `settings-${id}`);

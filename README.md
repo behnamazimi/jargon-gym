@@ -98,15 +98,16 @@ TypeScript.
 
 ## Project layout
 
-| Path               | Role                                      |
-| ------------------ | ----------------------------------------- |
-| `app/`             | Next.js routes (auth, jargon UI, API)     |
-| `components/`      | React UI                                  |
-| `lib/trace/`       | TRACE scoring — decay, recall, mastery    |
-| `lib/trace-queue/` | Term-picking pipeline built on TRACE      |
-| `lib/jargon/`      | Term cards, outcomes, known/unknown state |
-| `lib/study/`       | Collection scope and study pool wrapper   |
-| `lib/telegram/`    | Telegram bot flows                        |
-| `widget/`          | macOS Übersicht desktop widget            |
-| `supabase/`        | Migrations and Edge Functions             |
-| `docs/`            | Internal documentation                    |
+| Path               | Role                                    |
+| ------------------ | --------------------------------------- |
+| `app/`             | Next.js routes (auth, jargon UI, API)   |
+| `components/`      | React UI                                |
+| `lib/trace/`       | TRACE scoring — decay, recall, mastery  |
+| `lib/trace-queue/` | Term-picking pipeline built on TRACE    |
+| `lib/terms/`       | Term model, cards, outcomes, term CRUD  |
+| `lib/library/`     | Library page data, collections, filters |
+| `lib/study/`       | Collection scope and study pool wrapper |
+| `lib/telegram/`    | Telegram bot flows                      |
+| `widget/`          | macOS Übersicht desktop widget          |
+| `supabase/`        | Migrations and Edge Functions           |
+| `docs/`            | Internal documentation                  |

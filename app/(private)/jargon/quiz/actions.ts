@@ -1,6 +1,6 @@
 "use server";
 
-import { applyQuizAnswer } from "@/lib/jargon/review-outcome";
+import { applyQuizAnswer } from "@/lib/terms/review-outcome";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { withRunGuard } from "@/lib/ai/run-guard";
 import { runMetered } from "@/lib/ai/run-metered";

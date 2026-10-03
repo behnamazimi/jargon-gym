@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { readVerifiedUser } from "@/lib/auth/verified-user-header";
-import { fetchCollectionForExport, isUuid } from "@/lib/jargon/library/details";
+import { fetchCollectionForExport, isUuid } from "@/lib/library/details";
 import { createClient } from "@/lib/supabase/server";
 
 const NO_STORE = { "Cache-Control": "private, no-store" };

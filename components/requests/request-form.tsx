@@ -3,7 +3,7 @@
 import { ChevronDown } from "lucide-react";
 import { useState, useTransition } from "react";
 import { createRequest } from "@/app/(private)/jargon/import/request/actions";
-import { SearchResults } from "@/components/jargon/import/chooser-search-results";
+import { SearchResults } from "@/components/import/chooser-search-results";
 import { RequestSent } from "@/components/requests/request-sent";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { LanguageToggle } from "@/components/jargon/language-toggle";
+import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useBrowseSearch } from "@/hooks/use-browse-search";
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import { MAX_TOPIC_LENGTH } from "@/lib/requests/schema";
 import {

@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 import type { Database } from "@/lib/supabase/database.types";
 import type { ProviderCall } from "./provider";
 

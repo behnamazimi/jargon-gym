@@ -1,0 +1,197 @@
+"use client";
+
+import { PauseCircle, Plus, Search, X } from "lucide-react";
+import { useLinkStatus } from "next/link";
+import { useMemo, useState } from "react";
+import { Button, LinkButton } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { rememberLibraryDomain } from "@/lib/library/pick-domain";
+import type { Domain } from "@/lib/terms/types";
+import { cn } from "@/lib/utils";
+
+type DomainSidebarProps = {
+  domains: Domain[];
+  currentDomainId: string;
+  onDomainSelect?: () => void;
+  className?: string;
+};
+
+/** Shown on the collection being opened until its list arrives. */
+function OpeningIndicator() {
+  const { pending } = useLinkStatus();
+  return pending ? (
+    <span className="loading loading-spinner loading-xs ml-auto shrink-0" aria-label="Opening" />
+  ) : null;
+}
+
+function DomainSidebarSection({
+  label,
+  domains,
+  currentDomainId,
+  onSelect,
+}: {
+  label: string;
+  domains: Domain[];
+  currentDomainId: string;
+  onSelect: () => void;
+}) {
+  if (domains.length === 0) return null;
+
+  return (
+    <div className="space-y-1">
+      <p className="px-2 text-xs font-semibold tracking-wider text-base-content/70 uppercase">
+        {label}
+      </p>
+      <ul className="space-y-1">
+        {domains.map((domain) => {
+          const isSelected = domain.id === currentDomainId;
+          return (
+            <li key={domain.id}>
+              <LinkButton
+                href={`/jargon?domain=${domain.id}`}
+                variant="ghost"
+                aria-current={isSelected ? "page" : undefined}
+                aria-label={
+                  domain.source === "added"
+                    ? `${domain.name} (added to your collection)`
+                    : domain.name
+                }
+                onPress={() => {
+                  rememberLibraryDomain(domain.id);
+                  onSelect();
+                }}
+                className={cn(
+                  "h-auto w-full flex-col items-start gap-1 rounded-field px-3 py-2 text-left",
+                  isSelected
+                    ? "bg-base-200 text-base-content hover:bg-base-200"
+                    : "hover:bg-base-200/60",
+                )}
+              >
+                <span className="flex w-full min-w-0 items-center gap-2">
+                  <span className="truncate text-sm font-medium">
+                    {domain.icon ? `${domain.icon} ` : ""}
+                    {domain.name}
+                  </span>
+                  {!domain.isActiveForReview ? (
+                    <PauseCircle
+                      className="ml-auto size-3.5 shrink-0 opacity-50"
+                      aria-label="Paused"
+                      strokeWidth={1.5}
+                    />
+                  ) : null}
+                  <OpeningIndicator />
+                </span>
+                <span
+                  className={cn(
+                    "text-xs tabular-nums",
+                    isSelected ? "text-primary-text" : "text-base-content/70",
+                  )}
+                >
+                  {domain.termsLearnedCount} of {domain.termCount} mastered or known
+                  {domain.unfinishedCount > 0 ? ` · ${domain.unfinishedCount} to finish` : ""}
+                </span>
+              </LinkButton>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+export function DomainSidebar({
+  domains,
+  currentDomainId,
+  onDomainSelect,
+  className,
+}: DomainSidebarProps) {
+  const [filterQuery, setFilterQuery] = useState("");
+
+  const filteredDomains = useMemo(() => {
+    const query = filterQuery.trim().toLowerCase();
+    if (!query) return domains;
+    return domains.filter((domain) => domain.name.toLowerCase().includes(query));
+  }, [domains, filterQuery]);
+
+  const ownedDomains = useMemo(
+    () => filteredDomains.filter((domain) => domain.source === "owned"),
+    [filteredDomains],
+  );
+  const addedDomains = useMemo(
+    () => filteredDomains.filter((domain) => domain.source === "added"),
+    [filteredDomains],
+  );
+
+  function handleSelect() {
+    onDomainSelect?.();
+  }
+
+  if (domains.length === 0) return null;
+
+  return (
+    <nav
+      aria-label="Collections"
+      data-tour="library-collections"
+      className={cn("flex min-h-0 flex-col gap-2 p-1", className)}
+    >
+      <div className="relative shrink-0">
+        <Search
+          className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-base-content/70"
+          aria-hidden
+          strokeWidth={1.5}
+        />
+        <Input
+          type="search"
+          value={filterQuery}
+          onChange={(event) => setFilterQuery(event.target.value)}
+          placeholder="Search collections…"
+          aria-label="Search collections"
+          className="rounded-field py-2 pr-8 pl-8 text-base sm:text-sm"
+        />
+        {filterQuery ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 text-base-content/70 hover:text-base-content"
+            onPress={() => setFilterQuery("")}
+            aria-label="Clear filter"
+          >
+            <X className="size-3.5" aria-hidden strokeWidth={1.5} />
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
+        {filteredDomains.length === 0 ? (
+          <p className="px-2 text-sm text-base-content/70">No collections match your search.</p>
+        ) : (
+          <>
+            <DomainSidebarSection
+              label="Owned"
+              domains={ownedDomains}
+              currentDomainId={currentDomainId}
+              onSelect={handleSelect}
+            />
+            <DomainSidebarSection
+              label="Added"
+              domains={addedDomains}
+              currentDomainId={currentDomainId}
+              onSelect={handleSelect}
+            />
+          </>
+        )}
+      </div>
+
+      <LinkButton
+        href="/jargon/import"
+        variant="outline"
+        className="w-full shrink-0 justify-start gap-2 border-dashed"
+        onPress={onDomainSelect}
+      >
+        <Plus className="size-4" aria-hidden strokeWidth={1.5} />
+        Add collection
+      </LinkButton>
+    </nav>
+  );
+}

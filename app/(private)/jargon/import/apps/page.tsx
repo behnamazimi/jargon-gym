@@ -1,7 +1,7 @@
 import { ChevronRight, Layers } from "lucide-react";
 import Link from "next/link";
-import { PageHeader } from "@/components/jargon/page-header";
-import { APP_GUIDES } from "@/lib/jargon/import/guides";
+import { PageHeader } from "@/components/shared/page-header";
+import { APP_GUIDES } from "@/lib/import/guides";
 
 export default function AppPickerPage() {
   return (

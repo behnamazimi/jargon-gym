@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { recordRead } from "@/lib/jargon/review-outcome";
+import { recordRead } from "@/lib/terms/review-outcome";
 import { authenticateWidgetRequest } from "@/lib/widget/auth-request";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

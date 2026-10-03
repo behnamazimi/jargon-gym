@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 import { NARRATION_PAUSE } from "@/lib/ai/speech/pause";
 import type { NarratedTermFields } from "./types";
 
@@ -42,7 +42,7 @@ const CONNECTOR_PHRASES: Partial<Record<DomainLanguage, ConnectorPhrases>> = {
 /**
  * Builds the spoken-narration script for a term. Static and deterministic —
  * no LLM involved — so content_hash over the raw fields is a reliable cache
- * key. Field order mirrors components/jargon/term-body.tsx's display order.
+ * key. Field order mirrors components/terms/term-body.tsx's display order.
  */
 export function buildNarrationScript(fields: NarratedTermFields, language: DomainLanguage): string {
   const phrases = CONNECTOR_PHRASES[language];

@@ -1,7 +1,7 @@
 import { FolderPlus } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/jargon/import/actions";
-import { ImportChooser } from "@/components/jargon/import/import-chooser";
-import { PageHeader } from "@/components/jargon/page-header";
+import { ImportChooser } from "@/components/import/import-chooser";
+import { PageHeader } from "@/components/shared/page-header";
 import { RequestsSection } from "@/components/requests/requests-section";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { fetchMyRequests, loadRequestEntryFor } from "@/lib/requests/repository";

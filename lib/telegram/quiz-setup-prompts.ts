@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
+import { fetchCollectionStats } from "@/lib/mastery/collection-stats";
 import type { TelegramAction } from "./actions";
 import { NO_KNOWN_TERMS_FOR_QUIZ_MESSAGE } from "./copy";
 import {

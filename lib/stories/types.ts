@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 
 export const STORY_MIN_TERMS = 3;
 export const STORY_OUTLINE_MAX = 280;

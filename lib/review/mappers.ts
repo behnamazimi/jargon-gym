@@ -1,4 +1,4 @@
-import type { TermCard } from "@/lib/jargon/term-card";
+import type { TermCard } from "@/lib/terms/term-card";
 import type { ReviewTerm } from "./types";
 
 export function toReviewTerm(card: TermCard): ReviewTerm {

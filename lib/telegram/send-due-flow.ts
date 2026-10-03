@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { deliverNextTerm } from "@/lib/jargon/term-delivery";
+import { deliverNextTerm } from "@/lib/terms/term-delivery";
 import type { TelegramAction } from "./actions";
 import { CAUGHT_UP_MESSAGE } from "./copy";
 import { buildReadRevealKeyboard, formatReadPrompt } from "./presentation";

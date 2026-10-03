@@ -1,4 +1,4 @@
-import { DOMAIN_LANGUAGE_OPTIONS, type DomainLanguage } from "@/lib/jargon/languages";
+import { DOMAIN_LANGUAGE_OPTIONS, type DomainLanguage } from "@/lib/terms/languages";
 import { lengthPhrase, rangePhrase, type StoryLength } from "./length";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, ReadingLevel, StoryTerm } from "./types";

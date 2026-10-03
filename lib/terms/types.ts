@@ -1,0 +1,107 @@
+import type { DomainLanguage } from "./languages";
+
+export type TermRelationship = {
+  id: string;
+  relationshipType: string;
+  description: string;
+  direction: "outgoing" | "incoming";
+  relatedTermId: string;
+  relatedTermName: string;
+};
+
+/** Raw relationship row with both term names resolved (for hydrate / browse). */
+export type TermRelationshipLink = {
+  id: string;
+  relationship_type: string;
+  description: string;
+  source_term_id: string;
+  target_term_id: string;
+  source_term_name: string;
+  target_term_name: string;
+};
+
+export type Term = {
+  id: string;
+  term: string;
+  category: string | null;
+  definition: string;
+  example: string;
+  mentalModel?: string;
+  discussion: string;
+  antiExample?: string;
+  controversy?: string;
+  note?: string;
+  relationships: TermRelationship[];
+};
+
+/** A term with no definition yet. It is saved but stays out of study. */
+export type UnfinishedTerm = Omit<Term, "definition"> & { definition: null };
+
+/** The Library's lightweight row: enough to list, search, filter and sort.
+ *  The rest of a term is fetched when its card is about to be shown. */
+export type LibraryTerm = Pick<Term, "id" | "term" | "category" | "definition">;
+
+export type UnfinishedLibraryTerm = Pick<UnfinishedTerm, "id" | "term" | "category">;
+
+export type DomainSource = "owned" | "added";
+
+export type Domain = {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  visibility: "private" | "shared";
+  language: DomainLanguage;
+  source: DomainSource;
+  isActiveForReview: boolean;
+  termCount: number;
+  /** Terms without a definition. Only the owner ever sees a non-zero count. */
+  unfinishedCount: number;
+  knownCount: number;
+  termsLearnedCount: number;
+  markedKnownCount: number;
+};
+
+export type FullLibraryPageData = {
+  domain: Domain;
+  domains: Domain[];
+  terms: Term[];
+  unfinishedTerms: UnfinishedTerm[];
+  knownTermIds: string[];
+  markedKnownTermIds: string[];
+  everMasteredTermIds: string[];
+  activeDomainIds: string[];
+};
+
+/** One collection as the Library shows it. `loadedAt` (server time) lets
+ *  newer local edits win over this snapshot and older ones lose to it. */
+export type LibraryPageData = {
+  domain: Domain;
+  terms: LibraryTerm[];
+  unfinishedTerms: UnfinishedLibraryTerm[];
+  knownTermIds: string[];
+  markedKnownTermIds: string[];
+  everMasteredTermIds: string[];
+  loadedAt: number;
+};
+
+export type SortMode = "default" | "category" | "az" | "unknown";
+
+export type FilterOptions = {
+  searchQuery: string;
+  activeCategories: Set<string>;
+  hideKnown: boolean;
+  sortMode: SortMode;
+  knownTerms: Set<string>;
+  markedKnownTerms: Set<string>;
+};
+
+export type SharedDomain = {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  ownerId: string;
+  termCount: number;
+  inCollection: boolean;
+};

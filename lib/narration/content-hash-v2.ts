@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 import type { NarratedTermFields } from "./types";
 
 /** Bump when the wording in template.ts changes, so cached clips are remade. */

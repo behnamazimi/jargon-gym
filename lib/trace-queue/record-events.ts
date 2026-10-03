@@ -1,4 +1,4 @@
-/** Trace-queue event-recording RPCs. Internal — only lib/jargon/review-outcome.ts should call these. */
+/** Trace-queue event-recording RPCs. Internal — only lib/terms/review-outcome.ts should call these. */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";

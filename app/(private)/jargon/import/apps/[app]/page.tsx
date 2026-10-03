@@ -1,9 +1,9 @@
 import { Layers } from "lucide-react";
 import { notFound } from "next/navigation";
-import { PageHeader } from "@/components/jargon/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LinkButton } from "@/components/ui/button";
-import { APP_GUIDES, findGuide } from "@/lib/jargon/import/guides";
+import { APP_GUIDES, findGuide } from "@/lib/import/guides";
 
 type PageProps = {
   params: Promise<{ app: string }>;

@@ -1,6 +1,6 @@
 "use server";
 
-import { applyReviewGrade } from "@/lib/jargon/review-outcome";
+import { applyReviewGrade } from "@/lib/terms/review-outcome";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import type { ReviewGrade } from "@/lib/trace";
 

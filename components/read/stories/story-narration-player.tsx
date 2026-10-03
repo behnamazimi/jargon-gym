@@ -1,0 +1,125 @@
+"use client";
+
+import { Headphones, Loader2 } from "lucide-react";
+import { useRef, useState, type Ref } from "react";
+import {
+  StoryAudioControls,
+  type StoryPlayerHandle,
+} from "@/components/read/stories/story-audio-controls";
+import type { ShadowingSetup } from "@/components/read/stories/use-shadowing-playback";
+import type { ClipPauses } from "@/lib/stories/silence";
+import { Button } from "@/components/ui/button";
+import { useMountEffect } from "@/hooks/use-mount-effect";
+
+const RETRY_INTERVAL_MS = 3000;
+const PREPARE_TIMEOUT_MS = 2 * 60 * 1000;
+
+type PlayerStatus = "idle" | "preparing" | "ready" | "capped" | "unavailable";
+
+const STATUS_MESSAGES: Partial<Record<PlayerStatus, string>> = {
+  preparing: "Preparing audio…",
+  capped: "Daily listening limit reached. Try again tomorrow.",
+  unavailable: "Audio unavailable for this story.",
+};
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Audio is made on the first Listen tap, so the player asks the route to
+ *  prepare it (retrying while another request is still making it), then hands
+ *  the ready file to the story's audio controls. */
+export function StoryNarrationPlayer({
+  storyId,
+  onProgress,
+  shadowing,
+  sentencePlayback,
+  handleRef,
+  onClipPauses,
+}: {
+  storyId: string;
+  onProgress?: (fraction: number | null) => void;
+  shadowing?: ShadowingSetup | null;
+  sentencePlayback?: ShadowingSetup | null;
+  handleRef?: Ref<StoryPlayerHandle>;
+  onClipPauses?: (clip: ClipPauses) => void;
+}) {
+  const [status, setStatus] = useState<PlayerStatus>("idle");
+  const cancelledRef = useRef(false);
+  const src = `/api/stories/${storyId}/narration`;
+
+  useMountEffect(() => {
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true;
+    };
+  });
+
+  async function prepare() {
+    setStatus("preparing");
+    const deadline = Date.now() + PREPARE_TIMEOUT_MS;
+    while (!cancelledRef.current && Date.now() < deadline) {
+      let response: Response;
+      try {
+        response = await fetch(src, { method: "POST" });
+      } catch {
+        break;
+      }
+      if (cancelledRef.current) return;
+      if (response.status === 200) {
+        setStatus("ready");
+        return;
+      }
+      if (response.status === 429) {
+        setStatus("capped");
+        return;
+      }
+      if (response.status !== 202) break;
+      await sleep(RETRY_INTERVAL_MS);
+    }
+    if (!cancelledRef.current) setStatus("unavailable");
+  }
+
+  if (status === "ready") {
+    return (
+      <StoryAudioControls
+        src={src}
+        onError={() => {
+          setStatus("unavailable");
+          onProgress?.(null);
+        }}
+        onProgress={onProgress}
+        shadowing={shadowing}
+        sentencePlayback={sentencePlayback}
+        handleRef={handleRef}
+        onClipPauses={onClipPauses}
+      />
+    );
+  }
+
+  const message = STATUS_MESSAGES[status];
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <Button
+        type="button"
+        size="xs"
+        variant="ghost"
+        onPress={() => void prepare()}
+        isDisabled={status === "preparing" || status === "capped"}
+        className="-ms-2 h-8 px-2 text-xs font-medium text-base-content/70"
+      >
+        {status === "preparing" ? (
+          <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />
+        ) : (
+          <Headphones className="size-4" aria-hidden strokeWidth={1.5} />
+        )}
+        {shadowing ? "Listen and shadow" : "Listen"}
+      </Button>
+      {message ? (
+        <p className="m-0 text-xs text-base-content/70" role="status">
+          {message}
+        </p>
+      ) : null}
+    </div>
+  );
+}

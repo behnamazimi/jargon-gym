@@ -3,7 +3,7 @@ import Link from "next/link";
 import { BookOpen, LayoutList, Sparkles, Zap } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
-import { ProfileMenu } from "@/components/jargon/profile-menu";
+import { ProfileMenu } from "@/components/settings/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
 import { LoggedOutHeaderNav } from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";

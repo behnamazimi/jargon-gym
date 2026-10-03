@@ -1,6 +1,6 @@
 import { Compass, Mail } from "lucide-react";
 import Link from "next/link";
-import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
+import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
 import {
   ContentPageHeader,
   ContentPageIntro,
