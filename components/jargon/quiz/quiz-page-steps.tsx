@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { PreparingScene } from "@/components/illustrations/scenes/preparing";
 import { CreditsInsteadButton } from "@/components/jargon/ai-credits/credits-instead-button";
 import { QuizQuestionView } from "@/components/jargon/quiz/quiz-question";
 import {
@@ -25,8 +26,7 @@ export function QuizGeneratingStep({ quiz }: { quiz: UseQuizSessionResult }) {
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <QuizPanelBody className="flex min-h-0 flex-1 items-center justify-center">
         <QuizCenteredState
-          icon={Loader2}
-          iconClassName="animate-spin"
+          illustration={<PreparingScene className="w-48" />}
           title={isSimple ? "Preparing your quiz" : "Building your quiz"}
           description={
             isSimple

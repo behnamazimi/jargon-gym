@@ -161,6 +161,90 @@
   animation: ill-steam var(--ill-duration, 1.8s) ease-out var(--ill-delay, 0s) infinite;
 }
 
+/* Preparing: writes three lines along a card, then starts a fresh one. The
+   ill-write-* lines draw in under the pencil (needs Line with `drawable`). */
+.ill-scribe,
+.ill-write-1,
+.ill-write-2,
+.ill-write-3,
+.ill-done-flash {
+  animation: var(--ill-duration, 6s) linear var(--ill-delay, 0s) infinite;
+}
+
+.ill-write-1,
+.ill-write-2,
+.ill-write-3 {
+  stroke-dasharray: 1 2;
+}
+
+.ill-scribe {
+  animation-name: ill-scribe;
+}
+.ill-write-1 {
+  animation-name: ill-write-1;
+}
+.ill-write-2 {
+  animation-name: ill-write-2;
+}
+.ill-write-3 {
+  animation-name: ill-write-3;
+}
+.ill-done-flash {
+  animation-name: ill-done-flash;
+  animation-timing-function: ease-out;
+}
+
+/* Not found: sweeps a flashlight, finds nothing, tilts its head and scratches it. */
+.ill-search,
+.ill-puzzle-tilt,
+.ill-scratch {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-search {
+  animation-name: ill-search;
+}
+.ill-puzzle-tilt {
+  animation-name: ill-puzzle-tilt;
+}
+.ill-scratch {
+  animation-name: ill-scratch;
+}
+
+/* Something went wrong: the house of cards wobbles, its top floor falls, the
+   builder flinches, and it's built back up for another try. */
+.ill-topple,
+.ill-fall-top,
+.ill-fall-next,
+.ill-fall-dashes,
+.ill-flinch,
+.ill-flinch-arm,
+.ill-flinch-eyes {
+  animation: var(--ill-duration, 5s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-topple {
+  animation-name: ill-topple;
+}
+.ill-fall-top {
+  animation-name: ill-fall-top;
+}
+.ill-fall-next {
+  animation-name: ill-fall-next;
+}
+.ill-fall-dashes {
+  animation-name: ill-fall-dashes;
+}
+.ill-flinch {
+  animation-name: ill-flinch;
+}
+.ill-flinch-arm {
+  animation-name: ill-flinch-arm;
+}
+.ill-flinch-eyes {
+  animation-name: ill-flinch-eyes;
+}
+
 /* Invite: sneaks a peek over the rim, then climbs out with the card overhead,
    shows it off, and ducks back in. All share one beat. */
 .ill-emerge,
@@ -833,6 +917,332 @@
   76%,
   100% {
     transform: none;
+  }
+}
+
+/* The pencil: along a line, a quick carriage return down to the next, three
+   lines, then a hop back to the top. Offsets match PreparingScene's lines. */
+@keyframes ill-scribe {
+  0%,
+  4% {
+    transform: none;
+  }
+  28% {
+    transform: translateX(150px);
+    animation-timing-function: ease-in-out;
+  }
+  31% {
+    transform: translate(75px, -10px);
+    animation-timing-function: ease-in-out;
+  }
+  34% {
+    transform: translateY(32px);
+  }
+  58% {
+    transform: translate(150px, 32px);
+    animation-timing-function: ease-in-out;
+  }
+  61% {
+    transform: translate(75px, 22px);
+    animation-timing-function: ease-in-out;
+  }
+  64% {
+    transform: translateY(64px);
+  }
+  80% {
+    transform: translate(80px, 64px);
+    animation-timing-function: ease-in-out;
+  }
+  88% {
+    transform: translate(40px, 16px);
+    animation-timing-function: ease-in-out;
+  }
+  94%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Each line draws in while the pencil crosses it; all fade when the card is done. */
+@keyframes ill-write-1 {
+  0%,
+  4% {
+    stroke-dashoffset: 1.05;
+  }
+  28%,
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes ill-write-2 {
+  0%,
+  34% {
+    stroke-dashoffset: 1.05;
+  }
+  58%,
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes ill-write-3 {
+  0%,
+  64% {
+    stroke-dashoffset: 1.05;
+  }
+  80%,
+  84% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  90%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+@keyframes ill-done-flash {
+  0%,
+  80% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  83% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* The flashlight arm: sweeps up and down, settles on the empty spot, then again. */
+@keyframes ill-search {
+  0%,
+  100% {
+    transform: rotate(-12deg);
+  }
+  18% {
+    transform: rotate(9deg);
+  }
+  30% {
+    transform: rotate(-5deg);
+  }
+  40%,
+  64% {
+    transform: none;
+  }
+}
+
+/* Head tilts while it stares at the nothing it found. Bottom origin. */
+@keyframes ill-puzzle-tilt {
+  0%,
+  42% {
+    transform: none;
+  }
+  48%,
+  66% {
+    transform: rotate(-5deg);
+  }
+  72%,
+  100% {
+    transform: none;
+  }
+}
+
+/* A little head scratch during the tilt. Pivot at the shoulder. */
+@keyframes ill-scratch {
+  0%,
+  47%,
+  65%,
+  100% {
+    transform: none;
+  }
+  50%,
+  56%,
+  62% {
+    transform: rotate(-6deg);
+  }
+  53%,
+  59% {
+    transform: rotate(4deg);
+  }
+}
+
+/* The house of cards wobbling before the fall. Bottom origin. */
+@keyframes ill-topple {
+  0%,
+  28%,
+  44%,
+  100% {
+    transform: none;
+  }
+  32% {
+    transform: rotate(-2deg);
+  }
+  36% {
+    transform: rotate(3deg);
+  }
+  40% {
+    transform: rotate(-2deg);
+  }
+}
+
+/* The top floor's right card: tips over, tumbles off to the right, lands on
+   its side, bounces, lies there, then is back in place (faded in) for the
+   next try. Rotation adds to the card's own lean. */
+@keyframes ill-fall-top {
+  0%,
+  42% {
+    transform: none;
+    opacity: 1;
+  }
+  46% {
+    transform: translate(18px, 4px) rotate(24deg);
+  }
+  52% {
+    transform: translate(110px, 30px) rotate(70deg);
+    animation-timing-function: ease-in;
+  }
+  58% {
+    transform: translate(228px, 114px) rotate(106deg);
+    animation-timing-function: ease-out;
+  }
+  61% {
+    transform: translate(228px, 106px) rotate(100deg);
+    animation-timing-function: ease-in;
+  }
+  64%,
+  84% {
+    transform: translate(228px, 114px) rotate(106deg);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(228px, 114px) rotate(106deg);
+    opacity: 0;
+  }
+  91% {
+    transform: none;
+    opacity: 0;
+  }
+  96%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Its partner loses its support a beat later and follows it down. */
+@keyframes ill-fall-next {
+  0%,
+  45% {
+    transform: none;
+    opacity: 1;
+  }
+  50% {
+    transform: translate(20px, 6px) rotate(30deg);
+  }
+  56% {
+    transform: translate(100px, 50px) rotate(56deg);
+    animation-timing-function: ease-in;
+  }
+  61% {
+    transform: translate(180px, 114px) rotate(74deg);
+    animation-timing-function: ease-out;
+  }
+  64% {
+    transform: translate(180px, 108px) rotate(70deg);
+    animation-timing-function: ease-in;
+  }
+  67%,
+  84% {
+    transform: translate(180px, 114px) rotate(74deg);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(180px, 114px) rotate(74deg);
+    opacity: 0;
+  }
+  91% {
+    transform: none;
+    opacity: 0;
+  }
+  98%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Speed lines, only while the cards fall. */
+@keyframes ill-fall-dashes {
+  0%,
+  45%,
+  62%,
+  100% {
+    opacity: 0;
+  }
+  48%,
+  58% {
+    opacity: 1;
+  }
+}
+
+/* Shrinks back as the cards fall. Bottom origin. */
+@keyframes ill-flinch {
+  0%,
+  46%,
+  70%,
+  100% {
+    transform: none;
+  }
+  50%,
+  62% {
+    transform: scale(1.05, 0.92);
+  }
+}
+
+/* Hands fly up to the cheeks, then drop. Pivot at the shoulder. */
+@keyframes ill-flinch-arm {
+  0%,
+  45%,
+  74%,
+  100% {
+    transform: none;
+  }
+  50%,
+  64% {
+    transform: rotate(calc(var(--ill-dir, 1) * -140deg));
+  }
+}
+
+/* Eyes squeezed shut through the crash. */
+@keyframes ill-flinch-eyes {
+  0%,
+  46%,
+  66%,
+  100% {
+    transform: none;
+  }
+  49%,
+  62% {
+    transform: scaleY(0.15);
   }
 }
 

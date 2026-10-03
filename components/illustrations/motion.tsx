@@ -27,6 +27,21 @@ type MotionKind =
   | "nod"
   | "sip"
   | "steam"
+  | "scribe"
+  | "write-1"
+  | "write-2"
+  | "write-3"
+  | "done-flash"
+  | "search"
+  | "puzzle-tilt"
+  | "scratch"
+  | "topple"
+  | "fall-top"
+  | "fall-next"
+  | "fall-dashes"
+  | "flinch"
+  | "flinch-arm"
+  | "flinch-eyes"
   | "emerge"
   | "emerge-card"
   | "emerge-squash"
@@ -66,15 +81,16 @@ export function Motion({
   pivot,
   children,
 }: MotionProps) {
-  const style: Record<string, string | number> = { "--ill-delay": `${-phase}s` };
-  if (duration !== undefined) style["--ill-duration"] = `${duration}s`;
-  if (amount !== undefined) style["--ill-amount"] = amount;
-  if (mirror) style["--ill-dir"] = -1;
-  if (origin) style["--ill-origin"] = origin;
-  if (pivot) {
-    style["--ill-box"] = "view-box";
-    style["--ill-origin"] = `${pivot[0]}px ${pivot[1]}px`;
-  }
+  // Custom properties inherit, so a nested Motion would otherwise pick up its
+  // parent's pivot, size or direction. "initial" falls back to the kind's default.
+  const style: Record<string, string | number> = {
+    "--ill-delay": `${-phase}s`,
+    "--ill-duration": duration === undefined ? "initial" : `${duration}s`,
+    "--ill-amount": amount ?? "initial",
+    "--ill-dir": mirror ? -1 : 1,
+    "--ill-box": pivot ? "view-box" : "fill-box",
+    "--ill-origin": pivot ? `${pivot[0]}px ${pivot[1]}px` : (origin ?? "center"),
+  };
 
   return (
     <g className={`ill-motion ill-${kind}`} style={style as CSSProperties}>

@@ -2,6 +2,7 @@
 
 import { AlertTriangle } from "lucide-react";
 import { useEffect } from "react";
+import { SomethingWentWrongScene } from "@/components/illustrations/scenes/something-went-wrong";
 import { StatusPage } from "@/components/status-page";
 import { Button, LinkButton } from "@/components/ui/button";
 
@@ -21,6 +22,7 @@ export default function Error({ error, reset, unstable_retry }: ErrorProps) {
   return (
     <StatusPage
       icon={AlertTriangle}
+      illustration={<SomethingWentWrongScene className="w-72 sm:w-96" />}
       title="Something went wrong"
       description="An unexpected error occurred. Try again, or return home if the problem continues."
     >

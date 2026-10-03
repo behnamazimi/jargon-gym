@@ -113,12 +113,15 @@ export function QuizKeyboardHint({ action }: { action: string }) {
 
 export function QuizCenteredState({
   icon: Icon,
+  illustration,
   title,
   description,
   children,
   iconClassName,
 }: {
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  /** Shown instead of the icon, e.g. a scene from components/illustrations. */
+  illustration?: ReactNode;
   title: string;
   description?: string;
   children?: ReactNode;
@@ -126,9 +129,12 @@ export function QuizCenteredState({
 }) {
   return (
     <div className="mx-auto flex max-w-sm flex-col items-center gap-3 py-2 text-center">
-      <div className="flex size-10 items-center justify-center rounded-field bg-primary/10 text-primary">
-        <Icon className={cn("size-5", iconClassName)} aria-hidden strokeWidth={1.5} />
-      </div>
+      {illustration ??
+        (Icon ? (
+          <div className="flex size-10 items-center justify-center rounded-field bg-primary/10 text-primary">
+            <Icon className={cn("size-5", iconClassName)} aria-hidden strokeWidth={1.5} />
+          </div>
+        ) : null)}
       <div className="space-y-1">
         <h2 className="m-0 text-sm font-medium text-base-content/80">{title}</h2>
         {description ? <p className="m-0 text-sm text-base-content/70">{description}</p> : null}

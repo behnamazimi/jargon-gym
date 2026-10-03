@@ -3,6 +3,7 @@
 import { AlertTriangle } from "lucide-react";
 import { Figtree, Fraunces } from "next/font/google";
 import { useEffect } from "react";
+import { SomethingWentWrongScene } from "@/components/illustrations/scenes/something-went-wrong";
 import { StatusPageBody } from "@/components/status-page";
 import { Button, LinkButton } from "@/components/ui/button";
 import { DARK_THEME, LIGHT_THEME, THEME_COOKIE_NAME } from "@/lib/theme";
@@ -52,6 +53,7 @@ export default function GlobalError({ error, reset, unstable_retry }: GlobalErro
         <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3">
           <StatusPageBody
             icon={AlertTriangle}
+            illustration={<SomethingWentWrongScene className="w-72 sm:w-96" />}
             title="Something went wrong"
             description="A critical error occurred. Try again, or return home if the problem continues."
           >

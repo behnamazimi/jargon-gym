@@ -5,16 +5,25 @@ import { PageCenter } from "@/components/page-container";
 
 type StatusPageProps = {
   icon: LucideIcon;
+  illustration?: ReactNode;
   title: ReactNode;
   description?: string;
   children?: ReactNode;
   className?: string;
 };
 
-export function StatusPageBody({ icon, title, description, children, className }: StatusPageProps) {
+export function StatusPageBody({
+  icon,
+  illustration,
+  title,
+  description,
+  children,
+  className,
+}: StatusPageProps) {
   return (
     <EmptyState
       icon={icon}
+      illustration={illustration}
       title={title}
       description={description}
       titleAs="h1"

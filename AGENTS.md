@@ -142,7 +142,10 @@ svg shell, wobble filter and hatch patterns), `Shape` / `Line` / `Hatch`,
 `Clip`, the doodles in `marks.tsx`, and the seeded path builders in
 `geometry.ts`. Colours come only from `palette.ts`; the values and all motion
 live in `illustrations.css`. They're decorative and hidden from screen
-readers unless you pass a `title`.
+readers unless you pass a `title`. Reusable status scenes: `NotFoundScene`
+and `SomethingWentWrongScene` (pass them as `illustration` to `StatusPage`),
+and `PreparingScene` for waits while something is generated (pass it to
+`QuizCenteredState`).
 
 Keep new ones consistent with the existing scenes:
 
