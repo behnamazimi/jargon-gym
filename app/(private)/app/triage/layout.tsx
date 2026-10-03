@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
+
+export const metadata: Metadata = { title: "Triage" };
 
 export default function TriageLayout({ children }: { children: React.ReactNode }) {
   return (

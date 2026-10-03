@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { Signal } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
+
+export const metadata: Metadata = { title: "Mastery" };
 
 export default function MasteryLayout({ children }: { children: React.ReactNode }) {
   return (

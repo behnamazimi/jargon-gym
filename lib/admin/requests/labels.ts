@@ -13,9 +13,9 @@ export const ADMIN_STATUS: Record<string, { label: string; badge: string }> = {
 export const ADMIN_DECLINE_REASONS: Record<string, string> = {
   too_broad: "Too broad",
   too_niche: "Too niche",
-  not_jargon_or_vocabulary: "Not jargon or vocabulary",
+  not_jargon_or_vocabulary: "Not terms or vocabulary",
   language_not_supported: "Language not supported yet",
-  team_internal: "Team-internal jargon we can't know",
+  team_internal: "Team-internal terms we can't know",
 };
 
 export const ADMIN_LEVELS: Record<string, string> = {

@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import type { RequestEmail } from "@/lib/requests/email-copy";
 
-const FROM = "Jargon Gym <jargon-gym@bhnmzm.com>";
+const FROM = "Lobyas <info@lobyas.com>";
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;
@@ -36,12 +36,12 @@ type SendInviteEmailParams = {
 export async function sendInviteEmail({ to, signupUrl }: SendInviteEmailParams): Promise<void> {
   await sendEmail({
     to,
-    subject: "Jargon Gym access granted",
-    text: `You're in.\n\nJargon Gym is ready for you — use the link below to create your account:\n\n${signupUrl}\n\nSee you inside.`,
+    subject: "Lobyas access granted",
+    text: `You're in.\n\nLobyas is ready for you — use the link below to create your account:\n\n${signupUrl}\n\nSee you inside.`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto;">
         <h1 style="font-size: 20px;">You're in.</h1>
-        <p>Jargon Gym is ready for you — use the link below to create your account.</p>
+        <p>Lobyas is ready for you — use the link below to create your account.</p>
         <p>
           <a href="${signupUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
             Create your account
@@ -68,12 +68,12 @@ export async function sendWaitlistRequestNotification({
 
   await sendEmail({
     to,
-    subject: "New Jargon Gym access request",
-    text: `${requesterEmail} just asked for access to Jargon Gym.\n\nReview it here:\n\n${adminUrl}`,
+    subject: "New Lobyas access request",
+    text: `${requesterEmail} just asked for access to Lobyas.\n\nReview it here:\n\n${adminUrl}`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto;">
         <h1 style="font-size: 20px;">New access request</h1>
-        <p><strong>${requesterEmail}</strong> just asked for access to Jargon Gym.</p>
+        <p><strong>${requesterEmail}</strong> just asked for access to Lobyas.</p>
         <p>
           <a href="${adminUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
             Review request

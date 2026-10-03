@@ -1,5 +1,5 @@
 export const INSTALL_COMMAND =
-  "npx skills add https://github.com/behnamazimi/skills --skill jargon-gym-generator";
+  "npx skills add https://github.com/behnamazimi/skills --skill lobyas-generator";
 
 export const NEW_COLLECTION_KEY = "new";
 export const DEFAULT_COUNT = 100;
@@ -28,5 +28,5 @@ export function buildRunCommand(domain: string, countRaw: string, excludeRaw: st
     parts.push(`exclude: ${excludeTerms.join(", ")}`);
   }
 
-  return `/jargon-gym-generator ${parts.join(" | ")}`;
+  return `/lobyas-generator ${parts.join(" | ")}`;
 }

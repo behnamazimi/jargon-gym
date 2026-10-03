@@ -7,9 +7,9 @@ export const dynamic = "force-static";
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
-  title: "Public collections | Jargon Gym",
+  title: "Public collections",
   description:
-    "Browse public collections of jargon and language vocabulary, and see what terms actually mean.",
+    "Browse public collections of terms from fields and languages, and see what they actually mean.",
   alternates: { canonical: `${getPublicBaseUrl()}/collections` },
 };
 
@@ -21,7 +21,7 @@ export default async function PublicCollectionsIndexPage() {
       <div>
         <h1 className="text-3xl font-medium text-base-content">Public collections</h1>
         <p className="mt-1 text-base text-base-content/70">
-          Jargon and language vocabulary, explained in plain language.
+          Terms from fields and languages, explained in plain language.
         </p>
       </div>
 

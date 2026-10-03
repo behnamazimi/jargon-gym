@@ -26,7 +26,7 @@ Generate random values for `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_CRON_SECRET`, an
 ```
 TELEGRAM_BOT_USERNAME=YourBotName
 TELEGRAM_INTERNAL_SECRET=...
-APP_BASE_URL=https://your-jargon-gym-domain.com
+APP_BASE_URL=https://your-lobyas-domain.com
 SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
@@ -40,7 +40,7 @@ supabase secrets set \
   TELEGRAM_WEBHOOK_SECRET=... \
   TELEGRAM_CRON_SECRET=... \
   TELEGRAM_INTERNAL_SECRET=... \
-  APP_BASE_URL=https://your-jargon-gym-domain.com
+  APP_BASE_URL=https://your-lobyas-domain.com
 ```
 
 `TELEGRAM_INTERNAL_SECRET` must match Next.js. Edge Functions also receive `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` automatically when deployed (still used for inline-keyboard tracking).
@@ -113,7 +113,7 @@ After deploy, verify:
 
 ## 6. User flow
 
-1. User opens **Settings** in Jargon Gym → **Generate Telegram link**.
+1. User opens **Settings** in Lobyas → **Generate Telegram link**.
 2. User taps the link → Telegram opens the bot → **Start**.
 3. User runs `/read` or waits for scheduled reminders based on cadence.
 

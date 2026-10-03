@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { BookOpen } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { PromoSlot } from "@/components/promos/promo-slot";
 import { PageShell } from "@/components/page-container";
+
+export const metadata: Metadata = { title: "Review" };
 
 export default function ReviewLayout({ children }: { children: React.ReactNode }) {
   return (

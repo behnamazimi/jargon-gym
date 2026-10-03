@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { LibrarySidebar } from "@/components/library/library-sidebar";
@@ -13,6 +14,8 @@ import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/library/pick-domain";
  * only the query changes, so switching collections (?domain=) reloads just
  * the page below while the sidebar stays mounted.
  */
+export const metadata: Metadata = { title: "Library" };
+
 export default function LibraryLayout({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={<LibraryPageSkeleton />}>

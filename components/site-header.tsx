@@ -28,10 +28,10 @@ function SiteHeaderChrome({
           <Link
             href={homeHref}
             className="flex items-center gap-2 text-lg font-bold tracking-tight no-underline"
-            aria-label="Jargon Gym"
+            aria-label="Lobyas"
           >
             <BrandIcon className="lg:hidden" />
-            <span className="hidden whitespace-nowrap text-primary-text lg:inline">Jargon Gym</span>
+            <span className="hidden whitespace-nowrap text-primary-text lg:inline">Lobyas</span>
           </Link>
           {leftNav ? <nav className="flex items-center gap-1">{leftNav}</nav> : null}
         </div>

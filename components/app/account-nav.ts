@@ -72,5 +72,5 @@ export function studyScreenTitle(pathname: string): string {
   if (pathname === "/app/library") return "Library";
 
   const match = STUDY_SCREEN_TITLE_PREFIXES.find(([prefix]) => pathname.startsWith(prefix));
-  return match ? match[1] : "Jargon Gym";
+  return match ? match[1] : "Lobyas";
 }

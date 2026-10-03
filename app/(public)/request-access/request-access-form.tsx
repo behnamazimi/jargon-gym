@@ -44,8 +44,8 @@ export default function RequestAccessForm({
       />
       <h1 className="text-2xl font-medium">Request access</h1>
       <p className="text-sm text-base-content/70">
-        Jargon Gym is invite-only right now. Leave your email and I&apos;ll send you a signup link
-        when there&apos;s room.
+        Lobyas is invite-only right now. Leave your email and I&apos;ll send you a signup link when
+        there&apos;s room.
       </p>
 
       <form action={action} className="flex flex-col gap-4">

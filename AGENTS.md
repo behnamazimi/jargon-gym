@@ -173,3 +173,11 @@ counterparts in `lib/widget/` and `app/api/widget/`. Any change to the
 widget's logic must bump the version in [widget/version.json](widget/version.json) —
 `lib/widget/version.ts` and `scripts/widget-zip.sh` both read it as the
 single source of truth for the widget's release counter.
+
+# Brand
+
+The product is "Lobyas" in prose and UI, "lobyas" in identifiers, slugs and
+keys. User-facing copy says "terms", not "jargon". The request kind "Jargon",
+the quiz prompt's "real jargon" and "a new job's jargon" are the only literal
+uses. `lib/requests/copy.test.ts` fails if "jargon" appears elsewhere in the
+request copy.

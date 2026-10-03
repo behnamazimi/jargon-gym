@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { PageShell } from "@/components/page-container";
+
+export const metadata: Metadata = { title: "Add collection" };
 
 export default function ImportLayout({ children }: { children: React.ReactNode }) {
   return (

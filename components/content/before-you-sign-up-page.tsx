@@ -53,7 +53,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageHeader
           icon={Compass}
           title="Before you sign up"
-          description="A private app for learning a field's jargon or a language's vocabulary well enough to use it, not just recognize it. Here's the full picture before you ask for an invite."
+          description="A private app for learning the terms of a field or language well enough to use it, not just recognize it. Here's the full picture before you ask for an invite."
           backHref={isLoggedIn ? LIBRARY_HOME_PATH : PUBLIC_HOME_PATH}
           backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
@@ -109,7 +109,7 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
 
         <ContentPageSection title="Getting terms in">
           <p className="m-0">
-            I use a skill that generates jargon lists for different fields, more on that once
+            I use a skill that generates term lists for different fields, more on that once
             you&apos;re in, under More import options. There&apos;s a matching one for language
             vocabulary, words, phrases, or grammar for a language and level. You can also add terms
             one at a time, or skip building anything and browse a shared collection instead.{" "}

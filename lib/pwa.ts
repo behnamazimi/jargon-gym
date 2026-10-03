@@ -1,10 +1,10 @@
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 import { BRAND_ICON } from "@/lib/brand-icon";
 
-export const PWA_NAME = "Jargon Gym";
-export const PWA_SHORT_NAME = "Jargon Gym";
+export const PWA_NAME = "Lobyas";
+export const PWA_SHORT_NAME = "Lobyas";
 export const PWA_DESCRIPTION =
-  "Learn a field's jargon or a language's vocabulary well enough to actually use it: read, review, and quiz until it sticks.";
+  "Learn the terms of any field or language well enough to actually use them: read, review, and quiz until they stick.";
 export const PWA_START_URL = `${AUTHENTICATED_HOME_PATH}?source=pwa`;
 /** Identifies the installed app. Kept at its old value on purpose: a changed id makes browsers
  *  treat existing installs as a different app. */
