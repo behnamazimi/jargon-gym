@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, BookOpenText } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { EmptyBoxScene } from "@/components/illustrations/scenes/empty-box";
 import { PreparingScene } from "@/components/illustrations/scenes/preparing";
 import type { StoriesSetupData } from "@/lib/stories/setup";
 import { CreditsInsteadButton } from "@/components/jargon/ai-credits/credits-instead-button";
@@ -28,7 +29,7 @@ function StoriesNoTerms() {
   return (
     <QuizPanelBody>
       <QuizCenteredState
-        icon={BookOpenText}
+        illustration={<EmptyBoxScene className="w-44" />}
         title="Not enough terms to read"
         description={`Stories need a collection with at least ${STORY_MIN_TERMS} terms you haven't marked known.`}
       >

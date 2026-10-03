@@ -1,4 +1,5 @@
 import { Sparkles } from "lucide-react";
+import { EmptyBoxScene } from "@/components/illustrations/scenes/empty-box";
 import { EmptyState } from "@/components/jargon/empty-state";
 import { PageShell } from "@/components/page-container";
 import { StartCollectionButton } from "@/components/jargon/start-collection-button";
@@ -9,6 +10,7 @@ export function EmptyCollection() {
     <PageShell innerClassName="flex min-h-[60vh] flex-col items-center justify-center gap-6">
       <EmptyState
         icon={Sparkles}
+        illustration={<EmptyBoxScene className="w-56 sm:w-64" />}
         titleAs="h1"
         title={
           <>

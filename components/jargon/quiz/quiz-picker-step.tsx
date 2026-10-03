@@ -1,4 +1,4 @@
-import { AlertCircle } from "lucide-react";
+import { EmptyBoxScene } from "@/components/illustrations/scenes/empty-box";
 import { QuizCenteredState, QuizPanel, QuizPanelBody } from "@/components/jargon/quiz/quiz-ui";
 import { StudyNoActiveCollectionsState } from "@/components/jargon/study/study-paused-state";
 import { LinkButton } from "@/components/ui/button";
@@ -11,7 +11,7 @@ function QuizPickerNoTerms() {
   return (
     <QuizPanelBody>
       <QuizCenteredState
-        icon={AlertCircle}
+        illustration={<EmptyBoxScene className="w-44" />}
         title="No terms yet"
         description="Add some terms to a collection, then come back to quiz yourself."
       >

@@ -2,6 +2,7 @@
 
 import { type CSSProperties } from "react";
 import { ChevronDown, Dumbbell, RotateCcw, SlidersHorizontal, Trophy } from "lucide-react";
+import { KeepTrainingScene, QuizCheerScene } from "@/components/illustrations/scenes/quiz-results";
 import { QuizPanel, QuizPanelBody, QuizPanelHeader } from "@/components/jargon/quiz/quiz-ui";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -83,6 +84,7 @@ export function QuizResults({
 }: QuizResultsProps) {
   const percent = total > 0 ? Math.round((score / total) * 100) : 0;
   const hasMisses = missedTerms.length > 0;
+  const strongRound = !practice && total > 0 && score / total >= 0.8;
 
   return (
     <QuizPanel className="flex max-h-full min-h-0 flex-col">
@@ -94,6 +96,13 @@ export function QuizResults({
         }
       />
       <QuizPanelBody className="min-h-0 flex-1 space-y-6 overflow-y-auto">
+        <div className="flex justify-center">
+          {strongRound ? (
+            <QuizCheerScene className="w-40 sm:w-48" />
+          ) : (
+            <KeepTrainingScene className="w-40 sm:w-48" />
+          )}
+        </div>
         <div className="flex flex-col items-center gap-4 py-2 text-center sm:flex-row sm:gap-8 sm:text-left">
           <div
             className="radial-progress text-primary"

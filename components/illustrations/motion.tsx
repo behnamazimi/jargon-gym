@@ -2,6 +2,8 @@ import type { CSSProperties, ReactNode } from "react";
 
 type MotionKind =
   // Ambient
+  | "bob"
+  | "wiggle"
   | "breathe"
   | "look"
   | "blink"
@@ -52,6 +54,15 @@ type MotionKind =
   | "flinch"
   | "flinch-arm"
   | "flinch-eyes"
+  | "peek-lean"
+  | "box-shake"
+  | "look-up"
+  | "drift-in"
+  | "celebrate-hop"
+  | "celebrate-squash"
+  | "lift-bar"
+  | "lift-arms"
+  | "lift-squash"
   | "emerge"
   | "emerge-card"
   | "emerge-squash"
