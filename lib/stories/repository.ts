@@ -173,7 +173,7 @@ export async function hasCurrentStory(admin: Client, userId: string): Promise<bo
 export async function dismissUnreadStories(
   admin: Client,
   userId: string,
-  options: { onlyStoryId?: string; keepStoryId?: string } = {},
+  options: { keepStoryId?: string } = {},
 ): Promise<void> {
   let query = admin
     .from("stories")
@@ -181,7 +181,6 @@ export async function dismissUnreadStories(
     .eq("user_id", userId)
     .is("read_at", null)
     .is("dismissed_at", null);
-  if (options.onlyStoryId) query = query.eq("id", options.onlyStoryId);
   if (options.keepStoryId) query = query.neq("id", options.keepStoryId);
   const { error } = await query;
   if (error) throw error;

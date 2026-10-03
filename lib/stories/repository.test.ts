@@ -119,13 +119,6 @@ describe("dismissUnreadStories", () => {
     expect(calls).toContainEqual(["is", "read_at", null]);
     expect(calls.some(([method, column]) => method === "eq" && column === "id")).toBe(false);
   });
-
-  it("dismisses just the one story when asked", async () => {
-    const { client, calls } = recordingClient({ error: null });
-    await dismissUnreadStories(client, "u1", { onlyStoryId: "s1" });
-    expect(calls).toContainEqual(["eq", "id", "s1"]);
-    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
-  });
 });
 
 describe("listStorySummaries", () => {

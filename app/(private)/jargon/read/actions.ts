@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/jargon/review-outcome";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
-import { isReadOptionKey, saveReadOption } from "@/lib/read/options";
+import { isReadOptionKey, isReadOptionValue, saveReadOption } from "@/lib/read/options";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
 import { fetchTermCardForUser, pickReadTermsForUser } from "@/lib/trace-queue";
@@ -157,11 +157,11 @@ export async function getReadFeedBatchAction(
 
 export async function saveReadOptionAction(
   key: string,
-  value: boolean,
+  value: boolean | number,
 ): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: "Log in to continue." };
-  if (!isReadOptionKey(key) || typeof value !== "boolean") return { error: "Unknown option." };
+  if (!isReadOptionKey(key) || !isReadOptionValue(key, value)) return { error: "Unknown option." };
 
   try {
     await saveReadOption(auth.supabase, auth.user.id, key, value);

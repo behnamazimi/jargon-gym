@@ -1,70 +1,61 @@
 "use client";
 
-import { Pause, Play, RotateCcw, RotateCw } from "lucide-react";
-import { useRef, useState } from "react";
+import { Pause, Play } from "lucide-react";
+import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import { claimActiveAudio, releaseActiveAudio } from "@/components/jargon/active-audio";
+import {
+  LoopButton,
+  PauseCountdown,
+  SentenceButton,
+  SKIP_SECONDS,
+  SkipButton,
+} from "@/components/jargon/read/stories/story-audio-buttons";
+import {
+  loadSavedSpeed,
+  saveSpeed,
+  StorySpeedControl,
+} from "@/components/jargon/read/stories/story-speed-control";
+import {
+  useShadowingPlayback,
+  type ShadowingSetup,
+} from "@/components/jargon/read/stories/use-shadowing-playback";
 import { Button } from "@/components/ui/button";
-import { formatPlaybackTime, nextPlaybackSpeed, parsePlaybackSpeed } from "@/lib/stories/playback";
+import { detectClipPauses } from "@/lib/stories/clip-pauses";
+import { formatPlaybackTime } from "@/lib/stories/playback";
+import type { ClipPauses } from "@/lib/stories/silence";
+import { cn } from "@/lib/utils";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
-const SKIP_SECONDS = 10;
-const SPEED_STORAGE_KEY = "jargon-gym:story-audio-speed:v1";
+/** What the story reader can ask the player to do. */
+export type StoryPlayerHandle = { playSentence: (index: number) => void };
 
-function loadSpeed(): number {
-  try {
-    return parsePlaybackSpeed(window.localStorage.getItem(SPEED_STORAGE_KEY));
-  } catch {
-    return 1;
-  }
-}
-
-function saveSpeed(speed: number) {
-  try {
-    window.localStorage.setItem(SPEED_STORAGE_KEY, String(speed));
-  } catch {
-    // Ignore storage restrictions; the speed still applies for this story.
-  }
-}
-
-function SkipButton({
-  direction,
-  onPress,
-}: {
-  direction: "back" | "forward";
-  onPress: () => void;
-}) {
-  const Icon = direction === "back" ? RotateCcw : RotateCw;
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      aria-label={`${direction === "back" ? "Back" : "Forward"} ${SKIP_SECONDS} seconds`}
-      onPress={onPress}
-      className="relative size-10 shrink-0 min-[360px]:size-11 md:size-10"
-    >
-      <Icon className="size-6" aria-hidden strokeWidth={1.25} />
-      <span
-        aria-hidden
-        className="absolute inset-0 flex items-center justify-center pt-px text-[0.5625rem] font-semibold tabular-nums"
-      >
-        {SKIP_SECONDS}
-      </span>
-    </Button>
-  );
+/** Slower and faster playback keeps the voice's pitch. */
+function applySpeed(audio: HTMLAudioElement, speed: number) {
+  audio.defaultPlaybackRate = speed;
+  audio.playbackRate = speed;
+  audio.preservesPitch = true;
 }
 
 /** One-line controls for a story's narration: ±10s skips, play/pause, a seek
- *  bar, the time, and a speed button that steps through the speeds. */
+ *  bar, the time, and a speed button that steps through the speeds. With
+ *  Shadowing on, the skips become previous and next sentence and a loop button
+ *  joins the row. */
 export function StoryAudioControls({
   src,
   onError,
   onProgress,
+  shadowing = null,
+  handleRef,
+  onClipPauses,
 }: {
   src: string;
   onError: () => void;
   /** Where playback is, as a share of the clip; null once it has ended. */
   onProgress?: (fraction: number | null) => void;
+  shadowing?: ShadowingSetup | null;
+  handleRef?: Ref<StoryPlayerHandle>;
+  /** When given, the clip is measured for its pauses and they are passed here. */
+  onClipPauses?: (clip: ClipPauses) => void;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -72,15 +63,19 @@ export function StoryAudioControls({
   const [duration, setDuration] = useState(0);
   // Rendered only on the client, once the audio is ready, so reading the
   // saved speed here is safe.
-  const [speed, setSpeed] = useState(loadSpeed);
+  const [speed, setSpeed] = useState(loadSavedSpeed);
   // Only filled in when the user changes speed, so nothing is read out on load.
   const [speedAnnouncement, setSpeedAnnouncement] = useState("");
+  const sentences = useShadowingPlayback({ audioRef, shadowing, speed });
+
+  useImperativeHandle(handleRef, () => ({ playSentence: sentences.playSentence }), [
+    sentences.playSentence,
+  ]);
 
   useMountEffect(() => {
     const audio = audioRef.current;
     if (audio) {
-      audio.defaultPlaybackRate = speed;
-      audio.playbackRate = speed;
+      applySpeed(audio, speed);
       // Metadata, or a load error, can arrive before React attaches its listeners.
       if (audio.error) {
         onError();
@@ -91,7 +86,19 @@ export function StoryAudioControls({
       // took a while after the Listen tap; the Play button still works.
       void audio.play().catch(() => undefined);
     }
+    const measuring = new AbortController();
+    if (onClipPauses) {
+      void detectClipPauses(src, measuring.signal).then((clip) => {
+        if (!clip || measuring.signal.aborted) return;
+        // The player works in shares of its own length, which a decoder can
+        // read a little differently from the audio element.
+        const duration = Number.isFinite(audio?.duration) ? audio!.duration : clip.duration;
+        onClipPauses({ pauses: clip.pauses, duration });
+      });
+    }
     return () => {
+      measuring.abort();
+      sentences.stopWatching();
       if (audio) {
         audio.pause();
         releaseActiveAudio(audio);
@@ -105,7 +112,7 @@ export function StoryAudioControls({
   function togglePlay() {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) void audio.play().catch(() => undefined);
+    if (audio.paused) sentences.resume();
     else audio.pause();
   }
 
@@ -118,6 +125,7 @@ export function StoryAudioControls({
     const audio = audioRef.current;
     if (!audio) return;
     const end = Number.isFinite(audio.duration) ? audio.duration : seconds;
+    sentences.forgetSentence();
     audio.currentTime = Math.min(Math.max(seconds, 0), end);
     setCurrentTime(audio.currentTime);
     reportProgress(audio);
@@ -131,10 +139,7 @@ export function StoryAudioControls({
     setSpeed(next);
     setSpeedAnnouncement(`Speed ${next}×`);
     saveSpeed(next);
-    if (audioRef.current) {
-      audioRef.current.defaultPlaybackRate = next;
-      audioRef.current.playbackRate = next;
-    }
+    if (audioRef.current) applySpeed(audioRef.current, next);
   }
 
   return (
@@ -148,6 +153,7 @@ export function StoryAudioControls({
         onPlay={(event) => {
           claimActiveAudio(event.currentTarget);
           setPlaying(true);
+          if (shadowing) sentences.startWatching();
         }}
         onPause={(event) => {
           releaseActiveAudio(event.currentTarget);
@@ -156,7 +162,7 @@ export function StoryAudioControls({
         onEnded={(event) => {
           releaseActiveAudio(event.currentTarget);
           setPlaying(false);
-          onProgress?.(null);
+          if (!sentences.handleEnded()) onProgress?.(null);
         }}
         onTimeUpdate={(event) => {
           setCurrentTime(event.currentTarget.currentTime);
@@ -168,21 +174,37 @@ export function StoryAudioControls({
         }}
       />
 
-      <SkipButton direction="back" onPress={() => skip(-SKIP_SECONDS)} />
+      {shadowing ? (
+        <SentenceButton direction="previous" onPress={sentences.previousSentence} />
+      ) : (
+        <SkipButton direction="back" onPress={() => skip(-SKIP_SECONDS)} />
+      )}
       <Button
         type="button"
         size="icon"
         aria-label={playing ? "Pause" : "Play"}
         onPress={togglePlay}
-        className="btn-circle size-10 shrink-0 min-[360px]:size-11 md:size-10"
+        className="btn-circle relative size-10 shrink-0 min-[360px]:size-11 md:size-10"
       >
         {playing ? (
           <Pause className="size-4 fill-current" aria-hidden strokeWidth={1.5} />
         ) : (
           <Play className="size-4 translate-x-px fill-current" aria-hidden strokeWidth={1.5} />
         )}
+        {sentences.pauseMs === null ? null : <PauseCountdown ms={sentences.pauseMs} />}
       </Button>
-      <SkipButton direction="forward" onPress={() => skip(SKIP_SECONDS)} />
+      {shadowing ? (
+        <SentenceButton direction="next" onPress={sentences.nextSentence} />
+      ) : (
+        <SkipButton direction="forward" onPress={() => skip(SKIP_SECONDS)} />
+      )}
+      {shadowing ? (
+        <LoopButton
+          active={sentences.loop}
+          repeats={shadowing.settings.repeats}
+          onPress={sentences.toggleLoop}
+        />
+      ) : null}
 
       <input
         type="range"
@@ -194,22 +216,21 @@ export function StoryAudioControls({
         value={Math.floor(Math.min(currentTime, seekMax))}
         disabled={seekMax < 1}
         onChange={(event) => seekTo(Number(event.target.value))}
-        className="range range-sm range-primary mx-1.5 min-w-0 flex-1 sm:range-xs"
+        className={cn(
+          "range range-sm range-primary mx-1.5 min-w-0 flex-1 sm:range-xs",
+          shadowing && "max-sm:hidden",
+        )}
       />
-      <span className="shrink-0 text-xs text-base-content/70 tabular-nums max-[359px]:hidden">
+      <span
+        className={cn(
+          "shrink-0 text-xs text-base-content/70 tabular-nums max-[359px]:hidden",
+          shadowing && "max-sm:flex-1 max-sm:text-center",
+        )}
+      >
         {formatPlaybackTime(currentTime)}
         <span className="max-sm:hidden"> / {formatPlaybackTime(duration)}</span>
       </span>
-      <Button
-        type="button"
-        variant="ghost"
-        size="sm"
-        aria-label={`Playback speed ${speed}×`}
-        onPress={() => changeSpeed(nextPlaybackSpeed(speed))}
-        className="h-10 min-w-10 shrink-0 px-1 text-xs font-semibold tabular-nums min-[360px]:h-11 min-[360px]:min-w-11 md:h-10 md:min-w-10"
-      >
-        {speed}×
-      </Button>
+      <StorySpeedControl speed={speed} onChange={changeSpeed} />
       <span className="sr-only" aria-live="polite">
         {speedAnnouncement}
       </span>

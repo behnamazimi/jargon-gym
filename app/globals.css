@@ -331,6 +331,18 @@
     margin-block-start: 0.5rem;
   }
 
+  @keyframes shadowing-countdown {
+    to {
+      stroke-dashoffset: 100;
+    }
+  }
+
+  .shadowing-countdown {
+    animation-name: shadowing-countdown;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+  }
+
   @keyframes quiz-feedback-fade-in {
     from {
       opacity: 0;

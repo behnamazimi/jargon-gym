@@ -1295,6 +1295,10 @@ export type Database = {
           read_hide_question: boolean;
           read_narration_highlight: boolean;
           read_revealed_default: boolean;
+          read_shadowing: boolean;
+          read_shadowing_gap: number;
+          read_shadowing_pause: boolean;
+          read_shadowing_repeats: number;
           read_stories_default: boolean;
           story_last_domain_id: string | null;
           timezone: string | null;
@@ -1316,6 +1320,10 @@ export type Database = {
           read_hide_question?: boolean;
           read_narration_highlight?: boolean;
           read_revealed_default?: boolean;
+          read_shadowing?: boolean;
+          read_shadowing_gap?: number;
+          read_shadowing_pause?: boolean;
+          read_shadowing_repeats?: number;
           read_stories_default?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;
@@ -1337,6 +1345,10 @@ export type Database = {
           read_hide_question?: boolean;
           read_narration_highlight?: boolean;
           read_revealed_default?: boolean;
+          read_shadowing?: boolean;
+          read_shadowing_gap?: number;
+          read_shadowing_pause?: boolean;
+          read_shadowing_repeats?: number;
           read_stories_default?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;

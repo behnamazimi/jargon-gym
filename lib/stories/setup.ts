@@ -8,6 +8,7 @@ import type { PausedStudyCollection } from "@/lib/study/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getReadEligibleCountsByDomainForUser } from "@/lib/trace-queue";
 import { loadPrefs } from "./prefs";
+import type { ShadowingSettings } from "./shadowing";
 import { getCurrentStory, getStoryForUser, getStoryTerms } from "./repository";
 import { STORY_MIN_TERMS, type Story, type StoryLevels, type StoryTerm } from "./types";
 
@@ -21,6 +22,8 @@ export type StoriesSetupData = {
   ai: AiAccessView;
   narrationAccess: boolean;
   narrationHighlight: boolean;
+  /** Set while the Shadowing option is on. */
+  shadowing: ShadowingSettings | null;
   /** An unread piece to open straight into, instead of the setup screen. */
   currentStory: { story: Story; terms: StoryTerm[] } | null;
 };
@@ -91,6 +94,13 @@ export async function getStoriesSetupData(
     ai,
     narrationAccess,
     narrationHighlight: readOptions.narrationHighlight,
+    shadowing: readOptions.shadowing
+      ? {
+          pause: readOptions.shadowingPause,
+          gap: readOptions.shadowingGap,
+          repeats: readOptions.shadowingRepeats,
+        }
+      : null,
     currentStory: unreadStory
       ? { story: unreadStory, terms: await getStoryTerms(admin, unreadStory.termIds) }
       : null,

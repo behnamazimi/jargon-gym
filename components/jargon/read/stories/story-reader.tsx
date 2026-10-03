@@ -1,19 +1,24 @@
 "use client";
 
-import { ArrowUpRight, ChevronDown, X } from "lucide-react";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, type Ref } from "react";
 import { QuizPanel } from "@/components/jargon/quiz/quiz-ui";
+import type { StoryPlayerHandle } from "@/components/jargon/read/stories/story-audio-controls";
 import { StoryFooter } from "@/components/jargon/read/stories/story-footer";
 import { StoryMarkKnown } from "@/components/jargon/read/stories/story-mark-known";
+import { StoryShadowingToggle } from "@/components/jargon/read/stories/story-shadowing-toggle";
 import { StoryNarrationPlayer } from "@/components/jargon/read/stories/story-narration-player";
 import { StoryBody } from "@/components/jargon/read/stories/story-body";
 import { useNarrationAutoScroll } from "@/components/jargon/read/stories/use-narration-auto-scroll";
+import type { ShadowingSetup } from "@/components/jargon/read/stories/use-shadowing-playback";
 import type { StorySession } from "@/components/jargon/read/stories/use-story-session";
-import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { buildTimeline, sentenceAtFraction } from "@/lib/stories/highlight";
 import { storyMetaLabels } from "@/lib/stories/meta";
+import type { ShadowingSettings } from "@/lib/stories/shadowing";
+import { snapTimeline } from "@/lib/stories/pause-alignment";
+import type { ClipPauses } from "@/lib/stories/silence";
 import type { Story, StoryTerm } from "@/lib/stories/types";
 
 /** Each term's first wording in the piece, in reading order. */
@@ -39,12 +44,16 @@ function StoryHeader({
   story,
   narrationAccess,
   onNarrationProgress,
-  onDismiss,
+  shadowing,
+  playerRef,
+  onClipPauses,
 }: {
   story: Story;
   narrationAccess: boolean;
   onNarrationProgress?: (fraction: number | null) => void;
-  onDismiss: () => void;
+  shadowing: ShadowingSetup | null;
+  playerRef: Ref<StoryPlayerHandle>;
+  onClipPauses?: (clip: ClipPauses) => void;
 }) {
   const meta = storyMetaLabels(story);
 
@@ -54,18 +63,7 @@ function StoryHeader({
         <h2 className="font-heading m-0 min-w-0 pe-10 text-xl font-medium text-balance text-base-content sm:text-2xl sm:leading-tight">
           {story.title}
         </h2>
-        {story.readAt ? null : (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Dismiss story"
-            onPress={onDismiss}
-            className="absolute top-1 right-3 size-11 text-base-content/70 sm:right-4 md:top-2 md:size-9"
-          >
-            <X className="size-4" aria-hidden strokeWidth={1.5} />
-          </Button>
-        )}
+        {narrationAccess ? <StoryShadowingToggle on={shadowing !== null} /> : null}
       </div>
       <p className="m-0 text-xs text-base-content/70">
         {meta.map((item, index) => (
@@ -88,6 +86,9 @@ function StoryHeader({
             key={story.id}
             storyId={story.id}
             onProgress={onNarrationProgress}
+            shadowing={shadowing}
+            handleRef={playerRef}
+            onClipPauses={onClipPauses}
           />
         </div>
       ) : null}
@@ -155,23 +156,40 @@ export function StoryReader({
   terms,
   narrationAccess,
   narrationHighlight,
+  shadowingSettings,
 }: {
   session: StorySession;
   story: Story;
   terms: StoryTerm[];
   narrationAccess: boolean;
   narrationHighlight: boolean;
+  /** Set while Shadowing is on. It needs the highlight, so it turns that on. */
+  shadowingSettings: ShadowingSettings | null;
 }) {
   const termById = new Map(terms.map((term) => [term.id, term]));
-  const timeline = useMemo(
+  const estimatedTimeline = useMemo(
     () =>
-      narrationAccess && narrationHighlight
+      narrationAccess && (narrationHighlight || shadowingSettings)
         ? buildTimeline(story.title, story.segments, story.language)
         : null,
-    [narrationAccess, narrationHighlight, story],
+    [narrationAccess, narrationHighlight, shadowingSettings, story],
   );
+  // Once the clip has been measured, sentences move onto its real pauses.
+  const [clipPauses, setClipPauses] = useState<ClipPauses | null>(null);
+  const timeline = useMemo(
+    () =>
+      estimatedTimeline && clipPauses
+        ? snapTimeline(estimatedTimeline, clipPauses.pauses, clipPauses.duration)
+        : estimatedTimeline,
+    [estimatedTimeline, clipPauses],
+  );
+  const shadowing = useMemo<ShadowingSetup | null>(
+    () => (timeline && shadowingSettings ? { timeline, settings: shadowingSettings } : null),
+    [timeline, shadowingSettings],
+  );
+  const playerRef = useRef<StoryPlayerHandle | null>(null);
   const [activeSentence, setActiveSentence] = useState<number | null>(null);
-  const { pause: pauseAutoScroll, keepInView } = useNarrationAutoScroll();
+  const { pause: pauseAutoScroll, followAgain, keepInView } = useNarrationAutoScroll();
 
   // Nothing is highlighted while the option is off, so a sentence picked
   // before it was turned off doesn't come back when it is turned on.
@@ -182,13 +200,20 @@ export function StoryReader({
     setActiveSentence(fraction === null ? null : sentenceAtFraction(timeline, fraction));
   }
 
+  function playSentence(index: number) {
+    followAgain();
+    playerRef.current?.playSentence(index);
+  }
+
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <StoryHeader
         story={story}
         narrationAccess={narrationAccess}
         onNarrationProgress={timeline ? showNarrationProgress : undefined}
-        onDismiss={() => void session.dismiss()}
+        shadowing={shadowing}
+        playerRef={playerRef}
+        onClipPauses={timeline ? setClipPauses : undefined}
       />
       <div
         onWheel={pauseAutoScroll}
@@ -202,6 +227,7 @@ export function StoryReader({
           timeline={timeline}
           activeSentence={activeSentence}
           keepInView={keepInView}
+          onSentencePress={shadowing ? playSentence : undefined}
         />
         <StoryGlossary story={story} termById={termById} />
       </div>

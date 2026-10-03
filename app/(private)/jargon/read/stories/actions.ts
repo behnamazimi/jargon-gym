@@ -220,20 +220,6 @@ export async function voteStoryAction(
   }
 }
 
-export async function dismissStoryAction(storyId: string): Promise<{ error?: string }> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: LOGIN_ERROR };
-  if (!z.uuid().safeParse(storyId).success) return { error: "That story isn't available." };
-
-  try {
-    await dismissUnreadStories(createAdminClient(), auth.user.id, { onlyStoryId: storyId });
-    return {};
-  } catch (err) {
-    console.error("dismissStoryAction failed:", err);
-    return { error: "Couldn't close this story. Try again." };
-  }
-}
-
 export async function listStoryHistoryAction(): Promise<
   { stories: StorySummary[] } | { error: string }
 > {
