@@ -50,7 +50,9 @@ export function NotFoundScene({ className, title }: { className?: string; title?
         <Line d="M282 318L276 302M300 312L300 294M318 318L324 302" stroke={STROKE.regular} />
       </Motion>
       <Motion kind="shrug" origin="50% 100%">
-        <Motion kind="shrug-arm" pivot={[258, 428]}>
+        {/* Two drawn poses for the free arm: hanging at rest, and the shrug
+            (elbow out, forearm up, palm up). They swap on the jolt. */}
+        <Motion kind="shrug-arm-rest">
           <Line
             d={curve([
               [258, 428],
@@ -60,18 +62,31 @@ export function NotFoundScene({ className, title }: { className?: string; title?
           />
           <Dot x={236} y={480} r={8} color={BLUE} />
         </Motion>
+        <Motion kind="shrug-arm-up" pivot={[256, 424]}>
+          <Line
+            d={curve([
+              [256, 424],
+              [226, 446],
+              [206, 414],
+            ])}
+          />
+          <Line d="M194 410Q204 420 216 408" stroke={STROKE.regular} />
+        </Motion>
         <Shape d={blob({ cx: 300, cy: 420, rx: 50, ry: 80, taper: 0.12, seed: 8 })} color={BLUE} />
         <Hatch d={blob({ cx: 280, cy: 468, rx: 15, ry: 11, seed: 2 })} />
-        <Motion kind="blink" phase={1.1}>
-          <Motion kind="surprise-eyes">
-            <Eye x={316} y={388} />
-            <Eye x={338} y={386} />
+        {/* Turns from the beam to look straight at you while it shrugs. */}
+        <Motion kind="face-turn">
+          <Motion kind="blink" phase={1.1}>
+            <Motion kind="surprise-eyes">
+              <Eye x={316} y={388} />
+              <Eye x={338} y={386} />
+            </Motion>
           </Motion>
+          <Motion kind="surprise-brows">
+            <Line d="M306 368Q314 360 324 366M332 366Q340 360 350 366" stroke={STROKE.regular} />
+          </Motion>
+          <Line d="M320 414Q328 410 338 413" stroke={STROKE.regular} />
         </Motion>
-        <Motion kind="surprise-brows">
-          <Line d="M306 368Q314 360 324 366M332 366Q340 360 350 366" stroke={STROKE.regular} />
-        </Motion>
-        <Line d="M320 414Q328 410 338 413" stroke={STROKE.regular} />
       </Motion>
     </Illustration>
   );
