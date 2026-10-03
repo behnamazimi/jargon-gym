@@ -30,6 +30,12 @@
       "rules": {
         "max-lines": "off"
       }
+    },
+    {
+      "files": ["components/illustrations/scenes/**"],
+      "rules": {
+        "max-lines": ["error", 500]
+      }
     }
   ]
 }

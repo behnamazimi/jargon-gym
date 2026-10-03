@@ -134,6 +134,32 @@ Banners that point at a page the user hasn't visited live in `lib/promos/`
 and `components/promos/`. Read [docs/promos.md](docs/promos.md) before adding
 a promo or mounting the slot on a page.
 
+# Illustrations
+
+Hand-drawn doodle illustrations live in `components/illustrations/`. Scenes
+(`scenes/`) are built only from the shared primitives: `Illustration` (the
+svg shell, wobble filter and hatch patterns), `Shape` / `Line` / `Hatch`,
+`Clip`, the doodles in `marks.tsx`, and the seeded path builders in
+`geometry.ts`. Colours come only from `palette.ts`; the values and all motion
+live in `illustrations.css`. They're decorative and hidden from screen
+readers unless you pass a `title`.
+
+Keep new ones consistent with the existing scenes:
+
+- Look: thick ink outlines with flat fills that print slightly off the
+  outline (`Shape` does both; the wobble filter adds the marker jitter). Blue,
+  coral, yellow and purple on paper, small hatch patches for texture. No
+  text, gradients or shadows.
+- Characters: one-colour blob or bean bodies, stick limbs, dot eyes and a
+  one-line mouth. Quirky and minimal, no extra details.
+- Scene: 800×600, one idea that pictures the section's message, subject
+  centred with plenty of white space, a few sparks, squiggles or dots around
+  it. Check it still reads at phone width.
+- Motion: wrap a part in `<Motion kind=…>` (`motion.tsx`). Every character
+  acts out its job in a short story (read, flip, throw, sip), not random
+  wiggles; moves that belong together share a beat; loops pause before
+  repeating. Reduced motion turns it all off.
+
 # macOS widget
 
 The widget's source lives in `widget/jargon-gym.widget/` (`index.jsx` +

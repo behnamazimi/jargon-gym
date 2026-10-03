@@ -1,5 +1,5 @@
+import { ReadReviewQuizScene } from "@/components/illustrations/scenes/read-review-quiz";
 import { LandingCtas } from "./landing-ctas";
-import { TermCardMockup } from "./term-card-mockup";
 
 export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
   return (
@@ -24,12 +24,7 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
       </div>
 
-      <figure className="m-0 w-full min-w-0">
-        <TermCardMockup />
-        <figcaption className="mt-3 text-center text-sm text-base-content/70">
-          A real term card from a sample queue. It changes every few seconds.
-        </figcaption>
-      </figure>
+      <ReadReviewQuizScene className="mx-auto max-w-md lg:max-w-none" />
     </div>
   );
 }
