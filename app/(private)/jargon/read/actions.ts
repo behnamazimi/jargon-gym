@@ -2,7 +2,7 @@
 
 import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { recordRead } from "@/lib/jargon/review-outcome";
+import { recordRead } from "@/lib/terms/review-outcome";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { isReadOptionKey, isReadOptionValue, saveReadOption } from "@/lib/read/options";
 import { toReviewTerm } from "@/lib/review/mappers";
@@ -17,7 +17,7 @@ export type ReadTermByIdResult = {
   revealed?: boolean;
 };
 
-/** Seeds a useReadQueue instance (components/jargon/read/use-read-queue.ts)
+/** Seeds a useReadQueue instance (components/read/use-read-queue.ts)
  *  from the server — either a deep-linked single term or the first batch
  *  off the regular queue, built by the Read page's server component. */
 export type ReadQueueSeed = {
@@ -113,7 +113,7 @@ export async function getReadTermByIdAction(
  * via get_term_card (same RPC Telegram uses) so relationships match.
  *
  * The one fetch path both Read surfaces (paged view and fullscreen feed)
- * use via useReadQueue (components/jargon/read/use-read-queue.ts) — the
+ * use via useReadQueue (components/read/use-read-queue.ts) — the
  * paged view only ever needs one term at a time, but takes the same
  * batch so both surfaces share one queue and one prefetch mechanism.
  *

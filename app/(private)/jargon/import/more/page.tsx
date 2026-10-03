@@ -1,11 +1,11 @@
 import { Braces } from "lucide-react";
-import { CopyIconButton } from "@/components/jargon/import/copy-icon-button";
-import { ImportCodePanel, ImportCard } from "@/components/jargon/import/import-ui";
-import { ImportLlmPrompt } from "@/components/jargon/import/import-llm-prompt";
-import { PageHeader } from "@/components/jargon/page-header";
+import { CopyIconButton } from "@/components/import/copy-icon-button";
+import { ImportCodePanel, ImportCard } from "@/components/import/import-ui";
+import { ImportLlmPrompt } from "@/components/import/import-llm-prompt";
+import { PageHeader } from "@/components/shared/page-header";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { listImportDestinations } from "@/lib/jargon/import/import-collections";
-import { IMPORT_SAMPLE_PAYLOAD, stringifyImportPayload } from "@/lib/jargon/import/sample-payload";
+import { listImportDestinations } from "@/lib/import/import-collections";
+import { IMPORT_SAMPLE_PAYLOAD, stringifyImportPayload } from "@/lib/import/sample-payload";
 
 export default async function MoreImportOptionsPage() {
   const auth = await requireAuthenticatedClient();

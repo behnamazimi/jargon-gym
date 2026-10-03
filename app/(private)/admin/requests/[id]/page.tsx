@@ -13,7 +13,7 @@ import {
   findSimilarRequests,
   getRequestDetail,
 } from "@/lib/admin/requests/queries";
-import { parseLanguage } from "@/lib/jargon/languages";
+import { parseLanguage } from "@/lib/terms/languages";
 
 type PageProps = { params: Promise<{ id: string }> };
 

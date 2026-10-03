@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { deliverRequest, fillDefinitions } from "@/app/(private)/admin/requests/delivery-actions";
-import { ImportFlow } from "@/components/jargon/import/import-flow";
-import type { ImportAdapter } from "@/components/jargon/import/import-flow-helpers";
+import { ImportFlow } from "@/components/import/import-flow";
+import type { ImportAdapter } from "@/components/import/import-flow-helpers";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +16,9 @@ import {
 import { useToast } from "@/components/ui/toast";
 import type { ActionResult } from "@/lib/admin/action";
 import { settleAdminAction } from "@/lib/admin/settle-action";
-import { createDraftStore } from "@/lib/jargon/import/draft-store";
-import type { ImportFailure } from "@/lib/jargon/import/types";
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import { createDraftStore } from "@/lib/import/draft-store";
+import type { ImportFailure } from "@/lib/import/types";
+import type { DomainLanguage } from "@/lib/terms/languages";
 import { pluralize } from "@/lib/utils";
 
 type Payload = Parameters<ImportAdapter["commit"]>[0];

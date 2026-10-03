@@ -116,7 +116,7 @@ export function JargonListSkeleton() {
   );
 }
 
-export function JargonPageSkeleton() {
+export function LibraryPageSkeleton() {
   return (
     <PageShell aria-busy="true" aria-label="Loading your collection">
       <div className="flex flex-col gap-6 md:flex-row md:items-start">

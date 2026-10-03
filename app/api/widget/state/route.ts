@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchWidgetState } from "@/lib/jargon/widget-projection";
+import { fetchWidgetState } from "@/lib/widget/widget-projection";
 import { authenticateWidgetRequest } from "@/lib/widget/auth-request";
 import { LATEST_WIDGET_VERSION } from "@/lib/widget/version";
 

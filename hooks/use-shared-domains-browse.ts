@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { searchSharedDomains } from "@/app/(private)/jargon/browse/actions";
-import type { BrowseCollectionFilter, BrowseCounts, BrowsePageResult } from "@/lib/jargon/browse";
+import type { BrowseCollectionFilter, BrowseCounts, BrowsePageResult } from "@/lib/library/browse";
 
 const SEARCH_DEBOUNCE_MS = 300;
 

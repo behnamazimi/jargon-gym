@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { TermCard } from "@/lib/jargon/term-card";
+import type { TermCard } from "@/lib/terms/term-card";
 import { GOOD } from "@/lib/trace";
 import {
   buildReadRevealKeyboard,

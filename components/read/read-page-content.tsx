@@ -1,0 +1,79 @@
+"use client";
+
+import { ReadCaughtUp } from "@/components/read/read-caught-up";
+import { ReadErrorAlert } from "@/components/read/read-error-alert";
+import { ReadTermCard } from "@/components/read/read-term-card";
+import { caughtUpDescription } from "@/components/read/read-page-helpers";
+import type { ReadQueue } from "@/components/read/use-read-queue";
+import { LinkButton } from "@/components/ui/button";
+import type { StudyCollection } from "@/lib/study/types";
+
+function ReadCaughtUpActions({ selectedCollectionId }: { selectedCollectionId: string }) {
+  if (selectedCollectionId !== "all") return null;
+
+  return (
+    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+      <LinkButton href="/jargon" variant="outline">
+        Go to library
+      </LinkButton>
+      <LinkButton href="/jargon/import" variant="outline">
+        Add your own terms
+      </LinkButton>
+    </div>
+  );
+}
+
+export function ReadQueueContent({
+  queue,
+  term,
+  revealed,
+  collections,
+  selectedCollectionId,
+  narrationAccess,
+  hideQuestion,
+}: {
+  queue: ReadQueue;
+  term: ReadQueue["currentTerm"];
+  revealed: boolean;
+  collections: StudyCollection[];
+  selectedCollectionId: string;
+  narrationAccess: boolean;
+  hideQuestion: boolean;
+}) {
+  if (queue.status === "caughtUp") {
+    return (
+      <ReadCaughtUp
+        description={caughtUpDescription(selectedCollectionId, collections)}
+        actions={<ReadCaughtUpActions selectedCollectionId={selectedCollectionId} />}
+      />
+    );
+  }
+
+  if (queue.status === "ready" && term !== null) {
+    return (
+      <ReadTermCard
+        term={term}
+        revealed={revealed}
+        canGoBack={queue.canGoBack}
+        isPending={queue.isFetchingMore}
+        narrationAccess={narrationAccess}
+        hideQuestion={hideQuestion}
+        onReveal={queue.reveal}
+        onPrevious={queue.goPrevious}
+        onNext={queue.goNext}
+      />
+    );
+  }
+
+  if (queue.status === "error") {
+    return (
+      <ReadErrorAlert
+        message={queue.errorMessage ?? "Couldn't load the next term. Try again."}
+        isPending={queue.isFetchingMore}
+        onRetry={queue.retry}
+      />
+    );
+  }
+
+  return null;
+}

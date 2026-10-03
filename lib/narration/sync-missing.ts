@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { isCurrentJob } from "@/lib/ai/speech/audio";
 import type { AudioJob } from "@/lib/ai/speech/types";
-import { parseLanguage } from "@/lib/jargon/languages";
+import { parseLanguage } from "@/lib/terms/languages";
 import { computeContentHash } from "./content-hash";
 import { computeContentHashV2 } from "./content-hash-v2";
 import type { CollectionNarrationCoverage } from "./sync-shared";

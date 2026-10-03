@@ -5,10 +5,10 @@ import {
   getWidgetSettingsData,
 } from "@/app/(private)/jargon/settings/actions";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { LlmPanel } from "@/components/jargon/settings/llm-panel";
-import { TelegramPanel } from "@/components/jargon/settings/telegram-panel";
-import { ScrollToSettingsPanel, type SettingsTabId } from "@/components/jargon/settings/ui";
-import { WidgetPanel } from "@/components/jargon/settings/widget-panel";
+import { LlmPanel } from "@/components/settings/llm-panel";
+import { TelegramPanel } from "@/components/settings/telegram-panel";
+import { ScrollToSettingsPanel, type SettingsTabId } from "@/components/settings/ui";
+import { WidgetPanel } from "@/components/settings/widget-panel";
 import { PanelSkeleton } from "@/components/page-skeleton";
 import { LATEST_WIDGET_VERSION } from "@/lib/widget/version";
 

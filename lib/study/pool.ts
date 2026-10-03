@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { TermCard } from "@/lib/jargon/term-card";
+import type { TermCard } from "@/lib/terms/term-card";
 import type { StudyAuthMode, StudyScope } from "./types";
 
 type Client = SupabaseClient<Database>;

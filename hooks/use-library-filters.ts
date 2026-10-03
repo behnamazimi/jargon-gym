@@ -6,8 +6,8 @@ import {
   loadLibraryFiltersSnapshot,
   subscribeLibraryFilters,
   updateLibraryFilters,
-} from "@/lib/jargon/library-filters";
-import type { SortMode } from "@/lib/jargon/types";
+} from "@/lib/library/library-filters";
+import type { SortMode } from "@/lib/terms/types";
 
 /** Library filter choices, remembered on this device in a cookie. The server
  *  reads the same cookie (`serverSnapshot`), so the first render already

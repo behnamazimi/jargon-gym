@@ -226,7 +226,7 @@ highlight on while it is on and reuses the same timings (measured from the
 clip's pauses, or estimated until they are known), through `sentenceBounds` in
 `lib/stories/highlight.ts`; the rules for a finished sentence are in
 `lib/stories/shadowing.ts`, and the playback hook is
-`components/jargon/read/stories/use-shadowing-playback.ts`. If the pauses can't
+`components/read/stories/use-shadowing-playback.ts`. If the pauses can't
 be found, boundaries are only as accurate as the estimates, so a pause can land
 a little early or late.
 While Shadowing is playing, or waiting out the pause after a sentence, the
@@ -326,7 +326,7 @@ it:
    Candidates come from `get_trace_candidates_json` (or
    `my_get_trace_candidates_json`): every row in one JSON array, ordered by
    `term_id`, so a large collection is one call instead of a page per 1000 rows.
-3. **`lib/jargon/review-outcome.ts`** — the only code in the app allowed to
+3. **`lib/terms/review-outcome.ts`** — the only code in the app allowed to
    record an outcome. Loads a term's current state, asks `lib/trace` to
    compute what it becomes after a read, a review grade, or a quiz answer,
    and persists the result. Its functions — `recordRead`, `recordReveal`,
@@ -341,7 +341,7 @@ it:
    `POST /api/review/feed`, so a refill never waits behind a grade), and
    `generateQuizAction` / `recordQuizAnswerAction` in
    `app/(private)/jargon/quiz/actions.ts`. Telegram has its own equivalents
-   in `lib/telegram/` that call the same `lib/jargon/review-outcome.ts`
+   in `lib/telegram/` that call the same `lib/terms/review-outcome.ts`
    and `lib/trace-queue` functions underneath.
 5. **The database** — two tables. `review_state` holds one row per (user,
    term), storing exactly the fields `TraceState` needs: read count and
@@ -380,7 +380,7 @@ If you're trying to understand a bug or add a feature: math questions
 ("why did this term's score change like that") belong in `lib/trace/`,
 which you can read and test in complete isolation from the app. Questions
 about which terms show up where belong in `lib/trace-queue/`. Questions
-about when something gets written belong in `lib/jargon/review-outcome.ts`.
+about when something gets written belong in `lib/terms/review-outcome.ts`.
 
 ## Where this differs from the original design
 

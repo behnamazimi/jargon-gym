@@ -1,4 +1,4 @@
-import type { Domain, Term } from "@/lib/jargon/types";
+import type { Domain, Term } from "@/lib/terms/types";
 import type { ReviewTerm } from "@/lib/review/types";
 
 type DeckExclusions = {

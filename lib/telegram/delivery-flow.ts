@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { setTermMarkedKnownForUser } from "@/lib/jargon/known-state";
-import { recordRead } from "@/lib/jargon/review-outcome";
+import { setTermMarkedKnownForUser } from "@/lib/mastery/known-state";
+import { recordRead } from "@/lib/terms/review-outcome";
 import {
   deliverNextTerm,
   fetchTermCardForUser,
   resolveUserIdByChatId,
-} from "@/lib/jargon/term-delivery";
+} from "@/lib/terms/term-delivery";
 import { fetchTraceStateForUser } from "@/lib/trace-queue";
 import type { TelegramAction } from "./actions";
 import {

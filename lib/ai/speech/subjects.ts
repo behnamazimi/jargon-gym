@@ -3,7 +3,7 @@ import { computeContentHash } from "@/lib/narration/content-hash";
 import { computeContentHashV2 } from "@/lib/narration/content-hash-v2";
 import { buildNarrationScript } from "@/lib/narration/template";
 import type { NarratedTermFields } from "@/lib/narration/types";
-import { parseLanguage } from "@/lib/jargon/languages";
+import { parseLanguage } from "@/lib/terms/languages";
 import { getStoryForUser } from "@/lib/stories/repository";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SpeechSubject } from "./types";

@@ -1,8 +1,8 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { fetchStatsSnapshot } from "@/lib/jargon/collection-stats";
-import { loadMasteryCounts, loadMasteryTermRows } from "@/lib/jargon/mastery";
+import { fetchStatsSnapshot } from "@/lib/mastery/collection-stats";
+import { loadMasteryCounts, loadMasteryTermRows } from "@/lib/mastery/mastery";
 
 export async function getMasterySetupData() {
   const auth = await requireAuthenticatedClient();

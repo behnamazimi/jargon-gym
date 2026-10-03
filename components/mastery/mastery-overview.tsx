@@ -1,0 +1,80 @@
+"use client";
+
+import type { WebStatsSnapshot } from "@/lib/mastery/collection-stats";
+import { CollectionCard, PausedCollectionCard } from "./collection-card";
+import { formatLifetimeTotals } from "./mastery-format";
+import { MasteryPracticeActivity } from "./mastery-practice-activity";
+import { pluralize } from "@/lib/utils";
+
+type MasteryOverviewProps = {
+  stats: WebStatsSnapshot;
+  /** Ever touched (any activity), not yet Mastered, not marked known. */
+  termsLearning: number;
+  /** §8 "terms learned" — high-water mark, never decreases. */
+  termsLearned: number;
+  onSelectCollection: (collectionId: string) => void;
+};
+
+function OverviewHeader({
+  termsLearning,
+  termsLearned,
+  lifetimeTotalsLine,
+}: {
+  termsLearning: number;
+  termsLearned: number;
+  lifetimeTotalsLine: string | null;
+}) {
+  return (
+    <div className="space-y-1">
+      <p className="text-sm font-medium text-base-content">
+        Learning <span className="tabular-nums">{pluralize(termsLearning, "term")}</span> · Mastered{" "}
+        <span className="tabular-nums">{pluralize(termsLearned, "term")}</span>
+      </p>
+      {lifetimeTotalsLine ? (
+        <p className="m-0 text-xs text-base-content/70">{lifetimeTotalsLine}</p>
+      ) : null}
+    </div>
+  );
+}
+
+/** Per-collection breakdown leads — that's what users actually track day to
+ *  day. There's no single "overall strength" number here: mastery is shown
+ *  per collection instead (see CollectionCard), since blending collections
+ *  at very different stages into one aggregate obscured more than it told. */
+export function MasteryOverview({
+  stats,
+  termsLearning,
+  termsLearned,
+  onSelectCollection,
+}: MasteryOverviewProps) {
+  const hasLifetimeTotals =
+    stats.lifetimeTotals.reviews +
+      stats.lifetimeTotals.quizAnswers +
+      stats.lifetimeTotals.termsRead >
+    0;
+
+  return (
+    <div className="space-y-4">
+      <OverviewHeader
+        termsLearning={termsLearning}
+        termsLearned={termsLearned}
+        lifetimeTotalsLine={hasLifetimeTotals ? formatLifetimeTotals(stats.lifetimeTotals) : null}
+      />
+
+      <MasteryPracticeActivity stats={stats} />
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {stats.activeCollections.map((collection) => (
+          <CollectionCard
+            key={collection.id}
+            collection={collection}
+            onSelect={onSelectCollection}
+          />
+        ))}
+        {stats.pausedCollections.map((collection) => (
+          <PausedCollectionCard key={collection.id} collection={collection} />
+        ))}
+      </div>
+    </div>
+  );
+}

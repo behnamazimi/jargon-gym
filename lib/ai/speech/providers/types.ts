@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 
 export type SpeechProvider = "murf" | "elevenlabs";
 

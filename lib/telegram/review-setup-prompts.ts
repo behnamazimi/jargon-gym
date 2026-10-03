@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchCollectionStats } from "@/lib/jargon/collection-stats";
+import { fetchCollectionStats } from "@/lib/mastery/collection-stats";
 import { getMaxStudyCount } from "@/lib/study";
 import type { TelegramAction } from "./actions";
 import { DEFAULT_TELEGRAM_REVIEW_COUNT } from "./constants";

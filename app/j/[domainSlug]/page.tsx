@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { DomainTermsList } from "@/components/jargon/public/domain-terms-list";
-import { getPublicDomainPage, listPublicDomains } from "@/lib/jargon/public/public-terms";
+import { DomainTermsList } from "@/components/library/domain-terms-list";
+import { getPublicDomainPage, listPublicDomains } from "@/lib/terms/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 
 export const revalidate = 3600;

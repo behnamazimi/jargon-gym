@@ -4,19 +4,19 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getSessionUser, requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { commitFailureFor } from "@/lib/jargon/import/commit-errors";
+import { commitFailureFor } from "@/lib/import/commit-errors";
 import {
   batchResultSchema,
   commitImportSchema,
   MAX_IMPORT_TERMS,
-} from "@/lib/jargon/import/commit-schema";
+} from "@/lib/import/commit-schema";
 import {
   findDestinationMatches,
   listCollectionTermNames,
   listImportDestinations,
   type DestinationMatch,
-} from "@/lib/jargon/import/import-collections";
-import type { ImportFailure } from "@/lib/jargon/import/types";
+} from "@/lib/import/import-collections";
+import type { ImportFailure } from "@/lib/import/types";
 
 const NOT_SIGNED_IN: ImportFailure = { title: "Not signed in", message: "Sign in to add terms." };
 

@@ -1,7 +1,7 @@
 import { ClipboardPaste } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/jargon/import/actions";
-import { ImportFlow } from "@/components/jargon/import/import-flow";
-import { PageHeader } from "@/components/jargon/page-header";
+import { ImportFlow } from "@/components/import/import-flow";
+import { PageHeader } from "@/components/shared/page-header";
 
 type PageProps = {
   searchParams: Promise<{ to?: string; from?: string }>;

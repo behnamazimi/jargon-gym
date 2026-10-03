@@ -11,14 +11,14 @@ import {
   setDomainActiveForReview,
   setDomainVisibility,
   updateOwnedDomain as updateOwnedDomainRecord,
-} from "@/lib/jargon/collections";
+} from "@/lib/library/collections";
 import {
   parseDomainInput,
   parseNewCollectionInput,
   type DomainInput,
   type NewCollectionInput,
-} from "@/lib/jargon/domain-schema";
-import { resetDomainProgress } from "@/lib/jargon/known-state";
+} from "@/lib/library/domain-schema";
+import { resetDomainProgress } from "@/lib/mastery/known-state";
 import { revalidatePath } from "next/cache";
 
 export async function addToCollection(domainId: string): Promise<{ error?: string }> {

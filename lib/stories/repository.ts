@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseLanguage, type DomainLanguage } from "@/lib/jargon/languages";
+import { parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import {
   parseCefrLevel,

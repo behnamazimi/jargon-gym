@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { setTermMarkedKnownForUser } from "@/lib/jargon/known-state";
-import { applyReviewGrade } from "@/lib/jargon/review-outcome";
+import { setTermMarkedKnownForUser } from "@/lib/mastery/known-state";
+import { applyReviewGrade } from "@/lib/terms/review-outcome";
 import type { ReviewGrade } from "@/lib/trace";
 import type { TelegramAction } from "./actions";
 import { formatReviewRated, formatReviewRevealed } from "./presentation";

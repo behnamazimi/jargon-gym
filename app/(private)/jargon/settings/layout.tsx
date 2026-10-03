@@ -1,5 +1,5 @@
 import { Settings2 } from "lucide-react";
-import { PageHeader } from "@/components/jargon/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/page-container";
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {

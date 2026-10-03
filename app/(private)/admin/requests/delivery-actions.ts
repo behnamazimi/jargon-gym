@@ -7,7 +7,7 @@ import { writeAudit } from "@/lib/admin/audit";
 import { parseId, REVALIDATE, type AdminClient } from "@/lib/admin/requests/action-helpers";
 import { notifyRequester } from "@/lib/admin/requests/notify";
 import { throwRpcError } from "@/lib/admin/rpc-error";
-import { commitTermSchema, linkSchema } from "@/lib/jargon/import/commit-schema";
+import { commitTermSchema, linkSchema } from "@/lib/import/commit-schema";
 
 const idSchema = z.string().uuid();
 

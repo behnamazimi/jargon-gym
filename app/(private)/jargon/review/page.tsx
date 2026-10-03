@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ReviewPage } from "@/components/jargon/review/review-page";
+import { ReviewPage } from "@/components/review/review-page";
 import {
   parseReviewCollectionCookie,
   REVIEW_COLLECTION_COOKIE,

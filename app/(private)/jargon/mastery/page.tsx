@@ -1,7 +1,7 @@
 import { Signal } from "lucide-react";
 import { getMasterySetupData } from "@/app/(private)/jargon/mastery/actions";
-import { MasteryPage } from "@/components/jargon/mastery/mastery-page";
-import { EmptyState } from "@/components/jargon/empty-state";
+import { MasteryPage } from "@/components/mastery/mastery-page";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
 

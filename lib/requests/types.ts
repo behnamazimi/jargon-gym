@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/jargon/languages";
+import type { DomainLanguage } from "@/lib/terms/languages";
 
 export const REQUEST_KINDS = ["jargon", "vocabulary"] as const;
 export type RequestKind = (typeof REQUEST_KINDS)[number];

@@ -1,0 +1,102 @@
+import { type ReactNode, useCallback } from "react";
+import { FirstExposureKnownPrompt } from "@/components/shared/first-exposure-known-prompt";
+import { TermCardHeader } from "@/components/terms/term-card-header";
+import { TermBody } from "@/components/terms/term-body";
+import type { ReviewTerm } from "@/lib/review/types";
+
+export function ReadFullscreenCard({
+  term,
+  index,
+  narrationAccess,
+  narrationPreload,
+  onExposed,
+  onMarkedKnown,
+  registerCardNode,
+  unregisterCardNode,
+}: {
+  term: ReviewTerm;
+  index: number;
+  narrationAccess: boolean;
+  narrationPreload: boolean;
+  onExposed: (index: number, termId: string) => void;
+  onMarkedKnown: () => void;
+  registerCardNode: (termId: string, node: HTMLDivElement) => void;
+  unregisterCardNode: (termId: string) => void;
+}) {
+  const ref = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node) return;
+      registerCardNode(term.id, node);
+
+      // One-shot: disconnect after the first crossing so scrolling back up
+      // to reread this term can never refire the exposure event.
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              onExposed(index, term.id);
+              observer.disconnect();
+            }
+          }
+        },
+        { threshold: 0.5 },
+      );
+      observer.observe(node);
+      return () => {
+        observer.disconnect();
+        unregisterCardNode(term.id);
+      };
+    },
+    [index, term.id, onExposed, registerCardNode, unregisterCardNode],
+  );
+
+  return (
+    <div
+      ref={ref}
+      className="flex h-dvh w-full shrink-0 flex-col pt-safe pb-safe"
+      style={{ scrollSnapAlign: "start" }}
+    >
+      <TermCardHeader
+        term={term}
+        narrationAccess={narrationAccess}
+        narrationPreload={narrationPreload}
+        style={{ paddingInlineEnd: "calc(env(safe-area-inset-right) + 3.25rem)" }}
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 has-[[data-known-prompt]]:pb-0 sm:px-6">
+        <TermBody term={term} language={term.domainLanguage} />
+        {term.isNewToUser ? (
+          <FirstExposureKnownPrompt
+            termId={term.id}
+            term={term.term}
+            onMarkedKnown={onMarkedKnown}
+          />
+        ) : null}
+      </div>
+      {index === 0 ? (
+        <p className="m-0 shrink-0 px-5 pb-3 text-center text-xs text-base-content/70">
+          Scroll for the next term. ✕ to exit.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export function ReadFullscreenSlide({
+  children,
+  className = "items-center justify-center text-center",
+  slideRef,
+}: {
+  children: ReactNode;
+  className?: string;
+  slideRef?: React.Ref<HTMLDivElement>;
+}) {
+  return (
+    <div
+      ref={slideRef}
+      className={`flex h-dvh w-full shrink-0 flex-col gap-4 px-6 pt-safe pb-safe ${className}`}
+      style={{ scrollSnapAlign: "start" }}
+    >
+      {children}
+    </div>
+  );
+}

@@ -2,8 +2,8 @@
 
 import { useActionRunner } from "@/hooks/use-action-runner";
 import { createTerm, deleteTerm, finishTerm, updateTerm } from "@/app/(private)/jargon/actions";
-import type { RelationshipSyncPayload } from "@/lib/jargon/relationship-schema";
-import type { TermInput } from "@/lib/jargon/term-schema";
+import type { RelationshipSyncPayload } from "@/lib/terms/relationship-schema";
+import type { TermInput } from "@/lib/terms/term-schema";
 
 /** Create, update and finish revalidate the page in their own response, so
  *  none of these asks the router to refresh again. */

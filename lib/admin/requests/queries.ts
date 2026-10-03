@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { containsPattern } from "@/lib/admin/email-lookup";
 import { clampPage, PAGE_SIZE } from "@/lib/admin/list-params";
-import { escapeIlike } from "@/lib/jargon/browse";
+import { escapeIlike } from "@/lib/library/browse";
 import type { Database } from "@/lib/supabase/database.types";
 import type { RequestListParams, RequestTab } from "./list-params";
 import { significantWords, topicsSimilar } from "./similar";

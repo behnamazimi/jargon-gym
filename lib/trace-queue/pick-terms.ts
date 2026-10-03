@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { TermCard } from "@/lib/jargon/term-card";
+import type { TermCard } from "@/lib/terms/term-card";
 import { hasTraceActivity, rankQuizQueue, rankReadQueue, rankReviewQueue } from "@/lib/trace";
 import { fetchTraceCandidates, fetchTraceCandidatesForUser, type ReviewScope } from "./repository";
 import { hydrateTermCardsForUser, hydrateTermsAsTermCards } from "./hydrate";

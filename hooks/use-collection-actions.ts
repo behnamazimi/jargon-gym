@@ -11,7 +11,7 @@ import {
   updateOwnedDomain,
   unshareDomain,
 } from "@/app/(private)/jargon/actions";
-import type { DomainInput, NewCollectionInput } from "@/lib/jargon/domain-schema";
+import type { DomainInput, NewCollectionInput } from "@/lib/library/domain-schema";
 
 export function useCollectionActions() {
   const { run, error, busyId, isBusy, clearError } = useActionRunner();

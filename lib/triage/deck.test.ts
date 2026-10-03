@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Term } from "@/lib/jargon/types";
+import type { Term } from "@/lib/terms/types";
 import { buildTriageDeck, toTriageTerm } from "./deck";
 
 function makeTerm(id: string): Term {

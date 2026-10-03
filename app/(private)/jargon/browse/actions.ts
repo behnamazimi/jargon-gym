@@ -5,7 +5,7 @@ import {
   fetchSharedDomainsBrowse,
   type BrowseCollectionFilter,
   type BrowsePageResult,
-} from "@/lib/jargon/browse";
+} from "@/lib/library/browse";
 
 export async function getBrowseSetupData() {
   const auth = await requireAuthenticatedClient();

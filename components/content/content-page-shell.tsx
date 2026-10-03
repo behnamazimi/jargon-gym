@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { PageHeader } from "@/components/jargon/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/page-container";
 import { cn } from "@/lib/utils";
 

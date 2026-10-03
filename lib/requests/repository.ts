@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/lib/supabase/database.types";
-import { DOMAIN_LANGUAGES } from "@/lib/jargon/languages";
+import { DOMAIN_LANGUAGES } from "@/lib/terms/languages";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { formatRequestDate } from "./dates";
 import { entryFor, type RequestEntry } from "./entry";

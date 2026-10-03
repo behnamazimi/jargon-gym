@@ -2,10 +2,7 @@
 
 import { useRef, useState } from "react";
 import { findCaptureDuplicate } from "@/app/(private)/jargon/capture/actions";
-import {
-  createDuplicateChecker,
-  type DuplicateMatch,
-} from "@/lib/jargon/capture/duplicate-checker";
+import { createDuplicateChecker, type DuplicateMatch } from "@/lib/capture/duplicate-checker";
 
 const DEBOUNCE_MS = 300;
 

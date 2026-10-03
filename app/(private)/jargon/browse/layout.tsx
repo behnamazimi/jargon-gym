@@ -1,5 +1,5 @@
 import { Compass } from "lucide-react";
-import { PageHeader } from "@/components/jargon/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
 

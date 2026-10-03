@@ -22,7 +22,7 @@ After finishing a change, run `pnpm check` (lint + format check + type-check + k
 
 Read, Review, and Quiz are all driven by TRACE, the scoring engine that
 picks which term to show next and computes mastery
-(`lib/trace/`, `lib/trace-queue/`, `lib/jargon/review-outcome.ts`, and the
+(`lib/trace/`, `lib/trace-queue/`, `lib/terms/review-outcome.ts`, and the
 Read/Review/Quiz server actions). When a task requires actually understanding
 how it works — the memory traces, mastery blend, ranking rules, or which
 layer owns what — read [docs/trace.md](docs/trace.md) in detail rather than
@@ -57,7 +57,7 @@ row through `writeAudit`.
 Read's Stories mode lives in `lib/stories/` (prompt, generation, parsing
 the model's plain-text reply in `markup.ts`, style and setting pickers,
 repository, narration) with its page, actions, and components under
-`app/(private)/jargon/read/stories/` and `components/jargon/read/stories/`.
+`app/(private)/jargon/read/stories/` and `components/read/stories/`.
 It credits reads through `recordRead` like Cards; see the Stories section in
 [docs/trace.md](docs/trace.md).
 
@@ -69,7 +69,7 @@ command logic), `commands.ts` parses and handles top-level commands,
 `delivery-flow.ts` / `quiz-flow.ts` / `review-flow.ts` hold the Read/Quiz/
 Review flows, `presentation.ts` + `copy.ts` format outgoing messages, and
 `transport.ts` builds the `TelegramAction` DTOs that get sent. It calls the
-same `lib/jargon/review-outcome.ts` and `lib/trace-queue` functions the web
+same `lib/terms/review-outcome.ts` and `lib/trace-queue` functions the web
 app uses, so scoring behavior stays identical across both surfaces. The
 Supabase Edge Functions that actually receive/send Telegram HTTP traffic are
 in `supabase/functions/telegram-webhook` and
@@ -97,26 +97,26 @@ lives in `user_settings.tour_status` / `tour_seen`.
 The Library's layout (`app/(private)/jargon/(collection)/layout.tsx`) holds the
 collection sidebar, and the page loads one collection. Switching collections
 is a plain `?domain=` link, so only the page reloads. The page sends a lean
-row per term (`LibraryTerm`, from `lib/jargon/library/load.ts`). Full details
+row per term (`LibraryTerm`, from `lib/library/load.ts`). Full details
 load in batches from `GET /api/jargon/terms/details` as rows near the screen
-(`lib/jargon/library/details-store.ts`). Marking known and deleting don't
+(`lib/library/details-store.ts`). Marking known and deleting don't
 revalidate the page. They record a local edit in
-`lib/jargon/library/overrides.ts`, which wins over any older server snapshot,
+`lib/library/overrides.ts`, which wins over any older server snapshot,
 so call `overrideMarkedKnown` wherever a term is marked known. Filters live in
 the `jg_lib_filters` cookie so the server renders them.
 
 # Import
 
 Adding terms (chooser, paste importer, commit, unfinished terms) is described
-in [docs/import.md](docs/import.md). Parsing lives in `lib/jargon/import/parse/`
+in [docs/import.md](docs/import.md). Parsing lives in `lib/import/parse/`
 and stays pure. Nothing in this path may call an AI model. A term needs only
 its name; terms without a definition are excluded from everything TRACE and
 every delivery surface serve.
 
 # Capture
 
-Saving one term (`/jargon/capture`, `lib/jargon/capture/`,
-`components/jargon/capture/`) is described in the Capture section of
+Saving one term (`/jargon/capture`, `lib/capture/`,
+`components/capture/`) is described in the Capture section of
 [docs/import.md](docs/import.md). It reuses `createTerm`; no AI runs in it.
 
 # Collection requests

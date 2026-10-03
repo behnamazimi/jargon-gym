@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchUserCollectionDomains } from "@/lib/jargon/collections";
+import { fetchUserCollectionDomains } from "@/lib/library/collections";
 import type { PausedStudyCollection, StudyCollection } from "./types";
 
 type Client = SupabaseClient<Database>;

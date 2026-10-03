@@ -2,7 +2,7 @@ import { Inbox } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/jargon/import/actions";
 import { DefinitionsForm } from "@/components/requests/definitions-form";
 import { RequestForm, type RecentRequest } from "@/components/requests/request-form";
-import { PageHeader } from "@/components/jargon/page-header";
+import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LinkButton } from "@/components/ui/button";
 import type { SupabaseClient } from "@supabase/supabase-js";

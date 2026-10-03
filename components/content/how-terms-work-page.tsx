@@ -1,5 +1,5 @@
 import { BookOpen } from "lucide-react";
-import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/jargon/back-link";
+import { JARGON_HOME_PATH, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
 import {
   ContentPageBulletList,
   ContentPageHeader,

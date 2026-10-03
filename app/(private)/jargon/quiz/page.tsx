@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { QuizPage } from "@/components/jargon/quiz/quiz-page";
+import { QuizPage } from "@/components/quiz/quiz-page";
 import { getQuizSetupData } from "@/app/(private)/jargon/quiz/actions";
 import {
   parseQuizSetupCookie,

@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { addToCollection } from "@/app/(private)/jargon/actions";
 import { searchSharedDomains } from "@/app/(private)/jargon/browse/actions";
-import type { SearchState } from "@/components/jargon/import/chooser-search-results";
+import type { SearchState } from "@/components/import/chooser-search-results";
 
 const SEARCH_DEBOUNCE_MS = 300;
 

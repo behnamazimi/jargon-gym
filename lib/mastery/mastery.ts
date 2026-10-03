@@ -1,0 +1,214 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
+import { computeTraceSnapshot, daysBetween, hasTraceActivity, type KnownLabel } from "@/lib/trace";
+import { fetchActiveTraceCandidates } from "@/lib/trace-queue";
+import type { CollectionDomainRow } from "@/lib/library/collections";
+import { resolveReviewDomainIds } from "./known-state";
+
+type Client = SupabaseClient<Database>;
+
+/** Keeps the `.in("id", …)` request URL under PostgREST's length limit. */
+const TERM_ID_BATCH_SIZE = 100;
+
+/** Just enough to populate the term list's collection filter — the
+ *  known/total/percentage breakdown per collection lives in
+ *  collection-stats.ts's WebStatsSnapshot, which is what the overview card
+ *  actually renders. */
+export type MasteryCollectionOption = {
+  domainId: string;
+  domainName: string;
+};
+
+/** A coarser 3-band read of the same knownLabel a term already carries
+ *  elsewhere in the app — weak/medium/strong instead of
+ *  unknown/learning/known, for the term list's filter chips. Same
+ *  thresholds (§9), just relabeled for this view. */
+export type MasteryTier = "weak" | "medium" | "strong";
+
+/** The "learned in N days" reward line — first-touch-to-mastered span for
+ *  a term that has crossed the known threshold. Dates are ISO strings (not
+ *  Date objects) so the row can cross the server/client boundary the same
+ *  way the rest of MasteryTermRow does; the component formats them for
+ *  display in the viewer's own locale. */
+export type MasteryTermJourney = {
+  firstSeenAt: string;
+  masteredAt: string;
+  /** Rounded, floored at 1 — a same-day mastery still reads as "1 day". */
+  learnedInDays: number;
+};
+
+export type MasteryTermRow = {
+  termId: string;
+  term: string;
+  domainId: string;
+  domainName: string;
+  category: string | null;
+  /** Mastery_adjusted scaled to 0–100 for display. */
+  score: number;
+  tier: MasteryTier;
+  /** True only when the label is "known" (mastery ≥0.8 & n≥3) — the same
+   *  bar the checkmark badge elsewhere in the app uses. */
+  known: boolean;
+  /** True when the user manually marked this term known — separate from
+   *  `known` above (TRACE's earned label). Rows with this set render a
+   *  "Marked known" badge instead of a score, since there's no earned
+   *  score to show. */
+  markedKnown: boolean;
+  /** True once the term has any Read, Review or Quiz activity. Untouched
+   *  terms show "Not started" instead of a score band. */
+  started: boolean;
+  /** Null unless known — and, as an edge case, if a mastered term somehow
+   *  has no review_events row to date its first touch from. */
+  journey: MasteryTermJourney | null;
+};
+
+export type MasteryCountsData = {
+  collections: MasteryCollectionOption[];
+  /** Terms with any Read/Review/Quiz activity that aren't mastered or
+   *  marked known — same activity split as partitionMasteryBuckets, not
+   *  the live/decaying knownLabel. */
+  termsLearning: number;
+  /** §8 "terms learned" — high-water mark count of terms that ever crossed
+   *  the known threshold. Never decreases. */
+  termsLearned: number;
+};
+
+type ActiveMasteryCollections = {
+  collections: MasteryCollectionOption[];
+  activeCollectionRows: CollectionDomainRow[];
+};
+
+/** First-touch timestamp per term, from the append-only `review_events`
+ *  log — batched once across every mastered term on the page via a
+ *  MIN(created_at) GROUP BY term_id RPC rather than pulling every event
+ *  row for these terms into JS. `TraceCandidate.createdAt` looks tempting
+ *  here but is the term's own creation date in `terms`, not when this user
+ *  first saw it, so it can't stand in for this. */
+async function fetchFirstSeenAtByTermId(
+  client: Client,
+  termIds: string[],
+): Promise<Map<string, Date>> {
+  if (termIds.length === 0) return new Map();
+
+  const { data, error } = await client.rpc("my_first_seen_at_by_term", {
+    p_term_ids: termIds,
+  });
+  if (error) throw error;
+
+  const firstSeenAtByTermId = new Map<string, Date>();
+  for (const row of data) {
+    firstSeenAtByTermId.set(row.term_id, new Date(row.first_seen_at));
+  }
+  return firstSeenAtByTermId;
+}
+
+function tierFromLabel(label: KnownLabel): MasteryTier {
+  if (label === "known") return "strong";
+  if (label === "learning") return "medium";
+  return "weak";
+}
+
+async function loadActiveMasteryCollections(
+  client: Client,
+  userId: string,
+): Promise<ActiveMasteryCollections> {
+  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+  const activeSet = new Set(reviewDomainIds);
+  const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
+  const collections: MasteryCollectionOption[] = activeCollectionRows
+    .map((row) => ({ domainId: row.id, domainName: row.name }))
+    .sort((a, b) => a.domainName.localeCompare(b.domainName));
+  return { collections, activeCollectionRows };
+}
+
+/** Overview numbers for /jargon/mastery — no per-term rows. Paused
+ *  collections are excluded throughout. */
+export async function loadMasteryCounts(
+  client: Client,
+  userId: string,
+): Promise<MasteryCountsData> {
+  const { collections, activeCollectionRows } = await loadActiveMasteryCollections(client, userId);
+  if (activeCollectionRows.length === 0) {
+    return { collections: [], termsLearning: 0, termsLearned: 0 };
+  }
+
+  const candidates = await fetchActiveTraceCandidates(client, userId);
+  // A manually-marked-known term counts as "learned" for consistency with
+  // the collection percentage (lib/library/collections.ts) — it reduces
+  // what's left to learn regardless of how it happened.
+  const termsLearned = candidates.filter(
+    (c) => c.everMasteredAt !== null || c.markedKnownAt !== null,
+  ).length;
+  const termsLearning = candidates.filter(
+    (c) => hasTraceActivity(c) && c.everMasteredAt === null && c.markedKnownAt === null,
+  ).length;
+
+  return { collections, termsLearning, termsLearned };
+}
+
+/** Every term across active collections, ranked by score descending, for
+ *  the searchable/filterable term list. */
+export async function loadMasteryTermRows(
+  client: Client,
+  userId: string,
+): Promise<MasteryTermRow[]> {
+  const { activeCollectionRows } = await loadActiveMasteryCollections(client, userId);
+  if (activeCollectionRows.length === 0) return [];
+
+  const candidates = await fetchActiveTraceCandidates(client, userId);
+  const now = new Date();
+  const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
+
+  const termIds = candidates.map((c) => c.termId);
+  const termInfoById = new Map<string, { term: string; category: string | null }>();
+  for (let i = 0; i < termIds.length; i += TERM_ID_BATCH_SIZE) {
+    const { data: termData, error } = await client
+      .from("terms")
+      .select("id, term, category")
+      .in("id", termIds.slice(i, i + TERM_ID_BATCH_SIZE));
+    if (error) throw error;
+    for (const t of termData) termInfoById.set(t.id, { term: t.term, category: t.category });
+  }
+
+  const masteredTermIds = candidates.filter((c) => c.everMasteredAt !== null).map((c) => c.termId);
+  const firstSeenAtByTermId = await fetchFirstSeenAtByTermId(client, masteredTermIds);
+
+  return candidates
+    .flatMap((candidate) => {
+      const info = termInfoById.get(candidate.termId);
+      if (!info) return [];
+      const snapshot = computeTraceSnapshot(candidate, now);
+
+      let journey: MasteryTermJourney | null = null;
+      if (candidate.everMasteredAt !== null) {
+        const firstSeenAt = firstSeenAtByTermId.get(candidate.termId);
+        if (firstSeenAt) {
+          journey = {
+            firstSeenAt: firstSeenAt.toISOString(),
+            masteredAt: candidate.everMasteredAt.toISOString(),
+            learnedInDays: Math.max(
+              1,
+              Math.round(daysBetween(firstSeenAt, candidate.everMasteredAt)),
+            ),
+          };
+        }
+      }
+
+      return [
+        {
+          termId: candidate.termId,
+          term: info.term,
+          domainId: candidate.domainId,
+          domainName: domainNameById.get(candidate.domainId) ?? "Unknown",
+          category: info.category,
+          score: Math.round(snapshot.masteryAdjusted * 100),
+          tier: tierFromLabel(snapshot.knownLabel),
+          known: snapshot.knownLabel === "known",
+          markedKnown: candidate.markedKnownAt !== null,
+          started: hasTraceActivity(candidate),
+          journey,
+        },
+      ];
+    })
+    .sort((a, b) => b.score - a.score || a.term.localeCompare(b.term));
+}

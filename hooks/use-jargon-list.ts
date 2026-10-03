@@ -6,15 +6,15 @@ import {
   recordTermReadAction,
   setTermMarkedKnownAction,
 } from "@/app/(private)/jargon/actions";
-import { filterTerms, getCategories, getCategoryCounts } from "@/lib/jargon/filter-terms";
+import { filterTerms, getCategories, getCategoryCounts } from "@/lib/library/filter-terms";
 import {
   overrideCollectionCounts,
   overrideMarkedKnown,
   overrideRemoved,
   termOverride,
   useLibraryOverrides,
-} from "@/lib/jargon/library/overrides";
-import type { LibraryPageData } from "@/lib/jargon/types";
+} from "@/lib/library/overrides";
+import type { LibraryPageData } from "@/lib/terms/types";
 import { useLibraryFilters } from "./use-library-filters";
 
 type PendingMark = { marked: boolean; tap: number };
