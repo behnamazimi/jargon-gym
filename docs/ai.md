@@ -1,4 +1,4 @@
-# AI in Jargon Gym
+# AI in Lobyas
 
 One map of every AI feature: what it does, who provides it, who may use it, and
 what it costs. The list of features lives in [lib/ai/registry.ts](../lib/ai/registry.ts);

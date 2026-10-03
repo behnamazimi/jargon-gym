@@ -23,7 +23,7 @@ export function AiSection() {
         </span>
       </h2>
       <p className="mt-4 m-0 max-w-[52ch] text-base leading-relaxed text-base-content/85">
-        Use it for a field&apos;s jargon or a language&apos;s vocabulary. New accounts get some free
+        Use it for the terms of a field or the vocabulary of a language. New accounts get some free
         AI credits, or you can add your own Google or Anthropic API key. Read, Review, and simple
         quizzes never cost credits.
       </p>

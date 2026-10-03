@@ -24,7 +24,7 @@ export async function generateMetadata({
   const data = await getPublicTermPage(domainSlug, termSlug);
   if (!data) return {};
 
-  const title = `${data.term.term}, ${data.domain.name} | Jargon Gym`;
+  const title = `${data.term.term}, ${data.domain.name}`;
   const description = data.term.definition.slice(0, 155);
   const url = `${getPublicBaseUrl()}/collections/${domainSlug}/${termSlug}`;
 
@@ -34,7 +34,7 @@ export async function generateMetadata({
     alternates: { canonical: url },
     openGraph: {
       type: "article",
-      title,
+      title: `${title} | Lobyas`,
       description,
       url,
     },

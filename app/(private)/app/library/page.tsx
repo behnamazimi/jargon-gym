@@ -69,7 +69,7 @@ function LoadError({ message }: { message: string }) {
   );
 }
 
-export default async function JargonListPage({ searchParams }: PageProps) {
+export default async function LibraryRoute({ searchParams }: PageProps) {
   const [{ domain: requestedDomainId, added }, cookieStore, requestHeaders, auth] =
     await Promise.all([searchParams, cookies(), headers(), requireAuthenticatedClient()]);
 

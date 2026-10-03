@@ -106,7 +106,7 @@ export async function handleCallback(
       {
         type: "answerCallbackQuery",
         callbackQueryId: callbackId,
-        text: "Connect in Jargon Gym settings first.",
+        text: "Connect in Lobyas settings first.",
       },
       send(chatId, CONNECT_MESSAGE),
     ];

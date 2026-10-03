@@ -1,8 +1,8 @@
 export const CONNECT_MESSAGE =
-  "Connect your Telegram account in Jargon Gym settings first, then tap the link to open this bot.";
+  "Connect your Telegram account in Lobyas settings first, then tap the link to open this bot.";
 
 export const WELCOME_MESSAGE =
-  "You're connected to Jargon Gym. Use /read anytime for a term to read. Scheduled reminders follow your cadence setting in the app.";
+  "You're connected to Lobyas. Use /read anytime for a term to read. Scheduled reminders follow your cadence setting in the app.";
 
 export const HELP_MESSAGE =
   "Commands:\n/read: send the next term to read\n/review: flashcard-style review (guided setup)\n/quiz: start a quiz (guided setup)";

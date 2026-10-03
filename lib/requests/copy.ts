@@ -120,7 +120,7 @@ export const REQUEST_COPY = {
     too_niche:
       "That topic is too narrow for us to prepare a collection around. Try a wider one, or add the terms yourself.",
     not_jargon_or_vocabulary:
-      "That isn't something we can prepare as jargon or vocabulary. Collections here are terms with definitions.",
+      "That isn't something we can prepare as a set of terms or vocabulary. Collections here are terms with definitions.",
     language_not_supported:
       "We can't prepare collections in that language yet. English and Dutch are supported.",
     team_internal: "We can't know a team's own terms. Paste your team's list instead.",

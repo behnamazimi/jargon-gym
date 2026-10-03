@@ -4,11 +4,10 @@ export const BRAND_ICON = {
   box: 32,
   background: "#3f4755",
   color: "#f8f9fb",
-  letterSpacing: "-0.04em",
   borderRadius: 4,
-  jFontSize: 18,
-  jFontWeight: 900,
-  jStroke: 0.8,
+  fontSize: 24,
+  fontWeight: 900,
+  stroke: 0.8,
 } as const;
 
 export const BRAND_ICON_BOX_SIZES = {
@@ -24,30 +23,32 @@ function scaleBrandIcon(boxSize: number) {
   return {
     box: boxSize,
     borderRadius: BRAND_ICON.borderRadius * scale,
-    jFontSize: BRAND_ICON.jFontSize * scale,
-    jStroke: BRAND_ICON.jStroke * scale,
+    fontSize: BRAND_ICON.fontSize * scale,
+    stroke: BRAND_ICON.stroke * scale,
   };
 }
 
 type BrandIconGlyphsProps = {
-  jFontSize: number;
-  jStroke: number;
+  fontSize: number;
+  stroke: number;
   strokeColor: string;
 };
 
-export function BrandIconGlyphs({ jFontSize, jStroke, strokeColor }: BrandIconGlyphsProps) {
+export function BrandIconGlyphs({ fontSize, stroke, strokeColor }: BrandIconGlyphsProps) {
   return (
     <>
       <span
         style={{
-          fontSize: jFontSize,
-          fontWeight: BRAND_ICON.jFontWeight,
+          fontSize: fontSize,
+          fontWeight: BRAND_ICON.fontWeight,
           lineHeight: 1,
-          WebkitTextStroke: `${jStroke}px ${strokeColor}`,
+          // An L is heavy on its left and sits low, so nudge it toward the visual centre.
+          transform: `translate(${fontSize * 0.04}px, ${-fontSize * 0.04}px)`,
+          WebkitTextStroke: `${stroke}px ${strokeColor}`,
           paintOrder: "stroke fill",
         }}
       >
-        JG
+        L
       </span>
     </>
   );
@@ -55,8 +56,8 @@ export function BrandIconGlyphs({ jFontSize, jStroke, strokeColor }: BrandIconGl
 
 export function brandIconBaseGlyphsProps(strokeColor = "currentColor") {
   return {
-    jFontSize: BRAND_ICON.jFontSize,
-    jStroke: BRAND_ICON.jStroke,
+    fontSize: BRAND_ICON.fontSize,
+    stroke: BRAND_ICON.stroke,
     strokeColor,
   };
 }
@@ -64,7 +65,7 @@ export function brandIconBaseGlyphsProps(strokeColor = "currentColor") {
 type BrandIconImageProps = {
   boxSize: number;
   fill?: boolean;
-  /** Inset the glyph ~20% so Android adaptive icons keep JG in the safe zone. */
+  /** Inset the glyph ~20% so Android adaptive icons keep the L in the safe zone. */
   maskable?: boolean;
 };
 
@@ -82,13 +83,12 @@ export function BrandIconImage({ boxSize, fill = false, maskable = false }: Bran
         justifyContent: "center",
         background: BRAND_ICON.background,
         color: BRAND_ICON.color,
-        letterSpacing: BRAND_ICON.letterSpacing,
         borderRadius: maskable ? 0 : scaled.borderRadius,
       }}
     >
       <BrandIconGlyphs
-        jFontSize={scaled.jFontSize}
-        jStroke={scaled.jStroke}
+        fontSize={scaled.fontSize}
+        stroke={scaled.stroke}
         strokeColor={BRAND_ICON.color}
       />
     </div>
@@ -99,7 +99,6 @@ export function brandIconShellStyle(boxSize: number): CSSProperties {
   return {
     width: boxSize,
     height: boxSize,
-    letterSpacing: BRAND_ICON.letterSpacing,
   };
 }
 

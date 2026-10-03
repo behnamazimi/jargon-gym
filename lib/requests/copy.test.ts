@@ -31,7 +31,11 @@ const NEVER_USE: [string, RegExp][] = [
   ["no one sees", /no one sees/i],
   ["100% private", /100%\s*private/i],
   ["expert-written", /expert-written|hand-?crafted/i],
+  ["jargon", /jargon/i],
 ];
+
+/** The request kind is literally named "Jargon", so its option label is allowed to say so. */
+const ALLOWED_JARGON = [REQUEST_COPY.form.kinds.jargon];
 
 const emails = [
   buildReadyEmail({
@@ -39,23 +43,23 @@ const emails = [
     terms: 48,
     deliveryKind: "prepared",
     collectionName: "Sample",
-    url: "https://x.test/jargon",
+    url: "https://x.test/app",
   }),
   buildReadyEmail({
     topic: "Sample",
     terms: 10,
     deliveryKind: "added_shared",
     collectionName: "Kubernetes basics",
-    url: "https://x.test/jargon",
+    url: "https://x.test/app",
   }),
-  buildNeedsInputEmail({ topic: "Sample", question: "Which level?", url: "https://x.test/jargon" }),
-  buildDelayEmail({ topic: "Sample", date: "Sat 4 Oct", url: "https://x.test/jargon" }),
+  buildNeedsInputEmail({ topic: "Sample", question: "Which level?", url: "https://x.test/app" }),
+  buildDelayEmail({ topic: "Sample", date: "Sat 4 Oct", url: "https://x.test/app" }),
   ...DECLINE_REASONS.map((reason) =>
     buildDeclinedEmail({
       topic: "Sample",
       reason,
       note: "A short note.",
-      pasteUrl: "https://x.test/jargon/import/paste",
+      pasteUrl: "https://x.test/app/import/paste",
     }),
   ),
 ].flatMap((email) => [email.subject, email.text]);
@@ -68,7 +72,8 @@ describe("request copy", () => {
   });
 
   it.each(NEVER_USE)("never says %s", (_name, pattern) => {
-    expect(strings.filter((s) => pattern.test(s))).toEqual([]);
+    const checked = strings.filter((s) => !ALLOWED_JARGON.includes(s));
+    expect(checked.filter((s) => pattern.test(s))).toEqual([]);
   });
 
   it("has a reason for every decline template", () => {

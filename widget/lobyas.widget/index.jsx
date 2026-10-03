@@ -239,16 +239,16 @@ function escapeShellArg(value) {
 const openApp = (appBaseUrl, current, alreadyRevealed = false) => {
   const base = appBaseUrl.replace(/\/$/, "");
   const url = current
-    ? `${base}/jargon/read?termId=${encodeURIComponent(current.id)}${
+    ? `${base}/app/read?termId=${encodeURIComponent(current.id)}${
         alreadyRevealed ? "&alreadyRead=true" : ""
       }`
-    : `${base}/jargon`;
+    : `${base}/app/library`;
   run(`open ${escapeShellArg(url)}`);
 };
 
 const openWidgetSettings = (appBaseUrl) => {
   const base = appBaseUrl.replace(/\/$/, "");
-  run(`open ${escapeShellArg(`${base}/jargon/settings?tab=widget`)}`);
+  run(`open ${escapeShellArg(`${base}/app/settings?tab=widget`)}`);
 };
 
 /** Re-fetch widget state only — never records anything. `reset` clears the
@@ -363,7 +363,7 @@ export const render = ({ output, error }, dispatch) => {
     const message = typeof error === "string" ? error : error?.message || String(error);
     return (
       <div onClick={() => openApp("http://localhost:3000", null)}>
-        <LabelBar title="💡 Jargon" dispatch={dispatch} />
+        <LabelBar title="💡 Term" dispatch={dispatch} />
         <div className="def">Couldn&apos;t read terms — click to open the app anyway.</div>
         <code>{message}</code>
       </div>
@@ -386,7 +386,7 @@ export const render = ({ output, error }, dispatch) => {
   if (apiError) {
     return (
       <div onClick={() => openApp(appBaseUrl, null)}>
-        <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
+        <LabelBar title="💡 Term" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="def">{apiError}</div>
         <UpdateBanner
           widgetVersion={widgetVersion}
@@ -400,7 +400,7 @@ export const render = ({ output, error }, dispatch) => {
   if (totalCount === 0) {
     return (
       <div onClick={() => openApp(appBaseUrl, null)}>
-        <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
+        <LabelBar title="💡 Term" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="def">No terms found — click to open the app.</div>
         <UpdateBanner
           widgetVersion={widgetVersion}
@@ -414,7 +414,7 @@ export const render = ({ output, error }, dispatch) => {
   if (!current) {
     return (
       <div onClick={() => openApp(appBaseUrl, null)}>
-        <LabelBar title="💡 Jargon" dispatch={dispatch} widgetDir={widgetDir} />
+        <LabelBar title="💡 Term" dispatch={dispatch} widgetDir={widgetDir} />
         <div className="done">
           🎉 You&apos;ve marked all {totalCount} terms known in this widget. Click to review in the
           app.

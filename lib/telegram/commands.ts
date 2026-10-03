@@ -37,8 +37,8 @@ export async function handleStart(
   if (!result.ok) {
     const message =
       result.reason === "already_linked"
-        ? "This Telegram account is already linked to another Jargon Gym user."
-        : "That link is invalid or expired. Generate a new one in Jargon Gym settings.";
+        ? "This Telegram account is already linked to another Lobyas user."
+        : "That link is invalid or expired. Generate a new one in Lobyas settings.";
     return [send(chatId, message)];
   }
 

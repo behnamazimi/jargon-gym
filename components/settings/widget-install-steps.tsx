@@ -84,7 +84,7 @@ export function WidgetInstallSteps({
         )}
         <p className="m-0 text-sm text-base-content/70">
           Or{" "}
-          <a href="/downloads/jargon-gym.widget.zip" download className="link link-hover">
+          <a href="/downloads/lobyas.widget.zip" download className="link link-hover">
             download the zip
           </a>{" "}
           and unzip into{" "}

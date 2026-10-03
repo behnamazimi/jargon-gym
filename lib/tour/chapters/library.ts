@@ -8,7 +8,7 @@ export const LIBRARY_CHAPTERS = [
     steps: [
       {
         target: "library-browse",
-        title: "Welcome to Jargon Gym",
+        title: "Welcome to Lobyas",
         body: "Add a shared collection to get started.",
       },
       {

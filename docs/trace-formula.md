@@ -2,7 +2,7 @@
 
 **T**iered **R**etention **A**cross **C**ognitive **E**xposure
 
-A memory-scoring engine derived from FSRS, redesigned for jargon learning with three tiers (Read, Review, Quiz), no due dates, and independent queues per tier.
+A memory-scoring engine derived from FSRS, redesigned for learning terms with three tiers (Read, Review, Quiz), no due dates, and independent queues per tier.
 
 ---
 

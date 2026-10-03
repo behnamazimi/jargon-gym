@@ -25,13 +25,13 @@ export function useWidgetPanel(initialTokens: WidgetTokenRow[]) {
   // Falls back to the production origin on the server and on first client
   // render so SSR and hydration match, then fills in the real origin once
   // mounted.
-  const [origin, setOrigin] = useState("https://jargon-gym.vercel.app");
+  const [origin, setOrigin] = useState("https://lobyas.com");
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
   const installScriptUrl = `${origin}/install-widget.sh`;
   const installWithTokenCommand = newToken
-    ? `curl -fsSL ${installScriptUrl} | JARGON_WIDGET_TOKEN=${shellQuote(newToken)} bash`
+    ? `curl -fsSL ${installScriptUrl} | LOBYAS_WIDGET_TOKEN=${shellQuote(newToken)} bash`
     : null;
   // No token needed — install-widget.sh keeps whatever token is already in
   // config.json, so this just refreshes the widget files in place.

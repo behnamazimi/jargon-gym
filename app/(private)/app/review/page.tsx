@@ -20,7 +20,7 @@ function LoginPrompt({ message }: { message: string }) {
   return <p className="text-sm text-base-content/70">{message}</p>;
 }
 
-export default async function JargonReviewPage({ searchParams }: PageProps) {
+export default async function ReviewRoute({ searchParams }: PageProps) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
   const rememberedId = parseReviewCollectionCookie(
     cookieStore.get(REVIEW_COLLECTION_COOKIE)?.value,

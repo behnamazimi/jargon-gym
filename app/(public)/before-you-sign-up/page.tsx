@@ -5,7 +5,7 @@ import { getSessionUser } from "@/lib/auth/require-session";
 export const metadata: Metadata = {
   title: "Before you sign up",
   description:
-    "What Jargon Gym actually is, why it's built the way it is, and what to expect before you request an invite.",
+    "What Lobyas actually is, why it's built the way it is, and what to expect before you request an invite.",
 };
 
 export default async function BeforeYouSignUpRoute() {

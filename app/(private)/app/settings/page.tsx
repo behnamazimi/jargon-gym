@@ -51,7 +51,7 @@ async function WidgetPanelServer() {
   );
 }
 
-export default async function JargonSettingsPage({ searchParams }: PageProps) {
+export default async function SettingsRoute({ searchParams }: PageProps) {
   const [{ tab: tabParam }, auth] = await Promise.all([searchParams, requireAuthenticatedClient()]);
 
   if ("error" in auth) {

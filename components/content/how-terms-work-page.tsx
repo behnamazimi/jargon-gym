@@ -95,18 +95,18 @@ export function HowTermsWorkPage({ isLoggedIn = false }: HowTermsWorkPageProps) 
         <ContentPageHeader
           icon={BookOpen}
           title="How terms are built"
-          description="I kept learning jargon the wrong way, memorizing definitions I couldn't use. This is the shape that came out of that."
+          description="I kept learning terms the wrong way, memorizing definitions I couldn't use. This is the shape that came out of that."
           backHref={isLoggedIn ? LIBRARY_HOME_PATH : PUBLIC_HOME_PATH}
           backLabel={isLoggedIn ? "Back to library" : "Back to home"}
         />
 
         <p className="m-0 mb-4 text-sm text-base-content/80">
           This is for anyone who wants to understand how content is structured in the app, or who
-          plans to add terms of their own. A term can be a piece of jargon or a word, phrase, or
-          grammar construction in a language you&apos;re learning. You can paste a list from Notes
-          or a spreadsheet, bring a deck from another app, import JSON from an LLM prompt I prepared
-          for generating a field&apos;s jargon or a language&apos;s vocabulary, or add terms one at
-          a time. Only the term itself is required. A term without a definition waits in your
+          plans to add terms of their own. A term can be a piece of field-specific language or a
+          word, phrase, or grammar construction in a language you&apos;re learning. You can paste a
+          list from Notes or a spreadsheet, bring a deck from another app, import JSON from an LLM
+          prompt I prepared for generating the terms of a field or language, or add terms one at a
+          time. Only the term itself is required. A term without a definition waits in your
           collection and stays out of Read, Review and Quiz until you add one.
         </p>
 

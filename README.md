@@ -1,7 +1,7 @@
-# Jargon Gym
+# Lobyas
 
-A private, invite-only app for learning industry jargon you can
-actually use — not just recognize. Import term lists into collections (or start
+A private, invite-only app for learning the terms of a field or language well enough to
+actually use them, not just recognize them. Import term lists into collections (or start
 with built-in ones), mark what you already know, review a ranked queue when you
 feel like it, and quiz when you want a check-in. No due dates — there's an
 optional streak badge, but nothing punishes you for breaking it.
@@ -100,7 +100,7 @@ TypeScript.
 
 | Path               | Role                                    |
 | ------------------ | --------------------------------------- |
-| `app/`             | Next.js routes (auth, jargon UI, API)   |
+| `app/`             | Next.js routes (auth, app UI, API)      |
 | `components/`      | React UI                                |
 | `lib/trace/`       | TRACE scoring — decay, recall, mastery  |
 | `lib/trace-queue/` | Term-picking pipeline built on TRACE    |

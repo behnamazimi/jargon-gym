@@ -38,8 +38,14 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   applicationName: PWA_NAME,
-  title: PWA_NAME,
+  title: { default: "Lobyas: learn the terms that stick", template: "%s | Lobyas" },
   description: PWA_DESCRIPTION,
+  openGraph: {
+    siteName: PWA_NAME,
+    title: "Lobyas: learn the terms that stick",
+    description: PWA_DESCRIPTION,
+    type: "website",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

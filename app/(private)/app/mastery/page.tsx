@@ -9,7 +9,7 @@ type PageProps = {
   searchParams: Promise<{ tab?: string; collection?: string }>;
 };
 
-export default async function JargonMasteryPage({ searchParams }: PageProps) {
+export default async function MasteryRoute({ searchParams }: PageProps) {
   const [params, setup] = await Promise.all([searchParams, getMasterySetupData()]);
 
   if ("error" in setup) {

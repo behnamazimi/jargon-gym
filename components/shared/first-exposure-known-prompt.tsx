@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/toast";
 /** Shown once, the very first time a term is ever revealed to this user
  *  (term.isNewToUser) — a chance to say "I already know this" before it
  *  enters the Read/Review/Quiz rotation at all. Separate from TRACE's own
- *  earned known label; only ever set by the user, here or on the jargon
+ *  earned known label; only ever set by the user, here or on the library
  *  page.
  *
  *  Rendered as a button pinned to the bottom-right of the card's scrolling

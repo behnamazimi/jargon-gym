@@ -16,7 +16,7 @@ type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };
 
-export default async function JargonQuizPage({ searchParams }: PageProps) {
+export default async function QuizRoute({ searchParams }: PageProps) {
   const [params, setup, cookieStore] = await Promise.all([
     searchParams,
     getQuizSetupData(),

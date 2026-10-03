@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Zap } from "lucide-react";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/shared/page-header";
@@ -9,6 +10,8 @@ import { PageShell } from "@/components/page-container";
 import { PromoSlot } from "@/components/promos/promo-slot";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { DEFAULT_READ_OPTIONS, getReadOptions } from "@/lib/read/options";
+
+export const metadata: Metadata = { title: "Read" };
 
 export default async function ReadLayout({ children }: { children: React.ReactNode }) {
   const { supabase, user } = await getSessionUser();

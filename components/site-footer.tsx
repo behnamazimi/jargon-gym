@@ -32,7 +32,7 @@ export function SiteFooter() {
         </nav>
         <p className="m-0 flex items-center justify-center gap-2 text-center text-xs text-base-content/70">
           <BrandIcon size="sm" />
-          <span>Jargon Gym is a private app, shared by invitation.</span>
+          <span>Lobyas is a private app, shared by invitation.</span>
         </p>
       </div>
     </footer>

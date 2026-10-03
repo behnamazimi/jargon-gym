@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LandingPage } from "@/components/landing/landing-page";
 
 export const metadata: Metadata = {
-  title: "Jargon and vocabulary you can actually use",
+  title: { absolute: "Lobyas: a better way to learn terms and vocabulary" },
   description:
-    "Learn a field's jargon or a language's vocabulary with real examples, AI stories, AI quizzes, and audio, and keep testing what you're weakest on so it actually sticks. Invite-only.",
+    "Learn the terms of any field or language with real examples, AI stories, AI quizzes, and audio, and keep testing what you're weakest on so they actually stick. Invite-only.",
 };
 
 export default function Page() {

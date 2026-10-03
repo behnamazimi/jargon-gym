@@ -55,7 +55,7 @@ export function StudyPhoneTopBar() {
             <Link
               href={AUTHENTICATED_HOME_PATH}
               className="btn btn-ghost btn-square min-h-11 min-w-11"
-              aria-label="Jargon Gym"
+              aria-label="Lobyas"
             >
               <BrandIcon />
             </Link>

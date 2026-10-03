@@ -38,7 +38,7 @@ async function settle<T extends { error?: string; savedAt?: number }>(
  * nothing is copied into state and a newer snapshot simply wins. The page
  * remounts per collection, which resets search and open cards.
  */
-export function useJargonList(data: LibraryPageData, filtersCookie: string) {
+export function useLibraryList(data: LibraryPageData, filtersCookie: string) {
   const overrides = useLibraryOverrides();
   // Edits still on their way to the server. They show at once and are
   // undone if the save fails.

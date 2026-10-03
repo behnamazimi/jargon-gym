@@ -26,7 +26,7 @@ export async function generateMetadata({
   const data = await getPublicDomainPage(domainSlug);
   if (!data) return {};
 
-  const title = `${data.domain.name} | Jargon Gym`;
+  const title = data.domain.name;
   const description = data.domain.description || `Terms and definitions in ${data.domain.name}.`;
   const url = `${getPublicBaseUrl()}/collections/${domainSlug}`;
 
@@ -34,7 +34,7 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { type: "website", title, description, url },
+    openGraph: { type: "website", title: `${title} | Lobyas`, description, url },
   };
 }
 

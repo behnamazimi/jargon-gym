@@ -86,7 +86,7 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
               id="domain-name"
               value={form.name}
               onChange={(event) => updateField("name", event.target.value)}
-              placeholder="e.g. Startup Jargon"
+              placeholder="e.g. Startup Terms"
               required
             />
           </Field>
