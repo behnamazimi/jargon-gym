@@ -21,7 +21,7 @@
     "supabase:reset": "supabase db reset",
     "supabase:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
     "widget:zip": "WIDGET_PRODUCTION_URL=https://lobyas.com scripts/widget-zip.sh",
-    "widget:install": "LOBYAS_WIDGET_TOKEN=<TOKEN> LOBYAS_BASE_URL=https://lobyas.com scripts/widget-install.sh",
+    "widget:install": "LOBYAS_BASE_URL=${LOBYAS_BASE_URL:-https://lobyas.com} scripts/widget-install.sh",
     "widget:link": "scripts/widget-link.sh"
   },
   "dependencies": {

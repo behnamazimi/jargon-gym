@@ -43,6 +43,9 @@ trap cleanup EXIT
 
 mkdir -p "$OUT_DIR"
 cp -R "$WIDGET_SRC" "$TMP/lobyas.widget"
+# Start from the example, never from a local config.json that may hold a real token.
+cp "$WIDGET_SRC/config.example.json" "$TMP/lobyas.widget/config.json"
+rm -f "$TMP/lobyas.widget/config.example.json"
 
 /usr/bin/python3 - <<PY
 import json

@@ -19,6 +19,11 @@ if [[ -e "$INSTALL_DIR" && ! -L "$INSTALL_DIR" ]]; then
   exit 1
 fi
 
+if [[ ! -f "$WIDGET_SRC/config.json" ]]; then
+  cp "$WIDGET_SRC/config.example.json" "$WIDGET_SRC/config.json"
+  echo "Created ${WIDGET_SRC}/config.json from config.example.json (git-ignored)"
+fi
+
 ln -sfn "$WIDGET_SRC" "$INSTALL_DIR"
 
 echo "Linked ${INSTALL_DIR} -> ${WIDGET_SRC}"

@@ -3,8 +3,10 @@ set -euo pipefail
 
 # Production URL is baked in by scripts/widget-zip.sh (see BAKED_BASE_URL below).
 BAKED_BASE_URL="http://localhost:3000"
-if [[ -n "${LOBYAS_BASE_URL:-}" ]]; then
-  BASE_URL="$LOBYAS_BASE_URL"
+# JARGON_* are the names from before the rename; still accepted so old instructions keep working.
+REQUESTED_BASE_URL="${LOBYAS_BASE_URL:-${JARGON_BASE_URL:-}}"
+if [[ -n "$REQUESTED_BASE_URL" ]]; then
+  BASE_URL="$REQUESTED_BASE_URL"
 elif [[ "$BAKED_BASE_URL" != "__LOBYAS_BASE_URL__" ]]; then
   BASE_URL="$BAKED_BASE_URL"
 else
@@ -23,7 +25,23 @@ WIDGET_NAME="lobyas.widget"
 WIDGETS_DIR="${HOME}/Library/Application Support/Übersicht/widgets"
 INSTALL_DIR="${WIDGETS_DIR}/${WIDGET_NAME}"
 ZIP_URL="${BASE_URL}/downloads/lobyas.widget.zip"
-API_TOKEN="${LOBYAS_WIDGET_TOKEN:-}"
+LEGACY_INSTALL_DIR="${WIDGETS_DIR}/jargon-gym.widget"
+API_TOKEN="${LOBYAS_WIDGET_TOKEN:-${JARGON_WIDGET_TOKEN:-}}"
+
+read_api_token() {
+  CONFIG_PATH="$1" /usr/bin/python3 - <<'PY'
+import json
+import os
+import pathlib
+
+path = pathlib.Path(os.environ["CONFIG_PATH"])
+try:
+    data = json.loads(path.read_text())
+except (FileNotFoundError, json.JSONDecodeError):
+    data = {}
+print(data.get("apiToken") or "")
+PY
+}
 
 inject_api_token() {
   local config="${INSTALL_DIR}/config.json"
@@ -75,27 +93,26 @@ fi
 
 mkdir -p "$WIDGETS_DIR"
 
-# Reinstalling to update: keep the token already in config.json unless the
-# caller explicitly passed a new one, so "update the widget" never requires
-# generating a fresh token.
-if [[ -z "$API_TOKEN" && -f "${INSTALL_DIR}/config.json" ]]; then
-  EXISTING_TOKEN="$(CONFIG_PATH="${INSTALL_DIR}/config.json" /usr/bin/python3 - <<'PY'
-import json
-import os
-import pathlib
+# Reinstalling to update: keep the token already installed unless the caller
+# explicitly passed a new one, so "update the widget" never requires generating
+# a fresh token. The widget used to be called jargon-gym.widget; its token
+# carries over too.
+if [[ -z "$API_TOKEN" ]]; then
+  for existing in "${INSTALL_DIR}/config.json" "${LEGACY_INSTALL_DIR}/config.json"; do
+    if [[ -f "$existing" ]]; then
+      EXISTING_TOKEN="$(read_api_token "$existing")"
+      if [[ -n "$EXISTING_TOKEN" ]]; then
+        API_TOKEN="$EXISTING_TOKEN"
+        echo "Preserving existing API token from previous install."
+        break
+      fi
+    fi
+  done
+fi
 
-path = pathlib.Path(os.environ["CONFIG_PATH"])
-try:
-    data = json.loads(path.read_text())
-except (FileNotFoundError, json.JSONDecodeError):
-    data = {}
-print(data.get("apiToken") or "")
-PY
-)"
-  if [[ -n "$EXISTING_TOKEN" ]]; then
-    API_TOKEN="$EXISTING_TOKEN"
-    echo "Preserving existing API token from previous install."
-  fi
+if [[ -e "$LEGACY_INSTALL_DIR" || -L "$LEGACY_INSTALL_DIR" ]]; then
+  echo "Removing the old widget at ${LEGACY_INSTALL_DIR}"
+  rm -rf "$LEGACY_INSTALL_DIR"
 fi
 
 if [[ -e "$INSTALL_DIR" ]]; then
@@ -121,7 +138,7 @@ if [[ -n "$API_TOKEN" ]]; then
 else
   echo ""
   echo "Next steps:"
-  echo "  1. Open ${BASE_URL}/jargon/settings and generate a widget API token"
+  echo "  1. Open ${BASE_URL}/app/settings and generate a widget API token"
   echo "  2. Re-run install with LOBYAS_WIDGET_TOKEN set, or paste the token into ${INSTALL_DIR}/config.json"
   echo "  3. Refresh Übersicht (or restart it)"
 fi
