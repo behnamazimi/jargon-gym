@@ -111,7 +111,7 @@ export async function deleteTerm(termId: string): Promise<{ error?: string; save
   }
 }
 
-/** Jargon-page card open: deliberate exposure (Read tier). */
+/** Library card open: deliberate exposure (Read tier). */
 export async function recordTermReadAction(termId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };

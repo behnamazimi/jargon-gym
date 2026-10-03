@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Suspense, useCallback, useMemo, useRef, useState } from "react";
 import type { LibraryPageData, LibraryTerm, Term } from "@/lib/terms/types";
 import { loadTermDetails, TermDetailsScope } from "@/lib/library/details-store";
-import { useJargonList } from "@/hooks/use-jargon-list";
+import { useLibraryList } from "@/hooks/use-library-list";
 import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
 import { useToast } from "@/components/ui/toast";
 import { ImportedNotice, type ImportedSummary } from "@/components/import/imported-banner";
@@ -54,7 +54,7 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
     toggleOpen,
     toggleMarkedKnown,
     clearSearch,
-  } = useJargonList(data, filtersCookie);
+  } = useLibraryList(data, filtersCookie);
 
   const liveDomain = useMemo(() => {
     const known = new Set<string>();

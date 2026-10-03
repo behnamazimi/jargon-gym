@@ -1,5 +1,5 @@
 /**
- * Only one narration clip should play at a time — the jargon collection
+ * Only one narration clip should play at a time — the collection
  * page renders many TermNarrationPlayer instances at once, and a story's
  * player sits next to them in Read. Starting a new clip pauses whichever was
  * previously playing (simultaneous fetches/loads are fine; simultaneous

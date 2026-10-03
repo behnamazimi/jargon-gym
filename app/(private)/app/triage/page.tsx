@@ -1,6 +1,6 @@
 import { Layers } from "lucide-react";
 import { redirect } from "next/navigation";
-import { getJargonSetupData } from "@/lib/library/setup";
+import { getLibrarySetupData } from "@/lib/library/setup";
 import { PageHeader } from "@/components/shared/page-header";
 import { TriagePage } from "@/components/triage/triage-page";
 import { createClient } from "@/lib/supabase/server";
@@ -10,9 +10,9 @@ type PageProps = {
   searchParams: Promise<{ domain?: string }>;
 };
 
-export default async function JargonTriagePage({ searchParams }: PageProps) {
+export default async function TriageRoute({ searchParams }: PageProps) {
   const { domain: selectedDomainId } = await searchParams;
-  const setup = await getJargonSetupData(selectedDomainId);
+  const setup = await getLibrarySetupData(selectedDomainId);
 
   if ("emptyCollection" in setup) redirect("/app/library");
   if ("error" in setup) {

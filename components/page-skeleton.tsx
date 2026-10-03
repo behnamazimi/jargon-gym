@@ -85,7 +85,7 @@ export function PanelSkeleton() {
 
 /** Header card + filter bar + term rows, without the sidebar — reused for
  *  an in-place collection switch, where the sidebar stays mounted. */
-export function JargonListSkeleton() {
+export function LibraryListSkeleton() {
   return (
     <div className="min-w-0 flex-1 space-y-4" aria-busy="true" aria-label="Loading collection">
       <div className="shadow-surface space-y-4 rounded-box bg-base-100 p-4">
@@ -131,7 +131,7 @@ export function LibraryPageSkeleton() {
           </div>
         </aside>
 
-        <JargonListSkeleton />
+        <LibraryListSkeleton />
       </div>
     </PageShell>
   );

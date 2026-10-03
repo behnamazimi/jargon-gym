@@ -79,7 +79,7 @@ function LoginPrompt() {
   return <p className="text-sm text-base-content/70">Log in to read terms.</p>;
 }
 
-export default async function JargonReadPage({ searchParams }: PageProps) {
+export default async function ReadRoute({ searchParams }: PageProps) {
   const params = await searchParams;
 
   const { options, hasStory } = await loadLandingState();

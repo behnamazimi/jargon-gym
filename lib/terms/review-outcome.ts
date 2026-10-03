@@ -4,7 +4,7 @@
  * @see docs/trace-formula.md
  *
  * Three writes, one per event shape:
- * - recordRead — Read page/command, jargon-page card open. Pure exposure.
+ * - recordRead — Read page/command, library card open. Pure exposure.
  * - recordReveal — Review flashcard reveal. No TRACE state changes, no test yet.
  * - recordTest — Review grade or quiz answer. The only writer of pass/fail
  *   history, scoped to whichever `activity` it's called with.
@@ -74,7 +74,7 @@ async function loadState(client: Client, mode: AuthMode, userId: string, termId:
     : fetchTraceStateForUser(client, userId, termId);
 }
 
-/** Read page/command, `/read`, or opening a term card on the jargon page: deliberate but untested
+/** Read page/command, `/read`, or opening a term card on the library page: deliberate but untested
  *  exposure. All three Read surfaces (web, widget, Telegram) gate the definition behind an
  *  explicit reveal — call this at reveal time, never at delivery/fetch time. */
 export async function recordRead(

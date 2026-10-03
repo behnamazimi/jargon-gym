@@ -13,7 +13,7 @@ type PageProps = {
   searchParams: Promise<{ domain?: string; story?: string }>;
 };
 
-export default async function JargonReadStoriesPage({ searchParams }: PageProps) {
+export default async function ReadStoriesRoute({ searchParams }: PageProps) {
   const { domain, story } = await searchParams;
   const storyId = z.uuid().safeParse(story).success ? story : undefined;
   const setup = await getStoriesSetupData(domain, storyId);

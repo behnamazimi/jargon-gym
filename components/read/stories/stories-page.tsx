@@ -5,7 +5,7 @@ import { EmptyBoxScene } from "@/components/illustrations/scenes/empty-box";
 import { PreparingScene } from "@/components/illustrations/scenes/preparing";
 import type { StoriesSetupData } from "@/lib/stories/setup";
 import { CreditsInsteadButton } from "@/components/settings/credits-instead-button";
-import { JargonErrorAlert } from "@/components/shared/error-alert";
+import { ErrorAlert } from "@/components/shared/error-alert";
 import {
   QuizCenteredState,
   QuizPanel,
@@ -66,7 +66,7 @@ function StoriesErrorStep({ session, ai }: { session: StorySession; ai: AiAccess
         description="Nothing was saved to your progress."
       />
       <QuizPanelBody className="space-y-4">
-        <JargonErrorAlert error={session.errorMessage ?? "Couldn't write a story. Try again."} />
+        <ErrorAlert error={session.errorMessage ?? "Couldn't write a story. Try again."} />
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Button
             type="button"

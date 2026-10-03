@@ -76,7 +76,7 @@ export function LibraryFilters({
           type="button"
           variant="outline"
           aria-expanded={expanded}
-          aria-controls="jargon-advanced-filters"
+          aria-controls="library-advanced-filters"
           onPress={() => setExpanded((value) => !value)}
           className={cn("min-h-10 shrink-0 gap-2", expanded && "bg-base-200")}
         >
@@ -95,7 +95,7 @@ export function LibraryFilters({
 
       {expanded ? (
         <div
-          id="jargon-advanced-filters"
+          id="library-advanced-filters"
           className="shadow-surface space-y-3 rounded-box bg-base-100 p-4"
         >
           <CategoryChips

@@ -1,33 +1,33 @@
 import { Alert, AlertContent, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-type JargonErrorIssue = {
+type ErrorIssue = {
   path?: string;
   message: string;
   expected?: string;
   received?: string;
 };
 
-type JargonErrorContext = {
+type ErrorContextDetails = {
   term?: string;
   domain?: string;
 };
 
-type JargonErrorDetails = {
+type ErrorDetails = {
   title?: string;
   message: string;
   details?: string[];
   hint?: string;
   code?: string;
-  issues?: JargonErrorIssue[];
-  context?: JargonErrorContext;
+  issues?: ErrorIssue[];
+  context?: ErrorContextDetails;
 };
 
-type JargonErrorAlertProps = {
-  error: string | JargonErrorDetails;
+type ErrorAlertProps = {
+  error: string | ErrorDetails;
   className?: string;
 };
 
-function ErrorContext({ context }: { context: JargonErrorContext | undefined }) {
+function ErrorContext({ context }: { context: ErrorContextDetails | undefined }) {
   if (!context?.domain && !context?.term) return null;
   return (
     <dl className="mt-3 grid gap-2 rounded-field bg-error/5 px-3 py-3 ring-1 ring-error/15">
@@ -58,7 +58,7 @@ function ErrorDetailsList({ details }: { details: string[] | undefined }) {
   );
 }
 
-function IssueExpectedReceived({ issue }: { issue: JargonErrorIssue }) {
+function IssueExpectedReceived({ issue }: { issue: ErrorIssue }) {
   if (!issue.expected && !issue.received) return null;
   return (
     <div className="mt-1 text-xs text-base-content/70">
@@ -69,7 +69,7 @@ function IssueExpectedReceived({ issue }: { issue: JargonErrorIssue }) {
   );
 }
 
-function ErrorIssuesList({ issues }: { issues: JargonErrorIssue[] | undefined }) {
+function ErrorIssuesList({ issues }: { issues: ErrorIssue[] | undefined }) {
   if (!issues || issues.length === 0) return null;
   return (
     <ul className="mt-3 space-y-2">
@@ -99,10 +99,10 @@ function ErrorHint({ hint }: { hint: string | undefined }) {
 }
 
 // One error-display component for the whole app: a plain string renders as a
-// simple destructive alert, a full JargonErrorDetails renders with an
+// simple destructive alert, a full ErrorDetails renders with an
 // optional title, context, code, details list, issue list, and hint.
-export function JargonErrorAlert({ error, className }: JargonErrorAlertProps) {
-  const failure: JargonErrorDetails = typeof error === "string" ? { message: error } : error;
+export function ErrorAlert({ error, className }: ErrorAlertProps) {
+  const failure: ErrorDetails = typeof error === "string" ? { message: error } : error;
 
   return (
     <Alert variant="destructive" className={className}>
