@@ -38,6 +38,14 @@
     alternate;
 }
 
+.ill-bob {
+  animation: ill-bob var(--ill-duration, 1.6s) ease-in-out var(--ill-delay, 0s) infinite alternate;
+}
+
+.ill-wiggle {
+  animation: ill-wiggle var(--ill-duration, 1s) ease-in-out var(--ill-delay, 0s) infinite alternate;
+}
+
 .ill-look {
   animation: ill-look var(--ill-duration, 1.6s) ease-in-out var(--ill-delay, 0s) infinite alternate;
 }
@@ -290,6 +298,58 @@
 }
 .ill-flinch-eyes {
   animation-name: ill-flinch-eyes;
+}
+
+/* Empty box: leans in to peek, shakes the box, looks up as a blank card
+   drifts down into it. */
+.ill-peek-lean,
+.ill-box-shake,
+.ill-look-up,
+.ill-drift-in {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-peek-lean {
+  animation-name: ill-peek-lean;
+}
+.ill-box-shake {
+  animation-name: ill-box-shake;
+}
+.ill-look-up {
+  animation-name: ill-look-up;
+}
+.ill-drift-in {
+  animation-name: ill-drift-in;
+}
+
+/* Quiz cheer: a happy hop with the card held high. */
+.ill-celebrate-hop,
+.ill-celebrate-squash {
+  animation: var(--ill-duration, 1.2s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-celebrate-hop {
+  animation-name: ill-celebrate-hop;
+}
+.ill-celebrate-squash {
+  animation-name: ill-celebrate-squash;
+}
+
+/* Keep training: presses the card barbell up, holds, lowers it. */
+.ill-lift-bar,
+.ill-lift-arms,
+.ill-lift-squash {
+  animation: var(--ill-duration, 2.4s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-lift-bar {
+  animation-name: ill-lift-bar;
+}
+.ill-lift-arms {
+  animation-name: ill-lift-arms;
+}
+.ill-lift-squash {
+  animation-name: ill-lift-squash;
 }
 
 /* Invite: sneaks a peek over the rim, then climbs out with the card overhead,
@@ -1462,6 +1522,181 @@
   49%,
   62% {
     transform: scaleY(0.15);
+  }
+}
+
+@keyframes ill-bob {
+  to {
+    transform: translateY(calc(var(--ill-amount, 6) * -1px));
+  }
+}
+
+@keyframes ill-wiggle {
+  from {
+    transform: rotate(calc(var(--ill-amount, 9) * -1deg));
+  }
+  to {
+    transform: rotate(calc(var(--ill-amount, 9) * 1deg));
+  }
+}
+
+/* Leans toward the box to look inside. */
+@keyframes ill-peek-lean {
+  0%,
+  8%,
+  34%,
+  100% {
+    transform: none;
+  }
+  14%,
+  28% {
+    transform: rotate(7deg);
+  }
+}
+
+/* A little shake to check it's really empty. */
+@keyframes ill-box-shake {
+  0%,
+  34%,
+  46%,
+  100% {
+    transform: none;
+  }
+  37%,
+  43% {
+    transform: rotate(-5deg);
+  }
+  40% {
+    transform: rotate(5deg);
+  }
+}
+
+/* Eyes go up to follow the card coming down, then back to the box. */
+@keyframes ill-look-up {
+  0%,
+  48%,
+  84%,
+  100% {
+    transform: none;
+  }
+  54%,
+  70% {
+    transform: translate(-2px, -6px);
+  }
+}
+
+/* The blank card: fades in up high, zigzags down, drops into the box. */
+@keyframes ill-drift-in {
+  0%,
+  46% {
+    transform: translate(-60px, -170px) rotate(-30deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-60px, -170px) rotate(-30deg);
+    opacity: 1;
+  }
+  58% {
+    transform: translate(-20px, -120px) rotate(18deg);
+  }
+  66% {
+    transform: translate(-44px, -70px) rotate(-12deg);
+  }
+  74% {
+    transform: translate(0, -24px) rotate(4deg);
+  }
+  80% {
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+  86% {
+    transform: translateY(26px);
+    opacity: 1;
+  }
+  88%,
+  100% {
+    transform: translateY(26px);
+    opacity: 0;
+  }
+}
+
+/* Crouch, jump, hang, land. */
+@keyframes ill-celebrate-hop {
+  0%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: translateY(4px);
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  45% {
+    transform: translateY(-22px);
+    animation-timing-function: ease-in;
+  }
+  72% {
+    transform: none;
+  }
+  80% {
+    transform: translateY(3px);
+  }
+}
+
+/* Squash on the crouch and landing, stretch in the air. Bottom origin. */
+@keyframes ill-celebrate-squash {
+  0%,
+  92%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: scale(1.06, 0.92);
+  }
+  45% {
+    transform: scale(0.95, 1.06);
+  }
+  76% {
+    transform: scale(1.05, 0.94);
+  }
+}
+
+/* The bar: down at the head, pressed up, held, lowered. */
+@keyframes ill-lift-bar {
+  0%,
+  100% {
+    transform: translateY(30px);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1);
+  }
+  38%,
+  58% {
+    transform: none;
+    animation-timing-function: ease-in-out;
+  }
+}
+
+/* The arms stretch with it, from the shoulders (bottom origin). */
+@keyframes ill-lift-arms {
+  0%,
+  100% {
+    transform: scaleY(0.6);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.3, 1);
+  }
+  38%,
+  58% {
+    transform: none;
+    animation-timing-function: ease-in-out;
+  }
+}
+
+/* Loaded under the bar, taller once it's up. Bottom origin. */
+@keyframes ill-lift-squash {
+  0%,
+  100% {
+    transform: scale(1.04, 0.95);
+  }
+  38%,
+  58% {
+    transform: scale(0.98, 1.03);
   }
 }
 

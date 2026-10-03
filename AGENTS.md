@@ -144,9 +144,10 @@ svg shell, wobble filter and hatch patterns), `Shape` / `Line` / `Hatch`,
 live in `illustrations.css`. They're decorative and hidden from screen
 readers unless you pass a `title`. Reusable status scenes: `NotFoundScene`,
 `SomethingWentWrongScene` and `OfflineScene` (pass them as `illustration` to
-`StatusPage`),
-and `PreparingScene` for waits while something is generated (pass it to
-`QuizCenteredState`).
+`StatusPage`), `PreparingScene` for waits while something is generated,
+`EmptyBoxScene` for empty collections and term lists, `CaughtUpScene` for
+"nothing left to study", and `QuizCheerScene` / `KeepTrainingScene` for quiz
+results (`EmptyState` and `QuizCenteredState` take them as `illustration`).
 
 Keep new ones consistent with the existing scenes:
 
