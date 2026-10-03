@@ -1299,8 +1299,8 @@ export type Database = {
           read_shadowing_gap: number;
           read_shadowing_pause: boolean;
           read_shadowing_repeats: number;
-          read_tap_to_play: boolean;
           read_stories_default: boolean;
+          read_tap_to_play: boolean;
           story_last_domain_id: string | null;
           timezone: string | null;
           tour_seen: string[];
@@ -1325,8 +1325,8 @@ export type Database = {
           read_shadowing_gap?: number;
           read_shadowing_pause?: boolean;
           read_shadowing_repeats?: number;
-          read_tap_to_play?: boolean;
           read_stories_default?: boolean;
+          read_tap_to_play?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;
           tour_seen?: string[];
@@ -1351,8 +1351,8 @@ export type Database = {
           read_shadowing_gap?: number;
           read_shadowing_pause?: boolean;
           read_shadowing_repeats?: number;
-          read_tap_to_play?: boolean;
           read_stories_default?: boolean;
+          read_tap_to_play?: boolean;
           story_last_domain_id?: string | null;
           timezone?: string | null;
           tour_seen?: string[];

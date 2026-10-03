@@ -15,7 +15,12 @@ import { useMediaQuery } from "@/hooks/use-platform";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { ReadOptionKey, ReadOptions } from "@/lib/read/options";
 
-type SwitchOptionKey = "storiesDefault" | "revealedDefault" | "hideQuestion" | "narrationHighlight" | "tapToPlay";
+type SwitchOptionKey =
+  | "storiesDefault"
+  | "revealedDefault"
+  | "hideQuestion"
+  | "narrationHighlight"
+  | "tapToPlay";
 
 const OPTION_ROWS: { key: SwitchOptionKey; label: string; description: string }[] = [
   {
