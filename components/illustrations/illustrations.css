@@ -194,21 +194,33 @@
   animation-timing-function: ease-out;
 }
 
-/* Not found: sweeps a flashlight, finds nothing, tilts its head and scratches it. */
+/* Not found: sweeps a flashlight, is surprised to find nothing, and shrugs. */
 .ill-search,
-.ill-puzzle-tilt,
-.ill-scratch {
+.ill-shrug,
+.ill-shrug-arm,
+.ill-surprise-eyes,
+.ill-surprise-brows,
+.ill-surprise-marks {
   animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
 }
 
 .ill-search {
   animation-name: ill-search;
 }
-.ill-puzzle-tilt {
-  animation-name: ill-puzzle-tilt;
+.ill-shrug {
+  animation-name: ill-shrug;
 }
-.ill-scratch {
-  animation-name: ill-scratch;
+.ill-shrug-arm {
+  animation-name: ill-shrug-arm;
+}
+.ill-surprise-eyes {
+  animation-name: ill-surprise-eyes;
+}
+.ill-surprise-brows {
+  animation-name: ill-surprise-brows;
+}
+.ill-surprise-marks {
+  animation-name: ill-surprise-marks;
 }
 
 /* Something went wrong: the house of cards wobbles, its top floor falls, the
@@ -1032,7 +1044,8 @@
   }
 }
 
-/* The flashlight arm: sweeps up and down, settles on the empty spot, then again. */
+/* The flashlight arm: sweeps up and down, settles on the empty spot, droops
+   toward the floor during the shrug, then starts again. Pivot at the shoulder. */
 @keyframes ill-search {
   0%,
   100% {
@@ -1045,43 +1058,97 @@
     transform: rotate(-5deg);
   }
   40%,
-  64% {
+  50% {
     transform: none;
   }
-}
-
-/* Head tilts while it stares at the nothing it found. Bottom origin. */
-@keyframes ill-puzzle-tilt {
-  0%,
-  42% {
-    transform: none;
-  }
-  48%,
-  66% {
-    transform: rotate(-5deg);
-  }
-  72%,
-  100% {
-    transform: none;
-  }
-}
-
-/* A little head scratch during the tilt. Pivot at the shoulder. */
-@keyframes ill-scratch {
-  0%,
-  47%,
-  65%,
-  100% {
-    transform: none;
-  }
-  50%,
   56%,
-  62% {
-    transform: rotate(-6deg);
+  70% {
+    transform: rotate(16deg);
   }
-  53%,
-  59% {
-    transform: rotate(4deg);
+  80% {
+    transform: rotate(-2deg);
+  }
+}
+
+/* The body: a startled hop, then shoulders up with a head tilt. Bottom origin. */
+@keyframes ill-shrug {
+  0%,
+  44%,
+  76%,
+  100% {
+    transform: none;
+  }
+  47% {
+    transform: translateY(-12px) scale(0.96, 1.06);
+    animation-timing-function: ease-in;
+  }
+  51% {
+    transform: scale(1.04, 0.96);
+  }
+  57%,
+  70% {
+    transform: translateY(-4px) rotate(-4deg) scale(1.02, 1.04);
+  }
+}
+
+/* The free arm swings out, palm up. Pivot at the shoulder. */
+@keyframes ill-shrug-arm {
+  0%,
+  52%,
+  76%,
+  100% {
+    transform: none;
+  }
+  57%,
+  70% {
+    transform: rotate(96deg);
+  }
+}
+
+/* Eyes pop wide in surprise. */
+@keyframes ill-surprise-eyes {
+  0%,
+  45%,
+  56%,
+  100% {
+    transform: none;
+  }
+  47%,
+  52% {
+    transform: scale(1.7);
+  }
+}
+
+/* Brows shoot up with the surprise and stay up through the shrug. */
+@keyframes ill-surprise-brows {
+  0%,
+  45%,
+  74%,
+  100% {
+    transform: none;
+  }
+  47%,
+  70% {
+    transform: translateY(-7px);
+  }
+}
+
+/* Little shock marks above the head, only during the jolt. */
+@keyframes ill-surprise-marks {
+  0%,
+  45%,
+  56%,
+  100% {
+    transform: none;
+    opacity: 0;
+  }
+  47% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+  53% {
+    transform: none;
+    opacity: 1;
   }
 }
 

@@ -9,7 +9,7 @@ const SHOULDER: readonly [number, number] = [344, 410];
 
 /**
  * For a missing page: someone sweeps a flashlight across the dotted outline
- * where a card should be, finds nothing, tilts their head and scratches it.
+ * where a card should be, is surprised to find nothing there, and shrugs.
  */
 export function NotFoundScene({ className, title }: { className?: string; title?: string }) {
   return (
@@ -19,7 +19,7 @@ export function NotFoundScene({ className, title }: { className?: string; title?
       <Dot x={700} y={180} r={9} color={PURPLE} ring />
       <Line d={wave(160, 524, 540, { amp: 2, period: 44, seed: 3 })} stroke={STROKE.regular} />
 
-      {/* Sweeps the beam over the empty spot, holds it there, gives up. */}
+      {/* Sweeps the beam over the empty spot, holds it there, lets it droop in the shrug. */}
       <Motion kind="search" pivot={SHOULDER}>
         <path d="M430 388L708 286L716 486L430 410Z" style={{ fill: YELLOW }} />
         <Line d="M430 388L708 286M430 410L716 486" stroke={STROKE.regular} />
@@ -44,25 +44,34 @@ export function NotFoundScene({ className, title }: { className?: string; title?
 
       <Line d="M286 494L280 522M314 494L322 522" />
       <Line d="M268 523L282 523M320 523L334 523" stroke={9} />
-      <Motion kind="puzzle-tilt" origin="50% 100%">
+      {/* Finds nothing: jolts in surprise (eyes pop, brows up, a hop), then shrugs
+          with a palm up and the flashlight drooping. */}
+      <Motion kind="surprise-marks">
+        <Line d="M282 318L276 302M300 312L300 294M318 318L324 302" stroke={STROKE.regular} />
+      </Motion>
+      <Motion kind="shrug" origin="50% 100%">
+        <Motion kind="shrug-arm" pivot={[258, 428]}>
+          <Line
+            d={curve([
+              [258, 428],
+              [240, 452],
+              [236, 476],
+            ])}
+          />
+          <Dot x={236} y={480} r={8} color={BLUE} />
+        </Motion>
         <Shape d={blob({ cx: 300, cy: 420, rx: 50, ry: 80, taper: 0.12, seed: 8 })} color={BLUE} />
         <Hatch d={blob({ cx: 280, cy: 468, rx: 15, ry: 11, seed: 2 })} />
         <Motion kind="blink" phase={1.1}>
-          <Eye x={316} y={388} />
-          <Eye x={338} y={386} />
+          <Motion kind="surprise-eyes">
+            <Eye x={316} y={388} />
+            <Eye x={338} y={386} />
+          </Motion>
         </Motion>
-        <Line d="M306 366Q314 356 326 364M332 372L348 370" stroke={STROKE.regular} />
-        <Line d="M318 414L338 412" stroke={STROKE.regular} />
-        <Motion kind="scratch" pivot={[258, 424]}>
-          <Line
-            d={curve([
-              [258, 424],
-              [232, 380],
-              [280, 334],
-            ])}
-          />
-          <Dot x={283} y={332} r={8} color={BLUE} />
+        <Motion kind="surprise-brows">
+          <Line d="M306 368Q314 360 324 366M332 366Q340 360 350 366" stroke={STROKE.regular} />
         </Motion>
+        <Line d="M320 414Q328 410 338 413" stroke={STROKE.regular} />
       </Motion>
     </Illustration>
   );
