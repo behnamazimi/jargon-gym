@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BookOpen, LayoutList, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, LayoutList, Sparkles, Zap } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/settings/profile-menu";
@@ -86,20 +86,29 @@ export function SiteHeader({
       homeHref={user ? AUTHENTICATED_HOME_PATH : "/"}
       leftNav={
         user ? (
-          <HiddenUntilSignupComplete>
-            {/* Desktop only: phones reach the Library from the dock, and a
-                fourth icon would crowd the public-page header. */}
-            <HeaderStudyLink href="/app/library" icon={LayoutList} label="Library" />
-            <HeaderStudyLink href="/app/read" icon={Zap} label="Read" />
-            <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
-            <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
-          </HiddenUntilSignupComplete>
+          <>
+            {/* Phones get one link into the app instead of four study icons. */}
+            <HiddenUntilSignupComplete className="md:hidden">
+              <Link href={AUTHENTICATED_HOME_PATH} className="btn btn-ghost">
+                Open app
+                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
+              </Link>
+            </HiddenUntilSignupComplete>
+            <HiddenUntilSignupComplete className="max-md:hidden">
+              <HeaderStudyLink href="/app/library" icon={LayoutList} label="Library" />
+              <HeaderStudyLink href="/app/read" icon={Zap} label="Read" />
+              <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
+              <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
+            </HiddenUntilSignupComplete>
+          </>
         ) : null
       }
       rightNav={
         <>
           {user ? (
-            <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+            <span className="max-md:hidden">
+              <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+            </span>
           ) : null}
           {user ? null : <InstallButton />}
           <ThemeToggle initialIsDark={initialIsDark} />

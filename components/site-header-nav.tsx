@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { LinkButton } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const AUTH_ROUTES = new Set([
   "/login",
@@ -22,12 +23,18 @@ export function LoggedOutHeaderNav() {
   return <LinkButton href="/login">Log in</LinkButton>;
 }
 
-export function HiddenUntilSignupComplete({ children }: { children: ReactNode }) {
+export function HiddenUntilSignupComplete({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   const pathname = usePathname();
 
   if (pathname === "/complete-signup") {
     return null;
   }
 
-  return <nav className="flex items-center gap-1">{children}</nav>;
+  return <nav className={cn("flex items-center gap-1", className)}>{children}</nav>;
 }
