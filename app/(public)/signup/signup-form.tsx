@@ -1,11 +1,13 @@
 "use client";
 
+import { Mail } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -39,6 +41,26 @@ export default function SignupForm({
     }
     wasPending.current = pending;
   }, [pending, state]);
+
+  if (state?.checkEmail) {
+    return (
+      <div className="flex w-full max-w-sm flex-col gap-4">
+        <h1 className="text-2xl font-medium">Check your email</h1>
+        <Alert variant="success" icon={<Mail strokeWidth={1.5} />}>
+          <AlertDescription>
+            We sent a confirmation link to <strong>{state.checkEmail}</strong>. Open it to finish
+            signing up, then log in. If you don&apos;t see it, check your spam folder.
+          </AlertDescription>
+        </Alert>
+        <Link
+          href={appendNextParam("/login", rawNext)}
+          className="text-sm underline underline-offset-2"
+        >
+          Go to log in
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-4">
