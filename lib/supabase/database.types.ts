@@ -1868,10 +1868,6 @@ export type Database = {
         Args: { p_chat_id: number; p_token_hash: string };
         Returns: string;
       };
-      delete_own_account: {
-        Args: { p_confirm_email: string };
-        Returns: undefined;
-      };
       create_referral_code: {
         Args: { p_code?: string };
         Returns: {
@@ -1893,6 +1889,10 @@ export type Database = {
           isOneToOne: true;
           isSetofReturn: false;
         };
+      };
+      delete_own_account: {
+        Args: { p_confirm_email: string };
+        Returns: undefined;
       };
       end_ai_run: {
         Args: { p_feature: string; p_token: string; p_user_id: string };
