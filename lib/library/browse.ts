@@ -232,8 +232,8 @@ export async function fetchSharedDomainsBrowse(
 
   const ordered =
     sort === "loved"
-      ? pageQuery.order("love_count", { ascending: false }).order("name")
-      : pageQuery.order("name");
+      ? pageQuery.order("love_count", { ascending: false }).order("name").order("id")
+      : pageQuery.order("name").order("id");
   const { data, error } = await ordered.range(offset, offset + limit - 1);
   if (error) throw error;
 

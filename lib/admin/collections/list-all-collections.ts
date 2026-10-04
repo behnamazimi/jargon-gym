@@ -26,19 +26,22 @@ export type AdminCollectionRow = {
 };
 
 /** Admins act on shared collections and their own. Other people's private ones are theirs alone,
- *  except after a takedown: the collection is private again, and the admin can lift its lock. */
+ *  except after a takedown (the admin can lift its lock) or while it has open reports (the owner may
+ *  have unshared it, and the admin still has to close them). */
 export function canActOnCollection(
   collection: {
     visibility: string;
     ownerId: string;
     shareBlockedAt?: string | null;
+    openReportCount?: number;
   },
   adminId: string,
 ): boolean {
   return (
     collection.visibility === "shared" ||
     collection.ownerId === adminId ||
-    Boolean(collection.shareBlockedAt)
+    Boolean(collection.shareBlockedAt) ||
+    (collection.openReportCount ?? 0) > 0
   );
 }
 
@@ -83,6 +86,7 @@ export async function listAllCollectionsForAdmin(
         visibility: row.visibility,
         ownerId: row.owner_id,
         shareBlockedAt: row.share_blocked_at as string | null,
+        openReportCount: Number(row.open_report_count),
       },
       adminId,
     ),

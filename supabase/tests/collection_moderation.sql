@@ -61,6 +61,9 @@ begin
   insert into public.domains (name, owner_id, visibility, is_builtin) values ('CM Builtin', owner_id, 'shared', true) returning id into d_builtin;
   insert into public.user_collection_domains (user_id, domain_id) values (a_id, d_shared), (b_id, d_shared);
 
+  -- A love only changes the counter, so it must not bump updated_at
+  assert (select pg_get_triggerdef(oid) from pg_trigger where tgname = 'domains_set_updated_at' and tgrelid = 'public.domains'::regclass) like '%love_count%', 'updated_at trigger ignores loves';
+
   -- Loves
   perform pg_temp.act_as(owner_id);
   v_failed := false;

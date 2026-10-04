@@ -85,6 +85,11 @@ describe("canActOnCollection", () => {
     expect(canActOnCollection({ visibility: "private", ownerId: "x" }, "a")).toBe(false);
   });
 
+  it("keeps a collection with open reports actable after its owner unshared it", () => {
+    const reported = { visibility: "private", ownerId: "x", openReportCount: 2 };
+    expect(canActOnCollection(reported, "a")).toBe(true);
+  });
+
   it("keeps a blocked collection actable, so its lock can be lifted", () => {
     const blocked = {
       visibility: "private",

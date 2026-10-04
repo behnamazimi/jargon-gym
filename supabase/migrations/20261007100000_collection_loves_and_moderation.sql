@@ -8,7 +8,8 @@
 -- Rollback (as a new migration, history is append-only): drop the functions
 -- my_set_collection_love, my_report_collection and the admin_*_collection*,
 -- admin_lift_share_lock functions; drop the tables collection_reports and
--- collection_loves; drop trigger domains_guard_protected; drop the three new
+-- collection_loves; recreate trigger domains_set_updated_at without its WHEN clause;
+-- drop trigger domains_guard_protected; drop the three new
 -- columns from public.domains; recreate the "Users add shared domains to
 -- collection" policy from 20260725140000_user_owned_domains.sql; and re-run
 -- admin_list_collections from 20261006100000_domain_kind.sql (drop it first).
@@ -25,6 +26,16 @@ alter table public.domains
     check (share_block_reason in ('rules', 'personal_info', 'not_appropriate')),
   add constraint domains_share_block_pair_check
     check ((share_blocked_at is null) = (share_block_reason is null));
+
+-- A love only changes the counter, so it must not bump updated_at (the admin
+-- list and the sitemap read it as "last edited").
+drop trigger domains_set_updated_at on public.domains;
+
+create trigger domains_set_updated_at
+  before update on public.domains
+  for each row
+  when (old.love_count is not distinct from new.love_count)
+  execute function public.set_updated_at();
 
 -- ---------------------------------------------------------------------------
 -- Guard: owners hold a table-wide UPDATE grant and an owner UPDATE policy, so a

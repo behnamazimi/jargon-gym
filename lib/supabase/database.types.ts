@@ -1870,11 +1870,7 @@ export type Database = {
         }[];
       };
       admin_publish_collection: {
-        Args: {
-          p_domain_id: string;
-          p_domain_slug: string;
-          p_term_slugs: Json;
-        };
+        Args: { p_domain_id: string; p_domain_slug: string; p_term_slugs: Json };
         Returns: string;
       };
       admin_remove_user_api_key: {
