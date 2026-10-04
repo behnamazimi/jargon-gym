@@ -8,13 +8,9 @@ export type FeatureIconKey =
   | "phone"
   | "send"
   | "monitor"
-  | "wifi"
-  | "moon"
   | "star"
   | "key"
-  | "undo"
-  | "shield"
-  | "trash";
+  | "shield";
 
 type FeatureItem = { title: string; body: string };
 

@@ -51,12 +51,6 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
         title: "macOS widget",
         body: "The next term on your desktop. Reveal it, advance it.",
       },
-      {
-        icon: "wifi",
-        title: "Offline notice",
-        body: "A clear banner when you lose connection.",
-      },
-      { icon: "moon", title: "Light and dark", body: "Follows your theme." },
     ],
   },
   {
@@ -68,7 +62,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         icon: "star",
         title: "Credits to start",
-        body: "New accounts get AI credits, plus a monthly refill.",
+        body: "New accounts get AI credits, plus a monthly refill. If an AI run fails, the credits come back.",
       },
       {
         icon: "key",
@@ -76,19 +70,9 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
         body: "Use a Google or Anthropic key and spend no credits.",
       },
       {
-        icon: "undo",
-        title: "Refunded on failure",
-        body: "If an AI run fails, the credits come back.",
-      },
-      {
         icon: "shield",
         title: "AI only where you choose",
         body: "Quiz, Stories and voices. Import never uses AI.",
-      },
-      {
-        icon: "trash",
-        title: "Yours to delete",
-        body: "Delete your account from Settings.",
       },
     ],
   },
@@ -109,6 +93,8 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       "Duplicate check",
       "Full-screen Read feed",
       "Answer feedback in Quiz",
+      "Light and dark themes",
+      "Delete your account any time",
     ],
   },
 ];

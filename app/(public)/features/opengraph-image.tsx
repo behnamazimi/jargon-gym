@@ -7,7 +7,7 @@ export const contentType = OG_CONTENT_TYPE;
 export default function Image() {
   return renderSpecimenImage({
     kicker: "Features",
-    heading: "Hear it, say it, and see what has stuck.",
+    heading: "Stories you can hear, shadow and learn from.",
     body: "Voices, stories, shadowing and no due dates, for the terms of a field or the words of a language.",
     accent: true,
   });

@@ -4,15 +4,11 @@ import {
   Globe,
   KeyRound,
   Monitor,
-  Moon,
   Pencil,
   Send,
   ShieldCheck,
   Smartphone,
   Star,
-  Trash2,
-  Undo2,
-  Wifi,
   type LucideIcon,
 } from "lucide-react";
 import { SectionHeading } from "@/components/public/section-heading";
@@ -29,13 +25,9 @@ const ICONS: Record<FeatureIconKey, LucideIcon> = {
   phone: Smartphone,
   send: Send,
   monitor: Monitor,
-  wifi: Wifi,
-  moon: Moon,
   star: Star,
   key: KeyRound,
-  undo: Undo2,
   shield: ShieldCheck,
-  trash: Trash2,
 };
 
 export function FeatureCards({ section, number }: { section: CardsSection; number: number }) {

@@ -26,7 +26,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Save one term",
-        body: "Meet a word at work and capture it in seconds, with a duplicate check.",
+        body: "Capture a word the moment you meet it. A name is enough: it waits out of practice until you add a definition.",
       },
       {
         title: "Request a collection",
@@ -35,10 +35,6 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       {
         title: "Import without AI",
         body: "Nothing you paste is sent to a model. Parsing is plain rules, so it is free.",
-      },
-      {
-        title: "Start with just a name",
-        body: "A term waits, out of practice, until you give it a definition.",
       },
     ],
   },
@@ -66,26 +62,49 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         body: "A real check. Free questions come from your definitions; AI questions are sharper.",
       },
       {
-        title: "Any order",
+        title: "Study in any order",
         body: "Most people read, review, then quiz, but you can use them in any order.",
       },
       { title: "One collection or all", body: "Pick the scope for each session." },
       {
-        title: "Fields and languages",
-        body: "Terms of a trade, or words and phrases in a language you're learning.",
+        title: "Hear any term",
+        body: "Play a spoken clip from a term card.",
       },
     ],
   },
   {
     layout: "split",
-    id: "hear",
-    title: "Hear it, then say it",
-    lead: "Natural AI voices that read terms and stories aloud, and a shadowing mode built to get you speaking.",
+    id: "stories",
+    title: "Stories made from your terms",
+    lead: "A short read written around the terms you're learning, so they show up in context.",
+    scene: "stories",
+    items: [
+      {
+        title: "From your queue",
+        body: "Each story uses the terms your queue ranks next.",
+      },
+      {
+        title: "Style, setting, difficulty",
+        body: "Choose the voice, the scene and how hard the sentences are.",
+      },
+      {
+        title: "Mark known as you read",
+        body: "Skip a term for good without leaving the page.",
+      },
+      { title: "Story history", body: "Reopen anything you read before." },
+      { title: "Open on Stories", body: "Make it your default way into Read." },
+    ],
+  },
+  {
+    layout: "split",
+    id: "listen",
+    title: "Listen and shadow in Stories",
+    lead: "Every story can be read aloud in a natural AI voice. Turn on shadowing to repeat each sentence out loud.",
     scene: "hear",
     items: [
       {
         title: "AI voices",
-        body: "Spoken clips for terms and stories, with a backup voice so playback keeps working.",
+        body: "Stories are read aloud, with a backup voice so playback keeps working.",
       },
       {
         title: "Sentence highlight",
@@ -104,41 +123,6 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         body: "Slow a hard sentence down, or speed up an easy one.",
       },
       { title: "Tap any sentence", body: "Jump to it and hear it again." },
-      {
-        title: "Clips on term cards",
-        body: "Hear a single term without opening a story.",
-      },
-      {
-        title: "Built for languages",
-        body: "Shadowing works on words and phrases collections too.",
-      },
-    ],
-  },
-  {
-    layout: "split",
-    id: "stories",
-    title: "Stories made from your terms",
-    lead: "A short read written around the terms you're learning, so they show up in context.",
-    scene: "stories",
-    items: [
-      {
-        title: "Written for you",
-        body: "Each story uses the terms your queue ranks next.",
-      },
-      {
-        title: "Tap for the definition",
-        body: "Open any term in place without leaving the story.",
-      },
-      {
-        title: "Style, setting, difficulty",
-        body: "Choose the voice, the scene and how hard the sentences are.",
-      },
-      {
-        title: "Mark known as you read",
-        body: "Skip a term for good without leaving the page.",
-      },
-      { title: "Story history", body: "Reopen anything you read before." },
-      { title: "Open on Stories", body: "Make it your default way into Read." },
     ],
   },
   {
@@ -158,14 +142,13 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Skip what you know",
-        body: "Swipe through a deck of terms: right for known, left for not yet.",
+        body: "Swipe through a deck of terms: right for known, left for not yet. Undo the last one if you slip.",
       },
       { title: "Mark known anywhere", body: "From the Library, a card or a story." },
       {
         title: "Pause a collection",
         body: "Take it out of practice for a busy month, then bring it back.",
       },
-      { title: "Undo", body: "Changed your mind? Your last choice reverses." },
     ],
   },
   {
