@@ -66,6 +66,16 @@ export function PrivacyPage() {
         </p>
       </ContentPageSection>
 
+      <ContentPageSection title="Who can see it">
+        <p className="m-0">
+          Other members never see your progress or history, even in a shared collection. The admin
+          can see basic account details to run the service and help you: your email, streaks, last
+          activity, the provider and last four characters of an AI key if you added one, and how
+          many collections you have. As the operator, I also have technical access to the database,
+          and I use it only to run, secure and fix the service.
+        </p>
+      </ContentPageSection>
+
       <ContentPageSection title="Why we use it">
         <ContentPageTitledBulletList
           items={[

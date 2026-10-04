@@ -149,7 +149,9 @@ export function BeforeYouSignUpPage({ isLoggedIn = false }: BeforeYouSignUpPageP
         <ContentPageSection title="Private by default">
           <p className="m-0">
             Your own collections are private until you choose to share them. Even on a shared
-            collection, your progress and activity history stays yours, nobody else sees it.
+            collection, your progress and activity history stays yours, other members never see it.
+            The admin sees only basic account details to run the service, as the privacy page
+            explains.
           </p>
         </ContentPageSection>
 
