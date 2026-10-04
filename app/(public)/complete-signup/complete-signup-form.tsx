@@ -12,12 +12,14 @@ import { safeNextPath } from "@/lib/auth/safe-next-path";
 import { redeemReferralCode } from "./actions";
 
 type CompleteSignupFormProps = {
+  codeRanOut?: boolean;
   defaultReferenceCode?: string;
   initialError?: string | null;
   next?: string;
 };
 
 export default function CompleteSignupForm({
+  codeRanOut = false,
   defaultReferenceCode = "",
   initialError = null,
   next: rawNext,
@@ -34,7 +36,20 @@ export default function CompleteSignupForm({
         Almost there. Enter your reference code to finish setting up your account.
       </p>
 
-      {!defaultReferenceCode && (
+      {codeRanOut && (
+        <Alert variant="warning">
+          <AlertDescription>
+            The code you signed up with ran out of seats before your email was confirmed. Enter
+            another code, or{" "}
+            <Link href="/request-access" className="underline underline-offset-2">
+              request access
+            </Link>
+            .
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!defaultReferenceCode && !codeRanOut && (
         <Alert variant="info" icon={<Mail strokeWidth={1.5} />}>
           <AlertDescription>
             No code yet? You get one once your access is approved.{" "}

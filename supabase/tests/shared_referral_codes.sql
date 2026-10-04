@@ -131,6 +131,7 @@ begin
   update public.referral_codes set use_count = max_uses where code = 'SCLAST';
   update auth.users set email_confirmed_at = now() where id = v_b;
   assert (select not referral_verified and pending_referral_code is null from public.users where id = v_b), 'late confirmation took a seat';
+  assert (select referral_code_ran_out from public.users where id = v_b), 'ran-out not remembered';
 
   -- ... and can still enter another code afterwards.
   perform pg_temp.act_as(v_b);
@@ -145,6 +146,7 @@ begin
   perform public.redeem_referral_code('scopen');
   execute 'reset role';
   assert (select referral_verified from public.users where id = v_b), 'redeem after sign-in';
+  assert (select not referral_code_ran_out from public.users where id = v_b), 'ran-out not cleared';
   assert (select use_count from public.referral_codes where code = 'SCOPEN') = 1, 'seat after sign-in redeem';
 
   -- Verified accounts can't take another seat.

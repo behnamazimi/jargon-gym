@@ -1431,6 +1431,7 @@ export type Database = {
           email: string;
           id: string;
           pending_referral_code: string | null;
+          referral_code_ran_out: boolean;
           referral_verified: boolean;
           role: Database["public"]["Enums"]["user_role"];
           suspended_at: string | null;
@@ -1440,6 +1441,7 @@ export type Database = {
           email: string;
           id: string;
           pending_referral_code?: string | null;
+          referral_code_ran_out?: boolean;
           referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
           suspended_at?: string | null;
@@ -1449,6 +1451,7 @@ export type Database = {
           email?: string;
           id?: string;
           pending_referral_code?: string | null;
+          referral_code_ran_out?: boolean;
           referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
           suspended_at?: string | null;
@@ -1563,6 +1566,7 @@ export type Database = {
           email: string;
           id: string;
           pending_referral_code: string | null;
+          referral_code_ran_out: boolean;
           referral_verified: boolean;
           role: Database["public"]["Enums"]["user_role"];
           suspended_at: string | null;

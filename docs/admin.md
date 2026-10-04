@@ -104,6 +104,7 @@ code also has a label and an end date, and stops at whichever limit comes first.
 - An email signup with a shared code takes its seat when the email is confirmed, not at signup, so a made-up
   address can't use one up. Until then the account is unverified and holds the code in
   `users.pending_referral_code`. If the code filled up meanwhile, the person lands on `/complete-signup`.
+  `users.referral_code_ran_out` remembers it, so that page says the code ran out instead of just asking for one.
 - Pausing stops new seats at once. The signup page shows no seat count or deadline.
 - SQL checks: `supabase/tests/shared_referral_codes.sql` and `shared_referral_codes_concurrency.sh`, run by hand.
 
