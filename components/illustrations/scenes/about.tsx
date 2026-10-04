@@ -14,10 +14,12 @@ const LEAVES = [
   { x: 224, y: 292, angle: -6, seed: 4 },
 ];
 
+// Under the spout, falling into the pot. In the plant's own coordinates (the
+// plant group is shifted 40 left), where the pot rim spans x 196 to 324.
 const DROPS = [
-  { x: 292, y: 396, phase: 0 },
-  { x: 302, y: 404, phase: 0.15 },
-  { x: 284, y: 410, phase: 0.3 },
+  { x: 306, y: 388, phase: 0 },
+  { x: 294, y: 396, phase: 0.15 },
+  { x: 312, y: 402, phase: 0.3 },
 ];
 
 function drop(x: number, y: number) {
@@ -65,6 +67,12 @@ export function AboutScene({ className, title }: { className?: string; title?: s
             </g>
           ))}
         </Motion>
+        {/* Drawn before the pot, so the drops land behind its rim. */}
+        {DROPS.map((d) => (
+          <Motion key={d.x} kind="pour-drops" phase={d.phase}>
+            <Shape d={drop(d.x, d.y)} color={BLUE} stroke={STROKE.fine} offset={[2, 2]} />
+          </Motion>
+        ))}
         <Shape
           d={polyline(
             [
@@ -80,12 +88,6 @@ export function AboutScene({ className, title }: { className?: string; title?: s
         <Shape d={box(196, 428, 128, 24, { seed: 5 })} color={CORAL} />
         <Hatch d={blob({ cx: 252, cy: 494, rx: 22, ry: 12, seed: 6 })} />
       </g>
-
-      {DROPS.map((d) => (
-        <Motion key={d.x} kind="pour-drops" phase={d.phase}>
-          <Shape d={drop(d.x, d.y)} color={BLUE} stroke={STROKE.fine} offset={[2, 2]} />
-        </Motion>
-      ))}
 
       {/* The gardener. */}
       <Line d="M538 506L532 524M584 506L590 524" />
