@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useStudyPhone } from "@/components/app/study-phone-context";
+import { LEGAL_LINKS } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 export function MoreSheet() {
@@ -123,6 +124,21 @@ export function MoreSheet() {
           </button>
         </li>
       </ul>
+      <nav
+        aria-label="Legal"
+        className="flex items-center justify-center gap-x-5 border-t border-base-300 px-4 py-1"
+      >
+        {LEGAL_LINKS.map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            onClick={() => setMoreOpen(false)}
+            className="flex min-h-11 items-center text-xs text-base-content/70 underline underline-offset-2"
+          >
+            {link.label}
+          </Link>
+        ))}
+      </nav>
     </Sheet>
   );
 }
