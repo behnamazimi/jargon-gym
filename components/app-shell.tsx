@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { ViewportDebug } from "@/components/app/viewport-debug";
 import { isDockPath, isStudyPath } from "@/lib/chrome";
 import { cn } from "@/lib/utils";
 
@@ -26,15 +27,16 @@ export function AppShell({
     return (
       <div
         className={cn(
-          "flex min-h-full flex-1 flex-col chrome-study max-md:h-dvh max-md:min-h-0 max-md:overflow-hidden",
+          "flex min-h-full flex-1 flex-col chrome-study max-md:fixed max-md:inset-0 max-md:min-h-0 max-md:overflow-hidden",
           showDock && "chrome-dock",
         )}
         data-chrome="study"
       >
         <div className="hidden md:contents">{header}</div>
         {studyPhoneChrome}
-        {/* On phones the shell is exactly the viewport and only this area
-            scrolls, so the dock and top bar can't drift with the document. */}
+        <ViewportDebug />
+        {/* On phones the shell is pinned to the screen edges (not sized with
+            dvh, which iOS standalone gets wrong) and only this area scrolls. */}
         <div className="flex min-h-0 flex-1 flex-col max-md:overflow-y-auto max-md:overscroll-contain md:contents">
           {children}
         </div>
