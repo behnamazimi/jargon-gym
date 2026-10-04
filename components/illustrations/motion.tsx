@@ -72,7 +72,20 @@ type MotionKind =
   | "burst"
   | "pour"
   | "pour-drops"
-  | "perk";
+  | "perk"
+  | "pass-card"
+  | "puzzle-mark"
+  | "click-spark"
+  | "say"
+  | "slide-cup"
+  | "fetch-arm"
+  | "fetch-box"
+  | "fetch-level"
+  | "fetch-face"
+  | "fetch-turn"
+  | "fetch-solo"
+  | "fetch-offer"
+  | "fetch-handoff";
 
 type MotionProps = {
   kind: MotionKind;

@@ -560,3 +560,67 @@ begin
     (v_domain_ux, 'Screener', 'Recruiting', 'A short survey used to pick the right participants for a study.');
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- Public collections, so /collections and its pages have something to show:
+-- one field's terms and one language's words and phrases. Published directly
+-- (built-in, public, slugs on every term), the state admin publishing leaves.
+-- ---------------------------------------------------------------------------
+
+do $$
+declare
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_domain_standup uuid := '22222222-2222-2222-2222-222222222225';
+  v_domain_dutch uuid := '22222222-2222-2222-2222-222222222226';
+begin
+  insert into public.domains (
+    id, name, description, visibility, owner_id, is_builtin, is_public, slug, kind, language
+  )
+  values
+    (
+      v_domain_standup,
+      'Standup',
+      'The vocabulary around daily standups and the agile ceremonies, roles, and artifacts around them.',
+      'shared', v_admin_id, true, true, 'standup', 'terms', 'en'
+    ),
+    (
+      v_domain_dutch,
+      'Dutch basics',
+      'Everyday Dutch words and the small words that make it sound natural.',
+      'shared', v_admin_id, true, true, 'dutch-basics', 'vocabulary', 'nl'
+    );
+
+  insert into public.terms (domain_id, term, slug, category, definition, example)
+  values
+    (v_domain_standup, 'Blocker', 'blocker', 'Tracking',
+      'Anything stopping a piece of work from moving that the person can''t clear alone.',
+      '"I''m blocked until the API team deploys their fix."'),
+    (v_domain_standup, 'Zombie ticket', 'zombie-ticket', 'Tracking',
+      'A ticket marked in progress that hasn''t actually moved in days.',
+      'It has been "In progress" for three sprints with the same update every morning.'),
+    (v_domain_standup, 'Carryover', 'carryover', 'Tracking',
+      'Unfinished work pushed into the next sprint.', null),
+    (v_domain_standup, 'Parking lot', 'parking-lot', 'Meeting format',
+      'Topics raised in standup that move to a separate conversation so the meeting stays short.',
+      'Two people start debating a migration; someone says "parking lot" and they take it offline.'),
+    (v_domain_standup, 'Walking the board', 'walking-the-board', 'Meeting format',
+      'Running standup column by column on the board instead of person by person.', null),
+    (v_domain_standup, 'Spike', 'spike', 'Planning',
+      'A time-boxed task to answer a question or reduce uncertainty, not to ship anything.',
+      '"Spike: can we reuse the existing auth library?"'),
+    (v_domain_standup, 'Velocity', 'velocity', 'Metrics',
+      'How many story points a team usually finishes per sprint.',
+      'The team has averaged 30 points over the last three sprints.'),
+    (v_domain_standup, 'Scope creep', 'scope-creep', 'Metrics',
+      'Work quietly added to a sprint after it started, without replanning.', null),
+    (v_domain_dutch, 'lopen', 'lopen', 'Verbs', 'to walk', 'Ik loop elke dag naar mijn werk.'),
+    (v_domain_dutch, 'fietsen', 'fietsen', 'Verbs', 'to cycle', 'We fietsen naar het strand.'),
+    (v_domain_dutch, 'gezellig', 'gezellig', 'Adjectives',
+      'cosy, sociable, pleasant: about a place, a person or a moment', 'Wat een gezellige avond!'),
+    (v_domain_dutch, 'eigenlijk', 'eigenlijk', 'Small words',
+      'actually, really; softens or corrects what came before', 'Eigenlijk heb ik geen tijd.'),
+    (v_domain_dutch, 'toch', 'toch', 'Small words',
+      'after all, still; asks for agreement at the end of a sentence', 'Je komt toch?'),
+    (v_domain_dutch, 'misschien', 'misschien', 'Small words', 'maybe, perhaps', null);
+end;
+$$;

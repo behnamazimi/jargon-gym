@@ -1771,6 +1771,367 @@
   }
 }
 
+/* Field terms: a colleague's term card passes over, the question mark over
+   the listener pops into a spark, and it nods along (ill-nod shares the 6s beat). */
+.ill-pass-card,
+.ill-puzzle-mark,
+.ill-click-spark {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-pass-card {
+  animation-name: ill-pass-card;
+}
+.ill-puzzle-mark {
+  animation-name: ill-puzzle-mark;
+}
+.ill-click-spark {
+  animation-name: ill-click-spark;
+}
+
+/* Leaves the speech bubble, lands in the listener's hand, fades, comes back. */
+@keyframes ill-pass-card {
+  0%,
+  28% {
+    transform: none;
+    opacity: 1;
+  }
+  44%,
+  84% {
+    transform: translate(200px, 96px) rotate(10deg);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(200px, 96px) rotate(10deg);
+    opacity: 0;
+  }
+  91%,
+  96% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes ill-puzzle-mark {
+  0%,
+  36%,
+  96%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+  44%,
+  90% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+
+@keyframes ill-click-spark {
+  0%,
+  42%,
+  92%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50%,
+  84% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Vocabulary: says the word, and the cup slides across the counter to them.
+   Shares the 6s beat with ill-nod for the one behind the counter. */
+.ill-say,
+.ill-slide-cup {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-say {
+  animation-name: ill-say;
+}
+.ill-slide-cup {
+  animation-name: ill-slide-cup;
+}
+
+/* The speech bubble pops up with the word, holds, and goes. Give it a bottom origin. */
+@keyframes ill-say {
+  0%,
+  4% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  12%,
+  58% {
+    transform: none;
+    opacity: 1;
+  }
+  66%,
+  100% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes ill-slide-cup {
+  0%,
+  40% {
+    transform: none;
+    opacity: 1;
+  }
+  56%,
+  86% {
+    transform: translateX(-210px);
+    opacity: 1;
+  }
+  92% {
+    transform: translateX(-210px);
+    opacity: 0;
+  }
+  93%,
+  96% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Index: the arm swings up from the shoulder and pulls a box out (the box rides
+   on the arm's rotation, same pivot, and counter-turns to stay level); then it
+   swings down in an arc to the front as the body turns to face you, both hands
+   take it and hold it out, it's handed over (grows and fades toward you), and
+   the shelf is restocked. Everything shares the 7s beat. */
+.ill-fetch-arm,
+.ill-fetch-box,
+.ill-fetch-level,
+.ill-fetch-face,
+.ill-fetch-turn,
+.ill-fetch-solo,
+.ill-fetch-offer,
+.ill-fetch-handoff {
+  animation: var(--ill-duration, 7s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-fetch-arm {
+  animation-name: ill-fetch-arm;
+}
+.ill-fetch-box {
+  animation-name: ill-fetch-box;
+}
+.ill-fetch-level {
+  animation-name: ill-fetch-level;
+}
+.ill-fetch-face {
+  animation-name: ill-fetch-face;
+}
+.ill-fetch-turn {
+  animation-name: ill-fetch-turn;
+}
+.ill-fetch-solo {
+  animation-name: ill-fetch-solo;
+}
+/* Hidden unless the animation shows it, so a still frame has one pose. */
+.ill-fetch-offer {
+  animation-name: ill-fetch-offer;
+  opacity: 0;
+}
+.ill-fetch-handoff {
+  animation-name: ill-fetch-handoff;
+  opacity: 0;
+}
+
+/* The reaching arm, drawn reaching; pivot at the shoulder. Hangs, swings up,
+   pulls back a little, follows the box down, and lets the other pose take over. */
+@keyframes ill-fetch-arm {
+  0%,
+  10% {
+    transform: rotate(148deg);
+    opacity: 1;
+  }
+  24% {
+    transform: rotate(0deg);
+  }
+  28%,
+  32% {
+    transform: rotate(-12deg);
+    opacity: 1;
+  }
+  41% {
+    transform: rotate(81deg);
+    opacity: 1;
+  }
+  46% {
+    transform: rotate(100deg);
+    opacity: 0;
+  }
+  47%,
+  92% {
+    transform: rotate(148deg);
+    opacity: 0;
+  }
+  96%,
+  100% {
+    transform: rotate(148deg);
+    opacity: 1;
+  }
+}
+
+/* The shelf box: sits until the hand has it, rides the arm while it is pulled
+   out (same pivot), then the front copy takes over. */
+@keyframes ill-fetch-box {
+  0%,
+  24% {
+    transform: none;
+    opacity: 1;
+  }
+  28%,
+  32% {
+    transform: rotate(-12deg);
+    opacity: 1;
+  }
+  33%,
+  90% {
+    transform: rotate(-12deg);
+    opacity: 0;
+  }
+  91% {
+    transform: none;
+    opacity: 0;
+  }
+  96%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Counter-turns the box around its own centre so it stays level while pulled. */
+@keyframes ill-fetch-level {
+  0%,
+  24% {
+    transform: none;
+  }
+  28%,
+  90% {
+    transform: rotate(12deg);
+  }
+  91%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Eyes and mouth: on the shelf, then turned to look at you, then back. */
+@keyframes ill-fetch-face {
+  0%,
+  42% {
+    transform: none;
+  }
+  50%,
+  84% {
+    transform: translate(-22px, -6px);
+  }
+  92%,
+  100% {
+    transform: none;
+  }
+}
+
+/* The turn to face you: a quick squash and settle. Bottom origin. */
+@keyframes ill-fetch-turn {
+  0%,
+  42%,
+  54%,
+  100% {
+    transform: none;
+  }
+  46% {
+    transform: scale(0.9, 1.04);
+  }
+  50% {
+    transform: scale(1.04, 0.97);
+  }
+}
+
+/* The resting arm, there until both hands take the box. */
+@keyframes ill-fetch-solo {
+  0%,
+  43% {
+    opacity: 1;
+  }
+  47%,
+  88% {
+    opacity: 0;
+  }
+  92%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Both arms holding the box out in front. */
+@keyframes ill-fetch-offer {
+  0%,
+  43% {
+    opacity: 0;
+  }
+  47%,
+  80% {
+    opacity: 1;
+  }
+  84%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The box in front: takes over where the pulled box is, swings down in an arc
+   to the front, is held out (a small push toward you), then handed over: it
+   grows and fades. */
+@keyframes ill-fetch-handoff {
+  0%,
+  32% {
+    transform: translate(95px, -148px);
+    opacity: 0;
+  }
+  33% {
+    transform: translate(95px, -148px);
+    opacity: 1;
+  }
+  41% {
+    transform: translate(108px, -30px);
+  }
+  48% {
+    transform: none;
+    opacity: 1;
+  }
+  56% {
+    transform: translateY(-4px) scale(1.12);
+  }
+  62%,
+  78% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  86% {
+    transform: translateY(16px) scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(95px, -148px);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ill-motion,
   .ill-march {
