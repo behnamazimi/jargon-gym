@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { parseKind, type CollectionKind } from "@/lib/terms/kinds";
 
 type Client = SupabaseClient<Database>;
 
@@ -11,6 +12,7 @@ export type AdminCollectionRow = {
   termCount: number;
   isBuiltin: boolean;
   isPublic: boolean;
+  kind: CollectionKind;
   slug: string | null;
   visibility: "private" | "shared";
   updatedAt: string;
@@ -54,6 +56,7 @@ export async function listAllCollectionsForAdmin(
     termCount: Number(row.term_count),
     isBuiltin: row.is_builtin,
     isPublic: row.is_public,
+    kind: parseKind(row.kind),
     slug: (row.slug as string | null) || null,
     visibility: row.visibility,
     updatedAt: row.updated_at,

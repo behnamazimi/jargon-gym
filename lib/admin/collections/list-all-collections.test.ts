@@ -31,6 +31,14 @@ describe("listAllCollectionsForAdmin", () => {
     expect(result).toMatchObject({ ownerEmail: null, slug: null, termCount: 7, readOnly: false });
   });
 
+  it("reads the kind, and treats a missing or unknown one as terms", async () => {
+    const rows = await listAllCollectionsForAdmin(
+      client([row({ id: "a", kind: "vocabulary" }), row({ id: "b" }), row({ id: "c", kind: "x" })]),
+      "admin-1",
+    );
+    expect(rows.map((r) => r.kind)).toEqual(["vocabulary", "terms", "terms"]);
+  });
+
   it("marks only other people's private collections read-only", async () => {
     const rows = await listAllCollectionsForAdmin(
       client([

@@ -10,6 +10,7 @@ export function CollectionsTable({ rows }: { rows: AdminCollectionRow[] }) {
             <th>Name</th>
             <th>Owner</th>
             <th>Terms</th>
+            <th>Kind</th>
             <th>Status</th>
             <th>Address</th>
             <th>Updated</th>
@@ -21,7 +22,7 @@ export function CollectionsTable({ rows }: { rows: AdminCollectionRow[] }) {
           ))}
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={6} className="text-center text-base-content/50">
+              <td colSpan={7} className="text-center text-base-content/50">
                 No collections here.
               </td>
             </tr>

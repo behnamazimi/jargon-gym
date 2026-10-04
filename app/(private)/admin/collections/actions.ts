@@ -19,6 +19,7 @@ import {
 import { buildPublishSlugs } from "@/lib/admin/collections/publish-slugs";
 import { resolveSlug } from "@/lib/admin/collections/slug-check";
 import type { Database } from "@/lib/supabase/database.types";
+import { COLLECTION_KINDS, type CollectionKind } from "@/lib/terms/kinds";
 
 type Client = SupabaseClient<Database>;
 
@@ -165,6 +166,36 @@ async function auditStatus(
     targetType: "domain",
     targetId: domainId,
     details: { from, to: reached, slug },
+  });
+}
+
+const kindSchema = z.enum(COLLECTION_KINDS);
+
+/** Field terms or words and phrases. Only the public pages read it, so only they are refreshed. */
+export async function setCollectionKind(domainId: string, kind: CollectionKind) {
+  return runAdminAction(async ({ supabase, user }): Promise<{ kind: CollectionKind }> => {
+    const to = kindSchema.parse(kind);
+    const { collection } = await findActable(supabase, user.id, domainId);
+    if (collection.kind === to) return { kind: to };
+
+    const { error } = await supabase
+      .from("domains")
+      .update({ kind: to })
+      .eq("id", domainId)
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    await writeAudit(supabase, {
+      action: "app.collection_kind",
+      targetType: "domain",
+      targetId: domainId,
+      details: { from: collection.kind, to },
+    });
+
+    if (collection.isPublic) revalidateCollection(collection.slug);
+    else revalidatePath("/admin/collections");
+    return { kind: to };
   });
 }
 

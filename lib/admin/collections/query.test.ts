@@ -10,6 +10,7 @@ const row = (id: string, overrides: Partial<AdminCollectionRow> = {}): AdminColl
   termCount: 1,
   isBuiltin: false,
   isPublic: false,
+  kind: "terms",
   slug: null,
   visibility: "private",
   readOnly: false,
