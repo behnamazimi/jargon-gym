@@ -41,7 +41,6 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
       className={cn(
         "shadow-surface space-y-3 rounded-box bg-base-100 p-5",
         "max-md:sticky max-md:z-30 max-md:top-0",
-        "in-[.chrome-study]:max-md:top-[calc(2.75rem+env(safe-area-inset-top,0px))]",
       )}
     >
       <InputGroup className="h-11 min-h-11 cursor-text items-center">
