@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { logout } from "@/app/(private)/auth/actions";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAiAccessView } from "@/lib/llm/access";
@@ -177,4 +178,22 @@ export async function clearLlmSettingsAction(): Promise<{ error?: string }> {
     console.error("Settings action failed:", err);
     return { error: "Couldn't remove your AI key. Try again." };
   }
+}
+
+export async function deleteOwnAccountAction(confirmEmail: string): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const { error } = await auth.supabase.rpc("delete_own_account", {
+    p_confirm_email: confirmEmail,
+  });
+  if (error) {
+    // AD001 marks messages the database wrote for the person to read.
+    if (error.code === "AD001") return { error: error.message };
+    console.error("Settings action failed:", error);
+    return { error: "Couldn't delete your account. Try again, or contact support." };
+  }
+
+  await logout();
+  return {};
 }

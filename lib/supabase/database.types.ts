@@ -1868,6 +1868,10 @@ export type Database = {
         Args: { p_chat_id: number; p_token_hash: string };
         Returns: string;
       };
+      delete_own_account: {
+        Args: { p_confirm_email: string };
+        Returns: undefined;
+      };
       create_referral_code: {
         Args: { p_code?: string };
         Returns: {
