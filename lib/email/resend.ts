@@ -36,18 +36,19 @@ type SendInviteEmailParams = {
 export async function sendInviteEmail({ to, signupUrl }: SendInviteEmailParams): Promise<void> {
   await sendEmail({
     to,
-    subject: "Lobyas access granted",
-    text: `You're in.\n\nLobyas is ready for you — use the link below to create your account:\n\n${signupUrl}\n\nSee you inside.`,
+    subject: "Your Lobyas invite is here",
+    text: `Hi,\n\nGood news: your Lobyas invite just came through. Use the link below to finish signing up and you can start learning right away.\n\n${signupUrl}\n\nSee you inside,\nThe Lobyas team`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 20px;">You're in.</h1>
-        <p>Lobyas is ready for you — use the link below to create your account.</p>
+        <h1 style="font-size: 20px;">Your invite is here</h1>
+        <p>Good news: your Lobyas invite just came through. Use the button below to finish signing up and you can start learning right away.</p>
         <p>
           <a href="${signupUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
-            Create your account
+            Finish signing up
           </a>
         </p>
         <p style="color:#666;font-size:13px;">Or paste this link into your browser: ${signupUrl}</p>
+        <p>See you inside,<br />The Lobyas team</p>
       </div>
     `,
   });
@@ -68,12 +69,12 @@ export async function sendWaitlistRequestNotification({
 
   await sendEmail({
     to,
-    subject: "New Lobyas access request",
-    text: `${requesterEmail} just asked for access to Lobyas.\n\nReview it here:\n\n${adminUrl}`,
+    subject: `${requesterEmail} asked for access to Lobyas`,
+    text: `Hi,\n\n${requesterEmail} just asked for access to Lobyas and is waiting on the waitlist. You can approve or review the request here:\n\n${adminUrl}`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 20px;">New access request</h1>
-        <p><strong>${requesterEmail}</strong> just asked for access to Lobyas.</p>
+        <h1 style="font-size: 20px;">Someone new wants in</h1>
+        <p><strong>${requesterEmail}</strong> just asked for access to Lobyas and is waiting on the waitlist. You can approve or review the request below.</p>
         <p>
           <a href="${adminUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
             Review request

@@ -113,6 +113,15 @@ export const DB_AUDIT_ACTIONS = {
     describe: (d) => [text(d.provider), reason(d)].filter(Boolean).join(", ") || null,
   },
   delete_user: { label: "Account deleted", describe: (d) => reason(d) },
+  create_shared_referral_code: {
+    label: "Shared code created",
+    describe: (d) =>
+      `${text(d.label) ?? "?"}, ${text(d.max_uses) ?? "?"} seats${text(d.expires_at) ? ` until ${text(d.expires_at)?.slice(0, 10)}` : ""}`,
+  },
+  set_referral_code_active: {
+    label: "Shared code switched",
+    describe: (d) => `${text(d.label) ?? "?"} is now ${d.active === true ? "active" : "paused"}`,
+  },
   deliver_collection_request: {
     label: "Requested collection delivered",
     describe: (d) => `${text(d.deliveries) ?? "?"} delivered, ${text(d.terms) ?? "?"} terms each`,

@@ -2,10 +2,13 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminSearchBar } from "@/components/admin/admin-search-bar";
 import { AdminTabs } from "@/components/admin/admin-tabs";
+import { CodesTable } from "@/components/admin/people/codes-table";
 import { MembersTable } from "@/components/admin/people/members-table";
 import { WaitlistTable } from "@/components/admin/people/waitlist-table";
+import { getAppOrigin } from "@/lib/auth/app-origin";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { parsePeopleParams, peopleHref, type PeopleParams } from "@/lib/admin/list-params";
+import { listSharedCodes } from "@/lib/admin/people/codes";
 import { listMembers } from "@/lib/admin/people/members";
 import { listWaitlist } from "@/lib/admin/people/waitlist";
 
@@ -77,6 +80,15 @@ async function MembersView({
   );
 }
 
+async function CodesView({
+  supabase,
+}: {
+  supabase: Awaited<ReturnType<typeof requireAdminPage>>["supabase"];
+}) {
+  const [rows, origin] = await Promise.all([listSharedCodes(supabase), getAppOrigin()]);
+  return <CodesTable rows={rows} origin={origin} />;
+}
+
 export default async function AdminPeoplePage({ searchParams }: PageProps) {
   const { supabase } = await requireAdminPage();
   const params = parsePeopleParams(await searchParams);
@@ -85,7 +97,7 @@ export default async function AdminPeoplePage({ searchParams }: PageProps) {
     <>
       <AdminPageHeader
         title="People"
-        description="Approve waitlist requests, and open a member to manage their account."
+        description="Approve waitlist requests, share codes, and open a member to manage their account."
       />
       <AdminTabs
         label="People"
@@ -100,10 +112,17 @@ export default async function AdminPeoplePage({ searchParams }: PageProps) {
             label: "Members",
             active: params.view === "members",
           },
+          {
+            href: peopleHref({ view: "codes" }),
+            label: "Codes",
+            active: params.view === "codes",
+          },
         ]}
       />
       {params.view === "members" ? (
         <MembersView supabase={supabase} params={params} />
+      ) : params.view === "codes" ? (
+        <CodesView supabase={supabase} />
       ) : (
         <WaitlistView supabase={supabase} params={params} />
       )}

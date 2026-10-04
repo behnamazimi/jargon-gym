@@ -7,7 +7,8 @@ import { getPasswordValidationError } from "@/lib/auth/password-policy";
 import { safeNextPath } from "@/lib/auth/safe-next-path";
 import { createClient } from "@/lib/supabase/server";
 
-export type SignupState = { error: string } | null;
+/** `checkEmail` is the address a confirmation link was sent to. */
+export type SignupState = { error?: string; checkEmail?: string } | null;
 
 type SignupFields = { email: string; password: string; referenceCode: string };
 
@@ -37,7 +38,7 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
 
   const supabase = await createClient();
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -49,6 +50,11 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
 
   if (error) {
     return { error: formatSignupError(error) };
+  }
+
+  // No session yet means the project wants the email confirmed first.
+  if (!data.session) {
+    return { checkEmail: email };
   }
 
   const next = safeNextPath(formData.get("next")?.toString() ?? null);

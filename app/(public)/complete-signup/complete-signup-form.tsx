@@ -34,15 +34,17 @@ export default function CompleteSignupForm({
         Almost there. Enter your reference code to finish setting up your account.
       </p>
 
-      <Alert variant="info" icon={<Mail strokeWidth={1.5} />}>
-        <AlertDescription>
-          You need a reference code to finish setting up your account. If you don&apos;t have one,{" "}
-          <Link href="/request-access" className="underline underline-offset-2">
-            request access
-          </Link>
-          .
-        </AlertDescription>
-      </Alert>
+      {!defaultReferenceCode && (
+        <Alert variant="info" icon={<Mail strokeWidth={1.5} />}>
+          <AlertDescription>
+            No code yet? You get one once your access is approved.{" "}
+            <Link href="/request-access" className="underline underline-offset-2">
+              Request access
+            </Link>{" "}
+            to start.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <AuthFormError error={error} context="signup" />
 
@@ -60,9 +62,7 @@ export default function CompleteSignupForm({
             defaultValue={defaultReferenceCode}
             className="uppercase"
           />
-          <FieldDescription>
-            You need a reference code from admin/owner of the app.
-          </FieldDescription>
+          <FieldDescription>Enter the code you were given.</FieldDescription>
         </Field>
       </FieldGroup>
 

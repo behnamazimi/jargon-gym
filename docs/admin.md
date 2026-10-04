@@ -9,7 +9,7 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | Address               | What it is                                                                                                           |
 | --------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity     |
-| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend) and the members list                                           |
+| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend), shared codes, and the members list                            |
 | `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete            |
 | `/admin/collections`  | Built-in and all collections: status, public address                                                                 |
 | `/admin/requests`     | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers |
@@ -86,6 +86,26 @@ characters is required. Errors the admin should read use the database code `AD00
   The migration also made `domains.owner_id` cascade and let `referral_codes` keep `used_at` after its user is gone;
   both used to make every delete fail. Their waitlist row stays.
 - SQL checks: `supabase/tests/admin_user_management.sql` and `admin_delete_concurrency.sh`, run by hand.
+
+## Shared codes
+
+`/admin/people?view=codes` makes and pauses codes that several people can use, for sharing on a platform
+or a campaign page. Every reference code has `max_uses` seats (a single-use waitlist code has one); a shared
+code also has a label and an end date, and stops at whichever limit comes first. Each seat is a row in
+`referral_redemptions`, and a used seat stays used when the account is deleted.
+
+- The database does it all (`20261005110000_shared_referral_codes.sql`): `_consume_referral_code` locks the code
+  and takes the seat, `admin_create_shared_referral_code`, `admin_set_referral_code_active` and
+  `admin_list_shared_referral_codes` audit and check the admin themselves. The actions are in
+  `app/(private)/admin/people/codes-actions.ts`.
+- The functions raise readable errors with the code `AD001`, shown through `throwRpcError`.
+  `referral_redemptions` has row level security on and no client access; only these functions read and write it.
+- Shared codes may be short (4 to 32 letters and numbers). Single-use codes keep the 12-character minimum.
+- An email signup with a shared code takes its seat when the email is confirmed, not at signup, so a made-up
+  address can't use one up. Until then the account is unverified and holds the code in
+  `users.pending_referral_code`. If the code filled up meanwhile, the person lands on `/complete-signup`.
+- Pausing stops new seats at once. The signup page shows no seat count or deadline.
+- SQL checks: `supabase/tests/shared_referral_codes.sql` and `shared_referral_codes_concurrency.sh`, run by hand.
 
 ## Collection requests
 

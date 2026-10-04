@@ -6,7 +6,7 @@ type CompleteSignupPageProps = {
   searchParams: Promise<{ ref?: string; error?: string; next?: string }>;
 };
 
-const INVALID_REFERRAL_ERROR = "That reference code isn't valid or was already used.";
+const INVALID_REFERRAL_ERROR = "That reference code isn't valid, was already used, or has run out.";
 
 export default async function CompleteSignupPage({ searchParams }: CompleteSignupPageProps) {
   const { ref, error, next } = await searchParams;
