@@ -2,7 +2,6 @@
 
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { ViewportDebug } from "@/components/app/viewport-debug";
 import { isDockPath, isStudyPath } from "@/lib/chrome";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +33,6 @@ export function AppShell({
       >
         <div className="hidden md:contents">{header}</div>
         {studyPhoneChrome}
-        <ViewportDebug />
         {/* On phones the shell is pinned to the screen edges (not sized with
             dvh, which iOS standalone gets wrong) and only this area scrolls. */}
         <div className="flex min-h-0 flex-1 flex-col max-md:overflow-y-auto max-md:overscroll-contain md:contents">

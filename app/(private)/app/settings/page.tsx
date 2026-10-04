@@ -5,7 +5,6 @@ import {
   getWidgetSettingsData,
 } from "@/app/(private)/app/settings/actions";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { DiagnosticsPanel } from "@/components/settings/diagnostics-panel";
 import { LlmPanel } from "@/components/settings/llm-panel";
 import { TelegramPanel } from "@/components/settings/telegram-panel";
 import { ScrollToSettingsPanel, type SettingsTabId } from "@/components/settings/ui";
@@ -73,7 +72,6 @@ export default async function SettingsRoute({ searchParams }: PageProps) {
       <Suspense fallback={<PanelSkeleton />}>
         <WidgetPanelServer />
       </Suspense>
-      <DiagnosticsPanel />
     </div>
   );
 }
