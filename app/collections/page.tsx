@@ -55,8 +55,8 @@ export default async function PublicCollectionsIndexPage() {
           then study the ones you need in Lobyas.
         </p>
         <p className="mt-3 m-0 max-w-[44ch] text-base leading-relaxed text-base-content/70">
-          Made and kept up by Lobyas. Community collections, shared by people who use it, are
-          in the app once you sign in.
+          Made and kept up by Lobyas. Community collections, shared by people who use it, are in the
+          app once you sign in.
         </p>
       </SplitWithScene>
 
