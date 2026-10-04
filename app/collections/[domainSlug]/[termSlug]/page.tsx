@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { categoryAnchor } from "@/components/collections/term-card-grid";
 import { TermPageBlock } from "@/components/collections/term-page-block";
+import { JsonLd } from "@/components/seo/json-ld";
 import { TermBody } from "@/components/terms/term-body";
 import {
   getPublicDomainPage,
@@ -10,6 +11,7 @@ import {
   listPublicTermPaths,
 } from "@/lib/terms/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
+import { breadcrumbs, definedTerm } from "@/lib/seo/json-ld";
 
 export const revalidate = 3600;
 export const dynamicParams = true;
@@ -57,8 +59,28 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
 
   const { domain, term, relatedTermSlugsById } = data;
 
+  const base = getPublicBaseUrl();
+  const setUrl = `${base}/collections/${domain.slug}`;
+  const url = `${setUrl}/${term.slug}`;
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-10">
+      <JsonLd
+        data={definedTerm({
+          name: term.term,
+          description: term.definition,
+          url,
+          inLanguage: domain.language,
+          set: { name: domain.name, url: setUrl },
+        })}
+      />
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Collections", url: `${base}/collections` },
+          { name: domain.name, url: setUrl },
+          { name: term.term, url },
+        ])}
+      />
       <p className="text-sm font-medium tracking-wider text-base-content/70 uppercase">
         <Link
           href={`/collections/${domain.slug}`}

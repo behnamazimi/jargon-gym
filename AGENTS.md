@@ -154,6 +154,12 @@ picks it, stable per slug). Optional copy or a pinned term goes in
 `lib/collections/showcase-overrides.ts`. The seed has two public samples
 (`standup`, `dutch-basics`) for checking these pages locally.
 
+Search metadata: collection and term pages carry JSON-LD (`lib/seo/json-ld.ts`,
+rendered with `components/seo/json-ld.tsx`), and public pages get generated
+share images from `lib/seo/og/specimen-image.tsx` (fonts in `assets/fonts/`).
+An `opengraph-image` outside `/collections/` must be added to the proxy's
+public paths, or crawlers are sent to the login page.
+
 # Illustrations
 
 Hand-drawn doodle illustrations live in `components/illustrations/`. Scenes

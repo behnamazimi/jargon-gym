@@ -22,6 +22,7 @@ const PUBLIC_EXACT_PATHS = new Set([
   "/sitemap.xml",
   "/robots.txt",
   "/collections",
+  "/opengraph-image",
 ]);
 
 const PUBLIC_PATH_PREFIXES = [
