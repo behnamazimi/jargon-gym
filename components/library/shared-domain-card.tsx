@@ -1,8 +1,11 @@
 "use client";
 
-import { ArrowRight, BookmarkMinus, CheckCircle2, Plus } from "lucide-react";
+import { ArrowRight, BookmarkMinus, CheckCircle2, Ellipsis, Flag, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { REPORTED_THANKS } from "@/lib/collections/moderation";
+import { LoveButton } from "./love-button";
 import type { SharedDomain } from "@/lib/terms/types";
 import { cn, pluralize } from "@/lib/utils";
 
@@ -11,9 +14,18 @@ type SharedDomainCardProps = {
   busy: boolean;
   onAdd: () => void;
   onRemove: () => void;
+  onToggleLove: () => void;
+  onReport: () => void;
 };
 
-export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomainCardProps) {
+export function SharedDomainCard({
+  domain,
+  busy,
+  onAdd,
+  onRemove,
+  onToggleLove,
+  onReport,
+}: SharedDomainCardProps) {
   return (
     <article
       className={cn(
@@ -49,6 +61,27 @@ export function SharedDomainCard({ domain, busy, onAdd, onRemove }: SharedDomain
       </div>
 
       <div className="flex shrink-0 flex-col items-stretch gap-2 md:flex-row md:items-center md:ps-2">
+        <div className="flex items-center justify-between gap-1 md:justify-start">
+          <LoveButton loved={domain.lovedByMe} count={domain.loveCount} onToggle={onToggleLove} />
+          {domain.isBuiltin ? null : (
+            <DropdownMenuTrigger>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="min-h-11 min-w-11 text-base-content/70 hover:text-base-content md:min-h-8 md:min-w-8"
+                aria-label="More actions"
+              >
+                <Ellipsis className="size-5" aria-hidden strokeWidth={1.5} />
+              </Button>
+              <DropdownMenu className="min-w-[200px]" placement="bottom end">
+                <DropdownMenuItem isDisabled={domain.reportedByMe} onAction={onReport}>
+                  <Flag className="h-4 w-4" />
+                  {domain.reportedByMe ? REPORTED_THANKS : "Report collection"}
+                </DropdownMenuItem>
+              </DropdownMenu>
+            </DropdownMenuTrigger>
+          )}
+        </div>
         {domain.inCollection ? (
           <>
             <LinkButton

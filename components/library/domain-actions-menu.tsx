@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { fetchCollectionExport, type CollectionExport } from "@/lib/export/fetch-collection-export";
 import type { Domain } from "@/lib/terms/types";
+import { ReportCollectionDialog } from "./report-collection-dialog";
 import { DomainActionsDialogs, type SubscriberCheck } from "./domain-actions-dialogs";
 import { DomainActionsDropdown } from "./domain-actions-dropdown";
 
@@ -45,6 +46,8 @@ export function DomainActionsMenu({
     open: boolean;
   } | null>(null);
   const [resetProgressOpen, setResetProgressOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reported, setReported] = useState<string | null>(null);
   const {
     error,
     isBusy,
@@ -85,7 +88,10 @@ export function DomainActionsMenu({
   return (
     <div className="relative shrink-0">
       <DomainActionsDropdown
-        domain={domain}
+        domain={{
+          ...domain,
+          reportedByMe: domain.reportedByMe || reported === domain.id,
+        }}
         disabled={disabled}
         onToggleActiveForReview={onToggleActiveForReview}
         onResetProgress={() => setResetProgressOpen(true)}
@@ -101,6 +107,7 @@ export function DomainActionsMenu({
           })
         }
         onDelete={() => setDeleteOpen(true)}
+        onReport={() => setReportOpen(true)}
         onRemoveFromCollection={() => {
           // The Library picks the next collection to show.
           removeFromCollection(domain.id, () => router.push("/app/library"));
@@ -125,6 +132,15 @@ export function DomainActionsMenu({
             }}
           />
         </Suspense>
+      ) : null}
+
+      {reportOpen ? (
+        <ReportCollectionDialog
+          domainId={domain.id}
+          domainName={domain.name}
+          onReported={() => setReported(domain.id)}
+          onClose={() => setReportOpen(false)}
+        />
       ) : null}
 
       <DomainActionsDialogs

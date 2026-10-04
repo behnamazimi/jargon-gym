@@ -19,10 +19,13 @@ type MapDomainOptions = {
   knownCount?: number;
   termsLearnedCount?: number;
   markedKnownCount?: number;
+  lovedByMe?: boolean;
+  reportedByMe?: boolean;
 };
 
 export function mapDomain(
-  row: Pick<DomainRow, "id" | "name" | "visibility" | "description" | "language">,
+  row: Pick<DomainRow, "id" | "name" | "visibility" | "description" | "language"> &
+    Partial<Pick<DomainRow, "is_builtin" | "love_count" | "share_block_reason">>,
   options: MapDomainOptions,
 ): Domain {
   return {
@@ -39,6 +42,11 @@ export function mapDomain(
     knownCount: options.knownCount ?? 0,
     termsLearnedCount: options.termsLearnedCount ?? 0,
     markedKnownCount: options.markedKnownCount ?? 0,
+    isBuiltin: row.is_builtin ?? false,
+    loveCount: row.love_count ?? 0,
+    shareBlockedReason: row.share_block_reason ?? null,
+    lovedByMe: options.lovedByMe ?? false,
+    reportedByMe: options.reportedByMe ?? false,
   };
 }
 

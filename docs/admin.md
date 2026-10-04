@@ -11,7 +11,7 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity     |
 | `/admin/people`       | Waitlist (approve one or up to ten at a time, resend), shared codes, and the members list                            |
 | `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete            |
-| `/admin/collections`  | Built-in and all collections: status, public address                                                                 |
+| `/admin/collections`  | Built-in and all collections: status, public address; the Reported view lists reported and sharing-locked ones       |
 | `/admin/requests`     | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers |
 | `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                       |
 | `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                          |
@@ -118,6 +118,35 @@ writes into another person's account, so it is a database function
 `20261002110000_collection_requests.sql`) that audits in the same transaction. Audit details
 hold ids and counts, never the topic, the terms or emails. SQL checks:
 `supabase/tests/collection_requests.sql` and `collection_requests_concurrency.sh`.
+
+## Shared collections: loves, reports and takedowns
+
+Members can love and report collections other members share (migration
+`20261007100000_collection_loves_and_moderation.sql`; shared copy in `lib/collections/moderation.ts`).
+Nothing is automatic: reports only show up for an admin, who decides.
+
+- **Tables.** `collection_loves` (one row per member and collection; members read only their own) keeps
+  `domains.love_count` in step through a trigger, so Browse can sort and page in the database. Nobody, admins
+  included, can see who loved. `collection_reports` holds a reason, an optional note of up to 500 characters
+  and a status (`open`, `dismissed`, `actioned`); one open report per member and collection. Members read their
+  own; admins read all. Neither table takes direct writes.
+- **Member functions.** `my_set_collection_love` (shared, not blocked, not your own) and `my_report_collection`
+  (also not built-in; 10 per 24 hours). They raise snake_case codes the app maps to copy.
+- **A takedown is unshare plus a lock.** `admin_stop_sharing_collection` sets `share_blocked_at` and
+  `share_block_reason`, flips visibility to private (the existing unshare trigger removes it from other
+  libraries, silently) and marks the open reports `actioned`. The owner sees only the reason category; the
+  admin's 1 to 200 character note goes to the audit log only. `admin_lift_share_lock` lets the owner share
+  again and restores nothing. `admin_dismiss_collection_reports` closes reports without acting. All three
+  audit as `stop_sharing_collection`, `lift_share_lock` and `dismiss_collection_reports`.
+- **Why a trigger guards the columns.** Owners have a table-wide UPDATE grant and an owner UPDATE policy, so a
+  policy can't protect single columns. `domains_guard_protected` refuses a non-admin change to the lock columns
+  or `love_count` (only the love counter trigger may write it, recognised by `pg_trigger_depth() > 1`) and
+  refuses sharing while the lock is set (`share_blocked`, shown to the owner as the moderation sentence).
+- **Where it shows.** Browse cards (love, report, Most loved sort), the Library header and actions menu, and
+  `/admin/collections` (Loves column, status badges, Stop sharing, Lift lock and Reports dialogs; code in
+  `components/admin/collections/moderation-*.tsx` and `moderation-actions.ts`). The overview counts collections
+  with open reports. No user-facing string may name the admin; `lib/collections/moderation.test.ts` checks it.
+- SQL checks: `supabase/tests/collection_moderation.sql`, run by hand against a local database.
 
 ## The audit log
 

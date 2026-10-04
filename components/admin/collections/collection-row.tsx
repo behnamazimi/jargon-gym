@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ModerationBadges, ModerationCell } from "@/components/admin/collections/moderation-cell";
 import { EditUrlDialog } from "@/components/admin/collections/edit-url-dialog";
 import { KindSelect, kindLabel } from "@/components/admin/collections/kind-select";
 import { StatusSelect } from "@/components/admin/collections/status-select";
@@ -9,7 +10,11 @@ import { formatAdminDate } from "@/lib/admin/format";
 import { statusOf } from "@/lib/admin/collections/collection-status";
 import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
 
-const STATUS_LABEL = { none: "Not built-in", builtin: "Built-in", published: "Published" } as const;
+const STATUS_LABEL = {
+  none: "Not built-in",
+  builtin: "Built-in",
+  published: "Published",
+} as const;
 
 export function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
   const [editing, setEditing] = useState(false);
@@ -33,6 +38,9 @@ export function CollectionRow({ collection }: { collection: AdminCollectionRow }
       </td>
       <td className="text-base-content/65">{collection.ownerEmail ?? "—"}</td>
       <td className="text-base-content/65">{collection.termCount}</td>
+      <td className="text-base-content/65">
+        {collection.visibility === "shared" ? collection.loveCount : "—"}
+      </td>
       <td>
         {collection.readOnly ? (
           <span className="text-base-content/65">{kindLabel(collection.kind)}</span>
@@ -46,6 +54,7 @@ export function CollectionRow({ collection }: { collection: AdminCollectionRow }
         ) : (
           <StatusSelect collection={collection} />
         )}
+        <ModerationBadges collection={collection} />
       </td>
       <td className="whitespace-nowrap text-base-content/65">
         {collection.slug ? `/collections/${collection.slug}` : "—"}
@@ -61,6 +70,7 @@ export function CollectionRow({ collection }: { collection: AdminCollectionRow }
           </>
         ) : null}
       </td>
+      <ModerationCell collection={collection} />
       <td className="text-base-content/65">{formatAdminDate(collection.updatedAt)}</td>
     </tr>
   );

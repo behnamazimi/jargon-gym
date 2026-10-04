@@ -15,12 +15,21 @@ const row = (id: string, overrides: Partial<AdminCollectionRow> = {}): AdminColl
   visibility: "private",
   readOnly: false,
   updatedAt: "2026-09-29T00:00:00Z",
+  loveCount: 0,
+  openReportCount: 0,
+  shareBlockedAt: null,
+  shareBlockReason: null,
   ...overrides,
 });
 
 const rows = [
   row("a", { name: "Baking", isBuiltin: true }),
-  row("b", { name: "Cooking", isBuiltin: true, isPublic: true, slug: "cooking" }),
+  row("b", {
+    name: "Cooking",
+    isBuiltin: true,
+    isPublic: true,
+    slug: "cooking",
+  }),
   row("c", { name: "Archery", ownerEmail: null }),
   row("d", { name: "Cooking", isBuiltin: true }),
 ];
@@ -34,6 +43,25 @@ describe("queryCollections", () => {
   it("shows everyone's collections by name in the all view, with a stable tiebreak", () => {
     const result = queryCollections(rows, { view: "all", q: "", page: 1 });
     expect(result.rows.map((r) => r.id)).toEqual(["c", "a", "b", "d"]);
+  });
+
+  it("lists reported or locked collections, most reports first", () => {
+    const flagged = [
+      row("a", { name: "A", openReportCount: 1 }),
+      row("b", { name: "B", openReportCount: 3 }),
+      row("c", {
+        name: "C",
+        shareBlockedAt: "2026-10-01T00:00:00Z",
+        shareBlockReason: "rules",
+      }),
+      row("d", { name: "D" }),
+    ];
+    const result = queryCollections(flagged, {
+      view: "reported",
+      q: "",
+      page: 1,
+    });
+    expect(result.rows.map((r) => r.id)).toEqual(["b", "a", "c"]);
   });
 
   it("searches name, owner email and slug, case-insensitively and literally", () => {

@@ -386,6 +386,97 @@ export type Database = {
         };
         Relationships: [];
       };
+      collection_loves: {
+        Row: {
+          created_at: string;
+          domain_id: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          domain_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          domain_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "collection_loves_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "collection_loves_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      collection_reports: {
+        Row: {
+          created_at: string;
+          domain_id: string;
+          id: string;
+          note: string | null;
+          reason: string;
+          reporter_id: string;
+          resolved_at: string | null;
+          resolved_by: string | null;
+          status: string;
+        };
+        Insert: {
+          created_at?: string;
+          domain_id: string;
+          id?: string;
+          note?: string | null;
+          reason: string;
+          reporter_id: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+        };
+        Update: {
+          created_at?: string;
+          domain_id?: string;
+          id?: string;
+          note?: string | null;
+          reason?: string;
+          reporter_id?: string;
+          resolved_at?: string | null;
+          resolved_by?: string | null;
+          status?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "collection_reports_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: false;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "collection_reports_reporter_id_fkey";
+            columns: ["reporter_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "collection_reports_resolved_by_fkey";
+            columns: ["resolved_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       collection_request_settings: {
         Row: {
           enabled: boolean;
@@ -547,8 +638,11 @@ export type Database = {
           is_public: boolean;
           kind: string;
           language: string;
+          love_count: number;
           name: string;
           owner_id: string;
+          share_block_reason: string | null;
+          share_blocked_at: string | null;
           slug: string | null;
           updated_at: string;
           visibility: Database["public"]["Enums"]["domain_visibility"];
@@ -561,8 +655,11 @@ export type Database = {
           is_public?: boolean;
           kind?: string;
           language?: string;
+          love_count?: number;
           name: string;
           owner_id: string;
+          share_block_reason?: string | null;
+          share_blocked_at?: string | null;
           slug?: string | null;
           updated_at?: string;
           visibility?: Database["public"]["Enums"]["domain_visibility"];
@@ -575,8 +672,11 @@ export type Database = {
           is_public?: boolean;
           kind?: string;
           language?: string;
+          love_count?: number;
           name?: string;
           owner_id?: string;
+          share_block_reason?: string | null;
+          share_blocked_at?: string | null;
           slug?: string | null;
           updated_at?: string;
           visibility?: Database["public"]["Enums"]["domain_visibility"];
@@ -1693,6 +1793,10 @@ export type Database = {
         };
         Returns: Json;
       };
+      admin_dismiss_collection_reports: {
+        Args: { p_domain_id: string };
+        Returns: number;
+      };
       admin_fill_definitions: {
         Args: { p_request_id: string; p_terms: Json };
         Returns: Json;
@@ -1700,6 +1804,21 @@ export type Database = {
       admin_grant_ai_credits: {
         Args: { p_amount: number; p_note: string; p_user_id: string };
         Returns: undefined;
+      };
+      admin_lift_share_lock: {
+        Args: { p_domain_id: string; p_note?: string };
+        Returns: undefined;
+      };
+      admin_list_collection_reports: {
+        Args: { p_domain_id: string };
+        Returns: {
+          created_at: string;
+          id: string;
+          note: string;
+          reason: string;
+          reporter_email: string;
+          status: string;
+        }[];
       };
       admin_list_collections: {
         Args: never;
@@ -1709,9 +1828,13 @@ export type Database = {
           is_builtin: boolean;
           is_public: boolean;
           kind: string;
+          love_count: number;
           name: string;
+          open_report_count: number;
           owner_email: string;
           owner_id: string;
+          share_block_reason: string;
+          share_blocked_at: string;
           slug: string;
           term_count: number;
           updated_at: string;
@@ -1791,6 +1914,10 @@ export type Database = {
       };
       admin_set_user_suspended: {
         Args: { p_reason: string; p_suspended: boolean; p_user_id: string };
+        Returns: undefined;
+      };
+      admin_stop_sharing_collection: {
+        Args: { p_domain_id: string; p_note: string; p_reason: string };
         Returns: undefined;
       };
       admin_write_audit: {
@@ -2194,11 +2321,19 @@ export type Database = {
         Args: { p_id: string; p_reply: string };
         Returns: undefined;
       };
+      my_report_collection: {
+        Args: { p_domain_id: string; p_note?: string; p_reason: string };
+        Returns: string;
+      };
       my_reset_domain_progress: {
         Args: { p_domain_id: string };
         Returns: undefined;
       };
       my_review_domain_ids: { Args: never; Returns: string[] };
+      my_set_collection_love: {
+        Args: { p_domain_id: string; p_loved: boolean };
+        Returns: number;
+      };
       my_set_request_notify: {
         Args: { p_id: string; p_notify: boolean };
         Returns: undefined;

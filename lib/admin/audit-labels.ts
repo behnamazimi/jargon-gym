@@ -16,7 +16,10 @@ const reason = (d: Details) => (text(d.reason) ? `Reason: ${text(d.reason)}` : n
 
 const onOff = (value: Json | undefined) => (value === true ? "on" : value === false ? "off" : "?");
 
-type AuditEntry = { label: string; describe: (details: Details) => string | null };
+type AuditEntry = {
+  label: string;
+  describe: (details: Details) => string | null;
+};
 
 /** Actions the app writes itself, after a change it makes directly. Every one has a label, because
  *  `writeAudit` only accepts these names. */
@@ -56,16 +59,31 @@ export const APP_AUDIT_ACTIONS = {
     label: "Narration sync started",
     describe: (d) => (text(d.job) ? `Job ${text(d.job)}` : null),
   },
-  "app.narration_sync_cancel": { label: "Narration sync cancelled", describe: () => null },
-  "app.narration_sync_resume": { label: "Narration sync resumed", describe: () => null },
-  "app.request_accept": { label: "Collection request accepted", describe: () => null },
-  "app.request_ask": { label: "Question sent about a collection request", describe: () => null },
+  "app.narration_sync_cancel": {
+    label: "Narration sync cancelled",
+    describe: () => null,
+  },
+  "app.narration_sync_resume": {
+    label: "Narration sync resumed",
+    describe: () => null,
+  },
+  "app.request_accept": {
+    label: "Collection request accepted",
+    describe: () => null,
+  },
+  "app.request_ask": {
+    label: "Question sent about a collection request",
+    describe: () => null,
+  },
   "app.request_decline": {
     label: "Collection request declined",
     describe: (d) =>
       `${text(d.reason) ?? "?"}${typeof d.merged === "number" && d.merged > 0 ? `, with ${d.merged} merged` : ""}`,
   },
-  "app.request_merge": { label: "Collection request merged", describe: () => null },
+  "app.request_merge": {
+    label: "Collection request merged",
+    describe: () => null,
+  },
   "app.request_new_date": {
     label: "New estimate set on a collection request",
     describe: (d) => (d.emailSent === false ? "The email failed" : "Delay notice emailed"),
@@ -75,7 +93,10 @@ export const APP_AUDIT_ACTIONS = {
     describe: (d) =>
       `Requests ${onOff(d.enabled)}, slower than usual ${onOff(d.paused)}, estimate ${text(d.estimateDays) ?? "?"} days (${text(d.pausedEstimateDays) ?? "?"} when slower)`,
   },
-  "app.request_email_resend": { label: "Request email resent", describe: () => null },
+  "app.request_email_resend": {
+    label: "Request email resent",
+    describe: () => null,
+  },
 } as const satisfies Record<string, AuditEntry>;
 
 export type AppAuditAction = keyof typeof APP_AUDIT_ACTIONS;
@@ -138,9 +159,27 @@ export const DB_AUDIT_ACTIONS = {
     label: "Shared collection added for a request",
     describe: (d) => `${text(d.deliveries) ?? "?"} added`,
   },
+  stop_sharing_collection: {
+    label: "Collection sharing stopped",
+    describe: (d) =>
+      `${text(d.reason) ?? "?"}, removed from ${text(d.removed_from) ?? "?"} libraries, ${text(d.reports_closed) ?? "?"} reports closed${text(d.note) ? `, "${text(d.note)}"` : ""}`,
+  },
+  lift_share_lock: {
+    label: "Sharing lock lifted",
+    describe: (d) =>
+      [text(d.reason), text(d.note) ? `"${text(d.note)}"` : null].filter(Boolean).join(", ") ||
+      null,
+  },
+  dismiss_collection_reports: {
+    label: "Collection reports dismissed",
+    describe: (d) => `${text(d.count) ?? "?"} dismissed`,
+  },
 } as const satisfies Record<string, AuditEntry>;
 
-const ALL_ACTIONS: Record<string, AuditEntry> = { ...APP_AUDIT_ACTIONS, ...DB_AUDIT_ACTIONS };
+const ALL_ACTIONS: Record<string, AuditEntry> = {
+  ...APP_AUDIT_ACTIONS,
+  ...DB_AUDIT_ACTIONS,
+};
 
 export const KNOWN_AUDIT_ACTIONS = Object.keys(ALL_ACTIONS);
 

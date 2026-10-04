@@ -1,7 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { ReportCollectionDialog } from "@/components/library/report-collection-dialog";
 import { SharedDomainCard } from "@/components/library/shared-domain-card";
 import { SharedDomainsFilterBar } from "@/components/library/shared-domains-filter-bar";
 import {
@@ -9,6 +10,7 @@ import {
   SharedDomainsNoMatches,
 } from "@/components/library/shared-domains-empty-states";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { setCollectionLove } from "@/app/(private)/app/actions";
 import { useToast } from "@/components/ui/toast";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
@@ -28,6 +30,10 @@ export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomains
   const browse = useSharedDomainsBrowse({ initialPage });
   const router = useRouter();
   const { toast } = useToast();
+  const [reporting, setReporting] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   useSlashToFocus(searchInputRef);
 
@@ -52,6 +58,17 @@ export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomains
     browse.markInCollection(domainId, false);
     const ok = await removeFromCollection(domainId);
     if (!ok) browse.retry();
+  }
+
+  async function handleToggleLove(domainId: string, loved: boolean) {
+    browse.markLoved(domainId, loved);
+    const result = await setCollectionLove(domainId, loved);
+    if (result.error) {
+      browse.markLoved(domainId, !loved);
+      toast(result.error, "destructive");
+      return;
+    }
+    if (result.count !== undefined) browse.markLoved(domainId, loved, result.count);
   }
 
   const bannerError = error ?? browse.listError;
@@ -90,11 +107,22 @@ export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomains
                 busy={busyId === domain.id}
                 onAdd={() => void handleAdd(domain.id)}
                 onRemove={() => void handleRemove(domain.id)}
+                onToggleLove={() => void handleToggleLove(domain.id, !domain.lovedByMe)}
+                onReport={() => setReporting({ id: domain.id, name: domain.name })}
               />
             </li>
           ))}
         </ul>
       )}
+
+      {reporting ? (
+        <ReportCollectionDialog
+          domainId={reporting.id}
+          domainName={reporting.name}
+          onReported={() => browse.markReported(reporting.id)}
+          onClose={() => setReporting(null)}
+        />
+      ) : null}
 
       {browse.nextOffset !== null ? (
         <div

@@ -60,6 +60,12 @@ export type Domain = {
   knownCount: number;
   termsLearnedCount: number;
   markedKnownCount: number;
+  isBuiltin: boolean;
+  loveCount: number;
+  /** Why sharing was turned off for this collection; null when it wasn't. Only the owner is shown it. */
+  shareBlockedReason: string | null;
+  lovedByMe: boolean;
+  reportedByMe: boolean;
 };
 
 export type FullLibraryPageData = {
@@ -104,4 +110,8 @@ export type SharedDomain = {
   ownerId: string;
   termCount: number;
   inCollection: boolean;
+  isBuiltin: boolean;
+  loveCount: number;
+  lovedByMe: boolean;
+  reportedByMe: boolean;
 };

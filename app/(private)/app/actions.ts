@@ -13,6 +13,8 @@ export {
   removeFromCollection,
   toggleActiveForReview,
   shareDomain,
+  setCollectionLove,
+  reportCollection,
   unshareDomain,
   getDomainSubscriberCount,
   updateOwnedDomain,

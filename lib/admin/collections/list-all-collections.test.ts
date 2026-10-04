@@ -15,6 +15,10 @@ const row = (overrides: Record<string, unknown>) => ({
   is_public: false,
   slug: null,
   term_count: 3,
+  love_count: 0,
+  open_report_count: 0,
+  share_blocked_at: null,
+  share_block_reason: null,
   created_at: "",
   updated_at: "",
   ...overrides,
@@ -28,7 +32,12 @@ describe("listAllCollectionsForAdmin", () => {
       client([row({ owner_email: null, slug: "", term_count: "7" })]),
       "admin-1",
     );
-    expect(result).toMatchObject({ ownerEmail: null, slug: null, termCount: 7, readOnly: false });
+    expect(result).toMatchObject({
+      ownerEmail: null,
+      slug: null,
+      termCount: 7,
+      readOnly: false,
+    });
   });
 
   it("reads the kind, and treats a missing or unknown one as terms", async () => {
@@ -62,7 +71,9 @@ describe("listAllCollectionsForAdmin", () => {
   });
 
   it("throws when the read fails", async () => {
-    const failing = { rpc: async () => ({ data: null, error: new Error("x") }) } as never;
+    const failing = {
+      rpc: async () => ({ data: null, error: new Error("x") }),
+    } as never;
     await expect(listAllCollectionsForAdmin(failing, "admin-1")).rejects.toThrow("x");
   });
 });
@@ -72,6 +83,20 @@ describe("canActOnCollection", () => {
     expect(canActOnCollection({ visibility: "shared", ownerId: "x" }, "a")).toBe(true);
     expect(canActOnCollection({ visibility: "private", ownerId: "a" }, "a")).toBe(true);
     expect(canActOnCollection({ visibility: "private", ownerId: "x" }, "a")).toBe(false);
+  });
+
+  it("keeps a collection with open reports actable after its owner unshared it", () => {
+    const reported = { visibility: "private", ownerId: "x", openReportCount: 2 };
+    expect(canActOnCollection(reported, "a")).toBe(true);
+  });
+
+  it("keeps a blocked collection actable, so its lock can be lifted", () => {
+    const blocked = {
+      visibility: "private",
+      ownerId: "x",
+      shareBlockedAt: "2026-10-01T00:00:00Z",
+    };
+    expect(canActOnCollection(blocked, "a")).toBe(true);
   });
 });
 

@@ -4,6 +4,7 @@ import { readRequestAttention } from "./requests/queries";
 import { canResumeNarrationSync, isActiveNarrationSyncStatus } from "@/lib/narration/sync-shared";
 import { getLastNarrationSyncJob } from "@/lib/narration/sync";
 import { describeCron, readCronStatus } from "@/lib/narration/worker-status";
+import { fetchAllRows } from "@/lib/supabase/fetch-all-rows";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -16,6 +17,19 @@ export async function readWaitlistPending(client: Client): Promise<number> {
     .eq("status", "pending");
   if (error) throw error;
   return count ?? 0;
+}
+
+/** How many collections have an open report. Admins can read every report through the policy. */
+export async function readReportedCollections(client: Client): Promise<number> {
+  const rows = await fetchAllRows((from, to) =>
+    client
+      .from("collection_reports")
+      .select("id, domain_id")
+      .eq("status", "open")
+      .order("id")
+      .range(from, to),
+  );
+  return new Set(rows.map((row) => row.domain_id)).size;
 }
 
 export async function readRequestsAttention(client: Client) {

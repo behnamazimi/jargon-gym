@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { ToggleChip } from "@/components/ui/toggle";
 import type { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
-import type { BrowseCollectionFilter } from "@/lib/library/browse";
+import type { BrowseCollectionFilter, BrowseSort } from "@/lib/library/browse";
 import { cn, pluralize } from "@/lib/utils";
 
 const FILTERS: Array<{
@@ -13,7 +13,12 @@ const FILTERS: Array<{
   ariaLabel: string;
   countKey: "all" | "available" | "inCollection";
 }> = [
-  { value: "all", label: "All", ariaLabel: "Show all shared collections", countKey: "all" },
+  {
+    value: "all",
+    label: "All",
+    ariaLabel: "Show all shared collections",
+    countKey: "all",
+  },
   {
     value: "available",
     label: "Available",
@@ -26,6 +31,11 @@ const FILTERS: Array<{
     ariaLabel: "Show collections you've added",
     countKey: "inCollection",
   },
+];
+
+const SORTS: Array<{ value: BrowseSort; label: string }> = [
+  { value: "name", label: "Name" },
+  { value: "loved", label: "Most loved" },
 ];
 
 type SharedDomainsFilterBarProps = {
@@ -95,13 +105,29 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
             );
           })}
         </div>
-        <p
-          className="text-sm tabular-nums text-base-content/70 max-md:text-start"
-          aria-live="polite"
-        >
-          {pluralize(browse.matchingCount, "collection")}
-          {browse.isRefreshing ? "…" : ""}
-        </p>
+        <div className="flex flex-wrap items-center gap-3 md:justify-end">
+          <label className="flex items-center gap-2 text-sm text-base-content/70">
+            Sort by
+            <select
+              className="select select-sm min-h-11 w-auto md:min-h-8"
+              value={browse.sort}
+              onChange={(event) => browse.setSort(event.target.value as BrowseSort)}
+            >
+              {SORTS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <p
+            className="text-sm tabular-nums text-base-content/70 max-md:text-start"
+            aria-live="polite"
+          >
+            {pluralize(browse.matchingCount, "collection")}
+            {browse.isRefreshing ? "…" : ""}
+          </p>
+        </div>
       </div>
     </section>
   );

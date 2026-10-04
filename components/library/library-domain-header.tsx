@@ -1,14 +1,17 @@
 "use client";
 
 import { BookOpen, Layers, Sparkles, Zap } from "lucide-react";
-import { useOptimistic, useTransition } from "react";
-import { toggleActiveForReview } from "@/app/(private)/app/actions";
+import { useOptimistic, useState, useTransition } from "react";
+import { setCollectionLove, toggleActiveForReview } from "@/app/(private)/app/actions";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { ownerNoticeFor } from "@/lib/collections/moderation";
 import { cn } from "@/lib/utils";
 import { rememberLibraryDomain } from "@/lib/library/pick-domain";
 import type { Domain } from "@/lib/terms/types";
 import { DomainActionsMenu, DomainMeta } from "./domain-actions-menu";
+import { LoveButton } from "./love-button";
 import { AddTermsMenu } from "@/components/import/add-terms-menu";
 
 type LibraryDomainHeaderProps = {
@@ -26,7 +29,11 @@ const STUDY_LINKS = [
 ] as const;
 
 /** Only while the collection still has terms that aren't known or marked known. */
-const TRIAGE_LINK = { path: "/app/triage", label: "Triage", icon: Layers } as const;
+const TRIAGE_LINK = {
+  path: "/app/triage",
+  label: "Triage",
+  icon: Layers,
+} as const;
 
 function StudyLinkButton({
   link,
@@ -121,7 +128,39 @@ export function LibraryDomainHeader({
   // saved value, and a failed save falls back to it on its own.
   const [isActiveForReview, setOptimisticActive] = useOptimistic(serverDomain.isActiveForReview);
   const [togglePending, startToggle] = useTransition();
-  const domain = { ...serverDomain, isActiveForReview };
+  const [loveOverride, setLoveOverride] = useState<{
+    id: string;
+    loved: boolean;
+    count: number;
+  } | null>(null);
+  const love = loveOverride?.id === serverDomain.id ? loveOverride : null;
+  const domain = {
+    ...serverDomain,
+    isActiveForReview,
+    lovedByMe: love?.loved ?? serverDomain.lovedByMe,
+    loveCount: love?.count ?? serverDomain.loveCount,
+  };
+
+  async function toggleLove() {
+    const previous = {
+      id: domain.id,
+      loved: domain.lovedByMe,
+      count: domain.loveCount,
+    };
+    const loved = !previous.loved;
+    setLoveOverride({
+      id: domain.id,
+      loved,
+      count: Math.max(0, previous.count + (loved ? 1 : -1)),
+    });
+    const result = await setCollectionLove(domain.id, loved);
+    if (result.error) {
+      setLoveOverride(previous);
+      toast(result.error, "destructive");
+    } else if (result.count !== undefined) {
+      setLoveOverride({ id: domain.id, loved, count: result.count });
+    }
+  }
 
   function setActiveForReview(active: boolean) {
     // A plain /app/library visit shows the first active collection without
@@ -149,6 +188,9 @@ export function LibraryDomainHeader({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
+          {domain.source === "added" ? (
+            <LoveButton loved={domain.lovedByMe} count={domain.loveCount} onToggle={toggleLove} />
+          ) : null}
           {isOwner ? <AddTermsMenu domainId={domain.id} /> : null}
           <DomainActionsMenu
             domain={domain}
@@ -157,6 +199,12 @@ export function LibraryDomainHeader({
           />
         </div>
       </div>
+
+      {domain.source === "owned" && domain.shareBlockedReason ? (
+        <Alert variant="info">
+          <AlertDescription>{ownerNoticeFor(domain.shareBlockedReason)}</AlertDescription>
+        </Alert>
+      ) : null}
 
       <DomainMeta domain={domain} categoryCount={categoryCount} />
 
