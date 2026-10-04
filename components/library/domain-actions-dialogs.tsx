@@ -89,6 +89,8 @@ type DomainActionsDialogsProps = {
   onUnshareClose: () => void;
   onConfirmUnshare: () => void;
   deleteOpen: boolean;
+  /** The delete is running: the dialog stays up and can't be dismissed. */
+  deleting: boolean;
   onDeleteOpenChange: (open: boolean) => void;
   onConfirmDelete: () => void;
   resetProgressOpen: boolean;
@@ -106,6 +108,7 @@ export function DomainActionsDialogs({
   onUnshareClose,
   onConfirmUnshare,
   deleteOpen,
+  deleting,
   onDeleteOpenChange,
   onConfirmDelete,
   resetProgressOpen,
@@ -151,7 +154,13 @@ export function DomainActionsDialogs({
         </Suspense>
       </AlertDialog>
 
-      <AlertDialog isOpen={deleteOpen} onOpenChange={onDeleteOpenChange}>
+      <AlertDialog
+        isOpen={deleteOpen}
+        onOpenChange={(open) => {
+          if (!deleting) onDeleteOpenChange(open);
+        }}
+        isKeyboardDismissDisabled={deleting}
+      >
         <AlertDialogHeader>
           <AlertDialogTitle>Delete collection?</AlertDialogTitle>
           <AlertDialogDescription>
@@ -159,9 +168,14 @@ export function DomainActionsDialogs({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onPress={onConfirmDelete}>
-            Delete
+          <AlertDialogCancel isDisabled={deleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            slot={null}
+            variant="destructive"
+            onPress={onConfirmDelete}
+            isDisabled={deleting}
+          >
+            {deleting ? "Deleting…" : "Delete"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialog>
