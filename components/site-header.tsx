@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, LayoutList, Sparkles, Zap } from "lucide-react";
+import { BookOpen, LayoutList, Sparkles, Zap } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/settings/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
-import { HiddenUntilSignupComplete, LoggedOutHeaderNav } from "@/components/site-header-nav";
+import { LoggedOutHeaderNav, SignedInHeaderNav } from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
@@ -86,29 +86,18 @@ export function SiteHeader({
       homeHref={user ? AUTHENTICATED_HOME_PATH : "/"}
       leftNav={
         user ? (
-          <>
-            {/* Phones get one link into the app instead of four study icons. */}
-            <HiddenUntilSignupComplete className="md:hidden">
-              <Link href={AUTHENTICATED_HOME_PATH} className="btn btn-ghost">
-                Open app
-                <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
-              </Link>
-            </HiddenUntilSignupComplete>
-            <HiddenUntilSignupComplete className="max-md:hidden">
-              <HeaderStudyLink href="/app/library" icon={LayoutList} label="Library" />
-              <HeaderStudyLink href="/app/read" icon={Zap} label="Read" />
-              <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
-              <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
-            </HiddenUntilSignupComplete>
-          </>
+          <SignedInHeaderNav>
+            <HeaderStudyLink href="/app/library" icon={LayoutList} label="Library" />
+            <HeaderStudyLink href="/app/read" icon={Zap} label="Read" />
+            <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
+            <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
+          </SignedInHeaderNav>
         ) : null
       }
       rightNav={
         <>
           {user ? (
-            <span className="max-md:hidden">
-              <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
-            </span>
+            <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
           ) : null}
           {user ? null : <InstallButton />}
           <ThemeToggle initialIsDark={initialIsDark} />
