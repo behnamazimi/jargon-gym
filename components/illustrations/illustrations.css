@@ -1905,102 +1905,230 @@
   }
 }
 
-/* Index: up on tiptoe, pulls a box off the shelf, turns to face you and holds
-   it out, then puts it back. The reaching pose and the offering pose swap
-   halfway; all four share the 7s beat. */
-.ill-fetch-tiptoe,
-.ill-fetch-reach,
+/* Index: the arm swings up from the shoulder and pulls a box out (the box rides
+   on the arm's rotation, same pivot, and counter-turns to stay level); then it
+   swings down in an arc to the front as the body turns to face you, both hands
+   take it and hold it out, it's handed over (grows and fades toward you), and
+   the shelf is restocked. Everything shares the 7s beat. */
+.ill-fetch-arm,
+.ill-fetch-box,
+.ill-fetch-level,
+.ill-fetch-face,
+.ill-fetch-turn,
+.ill-fetch-solo,
 .ill-fetch-offer,
-.ill-fetch-box {
+.ill-fetch-handoff {
   animation: var(--ill-duration, 7s) ease-in-out var(--ill-delay, 0s) infinite;
 }
 
-.ill-fetch-tiptoe {
-  animation-name: ill-fetch-tiptoe;
+.ill-fetch-arm {
+  animation-name: ill-fetch-arm;
 }
-.ill-fetch-reach {
-  animation-name: ill-fetch-reach;
+.ill-fetch-box {
+  animation-name: ill-fetch-box;
+}
+.ill-fetch-level {
+  animation-name: ill-fetch-level;
+}
+.ill-fetch-face {
+  animation-name: ill-fetch-face;
+}
+.ill-fetch-turn {
+  animation-name: ill-fetch-turn;
+}
+.ill-fetch-solo {
+  animation-name: ill-fetch-solo;
 }
 /* Hidden unless the animation shows it, so a still frame has one pose. */
 .ill-fetch-offer {
   animation-name: ill-fetch-offer;
   opacity: 0;
 }
-.ill-fetch-box {
-  animation-name: ill-fetch-box;
+.ill-fetch-handoff {
+  animation-name: ill-fetch-handoff;
+  opacity: 0;
 }
 
-/* Bottom origin. */
-@keyframes ill-fetch-tiptoe {
+/* The reaching arm, drawn reaching; pivot at the shoulder. Hangs, swings up,
+   pulls back a little, follows the box down, and lets the other pose take over. */
+@keyframes ill-fetch-arm {
   0%,
-  8%,
-  46%,
-  100% {
-    transform: none;
-  }
-  16%,
-  40% {
-    transform: translateY(-10px);
-  }
-}
-
-/* Reaching arm and eyes on the shelf: shown until the box is in hand. */
-@keyframes ill-fetch-reach {
-  0%,
-  44%,
-  94%,
-  100% {
+  10% {
+    transform: rotate(124deg);
     opacity: 1;
   }
-  48%,
-  90% {
+  24% {
+    transform: rotate(0deg);
+  }
+  28%,
+  32% {
+    transform: rotate(-12deg);
+    opacity: 1;
+  }
+  41% {
+    transform: rotate(60deg);
+    opacity: 1;
+  }
+  46% {
+    transform: rotate(84deg);
     opacity: 0;
   }
-}
-
-/* Both arms holding the box out, eyes on you: shown while offering. */
-@keyframes ill-fetch-offer {
-  0%,
-  44%,
-  94%,
+  47%,
+  92% {
+    transform: rotate(124deg);
+    opacity: 0;
+  }
+  96%,
   100% {
-    opacity: 0;
-  }
-  48%,
-  90% {
+    transform: rotate(124deg);
     opacity: 1;
   }
 }
 
-/* Slides out of the shelf, comes down into both hands held out front, then
-   is back on the shelf for the next round. */
+/* The shelf box: sits until the hand has it, rides the arm while it is pulled
+   out (same pivot), then the front copy takes over. */
 @keyframes ill-fetch-box {
   0%,
-  18% {
+  24% {
     transform: none;
     opacity: 1;
   }
-  30%,
-  40% {
-    transform: translateX(-46px) rotate(-4deg);
-  }
-  50%,
-  86% {
-    transform: translate(-134px, 172px) scale(1.25);
+  28%,
+  32% {
+    transform: rotate(-12deg);
     opacity: 1;
   }
+  33%,
   90% {
-    transform: translate(-134px, 172px) scale(1.25);
+    transform: rotate(-12deg);
     opacity: 0;
   }
-  91%,
-  96% {
+  91% {
     transform: none;
     opacity: 0;
   }
+  96%,
   100% {
     transform: none;
     opacity: 1;
+  }
+}
+
+/* Counter-turns the box around its own centre so it stays level while pulled. */
+@keyframes ill-fetch-level {
+  0%,
+  24% {
+    transform: none;
+  }
+  28%,
+  90% {
+    transform: rotate(12deg);
+  }
+  91%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Eyes and mouth: on the shelf, then turned to look at you, then back. */
+@keyframes ill-fetch-face {
+  0%,
+  42% {
+    transform: none;
+  }
+  50%,
+  84% {
+    transform: translate(-22px, -6px);
+  }
+  92%,
+  100% {
+    transform: none;
+  }
+}
+
+/* The turn to face you: a quick squash and settle. Bottom origin. */
+@keyframes ill-fetch-turn {
+  0%,
+  42%,
+  54%,
+  100% {
+    transform: none;
+  }
+  46% {
+    transform: scale(0.9, 1.04);
+  }
+  50% {
+    transform: scale(1.04, 0.97);
+  }
+}
+
+/* The resting arm, there until both hands take the box. */
+@keyframes ill-fetch-solo {
+  0%,
+  43% {
+    opacity: 1;
+  }
+  47%,
+  88% {
+    opacity: 0;
+  }
+  92%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Both arms holding the box out in front. */
+@keyframes ill-fetch-offer {
+  0%,
+  43% {
+    opacity: 0;
+  }
+  47%,
+  80% {
+    opacity: 1;
+  }
+  84%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The box in front: takes over where the pulled box is, swings down in an arc
+   to the front, is held out (a small push toward you), then handed over: it
+   grows and fades. */
+@keyframes ill-fetch-handoff {
+  0%,
+  32% {
+    transform: translate(114px, -155px);
+    opacity: 0;
+  }
+  33% {
+    transform: translate(114px, -155px);
+    opacity: 1;
+  }
+  41% {
+    transform: translate(100px, -36px);
+  }
+  48% {
+    transform: none;
+    opacity: 1;
+  }
+  56% {
+    transform: translateY(-4px) scale(1.12);
+  }
+  62%,
+  78% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+  86% {
+    transform: translateY(16px) scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(114px, -155px);
+    opacity: 0;
   }
 }
 
