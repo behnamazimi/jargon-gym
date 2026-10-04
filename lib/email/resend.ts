@@ -69,12 +69,12 @@ export async function sendWaitlistRequestNotification({
 
   await sendEmail({
     to,
-    subject: "New Lobyas access request",
-    text: `${requesterEmail} just asked for access to Lobyas.\n\nReview it here:\n\n${adminUrl}`,
+    subject: `${requesterEmail} asked for access to Lobyas`,
+    text: `Hi,\n\n${requesterEmail} just asked for access to Lobyas and is waiting on the waitlist. You can approve or review the request here:\n\n${adminUrl}`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto;">
-        <h1 style="font-size: 20px;">New access request</h1>
-        <p><strong>${requesterEmail}</strong> just asked for access to Lobyas.</p>
+        <h1 style="font-size: 20px;">Someone new wants in</h1>
+        <p><strong>${requesterEmail}</strong> just asked for access to Lobyas and is waiting on the waitlist. You can approve or review the request below.</p>
         <p>
           <a href="${adminUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
             Review request
