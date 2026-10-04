@@ -37,6 +37,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/before-you-sign-up",
   "/how-terms-work",
   "/about",
+  "/features",
   "/privacy",
   "/terms",
   "/auth/callback",

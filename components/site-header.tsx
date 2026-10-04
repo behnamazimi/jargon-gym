@@ -5,7 +5,11 @@ import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/settings/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
-import { LoggedOutHeaderNav, SignedInHeaderNav } from "@/components/site-header-nav";
+import {
+  FeaturesNavLink,
+  LoggedOutHeaderNav,
+  SignedInHeaderNav,
+} from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
@@ -92,7 +96,9 @@ export function SiteHeader({
             <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
             <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
           </SignedInHeaderNav>
-        ) : null
+        ) : (
+          <FeaturesNavLink />
+        )
       }
       rightNav={
         <>

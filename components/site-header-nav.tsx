@@ -25,6 +25,24 @@ export function LoggedOutHeaderNav() {
   return <LinkButton href="/login">Log in</LinkButton>;
 }
 
+export function FeaturesNavLink() {
+  const pathname = usePathname();
+
+  if (AUTH_ROUTES.has(pathname) || isStudyPath(pathname)) {
+    return null;
+  }
+
+  return (
+    <Link
+      href="/features"
+      aria-current={pathname === "/features" ? "page" : undefined}
+      className="btn btn-ghost"
+    >
+      Features
+    </Link>
+  );
+}
+
 /** Inside the app the header shows the study links; on public pages a single link into the app. */
 export function SignedInHeaderNav({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -38,8 +56,11 @@ export function SignedInHeaderNav({ children }: { children: ReactNode }) {
   }
 
   return (
-    <Link href={AUTHENTICATED_HOME_PATH} className="btn btn-ghost">
-      Study
-    </Link>
+    <>
+      <FeaturesNavLink />
+      <Link href={AUTHENTICATED_HOME_PATH} className="btn btn-ghost">
+        Study
+      </Link>
+    </>
   );
 }
