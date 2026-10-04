@@ -62,7 +62,7 @@ export function buildReadyEmail(input: {
   return build(`"${input.topic}" is ready in your Library`, {
     heading: "Your collection is ready",
     paragraphs: [line],
-    button: { label: "Open it", url: input.url },
+    button: { label: "Start reading", url: input.url },
   });
 }
 
@@ -82,7 +82,7 @@ export function buildDelayEmail(input: { topic: string; date: string; url: strin
   return build(`"${input.topic}" is taking a little longer`, {
     heading: "Taking a little longer than usual",
     paragraphs: [
-      `“${input.topic}” is taking a little longer than usual. New estimate: ${input.date}.`,
+      `Sorry for the wait. “${input.topic}” is taking a little longer than we expected. We now expect to have it ready by ${input.date}.`,
     ],
     button: { label: "Open your Library", url: input.url },
   });
@@ -99,7 +99,7 @@ export function buildDeclinedEmail(input: {
     paragraphs: [
       REQUEST_COPY.declineReasons[input.reason],
       ...(input.note ? [input.note] : []),
-      "You can paste a list of your own, or browse shared collections.",
+      "In the meantime, you can paste a list of your own or browse the shared collections.",
     ],
     button: { label: REQUEST_COPY.card.pasteList, url: input.pasteUrl },
   });
@@ -113,8 +113,8 @@ export function buildAdminNoticeEmail(input: {
   adminUrl: string;
 }): RequestEmail {
   return build("New collection request", {
-    heading: "New collection request",
-    paragraphs: [`${input.kindLabel} · ${input.languageLabel}: ${input.topic}`],
+    heading: "A new collection request came in",
+    paragraphs: [`${input.kindLabel}, ${input.languageLabel}: ${input.topic}`],
     button: { label: "Open the request desk", url: input.adminUrl },
   });
 }
