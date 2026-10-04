@@ -33,6 +33,7 @@ export function DomainActionsMenu({
 }: DomainActionsMenuProps) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   // Set when the export dialog opens; the dialog reads it.
   const [exportTerms, setExportTerms] = useState<Promise<CollectionExport> | null>(null);
@@ -57,8 +58,12 @@ export function DomainActionsMenu({
 
   const disabled = togglePending || (isBusy && busyId === domain.id);
 
-  function handleConfirmDelete() {
-    deleteOwnedDomain(domain.id, () => router.push("/app/library"));
+  async function handleConfirmDelete() {
+    setDeleting(true);
+    const deleted = await deleteOwnedDomain(domain.id, () => router.push("/app/library"));
+    // On success the dialog stays up until the navigation unmounts this menu.
+    if (deleted) return;
+    setDeleting(false);
     setDeleteOpen(false);
   }
 
@@ -132,6 +137,7 @@ export function DomainActionsMenu({
         onUnshareClose={() => setUnshare((current) => current && { ...current, open: false })}
         onConfirmUnshare={handleConfirmUnshare}
         deleteOpen={deleteOpen}
+        deleting={deleting}
         onDeleteOpenChange={setDeleteOpen}
         onConfirmDelete={handleConfirmDelete}
         resetProgressOpen={resetProgressOpen}
