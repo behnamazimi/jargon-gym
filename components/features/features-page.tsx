@@ -1,4 +1,4 @@
-import { AboutScene } from "@/components/illustrations/scenes/about";
+import { AllInOneScene } from "@/components/illustrations/scenes/all-in-one";
 import { pageContainerClass } from "@/components/page-container";
 import { ClosingCta } from "@/components/public/closing-cta";
 import { PublicCta } from "@/components/public/public-cta";
@@ -17,7 +17,7 @@ function splitPosition(index: number) {
 export function FeaturesPage() {
   return (
     <div className={cn(pageContainerClass, "landing-enter flex-1 py-10 pb-24 sm:py-16 lg:py-20")}>
-      <SplitWithScene scene={<AboutScene />}>
+      <SplitWithScene scene={<AllInOneScene />}>
         <p className="m-0 mb-3 font-mono text-sm tracking-widest text-primary-text">FEATURES</p>
         <h1 className="m-0 max-w-[16ch] text-balance text-[clamp(2.5rem,4vw+1rem,4rem)] font-medium leading-[1.05] tracking-tight">
           Everything Lobyas does, in the order you&apos;ll need it
