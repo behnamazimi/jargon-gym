@@ -66,6 +66,29 @@ export function PrivacyPage() {
         </p>
       </ContentPageSection>
 
+      <ContentPageSection title="Why we use it">
+        <ContentPageTitledBulletList
+          items={[
+            {
+              title: "Running your account",
+              body: "Sign-in, storing your terms and study history, scheduling what you see next. Needed to give you the service.",
+            },
+            {
+              title: "Security and abuse prevention",
+              body: "Keeping accounts and the service safe. Our legitimate interest.",
+            },
+            {
+              title: "Optional extras",
+              body: "Telegram reminders, your own AI key, and AI or spoken features. Only when you turn them on, and you can turn them off.",
+            },
+            {
+              title: "Emails",
+              body: "Invites, sign-in and password emails, and updates about collections you requested.",
+            },
+          ]}
+        />
+      </ContentPageSection>
+
       <ContentPageSection title="Cookies">
         <p className="m-0">
           Only what the app needs: your login session, your theme, and remembered choices like
@@ -78,13 +101,20 @@ export function PrivacyPage() {
       <ContentPageSection title="Who else handles it">
         <p className="m-0">These services process data on our behalf:</p>
         <ContentPageTitledBulletList items={PROCESSORS} />
+        <p className="m-0">
+          Some of them are based outside the European Economic Area, mainly in the United States.
+          Where that is the case, we rely on safeguards the GDPR accepts, such as the EU standard
+          contractual clauses or the EU-US Data Privacy Framework.
+        </p>
       </ContentPageSection>
 
       <ContentPageSection title="How long we keep it">
         <p className="m-0">
-          For as long as your account exists. Delete your account in Settings and your account and
-          its data are removed (copies in backups age out). If other people use one of your public
-          collections, make it private first.
+          For as long as your account exists. When you delete your account in Settings, your account
+          and its data are removed straight away. Copies in our database provider&apos;s backups
+          disappear as those backups are replaced on their normal schedule. The text of anything
+          already sent to an AI or voice service is handled under that service&apos;s own retention
+          terms. If other people use one of your public collections, make it private first.
         </p>
       </ContentPageSection>
 

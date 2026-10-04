@@ -27,6 +27,7 @@ export function TermsPage() {
             "Lobyas is invite-only. You need an invite or an approved request to sign up.",
             "Keep your sign-in secure. You're responsible for what happens under your account.",
             "One person per account.",
+            "You must be 16 or older.",
           ]}
         />
       </ContentPageSection>
@@ -36,6 +37,17 @@ export function TermsPage() {
           You keep ownership of the terms and collections you add. You give us permission to store
           and process them to run the app for you. Only add what you have the right to add.
           Don&apos;t upload anything unlawful or that infringes someone else&apos;s rights.
+        </p>
+      </ContentPageSection>
+
+      <ContentPageSection title="Copyright and reporting problems">
+        <p className="m-0">
+          If you think something in a collection infringes your rights or breaks the law, email{" "}
+          <a href={SUPPORT_MAILTO} className={contentPageLinkClass}>
+            {SUPPORT_EMAIL}
+          </a>{" "}
+          with what it is, where it is, and why. We&apos;ll look at it promptly and remove it if it
+          shouldn&apos;t be there.
         </p>
       </ContentPageSection>
 
