@@ -1905,22 +1905,102 @@
   }
 }
 
-/* Index: pulls a box out of the shelf to look, while up on tiptoe (ill-reach,
-   same 5s beat), then slides it back. */
-.ill-pull-box {
-  animation: ill-pull-box var(--ill-duration, 5s) ease-in-out var(--ill-delay, 0s) infinite;
+/* Index: up on tiptoe, pulls a box off the shelf, turns to face you and holds
+   it out, then puts it back. The reaching pose and the offering pose swap
+   halfway; all four share the 7s beat. */
+.ill-fetch-tiptoe,
+.ill-fetch-reach,
+.ill-fetch-offer,
+.ill-fetch-box {
+  animation: var(--ill-duration, 7s) ease-in-out var(--ill-delay, 0s) infinite;
 }
 
-@keyframes ill-pull-box {
+.ill-fetch-tiptoe {
+  animation-name: ill-fetch-tiptoe;
+}
+.ill-fetch-reach {
+  animation-name: ill-fetch-reach;
+}
+/* Hidden unless the animation shows it, so a still frame has one pose. */
+.ill-fetch-offer {
+  animation-name: ill-fetch-offer;
+  opacity: 0;
+}
+.ill-fetch-box {
+  animation-name: ill-fetch-box;
+}
+
+/* Bottom origin. */
+@keyframes ill-fetch-tiptoe {
   0%,
-  16%,
-  70%,
+  8%,
+  46%,
   100% {
     transform: none;
   }
-  28%,
-  58% {
+  16%,
+  40% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Reaching arm and eyes on the shelf: shown until the box is in hand. */
+@keyframes ill-fetch-reach {
+  0%,
+  44%,
+  94%,
+  100% {
+    opacity: 1;
+  }
+  48%,
+  90% {
+    opacity: 0;
+  }
+}
+
+/* Both arms holding the box out, eyes on you: shown while offering. */
+@keyframes ill-fetch-offer {
+  0%,
+  44%,
+  94%,
+  100% {
+    opacity: 0;
+  }
+  48%,
+  90% {
+    opacity: 1;
+  }
+}
+
+/* Slides out of the shelf, comes down into both hands held out front, then
+   is back on the shelf for the next round. */
+@keyframes ill-fetch-box {
+  0%,
+  18% {
+    transform: none;
+    opacity: 1;
+  }
+  30%,
+  40% {
     transform: translateX(-46px) rotate(-4deg);
+  }
+  50%,
+  86% {
+    transform: translate(-134px, 172px) scale(1.25);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(-134px, 172px) scale(1.25);
+    opacity: 0;
+  }
+  91%,
+  96% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
   }
 }
 

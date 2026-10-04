@@ -78,7 +78,10 @@ type MotionKind =
   | "click-spark"
   | "say"
   | "slide-cup"
-  | "pull-box";
+  | "fetch-tiptoe"
+  | "fetch-reach"
+  | "fetch-offer"
+  | "fetch-box";
 
 type MotionProps = {
   kind: MotionKind;
