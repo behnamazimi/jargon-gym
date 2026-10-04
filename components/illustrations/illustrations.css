@@ -1771,6 +1771,159 @@
   }
 }
 
+/* Field terms: a colleague's term card passes over, the question mark over
+   the listener pops into a spark, and it nods along (ill-nod shares the 6s beat). */
+.ill-pass-card,
+.ill-puzzle-mark,
+.ill-click-spark {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-pass-card {
+  animation-name: ill-pass-card;
+}
+.ill-puzzle-mark {
+  animation-name: ill-puzzle-mark;
+}
+.ill-click-spark {
+  animation-name: ill-click-spark;
+}
+
+/* Leaves the speech bubble, lands in the listener's hand, fades, comes back. */
+@keyframes ill-pass-card {
+  0%,
+  28% {
+    transform: none;
+    opacity: 1;
+  }
+  44%,
+  84% {
+    transform: translate(200px, 96px) rotate(10deg);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(200px, 96px) rotate(10deg);
+    opacity: 0;
+  }
+  91%,
+  96% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes ill-puzzle-mark {
+  0%,
+  36%,
+  96%,
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+  44%,
+  90% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+
+@keyframes ill-click-spark {
+  0%,
+  42%,
+  92%,
+  100% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50%,
+  84% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Vocabulary: says the word, and the cup slides across the counter to them.
+   Shares the 6s beat with ill-nod for the one behind the counter. */
+.ill-say,
+.ill-slide-cup {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-say {
+  animation-name: ill-say;
+}
+.ill-slide-cup {
+  animation-name: ill-slide-cup;
+}
+
+/* The speech bubble pops up with the word, holds, and goes. Give it a bottom origin. */
+@keyframes ill-say {
+  0%,
+  4% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  12%,
+  58% {
+    transform: none;
+    opacity: 1;
+  }
+  66%,
+  100% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+@keyframes ill-slide-cup {
+  0%,
+  40% {
+    transform: none;
+    opacity: 1;
+  }
+  56%,
+  86% {
+    transform: translateX(-210px);
+    opacity: 1;
+  }
+  92% {
+    transform: translateX(-210px);
+    opacity: 0;
+  }
+  93%,
+  96% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Index: pulls a box out of the shelf to look, while up on tiptoe (ill-reach,
+   same 5s beat), then slides it back. */
+.ill-pull-box {
+  animation: ill-pull-box var(--ill-duration, 5s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+@keyframes ill-pull-box {
+  0%,
+  16%,
+  70%,
+  100% {
+    transform: none;
+  }
+  28%,
+  58% {
+    transform: translateX(-46px) rotate(-4deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ill-motion,
   .ill-march {

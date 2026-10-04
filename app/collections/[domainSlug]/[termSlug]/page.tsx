@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { categoryAnchor } from "@/components/collections/term-card-grid";
+import { TermPageBlock } from "@/components/collections/term-page-block";
 import { TermBody } from "@/components/terms/term-body";
-import { getPublicTermPage, listPublicTermPaths } from "@/lib/terms/public-terms";
+import {
+  getPublicDomainPage,
+  getPublicTermPage,
+  listPublicTermPaths,
+} from "@/lib/terms/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 
 export const revalidate = 3600;
@@ -43,10 +49,13 @@ export async function generateMetadata({
 
 export default async function PublicTermPage({ params }: { params: Promise<PageParams> }) {
   const { domainSlug, termSlug } = await params;
-  const data = await getPublicTermPage(domainSlug, termSlug);
-  if (!data) notFound();
+  const [data, collection] = await Promise.all([
+    getPublicTermPage(domainSlug, termSlug),
+    getPublicDomainPage(domainSlug),
+  ]);
+  if (!data || !collection) notFound();
 
-  const { domain, language, term, relatedTermSlugsById } = data;
+  const { domain, term, relatedTermSlugsById } = data;
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 px-4 py-10">
@@ -62,7 +71,7 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
             {" "}
             ·{" "}
             <Link
-              href={`/collections/${domain.slug}?category=${encodeURIComponent(term.category)}`}
+              href={`/collections/${domain.slug}#${categoryAnchor(term.category)}`}
               className="text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content"
             >
               {term.category}
@@ -74,12 +83,13 @@ export default async function PublicTermPage({ params }: { params: Promise<PageP
       <TermBody
         term={term}
         showSearchLink={false}
-        language={language}
+        language={domain.language}
         getRelationshipHref={(relatedTermId) => {
           const relatedSlug = relatedTermSlugsById.get(relatedTermId);
           return relatedSlug ? `/collections/${domain.slug}/${relatedSlug}` : undefined;
         }}
       />
+      <TermPageBlock domain={domain} current={term} terms={collection.terms} />
     </div>
   );
 }

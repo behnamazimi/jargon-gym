@@ -143,7 +143,16 @@ scene, closing CTA) or `LegalPage`, passing `showcaseProse` or `legalProse`
 from `components/content/mdx-prose.tsx`. Write plain Markdown; don't put
 classes in MDX. Shared pieces for public pages live in `components/public/`.
 Public pages are cached, so the server always renders the visitor CTA and
-`PublicCta` swaps it in the browser for signed-in users.
+`PublicCta` swaps it in the browser for signed-in users (on a collection it
+asks `/api/collections/[id]/membership` and offers Add or Open in library).
+
+Public collection pages (`app/collections/`, `components/collections/`) are
+built from data for every public collection: the hero reads the collection's
+`kind` (`lib/terms/kinds.ts`), terms show as cards grouped by category, and the
+index shows each collection by one of its terms (`lib/collections/pick.ts`
+picks it, stable per slug). Optional copy or a pinned term goes in
+`lib/collections/showcase-overrides.ts`. The seed has two public samples
+(`standup`, `dutch-basics`) for checking these pages locally.
 
 # Illustrations
 
@@ -191,4 +200,6 @@ The product is "Lobyas" in prose and UI, "lobyas" in identifiers, slugs and
 keys. User-facing copy says "terms", not "jargon". The request kind "Jargon",
 the quiz prompt's "real jargon" and "a new job's jargon" are the only literal
 uses. `lib/requests/copy.test.ts` fails if "jargon" appears elsewhere in the
-request copy, and `content/pages/copy.test.ts` does the same for content pages.
+request copy, and `content/pages/copy.test.ts` does the same for content pages. Public
+pages of a `vocabulary` collection say "words and phrases" instead of
+"terms".

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { InviteScene } from "@/components/illustrations/scenes/invite";
 import { PublicCta } from "./public-cta";
 import { SplitWithScene } from "./split-with-scene";
@@ -7,6 +7,8 @@ type ClosingCtaProps = {
   title?: ReactNode;
   body?: ReactNode;
   scene?: ReactNode;
+  /** On a collection's page, signed-in visitors can add it straight from here. */
+  collection?: ComponentProps<typeof PublicCta>["collection"];
 };
 
 export function ClosingCta({
@@ -17,6 +19,7 @@ export function ClosingCta({
   ),
   body = "Read, review and quiz the terms you need, with no due dates to fall behind on.",
   scene = <InviteScene />,
+  collection,
 }: ClosingCtaProps) {
   return (
     <section className="mt-20 border-t-2 border-base-content/80 pt-10 sm:mt-28 sm:pt-14">
@@ -28,7 +31,7 @@ export function ClosingCta({
           {body}
         </p>
         <div className="mt-6">
-          <PublicCta />
+          <PublicCta collection={collection} />
         </div>
       </SplitWithScene>
     </section>

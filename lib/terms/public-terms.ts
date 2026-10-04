@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createPublicClient } from "@/lib/supabase/public";
 import { attachRelationshipsToTerms, mapTerm } from "@/lib/terms/mappers";
 import type { TermRelationshipLink } from "@/lib/terms/types";
+import { parseKind, type CollectionKind } from "@/lib/terms/kinds";
 import { parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
 
 export type PublicTermPath = {
@@ -27,15 +28,77 @@ export async function listPublicTermPaths(): Promise<PublicTermPath[]> {
   );
 }
 
-type PublicDomain = {
+export type PublicDomain = {
   id: string;
   slug: string;
   name: string;
   description: string;
   updatedAt: string;
+  kind: CollectionKind;
+  language: DomainLanguage;
+  /** Only shared collections can be added to a library. */
+  canAdd: boolean;
 };
 
-export type PublicDomainSummary = PublicDomain & { termCount: number };
+const DOMAIN_COLUMNS = "id, slug, name, description, updated_at, kind, language, visibility";
+
+type DomainRow = {
+  id: string;
+  slug: string | null;
+  name: string;
+  description: string | null;
+  updated_at: string;
+  kind: string;
+  language: string;
+  visibility: string;
+};
+
+function mapPublicDomain(row: DomainRow): PublicDomain {
+  return {
+    id: row.id,
+    slug: row.slug!,
+    name: row.name,
+    description: row.description ?? "",
+    updatedAt: row.updated_at,
+    kind: parseKind(row.kind),
+    language: parseLanguage(row.language),
+    canAdd: row.visibility === "shared",
+  };
+}
+
+const TERM_COLUMNS = "slug, term, category, definition, example";
+
+type TermRow = {
+  slug: string | null;
+  term: string;
+  category: string | null;
+  definition: string | null;
+  example: string | null;
+};
+
+/** Public pages show finished terms only: ones with a page and a definition. */
+function mapFinishedTerms(rows: TermRow[]): PublicTermSummary[] {
+  return rows.flatMap((row) =>
+    row.slug && row.definition?.trim()
+      ? [
+          {
+            slug: row.slug,
+            term: row.term,
+            category: row.category,
+            definition: row.definition,
+            example: row.example?.trim() ? row.example : null,
+          },
+        ]
+      : [],
+  );
+}
+
+type PublicDomainSummary = Pick<
+  PublicDomain,
+  "id" | "slug" | "name" | "description" | "updatedAt"
+> & {
+  termCount: number;
+};
 
 export async function listPublicDomains(): Promise<PublicDomainSummary[]> {
   const supabase = createPublicClient();
@@ -64,12 +127,31 @@ export type PublicTermSummary = {
   term: string;
   category: string | null;
   definition: string;
+  example: string | null;
 };
 
 export type PublicDomainPage = {
   domain: PublicDomain;
   terms: PublicTermSummary[];
 };
+
+/** Every public collection with its finished terms, for the index. */
+export async function listPublicCollections(): Promise<PublicDomainPage[]> {
+  const supabase = createPublicClient();
+
+  const { data, error } = await supabase
+    .from("domains")
+    .select(`${DOMAIN_COLUMNS}, terms(${TERM_COLUMNS})`)
+    .eq("is_public", true)
+    .not("slug", "is", null)
+    .order("name");
+  if (error) throw error;
+
+  return (data ?? []).map(({ terms, ...row }) => ({
+    domain: mapPublicDomain(row),
+    terms: mapFinishedTerms(terms ?? []),
+  }));
+}
 
 export const getPublicDomainPage = cache(async function getPublicDomainPage(
   domainSlug: string,
@@ -78,7 +160,7 @@ export const getPublicDomainPage = cache(async function getPublicDomainPage(
 
   const { data: domainRow, error: domainError } = await supabase
     .from("domains")
-    .select("id, slug, name, description, updated_at")
+    .select(DOMAIN_COLUMNS)
     .eq("slug", domainSlug)
     .eq("is_public", true)
     .maybeSingle();
@@ -88,32 +170,17 @@ export const getPublicDomainPage = cache(async function getPublicDomainPage(
 
   const { data: termRows, error: termsError } = await supabase
     .from("terms")
-    .select("slug, term, category, definition")
+    .select(TERM_COLUMNS)
     .eq("domain_id", domainRow.id)
     .not("slug", "is", null)
     .order("term");
   if (termsError) throw termsError;
 
-  return {
-    domain: {
-      id: domainRow.id,
-      slug: domainRow.slug!,
-      name: domainRow.name,
-      description: domainRow.description ?? "",
-      updatedAt: domainRow.updated_at,
-    },
-    terms: (termRows ?? []).map((row) => ({
-      slug: row.slug!,
-      term: row.term,
-      category: row.category,
-      definition: row.definition ?? "",
-    })),
-  };
+  return { domain: mapPublicDomain(domainRow), terms: mapFinishedTerms(termRows ?? []) };
 });
 
 export type PublicTermPage = {
   domain: PublicDomain;
-  language: DomainLanguage;
   term: ReturnType<typeof mapTerm> & { slug: string; updatedAt: string };
   relatedTermSlugsById: Map<string, string>;
 };
@@ -126,7 +193,7 @@ export const getPublicTermPage = cache(async function getPublicTermPage(
 
   const { data: domainRow, error: domainError } = await supabase
     .from("domains")
-    .select("id, slug, name, description, updated_at, language")
+    .select(DOMAIN_COLUMNS)
     .eq("slug", domainSlug)
     .eq("is_public", true)
     .maybeSingle();
@@ -177,14 +244,7 @@ export const getPublicTermPage = cache(async function getPublicTermPage(
   const [term] = attachRelationshipsToTerms([mapTerm(termRow)], relationshipLinks);
 
   return {
-    domain: {
-      id: domainRow.id,
-      slug: domainRow.slug!,
-      name: domainRow.name,
-      description: domainRow.description ?? "",
-      updatedAt: domainRow.updated_at,
-    },
-    language: parseLanguage(domainRow.language),
+    domain: mapPublicDomain(domainRow),
     term: { ...term, slug: termRow.slug!, updatedAt: termRow.updated_at },
     relatedTermSlugsById,
   };
