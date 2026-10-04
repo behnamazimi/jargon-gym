@@ -13,16 +13,22 @@ const PROCESSORS = [
     body: "Database and sign-in. Stores your account and everything you study.",
   },
   { title: "Vercel", body: "Hosts the app." },
-  { title: "Resend", body: "Sends sign-up and password emails." },
+  {
+    title: "Resend",
+    body: "Sends invites and collection updates. Sign-up confirmation and password emails come through Supabase.",
+  },
   {
     title: "Google and Anthropic",
-    body: "Write AI quiz questions and Stories. Only when you use those features, and only the terms involved. If you add your own key, requests go on your account with them.",
+    body: "Write AI quiz questions and Stories. Only when you use those features, and only the term content needed for the request. If you add your own key, requests go on your account with them.",
   },
   {
     title: "Murf and ElevenLabs",
     body: "Turn a term or story into spoken audio. They receive the text to be read aloud.",
   },
-  { title: "Telegram", body: "Only if you link the bot. Messages go through Telegram." },
+  {
+    title: "Telegram",
+    body: "Only if you link the bot. We keep your chat ID and send messages through Telegram.",
+  },
   { title: "Google sign-in", body: "Only if you choose to sign in with Google." },
 ] as const;
 
@@ -51,6 +57,7 @@ export function PrivacyPage() {
             "The terms and collections you add, and your study history: what you read, review and quiz, and your streak.",
             "Your settings, including a Telegram link and an AI key if you add one (stored encrypted).",
             "AI credit usage.",
+            "If you asked for access, the email you used and when.",
           ]}
         />
         <p className="m-0">
@@ -61,8 +68,10 @@ export function PrivacyPage() {
 
       <ContentPageSection title="Cookies">
         <p className="m-0">
-          Only the essential ones: your login session, your light or dark theme, and your library
-          filters. There&apos;s no analytics or tracking, so there&apos;s no cookie banner.
+          Only what the app needs: your login session, your theme, and remembered choices like
+          library filters, the collection you last studied and an unfinished quiz, kept in cookies
+          or on your device. There&apos;s no analytics, advertising or tracking, so there&apos;s no
+          cookie banner. The installable app also caches pages on your device so it works offline.
         </p>
       </ContentPageSection>
 
@@ -74,8 +83,8 @@ export function PrivacyPage() {
       <ContentPageSection title="How long we keep it">
         <p className="m-0">
           For as long as your account exists. Delete your account in Settings and your account and
-          its data are removed. If other people use one of your public collections, make it private
-          first.
+          its data are removed (copies in backups age out). If other people use one of your public
+          collections, make it private first.
         </p>
       </ContentPageSection>
 
@@ -89,10 +98,7 @@ export function PrivacyPage() {
       </ContentPageSection>
 
       <ContentPageSection title="Changes">
-        <p className="m-0">
-          If this changes in a way that matters, we&apos;ll update the date above and tell signed-in
-          people.
-        </p>
+        <p className="m-0">If this changes, we&apos;ll update the date above.</p>
       </ContentPageSection>
     </LegalPage>
   );

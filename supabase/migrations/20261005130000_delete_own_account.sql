@@ -41,6 +41,9 @@ begin
       using errcode = 'AD001';
   end if;
 
+  -- An access request keeps the email outside the account, so remove it too.
+  delete from public.waitlist_requests where normalized_email = lower(trim(v_me.email));
+
   delete from auth.users where id = v_me.id;
 end;
 $$;
