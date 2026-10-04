@@ -128,8 +128,12 @@ begin
   assert (select owner_email from public.admin_list_collections() c where c.id = d1) = 'rpc-other@example.test', 'owner email';
   assert (select term_count from public.admin_list_collections() c where c.id = d2) = 1, 'count';
   assert (select term_count from public.admin_list_collections() c where c.id = d3) = 0, 'no terms shows 0';
+  assert (select kind from public.admin_list_collections() c where c.id = d1) = 'terms', 'kind defaults to terms';
   execute 'reset role';
   update public.domains set visibility = 'shared' where id = d1;
+  v_failed := false;
+  begin update public.domains set kind = 'slang' where id = d1; exception when check_violation then v_failed := true; end;
+  assert v_failed, 'kind only takes terms or vocabulary';
   perform pg_temp.act_as(admin_id);
 
   -- Publishing needs a built-in collection.

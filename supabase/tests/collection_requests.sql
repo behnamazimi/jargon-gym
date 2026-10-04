@@ -205,6 +205,20 @@ begin
   perform pg_temp.act_as(admin);
   assert pg_temp.fails_with(format($q$select public.admin_deliver_request(%L, 'Again', '[{"term":"Pod","definition":"x"}]', '[]', 'lines')$q$, r1), 'already closed'), 'not twice';
   perform pg_temp.back_to_owner();
+  assert (select count(*) from public.domains d join public.collection_requests q on q.delivered_domain_id = d.id
+          where q.id in (r1, r2, r3) and d.kind = 'terms') = 3, 'jargon requests deliver terms collections';
+
+  -- A vocabulary request delivers a vocabulary collection.
+  insert into public.collection_requests (user_id, topic, kind, language, level, status, due_at, accepted_at)
+  values (ann, 'Dutch verbs', 'vocabulary', 'nl', 'a1_a2', 'in_progress', now() + interval '3 days', now())
+  returning id into r2;
+  perform pg_temp.act_as(admin);
+  perform public.admin_deliver_request(r2, 'Dutch verbs', '[{"term":"lopen","definition":"to walk"}]', '[]', 'lines');
+  perform pg_temp.back_to_owner();
+  assert (select d.kind from public.domains d join public.collection_requests q on q.delivered_domain_id = d.id
+          where q.id = r2) = 'vocabulary', 'vocabulary request delivers a vocabulary collection';
+  assert (select d.language from public.domains d join public.collection_requests q on q.delivered_domain_id = d.id
+          where q.id = r2) = 'nl', 'language still copied';
 
   -- Cancelled and suspended requesters block delivery.
   update public.collection_requests set status = 'cancelled' where user_id = ann and status = 'ready';

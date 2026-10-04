@@ -545,6 +545,7 @@ export type Database = {
           id: string;
           is_builtin: boolean;
           is_public: boolean;
+          kind: string;
           language: string;
           name: string;
           owner_id: string;
@@ -558,6 +559,7 @@ export type Database = {
           id?: string;
           is_builtin?: boolean;
           is_public?: boolean;
+          kind?: string;
           language?: string;
           name: string;
           owner_id: string;
@@ -571,6 +573,7 @@ export type Database = {
           id?: string;
           is_builtin?: boolean;
           is_public?: boolean;
+          kind?: string;
           language?: string;
           name?: string;
           owner_id?: string;
@@ -1705,6 +1708,7 @@ export type Database = {
           id: string;
           is_builtin: boolean;
           is_public: boolean;
+          kind: string;
           name: string;
           owner_email: string;
           owner_id: string;
