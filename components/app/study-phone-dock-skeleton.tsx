@@ -14,7 +14,7 @@ export function StudyPhoneDockSkeleton() {
     <nav
       aria-hidden
       className={cn(
-        "dock dock-md bg-base-100/80 pb-safe backdrop-blur-sm md:hidden",
+        "dock dock-md absolute! bg-base-100/80 pb-safe backdrop-blur-sm md:hidden",
         !isDockPath(pathname) && "hidden",
       )}
     >
