@@ -167,6 +167,16 @@ share images from `lib/seo/og/specimen-image.tsx` (fonts in `assets/fonts/`).
 An `opengraph-image` outside `/collections/` must be added to the proxy's
 public paths, or crawlers are sent to the login page.
 
+# Features page
+
+The public `/features` page is data-driven. The sections, their copy and their
+scene or icon keys live in `lib/features/sections.ts` (pure data, with a test
+for ids and banned words); `components/features/` renders them, and
+`components/features/scenes.tsx` maps each scene key to an illustration, so a
+new scene is a one-line change. Section ids are anchors, so keep them stable.
+Add a line there whenever a user-visible feature ships. Keep the copy plain
+and product-voiced, and never name the admin or imply automation.
+
 # Illustrations
 
 Hand-drawn doodle illustrations live in `components/illustrations/`. Scenes

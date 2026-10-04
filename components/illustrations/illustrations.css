@@ -2132,6 +2132,729 @@
   }
 }
 
+/* Bring terms in: lets the list drop into the box, the deck slides in from the
+   other app after it, the box bumps as each lands, both clear for the next go. */
+.ill-import-drop,
+.ill-import-slide,
+.ill-import-bump,
+.ill-import-spark,
+.ill-import-flick,
+.ill-import-eyes {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-import-drop {
+  animation-name: ill-import-drop;
+}
+.ill-import-slide {
+  animation-name: ill-import-slide;
+}
+.ill-import-bump {
+  animation-name: ill-import-bump;
+}
+.ill-import-spark {
+  animation-name: ill-import-spark;
+}
+.ill-import-flick {
+  animation-name: ill-import-flick;
+}
+.ill-import-eyes {
+  animation-name: ill-import-eyes;
+}
+
+/* Falls from the hand into the box, sits there, fades and is back in the hand. */
+@keyframes ill-import-drop {
+  0%,
+  14% {
+    transform: none;
+    opacity: 1;
+    animation-timing-function: ease-in;
+  }
+  26%,
+  84% {
+    transform: translateY(178px);
+    opacity: 1;
+  }
+  90% {
+    transform: translateY(178px);
+    opacity: 0;
+  }
+  91%,
+  94% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Out of the app window in a little arc and down into the box. */
+@keyframes ill-import-slide {
+  0%,
+  34% {
+    transform: none;
+    opacity: 1;
+  }
+  45% {
+    transform: translate(-124px, -8px) rotate(-10deg);
+  }
+  56%,
+  84% {
+    transform: translate(-236px, 106px);
+    opacity: 1;
+  }
+  90% {
+    transform: translate(-236px, 106px);
+    opacity: 0;
+  }
+  91%,
+  94% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* A squash each time something lands. Bottom origin. */
+@keyframes ill-import-bump {
+  0%,
+  25%,
+  32%,
+  55%,
+  63%,
+  100% {
+    transform: none;
+  }
+  28%,
+  59% {
+    transform: scale(1.04, 0.94);
+  }
+}
+
+@keyframes ill-import-spark {
+  0%,
+  56% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  62% {
+    transform: none;
+    opacity: 1;
+  }
+  74%,
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+/* The hand opens upward as it lets go. Pivot at the shoulder. */
+@keyframes ill-import-flick {
+  0%,
+  12% {
+    transform: none;
+  }
+  18% {
+    transform: rotate(-12deg);
+  }
+  26%,
+  86% {
+    transform: rotate(-6deg);
+  }
+  94%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Watches the list fall, then the deck come over. */
+@keyframes ill-import-eyes {
+  0%,
+  12%,
+  38%,
+  68%,
+  100% {
+    transform: none;
+  }
+  18%,
+  30% {
+    transform: translate(2px, 5px);
+  }
+  44%,
+  60% {
+    transform: translate(5px, 0);
+  }
+}
+
+/* Term layers: says the word, the card unfolds its example, then its picture,
+   then the link to a neighbour; it all folds away and the word comes again. */
+.ill-learn-say,
+.ill-learn-gesture,
+.ill-learn-unfold-side,
+.ill-learn-unfold-down,
+.ill-learn-link {
+  animation: var(--ill-duration, 7s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-learn-say {
+  animation-name: ill-learn-say;
+}
+.ill-learn-gesture {
+  animation-name: ill-learn-gesture;
+}
+.ill-learn-unfold-side {
+  animation-name: ill-learn-unfold-side;
+}
+.ill-learn-unfold-down {
+  animation-name: ill-learn-unfold-down;
+}
+.ill-learn-link {
+  animation-name: ill-learn-link;
+}
+
+@keyframes ill-learn-say {
+  0%,
+  2% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  10%,
+  84% {
+    transform: none;
+    opacity: 1;
+  }
+  92%,
+  100% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* The hand comes up with the word and points at the card. Pivot at the shoulder. */
+@keyframes ill-learn-gesture {
+  0%,
+  4%,
+  94%,
+  100% {
+    transform: rotate(16deg);
+  }
+  12%,
+  84% {
+    transform: none;
+  }
+}
+
+/* Folds out from the card's right edge. Left origin. */
+@keyframes ill-learn-unfold-side {
+  0%,
+  16%,
+  92%,
+  100% {
+    transform: scaleX(0);
+  }
+  24%,
+  86% {
+    transform: none;
+  }
+}
+
+/* Folds down from the card's bottom edge. Top origin. */
+@keyframes ill-learn-unfold-down {
+  0%,
+  30%,
+  92%,
+  100% {
+    transform: scaleY(0);
+  }
+  38%,
+  86% {
+    transform: none;
+  }
+}
+
+@keyframes ill-learn-link {
+  0%,
+  44%,
+  86%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  52%,
+  82% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Shadowing: the sentence lights up as it plays while the listener bobs
+   along; in the gap after it, the other one says it back. */
+.ill-hear-play,
+.ill-hear-sound,
+.ill-hear-listen,
+.ill-hear-glance,
+.ill-hear-speak,
+.ill-hear-echo,
+.ill-hear-mouth-open,
+.ill-hear-mouth-shut {
+  animation: var(--ill-duration, 6s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-hear-play {
+  animation-name: ill-hear-play;
+}
+.ill-hear-sound {
+  animation-name: ill-hear-sound;
+}
+.ill-hear-listen {
+  animation-name: ill-hear-listen;
+}
+.ill-hear-glance {
+  animation-name: ill-hear-glance;
+}
+.ill-hear-speak {
+  animation-name: ill-hear-speak;
+}
+.ill-hear-echo {
+  animation-name: ill-hear-echo;
+}
+.ill-hear-mouth-open {
+  animation-name: ill-hear-mouth-open;
+}
+/* Hidden unless the animation shows it, so a still frame has one mouth. */
+.ill-hear-mouth-shut {
+  animation-name: ill-hear-mouth-shut;
+  opacity: 0;
+}
+
+/* The sentence lights up from the left as it is read, stays lit while it is
+   said back, then clears for the next go. Left origin. */
+@keyframes ill-hear-play {
+  0%,
+  4%,
+  94%,
+  100% {
+    transform: scaleX(0);
+  }
+  40%,
+  86% {
+    transform: none;
+  }
+}
+
+/* Sound in the listener's ear while the sentence plays. */
+@keyframes ill-hear-sound {
+  0%,
+  4%,
+  44%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  10%,
+  26%,
+  40% {
+    transform: none;
+    opacity: 1;
+  }
+  18%,
+  34% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+/* Bobs to the sentence while it plays. Bottom origin. */
+@keyframes ill-hear-listen {
+  0%,
+  16%,
+  32%,
+  40%,
+  100% {
+    transform: none;
+  }
+  8%,
+  24% {
+    transform: rotate(-2deg);
+  }
+}
+
+/* Up at the text while it plays, over at the one repeating it in the gap. */
+@keyframes ill-hear-glance {
+  0%,
+  4%,
+  90%,
+  100% {
+    transform: none;
+  }
+  8%,
+  40% {
+    transform: translate(1px, -4px);
+  }
+  46%,
+  84% {
+    transform: translate(5px, 1px);
+  }
+}
+
+/* Leans in to say it back. Bottom origin. */
+@keyframes ill-hear-speak {
+  0%,
+  46%,
+  90%,
+  100% {
+    transform: none;
+  }
+  50%,
+  66% {
+    transform: rotate(-4deg);
+  }
+  58%,
+  74% {
+    transform: rotate(-2deg);
+  }
+  84% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes ill-hear-echo {
+  0%,
+  46%,
+  88%,
+  100% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  52%,
+  68%,
+  84% {
+    transform: none;
+    opacity: 1;
+  }
+  60%,
+  76% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes ill-hear-mouth-open {
+  0%,
+  46%,
+  88%,
+  100% {
+    opacity: 0;
+  }
+  48%,
+  84% {
+    opacity: 1;
+  }
+}
+
+@keyframes ill-hear-mouth-shut {
+  0%,
+  46%,
+  88%,
+  100% {
+    opacity: 1;
+  }
+  48%,
+  84% {
+    opacity: 0;
+  }
+}
+
+/* Story scroll: reaches over, taps a glowing word, its definition opens over
+   it and stays while the arm rests, then closes. */
+.ill-story-tap,
+.ill-story-define,
+.ill-story-tap-spark {
+  animation: var(--ill-duration, 5s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-story-tap {
+  animation-name: ill-story-tap;
+}
+.ill-story-define {
+  animation-name: ill-story-define;
+}
+.ill-story-tap-spark {
+  animation-name: ill-story-tap-spark;
+}
+
+/* Pivot at the shoulder. Drawn tapping; rests lower. */
+@keyframes ill-story-tap {
+  0%,
+  20%,
+  56%,
+  100% {
+    transform: rotate(22deg);
+  }
+  30% {
+    transform: rotate(-3deg);
+  }
+  34%,
+  44% {
+    transform: none;
+  }
+}
+
+/* Pops open from the tapped word. Bottom-left origin. */
+@keyframes ill-story-define {
+  0%,
+  34%,
+  88%,
+  100% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+  44%,
+  82% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes ill-story-tap-spark {
+  0%,
+  32% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  38% {
+    transform: none;
+    opacity: 1;
+  }
+  48%,
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* The other glowing words, softly brightening and dimming. */
+.ill-story-glow {
+  animation: ill-story-glow var(--ill-duration, 1.6s) ease-in-out var(--ill-delay, 0s) infinite
+    alternate;
+}
+
+@keyframes ill-story-glow {
+  to {
+    opacity: 0.45;
+  }
+}
+
+/* Nothing due: now and then the calendar page turns over to another empty one,
+   and the one in the deck chair glances up at it. */
+.ill-calm-flip,
+.ill-calm-glance {
+  animation: var(--ill-duration, 8s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-calm-flip {
+  animation-name: ill-calm-flip;
+}
+.ill-calm-glance {
+  animation-name: ill-calm-glance;
+}
+
+/* Lifts up over the top and away; the identical page under it fades back in. Top origin. */
+@keyframes ill-calm-flip {
+  0%,
+  48% {
+    transform: none;
+    opacity: 1;
+    animation-timing-function: ease-in;
+  }
+  56% {
+    transform: scaleY(0);
+    opacity: 1;
+  }
+  57% {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  58%,
+  94% {
+    transform: none;
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes ill-calm-glance {
+  0%,
+  40%,
+  76%,
+  100% {
+    transform: none;
+  }
+  46%,
+  68% {
+    transform: translate(6px, -3px);
+  }
+}
+
+/* Practice bars: holds a card up and turns it over while the bars climb, then
+   lowers it for a break and the bars sink back a little below their best. */
+.ill-practice-grow,
+.ill-practice-arm,
+.ill-practice-flip-front,
+.ill-practice-flip-back,
+.ill-practice-eyes,
+.ill-practice-rest {
+  animation: var(--ill-duration, 8s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-practice-grow {
+  animation-name: ill-practice-grow;
+}
+.ill-practice-arm {
+  animation-name: ill-practice-arm;
+}
+.ill-practice-flip-front {
+  animation-name: ill-practice-flip-front;
+}
+/* Hidden unless the animation shows it, so a still frame shows the front. */
+.ill-practice-flip-back {
+  animation-name: ill-practice-flip-back;
+  transform: scaleX(0);
+}
+.ill-practice-eyes {
+  animation-name: ill-practice-eyes;
+}
+.ill-practice-rest {
+  animation-name: ill-practice-rest;
+}
+
+/* Bottom origin. */
+@keyframes ill-practice-grow {
+  0%,
+  90%,
+  100% {
+    transform: scaleY(0.8);
+  }
+  10% {
+    transform: scaleY(0.88);
+  }
+  20% {
+    transform: scaleY(0.95);
+  }
+  30%,
+  46% {
+    transform: none;
+  }
+}
+
+/* Lowers the card for the break. Pivot at the shoulder. */
+@keyframes ill-practice-arm {
+  0%,
+  38%,
+  94%,
+  100% {
+    transform: none;
+  }
+  46%,
+  86% {
+    transform: rotate(40deg);
+  }
+}
+
+/* Turned over to the answer at 10%, back at 24%. */
+@keyframes ill-practice-flip-front {
+  0%,
+  10% {
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+  12%,
+  24% {
+    transform: scaleX(0);
+    animation-timing-function: ease-out;
+  }
+  26%,
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes ill-practice-flip-back {
+  0%,
+  12% {
+    transform: scaleX(0);
+    animation-timing-function: ease-out;
+  }
+  14%,
+  22% {
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+  24%,
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+/* On the card while practising, on the bars while resting. */
+@keyframes ill-practice-eyes {
+  0%,
+  38%,
+  94%,
+  100% {
+    transform: translate(2px, -5px);
+  }
+  46%,
+  86% {
+    transform: translate(5px, 0);
+  }
+}
+
+/* Settles a little while resting. Bottom origin. */
+@keyframes ill-practice-rest {
+  0%,
+  40%,
+  94%,
+  100% {
+    transform: none;
+  }
+  48%,
+  86% {
+    transform: scale(1.02, 0.96);
+  }
+}
+
+/* Sound coming out of headphones: arcs swell outward and fade. */
+.ill-listen-arcs {
+  animation: ill-listen-arcs var(--ill-duration, 1.6s) ease-out var(--ill-delay, 0s) infinite;
+}
+
+@keyframes ill-listen-arcs {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ill-motion,
   .ill-march {
