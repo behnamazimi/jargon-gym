@@ -69,7 +69,10 @@ type MotionKind =
   | "emerge-waggle"
   | "peek-face"
   | "happy-face"
-  | "burst";
+  | "burst"
+  | "pour"
+  | "pour-drops"
+  | "perk";
 
 type MotionProps = {
   kind: MotionKind;
