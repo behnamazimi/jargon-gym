@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { ViewportDebug } from "@/components/app/viewport-debug";
+import { useIosStandaloneHeight } from "@/hooks/use-ios-standalone-height";
 import { isDockPath, isStudyPath } from "@/lib/chrome";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  useIosStandaloneHeight();
   const showStudyChrome = hasLikelySession && isStudyPath(pathname);
   const showDock = isDockPath(pathname);
 
@@ -27,7 +29,7 @@ export function AppShell({
     return (
       <div
         className={cn(
-          "flex min-h-full flex-1 flex-col chrome-study max-md:fixed max-md:inset-0 max-md:min-h-0 max-md:overflow-hidden",
+          "flex min-h-full flex-1 flex-col chrome-study max-md:fixed max-md:inset-0 max-md:h-(--app-height) max-md:min-h-0 max-md:overflow-hidden",
           showDock && "chrome-dock",
         )}
         data-chrome="study"
