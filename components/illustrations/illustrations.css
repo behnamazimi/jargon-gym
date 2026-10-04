@@ -1700,6 +1700,77 @@
   }
 }
 
+/* About: tips the watering can over the card plant, the drops fall, the
+   leaves perk up, the can comes back. All three share a beat. */
+.ill-pour,
+.ill-pour-drops,
+.ill-perk {
+  animation: var(--ill-duration, 4.8s) ease-in-out var(--ill-delay, 0s) infinite;
+}
+
+.ill-pour {
+  animation-name: ill-pour;
+}
+.ill-pour-drops {
+  animation-name: ill-pour-drops;
+}
+.ill-perk {
+  animation-name: ill-perk;
+}
+
+/* The can tips forward from the shoulder, holds while it pours, comes back. */
+@keyframes ill-pour {
+  0%,
+  22% {
+    transform: none;
+  }
+  34%,
+  62% {
+    transform: rotate(-26deg);
+  }
+  74%,
+  100% {
+    transform: none;
+  }
+}
+
+/* Drops only show while the can is tipped, falling onto the plant. */
+@keyframes ill-pour-drops {
+  0%,
+  36% {
+    transform: none;
+    opacity: 0;
+  }
+  42% {
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(26px);
+    opacity: 1;
+  }
+  66%,
+  100% {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+
+/* The leaves stand a little taller once watered. Bottom origin. */
+@keyframes ill-perk {
+  0%,
+  58% {
+    transform: none;
+  }
+  68%,
+  84% {
+    transform: scale(1.05, 1.08);
+  }
+  94%,
+  100% {
+    transform: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ill-motion,
   .ill-march {

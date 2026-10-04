@@ -134,6 +134,17 @@ Banners that point at a page the user hasn't visited live in `lib/promos/`
 and `components/promos/`. Read [docs/promos.md](docs/promos.md) before adding
 a promo or mounting the slot on a page.
 
+# Public pages
+
+Content pages (About, How terms are built, Before you sign up, Privacy,
+Terms) are MDX in `content/pages/`. The route's `page.tsx` keeps the
+metadata, imports the MDX and renders it in `ShowcasePage` (title, lead,
+scene, closing CTA) or `LegalPage`, passing `showcaseProse` or `legalProse`
+from `components/content/mdx-prose.tsx`. Write plain Markdown; don't put
+classes in MDX. Shared pieces for public pages live in `components/public/`.
+Public pages are cached, so the server always renders the visitor CTA and
+`PublicCta` swaps it in the browser for signed-in users.
+
 # Illustrations
 
 Hand-drawn doodle illustrations live in `components/illustrations/`. Scenes
@@ -180,4 +191,4 @@ The product is "Lobyas" in prose and UI, "lobyas" in identifiers, slugs and
 keys. User-facing copy says "terms", not "jargon". The request kind "Jargon",
 the quiz prompt's "real jargon" and "a new job's jargon" are the only literal
 uses. `lib/requests/copy.test.ts` fails if "jargon" appears elsewhere in the
-request copy.
+request copy, and `content/pages/copy.test.ts` does the same for content pages.

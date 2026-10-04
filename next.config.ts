@@ -1,3 +1,4 @@
+import createMDX from "@next/mdx";
 import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
 import { LEGACY_ADMIN_REDIRECTS, LEGACY_APP_REDIRECTS } from "./lib/redirects";
@@ -29,4 +30,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSerwist(nextConfig);
+const withMDX = createMDX();
+
+export default withSerwist(withMDX(nextConfig));

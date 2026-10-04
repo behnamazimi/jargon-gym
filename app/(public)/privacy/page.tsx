@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { PrivacyPage } from "@/components/content/privacy-page";
+import { LegalPage } from "@/components/content/legal-page";
+import { legalProse } from "@/components/content/mdx-prose";
+import Privacy from "@/content/pages/privacy.mdx";
 
 export const metadata: Metadata = {
   title: "Privacy",
@@ -7,5 +9,13 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPageRoute() {
-  return <PrivacyPage />;
+  return (
+    <LegalPage
+      title="Privacy"
+      description="What Lobyas keeps about you, why, and who else touches it."
+      updated="4 October 2026"
+    >
+      <Privacy components={legalProse} />
+    </LegalPage>
+  );
 }

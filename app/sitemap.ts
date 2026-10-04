@@ -15,7 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${baseUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${baseUrl}/how-terms-work`, changeFrequency: "yearly", priority: 0.5 },
-    { url: `${baseUrl}/t`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${baseUrl}/collections`, changeFrequency: "weekly", priority: 0.8 },
   ];
 
   const domains = await listPublicDomains();

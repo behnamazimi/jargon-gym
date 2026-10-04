@@ -6,7 +6,7 @@
 - Public footer: `components/site-footer.tsx`. In-app footer
   (`components/app-footer.tsx`) shows on desktop only; phones get the same
   links at the bottom of the More sheet.
-- Pages: `/about`, `/privacy`, `/terms` (`components/content/`). They must stay
+- Pages: `/about`, `/privacy`, `/terms` (text in `content/pages/*.mdx`). They must stay
   in `PUBLIC_PATH_PREFIXES` in `lib/supabase/proxy.ts` and in `app/sitemap.ts`.
 - When a new service starts receiving user data (an AI vendor, email, analytics),
   update the processor list on the Privacy page. Adding analytics also needs a

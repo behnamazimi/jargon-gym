@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import {
   ContentPageHeader,
   ContentPageIntro,
-  ContentPageMain,
   ContentPageShell,
 } from "@/components/content/content-page-shell";
 import { PUBLIC_HOME_PATH } from "@/components/shared/back-link";
@@ -28,7 +27,7 @@ export function LegalPage({ title, description, updated, children }: LegalPagePr
         />
         <p className="m-0 text-xs text-base-content/60">Last updated {updated}</p>
       </ContentPageIntro>
-      <ContentPageMain>{children}</ContentPageMain>
+      <article className="mt-10">{children}</article>
     </ContentPageShell>
   );
 }

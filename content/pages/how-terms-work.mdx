@@ -1,0 +1,55 @@
+This is for anyone who wants to understand how content is structured in the app, or who plans to add terms of their own. A term can be a piece of field-specific language or a word, phrase, or grammar construction in a language you're learning. You can paste a list from Notes or a spreadsheet, bring a deck from another app, import JSON from an LLM prompt I prepared for generating the terms of a field or language, or add terms one at a time. Only the term itself is required. A term without a definition waits in your collection and stays out of Read, Review and Quiz until you add one.
+
+## Why not just a definition
+
+Flashcards and glossaries gave me the word and a one-line meaning. That was enough to recognize it in a slide deck, not enough to use it in conversation.
+
+I also had a passive memory problem: I'd read a definition, feel like I got it, and forget it a week later. Or recognize the word when someone else said it but draw a blank when it was my turn to use it. The definition was going in, but it wasn't sticking in a way that actually held.
+
+Two problems kept showing up: shallow understanding (I could repeat a definition but not apply the word) and mixing terms up (coupling vs cohesion, that kind of thing). What I kept wanting was an example, how people actually use it, where they disagree, and how it connects to nearby terms, so I split those into separate fields instead of cramming everything into the definition.
+
+A term is “known” when I could define it, use it correctly, and spot misuse or nuance, not just recognize it on a slide.
+
+## What goes in a term
+
+Every term needs a name, category, and definition, the minimum before it's worth keeping. I import lists or add terms one at a time into collections. This structure is the main thing that separates it from a one-line flashcard.
+
+- **Term**: the word or phrase. Keep it short.
+- **Category**: a browse label so the list doesn't turn into one blob (Architecture, Testing, whatever helps you find things later). Not a learning field.
+- **Definition**: what the term means, in plain language. Required. Meaning only: not when to use it, not how people disagree, not how it differs from a related term. If you can't say it simply, you probably don't have it yet.
+- **Example**: optional. Add when the definition alone wouldn't let you use the word. A concrete scene (where you've seen it apply) or a natural sentence (the word used in speech), whichever makes it click.
+- **Mental model**: optional. A comparison or analogy, a way to think about the term rather than what it does. Add it when it would make the term click faster than the definition alone.
+- **In practice**: optional. Tradeoffs, team conventions, when you'd reach for it, usage nuance that isn't obvious from the definition. Common misuse fits here too, as does a caution about overuse, not in Debated.
+- **Anti-example**: optional and rare. A near-miss, something that looks like this term but isn't, so you can tell them apart. Only when there's a real risk of confusing the two.
+- **Debated**: optional and rare. Only when practitioners genuinely disagree on meaning or scope, not loose usage, not a caution about overuse.
+- **Note**: optional. Freeform text for something that doesn't belong in the other fields. What it holds is up to the collection. Empty means not needed.
+- **Relationships**: optional links to other terms in the collection: often confused with, depends on, builds on, opposite of, or any real connection worth pointing out. Add a line on how they differ when it helps.
+
+## When to add optional fields
+
+Empty optional fields mean “not needed,” not “TODO.” I add a field only when it would have helped me understand or use the word.
+
+- **Example**: the definition is solid but I still couldn't use the word in conversation from it alone.
+- **Mental model**: a comparison or analogy would make this click faster than the definition alone.
+- **In practice**: there's a tradeoff, convention, or “when you'd reach for it” that the definition and example don't cover for me.
+- **Anti-example**: there's something people commonly mistake for this term, and naming the difference would help.
+- **Debated**: people in the field actually disagree on what this term means or how far it extends.
+- **Note**: there's something about this term that doesn't belong in the other fields.
+- **Relationships**: this term connects to another one in a way worth naming: confusion, dependency, contrast, or otherwise.
+
+## Known and unknown
+
+“Known” isn't something you set by hand. It's read off how well you've actually retained the term: how much you've read it, how you've done recalling it in Review, and how you've done recognizing it in Quiz. All three fade over time if you stop practicing, so the badge reflects where you are right now, not a status you flip once and forget.
+
+Read, Review, and Quiz all draw from the same set of terms, each ranked by what you're most at risk of forgetting in that mode. There's no separate known-only pool to graduate into: a term you haven't touched in a while can resurface in any of the three, and a strong run of practice is what moves the badge, not a manual toggle.
+
+## When a term is done
+
+Done means I could use the word correctly in conversation, not that every optional field is filled. I revisit terms when I encounter them in the wild and realize something is missing.
+
+## What this is not
+
+- Not a wiki article: a few focused lines beat a long write-up.
+- Not a strict taxonomy: categories are browse labels, not a learning hierarchy.
+- Not every field on every term: leave optional ones empty.
+- Not complete when all fields are full: complete when the use test passes.
