@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { EditUrlDialog } from "@/components/admin/collections/edit-url-dialog";
+import { KindSelect, kindLabel } from "@/components/admin/collections/kind-select";
 import { StatusSelect } from "@/components/admin/collections/status-select";
 import { formatAdminDate } from "@/lib/admin/format";
 import { statusOf } from "@/lib/admin/collections/collection-status";
@@ -32,6 +33,13 @@ export function CollectionRow({ collection }: { collection: AdminCollectionRow }
       </td>
       <td className="text-base-content/65">{collection.ownerEmail ?? "—"}</td>
       <td className="text-base-content/65">{collection.termCount}</td>
+      <td>
+        {collection.readOnly ? (
+          <span className="text-base-content/65">{kindLabel(collection.kind)}</span>
+        ) : (
+          <KindSelect collection={collection} />
+        )}
+      </td>
       <td>
         {collection.readOnly ? (
           <span className="text-base-content/65">{STATUS_LABEL[statusOf(collection)]}</span>

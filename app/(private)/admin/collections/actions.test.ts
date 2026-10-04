@@ -68,7 +68,8 @@ vi.mock("@/lib/auth/require-session", () => ({
   }),
 }));
 
-const { checkDomainSlug, setCollectionStatus, updateDomainSlug } = await import("./actions");
+const { checkDomainSlug, setCollectionKind, setCollectionStatus, updateDomainSlug } =
+  await import("./actions");
 
 const domain = (overrides: Record<string, unknown> = {}) => ({
   id: "d1",
@@ -406,6 +407,52 @@ describe("updateDomainSlug", () => {
         "/collections/kitchen:layout",
         "/collections",
       ]),
+    );
+  });
+});
+
+describe("setCollectionKind", () => {
+  it("saves the kind and records the change", async () => {
+    expect(await setCollectionKind("d1", "vocabulary")).toEqual({
+      ok: true,
+      data: { kind: "vocabulary" },
+    });
+    expect(state.updates).toEqual([{ table: "domains", values: { kind: "vocabulary" } }]);
+    expect(state.audits).toEqual([
+      {
+        action: "app.collection_kind",
+        targetId: "d1",
+        details: { from: "terms", to: "vocabulary" },
+      },
+    ]);
+  });
+
+  it("does nothing, and says ok, when the kind is already set", async () => {
+    state.list = [domain({ kind: "vocabulary" })];
+    expect(await setCollectionKind("d1", "vocabulary")).toMatchObject({ ok: true });
+    expect(state.updates).toEqual([]);
+    expect(state.audits).toEqual([]);
+  });
+
+  it("refuses an unknown kind and someone else's private collection", async () => {
+    expect((await setCollectionKind("d1", "slang" as never)).ok).toBe(false);
+    state.list = [theirs()];
+    expect(await setCollectionKind("d1", "vocabulary")).toEqual({
+      ok: false,
+      error: "Collection not found.",
+    });
+    expect(state.updates).toEqual([]);
+  });
+
+  it("refreshes the public pages only when the collection is public", async () => {
+    await setCollectionKind("d1", "vocabulary");
+    expect(state.revalidated).toEqual(["/admin/collections"]);
+
+    state.revalidated = [];
+    state.list = [domain({ slug: "cooking", is_public: true })];
+    await setCollectionKind("d1", "vocabulary");
+    expect(state.revalidated).toEqual(
+      expect.arrayContaining(["/collections/cooking:layout", "/collections"]),
     );
   });
 });

@@ -31,6 +31,10 @@ export const APP_AUDIT_ACTIONS = {
     describe: (d) =>
       `${text(d.old) ? `/collections/${text(d.old)}` : "none"} to /collections/${text(d.new) ?? "?"}`,
   },
+  "app.collection_kind": {
+    label: "Collection kind changed",
+    describe: (d) => `${text(d.from) ?? "?"} to ${text(d.to) ?? "?"}`,
+  },
   "app.ai_credits_enabled": {
     label: "AI credits switched",
     describe: (d) => `Now ${onOff(d.enabled)}`,
