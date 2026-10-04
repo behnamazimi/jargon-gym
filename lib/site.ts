@@ -1,8 +1,8 @@
-const SUPPORT_EMAIL = "support@lobyas.com";
-const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
+export const SUPPORT_EMAIL = "support@lobyas.com";
+export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
 
-const PRIVACY_PATH = "/privacy";
-const TERMS_PATH = "/terms";
+export const PRIVACY_PATH = "/privacy";
+export const TERMS_PATH = "/terms";
 
 export const LEGAL_LINKS = [
   { href: PRIVACY_PATH, label: "Privacy" },
