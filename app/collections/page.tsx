@@ -47,8 +47,8 @@ export default async function PublicCollectionsIndexPage() {
     <div className={cn(pageContainerClass, "landing-enter flex-1 py-10 pb-24 sm:py-16 lg:py-20")}>
       <SplitWithScene scene={<CollectionsIndexScene />} hideSceneOnPhone>
         <p className="m-0 text-sm text-base-content/70">Built-in collections</p>
-        <h1 className="mt-4 m-0 max-w-[14ch] text-balance text-[clamp(2.5rem,4vw+1rem,4.25rem)] font-medium leading-[1.05] tracking-tight">
-          Pick a field. Learn its terms.
+        <h1 className="mt-4 m-0 max-w-[16ch] text-balance text-[clamp(2.5rem,4vw+1rem,4.25rem)] font-medium leading-[1.05] tracking-tight">
+          Pick a field or a language. Learn its words.
         </h1>
         <p className="mt-6 m-0 max-w-[44ch] text-lg leading-relaxed text-base-content/85">
           Real terms from fields and languages, explained in plain language. Read any of them here,
