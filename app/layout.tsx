@@ -48,7 +48,9 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    // Translucent makes iOS 26 size the home-screen web view short of the screen
+    // bottom (WebKit bug 301108), leaving a gap under the dock.
+    statusBarStyle: "default",
     title: PWA_NAME,
   },
 };
