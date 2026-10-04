@@ -56,7 +56,7 @@ export default async function PublicCollectionsIndexPage() {
         </p>
         <p className="mt-3 m-0 max-w-[44ch] text-base leading-relaxed text-base-content/70">
           Made and kept up by Lobyas. Community collections, shared by people who use it, are
-          coming.
+          in the app once you sign in.
         </p>
       </SplitWithScene>
 
