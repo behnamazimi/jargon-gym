@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Browse" };
 
 export default function BrowseLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PageShell innerClassName="landing-enter mx-auto max-w-3xl max-md:space-y-0 max-md:py-4 max-md:pb-[calc(2rem+env(safe-area-inset-bottom,0px))]">
+    <PageShell innerClassName="landing-enter mx-auto max-w-3xl max-md:space-y-0 max-md:py-4 max-md:pb-[calc(2rem+var(--safe-bottom))]">
       <PageHeader
         icon={Compass}
         title="Browse shared collections"

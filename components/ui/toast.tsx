@@ -62,7 +62,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         visibleToasts={MAX_TOASTS}
         offset={{ bottom: "1rem" }}
         mobileOffset={{
-          bottom: "calc(var(--dock-bottom, env(safe-area-inset-bottom, 0px)) + 0.75rem)",
+          bottom: "calc(var(--dock-bottom, var(--safe-bottom)) + 0.75rem)",
         }}
         style={{ ...toasterStyle, zIndex: 110 }}
         toastOptions={{
