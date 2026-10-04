@@ -8,7 +8,9 @@ import { COLLECTION_LIST_LIMIT, queryCollections } from "@/lib/admin/collections
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { listAllCollectionsForAdmin } from "@/lib/admin/collections/list-all-collections";
 
-type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export default async function AdminCollectionsPage({ searchParams }: PageProps) {
   const { supabase, user } = await requireAdminPage();
@@ -35,6 +37,11 @@ export default async function AdminCollectionsPage({ searchParams }: PageProps) 
             href: collectionsHref({ view: "all" }),
             label: "All collections",
             active: params.view === "all",
+          },
+          {
+            href: collectionsHref({ view: "reported" }),
+            label: "Reported",
+            active: params.view === "reported",
           },
         ]}
       />

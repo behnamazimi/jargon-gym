@@ -3,7 +3,16 @@ import { collectionsHref, parseCollectionParams } from "./params";
 
 describe("parseCollectionParams", () => {
   it("defaults to the built-in view, page one", () => {
-    expect(parseCollectionParams({})).toEqual({ view: "builtin", q: "", page: 1 });
+    expect(parseCollectionParams({})).toEqual({
+      view: "builtin",
+      q: "",
+      page: 1,
+    });
+  });
+
+  it("accepts the reported view", () => {
+    expect(parseCollectionParams({ view: "reported" }).view).toBe("reported");
+    expect(collectionsHref({ view: "reported" })).toBe("/admin/collections?view=reported");
   });
 
   it("accepts the all view, cleans the search and bounds the page", () => {

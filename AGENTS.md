@@ -119,6 +119,13 @@ Saving one term (`/app/capture`, `lib/capture/`,
 `components/capture/`) is described in the Capture section of
 [docs/import.md](docs/import.md). It reuses `createTerm`; no AI runs in it.
 
+# Loves and reports
+
+Members love and report shared collections; admins take them down. Read the
+"Shared collections: loves, reports and takedowns" section of
+[docs/admin.md](docs/admin.md) first. Shared reasons and copy live in
+`lib/collections/moderation.ts`, and no user-facing string may name the admin.
+
 # Collection requests
 
 People can request a collection; the admin builds it by hand and delivers a private

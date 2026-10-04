@@ -42,6 +42,7 @@ const summary: AiCreditSummary = {
 
 const healthy: OverviewInput = {
   waitlistPending: 0,
+  reported: 0,
   requests: { waiting: 0, overdue: 0 },
   credits: summary,
   creditsEnabled: true,
@@ -70,7 +71,10 @@ describe("buildAttentionItems", () => {
   });
 
   it("asks for attention on requests, more urgently when some are late", () => {
-    const waiting = buildAttentionItems({ ...healthy, requests: { waiting: 2, overdue: 0 } });
+    const waiting = buildAttentionItems({
+      ...healthy,
+      requests: { waiting: 2, overdue: 0 },
+    });
     expect(waiting).toEqual([
       expect.objectContaining({
         id: "requests",
@@ -80,12 +84,23 @@ describe("buildAttentionItems", () => {
       }),
     ]);
 
-    const late = buildAttentionItems({ ...healthy, requests: { waiting: 1, overdue: 1 } });
-    expect(late[0]).toMatchObject({ tone: "warning", title: "1 collection request needs you" });
+    const late = buildAttentionItems({
+      ...healthy,
+      requests: { waiting: 1, overdue: 1 },
+    });
+    expect(late[0]).toMatchObject({
+      tone: "warning",
+      title: "1 collection request needs you",
+    });
     expect(late[0]?.detail).toBe("1 waiting to be accepted, 1 past its estimate.");
 
-    const lateOnly = buildAttentionItems({ ...healthy, requests: { waiting: 0, overdue: 3 } });
-    expect(lateOnly[0]).toMatchObject({ title: "3 collection requests need you" });
+    const lateOnly = buildAttentionItems({
+      ...healthy,
+      requests: { waiting: 0, overdue: 3 },
+    });
+    expect(lateOnly[0]).toMatchObject({
+      title: "3 collection requests need you",
+    });
   });
 
   it("reports one missing-key problem once when features share a note", () => {
@@ -96,7 +111,13 @@ describe("buildAttentionItems", () => {
   it("flags high refunds, the credits switch, exhausted people and a stalled sync", () => {
     const items = buildAttentionItems({
       ...healthy,
-      credits: { ...summary, spends24h: 6, refunds24h: 4, refundUsers24h: 3, usersExhausted: 1 },
+      credits: {
+        ...summary,
+        spends24h: 6,
+        refunds24h: 4,
+        refundUsers24h: 3,
+        usersExhausted: 1,
+      },
       creditsEnabled: false,
       syncNote: "A sync has stalled.",
     });
@@ -108,9 +129,24 @@ describe("buildAttentionItems", () => {
     ]);
   });
 
+  it("points at the reported view when collections have open reports", () => {
+    const items = buildAttentionItems({ ...healthy, reported: 2 });
+    expect(items).toEqual([
+      expect.objectContaining({
+        id: "reported",
+        title: "2 collections reported",
+        href: "/admin/collections?view=reported",
+      }),
+    ]);
+    expect(buildAttentionItems({ ...healthy, reported: 1 })[0]?.title).toBe(
+      "1 collection reported",
+    );
+  });
+
   it("says a source couldn't be read instead of pretending all is well", () => {
     const items = buildAttentionItems({
       waitlistPending: null,
+      reported: null,
       requests: null,
       credits: null,
       creditsEnabled: null,
@@ -121,6 +157,7 @@ describe("buildAttentionItems", () => {
       "unreadable-credits",
       "unreadable-credits-switch",
       "unreadable-features",
+      "unreadable-reports",
       "unreadable-requests",
       "unreadable-waitlist",
     ]);

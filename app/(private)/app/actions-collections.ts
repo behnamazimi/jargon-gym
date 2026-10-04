@@ -1,5 +1,7 @@
 "use server";
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/database.types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
   addDomainToCollection,
@@ -18,6 +20,14 @@ import {
   type DomainInput,
   type NewCollectionInput,
 } from "@/lib/library/domain-schema";
+import {
+  LOVE_ERROR_COPY,
+  LOVE_FALLBACK_ERROR,
+  ownerNoticeFor,
+  REPORT_ERROR_COPY,
+  REPORT_FALLBACK_ERROR,
+  reportInputSchema,
+} from "@/lib/collections/moderation";
 import { resetDomainProgress } from "@/lib/mastery/known-state";
 import { revalidatePath } from "next/cache";
 
@@ -77,10 +87,64 @@ export async function shareDomain(domainId: string): Promise<{ error?: string }>
     revalidatePath("/app/library");
     return {};
   } catch (err) {
+    if (isShareBlocked(err)) {
+      return { error: await blockedShareMessage(auth.supabase, domainId) };
+    }
     const message =
       err instanceof Error ? err.message : "Couldn't share that collection. Try again.";
     return { error: message };
   }
+}
+
+function isShareBlocked(err: unknown) {
+  return (
+    typeof err === "object" && err !== null && "message" in err && err.message === "share_blocked"
+  );
+}
+
+async function blockedShareMessage(supabase: SupabaseClient<Database>, domainId: string) {
+  const { data } = await supabase
+    .from("domains")
+    .select("share_block_reason")
+    .eq("id", domainId)
+    .maybeSingle();
+  return ownerNoticeFor(data?.share_block_reason);
+}
+
+export async function setCollectionLove(
+  domainId: string,
+  loved: boolean,
+): Promise<{ count?: number; error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const { data, error } = await auth.supabase.rpc("my_set_collection_love", {
+    p_domain_id: domainId,
+    p_loved: loved,
+  });
+  if (error) return { error: LOVE_ERROR_COPY[error.message] ?? LOVE_FALLBACK_ERROR };
+  return { count: data };
+}
+
+export async function reportCollection(
+  domainId: string,
+  reason: string,
+  note: string,
+): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  const parsed = reportInputSchema.safeParse({ reason, note });
+  if (!parsed.success) return { error: REPORT_ERROR_COPY.invalid_report };
+
+  const { error } = await auth.supabase.rpc("my_report_collection", {
+    p_domain_id: domainId,
+    p_reason: parsed.data.reason,
+    p_note: parsed.data.note,
+  });
+  if (error) return { error: REPORT_ERROR_COPY[error.message] ?? REPORT_FALLBACK_ERROR };
+  revalidatePath("/app/library");
+  return {};
 }
 
 export async function unshareDomain(domainId: string): Promise<{ error?: string }> {
@@ -152,7 +216,9 @@ export async function updateOwnedDomain(
     revalidatePath("/app/library");
     return {};
   } catch (err) {
-    return { error: domainMutationErrorMessage(err, "Couldn't save that collection. Try again.") };
+    return {
+      error: domainMutationErrorMessage(err, "Couldn't save that collection. Try again."),
+    };
   }
 }
 

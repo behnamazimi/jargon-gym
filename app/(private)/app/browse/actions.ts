@@ -5,6 +5,7 @@ import {
   fetchSharedDomainsBrowse,
   type BrowseCollectionFilter,
   type BrowsePageResult,
+  type BrowseSort,
 } from "@/lib/library/browse";
 
 export async function getBrowseSetupData() {
@@ -21,6 +22,7 @@ export async function getBrowseSetupData() {
 export async function searchSharedDomains(input: {
   search: string;
   filter: BrowseCollectionFilter;
+  sort?: BrowseSort;
   offset: number;
 }): Promise<{ page?: BrowsePageResult; error?: string }> {
   const auth = await requireAuthenticatedClient();
@@ -30,6 +32,7 @@ export async function searchSharedDomains(input: {
     const page = await fetchSharedDomainsBrowse(auth.supabase, auth.user.id, {
       search: input.search,
       filter: input.filter,
+      sort: input.sort,
       offset: input.offset,
     });
     return { page };

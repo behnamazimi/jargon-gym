@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { isReportReason, type ReportReason } from "@/lib/collections/moderation";
 import { parseKind, type CollectionKind } from "@/lib/terms/kinds";
 
 type Client = SupabaseClient<Database>;
@@ -16,16 +17,29 @@ export type AdminCollectionRow = {
   slug: string | null;
   visibility: "private" | "shared";
   updatedAt: string;
+  loveCount: number;
+  openReportCount: number;
+  shareBlockedAt: string | null;
+  shareBlockReason: ReportReason | null;
   /** Someone else's private collection: an admin can see it exists, not change it. */
   readOnly: boolean;
 };
 
-/** Admins act on shared collections and their own. Other people's private ones are theirs alone. */
+/** Admins act on shared collections and their own. Other people's private ones are theirs alone,
+ *  except after a takedown: the collection is private again, and the admin can lift its lock. */
 export function canActOnCollection(
-  collection: { visibility: string; ownerId: string },
+  collection: {
+    visibility: string;
+    ownerId: string;
+    shareBlockedAt?: string | null;
+  },
   adminId: string,
 ): boolean {
-  return collection.visibility === "shared" || collection.ownerId === adminId;
+  return (
+    collection.visibility === "shared" ||
+    collection.ownerId === adminId ||
+    Boolean(collection.shareBlockedAt)
+  );
 }
 
 /** Narration is generated for whatever it is asked about, so it also covers public collections
@@ -60,6 +74,17 @@ export async function listAllCollectionsForAdmin(
     slug: (row.slug as string | null) || null,
     visibility: row.visibility,
     updatedAt: row.updated_at,
-    readOnly: !canActOnCollection({ visibility: row.visibility, ownerId: row.owner_id }, adminId),
+    loveCount: row.love_count,
+    openReportCount: Number(row.open_report_count),
+    shareBlockedAt: (row.share_blocked_at as string | null) ?? null,
+    shareBlockReason: isReportReason(row.share_block_reason) ? row.share_block_reason : null,
+    readOnly: !canActOnCollection(
+      {
+        visibility: row.visibility,
+        ownerId: row.owner_id,
+        shareBlockedAt: row.share_blocked_at as string | null,
+      },
+      adminId,
+    ),
   }));
 }

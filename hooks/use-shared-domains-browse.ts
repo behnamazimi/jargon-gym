@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { searchSharedDomains } from "@/app/(private)/app/browse/actions";
-import type { BrowseCollectionFilter, BrowseCounts, BrowsePageResult } from "@/lib/library/browse";
+import type {
+  BrowseCollectionFilter,
+  BrowseCounts,
+  BrowsePageResult,
+  BrowseSort,
+} from "@/lib/library/browse";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -14,6 +19,7 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
   const [searchInput, setSearchInput] = useState("");
   const [committedSearch, setCommittedSearch] = useState("");
   const [filter, setFilter] = useState<BrowseCollectionFilter>("all");
+  const [sort, setSort] = useState<BrowseSort>("name");
   const [domains, setDomains] = useState(initialPage.domains);
   const [counts, setCounts] = useState(initialPage.counts);
   const [nextOffset, setNextOffset] = useState(initialPage.nextOffset);
@@ -33,7 +39,13 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
   }, []);
 
   const fetchPage = useCallback(
-    async (nextFilter: BrowseCollectionFilter, search: string, offset: number, append: boolean) => {
+    async (
+      nextFilter: BrowseCollectionFilter,
+      nextSort: BrowseSort,
+      search: string,
+      offset: number,
+      append: boolean,
+    ) => {
       const id = ++requestId.current;
       inFlight.current = true;
       if (append) {
@@ -44,7 +56,12 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
       }
       setListError(null);
 
-      const result = await searchSharedDomains({ search, filter: nextFilter, offset });
+      const result = await searchSharedDomains({
+        search,
+        filter: nextFilter,
+        sort: nextSort,
+        offset,
+      });
       if (id !== requestId.current) return;
 
       inFlight.current = false;
@@ -74,13 +91,13 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
       isFirstSync.current = false;
       return;
     }
-    void fetchPage(filter, committedSearch, 0, false);
-  }, [committedSearch, fetchPage, filter]);
+    void fetchPage(filter, sort, committedSearch, 0, false);
+  }, [committedSearch, fetchPage, filter, sort]);
 
   const loadMore = useCallback(() => {
     if (nextOffset === null || inFlight.current) return;
-    void fetchPage(filter, committedSearch, nextOffset, true);
-  }, [committedSearch, fetchPage, filter, nextOffset]);
+    void fetchPage(filter, sort, committedSearch, nextOffset, true);
+  }, [committedSearch, fetchPage, filter, nextOffset, sort]);
   loadMoreRef.current = loadMore;
 
   const bindSentinel = useCallback((node: HTMLDivElement | null) => {
@@ -102,6 +119,7 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
     setSearchInput("");
     setCommittedSearch("");
     setFilter("all");
+    setSort("name");
   }
 
   function markInCollection(domainId: string, inCollection: boolean) {
@@ -120,8 +138,30 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
     setCounts((current) => adjustCounts(current, inCollection));
   }
 
+  function markLoved(domainId: string, lovedByMe: boolean, loveCount?: number) {
+    setDomains((current) =>
+      current.map((domain) =>
+        domain.id === domainId
+          ? {
+              ...domain,
+              lovedByMe,
+              loveCount: loveCount ?? Math.max(0, domain.loveCount + (lovedByMe ? 1 : -1)),
+            }
+          : domain,
+      ),
+    );
+  }
+
+  function markReported(domainId: string) {
+    setDomains((current) =>
+      current.map((domain) =>
+        domain.id === domainId ? { ...domain, reportedByMe: true } : domain,
+      ),
+    );
+  }
+
   const matchingCount = countForFilter(counts, filter);
-  const hasActiveFilters = committedSearch.length > 0 || filter !== "all";
+  const hasActiveFilters = committedSearch.length > 0 || filter !== "all" || sort !== "name";
   const isEmptyCatalog = counts.all === 0 && !hasActiveFilters && domains.length === 0;
 
   return {
@@ -129,6 +169,8 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
     setSearchInput,
     filter,
     setFilter,
+    sort,
+    setSort,
     domains,
     counts,
     matchingCount,
@@ -141,7 +183,9 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
     isEmptyCatalog,
     clearFilters,
     markInCollection,
-    retry: () => void fetchPage(filter, committedSearch, 0, false),
+    markLoved,
+    markReported,
+    retry: () => void fetchPage(filter, sort, committedSearch, 0, false),
   };
 }
 

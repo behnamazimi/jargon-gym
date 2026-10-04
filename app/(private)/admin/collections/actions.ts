@@ -12,10 +12,8 @@ import {
   type CollectionStatus,
   type StatusStep,
 } from "@/lib/admin/collections/collection-status";
-import {
-  listAllCollectionsForAdmin,
-  type AdminCollectionRow,
-} from "@/lib/admin/collections/list-all-collections";
+import { findActable } from "@/lib/admin/collections/find-actable";
+import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
 import { buildPublishSlugs } from "@/lib/admin/collections/publish-slugs";
 import { resolveSlug } from "@/lib/admin/collections/slug-check";
 import type { Database } from "@/lib/supabase/database.types";
@@ -25,15 +23,6 @@ type Client = SupabaseClient<Database>;
 
 /** PostgREST returns at most this many rows per request. */
 const PAGE_SIZE = 1000;
-
-/** The collection, if an admin may change it. The browser only sends an id, and the
- *  publish function bypasses row level security, so ownership is checked here. */
-async function findActable(supabase: Client, adminId: string, domainId: string) {
-  const collections = await listAllCollectionsForAdmin(supabase, adminId);
-  const collection = collections.find((row) => row.id === domainId);
-  if (!collection || collection.readOnly) throw new AdminError("Collection not found.");
-  return { collection, collections };
-}
 
 function takenSlugs(collections: AdminCollectionRow[], domainId: string) {
   return new Set(collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])));

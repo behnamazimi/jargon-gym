@@ -18,6 +18,16 @@ export async function readWaitlistPending(client: Client): Promise<number> {
   return count ?? 0;
 }
 
+/** How many collections have an open report. Admins can read every report through the policy. */
+export async function readReportedCollections(client: Client): Promise<number> {
+  const { data, error } = await client
+    .from("collection_reports")
+    .select("domain_id")
+    .eq("status", "open");
+  if (error) throw error;
+  return new Set((data ?? []).map((row) => row.domain_id)).size;
+}
+
 export async function readRequestsAttention(client: Client) {
   return readRequestAttention(client);
 }

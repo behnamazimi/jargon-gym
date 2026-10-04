@@ -10,14 +10,22 @@ function byName(a: AdminCollectionRow, b: AdminCollectionRow) {
   return a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
 }
 
-/** Filters, orders and pages the collections. Built-in view: published first, then by name. */
+/** Filters, orders and pages the collections. Built-in view: published first, then by name. Reported view: most open reports first. */
 export function queryCollections(
   rows: AdminCollectionRow[],
   { view, q, page }: CollectionParams,
-): { rows: AdminCollectionRow[]; total: number; page: number; truncated: boolean } {
+): {
+  rows: AdminCollectionRow[];
+  total: number;
+  page: number;
+  truncated: boolean;
+} {
   const needle = q.toLowerCase();
   const matching = rows
-    .filter((row) => view === "all" || row.isBuiltin)
+    .filter((row) => {
+      if (view === "reported") return row.openReportCount > 0 || row.shareBlockedAt !== null;
+      return view === "all" || row.isBuiltin;
+    })
     .filter(
       (row) =>
         !needle ||
@@ -26,6 +34,10 @@ export function queryCollections(
         ),
     )
     .sort((a, b) => {
+      if (view === "reported") {
+        const reports = b.openReportCount - a.openReportCount;
+        if (reports !== 0) return reports;
+      }
       if (view === "builtin") {
         const published = Number(statusOf(b) === "published") - Number(statusOf(a) === "published");
         if (published !== 0) return published;

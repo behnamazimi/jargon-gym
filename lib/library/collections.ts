@@ -23,6 +23,9 @@ export type CollectionDomainRow = {
   visibility: DomainVisibility;
   language: string;
   owner_id: string;
+  is_builtin: boolean;
+  love_count: number;
+  share_block_reason: string | null;
   source: "owned" | "added";
   termCount: number;
   unfinishedCount: number;
@@ -34,7 +37,9 @@ export type CollectionDomainRow = {
 async function fetchOwnedDomains(client: Client, userId: string) {
   const { data, error } = await client
     .from("domains")
-    .select("id, name, description, visibility, language, owner_id")
+    .select(
+      "id, name, description, visibility, language, owner_id, is_builtin, love_count, share_block_reason",
+    )
     .eq("owner_id", userId)
     .order("name");
 
@@ -45,7 +50,9 @@ async function fetchOwnedDomains(client: Client, userId: string) {
 async function fetchAddedDomains(client: Client, userId: string) {
   const { data, error } = await client
     .from("user_collection_domains")
-    .select("domain_id, domains(id, name, description, visibility, language, owner_id)")
+    .select(
+      "domain_id, domains(id, name, description, visibility, language, owner_id, is_builtin, love_count, share_block_reason)",
+    )
     .eq("user_id", userId);
 
   if (error) throw error;

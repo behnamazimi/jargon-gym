@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import type { Database } from "@/lib/supabase/database.types";
+import { fetchMyLovedAndReported } from "@/lib/library/browse";
 import { fetchDomainStats } from "@/lib/library/collection-domain-tally";
 import { fetchUserCollectionDomains } from "@/lib/library/collections";
 import { fetchProgressStateByDomain } from "@/lib/mastery/known-state";
@@ -54,7 +55,11 @@ export const loadLibraryCollections = cache(async function loadLibraryCollection
     list.map(({ row }) => row.id),
   );
   const domains = list.map(({ row, isActiveForReview }) =>
-    mapDomain(row, { source: row.source, isActiveForReview, ...stats.get(row.id) }),
+    mapDomain(row, {
+      source: row.source,
+      isActiveForReview,
+      ...stats.get(row.id),
+    }),
   );
   return { domains, loadedAt };
 });
@@ -65,7 +70,11 @@ async function fetchLibraryTermIndex(client: Client, domainId: string) {
   const unfinishedTerms: UnfinishedLibraryTerm[] = [];
   for (const row of rows) {
     if (row.definition === null) {
-      unfinishedTerms.push({ id: row.id, term: row.term, category: row.category });
+      unfinishedTerms.push({
+        id: row.id,
+        term: row.term,
+        category: row.category,
+      });
     } else {
       terms.push({
         id: row.id,
@@ -107,9 +116,15 @@ export async function loadLibraryPage(
   const domainId = pickLibraryDomainId(domains, options);
   if (!domainId) return { kind: "empty" };
 
-  const loaded =
-    guessed && guess === domainId ? await guessed : await loadDomainTerms(client, domainId);
-  const domain = domains.find((item) => item.id === domainId)!;
+  const [loaded, mine] = await Promise.all([
+    guessed && guess === domainId ? guessed : loadDomainTerms(client, domainId),
+    fetchMyLovedAndReported(client, userId, [domainId]),
+  ]);
+  const domain = {
+    ...domains.find((item) => item.id === domainId)!,
+    lovedByMe: mine.loved.has(domainId),
+    reportedByMe: mine.reported.has(domainId),
+  };
   return { kind: "ready", data: { domain, ...loaded } };
 }
 

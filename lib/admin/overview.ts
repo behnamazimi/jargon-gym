@@ -8,6 +8,7 @@ import { FEATURE_IDS, type FeatureId } from "@/lib/ai/registry";
 import {
   readCreditsEnabled,
   readFeaturesOff,
+  readReportedCollections,
   readRequestsAttention,
   readSyncNote,
   readWaitlistPending,
@@ -35,6 +36,8 @@ const HEALTH_TITLES: Record<FeatureId, string> = {
 /** What the Overview is built from. `null` means that source couldn't be read. */
 export type OverviewInput = {
   waitlistPending: number | null;
+  /** Collections with an open report. */
+  reported: number | null;
   /** Collection requests waiting to be accepted, and past their estimate. */
   requests: { waiting: number; overdue: number } | null;
   credits: AiCreditSummary | null;
@@ -141,6 +144,20 @@ function waitlistItems(pending: number | null): AttentionItem[] {
   ];
 }
 
+function reportItems(reported: number | null): AttentionItem[] {
+  if (reported === null) return [unreadable("reports", "collection reports")];
+  if (reported === 0) return [];
+  return [
+    {
+      id: "reported",
+      tone: "warning",
+      title: `${reported} ${reported === 1 ? "collection" : "collections"} reported`,
+      detail: "Members flagged shared collections for a look.",
+      href: "/admin/collections?view=reported",
+    },
+  ];
+}
+
 function requestItems(requests: OverviewInput["requests"]): AttentionItem[] {
   if (requests === null) return [unreadable("requests", "collection requests")];
   const { waiting, overdue } = requests;
@@ -180,6 +197,7 @@ export function buildAttentionItems(input: OverviewInput): AttentionItem[] {
       : []),
     ...waitlistItems(input.waitlistPending),
     ...requestItems(input.requests),
+    ...reportItems(input.reported),
   ];
   return items.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]);
 }
@@ -205,11 +223,12 @@ function settled<T>(label: string, result: PromiseSettledResult<T>): T | null {
 
 /** One failing source never fails the page: it shows as unknown. */
 export async function loadAdminOverview(client: Client): Promise<AdminOverview> {
-  const [credits, creditsEnabled, waitlist, requests, featuresOff, syncNote, recent] =
+  const [credits, creditsEnabled, waitlist, reported, requests, featuresOff, syncNote, recent] =
     await Promise.allSettled([
       getAiCreditSummaryForAdmin(client),
       readCreditsEnabled(client),
       readWaitlistPending(client),
+      readReportedCollections(client),
       readRequestsAttention(client),
       readFeaturesOff(client),
       readSyncNote(client),
@@ -220,6 +239,7 @@ export async function loadAdminOverview(client: Client): Promise<AdminOverview> 
     credits: settled("AI credit numbers", credits),
     creditsEnabled: settled("the credits switch", creditsEnabled),
     waitlistPending: settled("the waitlist", waitlist),
+    reported: settled("collection reports", reported),
     requests: settled("collection requests", requests),
     featuresOff: settled("the feature switches", featuresOff),
     // The sync note is a courtesy: when it can't be read, say nothing about it.
