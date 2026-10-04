@@ -37,14 +37,14 @@ export async function sendInviteEmail({ to, signupUrl }: SendInviteEmailParams):
   await sendEmail({
     to,
     subject: "Lobyas access granted",
-    text: `You're in.\n\nLobyas is ready for you — use the link below to create your account:\n\n${signupUrl}\n\nSee you inside.`,
+    text: `You're in.\n\nYour spot is ready. Use the link below to finish signing up:\n\n${signupUrl}\n\nSee you inside.`,
     html: `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 480px; margin: 0 auto;">
         <h1 style="font-size: 20px;">You're in.</h1>
-        <p>Lobyas is ready for you — use the link below to create your account.</p>
+        <p>Your spot is ready. Use the link below to finish signing up.</p>
         <p>
           <a href="${signupUrl}" style="display:inline-block;padding:10px 16px;background:#111;color:#fff;text-decoration:none;border-radius:6px;">
-            Create your account
+            Finish signing up
           </a>
         </p>
         <p style="color:#666;font-size:13px;">Or paste this link into your browser: ${signupUrl}</p>
