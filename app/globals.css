@@ -106,10 +106,15 @@
 }
 
 /* DaisyUI sizes the dock with the raw inset, which iOS home-screen apps can
-   inflate; this keeps it at the capped value. */
+   inflate. This keeps the dock compact: icons sit just above the home
+   indicator instead of clearing the whole safe area. */
 @utility dock-safe {
-  height: calc(4rem + var(--safe-bottom)) !important;
-  padding-bottom: var(--safe-bottom) !important;
+  height: var(--dock-bottom) !important;
+  padding: 0.25rem 0.5rem var(--dock-inset) !important;
+
+  & > * {
+    margin-bottom: 0 !important;
+  }
 }
 
 /* Grows the tappable area past the visible box without changing layout. */
@@ -134,7 +139,7 @@
 }
 
 @utility pb-dock {
-  padding-bottom: calc(var(--dock-height) + var(--safe-bottom));
+  padding-bottom: calc(var(--dock-bottom) + 0.5rem);
 }
 
 @layer base {
@@ -146,11 +151,12 @@
     --font-heading: var(--font-fraunces);
     --font-body: var(--font-figtree);
     --font-mono: var(--font-jetbrains-mono);
-    --dock-height: 4.5rem;
+    --dock-height: 3.5rem;
     /* iOS home-screen apps can report an inflated bottom inset until the first
        rotation; 34px is the tallest real home indicator. */
     --safe-bottom: min(34px, env(safe-area-inset-bottom, 0px));
-    --dock-bottom: calc(var(--dock-height) + var(--safe-bottom));
+    --dock-inset: max(0.25rem, calc(var(--safe-bottom) - 0.75rem));
+    --dock-bottom: calc(var(--dock-height) + var(--dock-inset));
     /* Text-safe variants: the fill colours are too light to read as text on white. */
     --primary-text: oklch(45% 0.12 153);
     --error-text: oklch(50% 0.16 25);
