@@ -704,8 +704,12 @@ export type Database = {
           code: string;
           created_at: string;
           created_by: string | null;
+          expires_at: string | null;
           id: string;
           is_active: boolean;
+          label: string | null;
+          max_uses: number;
+          use_count: number;
           used_at: string | null;
           used_by: string | null;
         };
@@ -713,8 +717,12 @@ export type Database = {
           code: string;
           created_at?: string;
           created_by?: string | null;
+          expires_at?: string | null;
           id?: string;
           is_active?: boolean;
+          label?: string | null;
+          max_uses?: number;
+          use_count?: number;
           used_at?: string | null;
           used_by?: string | null;
         };
@@ -722,8 +730,12 @@ export type Database = {
           code?: string;
           created_at?: string;
           created_by?: string | null;
+          expires_at?: string | null;
           id?: string;
           is_active?: boolean;
+          label?: string | null;
+          max_uses?: number;
+          use_count?: number;
           used_at?: string | null;
           used_by?: string | null;
         };
@@ -738,6 +750,42 @@ export type Database = {
           {
             foreignKeyName: "referral_codes_used_by_fkey";
             columns: ["used_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      referral_redemptions: {
+        Row: {
+          code_id: string;
+          id: string;
+          redeemed_at: string;
+          user_id: string | null;
+        };
+        Insert: {
+          code_id: string;
+          id?: string;
+          redeemed_at?: string;
+          user_id?: string | null;
+        };
+        Update: {
+          code_id?: string;
+          id?: string;
+          redeemed_at?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "referral_redemptions_code_id_fkey";
+            columns: ["code_id"];
+            isOneToOne: false;
+            referencedRelation: "referral_codes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "referral_redemptions_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -1382,6 +1430,7 @@ export type Database = {
           created_at: string;
           email: string;
           id: string;
+          pending_referral_code: string | null;
           referral_verified: boolean;
           role: Database["public"]["Enums"]["user_role"];
           suspended_at: string | null;
@@ -1390,6 +1439,7 @@ export type Database = {
           created_at?: string;
           email: string;
           id: string;
+          pending_referral_code?: string | null;
           referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
           suspended_at?: string | null;
@@ -1398,6 +1448,7 @@ export type Database = {
           created_at?: string;
           email?: string;
           id?: string;
+          pending_referral_code?: string | null;
           referral_verified?: boolean;
           role?: Database["public"]["Enums"]["user_role"];
           suspended_at?: string | null;
@@ -1511,6 +1562,7 @@ export type Database = {
           created_at: string;
           email: string;
           id: string;
+          pending_referral_code: string | null;
           referral_verified: boolean;
           role: Database["public"]["Enums"]["user_role"];
           suspended_at: string | null;
@@ -1581,6 +1633,28 @@ export type Database = {
           user_id: string;
         }[];
       };
+      admin_create_shared_referral_code: {
+        Args: { p_code: string; p_expires_at: string; p_label: string; p_max_uses: number };
+        Returns: {
+          code: string;
+          created_at: string;
+          created_by: string | null;
+          expires_at: string | null;
+          id: string;
+          is_active: boolean;
+          label: string | null;
+          max_uses: number;
+          use_count: number;
+          used_at: string | null;
+          used_by: string | null;
+        };
+        SetofOptions: {
+          from: "*";
+          to: "referral_codes";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       admin_delete_user: {
         Args: { p_confirm_email: string; p_reason: string; p_user_id: string };
         Returns: undefined;
@@ -1621,6 +1695,19 @@ export type Database = {
           term_count: number;
           updated_at: string;
           visibility: Database["public"]["Enums"]["domain_visibility"];
+        }[];
+      };
+      admin_list_shared_referral_codes: {
+        Args: never;
+        Returns: {
+          code: string;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          label: string;
+          max_uses: number;
+          status: string;
+          use_count: number;
         }[];
       };
       admin_person_detail: {
@@ -1675,6 +1762,10 @@ export type Database = {
       };
       admin_set_narration_provider: {
         Args: { p_enabled: boolean; p_provider: string };
+        Returns: undefined;
+      };
+      admin_set_referral_code_active: {
+        Args: { p_active: boolean; p_id: string };
         Returns: undefined;
       };
       admin_set_user_suspended: {
