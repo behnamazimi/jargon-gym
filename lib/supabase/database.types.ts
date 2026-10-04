@@ -1890,6 +1890,10 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      delete_own_account: {
+        Args: { p_confirm_email: string };
+        Returns: undefined;
+      };
       end_ai_run: {
         Args: { p_feature: string; p_token: string; p_user_id: string };
         Returns: undefined;

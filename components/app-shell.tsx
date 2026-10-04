@@ -8,12 +8,14 @@ import { cn } from "@/lib/utils";
 export function AppShell({
   header,
   footer,
+  appFooter,
   studyPhoneChrome,
   hasLikelySession,
   children,
 }: {
   header: ReactNode;
   footer: ReactNode;
+  appFooter: ReactNode;
   studyPhoneChrome: ReactNode;
   hasLikelySession: boolean;
   children: ReactNode;
@@ -38,7 +40,7 @@ export function AppShell({
         <div className="flex min-h-0 flex-1 flex-col max-md:overflow-y-auto max-md:overscroll-contain md:contents">
           {children}
         </div>
-        <div className="hidden md:contents">{footer}</div>
+        <div className="hidden md:contents">{appFooter}</div>
       </div>
     );
   }

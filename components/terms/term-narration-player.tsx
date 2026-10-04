@@ -192,7 +192,7 @@ export function TermNarrationPlayer({
   }
 
   return (
-    <span className="inline-flex">
+    <span className="inline-flex" title="AI voice">
       <audio
         ref={audioRef}
         hidden
@@ -209,7 +209,7 @@ export function TermNarrationPlayer({
           size="icon-sm"
           onPress={handlePress}
           isDisabled={status === "loading"}
-          aria-label={status === "playing" ? "Pause" : "Listen"}
+          aria-label={status === "playing" ? "Pause" : "Listen (AI voice)"}
         >
           {status === "loading" ? (
             <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />

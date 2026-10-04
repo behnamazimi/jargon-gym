@@ -82,18 +82,21 @@ export function StoryNarrationPlayer({
 
   if (status === "ready") {
     return (
-      <StoryAudioControls
-        src={src}
-        onError={() => {
-          setStatus("unavailable");
-          onProgress?.(null);
-        }}
-        onProgress={onProgress}
-        shadowing={shadowing}
-        sentencePlayback={sentencePlayback}
-        handleRef={handleRef}
-        onClipPauses={onClipPauses}
-      />
+      <>
+        <StoryAudioControls
+          src={src}
+          onError={() => {
+            setStatus("unavailable");
+            onProgress?.(null);
+          }}
+          onProgress={onProgress}
+          shadowing={shadowing}
+          sentencePlayback={sentencePlayback}
+          handleRef={handleRef}
+          onClipPauses={onClipPauses}
+        />
+        <p className="m-0 text-xs text-base-content/60">AI voice</p>
+      </>
     );
   }
 
@@ -114,6 +117,7 @@ export function StoryNarrationPlayer({
           <Headphones className="size-4" aria-hidden strokeWidth={1.5} />
         )}
         {shadowing ? "Listen and shadow" : "Listen"}
+        <span className="font-normal text-base-content/60">AI voice</span>
       </Button>
       {message ? (
         <p className="m-0 text-xs text-base-content/70" role="status">

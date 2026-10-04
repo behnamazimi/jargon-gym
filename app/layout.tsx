@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
+import { AppFooter } from "@/components/app-footer";
 import { AppShell } from "@/components/app-shell";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
 import { ToastProvider } from "@/components/ui/toast";
@@ -93,6 +94,7 @@ export default async function RootLayout({
                 </Suspense>
               }
               footer={<SiteFooter />}
+              appFooter={<AppFooter />}
               studyPhoneChrome={
                 <Suspense
                   fallback={
