@@ -4,8 +4,10 @@ import { CollectionHero } from "@/components/collections/collection-hero";
 import { TermCardGrid } from "@/components/collections/term-card-grid";
 import { pageContainerClass } from "@/components/page-container";
 import { ClosingCta } from "@/components/public/closing-cta";
+import { JsonLd } from "@/components/seo/json-ld";
 import { showcaseOverride } from "@/lib/collections/showcase-overrides";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
+import { breadcrumbs, definedTermSet } from "@/lib/seo/json-ld";
 import { countLabel, kindLine } from "@/lib/terms/kinds";
 import { getPublicDomainPage, listPublicDomains } from "@/lib/terms/public-terms";
 import { cn } from "@/lib/utils";
@@ -53,9 +55,30 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
 
   const { domain, terms } = data;
   const override = showcaseOverride(domain.slug);
+  const base = getPublicBaseUrl();
+  const url = `${base}/collections/${domain.slug}`;
 
   return (
     <div className={cn(pageContainerClass, "landing-enter flex-1 py-10 pb-24 sm:py-16 lg:py-20")}>
+      <JsonLd
+        data={definedTermSet({
+          name: domain.name,
+          description: domain.description,
+          url,
+          inLanguage: domain.language,
+          terms: terms.map((term) => ({
+            name: term.term,
+            description: term.definition,
+            url: `${url}/${term.slug}`,
+          })),
+        })}
+      />
+      <JsonLd
+        data={breadcrumbs([
+          { name: "Collections", url: `${base}/collections` },
+          { name: domain.name, url },
+        ])}
+      />
       <CollectionHero
         domain={domain}
         termCount={terms.length}

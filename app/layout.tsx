@@ -16,6 +16,7 @@ import { TourIsland } from "@/components/tour/tour-island";
 import "./globals.css";
 import { hasLikelySession } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
+import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { DARK_THEME } from "@/lib/theme";
 import { getTheme } from "@/lib/theme-server";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getPublicBaseUrl()),
   applicationName: PWA_NAME,
   title: { default: "Lobyas: learn the terms that stick", template: "%s | Lobyas" },
   description: PWA_DESCRIPTION,
@@ -47,6 +49,7 @@ export const metadata: Metadata = {
     description: PWA_DESCRIPTION,
     type: "website",
   },
+  twitter: { card: "summary_large_image" },
   appleWebApp: {
     capable: true,
     // Translucent makes iOS 26 size the home-screen web view short of the screen
