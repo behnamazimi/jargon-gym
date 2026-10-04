@@ -1578,6 +1578,10 @@ export type Database = {
         Args: { p_owner: string };
         Returns: number;
       };
+      _consume_referral_code: {
+        Args: { p_code: string; p_user: string };
+        Returns: undefined;
+      };
       _counted_requests: {
         Args: { p_user: string };
         Returns: {
@@ -1600,6 +1604,10 @@ export type Database = {
         Returns: Json;
       };
       _promote_merged_children: { Args: { p_id: string }; Returns: undefined };
+      _referral_code_problem: {
+        Args: { p_row: Database["public"]["Tables"]["referral_codes"]["Row"] };
+        Returns: string;
+      };
       admin_ai_credit_failure_reasons: {
         Args: { p_limit?: number };
         Returns: {
@@ -1634,7 +1642,12 @@ export type Database = {
         }[];
       };
       admin_create_shared_referral_code: {
-        Args: { p_code: string; p_expires_at: string; p_label: string; p_max_uses: number };
+        Args: {
+          p_code: string;
+          p_expires_at: string;
+          p_label: string;
+          p_max_uses: number;
+        };
         Returns: {
           code: string;
           created_at: string;
@@ -1702,9 +1715,9 @@ export type Database = {
         Returns: {
           code: string;
           created_at: string;
-          expires_at: string | null;
+          expires_at: string;
           id: string;
-          label: string | null;
+          label: string;
           max_uses: number;
           status: string;
           use_count: number;
@@ -1857,8 +1870,12 @@ export type Database = {
           code: string;
           created_at: string;
           created_by: string | null;
+          expires_at: string | null;
           id: string;
           is_active: boolean;
+          label: string | null;
+          max_uses: number;
+          use_count: number;
           used_at: string | null;
           used_by: string | null;
         };
