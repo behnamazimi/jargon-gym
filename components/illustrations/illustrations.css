@@ -1954,7 +1954,7 @@
 @keyframes ill-fetch-arm {
   0%,
   10% {
-    transform: rotate(124deg);
+    transform: rotate(148deg);
     opacity: 1;
   }
   24% {
@@ -1966,21 +1966,21 @@
     opacity: 1;
   }
   41% {
-    transform: rotate(60deg);
+    transform: rotate(81deg);
     opacity: 1;
   }
   46% {
-    transform: rotate(84deg);
+    transform: rotate(100deg);
     opacity: 0;
   }
   47%,
   92% {
-    transform: rotate(124deg);
+    transform: rotate(148deg);
     opacity: 0;
   }
   96%,
   100% {
-    transform: rotate(124deg);
+    transform: rotate(148deg);
     opacity: 1;
   }
 }
@@ -2100,15 +2100,15 @@
 @keyframes ill-fetch-handoff {
   0%,
   32% {
-    transform: translate(114px, -155px);
+    transform: translate(95px, -148px);
     opacity: 0;
   }
   33% {
-    transform: translate(114px, -155px);
+    transform: translate(95px, -148px);
     opacity: 1;
   }
   41% {
-    transform: translate(100px, -36px);
+    transform: translate(108px, -30px);
   }
   48% {
     transform: none;
@@ -2127,7 +2127,7 @@
     opacity: 0;
   }
   100% {
-    transform: translate(114px, -155px);
+    transform: translate(95px, -148px);
     opacity: 0;
   }
 }

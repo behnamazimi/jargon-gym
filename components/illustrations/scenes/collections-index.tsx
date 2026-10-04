@@ -9,7 +9,7 @@ const TOP_SHELF = 340;
 const BOTTOM_SHELF = 470;
 
 // The reaching arm turns about this shoulder, and the box rides along with it.
-const SHOULDER = [340, 395] as const;
+const SHOULDER = [372, 392] as const;
 // The box being fetched, where it sits on the shelf.
 const FETCHED = { x: 404, y: TOP_SHELF - 64, w: 60, h: 64 };
 
@@ -77,28 +77,28 @@ export function CollectionsIndexScene({
       ))}
 
       {/* The picker. */}
-      <Line d="M280 500L274 524M320 500L326 524" />
+      <Line d="M300 500L294 524M340 500L346 524" />
       <Motion kind="fetch-turn" origin="50% 100%">
-        <Shape d={blob({ cx: 300, cy: 420, rx: 58, ry: 82, taper: 0.1, seed: 6 })} color={PURPLE} />
-        <Hatch d={blob({ cx: 276, cy: 470, rx: 16, ry: 10, seed: 7 })} />
+        <Shape d={blob({ cx: 320, cy: 420, rx: 58, ry: 82, taper: 0.1, seed: 6 })} color={PURPLE} />
+        <Hatch d={blob({ cx: 296, cy: 470, rx: 16, ry: 10, seed: 7 })} />
       </Motion>
       <Motion kind="fetch-face">
         <Motion kind="blink" phase={1.5}>
-          <Eye x={312} y={378} />
-          <Eye x={334} y={376} />
+          <Eye x={332} y={378} />
+          <Eye x={354} y={376} />
         </Motion>
-        <Line d="M314 398Q324 406 334 398" stroke={STROKE.regular} />
+        <Line d="M334 398Q344 406 354 398" stroke={STROKE.regular} />
       </Motion>
 
       {/* Arms go behind whatever box they hold. */}
       <Motion kind="fetch-solo">
-        <Line d="M248 430Q232 456 238 480" />
+        <Line d="M268 430Q252 456 258 480" />
       </Motion>
       <Motion kind="fetch-arm" pivot={SHOULDER}>
         <Line
           d={curve([
             [SHOULDER[0], SHOULDER[1]],
-            [378, 356],
+            [392, 350],
             [406, 310],
           ])}
         />
@@ -109,14 +109,14 @@ export function CollectionsIndexScene({
         />
       </Motion>
       <Motion kind="fetch-offer">
-        <Line d="M248 412Q230 438 266 448M352 412Q370 438 334 448" />
+        <Line d="M268 412Q250 438 286 448M372 412Q390 438 354 448" />
         <Shape
-          d={blob({ cx: 266, cy: 448, rx: 11, seed: 9 })}
+          d={blob({ cx: 286, cy: 448, rx: 11, seed: 9 })}
           color={PURPLE}
           stroke={STROKE.regular}
         />
         <Shape
-          d={blob({ cx: 334, cy: 448, rx: 11, seed: 10 })}
+          d={blob({ cx: 354, cy: 448, rx: 11, seed: 10 })}
           color={PURPLE}
           stroke={STROKE.regular}
         />
@@ -130,7 +130,7 @@ export function CollectionsIndexScene({
       </Motion>
       {/* The same box swung to the front in both hands and held out to you. */}
       <Motion kind="fetch-handoff">
-        <CardBox x={270} y={413} w={60} h={64} seed={20} />
+        <CardBox x={290} y={413} w={60} h={64} seed={20} />
       </Motion>
     </Illustration>
   );
