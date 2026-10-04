@@ -222,13 +222,17 @@ begin
     update public.users
     set referral_verified = true, pending_referral_code = null
     where id = new.id;
-  exception when raise_exception then
+  exception when others then
+    -- Whatever went wrong, the email confirmation must not fail because of the code.
+    raise warning 'Could not take a seat for % on confirmation: %', new.id, sqlerrm;
     update public.users set pending_referral_code = null where id = new.id;
   end;
 
   return new;
 end;
 $$;
+
+revoke all on function public.handle_email_confirmed() from public, anon, authenticated;
 
 create trigger on_auth_user_email_confirmed
   after update of email_confirmed_at on auth.users

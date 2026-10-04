@@ -98,6 +98,8 @@ code also has a label and an end date, and stops at whichever limit comes first.
   and takes the seat, `admin_create_shared_referral_code`, `admin_set_referral_code_active` and
   `admin_list_shared_referral_codes` audit and check the admin themselves. The actions are in
   `app/(private)/admin/people/codes-actions.ts`.
+- The functions raise readable errors with the code `AD001`, shown through `throwRpcError`.
+  `referral_redemptions` has row level security on and no client access; only these functions read and write it.
 - Shared codes may be short (4 to 32 letters and numbers). Single-use codes keep the 12-character minimum.
 - An email signup with a shared code takes its seat when the email is confirmed, not at signup, so a made-up
   address can't use one up. Until then the account is unverified and holds the code in

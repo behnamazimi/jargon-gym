@@ -85,6 +85,7 @@ function CreateCodeForm() {
         <input
           type="date"
           required
+          min={new Date().toISOString().slice(0, 10)}
           className="input input-bordered"
           value={endDate}
           onChange={(event) => setEndDate(event.target.value)}

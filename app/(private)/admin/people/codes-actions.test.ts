@@ -41,7 +41,7 @@ describe("createSharedCode", () => {
           p_code: "launch50",
           p_label: "Newsletter",
           p_max_uses: 50,
-          p_expires_at: "2026-11-01T23:59:59Z",
+          p_expires_at: "2026-11-01T23:59:59.999Z",
         },
       },
     ]);

@@ -1702,9 +1702,9 @@ export type Database = {
         Returns: {
           code: string;
           created_at: string;
-          expires_at: string;
+          expires_at: string | null;
           id: string;
-          label: string;
+          label: string | null;
           max_uses: number;
           status: string;
           use_count: number;

@@ -28,7 +28,7 @@ export async function listSharedCodes(client: Client): Promise<AdminSharedCode[]
   return (data ?? []).map((row) => ({
     id: row.id,
     code: row.code,
-    label: row.label,
+    label: row.label ?? "",
     maxUses: row.max_uses,
     useCount: row.use_count,
     expiresAt: row.expires_at,

@@ -18,7 +18,7 @@ export type CreateSharedCodeInput = z.input<typeof createSchema>;
 
 /** The campaign ends at the very end of the chosen day, UTC. */
 function endOfDay(date: string): string {
-  return `${date}T23:59:59Z`;
+  return `${date}T23:59:59.999Z`;
 }
 
 export async function createSharedCode(input: CreateSharedCodeInput) {
