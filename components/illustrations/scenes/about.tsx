@@ -14,10 +14,11 @@ const LEAVES = [
   { x: 224, y: 292, angle: -6, seed: 4 },
 ];
 
+// Under the spout, falling into the pot (its rim spans x 156 to 284 at y 428).
 const DROPS = [
-  { x: 292, y: 396, phase: 0 },
-  { x: 302, y: 404, phase: 0.15 },
-  { x: 284, y: 410, phase: 0.3 },
+  { x: 266, y: 388, phase: 0 },
+  { x: 254, y: 396, phase: 0.15 },
+  { x: 272, y: 402, phase: 0.3 },
 ];
 
 function drop(x: number, y: number) {
