@@ -176,7 +176,9 @@ Keep new ones consistent with the existing scenes:
   coral, yellow and purple on paper, small hatch patches for texture. No
   text, gradients or shadows.
 - Characters: one-colour blob or bean bodies, stick limbs, dot eyes and a
-  one-line mouth. Quirky and minimal, no extra details.
+  one-line mouth. Quirky and minimal, no extra details. Every character is a
+  lobya; the named ones are Lobyaq (blue), Lobyar (coral) and Lobyare
+  (purple), introduced on the About page.
 - Scene: 800×600, one idea that pictures the section's message, subject
   centred with plenty of white space, a few sparks, squiggles or dots around
   it. Check it still reads at phone width.

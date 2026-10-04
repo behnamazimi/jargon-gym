@@ -2,6 +2,7 @@ import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
 import type { ComponentProps } from "react";
 import { contentPageLinkClass } from "@/components/content/content-page-shell";
+import { MeetTheLobyas } from "@/components/content/meet-the-lobyas";
 import { SectionHeading } from "@/components/public/section-heading";
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
 
@@ -37,6 +38,7 @@ export const baseProse: MDXComponents = {
 /** Long-form pages that sell the app: larger type, Fraunces section headings. */
 export const showcaseProse: MDXComponents = {
   ...baseProse,
+  MeetTheLobyas,
   h2: ({ children }) => <SectionHeading className="mt-14 first:mt-0">{children}</SectionHeading>,
   p: ({ children }) => (
     <p className="m-0 mt-4 text-base leading-relaxed text-base-content/85">{children}</p>
