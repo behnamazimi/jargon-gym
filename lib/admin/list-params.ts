@@ -1,6 +1,6 @@
 export const PAGE_SIZE = 25;
 
-type PeopleView = "waitlist" | "members";
+type PeopleView = "waitlist" | "members" | "codes";
 export type WaitlistFilter = "pending" | "invited" | "all";
 
 export type PeopleParams = {
@@ -31,12 +31,16 @@ export function first(value: string | string[] | undefined): string | undefined 
   return Array.isArray(value) ? value[0] : value;
 }
 
+function parsePeopleView(value: string | undefined): PeopleView {
+  return value === "members" || value === "codes" ? value : "waitlist";
+}
+
 /** What comes from the address bar is untrusted, so every value is checked and defaulted. */
 export function parsePeopleParams(raw: RawParams): PeopleParams {
   const status = first(raw.status);
   const page = Number.parseInt(first(raw.page) ?? "", 10);
   return {
-    view: first(raw.view) === "members" ? "members" : "waitlist",
+    view: parsePeopleView(first(raw.view)),
     status: status === "invited" || status === "all" ? status : "pending",
     q: cleanSearch(first(raw.q)),
     page: Number.isFinite(page) && page > 0 ? Math.min(page, 100_000) : 1,
@@ -56,7 +60,7 @@ export function pageBounds(page: number, total: number): { from: number; to: num
 /** An address for the people page that keeps only what is set. */
 export function peopleHref(params: Partial<PeopleParams>): string {
   const query = new URLSearchParams();
-  if (params.view === "members") query.set("view", "members");
+  if (params.view === "members" || params.view === "codes") query.set("view", params.view);
   if (params.status && params.status !== "pending") query.set("status", params.status);
   if (params.q) query.set("q", params.q);
   if (params.page && params.page > 1) query.set("page", String(params.page));

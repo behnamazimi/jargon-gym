@@ -15,7 +15,8 @@ type AuthLikeError = {
 const GENERIC_ERROR = "We couldn't complete that. Try again in a moment.";
 const INVALID_LOGIN = "That email or password doesn't look right.";
 export const SUSPENDED_ERROR = "This account has been suspended.";
-const INVALID_REFERRAL = "That reference code isn't valid or was already used.";
+const INVALID_REFERRAL = "That reference code isn't valid, was already used, or has run out.";
+export const FULL_REFERRAL = "That reference code is full or has expired.";
 const RESET_FAILED = "Couldn't reset your password. Request a new reset link and try again.";
 const PASSWORD_FAILED =
   getPasswordValidationError("") ?? "Your password doesn't meet the requirements below.";
@@ -94,6 +95,10 @@ function isLoginFailure(error: AuthLikeError, message: string): boolean {
   );
 }
 
+function isFullReferral(message: string): boolean {
+  return message.toLowerCase().includes("full or expired");
+}
+
 function isReferralFailure(message: string): boolean {
   const lower = message.toLowerCase();
   return (
@@ -131,6 +136,10 @@ const FAILURE_RULES: FailureRule[] = [
   {
     matches: (error, message) => Boolean(message) && isLoginFailure(error, message),
     result: INVALID_LOGIN,
+  },
+  {
+    matches: (_error, message) => Boolean(message) && isFullReferral(message),
+    result: FULL_REFERRAL,
   },
   {
     matches: (error, message) => Boolean(message) && isReferralFailure(message),
