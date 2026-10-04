@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-
-const STORAGE_KEY = "lb_viewport_debug";
+import { readViewportDebug, subscribeViewportDebug } from "@/lib/viewport-debug";
 
 type Readout = Record<string, string>;
 
@@ -32,24 +31,17 @@ function measure(probe: HTMLElement, pathname: string): Readout {
   };
 }
 
-/** Temporary on-screen readout for chasing the iOS PWA dock glitch.
- *  Turn it on with `?debug=viewport` (it sticks), off with `?debug=off`. */
+/** On-screen readout for chasing viewport glitches; switch it on in Settings. */
 export function ViewportDebug() {
+  const enabled = useSyncExternalStore(subscribeViewportDebug, readViewportDebug, () => false);
+  return enabled ? <ViewportReadout /> : null;
+}
+
+function ViewportReadout() {
   const pathname = usePathname();
-  const [enabled, setEnabled] = useState(false);
   const [readout, setReadout] = useState<Readout>({});
 
   useMountEffect(() => {
-    const flag = new URLSearchParams(window.location.search).get("debug");
-    try {
-      if (flag === "viewport") localStorage.setItem(STORAGE_KEY, "1");
-      if (flag === "off") localStorage.removeItem(STORAGE_KEY);
-      if (localStorage.getItem(STORAGE_KEY) !== "1") return;
-    } catch {
-      if (flag !== "viewport") return;
-    }
-    setEnabled(true);
-
     const probe = document.createElement("div");
     probe.style.cssText =
       "position:fixed;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)";
@@ -68,8 +60,6 @@ export function ViewportDebug() {
       probe.remove();
     };
   });
-
-  if (!enabled) return null;
 
   return (
     <pre
