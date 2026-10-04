@@ -5,7 +5,7 @@ import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/settings/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
-import { LoggedOutHeaderNav } from "@/components/site-header-nav";
+import { HiddenUntilSignupComplete, LoggedOutHeaderNav } from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
@@ -33,7 +33,7 @@ function SiteHeaderChrome({
             <BrandIcon className="lg:hidden" />
             <span className="hidden whitespace-nowrap text-primary-text lg:inline">Lobyas</span>
           </Link>
-          {leftNav ? <nav className="flex items-center gap-1">{leftNav}</nav> : null}
+          {leftNav}
         </div>
 
         <nav className="flex items-center gap-1">{rightNav}</nav>
@@ -86,14 +86,14 @@ export function SiteHeader({
       homeHref={user ? AUTHENTICATED_HOME_PATH : "/"}
       leftNav={
         user ? (
-          <>
+          <HiddenUntilSignupComplete>
             {/* Desktop only: phones reach the Library from the dock, and a
                 fourth icon would crowd the public-page header. */}
             <HeaderStudyLink href="/app/library" icon={LayoutList} label="Library" />
             <HeaderStudyLink href="/app/read" icon={Zap} label="Read" />
             <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
             <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
-          </>
+          </HiddenUntilSignupComplete>
         ) : null
       }
       rightNav={

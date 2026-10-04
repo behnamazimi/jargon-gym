@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { LinkButton } from "@/components/ui/button";
 
@@ -19,4 +20,14 @@ export function LoggedOutHeaderNav() {
   }
 
   return <LinkButton href="/login">Log in</LinkButton>;
+}
+
+export function HiddenUntilSignupComplete({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  if (pathname === "/complete-signup") {
+    return null;
+  }
+
+  return <nav className="flex items-center gap-1">{children}</nav>;
 }
