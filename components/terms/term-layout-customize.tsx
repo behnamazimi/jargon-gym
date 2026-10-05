@@ -120,6 +120,13 @@ export function TermLayoutCustomize({ domainId }: { domainId: string | undefined
             </fieldset>
           ) : null}
 
+          {hasOverride && target === "default" ? (
+            <p className="m-0 text-sm text-base-content/70">
+              This collection has its own layout, so it won't change here. Choose “Use my default
+              here” to follow the new one.
+            </p>
+          ) : null}
+
           <DialogFooter>
             {hasOverride && domainId ? (
               <Button

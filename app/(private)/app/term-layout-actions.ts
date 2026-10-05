@@ -2,6 +2,7 @@
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
+  canStoreCollectionPlacement,
   isDomainId,
   parsePlacement,
   withCollectionPlacement,
@@ -34,6 +35,9 @@ export async function saveTermLayoutAction(
     if (change.scope === "default" && placement) {
       next = withDefaultPlacement(current, placement);
     } else if (change.scope === "collection" && placement) {
+      if (!canStoreCollectionPlacement(current, change.domainId)) {
+        return { error: "Too many collections have their own layout. Reset one first." };
+      }
       next = withCollectionPlacement(current, change.domainId, placement);
     } else if (change.scope === "reset-collection") {
       next = withoutCollectionPlacement(current, change.domainId);

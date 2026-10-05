@@ -27,7 +27,7 @@ export type TermLayout = {
 
 export const EMPTY_TERM_LAYOUT: TermLayout = { default: {}, collections: {} };
 
-const MAX_COLLECTIONS = 100;
+export const MAX_COLLECTION_LAYOUTS = 100;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function isBlock(value: string): value is TermBlock {
@@ -52,10 +52,7 @@ export function parseTermLayout(value: unknown): TermLayout {
   if (!isRecord(value)) return EMPTY_TERM_LAYOUT;
   const collections: Record<string, PlacementOverrides> = {};
   if (isRecord(value.collections)) {
-    for (const [domainId, overrides] of Object.entries(value.collections).slice(
-      0,
-      MAX_COLLECTIONS,
-    )) {
+    for (const [domainId, overrides] of Object.entries(value.collections)) {
       if (UUID.test(domainId)) collections[domainId] = parseOverrides(overrides);
     }
   }
@@ -100,6 +97,16 @@ export function resolvePlacement(layout: TermLayout, domainId: string | undefine
 
 export function hasCollectionOverride(layout: TermLayout, domainId: string | undefined): boolean {
   return Boolean(domainId && layout.collections[domainId]);
+}
+
+/** Whether this collection can get its own map: it already has one, or there
+ *  is room for another. The limit is checked on save and never trims what is
+ *  stored. */
+export function canStoreCollectionPlacement(layout: TermLayout, domainId: string): boolean {
+  return (
+    domainId in layout.collections ||
+    Object.keys(layout.collections).length < MAX_COLLECTION_LAYOUTS
+  );
 }
 
 export function withCollectionPlacement(

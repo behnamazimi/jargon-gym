@@ -4,11 +4,14 @@ import { useEffectEvent } from "react";
 import { isTypingTarget } from "@/components/read/read-page-helpers";
 import type { ReadQueue } from "@/components/read/use-read-queue";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { isInsideDialog } from "@/lib/dom/in-dialog";
 
 function handleReadEnterKey(event: KeyboardEvent, fullscreenActive: boolean, queue: ReadQueue) {
   if (fullscreenActive) return;
   if (event.key !== "Enter") return;
-  if (queue.status !== "ready" || isTypingTarget(event.target)) return;
+  if (queue.status !== "ready" || isTypingTarget(event.target) || isInsideDialog(event.target)) {
+    return;
+  }
 
   const term = queue.currentTerm;
   if (!term) return;

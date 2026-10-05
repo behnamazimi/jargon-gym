@@ -94,4 +94,35 @@ describe("saveTermLayoutAction", () => {
     expect(badPlacement.error).toBeDefined();
     expect(state.saved).toEqual([]);
   });
+
+  it("refuses a new collection at the limit but lets an existing one change", async () => {
+    const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+    state.stored = {
+      default: {},
+      collections: Object.fromEntries(
+        Array.from({ length: 100 }, (_, i) => [id(i), { note: "more" as const }]),
+      ),
+    };
+    const placement = toPlacement({ example: "more" });
+
+    const added = await saveTermLayoutAction({
+      scope: "collection",
+      domainId: id(100),
+      placement,
+    });
+    expect(added.error).toBeDefined();
+    expect(state.saved).toEqual([]);
+
+    const changed = await saveTermLayoutAction({
+      scope: "collection",
+      domainId: id(0),
+      placement,
+    });
+    expect(changed.layout?.collections[id(0)]).toEqual({ example: "more" });
+  });
+
+  it("resetting a collection with no map saves cleanly", async () => {
+    const result = await saveTermLayoutAction({ scope: "reset-collection", domainId: DOMAIN });
+    expect(result.layout?.collections).toEqual({});
+  });
 });

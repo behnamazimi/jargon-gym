@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  canStoreCollectionPlacement,
   EMPTY_TERM_LAYOUT,
+  MAX_COLLECTION_LAYOUTS,
   moreCount,
   parsePlacement,
   parseTermLayout,
@@ -113,5 +115,38 @@ describe("moreCount", () => {
     const placement = toPlacement({ searchLink: "more" });
     expect(moreCount(placement, term, true)).toBe(1);
     expect(moreCount(placement, term, false)).toBe(0);
+  });
+});
+
+function uuid(n: number) {
+  return `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
+}
+
+describe("collection limit", () => {
+  const full = parseTermLayout({
+    collections: Object.fromEntries(
+      Array.from({ length: MAX_COLLECTION_LAYOUTS }, (_, i) => [uuid(i), { note: "more" }]),
+    ),
+  });
+
+  it("never drops stored collections when reading", () => {
+    const over = parseTermLayout({
+      collections: Object.fromEntries(
+        Array.from({ length: MAX_COLLECTION_LAYOUTS + 20 }, (_, i) => [uuid(i), { note: "more" }]),
+      ),
+    });
+    expect(Object.keys(over.collections)).toHaveLength(MAX_COLLECTION_LAYOUTS + 20);
+  });
+
+  it("refuses a new collection once the limit is reached", () => {
+    expect(canStoreCollectionPlacement(full, uuid(MAX_COLLECTION_LAYOUTS))).toBe(false);
+  });
+
+  it("still lets a collection that has a map change it", () => {
+    expect(canStoreCollectionPlacement(full, uuid(0))).toBe(true);
+  });
+
+  it("allows a new collection while there is room", () => {
+    expect(canStoreCollectionPlacement(EMPTY_TERM_LAYOUT, A)).toBe(true);
   });
 });
