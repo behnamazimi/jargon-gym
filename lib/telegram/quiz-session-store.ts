@@ -1,7 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
-import { buildIllustrationQuestions, type IllustrationPick } from "@/lib/quiz/illustration";
-import { fetchQuizTermPool, getMaxStudyCount } from "@/lib/study";
+import { buildQuiz } from "@/lib/quiz/build";
+import { supabaseDistractorSource } from "@/lib/quiz/distractors-supabase";
+import { isQuizQuestion } from "@/lib/quiz/question-schema";
+import { fetchQuizTermPool } from "@/lib/quiz/terms";
+import type { QuizQuestion } from "@/lib/quiz/types";
+import { getMaxStudyCount } from "@/lib/study";
 import { getPoolStatsForUser } from "@/lib/trace-queue";
 import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
 
@@ -14,19 +18,20 @@ export { DEFAULT_TELEGRAM_QUIZ_COUNT };
 export type ReviewSession = {
   userId: string;
   domainId: QuizDomainSelection;
-  termIds: string[];
-  /** termId -> illustration MCQ pick, for terms picked at session creation.
-   *  Terms not in this map get the regular term-guess MCQ. */
-  illustration: Record<string, IllustrationPick>;
+  questions: QuizQuestion[];
   currentIndex: number;
   correctCount: number;
   startedAt: number;
 };
 
+/** Bump when the stored question shape changes; sessions in any other shape
+ *  read as expired. */
+const STORED_SESSION_VERSION = 2;
+
 type StoredQuizSession = {
+  version: typeof STORED_SESSION_VERSION;
   domainId: QuizDomainSelection;
-  termIds: string[];
-  illustration: Record<string, IllustrationPick>;
+  questions: QuizQuestion[];
   currentIndex: number;
   correctCount: number;
   startedAt: number;
@@ -34,35 +39,14 @@ type StoredQuizSession = {
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
 
-function isIllustrationPick(value: unknown): value is IllustrationPick {
-  if (!value || typeof value !== "object") return false;
-  const pick = value as IllustrationPick;
-  return (
-    typeof pick.scenarioText === "string" &&
-    Array.isArray(pick.options) &&
-    pick.options.every(
-      (option) => option && typeof option.id === "string" && typeof option.text === "string",
-    ) &&
-    typeof pick.correctOptionId === "string"
-  );
-}
-
-function isIllustrationMap(value: unknown): value is Record<string, IllustrationPick> {
-  // Older stored sessions predate this field, so treat it as optional here —
-  // the reader below defaults a missing map to {}.
-  if (value === undefined) return true;
-  if (!value || typeof value !== "object") return false;
-  return Object.values(value).every(isIllustrationPick);
-}
-
 function isStoredSession(value: unknown): value is StoredQuizSession {
   if (!value || typeof value !== "object") return false;
   const session = value as StoredQuizSession;
   return (
+    session.version === STORED_SESSION_VERSION &&
     (session.domainId === "all" || typeof session.domainId === "string") &&
-    Array.isArray(session.termIds) &&
-    session.termIds.every((id) => typeof id === "string") &&
-    isIllustrationMap(session.illustration) &&
+    Array.isArray(session.questions) &&
+    session.questions.every(isQuizQuestion) &&
     typeof session.currentIndex === "number" &&
     typeof session.correctCount === "number" &&
     typeof session.startedAt === "number"
@@ -77,12 +61,21 @@ export function domainIdsForScope(domainId: QuizDomainSelection | undefined): st
 export async function saveStoredSession(
   client: Client,
   chatId: number,
-  session: StoredQuizSession,
+  session: ReviewSession,
 ): Promise<void> {
+  const stored: StoredQuizSession = {
+    version: STORED_SESSION_VERSION,
+    domainId: session.domainId,
+    questions: session.questions,
+    currentIndex: session.currentIndex,
+    correctCount: session.correctCount,
+    startedAt: session.startedAt,
+  };
+
   const { error } = await client
     .from("telegram_links")
     .update({
-      quiz_session: session as unknown as Json,
+      quiz_session: stored as unknown as Json,
       updated_at: new Date().toISOString(),
     })
     .eq("chat_id", chatId);
@@ -127,36 +120,25 @@ export async function createSession(
   domainId: QuizDomainSelection,
   count: number,
 ): Promise<ReviewSession> {
-  const cards = await fetchQuizTermPool(
+  const terms = await fetchQuizTermPool(
     client,
     userId,
-    { domainIds: domainIdsForScope(domainId) },
+    domainIdsForScope(domainId),
     count,
     "admin",
   );
-  const termIds = cards.map((t) => t.id);
-  const illustration = Object.fromEntries(await buildIllustrationQuestions(cards, client));
+  const questions = await buildQuiz(terms, supabaseDistractorSource(client), "telegram");
 
   const session: ReviewSession = {
     userId,
     domainId,
-    termIds,
-    illustration,
+    questions,
     currentIndex: 0,
     correctCount: 0,
     startedAt: Date.now(),
   };
 
-  if (termIds.length > 0) {
-    await saveStoredSession(client, chatId, {
-      domainId: session.domainId,
-      termIds: session.termIds,
-      illustration: session.illustration,
-      currentIndex: session.currentIndex,
-      correctCount: session.correctCount,
-      startedAt: session.startedAt,
-    });
-  }
+  if (questions.length > 0) await saveStoredSession(client, chatId, session);
 
   return session;
 }
@@ -179,8 +161,7 @@ export async function getSession(client: Client, chatId: number): Promise<Review
   return {
     userId: data.user_id,
     domainId: data.quiz_session.domainId,
-    termIds: data.quiz_session.termIds,
-    illustration: data.quiz_session.illustration ?? {},
+    questions: data.quiz_session.questions,
     currentIndex: data.quiz_session.currentIndex,
     correctCount: data.quiz_session.correctCount,
     startedAt: data.quiz_session.startedAt,

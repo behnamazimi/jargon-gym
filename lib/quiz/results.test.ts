@@ -3,7 +3,13 @@ import type { QuizQuestion } from "./types";
 import { missedQuestions, missedTermIds } from "./results";
 
 function question(termId: string): QuizQuestion {
-  return { type: "true_false", termId, prompt: `Is ${termId} right?`, correctAnswer: true };
+  return {
+    interaction: "boolean",
+    template: "free_boolean",
+    termId,
+    prompt: `Is ${termId} right?`,
+    correctAnswer: true,
+  };
 }
 
 describe("missedQuestions", () => {

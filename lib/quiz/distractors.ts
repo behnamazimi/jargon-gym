@@ -1,84 +1,18 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/database.types";
+import type { QuizTerm } from "./types";
 
-type Client = SupabaseClient<Database>;
+export type DistractorTerm = {
+  id: string;
+  term: string;
+  definition: string;
+  category: string | null;
+};
 
-type TermRef = { id: string; term: string; example: string | null };
-type RelatedTermRef = TermRef & { definition: string | null };
+export type PickDistractorsOptions = {
+  /** Prefer terms sharing the term's category (same part of speech, topic). */
+  preferCategory?: boolean;
+};
 
-async function fetchRelatedDistractors(
-  client: Client,
-  termId: string,
-  excludedIds: string[],
-  count: number,
-): Promise<TermRef[]> {
-  const { data: relatedTerms, error: relatedError } = await client
-    .from("term_relationships")
-    .select(
-      `
-      source_term_id,
-      target_term_id,
-      source:terms!term_relationships_source_term_id_fkey(id, term, example, definition),
-      target:terms!term_relationships_target_term_id_fkey(id, term, example, definition)
-    `,
-    )
-    .or(`source_term_id.eq.${termId},target_term_id.eq.${termId}`);
-
-  if (relatedError || !relatedTerms) return [];
-
-  const distractors: TermRef[] = [];
-  for (const rel of relatedTerms) {
-    const relatedTerm =
-      rel.source_term_id === termId
-        ? (rel.target as unknown as RelatedTermRef)
-        : (rel.source as unknown as RelatedTermRef);
-
-    if (!relatedTerm || relatedTerm.definition === null) continue;
-    if (excludedIds.includes(relatedTerm.id)) continue;
-
-    distractors.push({ id: relatedTerm.id, term: relatedTerm.term, example: relatedTerm.example });
-    excludedIds.push(relatedTerm.id);
-    if (distractors.length >= count) break;
-  }
-  return distractors;
-}
-
-async function fetchRandomDistractors(
-  client: Client,
-  domainId: string,
-  excludedIds: string[],
-  needed: number,
-): Promise<TermRef[]> {
-  const { data: randomTerms, error: randomError } = await client
-    .from("terms")
-    .select("id, term, example")
-    .eq("domain_id", domainId)
-    .not("definition", "is", null)
-    .not("id", "in", `(${excludedIds.join(",")})`)
-    .limit(needed * 3);
-
-  if (randomError || !randomTerms) return [];
-
-  const shuffled = randomTerms.sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, needed).map((t) => ({ id: t.id, term: t.term, example: t.example }));
-}
-
-/**
- * Domain-scoped distractors: related terms first, then random same-domain.
- */
-export async function selectDistractorsFromDomain(
-  client: Client,
-  termId: string,
-  domainId: string,
-  count: number = 3,
-): Promise<TermRef[]> {
-  const excludedIds = [termId];
-  const distractors = await fetchRelatedDistractors(client, termId, excludedIds, count);
-
-  if (distractors.length < count) {
-    const needed = count - distractors.length;
-    distractors.push(...(await fetchRandomDistractors(client, domainId, excludedIds, needed)));
-  }
-
-  return distractors.sort(() => Math.random() - 0.5);
-}
+/** Where wrong options come from. Builders depend on this, never on a database. */
+export type DistractorSource = {
+  pick(term: QuizTerm, count: number, options?: PickDistractorsOptions): Promise<DistractorTerm[]>;
+};

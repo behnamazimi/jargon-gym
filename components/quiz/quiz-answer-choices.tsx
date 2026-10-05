@@ -1,76 +1,20 @@
-import { RadioGroup } from "react-aria-components";
-import { QuizChoice } from "@/components/quiz/quiz-controls";
-import type { QuizQuestion } from "@/lib/quiz/types";
-import {
-  getMcqResult,
-  getTrueFalseResult,
-  type QuizAnswerState,
-} from "@/components/quiz/quiz-question-state";
+import { BooleanAnswer } from "@/components/quiz/boolean-answer";
+import { ChoiceAnswer } from "@/components/quiz/choice-answer";
+import type { QuizQuestion, QuizResponse } from "@/lib/quiz/types";
 
 type QuizAnswerChoicesProps = {
   question: QuizQuestion;
-  state: QuizAnswerState;
+  response: QuizResponse | null;
   submitted: boolean;
-  onSelectOption: (optionId: string) => void;
-  onSelectTrueFalse: (value: boolean) => void;
+  onRespond: (response: QuizResponse) => void;
 };
 
-export function QuizAnswerChoices({
-  question,
-  state,
-  submitted,
-  onSelectOption,
-  onSelectTrueFalse,
-}: QuizAnswerChoicesProps) {
-  if (question.type === "multiple_choice") {
-    return (
-      <RadioGroup
-        aria-label="Answer choices"
-        value={state.selectedOptionIds[0] ?? ""}
-        onChange={onSelectOption}
-        isDisabled={submitted}
-        className="flex flex-col gap-2 pt-5"
-      >
-        {question.options.map((option, index) => (
-          <QuizChoice
-            key={option.id}
-            value={option.id}
-            label={option.text}
-            shortcut={index + 1}
-            result={getMcqResult(
-              option.id,
-              state.selectedOptionIds,
-              question.correctOptionIds,
-              submitted,
-            )}
-          />
-        ))}
-      </RadioGroup>
-    );
+/** The one place that picks an answer UI for a question's interaction. */
+export function QuizAnswerChoices({ question, ...props }: QuizAnswerChoicesProps) {
+  switch (question.interaction) {
+    case "choice":
+      return <ChoiceAnswer question={question} {...props} />;
+    case "boolean":
+      return <BooleanAnswer question={question} {...props} />;
   }
-
-  return (
-    <RadioGroup
-      aria-label="Answer choices"
-      value={state.trueFalseAnswer === null ? "" : String(state.trueFalseAnswer)}
-      onChange={(value) => onSelectTrueFalse(value === "true")}
-      isDisabled={submitted}
-      className="grid gap-2 pt-5 sm:grid-cols-2"
-    >
-      {[true, false].map((value, index) => (
-        <QuizChoice
-          key={String(value)}
-          value={String(value)}
-          label={value ? "True" : "False"}
-          shortcut={index + 1}
-          result={getTrueFalseResult(
-            value,
-            state.trueFalseAnswer,
-            question.correctAnswer,
-            submitted,
-          )}
-        />
-      ))}
-    </RadioGroup>
-  );
 }

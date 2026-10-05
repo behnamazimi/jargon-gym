@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { generateQuizQuestions } from "./generate";
+import { makeTerm } from "./test-support";
 import type { QuizTerm } from "./types";
 
 vi.mock("ai", () => ({
@@ -32,19 +33,6 @@ function makeClient(): Client {
       };
     },
   } as unknown as Client;
-}
-
-function makeTerm(overrides: Partial<QuizTerm>): QuizTerm {
-  return {
-    id: "term-default",
-    term: "Default Term",
-    definition: "A default definition.",
-    example: null,
-    antiExample: null,
-    domainId: "domain-1",
-    domainName: "Testing",
-    ...overrides,
-  };
 }
 
 /**
@@ -109,7 +97,7 @@ describe("generateQuizQuestions", () => {
       client: makeClient(),
     });
 
-    const trueFalseCount = questions.filter((q) => q.type === "true_false").length;
+    const trueFalseCount = questions.filter((q) => q.interaction === "boolean").length;
     expect(trueFalseCount).toBeLessThanOrEqual(4);
   });
 });

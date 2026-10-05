@@ -28,6 +28,18 @@ how it works — the memory traces, mastery blend, ranking rules, or which
 layer owns what — read [docs/trace.md](docs/trace.md) in detail rather than
 guessing from the code alone.
 
+# Quiz questions
+
+What a quiz asks depends on the collection's kind. Simple mode and Telegram
+build questions with `buildQuiz` in `lib/quiz/build.ts`; each question type is
+a module in `lib/quiz/templates/`, listed in `registry.ts`. A question carries
+its `template` (what it asks) and `interaction` (how it is answered), and
+grading, keys and the TRACE question type follow the interaction. Builders
+stay pure and get wrong options through `DistractorSource`. Read
+[docs/quiz-implementation-plan.md](docs/quiz-implementation-plan.md) and
+[docs/quiz-question-design.md](docs/quiz-question-design.md) before adding a
+question type.
+
 # AI overview
 
 [docs/ai.md](docs/ai.md) is the single map of every AI feature: vendors,

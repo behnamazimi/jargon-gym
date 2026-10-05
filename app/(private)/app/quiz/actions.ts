@@ -62,7 +62,7 @@ async function generateSimpleQuizResult(
     return { error: NOTHING_ELIGIBLE_ERROR };
   }
   const questions = await generateSimpleQuiz(terms, auth.supabase);
-  return { questions, terms, providerLabel: "Simple (Definition → Term)" };
+  return { questions, terms, providerLabel: "Simple" };
 }
 
 async function generateAiQuizResult(

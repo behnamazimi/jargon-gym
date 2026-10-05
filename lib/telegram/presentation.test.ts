@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import type { QuizQuestion } from "@/lib/quiz/types";
 import type { TermCard } from "@/lib/terms/term-card";
 import { GOOD } from "@/lib/trace";
 import {
   buildReadRevealKeyboard,
-  formatIllustrationQuestion,
-  formatIllustrationQuestionWithAnswer,
+  buildQuizKeyboard,
+  formatQuizQuestion,
+  formatQuizQuestionWithAnswer,
   formatReadPrompt,
-  formatReviewQuestion,
-  formatReviewQuestionWithAnswer,
   formatReviewRated,
   formatTermMessage,
 } from "./presentation";
@@ -29,6 +29,16 @@ const dangerousTerm: TermCard = {
   relationships: [],
 };
 
+const dangerousQuestion: QuizQuestion = {
+  interaction: "choice",
+  template: "masked_example",
+  termId: "term-1",
+  prompt: `Which one, with "quotes" and 'apostrophes'?`,
+  quote: "<img src=x onerror=alert(1)>",
+  options: [{ id: "term-1", text: "<script>alert(1)</script>" }],
+  correctOptionIds: ["term-1"],
+};
+
 describe("presentation HTML escaping", () => {
   it("encodes &, <, > in interpolated term fields", () => {
     const message = formatTermMessage(dangerousTerm);
@@ -46,25 +56,28 @@ describe("presentation HTML escaping", () => {
   });
 
   it("leaves quotes and apostrophes as literal characters — Telegram's HTML parser only decodes &lt; &gt; &amp; &quot;, so &apos; would render literally", () => {
-    const message = formatReviewQuestion(dangerousTerm, 0, 1);
+    const message = formatQuizQuestion(dangerousQuestion, 0, 1);
     expect(message).toContain(`"quotes"`);
     expect(message).toContain(`'apostrophes'`);
     expect(message).not.toContain("&apos;");
     expect(message).not.toContain("&quot;");
   });
 
-  it("produces well-formed output for formatReviewQuestionWithAnswer", () => {
-    const message = formatReviewQuestionWithAnswer(
-      dangerousTerm,
+  it("escapes the quote and answers in formatQuizQuestionWithAnswer", () => {
+    const message = formatQuizQuestionWithAnswer(
+      dangerousQuestion,
       0,
       1,
       `<img src=x onerror=alert(1)>`,
+      `<script>alert("x")</script>`,
       false,
       0,
     );
     expect(message).not.toContain("<img");
     expect(message).toContain("&lt;img");
+    expect(message).not.toContain("<script>");
     expect(message).toContain("&lt;script&gt;");
+    expect(message).toContain("The correct answer was: <b>&lt;script&gt;");
   });
 
   it("produces well-formed output for formatReviewRated", () => {
@@ -91,43 +104,62 @@ describe("presentation HTML escaping", () => {
     expect(message).not.toContain("fake bold");
     expect(message).toContain("&lt;script&gt;");
   });
+});
 
-  it("escapes scenario text in formatIllustrationQuestion", () => {
-    const message = formatIllustrationQuestion(0, 1, `<img src=x onerror=alert(1)>`);
-    expect(message).not.toContain("<img");
-    expect(message).toContain("&lt;img");
-    expect(message).toContain("Which term does this show, or none?");
+describe("quiz question formatting", () => {
+  const long = "A fairly long definition that would not fit on a button face at all";
+  const choice: QuizQuestion = {
+    interaction: "choice",
+    template: "term_to_meaning",
+    termId: "t1",
+    prompt: "What does it mean?",
+    options: [
+      { id: "t1", text: long },
+      { id: "t2", text: "Short" },
+    ],
+    correctOptionIds: ["t1"],
+  };
+  const boolean: QuizQuestion = {
+    interaction: "boolean",
+    template: "does_it_fit",
+    termId: "t1",
+    prompt: "Is this an example?",
+    quote: "A scenario.",
+    correctAnswer: false,
+  };
+
+  it("lists long answers in the message and numbers the buttons", () => {
+    expect(formatQuizQuestion(choice, 0, 3)).toContain(`1. ${long}`);
+    const keyboard = buildQuizKeyboard(choice, 0);
+    expect(keyboard.inline_keyboard[0].map((b) => b.text)).toEqual(["1", "2"]);
+    expect(keyboard.inline_keyboard[0][0]).toMatchObject({ callback_data: "quiz:0:t1" });
   });
 
-  it("produces well-formed output for formatIllustrationQuestionWithAnswer", () => {
-    const message = formatIllustrationQuestionWithAnswer(
-      0,
-      1,
-      `<img src=x onerror=alert(1)>`,
-      `<script>alert("x")</script>`,
-      "None of these",
-      false,
-      0,
-    );
-    expect(message).not.toContain("<img");
-    expect(message).toContain("&lt;img");
-    expect(message).not.toContain("<script>");
-    expect(message).toContain("&lt;script&gt;");
-    expect(message).toContain("The correct answer was: <b>None of these</b>");
+  it("shows short answers on the buttons themselves", () => {
+    const short: QuizQuestion = {
+      ...choice,
+      options: [
+        { id: "t1", text: "Alpha" },
+        { id: "t2", text: "Beta" },
+      ],
+    };
+    expect(formatQuizQuestion(short, 0, 1)).not.toContain("1. Alpha");
+    expect(buildQuizKeyboard(short, 2).inline_keyboard[0].map((b) => b.text)).toEqual([
+      "Alpha",
+      "Beta",
+    ]);
   });
 
-  it("renders 'None of these' as a plain label, not escaped or altered", () => {
-    const message = formatIllustrationQuestionWithAnswer(
-      0,
-      1,
-      "A plain scenario.",
-      "None of these",
-      "None of these",
-      true,
-      1,
-    );
-    expect(message).toContain("Your answer:</b> None of these");
-    expect(message).toContain("✅ <b>Correct!</b>");
+  it("offers Yes and No for boolean questions and explains anti-examples", () => {
+    const keyboard = buildQuizKeyboard(boolean, 1);
+    expect(keyboard.inline_keyboard[0]).toEqual([
+      { text: "Yes", callback_data: "quiz:1:yes" },
+      { text: "No", callback_data: "quiz:1:no" },
+    ]);
+    expect(formatQuizQuestion(boolean, 0, 1)).toContain("<blockquote>A scenario.</blockquote>");
+
+    const answered = formatQuizQuestionWithAnswer(boolean, 0, 1, "Yes", "No", false, 0);
+    expect(answered).toContain("anti-example");
   });
 });
 

@@ -1,15 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { applyQuizAnswer } from "@/lib/terms/review-outcome";
-import { NONE_OF_THESE_OPTION_TEXT } from "@/lib/quiz/illustration";
+import { gradeAnswer } from "@/lib/quiz/grade";
+import { traceQuestionType } from "@/lib/quiz/trace-type";
 import type { TelegramAction } from "./actions";
-import {
-  formatIllustrationQuestionWithAnswer,
-  formatReviewQuestionWithAnswer,
-} from "./presentation";
+import { formatQuizQuestionWithAnswer } from "./presentation";
+import { correctOption, quizOptions } from "./quiz-options";
 import { buildNextQuestionActions, buildReviewSummaryActions } from "./quiz-session-flow";
 import {
-  getCurrentTerm,
+  getCurrentQuestion,
   getSession,
   hasMoreQuestions,
   updateSession,
@@ -18,11 +17,6 @@ import {
 import { edit, send } from "./transport";
 
 type Client = SupabaseClient<Database>;
-
-async function lookupTermName(client: Client, termId: string): Promise<string> {
-  const { data } = await client.from("terms").select("term").eq("id", termId).single();
-  return data?.term ?? "Unknown";
-}
 
 /** Shared tail for both answer handlers: persist the outcome, show the
  *  answered-question message, then either advance or wrap up the session. */
@@ -54,7 +48,7 @@ export async function handleReviewAnswer(
   chatId: number,
   messageId: number,
   sessionIndex: number,
-  selectedTermId: string,
+  selectedOptionId: string,
 ): Promise<TelegramAction[]> {
   const session = await getSession(client, chatId);
   if (!session) {
@@ -65,57 +59,30 @@ export async function handleReviewAnswer(
     return [send(chatId, "This question has already been answered.")];
   }
 
-  const currentTerm = await getCurrentTerm(client, session);
-  if (!currentTerm) return [];
+  const question = getCurrentQuestion(session);
+  if (!question) return [];
 
-  const illustrationPick = session.illustration[currentTerm.id];
+  const selected = quizOptions(question).find((option) => option.id === selectedOptionId);
+  if (!selected) return [];
 
-  let isCorrect: boolean;
-  let selectedLabel: string;
-  let correctLabel: string;
-
-  if (illustrationPick) {
-    isCorrect = selectedTermId === illustrationPick.correctOptionId;
-    // Both labels come from the pick's own options — the same list already
-    // sent to the user in the keyboard — rather than a DB lookup, since that
-    // list already covers every id the user could have tapped, including
-    // the "none" sentinel.
-    correctLabel =
-      illustrationPick.options.find((o) => o.id === illustrationPick.correctOptionId)?.text ??
-      NONE_OF_THESE_OPTION_TEXT;
-    selectedLabel =
-      illustrationPick.options.find((o) => o.id === selectedTermId)?.text ?? "Unknown";
-  } else {
-    isCorrect = selectedTermId === currentTerm.id;
-    correctLabel = currentTerm.term;
-    selectedLabel = await lookupTermName(client, selectedTermId);
-  }
+  const isCorrect = gradeAnswer(question, selected.response);
 
   await applyQuizAnswer(client, session.userId, {
-    termId: currentTerm.id,
+    termId: question.termId,
     passed: isCorrect,
-    questionType: "multiple_choice",
+    questionType: traceQuestionType(question),
     mode: "admin",
   });
 
-  const message = illustrationPick
-    ? formatIllustrationQuestionWithAnswer(
-        sessionIndex,
-        session.termIds.length,
-        illustrationPick.scenarioText,
-        selectedLabel,
-        correctLabel,
-        isCorrect,
-        session.correctCount + (isCorrect ? 1 : 0),
-      )
-    : formatReviewQuestionWithAnswer(
-        currentTerm,
-        sessionIndex,
-        session.termIds.length,
-        selectedLabel,
-        isCorrect,
-        session.correctCount + (isCorrect ? 1 : 0),
-      );
+  const message = formatQuizQuestionWithAnswer(
+    question,
+    sessionIndex,
+    session.questions.length,
+    selected.label,
+    correctOption(question)?.label ?? "",
+    isCorrect,
+    session.correctCount + (isCorrect ? 1 : 0),
+  );
 
   return finishAnsweredQuestion(client, chatId, messageId, session, isCorrect, message);
 }

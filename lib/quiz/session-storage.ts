@@ -1,4 +1,5 @@
 import type { QuestionType } from "@/lib/trace";
+import { isQuizQuestion } from "./question-schema";
 import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "./types";
 
 type QuizSetup = {
@@ -29,7 +30,10 @@ export type QuizSessionState = {
   complete?: boolean;
 };
 
-const STORAGE_KEY = "lobyas:quiz-session:v1";
+// Bump the version when the stored question shape changes; the old key is
+// removed on the next load so a session in the old shape is simply dropped.
+const STORAGE_KEY = "lobyas:quiz-session:v2";
+const LEGACY_STORAGE_KEYS = ["lobyas:quiz-session:v1"];
 
 export function saveQuizSession(state: QuizSessionState): void {
   if (typeof window === "undefined") return;
@@ -45,11 +49,14 @@ export function loadQuizSession(): QuizSessionState | null {
   if (typeof window === "undefined") return null;
 
   try {
+    for (const key of LEGACY_STORAGE_KEYS) window.localStorage.removeItem(key);
+
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
 
     const parsed = JSON.parse(raw) as QuizSessionState;
     if (!parsed.questions?.length || !parsed.setup) return null;
+    if (!parsed.questions.every(isQuizQuestion)) return null;
 
     parsed.pendingWrites ??= [];
     parsed.complete = parsed.complete === true;
