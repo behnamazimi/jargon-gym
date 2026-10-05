@@ -14,7 +14,7 @@ type ClosingCtaProps = {
 export function ClosingCta({
   title = (
     <>
-      <span className="text-primary-text">Free.</span> Invite-only.
+      <span className="text-primary-text">Free.</span> At your own pace.
     </>
   ),
   body = "Read, review and quiz the terms you need, with no due dates to fall behind on.",

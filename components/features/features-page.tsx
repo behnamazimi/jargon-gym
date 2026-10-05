@@ -6,7 +6,6 @@ import { SplitWithScene } from "@/components/public/split-with-scene";
 import { FEATURE_SECTIONS } from "@/lib/features/sections";
 import { cn } from "@/lib/utils";
 import { FeatureCards } from "./feature-cards";
-import { FeatureChips } from "./feature-chips";
 import { FeatureSplit } from "./feature-split";
 import { FeaturesContents } from "./features-contents";
 
@@ -47,8 +46,6 @@ export function FeaturesPage() {
             );
           case "cards":
             return <FeatureCards key={section.id} section={section} number={number} />;
-          case "chips":
-            return <FeatureChips key={section.id} section={section} number={number} />;
         }
       })}
 

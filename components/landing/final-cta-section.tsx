@@ -8,10 +8,10 @@ export function FinalCtaSection({ isLoggedIn }: { isLoggedIn: boolean }) {
     <div className="grid grid-cols-1 items-center gap-8 border-t-2 border-base-content/80 pt-10 sm:pt-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)] lg:gap-20">
       <div>
         <h2 className="m-0 text-balance text-5xl font-medium tracking-tight sm:text-6xl">
-          <span className="text-primary-text">Free.</span> Invite-only.
+          <span className="text-primary-text">Free.</span> At your own pace.
         </h2>
         <p className="mt-4 m-0 max-w-[52ch] text-base leading-relaxed text-base-content/85">
-          Request access, or use the code someone gave you.
+          Read, review and quiz the terms you need, with no due dates to fall behind on.
         </p>
         <div className="mt-6">
           <LandingCtas isLoggedIn={isLoggedIn} />

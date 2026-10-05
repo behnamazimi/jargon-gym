@@ -29,5 +29,4 @@ export type FeatureSection =
       title: string;
       lead: string;
       items: (FeatureItem & { icon: FeatureIconKey })[];
-    }
-  | { layout: "chips"; id: string; title: string; items: string[] };
+    };

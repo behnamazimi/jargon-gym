@@ -3,7 +3,6 @@ import { FEATURE_SECTIONS, type FeatureSection } from "./sections";
 
 function strings(section: FeatureSection): string[] {
   const own = [section.title, ...("lead" in section ? [section.lead] : [])];
-  if (section.layout === "chips") return [...own, ...section.items];
   return [...own, ...section.items.flatMap((item) => [item.title, item.body])];
 }
 
@@ -22,7 +21,6 @@ describe("feature sections", () => {
 
   it("gives every item in a section a unique title", () => {
     for (const section of FEATURE_SECTIONS) {
-      if (section.layout === "chips") continue;
       const titles = section.items.map((item) => item.title);
       expect(new Set(titles).size).toBe(titles.length);
     }
