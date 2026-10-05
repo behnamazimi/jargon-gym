@@ -67,6 +67,10 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         body: "An example, a counter-example, a way to picture it, how it's used in practice, where people disagree, and links to related terms.",
       },
       {
+        title: "Show as much as you like",
+        body: "Keep parts of a term under More, for one collection or all of them. Customize sits under the term while you study.",
+      },
+      {
         title: "Hear any term",
         body: "Play a spoken clip from a term card.",
       },

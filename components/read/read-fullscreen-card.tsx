@@ -1,7 +1,7 @@
 import { type ReactNode, useCallback } from "react";
 import { FirstExposureKnownPrompt } from "@/components/shared/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/terms/term-card-header";
-import { TermBody } from "@/components/terms/term-body";
+import { StudyTermBody } from "@/components/terms/study-term-body";
 import type { ReviewTerm } from "@/lib/review/types";
 
 export function ReadFullscreenCard({
@@ -63,7 +63,7 @@ export function ReadFullscreenCard({
         style={{ paddingInlineEnd: "calc(env(safe-area-inset-right) + 3.25rem)" }}
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 has-[[data-known-prompt]]:pb-0 sm:px-6">
-        <TermBody term={term} language={term.domainLanguage} />
+        <StudyTermBody key={term.id} term={term} />
         {term.isNewToUser ? (
           <FirstExposureKnownPrompt
             termId={term.id}

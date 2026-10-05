@@ -1506,6 +1506,7 @@ export type Database = {
           read_stories_default: boolean;
           read_tap_to_play: boolean;
           story_last_domain_id: string | null;
+          term_layout: Json;
           timezone: string | null;
           tour_seen: string[];
           tour_status: string;
@@ -1532,6 +1533,7 @@ export type Database = {
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
           story_last_domain_id?: string | null;
+          term_layout?: Json;
           timezone?: string | null;
           tour_seen?: string[];
           tour_status?: string;
@@ -1558,6 +1560,7 @@ export type Database = {
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
           story_last_domain_id?: string | null;
+          term_layout?: Json;
           timezone?: string | null;
           tour_seen?: string[];
           tour_status?: string;

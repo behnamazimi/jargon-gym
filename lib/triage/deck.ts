@@ -19,6 +19,14 @@ export function buildTriageDeck(terms: Term[], exclusions: DeckExclusions): Term
 
 /** Shapes a Library term for the Review flashcard. `isNewToUser` stays
  *  unset so the card doesn't repeat Triage's own "I know this" prompt. */
-export function toTriageTerm(term: Term, domain: Pick<Domain, "name" | "language">): ReviewTerm {
-  return { ...term, domainName: domain.name, domainLanguage: domain.language };
+export function toTriageTerm(
+  term: Term,
+  domain: Pick<Domain, "id" | "name" | "language">,
+): ReviewTerm {
+  return {
+    ...term,
+    domainId: domain.id,
+    domainName: domain.name,
+    domainLanguage: domain.language,
+  };
 }

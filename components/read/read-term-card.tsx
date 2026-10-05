@@ -3,7 +3,7 @@ import { memo } from "react";
 import { FirstExposureKnownPrompt } from "@/components/shared/first-exposure-known-prompt";
 import { QuizKeyboardHint, QuizPanel } from "@/components/quiz/quiz-ui";
 import { TermCardHeader } from "@/components/terms/term-card-header";
-import { TermBody } from "@/components/terms/term-body";
+import { StudyTermBody } from "@/components/terms/study-term-body";
 import { Button } from "@/components/ui/button";
 import type { ReviewTerm } from "@/lib/review/types";
 
@@ -66,7 +66,7 @@ function ReadCardRevealed({
   return (
     <>
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 has-[[data-known-prompt]]:pb-0 sm:px-6">
-        <TermBody term={term} language={term.domainLanguage} />
+        <StudyTermBody key={term.id} term={term} />
         {term.isNewToUser ? (
           <FirstExposureKnownPrompt
             termId={term.id}

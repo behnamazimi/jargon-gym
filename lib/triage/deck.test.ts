@@ -35,8 +35,9 @@ describe("buildTriageDeck", () => {
 });
 
 describe("toTriageTerm", () => {
-  it("adds the collection name and language without flagging the term as new", () => {
-    const term = toTriageTerm(makeTerm("a"), { name: "Finance", language: "en" });
+  it("adds the collection id, name and language without flagging the term as new", () => {
+    const term = toTriageTerm(makeTerm("a"), { id: "d1", name: "Finance", language: "en" });
+    expect(term.domainId).toBe("d1");
     expect(term.domainName).toBe("Finance");
     expect(term.domainLanguage).toBe("en");
     expect(term.isNewToUser).toBeUndefined();

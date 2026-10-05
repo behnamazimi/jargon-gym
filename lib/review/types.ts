@@ -3,6 +3,7 @@ import type { Term } from "@/lib/terms/types";
 import type { ReviewGrade } from "@/lib/trace";
 
 export type ReviewTerm = Term & {
+  domainId: string;
   domainName: string;
   domainLanguage: DomainLanguage;
   isNewToUser?: boolean;
