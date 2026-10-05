@@ -9,23 +9,18 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
   {
     layout: "cards",
     id: "find",
-    title: "Find your way around",
-    lead: "For when your collections get big.",
+    title: "Manage your collections",
+    lead: "Keep big collections tidy.",
     items: [
       {
         icon: "book",
         title: "Library",
-        body: "Browse by collection. Press / to search terms and definitions. Filters stay where you left them.",
+        body: "Browse by collection and search every term and definition.",
       },
       {
         icon: "pencil",
         title: "Edit anything",
-        body: "Every field, category and relationship, any time.",
-      },
-      {
-        icon: "globe",
-        title: "Browse shared collections",
-        body: "Love the good ones and report problems.",
+        body: "Every field, category and link between terms, any time.",
       },
       { icon: "download", title: "Export", body: "Take a collection out as text or JSON." },
     ],
@@ -44,7 +39,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         icon: "send",
         title: "Telegram bot",
-        body: "Use /read, /review and /quiz, with reminders on your own cadence.",
+        body: "Use /read, /review and /quiz, with reminders when you want them.",
       },
       {
         icon: "monitor",
@@ -57,12 +52,12 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     layout: "cards",
     id: "ai-and-cost",
     title: "AI and credits",
-    lead: "Quiz and Stories use AI, and it comes free with your account.",
+    lead: "Quiz, Stories and voices use AI, and it comes free with your account.",
     items: [
       {
         icon: "star",
-        title: "Credits to start",
-        body: "New accounts get AI credits, plus a monthly refill. If an AI run fails, the credits come back.",
+        title: "Free credits every month",
+        body: "New accounts get credits, plus a monthly refill.",
       },
       {
         icon: "key",
@@ -71,8 +66,8 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       },
       {
         icon: "shield",
-        title: "Where AI runs",
-        body: "Quiz, Stories and voices.",
+        title: "Voices are free",
+        body: "Spoken clips never use credits.",
       },
     ],
   },

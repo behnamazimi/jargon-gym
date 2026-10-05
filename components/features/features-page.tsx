@@ -22,7 +22,8 @@ export function FeaturesPage() {
           Everything Lobyas does, in the order you&apos;ll need it
         </h1>
         <p className="mt-6 m-0 max-w-[44ch] text-lg leading-relaxed text-base-content/85">
-          It starts with getting your first terms in and ends with seeing what has stuck.
+          For the terms of a field or the words of a language: from your first terms to seeing what
+          has stuck.
         </p>
         <div className="mt-8">
           <PublicCta />

@@ -1,16 +1,8 @@
-export type FeatureSceneKey =
-  | "start"
-  | "study"
-  | "learn"
-  | "hear"
-  | "stories"
-  | "noGuilt"
-  | "progress";
+export type FeatureSceneKey = "start" | "study" | "learn" | "hear" | "noGuilt" | "progress";
 
 export type FeatureIconKey =
   | "book"
   | "pencil"
-  | "globe"
   | "download"
   | "phone"
   | "send"
