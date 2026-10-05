@@ -1,4 +1,5 @@
 import { generateObject } from "ai";
+import { aiGenerationOptions, type AiObservabilityContext } from "@/lib/ai/observability";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
 import { buildQuiz } from "./build";
@@ -28,6 +29,7 @@ async function requestQuestionsFromModel(input: {
   provider: LlmProvider;
   apiKey: string;
   slots: AiSlot[];
+  observability?: AiObservabilityContext;
 }): Promise<QuizQuestion[]> {
   const prompt = buildQuizPrompt(input.slots);
   const plan = toGenerationPlan(input.slots);
@@ -46,11 +48,19 @@ async function requestQuestionsFromModel(input: {
               schema: buildQuizGenerationObjectSchema(plan),
               prompt,
               providerOptions: { google: { structuredOutputs: true } },
+              ...aiGenerationOptions(input.observability, "quiz_generation"),
             })
           ).object,
           plan,
         )
-      : (await generateObject({ model, schema: buildQuizGenerationSchema(plan), prompt })).object;
+      : (
+          await generateObject({
+            model,
+            schema: buildQuizGenerationSchema(plan),
+            prompt,
+            ...aiGenerationOptions(input.observability, "quiz_generation"),
+          })
+        ).object;
 
   return normalizeQuizQuestions(object, input.slots);
 }
@@ -59,6 +69,7 @@ async function writeQuestions(input: {
   provider: LlmProvider;
   apiKey: string;
   slots: AiSlot[];
+  observability?: AiObservabilityContext;
 }): Promise<QuizQuestion[]> {
   if (input.slots.length === 0) return [];
 
@@ -84,6 +95,7 @@ export async function generateQuizQuestions(input: {
   apiKey: string;
   plan: AiQuizPlan;
   source: DistractorSource;
+  observability?: AiObservabilityContext;
 }): Promise<QuizQuestion[]> {
   const { plan, source } = input;
   if (plan.terms.length === 0) {
@@ -94,6 +106,7 @@ export async function generateQuizQuestions(input: {
     provider: input.provider,
     apiKey: input.apiKey,
     slots: plan.slots,
+    observability: input.observability,
   });
 
   const byTermId = new Map(plan.built);

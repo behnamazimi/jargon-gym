@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics/track";
 import { useReducer, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { checkImportAgainstDestination } from "@/app/(private)/app/import/actions";
 import {
@@ -198,6 +199,12 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
         ? { domainId: existing.id }
         : { name: newName.trim(), language };
     if (mode === "new" && !adapter) writeLanguagePref(language);
+    track("import_submitted", {
+      source: json ? "json" : "paste",
+      format,
+      destination_mode: mode,
+      term_count: summary.toAdd,
+    });
 
     startCommit(async () => {
       const failed = await submitTerms({

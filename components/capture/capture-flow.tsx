@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics/track";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { CaptureDuplicateNote } from "@/components/capture/capture-duplicate-note";
@@ -139,6 +140,7 @@ function CaptureForm({ collections, presetId, shared = { kind: "none" } }: Captu
       create: prepared.relationships,
     });
     if (!ok) return;
+    track("term_created", { has_definition: !unfinished });
     saveDestinationPref(destination.id);
     void loadTerms(destination.id);
 

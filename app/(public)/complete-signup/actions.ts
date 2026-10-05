@@ -1,9 +1,11 @@
 "use server";
 
+import { trackServer } from "@/lib/analytics/server";
 import { redirect } from "next/navigation";
 import { formatSignupError } from "@/lib/auth/format-auth-error";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
 import { safeNextPath } from "@/lib/auth/safe-next-path";
+import { getSessionUser } from "@/lib/auth/require-session";
 import { createClient } from "@/lib/supabase/server";
 
 export type CompleteSignupState = { error: string } | null;
@@ -26,6 +28,10 @@ export async function redeemReferralCode(
   if (error) {
     return { error: formatSignupError(error) };
   }
+
+  const { user } = await getSessionUser();
+  if (user)
+    trackServer(user.id, "user_signed_up", { method: "google", needs_email_confirmation: false });
 
   const next = safeNextPath(formData.get("next")?.toString() ?? null);
   redirect(next);

@@ -1,5 +1,6 @@
 "use server";
 
+import { trackServer } from "@/lib/analytics/server";
 import { after } from "next/server";
 import { z } from "zod";
 import { getAppOrigin } from "@/lib/auth/app-origin";
@@ -65,6 +66,7 @@ export async function requestAccess(
   }
 
   if (insertResult.isNewRequest) {
+    trackServer(crypto.randomUUID(), "access_requested", { $process_person_profile: false });
     scheduleAdminNotification(email);
   }
   return { success: true };

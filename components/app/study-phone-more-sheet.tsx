@@ -1,5 +1,6 @@
 "use client";
 
+import { resetAnalytics } from "@/lib/analytics/track";
 import { Bug, Download, LogOut, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -24,6 +25,7 @@ export function MoreSheet() {
 
   async function handleLogout() {
     setIsBusy(true);
+    resetAnalytics();
     await logout();
   }
 

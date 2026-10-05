@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics/track";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { LanguageToggle } from "@/components/shared/language-toggle";
@@ -24,6 +25,7 @@ export function FirstCollectionForm() {
     event.preventDefault();
     if (!canCreate) return;
     await createEmptyCollection({ name: name.trim(), language }, (domainId) => {
+      track("collection_created", { language, creation_source: "first_capture" });
       const params = new URLSearchParams(searchParams.toString());
       params.set("to", domainId);
       router.replace(`/app/capture?${params.toString()}`);

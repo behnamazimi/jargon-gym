@@ -1,5 +1,6 @@
 "use server";
 
+import { trackServer } from "@/lib/analytics/server";
 import { redirect } from "next/navigation";
 import { formatLoginError } from "@/lib/auth/format-auth-error";
 import { safeNextPath } from "@/lib/auth/safe-next-path";
@@ -16,11 +17,13 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: formatLoginError(error) };
   }
+
+  trackServer(data.user.id, "user_logged_in", { method: "email" });
 
   const next = safeNextPath(formData.get("next")?.toString() ?? null);
   redirect(next);

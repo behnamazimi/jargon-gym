@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics/track";
 import { ChevronDown } from "lucide-react";
 import { useState, useTransition } from "react";
 import { createRequest } from "@/app/(private)/app/import/request/actions";
@@ -125,8 +126,10 @@ export function RequestForm({
         knownTerms: known,
         notifyEmail: true,
       });
-      if (result.ok) setSent(result);
-      else setError(result.message);
+      if (result.ok) {
+        track("collection_request_submitted", { kind, language, requested_size: size });
+        setSent(result);
+      } else setError(result.message);
     });
   }
 

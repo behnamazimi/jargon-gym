@@ -33,6 +33,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env-template
+!.env.example
 
 # vercel
 .vercel
@@ -55,3 +56,4 @@ ui-debug.log*
 .cache/firebase/
 **/.dataconnect/
 certificates
+.env

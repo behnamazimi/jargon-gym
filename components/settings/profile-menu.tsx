@@ -1,5 +1,6 @@
 "use client";
 
+import { resetAnalytics } from "@/lib/analytics/track";
 import { Bug, Download, LogOut, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
@@ -37,6 +38,7 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
 
   async function handleLogout() {
     setIsBusy(true);
+    resetAnalytics();
     await logout();
   }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { trackException } from "@/lib/analytics/track";
 import { AlertTriangle } from "lucide-react";
 import { Figtree, Fraunces } from "next/font/google";
 import { useEffect } from "react";
@@ -33,6 +34,7 @@ export default function GlobalError({ error, reset, unstable_retry }: GlobalErro
   const retry = unstable_retry ?? reset;
 
   useEffect(() => {
+    trackException(error);
     console.error(error);
   }, [error]);
 

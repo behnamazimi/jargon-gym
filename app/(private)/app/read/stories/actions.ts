@@ -2,7 +2,10 @@
 
 import { after } from "next/server";
 import { z } from "zod";
+import { trackServer } from "@/lib/analytics/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { createAiTurn } from "@/lib/ai/observability";
+import { runAiTurn } from "@/lib/ai/observability-server";
 import { recordRead } from "@/lib/terms/review-outcome";
 import { withRunGuard } from "@/lib/ai/run-guard";
 import { runMetered } from "@/lib/ai/run-metered";
@@ -79,7 +82,10 @@ export async function generateStoryAction(input: {
 
   try {
     const access = await resolveAiAccess(auth.supabase, admin, userId, "story");
-    if (access.kind === "unavailable") return noAiFailure(access.reason, "write stories");
+    if (access.kind === "unavailable") {
+      trackServer(userId, "ai_generation_blocked", { feature: "story", reason: access.reason });
+      return noAiFailure(access.reason, "write stories");
+    }
     usingCredits = access.kind === "credits";
 
     await savePrefs(admin, userId, domainId, levels);
@@ -101,23 +107,27 @@ export async function generateStoryAction(input: {
       definition: card.definition,
     }));
 
+    const observability = createAiTurn(userId, "story_generation");
     // Everything the user receives, so a failure anywhere in here refunds the credits.
     const produce = async () => {
-      const generated = await generateStory({
-        provider: access.provider,
-        apiKey: access.apiKey,
-        terms,
-        collectionName: collection.name,
-        language: collection.language,
-        format,
-        tone,
-        readingLevel,
-        cefrLevel,
-        pieceLength,
-        outline,
-        setting: pickSetting(format.id),
-        recentTitles,
-      });
+      const generated = await runAiTurn(observability, () =>
+        generateStory({
+          provider: access.provider,
+          apiKey: access.apiKey,
+          terms,
+          collectionName: collection.name,
+          language: collection.language,
+          format,
+          tone,
+          readingLevel,
+          cefrLevel,
+          pieceLength,
+          outline,
+          setting: pickSetting(format.id),
+          recentTitles,
+          observability,
+        }),
+      );
 
       const usedIds = new Set(generated.termIds);
       const story = await insertStory(admin, {
@@ -150,6 +160,9 @@ export async function generateStoryAction(input: {
         produce,
       );
       if (!outcome.charged) {
+        if (outcome.reason !== "busy") {
+          trackServer(userId, "ai_generation_blocked", { feature: "story", reason: "credits" });
+        }
         return outcome.reason === "busy" ? busyFailure() : creditsRefusedFailure(outcome, "story");
       }
       produced = outcome.value;
@@ -164,11 +177,24 @@ export async function generateStoryAction(input: {
       (err: unknown) => console.error("Failed to dismiss older stories:", err),
     );
 
+    trackServer(userId, "story_generated", {
+      format: format.id,
+      tone: tone.id,
+      reading_level: readingLevel,
+      cefr_level: cefrLevel,
+      piece_length: pieceLength,
+      language: collection.language,
+      has_outline: outline !== null,
+      term_count: produced.usedIds.size,
+      billing: usingCredits ? "credits" : "own_key",
+    });
+
     return {
       story: produced.story,
       terms: terms.filter((term) => produced.usedIds.has(term.id)),
     };
   } catch (err) {
+    trackServer(userId, "ai_generation_failed", { feature: "story", using_credits: usingCredits });
     return storyFailure(err, usingCredits);
   }
 }
@@ -195,6 +221,7 @@ export async function markStoryReadAction(
         }
       }
     });
+    trackServer(userId, "story_read", { term_count: marked.termIds.length });
     return { readAt: marked.readAt };
   } catch (err) {
     console.error("markStoryReadAction failed:", err);

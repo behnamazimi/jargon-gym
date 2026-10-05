@@ -1,6 +1,9 @@
 "use server";
 
+import { trackServer } from "@/lib/analytics/server";
 import { applyQuizAnswer } from "@/lib/terms/review-outcome";
+import { createAiTurn } from "@/lib/ai/observability";
+import { runAiTurn } from "@/lib/ai/observability-server";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { withRunGuard } from "@/lib/ai/run-guard";
 import { runMetered } from "@/lib/ai/run-metered";
@@ -87,6 +90,7 @@ async function generateAiQuizResult(
     return { error: NOTHING_ELIGIBLE_ERROR };
   }
   if (access.kind === "unavailable") {
+    trackServer(auth.user.id, "ai_generation_blocked", { feature: "quiz", reason: access.reason });
     return noAiFailure(access.reason, "generate AI quizzes");
   }
 
@@ -95,8 +99,19 @@ async function generateAiQuizResult(
   // The plan decides which questions the model writes before anything is charged,
   // so only those are paid for.
   const plan = await planAiQuiz(terms, source);
+  const observability = createAiTurn(auth.user.id, "quiz_generation");
   const generate = () =>
-    generateQuizQuestions({ provider: access.provider, apiKey: access.apiKey, plan, source });
+    plan.slots.length === 0
+      ? generateQuizQuestions({ provider: access.provider, apiKey: access.apiKey, plan, source })
+      : runAiTurn(observability, () =>
+          generateQuizQuestions({
+            provider: access.provider,
+            apiKey: access.apiKey,
+            plan,
+            source,
+            observability,
+          }),
+        );
 
   if (plan.slots.length === 0) {
     return { questions: await generate(), terms, providerLabel };
@@ -112,6 +127,7 @@ async function generateAiQuizResult(
       return { questions: guarded.value, terms, providerLabel };
     } catch (err) {
       console.error("AI quiz with own key failed:", err);
+      trackServer(auth.user.id, "ai_generation_failed", { feature: "quiz", using_credits: false });
       return quizFailure(err, false);
     }
   }
@@ -127,11 +143,15 @@ async function generateAiQuizResult(
       generate,
     );
     if (!outcome.charged) {
+      if (outcome.reason !== "busy") {
+        trackServer(auth.user.id, "ai_generation_blocked", { feature: "quiz", reason: "credits" });
+      }
       return outcome.reason === "busy" ? busyFailure() : creditsRefusedFailure(outcome, "quiz");
     }
     return { questions: outcome.value, terms, providerLabel };
   } catch (err) {
     console.error("AI quiz with credits failed:", err);
+    trackServer(auth.user.id, "ai_generation_failed", { feature: "quiz", using_credits: true });
     return quizFailure(err, true);
   }
 }
@@ -157,9 +177,16 @@ export async function generateQuizAction(input: {
       countResult.questionCount,
     );
 
-    return input.questionStyle === "simple"
-      ? await generateSimpleQuizResult(auth, termsPromise)
-      : await generateAiQuizResult(auth, termsPromise);
+    const result =
+      input.questionStyle === "simple"
+        ? await generateSimpleQuizResult(auth, termsPromise)
+        : await generateAiQuizResult(auth, termsPromise);
+
+    if (!("error" in result) && input.questionStyle !== "simple") {
+      trackServer(auth.user.id, "ai_quiz_generated", { question_count: result.questions.length });
+    }
+
+    return result;
   } catch (err) {
     console.error("Quiz generation failed:", err);
     return { error: "Couldn't generate the quiz. Try again." };

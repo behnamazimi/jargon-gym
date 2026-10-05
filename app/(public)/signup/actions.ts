@@ -1,5 +1,6 @@
 "use server";
 
+import { trackServer } from "@/lib/analytics/server";
 import { redirect } from "next/navigation";
 import { formatSignupError } from "@/lib/auth/format-auth-error";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
@@ -50,6 +51,13 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
 
   if (error) {
     return { error: formatSignupError(error) };
+  }
+
+  if (data.user) {
+    trackServer(data.user.id, "user_signed_up", {
+      method: "email",
+      needs_email_confirmation: !data.session,
+    });
   }
 
   // No session yet means the project wants the email confirmed first.
