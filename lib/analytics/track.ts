@@ -1,10 +1,13 @@
 import posthog from "posthog-js";
+import { analyticsEnabled } from "./enabled";
 
 type EventProperties = Record<string, boolean | number | string | null>;
 
 function isConfigured() {
   return Boolean(
-    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    analyticsEnabled &&
+    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
+    process.env.NEXT_PUBLIC_POSTHOG_HOST,
   );
 }
 

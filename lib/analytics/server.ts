@@ -1,5 +1,6 @@
 import { PostHog } from "posthog-node";
 import { after } from "next/server";
+import { analyticsEnabled } from "./enabled";
 
 type EventProperties = Record<string, boolean | number | string | null>;
 
@@ -9,7 +10,10 @@ export function getPostHogServer() {
   if (client !== undefined) return client;
   const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
   const host = process.env.POSTHOG_SERVER_HOST ?? process.env.NEXT_PUBLIC_POSTHOG_HOST;
-  client = token && host ? new PostHog(token, { host, flushAt: 1, flushInterval: 0 }) : null;
+  client =
+    analyticsEnabled && token && host
+      ? new PostHog(token, { host, flushAt: 1, flushInterval: 0 })
+      : null;
   return client;
 }
 
