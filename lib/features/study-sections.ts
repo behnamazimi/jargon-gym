@@ -4,25 +4,21 @@ export const STUDY_SECTIONS: FeatureSection[] = [
   {
     layout: "split",
     id: "start",
-    title: "Start without the effort",
+    title: "Get your terms in",
     lead: "Getting your first collection in is quick.",
     scene: "start",
     items: [
       {
-        title: "Shared collections",
+        title: "Add a shared collection",
         body: "Search what other members shared and add it in one tap. Remove it any time.",
       },
       {
         title: "Paste a list",
-        body: "From Notes, a spreadsheet or a table. A Check screen shows what will be added first.",
+        body: "From Notes, a spreadsheet or a table. You check it before anything is added, and no AI reads it.",
       },
       {
-        title: "Bring a deck",
-        body: "Export guides for Quizlet, Anki, Google Translate, Noji, Mochi, Brainscape, Duolingo and Memrise.",
-      },
-      {
-        title: "Import JSON",
-        body: "A documented format, plus a prompt that has any LLM draft a glossary for a field or language.",
+        title: "Bring a deck from another app",
+        body: "Export guides for Quizlet, Anki, Duolingo and five more apps. Or import JSON, with a prompt any AI chat can use to draft a glossary.",
       },
       {
         title: "Save one term",
@@ -32,10 +28,36 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         title: "Request a collection",
         body: "Can't find one? Ask for it and get a private copy when it's built.",
       },
+    ],
+  },
+  {
+    layout: "split",
+    id: "study",
+    title: "Read, review, quiz",
+    lead: "Three ways to study, and each one puts the terms you're shakiest on first.",
+    scene: "study",
+    items: [
       {
-        title: "Import without AI",
-        body: "Nothing you paste is sent to a model. Parsing is plain rules, so it is free.",
+        title: "Read",
+        body: "See a term with real usage and get familiar before anyone tests you.",
       },
+      {
+        title: "Review",
+        body: "Recall it first, then reveal and rate yourself: Again, Hard, Good or Easy.",
+      },
+      {
+        title: "Quiz",
+        body: "Free questions come from your definitions. AI-written questions are sharper.",
+      },
+      {
+        title: "Shakiest first",
+        body: "Each mode ranks terms by what you're most likely to forget.",
+      },
+      {
+        title: "Study in any order",
+        body: "Most people read, then review, then quiz. You can skip around.",
+      },
+      { title: "One collection or all", body: "Pick the scope for each session." },
     ],
   },
   {
@@ -50,25 +72,12 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         body: "Example, mental model, in practice, anti-example, debated and relationships to nearby terms.",
       },
       {
-        title: "Read",
-        body: "See a term with real usage and get familiar before anyone tests you.",
-      },
-      {
-        title: "Review",
-        body: "Recall it first, then reveal and rate yourself: Again, Hard, Good or Easy.",
-      },
-      {
-        title: "Quiz",
-        body: "Free questions come from your definitions. AI-written questions are sharper.",
-      },
-      {
-        title: "Study in any order",
-        body: "Most people read, then review, then quiz. You can skip around.",
-      },
-      { title: "One collection or all", body: "Pick the scope for each session." },
-      {
         title: "Hear any term",
         body: "Play a spoken clip from a term card.",
+      },
+      {
+        title: "Fields and languages",
+        body: "Terms of a trade, or words and phrases in a language you're learning.",
       },
     ],
   },
@@ -80,8 +89,8 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     scene: "stories",
     items: [
       {
-        title: "From your queue",
-        body: "Each story uses the terms your queue ranks next.",
+        title: "Your next terms",
+        body: "Each story uses the terms you're due to see next.",
       },
       {
         title: "Style, setting, difficulty",
@@ -99,28 +108,20 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     layout: "split",
     id: "listen",
     title: "Listen and shadow in Stories",
-    lead: "Every story can be read aloud in a natural AI voice. Turn on shadowing to repeat each sentence out loud.",
+    lead: "Every story can be read aloud in an AI voice. Turn on shadowing to repeat each sentence out loud.",
     scene: "hear",
     items: [
       {
-        title: "AI voices",
-        body: "Stories are read aloud, with a backup voice so playback keeps working.",
-      },
-      {
-        title: "Sentence highlight",
-        body: "The sentence being spoken lights up and the page follows along.",
+        title: "Read aloud, line by line",
+        body: "The sentence being spoken lights up and the page follows along. A backup voice keeps playback working.",
       },
       {
         title: "Shadowing",
         body: "Hear a sentence, then say it in the gap. Pauses of 1×, 1.5× or 2× the sentence.",
       },
       {
-        title: "Repeat or loop",
-        body: "Play each sentence 2, 3 or 5 times, or loop it until you stop.",
-      },
-      {
-        title: "Speed control",
-        body: "Slow a hard sentence down, or speed up an easy one.",
+        title: "Repeat, loop or slow down",
+        body: "Play each sentence 2, 3 or 5 times or on a loop, and change the speed.",
       },
       { title: "Tap any sentence", body: "Jump to it and hear it again." },
     ],
@@ -129,7 +130,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     layout: "split",
     id: "no-guilt",
     title: "Nothing to fall behind on",
-    lead: "Lobyas keeps no schedule for you, so you can come back whenever you like.",
+    lead: "Come back after a day or a month. Nothing piles up.",
     scene: "noGuilt",
     items: [
       {
@@ -137,12 +138,8 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         body: "Nothing is overdue and nothing piles up while you're away.",
       },
       {
-        title: "Shakiest first",
-        body: "Each mode ranks terms by what you're most likely to forget.",
-      },
-      {
         title: "Skip what you know",
-        body: "Swipe through a deck of terms: right for known, left for not yet. Undo the last one if you slip.",
+        body: "Swipe through your terms: right for known, left for not yet. Undo the last one if you slip.",
       },
       { title: "Mark known anywhere", body: "From the Library, a card or a story." },
       {
@@ -160,7 +157,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     items: [
       {
         title: "Mastery per term",
-        body: "One number blended from reading, recall and recognition.",
+        body: "One number built from what you read, review and quiz.",
       },
       {
         title: "Known, learning, unknown",

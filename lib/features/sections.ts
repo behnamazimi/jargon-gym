@@ -24,8 +24,8 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       },
       {
         icon: "globe",
-        title: "Shared collections",
-        body: "Browse, love the good ones and report problems.",
+        title: "Browse shared collections",
+        body: "Love the good ones and report problems.",
       },
       { icon: "download", title: "Export", body: "Take a collection out as text or JSON." },
     ],
@@ -34,7 +34,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     layout: "cards",
     id: "everywhere",
     title: "Wherever you are",
-    lead: "Your queue is the same wherever you open it.",
+    lead: "Pick up where you left off on any device.",
     items: [
       {
         icon: "phone",

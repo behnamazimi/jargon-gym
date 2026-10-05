@@ -1,4 +1,11 @@
-export type FeatureSceneKey = "start" | "learn" | "hear" | "stories" | "noGuilt" | "progress";
+export type FeatureSceneKey =
+  | "start"
+  | "study"
+  | "learn"
+  | "hear"
+  | "stories"
+  | "noGuilt"
+  | "progress";
 
 export type FeatureIconKey =
   | "book"
