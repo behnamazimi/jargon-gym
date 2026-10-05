@@ -23,3 +23,9 @@ export async function getNarrationAccessForUser(
   if (error) console.error("Couldn't check narration access:", error);
   return data ?? false;
 }
+
+/** Admins can play clips from the admin pages without being on the allowlist. */
+export async function isAdminAccount(client: Client, userId: string): Promise<boolean> {
+  const { data } = await client.from("users").select("role").eq("id", userId).maybeSingle();
+  return data?.role === "admin";
+}

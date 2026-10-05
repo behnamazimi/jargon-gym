@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { computeTermEvalHash } from "@/lib/terms/term-eval/content-hash";
 import { computeContentHash } from "@/lib/narration/content-hash";
-import { computeContentHashV2 } from "@/lib/narration/content-hash-v2";
+import { computeContentHashV2, computeTermOnlyHash } from "@/lib/narration/content-hash-v2";
 
 // These values were computed before category and definition became nullable.
 // If one changes, every cached narration or evaluation is thrown away.
@@ -37,6 +37,12 @@ describe("content hashes stay put for existing terms", () => {
   it("narration v2", () => {
     expect(computeContentHashV2(narrated, "nl")).toBe(
       "9cf81b113d3766719c95b3952870b1d6385c73c5321dcd2417c574208bc8e06b",
+    );
+  });
+
+  it("narration term only", () => {
+    expect(computeTermOnlyHash("SLA", "nl")).toBe(
+      "0cf7ffc7b405437f4f2d985e3118209946ca50160a4c53f966b4892e49b5c60a",
     );
   });
 

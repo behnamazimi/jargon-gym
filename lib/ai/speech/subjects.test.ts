@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeContentHash } from "@/lib/narration/content-hash";
-import { computeContentHashV2 } from "@/lib/narration/content-hash-v2";
+import { computeContentHashV2, computeTermOnlyHash } from "@/lib/narration/content-hash-v2";
 import { loadStorySubject, loadTermSubject } from "./subjects";
 
 const FIELDS = {
@@ -13,10 +13,12 @@ const FIELDS = {
   controversy: null,
 };
 
-function clientReturning(data: unknown) {
+function clientReturning(data: unknown, mode?: "term" | "full") {
+  const settings = mode ? [{ domain_id: "d1", mode }] : [];
   return {
     from: () => ({
       select: () => ({
+        in: async () => ({ data: settings, error: null }),
         eq: () => ({
           eq: () => ({ maybeSingle: async () => ({ data, error: null }) }),
           maybeSingle: async () => ({ data, error: null }),
@@ -26,13 +28,19 @@ function clientReturning(data: unknown) {
   } as never;
 }
 
+const TERM_ROW = { ...FIELDS, domain_id: "d1", domains: { language: "nl" } };
+
 describe("loadTermSubject", () => {
-  it("hashes with the collection language (version 2) and keeps the old hash for version 1 clips", async () => {
-    const subject = await loadTermSubject(
-      clientReturning({ ...FIELDS, domains: { language: "nl" } }),
-      "t1",
-    );
+  it("uses the term name alone by default, with no version 1 hash", async () => {
+    const subject = await loadTermSubject(clientReturning(TERM_ROW), "t1");
     expect(subject).toMatchObject({ type: "term", id: "t1", userId: null });
+    expect(subject?.contentHash).toBe(computeTermOnlyHash("Closure", "nl"));
+    expect(subject?.legacyHash).toBeUndefined();
+    expect(await subject?.loadScript()).toEqual({ script: "Closure.", language: "nl" });
+  });
+
+  it("in full mode hashes with the collection language (version 2) and keeps the old hash for version 1 clips", async () => {
+    const subject = await loadTermSubject(clientReturning(TERM_ROW, "full"), "t1");
     expect(subject?.contentHash).toBe(computeContentHashV2(FIELDS, "nl"));
     expect(subject?.contentHash).not.toBe(computeContentHashV2(FIELDS, "en"));
     expect(subject?.legacyHash).toBe(computeContentHash(FIELDS));

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
 import { computeContentHash } from "./content-hash";
-import { computeContentHashV2 } from "./content-hash-v2";
+import { computeContentHashV2, computeTermOnlyHash } from "./content-hash-v2";
 import type { NarratedTermFields } from "./types";
 
 vi.mock("next/server", () => ({
@@ -23,7 +23,8 @@ const {
   enqueueNarrationSync,
   getLastNarrationSyncJob,
   isCurrentAudio,
-  listCollectionNarrationCoverage,
+  getCollectionNarrationCoverage,
+  listCollectionTermClips,
   listMissingNarrationTermIds,
   processNarrationSyncBatch,
   processNarrationSyncTick,
@@ -46,6 +47,7 @@ const FIELDS: NarratedTermFields = {
 };
 const HASH = computeContentHash(FIELDS);
 const HASH_V2 = computeContentHashV2(FIELDS, "en");
+const HASH_TERM = computeTermOnlyHash(FIELDS.term, "en");
 const READY = { status: "ready", job: {} } as unknown as Awaited<
   ReturnType<typeof getOrCreateAudio>
 >;
@@ -68,7 +70,7 @@ function audioJob(
     subject_id: termId,
     status: "ready",
     hash_version: 2,
-    content_hash: HASH_V2,
+    content_hash: HASH_TERM,
     storage_path: `audio/term/${termId}.mp3`,
     ...overrides,
   };
@@ -99,6 +101,7 @@ type Store = {
   terms: ReturnType<typeof termRow>[];
   audioJobs: ReturnType<typeof audioJob>[];
   domains: { id: string; name: string }[];
+  settings: { domain_id: string; mode: string }[];
   claim: { job_id: string; term_id: string; cursor: number; term_count: number }[];
   insertErrorCode?: string;
 };
@@ -115,6 +118,7 @@ function makeClient(store: Store): Client {
     if (table === "audio_jobs") return store.audioJobs;
     if (table === "domains") return store.domains;
     if (table === "narration_sync_jobs") return store.jobs;
+    if (table === "collection_narration_settings") return store.settings;
     if (table === "ai_feature_settings") {
       return [{ feature: "narration_term", enabled: store.enabled }];
     }
@@ -222,6 +226,10 @@ function makeClient(store: Store): Client {
         range: () => finish("list"),
         single: () => finish("single"),
         maybeSingle: () => finish("maybe"),
+        // The real query builder is awaitable after `.in()`; the fake has to be too.
+        // oxlint-disable-next-line unicorn/no-thenable
+        then: (resolve: (value: unknown) => unknown, reject: (reason: unknown) => unknown) =>
+          finish("list").then(resolve, reject),
       });
       return builder;
     },
@@ -236,6 +244,7 @@ function emptyStore(overrides: Partial<Store> = {}): Store {
     terms: [],
     audioJobs: [],
     domains: [{ id: DOMAIN_ID, name: "Product" }],
+    settings: [],
     claim: [],
     ...overrides,
   };
@@ -253,34 +262,47 @@ describe("isCurrentAudio", () => {
   const term = termRow("term-1");
 
   it("is true only for ready audio that matches the current hash", () => {
-    expect(isCurrentAudio(term, undefined)).toBe(false);
-    expect(isCurrentAudio(term, audioJob("term-1"))).toBe(true);
-    expect(isCurrentAudio(term, audioJob("term-1", { status: "failed", storage_path: null }))).toBe(
-      false,
-    );
+    expect(isCurrentAudio(term, undefined, "term")).toBe(false);
+    expect(isCurrentAudio(term, audioJob("term-1"), "term")).toBe(true);
     expect(
-      isCurrentAudio(term, audioJob("term-1", { status: "pending", storage_path: null })),
+      isCurrentAudio(term, audioJob("term-1", { status: "failed", storage_path: null }), "term"),
     ).toBe(false);
-    expect(isCurrentAudio(term, audioJob("term-1", { content_hash: "stale" }))).toBe(false);
+    expect(
+      isCurrentAudio(term, audioJob("term-1", { status: "pending", storage_path: null }), "term"),
+    ).toBe(false);
+    expect(isCurrentAudio(term, audioJob("term-1", { content_hash: "stale" }), "term")).toBe(false);
   });
 
-  it("keeps a version 1 clip while its own hash still matches", () => {
-    const v1 = audioJob("term-1", { hash_version: 1, content_hash: HASH });
-    expect(isCurrentAudio(term, v1)).toBe(true);
-    expect(isCurrentAudio({ ...term, definition: "Edited." }, v1)).toBe(false);
-  });
-
-  it("makes a version 1 clip stale only through its fields, not the language", () => {
-    const v1 = audioJob("term-1", { hash_version: 1, content_hash: HASH });
-    expect(isCurrentAudio({ ...term, domains: { language: "nl" } }, v1)).toBe(true);
-    expect(isCurrentAudio({ ...term, domains: { language: "nl" } }, audioJob("term-1"))).toBe(
-      false,
+  it("does not remake a term-only clip when a field that is not spoken changes", () => {
+    expect(isCurrentAudio({ ...term, definition: "Edited." }, audioJob("term-1"), "term")).toBe(
+      true,
     );
+    expect(isCurrentAudio({ ...term, term: "Other" }, audioJob("term-1"), "term")).toBe(false);
+  });
+
+  it("makes a clip from the other mode stale", () => {
+    const full = audioJob("term-1", { content_hash: HASH_V2 });
+    expect(isCurrentAudio(term, full, "full")).toBe(true);
+    expect(isCurrentAudio(term, full, "term")).toBe(false);
+    expect(isCurrentAudio(term, audioJob("term-1"), "full")).toBe(false);
+  });
+
+  it("keeps a version 1 clip valid in full mode only, while its own hash matches", () => {
+    const v1 = audioJob("term-1", { hash_version: 1, content_hash: HASH });
+    expect(isCurrentAudio(term, v1, "full")).toBe(true);
+    expect(isCurrentAudio({ ...term, definition: "Edited." }, v1, "full")).toBe(false);
+    expect(isCurrentAudio(term, v1, "term")).toBe(false);
+  });
+
+  it("makes a term-only clip stale when the language changes", () => {
+    expect(
+      isCurrentAudio({ ...term, domains: { language: "nl" } }, audioJob("term-1"), "term"),
+    ).toBe(false);
   });
 });
 
 describe("listMissingNarrationTermIds", () => {
-  it("returns terms with no live job, a failed or pending one, or a stale hash; a version 1 clip that still matches is current", async () => {
+  it("returns terms with no live job, a failed or pending one, or a stale hash", async () => {
     const store = emptyStore({
       terms: [
         termRow("t-missing"),
@@ -303,27 +325,51 @@ describe("listMissingNarrationTermIds", () => {
       "t-missing",
       "t-failed",
       "t-stale",
+      "t-old-version",
       "t-superseded",
     ]);
   });
+
+  it("follows the collection's mode", async () => {
+    const store = emptyStore({
+      terms: [termRow("t1")],
+      audioJobs: [audioJob("t1", { content_hash: HASH_V2 })],
+      settings: [{ domain_id: DOMAIN_ID, mode: "full" }],
+    });
+    await expect(listMissingNarrationTermIds(makeClient(store), DOMAIN_ID)).resolves.toEqual([]);
+  });
 });
 
-describe("listCollectionNarrationCoverage", () => {
-  it("counts missing terms per collection", async () => {
+describe("getCollectionNarrationCoverage", () => {
+  it("splits terms into current, stale and missing", async () => {
     const store = emptyStore({
-      terms: [termRow("t1"), termRow("t2"), termRow("other", "dom-2")],
+      terms: [termRow("t-current"), termRow("t-stale"), termRow("t-missing")],
+      audioJobs: [audioJob("t-current"), audioJob("t-stale", { content_hash: HASH_V2 })],
+    });
+
+    await expect(getCollectionNarrationCoverage(makeClient(store), DOMAIN_ID)).resolves.toEqual({
+      total: 3,
+      current: 1,
+      stale: 1,
+      missing: 1,
+    });
+  });
+});
+
+describe("listCollectionTermClips", () => {
+  it("filters by state and reports the filtered total", async () => {
+    const store = emptyStore({
+      terms: [termRow("t1"), termRow("t2")],
       audioJobs: [audioJob("t1")],
     });
 
     await expect(
-      listCollectionNarrationCoverage(makeClient(store), [
-        { id: DOMAIN_ID, name: "Product" },
-        { id: "dom-2", name: "Other" },
-      ]),
-    ).resolves.toEqual([
-      { domainId: DOMAIN_ID, name: "Product", missingCount: 1 },
-      { domainId: "dom-2", name: "Other", missingCount: 1 },
-    ]);
+      listCollectionTermClips(makeClient(store), DOMAIN_ID, {
+        page: 1,
+        pageSize: 25,
+        state: "missing",
+      }),
+    ).resolves.toEqual({ clips: [{ id: "t2", term: "Closure", state: "missing" }], total: 1 });
   });
 });
 

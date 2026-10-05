@@ -7,7 +7,12 @@ import { findActable } from "@/lib/admin/collections/find-actable";
 import { throwRpcError } from "@/lib/admin/rpc-error";
 import { REPORT_REASONS, TAKEDOWN_NOTE_MAX } from "@/lib/collections/moderation";
 
-const MODERATION_REVALIDATE = ["/admin/collections", "/admin", "/app/browse"];
+const MODERATION_REVALIDATE = [
+  "/admin/collections",
+  "/admin/collections/[id]",
+  "/admin",
+  "/app/browse",
+];
 
 const idSchema = z.guid();
 const stopSchema = z.object({

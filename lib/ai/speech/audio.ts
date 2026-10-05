@@ -25,7 +25,9 @@ export function isCurrentJob(
   subject: Pick<SpeechSubject, "contentHash" | "legacyHash">,
 ): boolean {
   if (job.status !== "ready" || !job.storage_path) return false;
-  if (job.hash_version === 1) return job.content_hash === subject.legacyHash;
+  if (job.hash_version === 1) {
+    return subject.legacyHash !== undefined && job.content_hash === subject.legacyHash;
+  }
   return job.hash_version === CURRENT_HASH_VERSION && job.content_hash === subject.contentHash;
 }
 

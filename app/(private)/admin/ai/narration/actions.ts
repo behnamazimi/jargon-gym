@@ -11,7 +11,6 @@ import {
   enqueueNarrationSync,
   getLastNarrationSyncJob,
   kickNarrationSyncWorker,
-  listCollectionNarrationCoverage,
 } from "@/lib/narration/sync";
 import { capsSchema, type CapsInput } from "@/lib/narration/caps-schema";
 import { isActiveNarrationSyncStatus } from "@/lib/narration/sync-shared";
@@ -206,17 +205,4 @@ export async function resumeNarrationSync() {
 
 export async function getNarrationSyncStatus() {
   return runAdminAction(() => getLastNarrationSyncJob(createAdminClient()));
-}
-
-export async function getNarrationSyncCoverage(collections: { id: string; name: string }[]) {
-  return runAdminAction(async ({ supabase, user }) => {
-    const allowed = await actableCollections(supabase, user.id);
-    return listCollectionNarrationCoverage(
-      createAdminClient(),
-      collections.flatMap((collection) => {
-        const name = allowed.get(collection.id);
-        return name === undefined ? [] : [{ id: collection.id, name }];
-      }),
-    );
-  });
 }

@@ -1,14 +1,13 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-import { ModerationBadges, ModerationCell } from "@/components/admin/collections/moderation-cell";
-import { EditUrlDialog } from "@/components/admin/collections/edit-url-dialog";
-import { KindSelect, kindLabel } from "@/components/admin/collections/kind-select";
-import { StatusSelect } from "@/components/admin/collections/status-select";
+import { ModerationBadges } from "@/components/admin/collections/moderation-cell";
 import { formatAdminDate } from "@/lib/admin/format";
 import { statusOf } from "@/lib/admin/collections/collection-status";
-import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
+import {
+  canNarrateCollection,
+  type AdminCollectionRow,
+} from "@/lib/admin/collections/list-all-collections";
+import { kindLabel } from "@/lib/terms/kinds";
+import { narrationModeLabel, type NarrationMode } from "@/lib/narration/mode";
 
 const STATUS_LABEL = {
   none: "Not built-in",
@@ -16,61 +15,39 @@ const STATUS_LABEL = {
   published: "Published",
 } as const;
 
-export function CollectionRow({ collection }: { collection: AdminCollectionRow }) {
-  const [editing, setEditing] = useState(false);
-  const canEditUrl = !collection.readOnly && (collection.isBuiltin || Boolean(collection.slug));
-
+export function CollectionRow({
+  collection,
+  narrationMode,
+}: {
+  collection: AdminCollectionRow;
+  narrationMode: NarrationMode;
+}) {
   return (
     <tr>
-      <td className="font-medium text-base-content">
-        {collection.isPublic && collection.slug ? (
-          <Link href={`/collections/${collection.slug}`} className="link">
-            {collection.name}
-          </Link>
-        ) : (
-          collection.name
-        )}
-        {collection.visibility === "shared" ? (
-          <span className="badge badge-ghost badge-sm ml-2">Shared</span>
-        ) : (
-          <span className="badge badge-ghost badge-sm ml-2">Private</span>
-        )}
+      <td className="min-w-64 font-medium text-base-content">
+        <Link href={`/admin/collections/${collection.id}`} className="link">
+          {collection.name}
+        </Link>
+        <span className="badge badge-ghost badge-sm ml-2">
+          {collection.visibility === "shared" ? "Shared" : "Private"}
+        </span>
       </td>
       <td className="text-base-content/65">{collection.ownerEmail ?? "—"}</td>
       <td className="text-base-content/65">{collection.termCount}</td>
       <td className="text-base-content/65">
         {collection.visibility === "shared" ? collection.loveCount : "—"}
       </td>
-      <td>
-        {collection.readOnly ? (
-          <span className="text-base-content/65">{kindLabel(collection.kind)}</span>
-        ) : (
-          <KindSelect collection={collection} />
-        )}
-      </td>
-      <td>
-        {collection.readOnly ? (
-          <span className="text-base-content/65">{STATUS_LABEL[statusOf(collection)]}</span>
-        ) : (
-          <StatusSelect collection={collection} />
-        )}
+      <td className="text-base-content/65">{kindLabel(collection.kind)}</td>
+      <td className="text-base-content/65">
+        {STATUS_LABEL[statusOf(collection)]}
         <ModerationBadges collection={collection} />
       </td>
       <td className="whitespace-nowrap text-base-content/65">
         {collection.slug ? `/collections/${collection.slug}` : "—"}
-        {canEditUrl ? (
-          <>
-            {" "}
-            <button type="button" className="btn btn-ghost btn-xs" onClick={() => setEditing(true)}>
-              Edit URL
-            </button>
-            {editing ? (
-              <EditUrlDialog collection={collection} onClose={() => setEditing(false)} />
-            ) : null}
-          </>
-        ) : null}
       </td>
-      <ModerationCell collection={collection} />
+      <td className="whitespace-nowrap text-base-content/65">
+        {canNarrateCollection(collection) ? narrationModeLabel(narrationMode) : "—"}
+      </td>
       <td className="text-base-content/65">{formatAdminDate(collection.updatedAt)}</td>
     </tr>
   );

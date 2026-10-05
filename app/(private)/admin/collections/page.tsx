@@ -7,6 +7,7 @@ import { collectionsHref, parseCollectionParams } from "@/lib/admin/collections/
 import { COLLECTION_LIST_LIMIT, queryCollections } from "@/lib/admin/collections/query";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { listAllCollectionsForAdmin } from "@/lib/admin/collections/list-all-collections";
+import { getNarrationModes } from "@/lib/narration/mode";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -18,12 +19,16 @@ export default async function AdminCollectionsPage({ searchParams }: PageProps) 
 
   const all = await listAllCollectionsForAdmin(supabase, user.id);
   const { rows, total, page, truncated } = queryCollections(all, params);
+  const narrationModes = await getNarrationModes(
+    supabase,
+    rows.map((row) => row.id),
+  );
 
   return (
     <>
       <AdminPageHeader
         title="Collections"
-        description="Built-in collections can be published as a public page. Other people's private collections are listed but can't be changed."
+        description="Open a collection to change its status, address, sharing and narration. Other people's private collections are listed but can't be changed."
       />
       <AdminTabs
         label="Collections"
@@ -56,11 +61,7 @@ export default async function AdminCollectionsPage({ searchParams }: PageProps) 
           Only the first {COLLECTION_LIST_LIMIT} collections are listed, so some are missing.
         </p>
       ) : null}
-      <p className="m-0 text-sm text-base-content/65">
-        Publishing also marks a collection built-in. Taking a published collection back offline asks
-        first.
-      </p>
-      <CollectionsTable rows={rows} />
+      <CollectionsTable rows={rows} narrationModes={narrationModes} />
       <AdminPagination
         page={page}
         total={total}

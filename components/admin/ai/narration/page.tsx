@@ -1,20 +1,21 @@
 "use client";
 
+import Link from "next/link";
 import {
   setNarrationEnabled,
   setNarrationProvider,
 } from "@/app/(private)/admin/ai/narration/actions";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminSection } from "@/components/admin/admin-section";
 import { AdminSettingRow } from "@/components/admin/admin-setting-row";
 import { AdminSwitch } from "@/components/admin/admin-switch";
 import { AllowlistManager } from "@/components/admin/ai/narration/allowlist-manager";
-import { AdminNarrationSync } from "@/components/admin/ai/narration/sync";
 import { AdminNarrationCaps } from "@/components/admin/ai/narration/caps";
 import type { NarrationSettings } from "@/lib/admin/narration/narration-settings";
 import type { AdminNarrationAllowlistRow } from "@/lib/admin/narration/list-narration-allowlist";
-import type {
-  CollectionNarrationCoverage,
-  NarrationSyncJobView,
+import {
+  isActiveNarrationSyncStatus,
+  type NarrationSyncJobView,
 } from "@/lib/narration/sync-shared";
 
 type AdminNarrationPageClientProps = {
@@ -26,7 +27,6 @@ type AdminNarrationPageClientProps = {
   providers: NarrationSettings["providers"];
   providerKeys: NarrationSettings["providers"];
   allowlist: AdminNarrationAllowlistRow[];
-  coverage: CollectionNarrationCoverage[];
   lastJob: NarrationSyncJobView | null;
 };
 
@@ -39,7 +39,6 @@ export function AdminNarrationPageClient({
   providers,
   providerKeys,
   allowlist,
-  coverage,
   lastJob,
 }: AdminNarrationPageClientProps) {
   return (
@@ -106,7 +105,29 @@ export function AdminNarrationPageClient({
 
       <AdminNarrationCaps caps={caps} usageLast24h={usageLast24h} />
       <AllowlistManager allowlist={allowlist} />
-      <AdminNarrationSync enabled={enabled} coverage={coverage} lastJob={lastJob} />
+      <AdminSection
+        id="narration-sync"
+        title="Audio sync"
+        description="Each collection has its own narration mode and audio sync. Only one sync runs at a time."
+      >
+        {lastJob && isActiveNarrationSyncStatus(lastJob.status) ? (
+          <p className="m-0 text-sm text-base-content/80">
+            Running now:{" "}
+            <Link href={`/admin/collections/${lastJob.domainId}#narration`} className="link">
+              {lastJob.domainName}
+            </Link>{" "}
+            ({Math.min(lastJob.cursor, lastJob.total)}/{lastJob.total})
+          </p>
+        ) : (
+          <p className="m-0 text-sm text-base-content/65">
+            No sync is running. Open a{" "}
+            <Link href="/admin/collections" className="link">
+              collection
+            </Link>{" "}
+            to set its mode and make its audio.
+          </p>
+        )}
+      </AdminSection>
     </>
   );
 }

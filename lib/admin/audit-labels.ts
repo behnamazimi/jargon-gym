@@ -1,3 +1,4 @@
+import { narrationModeLabel, parseNarrationMode } from "@/lib/narration/mode";
 import type { Json } from "@/lib/supabase/database.types";
 
 type Details = Record<string, Json | undefined>;
@@ -55,6 +56,11 @@ export const APP_AUDIT_ACTIONS = {
     describe: (d) => (d.emailSent === false ? "The email failed" : "Invite emailed"),
   },
   "app.invite_resend": { label: "Invite resent", describe: () => null },
+  "app.narration_mode_set": {
+    label: "Narration mode changed",
+    describe: (d) =>
+      `${text(d.name) ?? "?"}: ${narrationModeLabel(parseNarrationMode(d.from))} to ${narrationModeLabel(parseNarrationMode(d.to))}`,
+  },
   "app.narration_sync_start": {
     label: "Narration sync started",
     describe: (d) => (text(d.job) ? `Job ${text(d.job)}` : null),

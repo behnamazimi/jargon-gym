@@ -446,7 +446,7 @@ describe("setCollectionKind", () => {
 
   it("refreshes the public pages only when the collection is public", async () => {
     await setCollectionKind("d1", "vocabulary");
-    expect(state.revalidated).toEqual(["/admin/collections"]);
+    expect(state.revalidated).toEqual(["/admin/collections", "/admin/collections/[id]:page"]);
 
     state.revalidated = [];
     state.list = [domain({ slug: "cooking", is_public: true })];

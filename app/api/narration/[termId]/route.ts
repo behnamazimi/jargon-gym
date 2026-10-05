@@ -6,7 +6,7 @@ import { countRecentGenerations, recordUsage } from "@/lib/ai/usage";
 import { getReadyAudio, getOrCreateAudio } from "@/lib/ai/speech/audio";
 import { serveAudio } from "@/lib/ai/speech/serve";
 import { loadTermSubject } from "@/lib/ai/speech/subjects";
-import { getNarrationAccessForUser } from "@/lib/narration/access";
+import { getNarrationAccessForUser, isAdminAccount } from "@/lib/narration/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,7 +38,11 @@ async function authorize(
   const userId = (await readVerifiedUser(request.headers))?.id;
   if (!userId) return { denied: new NextResponse(null, { status: 401 }) };
 
-  const allowed = await getNarrationAccessForUser(createAdminClient(), userId);
+  const admin = createAdminClient();
+  // Admins may listen from the admin pages; only people with access can have a clip made.
+  const allowed =
+    (await getNarrationAccessForUser(admin, userId)) ||
+    (request.method === "GET" && (await isAdminAccount(admin, userId)));
   if (!allowed) return { denied: new NextResponse(null, { status: 403 }) };
 
   if (!(await userCanReadTerm(termId))) return { denied: new NextResponse(null, { status: 404 }) };

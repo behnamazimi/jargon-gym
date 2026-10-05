@@ -11,7 +11,6 @@ const state = vi.hoisted(() => ({
   upsertOptions: [] as unknown[],
   deleted: [] as unknown[],
   enqueued: [] as string[],
-  coverageFor: [] as { id: string; name: string }[],
   audits: [] as { action: string; targetId?: string; details?: unknown }[],
   member: 0,
   lastJob: null as Record<string, unknown> | null,
@@ -32,13 +31,6 @@ vi.mock("@/lib/narration/sync", () => ({
   },
   getLastNarrationSyncJob: async () => state.lastJob,
   kickNarrationSyncWorker: () => undefined,
-  listCollectionNarrationCoverage: async (
-    _client: unknown,
-    collections: typeof state.coverageFor,
-  ) => {
-    state.coverageFor = collections;
-    return [];
-  },
 }));
 vi.mock("@/lib/auth/require-session", async () => {
   const { AdminError } = await import("@/lib/admin/admin-error");
@@ -122,7 +114,6 @@ vi.mock("@/lib/auth/require-session", async () => {
 const {
   addToNarrationAllowlist,
   cancelNarrationSyncJob,
-  getNarrationSyncCoverage,
   removeFromNarrationAllowlist,
   resumeNarrationSync,
   setNarrationCaps,
@@ -157,7 +148,6 @@ beforeEach(() => {
   state.upsertOptions = [];
   state.deleted = [];
   state.enqueued = [];
-  state.coverageFor = [];
   state.audits = [];
   state.member = 0;
   state.lastJob = null;
@@ -352,14 +342,5 @@ describe("narration sync collections", () => {
     });
     expect(await startNarrationSync("nope")).toEqual({ ok: false, error: "Collection not found." });
     expect(state.enqueued).toEqual([]);
-  });
-
-  it("only counts coverage for allowed collections, with names from the database", async () => {
-    await getNarrationSyncCoverage([
-      { id: "mine", name: "spoofed" },
-      { id: "theirs", name: "Theirs" },
-      { id: "unknown", name: "X" },
-    ]);
-    expect(state.coverageFor).toEqual([{ id: "mine", name: "Collection mine" }]);
   });
 });

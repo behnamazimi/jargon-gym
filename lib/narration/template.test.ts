@@ -14,13 +14,13 @@ const BASE = {
 
 describe("buildNarrationScript", () => {
   it("always includes term and definition", () => {
-    const script = buildNarrationScript(BASE, "en");
+    const script = buildNarrationScript(BASE, "en", "full");
     expect(script).toContain("Closure.");
     expect(script).toContain(BASE.definition);
   });
 
   it("omits sections for empty optional fields", () => {
-    const script = buildNarrationScript(BASE, "en");
+    const script = buildNarrationScript(BASE, "en", "full");
     expect(script).not.toContain("For example");
     expect(script).not.toContain("Think of it like this");
   });
@@ -36,6 +36,7 @@ describe("buildNarrationScript", () => {
         controversy: "Some say it's overused.",
       },
       "en",
+      "full",
     );
 
     const order = [
@@ -51,12 +52,12 @@ describe("buildNarrationScript", () => {
   });
 
   it("ignores whitespace-only optional fields", () => {
-    const script = buildNarrationScript({ ...BASE, example: "   " }, "en");
+    const script = buildNarrationScript({ ...BASE, example: "   " }, "en", "full");
     expect(script).not.toContain("For example");
   });
 
   it("uses Dutch connector phrases for a Dutch collection", () => {
-    const script = buildNarrationScript({ ...BASE, example: "Een voorbeeld." }, "nl");
+    const script = buildNarrationScript({ ...BASE, example: "Een voorbeeld." }, "nl", "full");
     expect(script).toContain("Bijvoorbeeld,");
     expect(script).not.toContain("For example");
   });
@@ -65,9 +66,18 @@ describe("buildNarrationScript", () => {
     // Cast past the DomainLanguage union to exercise the fallback path for a
     // language that isn't translated yet (e.g. a future addition to the type
     // without matching CONNECTOR_PHRASES entry).
-    const script = buildNarrationScript({ ...BASE, example: "An example." }, "fr" as never);
+    const script = buildNarrationScript({ ...BASE, example: "An example." }, "fr" as never, "full");
     expect(script).toContain(`${NARRATION_PAUSE} An example.`);
     expect(script).not.toContain("For example");
     expect(script).not.toContain("Bijvoorbeeld");
+  });
+
+  it("speaks only the term name in term mode, whatever else the term has", () => {
+    const script = buildNarrationScript(
+      { ...BASE, term: " Closure ", example: "A counter factory.", mental_model: "A backpack." },
+      "en",
+      "term",
+    );
+    expect(script).toBe("Closure.");
   });
 });

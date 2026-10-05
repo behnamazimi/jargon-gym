@@ -6,18 +6,19 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 
 ## Pages
 
-| Address               | What it is                                                                                                                |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity          |
-| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend), shared codes, and the members list                                 |
-| `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete                 |
-| `/admin/collections`  | Built-in and all collections: status, public address; the Reported view lists reported and sharing-locked ones            |
-| `/admin/requests`     | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers      |
-| `/admin/issues`       | Problems and ideas people sent; `/admin/issues/[id]` shows one with its screenshot, marks it done or won't do, deletes it |
-| `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                            |
-| `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                               |
-| `/admin/ai/narration` | Narration access, limits, audio sync                                                                                      |
-| `/admin/system/audit` | What admins changed, and when                                                                                             |
+| Address                   | What it is                                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `/admin`                  | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity          |
+| `/admin/people`           | Waitlist (approve one or up to ten at a time, resend), shared codes, and the members list                                 |
+| `/admin/people/[id]`      | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete                 |
+| `/admin/collections`      | Built-in and all collections, read-only: status, address, narration mode; the Reported view lists reported ones           |
+| `/admin/collections/[id]` | One collection: status, kind, address, sharing and reports, narration mode, audio sync and per-term clips                 |
+| `/admin/requests`         | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers      |
+| `/admin/issues`           | Problems and ideas people sent; `/admin/issues/[id]` shows one with its screenshot, marks it done or won't do, deletes it |
+| `/admin/ai`               | Every AI feature: switch, vendor, what is sent, price or limit                                                            |
+| `/admin/ai/credits`       | Credits switch, allowance and prices, health, usage, grants                                                               |
+| `/admin/ai/narration`     | Narration switch, providers, limits, access; links to the running sync                                                    |
+| `/admin/system/audit`     | What admins changed, and when                                                                                             |
 
 Old addresses (`/admin/invites`, `/admin/ai-credits`, `/admin/narration`) redirect with
 temporary (307) redirects from `lib/redirects.ts`.
@@ -107,6 +108,9 @@ code also has a label and an end date, and stops at whichever limit comes first.
   `users.pending_referral_code`. If the code filled up meanwhile, the person lands on `/complete-signup`.
   `users.referral_code_ran_out` remembers it, so that page says the code ran out instead of just asking for one.
 - Pausing stops new seats at once. The signup page shows no seat count or deadline.
+- Narration mode is per collection (`collection_narration_settings`, admin-only, no row means `term`), set on
+  `/admin/collections/[id]` through `setNarrationMode` and recorded as `app.narration_mode_set`. See Narration in
+  [ai.md](ai.md).
 - A shared code made with "Turn narration on" (`referral_codes.grants_narration`, set only when the code is
   created) gives everyone who takes a seat the `narration_term` and `narration_story` allowlist rows, inside
   `_consume_referral_code`. It only adds rows: the narration switch, access mode and caps still apply, and

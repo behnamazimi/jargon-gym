@@ -5,10 +5,17 @@ const NARRATION_SYNC_STALE_MS = 90_000;
 
 export type NarrationSyncStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
-export type CollectionNarrationCoverage = {
-  domainId: string;
-  name: string;
-  missingCount: number;
+export type NarrationCoverage = {
+  total: number;
+  current: number;
+  stale: number;
+  missing: number;
+};
+
+export type NarrationTermClip = {
+  id: string;
+  term: string;
+  state: "current" | "stale" | "missing";
 };
 
 export type NarrationSyncJobView = {
