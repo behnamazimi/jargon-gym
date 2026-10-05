@@ -18,6 +18,7 @@ export function quizResponseForKey(
   if (!/^[1-9]$/.test(input.key)) return null;
 
   const index = Number(input.key) - 1;
+  if (question.interaction === "text") return null;
   if (question.interaction === "choice") {
     const option = question.options[index];
     return option ? { interaction: "choice", optionIds: [option.id] } : null;

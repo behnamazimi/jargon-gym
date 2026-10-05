@@ -12,7 +12,9 @@ export type PickDistractorsOptions = {
   preferCategory?: boolean;
 };
 
-/** Where wrong options come from. Builders depend on this, never on a database. */
+/** Where a builder gets other terms from. Builders depend on this, never on a database. */
 export type DistractorSource = {
   pick(term: QuizTerm, count: number, options?: PickDistractorsOptions): Promise<DistractorTerm[]>;
+  /** Other terms in the term's collection whose definition is identical. */
+  sameDefinition(term: QuizTerm): Promise<DistractorTerm[]>;
 };

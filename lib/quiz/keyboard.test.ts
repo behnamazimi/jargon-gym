@@ -23,6 +23,15 @@ const trueFalse: QuizQuestion = {
   correctAnswer: true,
 };
 
+const typed: QuizQuestion = {
+  interaction: "text",
+  template: "typed_cloze",
+  termId: "t",
+  prompt: "Type it",
+  acceptedAnswers: ["x"],
+  language: "en",
+};
+
 const key = (value: string, extra = {}) => ({ key: value, typing: false, ...extra });
 
 describe("quizResponseForKey", () => {
@@ -54,5 +63,9 @@ describe("quizResponseForKey", () => {
     expect(quizResponseForKey(key("1", { typing: true }), mcq)).toBeNull();
     expect(quizResponseForKey(key("0"), mcq)).toBeNull();
     expect(quizResponseForKey(key("Enter"), mcq)).toBeNull();
+  });
+
+  it("leaves digits to the text box for a typed question", () => {
+    expect(quizResponseForKey(key("1"), typed)).toBeNull();
   });
 });

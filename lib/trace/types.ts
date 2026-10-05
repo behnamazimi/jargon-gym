@@ -7,7 +7,7 @@ import { AGAIN, EASY, GOOD, HARD } from "./constants";
 /** Review grade — recall-before-reveal, FSRS-5 grading (§4). */
 export type ReviewGrade = typeof AGAIN | typeof HARD | typeof GOOD | typeof EASY;
 
-export type QuestionType = "multiple_choice" | "true_false";
+export type QuestionType = "multiple_choice" | "true_false" | "typed";
 
 export type KnownLabel = "known" | "learning" | "unknown";
 

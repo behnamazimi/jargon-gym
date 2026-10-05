@@ -34,6 +34,24 @@ function withIsNewToUser(cards: TermCard[], candidates: TraceCandidate[]): TermC
   return cards.map((card) => ({ ...card, isNewToUser: isNewById.get(card.id) ?? false }));
 }
 
+/** Quiz copies the candidate's recognition facts onto the card so the quiz can
+ *  tell how well each term is known. */
+function withRecognition(cards: TermCard[], candidates: TraceCandidate[]): TermCard[] {
+  const byId = new Map(candidates.map((c) => [c.termId, c]));
+  return cards.map((card) => {
+    const candidate = byId.get(card.id);
+    return candidate
+      ? {
+          ...card,
+          recognition: {
+            posterior: candidate.quizKnowledgePosterior,
+            testCount: candidate.quizTestCount,
+          },
+        }
+      : card;
+  });
+}
+
 /** Read: single ranked pool, lowest exposure first. */
 export async function pickReadTerms(
   client: Client,
@@ -138,9 +156,12 @@ export async function pickQuizTerms(
   const ranked = rankQuizQueue(candidates, new Date()).slice(0, limit);
   if (ranked.length === 0) return [];
 
-  return hydrateTermsAsTermCards(
-    client,
-    ranked.map((c) => c.termId),
+  return withRecognition(
+    await hydrateTermsAsTermCards(
+      client,
+      ranked.map((c) => c.termId),
+    ),
+    ranked,
   );
 }
 
@@ -160,9 +181,12 @@ export async function pickQuizTermsForUser(
   const ranked = rankQuizQueue(candidates, new Date()).slice(0, limit);
   if (ranked.length === 0) return [];
 
-  return hydrateTermCardsForUser(
-    client,
-    userId,
-    ranked.map((c) => c.termId),
+  return withRecognition(
+    await hydrateTermCardsForUser(
+      client,
+      userId,
+      ranked.map((c) => c.termId),
+    ),
+    ranked,
   );
 }

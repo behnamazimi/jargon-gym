@@ -6,6 +6,7 @@
 import {
   P_CORRECT_GIVEN_GUESS_MCQ,
   P_CORRECT_GIVEN_GUESS_TF,
+  P_CORRECT_GIVEN_GUESS_TYPED,
   P_CORRECT_GIVEN_KNOWS,
   QUIZ_FAIL_PENALTY_RECALL_WEIGHT,
   RECOGNITION_INITIAL_PRIOR,
@@ -14,9 +15,11 @@ import {
 } from "./constants";
 import type { QuestionType } from "./types";
 
-function guessRate(questionType: QuestionType): number {
-  return questionType === "multiple_choice" ? P_CORRECT_GIVEN_GUESS_MCQ : P_CORRECT_GIVEN_GUESS_TF;
-}
+const GUESS_RATE: Record<QuestionType, number> = {
+  multiple_choice: P_CORRECT_GIVEN_GUESS_MCQ,
+  true_false: P_CORRECT_GIVEN_GUESS_TF,
+  typed: P_CORRECT_GIVEN_GUESS_TYPED,
+};
 
 /** Bayesian posterior update for one answer. `prior` is null only for the
  *  very first answer — RECOGNITION_INITIAL_PRIOR (0.5) is used at that
@@ -35,7 +38,7 @@ export function updatePosterior(
   recallRetrievability: number | null,
 ): number {
   const p = prior ?? RECOGNITION_INITIAL_PRIOR;
-  const pGuess = guessRate(questionType);
+  const pGuess = GUESS_RATE[questionType];
 
   if (correct) {
     return (P_CORRECT_GIVEN_KNOWS * p) / (P_CORRECT_GIVEN_KNOWS * p + pGuess * (1 - p));

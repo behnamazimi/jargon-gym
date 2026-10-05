@@ -10,6 +10,7 @@ export function makeTerm(overrides: Partial<QuizTerm> = {}): QuizTerm {
     antiExample: null,
     category: null,
     kind: "terms",
+    language: "en",
     domainId: "domain-1",
     domainName: "Testing",
     ...overrides,
@@ -26,8 +27,14 @@ export function makeDistractor(overrides: Partial<DistractorTerm> = {}): Distrac
   };
 }
 
-export function sourceOf(distractors: DistractorTerm[]): DistractorSource {
-  return { pick: async (_term, count) => distractors.slice(0, count) };
+export function sourceOf(
+  distractors: DistractorTerm[],
+  sameDefinition: DistractorTerm[] = [],
+): DistractorSource {
+  return {
+    pick: async (_term, count) => distractors.slice(0, count),
+    sameDefinition: async () => sameDefinition,
+  };
 }
 
 /** A deterministic rng cycling through the given values. */

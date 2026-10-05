@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { gradeAnswer } from "./grade";
-import type { QuizBooleanQuestion, QuizChoiceQuestion } from "./types";
+import type { QuizBooleanQuestion, QuizChoiceQuestion, QuizTextQuestion } from "./types";
 
 const choice: QuizChoiceQuestion = {
   interaction: "choice",
@@ -43,6 +43,30 @@ describe("gradeAnswer for boolean questions", () => {
   it("compares to the correct answer", () => {
     expect(gradeAnswer(boolean, { interaction: "boolean", value: true })).toBe(true);
     expect(gradeAnswer(boolean, { interaction: "boolean", value: false })).toBe(false);
+  });
+});
+
+describe("gradeAnswer for text questions", () => {
+  const text: QuizTextQuestion = {
+    interaction: "text",
+    template: "typed_cloze",
+    termId: "term-1",
+    prompt: "Type it",
+    acceptedAnswers: ["het licht"],
+    language: "nl",
+  };
+
+  it("accepts the word regardless of case and spacing", () => {
+    expect(gradeAnswer(text, { interaction: "text", text: " Het  Licht " })).toBe(true);
+  });
+
+  it("rejects other words, a missing article and an empty answer", () => {
+    expect(gradeAnswer(text, { interaction: "text", text: "licht" })).toBe(false);
+    expect(gradeAnswer(text, { interaction: "text", text: "" })).toBe(false);
+  });
+
+  it("never passes a choice response", () => {
+    expect(gradeAnswer(text, pick("a"))).toBe(false);
   });
 });
 

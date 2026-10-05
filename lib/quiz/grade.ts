@@ -1,3 +1,4 @@
+import { matchesAnswer } from "./text/answer-match";
 import type { QuizQuestion, QuizResponse } from "./types";
 
 /** A response of the wrong interaction never passes. */
@@ -9,6 +10,9 @@ export function gradeAnswer(question: QuizQuestion, response: QuizResponse): boo
   }
   if (question.interaction === "boolean" && response.interaction === "boolean") {
     return response.value === question.correctAnswer;
+  }
+  if (question.interaction === "text" && response.interaction === "text") {
+    return matchesAnswer(response.text, question.acceptedAnswers);
   }
   return false;
 }

@@ -22,5 +22,15 @@ describe("traceQuestionType", () => {
         correctAnswer: true,
       }),
     ).toBe("true_false");
+    expect(
+      traceQuestionType({
+        interaction: "text",
+        template: "typed_cloze",
+        termId: "t",
+        prompt: "p",
+        acceptedAnswers: ["x"],
+        language: "en",
+      }),
+    ).toBe("typed");
   });
 });

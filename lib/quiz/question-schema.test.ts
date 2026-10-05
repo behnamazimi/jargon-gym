@@ -25,6 +25,22 @@ describe("isQuizQuestion", () => {
     ).toBe(true);
   });
 
+  it("accepts a typed question and rejects one with no accepted answer", () => {
+    const typed = {
+      interaction: "text",
+      template: "typed_cloze",
+      termId: "t",
+      prompt: "p",
+      quote: "q",
+      hint: "h",
+      acceptedAnswers: ["x"],
+      language: "nl",
+    };
+    expect(isQuizQuestion(typed)).toBe(true);
+    expect(isQuizQuestion({ ...typed, acceptedAnswers: [] })).toBe(false);
+    expect(isQuizQuestion({ ...typed, language: "xx" })).toBe(false);
+  });
+
   it("rejects the old stored shape and unknown templates", () => {
     expect(isQuizQuestion({ type: "multiple_choice", termId: "t", prompt: "p", options: [] })).toBe(
       false,

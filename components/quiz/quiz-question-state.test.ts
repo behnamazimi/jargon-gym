@@ -41,6 +41,19 @@ describe("quizAnswerReducer", () => {
   });
 });
 
+describe("canSubmitAnswer for typed answers", () => {
+  const typed = (text: string) => ({
+    ...initialAnswerState,
+    response: { interaction: "text" as const, text },
+  });
+
+  it("needs something other than spaces", () => {
+    expect(canSubmitAnswer(typed(""))).toBe(false);
+    expect(canSubmitAnswer(typed("   "))).toBe(false);
+    expect(canSubmitAnswer(typed("lopen"))).toBe(true);
+  });
+});
+
 describe("answerResult", () => {
   it("shows nothing before submission", () => {
     expect(answerResult(true, true, false)).toBe("default");

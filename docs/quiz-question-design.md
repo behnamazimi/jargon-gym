@@ -78,9 +78,17 @@ No typed answers for field terms.
   session is mostly weak terms and typed questions will be rare. Pick a
   strength threshold deliberately and check what share of questions it
   produces on real data.
-- Grading is forgiving on case and surrounding spacing only. Accents and
-  articles count; no typo tolerance.
+- Grading is forgiving on case and spacing only. Accents and articles count;
+  no typo tolerance. When the only difference is accents or a leading
+  article, the answer is still wrong but the feedback says so.
+- A term qualifies once its recognition posterior is at least 0.7, it has been
+  quizzed at least once and it has at most 3 words (`lib/quiz/mix.ts`).
+  Typed meaning → word is skipped when another term in the collection has
+  the same definition.
 - Web only. The Telegram quiz uses the MCQ types and skips typed ones.
+- Built: typed answers use their own `typed` question type with a 0.05 guess
+  rate (migration `20261009100000_review_events_typed.sql`). The options below
+  are kept for the record.
 - TRACE is not unchanged by this. `applyQuizAnswer` takes a `QuestionType`
   (`multiple_choice` | `true_false`), the recognition update uses a
   guess-rate per type (`P_CORRECT_GIVEN_GUESS_MCQ` 0.25, `_TF` 0.5), and the

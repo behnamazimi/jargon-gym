@@ -53,5 +53,7 @@ export function quizAnswerReducer(
 }
 
 export function canSubmitAnswer(state: QuizAnswerState): boolean {
-  return state.response !== null;
+  const { response } = state;
+  if (response === null) return false;
+  return response.interaction !== "text" || response.text.trim().length > 0;
 }

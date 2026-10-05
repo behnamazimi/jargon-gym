@@ -18,6 +18,9 @@ export function quizOptions(question: QuizQuestion): QuizTelegramOption[] {
     }));
   }
 
+  // Typed questions are web only, so a Telegram session never holds one.
+  if (question.interaction === "text") return [];
+
   const labels = booleanLabelsFor(question);
   return [
     { id: "yes", label: labels.yes, response: { interaction: "boolean", value: true } },

@@ -87,7 +87,8 @@ question. So instead of a discrete grade, each Quiz answer updates a
 **posterior probability that you actually know the term**, using a simple
 Bayesian update: how much a correct or incorrect answer should move your
 estimate depends on how easy it'd be to get right by guessing (25% for
-4-option multiple choice, 50% for true/false). That posterior maps onto a
+4-option multiple choice, 50% for true/false, 5% for a typed answer, where
+you have to produce the word yourself). That posterior maps onto a
 stability value the same way recall's does, and decays the same way into a
 retrievability number.
 
@@ -426,7 +427,7 @@ writing:
 | Familiarity decay scale                                    | 10 days             | How fast familiarity fades if you stop reading a term                                                                            |
 | Cold-start nudge (difficulty / stability)                  | 2 / 0.5             | How much familiarity shifts a term's very first recall grade                                                                     |
 | Quiz slip allowance                                        | 0.95                | Assumed chance of answering correctly when you do know the term                                                                  |
-| Guess rate, multiple choice / true-false                   | 0.25 / 0.5          | Assumed chance of answering correctly by guessing                                                                                |
+| Guess rate, multiple choice / true-false / typed           | 0.25 / 0.5 / 0.05   | Assumed chance of answering correctly by guessing                                                                                |
 | Retrievability decay scale                                 | 9                   | Shared by recall and recognition — larger stability decays retrievability more slowly                                            |
 | Mastery blend weights (familiarity / recall / recognition) | 0.2 / 0.5 / 0.3     | How much each trace counts toward overall mastery                                                                                |
 | Confidence time constant                                   | 2 tests             | How quickly the confidence discount approaches full weight                                                                       |

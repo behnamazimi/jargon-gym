@@ -3,5 +3,12 @@ import type { QuizQuestion } from "./types";
 
 /** How TRACE weighs the answer: by how the question is answered, not what it asks. */
 export function traceQuestionType(question: QuizQuestion): QuestionType {
-  return question.interaction === "choice" ? "multiple_choice" : "true_false";
+  switch (question.interaction) {
+    case "choice":
+      return "multiple_choice";
+    case "boolean":
+      return "true_false";
+    case "text":
+      return "typed";
+  }
 }

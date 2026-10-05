@@ -37,6 +37,8 @@ export const P_CORRECT_GIVEN_KNOWS = 0.95;
 /** §5 Guess-rate correction per question type. */
 export const P_CORRECT_GIVEN_GUESS_MCQ = 0.25;
 export const P_CORRECT_GIVEN_GUESS_TF = 0.5;
+/** Typing the word is strong evidence; not zero, so one pass can't saturate the posterior. */
+export const P_CORRECT_GIVEN_GUESS_TYPED = 0.05;
 /** §5 Untested-term starting prior — used only at the moment of the first answer, never stored. */
 export const RECOGNITION_INITIAL_PRIOR = 0.5;
 /** §5 Posterior → stability scale: S_g = 1 + k_g · p. */
