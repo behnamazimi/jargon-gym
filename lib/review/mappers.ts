@@ -13,6 +13,7 @@ export function toReviewTerm(card: TermCard): ReviewTerm {
     antiExample: card.antiExample ?? undefined,
     controversy: card.controversy ?? undefined,
     note: card.note ?? undefined,
+    domainId: card.domainId,
     domainName: card.domainName,
     domainLanguage: card.domainLanguage,
     isNewToUser: card.isNewToUser,

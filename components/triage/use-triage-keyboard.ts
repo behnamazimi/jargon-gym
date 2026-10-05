@@ -2,6 +2,7 @@
 
 import { useEffectEvent } from "react";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { isInsideDialog } from "@/lib/dom/in-dialog";
 
 type TriageKeyboardHandlers = {
   onReveal: () => void;
@@ -35,7 +36,7 @@ const KEY_ACTIONS: Record<string, "knew" | "notYet" | "undo" | "reveal"> = {
 
 function handleTriageKeyDown(event: KeyboardEvent, handlers: TriageKeyboardHandlers) {
   if (!handlers.enabled || event.metaKey || event.ctrlKey || event.altKey || event.repeat) return;
-  if (isTypingTarget(event.target)) return;
+  if (isTypingTarget(event.target) || isInsideDialog(event.target)) return;
 
   const action = KEY_ACTIONS[event.key];
   if (!action) return;

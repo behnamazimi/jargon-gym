@@ -8,12 +8,15 @@ import {
   StickyNote,
 } from "lucide-react";
 import Link from "next/link";
+import { Fragment, type ReactNode } from "react";
 import type { DomainLanguage } from "@/lib/terms/languages";
 import { TERM_LABELS, type TermLabels as Labels } from "@/lib/terms/term-labels";
 import { relationshipLabel } from "@/lib/terms/relationship-label";
+import { moreCount, TERM_BLOCKS, type Placement, type TermBlock } from "@/lib/terms/term-layout";
 import type { Term } from "@/lib/terms/types";
 import { cn } from "@/lib/utils";
 import { TermDetailSection } from "./term-detail-section";
+import { TermMoreFooter } from "./term-more-footer";
 
 type TermBodyProps = {
   term: Term;
@@ -21,6 +24,10 @@ type TermBodyProps = {
   showSearchLink?: boolean;
   language?: DomainLanguage;
   getRelationshipHref?: (relatedTermId: string) => string | undefined;
+  /** Which blocks sit under "More". Without it every block is shown. */
+  placement?: Placement;
+  /** The quiet button beside "More" that opens the layout editor. */
+  customize?: ReactNode;
 };
 
 function hasText(value: string | undefined): value is string {
@@ -47,41 +54,42 @@ function getTermDetails(term: Term): TermDetails {
   };
 }
 
-function TermDetailSections({ details, labels }: { details: TermDetails; labels: Labels }) {
-  return (
-    <>
-      {details.mentalModel ? (
-        <TermDetailSection icon={Lightbulb} label={labels.mentalModel}>
-          {details.mentalModel}
-        </TermDetailSection>
-      ) : null}
-      {details.example ? (
-        <TermDetailSection icon={Quote} label={labels.example}>
-          {details.example}
-        </TermDetailSection>
-      ) : null}
-      {details.antiExample ? (
-        <TermDetailSection icon={Ban} label={labels.antiExample} variant="anti">
-          {details.antiExample}
-        </TermDetailSection>
-      ) : null}
-      {details.discussion ? (
-        <TermDetailSection icon={Signpost} label={labels.discussion}>
-          {details.discussion}
-        </TermDetailSection>
-      ) : null}
-      {details.controversy ? (
-        <TermDetailSection icon={MessagesSquare} label={labels.controversy} variant="debated">
-          {details.controversy}
-        </TermDetailSection>
-      ) : null}
-      {details.note ? (
-        <TermDetailSection icon={StickyNote} label={labels.note}>
-          {details.note}
-        </TermDetailSection>
-      ) : null}
-    </>
-  );
+function detailBlocks(
+  details: TermDetails,
+  labels: Labels,
+): Pick<Record<TermBlock, ReactNode>, Exclude<TermBlock, "relationships" | "searchLink">> {
+  return {
+    mentalModel: details.mentalModel ? (
+      <TermDetailSection icon={Lightbulb} label={labels.mentalModel}>
+        {details.mentalModel}
+      </TermDetailSection>
+    ) : null,
+    example: details.example ? (
+      <TermDetailSection icon={Quote} label={labels.example}>
+        {details.example}
+      </TermDetailSection>
+    ) : null,
+    antiExample: details.antiExample ? (
+      <TermDetailSection icon={Ban} label={labels.antiExample} variant="anti">
+        {details.antiExample}
+      </TermDetailSection>
+    ) : null,
+    discussion: details.discussion ? (
+      <TermDetailSection icon={Signpost} label={labels.discussion}>
+        {details.discussion}
+      </TermDetailSection>
+    ) : null,
+    controversy: details.controversy ? (
+      <TermDetailSection icon={MessagesSquare} label={labels.controversy} variant="debated">
+        {details.controversy}
+      </TermDetailSection>
+    ) : null,
+    note: details.note ? (
+      <TermDetailSection icon={StickyNote} label={labels.note}>
+        {details.note}
+      </TermDetailSection>
+    ) : null,
+  };
 }
 
 type RelatedTermLinkProps = {
@@ -152,27 +160,47 @@ function SearchLink({ term, labels }: { term: Term; labels: Labels }) {
   );
 }
 
+export function TermDefinition({ term }: { term: Pick<Term, "definition"> }) {
+  return (
+    <p className="reading-text m-0 max-w-prose text-base whitespace-pre-line text-base-content/90">
+      {term.definition}
+    </p>
+  );
+}
+
 export function TermBody({
   term,
   className,
   showSearchLink = true,
   language = "en",
   getRelationshipHref,
+  placement,
+  customize,
 }: TermBodyProps) {
-  const details = getTermDetails(term);
   const labels = TERM_LABELS[language];
+  const blocks: Record<TermBlock, ReactNode> = {
+    ...detailBlocks(getTermDetails(term), labels),
+    relationships: (
+      <RelationshipsList term={term} labels={labels} getRelationshipHref={getRelationshipHref} />
+    ),
+    searchLink: showSearchLink ? <SearchLink term={term} labels={labels} /> : null,
+  };
+  const inPlace = (where: "shown" | "more") =>
+    TERM_BLOCKS.filter((block) => (placement?.[block] ?? "shown") === where).map((block) => (
+      <Fragment key={block}>{blocks[block]}</Fragment>
+    ));
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <p className="reading-text m-0 max-w-prose text-base whitespace-pre-line text-base-content/90">
-        {term.definition}
-      </p>
+      <TermDefinition term={term} />
 
-      <TermDetailSections details={details} labels={labels} />
+      {inPlace("shown")}
 
-      <RelationshipsList term={term} labels={labels} getRelationshipHref={getRelationshipHref} />
-
-      {showSearchLink ? <SearchLink term={term} labels={labels} /> : null}
+      {placement ? (
+        <TermMoreFooter count={moreCount(placement, term, showSearchLink)} customize={customize}>
+          {inPlace("more")}
+        </TermMoreFooter>
+      ) : null}
     </div>
   );
 }

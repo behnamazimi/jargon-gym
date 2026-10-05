@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffectEvent } from "react";
+import { isInsideDialog } from "@/lib/dom/in-dialog";
 import { reviewKeyAction, type ReviewKeyTarget } from "@/lib/review/keyboard";
 import type { ReviewGrade } from "@/lib/trace";
 import { useMountEffect } from "@/hooks/use-mount-effect";
@@ -23,7 +24,7 @@ function classifyTarget(target: EventTarget | null): ReviewKeyTarget {
 }
 
 function handleReviewKeyDown(event: KeyboardEvent, handlers: ReviewKeyboardHandlers) {
-  if (!handlers.enabled) return;
+  if (!handlers.enabled || isInsideDialog(event.target)) return;
 
   const action = reviewKeyAction(
     {

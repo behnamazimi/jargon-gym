@@ -109,6 +109,19 @@ add a chapter, add an entry to the matching area file, add any new target ids to
 components only carry that attribute and never import tour code. Progress
 lives in `user_settings.tour_status` / `tour_seen`.
 
+# Term body layout
+
+While studying (Triage, Read, Review) a learner decides which parts of a term
+sit under "More". The definition always shows; the other blocks (`TERM_BLOCKS`
+in `lib/terms/term-layout.ts`) are each shown or under More. The choice is saved
+for one collection or as the default for all (`user_settings.term_layout`),
+and a collection's own map wins over the default. Everything is shown when
+nothing is set. `TermLayoutScope` (mounted in the Read, Review and Triage
+layouts) loads it, `StudyTermBody` applies it, and `TermLayoutCustomize` is the
+only way to change it. Library, term detail and public pages render `TermBody`
+without a placement, so they always show everything. Key `StudyTermBody` by
+term so More starts collapsed on every card.
+
 # Library (/app/library)
 
 The Library's layout (`app/(private)/app/library/layout.tsx`) holds the

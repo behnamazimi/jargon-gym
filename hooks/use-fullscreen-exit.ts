@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { isInsideDialog } from "@/lib/dom/in-dialog";
 
 type FullscreenDocumentElement = HTMLElement & {
   requestFullscreen?: () => Promise<void>;
@@ -81,7 +82,7 @@ export function useFullscreenExit(
     }
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") exit();
+      if (event.key === "Escape" && !isInsideDialog(event.target)) exit();
     }
 
     // A real back-button press pops our pushed entry itself; if the state

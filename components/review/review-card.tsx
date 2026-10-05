@@ -4,7 +4,7 @@ import { Eye } from "lucide-react";
 import { useRef } from "react";
 import { FirstExposureKnownPrompt } from "@/components/shared/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/terms/term-card-header";
-import { TermBody } from "@/components/terms/term-body";
+import { StudyTermBody } from "@/components/terms/study-term-body";
 import { TermEvalButton } from "./term-eval-button";
 import type { ReviewTerm } from "@/lib/review/types";
 import { cn } from "@/lib/utils";
@@ -148,7 +148,7 @@ export function ReviewCard({
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-8 has-[[data-known-prompt]]:pb-0 [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] sm:px-6"
               onClick={(event) => event.stopPropagation()}
             >
-              <TermBody key={term.id} term={term} language={term.domainLanguage} />
+              <StudyTermBody key={term.id} term={term} />
               {term.isNewToUser ? (
                 <FirstExposureKnownPrompt
                   termId={term.id}
