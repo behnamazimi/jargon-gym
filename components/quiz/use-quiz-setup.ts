@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { getMaxStudyCount, studyCountPresetValues } from "@/lib/study/count";
+import { studyCountPresetValues } from "@/lib/study/count";
 import { type StudyCollection } from "@/lib/study/types";
+import { maxQuizQuestions } from "@/lib/quiz/question-limit";
 import { countTermsForSelection } from "@/lib/quiz/terms";
 import {
   questionCountFor,
@@ -17,11 +18,11 @@ function domainIdsFor(collectionId: string): "all" | string[] {
 }
 
 export function useQuizSetup(collections: StudyCollection[], initial: InitialQuizSetup) {
-  const maxFor = (collectionId: string) =>
-    getMaxStudyCount(countTermsForSelection(collections, domainIdsFor(collectionId)));
+  const maxFor = (collectionId: string, style: QuizQuestionStyle) =>
+    maxQuizQuestions(style, countTermsForSelection(collections, domainIdsFor(collectionId)));
 
   const [step, setStep] = useState<QuizStep>("picker");
-  const [questionStyle, setQuestionStyle] = useState<QuizQuestionStyle>(initial.style);
+  const [questionStyle, setQuestionStyleState] = useState<QuizQuestionStyle>(initial.style);
   const [selectedCollectionId, setSelectedCollectionIdState] = useState(initial.collectionId);
   const [collectionChanged, setCollectionChanged] = useState(false);
   // The count the user asked for; the field shows it capped to the
@@ -29,7 +30,7 @@ export function useQuizSetup(collections: StudyCollection[], initial: InitialQui
   const [preferredCount, setPreferredCount] = useState<number | null>(initial.count);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [questionCount, setQuestionCount] = useState(() =>
-    questionCountFor(initial.count, maxFor(initial.collectionId)),
+    questionCountFor(initial.count, maxFor(initial.collectionId, initial.style)),
   );
   const [questionCountInput, setQuestionCountInput] = useState(() => String(questionCount));
   const [questionCountError, setQuestionCountError] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export function useQuizSetup(collections: StudyCollection[], initial: InitialQui
     [collections, domainIds],
   );
 
-  const maxQuestionCount = getMaxStudyCount(availableTermCount);
+  const maxQuestionCount = maxQuizQuestions(questionStyle, availableTermCount);
 
   function showQuestionCount(value: number) {
     setQuestionCount(value);
@@ -52,7 +53,12 @@ export function useQuizSetup(collections: StudyCollection[], initial: InitialQui
   function setSelectedCollectionId(collectionId: string) {
     setSelectedCollectionIdState(collectionId);
     setCollectionChanged(true);
-    showQuestionCount(questionCountFor(preferredCount, maxFor(collectionId)));
+    showQuestionCount(questionCountFor(preferredCount, maxFor(collectionId, questionStyle)));
+  }
+
+  function setQuestionStyle(style: QuizQuestionStyle) {
+    setQuestionStyleState(style);
+    showQuestionCount(questionCountFor(preferredCount, maxFor(selectedCollectionId, style)));
   }
 
   function applyQuestionCount(value: number) {

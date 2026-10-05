@@ -9,6 +9,7 @@ import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
 import { LLM_PROVIDER_LABELS, type AiFailureReason } from "@/lib/llm/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quizFailure } from "@/lib/quiz/failure";
+import { AI_QUIZ_MAX_QUESTIONS } from "@/lib/quiz/mix";
 import { supabaseDistractorSource } from "@/lib/quiz/distractors-supabase";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { planAiQuiz } from "@/lib/quiz/plan-ai";
@@ -44,13 +45,19 @@ type QuizGenerationResult =
       providerLabel: string;
     };
 
-function validateQuestionCount(rawCount: number): { error: string } | { questionCount: number } {
+function validateQuestionCount(
+  rawCount: number,
+  style: QuizQuestionStyle,
+): { error: string } | { questionCount: number } {
   const questionCount = Math.floor(rawCount);
   if (!Number.isFinite(questionCount) || questionCount < 1) {
     return { error: "Choose at least one question." };
   }
-  if (questionCount > MAX_STUDY_TERMS) {
-    return { error: `Quizzes are limited to ${MAX_STUDY_TERMS} questions.` };
+  const limit = style === "ai" ? AI_QUIZ_MAX_QUESTIONS : MAX_STUDY_TERMS;
+  if (questionCount > limit) {
+    return {
+      error: `${style === "ai" ? "AI quizzes" : "Quizzes"} are limited to ${limit} questions.`,
+    };
   }
   return { questionCount };
 }
@@ -140,7 +147,7 @@ export async function generateQuizAction(input: {
   }
 
   try {
-    const countResult = validateQuestionCount(input.questionCount);
+    const countResult = validateQuestionCount(input.questionCount, input.questionStyle);
     if ("error" in countResult) return countResult;
 
     const termsPromise = fetchQuizTermPool(

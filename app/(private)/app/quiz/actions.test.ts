@@ -113,6 +113,30 @@ describe("generateQuizAction on AI credits", () => {
   });
 });
 
+describe("generateQuizAction question limits", () => {
+  it("refuses an AI quiz of more than 10 questions before doing anything", async () => {
+    const result = await generateQuizAction({ ...input, questionCount: 11 });
+    expect(result).toMatchObject({ error: "AI quizzes are limited to 10 questions." });
+    expect(state.generate).not.toHaveBeenCalled();
+    expect(state.guardCalls).toEqual([]);
+  });
+
+  it("accepts exactly 10 for AI", async () => {
+    expect(await generateQuizAction({ ...input, questionCount: 10 })).toMatchObject({
+      questions: ["q"],
+    });
+  });
+
+  it("still allows a simple quiz past 10", async () => {
+    const result = await generateQuizAction({
+      ...input,
+      questionCount: 20,
+      questionStyle: "simple" as never,
+    });
+    expect(result).not.toHaveProperty("error", expect.stringContaining("limited"));
+  });
+});
+
 describe("generateQuizAction when the feature is unavailable", () => {
   it("says so without pointing own-key users at a key", async () => {
     state.access = { kind: "unavailable", reason: "feature-off" };

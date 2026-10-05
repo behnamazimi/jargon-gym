@@ -1,5 +1,8 @@
 import type { PlannedTemplateId } from "./types";
 
+/** Most questions an AI quiz can ask; the model writes every one of them. */
+export const AI_QUIZ_MAX_QUESTIONS = 10;
+
 /** Longest definition sent to the model; a longer one is cut at a word boundary. */
 export const AI_DEFINITION_MAX_CHARS = 200;
 
