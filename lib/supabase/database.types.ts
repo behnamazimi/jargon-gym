@@ -1768,6 +1768,15 @@ export type Database = {
         Args: { p_row: Database["public"]["Tables"]["referral_codes"]["Row"] };
         Returns: string;
       };
+      _system_audit_insert: {
+        Args: {
+          p_action: string;
+          p_details: Json;
+          p_target_id: string;
+          p_target_type: string;
+        };
+        Returns: undefined;
+      };
       admin_ai_credit_failure_reasons: {
         Args: { p_limit?: number };
         Returns: {
@@ -2062,6 +2071,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           expires_at: string | null;
+          grants_narration: boolean;
           id: string;
           is_active: boolean;
           label: string | null;
