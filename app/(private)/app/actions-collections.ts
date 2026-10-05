@@ -1,5 +1,6 @@
 "use server";
 
+import { trackServer } from "@/lib/analytics/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
@@ -37,6 +38,7 @@ export async function addToCollection(domainId: string): Promise<{ error?: strin
 
   try {
     await addDomainToCollection(auth.supabase, auth.user.id, domainId);
+    trackServer(auth.user.id, "collection_added", {});
     revalidatePath("/app/library");
     return {};
   } catch (err) {

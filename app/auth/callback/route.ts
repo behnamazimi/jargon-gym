@@ -1,3 +1,4 @@
+import { trackServer } from "@/lib/analytics/server";
 import { NextResponse, type NextRequest } from "next/server";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
 import { safeNextPath } from "@/lib/auth/safe-next-path";
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
       if (ref) {
@@ -29,6 +30,10 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      trackServer(data.user.id, ref ? "user_signed_up" : "user_logged_in", {
+        method: "google",
+        ...(ref ? { needs_email_confirmation: false } : {}),
+      });
       return NextResponse.redirect(`${origin}${next}`);
     }
 

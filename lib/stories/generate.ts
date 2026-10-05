@@ -1,4 +1,5 @@
 import { generateText } from "ai";
+import { aiGenerationOptions, type AiObservabilityContext } from "@/lib/ai/observability";
 import type { DomainLanguage } from "@/lib/terms/languages";
 import { describeFailure } from "@/lib/ai-credits/failure-reason";
 import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
@@ -43,6 +44,7 @@ type GenerateStoryInput = {
   outline: string | null;
   setting: string;
   recentTitles: string[];
+  observability?: AiObservabilityContext;
 };
 
 type GeneratedStory = { title: string; segments: StorySegment[]; termIds: string[] };
@@ -89,6 +91,7 @@ async function requestStory(
     prompt,
     maxRetries: 0,
     abortSignal: signal,
+    ...aiGenerationOptions(input.observability, "story_generation"),
   });
   return normalizeStory(parseStoryText(text, input.terms), input.terms, length);
 }

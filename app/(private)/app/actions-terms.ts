@@ -1,5 +1,6 @@
 "use server";
 
+import { trackServer } from "@/lib/analytics/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { setTermMarkedKnown } from "@/lib/mastery/known-state";
 import { recordReveal, recordRead } from "@/lib/terms/review-outcome";
@@ -118,6 +119,7 @@ export async function recordTermReadAction(termId: string): Promise<{ error?: st
 
   try {
     await recordRead(auth.supabase, auth.user.id, termId, "session");
+    trackServer(auth.user.id, "term_read", { source: "library" });
     return {};
   } catch (err) {
     console.error("recordTermReadAction failed", { termId, err });
@@ -155,6 +157,7 @@ export async function setTermMarkedKnownAction(
     // No revalidation: every caller flips the mark locally (see
     // lib/library/overrides.ts), so re-rendering the page is waste.
     await setTermMarkedKnown(auth.supabase, auth.user.id, termId, marked);
+    trackServer(auth.user.id, "term_marked_known", { marked });
     return { savedAt: Date.now() };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't update that. Try again.";

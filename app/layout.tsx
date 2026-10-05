@@ -14,7 +14,7 @@ import { StudyPhoneTopBarSkeleton } from "@/components/app/study-phone-topbar-sk
 import { TimezoneSyncIsland } from "@/components/timezone-sync-island";
 import { TourIsland } from "@/components/tour/tour-island";
 import "./globals.css";
-import { hasLikelySession } from "@/lib/auth/require-session";
+import { getSessionUser, hasLikelySession } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { DARK_THEME } from "@/lib/theme";
@@ -70,7 +70,11 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [theme, hasSession] = await Promise.all([getTheme(), hasLikelySession()]);
+  const [theme, hasSession, { user }] = await Promise.all([
+    getTheme(),
+    hasLikelySession(),
+    getSessionUser(),
+  ]);
   const initialIsDark = theme === DARK_THEME;
 
   return (
@@ -88,7 +92,7 @@ export default async function RootLayout({
       )}
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
-        <PwaProviders>
+        <PwaProviders user={user}>
           <ToastProvider>
             <AppShell
               header={

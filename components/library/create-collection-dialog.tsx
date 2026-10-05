@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics/track";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
@@ -53,6 +54,7 @@ function CreateCollectionForm({
     if (!canCreate) return;
 
     await createEmptyCollection({ name: name.trim(), language }, (domainId) => {
+      track("collection_created", { language });
       onClose();
       router.push(`/app/library?domain=${domainId}`);
     });

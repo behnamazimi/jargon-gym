@@ -1,3 +1,4 @@
+import { track } from "@/lib/analytics/track";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { generateQuizAction } from "@/app/(private)/app/quiz/actions";
@@ -169,6 +170,11 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
       return;
     }
 
+    track("quiz_started", {
+      question_style: questionStyle,
+      question_count: result.questions.length,
+      collection_scope: domainIds === "all" ? "all" : "selected",
+    });
     setQuestions(result.questions);
     setTerms(result.terms);
     setCurrentIndex(0);
@@ -203,6 +209,13 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     advancedQuestionKeyRef.current = key;
 
     setErrorMessage(null);
+    if (!practice && currentIndex === questions.length - 1) {
+      track("quiz_completed", {
+        correct_answers: answers.filter((answer) => answer.passed).length + (passed ? 1 : 0),
+        total_questions: questions.length,
+        question_style: questionStyle,
+      });
+    }
     submitQuizAnswer(answerSetters, passed, {
       question,
       answers,

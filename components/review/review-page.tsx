@@ -1,5 +1,6 @@
 "use client";
 
+import { track } from "@/lib/analytics/track";
 import { useCallback, useRef, useState } from "react";
 import { recordReviewRevealAction } from "@/app/(private)/app/actions";
 import { ReadCaughtUp } from "@/components/read/read-caught-up";
@@ -133,6 +134,7 @@ export function ReviewPage({
       if (!alreadyRated && advancedCardIdRef.current === currentCard.id) return;
 
       setRatings((prev) => upsertRating(prev, currentCard.id, grade));
+      track("review_term_rated", { grade });
       enqueueRating(currentCard.id, grade);
 
       if (alreadyRated) return;
