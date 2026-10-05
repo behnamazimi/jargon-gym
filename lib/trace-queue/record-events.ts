@@ -2,6 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import type { QuestionType } from "@/lib/trace";
 import type { ReviewEvent } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -23,7 +24,7 @@ export type TraceEventPayload = {
   /** 1-4 (AGAIN/HARD/GOOD/EASY) — review_pass/review_fail only, logged to review_events. */
   grade?: number;
   /** quiz_pass/quiz_fail only, logged to review_events. */
-  questionType?: "multiple_choice" | "true_false";
+  questionType?: QuestionType;
   /** Recall/recognition retrievability just before this event — review_pass/fail and
    *  quiz_pass/fail only, logged to review_events for calibration checking. */
   retrievabilityBefore?: number;

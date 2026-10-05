@@ -28,6 +28,18 @@ describe("updatePosterior", () => {
     expect(mcq).toBeGreaterThan(tf);
   });
 
+  it("a typed pass (0.05 guess rate) counts for more than a multiple-choice pass", () => {
+    const mcq = updatePosterior(0.5, true, "multiple_choice", null);
+    const typed = updatePosterior(0.5, true, "typed", null);
+    // (0.95*0.5) / (0.95*0.5 + 0.05*0.5) = 0.95
+    expect(typed).toBeCloseTo(0.95, 10);
+    expect(typed).toBeGreaterThan(mcq);
+  });
+
+  it("a typed miss still lowers the posterior", () => {
+    expect(updatePosterior(0.7, false, "typed", null)).toBeLessThan(0.7);
+  });
+
   it("cross-track penalty softening: high recall retrievability blunts the failure penalty", () => {
     const p = 0.7;
     // No recall history => full, unsoftened penalty (steepest drop).
