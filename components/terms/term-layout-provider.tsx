@@ -1,6 +1,16 @@
 "use client";
 
-import { createContext, use, useCallback, useContext, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import {
+  createContext,
+  Suspense,
+  use,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   saveTermLayoutAction,
   type TermLayoutChange,
@@ -17,8 +27,17 @@ import {
   type TermLayout,
 } from "@/lib/terms/term-layout";
 
+// The editor is only needed once someone asks for it.
+const loadEditor = () => import("./term-layout-dialog").then((module) => module.TermLayoutDialog);
+const TermLayoutDialog = dynamic(loadEditor, { ssr: false });
+
+export function preloadTermLayoutEditor() {
+  void loadEditor();
+}
+
 type TermLayoutContextValue = {
   stored: Promise<TermLayout>;
+  openEditor: (domainId: string | undefined) => void;
   /** What the learner has saved or is saving since the page loaded. */
   changed: TermLayout | null;
   save: (change: TermLayoutChange) => Promise<boolean>;
@@ -50,6 +69,15 @@ export function TermLayoutProvider({
   const { toast } = useToast();
   const [changed, setChanged] = useState<TermLayout | null>(null);
   const changedRef = useRef<TermLayout | null>(null);
+  const [editor, setEditor] = useState<{
+    domainId: string | undefined;
+    id: number;
+    isOpen: boolean;
+  } | null>(null);
+
+  const openEditor = useCallback((domainId: string | undefined) => {
+    setEditor((previous) => ({ domainId, id: (previous?.id ?? 0) + 1, isOpen: true }));
+  }, []);
 
   const save = useCallback(
     async (change: TermLayoutChange) => {
@@ -73,16 +101,31 @@ export function TermLayoutProvider({
   );
 
   const value = useMemo(
-    () => ({ stored: initialLayout, changed, save }),
-    [initialLayout, changed, save],
+    () => ({ stored: initialLayout, changed, save, openEditor }),
+    [initialLayout, changed, save, openEditor],
   );
-  return <TermLayoutContext value={value}>{children}</TermLayoutContext>;
+  return (
+    <TermLayoutContext value={value}>
+      {children}
+      {editor ? (
+        <Suspense fallback={null}>
+          <EditorHost
+            key={editor.id}
+            domainId={editor.domainId}
+            isOpen={editor.isOpen}
+            onOpenChange={(isOpen) => setEditor((current) => current && { ...current, isOpen })}
+          />
+        </Suspense>
+      ) : null}
+    </TermLayoutContext>
+  );
 }
 
 export type TermLayoutAccess = {
   placement: Placement;
   hasOverride: boolean;
   save: (change: TermLayoutChange) => Promise<boolean>;
+  openEditor: (domainId: string | undefined) => void;
 };
 
 /** The layout for a collection's cards, or null outside the study pages.
@@ -96,5 +139,29 @@ export function useTermLayoutScope(domainId: string | undefined): TermLayoutAcce
     placement: resolvePlacement(layout, domainId),
     hasOverride: hasCollectionOverride(layout, domainId),
     save: context.save,
+    openEditor: context.openEditor,
   };
+}
+
+/** The editor lives here, above the cards, so its events never pass through a
+ *  card's own handlers. */
+function EditorHost({
+  domainId,
+  isOpen,
+  onOpenChange,
+}: {
+  domainId: string | undefined;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+}) {
+  const access = useTermLayoutScope(domainId);
+  if (!access) return null;
+  return (
+    <TermLayoutDialog
+      domainId={domainId}
+      access={access}
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+    />
+  );
 }
