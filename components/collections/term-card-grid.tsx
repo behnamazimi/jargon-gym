@@ -41,22 +41,7 @@ export function TermCardGrid({ domainSlug, language, terms }: TermCardGridProps)
 
   return (
     <div>
-      {groups.length > 1 ? (
-        <nav aria-label="Categories" className="flex flex-wrap gap-2">
-          {groups.map((group) => (
-            <a
-              key={group.id}
-              href={`#${group.id}`}
-              className="inline-flex min-h-8 items-center gap-2 rounded-field border border-base-300 bg-base-100 px-4 text-sm text-base-content no-underline transition-colors duration-150 hover:bg-base-200/60 coarse:min-h-10"
-            >
-              {group.name}
-              <span className="tabular-nums opacity-55">{group.terms.length}</span>
-            </a>
-          ))}
-        </nav>
-      ) : null}
-
-      <div className="mt-12 space-y-16">
+      <div className="space-y-16">
         {groups.map((group) => (
           <section key={group.id} aria-labelledby={group.id}>
             <SectionHeading id={group.id} count={group.terms.length} ruled>

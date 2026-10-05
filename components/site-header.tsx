@@ -9,6 +9,7 @@ import {
   FeaturesNavLink,
   LoggedOutHeaderNav,
   SignedInHeaderNav,
+  StudyPathOnly,
 } from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -103,7 +104,9 @@ export function SiteHeader({
       rightNav={
         <>
           {user ? (
-            <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+            <StudyPathOnly>
+              <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+            </StudyPathOnly>
           ) : null}
           {user ? null : <InstallButton />}
           <ThemeToggle initialIsDark={initialIsDark} />
