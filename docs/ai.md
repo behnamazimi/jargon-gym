@@ -29,6 +29,9 @@ Every feature has a row in `ai_feature_settings`:
 - `daily_cap`: per person, rolling 24 hours. Blank means no cap.
 - `credit_cost` and `unit`: the price, for billable features only.
 
+A shared signup code can add people to the narration allowlist when they take a
+seat (see Shared codes in [admin.md](admin.md#shared-codes)).
+
 `has_feature_access(user, feature)` answers access in SQL, and
 `lib/ai/feature-settings.ts` reads the row in the app. Narration access is
 checked in the routes and the Read, Review and Collection actions.

@@ -107,6 +107,12 @@ code also has a label and an end date, and stops at whichever limit comes first.
   `users.pending_referral_code`. If the code filled up meanwhile, the person lands on `/complete-signup`.
   `users.referral_code_ran_out` remembers it, so that page says the code ran out instead of just asking for one.
 - Pausing stops new seats at once. The signup page shows no seat count or deadline.
+- A shared code made with "Turn narration on" (`referral_codes.grants_narration`, set only when the code is
+  created) gives everyone who takes a seat the `narration_term` and `narration_story` allowlist rows, inside
+  `_consume_referral_code`. It only adds rows: the narration switch, access mode and caps still apply, and
+  pausing or expiring the code never takes access away (remove it on the person's page). Each new grant writes
+  a `narration_granted_by_code` audit row with no actor (`_system_audit_insert`, shown as "System"); someone
+  already on the allowlist gets no row.
 - SQL checks: `supabase/tests/shared_referral_codes.sql` and `shared_referral_codes_concurrency.sh`, run by hand.
 
 ## Collection requests
