@@ -97,6 +97,10 @@ export const APP_AUDIT_ACTIONS = {
     label: "Request email resent",
     describe: () => null,
   },
+  "app.issue_done": { label: "Issue marked done", describe: (d) => text(d.kind) },
+  "app.issue_wont_do": { label: "Issue marked won't do", describe: (d) => text(d.kind) },
+  "app.issue_reopened": { label: "Issue reopened", describe: (d) => text(d.kind) },
+  "app.issue_deleted": { label: "Issue deleted", describe: (d) => text(d.kind) },
 } as const satisfies Record<string, AuditEntry>;
 
 export type AppAuditAction = keyof typeof APP_AUDIT_ACTIONS;

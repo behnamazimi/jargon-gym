@@ -46,6 +46,11 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
         title: "macOS widget",
         body: "The next term sits on your desktop. Reveal it, or move on to the next one.",
       },
+      {
+        icon: "bug",
+        title: "Report an issue",
+        body: "Send a problem or an idea from any page, with a screenshot if it helps.",
+      },
     ],
   },
   {

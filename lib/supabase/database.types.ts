@@ -739,6 +739,56 @@ export type Database = {
           },
         ];
       };
+      issue_reports: {
+        Row: {
+          body: string;
+          created_at: string;
+          id: string;
+          kind: string;
+          page_path: string | null;
+          screenshot_path: string | null;
+          status: string;
+          status_changed_at: string | null;
+          user_agent: string | null;
+          user_id: string;
+          viewport: string | null;
+        };
+        Insert: {
+          body: string;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          page_path?: string | null;
+          screenshot_path?: string | null;
+          status?: string;
+          status_changed_at?: string | null;
+          user_agent?: string | null;
+          user_id: string;
+          viewport?: string | null;
+        };
+        Update: {
+          body?: string;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          page_path?: string | null;
+          screenshot_path?: string | null;
+          status?: string;
+          status_changed_at?: string | null;
+          user_agent?: string | null;
+          user_id?: string;
+          viewport?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "issue_reports_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       narration_sync_jobs: {
         Row: {
           created_at: string;
@@ -2429,6 +2479,18 @@ export type Database = {
       set_term_marked_known: {
         Args: { p_marked: boolean; p_term_id: string; p_user_id: string };
         Returns: undefined;
+      };
+      submit_issue_report: {
+        Args: {
+          p_body: string;
+          p_id: string;
+          p_kind: string;
+          p_page_path?: string;
+          p_screenshot_path?: string;
+          p_user_agent?: string;
+          p_viewport?: string;
+        };
+        Returns: string;
       };
       update_telegram_cadence: {
         Args: { p_cadence: Database["public"]["Enums"]["telegram_cadence"] };

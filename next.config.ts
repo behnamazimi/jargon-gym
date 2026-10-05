@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   experimental: {
     optimizePackageImports: ["react-aria-components", "lucide-react"],
+    // Issue screenshots are shrunk to 2 MB in the browser; the rest is form overhead.
+    serverActions: { bodySizeLimit: "3mb" },
   },
   async redirects() {
     return [...LEGACY_APP_REDIRECTS, ...LEGACY_ADMIN_REDIRECTS];

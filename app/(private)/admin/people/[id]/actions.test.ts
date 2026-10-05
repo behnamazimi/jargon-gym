@@ -4,6 +4,15 @@ const state = vi.hoisted(() => ({
   rpcCalls: [] as { name: string; args: unknown }[],
   rpcError: null as { code?: string; message: string } | null,
   revalidated: [] as string[],
+  screenshotsRemovedFor: [] as string[],
+  screenshotsFail: false,
+}));
+
+vi.mock("@/lib/issues/storage", () => ({
+  deleteUserScreenshots: async (userId: string) => {
+    if (state.screenshotsFail) throw new Error("S3 down");
+    state.screenshotsRemovedFor.push(userId);
+  },
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: (path: string) => state.revalidated.push(path) }));
@@ -28,6 +37,8 @@ beforeEach(() => {
   state.rpcCalls = [];
   state.rpcError = null;
   state.revalidated = [];
+  state.screenshotsRemovedFor = [];
+  state.screenshotsFail = false;
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
@@ -105,6 +116,17 @@ describe("deleteUser", () => {
     ]);
   });
 
+  it("removes their issue screenshots once the account is gone", async () => {
+    await deleteUser({ userId: ID, reason: "requested", confirmEmail: "a@example.test" });
+    expect(state.screenshotsRemovedFor).toEqual([ID]);
+  });
+
+  it("still succeeds when the screenshots can't be removed", async () => {
+    state.screenshotsFail = true;
+    const result = await deleteUser({ userId: ID, reason: "x", confirmEmail: "a@example.test" });
+    expect(result.ok).toBe(true);
+  });
+
   it("doesn't refresh the page of the person who no longer exists", async () => {
     await deleteUser({ userId: ID, reason: "requested", confirmEmail: "a@example.test" });
     expect(state.revalidated).toEqual(["/admin", "/admin/people"]);
@@ -126,5 +148,6 @@ describe("deleteUser", () => {
     };
     const result = await deleteUser({ userId: ID, reason: "x", confirmEmail: "a@example.test" });
     expect(result).toEqual({ ok: false, error: state.rpcError.message });
+    expect(state.screenshotsRemovedFor).toEqual([]);
   });
 });

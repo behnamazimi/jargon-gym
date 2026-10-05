@@ -1,13 +1,15 @@
 "use client";
 
-import { Download, LogOut, Sparkles } from "lucide-react";
+import { Bug, Download, LogOut, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
 import { ACCOUNT_HOME_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { AppRouterProvider } from "@/components/app-router-provider";
+import { ReportIssueDialog } from "@/components/issues/report-issue-dialog";
 import { INSTALL_MENU_LABEL, useInstallAction } from "@/components/pwa/install-prompt";
 import { useAiCredits } from "@/hooks/use-ai-credits";
 import { aiCreditsLine, type AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
+import { ISSUE_COPY } from "@/lib/issues/copy";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -27,6 +29,7 @@ type ProfileMenuProps = {
 
 export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMenuProps) {
   const [isBusy, setIsBusy] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const { load: aiCreditsLoad, refresh: refreshAiCredits } = useAiCredits(aiCreditsMode);
   const creditsLine = aiCreditsLine(aiCreditsMode, aiCreditsLoad);
   const initials = emailInitials(email);
@@ -109,12 +112,17 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
               {INSTALL_MENU_LABEL}
             </DropdownMenuItem>
           ) : null}
+          <DropdownMenuItem onAction={() => setReportOpen(true)}>
+            <Bug className="h-4 w-4" />
+            {ISSUE_COPY.menuLabel}
+          </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>
             <LogOut className="h-4 w-4" />
             {isBusy ? "Signing out…" : "Log out"}
           </DropdownMenuItem>
         </DropdownMenu>
       </DropdownMenuTrigger>
+      <ReportIssueDialog isOpen={reportOpen} onOpenChange={setReportOpen} />
     </AppRouterProvider>
   );
 }

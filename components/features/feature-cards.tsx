@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Bug,
   Download,
   KeyRound,
   Monitor,
@@ -26,6 +27,7 @@ const ICONS: Record<FeatureIconKey, LucideIcon> = {
   star: Star,
   key: KeyRound,
   shield: ShieldCheck,
+  bug: Bug,
 };
 
 export function FeatureCards({ section, number }: { section: CardsSection; number: number }) {

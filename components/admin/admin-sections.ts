@@ -1,4 +1,5 @@
 import {
+  Bug,
   Coins,
   Inbox,
   LayoutDashboard,
@@ -33,6 +34,7 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
       { href: "/admin/collections", label: "Collections", icon: Library },
       { href: "/admin/people", label: "People", icon: Users },
       { href: "/admin/requests", label: "Requests", icon: Inbox },
+      { href: "/admin/issues", label: "Issues", icon: Bug },
     ],
   },
   {

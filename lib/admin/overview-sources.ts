@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { FEATURE_IDS, type FeatureId } from "@/lib/ai/registry";
+import { countNewIssues } from "./issues/queries";
 import { readRequestAttention } from "./requests/queries";
 import { canResumeNarrationSync, isActiveNarrationSyncStatus } from "@/lib/narration/sync-shared";
 import { getLastNarrationSyncJob } from "@/lib/narration/sync";
@@ -30,6 +31,10 @@ export async function readReportedCollections(client: Client): Promise<number> {
       .range(from, to),
   );
   return new Set(rows.map((row) => row.domain_id)).size;
+}
+
+export async function readNewIssues(client: Client): Promise<number> {
+  return countNewIssues(client);
 }
 
 export async function readRequestsAttention(client: Client) {
