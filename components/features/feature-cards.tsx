@@ -1,7 +1,6 @@
 import {
   BookOpen,
   Download,
-  Globe,
   KeyRound,
   Monitor,
   Pencil,
@@ -20,7 +19,6 @@ type CardsSection = Extract<FeatureSection, { layout: "cards" }>;
 const ICONS: Record<FeatureIconKey, LucideIcon> = {
   book: BookOpen,
   pencil: Pencil,
-  globe: Globe,
   download: Download,
   phone: Smartphone,
   send: Send,

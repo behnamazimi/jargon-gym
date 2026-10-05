@@ -6,7 +6,6 @@ import { SplitWithScene } from "@/components/public/split-with-scene";
 import { FEATURE_SECTIONS } from "@/lib/features/sections";
 import { cn } from "@/lib/utils";
 import { FeatureCards } from "./feature-cards";
-import { FeatureChips } from "./feature-chips";
 import { FeatureSplit } from "./feature-split";
 import { FeaturesContents } from "./features-contents";
 
@@ -23,8 +22,8 @@ export function FeaturesPage() {
           Everything Lobyas does, in the order you&apos;ll need it
         </h1>
         <p className="mt-6 m-0 max-w-[44ch] text-lg leading-relaxed text-base-content/85">
-          From getting your first terms in, to hearing them, to seeing what has stuck. Here is the
-          full list.
+          For the terms of a field or the words of a language: from your first terms to seeing what
+          has stuck.
         </p>
         <div className="mt-8">
           <PublicCta />
@@ -47,8 +46,6 @@ export function FeaturesPage() {
             );
           case "cards":
             return <FeatureCards key={section.id} section={section} number={number} />;
-          case "chips":
-            return <FeatureChips key={section.id} section={section} number={number} />;
         }
       })}
 

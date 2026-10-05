@@ -4,68 +4,68 @@ export const STUDY_SECTIONS: FeatureSection[] = [
   {
     layout: "split",
     id: "start",
-    title: "Start without the effort",
+    title: "Get your terms in",
     lead: "Getting your first collection in is quick.",
     scene: "start",
     items: [
       {
-        title: "Shared collections",
+        title: "Add a shared collection",
         body: "Search what other members shared and add it in one tap. Remove it any time.",
       },
       {
         title: "Paste a list",
-        body: "From Notes, a spreadsheet or a table. A Check screen shows what will be added first.",
+        body: "From Notes, a spreadsheet or a table. You check it before anything is added.",
       },
       {
-        title: "Bring a deck",
-        body: "Export guides for Quizlet, Anki, Google Translate, Noji, Mochi, Brainscape, Duolingo and Memrise.",
-      },
-      {
-        title: "Import JSON",
-        body: "A documented format, plus a prompt that has any LLM draft a glossary for a field or language.",
+        title: "Bring a deck from another app",
+        body: "Step-by-step guides for Quizlet, Anki, Duolingo and five more apps, or import a JSON file.",
       },
       {
         title: "Save one term",
-        body: "Capture a word the moment you meet it. A name is enough: it waits out of practice until you add a definition.",
+        body: "Save a word the moment you meet it and add the definition later.",
       },
       {
         title: "Request a collection",
         body: "Can't find one? Ask for it and get a private copy when it's built.",
       },
-      {
-        title: "Import without AI",
-        body: "Nothing you paste is sent to a model. Parsing is plain rules, so it is free.",
-      },
     ],
   },
   {
     layout: "split",
-    id: "learn",
-    title: "Learn terms you can actually use",
-    lead: "A definition alone won't help you use a word in a meeting, so each term carries more.",
-    scene: "learn",
+    id: "study",
+    title: "Read, review, quiz",
+    lead: "Three ways to study the same terms, from a first look to a real check.",
+    scene: "study",
     items: [
-      {
-        title: "Terms beyond a definition",
-        body: "Example, mental model, in practice, anti-example, debated and relationships to nearby terms.",
-      },
       {
         title: "Read",
         body: "See a term with real usage and get familiar before anyone tests you.",
       },
       {
         title: "Review",
-        body: "Recall it first, then reveal and rate yourself: Again, Hard, Good or Easy.",
+        body: "Try to recall it, then check yourself and say how well you knew it.",
       },
       {
         title: "Quiz",
-        body: "A real check. Free questions come from your definitions; AI questions are sharper.",
+        body: "Free questions come from your definitions, or let AI write them.",
       },
       {
-        title: "Study in any order",
-        body: "Most people read, review, then quiz, but you can use them in any order.",
+        title: "Shakiest first",
+        body: "Each mode ranks terms by what you're most likely to forget.",
       },
-      { title: "One collection or all", body: "Pick the scope for each session." },
+    ],
+  },
+  {
+    layout: "split",
+    id: "learn",
+    title: "More than a definition",
+    lead: "A definition alone won't help you use a word in a meeting, so each term carries more.",
+    scene: "learn",
+    items: [
+      {
+        title: "Everything around a term",
+        body: "An example, a counter-example, a way to picture it, how it's used in practice, where people disagree, and links to related terms.",
+      },
       {
         title: "Hear any term",
         body: "Play a spoken clip from a term card.",
@@ -75,76 +75,47 @@ export const STUDY_SECTIONS: FeatureSection[] = [
   {
     layout: "split",
     id: "stories",
-    title: "Stories made from your terms",
-    lead: "A short read written around the terms you're learning, so they show up in context.",
-    scene: "stories",
-    items: [
-      {
-        title: "From your queue",
-        body: "Each story uses the terms your queue ranks next.",
-      },
-      {
-        title: "Style, setting, difficulty",
-        body: "Choose the voice, the scene and how hard the sentences are.",
-      },
-      {
-        title: "Mark known as you read",
-        body: "Skip a term for good without leaving the page.",
-      },
-      { title: "Story history", body: "Reopen anything you read before." },
-      { title: "Open on Stories", body: "Make it your default way into Read." },
-    ],
-  },
-  {
-    layout: "split",
-    id: "listen",
-    title: "Listen and shadow in Stories",
-    lead: "Every story can be read aloud in a natural AI voice. Turn on shadowing to repeat each sentence out loud.",
+    title: "Stories you can read and hear",
+    lead: "Short reads built from your terms, read aloud so you can listen and repeat.",
     scene: "hear",
     items: [
       {
-        title: "AI voices",
-        body: "Stories are read aloud, with a backup voice so playback keeps working.",
+        title: "Your next terms",
+        body: "Each story uses the terms you most need to see.",
       },
       {
-        title: "Sentence highlight",
-        body: "The sentence being spoken lights up and the page follows along.",
+        title: "Style, setting, difficulty",
+        body: "Choose the writing style, the setting and how hard the sentences are.",
+      },
+      {
+        title: "Read aloud, sentence by sentence",
+        body: "The sentence being spoken lights up as you listen.",
       },
       {
         title: "Shadowing",
-        body: "Hear a sentence, then say it in the gap. Pauses of 1×, 1.5× or 2× the sentence.",
+        body: "Hear a sentence, then say it back in the pause.",
       },
       {
-        title: "Repeat or loop",
-        body: "Play each sentence 2, 3 or 5 times, or loop it until you stop.",
+        title: "Repeat, loop or slow down",
+        body: "Hear a hard sentence again, on a loop or slower.",
       },
-      {
-        title: "Speed control",
-        body: "Slow a hard sentence down, or speed up an easy one.",
-      },
-      { title: "Tap any sentence", body: "Jump to it and hear it again." },
     ],
   },
   {
     layout: "split",
     id: "no-guilt",
-    title: "No guilt, no backlog",
-    lead: "There are no due dates, so there is nothing to fall behind on. Come back whenever.",
+    title: "Nothing to fall behind on",
+    lead: "Come back after a day or a month. Nothing piles up.",
     scene: "noGuilt",
     items: [
       {
         title: "No due dates",
-        body: "Nothing is overdue and nothing piles up while you're away.",
-      },
-      {
-        title: "Shakiest first",
-        body: "Each mode ranks terms by what you're most likely to forget.",
+        body: "Lobyas never schedules a review for you.",
       },
       {
         title: "Skip what you know",
-        body: "Swipe through a deck of terms: right for known, left for not yet. Undo the last one if you slip.",
+        body: "Swipe right on terms you already know, or mark one known from anywhere.",
       },
-      { title: "Mark known anywhere", body: "From the Library, a card or a story." },
       {
         title: "Pause a collection",
         body: "Take it out of practice for a busy month, then bring it back.",
@@ -154,21 +125,13 @@ export const STUDY_SECTIONS: FeatureSection[] = [
   {
     layout: "split",
     id: "progress",
-    title: "Progress you can believe",
-    lead: "Mastery comes from what you actually do, and it fades when you stop practising.",
+    title: "Progress from what you do",
+    lead: "Mastery grows while you practise and fades when you stop.",
     scene: "progress",
     items: [
       {
         title: "Mastery per term",
-        body: "One number blended from reading, recall and recognition.",
-      },
-      {
-        title: "Known, learning, unknown",
-        body: "Worked out for you. You never set it by hand.",
-      },
-      {
-        title: "Mastery page",
-        body: "An overview, per-term views, tier filters and pace for each collection.",
+        body: "Each term gets a score from what you read, review and quiz, and a level: unknown, learning or known.",
       },
       {
         title: "Daily streak",

@@ -1,9 +1,8 @@
-export type FeatureSceneKey = "start" | "learn" | "hear" | "stories" | "noGuilt" | "progress";
+export type FeatureSceneKey = "start" | "study" | "learn" | "hear" | "noGuilt" | "progress";
 
 export type FeatureIconKey =
   | "book"
   | "pencil"
-  | "globe"
   | "download"
   | "phone"
   | "send"
@@ -29,5 +28,4 @@ export type FeatureSection =
       title: string;
       lead: string;
       items: (FeatureItem & { icon: FeatureIconKey })[];
-    }
-  | { layout: "chips"; id: string; title: string; items: string[] };
+    };

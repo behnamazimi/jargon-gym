@@ -9,23 +9,18 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
   {
     layout: "cards",
     id: "find",
-    title: "Find your way around",
-    lead: "For when your collections get big.",
+    title: "Manage your collections",
+    lead: "Keep big collections tidy.",
     items: [
       {
         icon: "book",
         title: "Library",
-        body: "Browse by collection. Press / to search terms and definitions. Filters stay where you left them.",
+        body: "Browse by collection and search every term and definition.",
       },
       {
         icon: "pencil",
         title: "Edit anything",
-        body: "Every field, category and relationship, any time.",
-      },
-      {
-        icon: "globe",
-        title: "Shared collections",
-        body: "Browse, love the good ones and report problems.",
+        body: "Every field, category and link between terms, any time.",
       },
       { icon: "download", title: "Export", body: "Take a collection out as text or JSON." },
     ],
@@ -34,7 +29,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     layout: "cards",
     id: "everywhere",
     title: "Wherever you are",
-    lead: "Same queue everywhere you open it.",
+    lead: "Pick up where you left off on any device.",
     items: [
       {
         icon: "phone",
@@ -44,57 +39,36 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         icon: "send",
         title: "Telegram bot",
-        body: "Use /read, /review and /quiz, with reminders on your own cadence.",
+        body: "Use /read, /review and /quiz, with reminders when you want them.",
       },
       {
         icon: "monitor",
         title: "macOS widget",
-        body: "The next term on your desktop. Reveal it, advance it.",
+        body: "The next term sits on your desktop. Reveal it, or move on to the next one.",
       },
     ],
   },
   {
     layout: "cards",
     id: "ai-and-cost",
-    title: "Honest about AI and cost",
-    lead: "AI sits where you chose it, and you can see what it costs.",
+    title: "AI and credits",
+    lead: "Quiz, Stories and voices use AI, and it comes free with your account.",
     items: [
       {
         icon: "star",
-        title: "Credits to start",
-        body: "New accounts get AI credits, plus a monthly refill. If an AI run fails, the credits come back.",
+        title: "Free credits every month",
+        body: "New accounts get credits, plus a monthly refill.",
       },
       {
         icon: "key",
         title: "Bring your own key",
-        body: "Use a Google or Anthropic key and spend no credits.",
+        body: "Use a Google or Anthropic key, and Quiz and Stories run on it instead of your credits.",
       },
       {
         icon: "shield",
-        title: "AI only where you choose",
-        body: "Quiz, Stories and voices. Import never uses AI.",
+        title: "Voices are free",
+        body: "Spoken clips never use credits.",
       },
-    ],
-  },
-  {
-    layout: "chips",
-    id: "small-things",
-    title: "Small things that add up",
-    items: [
-      "Skippable guided tour",
-      "Keyboard shortcuts",
-      "Swipe gestures",
-      "Already-know-it prompt",
-      "Unfinished-terms banner",
-      "Language per collection",
-      "Streak history",
-      "Pace insight",
-      "Tier filters",
-      "Duplicate check",
-      "Full-screen Read feed",
-      "Answer feedback in Quiz",
-      "Light and dark themes",
-      "Delete your account any time",
     ],
   },
 ];
