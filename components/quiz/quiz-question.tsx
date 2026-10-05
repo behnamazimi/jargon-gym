@@ -101,7 +101,7 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
         return;
       }
 
-      if (event.key !== "Enter") return;
+      if (event.key !== "Enter" || event.isComposing) return;
 
       const target = event.target as HTMLElement;
       if (target.tagName === "TEXTAREA") return;
@@ -130,7 +130,7 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
 
   const submitted = state.phase !== "answering";
   const canAdvance = state.phase === "ready";
-  const feedbackLine = submitted ? quizFeedbackLine(question, state.passed) : null;
+  const feedbackLine = submitted ? quizFeedbackLine(question, state.passed, state.response) : null;
 
   return (
     <QuizPanel className="quiz-feedback-enter flex min-h-0 flex-1 flex-col">
@@ -143,6 +143,10 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
           <blockquote className="mt-3 rounded-field border-l-4 border-primary/40 bg-base-200/60 px-4 py-3 text-base-content/80">
             <span className="text-base leading-snug">{question.quote}</span>
           </blockquote>
+        ) : null}
+
+        {question.interaction === "text" && question.hint ? (
+          <p className="m-0 mt-2 text-sm text-base-content/70">{question.hint}</p>
         ) : null}
 
         <QuizAnswerChoices

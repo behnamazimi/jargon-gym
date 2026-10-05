@@ -1,5 +1,6 @@
 import { BooleanAnswer } from "@/components/quiz/boolean-answer";
 import { ChoiceAnswer } from "@/components/quiz/choice-answer";
+import { TextAnswer } from "@/components/quiz/text-answer";
 import type { QuizQuestion, QuizResponse } from "@/lib/quiz/types";
 
 type QuizAnswerChoicesProps = {
@@ -16,5 +17,7 @@ export function QuizAnswerChoices({ question, ...props }: QuizAnswerChoicesProps
       return <ChoiceAnswer question={question} {...props} />;
     case "boolean":
       return <BooleanAnswer question={question} {...props} />;
+    case "text":
+      return <TextAnswer question={question} {...props} />;
   }
 }

@@ -32,6 +32,38 @@ const row = (id: string, category: string | null, definition: string | null = "d
   category,
 });
 
+describe("supabaseDistractorSource.sameDefinition", () => {
+  function sameDefinitionClient(rows: Row[], seen: { pattern?: string }): SupabaseClient<Database> {
+    return {
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            neq: () => ({
+              ilike: (_column: string, pattern: string) => {
+                seen.pattern = pattern;
+                return { limit: () => Promise.resolve({ data: rows, error: null }) };
+              },
+            }),
+          }),
+        }),
+      }),
+    } as unknown as SupabaseClient<Database>;
+  }
+
+  it("finds other terms with the same meaning, matching it literally", async () => {
+    const seen: { pattern?: string } = {};
+    const source = supabaseDistractorSource(sameDefinitionClient([row("b", null)], seen));
+    const found = await source.sameDefinition(makeTerm({ id: "a", definition: "100%_sure" }));
+    expect(found.map((d) => d.id)).toEqual(["b"]);
+    expect(seen.pattern).toBe("100\\%\\_sure");
+  });
+
+  it("finds none when no term shares it", async () => {
+    const source = supabaseDistractorSource(sameDefinitionClient([], {}));
+    expect(await source.sameDefinition(makeTerm())).toEqual([]);
+  });
+});
+
 describe("supabaseDistractorSource", () => {
   it("puts related terms first, then fills from the collection", async () => {
     const related = [

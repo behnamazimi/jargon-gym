@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { escapeLike } from "@/lib/terms/like-escape";
 import type { DistractorSource, DistractorTerm, PickDistractorsOptions } from "./distractors";
 import { shuffle } from "./random";
 import type { QuizTerm } from "./types";
@@ -103,6 +104,19 @@ export function supabaseDistractorSource(client: Client): DistractorSource {
       }
 
       return shuffle(distractors);
+    },
+
+    async sameDefinition(term) {
+      const { data, error } = await client
+        .from("terms")
+        .select("id, term, definition, category")
+        .eq("domain_id", term.domainId)
+        .neq("id", term.id)
+        .ilike("definition", escapeLike(term.definition.trim()))
+        .limit(1);
+
+      if (error || !data) return [];
+      return data.map(toDistractor).filter((row): row is DistractorTerm => row !== null);
     },
   };
 }

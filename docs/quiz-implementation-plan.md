@@ -2,7 +2,7 @@
 
 Implements [quiz-question-design.md](quiz-question-design.md). This page is
 only about code structure and rollout. PR 1 (foundation and vocabulary) is
-built; typed answers (PR 2) and AI mode (PR 3) are not.
+built, and so are typed answers (PR 2); AI mode (PR 3) is not.
 
 ## Design rules
 
@@ -17,13 +17,14 @@ built; typed answers (PR 2) and AI mode (PR 3) are not.
 A question carries two separate facts.
 
 - **template**: what it asks (`definition_to_term`, `term_to_meaning`,
-  `masked_example`, `does_it_fit`; PR 2 adds the typed ones). Both kinds share
+  `masked_example`, `does_it_fit`, and the web-only vocabulary templates
+  `typed_cloze` and `typed_meaning_to_word`). Both kinds share
   a template when the question is the same; `templates/copy.ts` holds the
   kind-specific wording ("Which term…" vs "Which word or phrase…"), and
   `does_it_fit` is field terms only. Drives feedback copy and AI guidance.
   AI-written questions carry the interim `free_choice` / `free_boolean`,
   removed in PR 3.
-- **interaction**: how it is answered (`choice`, `boolean`; PR 2 adds `text`). Drives
+- **interaction**: how it is answered (`choice`, `boolean`, `text`). Drives
   grading, keyboard handling, the answer UI and the TRACE question type
   (`multiple_choice`, `true_false`, `typed`).
 
@@ -67,7 +68,9 @@ is gone. A term is picked per its own collection's kind, so mixed quizzes work.
   responses. Long answers are listed in the message with numbered buttons.
   The "category / collection" header line is gone.
 - **Pool.** `lib/quiz/terms.ts` looks up `domains.kind` for the picked terms.
-  Recognition strength joins in PR 2.
+  The quiz pickers copy each term's recognition posterior and test count onto
+  the card (`withRecognition` in `lib/trace-queue/pick-terms.ts`), so no extra
+  query is needed.
 - **Saved sessions.** Web uses the storage key version (`v2`, the old key is
   removed on load) and validates questions with `isQuizQuestion`. Telegram
   stores `version: 2`. Old sessions are dropped, not migrated.

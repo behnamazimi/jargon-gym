@@ -1,4 +1,6 @@
 import type { CollectionKind } from "@/lib/terms/kinds";
+import type { DomainLanguage } from "@/lib/terms/languages";
+import type { TermCard } from "@/lib/terms/term-card";
 
 export type QuizQuestionStyle = "ai" | "simple";
 
@@ -12,6 +14,9 @@ export type QuizTerm = {
   antiExample: string | null;
   category: string | null;
   kind: CollectionKind;
+  language: DomainLanguage;
+  /** How well the learner already recognises the term; absent when unknown. */
+  recognition?: TermCard["recognition"];
   domainId: string;
   domainName: string;
 };
@@ -22,7 +27,9 @@ export type PlannedTemplateId =
   | "definition_to_term"
   | "term_to_meaning"
   | "masked_example"
-  | "does_it_fit";
+  | "does_it_fit"
+  | "typed_cloze"
+  | "typed_meaning_to_word";
 
 /** `free_*` are questions the AI model wrote in its own shape. */
 export const QUIZ_TEMPLATE_IDS = [
@@ -30,6 +37,8 @@ export const QUIZ_TEMPLATE_IDS = [
   "term_to_meaning",
   "masked_example",
   "does_it_fit",
+  "typed_cloze",
+  "typed_meaning_to_word",
   "free_choice",
   "free_boolean",
 ] as const satisfies readonly (PlannedTemplateId | "free_choice" | "free_boolean")[];
@@ -55,11 +64,21 @@ export type QuizBooleanQuestion = QuizQuestionBase & {
   correctAnswer: boolean;
 };
 
-export type QuizQuestion = QuizChoiceQuestion | QuizBooleanQuestion;
+export type QuizTextQuestion = QuizQuestionBase & {
+  interaction: "text";
+  /** Typed answers that count as right; the first is the one shown. */
+  acceptedAnswers: string[];
+  language: DomainLanguage;
+  /** Extra help shown under the quote, such as the meaning of a blanked word. */
+  hint?: string;
+};
+
+export type QuizQuestion = QuizChoiceQuestion | QuizBooleanQuestion | QuizTextQuestion;
 
 export type QuizResponse =
   | { interaction: "choice"; optionIds: string[] }
-  | { interaction: "boolean"; value: boolean };
+  | { interaction: "boolean"; value: boolean }
+  | { interaction: "text"; text: string };
 
 export type QuizAnswer = {
   termId: string;

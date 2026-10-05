@@ -33,8 +33,10 @@ guessing from the code alone.
 What a quiz asks depends on the collection's kind. Simple mode and Telegram
 build questions with `buildQuiz` in `lib/quiz/build.ts`; each question type is
 a module in `lib/quiz/templates/`, listed in `registry.ts`. A question carries
-its `template` (what it asks) and `interaction` (how it is answered), and
-grading, keys and the TRACE question type follow the interaction. Builders
+its `template` (what it asks) and `interaction` (`choice`, `boolean` or
+`text`, how it is answered), and grading, keys and the TRACE question type
+follow the interaction. Typed (`text`) questions are web-only and only for
+vocabulary terms the learner already knows (`lib/quiz/mix.ts`). Builders
 stay pure and get wrong options through `DistractorSource`. Read
 [docs/quiz-implementation-plan.md](docs/quiz-implementation-plan.md) and
 [docs/quiz-question-design.md](docs/quiz-question-design.md) before adding a

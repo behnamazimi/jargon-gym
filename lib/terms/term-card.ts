@@ -29,4 +29,7 @@ export type TermCard = {
    *  is the very first time the user is being shown it. Drives the
    *  first-exposure "mark known" prompt in Read/Review. */
   isNewToUser?: boolean;
+  /** What Quiz knows about the learner's recognition of this term when it was
+   *  picked. Set only by the quiz pickers. */
+  recognition?: { posterior: number | null; testCount: number };
 };

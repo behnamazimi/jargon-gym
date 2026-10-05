@@ -1,7 +1,13 @@
 import type { CollectionKind } from "@/lib/terms/kinds";
 import type { DistractorSource } from "../distractors";
 import type { Rng } from "../random";
-import type { PlannedTemplateId, QuizChannel, QuizQuestion, QuizTerm } from "../types";
+import type {
+  PlannedTemplateId,
+  QuizChannel,
+  QuizQuestion,
+  QuizResponse,
+  QuizTerm,
+} from "../types";
 
 export type BuildContext = {
   source: DistractorSource;
@@ -20,6 +26,6 @@ export type QuizTemplate = {
   eligible(term: QuizTerm): boolean;
   /** Null when the collection can't supply what the question needs. */
   build(term: QuizTerm, ctx: BuildContext): Promise<QuizQuestion | null>;
-  /** One sentence on why the answer was right or wrong, from the question alone. */
-  feedback(question: QuizQuestion, passed: boolean): string | null;
+  /** A sentence on why the answer was right or wrong, from the question and what was answered. */
+  feedback(question: QuizQuestion, passed: boolean, response: QuizResponse | null): string | null;
 };
