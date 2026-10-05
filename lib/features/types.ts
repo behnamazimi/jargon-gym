@@ -9,7 +9,8 @@ export type FeatureIconKey =
   | "monitor"
   | "star"
   | "key"
-  | "shield";
+  | "shield"
+  | "bug";
 
 type FeatureItem = { title: string; body: string };
 

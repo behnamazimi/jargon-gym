@@ -6,17 +6,18 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 
 ## Pages
 
-| Address               | What it is                                                                                                           |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity     |
-| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend), shared codes, and the members list                            |
-| `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete            |
-| `/admin/collections`  | Built-in and all collections: status, public address; the Reported view lists reported and sharing-locked ones       |
-| `/admin/requests`     | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers |
-| `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                       |
-| `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                          |
-| `/admin/ai/narration` | Narration access, limits, audio sync                                                                                 |
-| `/admin/system/audit` | What admins changed, and when                                                                                        |
+| Address               | What it is                                                                                                                |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `/admin`              | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity          |
+| `/admin/people`       | Waitlist (approve one or up to ten at a time, resend), shared codes, and the members list                                 |
+| `/admin/people/[id]`  | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete                 |
+| `/admin/collections`  | Built-in and all collections: status, public address; the Reported view lists reported and sharing-locked ones            |
+| `/admin/requests`     | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers      |
+| `/admin/issues`       | Problems and ideas people sent; `/admin/issues/[id]` shows one with its screenshot, marks it done or won't do, deletes it |
+| `/admin/ai`           | Every AI feature: switch, vendor, what is sent, price or limit                                                            |
+| `/admin/ai/credits`   | Credits switch, allowance and prices, health, usage, grants                                                               |
+| `/admin/ai/narration` | Narration access, limits, audio sync                                                                                      |
+| `/admin/system/audit` | What admins changed, and when                                                                                             |
 
 Old addresses (`/admin/invites`, `/admin/ai-credits`, `/admin/narration`) redirect with
 temporary (307) redirects from `lib/redirects.ts`.
@@ -118,6 +119,27 @@ writes into another person's account, so it is a database function
 `20261002110000_collection_requests.sql`) that audits in the same transaction. Audit details
 hold ids and counts, never the topic, the terms or emails. SQL checks:
 `supabase/tests/collection_requests.sql` and `collection_requests_concurrency.sh`.
+
+## Issue reports
+
+Members send a problem or an idea from "Report an issue" in the account menu (desktop) or the
+More sheet (phone). The modal is `components/issues/report-issue-dialog.tsx`; the copy, limits and
+image shrinking live in `lib/issues/`. It saves through `submitIssueReport`
+(`app/(private)/app/issues/actions.ts`), which calls `submit_issue_report`. That function checks
+the input and allows 10 reports per person per 24 hours. The page path, browser and window size
+are attached without being shown. Nothing is ever sent back to the member.
+
+A screenshot is shrunk in the browser to WebP, at most 2000 px on its longest side and 2 MB, so it
+fits a server action (`serverActions.bodySizeLimit` is 3 MB). The server uploads it to the private
+`issue-screenshots` bucket at `<user id>/<issue id>.webp` through the S3 endpoint
+(`lib/issues/storage.ts`), and removes it again when saving the row fails. Admins see it through
+`/api/admin/issues/[id]/screenshot`, which checks for an admin and streams the file.
+
+Statuses are new, done and won't do. Changing one or deleting an issue goes through
+`runAdminAction` and writes `app.issue_done`, `app.issue_wont_do`, `app.issue_reopened` or
+`app.issue_deleted`. Deleting an issue removes its screenshot first; if that fails, the row stays and the admin sees an error, so no file is left without its row. Deleting an account removes the
+rows through the cascade, and both delete actions remove the person's screenshot folder. New issues
+show on the Overview.
 
 ## Shared collections: loves, reports and takedowns
 

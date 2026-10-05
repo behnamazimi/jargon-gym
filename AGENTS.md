@@ -135,6 +135,15 @@ Read the Requests section of [docs/import.md](docs/import.md) before changing it
 runs in this path, and no user-facing string may name the admin or imply automation
 (`lib/requests/copy.ts` and its test enforce the list).
 
+# Issue reports
+
+"Report an issue" (account menu and phone More sheet) opens a modal for a
+problem or an idea with one optional screenshot; admins triage them at
+`/admin/issues`. Code: `lib/issues/`, `components/issues/`,
+`app/(private)/app/issues/`, `lib/admin/issues/`, `components/admin/issues/`.
+Read the Issue reports section of [docs/admin.md](docs/admin.md) first. Nothing
+goes back to the member, and no user-facing string may name the admin.
+
 # Page promos
 
 Banners that point at a page the user hasn't visited live in `lib/promos/`

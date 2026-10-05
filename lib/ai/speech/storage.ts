@@ -1,45 +1,10 @@
-import {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Client, isMissingObject } from "@/lib/supabase/s3";
 
 function getBucket(): string {
   const bucket = process.env.SUPABASE_S3_BUCKET;
   if (!bucket) throw new Error("Missing SUPABASE_S3_BUCKET.");
   return bucket;
-}
-
-let s3Client: S3Client | undefined;
-
-function getS3Client(): S3Client {
-  if (s3Client) return s3Client;
-
-  const endpoint = process.env.SUPABASE_S3_ENDPOINT;
-  const region = process.env.SUPABASE_S3_REGION;
-  const accessKeyId = process.env.SUPABASE_S3_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.SUPABASE_S3_SECRET_ACCESS_KEY;
-
-  if (!endpoint || !region || !accessKeyId || !secretAccessKey) {
-    const missing = [
-      !endpoint ? "SUPABASE_S3_ENDPOINT" : null,
-      !region ? "SUPABASE_S3_REGION" : null,
-      !accessKeyId ? "SUPABASE_S3_ACCESS_KEY_ID" : null,
-      !secretAccessKey ? "SUPABASE_S3_SECRET_ACCESS_KEY" : null,
-    ]
-      .filter(Boolean)
-      .join(", ");
-    throw new Error(`Missing ${missing}.`);
-  }
-
-  s3Client = new S3Client({
-    endpoint,
-    region,
-    credentials: { accessKeyId, secretAccessKey },
-    forcePathStyle: true,
-  });
-  return s3Client;
 }
 
 export async function uploadAudio(path: string, audio: Buffer): Promise<void> {
@@ -59,12 +24,6 @@ export class AudioMissingError extends Error {
     super(`Audio missing at ${path}.`);
     this.name = "AudioMissingError";
   }
-}
-
-function isMissingObject(error: unknown): boolean {
-  if (!(error instanceof Error)) return false;
-  const status = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
-  return error.name === "NoSuchKey" || error.name === "NotFound" || status === 404;
 }
 
 export type AudioStream = {

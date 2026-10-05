@@ -4,6 +4,7 @@ import { z } from "zod";
 import { AdminError } from "@/lib/admin/admin-error";
 import { runAdminAction } from "@/lib/admin/action";
 import { throwRpcError } from "@/lib/admin/rpc-error";
+import { deleteUserScreenshots } from "@/lib/issues/storage";
 
 const REASON_MAX = 200;
 
@@ -66,5 +67,8 @@ export async function deleteUser(input: { userId: string; reason: string; confir
       p_reason: reason,
     });
     if (error) throwRpcError(error);
+    await deleteUserScreenshots(userId).catch((err) =>
+      console.error("Couldn't remove issue screenshots for a deleted account:", err),
+    );
   }, REVALIDATE_AFTER_DELETE);
 }

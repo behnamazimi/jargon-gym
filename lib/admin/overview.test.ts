@@ -43,6 +43,7 @@ const summary: AiCreditSummary = {
 const healthy: OverviewInput = {
   waitlistPending: 0,
   reported: 0,
+  newIssues: 0,
   requests: { waiting: 0, overdue: 0 },
   credits: summary,
   creditsEnabled: true,
@@ -143,10 +144,18 @@ describe("buildAttentionItems", () => {
     );
   });
 
+  it("points at the issues page when there are new issues", () => {
+    expect(buildAttentionItems({ ...healthy, newIssues: 3 })).toEqual([
+      expect.objectContaining({ id: "issues", title: "3 new issues", href: "/admin/issues" }),
+    ]);
+    expect(buildAttentionItems({ ...healthy, newIssues: 1 })[0]?.title).toBe("1 new issue");
+  });
+
   it("says a source couldn't be read instead of pretending all is well", () => {
     const items = buildAttentionItems({
       waitlistPending: null,
       reported: null,
+      newIssues: null,
       requests: null,
       credits: null,
       creditsEnabled: null,
@@ -157,6 +166,7 @@ describe("buildAttentionItems", () => {
       "unreadable-credits",
       "unreadable-credits-switch",
       "unreadable-features",
+      "unreadable-issues",
       "unreadable-reports",
       "unreadable-requests",
       "unreadable-waitlist",

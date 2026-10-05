@@ -15,6 +15,7 @@ import {
 } from "@/lib/telegram/links";
 import type { TelegramCadence } from "@/lib/telegram/types";
 import { createWidgetToken, listWidgetTokens, revokeWidgetToken } from "@/lib/widget/tokens";
+import { deleteUserScreenshots } from "@/lib/issues/storage";
 
 export async function getLlmSettingsData() {
   const auth = await requireAuthenticatedClient();
@@ -194,6 +195,9 @@ export async function deleteOwnAccountAction(confirmEmail: string): Promise<{ er
     return { error: "Couldn't delete your account. Try again, or contact support." };
   }
 
+  await deleteUserScreenshots(auth.user.id).catch((err) =>
+    console.error("Couldn't remove issue screenshots for a deleted account:", err),
+  );
   await logout();
   return {};
 }
