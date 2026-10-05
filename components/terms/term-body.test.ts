@@ -42,6 +42,7 @@ describe("TermBody", () => {
     const html = render(toPlacement({ mentalModel: "more", searchLink: "more" }));
     expect(html).toContain("More (2)");
     expect(html).toContain("Customize");
+    expect(html.indexOf("More (2)")).toBeLessThan(html.indexOf("Customize"));
     expect(html).toMatch(/hidden=""[^>]*>[\s\S]*Denk aan een lamp\./);
     expect(html.indexOf("Jawel, ik heb wel tijd.")).toBeLessThan(html.indexOf('hidden=""'));
   });

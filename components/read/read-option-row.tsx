@@ -54,7 +54,7 @@ export function OptionRow({
 }
 
 /** A row with a label and one choice out of a few, like 1x, 1.5x, 2x. */
-export function ChoiceRow<T extends number>({
+export function ChoiceRow<T extends string | number>({
   label,
   options,
   value,
