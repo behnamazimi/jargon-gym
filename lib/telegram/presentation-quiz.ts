@@ -1,63 +1,43 @@
 import { escapeText } from "entities";
-import type { TermCard } from "@/lib/terms/term-card";
-import { ILLUSTRATION_QUESTION_LINE, NONE_OF_THESE_OPTION_TEXT } from "@/lib/quiz/illustration";
+import { quizFeedbackLine } from "@/lib/quiz/templates/registry";
+import type { QuizQuestion } from "@/lib/quiz/types";
 import type { InlineKeyboardMarkup } from "./actions";
+import { quizOptions, type QuizTelegramOption } from "./quiz-options";
 
-export function formatReviewQuestion(
-  term: TermCard,
+/** Buttons show the full answer unless some are long; then the answers are
+ *  listed in the message and the buttons carry their numbers. */
+const LONG_OPTION_LENGTH = 28;
+
+function usesNumberedButtons(options: QuizTelegramOption[]): boolean {
+  return options.some((option) => option.label.length > LONG_OPTION_LENGTH);
+}
+
+export function formatQuizQuestion(
+  question: QuizQuestion,
   currentIndex: number,
   totalQuestions: number,
 ): string {
   let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
-  message += `${escapeText(term.definition)}\n\n`;
-  message += term.category
-    ? `<i>Category: ${escapeText(term.category)}</i> · ${escapeText(term.domainName)}`
-    : `<i>${escapeText(term.domainName)}</i>`;
-  return message;
-}
+  message += escapeText(question.prompt);
+  if (question.quote) message += `\n\n<blockquote>${escapeText(question.quote)}</blockquote>`;
 
-export function formatReviewQuestionWithAnswer(
-  term: TermCard,
-  questionIndex: number,
-  totalQuestions: number,
-  selectedTerm: string,
-  isCorrect: boolean,
-  currentScore: number,
-): string {
-  let message = formatReviewQuestion(term, questionIndex, totalQuestions);
-  message += `\n\n<b>Your answer:</b> ${escapeText(selectedTerm)}`;
-
-  if (isCorrect) {
-    message += `\n\n✅ <b>Correct!</b>`;
-  } else {
-    message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeText(term.term)}</b>`;
+  const options = quizOptions(question);
+  if (question.interaction === "choice" && usesNumberedButtons(options)) {
+    message += `\n\n${options.map((option, i) => `${i + 1}. ${escapeText(option.label)}`).join("\n")}`;
   }
-
-  message += `\n\nScore: ${currentScore}/${totalQuestions}`;
   return message;
 }
 
-export function formatIllustrationQuestion(
-  currentIndex: number,
-  totalQuestions: number,
-  scenarioText: string,
-): string {
-  let message = `<b>Question ${currentIndex + 1}/${totalQuestions}</b>\n\n`;
-  message += `${ILLUSTRATION_QUESTION_LINE}\n\n`;
-  message += `<blockquote>${escapeText(scenarioText)}</blockquote>`;
-  return message;
-}
-
-export function formatIllustrationQuestionWithAnswer(
+export function formatQuizQuestionWithAnswer(
+  question: QuizQuestion,
   questionIndex: number,
   totalQuestions: number,
-  scenarioText: string,
   selectedLabel: string,
   correctLabel: string,
   isCorrect: boolean,
   currentScore: number,
 ): string {
-  let message = formatIllustrationQuestion(questionIndex, totalQuestions, scenarioText);
+  let message = formatQuizQuestion(question, questionIndex, totalQuestions);
   message += `\n\n<b>Your answer:</b> ${escapeText(selectedLabel)}`;
 
   if (isCorrect) {
@@ -66,36 +46,28 @@ export function formatIllustrationQuestionWithAnswer(
     message += `\n\n❌ <b>Wrong.</b> The correct answer was: <b>${escapeText(correctLabel)}</b>`;
   }
 
-  if (correctLabel === NONE_OF_THESE_OPTION_TEXT) {
-    message += `\n\nThis scenario is an anti-example: it shows what a term is not.`;
-  }
+  const feedback = quizFeedbackLine(question, isCorrect);
+  if (feedback) message += `\n\n${escapeText(feedback)}`;
 
   message += `\n\nScore: ${currentScore}/${totalQuestions}`;
   return message;
 }
 
-export function buildReviewKeyboard(
-  options: Array<{ id: string; term: string }>,
+export function buildQuizKeyboard(
+  question: QuizQuestion,
   sessionIndex: number,
 ): InlineKeyboardMarkup {
+  const options = quizOptions(question);
+  const numbered = question.interaction === "choice" && usesNumberedButtons(options);
+  const buttons = options.map((option, index) => ({
+    text: numbered ? String(index + 1) : option.label,
+    callback_data: `quiz:${sessionIndex}:${option.id}`,
+  }));
+
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [];
-
-  for (let i = 0; i < options.length; i += 2) {
-    const row: InlineKeyboardMarkup["inline_keyboard"][number] = [
-      {
-        text: options[i].term,
-        callback_data: `quiz:${sessionIndex}:${options[i].id}`,
-      },
-    ];
-    if (i + 1 < options.length) {
-      row.push({
-        text: options[i + 1].term,
-        callback_data: `quiz:${sessionIndex}:${options[i + 1].id}`,
-      });
-    }
-    rows.push(row);
+  for (let i = 0; i < buttons.length; i += 2) {
+    rows.push(buttons.slice(i, i + 2));
   }
-
   return { inline_keyboard: rows };
 }
 

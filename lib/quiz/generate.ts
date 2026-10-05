@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
 import type { Database } from "@/lib/supabase/database.types";
-import { TRUE_FALSE_MAX_SHARE } from "./mix-ratios";
+import { TRUE_FALSE_MAX_SHARE } from "./mix";
 import { normalizeQuizQuestions } from "./normalize";
 import { buildQuizPrompt, buildRemainderPlan } from "./generate-prompt";
 import {

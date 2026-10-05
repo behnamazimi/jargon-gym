@@ -1,7 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { TermCard } from "@/lib/terms/term-card";
-import { fetchTermCardForUser } from "@/lib/trace-queue";
+import type { QuizQuestion } from "@/lib/quiz/types";
 import { saveStoredSession, type ReviewSession } from "./quiz-session-store";
 
 type Client = SupabaseClient<Database>;
@@ -18,27 +17,15 @@ export async function updateSession(
     correctCount: wasCorrect ? session.correctCount + 1 : session.correctCount,
   };
 
-  await saveStoredSession(client, chatId, {
-    domainId: updated.domainId,
-    termIds: updated.termIds,
-    illustration: updated.illustration,
-    currentIndex: updated.currentIndex,
-    correctCount: updated.correctCount,
-    startedAt: updated.startedAt,
-  });
+  await saveStoredSession(client, chatId, updated);
 
   return updated;
 }
 
 export function hasMoreQuestions(session: ReviewSession): boolean {
-  return session.currentIndex < session.termIds.length;
+  return session.currentIndex < session.questions.length;
 }
 
-export async function getCurrentTerm(
-  client: Client,
-  session: ReviewSession,
-): Promise<TermCard | null> {
-  if (session.currentIndex >= session.termIds.length) return null;
-  const termId = session.termIds[session.currentIndex];
-  return fetchTermCardForUser(client, session.userId, termId);
+export function getCurrentQuestion(session: ReviewSession): QuizQuestion | null {
+  return session.questions[session.currentIndex] ?? null;
 }

@@ -31,7 +31,8 @@ function normalizeOneQuestion(question: RawQuizQuestion, termId: string): QuizQu
     if (typeof question.correctAnswer !== "boolean") return null;
 
     return {
-      type: "true_false",
+      interaction: "boolean",
+      template: "free_boolean",
       termId,
       prompt: question.prompt.trim(),
       correctAnswer: question.correctAnswer,
@@ -47,7 +48,8 @@ function normalizeOneQuestion(question: RawQuizQuestion, termId: string): QuizQu
   if (!correctOptionId) return null;
 
   return {
-    type: "multiple_choice",
+    interaction: "choice",
+    template: "free_choice",
     termId,
     prompt: question.prompt.trim(),
     options: options.slice(0, 5),

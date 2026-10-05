@@ -1,18 +1,14 @@
-import type { QuizMcqQuestion, QuizTrueFalseQuestion } from "./types";
+import type { QuizQuestion, QuizResponse } from "./types";
 
-export function gradeMcqAnswer(question: QuizMcqQuestion, selectedOptionIds: string[]): boolean {
-  const selected = new Set(selectedOptionIds);
-  const correct = new Set(question.correctOptionIds);
-
-  if (selected.size !== correct.size) return false;
-
-  for (const id of correct) {
-    if (!selected.has(id)) return false;
+/** A response of the wrong interaction never passes. */
+export function gradeAnswer(question: QuizQuestion, response: QuizResponse): boolean {
+  if (question.interaction === "choice" && response.interaction === "choice") {
+    const selected = new Set(response.optionIds);
+    const correct = new Set(question.correctOptionIds);
+    return selected.size === correct.size && [...correct].every((id) => selected.has(id));
   }
-
-  return true;
-}
-
-export function gradeTrueFalseAnswer(question: QuizTrueFalseQuestion, answer: boolean): boolean {
-  return answer === question.correctAnswer;
+  if (question.interaction === "boolean" && response.interaction === "boolean") {
+    return response.value === question.correctAnswer;
+  }
+  return false;
 }

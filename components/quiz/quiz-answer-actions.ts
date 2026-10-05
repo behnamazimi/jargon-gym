@@ -1,4 +1,5 @@
 import type { PendingQuizWrite } from "@/lib/quiz/session-storage";
+import { traceQuestionType } from "@/lib/quiz/trace-type";
 import type { QuizAnswer, QuizQuestion } from "@/lib/quiz/types";
 import type { QuizStep } from "@/components/quiz/use-quiz-setup";
 
@@ -41,7 +42,7 @@ export function submitQuizAnswer(
       id: crypto.randomUUID(),
       termId: args.question.termId,
       passed,
-      questionType: args.question.type,
+      questionType: traceQuestionType(args.question),
     };
     setters.setPendingWrites((prev) => [...prev, write]);
     setters.enqueueAnswerWrite(write);

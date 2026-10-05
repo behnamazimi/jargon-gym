@@ -5,14 +5,13 @@ import { QuizPanel } from "@/components/quiz/quiz-ui";
 import { QuizAnswerChoices } from "@/components/quiz/quiz-answer-choices";
 import { QuizQuestionFooter } from "@/components/quiz/quiz-question-footer";
 import type { QuizQuestion } from "@/lib/quiz/types";
-import { gradeMcqAnswer, gradeTrueFalseAnswer } from "@/lib/quiz/grade";
-import { quizFeedbackLine } from "@/lib/quiz/feedback";
-import { quizChoiceForKey } from "@/lib/quiz/keyboard";
+import { gradeAnswer } from "@/lib/quiz/grade";
+import { quizFeedbackLine } from "@/lib/quiz/templates/registry";
+import { quizResponseForKey } from "@/lib/quiz/keyboard";
 import {
   canSubmitAnswer,
   initialAnswerState,
   quizAnswerReducer,
-  splitPromptQuote,
 } from "@/components/quiz/quiz-question-state";
 
 /** Radios are inputs too, so only fields you type into count. */
@@ -39,7 +38,7 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
   // not part of the answer lifecycle, so it stays outside the reducer.
   const [justUnlocked, setJustUnlocked] = useState(false);
 
-  const canSubmit = canSubmitAnswer(question, state);
+  const canSubmit = canSubmitAnswer(state);
 
   const stateRef = useRef({ state, canSubmit, question, onAnswer });
   stateRef.current = { state, canSubmit, question, onAnswer };
@@ -63,12 +62,12 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
     const current = stateRef.current;
     if (current.state.phase !== "answering" || !current.canSubmit) return;
 
-    const result =
-      current.question.type === "multiple_choice"
-        ? gradeMcqAnswer(current.question, current.state.selectedOptionIds)
-        : gradeTrueFalseAnswer(current.question, current.state.trueFalseAnswer ?? false);
+    if (!current.state.response) return;
 
-    dispatch({ type: "SUBMIT", passed: result });
+    dispatch({
+      type: "SUBMIT",
+      passed: gradeAnswer(current.question, current.state.response),
+    });
     lockoutTimeoutRef.current = setTimeout(() => {
       dispatch({ type: "UNLOCK" });
       setJustUnlocked(true);
@@ -84,7 +83,7 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      const choice = quizChoiceForKey(
+      const response = quizResponseForKey(
         {
           key: event.key,
           metaKey: event.metaKey,
@@ -95,14 +94,10 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
         },
         stateRef.current.question,
       );
-      if (choice) {
+      if (response) {
         if (stateRef.current.state.phase !== "answering") return;
         event.preventDefault();
-        dispatch(
-          choice.type === "multiple_choice"
-            ? { type: "SELECT_MCQ_OPTION", optionId: choice.optionId }
-            : { type: "SELECT_TRUE_FALSE", value: choice.value },
-        );
+        dispatch({ type: "RESPOND", response });
         return;
       }
 
@@ -136,27 +131,25 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
   const submitted = state.phase !== "answering";
   const canAdvance = state.phase === "ready";
   const feedbackLine = submitted ? quizFeedbackLine(question, state.passed) : null;
-  const { question: promptQuestion, quote: promptQuote } = splitPromptQuote(question.prompt);
 
   return (
     <QuizPanel className="quiz-feedback-enter flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
         <h2 className="m-0 text-lg font-medium leading-snug text-base-content sm:text-xl">
-          {promptQuestion}
+          {question.prompt}
         </h2>
 
-        {promptQuote ? (
+        {question.quote ? (
           <blockquote className="mt-3 rounded-field border-l-4 border-primary/40 bg-base-200/60 px-4 py-3 text-base-content/80">
-            <span className="text-base leading-snug">{promptQuote}</span>
+            <span className="text-base leading-snug">{question.quote}</span>
           </blockquote>
         ) : null}
 
         <QuizAnswerChoices
           question={question}
-          state={state}
+          response={state.response}
           submitted={submitted}
-          onSelectOption={(optionId) => dispatch({ type: "SELECT_MCQ_OPTION", optionId })}
-          onSelectTrueFalse={(value) => dispatch({ type: "SELECT_TRUE_FALSE", value })}
+          onRespond={(response) => dispatch({ type: "RESPOND", response })}
         />
 
         {feedbackLine ? (
