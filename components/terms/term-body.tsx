@@ -160,6 +160,14 @@ function SearchLink({ term, labels }: { term: Term; labels: Labels }) {
   );
 }
 
+export function TermDefinition({ term }: { term: Pick<Term, "definition"> }) {
+  return (
+    <p className="reading-text m-0 max-w-prose text-base whitespace-pre-line text-base-content/90">
+      {term.definition}
+    </p>
+  );
+}
+
 export function TermBody({
   term,
   className,
@@ -184,9 +192,7 @@ export function TermBody({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      <p className="reading-text m-0 max-w-prose text-base whitespace-pre-line text-base-content/90">
-        {term.definition}
-      </p>
+      <TermDefinition term={term} />
 
       {inPlace("shown")}
 
