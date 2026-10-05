@@ -64,3 +64,9 @@ export function SignedInHeaderNav({ children }: { children: ReactNode }) {
     </>
   );
 }
+
+/** For header items that belong to the app: public pages, collections included, don't show them. */
+export function StudyPathOnly({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  return isStudyPath(pathname) ? children : null;
+}
