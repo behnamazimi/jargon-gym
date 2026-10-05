@@ -41,7 +41,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
   {
     layout: "split",
     id: "learn",
-    title: "Learn terms you can actually use",
+    title: "Learn terms you can use",
     lead: "A definition alone won't help you use a word in a meeting, so each term carries more.",
     scene: "learn",
     items: [
@@ -59,11 +59,11 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Quiz",
-        body: "A real check. Free questions come from your definitions; AI questions are sharper.",
+        body: "Free questions come from your definitions. AI-written questions are sharper.",
       },
       {
         title: "Study in any order",
-        body: "Most people read, review, then quiz, but you can use them in any order.",
+        body: "Most people read, then review, then quiz. You can skip around.",
       },
       { title: "One collection or all", body: "Pick the scope for each session." },
       {
@@ -128,8 +128,8 @@ export const STUDY_SECTIONS: FeatureSection[] = [
   {
     layout: "split",
     id: "no-guilt",
-    title: "No guilt, no backlog",
-    lead: "There are no due dates, so there is nothing to fall behind on. Come back whenever.",
+    title: "Nothing to fall behind on",
+    lead: "Lobyas keeps no schedule for you, so you can come back whenever you like.",
     scene: "noGuilt",
     items: [
       {
@@ -154,8 +154,8 @@ export const STUDY_SECTIONS: FeatureSection[] = [
   {
     layout: "split",
     id: "progress",
-    title: "Progress you can believe",
-    lead: "Mastery comes from what you actually do, and it fades when you stop practising.",
+    title: "Progress from what you do",
+    lead: "Mastery grows while you practise and fades when you stop.",
     scene: "progress",
     items: [
       {

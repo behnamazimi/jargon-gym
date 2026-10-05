@@ -34,7 +34,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     layout: "cards",
     id: "everywhere",
     title: "Wherever you are",
-    lead: "Same queue everywhere you open it.",
+    lead: "Your queue is the same wherever you open it.",
     items: [
       {
         icon: "phone",
@@ -49,15 +49,15 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         icon: "monitor",
         title: "macOS widget",
-        body: "The next term on your desktop. Reveal it, advance it.",
+        body: "The next term sits on your desktop. Reveal it, or move on to the next one.",
       },
     ],
   },
   {
     layout: "cards",
     id: "ai-and-cost",
-    title: "Honest about AI and cost",
-    lead: "AI sits where you chose it, and you can see what it costs.",
+    title: "AI and credits",
+    lead: "Quiz and Stories use AI, and it comes free with your account.",
     items: [
       {
         icon: "star",
@@ -67,12 +67,12 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       {
         icon: "key",
         title: "Bring your own key",
-        body: "Use a Google or Anthropic key and spend no credits.",
+        body: "Use a Google or Anthropic key, and Quiz and Stories run on it instead of your credits.",
       },
       {
         icon: "shield",
-        title: "AI only where you choose",
-        body: "Quiz, Stories and voices. Import never uses AI.",
+        title: "Where AI runs",
+        body: "Quiz, Stories and voices.",
       },
     ],
   },
