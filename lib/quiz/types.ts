@@ -31,7 +31,6 @@ export type PlannedTemplateId =
   | "typed_cloze"
   | "typed_meaning_to_word";
 
-/** `free_*` are questions the AI model wrote in its own shape. */
 export const QUIZ_TEMPLATE_IDS = [
   "definition_to_term",
   "term_to_meaning",
@@ -39,9 +38,7 @@ export const QUIZ_TEMPLATE_IDS = [
   "does_it_fit",
   "typed_cloze",
   "typed_meaning_to_word",
-  "free_choice",
-  "free_boolean",
-] as const satisfies readonly (PlannedTemplateId | "free_choice" | "free_boolean")[];
+] as const satisfies readonly PlannedTemplateId[];
 
 type QuizTemplateId = (typeof QUIZ_TEMPLATE_IDS)[number];
 

@@ -1,11 +1,7 @@
 import type { PlannedTemplateId } from "./types";
 
-/**
- * Hard ceiling on the share of an AI-generated quiz that can be true/false
- * questions (lib/quiz/generate.ts only). True/false is the easiest shape to
- * pass by guessing, so the rest (at least 60%) is multiple_choice.
- */
-export const TRUE_FALSE_MAX_SHARE = 0.4;
+/** Longest definition sent to the model; a longer one is cut at a word boundary. */
+export const AI_DEFINITION_MAX_CHARS = 200;
 
 /** Wrong options shown next to the right one in a choice question. */
 export const DISTRACTOR_COUNT = 3;

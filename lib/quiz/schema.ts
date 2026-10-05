@@ -1,32 +1,34 @@
 import { z, type ZodTypeAny } from "zod";
 
+/** One question the model is asked to write: its shape and whether it also writes a quote. */
 export type QuizGenerationSlot = {
   termId: string;
   type: "multiple_choice" | "true_false";
+  quote: boolean;
 };
 
 type QuizGenerationQuestion =
   | {
       type: "multiple_choice";
       termId: string;
-      prompt: string;
+      quote?: string;
       options: { id: string; text: string }[];
       correctOptionIds: string[];
     }
   | {
       type: "true_false";
       termId: string;
-      prompt: string;
+      quote?: string;
       correctAnswer: boolean;
     };
 
 export type QuizGenerationPayload = { questions: QuizGenerationQuestion[] };
 
-function buildMultipleChoiceSchema(termIdSchema: ZodTypeAny) {
+function buildMultipleChoiceSchema(termIdSchema: ZodTypeAny, quote: boolean) {
   return z.object({
     type: z.literal("multiple_choice"),
     termId: termIdSchema,
-    prompt: z.string(),
+    ...(quote ? { quote: z.string() } : {}),
     options: z
       .array(
         z.object({
@@ -40,11 +42,11 @@ function buildMultipleChoiceSchema(termIdSchema: ZodTypeAny) {
   });
 }
 
-function buildTrueFalseSchema(termIdSchema: ZodTypeAny) {
+function buildTrueFalseSchema(termIdSchema: ZodTypeAny, quote: boolean) {
   return z.object({
     type: z.literal("true_false"),
     termId: termIdSchema,
-    prompt: z.string(),
+    ...(quote ? { quote: z.string() } : {}),
     correctAnswer: z.boolean(),
   });
 }
@@ -55,8 +57,8 @@ function buildPerSlotQuestionSchemas(
 ) {
   return plan.map((slot) =>
     slot.type === "multiple_choice"
-      ? buildMultipleChoiceSchema(termIdSchema)
-      : buildTrueFalseSchema(termIdSchema),
+      ? buildMultipleChoiceSchema(termIdSchema, slot.quote)
+      : buildTrueFalseSchema(termIdSchema, slot.quote),
   );
 }
 

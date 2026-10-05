@@ -110,6 +110,11 @@ Same named types per kind. One prompt builder takes the kind and swaps in a
 kind-specific section (rules, distractor guidance, tone) rather than becoming
 two prompts. Wording of the plain-language tone rules stays shared.
 
+Built: the model writes the choice and boolean templates (and only the quote
+and options; the question wording is shared with simple mode), typed templates
+are built without it and aren't charged, and a term the model fails on gets a
+simple question. See "AI mode, as built" in `quiz-implementation-plan.md`.
+
 ## Open (author's call at build time)
 
 - Mix ratios between types and the share of "Does it fit?". A per-term

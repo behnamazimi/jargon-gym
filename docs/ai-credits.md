@@ -24,9 +24,12 @@ Simple quizzes, Read, and Review never use credits.
 
 ## What things cost
 
-A quiz costs one credit per question it will ask, which is one per term picked.
-The charge is set before the model runs, so if the model returns fewer usable
-questions than asked for, the full amount is still charged. A story costs one
+A quiz costs one credit per question the model writes. Every term picked gets a
+question, but a term that is ready to be typed gets a typed question built
+without the model, and that one is free, so the cost shown when setting up a
+quiz is a maximum. The quiz is planned, and the charge set, before the model
+runs. If the model fails on some terms, those get a simple question and the
+amount stays charged; if it fails on all of them, nothing is charged. A story costs one
 credit per term it uses, which is 6, 8, or 10 for a short, medium, or long
 story, and fewer if the collection has fewer eligible terms. Both weights are
 settings, so the cost can change without a deploy.
