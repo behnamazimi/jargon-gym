@@ -171,7 +171,6 @@ function ReportIssueForm({
             maxLength={BODY_MAX}
             rows={5}
             disabled={isSending}
-            autoFocus
             required
           />
           <span className="self-end text-xs text-base-content/60 tabular-nums">
