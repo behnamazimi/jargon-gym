@@ -120,7 +120,10 @@ nothing is set. `TermLayoutScope` (mounted in the Read, Review and Triage
 layouts) loads it, `StudyTermBody` applies it, and `TermLayoutCustomize` is the
 only way to change it. Library, term detail and public pages render `TermBody`
 without a placement, so they always show everything. Key `StudyTermBody` by
-term so More starts collapsed on every card.
+term so More starts collapsed on every card. The editor is rendered by
+`TermLayoutProvider`, never inside a card: it is a portal, and wrapping it to
+stop its events from reaching a card (`stopPropagation`) also stops React
+Aria's document-level `pointerup`, so its buttons stop working.
 
 # Library (/app/library)
 

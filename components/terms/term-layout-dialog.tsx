@@ -33,14 +33,11 @@ const TARGETS: { value: Target; label: string }[] = [
   { value: "default", label: "All collections" },
 ];
 
-function stop(event: { stopPropagation: () => void }) {
-  event.stopPropagation();
-}
-
 /** Edits what sits under "More" for this collection or for all of them: a
  *  bottom sheet on phone and a dialog on larger screens, like Read options.
  *  It starts from the layout it is mounted with, so mount a fresh one each
- *  time it opens. */
+ *  time it opens. Don't render it inside a card: it is a portal, and a card's
+ *  handlers would see its events. */
 export function TermLayoutDialog({
   domainId,
   access,
@@ -57,10 +54,13 @@ export function TermLayoutDialog({
   const [draft, setDraft] = useState(placement);
   const [target, setTarget] = useState<Target>(domainId ? "collection" : "default");
   const [isPending, startTransition] = useTransition();
+  const [failed, setFailed] = useState(false);
 
   function submit(change: Parameters<typeof save>[0]) {
     startTransition(async () => {
-      if (await save(change)) onOpenChange(false);
+      const saved = await save(change);
+      setFailed(!saved);
+      if (saved) onOpenChange(false);
     });
   }
 
@@ -84,6 +84,14 @@ export function TermLayoutDialog({
           <ChoiceRow label="Apply to" options={TARGETS} value={target} onChange={setTarget} />
         ) : null}
       </ul>
+      {failed ? (
+        <p
+          role="alert"
+          className="m-0 border-t border-base-300/60 px-4 py-3 text-xs text-error-text"
+        >
+          Couldn't save the layout. Try again.
+        </p>
+      ) : null}
       {hasOverride && target === "default" ? (
         <p className="m-0 border-t border-base-300/60 px-4 py-3 text-xs text-base-content/70">
           This collection has its own layout, so it won't change here. Choose “Use my default here”
@@ -121,47 +129,36 @@ export function TermLayoutDialog({
     </div>
   );
 
-  return (
-    // The dialog is a React child of the card, so its events would reach the
-    // card's swipe and flip handlers.
-    <div
-      onPointerDown={stop}
-      onPointerMove={stop}
-      onPointerUp={stop}
-      onPointerCancel={stop}
-      onClick={stop}
+  return isPhone ? (
+    <Sheet
+      isOpen={isOpen}
+      onOpenChange={onOpenChange}
+      side="bottom"
+      showCloseButton={false}
+      overlayClassName="z-[105]"
+      className="max-h-[min(40rem,90dvh)] rounded-t-2xl pb-safe"
     >
-      {isPhone ? (
-        <Sheet
-          isOpen={isOpen}
-          onOpenChange={onOpenChange}
-          side="bottom"
-          showCloseButton={false}
-          className="max-h-[min(40rem,90dvh)] rounded-t-2xl pb-safe"
-        >
-          <SheetHeader className="shrink-0 border-b border-base-300 px-4 py-3">
-            <div className="flex items-center gap-1">
-              <SheetTitle className="min-w-0 flex-1">What shows on a term</SheetTitle>
-              <SheetClose className="shrink-0">
-                <XIcon className="size-4" />
-                <span className="sr-only">Close</span>
-              </SheetClose>
-            </div>
-          </SheetHeader>
-          {body}
-          {footer}
-        </Sheet>
-      ) : (
-        <Dialog isOpen={isOpen} onOpenChange={onOpenChange} className="max-w-md gap-0 p-0">
-          <div className="flex min-h-0 flex-col">
-            <div className="shrink-0 border-b border-base-300 py-3 ps-4 pe-12">
-              <DialogTitle>What shows on a term</DialogTitle>
-            </div>
-            {body}
-            {footer}
-          </div>
-        </Dialog>
-      )}
-    </div>
+      <SheetHeader className="shrink-0 border-b border-base-300 px-4 py-3">
+        <div className="flex items-center gap-1">
+          <SheetTitle className="min-w-0 flex-1">What shows on a term</SheetTitle>
+          <SheetClose className="shrink-0">
+            <XIcon className="size-4" />
+            <span className="sr-only">Close</span>
+          </SheetClose>
+        </div>
+      </SheetHeader>
+      {body}
+      {footer}
+    </Sheet>
+  ) : (
+    <Dialog isOpen={isOpen} onOpenChange={onOpenChange} className="max-w-md gap-0 p-0">
+      <div className="flex min-h-0 flex-col">
+        <div className="shrink-0 border-b border-base-300 py-3 ps-4 pe-12">
+          <DialogTitle>What shows on a term</DialogTitle>
+        </div>
+        {body}
+        {footer}
+      </div>
+    </Dialog>
   );
 }

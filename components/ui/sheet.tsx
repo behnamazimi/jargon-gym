@@ -61,16 +61,19 @@ function Sheet({
   children,
   side = "right",
   showCloseButton = true,
+  overlayClassName,
   ...props
 }: Omit<ModalOverlayPrimitiveProps, "className" | "children"> &
   Pick<React.ComponentProps<typeof ModalPrimitive>, "isDismissable"> & {
     className?: string;
+    /** For a sheet that has to sit above something fixed, like Read's focus mode. */
+    overlayClassName?: string;
     children: React.ReactNode;
     side?: "top" | "right" | "bottom" | "left";
     showCloseButton?: boolean;
   }) {
   return (
-    <SheetOverlay {...props}>
+    <SheetOverlay className={overlayClassName} {...props}>
       <ModalPrimitive
         data-slot="sheet-content"
         data-side={side}
