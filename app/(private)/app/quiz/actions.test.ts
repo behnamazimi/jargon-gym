@@ -6,6 +6,8 @@ const state = vi.hoisted(() => ({
   guardCalls: [] as unknown[],
   meteredOutcome: { charged: true, value: ["q"], remaining: 5 } as Record<string, unknown>,
   meteredCalls: 0,
+  meteredCosts: [] as number[],
+  slotCount: 1,
   generate: vi.fn(),
 }));
 
@@ -15,6 +17,14 @@ vi.mock("@/lib/auth/require-session", () => ({
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/quiz/terms", () => ({ fetchQuizTermPool: async () => [{ id: "t1" }] }));
 vi.mock("@/lib/quiz/generate", () => ({ generateQuizQuestions: state.generate }));
+vi.mock("@/lib/quiz/distractors-supabase", () => ({ supabaseDistractorSource: () => ({}) }));
+vi.mock("@/lib/quiz/plan-ai", () => ({
+  planAiQuiz: async (terms: unknown[]) => ({
+    terms,
+    built: new Map(),
+    slots: Array.from({ length: state.slotCount }, () => ({})),
+  }),
+}));
 vi.mock("@/lib/llm/access", () => ({
   resolveAiAccess: async () => state.access,
   getAiAccessView: async () => ({}),
@@ -27,8 +37,9 @@ vi.mock("@/lib/ai/run-guard", () => ({
   },
 }));
 vi.mock("@/lib/ai/run-metered", () => ({
-  runMetered: async () => {
+  runMetered: async (input: { cost: number }) => {
     state.meteredCalls += 1;
+    state.meteredCosts.push(input.cost);
     return state.meteredOutcome;
   },
 }));
@@ -43,6 +54,8 @@ beforeEach(() => {
   state.guardCalls = [];
   state.meteredOutcome = { charged: true, value: ["q"], remaining: 5 };
   state.meteredCalls = 0;
+  state.meteredCosts = [];
+  state.slotCount = 1;
   state.generate.mockReset().mockResolvedValue(["q"]);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
@@ -78,6 +91,20 @@ describe("generateQuizAction on AI credits", () => {
   it("charges through runMetered", async () => {
     expect(await generateQuizAction(input)).toMatchObject({ questions: ["q"] });
     expect(state.meteredCalls).toBe(1);
+  });
+
+  it("charges only for the questions the model writes", async () => {
+    state.slotCount = 3;
+    await generateQuizAction(input);
+    expect(state.meteredCosts).toEqual([3]);
+  });
+
+  it("neither charges nor runs the guard when the model has nothing to write", async () => {
+    state.slotCount = 0;
+    expect(await generateQuizAction(input)).toMatchObject({ questions: ["q"] });
+    expect(state.meteredCalls).toBe(0);
+    expect(state.guardCalls).toEqual([]);
+    expect(state.generate).toHaveBeenCalledTimes(1);
   });
 
   it("reports a busy request as busy, not as a credits problem", async () => {

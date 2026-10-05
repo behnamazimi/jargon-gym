@@ -6,6 +6,28 @@ export const doesItFit: QuizTemplate = {
   kinds: ["terms"],
   channels: ["web", "telegram"],
   booleanLabels: { yes: "Yes", no: "No" },
+  ai: {
+    interaction: "boolean",
+    writesQuote: true,
+    guidance: {
+      terms:
+        "quote: a short realistic scenario. correctAnswer is true when it is a genuine example of the term and false when it is a plausible near-miss that looks like the term but is not. Vary true and false across the quiz.",
+      vocabulary: "",
+    },
+    finish(raw, term) {
+      const quote = raw.quote?.trim();
+      if (!quote || typeof raw.correctAnswer !== "boolean") return null;
+
+      return {
+        interaction: "boolean",
+        template: "does_it_fit",
+        termId: term.id,
+        prompt: QUIZ_COPY[term.kind].doesItFit(term.term),
+        quote,
+        correctAnswer: raw.correctAnswer,
+      };
+    },
+  },
   eligible: (term) => Boolean(term.example?.trim() || term.antiExample?.trim()),
   async build(term, ctx) {
     const candidates: { text: string; fits: boolean }[] = [];

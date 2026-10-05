@@ -9,7 +9,9 @@ import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
 import { LLM_PROVIDER_LABELS, type AiFailureReason } from "@/lib/llm/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quizFailure } from "@/lib/quiz/failure";
+import { supabaseDistractorSource } from "@/lib/quiz/distractors-supabase";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
+import { planAiQuiz } from "@/lib/quiz/plan-ai";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { fetchQuizTermPool } from "@/lib/quiz/terms";
 import { listStudyCollectionState } from "@/lib/study/collections";
@@ -82,13 +84,16 @@ async function generateAiQuizResult(
   }
 
   const providerLabel = LLM_PROVIDER_LABELS[access.provider];
+  const source = supabaseDistractorSource(auth.supabase);
+  // The plan decides which questions the model writes before anything is charged,
+  // so only those are paid for.
+  const plan = await planAiQuiz(terms, source);
   const generate = () =>
-    generateQuizQuestions({
-      provider: access.provider,
-      apiKey: access.apiKey,
-      terms,
-      client: auth.supabase,
-    });
+    generateQuizQuestions({ provider: access.provider, apiKey: access.apiKey, plan, source });
+
+  if (plan.slots.length === 0) {
+    return { questions: await generate(), terms, providerLabel };
+  }
 
   if (access.kind === "own") {
     try {
@@ -110,7 +115,7 @@ async function generateAiQuizResult(
         admin: createAdminClient(),
         userId: auth.user.id,
         feature: "quiz",
-        cost: quizCost(terms.length, access.costs),
+        cost: quizCost(plan.slots.length, access.costs),
       },
       generate,
     );

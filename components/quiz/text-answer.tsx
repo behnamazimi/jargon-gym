@@ -10,6 +10,13 @@ type TextAnswerProps = {
   onRespond: (response: QuizResponse) => void;
 };
 
+/** Focusing from script on a touch screen opens the keyboard before the browser
+ *  applies autocapitalize (iOS starts shifted) and hides the question, so only
+ *  mouse and keyboard users get autofocus. */
+function hasFinePointer(): boolean {
+  return window.matchMedia("(pointer: fine)").matches;
+}
+
 export function TextAnswer({ question, response, submitted, onRespond }: TextAnswerProps) {
   const text = response?.interaction === "text" ? response.text : "";
   const passed = submitted && response !== null && gradeAnswer(question, response);
@@ -20,7 +27,7 @@ export function TextAnswer({ question, response, submitted, onRespond }: TextAns
       value={text}
       onChange={(event) => onRespond({ interaction: "text", text: event.target.value })}
       readOnly={submitted}
-      autoFocus
+      autoFocus={hasFinePointer()}
       autoComplete="off"
       autoCorrect="off"
       autoCapitalize="none"

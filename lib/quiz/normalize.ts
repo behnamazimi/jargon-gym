@@ -1,87 +1,38 @@
+import type { AiSlot } from "./plan-ai";
 import type { QuizGenerationPayload } from "./schema";
-import type { QuizQuestion, QuizTerm } from "./types";
+import type { QuizQuestion } from "./types";
 
 type RawQuizQuestion = QuizGenerationPayload["questions"][number];
 
-function resolveRawTermId(question: RawQuizQuestion, termIds: Set<string>): string | null {
-  return termIds.has(question.termId) ? question.termId : null;
-}
+const WIRE_TYPE = { choice: "multiple_choice", boolean: "true_false" } as const;
 
-function resolveMcqCorrectOptionId(
-  options: { id: string; text: string }[],
-  correctOptionIds: string[] | undefined,
-): string | null {
-  if (!correctOptionIds?.length) return null;
-
-  const optionIds = new Set(options.map((option) => option.id));
-  const byExact = correctOptionIds.find((id) => optionIds.has(id));
-  if (byExact) return byExact;
-
-  const byLowercase = new Map(options.map((option) => [option.id.toLowerCase(), option.id]));
-  for (const id of correctOptionIds) {
-    const match = byLowercase.get(id.toLowerCase());
-    if (match) return match;
-  }
-
-  return null;
-}
-
-function normalizeOneQuestion(question: RawQuizQuestion, termId: string): QuizQuestion | null {
-  if (question.type === "true_false") {
-    if (typeof question.correctAnswer !== "boolean") return null;
-
-    return {
-      interaction: "boolean",
-      template: "free_boolean",
-      termId,
-      prompt: question.prompt.trim(),
-      correctAnswer: question.correctAnswer,
-    };
-  }
-
-  if (question.type !== "multiple_choice") return null;
-
-  const options = question.options?.filter((option) => option.id && option.text.trim()) ?? [];
-  if (options.length < 4) return null;
-
-  const correctOptionId = resolveMcqCorrectOptionId(options, question.correctOptionIds);
-  if (!correctOptionId) return null;
-
-  return {
-    interaction: "choice",
-    template: "free_choice",
-    termId,
-    prompt: question.prompt.trim(),
-    options: options.slice(0, 5),
-    correctOptionIds: [correctOptionId],
-  };
-}
-
+/**
+ * Turns the model's questions into finished ones, one per slot. A slot whose
+ * question is missing or unusable is left out, and the caller fills it in.
+ * Throws only when the model returned nothing usable at all.
+ */
 export function normalizeQuizQuestions(
   raw: QuizGenerationPayload,
-  terms: QuizTerm[],
+  slots: AiSlot[],
 ): QuizQuestion[] {
-  const termIds = new Set(terms.map((term) => term.id));
+  const termIds = new Set(slots.map((slot) => slot.term.id));
 
-  // Pass 1: strict match — only trust a question's own termId/id when it names
-  // a real term in this pool. A question that fails this never gets guessed
-  // into the wrong term's slot, so one bad LLM response can't cascade
-  // misalignment across the rest of the quiz.
+  // Pass 1: strict match — only trust a question's own termId when it names a
+  // real term in this quiz. A question that fails this never gets guessed into
+  // the wrong term's slot, so one bad response can't misalign the rest.
   const byTermId = new Map<string, RawQuizQuestion>();
   const unmatchedQuestions: RawQuizQuestion[] = [];
 
   for (const question of raw.questions) {
-    const termId = resolveRawTermId(question, termIds);
-    if (termId && !byTermId.has(termId)) {
-      byTermId.set(termId, question);
+    if (termIds.has(question.termId) && !byTermId.has(question.termId)) {
+      byTermId.set(question.termId, question);
     } else {
       unmatchedQuestions.push(question);
     }
   }
 
-  // Pass 2: pair whatever's left over positionally, among the leftovers only —
-  // not by absolute index into the original arrays.
-  const unmatchedTermIds = terms.map((term) => term.id).filter((id) => !byTermId.has(id));
+  // Pass 2: pair whatever's left over positionally, among the leftovers only.
+  const unmatchedTermIds = slots.map((slot) => slot.term.id).filter((id) => !byTermId.has(id));
   for (const [index, termId] of unmatchedTermIds.entries()) {
     const rawQuestion = unmatchedQuestions[index];
     if (rawQuestion) byTermId.set(termId, rawQuestion);
@@ -89,15 +40,16 @@ export function normalizeQuizQuestions(
 
   const normalized: QuizQuestion[] = [];
 
-  for (const term of terms) {
+  for (const { term, template } of slots) {
+    const ai = template.ai;
     const rawQuestion = byTermId.get(term.id);
-    if (!rawQuestion) continue;
+    if (!ai || !rawQuestion || rawQuestion.type !== WIRE_TYPE[ai.interaction]) continue;
 
-    const question = normalizeOneQuestion(rawQuestion, term.id);
+    const question = ai.finish(rawQuestion, term);
     if (question) normalized.push(question);
   }
 
-  if (normalized.length === 0) {
+  if (normalized.length === 0 && slots.length > 0) {
     throw new Error(
       `Could not build a valid quiz from the model response (${raw.questions.length} questions returned, none passed validation).`,
     );

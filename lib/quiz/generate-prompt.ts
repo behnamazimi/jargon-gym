@@ -1,98 +1,107 @@
-import type { QuizGenerationSlot } from "./schema";
-import type { QuizTerm } from "./types";
+import type { CollectionKind } from "@/lib/terms/kinds";
+import { AI_DEFINITION_MAX_CHARS } from "./mix";
+import type { AiSlot } from "./plan-ai";
+import { truncateAtWord } from "./text/truncate";
 
-function formatDomainLabel(terms: QuizTerm[]): string {
-  const names = [...new Set(terms.map((term) => term.domainName))];
-  if (names.length === 1) return names[0];
-  return names.join(", ");
+const KIND_INTRO: Record<CollectionKind, string> = {
+  terms:
+    "Field terms: write for someone learning the vocabulary of a profession, using realistic work scenarios.",
+  vocabulary:
+    "Language words and phrases: write for a beginner learning the language of the term's collection. Put example sentences in that language, keep every other line in English, and use simple words.",
+};
+
+const KIND_LABEL: Record<CollectionKind, string> = {
+  terms: "field terms",
+  vocabulary: "language words",
+};
+
+function formatDomainLabel(slots: AiSlot[]): string {
+  return [...new Set(slots.map(({ term }) => term.domainName))].join(", ");
+}
+
+function questionShapes(slots: AiSlot[]): string[] {
+  const shapes = new Map<string, string>();
+  for (const { template } of slots) {
+    const ai = template.ai;
+    if (!ai) continue;
+
+    const quote = ai.writesQuote ? '      "quote": "string",\n' : "";
+    shapes.set(
+      `${ai.interaction}:${ai.writesQuote}`,
+      ai.interaction === "choice"
+        ? `    {
+      "type": "multiple_choice",
+      "termId": "string, copied exactly from input",
+${quote}      "options": [{ "id": "a", "text": "string" }],
+      "correctOptionIds": ["a"]
+    }`
+        : `    {
+      "type": "true_false",
+      "termId": "string, copied exactly from input",
+${quote}      "correctAnswer": true
+    }`,
+    );
+  }
+  return [...shapes.values()];
 }
 
 /**
- * Splits the given terms into multiple_choice vs true_false, one slot per
- * term. This assignment — not a free-text count in the prompt — is what the
- * model gets held to (buildQuizGenerationSchema turns it into a literal
- * `type` per position), so the mix can't collapse to all-true_false the way
- * it did when the split lived only in prompt text.
- *
- * `trueFalseBudget` is `floor(terms.length * TRUE_FALSE_MAX_SHARE)` — the
- * only consumer of that cap in AI-mode quiz generation.
+ * The prompt for the questions the model writes. It carries only what these
+ * questions need: the guidance of the templates in the quiz, the intro of the
+ * kinds in the quiz, and each term's name and (capped) definition.
  */
-export function buildRemainderPlan(
-  remainderTerms: QuizTerm[],
-  trueFalseBudget: number,
-): QuizGenerationSlot[] {
-  const trueFalseCount = Math.max(0, Math.min(trueFalseBudget, remainderTerms.length));
-  const trueFalseIds = new Set(
-    [...remainderTerms]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, trueFalseCount)
-      .map((term) => term.id),
-  );
+export function buildQuizPrompt(slots: AiSlot[]): string {
+  const multipleDomains = new Set(slots.map(({ term }) => term.domainName)).size > 1;
+  const kinds = [...new Set(slots.map(({ term }) => term.kind))];
+  const templates = [...new Map(slots.map(({ template }) => [template.id, template])).values()];
 
-  return remainderTerms.map((term) => ({
-    termId: term.id,
-    type: trueFalseIds.has(term.id) ? "true_false" : "multiple_choice",
-  }));
-}
-
-export function buildQuizPrompt(terms: QuizTerm[], plan: QuizGenerationSlot[]): string {
-  const domainLabel = formatDomainLabel(terms);
-  const multipleDomains = new Set(terms.map((term) => term.domainName)).size > 1;
-  const typeByTermId = new Map(plan.map((slot) => [slot.termId, slot.type]));
-  const mcqCount = plan.filter((slot) => slot.type === "multiple_choice").length;
-  const trueFalseCount = plan.length - mcqCount;
-
-  const termList = terms
-    .map((term) => {
+  const termList = slots
+    .map(({ term, template }) => {
       const lines = [
         `- id: ${term.id}`,
-        `  type: ${typeByTermId.get(term.id)}`,
-        `  definition: ${JSON.stringify(term.definition)}`,
+        `  template: ${template.id}`,
+        `  term: ${JSON.stringify(term.term)}`,
+        `  definition: ${JSON.stringify(truncateAtWord(term.definition, AI_DEFINITION_MAX_CHARS))}`,
       ];
-      if (multipleDomains) {
-        lines.push(`  domain: ${JSON.stringify(term.domainName)}`);
-      }
+      if (multipleDomains) lines.push(`  domain: ${JSON.stringify(term.domainName)}`);
       return lines.join("\n");
     })
     .join("\n");
 
-  return `Generate exactly ${terms.length} vocabulary quiz questions in the domain(s): ${JSON.stringify(domainLabel)} — one per term below, in the same order as the input. Each term already has a required "type" — you must write that exact question shape for that term (${mcqCount} "multiple_choice", ${trueFalseCount} "true_false" — fixed, do not change any term's type).
+  const guidance = templates
+    .flatMap((template) =>
+      kinds.flatMap((kind) => {
+        const text = template.ai?.guidance[kind];
+        if (!text) return [];
+        return `- ${template.id}${kinds.length > 1 ? ` (${KIND_LABEL[kind]})` : ""}: ${text}`;
+      }),
+    )
+    .join("\n");
 
-Each term is given as: id, type, and definition. Use the definition to write the question but do not copy it verbatim — the question must require applying the concept to a scenario, use case, or contrast, not just recognizing a reworded version of the definition. If a learner could match your prompt back to the definition by wording alone, without understanding what the term means, rewrite it.
+  return `Write exactly ${slots.length} quiz questions in the collection(s): ${JSON.stringify(formatDomainLabel(slots))}, one per term below, in the same order. Each term has a "template" that fixes the question shape; write only the fields described for it. The question wording itself is added for you.
+
+${kinds.map((kind) => KIND_INTRO[kind]).join("\n")}
+
+Each term gives an id, a template, the term itself and its definition. Use the definition to understand the term but do not copy it: the question must make the learner apply or recognise the concept, not match reworded text.
 
 Terms:
 ${termList}
+
+What to write for each template:
+${guidance}
 
 Output ONLY valid JSON (no markdown fences, no comments, no commentary before or after), matching this shape exactly:
 
 {
   "questions": [
-    {
-      "type": "multiple_choice",
-      "termId": "string, copied exactly from input",
-      "prompt": "string, 1-2 sentences",
-      "options": [{ "id": "a", "text": "string" }],
-      "correctOptionIds": ["a"]
-    },
-    {
-      "type": "true_false",
-      "termId": "string, copied exactly from input",
-      "prompt": "string, 1-2 sentences",
-      "correctAnswer": true
-    }
+${questionShapes(slots).join(",\n")}
   ]
 }
 
-(The two objects above show the two allowed shapes — every question must match its assigned type from the Terms list above. Do not include fields from the other type.)
-
 Rules:
-- Set termId on each question to the input id for that term — copy the UUID exactly, character for character.
-- Use each termId exactly once, preserving input order.
-- multiple_choice: 4-5 options, short sequential ids ("a", "b", "c", ...). Exactly one correct option — always a single-element correctOptionIds array. Vary which option letter is correct across questions; do not always put the answer in the same position.
-- For some multiple_choice questions (roughly half of them), use a definition-match format: write a short definition of the term in the prompt without naming it, then ask which option is the term that matches that definition. In those questions, each option's text must be a term name — the correct option is the target term's name; distractors are other plausible term names from the same domain, not definitions.
-- Distractors must be other real jargon, common misconceptions, or near-miss definitions a learner at this level could plausibly confuse with the real term. Each distractor must share a category, mechanism, or use case with the correct answer — never an option from an obviously unrelated concern that a learner could rule out without knowing the target term.
-- correctOptionIds must reference only ids present in that question's options.
-- true_false: vary true vs. false roughly evenly across the set — do not make every statement true. False statements must alter one specific, plausible-sounding detail (a scope, a trigger condition, a boundary, or a cause/effect direction) while keeping everything else accurate — never swap in an unrelated term or an absurd claim that's obviously false without knowing the term.
-- Prompts must be self-contained: don't assume the reader has the definition in front of them, and don't reference other terms from the list (this can leak answers).
-- Tone: write the way a helpful colleague would quiz someone — plain, natural, easy to follow. Avoid robotic or exam-template phrasing (e.g. "Which of the following best describes…", "It is important to note that…", "The aforementioned term"). Keep prompts and option text short, direct, and conversational; use simple words unless the jargon itself requires a technical term.`;
+- Set termId on each question to the input id for that term, copied character for character. Use each termId exactly once, in input order.
+- Choice questions: 4-5 options with short sequential ids ("a", "b", "c", ...) and exactly one correct option, so correctOptionIds has one id that exists in options. Vary which letter is correct across questions.
+- Wrong options must be real, plausible and in the same area as the right answer: something a learner could confuse with it. Never use an option from an unrelated area that can be ruled out without knowing the term.
+- The quote must stand on its own: don't assume the reader has the definition, and don't mention other terms from this list.
+- Tone: plain, natural and short, as a helpful colleague would quiz someone. No exam phrasing such as "Which of the following best describes…".`;
 }

@@ -19,7 +19,7 @@ function creditHint(ai: AiAccessView, cost: number) {
   const isLow = ai.remaining <= AI_CREDITS_LOW_THRESHOLD;
   return (
     <>
-      This quiz uses <span className="tabular-nums">{cost}</span> credits ·{" "}
+      This quiz uses up to <span className="tabular-nums">{cost}</span> credits ·{" "}
       <span className="tabular-nums">{ai.remaining}</span> left
       {isLow ? ", running low." : "."}
     </>

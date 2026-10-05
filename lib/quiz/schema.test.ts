@@ -14,8 +14,8 @@ describe("buildQuizGenerationSchema", () => {
     // requiring multiple_choice too. The type must now be locked in per slot
     // so this shape fails validation instead of silently being accepted.
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "multiple_choice" },
-      { termId: "t2", type: "true_false" },
+      { termId: "t1", type: "multiple_choice", quote: false },
+      { termId: "t2", type: "true_false", quote: false },
     ];
     const schema = buildQuizGenerationSchema(plan);
 
@@ -31,8 +31,8 @@ describe("buildQuizGenerationSchema", () => {
 
   it("accepts a response matching the plan's exact type per slot", () => {
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "multiple_choice" },
-      { termId: "t2", type: "true_false" },
+      { termId: "t1", type: "multiple_choice", quote: false },
+      { termId: "t2", type: "true_false", quote: false },
     ];
     const schema = buildQuizGenerationSchema(plan);
 
@@ -61,7 +61,7 @@ describe("buildQuizGenerationSchema", () => {
     // Regression guard: minimum option count was raised from 3 to 4 to make
     // guessing harder — a 3-option response must now fail validation.
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "multiple_choice" },
+      { termId: "t1", type: "multiple_choice", quote: false },
     ];
     const schema = buildQuizGenerationSchema(plan);
 
@@ -86,7 +86,7 @@ describe("buildQuizGenerationSchema", () => {
 
   it("rejects a termId outside the plan", () => {
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "true_false" },
+      { termId: "t1", type: "true_false", quote: false },
     ];
     const schema = buildQuizGenerationSchema(plan);
 
@@ -99,8 +99,8 @@ describe("buildQuizGenerationSchema", () => {
 
   it("rejects a response with the wrong number of questions", () => {
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "true_false" },
-      { termId: "t2", type: "true_false" },
+      { termId: "t1", type: "true_false", quote: false },
+      { termId: "t2", type: "true_false", quote: false },
     ];
     const schema = buildQuizGenerationSchema(plan);
 
@@ -120,8 +120,8 @@ describe("buildQuizGenerationObjectSchema", () => {
   // differently-shaped items.
   it("has no tuple-style array field anywhere in its JSON Schema", () => {
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "multiple_choice" },
-      { termId: "t2", type: "true_false" },
+      { termId: "t1", type: "multiple_choice", quote: false },
+      { termId: "t2", type: "true_false", quote: false },
     ];
     const schema = buildQuizGenerationObjectSchema(plan);
     const jsonSchema = z.toJSONSchema(schema);
@@ -131,8 +131,8 @@ describe("buildQuizGenerationObjectSchema", () => {
 
   it("rejects a response that answers every slot as true_false when the plan calls for a mix", () => {
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "multiple_choice" },
-      { termId: "t2", type: "true_false" },
+      { termId: "t1", type: "multiple_choice", quote: false },
+      { termId: "t2", type: "true_false", quote: false },
     ];
     const schema = buildQuizGenerationObjectSchema(plan);
 
@@ -158,8 +158,8 @@ describe("buildQuizGenerationObjectSchema", () => {
 
   it("accepts a response matching the plan's exact type per slot and converts back to the ordered array shape", () => {
     const plan: [QuizGenerationSlot, ...QuizGenerationSlot[]] = [
-      { termId: "t1", type: "multiple_choice" },
-      { termId: "t2", type: "true_false" },
+      { termId: "t1", type: "multiple_choice", quote: false },
+      { termId: "t2", type: "true_false", quote: false },
     ];
     const schema = buildQuizGenerationObjectSchema(plan);
 

@@ -1,26 +1,36 @@
 import { generateObject } from "ai";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
-import type { Database } from "@/lib/supabase/database.types";
-import { TRUE_FALSE_MAX_SHARE } from "./mix";
+import { buildQuiz } from "./build";
+import type { DistractorSource } from "./distractors";
 import { normalizeQuizQuestions } from "./normalize";
-import { buildQuizPrompt, buildRemainderPlan } from "./generate-prompt";
+import type { AiQuizPlan, AiSlot } from "./plan-ai";
+import { buildQuizPrompt } from "./generate-prompt";
 import {
   buildQuizGenerationObjectSchema,
   buildQuizGenerationSchema,
   toQuizGenerationPayload,
   type QuizGenerationSlot,
 } from "./schema";
-import type { QuizQuestion, QuizTerm } from "./types";
+import type { QuizQuestion } from "./types";
 
-async function requestQuizFromModel(input: {
+type GenerationPlan = [QuizGenerationSlot, ...QuizGenerationSlot[]];
+
+function toGenerationPlan(slots: AiSlot[]): GenerationPlan {
+  return slots.map(({ term, template }) => ({
+    termId: term.id,
+    type: template.ai?.interaction === "boolean" ? "true_false" : "multiple_choice",
+    quote: template.ai?.writesQuote ?? false,
+  })) as GenerationPlan;
+}
+
+async function requestQuestionsFromModel(input: {
   provider: LlmProvider;
   apiKey: string;
-  terms: QuizTerm[];
-  plan: [QuizGenerationSlot, ...QuizGenerationSlot[]];
+  slots: AiSlot[];
 }): Promise<QuizQuestion[]> {
-  const prompt = buildQuizPrompt(input.terms, input.plan);
+  const prompt = buildQuizPrompt(input.slots);
+  const plan = toGenerationPlan(input.slots);
   const model = createModel(input.provider, input.apiKey);
 
   // Gemini's structured-output response_schema can't express the positional
@@ -33,57 +43,66 @@ async function requestQuizFromModel(input: {
           (
             await generateObject({
               model,
-              schema: buildQuizGenerationObjectSchema(input.plan),
+              schema: buildQuizGenerationObjectSchema(plan),
               prompt,
               providerOptions: { google: { structuredOutputs: true } },
             })
           ).object,
-          input.plan,
+          plan,
         )
-      : (await generateObject({ model, schema: buildQuizGenerationSchema(input.plan), prompt }))
-          .object;
+      : (await generateObject({ model, schema: buildQuizGenerationSchema(plan), prompt })).object;
 
-  return normalizeQuizQuestions(object, input.terms);
+  return normalizeQuizQuestions(object, input.slots);
 }
 
-/** Generate questions for the given terms. Callers must pass the final sampled set only. */
-export async function generateQuizQuestions(input: {
+async function writeQuestions(input: {
   provider: LlmProvider;
   apiKey: string;
-  terms: QuizTerm[];
-  client: SupabaseClient<Database>;
+  slots: AiSlot[];
 }): Promise<QuizQuestion[]> {
-  if (input.terms.length === 0) {
-    throw new Error("No terms to generate a quiz for.");
-  }
+  if (input.slots.length === 0) return [];
 
-  const maxTrueFalse = Math.floor(input.terms.length * TRUE_FALSE_MAX_SHARE);
-  const plan = buildRemainderPlan(input.terms, maxTrueFalse) as [
-    QuizGenerationSlot,
-    ...QuizGenerationSlot[],
-  ];
-  const requestInput = { ...input, plan };
-
-  let generated: QuizQuestion[];
   try {
-    generated = await requestQuizFromModel(requestInput);
+    return await requestQuestionsFromModel(input);
   } catch (firstError) {
     try {
-      generated = await requestQuizFromModel(requestInput);
+      return await requestQuestionsFromModel(input);
     } catch {
       if (firstError instanceof Error) throw firstError;
       throw new Error("Couldn't generate the quiz. Check your API key and try again.");
     }
   }
+}
 
-  const generatedByTermId = new Map(generated.map((question) => [question.termId, question]));
-  const questions = input.terms
-    .map((term) => generatedByTermId.get(term.id))
-    .filter((question): question is QuizQuestion => Boolean(question));
-
-  if (questions.length === 0) {
-    throw new Error("Could not build a valid quiz from the model response.");
+/**
+ * The finished quiz for a plan, one question per term in the plan's order:
+ * the ones built without the model, the ones the model wrote, and a simple
+ * question for any term the model failed on, so the quiz keeps its length.
+ */
+export async function generateQuizQuestions(input: {
+  provider: LlmProvider;
+  apiKey: string;
+  plan: AiQuizPlan;
+  source: DistractorSource;
+}): Promise<QuizQuestion[]> {
+  const { plan, source } = input;
+  if (plan.terms.length === 0) {
+    throw new Error("No terms to generate a quiz for.");
   }
 
-  return questions;
+  const written = await writeQuestions({
+    provider: input.provider,
+    apiKey: input.apiKey,
+    slots: plan.slots,
+  });
+
+  const byTermId = new Map(plan.built);
+  for (const question of written) byTermId.set(question.termId, question);
+
+  const missing = plan.terms.filter((term) => !byTermId.has(term.id));
+  for (const question of await buildQuiz(missing, source, "web")) {
+    byTermId.set(question.termId, question);
+  }
+
+  return plan.terms.flatMap((term) => byTermId.get(term.id) ?? []);
 }

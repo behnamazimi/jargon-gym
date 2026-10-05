@@ -5,7 +5,7 @@ import { missedQuestions, missedTermIds } from "./results";
 function question(termId: string): QuizQuestion {
   return {
     interaction: "boolean",
-    template: "free_boolean",
+    template: "does_it_fit",
     termId,
     prompt: `Is ${termId} right?`,
     correctAnswer: true,

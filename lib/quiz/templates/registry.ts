@@ -26,8 +26,12 @@ export function templatesFor(kind: CollectionKind, channel: QuizChannel): QuizTe
   );
 }
 
+export function templateById(id: QuizQuestion["template"]): QuizTemplate | undefined {
+  return QUIZ_TEMPLATES.find((template) => template.id === id);
+}
+
 function templateOf(question: QuizQuestion): QuizTemplate | undefined {
-  return QUIZ_TEMPLATES.find((template) => template.id === question.template);
+  return templateById(question.template);
 }
 
 export function quizFeedbackLine(

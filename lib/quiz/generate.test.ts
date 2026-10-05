@@ -1,103 +1,161 @@
 import { generateObject } from "ai";
 import { describe, expect, it, vi } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/supabase/database.types";
+import { planAiQuiz } from "./plan-ai";
 import { generateQuizQuestions } from "./generate";
-import { makeTerm } from "./test-support";
+import { templateById } from "./templates/registry";
+import { makeDistractor, makeTerm, rngOf, sourceOf } from "./test-support";
 import type { QuizTerm } from "./types";
 
 vi.mock("ai", () => ({
   generateObject: vi.fn(),
 }));
 
-type Client = SupabaseClient<Database>;
-
-function makeClient(): Client {
-  return {
-    from(table: string) {
-      if (table === "term_relationships") {
-        return {
-          select: () => ({
-            or: () => Promise.resolve({ data: [], error: null }),
-          }),
-        };
-      }
-      return {
-        select: () => ({
-          eq: () => ({
-            not: () => ({
-              limit: () => Promise.resolve({ data: [], error: null }),
-            }),
-          }),
-        }),
-      };
-    },
-  } as unknown as Client;
-}
+const source = sourceOf([
+  makeDistractor({ id: "d1", term: "One", definition: "first thing" }),
+  makeDistractor({ id: "d2", term: "Two", definition: "second thing" }),
+  makeDistractor({ id: "d3", term: "Three", definition: "third thing" }),
+]);
 
 /**
- * Builds a fake model response that matches whatever type each remainder
- * term's prompt line assigned it — mirrors what a well-behaved model would
- * return, without making a real API call.
+ * Stands in for the model: reads each term's id, template and term name from the
+ * prompt and answers in the shape that template asks for. `skip` leaves some
+ * terms unanswered.
  */
-function fakeGeneratedQuestions(prompt: string) {
-  const lines = prompt.split("\n");
-  const questions: unknown[] = [];
+function fakeModel(skip: (termId: string) => boolean = () => false) {
+  vi.mocked(generateObject).mockImplementation((async ({ prompt }: { prompt: string }) => {
+    const lines = prompt.split("\n");
+    const questions: unknown[] = [];
 
-  for (let i = 0; i < lines.length; i++) {
-    const idMatch = /^- id: (.+)$/.exec(lines[i]);
-    if (!idMatch) continue;
-    const termId = idMatch[1];
-    const typeMatch = /^ {2}type: (.+)$/.exec(lines[i + 1] ?? "");
-    const type = typeMatch?.[1];
+    lines.forEach((line, i) => {
+      const id = /^- id: (.+)$/.exec(line)?.[1];
+      if (!id || skip(id)) return;
+      const template = /^ {2}template: (.+)$/.exec(lines[i + 1])?.[1] ?? "";
+      const termName = JSON.parse(/^ {2}term: (.+)$/.exec(lines[i + 2])?.[1] ?? '""') as string;
+      const ai = templateById(template as never)?.ai;
 
-    if (type === "multiple_choice") {
-      questions.push({
-        type: "multiple_choice",
-        termId,
-        prompt: `Which one is ${termId}?`,
-        options: [
-          { id: "a", text: "A" },
-          { id: "b", text: "B" },
-          { id: "c", text: "C" },
-          { id: "d", text: "D" },
-        ],
-        correctOptionIds: ["a"],
-      });
-    } else {
-      questions.push({
-        type: "true_false",
-        termId,
-        prompt: `Is ${termId} real?`,
-        correctAnswer: true,
-      });
-    }
-  }
+      const quote = ai?.writesQuote ? { quote: `Someone uses ${termName} here.` } : {};
+      questions.push(
+        ai?.interaction === "boolean"
+          ? { type: "true_false", termId: id, ...quote, correctAnswer: true }
+          : {
+              type: "multiple_choice",
+              termId: id,
+              ...quote,
+              options: [
+                { id: "a", text: termName },
+                { id: "b", text: "B" },
+                { id: "c", text: "C" },
+                { id: "d", text: "D" },
+              ],
+              correctOptionIds: ["a"],
+            },
+      );
+    });
 
-  return questions;
+    return { object: { questions } };
+  }) as never);
 }
 
-describe("generateQuizQuestions", () => {
-  it("keeps AI-planned true_false at or under 40% of the quiz", async () => {
-    // AI mode no longer builds illustration questions itself (that's
-    // Simple-mode-only, via lib/quiz/illustration.ts) — its entire
-    // true_false budget is TRUE_FALSE_MAX_SHARE of the full term set.
-    const terms: QuizTerm[] = Array.from({ length: 10 }, (_, i) =>
-      makeTerm({ id: `t${i}`, term: `Term${i}`, example: `Term${i} in action.` }),
-    );
+const field = (i: number): QuizTerm =>
+  makeTerm({ id: `t${i}`, term: `Term${i}`, definition: `Meaning of Term${i}.` });
 
-    vi.mocked(generateObject).mockImplementation((async ({ prompt }: { prompt: string }) => ({
-      object: { questions: fakeGeneratedQuestions(prompt) },
-    })) as never);
+const known = { posterior: 0.9, testCount: 3 };
+
+describe("generateQuizQuestions", () => {
+  it("returns one finished question per term, in order", async () => {
+    fakeModel();
+    const terms = Array.from({ length: 8 }, (_, i) => field(i));
+    const plan = await planAiQuiz(terms, source, rngOf(0.3, 0.6, 0.9));
 
     const questions = await generateQuizQuestions({
       provider: "anthropic",
-      apiKey: "test-key",
-      terms,
-      client: makeClient(),
+      apiKey: "k",
+      plan,
+      source,
     });
 
-    const trueFalseCount = questions.filter((q) => q.interaction === "boolean").length;
-    expect(trueFalseCount).toBeLessThanOrEqual(4);
+    expect(questions.map((q) => q.termId)).toEqual(terms.map((t) => t.id));
+    for (const q of questions) {
+      expect(["definition_to_term", "term_to_meaning", "masked_example", "does_it_fit"]).toContain(
+        q.template,
+      );
+    }
+  });
+
+  it("only makes booleans from does-it-fit, so true/false stays a small share", async () => {
+    fakeModel();
+    const terms = Array.from({ length: 30 }, (_, i) => field(i));
+    const plan = await planAiQuiz(terms, source);
+    const questions = await generateQuizQuestions({
+      provider: "anthropic",
+      apiKey: "k",
+      plan,
+      source,
+    });
+
+    const booleans = questions.filter((q) => q.interaction === "boolean");
+    expect(booleans.every((q) => q.template === "does_it_fit")).toBe(true);
+    expect(booleans.length).toBeLessThan(terms.length / 2);
+  });
+
+  it("builds typed questions itself and never sends those terms to the model", async () => {
+    fakeModel();
+    const typedTerm = makeTerm({
+      id: "typed",
+      kind: "vocabulary",
+      term: "fietsen",
+      definition: "to cycle",
+      example: "We fietsen naar het strand.",
+      recognition: known,
+    });
+    // With this rng the typed template comes first for a known vocabulary term.
+    const forced = await planAiQuiz([typedTerm], source, rngOf(0.5));
+    expect(forced.slots).toHaveLength(0);
+    expect(forced.built.get("typed")?.interaction).toBe("text");
+
+    vi.mocked(generateObject).mockClear();
+    const questions = await generateQuizQuestions({
+      provider: "anthropic",
+      apiKey: "k",
+      plan: forced,
+      source,
+    });
+    expect(generateObject).not.toHaveBeenCalled();
+    expect(questions).toHaveLength(1);
+  });
+
+  it("gives a term the model skipped a simple question, so the quiz keeps its length", async () => {
+    fakeModel((id) => id === "t1");
+    const terms = [field(0), field(1), field(2)];
+    const plan = await planAiQuiz(terms, source, rngOf(0.5));
+
+    const questions = await generateQuizQuestions({
+      provider: "anthropic",
+      apiKey: "k",
+      plan,
+      source,
+    });
+
+    expect(questions.map((q) => q.termId)).toEqual(["t0", "t1", "t2"]);
+  });
+
+  it("fails, so the charge is refunded, when the model returns nothing usable", async () => {
+    vi.mocked(generateObject).mockResolvedValue({ object: { questions: [] } } as never);
+    const plan = await planAiQuiz([field(0)], source, rngOf(0.5));
+
+    await expect(
+      generateQuizQuestions({ provider: "anthropic", apiKey: "k", plan, source }),
+    ).rejects.toThrow(/none passed validation/);
+  });
+
+  it("rejects an empty term list", async () => {
+    await expect(
+      generateQuizQuestions({
+        provider: "anthropic",
+        apiKey: "k",
+        plan: { terms: [], built: new Map(), slots: [] },
+        source,
+      }),
+    ).rejects.toThrow("No terms");
   });
 });

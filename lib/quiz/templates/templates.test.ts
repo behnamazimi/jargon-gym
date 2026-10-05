@@ -4,7 +4,7 @@ import { makeDistractor, makeTerm, rngOf, sourceOf } from "../test-support";
 import { buildDefinitionToTerm, definitionToTerm } from "./definition-to-term";
 import { doesItFit } from "./does-it-fit";
 import { maskedExample } from "./masked-example";
-import { booleanLabelsFor, quizFeedbackLine, templatesFor } from "./registry";
+import { booleanLabelsFor, quizFeedbackLine, templateById, templatesFor } from "./registry";
 import { termToMeaning } from "./term-to-meaning";
 import type { BuildContext } from "./types";
 
@@ -151,15 +151,21 @@ describe("registry", () => {
     expect(templatesFor("vocabulary", "web").map((t) => t.id)).not.toContain("does_it_fit");
   });
 
-  it("falls back to True/False and no feedback for AI-written questions", () => {
-    const free = {
+  it("finds a template by id and knows which ones the model can write", () => {
+    expect(templateById("masked_example")?.ai?.interaction).toBe("choice");
+    expect(templateById("does_it_fit")?.ai?.interaction).toBe("boolean");
+    expect(templateById("typed_cloze")?.ai).toBeUndefined();
+    expect(templateById("typed_meaning_to_word")?.ai).toBeUndefined();
+  });
+
+  it("uses True/False for a boolean question whose template has no custom labels", () => {
+    const question = {
       interaction: "boolean" as const,
-      template: "free_boolean" as const,
+      template: "definition_to_term" as const,
       termId: "t",
       prompt: "p",
       correctAnswer: true,
     };
-    expect(booleanLabelsFor(free)).toEqual({ yes: "True", no: "False" });
-    expect(quizFeedbackLine(free, false)).toBeNull();
+    expect(booleanLabelsFor(question)).toEqual({ yes: "True", no: "False" });
   });
 });

@@ -2,7 +2,7 @@
 
 Implements [quiz-question-design.md](quiz-question-design.md). This page is
 only about code structure and rollout. PR 1 (foundation and vocabulary) is
-built, and so are typed answers (PR 2); AI mode (PR 3) is not.
+built, and so are typed answers (PR 2) and AI mode on the registry (PR 3).
 
 ## Design rules
 
@@ -22,8 +22,7 @@ A question carries two separate facts.
   a template when the question is the same; `templates/copy.ts` holds the
   kind-specific wording ("Which term…" vs "Which word or phrase…"), and
   `does_it_fit` is field terms only. Drives feedback copy and AI guidance.
-  AI-written questions carry the interim `free_choice` / `free_boolean`,
-  removed in PR 3.
+  AI-written questions carry the same template ids.
 - **interaction**: how it is answered (`choice`, `boolean`, `text`). Drives
   grading, keyboard handling, the answer UI and the TRACE question type
   (`multiple_choice`, `true_false`, `typed`).
@@ -86,6 +85,27 @@ is gone. A term is picked per its own collection's kind, so mixed quizzes work.
   slots.
 - Typed templates are never sent to the model. They come from the
   deterministic builder, since the stored word is the answer.
+
+## AI mode, as built
+
+- `plan-ai.ts`: `planAiQuiz` orders templates per term with the simple quiz's
+  weighted `orderTemplates`, but a template the model can write (`ai` spec) is
+  eligible for any term of its kind, with no example needed. Templates the model
+  can't write (typed) are built there, so the model is only asked for, and only
+  charged for, the rest. Booleans come only from `does_it_fit`, so there is no
+  separate true/false cap.
+- Each model-writable template declares an `ai` spec: whether the model writes a
+  quote, kind-specific guidance, and `finish`, which turns the model's raw fields
+  into the final question (shared wording from `templates/copy.ts`, the term
+  masked, the right option set to the real term name).
+- `generate-prompt.ts` sends each term's id, template, name and definition
+  (capped at `AI_DEFINITION_MAX_CHARS`), the intro of the kinds present, and
+  guidance only for the templates present. `schema.ts` locks the shape per slot
+  and adds a `quote` field only where a template writes one.
+- `generate.ts` assembles the quiz: built questions, model-written ones, and a
+  simple question for any term the model failed on. `actions.ts` plans first and
+  charges `quizCost(plan.slots.length)`; with no slots there is no run guard, no
+  charge and no model call.
 
 ## Rollout
 
