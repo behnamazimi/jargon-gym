@@ -12,6 +12,7 @@ export type AdminSharedCode = {
   maxUses: number;
   useCount: number;
   expiresAt: string | null;
+  grantsNarration: boolean;
   status: SharedCodeStatus;
 };
 
@@ -32,6 +33,7 @@ export async function listSharedCodes(client: Client): Promise<AdminSharedCode[]
     maxUses: row.max_uses,
     useCount: row.use_count,
     expiresAt: row.expires_at,
+    grantsNarration: row.grants_narration,
     status: toStatus(row.status),
   }));
 }

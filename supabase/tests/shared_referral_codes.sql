@@ -57,7 +57,7 @@ declare
 begin
   update public.users set role = 'member' where id = member_id;
 
-  assert not has_function_privilege('anon', 'public.admin_create_shared_referral_code(text,text,integer,timestamptz)', 'execute'), 'anon create';
+  assert not has_function_privilege('anon', 'public.admin_create_shared_referral_code(text,text,integer,timestamptz,boolean)', 'execute'), 'anon create';
   assert not has_function_privilege('anon', 'public.admin_list_shared_referral_codes()', 'execute'), 'anon list';
   assert not has_function_privilege('authenticated', 'public._consume_referral_code(uuid,text)', 'execute'), 'consume callable';
   assert not has_table_privilege('authenticated', 'public.referral_redemptions', 'select'), 'redemptions readable';
@@ -199,6 +199,39 @@ begin
   v_failed := false;
   begin perform pg_temp.sign_up('sc-k@example.test', 'NOSUCHCODE12'); exception when others then v_failed := true; v_msg := sqlerrm; end;
   assert v_failed and v_msg = 'Invalid or already used referral code', 'unknown code accepted';
+
+  -- A code made with narration on gives each person who takes a seat the narration
+  -- allowlist rows and one system audit row, once. It adds rows only.
+  perform pg_temp.act_as(admin_id);
+  v_row := public.admin_create_shared_referral_code('scnarrate', 'Podcast', 3, now() + interval '1 day', true);
+  assert v_row.grants_narration, 'flag not stored';
+  assert (select grants_narration from public.admin_list_shared_referral_codes() where code = 'SCNARRATE'), 'flag not listed';
+  assert (select (details->>'grants_narration')::boolean from public.admin_audit_log where action = 'create_shared_referral_code' and target_id = v_row.id::text), 'flag not audited on create';
+  assert not (select grants_narration from public.admin_list_shared_referral_codes() where code = 'SCLAUNCH'), 'plain code grants narration';
+  execute 'reset role';
+
+  v_a := pg_temp.sign_up('sc-n1@example.test', 'SCNARRATE');
+  assert not exists (select 1 from public.ai_feature_allowlist where user_id = v_a and feature like 'narration%'), 'narration granted before the email was confirmed';
+  update auth.users set email_confirmed_at = now() where id = v_a;
+  assert (select count(*) from public.ai_feature_allowlist where user_id = v_a and feature in ('narration_term', 'narration_story')) = 2, 'narration not granted on confirmation';
+  assert (select count(*) from public.admin_audit_log where action = 'narration_granted_by_code' and target_id = v_a::text and actor_id is null and details->>'label' = 'Podcast') = 1, 'system audit row';
+
+  v_b := pg_temp.sign_up('sc-n2@example.test', 'SCNARRATE', true);
+  assert (select count(*) from public.ai_feature_allowlist where user_id = v_b and feature like 'narration%') = 2, 'narration not granted at signup';
+
+  -- Someone already on the allowlist gets no second row and no audit entry.
+  insert into public.referral_codes (code) values ('SCPLAINONE1');
+  v_c := pg_temp.sign_up('sc-n3@example.test', 'SCPLAINONE1');
+  insert into public.ai_feature_allowlist (feature, user_id) values ('narration_term', v_c), ('narration_story', v_c);
+  perform public._consume_referral_code(v_c, 'SCNARRATE');
+  assert (select count(*) from public.admin_audit_log where action = 'narration_granted_by_code' and target_id = v_c::text) = 0, 'audited a grant that changed nothing';
+
+  -- Codes without the flag leave the allowlist alone, and pausing never takes access away.
+  assert not exists (select 1 from public.ai_feature_allowlist where user_id = (select id from public.users where email = 'sc-i@example.test') and feature like 'narration%'), 'plain code granted narration';
+  perform pg_temp.act_as(admin_id);
+  perform public.admin_set_referral_code_active(v_row.id, false);
+  execute 'reset role';
+  assert (select count(*) from public.ai_feature_allowlist where user_id = v_a and feature like 'narration%') = 2, 'pausing revoked narration';
 end;
 $$;
 

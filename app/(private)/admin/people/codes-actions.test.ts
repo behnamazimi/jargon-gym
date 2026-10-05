@@ -23,7 +23,13 @@ vi.mock("@/lib/auth/require-session", () => ({
 
 import { createSharedCode, setSharedCodeActive } from "./codes-actions";
 
-const valid = { code: "launch50", label: "Newsletter", maxUses: 50, endDate: "2026-11-01" };
+const valid = {
+  code: "launch50",
+  label: "Newsletter",
+  maxUses: 50,
+  endDate: "2026-11-01",
+  grantsNarration: false,
+};
 
 beforeEach(() => {
   state.calls = [];
@@ -42,10 +48,26 @@ describe("createSharedCode", () => {
           p_label: "Newsletter",
           p_max_uses: 50,
           p_expires_at: "2026-11-01T23:59:59.999Z",
+          p_grants_narration: false,
         },
       },
     ]);
     expect(state.revalidated).toEqual(["/admin/people"]);
+  });
+
+  it("passes along that the code turns narration on", async () => {
+    await createSharedCode({ ...valid, grantsNarration: true });
+    expect(state.calls[0].args).toMatchObject({ p_grants_narration: true });
+  });
+
+  it("leaves narration off when the flag is left out", async () => {
+    await createSharedCode({
+      code: "launch50",
+      label: "Newsletter",
+      maxUses: 50,
+      endDate: "2026-11-01",
+    });
+    expect(state.calls[0].args).toMatchObject({ p_grants_narration: false });
   });
 
   it("rejects incomplete input without calling the database", async () => {

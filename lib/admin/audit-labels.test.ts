@@ -5,6 +5,7 @@ import {
   DB_AUDIT_ACTIONS,
   describeAudit,
   KNOWN_AUDIT_ACTIONS,
+  SYSTEM_AUDIT_ACTIONS,
 } from "./audit-labels";
 
 describe("audit labels", () => {
@@ -17,13 +18,26 @@ describe("audit labels", () => {
     expect(new Set(written)).toEqual(new Set(Object.keys(DB_AUDIT_ACTIONS)));
   });
 
+  it("cover exactly the actions the database writes with no admin", () => {
+    const sql = readdirSync("supabase/migrations")
+      .filter((file) => file.endsWith(".sql"))
+      .map((file) => readFileSync(`supabase/migrations/${file}`, "utf8"))
+      .join("\n");
+    const written = [...sql.matchAll(/_system_audit_insert\(\s*'([a-z_]+)'/g)].map((m) => m[1]);
+    expect(new Set(written)).toEqual(new Set(Object.keys(SYSTEM_AUDIT_ACTIONS)));
+  });
+
   it("start with app. for app-written actions and never for database ones", () => {
     for (const action of Object.keys(APP_AUDIT_ACTIONS))
       expect(action.startsWith("app.")).toBe(true);
     for (const action of Object.keys(DB_AUDIT_ACTIONS))
       expect(action.startsWith("app.")).toBe(false);
+    for (const action of Object.keys(SYSTEM_AUDIT_ACTIONS))
+      expect(action.startsWith("app.")).toBe(false);
     expect(KNOWN_AUDIT_ACTIONS).toHaveLength(
-      Object.keys(APP_AUDIT_ACTIONS).length + Object.keys(DB_AUDIT_ACTIONS).length,
+      Object.keys(APP_AUDIT_ACTIONS).length +
+        Object.keys(DB_AUDIT_ACTIONS).length +
+        Object.keys(SYSTEM_AUDIT_ACTIONS).length,
     );
   });
 });

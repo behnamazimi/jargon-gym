@@ -12,6 +12,7 @@ const createSchema = z.object({
   label: z.string().trim().min(1).max(60),
   maxUses: z.number().int().min(2).max(10000),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  grantsNarration: z.boolean().default(false),
 });
 
 export type CreateSharedCodeInput = z.input<typeof createSchema>;
@@ -25,13 +26,14 @@ export async function createSharedCode(input: CreateSharedCodeInput) {
   return runAdminAction(async ({ supabase }) => {
     const parsed = createSchema.safeParse(input);
     if (!parsed.success) throw new AdminError("Fill in the code, label, seats and end date.");
-    const { code, label, maxUses, endDate } = parsed.data;
+    const { code, label, maxUses, endDate, grantsNarration } = parsed.data;
 
     const { error } = await supabase.rpc("admin_create_shared_referral_code", {
       p_code: code,
       p_label: label,
       p_max_uses: maxUses,
       p_expires_at: endOfDay(endDate),
+      p_grants_narration: grantsNarration,
     });
     if (error) throwRpcError(error);
   }, REVALIDATE);

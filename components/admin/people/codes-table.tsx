@@ -26,17 +26,22 @@ function CreateCodeForm() {
   const [label, setLabel] = useState("");
   const [maxUses, setMaxUses] = useState("50");
   const [endDate, setEndDate] = useState("");
+  const [grantsNarration, setGrantsNarration] = useState(false);
   const { run, isPending, error } = useAdminAction();
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    void run(() => createSharedCode({ code, label, maxUses: Number(maxUses), endDate }), {
-      onSuccess: () => {
-        setCode("");
-        setLabel("");
+    void run(
+      () => createSharedCode({ code, label, maxUses: Number(maxUses), endDate, grantsNarration }),
+      {
+        onSuccess: () => {
+          setCode("");
+          setLabel("");
+          setGrantsNarration(false);
+        },
+        successMessage: "Code created.",
       },
-      successMessage: "Code created.",
-    });
+    );
   }
 
   return (
@@ -91,6 +96,15 @@ function CreateCodeForm() {
           onChange={(event) => setEndDate(event.target.value)}
         />
       </label>
+      <label className="flex w-full items-center gap-2">
+        <input
+          type="checkbox"
+          className="checkbox checkbox-sm"
+          checked={grantsNarration}
+          onChange={(event) => setGrantsNarration(event.target.checked)}
+        />
+        <span className="text-sm">Turn narration on for everyone who signs up with this code</span>
+      </label>
       <button type="submit" className="btn btn-primary" disabled={isPending}>
         {isPending ? "Creating…" : "Create code"}
       </button>
@@ -121,7 +135,10 @@ function CodeRow({ row, origin }: { row: AdminSharedCode; origin: string }) {
   return (
     <tr>
       <td className="font-mono font-medium text-base-content">{row.code}</td>
-      <td>{row.label}</td>
+      <td>
+        {row.label}
+        {row.grantsNarration ? <span className="badge badge-outline ml-2">Narration</span> : null}
+      </td>
       <td>
         <span className={`badge ${statusBadgeClass[row.status]}`}>{statusLabel[row.status]}</span>
         {error ? (

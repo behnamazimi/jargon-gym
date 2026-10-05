@@ -145,7 +145,7 @@ export const DB_AUDIT_ACTIONS = {
   create_shared_referral_code: {
     label: "Shared code created",
     describe: (d) =>
-      `${text(d.label) ?? "?"}, ${text(d.max_uses) ?? "?"} seats${text(d.expires_at) ? ` until ${text(d.expires_at)?.slice(0, 10)}` : ""}`,
+      `${text(d.label) ?? "?"}, ${text(d.max_uses) ?? "?"} seats${text(d.expires_at) ? ` until ${text(d.expires_at)?.slice(0, 10)}` : ""}${d.grants_narration === true ? ", turns narration on" : ""}`,
   },
   set_referral_code_active: {
     label: "Shared code switched",
@@ -180,10 +180,23 @@ export const DB_AUDIT_ACTIONS = {
   },
 } as const satisfies Record<string, AuditEntry>;
 
+/** Actions the database writes on its own, with no admin behind them. */
+export const SYSTEM_AUDIT_ACTIONS = {
+  narration_granted_by_code: {
+    label: "Narration turned on by a code",
+    describe: (d) => (text(d.label) ? `Code: ${text(d.label)}` : null),
+  },
+} as const satisfies Record<string, AuditEntry>;
+
 const ALL_ACTIONS: Record<string, AuditEntry> = {
   ...APP_AUDIT_ACTIONS,
   ...DB_AUDIT_ACTIONS,
+  ...SYSTEM_AUDIT_ACTIONS,
 };
+
+export function isSystemAuditAction(action: string): boolean {
+  return action in SYSTEM_AUDIT_ACTIONS;
+}
 
 export const KNOWN_AUDIT_ACTIONS = Object.keys(ALL_ACTIONS);
 

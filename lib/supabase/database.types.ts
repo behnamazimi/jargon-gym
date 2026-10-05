@@ -858,6 +858,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           expires_at: string | null;
+          grants_narration: boolean;
           id: string;
           is_active: boolean;
           label: string | null;
@@ -871,6 +872,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           expires_at?: string | null;
+          grants_narration?: boolean;
           id?: string;
           is_active?: boolean;
           label?: string | null;
@@ -884,6 +886,7 @@ export type Database = {
           created_at?: string;
           created_by?: string | null;
           expires_at?: string | null;
+          grants_narration?: boolean;
           id?: string;
           is_active?: boolean;
           label?: string | null;
@@ -1802,6 +1805,7 @@ export type Database = {
         Args: {
           p_code: string;
           p_expires_at: string;
+          p_grants_narration?: boolean;
           p_label: string;
           p_max_uses: number;
         };
@@ -1810,6 +1814,7 @@ export type Database = {
           created_at: string;
           created_by: string | null;
           expires_at: string | null;
+          grants_narration: boolean;
           id: string;
           is_active: boolean;
           label: string | null;
@@ -1897,6 +1902,7 @@ export type Database = {
           code: string;
           created_at: string;
           expires_at: string;
+          grants_narration: boolean;
           id: string;
           label: string;
           max_uses: number;

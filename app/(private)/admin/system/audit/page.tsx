@@ -1,7 +1,7 @@
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminPagination } from "@/components/admin/admin-pagination";
 import { auditHref, parseAuditParams } from "@/lib/admin/audit-params";
-import { describeAudit, KNOWN_AUDIT_ACTIONS } from "@/lib/admin/audit-labels";
+import { describeAudit, isSystemAuditAction, KNOWN_AUDIT_ACTIONS } from "@/lib/admin/audit-labels";
 import { emailsForTargets, listAudit } from "@/lib/admin/audit-query";
 import { formatAdminDateTime } from "@/lib/admin/format";
 import { requireAdminPage } from "@/lib/admin/page-guard";
@@ -65,7 +65,9 @@ export default async function AdminAuditPage({ searchParams }: PageProps) {
                   </td>
                   <td>
                     {row.actorEmail ?? (
-                      <span className="text-base-content/50">Deleted account</span>
+                      <span className="text-base-content/50">
+                        {isSystemAuditAction(row.action) ? "System" : "Deleted account"}
+                      </span>
                     )}
                   </td>
                   <td>
