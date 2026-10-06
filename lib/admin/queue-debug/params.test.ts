@@ -11,13 +11,21 @@ describe("parseQueueParams", () => {
       domainId: null,
       tab: "read",
       limit: 50,
+      page: 1,
     });
   });
 
   it("keeps valid values", () => {
     expect(
-      parseQueueParams({ user: ID, domain: ID, tab: "cooldown", limit: "250", q: " ann " }),
-    ).toEqual({ q: "ann", userId: ID, domainId: ID, tab: "cooldown", limit: 250 });
+      parseQueueParams({
+        user: ID,
+        domain: ID,
+        tab: "cooldown",
+        limit: "250",
+        q: " ann ",
+        page: "3",
+      }),
+    ).toEqual({ q: "ann", userId: ID, domainId: ID, tab: "cooldown", limit: 250, page: 3 });
   });
 
   it("drops what it doesn't recognise", () => {
@@ -27,6 +35,7 @@ describe("parseQueueParams", () => {
       domainId: null,
       tab: "read",
       limit: 50,
+      page: 1,
     });
   });
 });

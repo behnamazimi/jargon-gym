@@ -82,6 +82,12 @@ describe("buildQueueDebug", () => {
     expect(later.reviewCooldown.rows).toEqual([]);
   });
 
+  it("ignores a retrievability that isn't a number instead of listing it", () => {
+    const odd = term("odd", { recallStability: 0, lastReviewRecallAt: NOW });
+    const debug = buildQueueDebug([odd], options);
+    expect(debug.reviewCooldown.rows).toEqual([]);
+  });
+
   it("lists Quiz cooldowns with the posterior", () => {
     const answered = term("answered", {
       quizKnowledgePosterior: 0.9,

@@ -109,6 +109,12 @@ export async function getReadTermByIdAction(
   }
 }
 
+export type ReadFeedBatchResult = {
+  error?: string;
+  caughtUp?: boolean;
+  terms: ReviewTerm[];
+};
+
 /**
  * Web equivalent of Telegram /read: pull the next batch off the Read
  * queue, ranked by lowest exposure first. Returned masked — the client
@@ -124,13 +130,6 @@ export async function getReadTermByIdAction(
  * matches Telegram /read. The RPC already intersects with collections that are
  * turned on, so an unknown id just yields an empty pick.
  */
-
-export type ReadFeedBatchResult = {
-  error?: string;
-  caughtUp?: boolean;
-  terms: ReviewTerm[];
-};
-
 export async function getReadFeedBatchAction(
   domainId: string,
   excludeTermIds: string[],

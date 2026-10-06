@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AdminPagination } from "@/components/admin/admin-pagination";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { MemberPicker } from "@/components/admin/queue/member-picker";
@@ -48,11 +49,16 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
   );
 
   if (!params.userId) {
-    const { rows } = await listMembers(supabase, { q: params.q, page: 1 });
+    const { rows, total, page } = await listMembers(supabase, { q: params.q, page: params.page });
     return (
       <>
         {header}
         <MemberPicker query={params.q} rows={rows} />
+        <AdminPagination
+          page={page}
+          total={total}
+          hrefFor={(next) => queueHref({ q: params.q, page: next })}
+        />
       </>
     );
   }
@@ -167,6 +173,13 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
           }))}
         />
       </div>
+      {["read", "review", "quiz"].includes(params.tab) ? (
+        <p className="m-0 text-sm text-base-content/65">
+          "next" marks what one feed request takes: Read {READ_FEED_BATCH_SIZE}, Review{" "}
+          {REVIEW_QUEUE_BUFFER_SIZE}, Quiz {DEFAULT_QUIZ_QUESTION_COUNT} (its default length; a
+          member can pick another).
+        </p>
+      ) : null}
       {params.tab === "read" ? <ReadTable section={debug.read} asOf={debug.asOf} /> : null}
       {params.tab === "review" ? <ReviewTable section={debug.review} asOf={debug.asOf} /> : null}
       {params.tab === "quiz" ? <QuizTable section={debug.quiz} asOf={debug.asOf} /> : null}

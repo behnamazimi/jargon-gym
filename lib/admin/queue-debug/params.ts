@@ -14,6 +14,8 @@ export type QueueParams = {
   domainId: string | null;
   tab: QueueTab;
   limit: number;
+  /** Page of the member picker. */
+  page: number;
 };
 
 /** What comes from the address bar is untrusted, so every value is checked and defaulted. */
@@ -22,12 +24,14 @@ export function parseQueueParams(raw: RawParams): QueueParams {
   const domain = first(raw.domain);
   const tab = first(raw.tab);
   const limit = Number.parseInt(first(raw.limit) ?? "", 10);
+  const page = Number.parseInt(first(raw.page) ?? "", 10);
   return {
     q: cleanSearch(first(raw.q)),
     userId: user && isUuid(user) ? user : null,
     domainId: domain && isUuid(domain) ? domain : null,
     tab: QUEUE_TABS.find((t) => t === tab) ?? "read",
     limit: QUEUE_LIMITS.find((l) => l === limit) ?? DEFAULT_LIMIT,
+    page: Number.isFinite(page) && page > 0 ? Math.min(page, 100_000) : 1,
   };
 }
 
@@ -39,6 +43,7 @@ export function queueHref(params: Partial<QueueParams>): string {
   if (params.domainId) query.set("domain", params.domainId);
   if (params.tab && params.tab !== "read") query.set("tab", params.tab);
   if (params.limit && params.limit !== DEFAULT_LIMIT) query.set("limit", String(params.limit));
+  if (params.page && params.page > 1) query.set("page", String(params.page));
   const text = query.toString();
   return text ? `/admin/system/queue?${text}` : "/admin/system/queue";
 }

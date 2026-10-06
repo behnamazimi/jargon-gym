@@ -110,7 +110,7 @@ function cooldownRows(
     const retrievability = review
       ? recallRetrievabilityNow(item, now)
       : recognitionRetrievabilityNow(item, now);
-    if (retrievability === null || retrievability <= SESSION_COOLDOWN_RETRIEVABILITY) continue;
+    if (retrievability === null || !(retrievability > SESSION_COOLDOWN_RETRIEVABILITY)) continue;
 
     const stability = review
       ? item.recallStability
@@ -141,27 +141,37 @@ export function buildQueueDebug(terms: QueueDebugTerm[], options: QueueDebugOpti
   const byId = new Map(scoped.map((t) => [t.termId, t]));
   const eligible = scoped.filter((t) => excludedReasons(t).length === 0);
 
-  const read = rankReadQueue(eligible, now).map((c, i): ReadRow => {
-    const exposure = computeReadExposure(c, now);
-    const temper = computeReadTempering(c, now);
-    return {
-      rank: i + 1,
-      nextBatch: i < batch.read,
-      item: byId.get(c.termId)!,
-      exposure,
-      temper,
-      score: exposure + READ_TEMPER_WEIGHT * temper,
-    };
-  });
+  const readRanked = rankReadQueue(eligible, now);
+  const read: QueueSection<ReadRow> = {
+    total: readRanked.length,
+    rows: readRanked.slice(0, limit).map((c, i): ReadRow => {
+      const exposure = computeReadExposure(c, now);
+      const temper = computeReadTempering(c, now);
+      return {
+        rank: i + 1,
+        nextBatch: i < batch.read,
+        item: byId.get(c.termId)!,
+        exposure,
+        temper,
+        score: exposure + READ_TEMPER_WEIGHT * temper,
+      };
+    }),
+  };
 
-  const tier = (ranked: TraceCandidate[], size: number, track: "review" | "quiz") =>
-    ranked.map((c, i): TierRow => ({
+  const tier = (
+    ranked: TraceCandidate[],
+    size: number,
+    track: "review" | "quiz",
+  ): QueueSection<TierRow> => ({
+    total: ranked.length,
+    rows: ranked.slice(0, limit).map((c, i): TierRow => ({
       rank: i + 1,
       nextBatch: i < size,
       item: byId.get(c.termId)!,
       retrievability:
         track === "review" ? recallRetrievabilityNow(c, now) : recognitionRetrievabilityNow(c, now),
-    }));
+    })),
+  });
 
   const excluded = scoped
     .map((item): ExcludedRow => ({ item, reasons: excludedReasons(item) }))
@@ -171,9 +181,9 @@ export function buildQueueDebug(terms: QueueDebugTerm[], options: QueueDebugOpti
   return {
     asOf: now,
     eligible: eligible.length,
-    read: section(read, limit),
-    review: section(tier(rankReviewQueue(eligible, now), batch.review, "review"), limit),
-    quiz: section(tier(rankQuizQueue(eligible, now), batch.quiz, "quiz"), limit),
+    read,
+    review: tier(rankReviewQueue(eligible, now), batch.review, "review"),
+    quiz: tier(rankQuizQueue(eligible, now), batch.quiz, "quiz"),
     reviewCooldown: section(cooldownRows(eligible, "review", now), limit),
     quizCooldown: section(cooldownRows(eligible, "quiz", now), limit),
     excluded: section(excluded, limit),

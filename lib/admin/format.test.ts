@@ -37,7 +37,8 @@ describe("formatRelative", () => {
     expect(formatRelative(at(90 * MIN), from)).toBe("in 1h 30m");
   });
 
-  it("says under a minute for a tiny gap", () => {
-    expect(formatRelative(at(20_000), from)).toBe("under 1m");
+  it("says under a minute for a tiny gap, with its direction", () => {
+    expect(formatRelative(at(20_000), from)).toBe("in under 1m");
+    expect(formatRelative(at(-20_000), from)).toBe("under 1m ago");
   });
 });

@@ -29,7 +29,7 @@ export function formatRelative(to: Date, from: Date): string {
     if (count > 0 && parts.length < 2) parts.push(`${count}${unit}`);
     rest -= count * size;
   }
-  const text = parts.length > 0 ? parts.join(" ") : "under 1m";
-  if (parts.length === 0) return text;
+  if (parts.length === 0) return seconds < 0 ? "under 1m ago" : "in under 1m";
+  const text = parts.join(" ");
   return seconds < 0 ? `${text} ago` : `in ${text}`;
 }
