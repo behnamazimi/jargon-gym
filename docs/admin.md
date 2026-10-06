@@ -19,6 +19,7 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | `/admin/ai/credits`       | Credits switch, allowance and prices, health, usage, grants                                                               |
 | `/admin/ai/narration`     | Narration switch, providers, limits, access; links to the running sync                                                    |
 | `/admin/system/audit`     | What admins changed, and when                                                                                             |
+| `/admin/system/queue`     | Queue debug: what Read, Review and Quiz would serve one member now, what is on cooldown, and what is left out             |
 
 Old addresses (`/admin/invites`, `/admin/ai-credits`, `/admin/narration`) redirect with
 temporary (307) redirects from `lib/redirects.ts`.
@@ -181,6 +182,27 @@ Nothing is automatic: reports only show up for an admin, who decides.
   `components/admin/collections/moderation-*.tsx` and `moderation-actions.ts`). The overview counts collections
   with open reports. No user-facing string may name the admin; `lib/collections/moderation.test.ts` checks it.
 - SQL checks: `supabase/tests/collection_moderation.sql`, run by hand against a local database.
+
+## Queue debug
+
+`/admin/system/queue` is for checking that TRACE's queues behave. Pick a member, and it ranks their terms with
+the same functions the feeds call (`rankReadQueue`, `rankReviewQueue`, `rankQuizQueue`), so what you see is what
+they would get at that moment. It is a snapshot with an "As of" time; Refresh recomputes it. Nothing is written
+and viewing is not audited.
+
+- **Data.** `admin_queue_debug_terms` (`20261014100000_admin_queue_debug.sql`) is admin-checked and returns every
+  term in the member's collections with its TRACE state, whether its collection is on and whether it has a
+  definition. `get_trace_candidates` hides the last two kinds, so the page can't use it to explain a missing term.
+  Ranking and the rest are in `lib/admin/queue-debug/build.ts` (pure, tested); the URL is parsed in `params.ts`.
+- **Tabs.** Read, Review and Quiz show the rank, the number the sort used and the raw state. The first rows are
+  marked "next": that is the batch a feed takes at once (`READ_FEED_BATCH_SIZE`, `REVIEW_QUEUE_BUFFER_SIZE`, and
+  the default quiz length). Each tab keeps the top rows (25 to 500, default 50) and says how many there are.
+- **Cooldown.** Only Review and Quiz have one: a term above 0.98 retrievability is held out. There is no stored
+  due time, so "back in the queue" is computed by inverting the decay (`cooldownEndsAt` in `lib/trace/queue.ts`).
+  Read has no cooldown. Times show in the viewer's time zone, with the gap counted from the "As of" time.
+- **Left out.** Terms with no definition, in a collection that is off, or marked known, each with its reasons.
+- The page shows term names, including from private collections, to an admin only.
+- SQL check: `supabase/tests/admin_queue_debug.sql`, run by hand.
 
 ## The audit log
 

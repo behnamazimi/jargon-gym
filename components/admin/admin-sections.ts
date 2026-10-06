@@ -4,6 +4,7 @@ import {
   Inbox,
   LayoutDashboard,
   Library,
+  ListOrdered,
   ScrollText,
   Sparkles,
   Users,
@@ -47,7 +48,10 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
   },
   {
     title: "System",
-    sections: [{ href: "/admin/system/audit", label: "Audit log", icon: ScrollText }],
+    sections: [
+      { href: "/admin/system/audit", label: "Audit log", icon: ScrollText },
+      { href: "/admin/system/queue", label: "Queue debug", icon: ListOrdered },
+    ],
   },
 ];
 

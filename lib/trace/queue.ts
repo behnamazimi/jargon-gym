@@ -11,6 +11,7 @@
 import {
   FAMILIARITY_DECAY_SCALE_DAYS,
   READ_TEMPER_WEIGHT,
+  RETRIEVABILITY_DECAY_SCALE,
   SESSION_COOLDOWN_RETRIEVABILITY,
 } from "./constants";
 import { daysBetween, hyperbolicDecay } from "./decay";
@@ -64,27 +65,39 @@ export function computeReadExposure(candidate: TraceCandidate, now: Date): numbe
  *  rankReviewQueue/rankQuizQueue use below. Naturally 0 for a completely
  *  untested term (masteryAdjusted multiplies by confidence(0) = 0). */
 export function computeReadTempering(candidate: TraceCandidate, now: Date): number {
-  const recallR =
-    candidate.recallStability !== null
-      ? recallRetrievability(
-          candidate.recallStability,
-          daysBetween(candidate.lastReviewRecallAt ?? now, now),
-        )
-      : null;
-  const recognitionR =
-    candidate.quizKnowledgePosterior !== null
-      ? recognitionRetrievability(
-          posteriorToStability(candidate.quizKnowledgePosterior),
-          daysBetween(candidate.lastQuizTestedAt ?? now, now),
-        )
-      : null;
-
   const mastery = blendMastery({
     familiarityUsed: 0,
-    recallRetrievability: recallR,
-    recognitionRetrievability: recognitionR,
+    recallRetrievability: recallRetrievabilityNow(candidate, now),
+    recognitionRetrievability: recognitionRetrievabilityNow(candidate, now),
   });
   return masteryAdjusted(mastery, candidate.reviewRecallCount + candidate.quizTestCount);
+}
+
+/** Live recall retrievability, or null for a term never graded in Review. */
+export function recallRetrievabilityNow(candidate: TraceCandidate, now: Date): number | null {
+  return candidate.recallStability !== null
+    ? recallRetrievability(
+        candidate.recallStability,
+        daysBetween(candidate.lastReviewRecallAt ?? now, now),
+      )
+    : null;
+}
+
+/** Live recognition retrievability, or null for a term never answered in Quiz. */
+export function recognitionRetrievabilityNow(candidate: TraceCandidate, now: Date): number | null {
+  return candidate.quizKnowledgePosterior !== null
+    ? recognitionRetrievability(
+        posteriorToStability(candidate.quizKnowledgePosterior),
+        daysBetween(candidate.lastQuizTestedAt ?? now, now),
+      )
+    : null;
+}
+
+/** When a term held out by the cooldown (retrievability above the threshold)
+ *  decays back to it and re-enters the queue. Inverts R = 1 / (1 + t / (9·S)). */
+export function cooldownEndsAt(stability: number, lastTestedAt: Date): Date {
+  const days = RETRIEVABILITY_DECAY_SCALE * stability * (1 / SESSION_COOLDOWN_RETRIEVABILITY - 1);
+  return new Date(lastTestedAt.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
 /** Read: always eligible, ranked ascending by decay-aware cross-tier
@@ -114,10 +127,7 @@ export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceC
   return candidates
     .map((c) => ({
       candidate: c,
-      r:
-        c.recallStability !== null
-          ? recallRetrievability(c.recallStability, daysBetween(c.lastReviewRecallAt ?? now, now))
-          : UNTESTED_RETRIEVABILITY,
+      r: recallRetrievabilityNow(c, now) ?? UNTESTED_RETRIEVABILITY,
     }))
     .filter(({ r }) => r <= SESSION_COOLDOWN_RETRIEVABILITY)
     .sort((a, b) => a.r - b.r || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime())
@@ -130,13 +140,7 @@ export function rankQuizQueue(candidates: TraceCandidate[], now: Date): TraceCan
   return candidates
     .map((c) => ({
       candidate: c,
-      r:
-        c.quizKnowledgePosterior !== null
-          ? recognitionRetrievability(
-              posteriorToStability(c.quizKnowledgePosterior),
-              daysBetween(c.lastQuizTestedAt ?? now, now),
-            )
-          : UNTESTED_RETRIEVABILITY,
+      r: recognitionRetrievabilityNow(c, now) ?? UNTESTED_RETRIEVABILITY,
     }))
     .filter(({ r }) => r <= SESSION_COOLDOWN_RETRIEVABILITY)
     .sort((a, b) => a.r - b.r || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime())

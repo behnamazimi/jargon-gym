@@ -65,6 +65,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/admin/ai/narration", "Narration"],
   ["/admin/ai", "AI features"],
   ["/admin/system/audit", "Audit log"],
+  ["/admin/system/queue", "Queue debug"],
   ["/admin", "Admin"],
 ];
 
