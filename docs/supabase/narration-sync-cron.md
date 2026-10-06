@@ -90,6 +90,6 @@ curl -X POST http://localhost:3000/api/internal/narration/sync \
 
 ## Next steps
 
-Open **/admin/ai/narration**, start a collection with missing audio, and confirm
+Open a collection's page (**/admin/collections/[id]**), start its sync for missing audio, and confirm
 the progress row advances. If a run sits in **running** after a deploy, click
 **Resume** or wait for the next cron tick.

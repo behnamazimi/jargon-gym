@@ -12,8 +12,9 @@ import {
 
 export { canResumeNarrationSync, type NarrationSyncJobView } from "./sync-shared";
 export {
+  getCollectionNarrationCoverage,
   isCurrentAudio,
-  listCollectionNarrationCoverage,
+  listCollectionTermClips,
   listMissingNarrationTermIds,
 } from "./sync-missing";
 export {

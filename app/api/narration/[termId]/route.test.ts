@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { signedUserHeaders } from "@/lib/auth/signed-user-headers";
 
 const getNarrationAccessForUser = vi.fn();
+const isAdminAccount = vi.fn();
 const getReadyAudio = vi.fn();
 const getOrCreateAudio = vi.fn();
 const loadTermSubject = vi.fn();
@@ -13,7 +14,7 @@ const recordUsage = vi.fn();
 const guard = vi.hoisted(() => ({ busy: false, inputs: [] as unknown[] }));
 const SUBJECT = { type: "term", id: "term-1" };
 
-vi.mock("@/lib/narration/access", () => ({ getNarrationAccessForUser }));
+vi.mock("@/lib/narration/access", () => ({ getNarrationAccessForUser, isAdminAccount }));
 vi.mock("@/lib/ai/speech/audio", () => ({ getReadyAudio, getOrCreateAudio }));
 vi.mock("@/lib/ai/speech/subjects", () => ({ loadTermSubject }));
 vi.mock("@/lib/ai/speech/serve", () => ({ serveAudio }));
@@ -49,6 +50,7 @@ function request(method: string, headers: Record<string, string> = {}) {
 beforeEach(() => {
   vi.clearAllMocks();
   getNarrationAccessForUser.mockResolvedValue(true);
+  isAdminAccount.mockResolvedValue(false);
   termRow.mockResolvedValue({ data: { id: "term-1" } });
   loadTermSubject.mockResolvedValue(SUBJECT);
   getReadyAudio.mockResolvedValue({ id: "job-1" });
@@ -68,6 +70,14 @@ describe("narration route authorization", () => {
   it("rejects users who are not allowlisted", async () => {
     getNarrationAccessForUser.mockResolvedValue(false);
     expect((await GET(request("GET"), ctx)).status).toBe(403);
+    expect((await POST(request("POST"), ctx)).status).toBe(403);
+    expect(getOrCreateAudio).not.toHaveBeenCalled();
+  });
+
+  it("lets an admin without access listen, but not have a clip made", async () => {
+    getNarrationAccessForUser.mockResolvedValue(false);
+    isAdminAccount.mockResolvedValue(true);
+    expect((await GET(request("GET"), ctx)).status).toBe(200);
     expect((await POST(request("POST"), ctx)).status).toBe(403);
     expect(getOrCreateAudio).not.toHaveBeenCalled();
   });

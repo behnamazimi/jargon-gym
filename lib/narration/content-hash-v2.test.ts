@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeContentHash } from "./content-hash";
-import { computeContentHashV2 } from "./content-hash-v2";
+import { computeContentHashV2, computeNarrationHash, computeTermOnlyHash } from "./content-hash-v2";
 import type { NarratedTermFields } from "./types";
 
 const FIELDS: NarratedTermFields = {
@@ -33,5 +33,18 @@ describe("narration content hash", () => {
 
   it("version 2 is stable for the same input", () => {
     expect(computeContentHashV2(FIELDS, "en")).toBe(computeContentHashV2({ ...FIELDS }, "en"));
+  });
+
+  it("the term-only hash depends on the name and language, not on the other fields", () => {
+    expect(computeTermOnlyHash("Closure", "en")).toBe(computeTermOnlyHash("Closure", "en"));
+    expect(computeTermOnlyHash("Closure", "en")).not.toBe(computeTermOnlyHash("Closure", "nl"));
+    expect(computeTermOnlyHash("Closure", "en")).not.toBe(computeTermOnlyHash("closure", "en"));
+    expect(computeNarrationHash("term", FIELDS, "en")).toBe(
+      computeNarrationHash("term", { ...FIELDS, definition: "Other." }, "en"),
+    );
+    expect(computeNarrationHash("full", FIELDS, "en")).toBe(computeContentHashV2(FIELDS, "en"));
+    expect(computeNarrationHash("term", FIELDS, "en")).not.toBe(
+      computeNarrationHash("full", FIELDS, "en"),
+    );
   });
 });

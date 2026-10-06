@@ -17,6 +17,10 @@ export const COLLECTION_KIND_OPTIONS: { value: CollectionKind; label: string }[]
   { value: "vocabulary", label: "Words and phrases" },
 ];
 
+export function kindLabel(kind: CollectionKind) {
+  return COLLECTION_KIND_OPTIONS.find((option) => option.value === kind)?.label ?? kind;
+}
+
 export function parseKind(value: string | null | undefined): CollectionKind {
   return (COLLECTION_KINDS as readonly string[]).includes(value ?? "")
     ? (value as CollectionKind)

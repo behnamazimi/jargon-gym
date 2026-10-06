@@ -30,26 +30,40 @@ export function ModerationBadges({ collection }: { collection: AdminCollectionRo
 
 type Dialog = "stop" | "lift" | "reports";
 
-function ActionButton({ label, onPress }: { label: string; onPress: () => void }) {
+function ActionButton({
+  label,
+  onPress,
+  danger = false,
+}: {
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+}) {
   return (
-    <button type="button" className="btn btn-ghost btn-xs" onClick={onPress}>
+    <button
+      type="button"
+      className={danger ? "btn btn-error btn-sm" : "btn btn-sm"}
+      onClick={onPress}
+    >
       {label}
     </button>
   );
 }
 
-export function ModerationCell({ collection }: { collection: AdminCollectionRow }) {
+export function ModerationActions({ collection }: { collection: AdminCollectionRow }) {
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const close = () => setDialog(null);
   const canStop =
     collection.visibility === "shared" && !collection.isBuiltin && !collection.readOnly;
 
   return (
-    <td className="whitespace-nowrap">
+    <div className="flex flex-wrap gap-1">
       {collection.openReportCount > 0 ? (
         <ActionButton label="Reports" onPress={() => setDialog("reports")} />
       ) : null}
-      {canStop ? <ActionButton label="Stop sharing" onPress={() => setDialog("stop")} /> : null}
+      {canStop ? (
+        <ActionButton label="Stop sharing" danger onPress={() => setDialog("stop")} />
+      ) : null}
       {collection.shareBlockedAt ? (
         <ActionButton label="Lift lock" onPress={() => setDialog("lift")} />
       ) : null}
@@ -64,6 +78,6 @@ export function ModerationCell({ collection }: { collection: AdminCollectionRow 
           onClose={close}
         />
       ) : null}
-    </td>
+    </div>
   );
 }

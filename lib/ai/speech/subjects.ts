@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { computeContentHash } from "@/lib/narration/content-hash";
-import { computeContentHashV2 } from "@/lib/narration/content-hash-v2";
+import { computeNarrationHash } from "@/lib/narration/content-hash-v2";
+import { getNarrationMode } from "@/lib/narration/mode";
 import { buildNarrationScript } from "@/lib/narration/template";
 import type { NarratedTermFields } from "@/lib/narration/types";
 import { parseLanguage } from "@/lib/terms/languages";
@@ -11,7 +12,7 @@ import type { SpeechSubject } from "./types";
 type Client = SupabaseClient<Database>;
 
 const TERM_COLUMNS =
-  "term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)";
+  "domain_id, term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)";
 
 /** Stories never change once written, so a constant stands in for a hash. The
  *  version 1 value is what the earlier mirror wrote. */
@@ -30,16 +31,18 @@ export async function loadTermSubject(
   if (error) throw error;
   if (!data || data.definition === null) return null;
 
-  const { domains, ...fields } = data;
+  const { domains, domain_id: domainId, ...fields } = data;
   const language = parseLanguage(domains?.language);
   const narrated: NarratedTermFields = fields;
+  const mode = await getNarrationMode(admin, domainId);
   return {
     type: "term",
     id: termId,
     userId: null,
-    contentHash: computeContentHashV2(narrated, language),
-    legacyHash: computeContentHash(narrated),
-    loadScript: async () => ({ script: buildNarrationScript(narrated, language), language }),
+    contentHash: computeNarrationHash(mode, narrated, language),
+    // Only full clips can still be the older version 1 ones.
+    legacyHash: mode === "full" ? computeContentHash(narrated) : undefined,
+    loadScript: async () => ({ script: buildNarrationScript(narrated, language, mode), language }),
   };
 }
 

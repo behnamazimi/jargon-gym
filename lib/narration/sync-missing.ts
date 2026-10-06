@@ -4,8 +4,9 @@ import { isCurrentJob } from "@/lib/ai/speech/audio";
 import type { AudioJob } from "@/lib/ai/speech/types";
 import { parseLanguage } from "@/lib/terms/languages";
 import { computeContentHash } from "./content-hash";
-import { computeContentHashV2 } from "./content-hash-v2";
-import type { CollectionNarrationCoverage } from "./sync-shared";
+import { computeNarrationHash } from "./content-hash-v2";
+import { DEFAULT_NARRATION_MODE, getNarrationModes, type NarrationMode } from "./mode";
+import type { NarrationCoverage, NarrationTermClip } from "./sync-shared";
 import type { NarratedTermFields } from "./types";
 
 type AdminClient = SupabaseClient<Database>;
@@ -41,13 +42,29 @@ function fieldsFromTerm(term: NarratedTermFields): NarratedTermFields {
   };
 }
 
-export function isCurrentAudio(term: TermRow, job: JobRow | undefined): boolean {
+export function isCurrentAudio(
+  term: TermRow,
+  job: JobRow | undefined,
+  mode: NarrationMode,
+): boolean {
   if (!job) return false;
   const fields = fieldsFromTerm(term);
   return isCurrentJob(job, {
-    contentHash: computeContentHashV2(fields, parseLanguage(term.domains?.language)),
-    legacyHash: computeContentHash(fields),
+    contentHash: computeNarrationHash(mode, fields, parseLanguage(term.domains?.language)),
+    legacyHash: mode === "full" ? computeContentHash(fields) : undefined,
   });
+}
+
+/** A clip made for something that no longer matches (an edit, or the other mode) is stale. */
+export type NarrationClipState = "current" | "stale" | "missing";
+
+function narrationClipState(
+  term: TermRow,
+  job: JobRow | undefined,
+  mode: NarrationMode,
+): NarrationClipState {
+  if (isCurrentAudio(term, job, mode)) return "current";
+  return job?.status === "ready" && job.storage_path ? "stale" : "missing";
 }
 
 function chunkIds(ids: string[]): string[][] {
@@ -74,27 +91,6 @@ async function fetchAllTermsForDomain(admin: AdminClient, domainId: string): Pro
   return terms;
 }
 
-async function fetchAllTermsForDomains(
-  admin: AdminClient,
-  domainIds: string[],
-): Promise<TermRow[]> {
-  const terms: TermRow[] = [];
-  for (const domainChunk of chunkIds(domainIds)) {
-    for (let from = 0; ; from += PAGE_SIZE) {
-      const { data, error } = await admin
-        .from("terms")
-        .select(TERM_FIELD_COLUMNS)
-        .in("domain_id", domainChunk)
-        .not("definition", "is", null)
-        .range(from, from + PAGE_SIZE - 1);
-      if (error) throw error;
-      terms.push(...((data ?? []) as TermRow[]));
-      if (!data || data.length < PAGE_SIZE) break;
-    }
-  }
-  return terms;
-}
-
 async function loadLiveJobs(admin: AdminClient, termIds: string[]): Promise<Map<string, JobRow>> {
   const byTermId = new Map<string, JobRow>();
   for (const chunk of chunkIds(termIds)) {
@@ -117,41 +113,54 @@ export async function listMissingNarrationTermIds(
   admin: AdminClient,
   domainId: string,
 ): Promise<string[]> {
+  const clips = await loadCollectionClips(admin, domainId);
+  return clips.filter((clip) => clip.state !== "current").map((clip) => clip.id);
+}
+
+async function loadCollectionClips(
+  admin: AdminClient,
+  domainId: string,
+): Promise<NarrationTermClip[]> {
   const terms = await fetchAllTermsForDomain(admin, domainId);
   if (terms.length === 0) return [];
 
+  const mode = (await getNarrationModes(admin, [domainId])).get(domainId) ?? DEFAULT_NARRATION_MODE;
   const jobs = await loadLiveJobs(
     admin,
     terms.map((term) => term.id),
   );
-
-  return terms.filter((term) => !isCurrentAudio(term, jobs.get(term.id))).map((term) => term.id);
+  return terms.map((term) => ({
+    id: term.id,
+    term: term.term,
+    state: narrationClipState(term, jobs.get(term.id), mode),
+  }));
 }
 
-export async function listCollectionNarrationCoverage(
+export async function getCollectionNarrationCoverage(
   admin: AdminClient,
-  collections: { id: string; name: string }[],
-): Promise<CollectionNarrationCoverage[]> {
-  if (collections.length === 0) return [];
+  domainId: string,
+): Promise<NarrationCoverage> {
+  const clips = await loadCollectionClips(admin, domainId);
+  const count = (state: NarrationClipState) => clips.filter((clip) => clip.state === state).length;
+  return {
+    total: clips.length,
+    current: count("current"),
+    stale: count("stale"),
+    missing: count("missing"),
+  };
+}
 
-  const terms = await fetchAllTermsForDomains(
-    admin,
-    collections.map((collection) => collection.id),
+/** One page of a collection's terms, in alphabetical order, optionally only those in one state. */
+export async function listCollectionTermClips(
+  admin: AdminClient,
+  domainId: string,
+  options: { page: number; pageSize: number; state: NarrationClipState | "all" },
+): Promise<{ clips: NarrationTermClip[]; total: number }> {
+  const all = (await loadCollectionClips(admin, domainId)).sort((a, b) =>
+    a.term.localeCompare(b.term),
   );
-  const jobs = await loadLiveJobs(
-    admin,
-    terms.map((term) => term.id),
-  );
-
-  const missingByDomain = new Map<string, number>();
-  for (const term of terms) {
-    if (isCurrentAudio(term, jobs.get(term.id))) continue;
-    missingByDomain.set(term.domain_id, (missingByDomain.get(term.domain_id) ?? 0) + 1);
-  }
-
-  return collections.map((collection) => ({
-    domainId: collection.id,
-    name: collection.name,
-    missingCount: missingByDomain.get(collection.id) ?? 0,
-  }));
+  const filtered =
+    options.state === "all" ? all : all.filter((clip) => clip.state === options.state);
+  const from = (Math.max(options.page, 1) - 1) * options.pageSize;
+  return { clips: filtered.slice(from, from + options.pageSize), total: filtered.length };
 }

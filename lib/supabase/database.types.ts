@@ -419,6 +419,32 @@ export type Database = {
           },
         ];
       };
+      collection_narration_settings: {
+        Row: {
+          domain_id: string;
+          mode: string;
+          updated_at: string;
+        };
+        Insert: {
+          domain_id: string;
+          mode: string;
+          updated_at?: string;
+        };
+        Update: {
+          domain_id?: string;
+          mode?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "collection_narration_settings_domain_id_fkey";
+            columns: ["domain_id"];
+            isOneToOne: true;
+            referencedRelation: "domains";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       collection_reports: {
         Row: {
           created_at: string;

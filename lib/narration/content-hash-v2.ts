@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { DomainLanguage } from "@/lib/terms/languages";
+import type { NarrationMode } from "./mode";
 import type { NarratedTermFields } from "./types";
 
 /** Bump when the wording in template.ts changes, so cached clips are remade. */
@@ -25,6 +26,22 @@ export function computeContentHashV2(fields: NarratedTermFields, language: Domai
     fields.controversy ?? "",
   ]);
   return createHash("sha256").update(canonical).digest("hex");
+}
+
+/** Term-only clips say just the name, so only the name and the voice's language matter. */
+export function computeTermOnlyHash(term: string, language: DomainLanguage): string {
+  const canonical = JSON.stringify([2, NARRATION_TEMPLATE_VERSION, language, "term", term]);
+  return createHash("sha256").update(canonical).digest("hex");
+}
+
+export function computeNarrationHash(
+  mode: NarrationMode,
+  fields: NarratedTermFields,
+  language: DomainLanguage,
+): string {
+  return mode === "full"
+    ? computeContentHashV2(fields, language)
+    : computeTermOnlyHash(fields.term, language);
 }
 
 /** The hash version new audio jobs are made with. */

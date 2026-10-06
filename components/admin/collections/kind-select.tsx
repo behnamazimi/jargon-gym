@@ -5,7 +5,7 @@ import { setCollectionKind } from "@/app/(private)/admin/collections/actions";
 import { useToast } from "@/components/ui/toast";
 import { settleAdminAction } from "@/lib/admin/settle-action";
 import type { AdminCollectionRow } from "@/lib/admin/collections/list-all-collections";
-import { COLLECTION_KIND_OPTIONS, type CollectionKind } from "@/lib/terms/kinds";
+import { COLLECTION_KIND_OPTIONS, kindLabel, type CollectionKind } from "@/lib/terms/kinds";
 
 /** Shows a change at once, and falls back if saving fails. */
 export function KindSelect({ collection }: { collection: AdminCollectionRow }) {
@@ -47,8 +47,4 @@ export function KindSelect({ collection }: { collection: AdminCollectionRow }) {
       ) : null}
     </div>
   );
-}
-
-export function kindLabel(kind: CollectionKind) {
-  return COLLECTION_KIND_OPTIONS.find((option) => option.value === kind)?.label ?? kind;
 }

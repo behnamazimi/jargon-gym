@@ -14,8 +14,9 @@ export type SpeechSubject = {
   userId: string | null;
   /** Hash of the current version. New clips are made with it. */
   contentHash: string;
-  /** Hash of the older version 1 clips, valid while it still matches. */
-  legacyHash: string;
+  /** Hash of the older version 1 clips, valid while it still matches. Unset
+   *  for subjects that no longer accept version 1 clips. */
+  legacyHash?: string;
   loadScript: () => Promise<{ script: string; language: DomainLanguage } | null>;
 };
 

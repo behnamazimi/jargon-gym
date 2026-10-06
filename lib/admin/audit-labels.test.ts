@@ -50,6 +50,12 @@ describe("describeAudit", () => {
       label: "Collection status changed",
       summary: "builtin to published, /collections/cooking",
     });
+    expect(
+      describeAudit("app.narration_mode_set", { name: "Cooking", from: "term", to: "full" }),
+    ).toEqual({
+      label: "Narration mode changed",
+      summary: "Cooking: Term only to Full (term, definition, details)",
+    });
     expect(describeAudit("grant_ai_credits", { amount: 25, note: "beta" }).summary).toBe(
       '25 credits, "beta"',
     );

@@ -29,8 +29,13 @@ function takenSlugs(collections: AdminCollectionRow[], domainId: string) {
 }
 
 /** The public pages, the public list (cached for an hour) and the sitemap. */
-function revalidateCollection(slug: string | null) {
+function revalidateAdminCollections() {
   revalidatePath("/admin/collections");
+  revalidatePath("/admin/collections/[id]", "page");
+}
+
+function revalidateCollection(slug: string | null) {
+  revalidateAdminCollections();
   if (slug) revalidatePath(`/collections/${slug}`, "layout");
   revalidatePath("/collections");
   revalidatePath("/sitemap.xml");
@@ -183,7 +188,7 @@ export async function setCollectionKind(domainId: string, kind: CollectionKind) 
     });
 
     if (collection.isPublic) revalidateCollection(collection.slug);
-    else revalidatePath("/admin/collections");
+    else revalidateAdminCollections();
     return { kind: to };
   });
 }
@@ -238,7 +243,7 @@ export async function updateDomainSlug(domainId: string, raw: string, expected: 
       revalidateCollection(collection.slug);
       revalidateCollection(checked.slug);
     } else {
-      revalidatePath("/admin/collections");
+      revalidateAdminCollections();
     }
     return { slug: checked.slug };
   });

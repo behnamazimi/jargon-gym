@@ -1,5 +1,6 @@
 import type { DomainLanguage } from "@/lib/terms/languages";
 import { NARRATION_PAUSE } from "@/lib/ai/speech/pause";
+import type { NarrationMode } from "./mode";
 import type { NarratedTermFields } from "./types";
 
 function hasText(value: string | null): value is string {
@@ -44,7 +45,13 @@ const CONNECTOR_PHRASES: Partial<Record<DomainLanguage, ConnectorPhrases>> = {
  * no LLM involved — so content_hash over the raw fields is a reliable cache
  * key. Field order mirrors components/terms/term-body.tsx's display order.
  */
-export function buildNarrationScript(fields: NarratedTermFields, language: DomainLanguage): string {
+export function buildNarrationScript(
+  fields: NarratedTermFields,
+  language: DomainLanguage,
+  mode: NarrationMode,
+): string {
+  if (mode === "term") return `${fields.term.trim()}.`;
+
   const phrases = CONNECTOR_PHRASES[language];
   const parts = [`${fields.term}. ${(fields.definition ?? "").trim()}`];
 
