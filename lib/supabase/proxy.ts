@@ -187,7 +187,7 @@ export async function updateSession(request: NextRequest) {
   if (signedInRedirect) return signedInRedirect;
 
   // Forward the already-verified user so pages, actions and route handlers
-  // behind this proxy don't need to call supabase.auth.getUser() again.
+  // behind this proxy don't need to call supabase.auth.getClaims() again.
   const requestHeaders = new Headers(request.headers);
   await setVerifiedUser(requestHeaders, { id: user.id, email: user.email });
   const responseWithHeader = NextResponse.next({ request: { headers: requestHeaders } });

@@ -31,6 +31,18 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+type PreparedClip = { from: string | null | undefined; version: string };
+
+/** A clip learned from a POST only holds while the parent still hands in the
+ *  version it had then; a newer one from the parent wins. */
+function resolveClipVersion(clipVersion: string | null | undefined, prepared?: PreparedClip) {
+  const preparedVersion = prepared && prepared.from === clipVersion ? prepared.version : undefined;
+  return {
+    version: preparedVersion ?? clipVersion ?? undefined,
+    knownMissing: clipVersion === null && preparedVersion === undefined,
+  };
+}
+
 /** Play/pause for one term. `preload` buffers the clip before the tap;
  *  the collection list leaves it off so it does not fetch every term.
  *  `clipVersion` is the job id of the term's current clip: a string plays that
@@ -52,9 +64,8 @@ export function TermNarrationPlayer({
   const wantPlayingRef = useRef(false);
   const abortRetriedRef = useRef(false);
   const prepareRef = useRef<"idle" | "running" | "done">("idle");
-  const [preparedVersion, setPreparedVersion] = useState<string | undefined>();
-  const version = preparedVersion ?? clipVersion ?? undefined;
-  const knownMissing = clipVersion === null && preparedVersion === undefined;
+  const [prepared, setPrepared] = useState<PreparedClip>();
+  const { version, knownMissing } = resolveClipVersion(clipVersion, prepared);
   const src = narrationSrc(termId, version);
 
   useMountEffect(() => {
@@ -95,7 +106,7 @@ export function TermNarrationPlayer({
       }
       const body: { version?: string } = await response.json();
       if (body.version) {
-        setPreparedVersion(body.version);
+        setPrepared({ from: clipVersion, version: body.version });
         preparedSrc = narrationSrc(termId, body.version);
       }
     } catch {
