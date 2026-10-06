@@ -2,6 +2,7 @@
 
 import { createContext, Suspense, use, useContext, type ReactNode } from "react";
 import { TermNarrationPlayer } from "@/components/terms/term-narration-player";
+import { useTermDetails } from "@/lib/library/details-store";
 
 const NarrationAccessContext = createContext<Promise<boolean>>(Promise.resolve(false));
 
@@ -19,7 +20,9 @@ export function NarrationAccess({
 
 function NarrationButtonInner({ termId }: { termId: string }) {
   const allowed = use(useContext(NarrationAccessContext));
-  return allowed ? <TermNarrationPlayer termId={termId} /> : null;
+  const details = useTermDetails(termId);
+  const clipVersion = details && details !== "failed" ? details.narrationVersion : undefined;
+  return allowed ? <TermNarrationPlayer termId={termId} clipVersion={clipVersion} /> : null;
 }
 
 export function NarrationButton({ termId }: { termId: string }) {

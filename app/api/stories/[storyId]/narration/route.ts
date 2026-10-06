@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getOrCreateAudio } from "@/lib/ai/speech/audio";
-import { serveAudio } from "@/lib/ai/speech/serve";
+import { getReadyJobById } from "@/lib/ai/speech/jobs";
+import { serveAudio, serveJob } from "@/lib/ai/speech/serve";
 import { storyWithinDailyCap } from "@/lib/ai/speech/story-cap";
 import { loadStorySubject } from "@/lib/ai/speech/subjects";
 import { recordUsage } from "@/lib/ai/usage";
@@ -36,10 +37,22 @@ async function authorize(request: Request, params: RouteContext["params"]) {
 }
 
 /** Serves the story's audio once it exists. It never generates: the player
- *  prepares it with a POST first. */
+ *  prepares it with a POST first. With `?v=<job id>` it serves that exact clip,
+ *  which never changes, so the browser may keep it for a day. */
 export async function GET(request: Request, { params }: RouteContext) {
   const auth = await authorize(request, params);
   if (auth.denied) return auth.denied;
+
+  const version = new URL(request.url).searchParams.get("v");
+  if (version !== null) {
+    const job = z.uuid().safeParse(version).success
+      ? await getReadyJobById(auth.admin, auth.subject, version)
+      : null;
+    if (!job || job.user_id !== auth.userId) {
+      return new NextResponse(null, { status: 404, headers: { "Cache-Control": "no-store" } });
+    }
+    return serveJob(request, auth.admin, job, { versioned: true });
+  }
 
   return serveAudio(request, auth.admin, auth.subject);
 }
@@ -66,5 +79,5 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ ready: false, pending: true }, { status: 202 });
   }
   if (result.status !== "ready") return NextResponse.json({ ready: false }, { status: 502 });
-  return NextResponse.json({ ready: true });
+  return NextResponse.json({ ready: true, version: result.job.id });
 }

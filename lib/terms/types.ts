@@ -32,6 +32,9 @@ export type Term = {
   controversy?: string;
   note?: string;
   relationships: TermRelationship[];
+  /** The job id of this term's current narration clip. null: there is none yet.
+   *  Absent: not looked up. Set only where the term is served to a player. */
+  narrationVersion?: string | null;
 };
 
 /** A term with no definition yet. It is saved but stays out of study. */

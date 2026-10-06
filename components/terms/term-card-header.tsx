@@ -46,7 +46,11 @@ export function TermCardHeader({
         <div className="flex items-center gap-1">
           {actions}
           {narrationAccess ? (
-            <TermNarrationPlayer termId={term.id} preload={narrationPreload} />
+            <TermNarrationPlayer
+              termId={term.id}
+              clipVersion={term.narrationVersion}
+              preload={narrationPreload}
+            />
           ) : null}
         </div>
       ) : null}

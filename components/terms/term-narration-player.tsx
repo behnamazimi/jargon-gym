@@ -10,8 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
-function narrationSrc(termId: string): string {
-  return `/api/narration/${termId}`;
+/** With a version the address names one exact clip, which the browser may keep. */
+function narrationSrc(termId: string, version?: string): string {
+  const base = `/api/narration/${termId}`;
+  return version ? `${base}?v=${version}` : base;
 }
 
 function srcMatches(audio: HTMLAudioElement, src: string): boolean {
@@ -30,13 +32,18 @@ function isAbortError(error: unknown): boolean {
 }
 
 /** Play/pause for one term. `preload` buffers the clip before the tap;
- *  the collection list leaves it off so it does not fetch every term. */
+ *  the collection list leaves it off so it does not fetch every term.
+ *  `clipVersion` is the job id of the term's current clip: a string plays that
+ *  exact file, null means there is no clip yet (so the first tap prepares one
+ *  without a doomed request), undefined means it was not looked up. */
 export function TermNarrationPlayer({
   termId,
+  clipVersion,
   preload = false,
   showButton = true,
 }: {
   termId: string;
+  clipVersion?: string | null;
   preload?: boolean;
   showButton?: boolean;
 }) {
@@ -45,7 +52,10 @@ export function TermNarrationPlayer({
   const wantPlayingRef = useRef(false);
   const abortRetriedRef = useRef(false);
   const prepareRef = useRef<"idle" | "running" | "done">("idle");
-  const src = narrationSrc(termId);
+  const [preparedVersion, setPreparedVersion] = useState<string | undefined>();
+  const version = preparedVersion ?? clipVersion ?? undefined;
+  const knownMissing = clipVersion === null && preparedVersion === undefined;
+  const src = narrationSrc(termId, version);
 
   useMountEffect(() => {
     return () => {
@@ -75,12 +85,18 @@ export function TermNarrationPlayer({
     }
     prepareRef.current = "running";
     setStatus("loading");
+    let preparedSrc = src;
     try {
-      const response = await fetch(src, { method: "POST" });
+      const response = await fetch(narrationSrc(termId), { method: "POST" });
       if (!response.ok) {
         prepareRef.current = "done";
         giveUp(audio);
         return;
+      }
+      const body: { version?: string } = await response.json();
+      if (body.version) {
+        setPreparedVersion(body.version);
+        preparedSrc = narrationSrc(termId, body.version);
       }
     } catch {
       prepareRef.current = "done";
@@ -90,7 +106,7 @@ export function TermNarrationPlayer({
     prepareRef.current = "done";
     if (!wantPlayingRef.current) return;
     abortRetriedRef.current = false;
-    audio.src = src;
+    audio.src = preparedSrc;
     audio.load();
     void playClip(audio);
   }
@@ -145,6 +161,13 @@ export function TermNarrationPlayer({
     abortRetriedRef.current = false;
     prepareRef.current = "idle";
     wantPlayingRef.current = true;
+
+    if (knownMissing) {
+      claimActiveAudio(audio);
+      void prepareThenPlay(audio);
+      return;
+    }
+
     const alreadySet = srcMatches(audio, src);
     const ready = alreadySet && canPlayThrough(audio);
     if (!alreadySet) audio.src = src;
@@ -196,8 +219,8 @@ export function TermNarrationPlayer({
       <audio
         ref={audioRef}
         hidden
-        src={preload ? src : undefined}
-        preload={preload ? "auto" : "none"}
+        src={preload && !knownMissing ? src : undefined}
+        preload={preload && !knownMissing ? "auto" : "none"}
         onEnded={handleEnded}
         onError={handleError}
         onPause={handlePause}

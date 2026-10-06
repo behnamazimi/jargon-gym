@@ -5,15 +5,19 @@ const getNarrationAccessForUser = vi.fn();
 const loadStorySubject = vi.fn();
 const getOrCreateAudio = vi.fn();
 const serveAudio = vi.fn();
+const serveJob = vi.fn();
+const getReadyJobById = vi.fn();
 const storyWithinDailyCap = vi.fn();
 const recordUsage = vi.fn();
 const STORY_ID = "0b4f6a52-6a06-4a0f-9c0e-3f2d5a1b7c11";
 const SUBJECT = { type: "story", id: STORY_ID };
+const JOB_ID = "1c5a7b63-7b17-4b1a-8d1f-4e3e6b2c8d22";
 
 vi.mock("@/lib/narration/access", () => ({ getNarrationAccessForUser }));
 vi.mock("@/lib/ai/speech/subjects", () => ({ loadStorySubject }));
 vi.mock("@/lib/ai/speech/audio", () => ({ getOrCreateAudio }));
-vi.mock("@/lib/ai/speech/serve", () => ({ serveAudio }));
+vi.mock("@/lib/ai/speech/serve", () => ({ serveAudio, serveJob }));
+vi.mock("@/lib/ai/speech/jobs", () => ({ getReadyJobById }));
 vi.mock("@/lib/ai/speech/story-cap", () => ({ storyWithinDailyCap }));
 vi.mock("@/lib/ai/usage", () => ({ recordUsage }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
@@ -36,6 +40,8 @@ beforeEach(() => {
   getNarrationAccessForUser.mockResolvedValue(true);
   loadStorySubject.mockResolvedValue(SUBJECT);
   serveAudio.mockResolvedValue(new Response("audio", { status: 200 }));
+  serveJob.mockResolvedValue(new Response("audio", { status: 200 }));
+  getReadyJobById.mockResolvedValue({ id: JOB_ID, user_id: "user-1", storage_path: "p.mp3" });
   storyWithinDailyCap.mockResolvedValue(true);
 });
 
@@ -72,6 +78,35 @@ describe("GET", () => {
     expect((await GET(request("GET"), ctx)).status).toBe(200);
     expect(serveAudio).toHaveBeenCalledWith(expect.any(Request), {}, SUBJECT);
     expect(getOrCreateAudio).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET with a version", () => {
+  const versioned = () => request("GET", `?v=${JOB_ID}`);
+
+  it("serves that exact clip as cacheable", async () => {
+    expect((await GET(versioned(), ctx)).status).toBe(200);
+    expect(getReadyJobById).toHaveBeenCalledWith({}, SUBJECT, JOB_ID);
+    expect(serveJob).toHaveBeenCalledWith(
+      expect.any(Request),
+      {},
+      expect.objectContaining({ id: JOB_ID }),
+      { versioned: true },
+    );
+  });
+
+  it("never serves another person's clip", async () => {
+    getReadyJobById.mockResolvedValue({ id: JOB_ID, user_id: "someone-else", storage_path: "p" });
+    const res = await GET(versioned(), ctx);
+    expect(res.status).toBe(404);
+    expect(serveJob).not.toHaveBeenCalled();
+  });
+
+  it("is an uncacheable 404 for a clip that is gone", async () => {
+    getReadyJobById.mockResolvedValue(null);
+    const res = await GET(versioned(), ctx);
+    expect(res.status).toBe(404);
+    expect(res.headers.get("Cache-Control")).toBe("no-store");
   });
 });
 

@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/terms/review-outcome";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
+import { attachNarrationVersions } from "@/lib/narration/versions";
 import { isReadOptionKey, isReadOptionValue, saveReadOption } from "@/lib/read/options";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
@@ -99,7 +100,8 @@ export async function getReadTermByIdAction(
       return { error: "That term isn't in your collection." };
     }
 
-    return { term: toReviewTerm(card), revealed: alreadyRead };
+    const [term] = await attachNarrationVersions(admin, auth.user.id, [toReviewTerm(card)]);
+    return { term, revealed: alreadyRead };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load that term. Try again.";
     return { error: message };
@@ -148,7 +150,7 @@ export async function getReadFeedBatchAction(
     );
 
     if (cards.length === 0) return { caughtUp: true, terms: [] };
-    return { terms: cards.map(toReviewTerm) };
+    return { terms: await attachNarrationVersions(admin, auth.user.id, cards.map(toReviewTerm)) };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load more terms. Try again.";
     return { error: message, terms: [] };

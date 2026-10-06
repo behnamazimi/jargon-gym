@@ -7,8 +7,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export type SessionUser = VerifiedUser;
 
-/** The signed-in user. The proxy has already verified the session (and
- *  checked for a ban) on every request it matches, and forwards the result
+/** The signed-in user. The proxy has already verified the session on every
+ *  request it matches (a ban shows once its token refreshes), and forwards the result
  *  in headers, so this only asks Supabase Auth itself when those are absent. */
 export const getSessionUser = cache(async function getSessionUser(): Promise<{
   supabase: Awaited<ReturnType<typeof createClient>>;

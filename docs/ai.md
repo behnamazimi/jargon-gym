@@ -67,6 +67,18 @@ bucket. The shared code is `lib/ai/speech/`:
   ready. A job that is replaced is `superseded`, never rewritten.
 - `serveAudio` streams the current clip (ETag is the job id, Range works). It
   never generates; the player prepares a clip with an explicit POST.
+- `GET /api/narration/[termId]?v=<job id>` (and the story route's) serves that
+  exact clip through `serveJob` as `private, max-age=86400, immutable`: a job's
+  file is never rewritten, so a new clip means a new id and a new address. It
+  checks access and that the term is readable, then looks the job up by id; it
+  does not recompute the hash. A job that is not ready answers an uncacheable 404. Misses are never cached. POST returns `{ ready, version }`.
+- Players learn the id without asking per play: `loadNarrationVersions` /
+  `attachNarrationVersions` (`lib/narration/versions.ts`) give the current
+  clip's job id for a batch of terms (null when none). It is attached to Read
+  and Review terms and to the Library's `/api/terms/details` batches as
+  `narrationVersion`. Triage has no lookup yet and plays unversioned. With
+  `null` the player prepares on the first tap instead of a GET that would 404;
+  with nothing it asks the server as before.
 - `sweepSupersededAudio` removes the files of superseded jobs, at least an hour
   after they were replaced. It runs after each sync tick.
 - A term's clip is current while its hash matches. What is spoken depends on

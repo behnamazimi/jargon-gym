@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { attachNarrationVersions } from "@/lib/narration/versions";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { fetchTermDetails, parseDetailIds } from "@/lib/library/details";
 import { createClient } from "@/lib/supabase/server";
@@ -9,7 +11,8 @@ const NO_STORE = { "Cache-Control": "private, no-store" };
  *  view and when a card opens. A GET, so it runs in parallel with other
  *  requests instead of queueing like a Server Action. */
 export async function GET(request: NextRequest) {
-  if (!(await readVerifiedUser(request.headers))) {
+  const user = await readVerifiedUser(request.headers);
+  if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401, headers: NO_STORE });
   }
 
@@ -19,7 +22,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const terms = await fetchTermDetails(await createClient(), ids);
+    const details = await fetchTermDetails(await createClient(), ids);
+    const terms = await attachNarrationVersions(createAdminClient(), user.id, details);
     return NextResponse.json({ terms }, { headers: NO_STORE });
   } catch (error) {
     console.error("Couldn't load term details:", error);
