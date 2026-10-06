@@ -1,6 +1,10 @@
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { LEGACY_ADMIN_REDIRECTS, LEGACY_APP_REDIRECTS } from "./redirects";
+import {
+  LEGACY_ADMIN_REDIRECTS,
+  LEGACY_APP_REDIRECTS,
+  LEGACY_TERM_PAGE_REDIRECTS,
+} from "./redirects";
 
 describe("legacy admin redirects", () => {
   it("send every old address to a page that exists", () => {
@@ -50,5 +54,19 @@ describe("legacy app redirects", () => {
     const sources = new Set(LEGACY_APP_REDIRECTS.map((redirect) => redirect.source));
     for (const { destination } of LEGACY_APP_REDIRECTS)
       expect(sources.has(destination)).toBe(false);
+  });
+});
+
+describe("legacy term page redirects", () => {
+  const [redirect] = LEGACY_TERM_PAGE_REDIRECTS;
+  const termSlug = new RegExp(`^${redirect.source.match(/:termSlug\((.+)\)$/)![1]}$`);
+
+  it("send a term address to its collection", () => {
+    expect(termSlug.test("lopen")).toBe(true);
+    expect(redirect.destination).toBe("/collections/:domainSlug");
+  });
+
+  it("leave the collection's share image alone", () => {
+    expect(termSlug.test("opengraph-image")).toBe(false);
   });
 });

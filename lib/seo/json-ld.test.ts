@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { breadcrumbs, definedTerm, definedTermSet, serializeJsonLd, website } from "./json-ld";
+import { breadcrumbs, definedTermSet, serializeJsonLd, website } from "./json-ld";
 
 describe("JSON-LD builders", () => {
   it("numbers breadcrumbs from 1", () => {
@@ -17,7 +17,7 @@ describe("JSON-LD builders", () => {
       description: "",
       url: "https://x.test/collections/standup",
       inLanguage: "en",
-      terms: [{ name: "Blocker", description: "Stops work.", url: "https://x.test/b" }],
+      terms: [{ name: "Blocker", description: "Stops work." }],
     });
     expect(set.description).toBeUndefined();
     expect(set.hasDefinedTerm).toEqual([
@@ -25,21 +25,8 @@ describe("JSON-LD builders", () => {
         "@type": "DefinedTerm",
         name: "Blocker",
         description: "Stops work.",
-        url: "https://x.test/b",
       },
     ]);
-  });
-
-  it("links a term to its set", () => {
-    const term = definedTerm({
-      name: "lopen",
-      description: "to walk",
-      url: "https://x.test/collections/dutch/lopen",
-      inLanguage: "nl",
-      set: { name: "Dutch basics", url: "https://x.test/collections/dutch" },
-    });
-    expect(term.inDefinedTermSet["@id"]).toBe("https://x.test/collections/dutch");
-    expect(term.inLanguage).toBe("nl");
   });
 
   it("names the site and its publisher", () => {

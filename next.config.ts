@@ -1,7 +1,11 @@
 import createMDX from "@next/mdx";
 import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
-import { LEGACY_ADMIN_REDIRECTS, LEGACY_APP_REDIRECTS } from "./lib/redirects";
+import {
+  LEGACY_ADMIN_REDIRECTS,
+  LEGACY_APP_REDIRECTS,
+  LEGACY_TERM_PAGE_REDIRECTS,
+} from "./lib/redirects";
 
 const nextConfig: NextConfig = {
   devIndicators: false,
@@ -11,7 +15,7 @@ const nextConfig: NextConfig = {
     serverActions: { bodySizeLimit: "3mb" },
   },
   async redirects() {
-    return [...LEGACY_APP_REDIRECTS, ...LEGACY_ADMIN_REDIRECTS];
+    return [...LEGACY_APP_REDIRECTS, ...LEGACY_ADMIN_REDIRECTS, ...LEGACY_TERM_PAGE_REDIRECTS];
   },
   async headers() {
     return [

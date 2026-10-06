@@ -197,13 +197,19 @@ asks `/api/collections/[id]/membership` and offers Add or Open in library).
 
 Public collection pages (`app/collections/`, `components/collections/`) are
 built from data for every public collection: the hero reads the collection's
-`kind` (`lib/terms/kinds.ts`), terms show as cards grouped by category, and the
-index shows each collection by one of its terms (`lib/collections/pick.ts`
-picks it, stable per slug). Optional copy or a pinned term goes in
-`lib/collections/showcase-overrides.ts`. The seed has two public samples
-(`standup`, `dutch-basics`) for checking these pages locally.
+`kind` (`lib/terms/kinds.ts`), and the page shows only the newest 20 finished
+terms as a flat grid (`PUBLIC_TERMS_LIMIT` in `lib/terms/public-terms.ts`) with
+the total count and the closing CTA. Never load a whole collection on a public
+page: some have over a thousand terms and every read is Supabase egress. There
+are no term pages; old `/collections/<slug>/<term>` addresses redirect to the
+collection (`LEGACY_TERM_PAGE_REDIRECTS`). The index shows each collection by one
+of its terms (`lib/collections/pick.ts` picks it from the loaded terms, stable
+per slug). Public pages are cached for 24 hours; saving a collection in admin
+revalidates its pages, but editing a term inside it does not. Optional copy or a
+pinned term goes in `lib/collections/showcase-overrides.ts`. The seed has two
+public samples (`standup`, `dutch-basics`) for checking these pages locally.
 
-Search metadata: collection and term pages carry JSON-LD (`lib/seo/json-ld.ts`,
+Search metadata: collection pages carry JSON-LD (`lib/seo/json-ld.ts`,
 rendered with `components/seo/json-ld.tsx`), and public pages get generated
 share images from `lib/seo/og/specimen-image.tsx` (fonts in `assets/fonts/`).
 An `opengraph-image` outside `/collections/` must be added to the proxy's

@@ -8,14 +8,12 @@ import { pageContainerClass } from "@/components/page-container";
 import { ClosingCta } from "@/components/public/closing-cta";
 import { SplitWithScene } from "@/components/public/split-with-scene";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
-import { pickSpecimen } from "@/lib/collections/pick";
-import { showcaseOverride } from "@/lib/collections/showcase-overrides";
 import { kindLine } from "@/lib/terms/kinds";
 import { listPublicCollections } from "@/lib/terms/public-terms";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-static";
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: "Public collections",
@@ -26,18 +24,13 @@ export const metadata: Metadata = {
 
 export default async function PublicCollectionsIndexPage() {
   const collections = await listPublicCollections();
-  const rows: CollectionIndexRow[] = collections.map(({ domain, terms }) => {
-    const specimen = pickSpecimen(
-      domain.slug,
-      terms,
-      showcaseOverride(domain.slug).specimenTermSlug,
-    );
+  const rows: CollectionIndexRow[] = collections.map(({ domain, totalTerms, specimen }) => {
     return {
       slug: domain.slug,
       name: domain.name,
       description: domain.description,
       kindLine: kindLine(domain.kind, domain.language),
-      count: terms.length,
+      count: totalTerms,
       lang: domain.language === "en" ? undefined : domain.language,
       specimen: specimen ? { term: specimen.term, definition: specimen.definition } : null,
     };

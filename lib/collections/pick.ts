@@ -36,21 +36,3 @@ export function pickSpecimen<T extends Pickable>(
   const pool = good.length > 0 ? good : sorted;
   return pool.length > 0 ? pool[hash(collectionSlug) % pool.length] : undefined;
 }
-
-/** Up to `limit` other terms from the same category: the ones after it alphabetically,
- *  wrapping round, so neighbouring pages link to each other. */
-export function pickRelated<T extends Pickable>(
-  current: Pick<Pickable, "slug" | "category">,
-  terms: readonly T[],
-  limit = 3,
-): T[] {
-  if (!current.category) return [];
-  const sameCategory = terms
-    .filter((term) => term.category === current.category)
-    .sort((a, b) => a.term.localeCompare(b.term));
-  const at = sameCategory.findIndex((term) => term.slug === current.slug);
-  if (at === -1) return sameCategory.slice(0, limit);
-
-  const after = [...sameCategory.slice(at + 1), ...sameCategory.slice(0, at)];
-  return after.slice(0, limit);
-}

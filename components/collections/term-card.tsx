@@ -1,26 +1,21 @@
 import { Quote } from "lucide-react";
-import Link from "next/link";
 import type { PublicTermSummary } from "@/lib/terms/public-terms";
 import type { DomainLanguage } from "@/lib/terms/languages";
 import { TERM_LABELS } from "@/lib/terms/term-labels";
 
 type TermCardProps = {
   term: PublicTermSummary;
-  href: string;
   language: DomainLanguage;
 };
 
-export function TermCard({ term, href, language }: TermCardProps) {
+export function TermCard({ term, language }: TermCardProps) {
   const lang = language === "en" ? undefined : language;
 
   return (
-    <Link
-      href={href}
-      className="shadow-surface group flex h-full flex-col gap-2 rounded-box bg-base-100 p-5 text-base-content no-underline ring-1 ring-base-content/5 transition-shadow duration-150 hover:shadow-surface-hover"
-    >
-      <span className="font-heading text-xl font-medium leading-snug tracking-tight group-hover:underline group-hover:decoration-base-content/30 group-hover:underline-offset-4">
+    <article className="shadow-surface flex h-full flex-col gap-2 rounded-box bg-base-100 p-5 text-base-content ring-1 ring-base-content/5">
+      <h3 className="m-0 font-heading text-xl font-medium leading-snug tracking-tight">
         <span lang={lang}>{term.term}</span>
-      </span>
+      </h3>
       <p lang={lang} className="m-0 line-clamp-2 text-sm leading-relaxed text-base-content/80">
         {term.definition}
       </p>
@@ -33,6 +28,6 @@ export function TermCard({ term, href, language }: TermCardProps) {
           <span lang={lang}>{term.example}</span>
         </p>
       ) : null}
-    </Link>
+    </article>
   );
 }

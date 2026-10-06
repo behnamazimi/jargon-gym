@@ -28,7 +28,7 @@ function takenSlugs(collections: AdminCollectionRow[], domainId: string) {
   return new Set(collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])));
 }
 
-/** The public pages, the public list (cached for an hour) and the sitemap. */
+/** The public pages, the public list (cached for a day) and the sitemap. */
 function revalidateAdminCollections() {
   revalidatePath("/admin/collections");
   revalidatePath("/admin/collections/[id]", "page");
