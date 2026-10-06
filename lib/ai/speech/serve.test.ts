@@ -15,7 +15,7 @@ const { serveAudio } = await import("./serve");
 
 const admin = {} as never;
 const subject = { type: "term", id: "t1" } as SpeechSubject;
-const READY = { id: "job-1", storage_path: "audio/term/t1/2/h/job-1.mp3" };
+const READY = { id: "job-1", storage_path: "terms/t1/2/h/job-1.mp3" };
 
 function request(headers: Record<string, string> = {}) {
   return new Request("http://localhost/x", { headers });

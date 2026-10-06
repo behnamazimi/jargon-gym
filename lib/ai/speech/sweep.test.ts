@@ -64,10 +64,10 @@ beforeEach(() => {
 describe("sweepSupersededAudio", () => {
   it("deletes the file of a superseded job and clears its path", async () => {
     const rows: Row[] = [
-      { id: "a", status: "superseded", storage_path: "audio/term/t/2/h/a.mp3", updated_at: OLD },
+      { id: "a", status: "superseded", storage_path: "terms/t/2/h/a.mp3", updated_at: OLD },
     ];
     expect(await sweepSupersededAudio(fakeClient(rows))).toBe(1);
-    expect(deleteAudio).toHaveBeenCalledWith("audio/term/t/2/h/a.mp3");
+    expect(deleteAudio).toHaveBeenCalledWith("terms/t/2/h/a.mp3");
     expect(rows[0]?.storage_path).toBeNull();
   });
 

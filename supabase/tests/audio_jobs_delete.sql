@@ -39,15 +39,15 @@ begin
 
   -- New-style jobs: no row in the old narration tables at all.
   insert into public.audio_jobs (subject_type, subject_id, content_hash, hash_version, status, storage_path)
-  values ('term', t1, 'h1', 2, 'ready', 'audio/term/x/2/h1/a.mp3') returning id into j_term;
+  values ('term', t1, 'h1', 2, 'ready', 'terms/x/2/h1/a.mp3') returning id into j_term;
   insert into public.audio_jobs (subject_type, subject_id, user_id, content_hash, hash_version, status, storage_path)
-  values ('story', s1, u1, 'story-v2', 2, 'ready', 'audio/story/x/2/story-v2/b.mp3') returning id into j_story;
+  values ('story', s1, u1, 'story-v2', 2, 'ready', 'stories/x/2/story-v2/b.mp3') returning id into j_story;
   insert into public.audio_jobs (subject_type, subject_id, content_hash, hash_version, status, storage_path)
-  values ('term', t2, 'h2', 2, 'ready', 'audio/term/y/2/h2/c.mp3') returning id into j_other;
+  values ('term', t2, 'h2', 2, 'ready', 'terms/y/2/h2/c.mp3') returning id into j_other;
 
   delete from public.terms where id = t1;
   assert (select status from public.audio_jobs where id = j_term) = 'superseded', 'a deleted term supersedes its job';
-  assert (select storage_path from public.audio_jobs where id = j_term) = 'audio/term/x/2/h1/a.mp3',
+  assert (select storage_path from public.audio_jobs where id = j_term) = 'terms/x/2/h1/a.mp3',
     'and keeps the path for the sweep';
   assert (select status from public.audio_jobs where id = j_other) = 'ready', 'other terms are untouched';
 
@@ -64,7 +64,7 @@ begin
   insert into public.domains (id, name, owner_id) values (v_domain, 'D2', u1);
   insert into public.terms (id, term, category, definition, domain_id) values (t1, 'One', 'c', 'd', v_domain);
   insert into public.audio_jobs (subject_type, subject_id, content_hash, hash_version, status, storage_path)
-  values ('term', t1, 'h1b', 2, 'ready', 'audio/term/x/2/h1b/d.mp3');
+  values ('term', t1, 'h1b', 2, 'ready', 'terms/x/2/h1b/d.mp3');
   create function pg_temp.boom() returns trigger language plpgsql as $f$
   begin raise exception 'boom'; end; $f$;
   create trigger boom before update on public.audio_jobs for each row execute function pg_temp.boom();
