@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { LinkButton } from "@/components/ui/button";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 import { isStudyPath } from "@/lib/chrome";
+import { cn } from "@/lib/utils";
 
 const AUTH_ROUTES = new Set([
   "/login",
@@ -36,9 +37,35 @@ export function FeaturesNavLink() {
     <Link
       href="/features"
       aria-current={pathname === "/features" ? "page" : undefined}
-      className="btn btn-ghost"
+      className={cn("btn btn-ghost", pathname === "/features" && "btn-active")}
     >
       Features
+    </Link>
+  );
+}
+
+export function HeaderStudyLink({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+}) {
+  const pathname = usePathname();
+  const isActive = pathname === href || pathname.startsWith(`${href}/`);
+
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      aria-current={isActive ? "page" : undefined}
+      data-tour={`nav-${label.toLowerCase()}`}
+      className={cn("btn btn-ghost", isActive && "btn-active")}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
     </Link>
   );
 }
