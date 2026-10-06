@@ -1,15 +1,13 @@
-import type { ReactNode } from "react";
 import type {
   CooldownRow,
   ExcludedReason,
   ExcludedRow,
   QueueDebug,
-  QueueDebugTerm,
   QueueSection,
   ReadRow,
   TierRow,
 } from "@/lib/admin/queue-debug/build";
-import { LocalTime } from "./local-time";
+import { latest, number, QueueList, When, type Column } from "./queue-list";
 
 const REASON_LABELS: Record<ExcludedReason, string> = {
   unfinished: "No definition yet",
@@ -17,180 +15,99 @@ const REASON_LABELS: Record<ExcludedReason, string> = {
   marked_known: "Marked known",
 };
 
-const number = (value: number | null, digits = 3) => (value === null ? "—" : value.toFixed(digits));
-
-function TermCell({ item }: { item: QueueDebugTerm }) {
-  return (
-    <td>
-      <p className="m-0 font-medium text-base-content">{item.term}</p>
-      <p className="m-0 text-xs text-base-content/55">{item.domainName}</p>
-    </td>
-  );
-}
-
-function RankCell({ rank, nextBatch }: { rank: number; nextBatch: boolean }) {
-  return (
-    <td className="whitespace-nowrap">
-      {rank}
-      {nextBatch ? <span className="badge badge-primary badge-sm ml-2">next</span> : null}
-    </td>
-  );
-}
-
-function When({ date, asOf }: { date: Date | null; asOf: Date }) {
-  if (!date) return <span className="text-base-content/50">never</span>;
-  return <LocalTime iso={date.toISOString()} asOfIso={asOf.toISOString()} />;
-}
-
-function Table({
-  head,
-  section,
-  empty,
-  children,
-}: {
-  head: string[];
-  section: QueueSection<unknown>;
-  empty: string;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="overflow-x-auto rounded-lg border border-base-300">
-        <table className="table table-sm">
-          <thead>
-            <tr>
-              {head.map((label) => (
-                <th key={label}>{label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {children}
-            {section.rows.length === 0 ? (
-              <tr>
-                <td colSpan={head.length} className="text-center text-base-content/50">
-                  {empty}
-                </td>
-              </tr>
-            ) : null}
-          </tbody>
-        </table>
-      </div>
-      <p className="m-0 text-sm text-base-content/65">
-        Showing {section.rows.length} of {section.total}.
-      </p>
-    </div>
-  );
-}
-
 export function ReadTable({ section, asOf }: { section: QueueSection<ReadRow>; asOf: Date }) {
+  const columns: Column<ReadRow>[] = [
+    { label: "Score", cell: (r) => number(r.score) },
+    { label: "Exposure", cell: (r) => number(r.exposure) },
+    { label: "Mastery nudge", cell: (r) => number(r.temper) },
+    { label: "Reads", cell: (r) => r.item.readCount },
+    { label: "Reviews", cell: (r) => r.item.reviewRecallCount },
+    { label: "Quizzes", cell: (r) => r.item.quizTestCount },
+    {
+      label: "Last touched",
+      nowrap: true,
+      cell: (r) => (
+        <When
+          date={latest([r.item.lastReadAt, r.item.lastReviewRecallAt, r.item.lastQuizTestedAt])}
+          asOf={asOf}
+        />
+      ),
+    },
+    { label: "Added", nowrap: true, cell: (r) => <When date={r.item.createdAt} asOf={asOf} /> },
+  ];
   return (
-    <Table
-      head={[
-        "#",
-        "Term",
-        "Score",
-        "Exposure",
-        "Mastery nudge",
-        "Reads",
-        "Reviews",
-        "Quizzes",
-        "Last touched",
-        "Added",
-      ]}
+    <QueueList
+      rows={section.rows}
       section={section}
+      head={(r) => ({ key: r.item.termId, item: r.item, rank: r.rank, nextBatch: r.nextBatch })}
+      columns={columns}
       empty="Nothing for Read to show."
-    >
-      {section.rows.map(({ item, rank, nextBatch, score, exposure, temper }) => (
-        <tr key={item.termId}>
-          <RankCell rank={rank} nextBatch={nextBatch} />
-          <TermCell item={item} />
-          <td>{number(score)}</td>
-          <td>{number(exposure)}</td>
-          <td>{number(temper)}</td>
-          <td>{item.readCount}</td>
-          <td>{item.reviewRecallCount}</td>
-          <td>{item.quizTestCount}</td>
-          <td>
-            <When
-              date={latest([item.lastReadAt, item.lastReviewRecallAt, item.lastQuizTestedAt])}
-              asOf={asOf}
-            />
-          </td>
-          <td>
-            <When date={item.createdAt} asOf={asOf} />
-          </td>
-        </tr>
-      ))}
-    </Table>
+    />
   );
-}
-
-function latest(dates: (Date | null)[]): Date | null {
-  const present = dates.filter((d): d is Date => d !== null);
-  return present.length === 0 ? null : new Date(Math.max(...present.map((d) => d.getTime())));
 }
 
 export function ReviewTable({ section, asOf }: { section: QueueSection<TierRow>; asOf: Date }) {
+  const columns: Column<TierRow>[] = [
+    {
+      label: "Recall now",
+      cell: (r) =>
+        r.retrievability === null ? (
+          <span className="badge badge-ghost">never graded</span>
+        ) : (
+          number(r.retrievability)
+        ),
+    },
+    { label: "Stability", cell: (r) => number(r.item.recallStability, 2) },
+    { label: "Difficulty", cell: (r) => number(r.item.recallDifficulty, 2) },
+    { label: "Grades", cell: (r) => r.item.reviewRecallCount },
+    {
+      label: "Last graded",
+      nowrap: true,
+      cell: (r) => <When date={r.item.lastReviewRecallAt} asOf={asOf} />,
+    },
+  ];
   return (
-    <Table
-      head={["#", "Term", "Recall now", "Stability", "Difficulty", "Grades", "Last graded"]}
+    <QueueList
+      rows={section.rows}
       section={section}
+      head={(r) => ({ key: r.item.termId, item: r.item, rank: r.rank, nextBatch: r.nextBatch })}
+      columns={columns}
       empty="Nothing for Review to show."
-    >
-      {section.rows.map(({ item, rank, nextBatch, retrievability }) => (
-        <tr key={item.termId}>
-          <RankCell rank={rank} nextBatch={nextBatch} />
-          <TermCell item={item} />
-          <td>
-            {retrievability === null ? (
-              <span className="badge badge-ghost">never graded</span>
-            ) : (
-              number(retrievability)
-            )}
-          </td>
-          <td>{number(item.recallStability, 2)}</td>
-          <td>{number(item.recallDifficulty, 2)}</td>
-          <td>{item.reviewRecallCount}</td>
-          <td>
-            <When date={item.lastReviewRecallAt} asOf={asOf} />
-          </td>
-        </tr>
-      ))}
-    </Table>
+    />
   );
 }
 
 export function QuizTable({ section, asOf }: { section: QueueSection<TierRow>; asOf: Date }) {
+  const columns: Column<TierRow>[] = [
+    {
+      label: "Recognition now",
+      cell: (r) =>
+        r.retrievability === null ? (
+          <span className="badge badge-ghost">never answered</span>
+        ) : (
+          number(r.retrievability)
+        ),
+    },
+    { label: "Posterior", cell: (r) => number(r.item.quizKnowledgePosterior) },
+    { label: "Answers", cell: (r) => r.item.quizTestCount },
+    {
+      label: "Last answered",
+      nowrap: true,
+      cell: (r) => <When date={r.item.lastQuizTestedAt} asOf={asOf} />,
+    },
+  ];
   return (
-    <Table
-      head={["#", "Term", "Recognition now", "Posterior", "Answers", "Last answered"]}
+    <QueueList
+      rows={section.rows}
       section={section}
+      head={(r) => ({ key: r.item.termId, item: r.item, rank: r.rank, nextBatch: r.nextBatch })}
+      columns={columns}
       empty="Nothing for Quiz to show."
-    >
-      {section.rows.map(({ item, rank, nextBatch, retrievability }) => (
-        <tr key={item.termId}>
-          <RankCell rank={rank} nextBatch={nextBatch} />
-          <TermCell item={item} />
-          <td>
-            {retrievability === null ? (
-              <span className="badge badge-ghost">never answered</span>
-            ) : (
-              number(retrievability)
-            )}
-          </td>
-          <td>{number(item.quizKnowledgePosterior)}</td>
-          <td>{item.quizTestCount}</td>
-          <td>
-            <When date={item.lastQuizTestedAt} asOf={asOf} />
-          </td>
-        </tr>
-      ))}
-    </Table>
+    />
   );
 }
 
-function CooldownTable({
+function CooldownList({
   section,
   asOf,
   track,
@@ -200,38 +117,37 @@ function CooldownTable({
   track: "review" | "quiz";
 }) {
   const review = track === "review";
+  const columns: Column<CooldownRow>[] = [
+    { label: review ? "Recall now" : "Recognition now", cell: (r) => number(r.retrievability) },
+    { label: "Stability", cell: (r) => number(r.stability, 2) },
+    {
+      label: review ? "Difficulty" : "Posterior",
+      cell: (r) => number(review ? r.difficulty : r.posterior, review ? 2 : 3),
+    },
+    {
+      label: review ? "Last graded" : "Last answered",
+      nowrap: true,
+      cell: (r) => <When date={r.lastAt} asOf={asOf} />,
+    },
+    {
+      label: "Back in the queue",
+      nowrap: true,
+      cell: (r) =>
+        r.returnsAt ? (
+          <When date={r.returnsAt} asOf={asOf} />
+        ) : (
+          <span className="text-base-content/50">no last time</span>
+        ),
+    },
+  ];
   return (
-    <Table
-      head={[
-        "Term",
-        review ? "Recall now" : "Recognition now",
-        "Stability",
-        review ? "Difficulty" : "Posterior",
-        review ? "Last graded" : "Last answered",
-        "Back in the queue",
-      ]}
+    <QueueList
+      rows={section.rows}
       section={section}
+      head={(r) => ({ key: r.item.termId, item: r.item })}
+      columns={columns}
       empty={`No term is waiting out a ${review ? "Review" : "Quiz"} cooldown.`}
-    >
-      {section.rows.map((row) => (
-        <tr key={row.item.termId}>
-          <TermCell item={row.item} />
-          <td>{number(row.retrievability)}</td>
-          <td>{number(row.stability, 2)}</td>
-          <td>{number(review ? row.difficulty : row.posterior, review ? 2 : 3)}</td>
-          <td>
-            <When date={row.lastAt} asOf={asOf} />
-          </td>
-          <td>
-            {row.returnsAt ? (
-              <When date={row.returnsAt} asOf={asOf} />
-            ) : (
-              <span className="text-base-content/50">no last time</span>
-            )}
-          </td>
-        </tr>
-      ))}
-    </Table>
+    />
   );
 }
 
@@ -244,31 +160,38 @@ export function CooldownTables({ debug }: { debug: QueueDebug }) {
       </p>
       <section className="flex flex-col gap-2">
         <h2 className="m-0 text-lg font-semibold text-base-content">Review</h2>
-        <CooldownTable section={debug.reviewCooldown} asOf={debug.asOf} track="review" />
+        <CooldownList section={debug.reviewCooldown} asOf={debug.asOf} track="review" />
       </section>
       <section className="flex flex-col gap-2">
         <h2 className="m-0 text-lg font-semibold text-base-content">Quiz</h2>
-        <CooldownTable section={debug.quizCooldown} asOf={debug.asOf} track="quiz" />
+        <CooldownList section={debug.quizCooldown} asOf={debug.asOf} track="quiz" />
       </section>
     </div>
   );
 }
 
 export function ExcludedTable({ section }: { section: QueueSection<ExcludedRow> }) {
+  const columns: Column<ExcludedRow>[] = [
+    {
+      label: "Why it is left out",
+      cell: (r) => (
+        <span className="flex flex-wrap gap-1">
+          {r.reasons.map((reason) => (
+            <span key={reason} className="badge badge-ghost">
+              {REASON_LABELS[reason]}
+            </span>
+          ))}
+        </span>
+      ),
+    },
+  ];
   return (
-    <Table head={["Term", "Why it is left out"]} section={section} empty="No term is left out.">
-      {section.rows.map(({ item, reasons }) => (
-        <tr key={item.termId}>
-          <TermCell item={item} />
-          <td className="flex flex-wrap gap-1">
-            {reasons.map((reason) => (
-              <span key={reason} className="badge badge-ghost">
-                {REASON_LABELS[reason]}
-              </span>
-            ))}
-          </td>
-        </tr>
-      ))}
-    </Table>
+    <QueueList
+      rows={section.rows}
+      section={section}
+      head={(r) => ({ key: r.item.termId, item: r.item })}
+      columns={columns}
+      empty="No term is left out."
+    />
   );
 }

@@ -109,19 +109,27 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
             served
           </p>
         </div>
-        <div className="flex gap-2">
-          <Link href={queueHref({})} className="btn btn-sm btn-ghost">
+        <div className="flex flex-wrap gap-2">
+          <Link href={queueHref({})} className="btn btn-sm btn-ghost max-md:min-h-11">
             Change member
           </Link>
           <RefreshButton />
         </div>
       </div>
-      <form action="/admin/system/queue" method="get" className="flex flex-wrap items-end gap-3">
+      <form
+        action="/admin/system/queue"
+        method="get"
+        className="grid grid-cols-2 items-end gap-3 sm:flex sm:flex-wrap"
+      >
         <input type="hidden" name="user" value={params.userId} />
         <input type="hidden" name="tab" value={params.tab} />
         <label className="flex flex-col gap-1 text-sm">
           <span>Collection</span>
-          <select name="domain" defaultValue={params.domainId ?? ""} className="select select-sm">
+          <select
+            name="domain"
+            defaultValue={params.domainId ?? ""}
+            className="select select-sm w-full max-md:min-h-11 sm:w-auto"
+          >
             <option value="">All collections</option>
             {collections.map((c) => (
               <option key={c.domainId} value={c.domainId}>
@@ -133,7 +141,11 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
         </label>
         <label className="flex flex-col gap-1 text-sm">
           <span>Rows</span>
-          <select name="limit" defaultValue={params.limit} className="select select-sm">
+          <select
+            name="limit"
+            defaultValue={params.limit}
+            className="select select-sm w-full max-md:min-h-11 sm:w-auto"
+          >
             {QUEUE_LIMITS.map((limit) => (
               <option key={limit} value={limit}>
                 {limit}
@@ -141,18 +153,20 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
             ))}
           </select>
         </label>
-        <button type="submit" className="btn btn-sm">
+        <button type="submit" className="btn btn-sm col-span-2 max-md:min-h-11 sm:col-span-1">
           Apply
         </button>
       </form>
-      <AdminTabs
-        label="Queue"
-        tabs={QUEUE_TABS.map((tab) => ({
-          href: queueHref({ ...params, tab }),
-          label: `${TAB_LABELS[tab]} (${counts[tab]})`,
-          active: params.tab === tab,
-        }))}
-      />
+      <div className="max-w-full overflow-x-auto">
+        <AdminTabs
+          label="Queue"
+          tabs={QUEUE_TABS.map((tab) => ({
+            href: queueHref({ ...params, tab }),
+            label: `${TAB_LABELS[tab]} (${counts[tab]})`,
+            active: params.tab === tab,
+          }))}
+        />
+      </div>
       {params.tab === "read" ? <ReadTable section={debug.read} asOf={debug.asOf} /> : null}
       {params.tab === "review" ? <ReviewTable section={debug.review} asOf={debug.asOf} /> : null}
       {params.tab === "quiz" ? <QuizTable section={debug.quiz} asOf={debug.asOf} /> : null}

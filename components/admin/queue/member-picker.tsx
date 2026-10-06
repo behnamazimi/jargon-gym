@@ -27,7 +27,10 @@ export function MemberPicker({ query, rows }: { query: string; rows: AdminMember
               <tr key={row.id}>
                 <td className="font-medium text-base-content">{row.email}</td>
                 <td className="text-right">
-                  <Link href={queueHref({ userId: row.id })} className="btn btn-sm btn-ghost">
+                  <Link
+                    href={queueHref({ userId: row.id })}
+                    className="btn btn-sm btn-ghost max-md:min-h-11"
+                  >
                     View queue
                   </Link>
                 </td>

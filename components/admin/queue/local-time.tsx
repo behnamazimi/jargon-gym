@@ -19,7 +19,7 @@ export function LocalTime({ iso, asOfIso }: { iso: string; asOfIso: string }) {
     () => formatAdminDateTime(iso),
   );
   return (
-    <span className="whitespace-nowrap">
+    <span>
       {absolute}{" "}
       <span className="text-base-content/55">
         ({formatRelative(new Date(iso), new Date(asOfIso))})
