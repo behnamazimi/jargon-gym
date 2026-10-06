@@ -7,6 +7,7 @@ import { ProfileMenu } from "@/components/settings/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
 import {
   FeaturesNavLink,
+  HeaderStudyLink,
   LoggedOutHeaderNav,
   SignedInHeaderNav,
   StudyPathOnly,
@@ -47,30 +48,6 @@ function SiteHeaderChrome({
   );
 }
 
-function HeaderStudyLink({
-  href,
-  icon: Icon,
-  label,
-  className,
-}: {
-  href: string;
-  icon: typeof Sparkles;
-  label: string;
-  className?: string;
-}) {
-  return (
-    <Link
-      href={href}
-      aria-label={label}
-      data-tour={`nav-${label.toLowerCase()}`}
-      className={cn("btn btn-ghost", className)}
-    >
-      <Icon className="h-4 w-4" strokeWidth={1.5} />
-      <span className="hidden sm:inline">{label}</span>
-    </Link>
-  );
-}
-
 export function SiteHeader({
   initialIsDark,
   user,
@@ -92,10 +69,26 @@ export function SiteHeader({
       leftNav={
         user ? (
           <SignedInHeaderNav>
-            <HeaderStudyLink href="/app/library" icon={LayoutList} label="Library" />
-            <HeaderStudyLink href="/app/read" icon={Zap} label="Read" />
-            <HeaderStudyLink href="/app/review" icon={BookOpen} label="Review" />
-            <HeaderStudyLink href="/app/quiz" icon={Sparkles} label="Quiz" />
+            <HeaderStudyLink
+              href="/app/library"
+              icon={<LayoutList className="h-4 w-4" strokeWidth={1.5} />}
+              label="Library"
+            />
+            <HeaderStudyLink
+              href="/app/read"
+              icon={<Zap className="h-4 w-4" strokeWidth={1.5} />}
+              label="Read"
+            />
+            <HeaderStudyLink
+              href="/app/review"
+              icon={<BookOpen className="h-4 w-4" strokeWidth={1.5} />}
+              label="Review"
+            />
+            <HeaderStudyLink
+              href="/app/quiz"
+              icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
+              label="Quiz"
+            />
           </SignedInHeaderNav>
         ) : (
           <FeaturesNavLink />

@@ -39,6 +39,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/features",
   "/privacy",
   "/terms",
+  "/contact",
   "/auth/callback",
   "/downloads/",
   "/api/widget",
