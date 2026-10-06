@@ -1967,6 +1967,7 @@ export type Database = {
         Args: { p_domain_id: string; p_domain_slug: string; p_term_slugs: Json };
         Returns: string;
       };
+      admin_queue_debug_terms: { Args: { p_user_id: string }; Returns: Json };
       admin_remove_user_api_key: {
         Args: { p_reason: string; p_user_id: string };
         Returns: undefined;

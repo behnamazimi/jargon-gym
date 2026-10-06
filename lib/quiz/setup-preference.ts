@@ -8,7 +8,7 @@ import type { QuizQuestionStyle } from "./types";
 
 export const QUIZ_SETUP_COOKIE = "lb-quiz-setup";
 
-const DEFAULT_QUIZ_QUESTION_COUNT = 10;
+export const DEFAULT_QUIZ_QUESTION_COUNT = 10;
 
 /** `count` is only stored once the user picks one; until then every
  *  collection opens on the default. */
