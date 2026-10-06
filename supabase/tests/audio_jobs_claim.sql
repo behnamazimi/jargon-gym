@@ -92,7 +92,7 @@ begin
   update public.audio_jobs set storage_path = v_subject::text || '.mp3' where id = r.id;
   assert (select count(*) from public.audio_jobs where storage_path = v_subject::text || '.mp3') = 2,
     'a version-1 path can sit on both the superseded row and the live row';
-  v_path := 'audio/term/' || v_subject::text || '/2/v2-hash/shared.mp3';
+  v_path := 'terms/' || v_subject::text || '/2/v2-hash/shared.mp3';
   update public.audio_jobs set storage_path = v_path where id = v_old;
   begin
     update public.audio_jobs set storage_path = v_path where id = r.id;
@@ -207,8 +207,8 @@ begin
   v_path := public.audio_job_object_path(v_new, 'term', v_subject, 2, 'abc');
   v_other := public.audio_job_object_path(v_old, 'term', v_subject, 2, 'abc');
   assert v_path <> v_other;
-  assert v_path = 'audio/term/' || v_subject::text || '/2/abc/' || v_new::text || '.mp3';
-  assert v_path like 'audio/%';
+  assert v_path = 'terms/' || v_subject::text || '/2/abc/' || v_new::text || '.mp3';
+  assert v_path like 'terms/%';
 
   -- Grants, and the claim never mentions the credit ledger.
   assert has_function_privilege('service_role', 'public.claim_audio_job(text,uuid,uuid,text,integer,boolean)', 'execute');

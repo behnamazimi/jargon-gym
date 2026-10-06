@@ -71,7 +71,7 @@ function audioJob(
     status: "ready",
     hash_version: 2,
     content_hash: HASH_TERM,
-    storage_path: `audio/term/${termId}.mp3`,
+    storage_path: `terms/${termId}.mp3`,
     ...overrides,
   };
 }

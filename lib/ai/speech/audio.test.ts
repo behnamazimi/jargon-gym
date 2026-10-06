@@ -32,7 +32,7 @@ vi.mock("./storage", () => ({ uploadAudio, deleteAudio }));
 const { getOrCreateAudio, getReadyAudio, isCurrentJob } = await import("./audio");
 
 const admin = {} as never;
-const PATH = "audio/term/t1/2/h2/job-2.mp3";
+const PATH = "terms/t1/2/h2/job-2.mp3";
 const MURF_OK = [{ provider: "murf", units: 20, outcome: "ok" }];
 
 function job(overrides: Partial<AudioJob> = {}): AudioJob {
@@ -47,7 +47,7 @@ function job(overrides: Partial<AudioJob> = {}): AudioJob {
     attempts: 1,
     error: null,
     provider: "murf",
-    storage_path: "audio/term/t1/2/h2/job-1.mp3",
+    storage_path: "terms/t1/2/h2/job-1.mp3",
     requested_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

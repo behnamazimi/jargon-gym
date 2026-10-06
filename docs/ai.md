@@ -63,7 +63,7 @@ bucket. The shared code is `lib/ai/speech/`:
 
 - `getOrCreateAudio` claims a job in `audio_jobs` (`claim_audio_job`), writes the
   file path on the job, uploads to a never-reused key
-  (`audio/<type>/<id>/<hash version>/<hash>/<job id>.mp3`) and marks the job
+  (`terms/<id>/<hash version>/<hash>/<job id>.mp3`, or `stories/…`) and marks the job
   ready. A job that is replaced is `superseded`, never rewritten.
 - `serveAudio` streams the current clip (ETag is the job id, Range works). It
   never generates; the player prepares a clip with an explicit POST.
