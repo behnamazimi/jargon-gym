@@ -75,7 +75,9 @@ characters is required. Errors the admin should read use the database code `AD00
   nothing and leaves no second audit row. The page warns when the flag and the ban disagree (a hand edit);
   suspending again repairs it. Reactivating clears both.
 - **Where a suspended person is stopped:** sign-in, refresh and the Google callback (GoTrue's `user_banned`,
-  shown as "This account has been suspended."); `getSessionUser` and the proxy (`isBanned` on the verified user);
+  shown as "This account has been suspended."); the proxy, which checks the session token locally (`getClaims`), so it stops them when
+  the token next refreshes, up to about an hour later (`getSessionUser` checks `isBanned` itself only when the
+  proxy's headers are absent);
   widget tokens (`resolveUserFromToken`); Telegram commands (`resolveUserIdByChatId`), scheduled sends
   (`list_due_telegram_users`) and linking (`complete_telegram_link`). A new way in that doesn't go through a
   session must check `users.suspended_at` too.

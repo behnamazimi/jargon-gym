@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
-import { isBanned } from "@/lib/auth/suspension";
 import { setVerifiedUser, VERIFIED_USER_HEADERS } from "@/lib/auth/verified-user-header";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -160,12 +159,14 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run code between createServerClient and supabase.auth.getUser().
+  // Do not run code between createServerClient and supabase.auth.getClaims().
   // A simple mistake can make users appear randomly logged out.
-  const {
-    data: { user: verifiedUser },
-  } = await supabase.auth.getUser();
-  const user = verifiedUser && !isBanned(verifiedUser) ? verifiedUser : null;
+  // getClaims checks the token's signature here instead of asking Supabase
+  // Auth on every request. A suspension therefore bites when the token next
+  // refreshes (within the hour), not on the very next request.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims;
+  const user = claims?.sub ? { id: claims.sub, email: claims.email ?? null } : null;
 
   const { pathname } = request.nextUrl;
 
@@ -186,9 +187,9 @@ export async function updateSession(request: NextRequest) {
   if (signedInRedirect) return signedInRedirect;
 
   // Forward the already-verified user so pages, actions and route handlers
-  // behind this proxy don't need to call supabase.auth.getUser() again.
+  // behind this proxy don't need to call supabase.auth.getClaims() again.
   const requestHeaders = new Headers(request.headers);
-  await setVerifiedUser(requestHeaders, { id: user.id, email: user.email ?? null });
+  await setVerifiedUser(requestHeaders, { id: user.id, email: user.email });
   const responseWithHeader = NextResponse.next({ request: { headers: requestHeaders } });
   // NextResponse.next() returns a fresh response object, which would drop
   // any cookies already queued on supabaseResponse (session refresh,

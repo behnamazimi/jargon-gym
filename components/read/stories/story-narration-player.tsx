@@ -45,8 +45,10 @@ export function StoryNarrationPlayer({
   onClipPauses?: (clip: ClipPauses) => void;
 }) {
   const [status, setStatus] = useState<PlayerStatus>("idle");
+  const [version, setVersion] = useState<string | null>(null);
   const cancelledRef = useRef(false);
-  const src = `/api/stories/${storyId}/narration`;
+  const base = `/api/stories/${storyId}/narration`;
+  const src = version ? `${base}?v=${version}` : base;
 
   useMountEffect(() => {
     cancelledRef.current = false;
@@ -61,12 +63,14 @@ export function StoryNarrationPlayer({
     while (!cancelledRef.current && Date.now() < deadline) {
       let response: Response;
       try {
-        response = await fetch(src, { method: "POST" });
+        response = await fetch(base, { method: "POST" });
       } catch {
         break;
       }
       if (cancelledRef.current) return;
       if (response.status === 200) {
+        const body: { version?: string } = await response.json().catch(() => ({}));
+        setVersion(body.version ?? null);
         setStatus("ready");
         return;
       }

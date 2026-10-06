@@ -21,6 +21,26 @@ export async function getLiveJob(admin: Client, subject: SpeechSubject): Promise
   return data;
 }
 
+/** The ready clip with this id for this subject, or null when it is not ready
+ *  (replaced, failed or never made). Whether it is still the *current* clip is
+ *  not asked: the id was handed out when it was. */
+export async function getReadyJobById(
+  admin: Client,
+  subject: Pick<SpeechSubject, "type" | "id">,
+  jobId: string,
+): Promise<AudioJob | null> {
+  const { data, error } = await admin
+    .from("audio_jobs")
+    .select("*")
+    .eq("id", jobId)
+    .eq("subject_type", subject.type)
+    .eq("subject_id", subject.id)
+    .eq("status", "ready")
+    .maybeSingle();
+  if (error) throw error;
+  return data?.storage_path ? data : null;
+}
+
 /** The new pending job when this caller won the claim, otherwise null. */
 export async function claimJob(
   admin: Client,

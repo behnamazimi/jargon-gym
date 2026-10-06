@@ -11,18 +11,18 @@ import type { NarratedTermFields } from "./types";
 
 type AdminClient = SupabaseClient<Database>;
 
-type TermRow = {
+export type TermRow = {
   id: string;
   domain_id: string;
   domains: { language: string } | null;
 } & NarratedTermFields;
 
-type JobRow = Pick<
+export type JobRow = Pick<
   AudioJob,
-  "subject_id" | "status" | "hash_version" | "content_hash" | "storage_path"
+  "id" | "subject_id" | "status" | "hash_version" | "content_hash" | "storage_path"
 >;
 
-const TERM_FIELD_COLUMNS =
+export const TERM_FIELD_COLUMNS =
   "id, domain_id, term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)";
 
 /** PostgREST's default max-rows cap. */
@@ -44,7 +44,7 @@ function fieldsFromTerm(term: NarratedTermFields): NarratedTermFields {
 
 export function isCurrentAudio(
   term: TermRow,
-  job: JobRow | undefined,
+  job: Omit<JobRow, "id"> | undefined,
   mode: NarrationMode,
 ): boolean {
   if (!job) return false;
@@ -60,14 +60,14 @@ export type NarrationClipState = "current" | "stale" | "missing";
 
 function narrationClipState(
   term: TermRow,
-  job: JobRow | undefined,
+  job: Omit<JobRow, "id"> | undefined,
   mode: NarrationMode,
 ): NarrationClipState {
   if (isCurrentAudio(term, job, mode)) return "current";
   return job?.status === "ready" && job.storage_path ? "stale" : "missing";
 }
 
-function chunkIds(ids: string[]): string[][] {
+export function chunkIds(ids: string[]): string[][] {
   const chunks: string[][] = [];
   for (let i = 0; i < ids.length; i += IN_FILTER_CHUNK) {
     chunks.push(ids.slice(i, i + IN_FILTER_CHUNK));
@@ -91,12 +91,15 @@ async function fetchAllTermsForDomain(admin: AdminClient, domainId: string): Pro
   return terms;
 }
 
-async function loadLiveJobs(admin: AdminClient, termIds: string[]): Promise<Map<string, JobRow>> {
+export async function loadLiveJobs(
+  admin: AdminClient,
+  termIds: string[],
+): Promise<Map<string, JobRow>> {
   const byTermId = new Map<string, JobRow>();
   for (const chunk of chunkIds(termIds)) {
     const { data, error } = await admin
       .from("audio_jobs")
-      .select("subject_id, status, hash_version, content_hash, storage_path")
+      .select("id, subject_id, status, hash_version, content_hash, storage_path")
       .eq("subject_type", "term")
       .neq("status", "superseded")
       .in("subject_id", chunk)

@@ -1,6 +1,6 @@
 /**
  * The proxy (lib/supabase/proxy.ts) verifies each request's session with
- * supabase.auth.getUser() and forwards the result in these headers, so pages,
+ * supabase.auth.getClaims() and forwards the result in these headers, so pages,
  * Server Actions and route handlers don't verify it again. It strips any
  * incoming copies first and signs what it sets, and readers check the
  * signature, so a request the proxy never saw can't claim to be anyone.

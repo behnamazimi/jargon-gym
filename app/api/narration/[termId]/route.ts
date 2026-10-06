@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { getFeatureSettings } from "@/lib/ai/feature-settings";
 import { withRunGuard } from "@/lib/ai/run-guard";
 import { countRecentGenerations, recordUsage } from "@/lib/ai/usage";
 import { getReadyAudio, getOrCreateAudio } from "@/lib/ai/speech/audio";
-import { serveAudio } from "@/lib/ai/speech/serve";
+import { getReadyJobById } from "@/lib/ai/speech/jobs";
+import { serveAudio, serveJob } from "@/lib/ai/speech/serve";
 import { loadTermSubject } from "@/lib/ai/speech/subjects";
 import { getNarrationAccessForUser, isAdminAccount } from "@/lib/narration/access";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -50,13 +52,25 @@ async function authorize(
 }
 
 /** Serves cached audio only. It never generates, so preloading a card costs
- *  nothing; generation is an explicit POST. */
+ *  nothing; generation is an explicit POST. With `?v=<job id>` it serves that
+ *  exact clip, which never changes, so the browser may keep it for a day. */
 export async function GET(request: Request, { params }: RouteContext) {
   const { termId } = await params;
   const auth = await authorize(request, termId);
   if ("denied" in auth) return auth.denied;
 
   const admin = createAdminClient();
+  const version = new URL(request.url).searchParams.get("v");
+  if (version !== null) {
+    const job = z.uuid().safeParse(version).success
+      ? await getReadyJobById(admin, { type: "term", id: termId }, version)
+      : null;
+    if (!job) {
+      return new NextResponse(null, { status: 404, headers: { "Cache-Control": "no-store" } });
+    }
+    return serveJob(request, admin, job, { versioned: true });
+  }
+
   const subject = await loadTermSubject(admin, termId);
   if (!subject) return new NextResponse(null, { status: 404 });
   return serveAudio(request, admin, subject);
@@ -84,7 +98,8 @@ export async function POST(request: Request, { params }: RouteContext) {
   const subject = await loadTermSubject(admin, termId);
   if (!subject) return new NextResponse(null, { status: 404 });
 
-  if (await getReadyAudio(admin, subject)) return NextResponse.json({ ready: true });
+  const cached = await getReadyAudio(admin, subject);
+  if (cached) return NextResponse.json({ ready: true, version: cached.id });
 
   // One generation per person at a time, so the cap is checked against
   // everything they have already made before the next one starts.
@@ -108,5 +123,5 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ ready: false, capped: true }, { status: 429 });
   }
   if (result.status !== "ready") return NextResponse.json({ ready: false }, { status: 502 });
-  return NextResponse.json({ ready: true });
+  return NextResponse.json({ ready: true, version: result.job.id });
 }

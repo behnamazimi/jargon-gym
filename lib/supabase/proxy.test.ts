@@ -6,11 +6,17 @@ process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-signing-secret";
 
 const auth = vi.hoisted(() => ({
   user: null as null | { id: string; email: string; banned_until: null },
+  claims: undefined as undefined | { data: { claims: Record<string, unknown> } | null },
 }));
 
 vi.mock("@supabase/ssr", () => ({
   createServerClient: () => ({
-    auth: { getUser: async () => ({ data: { user: auth.user } }) },
+    auth: {
+      getClaims: async () =>
+        auth.claims ?? {
+          data: auth.user ? { claims: { sub: auth.user.id, email: auth.user.email } } : null,
+        },
+    },
   }),
 }));
 
@@ -40,6 +46,7 @@ function request(path: string, cookie = "") {
 describe("updateSession", () => {
   beforeEach(() => {
     auth.user = null;
+    auth.claims = undefined;
   });
 
   it("drops forged user headers on a public page for a signed-out visitor", async () => {
@@ -55,6 +62,30 @@ describe("updateSession", () => {
     expect(await readVerifiedUser(forwardedHeaders(response))).toEqual({
       id: "real-id",
       email: "mé@example.com",
+    });
+  });
+
+  it("treats a failed or unreadable token as signed out and sends a private page to login", async () => {
+    for (const claims of [{ data: null }, { data: { claims: { email: "a@example.com" } } }]) {
+      auth.claims = claims;
+      const response = await updateSession(request("/app/library"));
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get("location")!).pathname).toBe("/login");
+    }
+  });
+
+  it("forwards no user on a public page when the token has no subject", async () => {
+    auth.claims = { data: { claims: {} } };
+    const forwarded = forwardedHeaders(await updateSession(request("/")));
+    expect(await readVerifiedUser(forwarded)).toBeNull();
+  });
+
+  it("forwards a null email when the token has none", async () => {
+    auth.claims = { data: { claims: { sub: "real-id" } } };
+    const response = await updateSession(request("/app/library", `${REFERRAL_VERIFIED_COOKIE}=1`));
+    expect(await readVerifiedUser(forwardedHeaders(response))).toEqual({
+      id: "real-id",
+      email: null,
     });
   });
 });
