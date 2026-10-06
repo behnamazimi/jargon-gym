@@ -14,3 +14,13 @@ export const LEGACY_APP_REDIRECTS = [
   { source: "/jargon", destination: "/app/library" },
   { source: "/jargon/:path*", destination: "/app/:path*" },
 ].map((redirect) => ({ ...redirect, permanent: false }));
+
+/** Term pages are gone; their old addresses land on the collection. The collection's own
+ *  share image lives at /collections/<slug>/opengraph-image and must stay reachable. */
+export const LEGACY_TERM_PAGE_REDIRECTS = [
+  {
+    source: "/collections/:domainSlug/:termSlug((?!opengraph-image$).+)",
+    destination: "/collections/:domainSlug",
+    permanent: true,
+  },
+];

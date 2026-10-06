@@ -12,7 +12,7 @@ import { countLabel, kindLine } from "@/lib/terms/kinds";
 import { getPublicDomainPage, listPublicDomains } from "@/lib/terms/public-terms";
 import { cn } from "@/lib/utils";
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 export const dynamicParams = true;
 
 type PageParams = { domainSlug: string };
@@ -37,7 +37,7 @@ export async function generateMetadata({
       ? `${domain.name}: ${kindLine(domain.kind, domain.language)}`
       : `${domain.name} terms explained`;
   const description =
-    domain.description || `${countLabel(domain.kind, data.terms.length)} in ${domain.name}.`;
+    domain.description || `${countLabel(domain.kind, data.totalTerms)} in ${domain.name}.`;
   const url = `${getPublicBaseUrl()}/collections/${domainSlug}`;
 
   return {
@@ -53,7 +53,7 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
   const data = await getPublicDomainPage(domainSlug);
   if (!data) notFound();
 
-  const { domain, terms } = data;
+  const { domain, terms, totalTerms } = data;
   const override = showcaseOverride(domain.slug);
   const base = getPublicBaseUrl();
   const url = `${base}/collections/${domain.slug}`;
@@ -66,11 +66,7 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
           description: domain.description,
           url,
           inLanguage: domain.language,
-          terms: terms.map((term) => ({
-            name: term.term,
-            description: term.definition,
-            url: `${url}/${term.slug}`,
-          })),
+          terms: terms.map((term) => ({ name: term.term, description: term.definition })),
         })}
       />
       <JsonLd
@@ -81,7 +77,7 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
       />
       <CollectionHero
         domain={domain}
-        termCount={terms.length}
+        termCount={totalTerms}
         headline={override.headline}
         audience={override.audience}
       />
@@ -90,14 +86,22 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
         {terms.length === 0 ? (
           <p className="m-0 text-base text-base-content/70">No public terms yet.</p>
         ) : (
-          <TermCardGrid domainSlug={domain.slug} language={domain.language} terms={terms} />
+          <>
+            <TermCardGrid language={domain.language} terms={terms} />
+            {totalTerms > terms.length ? (
+              <p className="mt-8 m-0 text-base text-base-content/70">
+                Showing the newest {terms.length} of {countLabel(domain.kind, totalTerms)}. Add the
+                collection to Lobyas to study all of them.
+              </p>
+            ) : null}
+          </>
         )}
       </div>
 
       <ClosingCta
         title={
           <>
-            Learn all {countLabel(domain.kind, terms.length)}.{" "}
+            Learn all {countLabel(domain.kind, totalTerms)}.{" "}
             <span className="text-primary-text">Free.</span>
           </>
         }

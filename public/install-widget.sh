@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Production URL is baked in by scripts/widget-zip.sh (see BAKED_BASE_URL below).
-BAKED_BASE_URL="http://localhost:3000"
+BAKED_BASE_URL="https://lobyas.com"
 # JARGON_* are the names from before the rename; still accepted so old instructions keep working.
 REQUESTED_BASE_URL="${LOBYAS_BASE_URL:-${JARGON_BASE_URL:-}}"
 if [[ -n "$REQUESTED_BASE_URL" ]]; then

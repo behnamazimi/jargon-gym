@@ -15,9 +15,9 @@ export function breadcrumbs(items: Crumb[]) {
   };
 }
 
-type TermEntry = { name: string; description: string; url: string };
+type TermEntry = { name: string; description: string };
 
-/** A public collection as a glossary: the set and every term in it. */
+/** A public collection as a glossary: the set and the terms shown on its page. */
 export function definedTermSet(set: {
   name: string;
   description: string;
@@ -37,32 +37,7 @@ export function definedTermSet(set: {
       "@type": "DefinedTerm",
       name: term.name,
       description: term.description,
-      url: term.url,
     })),
-  };
-}
-
-export function definedTerm(term: {
-  name: string;
-  description: string;
-  url: string;
-  inLanguage: string;
-  set: { name: string; url: string };
-}) {
-  return {
-    "@context": CONTEXT,
-    "@type": "DefinedTerm",
-    "@id": term.url,
-    name: term.name,
-    description: term.description,
-    url: term.url,
-    inLanguage: term.inLanguage,
-    inDefinedTermSet: {
-      "@type": "DefinedTermSet",
-      "@id": term.set.url,
-      name: term.set.name,
-      url: term.set.url,
-    },
   };
 }
 
