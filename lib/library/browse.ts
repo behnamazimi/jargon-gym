@@ -8,10 +8,18 @@ const BROWSE_PAGE_SIZE = 12;
 
 export type BrowseCollectionFilter = "all" | "available" | "in-collection";
 
+export type BrowseGroup = "builtin" | "community";
+
+export function parseBrowseGroup(value: string | undefined): BrowseGroup {
+  return value === "community" ? "community" : "builtin";
+}
+
 export type BrowseCounts = {
   all: number;
   available: number;
   inCollection: number;
+  /** Search matches per group, ignoring the status filter. */
+  groups: Record<BrowseGroup, number>;
 };
 
 export type BrowsePageResult = {
@@ -25,6 +33,7 @@ export type BrowseSort = "name" | "loved";
 export type BrowseQuery = {
   search?: string;
   filter?: BrowseCollectionFilter;
+  group?: BrowseGroup;
   sort?: BrowseSort;
   offset?: number;
   limit?: number;
@@ -118,7 +127,8 @@ export async function fetchMyLovedAndReported(client: Client, userId: string, do
 
 function applyBrowseFilters<
   Query extends {
-    eq: (column: "visibility", value: "shared") => Query;
+    eq(column: "visibility", value: "shared"): Query;
+    eq(column: "is_builtin", value: boolean): Query;
     neq: (column: "owner_id", value: string) => Query;
     or: (filters: string) => Query;
     in: (column: "id", values: string[]) => Query;
@@ -131,8 +141,10 @@ function applyBrowseFilters<
   search: string,
   filter: BrowseCollectionFilter,
   collectionIds: string[],
+  group?: BrowseGroup,
 ): Query | null {
   let next = query.eq("visibility", "shared").is("share_blocked_at", null).neq("owner_id", userId);
+  if (group) next = next.eq("is_builtin", group === "builtin");
   const searchOr = browseSearchOr(search);
   if (searchOr) next = next.or(searchOr);
 
@@ -154,6 +166,7 @@ async function countMatching(
   search: string,
   filter: BrowseCollectionFilter,
   collectionIds: string[],
+  group?: BrowseGroup,
 ) {
   const scoped = applyBrowseFilters(
     client.from("domains").select("id", { count: "exact", head: true }),
@@ -161,6 +174,7 @@ async function countMatching(
     search,
     filter,
     collectionIds,
+    group,
   );
 
   if (!scoped) return 0;
@@ -174,6 +188,7 @@ function resolveBrowseQuery(query: BrowseQuery) {
   return {
     search: query.search ?? "",
     filter: query.filter ?? "all",
+    group: query.group,
     sort: query.sort ?? "name",
     offset: query.offset ?? 0,
     limit: query.limit ?? BROWSE_PAGE_SIZE,
@@ -191,26 +206,30 @@ export async function fetchSharedDomainsBrowse(
   userId: string,
   query: BrowseQuery = {},
 ): Promise<BrowsePageResult> {
-  const { search, filter, sort, offset, limit } = resolveBrowseQuery(query);
+  const { search, filter, group, sort, offset, limit } = resolveBrowseQuery(query);
 
   const collectionIds = await fetchCollectionIds(client, userId);
   const inCollection = new Set(collectionIds);
 
-  const [all, inCollectionCount] = await Promise.all([
-    countMatching(client, userId, search, "all", collectionIds),
-    countMatching(client, userId, search, "in-collection", collectionIds),
+  const [builtinTotal, communityTotal, inCollectionCount] = await Promise.all([
+    countMatching(client, userId, search, "all", collectionIds, "builtin"),
+    countMatching(client, userId, search, "all", collectionIds, "community"),
+    countMatching(client, userId, search, "in-collection", collectionIds, group),
   ]);
+  const groups = { builtin: builtinTotal, community: communityTotal };
+  const all = group ? groups[group] : builtinTotal + communityTotal;
 
   // "available" and "in-collection" exactly partition "all" — applyBrowseFilters
   // applies them as complementary id-in-collectionIds filters over the same
-  // base predicate "all" uses, so every matching row is in exactly one of
-  // the two. Re-verify this identity before relying on it if a new filter
-  // dimension is ever added here.
+  // base predicate (and group) "all" uses, so every matching row is in exactly
+  // one of the two. Re-verify this identity before relying on it if a new
+  // filter dimension is ever added here.
   const available = all - inCollectionCount;
   const counts: BrowseCounts = {
     all,
     available,
     inCollection: inCollectionCount,
+    groups,
   };
   const matching = selectMatchingCount(filter, counts);
 
@@ -224,6 +243,7 @@ export async function fetchSharedDomainsBrowse(
     search,
     filter,
     collectionIds,
+    group,
   );
 
   if (!pageQuery) {

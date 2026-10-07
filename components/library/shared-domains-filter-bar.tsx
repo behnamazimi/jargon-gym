@@ -2,6 +2,7 @@ import { Search, X } from "lucide-react";
 import type { RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { SharedDomainsTabs } from "@/components/library/shared-domains-tabs";
 import { ToggleChip } from "@/components/ui/toggle";
 import type { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
 import type { BrowseCollectionFilter, BrowseSort } from "@/lib/library/browse";
@@ -16,7 +17,7 @@ const FILTERS: Array<{
   {
     value: "all",
     label: "All",
-    ariaLabel: "Show all shared collections",
+    ariaLabel: "Show all collections",
     countKey: "all",
   },
   {
@@ -46,13 +47,19 @@ type SharedDomainsFilterBarProps = {
 export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomainsFilterBarProps) {
   return (
     <section
-      aria-label="Filter shared collections"
+      aria-label="Filter collections"
       data-tour="browse-filters"
       className={cn(
         "shadow-surface space-y-3 rounded-box bg-base-100 p-5",
         "max-md:sticky max-md:z-30 max-md:top-0",
       )}
     >
+      <SharedDomainsTabs
+        active={browse.group}
+        counts={browse.counts.groups}
+        onChange={browse.setGroup}
+      />
+
       <InputGroup className="h-11 min-h-11 cursor-text items-center">
         <InputGroupAddon>
           <Search className="size-4" aria-hidden strokeWidth={1.5} />
@@ -63,7 +70,7 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
           value={browse.searchInput}
           onChange={(event) => browse.setSearchInput(event.target.value)}
           placeholder="Search collections…"
-          aria-label="Search shared collections"
+          aria-label="Search collections"
           className="h-11 min-w-0 text-base sm:text-sm"
         />
         {browse.isRefreshing ? (

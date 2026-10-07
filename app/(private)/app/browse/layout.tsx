@@ -11,8 +11,8 @@ export default function BrowseLayout({ children }: { children: React.ReactNode }
     <PageShell innerClassName="landing-enter mx-auto max-w-3xl max-md:space-y-0 max-md:py-4 max-md:pb-[calc(2rem+var(--safe-bottom))]">
       <PageHeader
         icon={Compass}
-        title="Browse shared collections"
-        description="Find collections others have shared and add them to yours."
+        title="Browse collections"
+        description="Add built-in collections, or ones other members have shared."
         compactOnPhone
       />
       <PromoVisit target="browse" />

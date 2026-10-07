@@ -5,6 +5,7 @@ import { searchSharedDomains } from "@/app/(private)/app/browse/actions";
 import type {
   BrowseCollectionFilter,
   BrowseCounts,
+  BrowseGroup,
   BrowsePageResult,
   BrowseSort,
 } from "@/lib/library/browse";
@@ -13,13 +14,15 @@ const SEARCH_DEBOUNCE_MS = 300;
 
 type UseSharedDomainsBrowseArgs = {
   initialPage: BrowsePageResult;
+  initialGroup: BrowseGroup;
 };
 
-export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseArgs) {
+export function useSharedDomainsBrowse({ initialPage, initialGroup }: UseSharedDomainsBrowseArgs) {
   const [searchInput, setSearchInput] = useState("");
   const [committedSearch, setCommittedSearch] = useState("");
   const [filter, setFilter] = useState<BrowseCollectionFilter>("all");
   const [sort, setSort] = useState<BrowseSort>("name");
+  const [group, setGroupState] = useState<BrowseGroup>(initialGroup);
   const [domains, setDomains] = useState(initialPage.domains);
   const [counts, setCounts] = useState(initialPage.counts);
   const [nextOffset, setNextOffset] = useState(initialPage.nextOffset);
@@ -41,6 +44,7 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
   const fetchPage = useCallback(
     async (
       nextFilter: BrowseCollectionFilter,
+      nextGroup: BrowseGroup,
       nextSort: BrowseSort,
       search: string,
       offset: number,
@@ -59,6 +63,7 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
       const result = await searchSharedDomains({
         search,
         filter: nextFilter,
+        group: nextGroup,
         sort: nextSort,
         offset,
       });
@@ -91,13 +96,13 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
       isFirstSync.current = false;
       return;
     }
-    void fetchPage(filter, sort, committedSearch, 0, false);
-  }, [committedSearch, fetchPage, filter, sort]);
+    void fetchPage(filter, group, sort, committedSearch, 0, false);
+  }, [committedSearch, fetchPage, filter, group, sort]);
 
   const loadMore = useCallback(() => {
     if (nextOffset === null || inFlight.current) return;
-    void fetchPage(filter, sort, committedSearch, nextOffset, true);
-  }, [committedSearch, fetchPage, filter, nextOffset, sort]);
+    void fetchPage(filter, group, sort, committedSearch, nextOffset, true);
+  }, [committedSearch, fetchPage, filter, group, nextOffset, sort]);
   loadMoreRef.current = loadMore;
 
   const bindSentinel = useCallback((node: HTMLDivElement | null) => {
@@ -114,6 +119,14 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
     observerRef.current = observer;
     observer.observe(node);
   }, []);
+
+  function setGroup(next: BrowseGroup) {
+    if (next === group) return;
+    setGroupState(next);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", next);
+    window.history.replaceState(window.history.state, "", url);
+  }
 
   function clearFilters() {
     setSearchInput("");
@@ -162,7 +175,10 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
 
   const matchingCount = countForFilter(counts, filter);
   const hasActiveFilters = committedSearch.length > 0 || filter !== "all" || sort !== "name";
-  const isEmptyCatalog = counts.all === 0 && !hasActiveFilters && domains.length === 0;
+  const isEmptyCatalog =
+    counts.groups.builtin + counts.groups.community === 0 &&
+    !hasActiveFilters &&
+    domains.length === 0;
 
   return {
     searchInput,
@@ -171,6 +187,8 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
     setFilter,
     sort,
     setSort,
+    group,
+    setGroup,
     domains,
     counts,
     matchingCount,
@@ -185,7 +203,7 @@ export function useSharedDomainsBrowse({ initialPage }: UseSharedDomainsBrowseAr
     markInCollection,
     markLoved,
     markReported,
-    retry: () => void fetchPage(filter, sort, committedSearch, 0, false),
+    retry: () => void fetchPage(filter, group, sort, committedSearch, 0, false),
   };
 }
 
@@ -198,13 +216,13 @@ function countForFilter(counts: BrowseCounts, filter: BrowseCollectionFilter) {
 function adjustCounts(counts: BrowseCounts, inCollection: boolean): BrowseCounts {
   if (inCollection) {
     return {
-      all: counts.all,
+      ...counts,
       available: Math.max(0, counts.available - 1),
       inCollection: counts.inCollection + 1,
     };
   }
   return {
-    all: counts.all,
+    ...counts,
     available: counts.available + 1,
     inCollection: Math.max(0, counts.inCollection - 1),
   };

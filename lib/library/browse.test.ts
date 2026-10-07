@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { browseSearchOr, escapeIlike } from "./browse";
+import { browseSearchOr, escapeIlike, parseBrowseGroup } from "./browse";
 
 describe("escapeIlike", () => {
   it("escapes wildcard and backslash characters", () => {
@@ -19,5 +19,17 @@ describe("browseSearchOr", () => {
 
   it("escapes wildcards inside the quoted pattern", () => {
     expect(browseSearchOr("100%")).toBe('name.ilike."%100\\%%",description.ilike."%100\\%%"');
+  });
+});
+
+describe("parseBrowseGroup", () => {
+  it("accepts community", () => {
+    expect(parseBrowseGroup("community")).toBe("community");
+  });
+
+  it("falls back to builtin for missing or unknown values", () => {
+    expect(parseBrowseGroup(undefined)).toBe("builtin");
+    expect(parseBrowseGroup("builtin")).toBe("builtin");
+    expect(parseBrowseGroup("nope")).toBe("builtin");
   });
 });
