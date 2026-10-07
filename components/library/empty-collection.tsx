@@ -14,14 +14,14 @@ export function EmptyCollection() {
         titleAs="h1"
         title={
           <>
-            <span className="text-primary-text">Your collection</span> is empty
+            <span className="text-primary-text">Your library</span> is empty
           </>
         }
         description="Add a collection others have shared in one tap, or start your own."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
           <LinkButton href="/app/browse" data-tour="library-browse">
-            Browse shared collections
+            Browse collections
           </LinkButton>
           <LinkButton href="/app/import" variant="outline" data-tour="library-import">
             Add your own terms

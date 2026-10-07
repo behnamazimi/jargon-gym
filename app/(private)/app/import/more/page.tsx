@@ -10,7 +10,7 @@ import { IMPORT_SAMPLE_PAYLOAD, stringifyImportPayload } from "@/lib/import/samp
 export default async function MoreImportOptionsPage() {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
-    return <p className="text-sm text-base-content/70">Sign in to add terms.</p>;
+    return <p className="text-sm text-base-content/70">Log in to add terms.</p>;
   }
   // The page is mostly documentation, so it still opens if the list can't load.
   const collections = await listImportDestinations(auth.supabase, auth.user.id)
@@ -23,7 +23,7 @@ export default async function MoreImportOptionsPage() {
     <>
       <PageHeader
         icon={Braces}
-        title="More import options"
+        title="More ways to add"
         backHref="/app/import"
         backLabel="Add a collection"
         compactOnPhone

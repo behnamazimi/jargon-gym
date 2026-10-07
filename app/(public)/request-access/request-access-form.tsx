@@ -29,7 +29,7 @@ export default function RequestAccessForm({
         />
         <h1 className="text-2xl font-medium">You&apos;re on the list</h1>
         <p className="text-sm text-base-content/70">
-          I&apos;ll email you your invite as soon as there&apos;s room. Keep an eye on your inbox.
+          We&apos;ll email you your invite as soon as there&apos;s room. Keep an eye on your inbox.
         </p>
       </div>
     );
@@ -44,7 +44,7 @@ export default function RequestAccessForm({
       />
       <h1 className="text-2xl font-medium">Request access</h1>
       <p className="text-sm text-base-content/70">
-        Lobyas is invite-only right now. Leave your email and I&apos;ll send you an invite when
+        Lobyas is invite-only right now. Leave your email and we&apos;ll send you an invite when
         there&apos;s room.
       </p>
 
@@ -69,7 +69,7 @@ export default function RequestAccessForm({
               className={emailLocked ? "opacity-70" : undefined}
             />
             {emailLocked ? (
-              <FieldDescription>Tied to the account you&apos;re signed in with.</FieldDescription>
+              <FieldDescription>Tied to the account you&apos;re logged in with.</FieldDescription>
             ) : null}
           </Field>
 

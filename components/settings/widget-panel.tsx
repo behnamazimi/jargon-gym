@@ -52,7 +52,7 @@ export function WidgetPanel({ initialTokens, latestWidgetVersion }: WidgetPanelP
           />
           {hasTokens
             ? `${tokens.length} active ${tokens.length === 1 ? "token" : "tokens"}`
-            : "No tokens"}
+            : "Not set up"}
         </Badge>
       }
     >

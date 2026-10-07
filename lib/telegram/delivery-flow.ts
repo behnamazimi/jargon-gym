@@ -46,7 +46,7 @@ export async function handleRead(client: Client, chatId: number): Promise<Telegr
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     console.error("handleRead error:", detail, error);
-    return [send(chatId, "Could not send a term right now. Try again in a moment.")];
+    return [send(chatId, "Couldn't send a term right now. Try again in a moment.")];
   }
 }
 

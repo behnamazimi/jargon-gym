@@ -174,7 +174,7 @@ export function PasteStep({
           size="sm"
           className="min-h-11 text-base-content/70"
         >
-          More import options
+          More ways to add
         </LinkButton>
       </div>
     </div>

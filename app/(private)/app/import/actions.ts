@@ -18,11 +18,11 @@ import {
 } from "@/lib/import/import-collections";
 import type { ImportFailure } from "@/lib/import/types";
 
-const NOT_SIGNED_IN: ImportFailure = { title: "Not signed in", message: "Sign in to add terms." };
+const NOT_SIGNED_IN: ImportFailure = { title: "Not logged in", message: "Log in to add terms." };
 
 export async function getImportSetupData() {
   const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: "Sign in to add terms." as const };
+  if ("error" in auth) return { error: "Log in to add terms." as const };
 
   return listImportDestinations(auth.supabase, auth.user.id);
 }
@@ -37,7 +37,7 @@ export async function checkImportAgainstDestination(
   input: unknown,
 ): Promise<{ matches: DestinationMatch[] } | { error: string }> {
   const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: "Sign in to add terms." };
+  if ("error" in auth) return { error: "Log in to add terms." };
 
   const parsed = checkSchema.safeParse(input);
   if (!parsed.success) return { error: "We couldn't check that list. Try again." };
@@ -64,7 +64,7 @@ export async function getCollectionTermNames(
   if (!id.success) return { error: "That collection isn't available." };
 
   const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: "Sign in to add terms." };
+  if ("error" in auth) return { error: "Log in to add terms." };
 
   try {
     const terms = await listCollectionTermNames(auth.supabase, auth.user.id, id.data);

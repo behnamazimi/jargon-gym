@@ -31,7 +31,7 @@ export function commitFailureFor(
     };
   }
   if (text.includes("Not authenticated")) {
-    return { title: "Not signed in", message: "Sign in to add terms." };
+    return { title: "Not logged in", message: "Log in to add terms." };
   }
   return GENERIC;
 }

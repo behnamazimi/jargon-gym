@@ -4,14 +4,14 @@ import { legalProse } from "@/components/content/mdx-prose";
 import Terms from "@/content/pages/terms.mdx";
 
 export const metadata: Metadata = {
-  title: "Terms of use",
+  title: "Terms",
   description: "The ground rules for using Lobyas.",
 };
 
 export default function TermsPageRoute() {
   return (
     <LegalPage
-      title="Terms of use"
+      title="Terms"
       description="The ground rules for using Lobyas."
       updated="4 October 2026"
     >

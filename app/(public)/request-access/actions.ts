@@ -38,7 +38,7 @@ async function insertWaitlistRequest(
     .insert({ email, normalized_email: normalizedEmail });
 
   if (error && error.code !== "23505") {
-    return { failure: "Something went wrong. Try again." };
+    return { failure: "Couldn't send your request. Try again in a moment." };
   }
 
   return { failure: null, isNewRequest: !error };

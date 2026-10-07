@@ -9,7 +9,7 @@ export default function OfflinePage() {
       icon={WifiOff}
       illustration={<OfflineScene className="w-72 sm:w-96" />}
       title="You're offline"
-      description="Cached pages still load. Connect to the internet to open quizzes and your collection."
+      description="Cached pages still load. Connect to the internet to open quizzes and your library."
     >
       <OfflineRetryButton />
     </StatusPage>

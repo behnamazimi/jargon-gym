@@ -38,7 +38,7 @@ export default async function ImportPage() {
       <PageHeader
         icon={FolderPlus}
         title="Add a collection"
-        description="Find a shared collection, or start from what you have."
+        description="Find a collection, or start from what you have."
         compactOnPhone
       />
       <RequestsSection requests={requests} />

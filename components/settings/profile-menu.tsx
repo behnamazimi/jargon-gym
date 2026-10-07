@@ -120,7 +120,7 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
           </DropdownMenuItem>
           <DropdownMenuItem variant="destructive" isDisabled={isBusy} onAction={handleLogout}>
             <LogOut className="h-4 w-4" />
-            {isBusy ? "Signing out…" : "Log out"}
+            {isBusy ? "Logging out…" : "Log out"}
           </DropdownMenuItem>
         </DropdownMenu>
       </DropdownMenuTrigger>

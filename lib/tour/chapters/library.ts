@@ -9,7 +9,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-browse",
         title: "Welcome to Lobyas",
-        body: "Add a shared collection to get started.",
+        body: "Add a collection to get started.",
       },
       {
         target: "library-import",

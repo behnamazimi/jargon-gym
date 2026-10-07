@@ -20,7 +20,7 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         <p className="mt-6 m-0 max-w-[40ch] text-lg leading-relaxed text-base-content/85">
           Every field has shorthand insiders never explain, and every language has words you only
-          half know. Lobyas explains them, then drills you until they stick.
+          half know. Lobyas explains them, then helps them stick with light, regular practice.
         </p>
 
         <div className="mt-8">

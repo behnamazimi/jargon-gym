@@ -12,7 +12,7 @@ import {
 export async function getBrowseSetupData(group: BrowseGroup) {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
-    return { error: "Log in to browse shared collections." as const };
+    return { error: "Log in to browse collections." as const };
   }
 
   const initialPage = await fetchSharedDomainsBrowse(auth.supabase, auth.user.id, { group });

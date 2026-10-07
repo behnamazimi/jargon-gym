@@ -9,7 +9,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     scene: "start",
     items: [
       {
-        title: "Add a shared collection",
+        title: "Add a collection",
         body: "Search what other members shared and add it in one tap. Remove it any time.",
       },
       {

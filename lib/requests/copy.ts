@@ -58,7 +58,7 @@ export const REQUEST_COPY = {
     seeRequests: "See your requests",
     openIt: "Open it",
     sendFailed: "We couldn't send your request. Try again.",
-    signedOut: "Sign in to send a request.",
+    signedOut: "Log in to send a request.",
   },
   sent: {
     title: "Request sent",
@@ -100,7 +100,7 @@ export const REQUEST_COPY = {
     cancelBodyStarted: "We've already started, so this still counts toward your 3 requests.",
     keep: "Keep it",
     dismiss: "Dismiss",
-    cancelled: "Request cancelled",
+    cancelled: "Request canceled",
     replySent: "Reply sent",
     actionFailed: "That didn't work. Try again.",
     notReplyable: "This request isn't waiting for a reply any more.",

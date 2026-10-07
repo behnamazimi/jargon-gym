@@ -6,7 +6,7 @@ function SkeletonBar({ className }: { className: string }) {
 
 export default function BrowseLoading() {
   return (
-    <div className="space-y-4" aria-busy="true" aria-label="Loading shared collections">
+    <div className="space-y-4" aria-busy="true" aria-label="Loading collections">
       <div className="shadow-surface space-y-3 rounded-box bg-base-100 p-4">
         <SkeletonBar className="h-11 w-full rounded-field" />
         <SkeletonBar className="h-11 w-full rounded-field md:w-80" />

@@ -56,7 +56,7 @@ export default async function AppGuidePage({ params }: PageProps) {
             variant="outline"
             className="min-h-12 w-full md:min-h-11 md:w-auto"
           >
-            Browse shared collections
+            Browse collections
           </LinkButton>
         ) : null}
         {guide.link ? (

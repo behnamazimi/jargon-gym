@@ -38,7 +38,7 @@ export function ConsentBanner() {
         Help improve Lobyas? Allowing analytics saves an ID on this device and shares which features
         you use and any errors with PostHog.{" "}
         <Link href={PRIVACY_PATH} className="underline underline-offset-2">
-          Privacy
+          Privacy Policy
         </Link>
       </p>
       <div className="mt-3 flex gap-2">

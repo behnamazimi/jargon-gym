@@ -140,7 +140,7 @@ export function MoreSheet() {
               onClick={() => void handleLogout()}
             >
               <LogOut className="size-4" strokeWidth={1.5} aria-hidden />
-              {isBusy ? "Signing out…" : "Log out"}
+              {isBusy ? "Logging out…" : "Log out"}
             </button>
           </li>
         </ul>
