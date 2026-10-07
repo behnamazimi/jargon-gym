@@ -1,7 +1,6 @@
 import { PostHog } from "posthog-node";
-import { cookies } from "next/headers";
 import { after } from "next/server";
-import { CONSENT_COOKIE } from "@/lib/consent/consent";
+import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { analyticsEnabled } from "./enabled";
 
 type EventProperties = Record<string, boolean | number | string | null>;
@@ -25,7 +24,7 @@ export function trackServer(distinctId: string, event: string, properties?: Even
   const posthog = getPostHogServer();
   if (!posthog) return;
   after(async () => {
-    if ((await cookies()).get(CONSENT_COOKIE)?.value !== "granted") return;
+    if (!(await hasAnalyticsConsent())) return;
     await posthog
       .captureImmediate({ distinctId, event, properties })
       .catch((err: unknown) => console.error("PostHog capture failed:", err));

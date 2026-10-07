@@ -5,6 +5,7 @@ import { z } from "zod";
 import { trackServer } from "@/lib/analytics/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAiTurn } from "@/lib/ai/observability";
+import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { runAiTurn } from "@/lib/ai/observability-server";
 import { recordRead } from "@/lib/terms/review-outcome";
 import { withRunGuard } from "@/lib/ai/run-guard";
@@ -107,7 +108,7 @@ export async function generateStoryAction(input: {
       definition: card.definition,
     }));
 
-    const observability = createAiTurn(userId, "story_generation");
+    const observability = createAiTurn(userId, "story_generation", await hasAnalyticsConsent());
     // Everything the user receives, so a failure anywhere in here refunds the credits.
     const produce = async () => {
       const generated = await runAiTurn(observability, () =>

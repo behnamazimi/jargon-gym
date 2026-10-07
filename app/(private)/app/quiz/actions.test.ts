@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
 vi.mock("@/lib/auth/require-session", () => ({
   requireAuthenticatedClient: async () => ({ supabase: {}, user: { id: "u1" } }),
 }));
+vi.mock("@/lib/consent/server", () => ({ hasAnalyticsConsent: async () => false }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/quiz/terms", () => ({ fetchQuizTermPool: async () => [{ id: "t1" }] }));
 vi.mock("@/lib/quiz/generate", () => ({ generateQuizQuestions: state.generate }));

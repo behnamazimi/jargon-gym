@@ -14,7 +14,8 @@
   (`lib/consent/`, `components/consent/`, `lib/analytics/client.ts`). The choice is
   the `lb_consent` cookie, and for signed-in members also `user_settings.analytics_consent`
   (+ `_at`, `_version`; a refusal wins when device and account disagree, see `syncConsent`); server events and error reports also check it. AI
-  request traces (with their text) are not gated yet and the Privacy page says so; plan 12 decides what to keep.
+  request traces never record prompts or answers, and carry the member's id only with consent
+  (otherwise a random id): `lib/ai/observability.ts`.
 - Account deletion: Settings → Delete account calls `delete_own_account`
   (`supabase/migrations/20261005130000_delete_own_account.sql`). It deletes the
   auth user, which cascades. It refuses admins and owners whose collections other

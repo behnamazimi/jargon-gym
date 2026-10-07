@@ -31,13 +31,13 @@ What the app needs: your login session, your theme, your analytics choice, and r
 
 Analytics is off until you allow it in the banner. If you do, PostHog saves an ID on your device and we link what you do in the app (which features you use, and errors) to your account. If you decline, no analytics ID is saved and no analytics or error reports are sent. You can change your choice any time with "Analytics choice" in the footer or the More menu. There's no advertising.
 
-One exception, for now: when you use an AI feature (AI quizzes or Stories), the request, including the text sent to and returned by the AI, is also logged in PostHog (EU) with your account ID, whether or not you allowed analytics.
+When you use an AI feature (AI quizzes or Stories), we log how long the request took, how many tokens it used and whether it failed, never what you or the AI wrote. If you allowed analytics that log is tied to your account; if not, it carries a random ID that can't be traced to you.
 
 ## Who else handles it
 
 These services process data on our behalf:
 
-- **PostHog** (EU): product analytics and error reports if you allow analytics, and logs of AI requests when you use an AI feature.
+- **PostHog** (EU): product analytics and error reports if you allow analytics, and anonymous timings and token counts of AI requests.
 - **Supabase**: database and sign-in. Stores your account and everything you study.
 - **Vercel**: hosts the app.
 - **Resend**: sends invites and collection updates. Sign-up confirmation and password emails come through Supabase.

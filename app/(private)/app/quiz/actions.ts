@@ -3,6 +3,7 @@
 import { trackServer } from "@/lib/analytics/server";
 import { applyQuizAnswer } from "@/lib/terms/review-outcome";
 import { createAiTurn } from "@/lib/ai/observability";
+import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { runAiTurn } from "@/lib/ai/observability-server";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { withRunGuard } from "@/lib/ai/run-guard";
@@ -99,7 +100,7 @@ async function generateAiQuizResult(
   // The plan decides which questions the model writes before anything is charged,
   // so only those are paid for.
   const plan = await planAiQuiz(terms, source);
-  const observability = createAiTurn(auth.user.id, "quiz_generation");
+  const observability = createAiTurn(auth.user.id, "quiz_generation", await hasAnalyticsConsent());
   const generate = () =>
     plan.slots.length === 0
       ? generateQuizQuestions({ provider: access.provider, apiKey: access.apiKey, plan, source })
