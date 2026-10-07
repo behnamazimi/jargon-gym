@@ -8,6 +8,8 @@ Lobyas is run by Behnam Azimi, an individual based in the Netherlands, who is re
 - The terms and collections you add, and your study history: what you read, review and quiz, and your streak.
 - Your settings, including a Telegram link and an AI key if you add one (stored encrypted).
 - AI credit usage.
+- Your analytics choice and when you made it, so it follows your account to other devices and we can show you agreed.
+- Only if you allow analytics: which features you use and any errors you hit, linked to your account.
 - If you asked for access, the email you used and when.
 
 We use it to run the app and nothing else: no advertising, no selling, no profiling beyond the study scheduling you see.
@@ -25,12 +27,17 @@ Other members never see your progress or history, even in a shared collection. T
 
 ## Cookies
 
-Only what the app needs: your login session, your theme, and remembered choices like library filters, the collection you last studied and an unfinished quiz, kept in cookies or on your device. There's no analytics, advertising or tracking, so there's no cookie banner. The installable app also caches pages on your device so it works offline.
+What the app needs: your login session, your theme, your analytics choice, and remembered choices like library filters, the collection you last studied and an unfinished quiz, kept in cookies or on your device. The installable app also caches pages on your device so it works offline.
+
+Analytics is off until you allow it in the banner. If you do, PostHog saves an ID on your device and we link what you do in the app (which features you use, and errors) to your account. If you decline, no analytics ID is saved and no analytics or error reports are sent. You can change your choice any time with "Analytics choice" in the footer or the More menu. There's no advertising.
+
+One exception, for now: when you use an AI feature (AI quizzes or Stories), the request, including the text sent to and returned by the AI, is also logged in PostHog (EU) with your account ID, whether or not you allowed analytics.
 
 ## Who else handles it
 
 These services process data on our behalf:
 
+- **PostHog** (EU): product analytics and error reports if you allow analytics, and logs of AI requests when you use an AI feature.
 - **Supabase**: database and sign-in. Stores your account and everything you study.
 - **Vercel**: hosts the app.
 - **Resend**: sends invites and collection updates. Sign-up confirmation and password emails come through Supabase.

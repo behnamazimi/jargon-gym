@@ -1,28 +1,20 @@
 import posthog from "posthog-js";
-import { analyticsEnabled } from "./enabled";
+import { isAnalyticsRunning } from "./client";
 
 type EventProperties = Record<string, boolean | number | string | null>;
 
-function isConfigured() {
-  return Boolean(
-    analyticsEnabled &&
-    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN &&
-    process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  );
-}
-
 export function track(event: string, properties?: EventProperties) {
-  if (isConfigured()) posthog.capture(event, properties);
+  if (isAnalyticsRunning()) posthog.capture(event, properties);
 }
 
 export function identifyUser(id: string, email: string | null) {
-  if (isConfigured()) posthog.identify(id, email ? { email } : undefined);
+  if (isAnalyticsRunning()) posthog.identify(id, email ? { email } : undefined);
 }
 
 export function resetAnalytics() {
-  if (isConfigured()) posthog.reset();
+  if (isAnalyticsRunning()) posthog.reset();
 }
 
 export function trackException(error: unknown) {
-  if (isConfigured()) posthog.captureException(error);
+  if (isAnalyticsRunning()) posthog.captureException(error);
 }

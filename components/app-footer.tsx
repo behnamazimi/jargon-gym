@@ -1,3 +1,4 @@
+import { ConsentSettingsButton } from "@/components/consent/consent-settings-button";
 import { FooterLink } from "@/components/footer-link";
 import { pageContainerClass } from "@/components/page-container";
 import { LEGAL_LINKS } from "@/lib/site";
@@ -18,6 +19,7 @@ export function AppFooter() {
               {link.label}
             </FooterLink>
           ))}
+          <ConsentSettingsButton />
         </nav>
         <span className="text-xs text-base-content/70">© Lobyas {new Date().getFullYear()}</span>
       </div>

@@ -1,5 +1,7 @@
 import { PostHog } from "posthog-node";
+import { cookies } from "next/headers";
 import { after } from "next/server";
+import { CONSENT_COOKIE } from "@/lib/consent/consent";
 import { analyticsEnabled } from "./enabled";
 
 type EventProperties = Record<string, boolean | number | string | null>;
@@ -17,13 +19,15 @@ export function getPostHogServer() {
   return client;
 }
 
-/** Sends after the response, so analytics never slows or fails an action. */
+/** Sends after the response, so analytics never slows or fails an action.
+ *  Only for visitors who agreed to analytics. */
 export function trackServer(distinctId: string, event: string, properties?: EventProperties) {
   const posthog = getPostHogServer();
   if (!posthog) return;
-  after(() =>
-    posthog
+  after(async () => {
+    if ((await cookies()).get(CONSENT_COOKIE)?.value !== "granted") return;
+    await posthog
       .captureImmediate({ distinctId, event, properties })
-      .catch((err: unknown) => console.error("PostHog capture failed:", err)),
-  );
+      .catch((err: unknown) => console.error("PostHog capture failed:", err));
+  });
 }
