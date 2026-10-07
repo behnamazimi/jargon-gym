@@ -119,6 +119,53 @@ describe("normalizeStory", () => {
     expect(result.termIds).toContain("t5");
   });
 
+  it("turns every part of a split term into plain text when the parts don't match it", () => {
+    const terms = [...TERMS, { id: "t5", term: "aantrekken", definition: "d" }];
+    const result = normalizeStory(
+      payload([
+        { text: "Hij " },
+        { text: "liep", termId: "t5" },
+        { text: " naar " },
+        { text: "huis", termId: "t5" },
+        { text: ". " },
+        { text: "idempotent", termId: "t1" },
+        { text: " " },
+        { text: "sharding", termId: "t4" },
+        { text: " " },
+        { text: "backpressure", termId: "t3" },
+      ]),
+      terms,
+    );
+    expect(result.segments.some((segment) => segment.termId === "t5")).toBe(false);
+    expect(result.termIds).not.toContain("t5");
+  });
+
+  it("keeps split parts that sit in different paragraphs", () => {
+    const terms = [...TERMS, { id: "t5", term: "aantrekken", definition: "d" }];
+    const result = normalizeStory(
+      {
+        title: "A title",
+        paragraphs: [
+          { segments: [{ text: "Hij " }, { text: "trok", termId: "t5" }, { text: " door." }] },
+          {
+            segments: [
+              { text: "Zijn jas ging " },
+              { text: "aan", termId: "t5" },
+              { text: ` ${FILLER}. ` },
+              { text: "idempotent", termId: "t1" },
+              { text: " " },
+              { text: "sharding", termId: "t4" },
+              { text: " " },
+              { text: "backpressure", termId: "t3" },
+            ],
+          },
+        ],
+      },
+      terms,
+    );
+    expect(result.segments.filter((segment) => segment.termId === "t5")).toHaveLength(2);
+  });
+
   it("counts a repeated term once", () => {
     const result = normalizeStory(
       payload([
