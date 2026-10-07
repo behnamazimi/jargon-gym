@@ -17,8 +17,8 @@ export function SharedDomainsEmptyCatalog({ bannerError }: { bannerError: string
       <div className="shadow-surface rounded-box bg-base-100 px-6 py-14">
         <EmptyState
           icon={Compass}
-          title="Nothing shared yet"
-          description="When someone shares a collection, it shows up here. Add your own terms in the meantime, or head back to your library."
+          title="No collections yet"
+          description="Collections show up here once they are built or shared. Add your own terms in the meantime, or head back to your library."
         >
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center">
             <LinkButton href="/app/import" className="min-h-11">

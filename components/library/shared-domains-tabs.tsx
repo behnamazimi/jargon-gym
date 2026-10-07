@@ -21,7 +21,7 @@ export function SharedDomainsTabs({
     <div
       role="tablist"
       aria-label="Collection source"
-      className="tabs tabs-box tabs-sm w-full flex-nowrap bg-base-100 p-1 ring-1 ring-base-content/10"
+      className="tabs tabs-box tabs-sm w-full flex-nowrap"
     >
       {TABS.map((tab) => {
         const selected = tab.value === active;
@@ -34,7 +34,7 @@ export function SharedDomainsTabs({
             aria-selected={selected}
             aria-controls={BROWSE_PANEL_ID}
             onClick={() => onChange(tab.value)}
-            className={cn("tab min-h-11 grow gap-2 md:min-h-8", selected && "tab-active")}
+            className={cn("tab min-h-11 grow gap-2 md:min-h-9", selected && "tab-active")}
           >
             {tab.label}
             <span className="tabular-nums opacity-55">{counts[tab.value]}</span>

@@ -26,8 +26,8 @@ export const MORE_CHAPTERS = [
     steps: [
       {
         target: "browse-filters",
-        title: "Shared collections",
-        body: "Search collections other people have shared.",
+        title: "Browse collections",
+        body: "Switch between built-in and community collections, then search.",
       },
       {
         target: "browse-add",

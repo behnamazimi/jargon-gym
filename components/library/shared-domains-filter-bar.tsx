@@ -2,6 +2,7 @@ import { Search, X } from "lucide-react";
 import type { RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { SharedDomainsTabs } from "@/components/library/shared-domains-tabs";
 import { ToggleChip } from "@/components/ui/toggle";
 import type { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
 import type { BrowseCollectionFilter, BrowseSort } from "@/lib/library/browse";
@@ -53,6 +54,12 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
         "max-md:sticky max-md:z-30 max-md:top-0",
       )}
     >
+      <SharedDomainsTabs
+        active={browse.group}
+        counts={browse.counts.groups}
+        onChange={browse.setGroup}
+      />
+
       <InputGroup className="h-11 min-h-11 cursor-text items-center">
         <InputGroupAddon>
           <Search className="size-4" aria-hidden strokeWidth={1.5} />

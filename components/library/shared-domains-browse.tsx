@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ReportCollectionDialog } from "@/components/library/report-collection-dialog";
 import { SharedDomainCard } from "@/components/library/shared-domain-card";
-import { BROWSE_PANEL_ID, SharedDomainsTabs } from "@/components/library/shared-domains-tabs";
+import { BROWSE_PANEL_ID } from "@/components/library/shared-domains-tabs";
 import { SharedDomainsFilterBar } from "@/components/library/shared-domains-filter-bar";
 import {
   SharedDomainsEmptyCatalog,
@@ -96,12 +96,6 @@ export function SharedDomainsBrowse({
           <AlertDescription>{bannerError}</AlertDescription>
         </Alert>
       ) : null}
-
-      <SharedDomainsTabs
-        active={browse.group}
-        counts={browse.counts.groups}
-        onChange={browse.setGroup}
-      />
 
       <SharedDomainsFilterBar browse={browse} searchInputRef={searchInputRef} />
 
