@@ -4,6 +4,7 @@ import { Mail } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
+import { LegalConsentLine } from "@/components/auth/legal-consent-line";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -84,6 +85,7 @@ export default function CompleteSignupForm({
       <Button type="submit" isDisabled={pending} className="mt-2">
         {pending ? "Verifying…" : "Continue"}
       </Button>
+      <LegalConsentLine action="continuing" className="text-center" />
     </form>
   );
 }

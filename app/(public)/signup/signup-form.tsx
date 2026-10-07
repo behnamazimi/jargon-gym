@@ -2,9 +2,9 @@
 
 import { Mail } from "lucide-react";
 import Link from "next/link";
-import { PRIVACY_PATH, TERMS_PATH } from "@/lib/site";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
+import { LegalConsentLine } from "@/components/auth/legal-consent-line";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
@@ -72,6 +72,7 @@ export default function SignupForm({
         className="-ml-2 self-start"
       />
       <h1 className="text-2xl font-medium">Sign up</h1>
+      <LegalConsentLine action="signing up" className="-mt-2" />
 
       <GoogleSignInButton next={next} referenceCode={referenceCode} email={email} />
 
@@ -138,17 +139,6 @@ export default function SignupForm({
         <Button type="submit" isDisabled={pending} className="mt-2 w-full">
           {pending ? "Creating account…" : "Sign up with email"}
         </Button>
-        <p className="m-0 text-center text-xs text-base-content/70">
-          By signing up you agree to the{" "}
-          <Link href={TERMS_PATH} className="underline underline-offset-2">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link href={PRIVACY_PATH} className="underline underline-offset-2">
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </form>
 
       <p className="text-center text-sm text-base-content/70">
