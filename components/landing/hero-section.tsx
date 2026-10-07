@@ -7,7 +7,7 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
       <div className="lg:pt-6">
         {isLoggedIn ? null : (
           <p className="m-0 text-sm text-base-content/70">
-            Free to use, with monthly AI credits. Sign-up is by request.
+            Free to use, with monthly AI credits. Sign-up is by invite.
           </p>
         )}
 
