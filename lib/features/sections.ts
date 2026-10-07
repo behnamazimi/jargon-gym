@@ -57,7 +57,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     layout: "cards",
     id: "ai-and-cost",
     title: "AI and credits",
-    lead: "Quiz, Stories and voices use AI. New accounts get free credits, and limits can change.",
+    lead: "Quiz and Stories use AI. New accounts get free credits, and limits can change.",
     items: [
       {
         icon: "star",
@@ -71,8 +71,8 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       },
       {
         icon: "shield",
-        title: "Voices are free",
-        body: "Spoken clips never use credits.",
+        title: "Voices don't use credits",
+        body: "Spoken clips are free, and switched on for some accounts only.",
       },
     ],
   },
