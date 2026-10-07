@@ -42,6 +42,18 @@ function checkLength(segments: StorySegment[], length: LengthRange) {
   }
 }
 
+/** What the model marked for each term, parts joined: a term split around
+ *  other words ("trek … aan") is marked in several parts and checked as one. */
+function termSurfaces(payload: StoryGenerationPayload): Map<string, string> {
+  const surfaces = new Map<string, string>();
+  for (const paragraph of payload.paragraphs) {
+    for (const raw of paragraph.segments) {
+      if (raw.termId) surfaces.set(raw.termId, `${surfaces.get(raw.termId) ?? ""} ${raw.text}`);
+    }
+  }
+  return surfaces;
+}
+
 export function normalizeStory(
   payload: StoryGenerationPayload,
   terms: StoryTerm[],
@@ -50,6 +62,7 @@ export function normalizeStory(
   const title = checkedTitle(payload.title);
   const termById = new Map(terms.map((term) => [term.id, term]));
   const used = new Set<string>();
+  const surfaces = termSurfaces(payload);
   const paragraphs: StorySegment[][] = [];
 
   for (const rawParagraph of payload.paragraphs) {
@@ -58,7 +71,7 @@ export function normalizeStory(
       if (!raw.text) continue;
       const term = raw.termId ? termById.get(raw.termId) : undefined;
       const core = raw.text.trim();
-      if (term && core && surfaceMatchesTerm(core, term.term)) {
+      if (term && core && surfaceMatchesTerm(surfaces.get(term.id) ?? core, term.term)) {
         const start = raw.text.indexOf(core);
         if (start > 0) pushSegment(segments, { text: raw.text.slice(0, start) });
         pushSegment(segments, { text: core, termId: term.id });

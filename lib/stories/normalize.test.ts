@@ -98,6 +98,27 @@ describe("normalizeStory", () => {
     expect(result.segments[2]).toEqual({ text: " " });
   });
 
+  it("keeps the parts of a term split around other words", () => {
+    const terms = [...TERMS, { id: "t5", term: "aantrekken", definition: "d" }];
+    const result = normalizeStory(
+      payload([
+        { text: "Hij " },
+        { text: "trok", termId: "t5" },
+        { text: " zijn jas " },
+        { text: "aan", termId: "t5" },
+        { text: ". " },
+        { text: "idempotent", termId: "t1" },
+        { text: " " },
+        { text: "sharding", termId: "t4" },
+        { text: " " },
+        { text: "backpressure", termId: "t3" },
+      ]),
+      terms,
+    );
+    expect(result.segments.filter((segment) => segment.termId === "t5")).toHaveLength(2);
+    expect(result.termIds).toContain("t5");
+  });
+
   it("counts a repeated term once", () => {
     const result = normalizeStory(
       payload([
