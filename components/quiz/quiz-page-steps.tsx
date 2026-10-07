@@ -2,7 +2,6 @@
 
 import { AlertCircle } from "lucide-react";
 import { PreparingScene } from "@/components/illustrations/scenes/preparing";
-import { CreditsInsteadButton } from "@/components/settings/credits-instead-button";
 import { QuizQuestionView } from "@/components/quiz/quiz-question";
 import {
   QuizCenteredState,
@@ -13,7 +12,7 @@ import {
 import { QuizPickerStep } from "@/components/quiz/quiz-picker-step";
 import { StudyProgress } from "@/components/read/study/study-progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button, LinkButton } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import type { AiAccessView } from "@/lib/llm/types";
 import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
 import { type useQuizSession } from "@/components/quiz/use-quiz-session";
@@ -126,7 +125,7 @@ export function QuizPickerStepSection({
   );
 }
 
-export function QuizErrorStep({ quiz, ai }: { quiz: UseQuizSessionResult; ai: AiAccessView }) {
+export function QuizErrorStep({ quiz }: { quiz: UseQuizSessionResult }) {
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <QuizPanelHeader
@@ -149,19 +148,6 @@ export function QuizErrorStep({ quiz, ai }: { quiz: UseQuizSessionResult; ai: Ai
           >
             Try again
           </Button>
-          <CreditsInsteadButton
-            ai={ai}
-            reason={quiz.errorReason}
-            onSwitched={quiz.resetQuizState}
-            onError={quiz.setErrorMessage}
-          />
-          {quiz.errorReason === "unavailable" ||
-          quiz.errorReason === "busy" ||
-          quiz.errorReason === "feature-off" ? null : (
-            <LinkButton href="/app/settings?tab=ai" variant="ghost" className="min-h-11">
-              {quiz.errorReason === "credits" ? "Add your own key" : "Check settings"}
-            </LinkButton>
-          )}
         </div>
       </QuizPanelBody>
     </QuizPanel>

@@ -70,7 +70,7 @@ export default async function AdminPersonPage({ params }: PageProps) {
         ) : (
           <p className="m-0 text-sm text-base-content/65">
             {isYou
-              ? "You can't suspend, delete or change the key of your own account."
+              ? "You can't suspend or delete your own account."
               : "Admin accounts can't be suspended or deleted here. Change their role in the database first."}
           </p>
         )}

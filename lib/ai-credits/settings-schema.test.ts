@@ -6,6 +6,7 @@ const valid = {
   monthlyRefill: 30,
   quizCreditsPerQuestion: 1,
   storyCreditsPerTerm: 1,
+  selfTopupAmount: 30,
 };
 
 describe("creditSettingsSchema", () => {

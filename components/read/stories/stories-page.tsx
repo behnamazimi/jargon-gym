@@ -4,7 +4,6 @@ import { AlertCircle } from "lucide-react";
 import { EmptyBoxScene } from "@/components/illustrations/scenes/empty-box";
 import { PreparingScene } from "@/components/illustrations/scenes/preparing";
 import type { StoriesSetupData } from "@/lib/stories/setup";
-import { CreditsInsteadButton } from "@/components/settings/credits-instead-button";
 import { ErrorAlert } from "@/components/shared/error-alert";
 import {
   QuizCenteredState,
@@ -17,7 +16,6 @@ import { StorySetupPanel } from "@/components/read/stories/story-setup-panel";
 import { useStorySession, type StorySession } from "@/components/read/stories/use-story-session";
 import { StudyNoActiveCollectionsState } from "@/components/read/study/study-paused-state";
 import { Button, LinkButton } from "@/components/ui/button";
-import type { AiAccessView } from "@/lib/llm/types";
 import { STORY_MIN_TERMS } from "@/lib/stories/types";
 
 const CARDS_HREF = "/app/read?view=cards";
@@ -57,7 +55,7 @@ function StoriesGeneratingStep() {
   );
 }
 
-function StoriesErrorStep({ session, ai }: { session: StorySession; ai: AiAccessView }) {
+function StoriesErrorStep({ session }: { session: StorySession }) {
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <QuizPanelHeader
@@ -76,12 +74,6 @@ function StoriesErrorStep({ session, ai }: { session: StorySession; ai: AiAccess
           >
             Try again
           </Button>
-          <CreditsInsteadButton
-            ai={ai}
-            reason={session.errorReason}
-            onSwitched={session.backToSetup}
-            onError={session.setErrorMessage}
-          />
           <Button type="button" variant="ghost" onPress={session.backToSetup} className="min-h-11">
             Back to setup
           </Button>
@@ -98,7 +90,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
     case "generating":
       return <StoriesGeneratingStep />;
     case "error":
-      return <StoriesErrorStep session={session} ai={setup.ai} />;
+      return <StoriesErrorStep session={session} />;
     case "reading":
       return session.story ? (
         <StoryReader

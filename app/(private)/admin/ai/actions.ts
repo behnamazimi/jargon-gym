@@ -9,8 +9,7 @@ const REVALIDATE = { revalidate: ["/admin", "/admin/ai", "/admin/ai/credits"] };
 
 const featureSwitchSchema = z.object({ feature: z.enum(["quiz", "story"]), value: z.boolean() });
 
-/** Switches a feature on or off for everyone, including people with their own
- *  key. Only `enabled` is written; the update needs the signed-in admin's own
+/** Switches a feature on or off for everyone. Only `enabled` is written; the update needs the signed-in admin's own
  *  client, since the server role can't change these rows. */
 export async function setAiFeatureEnabled(feature: string, value: boolean) {
   return runAdminAction(async ({ supabase }) => {

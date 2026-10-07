@@ -1,6 +1,6 @@
 /** How the account menus treat AI credits for this user. Decided on the server
  *  without a balance lookup, so ordinary page loads stay cheap. */
-export type AiCreditsMenuMode = "own" | "credits" | "hidden";
+export type AiCreditsMenuMode = "credits" | "hidden";
 
 export type AiCreditsLoad = {
   status: "idle" | "loading" | "ready" | "hidden";
@@ -25,7 +25,6 @@ export function toAiCreditsLoad(result: { remaining: number } | null): AiCredits
 /** The one line the menus show about AI credits, or null to show nothing. */
 export function aiCreditsLine(mode: AiCreditsMenuMode, load: AiCreditsLoad): AiCreditsLine | null {
   if (mode === "hidden") return null;
-  if (mode === "own") return { label: "AI: your own key", tone: "muted" };
 
   if (load.status === "hidden") return null;
   if (load.remaining === null)

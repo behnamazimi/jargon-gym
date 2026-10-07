@@ -93,7 +93,7 @@ describe("generateStory", () => {
     mockedGenerate.mockRejectedValue(apiError(401));
     await expect(generateStory(INPUT)).rejects.toMatchObject({
       kind: "auth",
-      message: expect.stringMatching(/API key was rejected/),
+      message: expect.stringMatching(/Try again/),
     });
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
   });

@@ -65,11 +65,6 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
         body: "New accounts get credits, plus a monthly refill.",
       },
       {
-        icon: "key",
-        title: "Bring your own key",
-        body: "Use a Google or Anthropic key, and Quiz and Stories run on it instead of your credits.",
-      },
-      {
         icon: "shield",
         title: "Voices don't use credits",
         body: "Spoken clips are free, and switched on for some accounts only.",

@@ -2,7 +2,6 @@ import {
   BookOpen,
   Bug,
   Download,
-  KeyRound,
   Monitor,
   Pencil,
   Send,
@@ -25,7 +24,6 @@ const ICONS: Record<FeatureIconKey, LucideIcon> = {
   send: Send,
   monitor: Monitor,
   star: Star,
-  key: KeyRound,
   shield: ShieldCheck,
   bug: Bug,
 };

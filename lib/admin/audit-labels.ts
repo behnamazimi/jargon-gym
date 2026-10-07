@@ -117,12 +117,16 @@ export const DB_AUDIT_ACTIONS = {
     label: "Credits granted",
     describe: (d) => `${text(d.amount) ?? "?"} credits${text(d.note) ? `, "${text(d.note)}"` : ""}`,
   },
+  self_topup_ai_credits: {
+    label: "Credits topped up",
+    describe: (d) => `${text(d.amount) ?? "?"} credits, added by the account itself`,
+  },
   reset_ai_credits: { label: "Usage reset", describe: () => null },
   set_ai_credit_settings: {
     label: "AI credit settings changed",
     describe: (d) => {
       const next = asDetails(d.new ?? null);
-      return `Allowance ${text(next.default_allowance) ?? "?"}, monthly ${text(next.monthly_refill) ?? "?"}, quiz ${text(next.quiz_cost) ?? "?"}, story ${text(next.story_cost) ?? "?"}`;
+      return `Allowance ${text(next.default_allowance) ?? "?"}, monthly ${text(next.monthly_refill) ?? "?"}, quiz ${text(next.quiz_cost) ?? "?"}, story ${text(next.story_cost) ?? "?"}${text(next.self_topup_amount) ? `, top-up ${text(next.self_topup_amount)}` : ""}`;
     },
   },
   set_narration_enabled: {

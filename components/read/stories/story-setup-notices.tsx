@@ -1,4 +1,5 @@
-import { KeyRound } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { TopUpButton } from "@/components/ai-credits/top-up-button";
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
 import { PIECE_LENGTH_LABELS } from "@/components/read/stories/story-setup-fields";
@@ -12,14 +13,10 @@ import {
 } from "@/lib/llm/types";
 
 export function StoryFooterHint({
-  ai,
   use,
-  termCount,
   hasEnoughTerms,
 }: {
-  ai: AiAccessView;
   use: CreditUse;
-  termCount: number;
   hasEnoughTerms: boolean;
 }) {
   if (!hasEnoughTerms) return null;
@@ -40,29 +37,20 @@ export function StoryFooterHint({
       </>
     );
   }
-  if (ai.kind === "own") {
-    return (
-      <>
-        Uses {termCount} terms from this collection · written by {ai.providerLabel}.
-      </>
-    );
-  }
   return null;
 }
 
 function NoLlmAlert({ ai }: { ai: AiAccessView }) {
   const exhausted = ai.kind === "unavailable" && ai.reason === "exhausted";
   return (
-    <Alert variant="destructive" icon={<KeyRound strokeWidth={1.5} />}>
+    <Alert variant="destructive" icon={<Sparkles strokeWidth={1.5} />}>
       <AlertDescription>
         {exhausted
-          ? "You've used your AI credits for now. Add your own key in Settings to keep writing stories."
-          : "Stories are written with an AI provider. Add a provider and API key in Settings."}
+          ? "You've used your AI credits for now. Top up to keep writing stories."
+          : "Stories aren't available right now."}
       </AlertDescription>
       <AlertAction>
-        <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
-          Go to Settings
-        </LinkButton>
+        {exhausted ? <TopUpButton size="sm" variant="outline" /> : null}
         <LinkButton href="/app/read?view=cards" size="sm" variant="ghost">
           Read cards
         </LinkButton>
@@ -94,14 +82,9 @@ function OverBalanceAlert({
             Try {PIECE_LENGTH_LABELS[fitLength]}
           </Button>
         ) : (
-          <>
-            <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
-              Add your own key
-            </LinkButton>
-            <LinkButton href="/app/read?view=cards" size="sm" variant="ghost">
-              Read cards
-            </LinkButton>
-          </>
+          <LinkButton href="/app/read?view=cards" size="sm" variant="ghost">
+            Read cards
+          </LinkButton>
         )}
       </AlertAction>
     </Alert>

@@ -6,7 +6,6 @@ import { createAiTurn } from "@/lib/ai/observability";
 import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { runAiTurn } from "@/lib/ai/observability-server";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
-import { withRunGuard } from "@/lib/ai/run-guard";
 import { runMetered } from "@/lib/ai/run-metered";
 import { quizCost } from "@/lib/ai-credits/costs";
 import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
@@ -32,7 +31,7 @@ export async function getQuizSetupData() {
   }
 
   const [ai, { active: collections, paused }] = await Promise.all([
-    getAiAccessView(auth.supabase, auth.user.id),
+    getAiAccessView(auth.supabase),
     listStudyCollectionState(auth.supabase, auth.user.id),
   ]);
 
@@ -118,21 +117,6 @@ async function generateAiQuizResult(
     return { questions: await generate(), terms, providerLabel };
   }
 
-  if (access.kind === "own") {
-    try {
-      const guarded = await withRunGuard(
-        { admin: createAdminClient(), userId: auth.user.id, feature: "quiz" },
-        generate,
-      );
-      if (guarded.busy) return busyFailure();
-      return { questions: guarded.value, terms, providerLabel };
-    } catch (err) {
-      console.error("AI quiz with own key failed:", err);
-      trackServer(auth.user.id, "ai_generation_failed", { feature: "quiz", using_credits: false });
-      return quizFailure(err, false);
-    }
-  }
-
   try {
     const outcome = await runMetered(
       {
@@ -153,7 +137,7 @@ async function generateAiQuizResult(
   } catch (err) {
     console.error("AI quiz with credits failed:", err);
     trackServer(auth.user.id, "ai_generation_failed", { feature: "quiz", using_credits: true });
-    return quizFailure(err, true);
+    return quizFailure(err);
   }
 }
 

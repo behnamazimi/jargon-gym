@@ -42,7 +42,7 @@ function layout({ heading, paragraphs, button }: Layout): { text: string; html: 
   return { text, html };
 }
 
-function build(subject: string, content: Layout): RequestEmail {
+export function build(subject: string, content: Layout): RequestEmail {
   return { subject, ...layout(content) };
 }
 

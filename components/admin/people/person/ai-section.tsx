@@ -13,15 +13,6 @@ export function AiSection({ person }: { person: AdminPerson }) {
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-base-300 px-4 py-4">
-      <div className="flex flex-col gap-1">
-        <h3 className="m-0 text-sm font-semibold">Their AI setup</h3>
-        <p className="m-0 text-sm text-base-content/65">
-          {person.key
-            ? `Uses their own ${person.key.provider} key, ending in ${person.key.last4}.`
-            : "No key of their own. AI runs on the app's key, spending credits."}
-        </p>
-      </div>
-
       <div className="flex flex-col gap-2">
         <h3 className="m-0 text-sm font-semibold">AI credits</h3>
         <p className="m-0 text-sm text-base-content/65">

@@ -9,7 +9,6 @@ export type StudyPhoneUserSettings = {
   timezone: string | null;
   currentStreak: number;
   longestStreak: number;
-  hasOwnKey: boolean;
 };
 
 /** The signed-in user's settings row, read once per request for every piece
@@ -21,7 +20,7 @@ export const getRequestUserSettingsRow = cache(async function getRequestUserSett
   const { data, error } = await client
     .from("user_settings")
     .select(
-      "timezone, current_streak, longest_streak, provider, api_key_last4, tour_status, tour_seen, analytics_consent, analytics_consent_at, analytics_consent_version, promo_seen, promo_dismissed, term_layout, created_at",
+      "timezone, current_streak, longest_streak, tour_status, tour_seen, analytics_consent, analytics_consent_at, analytics_consent_version, promo_seen, promo_dismissed, term_layout, created_at",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -34,13 +33,12 @@ export const getStudyPhoneUserSettings = cache(async function getStudyPhoneUserS
   userId: string,
 ): Promise<StudyPhoneUserSettings> {
   const data = await getRequestUserSettingsRow(userId);
-  if (!data) return { timezone: null, currentStreak: 0, longestStreak: 0, hasOwnKey: false };
+  if (!data) return { timezone: null, currentStreak: 0, longestStreak: 0 };
 
   return {
     timezone: data.timezone,
     currentStreak: data.current_streak,
     longestStreak: data.longest_streak,
-    hasOwnKey: Boolean(data.provider && data.api_key_last4),
   };
 });
 

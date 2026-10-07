@@ -2,15 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  deleteUser,
-  removeUserApiKey,
-  setUserSuspended,
-} from "@/app/(private)/admin/people/[id]/actions";
+import { deleteUser, setUserSuspended } from "@/app/(private)/admin/people/[id]/actions";
 import { ReasonConfirmDialog } from "@/components/admin/reason-confirm-dialog";
 import type { AdminPerson } from "@/lib/admin/people/person";
 
-type Asking = "suspend" | "reactivate" | "key" | "delete" | null;
+type Asking = "suspend" | "reactivate" | "delete" | null;
 
 function DangerRow({
   title,
@@ -61,20 +57,10 @@ function DangerDialogs({
         />
       ) : null}
 
-      {asking === "key" ? (
-        <ReasonConfirmDialog
-          title="Remove their API key?"
-          description={`${person.email} loses their saved key. They can save a new one in settings.`}
-          confirmLabel="Remove key"
-          onSubmit={({ reason }) => removeUserApiKey({ userId: person.id, reason })}
-          onClose={onClose}
-        />
-      ) : null}
-
       {asking === "delete" ? (
         <ReasonConfirmDialog
           title="Delete this account?"
-          description={`This can't be undone. It deletes ${person.email}, their progress, settings, key and ${person.ownedCollections} ${person.ownedCollections === 1 ? "collection" : "collections"}.`}
+          description={`This can't be undone. It deletes ${person.email}, their progress, settings and ${person.ownedCollections} ${person.ownedCollections === 1 ? "collection" : "collections"}.`}
           confirmLabel="Delete account"
           confirmText={person.email}
           onSubmit={({ reason, typed }) =>
@@ -120,24 +106,6 @@ export function DangerZone({ person }: { person: AdminPerson }) {
           onClick={() => setAsking(suspended ? "reactivate" : "suspend")}
         >
           {suspended ? "Reactivate" : "Suspend"}
-        </button>
-      </DangerRow>
-
-      <DangerRow
-        title="Remove their API key"
-        text={
-          person.key
-            ? "They fall back to the app's key and spend credits until they save a key again."
-            : "They have no key saved."
-        }
-      >
-        <button
-          type="button"
-          className="btn btn-error btn-outline btn-sm"
-          disabled={!person.key}
-          onClick={() => setAsking("key")}
-        >
-          Remove key
         </button>
       </DangerRow>
 

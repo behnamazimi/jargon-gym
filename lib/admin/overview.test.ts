@@ -33,7 +33,6 @@ const summary: AiCreditSummary = {
   totalUsers: 10,
   usersWithUse: 4,
   usersExhausted: 0,
-  usersWithOwnKey: 1,
   creditsSpent: 50,
   spends24h: 10,
   refunds24h: 0,

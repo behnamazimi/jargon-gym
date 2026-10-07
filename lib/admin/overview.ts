@@ -103,7 +103,7 @@ function creditItems(input: OverviewInput): AttentionItem[] {
       id: "credits-off",
       tone: "warning",
       title: "AI credits are switched off",
-      detail: "Only people with their own key can use AI quizzes and Stories.",
+      detail: "Nobody can use AI quizzes and Stories, and the Top up button is hidden.",
       href: "/admin/ai/credits",
     });
   }

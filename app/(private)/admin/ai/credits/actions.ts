@@ -41,6 +41,7 @@ export async function saveAiCreditSettings(input: CreditSettingsInput) {
       p_monthly_refill: parsed.data.monthlyRefill,
       p_quiz_cost: parsed.data.quizCreditsPerQuestion,
       p_story_cost: parsed.data.storyCreditsPerTerm,
+      p_self_topup_amount: parsed.data.selfTopupAmount,
     });
     if (error) throw error;
   }, REVALIDATE);

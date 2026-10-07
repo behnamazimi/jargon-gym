@@ -28,7 +28,7 @@ vi.mock("@/lib/auth/require-session", () => ({
   }),
 }));
 
-const { deleteUser, removeUserApiKey, setUserSuspended } = await import("./actions");
+const { deleteUser, setUserSuspended } = await import("./actions");
 
 const ID = "3f2b8c1e-0a4d-4c55-9d1e-7a6b5c4d3e2f";
 const GENERIC = "Something went wrong. Try again.";
@@ -84,23 +84,6 @@ describe("setUserSuspended", () => {
     expect(await setUserSuspended({ userId: ID, suspended: true, reason: "x" })).toEqual({
       ok: false,
       error: GENERIC,
-    });
-  });
-});
-
-describe("removeUserApiKey", () => {
-  it("calls the database function with the reason", async () => {
-    await removeUserApiKey({ userId: ID, reason: "asked to" });
-    expect(state.rpcCalls).toEqual([
-      { name: "admin_remove_user_api_key", args: { p_user_id: ID, p_reason: "asked to" } },
-    ]);
-  });
-
-  it("passes on 'no key saved'", async () => {
-    state.rpcError = { code: "AD001", message: "No API key is saved for this account." };
-    expect(await removeUserApiKey({ userId: ID, reason: "x" })).toEqual({
-      ok: false,
-      error: "No API key is saved for this account.",
     });
   });
 });

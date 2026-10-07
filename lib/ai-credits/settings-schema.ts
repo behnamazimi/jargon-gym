@@ -5,6 +5,7 @@ export const creditSettingsSchema = z.object({
   monthlyRefill: z.number().int().min(0).max(1_000_000),
   quizCreditsPerQuestion: z.number().int().min(1).max(1000),
   storyCreditsPerTerm: z.number().int().min(1).max(1000),
+  selfTopupAmount: z.number().int().min(1).max(10_000),
 });
 
 export type CreditSettingsInput = z.infer<typeof creditSettingsSchema>;

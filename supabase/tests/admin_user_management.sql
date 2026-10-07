@@ -46,7 +46,6 @@ declare
 begin
   -- Privileges: nothing is callable by anon or through the helpers.
   assert not has_function_privilege('anon', 'public.admin_set_user_suspended(uuid,boolean,text)', 'execute'), 'anon suspend';
-  assert not has_function_privilege('anon', 'public.admin_remove_user_api_key(uuid,text)', 'execute'), 'anon remove key';
   assert not has_function_privilege('anon', 'public.admin_delete_user(uuid,text,text)', 'execute'), 'anon delete';
   assert not has_function_privilege('anon', 'public.admin_person_detail(uuid)', 'execute'), 'anon detail';
   assert has_function_privilege('authenticated', 'public.admin_delete_user(uuid,text,text)', 'execute'), 'authenticated delete';
@@ -56,13 +55,10 @@ begin
   assert not has_table_privilege('authenticated', 'public.users', 'update'), 'users updatable by clients';
   assert not has_column_privilege('authenticated', 'public.users', 'suspended_at', 'update'), 'suspended_at updatable by clients';
 
-  -- Fixtures: the member owns a private and a shared collection, has a key, a session, a telegram link and a widget token.
+  -- Fixtures: the member owns a private and a shared collection, has a session, a telegram link and a widget token.
   insert into public.domains (name, owner_id) values ('UM Private', member_id) returning id into d_priv;
   insert into public.domains (name, owner_id, visibility) values ('UM Shared', member_id, 'shared') returning id into d_shared;
   insert into public.terms (domain_id, term, category, definition) values (d_shared, 'um-term', 'c', 'd') returning id into t_shared;
-  insert into public.user_settings (user_id, provider, api_key_encrypted, api_key_last4)
-  values (member_id, 'google', 'enc', '1234')
-  on conflict (user_id) do update set provider = 'google', api_key_encrypted = 'enc', api_key_last4 = '1234';
   insert into auth.sessions (id, user_id) values (gen_random_uuid(), member_id);
   insert into public.telegram_links (user_id, chat_id, cadence, linked_at) values (member_id, 987654321, '6h', now());
 
@@ -81,9 +77,6 @@ begin
   v_failed := false;
   begin perform public.admin_set_user_suspended(member_id, true, 'x'); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member suspended a member';
-  v_failed := false;
-  begin perform public.admin_remove_user_api_key(member_id, 'x'); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
-  assert v_failed, 'member removed a key';
   v_failed := false;
   begin perform public.admin_delete_user(member_id, 'um-member@example.test', 'x'); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member deleted a member';
@@ -108,9 +101,6 @@ begin
   begin perform public.admin_delete_user(admin_id, 'um-admin@example.test', 'x'); exception when sqlstate 'AD001' then v_failed := true; end;
   assert v_failed, 'an admin deleted themselves';
   v_failed := false;
-  begin perform public.admin_remove_user_api_key(admin_id, 'x'); exception when sqlstate 'AD001' then v_failed := true; end;
-  assert v_failed, 'an admin removed their own key';
-  v_failed := false;
   begin perform public.admin_set_user_suspended(admin2_id, true, 'x'); exception when sqlstate 'AD001' then v_failed := sqlerrm like 'Admin accounts%'; end;
   assert v_failed, 'an admin suspended another admin';
   v_failed := false;
@@ -126,9 +116,6 @@ begin
     begin perform public.admin_set_user_suspended(member_id, true, v_msg); exception when sqlstate 'AD001' then v_failed := true; end;
     assert v_failed, 'a bad reason was accepted for suspend';
     v_failed := false;
-    begin perform public.admin_remove_user_api_key(member_id, v_msg); exception when sqlstate 'AD001' then v_failed := true; end;
-    assert v_failed, 'a bad reason was accepted for key removal';
-    v_failed := false;
     begin perform public.admin_delete_user(member_id, 'um-member@example.test', v_msg); exception when sqlstate 'AD001' then v_failed := true; end;
     assert v_failed, 'a bad reason was accepted for delete';
   end loop;
@@ -136,7 +123,7 @@ begin
   assert (select count(*) from public.admin_audit_log where actor_id = admin_id) = 0, 'refused calls left audit rows';
 
   -- Detail.
-  assert (select d.suspended_at is null and not d.ban_mismatch and d.key_provider = 'google' and d.key_last4 = '1234'
+  assert (select d.suspended_at is null and not d.ban_mismatch
                  and d.owned_collections = 2 and d.people_using_collections = 0
           from public.admin_person_detail(member_id) d), 'detail before';
   assert not exists (select 1 from public.admin_person_detail(gen_random_uuid())), 'detail for a missing account returned a row';
@@ -183,18 +170,6 @@ begin
   execute 'reset role';
   assert exists (select 1 from public.list_due_telegram_users() where user_id = member_id), 'reactivated person not due';
   perform pg_temp.act_as(admin_id);
-
-  -- Remove the API key: all three columns together, once.
-  perform public.admin_remove_user_api_key(member_id, 'asked to');
-  execute 'reset role';
-  assert (select provider is null and api_key_encrypted is null and api_key_last4 is null from public.user_settings where user_id = member_id), 'key kept';
-  perform pg_temp.act_as(admin_id);
-  assert (select details = '{"reason":"asked to","provider":"google"}'::jsonb from public.admin_audit_log where target_id = member_id::text and action = 'remove_user_api_key'), 'key audit row';
-  v_failed := false;
-  begin perform public.admin_remove_user_api_key(member_id, 'again'); exception when sqlstate 'AD001' then v_failed := sqlerrm like 'No API key%'; end;
-  assert v_failed, 'removed a key twice';
-  assert (select count(*) from public.admin_audit_log where target_id = member_id::text and action = 'remove_user_api_key') = 1, 'a failed removal was audited';
-  assert (select d.key_provider is null and d.key_last4 is null from public.admin_person_detail(member_id) d), 'detail still shows a key';
 
   -- Delete is refused while another person uses the collections, one way at a time.
   execute 'reset role';

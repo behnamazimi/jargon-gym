@@ -32,8 +32,8 @@ describe("quizCreditUse", () => {
     });
   });
 
-  it("charges nothing for a user on their own key", () => {
-    const own: AiAccessView = { kind: "own", providerLabel: "Anthropic", creditsRemaining: 50 };
-    expect(quizCreditUse("ai", own, 10)).toMatchObject({ credits: null, overBalance: false });
+  it("charges nothing when AI is unavailable", () => {
+    const none: AiAccessView = { kind: "unavailable", reason: "exhausted" };
+    expect(quizCreditUse("ai", none, 10)).toMatchObject({ credits: null, overBalance: false });
   });
 });

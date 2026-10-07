@@ -7,20 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type StatusVariant = "connected" | "pending" | "disconnected" | "credits";
+type StatusVariant = "connected" | "pending" | "disconnected";
 
 const STATUS_LABELS: Record<StatusVariant, string> = {
   connected: "Connected",
   pending: "Link pending",
   disconnected: "Not connected",
-  credits: "AI credits",
 };
 
 const STATUS_DOT_CLASS: Record<StatusVariant, string> = {
   connected: "bg-success",
   pending: "bg-warning",
   disconnected: "bg-base-content/30",
-  credits: "bg-info",
 };
 
 export function StatusPill({ variant }: { variant: StatusVariant }) {

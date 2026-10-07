@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
-  access: { kind: "own", provider: "google", apiKey: "k" } as Record<string, unknown>,
-  guardBusy: false,
-  guardCalls: [] as unknown[],
+  access: {} as Record<string, unknown>,
   meteredOutcome: { charged: true, value: ["q"], remaining: 5 } as Record<string, unknown>,
   meteredCalls: 0,
   meteredCosts: [] as number[],
@@ -30,13 +28,6 @@ vi.mock("@/lib/llm/access", () => ({
   resolveAiAccess: async () => state.access,
   getAiAccessView: async () => ({}),
 }));
-vi.mock("@/lib/ai/run-guard", () => ({
-  withRunGuard: async (input: unknown, run: () => Promise<unknown>) => {
-    state.guardCalls.push(input);
-    if (state.guardBusy) return { busy: true };
-    return { busy: false, value: await run() };
-  },
-}));
 vi.mock("@/lib/ai/run-metered", () => ({
   runMetered: async (input: { cost: number }) => {
     state.meteredCalls += 1;
@@ -50,9 +41,13 @@ const { generateQuizAction } = await import("./actions");
 const input = { domainIds: "all" as const, questionCount: 5, questionStyle: "ai" as never };
 
 beforeEach(() => {
-  state.access = { kind: "own", provider: "google", apiKey: "k" };
-  state.guardBusy = false;
-  state.guardCalls = [];
+  state.access = {
+    kind: "credits",
+    provider: "google",
+    apiKey: "central",
+    remaining: 50,
+    costs: { quizPerQuestion: 1, storyPerTerm: 1 },
+  };
   state.meteredOutcome = { charged: true, value: ["q"], remaining: 5 };
   state.meteredCalls = 0;
   state.meteredCosts = [];
@@ -61,34 +56,7 @@ beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => undefined);
 });
 
-describe("generateQuizAction on the user's own key", () => {
-  it("runs inside the run guard for the quiz feature", async () => {
-    const result = await generateQuizAction(input);
-    expect(result).toMatchObject({ questions: ["q"] });
-    expect(state.guardCalls).toEqual([expect.objectContaining({ userId: "u1", feature: "quiz" })]);
-    expect(state.meteredCalls).toBe(0);
-  });
-
-  it("refuses a duplicate request without generating or charging", async () => {
-    state.guardBusy = true;
-    const result = await generateQuizAction(input);
-    expect(result).toMatchObject({ reason: "busy" });
-    expect(state.generate).not.toHaveBeenCalled();
-    expect(state.meteredCalls).toBe(0);
-  });
-});
-
 describe("generateQuizAction on AI credits", () => {
-  beforeEach(() => {
-    state.access = {
-      kind: "credits",
-      provider: "google",
-      apiKey: "central",
-      remaining: 50,
-      costs: { quizPerQuestion: 1, storyPerTerm: 1 },
-    };
-  });
-
   it("charges through runMetered", async () => {
     expect(await generateQuizAction(input)).toMatchObject({ questions: ["q"] });
     expect(state.meteredCalls).toBe(1);
@@ -100,11 +68,10 @@ describe("generateQuizAction on AI credits", () => {
     expect(state.meteredCosts).toEqual([3]);
   });
 
-  it("neither charges nor runs the guard when the model has nothing to write", async () => {
+  it("does not charge when the model has nothing to write", async () => {
     state.slotCount = 0;
     expect(await generateQuizAction(input)).toMatchObject({ questions: ["q"] });
     expect(state.meteredCalls).toBe(0);
-    expect(state.guardCalls).toEqual([]);
     expect(state.generate).toHaveBeenCalledTimes(1);
   });
 
@@ -119,7 +86,6 @@ describe("generateQuizAction question limits", () => {
     const result = await generateQuizAction({ ...input, questionCount: 11 });
     expect(result).toMatchObject({ error: "AI quizzes are limited to 10 questions." });
     expect(state.generate).not.toHaveBeenCalled();
-    expect(state.guardCalls).toEqual([]);
   });
 
   it("accepts exactly 10 for AI", async () => {
@@ -139,7 +105,7 @@ describe("generateQuizAction question limits", () => {
 });
 
 describe("generateQuizAction when the feature is unavailable", () => {
-  it("says so without pointing own-key users at a key", async () => {
+  it("says so when the feature is off", async () => {
     state.access = { kind: "unavailable", reason: "feature-off" };
     const result = await generateQuizAction(input);
     expect(result).toMatchObject({ reason: "feature-off" });

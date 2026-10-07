@@ -31,8 +31,6 @@ export type AdminPerson = {
   currentStreak: number;
   longestStreak: number;
   lastActiveDate: string | null;
-  /** Only the provider and the last four characters ever leave the database. */
-  key: { provider: string; last4: string } | null;
   ownedCollections: number;
   /** Other people with something that would be deleted along with this person's collections. */
   peopleUsingCollections: number;
@@ -93,8 +91,6 @@ async function listLedger(client: Client, userId: string): Promise<PersonLedgerR
   }));
 }
 
-type Detail = Database["public"]["Functions"]["admin_person_detail"]["Returns"][number];
-
 function readCredits(balance: { data: unknown; error: unknown }): AdminPerson["credits"] {
   if (balance.error) {
     console.error("Couldn't read an AI credit balance:", balance.error);
@@ -102,12 +98,6 @@ function readCredits(balance: { data: unknown; error: unknown }): AdminPerson["c
   }
   const row = (balance.data as { remaining: number; total: number }[] | null)?.[0];
   return row ? { remaining: row.remaining, total: row.total } : null;
-}
-
-function readKey(info: Detail): AdminPerson["key"] {
-  return info.key_provider && info.key_last4
-    ? { provider: info.key_provider, last4: info.key_last4 }
-    : null;
 }
 
 /** One person for their page. Their balance is only readable with the server's own
@@ -158,7 +148,6 @@ export async function getPerson(
     currentStreak: info.current_streak,
     longestStreak: info.longest_streak,
     lastActiveDate: info.last_active_date,
-    key: readKey(info),
     ownedCollections: info.owned_collections,
     peopleUsingCollections: info.people_using_collections,
     credits: readCredits(balance),

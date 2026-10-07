@@ -8,7 +8,6 @@ import { createAiTurn } from "@/lib/ai/observability";
 import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { runAiTurn } from "@/lib/ai/observability-server";
 import { recordRead } from "@/lib/terms/review-outcome";
-import { withRunGuard } from "@/lib/ai/run-guard";
 import { runMetered } from "@/lib/ai/run-metered";
 import { storyCost } from "@/lib/ai-credits/costs";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
@@ -79,7 +78,6 @@ export async function generateStoryAction(input: {
   const levels = { readingLevel, cefrLevel, pieceLength };
   const userId = auth.user.id;
   const admin = createAdminClient();
-  let usingCredits = false;
 
   try {
     const access = await resolveAiAccess(auth.supabase, admin, userId, "story");
@@ -87,7 +85,6 @@ export async function generateStoryAction(input: {
       trackServer(userId, "ai_generation_blocked", { feature: "story", reason: access.reason });
       return noAiFailure(access.reason, "write stories");
     }
-    usingCredits = access.kind === "credits";
 
     await savePrefs(admin, userId, domainId, levels);
 
@@ -149,29 +146,22 @@ export async function generateStoryAction(input: {
       return { story, usedIds };
     };
 
-    let produced: Awaited<ReturnType<typeof produce>>;
-    if (access.kind === "credits") {
-      const outcome = await runMetered(
-        {
-          admin,
-          userId,
-          feature: "story",
-          cost: storyCost(cards.length, access.costs),
-        },
-        produce,
-      );
-      if (!outcome.charged) {
-        if (outcome.reason !== "busy") {
-          trackServer(userId, "ai_generation_blocked", { feature: "story", reason: "credits" });
-        }
-        return outcome.reason === "busy" ? busyFailure() : creditsRefusedFailure(outcome, "story");
+    const outcome = await runMetered(
+      {
+        admin,
+        userId,
+        feature: "story",
+        cost: storyCost(cards.length, access.costs),
+      },
+      produce,
+    );
+    if (!outcome.charged) {
+      if (outcome.reason !== "busy") {
+        trackServer(userId, "ai_generation_blocked", { feature: "story", reason: "credits" });
       }
-      produced = outcome.value;
-    } else {
-      const guarded = await withRunGuard({ admin, userId, feature: "story" }, produce);
-      if (guarded.busy) return busyFailure();
-      produced = guarded.value;
+      return outcome.reason === "busy" ? busyFailure() : creditsRefusedFailure(outcome, "story");
     }
+    const produced = outcome.value;
 
     // The story already exists, so tidying older ones must not fail the request.
     await dismissUnreadStories(admin, userId, { keepStoryId: produced.story.id }).catch(
@@ -187,7 +177,7 @@ export async function generateStoryAction(input: {
       language: collection.language,
       has_outline: outline !== null,
       term_count: produced.usedIds.size,
-      billing: usingCredits ? "credits" : "own_key",
+      billing: "credits",
     });
 
     return {
@@ -195,8 +185,8 @@ export async function generateStoryAction(input: {
       terms: terms.filter((term) => produced.usedIds.has(term.id)),
     };
   } catch (err) {
-    trackServer(userId, "ai_generation_failed", { feature: "story", using_credits: usingCredits });
-    return storyFailure(err, usingCredits);
+    trackServer(userId, "ai_generation_failed", { feature: "story", using_credits: true });
+    return storyFailure(err);
   }
 }
 

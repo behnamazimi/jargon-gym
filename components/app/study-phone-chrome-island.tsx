@@ -23,7 +23,7 @@ export async function StudyPhoneChromeIsland({ initialIsDark }: { initialIsDark:
         initialIsDark={initialIsDark}
         currentStreak={settings.currentStreak}
         longestStreak={settings.longestStreak}
-        aiCreditsMode={aiCreditsMenuMode(settings.hasOwnKey)}
+        aiCreditsMode={aiCreditsMenuMode()}
       >
         <StudyPhoneTopBar />
         <StudyPhoneDock />

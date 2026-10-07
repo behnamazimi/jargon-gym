@@ -79,8 +79,6 @@ const detail = {
   current_streak: 3,
   longest_streak: 9,
   last_active_date: "2026-09-29",
-  key_provider: "google",
-  key_last4: "1234",
   owned_collections: 2,
   people_using_collections: 1,
 };
@@ -128,7 +126,6 @@ describe("getPerson", () => {
       currentStreak: 3,
       longestStreak: 9,
       lastActiveDate: "2026-09-29",
-      key: { provider: "google", last4: "1234" },
       ownedCollections: 2,
       peopleUsingCollections: 1,
       credits: { remaining: 100, total: 130 },
@@ -149,14 +146,6 @@ describe("getPerson", () => {
         },
       ],
     });
-  });
-
-  it("has no key when none is saved", async () => {
-    const { client, service } = clients({
-      user,
-      detail: [{ ...detail, key_provider: null, key_last4: null }],
-    });
-    expect((await getPerson(client, service, "u1"))?.key).toBeNull();
   });
 
   it("derives the waitlist state, and includes the request in the history", async () => {

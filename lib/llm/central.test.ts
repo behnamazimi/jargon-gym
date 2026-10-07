@@ -30,15 +30,10 @@ describe("getCentralLlmConfig", () => {
 });
 
 describe("aiCreditsMenuMode", () => {
-  it("mentions the user's own key first", () => {
-    vi.stubEnv("CENTRAL_LLM_API_KEY", "key");
-    expect(aiCreditsMenuMode(true)).toBe("own");
-  });
-
   it("offers credits only when the app's key is set up", () => {
     vi.stubEnv("CENTRAL_LLM_API_KEY", "key");
-    expect(aiCreditsMenuMode(false)).toBe("credits");
+    expect(aiCreditsMenuMode()).toBe("credits");
     vi.stubEnv("CENTRAL_LLM_API_KEY", "");
-    expect(aiCreditsMenuMode(false)).toBe("hidden");
+    expect(aiCreditsMenuMode()).toBe("hidden");
   });
 });
