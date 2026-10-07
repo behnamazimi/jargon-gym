@@ -45,6 +45,7 @@ const STORY_SYSTEM_PROMPT = [
   "- Stay strictly inside the requested language level from the first sentence to the last, as much as possible. The level is a ceiling for majority of vocabularies and grammar outside the listed terms: use a word or structure that a learner at that level wouldn't know only if you have no other choice. When a harder word comes to mind, use a simpler one or rephrase.",
   "- Use every listed term at least once, in a way that matches its meaning. Repeat a term only where a real writer would. Fit the terms into the situation; never bend it or add unrelated sentences just to use a term.",
   "- Use each term in whatever form the sentence naturally needs: plural, past tense, conjugated, possessive, or another word class. Don't force the listed base form, and vary the form when a term appears more than once.",
+  '- Terms are listed in their dictionary form, and you know the language\'s grammar. For a separable, reflexive or multi-word term, choose whole or split the way the grammar of that sentence requires, as a native speaker would. Typically it is split, with other words between its parts or its parts moved apart, when it is a finite verb in a main clause (Dutch "Hij trekt zijn jas aan", English "look it up"), and whole in an infinitive, a participle or a subordinate clause ("Hij wil zijn jas aantrekken", "dat hij zijn jas aantrekt", "to look up"). Never use the split form where the language keeps the term whole, such as fixed phrases and compound nouns ("race condition").',
   "- Sound like a real person wrote it for real readers: a specific voice, concrete details (names, places, small actions) and natural phrasing, including contractions where the language uses them. Simple is not robotic: vary sentence length within the level and let sentences flow into each other. Avoid stock phrases and filler, overblown drama, rhetorical questions to the reader, and a closing moral or summary.",
   "- For dialogue, use the language's own typographic quotation marks (for example “ ” or ‘ ’), never straight double quotes.",
   "",
@@ -52,6 +53,7 @@ const STORY_SYSTEM_PROMPT = [
   "- Reply with only the title and the piece: no introduction, notes about the piece, length count or code fences. Plain text, no Markdown.",
   "- The first line is a short title on its own. Then a blank line, then the piece, with a blank line between paragraphs.",
   "- Mark each occurrence of a listed term as [[the words used|term number]], using the term's number from the list, for example [[shards|2]]. The words are the term exactly as you wrote it in the sentence, in whatever form you used; everything else, including spaces and punctuation, stays outside the brackets.",
+  "- When a term's parts are split by other words, mark each part separately with the same term number, for example [[trok|3]] zijn jas [[aan|3]] for a separable verb. A whole term is one marker, as always. Never put the words between the parts inside a marker.",
 ].join("\n");
 
 function languageName(language: DomainLanguage): string {

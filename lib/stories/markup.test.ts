@@ -17,6 +17,17 @@ describe("parseStoryText", () => {
     ]);
   });
 
+  it("reads the parts of a split term as separate segments of the same term", () => {
+    const result = parseStoryText("Title\n\nHe [[put|1]] his coat [[on|1]] fast.", TERMS);
+    expect(result.paragraphs[0].segments).toEqual([
+      { text: "He " },
+      { text: "put", termId: "t1" },
+      { text: " his coat " },
+      { text: "on", termId: "t1" },
+      { text: " fast." },
+    ]);
+  });
+
   it("turns markers into term segments and keeps the text around them exactly", () => {
     const result = parseStoryText("# Title\n\nWe [[sharded|2]] it.Then [[idempotent|1]]!", TERMS);
     expect(result.title).toBe("Title");

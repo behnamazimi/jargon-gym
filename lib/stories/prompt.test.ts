@@ -103,6 +103,8 @@ describe("buildStoryPrompt", () => {
     expect(system).toContain("Sound like a real person wrote it");
     expect(system).toContain("never straight double quotes");
     expect(system).toContain("[[the words used|term number]]");
+    expect(system).toContain("mark each part separately with the same term number");
+    expect(system).toContain("separable, reflexive or multi-word term, choose whole or split");
     expect(system).toContain("no introduction, notes about the piece, length count or code fences");
     expect(system).not.toContain("Distributed Systems");
     expect(system).toContain(

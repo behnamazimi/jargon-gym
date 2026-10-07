@@ -35,6 +35,18 @@ describe("buildTimeline", () => {
     ]);
   });
 
+  it("keeps the parts of a split term in one sentence", () => {
+    expect(
+      sentenceTexts([
+        { text: "Hij " },
+        { text: "trok", termId: "t1" },
+        { text: " zijn jas " },
+        { text: "aan", termId: "t1" },
+        { text: ". Toen ging hij weg." },
+      ]),
+    ).toEqual([["Hij trok zijn jas aan. ", "Toen ging hij weg."]]);
+  });
+
   it("keeps a term whole and in its sentence", () => {
     const segments: StorySegment[] = [
       { text: "The " },
