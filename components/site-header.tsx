@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { BookOpen, LayoutList, Sparkles, Zap } from "lucide-react";
+import { BadgeQuestionMark, BookOpenText, LayoutList, PlayingCardsFan } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/settings/profile-menu";
@@ -76,17 +76,17 @@ export function SiteHeader({
             />
             <HeaderStudyLink
               href="/app/read"
-              icon={<Zap className="h-4 w-4" strokeWidth={1.5} />}
+              icon={<BookOpenText className="h-4 w-4" strokeWidth={1.5} />}
               label="Read"
             />
             <HeaderStudyLink
               href="/app/review"
-              icon={<BookOpen className="h-4 w-4" strokeWidth={1.5} />}
+              icon={<PlayingCardsFan className="h-4 w-4" strokeWidth={1.5} />}
               label="Review"
             />
             <HeaderStudyLink
               href="/app/quiz"
-              icon={<Sparkles className="h-4 w-4" strokeWidth={1.5} />}
+              icon={<BadgeQuestionMark className="h-4 w-4" strokeWidth={1.5} />}
               label="Quiz"
             />
           </SignedInHeaderNav>
