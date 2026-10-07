@@ -30,7 +30,6 @@ type ReviewPageProps = {
   paused: PausedStudyCollection[];
   domainId: string;
   narrationAccess: boolean;
-  canEvaluateTerms: boolean;
 };
 
 function stripReviewDomainParam() {
@@ -57,7 +56,6 @@ export function ReviewPage({
   paused,
   domainId,
   narrationAccess,
-  canEvaluateTerms,
 }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
   const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
@@ -233,7 +231,6 @@ export function ReviewPage({
       errorMessage={errorMessage ?? queue.errorMessage}
       reduceMotion={reduceMotion}
       narrationAccess={narrationAccess}
-      canEvaluateTerms={canEvaluateTerms}
       collectionControl={collectionControl}
       onReveal={handleReveal}
       onPrevious={handlePrevious}

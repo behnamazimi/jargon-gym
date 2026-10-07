@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { computeTermEvalHash } from "@/lib/terms/term-eval/content-hash";
 import { computeContentHash } from "@/lib/narration/content-hash";
 import { computeContentHashV2, computeTermOnlyHash } from "@/lib/narration/content-hash-v2";
 
 // These values were computed before category and definition became nullable.
-// If one changes, every cached narration or evaluation is thrown away.
+// If one changes, every cached narration is thrown away.
 const narrated = {
   term: "SLA",
   definition: "A promised level of service",
@@ -12,18 +11,6 @@ const narrated = {
   mental_model: null,
   discussion: null,
   anti_example: null,
-  controversy: null,
-};
-
-const evalTerm = {
-  domainName: "Legal",
-  term: "SLA",
-  category: "Contracts",
-  definition: "A promised level of service",
-  example: "Ex",
-  mentalModel: null,
-  discussion: null,
-  antiExample: null,
   controversy: null,
 };
 
@@ -43,18 +30,6 @@ describe("content hashes stay put for existing terms", () => {
   it("narration term only", () => {
     expect(computeTermOnlyHash("SLA", "nl")).toBe(
       "0cf7ffc7b405437f4f2d985e3118209946ca50160a4c53f966b4892e49b5c60a",
-    );
-  });
-
-  it("evaluation", () => {
-    expect(computeTermEvalHash(evalTerm)).toBe(
-      "4398016ba1cfded193c516ae3eff78945c899b9873055743e83d25882bb3fb4d",
-    );
-  });
-
-  it("evaluation treats a missing category like an empty one", () => {
-    expect(computeTermEvalHash({ ...evalTerm, category: null })).toBe(
-      computeTermEvalHash({ ...evalTerm, category: "" }),
     );
   });
 });

@@ -190,7 +190,7 @@ where kind = 'spend'
 ## Feature settings
 
 `ai_feature_settings` has one row per AI feature (`quiz`, `story`,
-`term_evaluation`, `narration_term`, `narration_story`): the on/off switch, who
+`narration_term`, `narration_story`): the on/off switch, who
 may use it (`everyone`, `allowlist`, `admin`), a rolling 24-hour cap, and the
 credit cost. Only billable features (those with a cost) can be written to the
 ledger; the ledger's foreign key and `reserve_ai_credits` both refuse the rest,

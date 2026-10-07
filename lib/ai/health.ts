@@ -17,10 +17,6 @@ export function featureHealth(feature: FeatureId): FeatureHealth {
     case "quiz":
     case "story":
       return getCentralLlmConfig() ? { ok: true } : { ok: false, note: CREDITS_KEY_NOTE };
-    case "term_evaluation": {
-      const note = missing("AI_GATEWAY_API_KEY");
-      return note ? { ok: false, note } : { ok: true };
-    }
     case "narration_term":
     case "narration_story": {
       const note = missing(

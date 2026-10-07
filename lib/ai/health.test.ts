@@ -12,12 +12,7 @@ describe("featureHealth", () => {
     expect(featureHealth("story")).toEqual({ ok: true });
   });
 
-  it("names the missing variables for evaluation and narration", () => {
-    vi.stubEnv("AI_GATEWAY_API_KEY", "");
-    expect(featureHealth("term_evaluation")).toEqual({
-      ok: false,
-      note: "Missing AI_GATEWAY_API_KEY.",
-    });
+  it("names the missing variables for narration", () => {
     vi.stubEnv("MURF_API_KEY", "x");
     const health = featureHealth("narration_term");
     expect(health.ok).toBe(false);

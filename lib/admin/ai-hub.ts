@@ -10,10 +10,10 @@ export type AiSettingsRow = {
 };
 
 /** `mixed`: the two narration features disagree, which only happens if one was changed outside the page. */
-type AiHubState = "on" | "off" | "mixed" | "unknown" | "always-on";
+type AiHubState = "on" | "off" | "mixed" | "unknown";
 
 export type AiHubRow = {
-  id: "quiz" | "story" | "term_evaluation" | "narration";
+  id: "quiz" | "story" | "narration";
   label: string;
   vendor: string;
   sends: string;
@@ -72,22 +72,10 @@ export function buildAiHubRows(
   const term = byFeature.get("narration_term");
   const story = byFeature.get("narration_story");
   const narration = FEATURES.narration_term;
-  const evaluation = FEATURES.term_evaluation;
 
   return [
     credited("quiz"),
     credited("story"),
-    {
-      id: "term_evaluation",
-      label: AI_FEATURE_META.term_evaluation.label,
-      vendor: evaluation.vendor,
-      sends: evaluation.sends,
-      billing: "none",
-      state: "always-on",
-      healthNote: note("term_evaluation"),
-      limit: "—",
-      manageHref: AI_FEATURE_META.term_evaluation.manageHref,
-    },
     {
       id: "narration",
       label: "Narration",

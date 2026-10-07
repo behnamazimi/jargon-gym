@@ -7,13 +7,12 @@ this page explains how the pieces fit. Credits and their ledger are covered in
 
 ## Features
 
-| Feature           | What it does                      | Vendor                                | Billing | Unit     |
-| ----------------- | --------------------------------- | ------------------------------------- | ------- | -------- |
-| `quiz`            | Writes quiz questions             | Google or Anthropic                   | Credits | question |
-| `story`           | Writes a story around due terms   | Google or Anthropic                   | Credits | term     |
-| `term_evaluation` | Checks a term entry (admins only) | TypeSafe (Jev) through Vercel Gateway | None    | term     |
-| `narration_term`  | Spoken clip for a term            | Murf, ElevenLabs as fallback          | None    | clip     |
-| `narration_story` | Spoken clip for a story           | Murf, ElevenLabs as fallback          | None    | clip     |
+| Feature           | What it does                    | Vendor                       | Billing | Unit     |
+| ----------------- | ------------------------------- | ---------------------------- | ------- | -------- |
+| `quiz`            | Writes quiz questions           | Google or Anthropic          | Credits | question |
+| `story`           | Writes a story around due terms | Google or Anthropic          | Credits | term     |
+| `narration_term`  | Spoken clip for a term          | Murf, ElevenLabs as fallback | None    | clip     |
+| `narration_story` | Spoken clip for a story         | Murf, ElevenLabs as fallback | None    | clip     |
 
 `billing: none` means the feature never touches credits or the ledger.
 `lib/ai/narration-isolation.test.ts` fails if narration code mentions them.
@@ -115,5 +114,4 @@ the collection's page (`/admin/collections/[id]`) and continued by a cron job; s
 | `LLM_SETTINGS_ENCRYPTION_KEY`                    | Encrypts people's own saved keys      |
 | `MURF_API_KEY`, `ELEVENLABS_API_KEY`             | Narration providers (main, fallback)  |
 | `SUPABASE_S3_*`                                  | Narration audio storage               |
-| `AI_GATEWAY_API_KEY`                             | Term evaluation                       |
 | `AI_INTERNAL_SECRET`, `TELEGRAM_INTERNAL_SECRET` | Narration sync route; Telegram routes |

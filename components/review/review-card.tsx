@@ -5,7 +5,6 @@ import { useRef } from "react";
 import { FirstExposureKnownPrompt } from "@/components/shared/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/terms/term-card-header";
 import { StudyTermBody } from "@/components/terms/study-term-body";
-import { TermEvalButton } from "./term-eval-button";
 import type { ReviewTerm } from "@/lib/review/types";
 import { cn } from "@/lib/utils";
 import { useReviewSwipe } from "./use-review-swipe";
@@ -20,7 +19,6 @@ type ReviewCardProps = {
   reduceMotion: boolean;
   swipeEnabled: boolean;
   narrationAccess: boolean;
-  canEvaluateTerms?: boolean;
   /** The "Recall the meaning" prompt on the front; Triage asks a different question. */
   showRevealHint?: boolean;
 };
@@ -48,7 +46,6 @@ export function ReviewCard({
   reduceMotion,
   swipeEnabled,
   narrationAccess,
-  canEvaluateTerms,
   showRevealHint = true,
 }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -134,16 +131,7 @@ export function ReviewCard({
           </div>
 
           <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-box bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            <TermCardHeader
-              term={term}
-              narrationAccess={narrationAccess}
-              narrationPreload
-              actions={
-                revealed && canEvaluateTerms ? (
-                  <TermEvalButton key={term.id} termId={term.id} />
-                ) : null
-              }
-            />
+            <TermCardHeader term={term} narrationAccess={narrationAccess} narrationPreload />
             <div
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-8 has-[[data-known-prompt]]:pb-0 [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] sm:px-6"
               onClick={(event) => event.stopPropagation()}
