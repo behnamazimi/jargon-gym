@@ -16,11 +16,11 @@ describe("feature registry", () => {
     expect(isBillable("quiz")).toBe(true);
   });
 
-  it("matches the features the migration seeds", () => {
+  it("matches the features the migration seeds, less the one later dropped", () => {
     const sql = readFileSync("supabase/migrations/20260929170000_ai_feature_settings.sql", "utf8");
     const seeded = [...sql.matchAll(/(?:select|values \() *'([a-z_]+)', (?:true|false|s\.)/g)]
       .map((match) => match[1])
-      .filter((feature) => feature !== "new_feature");
+      .filter((feature) => feature !== "new_feature" && feature !== "term_evaluation");
     expect(new Set(seeded)).toEqual(new Set(FEATURE_IDS));
   });
 });

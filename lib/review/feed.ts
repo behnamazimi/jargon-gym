@@ -1,4 +1,4 @@
-import { requireAuthenticatedClient, getUserIsAdmin } from "@/lib/auth/require-session";
+import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { isUuid } from "@/lib/library/details";
 import { isCollectionPreference } from "@/lib/study/collection-preference";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
@@ -17,13 +17,12 @@ export async function loadReviewSetup() {
     return { error: "Log in to review terms." as const };
   }
 
-  const [{ active: collections, paused }, narrationAccess, canEvaluateTerms] = await Promise.all([
+  const [{ active: collections, paused }, narrationAccess] = await Promise.all([
     listStudyCollectionState(auth.supabase, auth.user.id),
     getNarrationAccessForUser(createAdminClient(), auth.user.id),
-    getUserIsAdmin(auth.user.id),
   ]);
 
-  return { collections, paused, narrationAccess, canEvaluateTerms };
+  return { collections, paused, narrationAccess };
 }
 
 /** The next few cards TRACE ranks for the signed-in user, skipping the ones

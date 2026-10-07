@@ -54,17 +54,9 @@ export async function readCreditsEnabled(client: Client): Promise<boolean> {
 export async function readFeaturesOff(client: Client): Promise<FeatureId[]> {
   const { data, error } = await client.from("ai_feature_settings").select("feature, enabled");
   if (error) throw error;
-  return (
-    (data ?? [])
-      // Term evaluation has no switch: nothing reads its setting, so "off" would be a false alarm.
-      .filter(
-        (row) =>
-          !row.enabled &&
-          row.feature !== "term_evaluation" &&
-          (FEATURE_IDS as string[]).includes(row.feature),
-      )
-      .map((row) => row.feature as FeatureId)
-  );
+  return (data ?? [])
+    .filter((row) => !row.enabled && (FEATURE_IDS as string[]).includes(row.feature))
+    .map((row) => row.feature as FeatureId);
 }
 
 /** A stalled sync, or a cron job that has gone quiet while a sync needs it. */

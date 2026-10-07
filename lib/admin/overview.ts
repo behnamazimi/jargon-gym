@@ -29,7 +29,6 @@ type AttentionItem = {
 const HEALTH_TITLES: Record<FeatureId, string> = {
   quiz: "The app's AI key isn't set up",
   story: "The app's AI key isn't set up",
-  term_evaluation: "Term evaluation isn't set up",
   narration_term: "Narration isn't set up",
   narration_story: "Narration isn't set up",
 };

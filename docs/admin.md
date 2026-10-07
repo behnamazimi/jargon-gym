@@ -235,7 +235,6 @@ out of the narration actions).
 
 - The collection list is capped at 1000 by PostgREST; the page says so when it is reached.
 - The audit log's `actor_email` is a snapshot, so it outlives an account.
-- Term evaluation has no switch: nothing reads its setting.
 - The people and collections tables have no phone card layout.
 - Suspension is enforced by the app and by GoTrue, not by row level security. A call made straight to the
   database with a token that outlived the session can still touch that person's own rows until it expires.

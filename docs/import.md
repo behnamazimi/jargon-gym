@@ -88,8 +88,8 @@ every study and delivery surface until it gets a definition:
   ignore it.
 - Row-level security hides it from everyone but the owner, so shared views,
   public pages and the sitemap never show it.
-- Readers that bypass row-level security filter it themselves: narration,
-  quiz distractors and the evaluation route.
+- Readers that bypass row-level security filter it themselves: narration and
+  quiz distractors.
 
 A finished term never goes back: a trigger rejects clearing a definition. That
 keeps every `review_state` row attached to a finished term. Deleting an

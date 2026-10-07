@@ -62,7 +62,6 @@ export default async function ReviewRoute({ searchParams }: PageProps) {
       paused={setup.paused}
       domainId={domainId}
       narrationAccess={setup.narrationAccess}
-      canEvaluateTerms={setup.canEvaluateTerms}
     />
   );
 }

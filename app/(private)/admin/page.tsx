@@ -61,7 +61,7 @@ export default async function AdminOverviewPage() {
           <AdminStat
             label="AI credit spends, last 24 hours"
             value={stats.spends24h}
-            hint="Own-key, narration and evaluation calls aren't counted"
+            hint="Own-key and narration calls aren't counted"
           />
           <AdminStat label="Waiting for an invite" value={stats.waitlistPending} />
         </div>

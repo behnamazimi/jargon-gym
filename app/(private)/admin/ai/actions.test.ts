@@ -62,8 +62,8 @@ describe("setAiFeatureEnabled", () => {
     ]);
   });
 
-  it("refuses features that aren't switched here, term evaluation included", async () => {
-    for (const feature of ["narration_term", "term_evaluation", "nope"]) {
+  it("refuses features that aren't switched here", async () => {
+    for (const feature of ["narration_term", "nope"]) {
       expect(await setAiFeatureEnabled(feature, true)).toEqual({
         ok: false,
         error: "Unknown feature.",

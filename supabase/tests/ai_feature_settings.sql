@@ -35,7 +35,7 @@ declare
 begin
   -- The seeded features are exactly the registry's (lib/ai/registry.ts).
   assert (select array_agg(feature order by feature) from public.ai_feature_settings)
-    = array['narration_story', 'narration_term', 'quiz', 'story', 'term_evaluation'],
+    = array['narration_story', 'narration_term', 'quiz', 'story'],
     'seeded features should match the registry';
 
   -- Quiz and Stories are open to everyone and priced on their feature rows.
@@ -68,10 +68,10 @@ begin
   assert v_failed, 'a billable feature needs a credit cost';
 
   -- A missing timeout falls back to the default rather than locking the user out.
-  v_token := public.begin_ai_run(u2, 'term_evaluation', null);
+  v_token := public.begin_ai_run(u2, 'narration_term', null);
   assert v_token is not null, 'a run with a null timeout should start';
-  update public.ai_feature_runs set started_at = now() - interval '5 minutes' where user_id = u2 and feature = 'term_evaluation';
-  assert public.begin_ai_run(u2, 'term_evaluation', null) is not null, 'a null timeout should still expire';
+  update public.ai_feature_runs set started_at = now() - interval '5 minutes' where user_id = u2 and feature = 'narration_term';
+  assert public.begin_ai_run(u2, 'narration_term', null) is not null, 'a null timeout should still expire';
 
   -- Narration and other non-billable features can't be reserved or written to the ledger.
   begin

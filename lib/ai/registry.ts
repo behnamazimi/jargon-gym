@@ -1,4 +1,4 @@
-type Capability = "object" | "text" | "evaluate" | "speech";
+type Capability = "object" | "text" | "speech";
 
 type FeatureDefinition = {
   capability: Capability;
@@ -24,13 +24,6 @@ export const FEATURES = {
     billing: "credits",
     vendor: "Google or Anthropic",
     sends: "Term names, definitions and the story outline you pick.",
-    unit: "term",
-  },
-  term_evaluation: {
-    capability: "evaluate",
-    billing: "none",
-    vendor: "TypeSafe (Jev) through Vercel AI Gateway",
-    sends: "The full text of the term entry being checked.",
     unit: "term",
   },
   narration_term: {
