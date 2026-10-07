@@ -167,7 +167,7 @@ where (select remaining from public.ai_credit_balance(u.id)) = 0;
 -- People who topped up themselves, and how much.
 select user_id, count(*) as top_ups, sum(amount) as credits
 from public.ai_credit_ledger
-where kind = 'grant' and note = 'self_topup'
+where kind = 'grant' and note = 'self_topup' and created_by = user_id
 group by user_id
 order by credits desc;
 

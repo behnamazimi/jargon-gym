@@ -31,7 +31,6 @@ export type AdminPerson = {
   currentStreak: number;
   longestStreak: number;
   lastActiveDate: string | null;
-  /** Only the provider and the last four characters ever leave the database. */
   ownedCollections: number;
   /** Other people with something that would be deleted along with this person's collections. */
   peopleUsingCollections: number;
