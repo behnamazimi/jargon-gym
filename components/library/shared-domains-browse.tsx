@@ -27,6 +27,34 @@ type SharedDomainsBrowseProps = {
   requestEntry: RequestEntry;
 };
 
+function EmptyResults({
+  browse,
+  allAdded,
+  requestEntry,
+  onClearFilters,
+}: {
+  browse: ReturnType<typeof useSharedDomainsBrowse>;
+  allAdded: boolean;
+  requestEntry: RequestEntry;
+  onClearFilters: () => void;
+}) {
+  if (browse.isRefreshing) return null;
+  if (!browse.hasActiveFilters) {
+    return <SharedDomainsEmptyGroup group={browse.group} requestEntry={requestEntry} />;
+  }
+  return (
+    <SharedDomainsNoMatches
+      group={browse.group}
+      allAdded={allAdded}
+      hasActiveFilters={browse.hasActiveFilters}
+      onClearFilters={onClearFilters}
+      onRetry={browse.retry}
+      requestEntry={requestEntry}
+      search={browse.searchInput}
+    />
+  );
+}
+
 export function SharedDomainsBrowse({
   initialPage,
   initialGroup,
@@ -102,23 +130,19 @@ export function SharedDomainsBrowse({
       <div
         role="tabpanel"
         id={BROWSE_PANEL_ID}
+        tabIndex={0}
         aria-labelledby={`browse-tab-${browse.group}`}
         className="space-y-4"
       >
-        {browse.domains.length === 0 && !browse.hasActiveFilters ? (
-          <SharedDomainsEmptyGroup group={browse.group} requestEntry={requestEntry} />
-        ) : browse.domains.length === 0 ? (
-          <SharedDomainsNoMatches
-            group={browse.group}
+        {browse.domains.length === 0 ? (
+          <EmptyResults
+            browse={browse}
             allAdded={allAdded}
-            hasActiveFilters={browse.hasActiveFilters}
+            requestEntry={requestEntry}
             onClearFilters={() => {
               browse.clearFilters();
               searchInputRef.current?.focus();
             }}
-            onRetry={browse.retry}
-            requestEntry={requestEntry}
-            search={browse.searchInput}
           />
         ) : (
           <ul className={cn("flex flex-col gap-3", browse.isRefreshing && "opacity-70")}>

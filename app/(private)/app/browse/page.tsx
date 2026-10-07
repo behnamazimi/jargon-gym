@@ -22,6 +22,7 @@ export default async function BrowseSharedDomainsPage({
 
   return (
     <SharedDomainsBrowse
+      key={group}
       initialPage={setup.initialPage}
       initialGroup={group}
       requestEntry={requestEntry}

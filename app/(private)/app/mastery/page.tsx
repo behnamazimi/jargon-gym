@@ -27,10 +27,10 @@ export default async function MasteryRoute({ searchParams }: PageProps) {
       <EmptyState
         icon={Signal}
         title="No collections yet"
-        description="Import your own terms or add a shared collection to see your mastery overview here."
+        description="Import your own terms or add a collection to see your mastery overview here."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <LinkButton href="/app/browse">Browse shared collections</LinkButton>
+          <LinkButton href="/app/browse">Browse collections</LinkButton>
           <LinkButton href="/app/import" variant="outline">
             Add your own terms
           </LinkButton>
