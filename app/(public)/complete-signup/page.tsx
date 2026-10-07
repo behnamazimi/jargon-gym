@@ -7,7 +7,7 @@ type CompleteSignupPageProps = {
   searchParams: Promise<{ ref?: string; error?: string; next?: string }>;
 };
 
-const INVALID_REFERRAL_ERROR = "That reference code isn't valid, was already used, or has run out.";
+const INVALID_REFERRAL_ERROR = "That invite code isn't valid, was already used, or has run out.";
 
 /** True when the code they signed up with filled up or expired before they confirmed their email. */
 async function readCodeRanOut(): Promise<boolean> {

@@ -23,7 +23,7 @@ describe("formatAuthError", () => {
     ).toBe("That email or password doesn't look right.");
   });
 
-  it("says when a shared reference code is full or expired", () => {
+  it("says when a shared invite code is full or expired", () => {
     expect(formatAuthError({ message: "Referral code is full or expired" }, "signup")).toBe(
       FULL_REFERRAL,
     );

@@ -33,7 +33,7 @@ export default function CompleteSignupForm({
       <input type="hidden" name="next" value={next} />
       <h1 className="text-2xl font-medium">Complete sign up</h1>
       <p className="text-sm text-base-content/70">
-        Almost there. Enter your reference code to finish setting up your account.
+        Almost there. Enter your invite code to finish setting up your account.
       </p>
 
       {codeRanOut && (
@@ -65,7 +65,7 @@ export default function CompleteSignupForm({
 
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="complete-signup-reference-code">Reference code</FieldLabel>
+          <FieldLabel htmlFor="complete-signup-reference-code">Invite code</FieldLabel>
           <Input
             id="complete-signup-reference-code"
             type="text"

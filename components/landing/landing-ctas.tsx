@@ -50,7 +50,7 @@ export function LandingCtas({ isLoggedIn }: { isLoggedIn: boolean }) {
       <p className="mt-3 m-0 text-sm leading-relaxed text-base-content/70">
         Sign-up is by request. Ask for access, or{" "}
         <Link href="/signup" className="underline underline-offset-2">
-          sign up with a reference code
+          sign up with an invite code
         </Link>{" "}
         if you have one.
       </p>

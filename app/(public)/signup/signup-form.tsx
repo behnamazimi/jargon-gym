@@ -118,7 +118,7 @@ export default function SignupForm({
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="signup-reference-code">Reference code</FieldLabel>
+            <FieldLabel htmlFor="signup-reference-code">Invite code</FieldLabel>
             <Input
               id="signup-reference-code"
               type="text"
@@ -131,9 +131,7 @@ export default function SignupForm({
               onChange={(event) => setReferenceCode(normalizeReferralCode(event.target.value))}
               className="uppercase"
             />
-            <FieldDescription>
-              You need a reference code from admin/owner of the app.
-            </FieldDescription>
+            <FieldDescription>It's in your invite.</FieldDescription>
           </Field>
         </FieldGroup>
 
@@ -161,7 +159,7 @@ export default function SignupForm({
       </p>
 
       <p className="text-center text-sm text-base-content/70">
-        Don&apos;t have a code?{" "}
+        Don&apos;t have an invite code?{" "}
         <Link href="/request-access" className="underline underline-offset-2">
           Request access
         </Link>
