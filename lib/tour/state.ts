@@ -37,8 +37,12 @@ function runsOn(chapter: TourChapter, pathname: string) {
 
 function unseenChaptersOn(pathname: string, state: TourState): TourChapter[] {
   if (state.status === "done") return [];
-  return TOUR_CHAPTERS.filter(
-    (chapter) => runsOn(chapter, pathname) && !state.seen.includes(chapter.id),
+  const seen: readonly string[] = state.seen;
+  return (TOUR_CHAPTERS as readonly TourChapter[]).filter(
+    (chapter) =>
+      runsOn(chapter, pathname) &&
+      !seen.includes(chapter.id) &&
+      (chapter.after ?? []).every((id) => seen.includes(id)),
   );
 }
 
