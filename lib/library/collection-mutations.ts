@@ -137,9 +137,7 @@ export async function deleteDomain(client: Client, domainId: string) {
   if (fetchError) throw fetchError;
 
   if (domain.is_builtin || domain.is_public) {
-    throw new Error(
-      "This collection is marked built-in and can't be deleted. Unmark it in admin first.",
-    );
+    throw new Error("This collection is built-in or public, so it can't be deleted.");
   }
 
   const { error } = await client.from("domains").delete().eq("id", domainId);

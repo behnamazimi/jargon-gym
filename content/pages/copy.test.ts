@@ -16,6 +16,10 @@ describe("content pages copy", () => {
     expect(pages.length).toBeGreaterThan(0);
   });
 
+  it.each(pages)("$name doesn't name the admin", ({ text }) => {
+    expect(text).not.toMatch(/\badmin(istrator)?s?\b/i);
+  });
+
   it.each(pages)("$name says terms, not jargon", ({ text }) => {
     const cleaned = ALLOWED_JARGON.reduce((rest, allowed) => rest.replace(allowed, ""), text);
     expect(cleaned).not.toMatch(/jargon/i);
