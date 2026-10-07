@@ -61,11 +61,7 @@ function toProviderError(error: unknown, timedOut: boolean): StoryProviderError 
     return new StoryProviderError("Writing the story took too long. Try again.", "timeout", cause);
   }
   if (isKeyRejected(error)) {
-    return new StoryProviderError(
-      "Your API key was rejected. Update it in Settings.",
-      "auth",
-      cause,
-    );
+    return new StoryProviderError("Couldn't write a story this time. Try again.", "auth", cause);
   }
   if (providerStatus(error) === 429) {
     return new StoryProviderError(

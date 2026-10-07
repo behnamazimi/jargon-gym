@@ -49,8 +49,12 @@ describe("storyCreditUse", () => {
     expect(storyCreditUse(view(7), "medium", 50)).toMatchObject({ cost: 8, overBalance: true });
   });
 
-  it("charges nothing for users on their own key", () => {
-    const own: AiAccessView = { kind: "own", providerLabel: "Anthropic", creditsRemaining: null };
-    expect(storyCreditUse(own, "long", 50)).toEqual({ credits: null, cost: 0, overBalance: false });
+  it("charges nothing when AI is unavailable", () => {
+    const none: AiAccessView = { kind: "unavailable", reason: "exhausted" };
+    expect(storyCreditUse(none, "long", 50)).toEqual({
+      credits: null,
+      cost: 0,
+      overBalance: false,
+    });
   });
 });

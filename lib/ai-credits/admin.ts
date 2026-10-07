@@ -19,7 +19,6 @@ export type AiCreditSummary = {
   totalUsers: number;
   usersWithUse: number;
   usersExhausted: number;
-  usersWithOwnKey: number;
   creditsSpent: number;
   spends24h: number;
   refunds24h: number;
@@ -37,7 +36,7 @@ export async function getAiCreditSettingsForAdmin(client: Client): Promise<AiCre
   const [{ data, error }, { data: prices, error: pricesError }] = await Promise.all([
     client
       .from("ai_credit_settings")
-      .select("enabled, default_allowance, monthly_refill")
+      .select("enabled, default_allowance, monthly_refill, self_topup_amount")
       .eq("id", true)
       .single(),
     client
@@ -57,6 +56,7 @@ export async function getAiCreditSettingsForAdmin(client: Client): Promise<AiCre
     enabled: data.enabled,
     defaultAllowance: data.default_allowance,
     monthlyRefill: data.monthly_refill,
+    selfTopupAmount: data.self_topup_amount,
     quizCreditsPerQuestion: quiz,
     storyCreditsPerTerm: story,
   };
@@ -87,7 +87,6 @@ export async function getAiCreditSummaryForAdmin(client: Client): Promise<AiCred
     totalUsers: row.total_users,
     usersWithUse: row.users_with_use,
     usersExhausted: row.users_exhausted,
-    usersWithOwnKey: row.users_with_own_key,
     creditsSpent: row.credits_spent,
     spends24h: row.spends_24h,
     refunds24h: row.refunds_24h,

@@ -60,7 +60,7 @@ begin
   assert not has_function_privilege('anon', 'public.admin_set_narration_enabled(boolean)', 'execute'), 'line 61';
   assert not has_function_privilege('anon', 'public.admin_set_narration_caps(integer,integer)', 'execute'), 'line 62';
   assert not has_function_privilege('anon', 'public.admin_set_narration_provider(text,boolean)', 'execute'), 'anon could switch a narration provider';
-  assert not has_function_privilege('anon', 'public.admin_set_ai_credit_settings(integer,integer,integer,integer)', 'execute'), 'line 63';
+  assert not has_function_privilege('anon', 'public.admin_set_ai_credit_settings(integer,integer,integer,integer,integer)', 'execute'), 'line 63';
   assert not has_function_privilege('anon', 'public.admin_write_audit(text,text,text,jsonb)', 'execute'), 'line 64';
   assert not has_function_privilege('authenticated', 'public._admin_audit_insert(text,text,text,jsonb)', 'execute'), 'line 65';
   assert not has_function_privilege('service_role', 'public._admin_audit_insert(text,text,text,jsonb)', 'execute'), 'line 66';
@@ -105,7 +105,7 @@ begin
   begin perform public.admin_set_narration_caps(null, 5); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could set caps';
   v_failed := false;
-  begin perform public.admin_set_ai_credit_settings(1, 1, 1, 1); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  begin perform public.admin_set_ai_credit_settings(1, 1, 1, 1, 1); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could set credit settings';
   v_failed := false;
   begin perform public.admin_write_audit('app.test'); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
@@ -261,23 +261,24 @@ begin
   assert (select daily_cap = 1000 from public.ai_feature_settings where feature = 'narration_term'), 'a refused call changed a cap';
 
   -- AI credit settings.
-  perform public.admin_set_ai_credit_settings(90, 20, 3, 4);
-  assert (select default_allowance = 90 and monthly_refill = 20 from public.ai_credit_settings where id), 'line 189';
+  perform public.admin_set_ai_credit_settings(90, 20, 3, 4, 50);
+  assert (select default_allowance = 90 and monthly_refill = 20 and self_topup_amount = 50 from public.ai_credit_settings where id), 'line 189';
   assert (select credit_cost = 3 from public.ai_feature_settings where feature = 'quiz'), 'line 190';
   assert (select credit_cost = 4 from public.ai_feature_settings where feature = 'story'), 'line 191';
-  for v_count in 1..4 loop
+  for v_count in 1..5 loop
     v_failed := false;
     begin
       perform public.admin_set_ai_credit_settings(
         case v_count when 1 then -1 else 10 end,
         case v_count when 2 then 1000001 else 10 end,
         case v_count when 3 then 0 else 2 end,
-        case v_count when 4 then 1001 else 2 end);
+        case v_count when 4 then 1001 else 2 end,
+        case v_count when 5 then 0 else 10 end);
     exception when others then v_failed := true; end;
     assert v_failed, 'bad credit settings accepted, case ' || v_count;
   end loop;
   v_failed := false;
-  begin perform public.admin_set_ai_credit_settings(1, 1, null, 1); exception when others then v_failed := true; end;
+  begin perform public.admin_set_ai_credit_settings(1, 1, null, 1, 1); exception when others then v_failed := true; end;
   assert v_failed, 'a null cost was accepted';
   assert (select credit_cost = 3 from public.ai_feature_settings where feature = 'quiz'), 'a refused call changed a price';
 

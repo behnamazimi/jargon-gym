@@ -33,6 +33,12 @@ const FIELDS: { key: keyof CreditDraft; label: string; hint: string; min: number
     hint: "Charged per term used.",
     min: 1,
   },
+  {
+    key: "selfTopupAmount",
+    label: "Credits per top-up",
+    hint: "Added each time someone taps Top up. There's no limit on taps.",
+    min: 1,
+  },
 ];
 
 export function AdminAiCreditsSettings({

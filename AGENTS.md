@@ -52,8 +52,9 @@ access rules, cost levers and narration. Start there.
 
 # AI credits
 
-AI Quiz and Stories run on the user's own key when they have one, and
-otherwise on the app's key (`CENTRAL_LLM_API_KEY`), spending AI credits. The
+AI Quiz and Stories run on the app's key (`CENTRAL_LLM_API_KEY`), spending
+the user's AI credits. When they run out, the Top up button
+(`topUpAiCreditsAction`) adds credits for free until payments exist. The
 resolver is `lib/llm/access.ts`; charging, refunds and cost math are in
 `lib/ai-credits/`; the ledger, balance and admin functions are in
 `supabase/migrations/20260929120000_ai_credits.sql`. Credits are charged before

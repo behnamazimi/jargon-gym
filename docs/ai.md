@@ -21,8 +21,7 @@ this page explains how the pieces fit. Credits and their ledger are covered in
 
 Every feature has a row in `ai_feature_settings`:
 
-- `enabled`: the switch. Off means off for everyone, including people with their
-  own key.
+- `enabled`: the switch. Off means off for everyone.
 - `access_mode`: `everyone`, `allowlist` (rows in `ai_feature_allowlist`) or
   `admin`.
 - `daily_cap`: per person, rolling 24 hours. Blank means no cap.
@@ -37,9 +36,9 @@ checked in the routes and the Read, Review and Collection actions.
 
 ## Quiz and Stories: whose key pays
 
-`lib/llm/access.ts` (`resolveAiAccess`) picks the key: the person's own saved
-key first, otherwise the app's key (`CENTRAL_LLM_API_KEY`) paid with credits. A
-failing own key never falls back to credits. Credits are charged before the
+`lib/llm/access.ts` (`resolveAiAccess`) uses the app's key
+(`CENTRAL_LLM_API_KEY`), paid with the person's credits. Nobody brings their
+own key. Credits are charged before the
 model call and refunded on any failure (`lib/ai-credits/`). A run guard
 (`begin_ai_run`, `lib/ai/run-guard.ts`) allows one run per person and feature at
 a time.
@@ -111,7 +110,6 @@ the collection's page (`/admin/collections/[id]`) and continued by a cron job; s
 | Variable                                         | Used for                              |
 | ------------------------------------------------ | ------------------------------------- |
 | `CENTRAL_LLM_PROVIDER`, `CENTRAL_LLM_API_KEY`    | The app's key for Quiz and Stories    |
-| `LLM_SETTINGS_ENCRYPTION_KEY`                    | Encrypts people's own saved keys      |
 | `MURF_API_KEY`, `ELEVENLABS_API_KEY`             | Narration providers (main, fallback)  |
 | `SUPABASE_S3_*`                                  | Narration audio storage               |
 | `AI_INTERNAL_SECRET`, `TELEGRAM_INTERNAL_SECRET` | Narration sync route; Telegram routes |

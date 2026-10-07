@@ -1,24 +1,22 @@
 # AI credits
 
 AI quizzes and Stories need a language model. AI credits let every account use
-the app's own AI key for those two features until they save a key of their own.
+the app's own AI key for those two features. When the credits run out they can
+top up.
 This page explains who pays for a request, how the balance works, and where the
 logic lives.
 
 ## Who pays for a request
 
-Each AI request resolves to exactly one of three outcomes, in this order:
+Each AI request resolves to one of two outcomes:
 
-1. **Own key.** The user saved a provider and API key in Settings. That key is
-   used, no credits are spent, and a failing key never falls back to credits.
-2. **AI credits.** The user has no key, the app's key is set up, credits are
-   switched on, and the balance is above zero. The app's key is used and the
-   request spends credits.
-3. **Unavailable.** None of the above. The screen tells the user to add a key,
-   or that their credits are used up.
+1. **AI credits.** The app's key is set up, credits are switched on, and the
+   balance is above zero. The app's key is used and the request spends credits.
+2. **Unavailable.** None of the above. The screen offers a top-up when the
+   credits are used up, and says AI isn't available otherwise.
 
-If `CENTRAL_LLM_API_KEY` isn't set, outcome 2 never happens and the app behaves
-as it did before credits existed. The code is in `lib/llm/access.ts`.
+Users can't bring their own key. If `CENTRAL_LLM_API_KEY` isn't set, outcome 1
+never happens. The code is in `lib/llm/access.ts`.
 
 Simple quizzes, Read, and Review never use credits.
 
@@ -98,8 +96,7 @@ The code is in `lib/ai-credits/charge.ts` and `lib/ai-credits/repository.ts`.
 ## What users see
 
 The account menu, and the More sheet on phones, show one plain line under the
-email: how many credits are left, that the credits are used up, or that the
-account uses its own key. The line is hidden when credits aren't offered. The
+email: how many credits are left, or that the credits are used up. The line is hidden when credits aren't offered. The
 balance is looked up only when the menu opens, so ordinary page loads don't
 pay for it. The line links to the AI section of Settings.
 
@@ -112,7 +109,7 @@ Set these server-only environment variables, listed in `.env-template`:
 
 Apply the migration before you set the key. If the key is set on a deployment
 that doesn't have the migration yet, the balance lookup fails and users see the
-same "add a key" screens as before, with no harm done to users on their own key.
+same "AI isn't available" screens as before.
 
 When someone uses AI credits, the terms, their definitions, and any outline the
 person writes are sent to the app's AI provider. The AI credits panel in
@@ -120,18 +117,16 @@ Settings (`components/settings/llm-panel.tsx`) says so. The privacy page names
 the providers and says the term content needed is sent, but doesn't mention
 outlines. The sign-up page says nothing about AI.
 
-The models are the same ones users get with their own key, set in
-`lib/llm/model.ts`. We recommend setting a monthly budget cap in the provider's
+The models are set in `lib/llm/model.ts`. We recommend setting a monthly budget cap in the provider's
 console as a backstop.
 
 ## Changing settings and helping a user
 
 Admins manage AI credits at `/admin/ai/credits`, reached from AI in the admin
 sidebar (see [admin.md](admin.md)). There you can switch AI credits on or off and change the allowance,
-the monthly refill, and the costs. **Grant** adds credits to someone's starter
+the monthly refill, the costs, and how many credits one top-up adds. **Grant** adds credits to someone's starter
 pool by email, and **Reset** clears their usage from that point on. Both keep
-every record, and a reset keeps any grants. Users with their own key are not
-affected by the switch.
+every record, and a reset keeps any grants. Turning credits off also hides the Top up button.
 
 The allowance and refill live in `ai_credit_settings`, the prices in
 `ai_feature_settings.credit_cost` (one row each for `quiz` and `story`), and the
@@ -152,7 +147,7 @@ values ('<user id>', 'grant', 50, 'why');
 ## Checking that it works
 
 The **Is it working?** section of the admin page shows how many people used
-credits, ran out, or then saved their own key, how many credits were spent, and
+credits, or ran out, how many credits were spent, and
 how many requests failed and were refunded in the last 24 hours. A warning
 appears when many recent requests failed for more than one person, which usually
 means the app's key was revoked or ran out of quota. **Why requests failed** lists
@@ -169,13 +164,12 @@ where kind = 'spend'
 select count(*) from public.users u
 where (select remaining from public.ai_credit_balance(u.id)) = 0;
 
--- People who saved their own key after using credits.
-select count(*) from public.user_settings s
-where s.api_key_last4 is not null
-  and exists (
-    select 1 from public.ai_credit_ledger l
-    where l.user_id = s.user_id and l.kind = 'spend'
-  );
+-- People who topped up themselves, and how much.
+select user_id, count(*) as top_ups, sum(amount) as credits
+from public.ai_credit_ledger
+where kind = 'grant' and note = 'self_topup'
+group by user_id
+order by credits desc;
 
 -- The most common failure reasons in the last day.
 select coalesce(note, 'Unknown reason') as reason, count(*) as failures
@@ -199,8 +193,7 @@ ledger; the ledger's foreign key and `reserve_ai_credits` both refuse the rest,
 so narration can never spend credits.
 
 Quiz and Stories read their row before every request (`resolveAiAccess`). A
-feature that is switched off is off for everyone, people with their own key
-included, and admins can switch them on the AI credits admin page. This is a
+feature that is switched off is off for everyone, and admins can switch them on the AI credits admin page. This is a
 separate lever from the credits switch, which only stops use of the app's key.
 If the settings can't be read the request goes ahead, so an app deployed ahead
 of its database keeps working; a missing row means off.
@@ -213,23 +206,36 @@ dropping the old columns is a later step.
 ## Running one request at a time
 
 Both features take a per-user, per-feature guard (`begin_ai_run`) around the
-work, on the own-key path as well as the credits path (`lib/ai/run-guard.ts`).
+work, through the credits charge (`lib/ai/run-guard.ts`).
 It is taken before credits are reserved, so a refused duplicate is never
 charged. It catches a second tab or a direct duplicate request; clicks in one
 tab are already queued by Next. A request killed by the platform frees the guard
 after 70 seconds, and the user sees "busy" until then. If the guard can't be
 reached the request runs without it.
 
-A saved own key that can't be decrypted (for example after the encryption
-secret changed) is never replaced by credits. The user is asked to enter it
-again in Settings.
+## Topping up
+
+When someone is out of credits, the quiz, Stories and Settings screens show
+**Top up credits**. The database only allows it while they have fewer than 10
+credits left (`topup_not_needed` otherwise). It calls `topUpAiCreditsAction`
+(`app/(private)/app/actions-ai-credits.ts`), which runs
+`my_self_topup_ai_credits()`. That adds a ledger `grant` row with the note
+`self_topup`, writes an audit row (`self_topup_ai_credits`) in the same
+transaction, and returns the new balance. The amount is
+`ai_credit_settings.self_topup_amount` (30 by default, editable on the admin
+credits page). Afterwards the person and every admin get an email
+(`lib/ai-credits/topup-copy.ts`); a failed email never fails the top-up.
+
+There is no payment, and no limit on how many times someone can top up, so the
+provider's monthly budget cap is the only backstop. The top-up sits behind this
+one action so a payment step can replace it later without touching the screens.
 
 ## Where things live
 
 - `supabase/migrations/20260929120000_ai_credits.sql`: tables, balance,
   reserve, refund, and admin functions.
 - `lib/ai-credits/`: costs, the charge wrapper, and the database calls.
-- `lib/llm/access.ts`: picks own key, credits, or unavailable.
+- `lib/llm/access.ts`: picks credits or unavailable.
 - `lib/llm/central.ts`: reads the app's key from the environment.
 - `app/(private)/app/quiz/actions.ts` and
   `app/(private)/app/read/stories/actions.ts`: charge and generate.

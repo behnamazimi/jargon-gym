@@ -1,11 +1,11 @@
 import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
-import { Button, LinkButton } from "@/components/ui/button";
+import { TopUpButton } from "@/components/ai-credits/top-up-button";
+import { Button } from "@/components/ui/button";
 import { largestQuizCount } from "@/lib/ai-credits/costs";
 import { AI_CREDITS_LOW_THRESHOLD, type AiAccessView, type CreditUse } from "@/lib/llm/types";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 
 function creditHint(ai: AiAccessView, cost: number) {
-  if (ai.kind === "own") return <>Uses {ai.providerLabel}. This may take a moment.</>;
   if (ai.kind !== "credits") return null;
 
   if (cost > ai.remaining) {
@@ -47,14 +47,14 @@ function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
     <Alert variant="destructive" className="max-w-md">
       <AlertDescription>
         {exhausted
-          ? "You've used your AI credits for now. Add your own key in Settings, or use a simple quiz."
-          : "AI quizzes need a provider and API key in Settings. Choose simple mode, or set up an LLM provider."}
+          ? "You've used your AI credits for now. Top up to keep going, or use a simple quiz."
+          : "AI quizzes aren't available right now. Choose simple mode."}
       </AlertDescription>
-      <AlertAction>
-        <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
-          Go to Settings
-        </LinkButton>
-      </AlertAction>
+      {exhausted ? (
+        <AlertAction>
+          <TopUpButton size="sm" variant="outline" />
+        </AlertAction>
+      ) : null}
     </Alert>
   );
 }
@@ -87,17 +87,13 @@ function QuizPickerOverBalanceAlert({
         This quiz needs <span className="tabular-nums">{cost}</span> credits and you have{" "}
         <span className="tabular-nums">{remaining}</span>.
       </AlertDescription>
-      <AlertAction>
-        {fitCount >= 1 ? (
+      {fitCount >= 1 ? (
+        <AlertAction>
           <Button type="button" size="sm" variant="outline" onPress={() => onFit(fitCount)}>
             Make it {fitCount} {fitCount === 1 ? "question" : "questions"}
           </Button>
-        ) : (
-          <LinkButton href="/app/settings?tab=ai" size="sm" variant="outline">
-            Add your own key
-          </LinkButton>
-        )}
-      </AlertAction>
+        </AlertAction>
+      ) : null}
     </Alert>
   );
 }

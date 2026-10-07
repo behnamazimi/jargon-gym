@@ -11,13 +11,7 @@ import {
 import type { BillableFeatureId } from "@/lib/ai/registry";
 import { isSchemaMissing } from "@/lib/ai/schema-missing";
 import { getUserIsAdmin } from "@/lib/auth/require-session";
-import { getDecryptedApiKey, getUserSettings, UnreadableKeyError } from "./settings";
-import {
-  hasLlmConfigured,
-  LLM_PROVIDER_LABELS,
-  type AiAccessView,
-  type LlmProvider,
-} from "./types";
+import { LLM_PROVIDER_LABELS, type AiAccessView, type LlmProvider } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -25,7 +19,7 @@ type CreditsOrNone =
   | { kind: "credits"; central: CentralLlmConfig; state: CreditState }
   | { kind: "unavailable"; reason: "none" | "exhausted" };
 
-/** The app's own key, for users without one. Off when the key isn't set up,
+/** The app's key, paid with credits. Off when the key isn't set up,
  *  the switch is off, or the balance is empty. */
 async function resolveCredits(client: Client): Promise<CreditsOrNone> {
   const central = getCentralLlmConfig();
@@ -39,22 +33,11 @@ async function resolveCredits(client: Client): Promise<CreditsOrNone> {
 }
 
 /** Who pays for this user's AI, for showing on screen. Never holds a key. */
-export async function getAiAccessView(client: Client, userId: string): Promise<AiAccessView> {
-  const [settings, credits] = await Promise.all([
-    getUserSettings(client, userId),
-    resolveCredits(client).catch((error: unknown): CreditsOrNone => {
-      console.error("Couldn't load AI credits:", error);
-      return { kind: "unavailable", reason: "none" };
-    }),
-  ]);
-
-  if (settings?.provider && hasLlmConfigured(settings)) {
-    return {
-      kind: "own",
-      providerLabel: LLM_PROVIDER_LABELS[settings.provider],
-      creditsRemaining: credits.kind === "credits" ? credits.state.remaining : null,
-    };
-  }
+export async function getAiAccessView(client: Client): Promise<AiAccessView> {
+  const credits = await resolveCredits(client).catch((error: unknown): CreditsOrNone => {
+    console.error("Couldn't load AI credits:", error);
+    return { kind: "unavailable", reason: "none" };
+  });
 
   if (credits.kind === "unavailable") return credits;
 
@@ -68,7 +51,6 @@ export async function getAiAccessView(client: Client, userId: string): Promise<A
 }
 
 export type AiAccess =
-  | { kind: "own"; provider: LlmProvider; apiKey: string }
   | {
       kind: "credits";
       provider: LlmProvider;
@@ -76,7 +58,7 @@ export type AiAccess =
       remaining: number;
       costs: CreditState["costs"];
     }
-  | { kind: "unavailable"; reason: "none" | "exhausted" | "key-unreadable" | "feature-off" };
+  | { kind: "unavailable"; reason: "none" | "exhausted" | "feature-off" };
 
 /** The feature switch and who may use it. If the database doesn't have the
  *  settings table yet, the request goes through, so an app deployed ahead of
@@ -108,8 +90,7 @@ async function featureAllowed(
 }
 
 /** The key to generate with. The feature switch comes first and blocks
- *  everyone. Then a saved key of the user's own always wins, and a key that
- *  can't be read never falls back to credits. */
+ *  everyone, then the app's key is used if the user has credits. */
 export async function resolveAiAccess(
   client: Client,
   admin: Client,
@@ -119,17 +100,6 @@ export async function resolveAiAccess(
   if (!(await featureAllowed(client, admin, userId, feature))) {
     return { kind: "unavailable", reason: "feature-off" };
   }
-
-  let own;
-  try {
-    own = await getDecryptedApiKey(client, userId);
-  } catch (error) {
-    if (error instanceof UnreadableKeyError) {
-      return { kind: "unavailable", reason: "key-unreadable" };
-    }
-    throw error;
-  }
-  if (own) return { kind: "own", ...own };
 
   const credits = await resolveCredits(client);
   if (credits.kind === "unavailable") return credits;

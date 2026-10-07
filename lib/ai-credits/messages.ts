@@ -4,28 +4,22 @@ export const AI_TEMPORARILY_UNAVAILABLE = "AI is unavailable right now. Try agai
 
 type Failure = { error: string; reason: AiFailureReason };
 
-/** No usable AI for this user: no key of their own, and no credits to fall back on. */
+/** No usable AI for this user: no credits left, or the app's AI isn't set up. */
 export function noAiFailure(
-  reason: "none" | "exhausted" | "key-unreadable" | "feature-off",
+  reason: "none" | "exhausted" | "feature-off",
   activity: string,
 ): Failure {
   if (reason === "feature-off") {
     return { error: "This isn't available right now.", reason: "feature-off" };
   }
-  if (reason === "key-unreadable") {
-    return {
-      error: `We couldn't read your saved API key. Enter it again in Settings to ${activity}.`,
-      reason: "no-ai",
-    };
-  }
   if (reason === "exhausted") {
     return {
-      error: `You've used your AI credits for now. Add your own key in Settings to ${activity}.`,
+      error: `You've used your AI credits for now, so you can't ${activity}.`,
       reason: "credits",
     };
   }
   return {
-    error: `Add a provider and API key in Settings to ${activity}.`,
+    error: `AI isn't available right now, so you can't ${activity}.`,
     reason: "no-ai",
   };
 }

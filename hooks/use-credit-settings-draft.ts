@@ -17,6 +17,7 @@ function toDraft(values: CreditSettingsInput): CreditDraft {
     monthlyRefill: String(values.monthlyRefill),
     quizCreditsPerQuestion: String(values.quizCreditsPerQuestion),
     storyCreditsPerTerm: String(values.storyCreditsPerTerm),
+    selfTopupAmount: String(values.selfTopupAmount),
   };
 }
 
@@ -25,6 +26,7 @@ const KEYS = [
   "monthlyRefill",
   "quizCreditsPerQuestion",
   "storyCreditsPerTerm",
+  "selfTopupAmount",
 ] as const;
 
 export function useCreditSettingsDraft(settings: AiCreditSettingsView) {
@@ -35,6 +37,7 @@ export function useCreditSettingsDraft(settings: AiCreditSettingsView) {
     monthlyRefill: toNumber(draft.monthlyRefill),
     quizCreditsPerQuestion: toNumber(draft.quizCreditsPerQuestion),
     storyCreditsPerTerm: toNumber(draft.storyCreditsPerTerm),
+    selfTopupAmount: toNumber(draft.selfTopupAmount),
   });
   // Compared as numbers, so "030" or "1e3" saved as 30 or 1000 doesn't look unsaved.
   const changed = KEYS.some((key) =>

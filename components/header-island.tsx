@@ -31,7 +31,7 @@ export async function HeaderIsland({ initialIsDark }: { initialIsDark: boolean }
         isAdmin={isAdmin}
         currentStreak={settings.currentStreak}
         longestStreak={settings.longestStreak}
-        aiCreditsMode={aiCreditsMenuMode(settings.hasOwnKey)}
+        aiCreditsMode={aiCreditsMenuMode()}
       />
     );
   } catch {

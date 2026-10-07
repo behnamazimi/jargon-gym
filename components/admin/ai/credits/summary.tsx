@@ -37,11 +37,6 @@ export function AdminAiCreditsSummary({ summary }: { summary: AiCreditSummary })
           hint={`${percent(summary.usersExhausted, summary.usersWithUse)} of those who used them. Can't afford another request.`}
         />
         <AdminStat
-          label="Saved their own key"
-          value={summary.usersWithOwnKey}
-          hint={`${percent(summary.usersWithOwnKey, summary.usersWithUse)} of those who used credits`}
-        />
-        <AdminStat
           label="Credits spent"
           value={summary.creditsSpent}
           hint="All time, net of refunds"

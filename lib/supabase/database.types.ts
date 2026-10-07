@@ -143,6 +143,7 @@ export type Database = {
           enabled: boolean;
           id: boolean;
           monthly_refill: number;
+          self_topup_amount: number;
           updated_at: string;
         };
         Insert: {
@@ -150,6 +151,7 @@ export type Database = {
           enabled?: boolean;
           id?: boolean;
           monthly_refill?: number;
+          self_topup_amount?: number;
           updated_at?: string;
         };
         Update: {
@@ -157,6 +159,7 @@ export type Database = {
           enabled?: boolean;
           id?: boolean;
           monthly_refill?: number;
+          self_topup_amount?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -1471,15 +1474,12 @@ export type Database = {
           analytics_consent: string | null;
           analytics_consent_at: string | null;
           analytics_consent_version: string | null;
-          api_key_encrypted: string | null;
-          api_key_last4: string | null;
           created_at: string;
           current_streak: number;
           last_active_date: string | null;
           longest_streak: number;
           promo_dismissed: Json;
           promo_seen: string[];
-          provider: string | null;
           read_hide_question: boolean;
           read_narration_highlight: boolean;
           read_revealed_default: boolean;
@@ -1501,15 +1501,12 @@ export type Database = {
           analytics_consent?: string | null;
           analytics_consent_at?: string | null;
           analytics_consent_version?: string | null;
-          api_key_encrypted?: string | null;
-          api_key_last4?: string | null;
           created_at?: string;
           current_streak?: number;
           last_active_date?: string | null;
           longest_streak?: number;
           promo_dismissed?: Json;
           promo_seen?: string[];
-          provider?: string | null;
           read_hide_question?: boolean;
           read_narration_highlight?: boolean;
           read_revealed_default?: boolean;
@@ -1531,15 +1528,12 @@ export type Database = {
           analytics_consent?: string | null;
           analytics_consent_at?: string | null;
           analytics_consent_version?: string | null;
-          api_key_encrypted?: string | null;
-          api_key_last4?: string | null;
           created_at?: string;
           current_streak?: number;
           last_active_date?: string | null;
           longest_streak?: number;
           promo_dismissed?: Json;
           promo_seen?: string[];
-          provider?: string | null;
           read_hide_question?: boolean;
           read_narration_highlight?: boolean;
           read_revealed_default?: boolean;
@@ -1788,7 +1782,6 @@ export type Database = {
           spends_24h: number;
           total_users: number;
           users_exhausted: number;
-          users_with_own_key: number;
           users_with_use: number;
         }[];
       };
@@ -1917,8 +1910,6 @@ export type Database = {
         Returns: {
           ban_mismatch: boolean;
           current_streak: number;
-          key_last4: string;
-          key_provider: string;
           last_active_date: string;
           longest_streak: number;
           owned_collections: number;
@@ -1932,10 +1923,6 @@ export type Database = {
         Returns: string;
       };
       admin_queue_debug_terms: { Args: { p_user_id: string }; Returns: Json };
-      admin_remove_user_api_key: {
-        Args: { p_reason: string; p_user_id: string };
-        Returns: undefined;
-      };
       admin_request_unfinished_terms: {
         Args: { p_request_id: string };
         Returns: {
@@ -1951,6 +1938,7 @@ export type Database = {
           p_default_allowance: number;
           p_monthly_refill: number;
           p_quiz_cost: number;
+          p_self_topup_amount: number;
           p_story_cost: number;
         };
         Returns: undefined;
@@ -2390,6 +2378,13 @@ export type Database = {
         Returns: undefined;
       };
       my_review_domain_ids: { Args: never; Returns: string[] };
+      my_self_topup_ai_credits: {
+        Args: never;
+        Returns: {
+          added: number;
+          remaining: number;
+        }[];
+      };
       my_set_collection_love: {
         Args: { p_domain_id: string; p_loved: boolean };
         Returns: number;

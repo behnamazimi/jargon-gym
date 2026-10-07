@@ -24,7 +24,6 @@ export function getCentralLlmConfig(): CentralLlmConfig | null {
 }
 
 /** Whether the account menus should mention AI credits at all. */
-export function aiCreditsMenuMode(hasOwnKey: boolean): AiCreditsMenuMode {
-  if (hasOwnKey) return "own";
+export function aiCreditsMenuMode(): AiCreditsMenuMode {
   return getCentralLlmConfig() ? "credits" : "hidden";
 }

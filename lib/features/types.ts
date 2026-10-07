@@ -8,7 +8,6 @@ export type FeatureIconKey =
   | "send"
   | "monitor"
   | "star"
-  | "key"
   | "shield"
   | "bug";
 

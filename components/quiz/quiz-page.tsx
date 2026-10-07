@@ -56,7 +56,7 @@ export function QuizPage({ ai, collections, paused, initialSetup }: QuizPageProp
         />
       );
     case "error":
-      return <QuizErrorStep quiz={quiz} ai={ai} />;
+      return <QuizErrorStep quiz={quiz} />;
     default:
       return null;
   }

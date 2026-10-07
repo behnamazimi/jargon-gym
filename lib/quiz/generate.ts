@@ -80,7 +80,7 @@ async function writeQuestions(input: {
       return await requestQuestionsFromModel(input);
     } catch {
       if (firstError instanceof Error) throw firstError;
-      throw new Error("Couldn't generate the quiz. Check your API key and try again.");
+      throw new Error("Couldn't generate the quiz. Try again.");
     }
   }
 }

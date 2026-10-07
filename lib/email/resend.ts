@@ -85,7 +85,7 @@ export async function sendWaitlistRequestNotification({
   });
 }
 
-/** A status email about a collection request, or the notice that tells the team about a new one. */
+/** A plain notice built with the shared email layout: collection request updates, credit top-ups. */
 export async function sendRequestEmail({
   to,
   email,

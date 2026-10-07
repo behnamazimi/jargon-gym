@@ -3,8 +3,7 @@ import type { FeatureId } from "./registry";
 
 export type FeatureHealth = { ok: true } | { ok: false; note: string };
 
-const CREDITS_KEY_NOTE =
-  "The app's own AI key isn't set up, so AI credits can't be used. People with their own key aren't affected.";
+const CREDITS_KEY_NOTE = "The app's own AI key isn't set up, so AI credits can't be used.";
 
 function missing(...names: string[]): string | null {
   const absent = names.filter((name) => !process.env[name]?.trim());

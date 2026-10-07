@@ -244,8 +244,6 @@ begin
 
   insert into public.ai_credit_ledger (user_id, kind, feature, amount)
   values (u1, 'spend', 'quiz', 129), (u3, 'spend', 'quiz', 100);
-  insert into public.user_settings (user_id, provider, api_key_encrypted, api_key_last4)
-  values (u1, 'google', 'x', 'abcd');
 
   -- Three failed requests from two different people.
   select ledger_id into v_ledger from public.reserve_ai_credits(u2, 'quiz', 5);
@@ -262,7 +260,6 @@ begin
   assert after_row.users_with_use = before_row.users_with_use + 2, 'two people used credits';
   assert after_row.users_exhausted = before_row.users_exhausted + 1,
     'one credit left, at 3 per action, counts as ran out; 30 left does not';
-  assert after_row.users_with_own_key = before_row.users_with_own_key + 1, 'one saved a key';
   assert after_row.refunds_24h = before_row.refunds_24h + 3, 'three refunds';
   assert after_row.refund_users_24h = before_row.refund_users_24h + 2,
     'refunds come from two different people';
@@ -326,6 +323,77 @@ begin
   exception when insufficient_privilege then null;
   end;
   execute 'reset role';
+end;
+$$;
+
+-- Self-service top-up.
+do $$
+declare
+  u1 uuid := pg_temp.make_user('topup1@example.test');
+  u2 uuid := pg_temp.make_user('topup2@example.test');
+  admin_id uuid := pg_temp.make_user('topup-admin@example.test', true);
+  r record;
+  v_failed boolean;
+begin
+  assert not has_function_privilege('anon', 'public.my_self_topup_ai_credits()', 'execute'), 'anon could top up';
+  assert (select self_topup_amount = 30 from public.ai_credit_settings where id), 'default top-up amount';
+
+  -- Signed out: refused.
+  execute 'set local role authenticated';
+  perform set_config('request.jwt.claims', '{}', true);
+  v_failed := false;
+  begin perform public.my_self_topup_ai_credits(); exception when others then v_failed := sqlerrm like 'Not authenticated%'; end;
+  assert v_failed, 'signed-out top-up was accepted';
+
+  -- Someone with plenty of credits can't top up.
+  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
+  v_failed := false;
+  begin perform public.my_self_topup_ai_credits(); exception when others then v_failed := sqlerrm like 'topup_not_needed%'; end;
+  assert v_failed, 'topped up with plenty of credits';
+
+  -- Under 10 left: adds the amount, as often as asked, and only for the caller.
+  execute 'reset role';
+  insert into public.ai_credit_ledger (user_id, kind, feature, amount) values (u1, 'spend', 'quiz', 125);
+  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  select * into r from public.my_self_topup_ai_credits();
+  assert r.added = 30 and r.remaining = 35, 'first top-up result';
+  execute 'reset role';
+  insert into public.ai_credit_ledger (user_id, kind, feature, amount) values (u1, 'spend', 'quiz', 30);
+  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  perform public.my_self_topup_ai_credits();
+  execute 'reset role';
+  assert pg_temp.remaining(u1) = 35, 'two top-ups add 60';
+  assert pg_temp.remaining(u2) = 130, 'someone else was topped up';
+  assert (select count(*) = 2 and bool_and(kind = 'grant' and note = 'self_topup' and created_by = u1)
+          from public.ai_credit_ledger where user_id = u1 and kind = 'grant'), 'top-up ledger rows';
+  assert (select count(*) = 2 and bool_and(actor_id = u1 and details = '{"amount":30}'::jsonb)
+          from public.admin_audit_log where action = 'self_topup_ai_credits' and target_id = u1::text), 'top-up audit rows';
+
+  -- The amount follows the setting.
+  update public.ai_credit_settings set self_topup_amount = 5 where id;
+  insert into public.ai_credit_ledger (user_id, kind, feature, amount) values (u2, 'spend', 'quiz', 125);
+  perform set_config('request.jwt.claims', json_build_object('sub', u2, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  select * into r from public.my_self_topup_ai_credits();
+  assert r.added = 5 and r.remaining = 10, 'configured top-up amount';
+  execute 'reset role';
+
+  -- Off when credits are off.
+  update public.ai_credit_settings set enabled = false where id;
+  perform set_config('request.jwt.claims', json_build_object('sub', u2, 'role', 'authenticated')::text, true);
+  execute 'set local role authenticated';
+  v_failed := false;
+  begin perform public.my_self_topup_ai_credits(); exception when others then v_failed := sqlerrm like 'topup_unavailable%'; end;
+  assert v_failed, 'topped up while credits were off';
+  execute 'reset role';
+  update public.ai_credit_settings set enabled = true where id;
+
+  -- The amount is checked, and only admins can change it.
+  v_failed := false;
+  begin update public.ai_credit_settings set self_topup_amount = 0 where id; exception when check_violation then v_failed := true; end;
+  assert v_failed, 'a zero top-up amount was accepted';
 end;
 $$;
 

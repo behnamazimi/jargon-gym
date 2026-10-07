@@ -31,7 +31,12 @@ function settingsClient(prices: { feature: string; credit_cost: number | null }[
               eq: () => ({
                 single: () =>
                   Promise.resolve({
-                    data: { enabled: true, default_allowance: 100, monthly_refill: 30 },
+                    data: {
+                      enabled: true,
+                      default_allowance: 100,
+                      monthly_refill: 30,
+                      self_topup_amount: 30,
+                    },
                     error: null,
                   }),
               }),
@@ -53,6 +58,7 @@ describe("getAiCreditSettingsForAdmin", () => {
       monthlyRefill: 30,
       quizCreditsPerQuestion: 1,
       storyCreditsPerTerm: 2,
+      selfTopupAmount: 30,
     });
   });
 
@@ -110,7 +116,6 @@ describe("getAiCreditSummaryForAdmin", () => {
           total_users: 10,
           users_with_use: 4,
           users_exhausted: 1,
-          users_with_own_key: 2,
           credits_spent: 90,
           spends_24h: 12,
           refunds_24h: 3,
@@ -124,7 +129,6 @@ describe("getAiCreditSummaryForAdmin", () => {
       totalUsers: 10,
       usersWithUse: 4,
       usersExhausted: 1,
-      usersWithOwnKey: 2,
       creditsSpent: 90,
       spends24h: 12,
       refunds24h: 3,

@@ -69,7 +69,7 @@ export async function getStoriesSetupData(
       listStudyCollectionState(auth.supabase, auth.user.id),
       getReadEligibleCountsByDomainForUser(admin, auth.user.id),
       loadPrefs(admin, auth.user.id),
-      getAiAccessView(auth.supabase, auth.user.id),
+      getAiAccessView(auth.supabase),
       getNarrationAccessForUser(admin, auth.user.id, "narration_story"),
       getReadOptions(auth.supabase, auth.user.id).catch((err: unknown) => {
         console.error("Failed to load Read options:", err);

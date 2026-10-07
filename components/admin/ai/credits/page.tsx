@@ -32,12 +32,12 @@ export function AdminAiCreditsPageClient({
     <>
       <AdminPageHeader
         title="AI credits"
-        description="Let people use the app's AI key until they add their own, and see how it's going. Feature switches are on the AI features page."
+        description="Everyone uses the app's AI key through credits. See how it's going. Feature switches are on the AI features page."
       />
 
       <AdminSettingRow
         title="AI credits on"
-        description="When off, only people with their own key can use AI quizzes and Stories."
+        description="When off, nobody can use AI quizzes and Stories, and the Top up button is hidden."
         control={
           <AdminSwitch
             label="Turn AI credits on"

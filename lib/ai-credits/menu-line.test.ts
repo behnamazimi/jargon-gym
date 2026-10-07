@@ -10,10 +10,6 @@ describe("aiCreditsLine", () => {
     expect(aiCreditsLine("hidden", ready(50))).toBeNull();
   });
 
-  it("says a user on their own key is using it", () => {
-    expect(aiCreditsLine("own", idle)).toEqual({ label: "AI: your own key", tone: "muted" });
-  });
-
   it("holds a placeholder, not a link, until the balance loads", () => {
     expect(aiCreditsLine("credits", idle)).toEqual({
       label: "Checking AI credits…",

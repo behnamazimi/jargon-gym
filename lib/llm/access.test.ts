@@ -4,11 +4,6 @@ import type { Database } from "@/lib/supabase/database.types";
 
 const central = vi.hoisted(() => ({ config: null as { provider: string; apiKey: string } | null }));
 const credits = vi.hoisted(() => ({ state: null as unknown, fail: false, calls: 0 }));
-const own = vi.hoisted(() => ({
-  key: null as unknown,
-  settings: null as unknown,
-  keyError: null as Error | null,
-}));
 const feature = vi.hoisted(() => ({
   settings: null as unknown,
   readError: null as Error | null,
@@ -25,14 +20,6 @@ vi.mock("@/lib/ai-credits/repository", () => ({
     return credits.state;
   },
 }));
-vi.mock("./settings", () => ({
-  getDecryptedApiKey: async () => {
-    if (own.keyError) throw own.keyError;
-    return own.key;
-  },
-  getUserSettings: async () => own.settings,
-  UnreadableKeyError: class UnreadableKeyError extends Error {},
-}));
 vi.mock("@/lib/ai/feature-settings", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/ai/feature-settings")>()),
   getFeatureSettings: async () => {
@@ -47,7 +34,6 @@ vi.mock("@/lib/ai/feature-settings", async (importOriginal) => ({
 vi.mock("@/lib/auth/require-session", () => ({ getUserIsAdmin: async () => feature.isAdmin }));
 
 const { getAiAccessView, resolveAiAccess } = await import("./access");
-const { UnreadableKeyError } = await import("./settings");
 
 const client = {} as SupabaseClient<Database>;
 const costs = { quizPerQuestion: 1, storyPerTerm: 1 };
@@ -76,9 +62,6 @@ beforeEach(() => {
   credits.state = state(50);
   credits.fail = false;
   credits.calls = 0;
-  own.key = null;
-  own.settings = null;
-  own.keyError = null;
   feature.settings = featureRow({});
   feature.readError = null;
   feature.isAdmin = false;
@@ -88,17 +71,7 @@ beforeEach(() => {
 });
 
 describe("resolveAiAccess", () => {
-  it("prefers the user's own key over credits, without asking for a balance", async () => {
-    own.key = { provider: "anthropic", apiKey: "own-key" };
-    expect(await resolve()).toEqual({
-      kind: "own",
-      provider: "anthropic",
-      apiKey: "own-key",
-    });
-    expect(credits.calls).toBe(0);
-  });
-
-  it("falls back to credits with the app's key", async () => {
+  it("uses credits with the app's key", async () => {
     expect(await resolve()).toEqual({
       kind: "credits",
       provider: "google",
@@ -128,8 +101,7 @@ describe("resolveAiAccess", () => {
 });
 
 describe("resolveAiAccess feature policy", () => {
-  it("blocks everyone, own-key users and admins included, when the feature is off", async () => {
-    own.key = { provider: "anthropic", apiKey: "own-key" };
+  it("blocks everyone, admins included, when the feature is off", async () => {
     feature.settings = featureRow({ enabled: false });
     feature.isAdmin = true;
     expect(await resolve()).toEqual({ kind: "unavailable", reason: "feature-off" });
@@ -175,23 +147,11 @@ describe("resolveAiAccess feature policy", () => {
     feature.isAdmin = true;
     expect(await resolve()).toMatchObject({ kind: "credits" });
   });
-
-  it("never falls back to credits for a saved key that can't be read", async () => {
-    own.keyError = new UnreadableKeyError();
-    expect(await resolve()).toEqual({ kind: "unavailable", reason: "key-unreadable" });
-    expect(credits.calls).toBe(0);
-  });
-
-  it("does not swallow other key errors", async () => {
-    own.keyError = new Error("database down");
-    await expect(resolve()).rejects.toThrow("database down");
-    expect(credits.calls).toBe(0);
-  });
 });
 
 describe("getAiAccessView", () => {
   it("shows the balance for users on credits, with no secrets", async () => {
-    const view = await getAiAccessView(client, "u1");
+    const view = await getAiAccessView(client);
     expect(view).toEqual({
       kind: "credits",
       providerLabel: "Google",
@@ -200,26 +160,5 @@ describe("getAiAccessView", () => {
       costs,
     });
     expect(JSON.stringify(view)).not.toContain("central-key");
-  });
-
-  it("tells own-key users whether credits would take over", async () => {
-    own.settings = { provider: "anthropic", apiKeyLast4: "abcd" };
-    expect(await getAiAccessView(client, "u1")).toEqual({
-      kind: "own",
-      providerLabel: "Anthropic",
-      creditsRemaining: 50,
-    });
-
-    credits.state = state(0);
-    expect(await getAiAccessView(client, "u1")).toMatchObject({
-      kind: "own",
-      creditsRemaining: null,
-    });
-
-    central.config = null;
-    expect(await getAiAccessView(client, "u1")).toMatchObject({
-      kind: "own",
-      creditsRemaining: null,
-    });
   });
 });

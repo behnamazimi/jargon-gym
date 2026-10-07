@@ -122,12 +122,19 @@ describe("the other admin actions", () => {
       monthlyRefill: 30,
       quizCreditsPerQuestion: 1,
       storyCreditsPerTerm: 1,
+      selfTopupAmount: 30,
     };
     expect(await saveAiCreditSettings(valid)).toMatchObject({ ok: true });
     expect(state.rpcCalls).toEqual([
       {
         name: "admin_set_ai_credit_settings",
-        args: { p_default_allowance: 100, p_monthly_refill: 30, p_quiz_cost: 1, p_story_cost: 1 },
+        args: {
+          p_default_allowance: 100,
+          p_monthly_refill: 30,
+          p_quiz_cost: 1,
+          p_story_cost: 1,
+          p_self_topup_amount: 30,
+        },
       },
     ]);
     state.rpcCalls = [];

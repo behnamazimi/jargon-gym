@@ -28,7 +28,7 @@ export function AdminAiHubClient({ rows }: { rows: AiHubRow[] }) {
     <>
       <AdminPageHeader
         title="AI features"
-        description="Every feature that calls an AI service. A feature switched off is off for everyone, including people with their own key."
+        description="Every feature that calls an AI service. A feature switched off is off for everyone."
       />
       <ul className="m-0 flex list-none flex-col gap-3 p-0">
         {rows.map((row) => (

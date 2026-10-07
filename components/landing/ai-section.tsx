@@ -24,8 +24,7 @@ export function AiSection() {
       </h2>
       <p className="mt-4 m-0 max-w-[52ch] text-base leading-relaxed text-base-content/85">
         Use it for the terms of a field or the vocabulary of a language. New accounts get some free
-        AI credits, or you can add your own Google or Anthropic API key. Read, Review, and simple
-        quizzes never cost credits.
+        AI credits. Read, Review, and simple quizzes never cost credits.
       </p>
       <dl className="m-0 mt-8 divide-y divide-base-content/15 border-y border-base-content/15">
         {AI_FEATURES.map(({ label, body }) => (

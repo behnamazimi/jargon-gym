@@ -24,7 +24,6 @@ import {
   STORY_OUTLINE_MAX,
   type CefrLevel,
 } from "@/lib/stories/types";
-import { termsForLength } from "@/lib/stories/length";
 import { aiAvailable, type AiAccessView } from "@/lib/llm/types";
 import { storyCreditUse } from "@/lib/stories/credit-fit";
 import { PieceLengthField, ReadingLevelField } from "@/components/read/stories/story-setup-fields";
@@ -115,7 +114,6 @@ export function StorySetupPanel({
 }) {
   const selected = collections.find((collection) => collection.id === session.domainId);
   const eligibleCount = selected?.eligibleCount ?? 0;
-  const termCount = Math.min(eligibleCount, termsForLength(session.pieceLength));
   const use = storyCreditUse(ai, session.pieceLength, eligibleCount);
   const hasEnoughTerms = eligibleCount >= STORY_MIN_TERMS;
   const canGenerate = aiAvailable(ai) && hasEnoughTerms && !use.overBalance;
@@ -133,9 +131,7 @@ export function StorySetupPanel({
           Write a story
         </Button>
       }
-      footerHint={
-        <StoryFooterHint ai={ai} use={use} termCount={termCount} hasEnoughTerms={hasEnoughTerms} />
-      }
+      footerHint={<StoryFooterHint use={use} hasEnoughTerms={hasEnoughTerms} />}
     >
       <QuizPanelLabel
         title="Set up your story"

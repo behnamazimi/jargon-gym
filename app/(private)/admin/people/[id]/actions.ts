@@ -43,17 +43,6 @@ export async function setUserSuspended(input: {
   }, revalidateFor(input.userId));
 }
 
-export async function removeUserApiKey(input: { userId: string; reason: string }) {
-  return runAdminAction(async ({ supabase }) => {
-    const { userId, reason } = parse(targetSchema, input);
-    const { error } = await supabase.rpc("admin_remove_user_api_key", {
-      p_user_id: userId,
-      p_reason: reason,
-    });
-    if (error) throwRpcError(error);
-  }, revalidateFor(input.userId));
-}
-
 const deleteSchema = targetSchema.extend({
   confirmEmail: z.string().trim().min(1, "Type their email."),
 });

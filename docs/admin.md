@@ -10,7 +10,7 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `/admin`                  | Overview: what needs attention (missing keys, refunds, switches off, waitlist, stalled sync) and recent activity          |
 | `/admin/people`           | Waitlist (approve one or up to ten at a time, resend), shared codes, and the members list                                 |
-| `/admin/people/[id]`      | One person: waitlist request, narration, AI setup and credits, admin history, suspend, remove key, delete                 |
+| `/admin/people/[id]`      | One person: waitlist request, narration, AI credits, admin history, suspend, delete                                       |
 | `/admin/collections`      | Built-in and all collections, read-only: status, address, narration mode; the Reported view lists reported ones           |
 | `/admin/collections/[id]` | One collection: status, kind, address, sharing and reports, narration mode, audio sync and per-term clips                 |
 | `/admin/requests`         | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers      |
@@ -64,7 +64,7 @@ temporary (307) redirects from `lib/redirects.ts`.
 ## Managing one person
 
 `supabase/migrations/20260930120000_admin_user_management.sql` adds `admin_person_detail`,
-`admin_set_user_suspended`, `admin_remove_user_api_key` and `admin_delete_user`. Each write checks, changes and
+`admin_set_user_suspended` and `admin_delete_user`. Each write checks, changes and
 audits in one transaction, so nothing is half done. They share `_admin_manage_target`: the caller must be an
 admin, the target must exist, must not be the caller, and must be a `member` (admins are changed in the
 database). It also locks the person's row, so two admins can't act on one person at once. A reason of 1 to 200
@@ -82,7 +82,6 @@ characters is required. Errors the admin should read use the database code `AD00
   widget tokens (`resolveUserFromToken`); Telegram commands (`resolveUserIdByChatId`), scheduled sends
   (`list_due_telegram_users`) and linking (`complete_telegram_link`). A new way in that doesn't go through a
   session must check `users.suspended_at` too.
-- **Remove API key** clears provider, key and last four together. They fall back to the app's key and credits.
 - **Delete** removes the auth user; everything else cascades. It is refused while other people have something
   hanging off the person's collections (added, studying, story preferences, review state or events), because
   deleting the collections would delete that for them. The collections and their terms are locked first, so no
