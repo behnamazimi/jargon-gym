@@ -181,6 +181,9 @@ Nothing is automatic: reports only show up for an admin, who decides.
   `/admin/collections` (Loves column, status badges, Stop sharing, Lift lock and Reports dialogs; code in
   `components/admin/collections/moderation-*.tsx` and `moderation-actions.ts`). The overview counts collections
   with open reports. No user-facing string may name the admin; `lib/collections/moderation.test.ts` checks it.
+- **Browse tabs.** Browse splits shared collections into Built-in and Community (`?tab=`, `group` in
+  `lib/library/browse.ts`). Search, sort and the status filter carry across tabs, and each tab shows its own
+  match count. Built-ins have no Report action; the import chooser search omits `group` and sees both.
 - SQL checks: `supabase/tests/collection_moderation.sql`, run by hand against a local database.
 
 ## Queue debug

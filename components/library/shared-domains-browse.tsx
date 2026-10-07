@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ReportCollectionDialog } from "@/components/library/report-collection-dialog";
 import { SharedDomainCard } from "@/components/library/shared-domain-card";
+import { BROWSE_PANEL_ID, SharedDomainsTabs } from "@/components/library/shared-domains-tabs";
 import { SharedDomainsFilterBar } from "@/components/library/shared-domains-filter-bar";
 import {
   SharedDomainsEmptyCatalog,
+  SharedDomainsEmptyGroup,
   SharedDomainsNoMatches,
 } from "@/components/library/shared-domains-empty-states";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,19 +17,24 @@ import { useToast } from "@/components/ui/toast";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
 import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
-import type { BrowsePageResult } from "@/lib/library/browse";
+import type { BrowseGroup, BrowsePageResult } from "@/lib/library/browse";
 import type { RequestEntry } from "@/lib/requests/entry";
 import { cn } from "@/lib/utils";
 
 type SharedDomainsBrowseProps = {
   initialPage: BrowsePageResult;
+  initialGroup: BrowseGroup;
   requestEntry: RequestEntry;
 };
 
-export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomainsBrowseProps) {
+export function SharedDomainsBrowse({
+  initialPage,
+  initialGroup,
+  requestEntry,
+}: SharedDomainsBrowseProps) {
   const { error, busyId, addToCollection, removeFromCollection } = useCollectionActions();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const browse = useSharedDomainsBrowse({ initialPage });
+  const browse = useSharedDomainsBrowse({ initialPage, initialGroup });
   const router = useRouter();
   const { toast } = useToast();
   const [reporting, setReporting] = useState<{
@@ -71,6 +78,11 @@ export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomains
     if (result.count !== undefined) browse.markLoved(domainId, loved, result.count);
   }
 
+  const allAdded =
+    browse.filter === "available" &&
+    browse.searchInput.trim() === "" &&
+    browse.counts.available === 0 &&
+    browse.counts.all > 0;
   const bannerError = error ?? browse.listError;
 
   if (browse.isEmptyCatalog) {
@@ -85,35 +97,52 @@ export function SharedDomainsBrowse({ initialPage, requestEntry }: SharedDomains
         </Alert>
       ) : null}
 
+      <SharedDomainsTabs
+        active={browse.group}
+        counts={browse.counts.groups}
+        onChange={browse.setGroup}
+      />
+
       <SharedDomainsFilterBar browse={browse} searchInputRef={searchInputRef} />
 
-      {browse.domains.length === 0 ? (
-        <SharedDomainsNoMatches
-          hasActiveFilters={browse.hasActiveFilters}
-          onClearFilters={() => {
-            browse.clearFilters();
-            searchInputRef.current?.focus();
-          }}
-          onRetry={browse.retry}
-          requestEntry={requestEntry}
-          search={browse.searchInput}
-        />
-      ) : (
-        <ul className={cn("flex flex-col gap-3", browse.isRefreshing && "opacity-70")}>
-          {browse.domains.map((domain) => (
-            <li key={domain.id}>
-              <SharedDomainCard
-                domain={domain}
-                busy={busyId === domain.id}
-                onAdd={() => void handleAdd(domain.id)}
-                onRemove={() => void handleRemove(domain.id)}
-                onToggleLove={() => void handleToggleLove(domain.id, !domain.lovedByMe)}
-                onReport={() => setReporting({ id: domain.id, name: domain.name })}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      <div
+        role="tabpanel"
+        id={BROWSE_PANEL_ID}
+        aria-labelledby={`browse-tab-${browse.group}`}
+        className="space-y-4"
+      >
+        {browse.domains.length === 0 && !browse.hasActiveFilters ? (
+          <SharedDomainsEmptyGroup group={browse.group} requestEntry={requestEntry} />
+        ) : browse.domains.length === 0 ? (
+          <SharedDomainsNoMatches
+            group={browse.group}
+            allAdded={allAdded}
+            hasActiveFilters={browse.hasActiveFilters}
+            onClearFilters={() => {
+              browse.clearFilters();
+              searchInputRef.current?.focus();
+            }}
+            onRetry={browse.retry}
+            requestEntry={requestEntry}
+            search={browse.searchInput}
+          />
+        ) : (
+          <ul className={cn("flex flex-col gap-3", browse.isRefreshing && "opacity-70")}>
+            {browse.domains.map((domain) => (
+              <li key={domain.id}>
+                <SharedDomainCard
+                  domain={domain}
+                  busy={busyId === domain.id}
+                  onAdd={() => void handleAdd(domain.id)}
+                  onRemove={() => void handleRemove(domain.id)}
+                  onToggleLove={() => void handleToggleLove(domain.id, !domain.lovedByMe)}
+                  onReport={() => setReporting({ id: domain.id, name: domain.name })}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {reporting ? (
         <ReportCollectionDialog
