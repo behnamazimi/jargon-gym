@@ -15,8 +15,11 @@ import { login } from "./actions";
 
 const OAUTH_FAILED_ERROR = "Google sign-in didn't work. Try again or use your email instead.";
 
+const LINK_FAILED_ERROR = "That link didn't work here. Log in with your email and password.";
+
 const QUERY_ERRORS: Record<string, string> = {
   "oauth-failed": OAUTH_FAILED_ERROR,
+  "link-failed": LINK_FAILED_ERROR,
   suspended: SUSPENDED_ERROR,
 };
 
