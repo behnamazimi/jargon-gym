@@ -57,7 +57,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     layout: "cards",
     id: "ai-and-cost",
     title: "AI and credits",
-    lead: "Quiz, Stories and voices use AI, and it comes free with your account.",
+    lead: "Quiz, Stories and voices use AI. New accounts get free credits, and limits can change.",
     items: [
       {
         icon: "star",

@@ -11,7 +11,8 @@ export function FinalCtaSection({ isLoggedIn }: { isLoggedIn: boolean }) {
           <span className="text-primary-text">Free.</span> At your own pace.
         </h2>
         <p className="mt-4 m-0 max-w-[52ch] text-base leading-relaxed text-base-content/85">
-          Read, review and quiz the terms you need, with no due dates to fall behind on.
+          Free to use, with monthly AI credits. Read, review and quiz the terms you need, with no
+          due dates to fall behind on.
         </p>
         <div className="mt-6">
           <LandingCtas isLoggedIn={isLoggedIn} />

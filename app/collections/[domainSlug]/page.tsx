@@ -105,7 +105,7 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
             <span className="text-primary-text">Free.</span>
           </>
         }
-        body="Read, review and quiz them in Lobyas, with no due dates to fall behind on."
+        body="Free to use, with monthly AI credits. Read, review and quiz them in Lobyas, with no due dates to fall behind on."
         collection={{ id: domain.id, name: domain.name, canAdd: domain.canAdd }}
       />
     </div>
