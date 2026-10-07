@@ -59,11 +59,11 @@ function UnshareContent({
           ) : error ? (
             error
           ) : result?.count === undefined ? (
-            "Unsharing will hide this collection from Browse shared collections."
+            "Unsharing will hide this collection from Browse."
           ) : (
             <>
               {subscriberCountMessage(result.count)} Unsharing will hide &ldquo;{domain.name}
-              &rdquo; from Browse shared collections.
+              &rdquo; from Browse.
             </>
           )}
         </AlertDialogDescription>
@@ -121,8 +121,7 @@ export function DomainActionsDialogs({
         <AlertDialogHeader>
           <AlertDialogTitle>Share collection?</AlertDialogTitle>
           <AlertDialogDescription>
-            &ldquo;{domain.name}&rdquo; will show up in Browse shared collections. You can unshare
-            it anytime.
+            &ldquo;{domain.name}&rdquo; will show up in Browse. You can unshare it anytime.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

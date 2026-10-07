@@ -99,7 +99,7 @@ export function buildDeclinedEmail(input: {
     paragraphs: [
       REQUEST_COPY.declineReasons[input.reason],
       ...(input.note ? [input.note] : []),
-      "In the meantime, you can paste a list of your own or browse the shared collections.",
+      "In the meantime, you can paste a list of your own or browse the built-in and community collections.",
     ],
     button: { label: REQUEST_COPY.card.pasteList, url: input.pasteUrl },
   });

@@ -9,7 +9,7 @@ const DESCRIPTION =
   "Learn the terms of any field or language with real examples, AI stories, AI quizzes, and audio, and keep testing what you're weakest on so they actually stick. Invite-only.";
 
 export const metadata: Metadata = {
-  title: { absolute: "Lobyas: a better way to learn terms and vocabulary" },
+  title: { absolute: "Lobyas: learn the terms that stick" },
   description: DESCRIPTION,
 };
 

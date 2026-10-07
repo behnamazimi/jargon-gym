@@ -1,4 +1,5 @@
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { LinkButton } from "@/components/ui/button";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 
@@ -47,7 +48,11 @@ export function LandingCtas({ isLoggedIn }: { isLoggedIn: boolean }) {
         </LinkButton>
       </div>
       <p className="mt-3 m-0 text-sm leading-relaxed text-base-content/70">
-        Sign-up is by request. Ask for access, or sign up with a reference code if you have one.
+        Sign-up is by invite. Request access, or{" "}
+        <Link href="/signup" className="underline underline-offset-2">
+          sign up with an invite code
+        </Link>{" "}
+        if you have one.
       </p>
     </div>
   );

@@ -17,7 +17,7 @@ export async function redeemReferralCode(
   const referenceCode = normalizeReferralCode(formData.get("referenceCode")?.toString());
 
   if (!referenceCode) {
-    return { error: "Enter your reference code." };
+    return { error: "Enter your invite code." };
   }
 
   const supabase = await createClient();

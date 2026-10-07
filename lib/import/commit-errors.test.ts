@@ -12,7 +12,7 @@ describe("commitFailureFor", () => {
       "import_too_large",
       "One import adds up to 500 terms, so split your list and add it in parts.",
     ],
-    ["Not authenticated", "Sign in to add terms."],
+    ["Not authenticated", "Log in to add terms."],
     [
       "duplicate key value violates unique constraint",
       "We couldn't add your terms. Nothing was added, and your list is still here. Try again.",

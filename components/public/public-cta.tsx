@@ -8,18 +8,14 @@ import { LandingCtas } from "@/components/landing/landing-ctas";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { hasAuthCookie } from "@/lib/auth/has-auth-cookie";
 import type { CollectionMembership } from "@/lib/library/membership";
 
 const subscribe = () => () => {};
 
 // Public pages are cached and rendered without a session, so the server always
-// sends the visitor CTA. The auth cookie is readable in the browser, which is
-// enough to tell a signed-in user apart without a request. A stale cookie just
-// leads to the login page.
-function hasAuthCookie() {
-  return document.cookie.includes("-auth-token");
-}
-
+// sends the visitor CTA and a signed-in visitor is spotted from the auth cookie.
+// A stale cookie just leads to the login page.
 const BUTTON_CLASS =
   "group min-h-12 w-full gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96] sm:w-auto";
 

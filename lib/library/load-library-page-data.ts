@@ -93,6 +93,6 @@ export async function loadLibraryPageData(
       activeDomainIds: reviewDomainIds,
     };
   } catch (err) {
-    throw toLibraryDataError(err, "Couldn't load your collection. Refresh the page or try again.");
+    throw toLibraryDataError(err, "Couldn't load your library. Refresh the page or try again.");
   }
 }

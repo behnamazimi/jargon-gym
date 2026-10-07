@@ -19,4 +19,6 @@ export type TourChapter = {
   /** Exact pathname(s) the chapter runs on. */
   route: string | readonly string[];
   steps: readonly TourStep[];
+  /** Chapter ids that must be seen first, even when their targets never show up here. */
+  after?: readonly string[];
 };

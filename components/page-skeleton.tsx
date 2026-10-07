@@ -118,7 +118,7 @@ export function LibraryListSkeleton() {
 
 export function LibraryPageSkeleton() {
   return (
-    <PageShell aria-busy="true" aria-label="Loading your collection">
+    <PageShell aria-busy="true" aria-label="Loading your library">
       <div className="flex flex-col gap-6 md:flex-row md:items-start">
         <aside className="hidden md:flex md:w-68 md:shrink-0">
           <div className="shadow-surface flex w-full flex-col gap-4 rounded-box bg-base-100 p-3">

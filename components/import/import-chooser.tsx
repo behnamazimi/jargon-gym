@@ -57,7 +57,7 @@ export function ImportChooser({
         aria-labelledby="find-shared"
       >
         <h2 id="find-shared" className={SECTION_HEADING}>
-          Find a shared collection
+          Find a collection
         </h2>
         <div className="relative">
           <Search
@@ -75,7 +75,7 @@ export function ImportChooser({
           />
         </div>
         {query.trim() ? null : (
-          <p className="m-0 text-sm text-base-content/70">Search shared collections.</p>
+          <p className="m-0 text-sm text-base-content/70">Search collections.</p>
         )}
         <SearchResults
           state={search}
@@ -163,7 +163,7 @@ export function ImportChooser({
           size="sm"
           className="min-h-11 text-base-content/70"
         >
-          More import options
+          More ways to add
         </LinkButton>
       </div>
 

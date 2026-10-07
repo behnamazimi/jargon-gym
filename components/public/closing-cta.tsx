@@ -17,7 +17,7 @@ export function ClosingCta({
       <span className="text-primary-text">Free.</span> At your own pace.
     </>
   ),
-  body = "Read, review and quiz the terms you need, with no due dates to fall behind on.",
+  body = "Free to use, with monthly AI credits. Read, review and quiz the terms you need, with no due dates to fall behind on.",
   scene = <InviteScene />,
   collection,
 }: ClosingCtaProps) {

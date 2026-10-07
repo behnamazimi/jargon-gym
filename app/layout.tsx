@@ -4,6 +4,8 @@ import { AppFooter } from "@/components/app-footer";
 import { AppShell } from "@/components/app-shell";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
 import { ToastProvider } from "@/components/ui/toast";
+import { ConsentBanner } from "@/components/consent/consent-banner";
+import { ConsentSyncIsland } from "@/components/consent/consent-sync-island";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { SiteFooter } from "@/components/site-footer";
 import { HeaderIsland } from "@/components/header-island";
@@ -120,11 +122,15 @@ export default async function RootLayout({
                 <TimezoneSyncIsland />
               </Suspense>
               <Suspense fallback={null}>
+                <ConsentSyncIsland />
+              </Suspense>
+              <Suspense fallback={null}>
                 <TourIsland />
               </Suspense>
               <OfflineBanner />
               <main className="flex min-h-0 flex-1 flex-col">{children}</main>
             </AppShell>
+            <ConsentBanner />
           </ToastProvider>
         </PwaProviders>
       </body>

@@ -15,8 +15,9 @@ type AuthLikeError = {
 const GENERIC_ERROR = "We couldn't complete that. Try again in a moment.";
 const INVALID_LOGIN = "That email or password doesn't look right.";
 export const SUSPENDED_ERROR = "This account has been suspended.";
-const INVALID_REFERRAL = "That reference code isn't valid, was already used, or has run out.";
-export const FULL_REFERRAL = "That reference code is full or has expired.";
+const INVALID_REFERRAL = "That invite code isn't valid, was already used, or has run out.";
+export const FULL_REFERRAL = "That invite code is full or has expired.";
+export const RATE_LIMITED_ERROR = "Too many attempts right now. Wait a few minutes and try again.";
 const RESET_FAILED = "Couldn't reset your password. Request a new reset link and try again.";
 const PASSWORD_FAILED =
   getPasswordValidationError("") ?? "Your password doesn't meet the requirements below.";
@@ -128,10 +129,16 @@ type FailureRule = {
   result: string;
 };
 
+const RATE_LIMIT_CODES = ["over_email_send_rate_limit", "over_request_rate_limit"];
+
 const FAILURE_RULES: FailureRule[] = [
   {
     matches: (error) => error.code === "user_banned",
     result: SUSPENDED_ERROR,
+  },
+  {
+    matches: (error) => error.code !== undefined && RATE_LIMIT_CODES.includes(error.code),
+    result: RATE_LIMITED_ERROR,
   },
   {
     matches: (error, message) => Boolean(message) && isLoginFailure(error, message),

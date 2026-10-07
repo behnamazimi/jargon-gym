@@ -6,7 +6,9 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
     <div className="landing-enter grid grid-cols-1 items-start gap-12 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)] lg:gap-20">
       <div className="lg:pt-6">
         {isLoggedIn ? null : (
-          <p className="m-0 text-sm text-base-content/70">Free. Sign-up is by request.</p>
+          <p className="m-0 text-sm text-base-content/70">
+            Free to use, with monthly AI credits. Sign-up is by invite.
+          </p>
         )}
 
         <h1 className="mt-4 m-0 max-w-[14ch] text-balance text-[clamp(2.5rem,5vw+1rem,4.75rem)] font-medium leading-[1.04] tracking-tight [overflow-wrap:anywhere]">
@@ -18,7 +20,7 @@ export function HeroSection({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         <p className="mt-6 m-0 max-w-[40ch] text-lg leading-relaxed text-base-content/85">
           Every field has shorthand insiders never explain, and every language has words you only
-          half know. Lobyas explains them, then drills you until they stick.
+          half know. Lobyas explains them, then helps them stick with light, regular practice.
         </p>
 
         <div className="mt-8">

@@ -1,5 +1,8 @@
-import { Search, X } from "lucide-react";
-import type { RefObject } from "react";
+"use client";
+
+import { Search, SlidersHorizontal, X } from "lucide-react";
+import { useState, type RefObject } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { SharedDomainsTabs } from "@/components/library/shared-domains-tabs";
@@ -39,61 +42,95 @@ const SORTS: Array<{ value: BrowseSort; label: string }> = [
   { value: "loved", label: "Most loved" },
 ];
 
+/** On phones the filter bar is three separate blocks so only the search row can stay pinned. */
+const CARD_ON_PHONE = "max-md:rounded-box max-md:bg-base-100 max-md:shadow-surface";
+
 type SharedDomainsFilterBarProps = {
   browse: ReturnType<typeof useSharedDomainsBrowse>;
   searchInputRef: RefObject<HTMLInputElement | null>;
 };
 
+const FILTER_PANEL_ID = "browse-advanced-filters";
+
 export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomainsFilterBarProps) {
+  const [expanded, setExpanded] = useState(false);
+  const activeFilterCount = (browse.filter !== "all" ? 1 : 0) + (browse.sort !== "name" ? 1 : 0);
+
   return (
     <section
       aria-label="Filter collections"
-      data-tour="browse-filters"
-      className={cn(
-        "shadow-surface space-y-3 rounded-box bg-base-100 p-5",
-        "max-md:sticky max-md:z-30 max-md:top-0",
-      )}
+      className="md:shadow-surface max-md:contents md:space-y-3 md:rounded-box md:bg-base-100 md:p-5"
     >
-      <SharedDomainsTabs
-        active={browse.group}
-        counts={browse.counts.groups}
-        onChange={browse.setGroup}
-      />
-
-      <InputGroup className="h-11 min-h-11 cursor-text items-center">
-        <InputGroupAddon>
-          <Search className="size-4" aria-hidden strokeWidth={1.5} />
-        </InputGroupAddon>
-        <InputGroupInput
-          ref={searchInputRef}
-          type="search"
-          value={browse.searchInput}
-          onChange={(event) => browse.setSearchInput(event.target.value)}
-          placeholder="Search collections…"
-          aria-label="Search collections"
-          className="h-11 min-w-0 text-base sm:text-sm"
+      <div className={cn(CARD_ON_PHONE, "max-md:p-3")} data-tour="browse-filters">
+        <SharedDomainsTabs
+          active={browse.group}
+          counts={browse.counts.groups}
+          onChange={browse.setGroup}
         />
-        {browse.isRefreshing ? (
-          <span className="loading loading-spinner loading-sm me-2 text-base-content/70" />
-        ) : browse.searchInput ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            className="me-1 min-h-11 min-w-11 text-base-content/70 hover:text-base-content"
-            onPress={() => browse.setSearchInput("")}
-            aria-label="Clear search"
-          >
-            <X className="size-3.5" aria-hidden strokeWidth={1.5} />
-          </Button>
-        ) : (
-          <kbd className="kbd kbd-sm pointer-events-none me-1.5 hidden h-6 w-6 items-center justify-center p-0 text-[11px] leading-none md:inline-flex">
-            <span className="inline-block translate-y-px">/</span>
-          </kbd>
-        )}
-      </InputGroup>
+      </div>
 
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex items-stretch gap-2 max-md:sticky max-md:top-0 max-md:z-30 max-md:rounded-box max-md:bg-base-100 max-md:p-2 max-md:shadow-surface">
+        <InputGroup className="h-11 min-h-11 min-w-0 flex-1 cursor-text items-center">
+          <InputGroupAddon>
+            <Search className="size-4" aria-hidden strokeWidth={1.5} />
+          </InputGroupAddon>
+          <InputGroupInput
+            ref={searchInputRef}
+            type="search"
+            value={browse.searchInput}
+            onChange={(event) => browse.setSearchInput(event.target.value)}
+            placeholder="Search collections…"
+            aria-label="Search collections"
+            className="h-11 min-w-0 text-base sm:text-sm"
+          />
+          {browse.isRefreshing ? (
+            <span className="loading loading-spinner loading-sm me-2 text-base-content/70" />
+          ) : browse.searchInput ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="me-1 min-h-11 min-w-11 text-base-content/70 hover:text-base-content"
+              onPress={() => browse.setSearchInput("")}
+              aria-label="Clear search"
+            >
+              <X className="size-3.5" aria-hidden strokeWidth={1.5} />
+            </Button>
+          ) : (
+            <kbd className="kbd kbd-sm pointer-events-none me-1.5 hidden h-6 w-6 items-center justify-center p-0 text-[11px] leading-none md:inline-flex">
+              <span className="inline-block translate-y-px">/</span>
+            </kbd>
+          )}
+        </InputGroup>
+        <Button
+          type="button"
+          variant="outline"
+          aria-expanded={expanded}
+          aria-controls={FILTER_PANEL_ID}
+          onPress={() => setExpanded((value) => !value)}
+          className={cn("min-h-11 shrink-0 gap-2 md:hidden", expanded && "bg-base-200")}
+        >
+          <SlidersHorizontal className="size-3.5" aria-hidden strokeWidth={1.5} />
+          Filters
+          {activeFilterCount > 0 ? (
+            <Badge
+              variant="default"
+              className={cn("min-w-5 px-1.5 py-0 text-xs tabular-nums", expanded && "invisible")}
+            >
+              {activeFilterCount}
+            </Badge>
+          ) : null}
+        </Button>
+      </div>
+
+      <div
+        id={FILTER_PANEL_ID}
+        className={cn(
+          CARD_ON_PHONE,
+          "flex-col gap-2 max-md:p-3 md:flex md:flex-row md:items-center md:justify-between",
+          expanded ? "flex" : "max-md:hidden",
+        )}
+      >
         <div className="flex flex-wrap gap-2" role="group" aria-label="Collection status">
           {FILTERS.map((item) => {
             const selected = browse.filter === item.value;

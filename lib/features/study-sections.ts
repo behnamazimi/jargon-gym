@@ -9,7 +9,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     scene: "start",
     items: [
       {
-        title: "Add a shared collection",
+        title: "Add a collection",
         body: "Search what other members shared and add it in one tap. Remove it any time.",
       },
       {
@@ -72,7 +72,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Hear any term",
-        body: "Play a spoken clip from a term card.",
+        body: "On accounts with voices switched on, play a spoken clip from a term card.",
       },
     ],
   },
@@ -80,7 +80,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     layout: "split",
     id: "stories",
     title: "Stories you can read and hear",
-    lead: "Short reads built from your terms, read aloud so you can listen and repeat.",
+    lead: "Short reads built from your terms. On accounts with voices switched on, they are read aloud so you can listen and repeat.",
     scene: "hear",
     items: [
       {

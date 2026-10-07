@@ -2,6 +2,8 @@
 
 import { trackServer } from "@/lib/analytics/server";
 import { redirect } from "next/navigation";
+import { getAppOrigin } from "@/lib/auth/app-origin";
+import { EMAIL_FLOW } from "@/lib/auth/callback-flow";
 import { formatSignupError } from "@/lib/auth/format-auth-error";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
 import { getPasswordValidationError } from "@/lib/auth/password-policy";
@@ -37,12 +39,15 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
     return { error: passwordError };
   }
 
-  const supabase = await createClient();
+  const next = safeNextPath(formData.get("next")?.toString() ?? null);
+  const [origin, supabase] = await Promise.all([getAppOrigin(), createClient()]);
+  const redirectParams = new URLSearchParams({ flow: EMAIL_FLOW, next });
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      emailRedirectTo: `${origin}/auth/callback?${redirectParams.toString()}`,
       data: {
         referral_code: referenceCode,
       },
@@ -65,6 +70,5 @@ export async function signup(_prev: SignupState, formData: FormData): Promise<Si
     return { checkEmail: email };
   }
 
-  const next = safeNextPath(formData.get("next")?.toString() ?? null);
   redirect(next);
 }

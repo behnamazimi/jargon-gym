@@ -76,7 +76,7 @@ export default async function LibraryRoute({ searchParams }: PageProps) {
   if ("error" in auth) {
     return (
       <PageCenter>
-        <p className="text-sm text-base-content/70">Log in to view your collection.</p>
+        <p className="text-sm text-base-content/70">Log in to view your library.</p>
       </PageCenter>
     );
   }

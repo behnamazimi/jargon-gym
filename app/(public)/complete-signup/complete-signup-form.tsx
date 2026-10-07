@@ -4,6 +4,7 @@ import { Mail } from "lucide-react";
 import Link from "next/link";
 import { useActionState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
+import { LegalConsentLine } from "@/components/auth/legal-consent-line";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
@@ -33,7 +34,7 @@ export default function CompleteSignupForm({
       <input type="hidden" name="next" value={next} />
       <h1 className="text-2xl font-medium">Complete sign up</h1>
       <p className="text-sm text-base-content/70">
-        Almost there. Enter your reference code to finish setting up your account.
+        Almost there. Enter your invite code to finish setting up your account.
       </p>
 
       {codeRanOut && (
@@ -65,7 +66,7 @@ export default function CompleteSignupForm({
 
       <FieldGroup>
         <Field>
-          <FieldLabel htmlFor="complete-signup-reference-code">Reference code</FieldLabel>
+          <FieldLabel htmlFor="complete-signup-reference-code">Invite code</FieldLabel>
           <Input
             id="complete-signup-reference-code"
             type="text"
@@ -84,6 +85,7 @@ export default function CompleteSignupForm({
       <Button type="submit" isDisabled={pending} className="mt-2">
         {pending ? "Verifying…" : "Continue"}
       </Button>
+      <LegalConsentLine action="continuing" className="text-center" />
     </form>
   );
 }

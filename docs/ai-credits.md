@@ -115,8 +115,10 @@ that doesn't have the migration yet, the balance lookup fails and users see the
 same "add a key" screens as before, with no harm done to users on their own key.
 
 When someone uses AI credits, the terms, their definitions, and any outline the
-person writes are sent to the app's AI provider. Settings and the sign-up page
-say so.
+person writes are sent to the app's AI provider. The AI credits panel in
+Settings (`components/settings/llm-panel.tsx`) says so. The privacy page names
+the providers and says the term content needed is sent, but doesn't mention
+outlines. The sign-up page says nothing about AI.
 
 The models are the same ones users get with their own key, set in
 `lib/llm/model.ts`. We recommend setting a monthly budget cap in the provider's

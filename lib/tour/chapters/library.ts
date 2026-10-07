@@ -9,7 +9,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "library-browse",
         title: "Welcome to Lobyas",
-        body: "Add a shared collection to get started.",
+        body: "Add a collection to get started.",
       },
       {
         target: "library-import",
@@ -55,6 +55,8 @@ export const LIBRARY_CHAPTERS = [
   {
     id: "app",
     route: "/app/library",
+    // Not on an empty Library: the header's tips would open before the welcome tip.
+    after: ["library"],
     steps: [
       {
         target: "app-streak",

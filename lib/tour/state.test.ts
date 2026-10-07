@@ -45,6 +45,21 @@ describe("pickChapter", () => {
     );
   });
 
+  it("holds the header tips back on an empty Library, so welcome comes first", () => {
+    const onEmptyLibrary = visible("library-browse", "library-import", "app-streak", "app-account");
+    expect(pickChapter("/app/library", NEW_USER_TOUR_STATE, onEmptyLibrary)?.id).toBe("welcome");
+
+    const welcomeSeen: TourState = { status: "pending", seen: ["welcome"] };
+    expect(pickChapter("/app/library", welcomeSeen, onEmptyLibrary)).toBeNull();
+  });
+
+  it("shows the header tips once the Library chapters have run", () => {
+    const state: TourState = { status: "pending", seen: ["library", "library-terms"] };
+    expect(pickChapter("/app/library", state, visible("app-streak", "app-account"))?.id).toBe(
+      "app",
+    );
+  });
+
   it("runs the Library chapter once a collection exists", () => {
     expect(
       pickChapter("/app/library", NEW_USER_TOUR_STATE, visible("library-collections"))?.id,

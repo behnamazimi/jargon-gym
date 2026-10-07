@@ -6,15 +6,21 @@ Lobyas is run by Behnam Azimi, an individual based in the Netherlands, who is re
 
 - Your email address and sign-in details.
 - The terms and collections you add, and your study history: what you read, review and quiz, and your streak.
-- Your settings, including a Telegram link and an AI key if you add one (stored encrypted).
+- Your settings, including a Telegram link, desktop widget tokens and an AI key if you add one (stored encrypted).
+- Stories you generate, and the spoken clip if you ask for one.
+- Collections you love or report, and collections you request.
+- Reports you send from "Report an issue": your message, the page you were on, your browser and window size, and the screenshot if you attach one.
+- The invite code you signed up with.
 - AI credit usage.
+- Your analytics choice and when you made it, so it follows your account to other devices and we can show you agreed.
+- Only if you allow analytics: which features you use and any errors you hit, linked to your account.
 - If you asked for access, the email you used and when.
 
 We use it to run the app and nothing else: no advertising, no selling, no profiling beyond the study scheduling you see.
 
 ## Who can see it
 
-Other members never see your progress or history, even in a shared collection. The admin can see basic account details to run the service and help you: your email, streaks, last activity, the provider and last four characters of an AI key if you added one, and how many collections you have. As the operator, I also have technical access to the database, and I use it only to run, secure and fix the service.
+Other members never see your progress or history, even in a shared collection. To run the service and help you, we can see basic account details: your email, streaks, last activity, the provider and last four characters of an AI key if you added one, and how many collections you have. We also have technical access to the database, and we use it only to run, secure and fix the service.
 
 ## Why we use it
 
@@ -25,12 +31,21 @@ Other members never see your progress or history, even in a shared collection. T
 
 ## Cookies
 
-Only what the app needs: your login session, your theme, and remembered choices like library filters, the collection you last studied and an unfinished quiz, kept in cookies or on your device. There's no analytics, advertising or tracking, so there's no cookie banner. The installable app also caches pages on your device so it works offline.
+What the app needs: your login session, your theme, your analytics choice, and remembered choices like library filters, the collection you last studied and an unfinished quiz, kept in cookies or on your device. The installable app also caches pages on your device so it works offline.
+
+Analytics is off until you allow it in the banner. If you do, PostHog saves an ID on your device and we link what you do in the app (which features you use, and errors) to your account. If you decline, no analytics ID is saved and no analytics or error reports are sent. You can change your choice any time with "Analytics choice" in the footer or the More menu. There's no advertising.
+
+When you use an AI feature (AI quizzes or Stories), we log how long the request took, how many tokens it used and whether it failed, never what you or the AI wrote. If you allowed analytics that log is tied to your account; if not, it carries a random ID that can't be traced to you.
+
+## Young people
+
+Lobyas is for people who are 13 or older. If you're under 16, ask a parent or guardian to read this page and the terms with you before you sign up. A parent or guardian can ask us to show or delete your data at <SupportEmail />.
 
 ## Who else handles it
 
 These services process data on our behalf:
 
+- **PostHog** (EU): product analytics and error reports if you allow analytics, and anonymous timings and token counts of AI requests.
 - **Supabase**: database and sign-in. Stores your account and everything you study.
 - **Vercel**: hosts the app.
 - **Resend**: sends invites and collection updates. Sign-up confirmation and password emails come through Supabase.
@@ -43,11 +58,11 @@ Some of them are based outside the European Economic Area, mainly in the United 
 
 ## How long we keep it
 
-For as long as your account exists. When you delete your account in Settings, your account and its data are removed straight away. Copies in our database provider's backups disappear as those backups are replaced on their normal schedule. The text of anything already sent to an AI or voice service is handled under that service's own retention terms. If other people use one of your public collections, make it private first.
+For as long as your account exists. When you delete your account in Settings, your account and its data are removed straight away. Screenshots and spoken clips are files, so they are removed right after your account (spoken clips within a few hours). Copies in our database provider's backups disappear as those backups are replaced on their normal schedule. The text of anything already sent to an AI or voice service is handled under that service's own retention terms. If other people use one of your public collections, make it private first.
 
 ## Your rights
 
-Under the GDPR you can ask to see, correct or delete your data, or object to how it's used. Deletion is self-serve in Settings; for anything else, email us and we'll reply within a month. If you're unhappy with the answer, you can complain to the Dutch Data Protection Authority (Autoriteit Persoonsgegevens).
+Under the GDPR you can ask to see, correct or delete your data, get a copy you can reuse, or object to how it's used. Deletion is self-serve in Settings, and you can export any collection from the Library. For anything else, including a copy of your account data (your collections, study history, settings and reports, as a JSON file), email <SupportEmail /> from the address on your account and we'll reply within a month. If you're unhappy with the answer, you can complain to the Dutch Data Protection Authority (Autoriteit Persoonsgegevens).
 
 ## Changes
 

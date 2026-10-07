@@ -33,7 +33,7 @@ export function OfflineBanner() {
         className="flex items-center gap-2 border-b border-warning/30 bg-warning/15 px-4 py-2 text-sm text-base-content md:px-5"
       >
         <WifiOff className="size-4 shrink-0" aria-hidden />
-        <span>You&apos;re offline. Quizzes and your collection need a connection.</span>
+        <span>You&apos;re offline. Quizzes and your library need a connection.</span>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export function OfflineBanner() {
       <Alert variant="warning" icon={<WifiOff strokeWidth={1.5} />}>
         <AlertContent>
           <AlertTitle>You&apos;re offline</AlertTitle>
-          <AlertDescription>Quizzes and your collection need a connection.</AlertDescription>
+          <AlertDescription>Quizzes and your library need a connection.</AlertDescription>
         </AlertContent>
       </Alert>
     </div>

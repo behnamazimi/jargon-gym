@@ -43,7 +43,7 @@ export const MORE_CHAPTERS = [
       {
         target: "import-search",
         title: "Search first",
-        body: "Shared collections you can add in one tap.",
+        body: "Collections you can add in one tap.",
       },
       {
         target: "import-routes",

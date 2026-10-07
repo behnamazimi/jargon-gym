@@ -2,9 +2,9 @@
 
 import { Mail } from "lucide-react";
 import Link from "next/link";
-import { PRIVACY_PATH, TERMS_PATH } from "@/lib/site";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
+import { LegalConsentLine } from "@/components/auth/legal-consent-line";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
 import { PasswordRequirements } from "@/components/auth/password-requirements";
 import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components/shared/back-link";
@@ -49,8 +49,9 @@ export default function SignupForm({
         <h1 className="text-2xl font-medium">Check your email</h1>
         <Alert variant="success" icon={<Mail strokeWidth={1.5} />}>
           <AlertDescription>
-            We sent a confirmation link to <strong>{state.checkEmail}</strong>. Open it to finish
-            signing up, then log in. If you don&apos;t see it, check your spam folder.
+            We sent a confirmation link to <strong>{state.checkEmail}</strong>. Open it to confirm
+            your email. If it doesn&apos;t sign you in, come back and log in. If you don&apos;t see
+            it, check your spam folder.
           </AlertDescription>
         </Alert>
         <Link
@@ -71,6 +72,7 @@ export default function SignupForm({
         className="-ml-2 self-start"
       />
       <h1 className="text-2xl font-medium">Sign up</h1>
+      <LegalConsentLine action="signing up" className="-mt-2" />
 
       <GoogleSignInButton next={next} referenceCode={referenceCode} email={email} />
 
@@ -117,7 +119,7 @@ export default function SignupForm({
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="signup-reference-code">Reference code</FieldLabel>
+            <FieldLabel htmlFor="signup-reference-code">Invite code</FieldLabel>
             <Input
               id="signup-reference-code"
               type="text"
@@ -130,26 +132,13 @@ export default function SignupForm({
               onChange={(event) => setReferenceCode(normalizeReferralCode(event.target.value))}
               className="uppercase"
             />
-            <FieldDescription>
-              You need a reference code from admin/owner of the app.
-            </FieldDescription>
+            <FieldDescription>It's in your invite.</FieldDescription>
           </Field>
         </FieldGroup>
 
         <Button type="submit" isDisabled={pending} className="mt-2 w-full">
           {pending ? "Creating account…" : "Sign up with email"}
         </Button>
-        <p className="m-0 text-center text-xs text-base-content/70">
-          By signing up you agree to the{" "}
-          <Link href={TERMS_PATH} className="underline underline-offset-2">
-            Terms
-          </Link>{" "}
-          and{" "}
-          <Link href={PRIVACY_PATH} className="underline underline-offset-2">
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </form>
 
       <p className="text-center text-sm text-base-content/70">
@@ -160,7 +149,7 @@ export default function SignupForm({
       </p>
 
       <p className="text-center text-sm text-base-content/70">
-        Don&apos;t have a code?{" "}
+        Don&apos;t have an invite code?{" "}
         <Link href="/request-access" className="underline underline-offset-2">
           Request access
         </Link>

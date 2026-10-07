@@ -113,7 +113,7 @@ function NewCollectionFields({
       ) : null}
       {addedMatch ? (
         <p className="m-0 text-sm text-base-content/70" role="status">
-          You added a shared collection called &ldquo;{addedMatch}&rdquo;. This creates your own.
+          You added a collection called &ldquo;{addedMatch}&rdquo;. This creates your own.
         </p>
       ) : null}
       <div className="flex flex-wrap items-center gap-3">

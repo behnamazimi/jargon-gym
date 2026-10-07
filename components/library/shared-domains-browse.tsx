@@ -118,7 +118,7 @@ export function SharedDomainsBrowse({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {bannerError ? (
         <Alert variant="destructive">
           <AlertDescription>{bannerError}</AlertDescription>

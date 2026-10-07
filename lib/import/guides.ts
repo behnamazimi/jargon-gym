@@ -88,7 +88,7 @@ export const APP_GUIDES: AppGuide[] = [
     name: "Duolingo",
     summary: "No export · type the words you want",
     steps: [],
-    note: "Duolingo doesn't offer an export. Type or paste the words you want to learn, or browse shared collections.",
+    note: "Duolingo doesn't offer an export. Type or paste the words you want to learn, or browse collections.",
     canExport: false,
   },
   {

@@ -1468,6 +1468,9 @@ export type Database = {
       };
       user_settings: {
         Row: {
+          analytics_consent: string | null;
+          analytics_consent_at: string | null;
+          analytics_consent_version: string | null;
           api_key_encrypted: string | null;
           api_key_last4: string | null;
           created_at: string;
@@ -1495,6 +1498,9 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          analytics_consent?: string | null;
+          analytics_consent_at?: string | null;
+          analytics_consent_version?: string | null;
           api_key_encrypted?: string | null;
           api_key_last4?: string | null;
           created_at?: string;
@@ -1522,6 +1528,9 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          analytics_consent?: string | null;
+          analytics_consent_at?: string | null;
+          analytics_consent_version?: string | null;
           api_key_encrypted?: string | null;
           api_key_last4?: string | null;
           created_at?: string;

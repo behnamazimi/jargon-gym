@@ -12,6 +12,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useStudyPhone } from "@/components/app/study-phone-context";
+import { ConsentSettingsButton } from "@/components/consent/consent-settings-button";
 import { ISSUE_COPY } from "@/lib/issues/copy";
 import { LEGAL_LINKS } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -139,7 +140,7 @@ export function MoreSheet() {
               onClick={() => void handleLogout()}
             >
               <LogOut className="size-4" strokeWidth={1.5} aria-hidden />
-              {isBusy ? "Signing out…" : "Log out"}
+              {isBusy ? "Logging out…" : "Log out"}
             </button>
           </li>
         </ul>
@@ -157,6 +158,10 @@ export function MoreSheet() {
               {link.label}
             </Link>
           ))}
+          <ConsentSettingsButton
+            className="flex min-h-11 items-center"
+            onOpen={() => setMoreOpen(false)}
+          />
         </nav>
       </Sheet>
       <ReportIssueDialog isOpen={reportOpen} onOpenChange={setReportOpen} />

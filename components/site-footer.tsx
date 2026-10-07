@@ -1,4 +1,5 @@
 import { BrandIcon } from "@/components/brand-icon";
+import { ConsentSettingsButton } from "@/components/consent/consent-settings-button";
 import { FooterLink } from "@/components/footer-link";
 import { pageContainerClass } from "@/components/page-container";
 import { LEGAL_LINKS } from "@/lib/site";
@@ -26,6 +27,7 @@ export function SiteFooter() {
               {link.label}
             </FooterLink>
           ))}
+          <ConsentSettingsButton />
         </nav>
         <p className="m-0 flex items-center justify-center gap-2 text-center text-xs text-base-content/70">
           <BrandIcon size="sm" />

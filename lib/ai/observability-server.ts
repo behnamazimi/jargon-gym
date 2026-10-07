@@ -15,6 +15,7 @@ export async function runAiTurn<T>(
         "gen_ai.operation.name": context.traceName,
         "posthog.distinct_id": context.distinctId,
         $ai_session_id: context.sessionId,
+        ...(context.anonymous ? { $process_person_profile: false } : {}),
       },
     },
     async (span) => {

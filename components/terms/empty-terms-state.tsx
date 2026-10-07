@@ -9,7 +9,7 @@ export function EmptyTermsState({ domainId }: { domainId: string }) {
       icon={FilePlus}
       illustration={<EmptyBoxScene className="w-44 sm:w-52" />}
       title="No terms yet"
-      description="Add your first term, or import a list."
+      description="Add your first term, or paste a list."
       className="py-10"
     >
       <div className="flex flex-wrap items-center justify-center gap-3">
