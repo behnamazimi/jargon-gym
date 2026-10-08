@@ -1,4 +1,5 @@
 import { generateObject } from "ai";
+import type { UsageTally } from "@/lib/ai-credits/usage-tally";
 import { aiGenerationOptions, type AiObservabilityContext } from "@/lib/ai/observability";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
@@ -25,12 +26,15 @@ function toGenerationPlan(slots: AiSlot[]): GenerationPlan {
   })) as GenerationPlan;
 }
 
-async function requestQuestionsFromModel(input: {
+type ModelInput = {
   provider: LlmProvider;
   apiKey: string;
   slots: AiSlot[];
   observability?: AiObservabilityContext;
-}): Promise<QuizQuestion[]> {
+  onUsage?: UsageTally["add"];
+};
+
+async function requestQuestionsFromModel(input: ModelInput): Promise<QuizQuestion[]> {
   const prompt = buildQuizPrompt(input.slots);
   const plan = toGenerationPlan(input.slots);
   const model = createModel(input.provider, input.apiKey);
@@ -39,38 +43,32 @@ async function requestQuestionsFromModel(input: {
   // tuple buildQuizGenerationSchema produces (its `items` field isn't
   // repeating), so Google gets an object-keyed variant of the same
   // per-slot-type schema instead — see buildQuizGenerationObjectSchema.
-  const object =
-    input.provider === "google"
-      ? toQuizGenerationPayload(
-          (
-            await generateObject({
-              model,
-              schema: buildQuizGenerationObjectSchema(plan),
-              prompt,
-              providerOptions: { google: { structuredOutputs: true } },
-              ...aiGenerationOptions(input.observability, "quiz_generation"),
-            })
-          ).object,
-          plan,
-        )
-      : (
-          await generateObject({
-            model,
-            schema: buildQuizGenerationSchema(plan),
-            prompt,
-            ...aiGenerationOptions(input.observability, "quiz_generation"),
-          })
-        ).object;
+  let object;
+  if (input.provider === "google") {
+    const result = await generateObject({
+      model,
+      schema: buildQuizGenerationObjectSchema(plan),
+      prompt,
+      providerOptions: { google: { structuredOutputs: true } },
+      ...aiGenerationOptions(input.observability, "quiz_generation"),
+    });
+    input.onUsage?.(result.usage);
+    object = toQuizGenerationPayload(result.object, plan);
+  } else {
+    const result = await generateObject({
+      model,
+      schema: buildQuizGenerationSchema(plan),
+      prompt,
+      ...aiGenerationOptions(input.observability, "quiz_generation"),
+    });
+    input.onUsage?.(result.usage);
+    object = result.object;
+  }
 
   return normalizeQuizQuestions(object, input.slots);
 }
 
-async function writeQuestions(input: {
-  provider: LlmProvider;
-  apiKey: string;
-  slots: AiSlot[];
-  observability?: AiObservabilityContext;
-}): Promise<QuizQuestion[]> {
+async function writeQuestions(input: ModelInput): Promise<QuizQuestion[]> {
   if (input.slots.length === 0) return [];
 
   try {
@@ -96,6 +94,7 @@ export async function generateQuizQuestions(input: {
   plan: AiQuizPlan;
   source: DistractorSource;
   observability?: AiObservabilityContext;
+  onUsage?: UsageTally["add"];
 }): Promise<QuizQuestion[]> {
   const { plan, source } = input;
   if (plan.terms.length === 0) {
@@ -107,6 +106,7 @@ export async function generateQuizQuestions(input: {
     apiKey: input.apiKey,
     slots: plan.slots,
     observability: input.observability,
+    onUsage: input.onUsage,
   });
 
   const byTermId = new Map(plan.built);

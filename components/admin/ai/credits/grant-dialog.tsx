@@ -15,11 +15,12 @@ function GrantForm({ initialEmail, onClose }: { initialEmail: string; onClose: (
   const [email, setEmail] = useState(initialEmail);
   const [amount, setAmount] = useState("25");
   const [note, setNote] = useState("");
+  const [expiresOn, setExpiresOn] = useState("");
   const { run, isPending, error } = useAdminAction();
 
   function handleGrant(event: FormEvent) {
     event.preventDefault();
-    void run(() => grantAiCredits({ email, amount: Number(amount), note }), {
+    void run(() => grantAiCredits({ email, amount: Number(amount), note, expiresOn }), {
       onSuccess: onClose,
       successMessage: "Credits granted.",
     });
@@ -30,7 +31,8 @@ function GrantForm({ initialEmail, onClose }: { initialEmail: string; onClose: (
       <DialogHeader>
         <DialogTitle>Grant credits</DialogTitle>
         <DialogDescription>
-          Adds to their starter credits. Resetting usage later keeps the grant.
+          Adds credits to their balance. They never expire unless you pick a day. Resetting later
+          keeps the grant.
         </DialogDescription>
       </DialogHeader>
 
@@ -69,6 +71,20 @@ function GrantForm({ initialEmail, onClose }: { initialEmail: string; onClose: (
           disabled={isPending}
           onChange={(event) => setNote(event.target.value)}
         />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-sm font-medium text-base-content">Expires on (optional)</span>
+        <input
+          type="date"
+          className="input input-bordered min-h-11 w-full"
+          min={new Date().toISOString().slice(0, 10)}
+          value={expiresOn}
+          disabled={isPending}
+          onChange={(event) => setExpiresOn(event.target.value)}
+        />
+        <span className="text-xs text-base-content/60">
+          Unused credits lapse at the end of that day (UTC).
+        </span>
       </label>
       {error ? (
         <p role="alert" className="m-0 text-sm text-error">

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { AiAccessView } from "@/lib/llm/types";
 import { quizCreditUse } from "./credit-use";
 
-const costs = { quizPerQuestion: 1, storyPerTerm: 1 };
+import { testCosts as costs } from "@/lib/ai-credits/test-costs";
 const credits = (remaining: number): AiAccessView => ({
   kind: "credits",
   providerLabel: "Google",

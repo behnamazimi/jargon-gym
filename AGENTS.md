@@ -57,8 +57,12 @@ the user's AI credits. When they run out, the Top up button
 (`topUpAiCreditsAction`) adds credits for free until payments exist. The
 resolver is `lib/llm/access.ts`; charging, refunds and cost math are in
 `lib/ai-credits/`; the ledger, balance and admin functions are in
-`supabase/migrations/20260929120000_ai_credits.sql`. Credits are charged before
-the model call and refunded on any failure. Read
+`supabase/migrations/20261018100000_credit_lots_schema.sql` and
+`20261018110000_credit_lots_functions.sql`. Credits are insert-only grant lots
+that can expire, priced by effective-dated `credit_prices` rows. They are
+charged before the model call and refunded on any failure. Story narration is
+charged to the person who starts the clip, through a callback
+(`lib/stories/narration-billing.ts`); term narration never touches credits. Read
 [docs/ai-credits.md](docs/ai-credits.md) before changing balances, costs or
 the charge flow.
 

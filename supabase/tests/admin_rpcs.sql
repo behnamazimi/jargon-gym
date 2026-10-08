@@ -60,7 +60,7 @@ begin
   assert not has_function_privilege('anon', 'public.admin_set_narration_enabled(boolean)', 'execute'), 'line 61';
   assert not has_function_privilege('anon', 'public.admin_set_narration_caps(integer,integer)', 'execute'), 'line 62';
   assert not has_function_privilege('anon', 'public.admin_set_narration_provider(text,boolean)', 'execute'), 'anon could switch a narration provider';
-  assert not has_function_privilege('anon', 'public.admin_set_ai_credit_settings(integer,integer,integer,integer,integer)', 'execute'), 'line 63';
+  assert not has_function_privilege('anon', 'public.admin_set_ai_credit_settings(integer,integer,integer,numeric,numeric,numeric,numeric)', 'execute'), 'line 63';
   assert not has_function_privilege('anon', 'public.admin_write_audit(text,text,text,jsonb)', 'execute'), 'line 64';
   assert not has_function_privilege('authenticated', 'public._admin_audit_insert(text,text,text,jsonb)', 'execute'), 'line 65';
   assert not has_function_privilege('service_role', 'public._admin_audit_insert(text,text,text,jsonb)', 'execute'), 'line 66';
@@ -105,7 +105,7 @@ begin
   begin perform public.admin_set_narration_caps(null, 5); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could set caps';
   v_failed := false;
-  begin perform public.admin_set_ai_credit_settings(1, 1, 1, 1, 1); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
+  begin perform public.admin_set_ai_credit_settings(1, 1, 1, 1, 1, 1, 1); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
   assert v_failed, 'member could set credit settings';
   v_failed := false;
   begin perform public.admin_write_audit('app.test'); exception when others then v_failed := sqlerrm like 'Only admins%'; end;
@@ -261,31 +261,35 @@ begin
   assert (select daily_cap = 1000 from public.ai_feature_settings where feature = 'narration_term'), 'a refused call changed a cap';
 
   -- AI credit settings.
-  perform public.admin_set_ai_credit_settings(90, 20, 3, 4, 50);
-  assert (select default_allowance = 90 and monthly_refill = 20 and self_topup_amount = 50 from public.ai_credit_settings where id), 'line 189';
-  assert (select credit_cost = 3 from public.ai_feature_settings where feature = 'quiz'), 'line 190';
-  assert (select credit_cost = 4 from public.ai_feature_settings where feature = 'story'), 'line 191';
-  for v_count in 1..5 loop
+  perform public.admin_set_ai_credit_settings(90, 20, 50, 3, 4, 2, 6);
+  assert (select amount = 90 from public.credit_grant_policies where source = 'starter' and effective_to is null), 'starter policy';
+  assert (select amount = 50 from public.credit_grant_policies where source = 'self_topup' and effective_to is null), 'top-up policy';
+  assert (select credits_per_unit = 3 from public.credit_prices where feature = 'quiz' order by effective_from desc limit 1), 'quiz price';
+  assert (select base_credits = 4 and credits_per_unit = 2 from public.credit_prices where feature = 'story' order by effective_from desc limit 1), 'story price';
+  assert (select credits_per_unit = 6 from public.credit_prices where feature = 'narration_story' order by effective_from desc limit 1), 'narration price';
+  for v_count in 1..7 loop
     v_failed := false;
     begin
       perform public.admin_set_ai_credit_settings(
         case v_count when 1 then -1 else 10 end,
         case v_count when 2 then 1000001 else 10 end,
-        case v_count when 3 then 0 else 2 end,
-        case v_count when 4 then 1001 else 2 end,
-        case v_count when 5 then 0 else 10 end);
+        case v_count when 3 then 0 else 10 end,
+        case v_count when 4 then 0 else 2 end,
+        case v_count when 5 then -1 else 2 end,
+        case v_count when 6 then 1001 else 2 end,
+        case v_count when 7 then 0 else 2 end);
     exception when others then v_failed := true; end;
     assert v_failed, 'bad credit settings accepted, case ' || v_count;
   end loop;
   v_failed := false;
-  begin perform public.admin_set_ai_credit_settings(1, 1, null, 1, 1); exception when others then v_failed := true; end;
-  assert v_failed, 'a null cost was accepted';
-  assert (select credit_cost = 3 from public.ai_feature_settings where feature = 'quiz'), 'a refused call changed a price';
+  begin perform public.admin_set_ai_credit_settings(1, 1, 1, null, 1, 1, 1); exception when others then v_failed := true; end;
+  assert v_failed, 'a null price was accepted';
+  assert (select credits_per_unit = 3 from public.credit_prices where feature = 'quiz' order by effective_from desc limit 1), 'a refused call changed a price';
 
   -- Grant and reset still work and now leave audit rows without emails.
   perform public.admin_grant_ai_credits(member_id, 25, 'beta');
   perform public.admin_reset_ai_credits(member_id, null);
-  assert (select count(*) from public.ai_credit_ledger where user_id = member_id) = 2, 'grant and reset ledger rows';
+  assert exists (select 1 from public.ai_credit_ledger where user_id = member_id and source = 'admin' and amount = 25) and exists (select 1 from public.ai_credit_ledger where user_id = member_id and kind = 'expire' and reason = 'reset') or not exists (select 1 from public.ai_credit_ledger where user_id = member_id and kind = 'expire'), 'grant and reset ledger rows';
   assert (select details = jsonb_build_object('amount', 25, 'note', 'beta') from public.admin_audit_log where actor_id = admin_id and action = 'grant_ai_credits'), 'grant audit details';
   assert (select target_id = member_id::text from public.admin_audit_log where actor_id = admin_id and action = 'reset_ai_credits'), 'reset audit target';
 
@@ -312,7 +316,7 @@ begin
   assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'set_narration_caps') = 2, 'narration caps audit rows';
   assert (select count(*) from public.admin_audit_log where actor_id = admin_id and action = 'set_ai_credit_settings') = 1, 'credit settings audit rows';
   assert exists (select 1 from public.admin_audit_log where actor_id = admin_id and action = 'publish_collection' and target_id = d1::text and details->>'slug' = 'rpc-one'), 'publish audit details';
-  assert (select details->'new'->>'quiz_cost' = '3' and details->'old'->>'quiz_cost' = '1' and details->'old'->>'default_allowance' = '100'
+  assert (select details->'new'->>'quiz' = '3' and (details->'old'->'prices'->'quiz'->>1)::numeric = 1 and (details->'old'->>'starter')::numeric = 50
           from public.admin_audit_log where actor_id = admin_id and action = 'set_ai_credit_settings'), 'old and new values in the credit settings audit row';
   execute 'reset role';
 

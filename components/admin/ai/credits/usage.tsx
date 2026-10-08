@@ -79,7 +79,7 @@ export function AdminAiCreditsUsage({ usage }: { usage: AiCreditUsageRow[] }) {
       )}
 
       <p className="m-0 text-xs text-base-content/60">
-        Used counts credits spent since the person&apos;s last reset. Refunded requests aren&apos;t
+        Used counts credits spent since credits moved to lots. Refunded requests aren&apos;t
         counted.
         {usage.length >= USAGE_LIST_LIMIT
           ? ` Showing the ${USAGE_LIST_LIMIT} most recently active people. To help someone else, use Grant credits with their email.`
@@ -95,8 +95,9 @@ export function AdminAiCreditsUsage({ usage }: { usage: AiCreditUsageRow[] }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Reset usage?</AlertDialogTitle>
           <AlertDialogDescription>
-            {resetRow?.email} gets their full allowance back, from now on. Their history stays on
-            record, and credits you granted are kept.
+            What {resetRow?.email} has left of their starter, monthly and top-up credits is written
+            off, and they get a fresh allowance. Their history stays on record, and credits you
+            granted are kept.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

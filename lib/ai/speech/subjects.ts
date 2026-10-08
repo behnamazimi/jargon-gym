@@ -6,6 +6,7 @@ import { buildNarrationScript } from "@/lib/narration/template";
 import type { NarratedTermFields } from "@/lib/narration/types";
 import { parseLanguage } from "@/lib/terms/languages";
 import { getStoryForUser } from "@/lib/stories/repository";
+import { buildStoryScript } from "@/lib/stories/script";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SpeechSubject } from "./types";
 
@@ -71,10 +72,7 @@ export async function loadStorySubject(
     loadScript: async () => {
       const story = await getStoryForUser(admin, userId, storyId);
       if (!story) return null;
-      const storyTitle = story.title.trim();
-      const title = /[.!?…]$/.test(storyTitle) ? storyTitle : `${storyTitle}.`;
-      const script = `${title}\n\n${story.segments.map((segment) => segment.text).join("")}`;
-      return { script, language: story.language };
+      return { script: buildStoryScript(story), language: story.language };
     },
   };
 }

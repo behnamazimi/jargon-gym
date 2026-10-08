@@ -23,6 +23,12 @@ function Control({ row }: { row: AiHubRow }) {
   );
 }
 
+const BILLING_LABEL: Record<AiHubRow["billing"], string> = {
+  credits: "Uses AI credits",
+  partial: "Story clips use AI credits",
+  none: "Not charged",
+};
+
 export function AdminAiHubClient({ rows }: { rows: AiHubRow[] }) {
   return (
     <>
@@ -37,7 +43,7 @@ export function AdminAiHubClient({ rows }: { rows: AiHubRow[] }) {
               <div className="min-w-0">
                 <h2 className="m-0 text-base font-semibold text-base-content">{row.label}</h2>
                 <p className="m-0 text-sm text-base-content/65">
-                  {row.vendor} · {row.billing === "credits" ? "Uses AI credits" : "Not charged"}
+                  {row.vendor} · {BILLING_LABEL[row.billing]}
                 </p>
               </div>
               <Control row={row} />

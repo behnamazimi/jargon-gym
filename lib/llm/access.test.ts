@@ -36,7 +36,7 @@ vi.mock("@/lib/auth/require-session", () => ({ getUserIsAdmin: async () => featu
 const { getAiAccessView, resolveAiAccess } = await import("./access");
 
 const client = {} as SupabaseClient<Database>;
-const costs = { quizPerQuestion: 1, storyPerTerm: 1 };
+import { testCosts as costs } from "@/lib/ai-credits/test-costs";
 
 function featureRow(overrides: Record<string, unknown>) {
   return {
@@ -45,7 +45,6 @@ function featureRow(overrides: Record<string, unknown>) {
     enabled: true,
     accessMode: "everyone",
     dailyCap: null,
-    creditCost: 1,
     unit: "question",
     ...overrides,
   };

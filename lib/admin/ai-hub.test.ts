@@ -6,32 +6,41 @@ const ok = () => ({ ok: true }) as const;
 const row = (feature: string, overrides: Partial<AiSettingsRow> = {}): AiSettingsRow => ({
   feature,
   enabled: true,
-  credit_cost: null,
   daily_cap: null,
   ...overrides,
 });
 
 const settings = [
-  row("quiz", { credit_cost: 1 }),
-  row("story", { credit_cost: 3, enabled: false }),
+  row("quiz"),
+  row("story", { enabled: false }),
   row("narration_term"),
   row("narration_story", { daily_cap: 20 }),
+];
+
+const prices = [
+  { feature: "quiz", base_credits: 0, credits_per_unit: 1, unit_size: 1 },
+  { feature: "story", base_credits: 2, credits_per_unit: 0.5, unit_size: 1 },
+  { feature: "narration_story", base_credits: 0, credits_per_unit: 7.5, unit_size: 1000 },
 ];
 
 const rowsById = (rows: ReturnType<typeof buildAiHubRows>) => new Map(rows.map((r) => [r.id, r]));
 
 describe("buildAiHubRows", () => {
   it("has one row per manageable feature, narration as one", () => {
-    expect(buildAiHubRows(settings, ok).map((r) => r.id)).toEqual(["quiz", "story", "narration"]);
+    expect(buildAiHubRows(settings, ok, prices).map((r) => r.id)).toEqual([
+      "quiz",
+      "story",
+      "narration",
+    ]);
   });
 
   it("shows switch state and the price or limit", () => {
-    const rows = rowsById(buildAiHubRows(settings, ok));
+    const rows = rowsById(buildAiHubRows(settings, ok, prices));
     expect(rows.get("quiz")).toMatchObject({ state: "on", limit: "1 credit per question" });
-    expect(rows.get("story")).toMatchObject({ state: "off", limit: "3 credits per term" });
+    expect(rows.get("story")).toMatchObject({ state: "off", limit: "2 credits + 0.5 per term" });
     expect(rows.get("narration")).toMatchObject({
       state: "on",
-      limit: "Terms: no limit. Stories: 20 a day.",
+      limit: "Terms: no limit. Stories: 20 a day, 7.5 credits per 1,000 characters.",
     });
   });
 
@@ -60,9 +69,8 @@ describe("buildAiHubRows", () => {
     expect(rowsById(partial).get("narration")?.state).toBe("unknown");
   });
 
-  it("shows a free feature's price instead of a dash", () => {
-    const free = settings.map((s) => (s.feature === "quiz" ? { ...s, credit_cost: 0 } : s));
-    expect(rowsById(buildAiHubRows(free, ok)).get("quiz")?.limit).toBe("0 credits per question");
+  it("shows a dash when a price can't be read", () => {
+    expect(rowsById(buildAiHubRows(settings, ok, null)).get("quiz")?.limit).toBe("—");
   });
 
   it("carries the health note of what each feature needs", () => {

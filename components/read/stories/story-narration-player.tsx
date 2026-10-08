@@ -9,18 +9,34 @@ import {
 import type { ShadowingSetup } from "@/components/read/stories/use-shadowing-playback";
 import type { ClipPauses } from "@/lib/stories/silence";
 import { Button } from "@/components/ui/button";
+import { TopUpButton } from "@/components/ai-credits/top-up-button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import type { NarrationPrice } from "@/lib/stories/narration-price";
 
 const RETRY_INTERVAL_MS = 3000;
 const PREPARE_TIMEOUT_MS = 2 * 60 * 1000;
 
-type PlayerStatus = "idle" | "preparing" | "ready" | "capped" | "unavailable";
+type PlayerStatus = "idle" | "preparing" | "ready" | "capped" | "insufficient" | "unavailable";
 
 const STATUS_MESSAGES: Partial<Record<PlayerStatus, string>> = {
   preparing: "Preparing audio…",
   capped: "Daily listening limit reached. Try again tomorrow.",
+  insufficient: "You don't have enough credits to make this audio.",
   unavailable: "Audio unavailable for this story.",
 };
+
+const REFUSED_STATUS: Record<number, PlayerStatus> = { 429: "capped", 402: "insufficient" };
+
+function isShort(price: NarrationPrice | null | undefined): price is NarrationPrice {
+  return price != null && price.cost > price.remaining;
+}
+
+function messageFor(status: PlayerStatus, price: NarrationPrice | null | undefined) {
+  if (status === "idle" && isShort(price)) {
+    return `This audio needs ${price.cost} credits and you have ${price.remaining}.`;
+  }
+  return STATUS_MESSAGES[status];
+}
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -36,6 +52,7 @@ export function StoryNarrationPlayer({
   sentencePlayback,
   handleRef,
   onClipPauses,
+  price,
 }: {
   storyId: string;
   onProgress?: (fraction: number | null) => void;
@@ -43,6 +60,9 @@ export function StoryNarrationPlayer({
   sentencePlayback?: ShadowingSetup | null;
   handleRef?: Ref<StoryPlayerHandle>;
   onClipPauses?: (clip: ClipPauses) => void;
+  /** What making this audio costs, if credits pay for it. The first listen pays;
+   *  a clip that already exists is free. */
+  price?: NarrationPrice | null;
 }) {
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const [version, setVersion] = useState<string | null>(null);
@@ -74,8 +94,9 @@ export function StoryNarrationPlayer({
         setStatus("ready");
         return;
       }
-      if (response.status === 429) {
-        setStatus("capped");
+      const refused = REFUSED_STATUS[response.status];
+      if (refused) {
+        setStatus(refused);
         return;
       }
       if (response.status !== 202) break;
@@ -104,7 +125,8 @@ export function StoryNarrationPlayer({
     );
   }
 
-  const message = STATUS_MESSAGES[status];
+  const short = status === "idle" && isShort(price);
+  const message = messageFor(status, price);
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
       <Button
@@ -112,7 +134,7 @@ export function StoryNarrationPlayer({
         size="xs"
         variant="ghost"
         onPress={() => void prepare()}
-        isDisabled={status === "preparing" || status === "capped"}
+        isDisabled={status === "preparing" || status === "capped" || status === "insufficient"}
         className="-ms-2 h-8 px-2 text-xs font-medium text-base-content/70"
       >
         {status === "preparing" ? (
@@ -122,7 +144,13 @@ export function StoryNarrationPlayer({
         )}
         {shadowing ? "Listen and shadow" : "Listen"}
         <span className="font-normal text-base-content/60">AI voice</span>
+        {price ? (
+          <span className="font-normal text-base-content/60">
+            · {price.cost} {price.cost === 1 ? "credit" : "credits"}
+          </span>
+        ) : null}
       </Button>
+      {status === "insufficient" || short ? <TopUpButton size="xs" variant="outline" /> : null}
       {message ? (
         <p className="m-0 text-xs text-base-content/70" role="status">
           {message}

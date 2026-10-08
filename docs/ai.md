@@ -7,15 +7,18 @@ this page explains how the pieces fit. Credits and their ledger are covered in
 
 ## Features
 
-| Feature           | What it does                    | Vendor                       | Billing | Unit     |
-| ----------------- | ------------------------------- | ---------------------------- | ------- | -------- |
-| `quiz`            | Writes quiz questions           | Google or Anthropic          | Credits | question |
-| `story`           | Writes a story around due terms | Google or Anthropic          | Credits | term     |
-| `narration_term`  | Spoken clip for a term          | Murf, ElevenLabs as fallback | None    | clip     |
-| `narration_story` | Spoken clip for a story         | Murf, ElevenLabs as fallback | None    | clip     |
+| Feature           | What it does                    | Vendor                       | Billing | Unit             |
+| ----------------- | ------------------------------- | ---------------------------- | ------- | ---------------- |
+| `quiz`            | Writes quiz questions           | Google or Anthropic          | Credits | question         |
+| `story`           | Writes a story around due terms | Google or Anthropic          | Credits | term             |
+| `narration_term`  | Spoken clip for a term          | Murf, ElevenLabs as fallback | None    | clip             |
+| `narration_story` | Spoken clip for a story         | Murf, ElevenLabs as fallback | Credits | 1,000 characters |
 
 `billing: none` means the feature never touches credits or the ledger.
-`lib/ai/narration-isolation.test.ts` fails if narration code mentions them.
+Story narration is billed, but the charge is passed into `lib/ai/speech/` from
+the story route, so that code stays free of credits. Term narration and the bulk
+sync never touch credits, and `lib/ai/narration-isolation.test.ts` fails if
+narration code mentions them.
 
 ## Who may use a feature
 
@@ -25,7 +28,7 @@ Every feature has a row in `ai_feature_settings`:
 - `access_mode`: `everyone`, `allowlist` (rows in `ai_feature_allowlist`) or
   `admin`.
 - `daily_cap`: per person, rolling 24 hours. Blank means no cap.
-- `credit_cost` and `unit`: the price, for billable features only.
+- `billable`: whether the feature may spend credits. Its price is in `credit_prices`.
 
 A shared signup code can add people to the narration allowlist when they take a
 seat (see Shared codes in [admin.md](admin.md#shared-codes)).
@@ -100,10 +103,11 @@ the collection's page (`/admin/collections/[id]`) and continued by a cron job; s
 
 ## Cost levers
 
-- Credits: allowance, monthly refill and per-feature prices (`/admin/ai/credits`).
+- Credits: starter and monthly credits, the top-up, and per-feature prices (`/admin/ai/credits`).
 - Per-feature switch, access mode and daily cap (admin pages).
 - Narration caps are counted in provider calls (`ai_usage_events`), and a clip
-  that already exists costs nothing.
+  that already exists costs nothing. A story clip also costs credits to the
+  person who starts it.
 
 ## Environment
 

@@ -2,6 +2,7 @@ import { generateText } from "ai";
 import { aiGenerationOptions, type AiObservabilityContext } from "@/lib/ai/observability";
 import type { DomainLanguage } from "@/lib/terms/languages";
 import { describeFailure } from "@/lib/ai-credits/failure-reason";
+import type { UsageTally } from "@/lib/ai-credits/usage-tally";
 import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
@@ -45,6 +46,8 @@ type GenerateStoryInput = {
   setting: string;
   recentTitles: string[];
   observability?: AiObservabilityContext;
+  /** Told each model call's usage, so a charged story can record its cost. */
+  onUsage?: UsageTally["add"];
 };
 
 type GeneratedStory = { title: string; segments: StorySegment[]; termIds: string[] };
@@ -81,7 +84,7 @@ async function requestStory(
 ): Promise<GeneratedStory> {
   const length = storyLength(input.pieceLength, input.cefrLevel, input.language);
   const { system, prompt } = buildStoryPrompt({ ...input, length });
-  const { text } = await generateText({
+  const { text, usage } = await generateText({
     model: createModel(input.provider, input.apiKey),
     system,
     prompt,
@@ -89,6 +92,7 @@ async function requestStory(
     abortSignal: signal,
     ...aiGenerationOptions(input.observability, "story_generation"),
   });
+  input.onUsage?.(usage);
   return normalizeStory(parseStoryText(text, input.terms), input.terms, length);
 }
 

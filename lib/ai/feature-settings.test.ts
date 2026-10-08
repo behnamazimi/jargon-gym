@@ -8,7 +8,6 @@ function settings(overrides: Partial<FeatureSettings>): FeatureSettings {
     enabled: true,
     accessMode: "allowlist",
     dailyCap: null,
-    creditCost: null,
     unit: "clip",
     ...overrides,
   };

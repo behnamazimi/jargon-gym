@@ -32,33 +32,48 @@ export type AiCreditFailureReason = {
   lastSeen: string;
 };
 
+/** The settings the admin form edits: what new accounts get, and the price rows in effect. */
 export async function getAiCreditSettingsForAdmin(client: Client): Promise<AiCreditSettingsView> {
-  const [{ data, error }, { data: prices, error: pricesError }] = await Promise.all([
+  const now = new Date().toISOString();
+  const [
+    { data, error },
+    { data: policies, error: policiesError },
+    { data: prices, error: pricesError },
+  ] = await Promise.all([
+    client.from("ai_credit_settings").select("enabled").eq("id", true).single(),
     client
-      .from("ai_credit_settings")
-      .select("enabled, default_allowance, monthly_refill, self_topup_amount")
-      .eq("id", true)
-      .single(),
+      .from("credit_grant_policies")
+      .select("source, amount, accounts_created_to, effective_from, effective_to, id")
+      .is("accounts_created_to", null)
+      .lte("effective_from", now)
+      .order("id", { ascending: false }),
     client
-      .from("ai_feature_settings")
-      .select("feature, credit_cost")
-      .in("feature", ["quiz", "story"]),
+      .from("credit_prices")
+      .select("feature, base_credits, credits_per_unit, effective_from")
+      .lte("effective_from", now)
+      .order("effective_from", { ascending: false }),
   ]);
   if (error) throw error;
+  if (policiesError) throw policiesError;
   if (pricesError) throw pricesError;
 
-  const price = (feature: string) => prices?.find((row) => row.feature === feature)?.credit_cost;
-  const quiz = price("quiz");
-  const story = price("story");
-  if (quiz == null || story == null) throw new Error("AI credit prices are not set.");
+  const inEffect = (policies ?? []).filter((row) => !row.effective_to || row.effective_to > now);
+  const amount = (source: string) => inEffect.find((row) => row.source === source)?.amount ?? 0;
+  const price = (feature: string) => {
+    const row = prices?.find((candidate) => candidate.feature === feature);
+    if (!row) throw new Error("AI credit prices are not set.");
+    return { base: Number(row.base_credits), perUnit: Number(row.credits_per_unit) };
+  };
 
   return {
     enabled: data.enabled,
-    defaultAllowance: data.default_allowance,
-    monthlyRefill: data.monthly_refill,
-    selfTopupAmount: data.self_topup_amount,
-    quizCreditsPerQuestion: quiz,
-    storyCreditsPerTerm: story,
+    defaultAllowance: amount("starter"),
+    monthlyRefill: amount("monthly"),
+    selfTopupAmount: amount("self_topup"),
+    quizCreditsPerQuestion: price("quiz").perUnit,
+    storyBaseCredits: price("story").base,
+    storyCreditsPerTerm: price("story").perUnit,
+    narrationCreditsPerThousand: price("narration_story").perUnit,
   };
 }
 

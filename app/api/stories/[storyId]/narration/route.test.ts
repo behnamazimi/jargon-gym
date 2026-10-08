@@ -9,6 +9,8 @@ const serveJob = vi.fn();
 const getReadyJobById = vi.fn();
 const storyWithinDailyCap = vi.fn();
 const recordUsage = vi.fn();
+const chargeStoryNarration = vi.fn();
+const GATE = () => Promise.resolve({ allowed: true });
 const STORY_ID = "0b4f6a52-6a06-4a0f-9c0e-3f2d5a1b7c11";
 const SUBJECT = { type: "story", id: STORY_ID };
 const JOB_ID = "1c5a7b63-7b17-4b1a-8d1f-4e3e6b2c8d22";
@@ -20,6 +22,7 @@ vi.mock("@/lib/ai/speech/serve", () => ({ serveAudio, serveJob }));
 vi.mock("@/lib/ai/speech/jobs", () => ({ getReadyJobById }));
 vi.mock("@/lib/ai/speech/story-cap", () => ({ storyWithinDailyCap }));
 vi.mock("@/lib/ai/usage", () => ({ recordUsage }));
+vi.mock("@/lib/stories/narration-billing", () => ({ chargeStoryNarration }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 
 const { GET, POST } = await import("./route");
@@ -43,6 +46,7 @@ beforeEach(() => {
   serveJob.mockResolvedValue(new Response("audio", { status: 200 }));
   getReadyJobById.mockResolvedValue({ id: JOB_ID, user_id: "user-1", storage_path: "p.mp3" });
   storyWithinDailyCap.mockResolvedValue(true);
+  chargeStoryNarration.mockReturnValue(GATE);
 });
 
 describe("story narration authorization", () => {
@@ -107,6 +111,27 @@ describe("GET with a version", () => {
     const res = await GET(versioned(), ctx);
     expect(res.status).toBe(404);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
+  });
+});
+
+describe("POST billing", () => {
+  it("hands the charge to the audio code so only the request that starts a clip pays", async () => {
+    getOrCreateAudio.mockResolvedValue({ status: "ready", job: {} });
+    await POST(request("POST"), ctx);
+    expect(chargeStoryNarration).toHaveBeenCalledWith({}, "user-1");
+    expect(getOrCreateAudio).toHaveBeenCalledWith(
+      {},
+      SUBJECT,
+      expect.objectContaining({ beforeGenerate: GATE }),
+    );
+  });
+
+  it("answers 402 when there are not enough credits", async () => {
+    getOrCreateAudio.mockResolvedValue({ status: "insufficient" });
+    const res = await POST(request("POST"), ctx);
+    expect(res.status).toBe(402);
+    expect(await res.json()).toEqual({ ready: false, insufficient: true });
+    expect(recordUsage).not.toHaveBeenCalled();
   });
 });
 

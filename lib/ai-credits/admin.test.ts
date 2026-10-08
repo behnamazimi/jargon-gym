@@ -21,50 +21,80 @@ function rpcClient(result: { data: unknown; error: Error | null }) {
   return { client, calls };
 }
 
-function settingsClient(prices: { feature: string; credit_cost: number | null }[]) {
+const NOW = "2026-10-18T00:00:00Z";
+
+type PolicyRow = { source: string; amount: number; effective_to: string | null; id: number };
+type PriceRow = {
+  feature: string;
+  base_credits: number;
+  credits_per_unit: number;
+  effective_from: string;
+};
+
+const policies: PolicyRow[] = [
+  { id: 3, source: "self_topup", amount: 30, effective_to: null },
+  { id: 2, source: "monthly", amount: 20, effective_to: null },
+  { id: 1, source: "starter", amount: 50, effective_to: null },
+];
+
+function settingsClient(prices: PriceRow[], policyRows: PolicyRow[] = policies) {
+  const chain = (data: unknown) => ({
+    is: () => ({ lte: () => ({ order: () => Promise.resolve({ data, error: null }) }) }),
+    lte: () => ({ order: () => Promise.resolve({ data, error: null }) }),
+  });
   return {
     from: (table: string) => ({
       select: () =>
-        table === "ai_feature_settings"
-          ? { in: () => Promise.resolve({ data: prices, error: null }) }
-          : {
+        table === "ai_credit_settings"
+          ? {
               eq: () => ({
-                single: () =>
-                  Promise.resolve({
-                    data: {
-                      enabled: true,
-                      default_allowance: 100,
-                      monthly_refill: 30,
-                      self_topup_amount: 30,
-                    },
-                    error: null,
-                  }),
+                single: () => Promise.resolve({ data: { enabled: true }, error: null }),
               }),
-            },
+            }
+          : chain(table === "credit_grant_policies" ? policyRows : prices),
     }),
   } as unknown as Client;
 }
 
-describe("getAiCreditSettingsForAdmin", () => {
-  it("maps the settings row and takes the prices from the feature rows", async () => {
-    const client = settingsClient([
-      { feature: "quiz", credit_cost: 1 },
-      { feature: "story", credit_cost: 2 },
-    ]);
+const prices: PriceRow[] = [
+  { feature: "quiz", base_credits: 0, credits_per_unit: 1, effective_from: NOW },
+  { feature: "story", base_credits: 2, credits_per_unit: 0.5, effective_from: NOW },
+  { feature: "narration_story", base_credits: 0, credits_per_unit: 7.5, effective_from: NOW },
+];
 
-    expect(await getAiCreditSettingsForAdmin(client)).toEqual({
+describe("getAiCreditSettingsForAdmin", () => {
+  it("maps the policies in effect for new accounts and the price rows", async () => {
+    expect(await getAiCreditSettingsForAdmin(settingsClient(prices))).toEqual({
       enabled: true,
-      defaultAllowance: 100,
-      monthlyRefill: 30,
-      quizCreditsPerQuestion: 1,
-      storyCreditsPerTerm: 2,
+      defaultAllowance: 50,
+      monthlyRefill: 20,
       selfTopupAmount: 30,
+      quizCreditsPerQuestion: 1,
+      storyBaseCredits: 2,
+      storyCreditsPerTerm: 0.5,
+      narrationCreditsPerThousand: 7.5,
     });
   });
 
+  it("shows a closed policy as zero", async () => {
+    const closed = policies.map((row) =>
+      row.source === "monthly" ? { ...row, effective_to: "2020-01-01T00:00:00Z" } : row,
+    );
+    expect((await getAiCreditSettingsForAdmin(settingsClient(prices, closed))).monthlyRefill).toBe(
+      0,
+    );
+  });
+
+  it("uses the newest price row", async () => {
+    const newer = [{ ...prices[1]!, base_credits: 4, effective_from: "2026-10-19T00:00:00Z" }];
+    const view = await getAiCreditSettingsForAdmin(settingsClient([...newer, ...prices]));
+    expect(view.storyBaseCredits).toBe(4);
+  });
+
   it("fails when a price is missing instead of guessing one", async () => {
-    const client = settingsClient([{ feature: "quiz", credit_cost: 1 }]);
-    await expect(getAiCreditSettingsForAdmin(client)).rejects.toThrow("prices are not set");
+    await expect(getAiCreditSettingsForAdmin(settingsClient([prices[0]!]))).rejects.toThrow(
+      "prices are not set",
+    );
   });
 });
 

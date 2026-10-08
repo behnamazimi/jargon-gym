@@ -67,6 +67,20 @@ beforeEach(() => {
 });
 
 describe("grantAiCredits", () => {
+  it("passes an expiry as the end of that day, UTC", async () => {
+    await grantAiCredits({ email: "a@example.com", amount: 5, expiresOn: "2027-01-31" });
+    expect(state.rpcCalls[0]?.args).toMatchObject({
+      p_expires_at: "2027-01-31T23:59:59Z",
+    });
+    state.rpcCalls = [];
+    await grantAiCredits({ email: "a@example.com", amount: 5, expiresOn: "" });
+    expect(state.rpcCalls[0]?.args).not.toHaveProperty("p_expires_at");
+    expect(await grantAiCredits({ email: "a@example.com", amount: 5, expiresOn: "soon" })).toEqual({
+      ok: false,
+      error: "Pick a date.",
+    });
+  });
+
   it("grants to the account matched by an exact, escaped email", async () => {
     const result = await grantAiCredits({
       email: "first_last@example.com",
@@ -121,7 +135,9 @@ describe("the other admin actions", () => {
       defaultAllowance: 100,
       monthlyRefill: 30,
       quizCreditsPerQuestion: 1,
-      storyCreditsPerTerm: 1,
+      storyBaseCredits: 2,
+      storyCreditsPerTerm: 0.5,
+      narrationCreditsPerThousand: 7.5,
       selfTopupAmount: 30,
     };
     expect(await saveAiCreditSettings(valid)).toMatchObject({ ok: true });
@@ -129,11 +145,13 @@ describe("the other admin actions", () => {
       {
         name: "admin_set_ai_credit_settings",
         args: {
-          p_default_allowance: 100,
-          p_monthly_refill: 30,
-          p_quiz_cost: 1,
-          p_story_cost: 1,
-          p_self_topup_amount: 30,
+          p_starter: 100,
+          p_monthly: 30,
+          p_topup: 30,
+          p_quiz_per_question: 1,
+          p_story_base: 2,
+          p_story_per_term: 0.5,
+          p_narration_per_thousand: 7.5,
         },
       },
     ]);

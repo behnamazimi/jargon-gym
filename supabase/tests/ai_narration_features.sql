@@ -61,10 +61,10 @@ begin
   assert public.has_feature_access(u2, 'narration_term'), 'listed for terms';
   assert not public.has_feature_access(u2, 'narration_story'), 'but not for stories';
 
-  -- Narration never reaches the credit ledger.
+  -- Term narration never reaches the credit ledger.
   assert (select count(*) from public.ai_credit_ledger) = v_ledger_before, 'the ledger must not change';
   begin
-    perform public.reserve_ai_credits(u1, 'narration_story', 1);
+    perform public.reserve_ai_credits(u1, 'narration_term', 1);
     v_failed := false;
   exception when raise_exception then
     v_failed := true;

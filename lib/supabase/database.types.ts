@@ -69,17 +69,105 @@ export type Database = {
           },
         ];
       };
+      ai_credit_allocations: {
+        Row: {
+          amount: number;
+          lot_id: number;
+          spend_id: number;
+        };
+        Insert: {
+          amount: number;
+          lot_id: number;
+          spend_id: number;
+        };
+        Update: {
+          amount?: number;
+          lot_id?: number;
+          spend_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_allocations_lot_id_fkey";
+            columns: ["lot_id"];
+            isOneToOne: false;
+            referencedRelation: "ai_credit_ledger";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_credit_allocations_spend_id_fkey";
+            columns: ["spend_id"];
+            isOneToOne: false;
+            referencedRelation: "ai_credit_ledger";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      ai_credit_costs: {
+        Row: {
+          calls: number;
+          characters: number | null;
+          cost_micro_usd: number;
+          created_at: string;
+          input_tokens: number | null;
+          model: string;
+          output_tokens: number | null;
+          provider: string;
+          reasoning_tokens: number | null;
+          spend_id: number;
+        };
+        Insert: {
+          calls?: number;
+          characters?: number | null;
+          cost_micro_usd: number;
+          created_at?: string;
+          input_tokens?: number | null;
+          model: string;
+          output_tokens?: number | null;
+          provider: string;
+          reasoning_tokens?: number | null;
+          spend_id: number;
+        };
+        Update: {
+          calls?: number;
+          characters?: number | null;
+          cost_micro_usd?: number;
+          created_at?: string;
+          input_tokens?: number | null;
+          model?: string;
+          output_tokens?: number | null;
+          provider?: string;
+          reasoning_tokens?: number | null;
+          spend_id?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_costs_spend_id_fkey";
+            columns: ["spend_id"];
+            isOneToOne: true;
+            referencedRelation: "ai_credit_ledger";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ai_credit_ledger: {
         Row: {
           amount: number;
           billable: boolean;
           created_at: string;
           created_by: string | null;
+          expires_at: string | null;
           feature: string | null;
           id: number;
           kind: string;
+          lot_id: number | null;
           note: string | null;
+          period_key: string | null;
+          policy_id: number | null;
+          price_id: number | null;
+          reason: string | null;
           refund_of: number | null;
+          source: string | null;
+          units: number | null;
           user_id: string;
         };
         Insert: {
@@ -87,11 +175,19 @@ export type Database = {
           billable?: boolean;
           created_at?: string;
           created_by?: string | null;
+          expires_at?: string | null;
           feature?: string | null;
           id?: never;
           kind: string;
+          lot_id?: number | null;
           note?: string | null;
+          period_key?: string | null;
+          policy_id?: number | null;
+          price_id?: number | null;
+          reason?: string | null;
           refund_of?: number | null;
+          source?: string | null;
+          units?: number | null;
           user_id: string;
         };
         Update: {
@@ -99,11 +195,19 @@ export type Database = {
           billable?: boolean;
           created_at?: string;
           created_by?: string | null;
+          expires_at?: string | null;
           feature?: string | null;
           id?: never;
           kind?: string;
+          lot_id?: number | null;
           note?: string | null;
+          period_key?: string | null;
+          policy_id?: number | null;
+          price_id?: number | null;
+          reason?: string | null;
           refund_of?: number | null;
+          source?: string | null;
+          units?: number | null;
           user_id?: string;
         };
         Relationships: [
@@ -122,9 +226,30 @@ export type Database = {
             referencedColumns: ["feature", "billable"];
           },
           {
+            foreignKeyName: "ai_credit_ledger_lot_id_fkey";
+            columns: ["lot_id"];
+            isOneToOne: false;
+            referencedRelation: "ai_credit_ledger";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_credit_ledger_policy_id_fkey";
+            columns: ["policy_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_grant_policies";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "ai_credit_ledger_price_id_fkey";
+            columns: ["price_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_prices";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "ai_credit_ledger_refund_of_fkey";
             columns: ["refund_of"];
-            isOneToOne: true;
+            isOneToOne: false;
             referencedRelation: "ai_credit_ledger";
             referencedColumns: ["id"];
           },
@@ -139,27 +264,27 @@ export type Database = {
       };
       ai_credit_settings: {
         Row: {
-          default_allowance: number;
+          default_margin: number;
           enabled: boolean;
           id: boolean;
-          monthly_refill: number;
-          self_topup_amount: number;
+          lots_after_id: number;
+          peg_usd: number;
           updated_at: string;
         };
         Insert: {
-          default_allowance?: number;
+          default_margin?: number;
           enabled?: boolean;
           id?: boolean;
-          monthly_refill?: number;
-          self_topup_amount?: number;
+          lots_after_id?: number;
+          peg_usd?: number;
           updated_at?: string;
         };
         Update: {
-          default_allowance?: number;
+          default_margin?: number;
           enabled?: boolean;
           id?: boolean;
-          monthly_refill?: number;
-          self_topup_amount?: number;
+          lots_after_id?: number;
+          peg_usd?: number;
           updated_at?: string;
         };
         Relationships: [];
@@ -237,7 +362,6 @@ export type Database = {
         Row: {
           access_mode: string;
           billable: boolean;
-          credit_cost: number | null;
           daily_cap: number | null;
           elevenlabs_enabled: boolean;
           enabled: boolean;
@@ -249,7 +373,6 @@ export type Database = {
         Insert: {
           access_mode?: string;
           billable: boolean;
-          credit_cost?: number | null;
           daily_cap?: number | null;
           elevenlabs_enabled?: boolean;
           enabled?: boolean;
@@ -261,7 +384,6 @@ export type Database = {
         Update: {
           access_mode?: string;
           billable?: boolean;
-          credit_cost?: number | null;
           daily_cap?: number | null;
           elevenlabs_enabled?: boolean;
           enabled?: boolean;
@@ -655,6 +777,111 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
+          },
+        ];
+      };
+      credit_grant_policies: {
+        Row: {
+          accounts_created_from: string | null;
+          accounts_created_to: string | null;
+          amount: number;
+          cadence: string;
+          created_at: string;
+          effective_from: string;
+          effective_to: string | null;
+          expiry_days: number | null;
+          expiry_kind: string;
+          id: number;
+          on_request: boolean;
+          only_when_balance_below: number | null;
+          source: string;
+        };
+        Insert: {
+          accounts_created_from?: string | null;
+          accounts_created_to?: string | null;
+          amount: number;
+          cadence: string;
+          created_at?: string;
+          effective_from?: string;
+          effective_to?: string | null;
+          expiry_days?: number | null;
+          expiry_kind: string;
+          id?: never;
+          on_request?: boolean;
+          only_when_balance_below?: number | null;
+          source: string;
+        };
+        Update: {
+          accounts_created_from?: string | null;
+          accounts_created_to?: string | null;
+          amount?: number;
+          cadence?: string;
+          created_at?: string;
+          effective_from?: string;
+          effective_to?: string | null;
+          expiry_days?: number | null;
+          expiry_kind?: string;
+          id?: never;
+          on_request?: boolean;
+          only_when_balance_below?: number | null;
+          source?: string;
+        };
+        Relationships: [];
+      };
+      credit_prices: {
+        Row: {
+          base_credits: number;
+          created_at: string;
+          created_by: string | null;
+          credits_per_unit: number;
+          effective_from: string;
+          feature: string;
+          id: number;
+          margin: number | null;
+          unit: string;
+          unit_cost_usd: number | null;
+          unit_size: number;
+        };
+        Insert: {
+          base_credits?: number;
+          created_at?: string;
+          created_by?: string | null;
+          credits_per_unit: number;
+          effective_from?: string;
+          feature: string;
+          id?: never;
+          margin?: number | null;
+          unit: string;
+          unit_cost_usd?: number | null;
+          unit_size?: number;
+        };
+        Update: {
+          base_credits?: number;
+          created_at?: string;
+          created_by?: string | null;
+          credits_per_unit?: number;
+          effective_from?: string;
+          feature?: string;
+          id?: never;
+          margin?: number | null;
+          unit?: string;
+          unit_cost_usd?: number | null;
+          unit_size?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "credit_prices_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "credit_prices_feature_fkey";
+            columns: ["feature"];
+            isOneToOne: false;
+            referencedRelation: "ai_feature_settings";
+            referencedColumns: ["feature"];
           },
         ];
       };
@@ -1725,6 +1952,27 @@ export type Database = {
         Args: { p_owner: string };
         Returns: number;
       };
+      _ai_credit_due_grants: {
+        Args: { p_at: string; p_user_id: string };
+        Returns: {
+          amount: number;
+          expires_at: string;
+          period_key: string;
+          policy_id: number;
+          source: string;
+        }[];
+      };
+      _ai_credit_lots: {
+        Args: { p_user_id: string };
+        Returns: {
+          amount: number;
+          created_at: string;
+          expires_at: string;
+          lot_id: number;
+          remaining: number;
+        }[];
+      };
+      _ai_credit_settle: { Args: { p_user_id: string }; Returns: string };
       _consume_referral_code: {
         Args: { p_code: string; p_user: string };
         Returns: undefined;
@@ -1734,6 +1982,14 @@ export type Database = {
         Returns: {
           created_at: string;
         }[];
+      };
+      _credit_policy_set_amount: {
+        Args: { p_amount: number; p_source: string };
+        Returns: undefined;
+      };
+      _credit_price_set: {
+        Args: { p_base: number; p_feature: string; p_per_unit: number };
+        Returns: undefined;
       };
       _import_terms_for: {
         Args: {
@@ -1852,7 +2108,12 @@ export type Database = {
         Returns: Json;
       };
       admin_grant_ai_credits: {
-        Args: { p_amount: number; p_note: string; p_user_id: string };
+        Args: {
+          p_amount: number;
+          p_expires_at?: string;
+          p_note: string;
+          p_user_id: string;
+        };
         Returns: undefined;
       };
       admin_lift_share_lock: {
@@ -1935,11 +2196,13 @@ export type Database = {
       };
       admin_set_ai_credit_settings: {
         Args: {
-          p_default_allowance: number;
-          p_monthly_refill: number;
-          p_quiz_cost: number;
-          p_self_topup_amount: number;
-          p_story_cost: number;
+          p_monthly: number;
+          p_narration_per_thousand: number;
+          p_quiz_per_question: number;
+          p_starter: number;
+          p_story_base: number;
+          p_story_per_term: number;
+          p_topup: number;
         };
         Returns: undefined;
       };
@@ -1982,6 +2245,13 @@ export type Database = {
           enabled: boolean;
           remaining: number;
           total: number;
+        }[];
+      };
+      ai_credit_price: {
+        Args: { p_at?: string; p_feature: string; p_units: number };
+        Returns: {
+          credits: number;
+          price_id: number;
         }[];
       };
       audio_job_object_path: {
@@ -2442,6 +2712,20 @@ export type Database = {
           term_id: string;
         }[];
       };
+      record_ai_credit_cost: {
+        Args: {
+          p_calls?: number;
+          p_characters?: number;
+          p_cost_micro_usd: number;
+          p_input_tokens?: number;
+          p_model: string;
+          p_output_tokens?: number;
+          p_provider: string;
+          p_reasoning_tokens?: number;
+          p_spend_id: number;
+        };
+        Returns: undefined;
+      };
       record_review_event: {
         Args: {
           p_crossed_known_threshold?: boolean;
@@ -2465,8 +2749,9 @@ export type Database = {
         Returns: undefined;
       };
       reserve_ai_credits: {
-        Args: { p_cost: number; p_feature: string; p_user_id: string };
+        Args: { p_feature: string; p_units: number; p_user_id: string };
         Returns: {
+          credits: number;
           ledger_id: number;
           remaining: number;
           status: string;

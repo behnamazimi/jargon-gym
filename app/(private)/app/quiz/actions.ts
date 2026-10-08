@@ -7,8 +7,9 @@ import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { runAiTurn } from "@/lib/ai/observability-server";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { runMetered } from "@/lib/ai/run-metered";
-import { quizCost } from "@/lib/ai-credits/costs";
 import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
+import { recordModelCost } from "@/lib/ai-credits/record-model-cost";
+import { createUsageTally } from "@/lib/ai-credits/usage-tally";
 import { LLM_PROVIDER_LABELS, type AiFailureReason } from "@/lib/llm/types";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quizFailure } from "@/lib/quiz/failure";
@@ -100,6 +101,7 @@ async function generateAiQuizResult(
   // so only those are paid for.
   const plan = await planAiQuiz(terms, source);
   const observability = createAiTurn(auth.user.id, "quiz_generation", await hasAnalyticsConsent());
+  const tally = createUsageTally();
   const generate = () =>
     plan.slots.length === 0
       ? generateQuizQuestions({ provider: access.provider, apiKey: access.apiKey, plan, source })
@@ -110,6 +112,7 @@ async function generateAiQuizResult(
             plan,
             source,
             observability,
+            onUsage: tally.add,
           }),
         );
 
@@ -118,14 +121,14 @@ async function generateAiQuizResult(
   }
 
   try {
+    const admin = createAdminClient();
     const outcome = await runMetered(
-      {
-        admin: createAdminClient(),
-        userId: auth.user.id,
-        feature: "quiz",
-        cost: quizCost(plan.slots.length, access.costs),
+      { admin, userId: auth.user.id, feature: "quiz", units: plan.slots.length },
+      async ({ ledgerId }) => {
+        const questions = await generate();
+        await recordModelCost(admin, ledgerId, access.provider, tally);
+        return questions;
       },
-      generate,
     );
     if (!outcome.charged) {
       if (outcome.reason !== "busy") {

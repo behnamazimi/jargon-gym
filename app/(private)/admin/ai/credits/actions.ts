@@ -37,17 +37,24 @@ export async function saveAiCreditSettings(input: CreditSettingsInput) {
     if (!parsed.success) throw new AdminError("Check the numbers and try again.");
 
     const { error } = await supabase.rpc("admin_set_ai_credit_settings", {
-      p_default_allowance: parsed.data.defaultAllowance,
-      p_monthly_refill: parsed.data.monthlyRefill,
-      p_quiz_cost: parsed.data.quizCreditsPerQuestion,
-      p_story_cost: parsed.data.storyCreditsPerTerm,
-      p_self_topup_amount: parsed.data.selfTopupAmount,
+      p_starter: parsed.data.defaultAllowance,
+      p_monthly: parsed.data.monthlyRefill,
+      p_topup: parsed.data.selfTopupAmount,
+      p_quiz_per_question: parsed.data.quizCreditsPerQuestion,
+      p_story_base: parsed.data.storyBaseCredits,
+      p_story_per_term: parsed.data.storyCreditsPerTerm,
+      p_narration_per_thousand: parsed.data.narrationCreditsPerThousand,
     });
     if (error) throw error;
   }, REVALIDATE);
 }
 
-export async function grantAiCredits(input: { email: string; amount: number; note?: string }) {
+export async function grantAiCredits(input: {
+  email: string;
+  amount: number;
+  note?: string;
+  expiresOn?: string;
+}) {
   return runAdminAction(async ({ supabase }) => {
     const parsed = grantCreditsSchema.safeParse(input);
     if (!parsed.success) {
@@ -66,6 +73,7 @@ export async function grantAiCredits(input: { email: string; amount: number; not
       p_user_id: account.id,
       p_amount: parsed.data.amount,
       p_note: parsed.data.note ?? "",
+      ...(parsed.data.expiresOn ? { p_expires_at: `${parsed.data.expiresOn}T23:59:59Z` } : {}),
     });
     if (error) throw error;
   }, REVALIDATE);

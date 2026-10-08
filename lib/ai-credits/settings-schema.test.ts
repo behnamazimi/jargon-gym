@@ -5,7 +5,9 @@ const valid = {
   defaultAllowance: 100,
   monthlyRefill: 30,
   quizCreditsPerQuestion: 1,
-  storyCreditsPerTerm: 1,
+  storyBaseCredits: 2,
+  storyCreditsPerTerm: 0.5,
+  narrationCreditsPerThousand: 7.5,
   selfTopupAmount: 30,
 };
 
@@ -14,7 +16,7 @@ describe("creditSettingsSchema", () => {
     expect(creditSettingsSchema.safeParse(valid).success).toBe(true);
   });
 
-  it("allows a zero allowance or refill but not a free action", () => {
+  it("allows a zero allowance, refill or story base but not a free action", () => {
     expect(
       creditSettingsSchema.safeParse({ ...valid, defaultAllowance: 0, monthlyRefill: 0 }).success,
     ).toBe(true);
@@ -24,9 +26,13 @@ describe("creditSettingsSchema", () => {
     expect(creditSettingsSchema.safeParse({ ...valid, storyCreditsPerTerm: 0 }).success).toBe(
       false,
     );
+    expect(
+      creditSettingsSchema.safeParse({ ...valid, narrationCreditsPerThousand: 0 }).success,
+    ).toBe(false);
+    expect(creditSettingsSchema.safeParse({ ...valid, storyBaseCredits: 0 }).success).toBe(true);
   });
 
-  it("rejects negatives, decimals, NaN and values past the database bounds", () => {
+  it("rejects negatives, fractional allowances, NaN and values past the database bounds", () => {
     for (const bad of [-1, 2.5, Number.NaN, 1_000_001]) {
       expect(creditSettingsSchema.safeParse({ ...valid, defaultAllowance: bad }).success).toBe(
         false,

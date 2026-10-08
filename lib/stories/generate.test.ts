@@ -74,6 +74,17 @@ describe("generateStory", () => {
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
   });
 
+  it("reports each successful call's usage, retries included", async () => {
+    const usage = { inputTokens: 2000, outputTokens: 300 };
+    mockedGenerate
+      .mockReturnValueOnce(Promise.resolve({ text: MISSING_TERMS_TEXT, usage }) as never)
+      .mockReturnValueOnce(Promise.resolve({ text: GOOD_TEXT, usage }) as never);
+    const onUsage = vi.fn();
+    await generateStory({ ...INPUT, onUsage });
+    expect(onUsage).toHaveBeenCalledTimes(2);
+    expect(onUsage).toHaveBeenCalledWith(usage);
+  });
+
   it("retries once when the story misses terms", async () => {
     mockedGenerate
       .mockReturnValueOnce(resolveWith(MISSING_TERMS_TEXT))

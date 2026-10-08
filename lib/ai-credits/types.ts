@@ -1,6 +1,9 @@
 import type { BillableFeatureId } from "@/lib/ai/registry";
 
-export type CreditCosts = { quizPerQuestion: number; storyPerTerm: number };
+/** price = ceil(baseCredits + creditsPerUnit × units ÷ unitSize), at least 1. */
+export type CreditPrice = { baseCredits: number; creditsPerUnit: number; unitSize: number };
+
+export type CreditCosts = Record<BillableFeatureId, CreditPrice>;
 
 export type CreditState = {
   enabled: boolean;

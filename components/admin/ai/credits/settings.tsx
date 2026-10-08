@@ -8,35 +8,57 @@ import { useAdminAction } from "@/hooks/use-admin-action";
 import { useCreditSettingsDraft, type CreditDraft } from "@/hooks/use-credit-settings-draft";
 import type { AiCreditSettingsView } from "@/lib/ai-credits/admin";
 
-const FIELDS: { key: keyof CreditDraft; label: string; hint: string; min: number }[] = [
+const FIELDS: {
+  key: keyof CreditDraft;
+  label: string;
+  hint: string;
+  min: number;
+  step?: string;
+}[] = [
   {
     key: "defaultAllowance",
     label: "Starter credits",
-    hint: "Everyone gets this once, for good.",
+    hint: "New accounts get this once, for good. Accounts that already existed keep what they had.",
     min: 0,
   },
   {
     key: "monthlyRefill",
     label: "Monthly credits",
-    hint: "Refreshed each month, no rollover.",
+    hint: "New accounts get this each month, with no rollover.",
     min: 0,
   },
   {
     key: "quizCreditsPerQuestion",
     label: "Credits per quiz question",
     hint: "Charged per question.",
-    min: 1,
+    min: 0.001,
+    step: "any",
+  },
+  {
+    key: "storyBaseCredits",
+    label: "Story base credits",
+    hint: "Charged for every story, before the terms.",
+    min: 0,
+    step: "any",
   },
   {
     key: "storyCreditsPerTerm",
     label: "Credits per story term",
-    hint: "Charged per term used.",
-    min: 1,
+    hint: "Added for each term used. A story's total is rounded up.",
+    min: 0.001,
+    step: "any",
+  },
+  {
+    key: "narrationCreditsPerThousand",
+    label: "Credits per 1,000 characters of narration",
+    hint: "Charged when someone listens to a story for the first time. The total is rounded up.",
+    min: 0.001,
+    step: "any",
   },
   {
     key: "selfTopupAmount",
     label: "Credits per top-up",
-    hint: "Added each time someone taps Top up. There's no limit on taps.",
+    hint: "Added when someone taps Top up. Once a day, and only with fewer than 10 credits left.",
     min: 1,
   },
 ];
@@ -77,13 +99,14 @@ export function AdminAiCreditsSettings({
       description="Changes apply to everyone straight away. Raising the allowance is safe. Lowering it takes credits away from people who are mid-use."
     >
       <div className="grid gap-3 sm:grid-cols-2">
-        {FIELDS.map(({ key, label, hint, min }) => (
+        {FIELDS.map(({ key, label, hint, min, step }) => (
           <label key={key} className="flex flex-col gap-1">
             <span className="text-sm font-medium text-base-content">{label}</span>
             <input
               type="number"
-              inputMode="numeric"
+              inputMode="decimal"
               min={min}
+              step={step}
               className="input input-bordered min-h-11 w-full"
               value={draft[key]}
               disabled={isPending}
@@ -104,7 +127,8 @@ export function AdminAiCreditsSettings({
       ) : null}
       {!values && changed ? (
         <p role="alert" className="m-0 text-sm text-error">
-          Use whole numbers. Costs must be at least 1, and nothing above 1,000,000.
+          Allowances are whole numbers, up to 1,000,000. Prices can have decimals, from 0.001 up to
+          1,000.
         </p>
       ) : null}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
