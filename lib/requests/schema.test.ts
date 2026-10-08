@@ -17,7 +17,7 @@ describe("requestFormSchema", () => {
     ["a jargon level on vocabulary", { ...base, kind: "vocabulary", level: "new" }, false],
     ["a listed size", { ...base, size: 50 }, true],
     ["an unlisted size", { ...base, size: 30 }, false],
-    ["an unsupported language", { ...base, language: "fr" }, false],
+    ["an unsupported language", { ...base, language: "xx" }, false],
     ["an unknown kind", { ...base, kind: "definitions" }, false],
     ["known terms within the cap", { ...base, knownTerms: "pod\nhelm chart" }, true],
     [

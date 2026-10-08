@@ -1,4 +1,6 @@
 export const SUPPORT_EMAIL = "support@lobyas.com";
+/** The address Lobyas emails (invites and notices) come from. */
+export const SENDER_EMAIL = "team@lobyas.com";
 export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
 
 const CONTACT_PATH = "/contact";

@@ -1,6 +1,12 @@
 "use client";
 
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DOMAIN_LANGUAGE_OPTIONS, parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
 
 type LanguageToggleProps = {
@@ -11,22 +17,25 @@ type LanguageToggleProps = {
 
 export function LanguageToggle({ value, onChange, isDisabled }: LanguageToggleProps) {
   return (
-    <ToggleGroup
+    <Select
       aria-label="Language"
-      selectionMode="single"
-      disallowEmptySelection
+      value={value}
       isDisabled={isDisabled}
-      selectedKeys={[value]}
-      onSelectionChange={(keys) => {
-        const [key] = [...keys];
-        if (key !== undefined) onChange(parseLanguage(String(key)));
+      className="w-full"
+      onChange={(key) => {
+        if (key != null) onChange(parseLanguage(String(key)));
       }}
     >
-      {DOMAIN_LANGUAGE_OPTIONS.map((option) => (
-        <ToggleGroupItem key={option.value} id={option.value}>
-          {option.label}
-        </ToggleGroupItem>
-      ))}
-    </ToggleGroup>
+      <SelectTrigger className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {DOMAIN_LANGUAGE_OPTIONS.map((option) => (
+          <SelectItem key={option.value} id={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

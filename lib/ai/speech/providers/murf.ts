@@ -7,9 +7,19 @@ const MODEL: keyof typeof MODELS = "falcon-2";
 const REQUEST_TIMEOUT_MS = 25_000;
 
 // Each voice is native to one language; an English voice reading Dutch mixes the pronunciations.
-const VOICE_BY_LANGUAGE: Record<DomainLanguage, { voiceId: string; locale: string }> = {
+// A language missing here has no Murf voice (Russian, Turkish), so the router skips Murf for it.
+// Ids are the Falcon 2 voices listed in Murf's voice library; not yet confirmed against the account.
+const VOICE_BY_LANGUAGE: Partial<Record<DomainLanguage, { voiceId: string; locale: string }>> = {
   en: { voiceId: "en-US-miles", locale: "en-US" },
   nl: { voiceId: "nl-NL-dirk", locale: "nl-NL" },
+  es: { voiceId: "es-ES-javier", locale: "es-ES" },
+  fr: { voiceId: "fr-FR-axel", locale: "fr-FR" },
+  de: { voiceId: "de-DE-ralf", locale: "de-DE" },
+  it: { voiceId: "it-IT-angelo", locale: "it-IT" },
+  pt: { voiceId: "pt-BR-heitor", locale: "pt-BR" },
+  ja: { voiceId: "ja-JP-kenji", locale: "ja-JP" },
+  ko: { voiceId: "ko-KR-seok", locale: "ko-KR" },
+  zh: { voiceId: "zh-CN-tao", locale: "zh-CN" },
 };
 
 const MODELS = {
@@ -39,9 +49,12 @@ export function createMurfProvider(modelName: keyof typeof MODELS): SpeechProvid
   return {
     id: "murf",
     isConfigured: () => Boolean(process.env.MURF_API_KEY?.trim()),
+    supports: (language) => language in VOICE_BY_LANGUAGE,
     async synthesize({ script, language }) {
       const apiKey = process.env.MURF_API_KEY;
       if (!apiKey) throw new Error("Missing MURF_API_KEY.");
+      const voice = VOICE_BY_LANGUAGE[language];
+      if (!voice) throw new Error(`Murf has no voice for ${language}.`);
 
       const model = MODELS[modelName];
       const response = await fetch(model.endpoint, {
@@ -49,7 +62,7 @@ export function createMurfProvider(modelName: keyof typeof MODELS): SpeechProvid
         headers: { "api-key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({
           text: renderPauses(script, model.pauses),
-          ...VOICE_BY_LANGUAGE[language],
+          ...voice,
           format: "MP3",
           ...model.body,
         }),

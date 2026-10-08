@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { ReportCollectionDialog } from "@/components/library/report-collection-dialog";
 import { SharedDomainCard } from "@/components/library/shared-domain-card";
@@ -63,7 +62,6 @@ export function SharedDomainsBrowse({
   const { error, busyId, addToCollection, removeFromCollection } = useCollectionActions();
   const searchInputRef = useRef<HTMLInputElement>(null);
   const browse = useSharedDomainsBrowse({ initialPage, initialGroup });
-  const router = useRouter();
   const { toast } = useToast();
   const [reporting, setReporting] = useState<{
     id: string;
@@ -71,6 +69,17 @@ export function SharedDomainsBrowse({
   } | null>(null);
 
   useSlashToFocus(searchInputRef);
+
+  const [justAdded, setJustAdded] = useState<ReadonlySet<string>>(new Set());
+
+  function setAddedNow(domainId: string, added: boolean) {
+    setJustAdded((current) => {
+      const next = new Set(current);
+      if (added) next.add(domainId);
+      else next.delete(domainId);
+      return next;
+    });
+  }
 
   async function handleAdd(domainId: string) {
     const name = browse.domains.find((domain) => domain.id === domainId)?.name;
@@ -80,17 +89,13 @@ export function SharedDomainsBrowse({
       browse.retry();
       return;
     }
-    // Added collections are always active, so Read can open on it.
-    toast(name ? `Added "${name}"` : "Added to your library", "success", {
-      action: {
-        label: "Start reading",
-        onPress: () => router.push(`/app/read?domain=${domainId}`),
-      },
-    });
+    setAddedNow(domainId, true);
+    toast(name ? `Added "${name}"` : "Added to your library", "success");
   }
 
   async function handleRemove(domainId: string) {
     browse.markInCollection(domainId, false);
+    setAddedNow(domainId, false);
     const ok = await removeFromCollection(domainId);
     if (!ok) browse.retry();
   }
@@ -151,6 +156,7 @@ export function SharedDomainsBrowse({
                 <SharedDomainCard
                   domain={domain}
                   busy={busyId === domain.id}
+                  justAdded={justAdded.has(domain.id)}
                   onAdd={() => void handleAdd(domain.id)}
                   onRemove={() => void handleRemove(domain.id)}
                   onToggleLove={() => void handleToggleLove(domain.id, !domain.lovedByMe)}

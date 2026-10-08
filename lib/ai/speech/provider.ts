@@ -36,6 +36,7 @@ export async function synthesizeSpeech(
 
   for (const adapter of PROVIDER_ORDER) {
     if (!switches[adapter.id] || !adapter.isConfigured()) continue;
+    if (adapter.supports && !adapter.supports(request.language)) continue;
     try {
       const audio = await adapter.synthesize(request);
       calls.push({ provider: adapter.id, units, outcome: "ok" });

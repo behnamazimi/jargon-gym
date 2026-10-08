@@ -66,7 +66,7 @@ describe("buildNarrationScript", () => {
     // Cast past the DomainLanguage union to exercise the fallback path for a
     // language that isn't translated yet (e.g. a future addition to the type
     // without matching CONNECTOR_PHRASES entry).
-    const script = buildNarrationScript({ ...BASE, example: "An example." }, "fr" as never, "full");
+    const script = buildNarrationScript({ ...BASE, example: "An example." }, "xx" as never, "full");
     expect(script).toContain(`${NARRATION_PAUSE} An example.`);
     expect(script).not.toContain("For example");
     expect(script).not.toContain("Bijvoorbeeld");

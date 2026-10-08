@@ -1,5 +1,8 @@
+import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
 import { pluralize } from "@/lib/utils";
 import type { DeclineReason, RequestKind, RequestLevel } from "./types";
+
+const SUPPORTED_LANGUAGE_NAMES = DOMAIN_LANGUAGE_OPTIONS.map((option) => option.label).join(", ");
 
 /** Every user-facing string of the request flow. The never-use rules (no
  *  automation talk, no progress bars, nobody named as doing the work) are
@@ -121,8 +124,7 @@ export const REQUEST_COPY = {
       "That topic is too narrow for us to prepare a collection around. Try a wider one, or add the terms yourself.",
     not_jargon_or_vocabulary:
       "That isn't something we can prepare as a set of terms or vocabulary. Collections here are terms with definitions.",
-    language_not_supported:
-      "We can't prepare collections in that language yet. English and Dutch are supported.",
+    language_not_supported: `We can't prepare collections in that language yet. Supported languages: ${SUPPORTED_LANGUAGE_NAMES}.`,
     team_internal: "We can't know a team's own terms. Paste your team's list instead.",
   } satisfies Record<DeclineReason, string>,
   public: {
