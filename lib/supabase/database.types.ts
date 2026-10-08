@@ -1615,7 +1615,7 @@ export type Database = {
           },
         ];
       };
-      triage_not_yet: {
+      triage_deferrals: {
         Row: {
           created_at: string;
           term_id: string;
@@ -1633,14 +1633,14 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "triage_not_yet_term_id_fkey";
+            foreignKeyName: "triage_deferrals_term_id_fkey";
             columns: ["term_id"];
             isOneToOne: false;
             referencedRelation: "terms";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "triage_not_yet_user_id_fkey";
+            foreignKeyName: "triage_deferrals_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
@@ -2476,7 +2476,7 @@ export type Database = {
           user_id: string;
         }[];
       };
-      my_add_not_yet_terms: {
+      my_add_deferred_terms: {
         Args: { p_term_ids: string[] };
         Returns: undefined;
       };
@@ -2493,7 +2493,7 @@ export type Database = {
         Args: { p_id: string };
         Returns: undefined;
       };
-      my_clear_not_yet_collection: {
+      my_clear_deferred_collection: {
         Args: { p_collection_id: string };
         Returns: undefined;
       };
@@ -2648,7 +2648,7 @@ export type Database = {
         };
         Returns: undefined;
       };
-      my_remove_not_yet_term: {
+      my_remove_deferred_term: {
         Args: { p_term_id: string };
         Returns: undefined;
       };
