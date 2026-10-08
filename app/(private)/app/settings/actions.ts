@@ -7,6 +7,8 @@ import { getPasswordValidationError } from "@/lib/auth/password-policy";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { createClient } from "@/lib/supabase/server";
+import { getMyCreditSchedule } from "@/lib/ai-credits/repository";
+import type { CreditSchedule } from "@/lib/ai-credits/types";
 import { getAiAccessView } from "@/lib/llm/access";
 import {
   createOrRefreshTelegramLink,
@@ -112,7 +114,24 @@ export async function getLlmSettingsData() {
     return { error: "Log in to view settings." as const };
   }
 
-  return { ai: await getAiAccessView(auth.supabase) };
+  const ai = await getAiAccessView(auth.supabase);
+  return { ai, schedule: await getCreditSchedule(auth.supabase, ai) };
+}
+
+/** When credits refill and lapse. Credits off, or any failure, just hides the row. */
+async function getCreditSchedule(
+  supabase: Client,
+  ai: Awaited<ReturnType<typeof getAiAccessView>>,
+): Promise<CreditSchedule | null> {
+  const hasCredits = ai.kind === "credits" || ai.reason === "exhausted";
+  if (!hasCredits) return null;
+
+  try {
+    return await getMyCreditSchedule(supabase);
+  } catch (err) {
+    console.error("Couldn't load the credit schedule:", err);
+    return null;
+  }
 }
 
 export async function getTelegramSettingsData() {

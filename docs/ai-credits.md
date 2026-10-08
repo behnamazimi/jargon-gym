@@ -159,15 +159,22 @@ characters, has anything that looks like a key removed, and never includes a
 prompt or what the user wrote. The first reason stays if a refund is attempted
 twice.
 
-Stories give up after 45 seconds, so a slow model is reported and refunded
-before the platform's 60-second limit ends the request. AI quizzes have no such
-limit of their own.
+Every charged request has a time limit that is shorter than the platform's
+60-second limit, so a slow provider is reported and refunded instead of the
+request being killed:
 
-One case isn't covered. If the server process dies between the charge and the
-refund, for example when a quiz runs past the platform's time limit, the
-credits stay spent. Nothing marks these spends. If this turns out to matter, a
-later change can add a "settled" marker to spends and a job that refunds ones
-that never settle.
+- AI quizzes give up after 45 seconds (`lib/quiz/generate.ts`). Stories do the
+  same (`lib/stories/generate.ts`). In both, the app retries once at most, only
+  for a failure a second attempt can fix and only while time remains, and the
+  AI SDK's own retries are off. Both attempts share the one limit.
+- Each speech provider gives up after 25 seconds, so Murf and then ElevenLabs
+  still fit in a narration route's 60 seconds.
+
+A request that is killed outright anyway, for example when the server process
+dies between the charge and the refund, still leaves the credits spent. Nothing
+marks these spends. This should be rare now that every request stops itself
+first. If it ever matters, a later change can add a "settled" marker to spends
+and a job that refunds ones that never settle.
 
 The code is in `lib/ai-credits/charge.ts` and `lib/ai-credits/repository.ts`.
 
@@ -213,6 +220,8 @@ email: how many credits are left, or that the credits are used up. The line is
 hidden when credits aren't offered. The balance is looked up only when the menu
 opens, so ordinary page loads don't pay for it. The line links to the AI section
 of Settings.
+
+That section also says when the credits next change (`lib/ai-credits/explainer.ts`): when the next monthly refill comes and when the soonest credits expire, in UTC. `my_credit_schedule()` supplies the dates, so the page never guesses. A part that doesn't apply, such as a refill for an account without a monthly policy, is left out, and the row is hidden when credits are switched off.
 
 ## Setting it up
 

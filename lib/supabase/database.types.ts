@@ -2484,6 +2484,15 @@ export type Database = {
         };
         Returns: Json;
       };
+      my_credit_schedule: {
+        Args: never;
+        Returns: {
+          expiring_amount: number;
+          expiring_at: string;
+          next_refill_amount: number;
+          next_refill_at: string;
+        }[];
+      };
       my_dismiss_collection_request: {
         Args: { p_id: string };
         Returns: undefined;

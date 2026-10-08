@@ -5,6 +5,8 @@ import type { SpeechProviderAdapter } from "./types";
 
 const MODEL_ID = "eleven_v3";
 const OUTPUT_FORMAT = "mp3_44100_128";
+// Murf has the same limit, so the two together fit in the narration routes' 60 seconds.
+const REQUEST_TIMEOUT_MS = 25_000;
 
 // ElevenLabs' own long-standing default ("Rachel") voice — verify this id
 // exists in the target ElevenLabs account (dashboard, or
@@ -46,6 +48,12 @@ export const elevenLabsProvider: SpeechProviderAdapter = {
         modelId: MODEL_ID,
         outputFormat: OUTPUT_FORMAT,
         languageCode: language,
+      },
+      // The signal also covers reading the audio, which the SDK's own timeout doesn't.
+      {
+        timeoutInSeconds: REQUEST_TIMEOUT_MS / 1000,
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       },
     );
     return Buffer.from(await new Response(audioStream).arrayBuffer());

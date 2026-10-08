@@ -20,6 +20,14 @@ export function isKeyRejected(error: unknown): boolean {
   return status === 400 && inner instanceof Error && /api key/i.test(inner.message);
 }
 
+/** A failure a second attempt can plausibly fix: a server error, a network error
+ *  or a reply that couldn't be used. A refused key, a rate limit or another client
+ *  error will fail the same way again. */
+export function isTransientFailure(error: unknown): boolean {
+  const status = providerStatus(error);
+  return status === undefined || status >= 500;
+}
+
 /** The key was refused or the provider has no quota left. For the app's own
  *  key that is our problem, not something the user can fix. */
 export function isProviderKeyFault(error: unknown): boolean {

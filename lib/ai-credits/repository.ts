@@ -1,6 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { CreditCosts, CreditFeature, CreditPrice, CreditState, TopUpState } from "./types";
+import type {
+  CreditCosts,
+  CreditFeature,
+  CreditPrice,
+  CreditSchedule,
+  CreditState,
+  TopUpState,
+} from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -39,6 +46,24 @@ async function getMyTopUpState(client: Client): Promise<TopUpState> {
   if (row.available) return { available: true, amount: row.amount };
   const reason = row.reason === "balance" || row.reason === "already-today" ? row.reason : "off";
   return { available: false, reason, amount: row.amount };
+}
+
+/** When the signed-in user's credits next refill and lapse. Pass the user-scoped client. */
+export async function getMyCreditSchedule(client: Client): Promise<CreditSchedule> {
+  const { data, error } = await client.rpc("my_credit_schedule");
+  if (error) throw error;
+
+  const row = data?.[0];
+  return {
+    nextRefill:
+      row?.next_refill_at && row.next_refill_amount
+        ? { at: row.next_refill_at, amount: row.next_refill_amount }
+        : null,
+    expiry:
+      row?.expiring_at && row.expiring_amount
+        ? { at: row.expiring_at, amount: row.expiring_amount }
+        : null,
+  };
 }
 
 /** The signed-in user's balance. Pass the user-scoped client. */

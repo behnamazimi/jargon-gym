@@ -1,12 +1,14 @@
-import { generateObject } from "ai";
-import { describe, expect, it, vi } from "vitest";
+import { APICallError, generateObject } from "ai";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { QuizTimeoutError } from "./failure";
 import { planAiQuiz } from "./plan-ai";
 import { generateQuizQuestions } from "./generate";
 import { templateById } from "./templates/registry";
 import { makeDistractor, makeTerm, rngOf, sourceOf } from "./test-support";
 import type { QuizTerm } from "./types";
 
-vi.mock("ai", () => ({
+vi.mock("ai", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("ai")>()),
   generateObject: vi.fn(),
 }));
 
@@ -172,5 +174,78 @@ describe("generateQuizQuestions", () => {
         source,
       }),
     ).rejects.toThrow("No terms");
+  });
+});
+
+describe("generateQuizQuestions time limit and retries", () => {
+  beforeEach(() => {
+    vi.mocked(generateObject).mockReset();
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const apiError = (statusCode: number) =>
+    new APICallError({ message: "fail", url: "https://x.test", requestBodyValues: {}, statusCode });
+
+  it("stops the model and raises a timeout when the deadline passes", async () => {
+    const controller = new AbortController();
+    vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+    vi.mocked(generateObject).mockImplementation(
+      ((args: { abortSignal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          args.abortSignal.addEventListener("abort", () => reject(new Error("aborted")));
+        })) as never,
+    );
+    const plan = await planAiQuiz([field(0)], source, rngOf(0.5));
+
+    const pending = generateQuizQuestions({ provider: "anthropic", apiKey: "k", plan, source });
+    controller.abort();
+
+    await expect(pending).rejects.toBeInstanceOf(QuizTimeoutError);
+    expect(generateObject).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives every model call the shared deadline and turns the SDK's own retries off", async () => {
+    fakeModel();
+    const plan = await planAiQuiz([field(0), field(1)], source, rngOf(0.5));
+    await generateQuizQuestions({ provider: "anthropic", apiKey: "k", plan, source });
+    const call = vi.mocked(generateObject).mock.calls[0][0] as {
+      maxRetries: number;
+      abortSignal: AbortSignal;
+    };
+    expect(call.maxRetries).toBe(0);
+    expect(call.abortSignal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("retries once after a server error, within the same deadline", async () => {
+    fakeModel();
+    const working = vi.mocked(generateObject).getMockImplementation()!;
+    vi.mocked(generateObject).mockRejectedValueOnce(apiError(503));
+    vi.mocked(generateObject).mockImplementation(working);
+    const plan = await planAiQuiz([field(0)], source, rngOf(0.5));
+
+    const questions = await generateQuizQuestions({
+      provider: "anthropic",
+      apiKey: "k",
+      plan,
+      source,
+    });
+    expect(questions).toHaveLength(1);
+    expect(generateObject).toHaveBeenCalledTimes(2);
+    const [first, second] = vi
+      .mocked(generateObject)
+      .mock.calls.map((call) => (call[0] as { abortSignal: AbortSignal }).abortSignal);
+    expect(second).toBe(first);
+  });
+
+  it.each([401, 429, 400])("does not retry a %s, which would fail the same way", async (status) => {
+    vi.mocked(generateObject).mockRejectedValue(apiError(status));
+    const plan = await planAiQuiz([field(0)], source, rngOf(0.5));
+
+    await expect(
+      generateQuizQuestions({ provider: "anthropic", apiKey: "k", plan, source }),
+    ).rejects.toMatchObject({ statusCode: status });
+    expect(generateObject).toHaveBeenCalledTimes(1);
   });
 });
