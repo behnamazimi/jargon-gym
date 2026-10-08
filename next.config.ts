@@ -8,6 +8,8 @@ import {
 } from "./lib/redirects";
 
 const nextConfig: NextConfig = {
+  // End-to-end runs build into their own folder so they never clobber a running `next dev`.
+  distDir: process.env.NEXT_DIST_DIR || undefined,
   devIndicators: false,
   experimental: {
     optimizePackageImports: ["react-aria-components", "lucide-react"],

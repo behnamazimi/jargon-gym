@@ -40,7 +40,10 @@ export const elevenLabsProvider: SpeechProviderAdapter = {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) throw new Error("Missing ELEVENLABS_API_KEY.");
 
-    const client = new ElevenLabsClient({ apiKey });
+    const client = new ElevenLabsClient({
+      apiKey,
+      baseUrl: process.env.ELEVENLABS_BASE_URL || undefined,
+    });
     const audioStream = await client.textToSpeech.convert(
       VOICE_BY_LANGUAGE[language] ?? DEFAULT_VOICE_ID,
       {

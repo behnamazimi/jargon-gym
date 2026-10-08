@@ -18,6 +18,14 @@ necessary. Any comment you add should be in plain language and not overkill.
 
 After finishing a change, run `pnpm check` (lint + format check + type-check + knip) and fix anything it flags before considering the change done.
 
+# End-to-end tests
+
+Playwright tests in `e2e/` drive a production build against local Supabase,
+with a stub server standing in for the model, Resend and narration. Read
+[docs/e2e.md](docs/e2e.md) before adding one. A user-visible feature adds or
+updates a spec, and a hot path gets `{ tag: "@smoke" }`. Run `pnpm test:e2e:smoke`
+when you change a flow they cover.
+
 # Scoring engine (TRACE)
 
 Read, Review, and Quiz are all driven by TRACE, the scoring engine that
