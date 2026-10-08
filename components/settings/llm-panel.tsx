@@ -3,8 +3,9 @@
 import { Sparkles } from "lucide-react";
 import { TopUpButton } from "@/components/ai-credits/top-up-button";
 import { SettingsPanel, SettingsRow, SettingsStack } from "@/components/settings/ui";
+import { priceLines, refillLines } from "@/lib/ai-credits/explainer";
 import { TOPUP_COPY } from "@/lib/ai-credits/topup-copy";
-import type { TopUpState } from "@/lib/ai-credits/types";
+import type { CreditCosts, CreditSchedule, TopUpState } from "@/lib/ai-credits/types";
 import type { AiAccessView } from "@/lib/llm/types";
 
 function freeCreditsCopy(topUp: TopUpState | undefined): string | null {
@@ -27,7 +28,49 @@ function FreeCreditsRow({ topUp }: { topUp: TopUpState | undefined }) {
   );
 }
 
-function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
+function LineList({ lines }: { lines: string[] }) {
+  return (
+    <ul className="m-0 list-none space-y-1 p-0">
+      {lines.map((line) => (
+        <li key={line}>{line}</li>
+      ))}
+    </ul>
+  );
+}
+
+/** What credits buy and when they refill or lapse. Hidden when there is nothing to say. */
+function ExplainerRows({
+  costs,
+  schedule,
+}: {
+  costs: CreditCosts | null;
+  schedule: CreditSchedule | null;
+}) {
+  const refills = refillLines(schedule);
+
+  return (
+    <>
+      {costs ? (
+        <SettingsRow title="What things cost" description={<LineList lines={priceLines(costs)} />}>
+          {null}
+        </SettingsRow>
+      ) : null}
+      {refills.length > 0 ? (
+        <SettingsRow title="Refills" description={<LineList lines={refills} />}>
+          {null}
+        </SettingsRow>
+      ) : null}
+    </>
+  );
+}
+
+type AiCreditsBlockProps = {
+  ai: AiAccessView;
+  costs: CreditCosts | null;
+  schedule: CreditSchedule | null;
+};
+
+function AiCreditsBlock({ ai, costs, schedule }: AiCreditsBlockProps) {
   if (ai.kind === "credits") {
     const label = `${ai.remaining} of ${ai.total} credits left`;
     return (
@@ -41,6 +84,7 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
               aria-label={label}
             />
           </SettingsRow>
+          <ExplainerRows costs={costs} schedule={schedule} />
           <FreeCreditsRow topUp={ai.topUp} />
         </SettingsStack>
         <p className="m-0 text-xs text-base-content/70">
@@ -57,6 +101,7 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
         <SettingsRow title="Balance" description="No credits left.">
           {null}
         </SettingsRow>
+        <ExplainerRows costs={costs} schedule={schedule} />
         <FreeCreditsRow topUp={ai.topUp} />
       </SettingsStack>
     );
@@ -65,7 +110,7 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
   return <p className="m-0 text-sm text-base-content/70">AI isn&apos;t available right now.</p>;
 }
 
-export function LlmPanel({ ai }: { ai: AiAccessView }) {
+export function LlmPanel({ ai, costs, schedule }: AiCreditsBlockProps) {
   return (
     <SettingsPanel
       id="ai"
@@ -73,7 +118,7 @@ export function LlmPanel({ ai }: { ai: AiAccessView }) {
       title="AI credits"
       description="Power AI quizzes and Stories."
     >
-      <AiCreditsBlock ai={ai} />
+      <AiCreditsBlock ai={ai} costs={costs} schedule={schedule} />
     </SettingsPanel>
   );
 }

@@ -10,6 +10,13 @@ export type TopUpState =
   | { available: true; amount: number }
   | { available: false; reason: "balance" | "already-today" | "off"; amount: number };
 
+/** What a person's credits do next. Dates are ISO strings, in UTC terms. */
+export type CreditSchedule = {
+  nextRefill: { at: string; amount: number } | null;
+  /** The soonest credits to lapse, and how many. */
+  expiry: { at: string; amount: number } | null;
+};
+
 export type CreditState = {
   enabled: boolean;
   total: number;

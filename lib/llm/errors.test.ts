@@ -1,6 +1,6 @@
 import { APICallError, RetryError } from "ai";
 import { describe, expect, it } from "vitest";
-import { isKeyRejected, isProviderKeyFault, providerStatus } from "./errors";
+import { isKeyRejected, isProviderKeyFault, isTransientFailure, providerStatus } from "./errors";
 
 function apiError(statusCode: number, message = "fail") {
   return new APICallError({
@@ -55,5 +55,19 @@ describe("isKeyRejected", () => {
   it("does not mistake other 400s or quota errors for a rejected key", () => {
     expect(isKeyRejected(apiError(400, "Invalid request body"))).toBe(false);
     expect(isKeyRejected(apiError(429))).toBe(false);
+  });
+});
+
+describe("isTransientFailure", () => {
+  it("is true for a server error and for anything without a status", () => {
+    expect(isTransientFailure(apiError(500))).toBe(true);
+    expect(isTransientFailure(apiError(503))).toBe(true);
+    expect(isTransientFailure(new Error("network down"))).toBe(true);
+  });
+
+  it("is false for a refused key, a rate limit and other client errors", () => {
+    for (const status of [400, 401, 403, 404, 429]) {
+      expect(isTransientFailure(apiError(status))).toBe(false);
+    }
   });
 });

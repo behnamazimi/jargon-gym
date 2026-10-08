@@ -24,6 +24,13 @@ describe("elevenLabsProvider", () => {
     expect(elevenLabsProvider.isConfigured()).toBe(false);
   });
 
+  it("gives up after 25 seconds and never retries, so a failed clip can be refunded in time", async () => {
+    await elevenLabsProvider.synthesize({ script: "Closure.", language: "en", kind: "term" });
+    const options = convert.mock.calls[0][2];
+    expect(options).toMatchObject({ timeoutInSeconds: 25, maxRetries: 0 });
+    expect(options.abortSignal).toBeInstanceOf(AbortSignal);
+  });
+
   it("writes pauses as dashes and returns the audio", async () => {
     const audio = await elevenLabsProvider.synthesize({
       script: `Closure. ${NARRATION_PAUSE} For example, x.`,

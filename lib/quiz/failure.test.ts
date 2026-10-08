@@ -1,7 +1,7 @@
 import { APICallError } from "ai";
 import { describe, expect, it } from "vitest";
 import { AI_TEMPORARILY_UNAVAILABLE } from "@/lib/ai-credits/messages";
-import { quizFailure } from "./failure";
+import { QuizTimeoutError, quizFailure } from "./failure";
 
 function apiError(statusCode: number, message = "fail") {
   return new APICallError({ message, url: "https://x.test", requestBodyValues: {}, statusCode });
@@ -15,6 +15,13 @@ describe("quizFailure", () => {
         reason: "unavailable",
       });
     }
+  });
+
+  it("tells the user the quiz took too long, and that they can try again", () => {
+    expect(quizFailure(new QuizTimeoutError())).toEqual({
+      error: "Writing the quiz took too long. Try again.",
+      reason: "unavailable",
+    });
   });
 
   it("uses a plain retry message otherwise, never the raw error", () => {

@@ -7,6 +7,8 @@ import { getPasswordValidationError } from "@/lib/auth/password-policy";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { createClient } from "@/lib/supabase/server";
+import { getCreditCosts, getMyCreditSchedule } from "@/lib/ai-credits/repository";
+import type { CreditCosts, CreditSchedule } from "@/lib/ai-credits/types";
 import { getAiAccessView } from "@/lib/llm/access";
 import {
   createOrRefreshTelegramLink,
@@ -112,7 +114,29 @@ export async function getLlmSettingsData() {
     return { error: "Log in to view settings." as const };
   }
 
-  return { ai: await getAiAccessView(auth.supabase) };
+  const ai = await getAiAccessView(auth.supabase);
+  const { costs, schedule } = await getCreditExplainerData(auth.supabase, ai);
+  return { ai, costs, schedule };
+}
+
+/** What the credits explainer needs. Credits off, or any failure, just hide it. */
+async function getCreditExplainerData(
+  supabase: Client,
+  ai: Awaited<ReturnType<typeof getAiAccessView>>,
+): Promise<{ costs: CreditCosts | null; schedule: CreditSchedule | null }> {
+  const hasCredits = ai.kind === "credits" || ai.reason === "exhausted";
+  if (!hasCredits) return { costs: null, schedule: null };
+
+  try {
+    const [costs, schedule] = await Promise.all([
+      ai.kind === "credits" ? ai.costs : getCreditCosts(supabase),
+      getMyCreditSchedule(supabase),
+    ]);
+    return { costs, schedule };
+  } catch (err) {
+    console.error("Couldn't load the credits explainer:", err);
+    return { costs: null, schedule: null };
+  }
 }
 
 export async function getTelegramSettingsData() {
