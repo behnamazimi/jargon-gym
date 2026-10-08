@@ -22,6 +22,10 @@ const VOICE_BY_LANGUAGE: Partial<Record<DomainLanguage, { voiceId: string; local
   zh: { voiceId: "zh-CN-tao", locale: "zh-CN" },
 };
 
+// Lets tests point at a local stub; unset in every real environment.
+const endpoint = (url: string) =>
+  process.env.MURF_BASE_URL ? url.replace(/^https:\/\/[^/]+/, process.env.MURF_BASE_URL) : url;
+
 const MODELS = {
   // Gen2 has a JSON endpoint that can return the audio as base64.
   gen2: {
@@ -57,7 +61,7 @@ export function createMurfProvider(modelName: keyof typeof MODELS): SpeechProvid
       if (!voice) throw new Error(`Murf has no voice for ${language}.`);
 
       const model = MODELS[modelName];
-      const response = await fetch(model.endpoint, {
+      const response = await fetch(endpoint(model.endpoint), {
         method: "POST",
         headers: { "api-key": apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({
