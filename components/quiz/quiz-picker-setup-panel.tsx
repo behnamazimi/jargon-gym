@@ -10,9 +10,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   QuizPickerAiNotices,
+  QuizPickerCreditGate,
   QuizPickerFooterHint,
-  QuizPickerOverBalance,
 } from "@/components/quiz/quiz-picker-notices";
+import { TopUpButton } from "@/components/ai-credits/top-up-button";
+import { creditGate, isExhausted } from "@/lib/ai-credits/gate";
 import { quizCreditUse } from "@/lib/quiz/credit-use";
 import type { AiAccessView } from "@/lib/llm/types";
 import { type PausedStudyCollection, type StudyCollection } from "@/lib/study/types";
@@ -90,20 +92,37 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
   const use = quizCreditUse(questionStyle, ai, questionCount);
   const startDisabled =
     availableTermCount === 0 || questionCountError !== null || aiRequiresSetup || use.overBalance;
+  const creditsBlock = (questionStyle === "ai" && isExhausted(ai)) || use.overBalance;
+  const gate = creditsBlock ? creditGate(ai.topUp) : null;
 
   return (
     <StudySetupPanel
       footer={
-        <Button
-          type="button"
-          onPress={onStartQuiz}
-          isDisabled={startDisabled}
-          className="min-h-11 w-full"
-        >
-          Start quiz
-        </Button>
+        gate?.kind === "top-up" ? (
+          <TopUpButton amount={gate.amount} className="min-h-11 w-full" />
+        ) : (
+          <Button
+            type="button"
+            onPress={onStartQuiz}
+            isDisabled={startDisabled}
+            className="min-h-11 w-full"
+          >
+            Start quiz
+          </Button>
+        )
       }
       footerHint={<QuizPickerFooterHint questionStyle={questionStyle} ai={ai} cost={use.cost} />}
+      footerNotice={
+        creditsBlock ? (
+          <QuizPickerCreditGate
+            ai={ai}
+            use={use}
+            questionCount={questionCount}
+            onFit={onApplyQuestionCount}
+            onUseSimple={() => onQuestionStyleChange("simple")}
+          />
+        ) : null
+      }
     >
       <QuizPanelLabel title="Set up your quiz" />
       {savedSession ? (
@@ -144,8 +163,6 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         onPresetSelect={onApplyQuestionCount}
         onInputChange={onQuestionCountInputChange}
       />
-
-      <QuizPickerOverBalance use={use} questionCount={questionCount} onFit={onApplyQuestionCount} />
 
       {availableTermCount === 0 ? (
         <Alert variant="destructive">

@@ -1,20 +1,15 @@
-import { Alert, AlertAction, AlertDescription } from "@/components/ui/alert";
-import { TopUpButton } from "@/components/ai-credits/top-up-button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CreditGateNotice } from "@/components/ai-credits/credit-gate-notice";
 import { Button } from "@/components/ui/button";
 import { largestQuizCount } from "@/lib/ai-credits/costs";
+import { creditGate, isExhausted } from "@/lib/ai-credits/gate";
 import { AI_CREDITS_LOW_THRESHOLD, type AiAccessView, type CreditUse } from "@/lib/llm/types";
 import type { QuizQuestionStyle } from "@/lib/quiz/types";
 
 function creditHint(ai: AiAccessView, cost: number) {
   if (ai.kind !== "credits") return null;
 
-  if (cost > ai.remaining) {
-    return (
-      <>
-        <span className="tabular-nums">{ai.remaining}</span> credits left.
-      </>
-    );
-  }
+  if (cost > ai.remaining) return null;
 
   const isLow = ai.remaining <= AI_CREDITS_LOW_THRESHOLD;
   return (
@@ -41,60 +36,26 @@ export function QuizPickerFooterHint({
   return hint;
 }
 
-function QuizPickerAiSetupAlert({ ai }: { ai: AiAccessView }) {
-  const exhausted = ai.kind === "unavailable" && ai.reason === "exhausted";
+/** AI quizzes are off for this account. Running out of credits is a different
+ *  case, handled by `QuizPickerCreditGate`. */
+function QuizPickerAiOffAlert() {
   return (
     <Alert variant="destructive" className="max-w-md">
       <AlertDescription>
-        {exhausted
-          ? "You've used your AI credits for now. Top up to keep going, or use a simple quiz."
-          : "AI quizzes aren't available right now. Choose simple mode."}
+        AI quizzes aren&apos;t available right now. Choose simple mode.
       </AlertDescription>
-      {exhausted ? (
-        <AlertAction>
-          <TopUpButton size="sm" variant="outline" />
-        </AlertAction>
-      ) : null}
     </Alert>
   );
 }
 
+/** Out of credits needs no note: a simple quiz is free, and picking AI shows
+ *  the credit gate. */
 function QuizPickerFallbackNotice({ ai }: { ai: AiAccessView }) {
-  const exhausted = ai.kind === "unavailable" && ai.reason === "exhausted";
+  if (isExhausted(ai)) return null;
   return (
     <p className="max-w-md text-xs text-base-content/70">
-      {exhausted
-        ? "You're out of AI credits, so we switched to a simple quiz."
-        : "AI quizzes aren't available right now, so we switched to a simple quiz."}
+      AI quizzes aren&apos;t available right now, so we switched to a simple quiz.
     </p>
-  );
-}
-
-function QuizPickerOverBalanceAlert({
-  cost,
-  remaining,
-  fitCount,
-  onFit,
-}: {
-  cost: number;
-  remaining: number;
-  fitCount: number;
-  onFit: (count: number) => void;
-}) {
-  return (
-    <Alert variant="destructive" className="max-w-md">
-      <AlertDescription>
-        This quiz needs <span className="tabular-nums">{cost}</span> credits and you have{" "}
-        <span className="tabular-nums">{remaining}</span>.
-      </AlertDescription>
-      {fitCount >= 1 ? (
-        <AlertAction>
-          <Button type="button" size="sm" variant="outline" onPress={() => onFit(fitCount)}>
-            Make it {fitCount} {fitCount === 1 ? "question" : "questions"}
-          </Button>
-        </AlertAction>
-      ) : null}
-    </Alert>
   );
 }
 
@@ -109,29 +70,52 @@ export function QuizPickerAiNotices({
   aiRequiresSetup: boolean;
   questionStyle: QuizQuestionStyle;
 }) {
-  if (aiRequiresSetup) return <QuizPickerAiSetupAlert ai={ai} />;
+  if (aiRequiresSetup) return isExhausted(ai) ? null : <QuizPickerAiOffAlert />;
   if (aiFellBack && questionStyle === "simple") return <QuizPickerFallbackNotice ai={ai} />;
   return null;
 }
 
-export function QuizPickerOverBalance({
+/** The AI quiz can't be paid for: no credits left, or fewer than it costs. The
+ *  free top-up is the footer's main button, so this explains and offers the
+ *  other ways forward. */
+export function QuizPickerCreditGate({
+  ai,
   use,
   questionCount,
   onFit,
+  onUseSimple,
 }: {
+  ai: AiAccessView;
   use: CreditUse;
   questionCount: number;
   onFit: (count: number) => void;
+  onUseSimple: () => void;
 }) {
-  const { credits, cost, overBalance } = use;
-  if (!credits || !overBalance) return null;
+  const { credits, cost } = use;
+  const gate = creditGate(ai.topUp);
+  const fitCount = credits ? largestQuizCount(questionCount, credits.remaining, credits.costs) : 0;
+
+  const summary = credits ? (
+    <>
+      This quiz needs <span className="tabular-nums">{cost}</span> credits and you have{" "}
+      <span className="tabular-nums">{credits.remaining}</span>.
+    </>
+  ) : (
+    <>You&apos;ve used your AI credits for now.</>
+  );
 
   return (
-    <QuizPickerOverBalanceAlert
-      cost={cost}
-      remaining={credits.remaining}
-      fitCount={largestQuizCount(questionCount, credits.remaining, credits.costs)}
-      onFit={onFit}
-    />
+    <CreditGateNotice gate={gate} summary={summary}>
+      {fitCount >= 1 ? (
+        <Button type="button" size="sm" variant="outline" onPress={() => onFit(fitCount)}>
+          Make it {fitCount} {fitCount === 1 ? "question" : "questions"}
+        </Button>
+      ) : null}
+      {gate.kind !== "top-up" ? (
+        <Button type="button" size="sm" variant="ghost" onPress={onUseSimple}>
+          Use a simple quiz instead
+        </Button>
+      ) : null}
+    </CreditGateNotice>
   );
 }

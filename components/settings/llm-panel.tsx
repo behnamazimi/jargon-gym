@@ -3,7 +3,25 @@
 import { Sparkles } from "lucide-react";
 import { TopUpButton } from "@/components/ai-credits/top-up-button";
 import { HighlightPanel, SettingsPanel } from "@/components/settings/ui";
+import { TOPUP_COPY } from "@/lib/ai-credits/topup-copy";
+import type { TopUpState } from "@/lib/ai-credits/types";
 import type { AiAccessView } from "@/lib/llm/types";
+
+/** The free top-up, only when it will work, or when today's has been used. */
+function FreeCredits({ topUp }: { topUp: TopUpState | undefined }) {
+  if (topUp?.available) {
+    return (
+      <div className="space-y-2">
+        <p className="m-0 text-sm font-medium">{TOPUP_COPY.eligible(topUp.amount)}</p>
+        <TopUpButton size="sm" amount={topUp.amount} />
+      </div>
+    );
+  }
+  if (topUp?.reason === "already-today") {
+    return <p className="m-0 text-sm text-base-content/70">{TOPUP_COPY.alreadyToday}</p>;
+  }
+  return null;
+}
 
 function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
   if (ai.kind === "credits") {
@@ -21,6 +39,7 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
             <span className="tabular-nums">{ai.remaining}</span> credits left.
           </p>
         </div>
+        <FreeCredits topUp={ai.topUp} />
         <p className="m-0 text-xs text-base-content/70">
           When you use AI credits, the terms, definitions and any outline you write are sent to our
           AI provider.
@@ -33,9 +52,9 @@ function AiCreditsBlock({ ai }: { ai: AiAccessView }) {
     return (
       <HighlightPanel label="AI credits">
         <p className="m-0 text-sm text-base-content/70">
-          You&apos;ve used your AI credits for now. Top up to keep going.
+          You&apos;ve used your AI credits for now.
         </p>
-        <TopUpButton size="sm" />
+        <FreeCredits topUp={ai.topUp} />
       </HighlightPanel>
     );
   }

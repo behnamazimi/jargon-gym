@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getMyCreditState } from "@/lib/ai-credits/repository";
-import type { CreditState } from "@/lib/ai-credits/types";
+import type { CreditState, TopUpState } from "@/lib/ai-credits/types";
 import type { Database } from "@/lib/supabase/database.types";
 import { getCentralLlmConfig, type CentralLlmConfig } from "./central";
 import {
@@ -17,7 +17,7 @@ type Client = SupabaseClient<Database>;
 
 type CreditsOrNone =
   | { kind: "credits"; central: CentralLlmConfig; state: CreditState }
-  | { kind: "unavailable"; reason: "none" | "exhausted" };
+  | { kind: "unavailable"; reason: "none" | "exhausted"; topUp?: TopUpState };
 
 /** The app's key, paid with credits. Off when the key isn't set up,
  *  the switch is off, or the balance is empty. */
@@ -27,7 +27,9 @@ async function resolveCredits(client: Client): Promise<CreditsOrNone> {
 
   const state = await getMyCreditState(client);
   if (!state || !state.enabled) return { kind: "unavailable", reason: "none" };
-  if (state.remaining <= 0) return { kind: "unavailable", reason: "exhausted" };
+  if (state.remaining <= 0) {
+    return { kind: "unavailable", reason: "exhausted", topUp: state.topUp };
+  }
 
   return { kind: "credits", central, state };
 }
@@ -47,6 +49,7 @@ export async function getAiAccessView(client: Client): Promise<AiAccessView> {
     remaining: credits.state.remaining,
     total: credits.state.total,
     costs: credits.state.costs,
+    topUp: credits.state.topUp,
   };
 }
 

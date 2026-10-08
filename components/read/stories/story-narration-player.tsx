@@ -10,6 +10,9 @@ import type { ShadowingSetup } from "@/components/read/stories/use-shadowing-pla
 import type { ClipPauses } from "@/lib/stories/silence";
 import { Button } from "@/components/ui/button";
 import { TopUpButton } from "@/components/ai-credits/top-up-button";
+import { CreditGateNotice } from "@/components/ai-credits/credit-gate-notice";
+import { creditGate } from "@/lib/ai-credits/gate";
+import type { TopUpState } from "@/lib/ai-credits/types";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { NarrationPrice } from "@/lib/stories/narration-price";
 
@@ -21,7 +24,6 @@ type PlayerStatus = "idle" | "preparing" | "ready" | "capped" | "insufficient" |
 const STATUS_MESSAGES: Partial<Record<PlayerStatus, string>> = {
   preparing: "Preparing audio…",
   capped: "Daily listening limit reached. Try again tomorrow.",
-  insufficient: "You don't have enough credits to make this audio.",
   unavailable: "Audio unavailable for this story.",
 };
 
@@ -31,11 +33,38 @@ function isShort(price: NarrationPrice | null | undefined): price is NarrationPr
   return price != null && price.cost > price.remaining;
 }
 
-function messageFor(status: PlayerStatus, price: NarrationPrice | null | undefined) {
+function isBlocked(status: PlayerStatus, price: NarrationPrice | null | undefined) {
+  return status === "insufficient" || (status === "idle" && isShort(price));
+}
+
+function shortSummary(status: PlayerStatus, price: NarrationPrice | null | undefined) {
   if (status === "idle" && isShort(price)) {
     return `This audio needs ${price.cost} credits and you have ${price.remaining}.`;
   }
-  return STATUS_MESSAGES[status];
+  return "You don't have enough credits to make this audio.";
+}
+
+function NarrationCreditGate({
+  summary,
+  topUp,
+  onAdded,
+}: {
+  summary: string;
+  topUp: TopUpState | undefined;
+  onAdded: () => void;
+}) {
+  const gate = creditGate(topUp);
+  return (
+    <CreditGateNotice
+      gate={gate}
+      summary={summary}
+      action={
+        gate.kind === "top-up" ? (
+          <TopUpButton size="sm" amount={gate.amount} onAdded={onAdded} />
+        ) : null
+      }
+    />
+  );
 }
 
 function sleep(ms: number) {
@@ -53,6 +82,7 @@ export function StoryNarrationPlayer({
   handleRef,
   onClipPauses,
   price,
+  topUp,
 }: {
   storyId: string;
   onProgress?: (fraction: number | null) => void;
@@ -63,6 +93,8 @@ export function StoryNarrationPlayer({
   /** What making this audio costs, if credits pay for it. The first listen pays;
    *  a clip that already exists is free. */
   price?: NarrationPrice | null;
+  /** Whether the free top-up would work, for when the audio can't be paid for. */
+  topUp?: TopUpState;
 }) {
   const [status, setStatus] = useState<PlayerStatus>("idle");
   const [version, setVersion] = useState<string | null>(null);
@@ -125,36 +157,44 @@ export function StoryNarrationPlayer({
     );
   }
 
-  const short = status === "idle" && isShort(price);
-  const message = messageFor(status, price);
+  const blocked = isBlocked(status, price);
+  const message = blocked ? null : STATUS_MESSAGES[status];
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-      <Button
-        type="button"
-        size="xs"
-        variant="ghost"
-        onPress={() => void prepare()}
-        isDisabled={status === "preparing" || status === "capped" || status === "insufficient"}
-        className="-ms-2 h-8 px-2 text-xs font-medium text-base-content/70"
-      >
-        {status === "preparing" ? (
-          <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />
-        ) : (
-          <Headphones className="size-4" aria-hidden strokeWidth={1.5} />
-        )}
-        {shadowing ? "Listen and shadow" : "Listen"}
-        <span className="font-normal text-base-content/60">AI voice</span>
-        {price ? (
-          <span className="font-normal text-base-content/60">
-            · {price.cost} {price.cost === 1 ? "credit" : "credits"}
-          </span>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Button
+          type="button"
+          size="xs"
+          variant="ghost"
+          onPress={() => void prepare()}
+          isDisabled={status === "preparing" || status === "capped" || status === "insufficient"}
+          className="-ms-2 h-8 px-2 text-xs font-medium text-base-content/70"
+        >
+          {status === "preparing" ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden strokeWidth={1.5} />
+          ) : (
+            <Headphones className="size-4" aria-hidden strokeWidth={1.5} />
+          )}
+          {shadowing ? "Listen and shadow" : "Listen"}
+          <span className="font-normal text-base-content/60">AI voice</span>
+          {price ? (
+            <span className="font-normal text-base-content/60">
+              · {price.cost} {price.cost === 1 ? "credit" : "credits"}
+            </span>
+          ) : null}
+        </Button>
+        {message ? (
+          <p className="m-0 text-xs text-base-content/70" role="status">
+            {message}
+          </p>
         ) : null}
-      </Button>
-      {status === "insufficient" || short ? <TopUpButton size="xs" variant="outline" /> : null}
-      {message ? (
-        <p className="m-0 text-xs text-base-content/70" role="status">
-          {message}
-        </p>
+      </div>
+      {blocked ? (
+        <NarrationCreditGate
+          summary={shortSummary(status, price)}
+          topUp={price?.topUp ?? topUp}
+          onAdded={() => setStatus("idle")}
+        />
       ) : null}
     </div>
   );

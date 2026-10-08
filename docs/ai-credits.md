@@ -49,10 +49,22 @@ quiz is a maximum. The quiz is planned, and the charge set, before the model
 runs. If the model fails on some terms, those get a simple question and the
 amount stays charged; if it fails on all of them, nothing is charged.
 
-The setup screens show the cost before you press Generate. If a request costs
-more than the balance, the button is disabled and the screen offers a smaller
-version: "Make it N questions" for a quiz, "Try Short" or "Try Medium" for a
-story. The server never trims a request on its own.
+The setup screens show the cost before you press Generate. If a request costs more than the balance, or
+the credits are gone, a calm notice appears above the main button
+(`CreditGateNotice`) instead of a red error. It says what is missing and offers
+a smaller version: "Make it N questions" for a quiz, "Make it Short instead" for
+a story. The server never trims a request on its own.
+
+When the person is eligible for the free top-up, the notice says so ("You're
+eligible for 30 free credits.") and the main button becomes **Get 30 free
+credits**. Taking it never starts the request, so credits are never spent by
+surprise. Eligibility comes from the server: `my_self_topup_state()` mirrors the
+checks in `my_self_topup_ai_credits` (switched on, balance under the policy's
+limit, nothing taken yet this UTC day), and `getMyCreditState` returns it as
+`topUp`. Screens read `ai.topUp` and never guess. After today's top-up they say
+more can be claimed tomorrow. `lib/ai-credits/gate.ts` picks the case. The same
+rule applies to the Listen button on a story, Settings and the account menus
+("free credits available").
 
 ## How the balance works
 

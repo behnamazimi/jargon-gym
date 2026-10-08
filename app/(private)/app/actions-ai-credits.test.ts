@@ -81,6 +81,13 @@ describe("topUpAiCreditsAction", () => {
     expect(state.emails).toEqual([]);
   });
 
+  it("says so when today's free credits were already taken", async () => {
+    state.rpcData = null;
+    state.rpcError = { message: "topup_already_today" };
+    expect(await topUpAiCreditsAction()).toEqual({ ok: false, reason: "already-today" });
+    expect(state.emails).toEqual([]);
+  });
+
   it("reports other failures without leaking them", async () => {
     state.rpcData = null;
     state.rpcError = { message: "relation missing" };

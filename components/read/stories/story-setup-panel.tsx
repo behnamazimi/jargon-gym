@@ -28,10 +28,12 @@ import { aiAvailable, type AiAccessView } from "@/lib/llm/types";
 import { storyCreditUse } from "@/lib/stories/credit-fit";
 import { PieceLengthField, ReadingLevelField } from "@/components/read/stories/story-setup-fields";
 import {
+  StoryCreditGate,
   StoryFooterHint,
   StoryNoAiNotice,
-  StoryOverBalance,
 } from "@/components/read/stories/story-setup-notices";
+import { TopUpButton } from "@/components/ai-credits/top-up-button";
+import { creditGate, isExhausted } from "@/lib/ai-credits/gate";
 
 const CEFR_HINTS: Record<CefrLevel, string> = {
   A1: "A1 · very short, basic sentences",
@@ -117,21 +119,38 @@ export function StorySetupPanel({
   const use = storyCreditUse(ai, session.pieceLength, eligibleCount);
   const hasEnoughTerms = eligibleCount >= STORY_MIN_TERMS;
   const canGenerate = aiAvailable(ai) && hasEnoughTerms && !use.overBalance;
+  const creditsBlock = isExhausted(ai) || (hasEnoughTerms && use.overBalance);
+  const gate = creditsBlock ? creditGate(ai.topUp) : null;
 
   return (
     <StudySetupPanel
       footer={
-        <Button
-          type="button"
-          data-tour="stories-write"
-          onPress={() => void session.generate()}
-          isDisabled={!canGenerate}
-          className="min-h-11 w-full"
-        >
-          Write a story
-        </Button>
+        gate?.kind === "top-up" ? (
+          <TopUpButton amount={gate.amount} className="min-h-11 w-full" />
+        ) : (
+          <Button
+            type="button"
+            data-tour="stories-write"
+            onPress={() => void session.generate()}
+            isDisabled={!canGenerate}
+            className="min-h-11 w-full"
+          >
+            Write a story
+          </Button>
+        )
       }
       footerHint={<StoryFooterHint use={use} hasEnoughTerms={hasEnoughTerms} />}
+      footerNotice={
+        creditsBlock ? (
+          <StoryCreditGate
+            ai={ai}
+            use={use}
+            pieceLength={session.pieceLength}
+            eligibleCount={eligibleCount}
+            onFit={session.setPieceLength}
+          />
+        ) : null
+      }
     >
       <QuizPanelLabel
         title="Set up your story"
@@ -167,12 +186,6 @@ export function StorySetupPanel({
         value={session.pieceLength}
         termsAvailable={eligibleCount}
         onChange={session.setPieceLength}
-      />
-      <StoryOverBalance
-        use={use}
-        pieceLength={session.pieceLength}
-        eligibleCount={eligibleCount}
-        onFit={session.setPieceLength}
       />
       <OutlineField value={session.outline} onChange={session.setOutline} />
     </StudySetupPanel>

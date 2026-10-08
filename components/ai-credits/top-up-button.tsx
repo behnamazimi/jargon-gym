@@ -11,10 +11,15 @@ export function TopUpButton({
   size,
   variant = "default",
   className,
+  amount,
+  onAdded,
 }: {
   size?: ButtonSize;
   variant?: ButtonVariant;
   className?: string;
+  /** The free credits on offer, so the label can say how many. */
+  amount?: number;
+  onAdded?: () => void;
 }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -27,12 +32,15 @@ export function TopUpButton({
         const message = {
           unavailable: TOPUP_COPY.unavailable,
           "not-needed": TOPUP_COPY.notNeeded,
+          "already-today": TOPUP_COPY.alreadyToday,
           failed: TOPUP_COPY.failed,
         }[result.reason];
         toast(message, "destructive");
+        router.refresh();
         return;
       }
       toast(TOPUP_COPY.added(result.added), "success");
+      onAdded?.();
       router.refresh();
     });
   }
@@ -46,7 +54,7 @@ export function TopUpButton({
       onPress={topUp}
       isDisabled={isPending}
     >
-      {isPending ? TOPUP_COPY.working : TOPUP_COPY.button}
+      {isPending ? TOPUP_COPY.working : amount ? TOPUP_COPY.buttonFor(amount) : TOPUP_COPY.button}
     </Button>
   );
 }
