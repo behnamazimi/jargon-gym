@@ -22,11 +22,19 @@ const row = (feature: string, base: number, per: number, size = 1, from = "2026-
   effective_from: from,
 });
 
-function client(prices: PriceRow[]) {
+function client(
+  prices: PriceRow[],
+  topUp: { available: boolean; amount: number; reason: string | null } = {
+    available: true,
+    amount: 30,
+    reason: null,
+  },
+) {
   return {
-    rpc: () =>
+    rpc: (name: string) =>
       Promise.resolve({
-        data: [{ enabled: true, total: 100, remaining: 40 }],
+        data:
+          name === "my_self_topup_state" ? [topUp] : [{ enabled: true, total: 100, remaining: 40 }],
         error: null,
       }),
     from: () => ({
@@ -46,6 +54,21 @@ describe("getMyCreditState", () => {
       total: 100,
       remaining: 40,
       costs: testCosts,
+      topUp: { available: true, amount: 30 },
+    });
+  });
+
+  it("says why the free top-up isn't available", async () => {
+    const taken = { available: false, amount: 30, reason: "already-today" };
+    expect((await getMyCreditState(client(seeded, taken)))?.topUp).toEqual({
+      available: false,
+      reason: "already-today",
+      amount: 30,
+    });
+    const unknown = { available: false, amount: 0, reason: "off" };
+    expect((await getMyCreditState(client(seeded, unknown)))?.topUp).toMatchObject({
+      available: false,
+      reason: "off",
     });
   });
 

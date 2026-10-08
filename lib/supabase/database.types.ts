@@ -2655,6 +2655,14 @@ export type Database = {
           remaining: number;
         }[];
       };
+      my_self_topup_state: {
+        Args: never;
+        Returns: {
+          amount: number;
+          available: boolean;
+          reason: string;
+        }[];
+      };
       my_set_collection_love: {
         Args: { p_domain_id: string; p_loved: boolean };
         Returns: number;

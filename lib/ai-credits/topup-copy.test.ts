@@ -10,7 +10,12 @@ const userEmail = buildTopUpUserEmail({
 describe("top-up copy", () => {
   it("never names the admin or promises anything unlimited or instant to the user", () => {
     const strings = [
-      ...Object.values({ ...TOPUP_COPY, added: TOPUP_COPY.added(30) }),
+      ...Object.values({
+        ...TOPUP_COPY,
+        buttonFor: TOPUP_COPY.buttonFor(30),
+        eligible: TOPUP_COPY.eligible(30),
+        added: TOPUP_COPY.added(30),
+      }),
       userEmail.subject,
       userEmail.text,
       userEmail.html,
@@ -18,6 +23,11 @@ describe("top-up copy", () => {
     for (const text of strings) {
       expect(text).not.toMatch(/\badmin\b|unlimited|instant|automatic/i);
     }
+  });
+
+  it("says the credits are free and that the person is eligible", () => {
+    expect(TOPUP_COPY.buttonFor(30)).toBe("Get 30 free credits");
+    expect(TOPUP_COPY.eligible(30)).toBe("You're eligible for 30 free credits.");
   });
 
   it("tells the user what was added and the new balance", () => {

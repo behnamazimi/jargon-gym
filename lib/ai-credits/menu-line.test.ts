@@ -42,6 +42,16 @@ describe("aiCreditsLine", () => {
     });
   });
 
+  it("mentions free credits when the top-up would work", () => {
+    expect(
+      aiCreditsLine("credits", { status: "ready", remaining: 5, freeCreditsAvailable: true })
+        ?.label,
+    ).toBe("5 credits left · free credits available");
+    expect(
+      aiCreditsLine("credits", { status: "ready", remaining: 0, freeCreditsAvailable: true }),
+    ).toEqual({ label: "AI credits used up · free credits available", tone: "error" });
+  });
+
   it("hides the row when credits turn out to be off or the lookup failed", () => {
     expect(aiCreditsLine("credits", { status: "hidden", remaining: null })).toBeNull();
   });
@@ -49,8 +59,17 @@ describe("aiCreditsLine", () => {
 
 describe("toAiCreditsLoad", () => {
   it("turns a balance into a ready state, including an empty one", () => {
-    expect(toAiCreditsLoad({ remaining: 62 })).toEqual({ status: "ready", remaining: 62 });
-    expect(toAiCreditsLoad({ remaining: 0 })).toEqual({ status: "ready", remaining: 0 });
+    const off = { available: false, reason: "balance", amount: 30 } as const;
+    expect(toAiCreditsLoad({ remaining: 62, topUp: off })).toEqual({
+      status: "ready",
+      remaining: 62,
+      freeCreditsAvailable: false,
+    });
+    expect(toAiCreditsLoad({ remaining: 0, topUp: { available: true, amount: 30 } })).toEqual({
+      status: "ready",
+      remaining: 0,
+      freeCreditsAvailable: true,
+    });
   });
 
   it("hides the row when there is no result", () => {

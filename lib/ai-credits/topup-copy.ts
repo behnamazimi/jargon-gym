@@ -2,12 +2,16 @@ import { build, type RequestEmail } from "@/lib/requests/email-copy";
 import { pluralize } from "@/lib/utils";
 
 export const TOPUP_COPY = {
-  button: "Top up credits",
+  button: "Get free credits",
+  buttonFor: (credits: number) => `Get ${credits} free credits`,
   working: "Adding credits…",
   failed: "Couldn't add credits. Try again.",
-  unavailable: "Credits can't be added right now.",
-  notNeeded: "You still have credits. Top up when you're nearly out.",
-  added: (credits: number) => `Added ${pluralize(credits, "credit")}.`,
+  unavailable: "Free credits aren't available right now.",
+  notNeeded: "You still have credits. You can get free credits when you're nearly out.",
+  whenNearlyOut: "You can get free credits when you're nearly out.",
+  alreadyToday: "You've already claimed today's free credits. You can claim more tomorrow.",
+  eligible: (credits: number) => `You're eligible for ${credits} free credits.`,
+  added: (credits: number) => `Added ${pluralize(credits, "free credit")}.`,
 } as const;
 
 export function buildTopUpUserEmail(input: {

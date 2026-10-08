@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { CreditCosts, CreditFeature, CreditPrice, CreditState } from "./types";
+import type { CreditCosts, CreditFeature, CreditPrice, CreditState, TopUpState } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -30,11 +30,23 @@ export type ReserveResult =
   | { status: "ok"; remaining: number; ledgerId: number; credits: number }
   | { status: "insufficient" | "disabled"; remaining: number; credits: number };
 
+async function getMyTopUpState(client: Client): Promise<TopUpState> {
+  const { data, error } = await client.rpc("my_self_topup_state");
+  if (error) throw error;
+
+  const row = data?.[0];
+  if (!row) return { available: false, reason: "off", amount: 0 };
+  if (row.available) return { available: true, amount: row.amount };
+  const reason = row.reason === "balance" || row.reason === "already-today" ? row.reason : "off";
+  return { available: false, reason, amount: row.amount };
+}
+
 /** The signed-in user's balance. Pass the user-scoped client. */
 export async function getMyCreditState(client: Client): Promise<CreditState | null> {
-  const [{ data, error }, costs] = await Promise.all([
+  const [{ data, error }, costs, topUp] = await Promise.all([
     client.rpc("my_ai_credit_state"),
     getCreditCosts(client),
+    getMyTopUpState(client),
   ]);
   if (error) throw error;
 
@@ -46,6 +58,7 @@ export async function getMyCreditState(client: Client): Promise<CreditState | nu
     total: row.total,
     remaining: row.remaining,
     costs,
+    topUp,
   };
 }
 

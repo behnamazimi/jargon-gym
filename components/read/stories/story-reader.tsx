@@ -9,6 +9,7 @@ import { StoryFooter } from "@/components/read/stories/story-footer";
 import { StoryMarkKnown } from "@/components/read/stories/story-mark-known";
 import { StoryShadowingToggle } from "@/components/read/stories/story-shadowing-toggle";
 import type { AiAccessView } from "@/lib/llm/types";
+import type { TopUpState } from "@/lib/ai-credits/types";
 import { narrationPrice, type NarrationPrice } from "@/lib/stories/narration-price";
 import { StoryNarrationPlayer } from "@/components/read/stories/story-narration-player";
 import { StoryBody } from "@/components/read/stories/story-body";
@@ -54,10 +55,12 @@ function StoryHeader({
   playerRef,
   onClipPauses,
   price,
+  topUp,
 }: {
   story: Story;
   narrationAccess: boolean;
   price: NarrationPrice | null;
+  topUp: TopUpState | undefined;
   onNarrationProgress?: (fraction: number | null) => void;
   shadowing: ShadowingSetup | null;
   sentencePlayback: ShadowingSetup | null;
@@ -100,6 +103,7 @@ function StoryHeader({
             handleRef={playerRef}
             onClipPauses={onClipPauses}
             price={price}
+            topUp={topUp}
           />
         </div>
       ) : null}
@@ -240,6 +244,7 @@ export function StoryReader({
         playerRef={playerRef}
         onClipPauses={timeline ? setClipPauses : undefined}
         price={narrationPrice(ai, story)}
+        topUp={ai.topUp}
       />
       <div
         onWheel={pauseAutoScroll}

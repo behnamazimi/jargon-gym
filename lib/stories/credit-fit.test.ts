@@ -41,6 +41,7 @@ describe("storyCreditUse", () => {
     remaining,
     total: 130,
     costs,
+    topUp: { available: false, reason: "balance", amount: 30 },
   });
 
   it("prices a story by the terms it will use", () => {

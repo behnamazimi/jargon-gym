@@ -9,6 +9,7 @@ const credits = (remaining: number): AiAccessView => ({
   remaining,
   total: 130,
   costs,
+  topUp: { available: false, reason: "balance", amount: 30 },
 });
 
 describe("quizCreditUse", () => {

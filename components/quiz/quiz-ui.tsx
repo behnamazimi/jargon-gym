@@ -64,15 +64,19 @@ export function QuizPanelBody({
 
 export function QuizSetupFooter({
   hint,
+  notice,
   children,
   className,
 }: {
   hint?: ReactNode;
+  /** A block that explains why the main button can't be used, shown above it. */
+  notice?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
     <div className={cn("flex flex-col gap-3 border-t border-base-300/60 pt-4", className)}>
+      {notice}
       {hint ? <p className="m-0 text-xs text-base-content/70">{hint}</p> : null}
       <div className="w-full">{children}</div>
     </div>

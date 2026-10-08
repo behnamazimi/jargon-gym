@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { getMyCreditState } from "@/lib/ai-credits/repository";
+import type { TopUpState } from "@/lib/ai-credits/types";
 import { buildTopUpAdminEmail, buildTopUpUserEmail } from "@/lib/ai-credits/topup-copy";
 import { getAppOrigin } from "@/lib/auth/app-origin";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
@@ -11,13 +12,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 /** The signed-in user's AI credits balance, for the account menus. Null when
  *  credits are off or the lookup fails, so the menus just hide the row. */
-export async function getMyAiCreditsAction(): Promise<{ remaining: number } | null> {
+export async function getMyAiCreditsAction(): Promise<{
+  remaining: number;
+  topUp: TopUpState;
+} | null> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return null;
 
   try {
     const state = await getMyCreditState(auth.supabase);
-    return state?.enabled ? { remaining: state.remaining } : null;
+    return state?.enabled ? { remaining: state.remaining, topUp: state.topUp } : null;
   } catch (err) {
     console.error("Couldn't load AI credits:", err);
     return null;
@@ -26,7 +30,7 @@ export async function getMyAiCreditsAction(): Promise<{ remaining: number } | nu
 
 export type TopUpResult =
   | { ok: true; added: number; remaining: number }
-  | { ok: false; reason: "unavailable" | "not-needed" | "failed" };
+  | { ok: false; reason: "unavailable" | "not-needed" | "already-today" | "failed" };
 
 async function emailTopUp(input: {
   userId: string;
@@ -73,6 +77,9 @@ export async function topUpAiCreditsAction(): Promise<TopUpResult> {
   if (error) {
     if (error.message.includes("topup_unavailable")) return { ok: false, reason: "unavailable" };
     if (error.message.includes("topup_not_needed")) return { ok: false, reason: "not-needed" };
+    if (error.message.includes("topup_already_today")) {
+      return { ok: false, reason: "already-today" };
+    }
     console.error("Couldn't top up AI credits:", error);
     return { ok: false, reason: "failed" };
   }

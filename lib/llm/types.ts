@@ -1,4 +1,4 @@
-import type { CreditCosts } from "@/lib/ai-credits/types";
+import type { CreditCosts, TopUpState } from "@/lib/ai-credits/types";
 
 export type LlmProvider = "google" | "anthropic";
 
@@ -15,8 +15,9 @@ export type AiAccessView =
       remaining: number;
       total: number;
       costs: CreditCosts;
+      topUp: TopUpState;
     }
-  | { kind: "unavailable"; reason: "none" | "exhausted" };
+  | { kind: "unavailable"; reason: "none" | "exhausted"; topUp?: TopUpState };
 
 type CreditsView = Extract<AiAccessView, { kind: "credits" }>;
 
