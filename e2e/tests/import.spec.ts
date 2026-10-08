@@ -76,14 +76,19 @@ test.describe("Adding terms", () => {
     },
   );
 
-  // Known issue: after "Create and continue" the URL gains ?to=<id> but the form stays until a reload.
-  test.fixme("creating the first collection while capturing shows the term form", async ({
+  test("creating the first collection while capturing shows the term form", async ({
     page,
+    user,
   }) => {
     await gotoReady(page, "/app/capture");
     await page.getByLabel("Name").fill("My first collection");
     await page.getByRole("button", { name: "Create and continue" }).click();
 
     await expect(page.getByLabel("Term", { exact: true })).toBeVisible();
+    const rows = await sql<{ name: string }>(
+      "select name from public.domains where owner_id = $1",
+      [user.id],
+    );
+    expect(rows.map((row) => row.name)).toEqual(["My first collection"]);
   });
 });
