@@ -66,8 +66,8 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
       },
       {
         icon: "shield",
-        title: "Voices don't use credits",
-        body: "Spoken clips are free, and switched on for some accounts only.",
+        title: "Voices cost a little for stories",
+        body: "Hearing a term is free. A story's audio costs a few credits the first time it's made.",
       },
     ],
   },

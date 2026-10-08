@@ -16,7 +16,7 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | `/admin/requests`         | Collection requests: queue, switches and estimates; `/admin/requests/[id]` accepts, asks, merges, declines, delivers      |
 | `/admin/issues`           | Problems and ideas people sent; `/admin/issues/[id]` shows one with its screenshot, marks it done or won't do, deletes it |
 | `/admin/ai`               | Every AI feature: switch, vendor, what is sent, price or limit                                                            |
-| `/admin/ai/credits`       | Credits switch, allowance and prices, health, usage, grants                                                               |
+| `/admin/ai/credits`       | Credits switch, starter and monthly credits, prices, health, usage, grants                                                |
 | `/admin/ai/narration`     | Narration switch, providers, limits, access; links to the running sync                                                    |
 | `/admin/system/audit`     | What admins changed, and when                                                                                             |
 | `/admin/system/queue`     | Queue debug: what Read, Review and Quiz would serve one member now, what is on cooldown, and what is left out             |
