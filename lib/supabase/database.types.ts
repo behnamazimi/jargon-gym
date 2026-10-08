@@ -1728,6 +1728,8 @@ export type Database = {
           read_shadowing_repeats: number;
           read_stories_default: boolean;
           read_tap_to_play: boolean;
+          review_narrate_on_reveal: boolean;
+          review_swipe: boolean;
           story_last_collection_id: string | null;
           term_layout: Json;
           timezone: string | null;
@@ -1755,6 +1757,8 @@ export type Database = {
           read_shadowing_repeats?: number;
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
+          review_narrate_on_reveal?: boolean;
+          review_swipe?: boolean;
           story_last_collection_id?: string | null;
           term_layout?: Json;
           timezone?: string | null;
@@ -1782,6 +1786,8 @@ export type Database = {
           read_shadowing_repeats?: number;
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
+          review_narrate_on_reveal?: boolean;
+          review_swipe?: boolean;
           story_last_collection_id?: string | null;
           term_layout?: Json;
           timezone?: string | null;
