@@ -11,7 +11,7 @@ import { fetchTraceStateForUser } from "@/lib/trace-queue";
 import type { TelegramAction } from "./actions";
 import {
   CAUGHT_UP_MESSAGE,
-  CONNECT_MESSAGE,
+  connectMessage,
   READ_NEXT_FAILED_MESSAGE,
   READ_REVEAL_FAILED_SUFFIX,
 } from "./copy";
@@ -28,7 +28,7 @@ type Client = SupabaseClient<Database>;
 
 export async function handleRead(client: Client, chatId: number): Promise<TelegramAction[]> {
   const userId = await resolveUserIdByChatId(client, chatId);
-  if (!userId) return [send(chatId, CONNECT_MESSAGE)];
+  if (!userId) return [send(chatId, connectMessage())];
 
   await clearTelegramInteractionState(client, chatId);
 
@@ -90,7 +90,7 @@ export async function handleReadReveal(
   ];
 }
 
-/** "I already know this" on a first-exposure card: marks it known (a
+/** "I know this" on a first-exposure card: marks it known (a
  *  separate, user-set signal from TRACE's earned state) and delivers the
  *  next term. */
 export async function handleReadMarkKnown(

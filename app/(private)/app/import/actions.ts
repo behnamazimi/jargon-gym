@@ -40,7 +40,7 @@ export async function checkImportAgainstDestination(
   if ("error" in auth) return { error: "Log in to add terms." };
 
   const parsed = checkSchema.safeParse(input);
-  if (!parsed.success) return { error: "We couldn't check that list. Try again." };
+  if (!parsed.success) return { error: "Couldn't check that list. Try again." };
 
   try {
     const matches = await findDestinationMatches(
@@ -52,7 +52,7 @@ export async function checkImportAgainstDestination(
     if (!matches) return { error: "That collection isn't available any more. Choose another." };
     return { matches };
   } catch {
-    return { error: "We couldn't check what's already there. Try again." };
+    return { error: "Couldn't check what's already there. Try again." };
   }
 }
 
@@ -70,7 +70,7 @@ export async function getCollectionTermNames(
     const terms = await listCollectionTermNames(auth.supabase, auth.user.id, id.data);
     return terms ? { terms } : { error: "That collection isn't available." };
   } catch {
-    return { error: "We couldn't load that collection's terms. Try again." };
+    return { error: "Couldn't load that collection's terms. Try again." };
   }
 }
 

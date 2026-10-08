@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { WifiOff } from "lucide-react";
 import { OfflineRetryButton } from "@/components/pwa/offline-retry-button";
 import { OfflineScene } from "@/components/illustrations/scenes/offline";
 import { StatusPage } from "@/components/status-page";
+
+export const metadata: Metadata = { title: "Offline" };
 
 export default function OfflinePage() {
   return (

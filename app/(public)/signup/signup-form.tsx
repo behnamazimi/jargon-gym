@@ -49,7 +49,7 @@ export default function SignupForm({
         <h1 className="text-2xl font-medium">Check your email</h1>
         <Alert variant="success" icon={<Mail strokeWidth={1.5} />}>
           <AlertDescription>
-            We sent a confirmation link to <strong>{state.checkEmail}</strong>. Open it to confirm
+            A confirmation link was sent to <strong>{state.checkEmail}</strong>. Open it to confirm
             your email. If it doesn&apos;t sign you in, come back and log in. If you don&apos;t see
             it, check your spam folder.
           </AlertDescription>

@@ -75,7 +75,7 @@ function collectionName(domainId: string, collections: StudyCollection[]) {
 
 export function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
   if (domainId === "all") {
-    return "No terms in your active collections. Add some terms or turn a collection back on to start reading.";
+    return "No terms in your active collections. Add some terms or resume a collection to start reading.";
   }
 
   const name = collectionName(domainId, collections);

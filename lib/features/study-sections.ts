@@ -72,7 +72,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Hear any term",
-        body: "On accounts with voices switched on, play a spoken clip from a term card.",
+        body: "Play a spoken clip from a term card.",
       },
     ],
   },
@@ -80,7 +80,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     layout: "split",
     id: "stories",
     title: "Stories you can read and hear",
-    lead: "Short reads built from your terms. On accounts with voices switched on, they are read aloud so you can listen and repeat.",
+    lead: "Short reads built from your terms. They are read aloud so you can listen and repeat.",
     scene: "hear",
     items: [
       {
@@ -130,7 +130,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     layout: "split",
     id: "progress",
     title: "Progress from what you do",
-    lead: "Mastery grows while you practise and fades when you stop.",
+    lead: "Mastery grows while you practice, and fades when you stop so the next term is always the one that needs it.",
     scene: "progress",
     items: [
       {
@@ -139,7 +139,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Daily streak",
-        body: "Practise each day to grow it. Open it to see your week.",
+        body: "An optional streak counts the days you practice. Open it to see your week.",
       },
     ],
   },

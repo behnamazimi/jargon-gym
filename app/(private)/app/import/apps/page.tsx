@@ -14,7 +14,7 @@ export default function AppPickerPage() {
         compactOnPhone
       />
       <p className="m-0 text-sm text-base-content/70">
-        Pick the app. We&apos;ll show where its export is, then you paste it here.
+        Pick the app. You&apos;ll see where its export is, then paste it here.
       </p>
       <ul className="shadow-surface m-0 list-none divide-y divide-base-300/60 overflow-hidden rounded-box bg-base-100 p-0">
         {APP_GUIDES.map((guide) => (

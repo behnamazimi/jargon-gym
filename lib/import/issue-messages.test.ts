@@ -97,13 +97,13 @@ describe("JSON problems", () => {
 
   it("points at the line and column of a syntax error", () => {
     const message = messagesFor('{\n  "domain": "X",\n  "terms": [ , ]\n}')[0];
-    expect(message).toMatch(/^We couldn't read this as JSON\. Look near line \d+, column \d+/);
+    expect(message).toMatch(/^Couldn't read this as JSON\. Look near line \d+, column \d+/);
     expect(message).not.toMatch(/position/i);
   });
 
   it("handles a trailing comma", () => {
     const message = messagesFor('{"domain": "X", "terms": [],}')[0];
-    expect(message).toContain("We couldn't read this as JSON.");
+    expect(message).toContain("Couldn't read this as JSON.");
   });
 });
 

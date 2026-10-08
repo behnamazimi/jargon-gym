@@ -41,7 +41,7 @@ function stripReviewDomainParam() {
 
 function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
   if (domainId === "all") {
-    return "No terms in your active collections. Add some terms or turn a collection back on to start reviewing.";
+    return "No terms in your active collections. Add some terms or resume a collection to start reviewing.";
   }
   const name = collections.find((collection) => collection.id === domainId)?.name;
   if (!name) {

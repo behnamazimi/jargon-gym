@@ -12,7 +12,7 @@ export function BringYourOwnSection() {
         field, your team&apos;s acronyms, or a language&apos;s vocabulary. Collections you create
         are private by default.{" "}
         <Link href="/collections" className={contentPageLinkClass}>
-          Or start from a public one
+          Or start from a built-in one
         </Link>
         .
       </p>

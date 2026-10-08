@@ -17,7 +17,7 @@ export default function ReviewLayout({ children }: { children: React.ReactNode }
         <PageHeader
           icon={BookOpen}
           title="Review"
-          description="Practice recall with flashcards from your active collections."
+          description="Recall each term, then check it."
           compactOnPhone
           showBack={false}
         />
