@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 import type { RequestEmail } from "@/lib/requests/email-copy";
+import { SENDER_EMAIL } from "@/lib/site";
 
-const FROM = "Lobyas <team@lobyas.com>";
+const FROM = `Lobyas <${SENDER_EMAIL}>`;
 
 function getResendClient(): Resend {
   const apiKey = process.env.RESEND_API_KEY;

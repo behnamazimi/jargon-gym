@@ -12,5 +12,7 @@ export type SynthesisRequest = {
 export type SpeechProviderAdapter = {
   id: SpeechProvider;
   isConfigured: () => boolean;
+  /** False when the provider has no voice for the language, so the router skips it. */
+  supports?: (language: DomainLanguage) => boolean;
   synthesize: (request: SynthesisRequest) => Promise<Buffer>;
 };

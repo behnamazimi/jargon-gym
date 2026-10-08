@@ -43,9 +43,7 @@ function languageHint(
   if (mode === "existing") {
     return `These terms look ${guessedLabel}, but ${existingName ? `"${existingName}"` : "this collection"} is set to ${languageLabel(language)}.`;
   }
-  return guessed === "nl"
-    ? "This list looks Dutch. Choose Dutch above if that's right."
-    : "This list looks English. Choose English above if that's right.";
+  return `This list looks ${guessedLabel}. Choose ${guessedLabel} above if that's right.`;
 }
 
 type NewFieldsProps = Pick<

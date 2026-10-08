@@ -16,6 +16,7 @@ import { SeparatorChips } from "@/components/import/separator-chips";
 import type { ImportFlowState } from "@/components/import/use-import-flow";
 import { activeDrafts } from "@/lib/import/check-state";
 import { guessLanguage } from "@/lib/import/parse/dutch-hint";
+import { guessScriptLanguage } from "@/lib/import/parse/script-hint";
 import { pluralize } from "@/lib/utils";
 
 function commitLabel(flow: ImportFlowState) {
@@ -30,7 +31,9 @@ function commitLabel(flow: ImportFlowState) {
 export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNames: string[] }) {
   const [editing, setEditing] = useState<string | null>(null);
   const drafts = activeDrafts(flow.check);
-  const guessed = guessLanguage(drafts.flatMap((d) => [d.term, d.definition ?? ""]));
+  const guessed =
+    guessScriptLanguage(drafts.map((d) => d.term)) ??
+    guessLanguage(drafts.flatMap((d) => [d.term, d.definition ?? ""]));
   const editingDraft = flow.check.drafts.find((d) => d.id === editing) ?? null;
 
   return (

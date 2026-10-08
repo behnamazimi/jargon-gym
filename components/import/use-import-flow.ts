@@ -24,6 +24,7 @@ import type { CommitImportInput } from "@/lib/import/commit-schema";
 import { personalDraft } from "@/lib/import/draft-store";
 import type { ImportDestination } from "@/lib/import/import-collections";
 import type { JsonImport } from "@/lib/import/json-input";
+import { guessScriptLanguage } from "@/lib/import/parse/script-hint";
 import { readLanguagePref, writeLanguagePref } from "@/lib/import/language-pref";
 import { buildTerms } from "@/lib/import/parse/build-terms";
 import { parseList } from "@/lib/import/parse/detect";
@@ -143,7 +144,11 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     } else {
       setJson(null);
       setParsed(result.parsed);
-      if (step === "paste" && !adapter) setLanguage(readLanguagePref());
+      if (step === "paste" && !adapter) {
+        setLanguage(
+          guessScriptLanguage(result.built.terms.map((term) => term.term)) ?? readLanguagePref(),
+        );
+      }
     }
 
     setStep("check");

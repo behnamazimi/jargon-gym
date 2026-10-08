@@ -624,3 +624,83 @@ begin
     (v_domain_dutch, 'misschien', 'misschien', 'Small words', 'maybe, perhaps', null);
 end;
 $$;
+
+-- ---------------------------------------------------------------------------
+-- One small public collection per additional content language, each with a
+-- single term, so every language has something to browse, read and narrate
+-- locally. Same shape as "Dutch basics" above.
+-- ---------------------------------------------------------------------------
+
+do $$
+declare
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_domain_es uuid := '22222222-2222-2222-2222-222222222227';
+  v_domain_fr uuid := '22222222-2222-2222-2222-222222222228';
+  v_domain_de uuid := '22222222-2222-2222-2222-222222222229';
+  v_domain_it uuid := '22222222-2222-2222-2222-22222222222a';
+  v_domain_pt uuid := '22222222-2222-2222-2222-22222222222b';
+  v_domain_ru uuid := '22222222-2222-2222-2222-22222222222c';
+  v_domain_tr uuid := '22222222-2222-2222-2222-22222222222d';
+  v_domain_ja uuid := '22222222-2222-2222-2222-22222222222e';
+  v_domain_ko uuid := '22222222-2222-2222-2222-22222222222f';
+  v_domain_zh uuid := '22222222-2222-2222-2222-222222222230';
+begin
+  insert into public.domains (
+    id, name, description, visibility, owner_id, is_builtin, is_public, slug, kind, language
+  )
+  values
+    (v_domain_es, 'Spanish basics', 'A first Spanish word to try.',
+      'shared', v_admin_id, true, true, 'spanish-basics', 'vocabulary', 'es'),
+    (v_domain_fr, 'French basics', 'A first French word to try.',
+      'shared', v_admin_id, true, true, 'french-basics', 'vocabulary', 'fr'),
+    (v_domain_de, 'German basics', 'A first German word to try.',
+      'shared', v_admin_id, true, true, 'german-basics', 'vocabulary', 'de'),
+    (v_domain_it, 'Italian basics', 'A first Italian word to try.',
+      'shared', v_admin_id, true, true, 'italian-basics', 'vocabulary', 'it'),
+    (v_domain_pt, 'Portuguese basics', 'A first Portuguese word to try.',
+      'shared', v_admin_id, true, true, 'portuguese-basics', 'vocabulary', 'pt'),
+    (v_domain_ru, 'Russian basics', 'A first Russian word to try.',
+      'shared', v_admin_id, true, true, 'russian-basics', 'vocabulary', 'ru'),
+    (v_domain_tr, 'Turkish basics', 'A first Turkish word to try.',
+      'shared', v_admin_id, true, true, 'turkish-basics', 'vocabulary', 'tr'),
+    (v_domain_ja, 'Japanese basics', 'A first Japanese phrase to try.',
+      'shared', v_admin_id, true, true, 'japanese-basics', 'vocabulary', 'ja'),
+    (v_domain_ko, 'Korean basics', 'A first Korean word to try.',
+      'shared', v_admin_id, true, true, 'korean-basics', 'vocabulary', 'ko'),
+    (v_domain_zh, 'Mandarin basics', 'A first Mandarin phrase to try.',
+      'shared', v_admin_id, true, true, 'mandarin-basics', 'vocabulary', 'zh');
+
+  insert into public.terms (domain_id, term, slug, category, definition, example)
+  values
+    (v_domain_es, 'sobremesa', 'sobremesa', 'Everyday life',
+      'time spent talking at the table after a meal is over',
+      'Después de comer, nos quedamos de sobremesa una hora.'),
+    (v_domain_fr, 'flâner', 'flaner', 'Verbs',
+      'to stroll without a goal, enjoying the surroundings',
+      'J''aime flâner dans les rues de Paris le dimanche.'),
+    (v_domain_de, 'Feierabend', 'feierabend', 'Everyday life',
+      'the end of the working day, and the free time that follows',
+      'Nach Feierabend gehen wir noch etwas trinken.'),
+    (v_domain_it, 'magari', 'magari', 'Small words',
+      'maybe; also "if only", used to wish for something',
+      'Magari avessi più tempo!'),
+    (v_domain_pt, 'saudade', 'saudade', 'Feelings',
+      'a warm longing for someone or something that is far away or in the past',
+      'Tenho saudade da minha família.'),
+    (v_domain_ru, 'соскучиться', 'soskuchitsya', 'Verbs',
+      'to start missing someone or something; used with "по"',
+      'Я соскучился по тебе.'),
+    (v_domain_tr, 'afiyet olsun', 'afiyet-olsun', 'Phrases',
+      'enjoy your meal; said to someone who is eating or about to eat',
+      'Afiyet olsun! Yemek çok güzel görünüyor.'),
+    (v_domain_ja, 'お疲れ様です', 'otsukaresama-desu', 'Phrases',
+      'a greeting that thanks someone for their effort, used at work and with friends',
+      '今日もお疲れ様です。'),
+    (v_domain_ko, '눈치', 'nunchi', 'Everyday life',
+      'the ability to sense what others feel and read the mood of a room',
+      '그 사람은 눈치가 빨라요.'),
+    (v_domain_zh, '加油', 'jiayou', 'Phrases',
+      'come on, keep going; a cheer of encouragement (literally "add oil")',
+      '考试加油！');
+end;
+$$;

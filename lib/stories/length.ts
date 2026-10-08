@@ -8,6 +8,16 @@ type LengthUnit = "words" | "characters";
 const LENGTH_UNIT: Record<DomainLanguage, LengthUnit> = {
   en: "words",
   nl: "words",
+  es: "words",
+  fr: "words",
+  de: "words",
+  it: "words",
+  pt: "words",
+  ru: "words",
+  tr: "words",
+  ja: "characters",
+  ko: "words",
+  zh: "characters",
 };
 
 // Roughly how many characters one word's worth of meaning takes in a

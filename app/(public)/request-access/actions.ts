@@ -9,7 +9,7 @@ import { sendWaitlistRequestNotification } from "@/lib/email/resend";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-export type RequestAccessState = { error: string } | { success: true } | null;
+export type RequestAccessState = { error: string } | { success: true; email: string } | null;
 
 const emailSchema = z.string().trim().toLowerCase().email();
 
@@ -50,7 +50,7 @@ export async function requestAccess(
 ): Promise<RequestAccessState> {
   const honeypot = formData.get("company")?.toString() ?? "";
   if (honeypot.trim() !== "") {
-    return { success: true };
+    return { success: true, email: formData.get("email")?.toString().trim() ?? "" };
   }
 
   const rawEmail = await resolveRequestEmail(formData);
@@ -69,7 +69,7 @@ export async function requestAccess(
     trackServer(crypto.randomUUID(), "access_requested", { $process_person_profile: false });
     scheduleAdminNotification(email);
   }
-  return { success: true };
+  return { success: true, email };
 }
 
 async function notifyAdmins(requesterEmail: string): Promise<void> {

@@ -6,7 +6,10 @@ import { BackLink, PUBLIC_HOME_BACK_LABEL, PUBLIC_HOME_PATH } from "@/components
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { SENDER_EMAIL } from "@/lib/site";
 import { requestAccess } from "./actions";
+
+const AFTER_ADDRESS = ` as soon as there's room. It comes from ${SENDER_EMAIL}, so check your spam folder if it doesn't show up.`;
 
 type RequestAccessFormProps = {
   defaultEmail?: string;
@@ -29,7 +32,8 @@ export default function RequestAccessForm({
         />
         <h1 className="text-2xl font-medium">You&apos;re on the list</h1>
         <p className="text-sm text-base-content/70">
-          Your invite will be emailed as soon as there&apos;s room. Keep an eye on your inbox.
+          Your invite will be emailed to <strong>{state.email}</strong>
+          {AFTER_ADDRESS}
         </p>
       </div>
     );

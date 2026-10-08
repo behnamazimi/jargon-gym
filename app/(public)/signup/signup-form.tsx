@@ -2,7 +2,7 @@
 
 import { Mail } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import { AuthFormError } from "@/components/auth/auth-form-error";
 import { LegalConsentLine } from "@/components/auth/legal-consent-line";
 import { GoogleSignInButton } from "@/components/auth/google-signin-button";
@@ -14,7 +14,88 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui
 import { Input } from "@/components/ui/input";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
 import { appendNextParam, safeNextPath } from "@/lib/auth/safe-next-path";
-import { signup } from "./actions";
+import { SUPPORT_EMAIL } from "@/lib/site";
+import { resendConfirmation, signup } from "./actions";
+
+const RESEND_COOLDOWN_MS = 60_000;
+
+type CheckEmailProps = {
+  email: string;
+  rawNext?: string;
+  onChangeEmail: () => void;
+};
+
+function CheckEmail({ email, rawNext, onChangeEmail }: CheckEmailProps) {
+  const [isSending, startSending] = useTransition();
+  const [resent, setResent] = useState(false);
+  const [coolingDown, setCoolingDown] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function handleResend() {
+    startSending(async () => {
+      const result = await resendConfirmation(email, rawNext);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setError(null);
+      setResent(true);
+      setCoolingDown(true);
+      setTimeout(() => setCoolingDown(false), RESEND_COOLDOWN_MS);
+    });
+  }
+
+  return (
+    <div className="flex w-full max-w-sm flex-col gap-4">
+      <h1 className="text-2xl font-medium">Check your email</h1>
+      <Alert variant="success" icon={<Mail strokeWidth={1.5} />}>
+        <AlertDescription>
+          A confirmation link was sent to <strong>{email}</strong>. Open it to confirm your email.
+          If it doesn&apos;t sign you in, come back and log in. If you don&apos;t see it, check your
+          spam folder.
+        </AlertDescription>
+      </Alert>
+
+      {error ? (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      {resent && !error ? (
+        <p className="m-0 text-sm text-base-content/70" role="status">
+          Sent again. Still nothing? Email {SUPPORT_EMAIL} and mention this address.
+        </p>
+      ) : null}
+
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1"
+          isDisabled={isSending || coolingDown}
+          onPress={handleResend}
+        >
+          {isSending ? "Sending…" : "Resend the email"}
+        </Button>
+        <Button type="button" variant="ghost" className="flex-1" onPress={onChangeEmail}>
+          Use a different email
+        </Button>
+      </div>
+
+      <p className="m-0 text-sm text-base-content/70">
+        Already have an account?{" "}
+        <Link href={appendNextParam("/login", rawNext)} className="underline underline-offset-2">
+          Log in
+        </Link>{" "}
+        or{" "}
+        <Link href="/forgot-password" className="underline underline-offset-2">
+          reset your password
+        </Link>
+        .
+      </p>
+    </div>
+  );
+}
 
 type SignupFormProps = {
   defaultReferenceCode?: string;
@@ -33,6 +114,7 @@ export default function SignupForm({
   const [password, setPassword] = useState("");
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [referenceCode, setReferenceCode] = useState(defaultReferenceCode);
+  const [dismissed, setDismissed] = useState<typeof state>(null);
   const wasPending = useRef(false);
 
   useEffect(() => {
@@ -43,24 +125,17 @@ export default function SignupForm({
     wasPending.current = pending;
   }, [pending, state]);
 
-  if (state?.checkEmail) {
+  if (state?.checkEmail && dismissed !== state) {
     return (
-      <div className="flex w-full max-w-sm flex-col gap-4">
-        <h1 className="text-2xl font-medium">Check your email</h1>
-        <Alert variant="success" icon={<Mail strokeWidth={1.5} />}>
-          <AlertDescription>
-            A confirmation link was sent to <strong>{state.checkEmail}</strong>. Open it to confirm
-            your email. If it doesn&apos;t sign you in, come back and log in. If you don&apos;t see
-            it, check your spam folder.
-          </AlertDescription>
-        </Alert>
-        <Link
-          href={appendNextParam("/login", rawNext)}
-          className="text-sm underline underline-offset-2"
-        >
-          Go to log in
-        </Link>
-      </div>
+      <CheckEmail
+        email={state.checkEmail}
+        rawNext={rawNext}
+        onChangeEmail={() => {
+          setDismissed(state);
+          setPassword("");
+          setPasswordTouched(false);
+        }}
+      />
     );
   }
 

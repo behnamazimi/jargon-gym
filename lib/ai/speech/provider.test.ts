@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const murf = vi.hoisted(() => ({ id: "murf", isConfigured: vi.fn(), synthesize: vi.fn() }));
+const murf = vi.hoisted(() => ({
+  id: "murf",
+  isConfigured: vi.fn(),
+  synthesize: vi.fn(),
+  supports: undefined as undefined | ((language: string) => boolean),
+}));
 const eleven = vi.hoisted(() => ({ id: "elevenlabs", isConfigured: vi.fn(), synthesize: vi.fn() }));
 
 vi.mock("./providers/murf", () => ({ murfProvider: murf }));
@@ -14,6 +19,7 @@ const both = { murf: true, elevenlabs: true };
 
 beforeEach(() => {
   vi.resetAllMocks();
+  murf.supports = undefined;
   murf.isConfigured.mockReturnValue(true);
   eleven.isConfigured.mockReturnValue(true);
   murf.synthesize.mockResolvedValue(Buffer.from("murf"));
@@ -21,6 +27,14 @@ beforeEach(() => {
 });
 
 describe("synthesizeSpeech", () => {
+  it("skips a provider with no voice for the language, without counting a failed call", async () => {
+    murf.supports = () => false;
+    const result = await synthesizeSpeech({ ...request, language: "ru" }, both);
+    expect(result.provider).toBe("elevenlabs");
+    expect(result.calls.map((c) => [c.provider, c.outcome])).toEqual([["elevenlabs", "ok"]]);
+    expect(murf.synthesize).not.toHaveBeenCalled();
+  });
+
   it("uses Murf first and does not call ElevenLabs", async () => {
     const result = await synthesizeSpeech(request, both);
     expect(result.provider).toBe("murf");
