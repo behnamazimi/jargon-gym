@@ -47,13 +47,24 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
 
-  # Waits for approval of the "Preview deploy" environment, then deploys the PR.
-  preview:
+  # No secrets here: the "Preview deploy" environment only holds the reviewer
+  # rule, so this job waits until someone approves it.
+  approve-preview:
     needs: [check, build, test]
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    environment: Preview deploy
+    concurrency:
+      group: preview-approval-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - run: echo "Preview approved"
+
+  preview:
+    needs: approve-preview
+    runs-on: ubuntu-latest
     environment:
-      name: Preview deploy
+      name: Preview
       url: ${{ steps.deploy.outputs.url }}
     concurrency:
       group: preview-${{ github.event.pull_request.number }}
