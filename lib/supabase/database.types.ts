@@ -2714,14 +2714,14 @@ export type Database = {
       };
       record_ai_credit_cost: {
         Args: {
-          p_calls: number;
-          p_characters: number;
+          p_calls?: number;
+          p_characters?: number;
           p_cost_micro_usd: number;
-          p_input_tokens: number;
+          p_input_tokens?: number;
           p_model: string;
-          p_output_tokens: number;
+          p_output_tokens?: number;
           p_provider: string;
-          p_reasoning_tokens: number;
+          p_reasoning_tokens?: number;
           p_spend_id: number;
         };
         Returns: undefined;

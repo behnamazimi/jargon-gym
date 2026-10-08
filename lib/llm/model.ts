@@ -7,6 +7,10 @@ const MODEL_BY_PROVIDER: Record<LlmProvider, string> = {
   anthropic: "claude-haiku-4-5",
 };
 
+export function modelName(provider: LlmProvider): string {
+  return MODEL_BY_PROVIDER[provider];
+}
+
 export function createModel(provider: LlmProvider, apiKey: string) {
   if (provider === "google") {
     const google = createGoogleGenerativeAI({ apiKey });

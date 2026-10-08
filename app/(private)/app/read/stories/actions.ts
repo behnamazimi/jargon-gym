@@ -10,6 +10,8 @@ import { runAiTurn } from "@/lib/ai/observability-server";
 import { recordRead } from "@/lib/terms/review-outcome";
 import { runMetered } from "@/lib/ai/run-metered";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
+import { recordModelCost } from "@/lib/ai-credits/record-model-cost";
+import { createUsageTally } from "@/lib/ai-credits/usage-tally";
 import { resolveAiAccess } from "@/lib/llm/access";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { storyFailure } from "@/lib/stories/failure";
@@ -106,7 +108,8 @@ export async function generateStoryAction(input: {
 
     const observability = createAiTurn(userId, "story_generation", await hasAnalyticsConsent());
     // Everything the user receives, so a failure anywhere in here refunds the credits.
-    const produce = async () => {
+    const tally = createUsageTally();
+    const produce = async ({ ledgerId }: { ledgerId: number }) => {
       const generated = await runAiTurn(observability, () =>
         generateStory({
           provider: access.provider,
@@ -123,8 +126,10 @@ export async function generateStoryAction(input: {
           setting: pickSetting(format.id),
           recentTitles,
           observability,
+          onUsage: tally.add,
         }),
       );
+      await recordModelCost(admin, ledgerId, access.provider, tally);
 
       const usedIds = new Set(generated.termIds);
       const story = await insertStory(admin, {

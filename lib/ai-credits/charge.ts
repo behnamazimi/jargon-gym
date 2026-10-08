@@ -21,7 +21,7 @@ export type ChargeOutcome<T> =
  *  actually received. */
 export async function runWithCredits<T>(
   { admin, userId, feature, units }: ChargeInput,
-  run: () => Promise<T>,
+  run: (charge: { ledgerId: number }) => Promise<T>,
 ): Promise<ChargeOutcome<T>> {
   const reservation = await reserveCredits(admin, userId, feature, units);
   if (reservation.status !== "ok") {
@@ -34,7 +34,7 @@ export async function runWithCredits<T>(
   }
 
   try {
-    const value = await run();
+    const value = await run({ ledgerId: reservation.ledgerId });
     return { charged: true, value, remaining: reservation.remaining };
   } catch (error) {
     try {

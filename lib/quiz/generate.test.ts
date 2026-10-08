@@ -82,6 +82,21 @@ describe("generateQuizQuestions", () => {
     }
   });
 
+  it("reports the model call's usage", async () => {
+    fakeModel();
+    const usage = { inputTokens: 600, outputTokens: 400 };
+    const original = vi.mocked(generateObject).getMockImplementation()!;
+    vi.mocked(generateObject).mockImplementation((async (args: never) => ({
+      ...(await (original as (a: never) => Promise<object>)(args)),
+      usage,
+    })) as never);
+    const terms = [field(0), field(1)];
+    const plan = await planAiQuiz(terms, source, rngOf(0.5));
+    const onUsage = vi.fn();
+    await generateQuizQuestions({ provider: "anthropic", apiKey: "k", plan, source, onUsage });
+    expect(onUsage).toHaveBeenCalledWith(usage);
+  });
+
   it("only makes booleans from does-it-fit, so true/false stays a small share", async () => {
     fakeModel();
     const terms = Array.from({ length: 30 }, (_, i) => field(i));

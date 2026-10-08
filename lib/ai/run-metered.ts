@@ -21,7 +21,7 @@ type MeteredInput = {
  *  the request that wins the clip). */
 export async function runMetered<T>(
   { admin, userId, feature, units }: MeteredInput,
-  run: () => Promise<T>,
+  run: (charge: { ledgerId: number }) => Promise<T>,
 ): Promise<MeteredOutcome<T>> {
   const guarded = await withRunGuard({ admin, userId, feature }, () =>
     runWithCredits({ admin, userId, feature, units }, run),

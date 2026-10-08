@@ -90,3 +90,39 @@ export async function refundCredits(
   });
   if (error) throw error;
 }
+
+export type CostRecord = {
+  provider: string;
+  model: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  reasoningTokens?: number;
+  characters?: number;
+  costMicroUsd: number;
+  calls: number;
+};
+
+/** What a charged call really cost, kept beside the spend. Best effort: a
+ *  failure here is logged and never fails or refunds the action. */
+export async function recordCreditCost(
+  admin: Client,
+  ledgerId: number,
+  record: CostRecord,
+): Promise<void> {
+  try {
+    const { error } = await admin.rpc("record_ai_credit_cost", {
+      p_spend_id: ledgerId,
+      p_provider: record.provider,
+      p_model: record.model,
+      p_input_tokens: record.inputTokens,
+      p_output_tokens: record.outputTokens,
+      p_reasoning_tokens: record.reasoningTokens,
+      p_characters: record.characters,
+      p_cost_micro_usd: Math.round(record.costMicroUsd),
+      p_calls: record.calls,
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.error("Couldn't record an AI credit cost:", error);
+  }
+}
