@@ -40,7 +40,7 @@ test.describe("Studying a collection", () => {
     await expect
       .poll(async () => {
         const [notYet] = await sql<{ count: string }>(
-          "select count(*) from public.triage_not_yet where user_id = $1",
+          "select count(*) from public.triage_deferrals where user_id = $1",
           [user.id],
         );
         return Number(notYet!.count);
