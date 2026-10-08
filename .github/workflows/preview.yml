@@ -1,0 +1,61 @@
+# Vercel no longer deploys on push (see vercel.json); production goes out from
+# deploy-migrations.yml after CI. Run this from the
+# Actions tab, or `gh workflow run preview.yml --ref <branch>`, to deploy the
+# chosen branch to a Vercel preview.
+name: Preview deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_checks:
+        description: Run lint, type-check and tests before deploying
+        type: boolean
+        default: false
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    environment: Preview
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint, type-check and test
+        if: inputs.run_checks
+        run: |
+          pnpm run check
+          pnpm run test
+
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          pnpm dlx vercel@latest pull --yes --environment=preview
+          url="$(pnpm dlx vercel@latest deploy)"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Preview: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+        run: |
+          pr="$(gh pr list --head "$GITHUB_REF_NAME" --json number -q '.[0].number')"
+          if [ -n "$pr" ]; then
+            gh pr comment "$pr" --body "Preview deployed: $PREVIEW_URL"
+          fi

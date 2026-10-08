@@ -1,7 +1,8 @@
 # Separate from CI so a failed production push cannot fail check/build/test
 # or the local migration dry-run. Runs after CI succeeds on main, and can
-# be re-run by hand if a push fails.
-name: Deploy Supabase migrations
+# be re-run by hand if a push fails. The production deploy to Vercel runs last,
+# so it only goes out once CI has passed and the migrations are pushed.
+name: Deploy production
 
 on:
   workflow_run:
@@ -11,7 +12,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  push-migrations:
     if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     concurrency:
@@ -50,3 +51,26 @@ jobs:
             echo "::error::Set GitHub secrets SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD, or SUPABASE_DB_URL (session pooler URI)."
             exit 1
           fi
+
+  deploy-vercel:
+    needs: push-migrations
+    runs-on: ubuntu-latest
+    environment: Production
+    concurrency:
+      group: vercel-production
+      cancel-in-progress: false
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm dlx vercel@latest pull --yes --environment=production
+      - run: pnpm dlx vercel@latest deploy --prod
