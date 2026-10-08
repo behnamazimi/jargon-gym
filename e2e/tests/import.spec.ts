@@ -86,7 +86,7 @@ test.describe("Adding terms", () => {
 
     await expect(page.getByLabel("Term", { exact: true })).toBeVisible();
     const rows = await sql<{ name: string }>(
-      "select name from public.domains where owner_id = $1",
+      "select name from public.collections where owner_id = $1",
       [user.id],
     );
     expect(rows.map((row) => row.name)).toEqual(["My first collection"]);
