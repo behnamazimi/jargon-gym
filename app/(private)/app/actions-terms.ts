@@ -24,7 +24,7 @@ function termMutationErrorMessage(err: unknown, fallback: string) {
 }
 
 export async function createTerm(
-  domainId: string,
+  collectionId: string,
   input: TermInput,
   relationshipSync?: Pick<RelationshipSyncPayload, "create">,
 ): Promise<{ error?: string; termId?: string }> {
@@ -35,7 +35,7 @@ export async function createTerm(
   if (!parsed.ok) return { error: parsed.error };
 
   try {
-    const created = await createTermRecord(auth.supabase, domainId, auth.user.id, parsed.data);
+    const created = await createTermRecord(auth.supabase, collectionId, auth.user.id, parsed.data);
 
     if (relationshipSync?.create.length) {
       await syncTermRelationships(auth.supabase, auth.user.id, created.id, {

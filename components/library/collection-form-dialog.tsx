@@ -21,54 +21,58 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
-import type { DomainInput } from "@/lib/library/domain-schema";
-import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
-import type { Domain } from "@/lib/terms/types";
+import type { CollectionInput } from "@/lib/library/collection-schema";
+import { COLLECTION_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
+import type { Collection } from "@/lib/terms/types";
 
-type DomainFormDialogProps = {
-  domain: Domain;
+type CollectionFormDialogProps = {
+  collection: Collection;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
-function domainToForm(domain: Domain): DomainInput {
+function collectionToForm(collection: Collection): CollectionInput {
   return {
-    name: domain.name,
-    description: domain.description || null,
-    language: domain.language,
+    name: collection.name,
+    description: collection.description || null,
+    language: collection.language,
   };
 }
 
-export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDialogProps) {
-  const { updateOwnedDomain, isBusy, busyId, error, clearError } = useCollectionActions();
-  const [form, setForm] = useState<DomainInput>(() => domainToForm(domain));
+export function CollectionFormDialog({
+  collection,
+  isOpen,
+  onOpenChange,
+}: CollectionFormDialogProps) {
+  const { updateOwnedCollection, isBusy, busyId, error, clearError } = useCollectionActions();
+  const [form, setForm] = useState<CollectionInput>(() => collectionToForm(collection));
   const wasOpenRef = useRef(false);
 
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       clearError();
-      setForm(domainToForm(domain));
+      setForm(collectionToForm(collection));
     }
 
     wasOpenRef.current = isOpen;
-  }, [isOpen, domain, clearError]);
+  }, [isOpen, collection, clearError]);
 
-  const isSubmitting = isBusy && busyId === domain.id;
+  const isSubmitting = isBusy && busyId === collection.id;
 
-  function updateField<K extends keyof DomainInput>(key: K, value: DomainInput[K]) {
+  function updateField<K extends keyof CollectionInput>(key: K, value: CollectionInput[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
-    const payload: DomainInput = {
+    const payload: CollectionInput = {
       name: form.name.trim(),
       description: form.description?.trim() ? form.description.trim() : null,
       language: form.language,
     };
 
-    await updateOwnedDomain(domain.id, payload, () => onOpenChange(false));
+    await updateOwnedCollection(collection.id, payload, () => onOpenChange(false));
   }
 
   return (
@@ -81,9 +85,9 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
 
         <div className="space-y-3">
           <Field>
-            <FieldLabel htmlFor="domain-name">Name</FieldLabel>
+            <FieldLabel htmlFor="collection-name">Name</FieldLabel>
             <Input
-              id="domain-name"
+              id="collection-name"
               value={form.name}
               onChange={(event) => updateField("name", event.target.value)}
               placeholder="e.g. Startup Terms"
@@ -92,9 +96,9 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="domain-description">Description (optional)</FieldLabel>
+            <FieldLabel htmlFor="collection-description">Description (optional)</FieldLabel>
             <Textarea
-              id="domain-description"
+              id="collection-description"
               value={form.description ?? ""}
               onChange={(event) => updateField("description", event.target.value)}
               placeholder="What is this collection about?"
@@ -103,19 +107,19 @@ export function DomainFormDialog({ domain, isOpen, onOpenChange }: DomainFormDia
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="domain-language">Content language</FieldLabel>
+            <FieldLabel htmlFor="collection-language">Content language</FieldLabel>
             <Select
               value={form.language}
               onChange={(key) => {
                 if (key == null) return;
-                updateField("language", key as DomainInput["language"]);
+                updateField("language", key as CollectionInput["language"]);
               }}
             >
-              <SelectTrigger id="domain-language" className="w-full">
+              <SelectTrigger id="collection-language" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {DOMAIN_LANGUAGE_OPTIONS.map((option) => (
+                {COLLECTION_LANGUAGE_OPTIONS.map((option) => (
                   <SelectItem key={option.value} id={option.value}>
                     {option.label}
                   </SelectItem>

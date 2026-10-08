@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { CollectionSelect } from "@/components/library/collection-select";
 import { ReadCaughtUp } from "@/components/read/read-caught-up";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
-import type { Domain, Term } from "@/lib/terms/types";
+import type { Collection, Term } from "@/lib/terms/types";
 import { toTriageTerm } from "@/lib/triage/deck";
 import { TriageActions } from "./triage-actions";
 import { TriageNextSteps, TriageSummary } from "./triage-summary";
@@ -13,8 +13,8 @@ import { useTriageDeck } from "./use-triage-deck";
 import { useTriageKeyboard } from "./use-triage-keyboard";
 
 type TriagePageProps = {
-  domain: Domain;
-  domains: Domain[];
+  collection: Collection;
+  collections: Collection[];
   terms: Term[];
   knownTermIds: string[];
   markedKnownTermIds: string[];
@@ -23,8 +23,8 @@ type TriagePageProps = {
 };
 
 export function TriagePage({
-  domain,
-  domains,
+  collection,
+  collections,
   terms,
   knownTermIds,
   markedKnownTermIds,
@@ -46,7 +46,7 @@ export function TriagePage({
     undo: handleUndo,
     revisitNotYet: handleRevisitNotYet,
   } = useTriageDeck({
-    domainId: domain.id,
+    collectionId: collection.id,
     terms,
     knownTermIds,
     markedKnownTermIds,
@@ -79,9 +79,9 @@ export function TriagePage({
       className="min-w-0 w-full flex-1 sm:max-w-xs"
       triggerClassName="text-sm"
       size="sm"
-      collections={domains.map((d) => ({ id: d.id, name: d.name, termCount: d.termCount }))}
-      value={domain.id}
-      hrefBuilder={(id) => `/app/triage?domain=${id}`}
+      collections={collections.map((d) => ({ id: d.id, name: d.name, termCount: d.termCount }))}
+      value={collection.id}
+      hrefBuilder={(id) => `/app/triage?collection=${id}`}
     />
   );
 
@@ -121,8 +121,8 @@ export function TriagePage({
         {topRow}
         {history.length > 0 ? (
           <TriageSummary
-            domainId={domain.id}
-            domainName={domain.name}
+            collectionId={collection.id}
+            collectionName={collection.name}
             markedCount={markedCount}
             leftToLearnCount={leftToLearnCount}
             hasNotYet={notYetIds.size > 0}
@@ -133,12 +133,12 @@ export function TriagePage({
             title="All terms sorted"
             description={
               notYetIds.size > 0
-                ? `You've sorted every term in ${domain.name}. The ones you set aside as "Not yet" stay in your learning pile.`
-                : `Every term in ${domain.name} is already mastered or marked known.`
+                ? `You've sorted every term in ${collection.name}. The ones you set aside as "Not yet" stay in your learning pile.`
+                : `Every term in ${collection.name} is already mastered or marked known.`
             }
             actions={
               <TriageNextSteps
-                domainId={domain.id}
+                collectionId={collection.id}
                 hasNotYet={notYetIds.size > 0}
                 onRevisitNotYet={handleRevisitNotYet}
               />
@@ -156,7 +156,7 @@ export function TriagePage({
       <TriageSwipeCard
         key={current.id}
         ref={cardRef}
-        term={toTriageTerm(current, domain)}
+        term={toTriageTerm(current, collection)}
         revealed={revealed}
         reduceMotion={reduceMotion}
         narrationAccess={narrationAccess}

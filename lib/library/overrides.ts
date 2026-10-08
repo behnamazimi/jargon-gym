@@ -65,9 +65,9 @@ export function overrideRemoved(termId: string, savedAt: number) {
 }
 
 /** The collection's live counts, for the sidebar next to the list. */
-export function overrideCollectionCounts(domainId: string, counts: CollectionCounts) {
+export function overrideCollectionCounts(collectionId: string, counts: CollectionCounts) {
   const next = new Map(state.counts);
-  next.set(domainId, counts);
+  next.set(collectionId, counts);
   emit({ ...state, counts: next });
 }
 
@@ -83,10 +83,10 @@ export function termOverride(
 
 export function collectionCountsOverride(
   overrides: State,
-  domainId: string,
+  collectionId: string,
   loadedAt: number,
 ): CollectionCounts | undefined {
-  const counts = overrides.counts.get(domainId);
+  const counts = overrides.counts.get(collectionId);
   return counts && counts.savedAt >= loadedAt ? counts : undefined;
 }
 

@@ -5,7 +5,7 @@ import type { TraceCandidate } from "./types";
 function makeCandidate(overrides: Partial<TraceCandidate> = {}): TraceCandidate {
   return {
     termId: "t1",
-    domainId: "d1",
+    collectionId: "d1",
     createdAt: new Date("2026-01-01T00:00:00Z"),
     readCount: 0,
     lastReadAt: null,

@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type AddTermsMenuProps = {
-  domainId: string;
+  collectionId: string;
 };
 
 /** Add terms to this collection: one at a time, or a pasted list. */
-export function AddTermsMenu({ domainId }: AddTermsMenuProps) {
+export function AddTermsMenu({ collectionId }: AddTermsMenuProps) {
   const router = useRouter();
 
   return (
@@ -25,10 +25,10 @@ export function AddTermsMenu({ domainId }: AddTermsMenuProps) {
         <Plus className="size-5" strokeWidth={1.5} />
       </Button>
       <DropdownMenu className="min-w-[180px]">
-        <DropdownMenuItem onAction={() => router.push(`/app/capture?to=${domainId}`)}>
+        <DropdownMenuItem onAction={() => router.push(`/app/capture?to=${collectionId}`)}>
           One term
         </DropdownMenuItem>
-        <DropdownMenuItem onAction={() => router.push(`/app/import/paste?to=${domainId}`)}>
+        <DropdownMenuItem onAction={() => router.push(`/app/import/paste?to=${collectionId}`)}>
           Paste a list
         </DropdownMenuItem>
       </DropdownMenu>

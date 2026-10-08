@@ -37,7 +37,7 @@ export function preloadTermLayoutEditor() {
 
 type TermLayoutContextValue = {
   stored: Promise<TermLayout>;
-  openEditor: (domainId: string | undefined) => void;
+  openEditor: (collectionId: string | undefined) => void;
   /** What the learner has saved or is saving since the page loaded. */
   changed: TermLayout | null;
   save: (change: TermLayoutChange) => Promise<boolean>;
@@ -47,13 +47,13 @@ const TermLayoutContext = createContext<TermLayoutContextValue | null>(null);
 
 function applyChange(layout: TermLayout, change: TermLayoutChange): TermLayout {
   if (change.scope === "reset-collection") {
-    return withoutCollectionPlacement(layout, change.domainId);
+    return withoutCollectionPlacement(layout, change.collectionId);
   }
   const placement = parsePlacement(change.placement);
   if (!placement) return layout;
   return change.scope === "default"
     ? withDefaultPlacement(layout, placement)
-    : withCollectionPlacement(layout, change.domainId, placement);
+    : withCollectionPlacement(layout, change.collectionId, placement);
 }
 
 /** Holds the learner's term layout for the study pages. It takes the layout as
@@ -70,13 +70,13 @@ export function TermLayoutProvider({
   const [changed, setChanged] = useState<TermLayout | null>(null);
   const changedRef = useRef<TermLayout | null>(null);
   const [editor, setEditor] = useState<{
-    domainId: string | undefined;
+    collectionId: string | undefined;
     id: number;
     isOpen: boolean;
   } | null>(null);
 
-  const openEditor = useCallback((domainId: string | undefined) => {
-    setEditor((previous) => ({ domainId, id: (previous?.id ?? 0) + 1, isOpen: true }));
+  const openEditor = useCallback((collectionId: string | undefined) => {
+    setEditor((previous) => ({ collectionId, id: (previous?.id ?? 0) + 1, isOpen: true }));
   }, []);
 
   const save = useCallback(
@@ -111,7 +111,7 @@ export function TermLayoutProvider({
         <Suspense fallback={null}>
           <EditorHost
             key={editor.id}
-            domainId={editor.domainId}
+            collectionId={editor.collectionId}
             isOpen={editor.isOpen}
             onOpenChange={(isOpen) => setEditor((current) => current && { ...current, isOpen })}
           />
@@ -125,19 +125,19 @@ export type TermLayoutAccess = {
   placement: Placement;
   hasOverride: boolean;
   save: (change: TermLayoutChange) => Promise<boolean>;
-  openEditor: (domainId: string | undefined) => void;
+  openEditor: (collectionId: string | undefined) => void;
 };
 
 /** The layout for a collection's cards, or null outside the study pages.
  *  Suspends until the layout has loaded, so call it under a Suspense boundary. */
-export function useTermLayoutScope(domainId: string | undefined): TermLayoutAccess | null {
+export function useTermLayoutScope(collectionId: string | undefined): TermLayoutAccess | null {
   const context = useContext(TermLayoutContext);
   if (!context) return null;
   const stored = use(context.stored);
   const layout = context.changed ?? stored;
   return {
-    placement: resolvePlacement(layout, domainId),
-    hasOverride: hasCollectionOverride(layout, domainId),
+    placement: resolvePlacement(layout, collectionId),
+    hasOverride: hasCollectionOverride(layout, collectionId),
     save: context.save,
     openEditor: context.openEditor,
   };
@@ -146,19 +146,19 @@ export function useTermLayoutScope(domainId: string | undefined): TermLayoutAcce
 /** The editor lives here, above the cards, so its events never pass through a
  *  card's own handlers. */
 function EditorHost({
-  domainId,
+  collectionId,
   isOpen,
   onOpenChange,
 }: {
-  domainId: string | undefined;
+  collectionId: string | undefined;
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
 }) {
-  const access = useTermLayoutScope(domainId);
+  const access = useTermLayoutScope(collectionId);
   if (!access) return null;
   return (
     <TermLayoutDialog
-      domainId={domainId}
+      collectionId={collectionId}
       access={access}
       isOpen={isOpen}
       onOpenChange={onOpenChange}

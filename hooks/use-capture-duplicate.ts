@@ -11,16 +11,16 @@ export function useCaptureDuplicate() {
   const [match, setMatch] = useState<DuplicateMatch | null>(null);
   const checker = useRef<ReturnType<typeof createDuplicateChecker> | null>(null);
 
-  function check(domainId: string | null, term: string) {
+  function check(collectionId: string | null, term: string) {
     checker.current ??= createDuplicateChecker(
       async (id, text) => {
-        const result = await findCaptureDuplicate({ domainId: id, term: text });
+        const result = await findCaptureDuplicate({ collectionId: id, term: text });
         return result.ok ? result.match : null;
       },
       setMatch,
       DEBOUNCE_MS,
     );
-    checker.current(domainId, term);
+    checker.current(collectionId, term);
   }
 
   return { match, check };

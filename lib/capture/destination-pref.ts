@@ -9,9 +9,9 @@ export function loadDestinationPref(): string | null {
   }
 }
 
-export function saveDestinationPref(domainId: string): void {
+export function saveDestinationPref(collectionId: string): void {
   try {
-    window.localStorage.setItem(KEY, domainId);
+    window.localStorage.setItem(KEY, collectionId);
   } catch {
     // Not kept in private mode.
   }

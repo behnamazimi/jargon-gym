@@ -7,7 +7,7 @@ import {
   type MasteryBucketCounts,
   type MilestoneEstimate,
 } from "@/lib/trace";
-import type { CollectionDomainRow } from "@/lib/library/collections";
+import type { CollectionRow } from "@/lib/library/collections";
 
 /** Rough "time to Mastered" insight, per collection — remaining learning
  *  terms (any activity, not yet mastered) against the ever_mastered_at
@@ -50,14 +50,14 @@ export type StatsSnapshot = {
   activeCollections: CollectionStatBreakdown[];
 };
 
-function groupCandidatesByDomain(candidates: TraceCandidate[]): Map<string, TraceCandidate[]> {
-  const byDomain = new Map<string, TraceCandidate[]>();
+function groupCandidatesByCollection(candidates: TraceCandidate[]): Map<string, TraceCandidate[]> {
+  const byCollection = new Map<string, TraceCandidate[]>();
   for (const candidate of candidates) {
-    const list = byDomain.get(candidate.domainId) ?? [];
+    const list = byCollection.get(candidate.collectionId) ?? [];
     list.push(candidate);
-    byDomain.set(candidate.domainId, list);
+    byCollection.set(candidate.collectionId, list);
   }
-  return byDomain;
+  return byCollection;
 }
 
 export const EMPTY_STATS_SNAPSHOT: StatsSnapshot = {
@@ -78,7 +78,7 @@ function countUnseen(candidates: TraceCandidate[], context: PickContext): number
 }
 
 /** Pure aggregation for the web snapshot fetcher below — one candidate
- *  fetch across all active collections (`domainIds: "all"`). */
+ *  fetch across all active collections (`collectionIds: "all"`). */
 function buildCollectionPaceInsight(
   candidates: TraceCandidate[],
   now: Date,
@@ -101,12 +101,12 @@ function buildCollectionPaceInsight(
 }
 
 export function buildStatsSnapshot(
-  collectionRows: CollectionDomainRow[],
-  reviewDomainIds: string[],
+  collectionRows: CollectionRow[],
+  reviewCollectionIds: string[],
   candidates: TraceCandidate[],
   now: Date,
 ): StatsSnapshot {
-  const activeSet = new Set(reviewDomainIds);
+  const activeSet = new Set(reviewCollectionIds);
   const activeRows = collectionRows.filter((row) => activeSet.has(row.id));
   const pausedCount = collectionRows.length - activeRows.length;
 
@@ -114,14 +114,14 @@ export function buildStatsSnapshot(
     return { ...EMPTY_STATS_SNAPSHOT, pausedCount };
   }
 
-  const byDomain = groupCandidatesByDomain(candidates);
+  const byCollection = groupCandidatesByCollection(candidates);
 
   const activeCollections: CollectionStatBreakdown[] = activeRows.map((row) => {
     const totalCount = row.termCount;
     const termsLearnedCount = row.termsLearnedCount;
     const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
-    const domainCandidates = byDomain.get(row.id) ?? [];
-    const startedDomainCandidates = domainCandidates.filter((c) => c.readCount > 0);
+    const collectionCandidates = byCollection.get(row.id) ?? [];
+    const startedCollectionCandidates = collectionCandidates.filter((c) => c.readCount > 0);
 
     return {
       id: row.id,
@@ -130,9 +130,9 @@ export function buildStatsSnapshot(
       markedKnownCount: row.markedKnownCount,
       totalCount,
       percentage,
-      unseenCount: countUnseen(domainCandidates, "read"),
-      paceInsight: buildCollectionPaceInsight(domainCandidates, now),
-      currentStrength: aggregateMastery(startedDomainCandidates, now),
+      unseenCount: countUnseen(collectionCandidates, "read"),
+      paceInsight: buildCollectionPaceInsight(collectionCandidates, now),
+      currentStrength: aggregateMastery(startedCollectionCandidates, now),
     };
   });
 

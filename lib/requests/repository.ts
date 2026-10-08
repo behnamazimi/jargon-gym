@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/lib/supabase/database.types";
-import { DOMAIN_LANGUAGES } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { formatRequestDate } from "./dates";
 import { entryFor, type RequestEntry } from "./entry";
@@ -45,7 +45,7 @@ export async function fetchRequestQuota(client: Client): Promise<RequestQuota> {
 
 const KINDS: readonly string[] = [...REQUEST_KINDS, "definitions"];
 const REASONS: readonly string[] = DECLINE_REASONS;
-const LANGUAGES: readonly string[] = DOMAIN_LANGUAGES;
+const LANGUAGES: readonly string[] = COLLECTION_LANGUAGES;
 
 /** The person's requests that are still worth showing, newest first. Dates are
  *  formatted here, in their time zone, so the page doesn't shift on hydration. */
@@ -73,8 +73,8 @@ export async function fetchMyRequests(
           : null,
         declineNote: row.decline_note,
         deliveryKind: row.delivery_kind as MyRequest["deliveryKind"],
-        deliveredDomainId: row.delivered_domain_id,
-        deliveredDomainName: row.delivered_domain_name,
+        deliveredCollectionId: row.delivered_collection_id,
+        deliveredCollectionName: row.delivered_collection_name,
         deliveredTerms: row.delivered_terms,
         delayNotified: row.delay_notified_at !== null,
         notifyEmail: row.notify_email,

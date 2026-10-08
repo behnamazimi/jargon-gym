@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { findSimilarName } from "@/lib/import/similar-name";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 type ExistingCollection = { id: string; name: string };
 
@@ -37,7 +37,7 @@ function CreateCollectionForm({
   const router = useRouter();
   const { createEmptyCollection, isBusy, error } = useCollectionActions();
   const [name, setName] = useState("");
-  const [language, setLanguage] = useState<DomainLanguage>("en");
+  const [language, setLanguage] = useState<CollectionLanguage>("en");
 
   const similar = findSimilarName(
     name,
@@ -53,10 +53,10 @@ function CreateCollectionForm({
     event.preventDefault();
     if (!canCreate) return;
 
-    await createEmptyCollection({ name: name.trim(), language }, (domainId) => {
+    await createEmptyCollection({ name: name.trim(), language }, (collectionId) => {
       track("collection_created", { language });
       onClose();
-      router.push(`/app/library?domain=${domainId}`);
+      router.push(`/app/library?collection=${collectionId}`);
     });
   }
 
@@ -98,7 +98,7 @@ function CreateCollectionForm({
               : `You already have "${match.name}". Open it instead?`}
           </AlertDescription>
           <AlertAction>
-            <LinkButton href={`/app/library?domain=${match.id}`} size="sm" variant="outline">
+            <LinkButton href={`/app/library?collection=${match.id}`} size="sm" variant="outline">
               Open it
             </LinkButton>
           </AlertAction>

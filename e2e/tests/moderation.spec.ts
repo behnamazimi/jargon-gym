@@ -7,8 +7,8 @@ import { APP_URL } from "../support/env";
 
 test.describe("Shared collections", () => {
   test("a reported collection can be taken down by an admin", async ({ browser, user }) => {
-    const { domainId, name } = await seedCollection(user);
-    await sql("update public.domains set visibility = 'shared' where id = $1", [domainId]);
+    const { collectionId, name } = await seedCollection(user);
+    await sql("update public.collections set visibility = 'shared' where id = $1", [collectionId]);
 
     const reporter = await browser.newContext({ baseURL: APP_URL });
     await reporter.addCookies([{ name: "lb_consent", value: "denied", url: APP_URL }]);
@@ -23,8 +23,8 @@ test.describe("Shared collections", () => {
     await member.getByRole("button", { name: "Report", exact: true }).click();
     await expect
       .poll(async () => {
-        const rows = await sql("select 1 from public.collection_reports where domain_id = $1", [
-          domainId,
+        const rows = await sql("select 1 from public.collection_reports where collection_id = $1", [
+          collectionId,
         ]);
         return rows.length;
       })
@@ -35,7 +35,7 @@ test.describe("Shared collections", () => {
       storageState: "e2e/.auth/admin.json",
     });
     const adminPage = await admin.newPage();
-    await gotoReady(adminPage, `/admin/collections/${domainId}`);
+    await gotoReady(adminPage, `/admin/collections/${collectionId}`);
     await adminPage.getByRole("button", { name: "Stop sharing" }).click();
     const dialog = adminPage.getByRole("alertdialog");
     await dialog.getByRole("combobox").selectOption({ index: 1 });
@@ -45,15 +45,15 @@ test.describe("Shared collections", () => {
     await expect
       .poll(async () => {
         const [row] = await sql<{ visibility: string; blocked: boolean }>(
-          "select visibility, share_blocked_at is not null as blocked from public.domains where id = $1",
-          [domainId],
+          "select visibility, share_blocked_at is not null as blocked from public.collections where id = $1",
+          [collectionId],
         );
         return row;
       })
       .toEqual({ visibility: "private", blocked: true });
     const audit = await sql(
       "select 1 from public.admin_audit_log where target_id = $1 and action = 'stop_sharing_collection'",
-      [domainId],
+      [collectionId],
     );
     expect(audit.length).toBeGreaterThan(0);
 

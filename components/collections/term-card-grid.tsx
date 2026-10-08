@@ -1,9 +1,9 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import type { PublicTermSummary } from "@/lib/terms/public-terms";
 import { TermCard } from "./term-card";
 
 type TermCardGridProps = {
-  language: DomainLanguage;
+  language: CollectionLanguage;
   terms: PublicTermSummary[];
 };
 

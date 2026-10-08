@@ -27,12 +27,12 @@ function replaceUrl(url: URL) {
   window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-export function replaceReadDomainInUrl(domainId: string) {
+export function replaceReadCollectionInUrl(collectionId: string) {
   const url = new URL(window.location.href);
-  if (domainId === "all") {
-    url.searchParams.delete("domain");
+  if (collectionId === "all") {
+    url.searchParams.delete("collection");
   } else {
-    url.searchParams.set("domain", domainId);
+    url.searchParams.set("collection", collectionId);
   }
   url.searchParams.delete("termId");
   url.searchParams.delete("alreadyRead");
@@ -44,14 +44,14 @@ export function replaceReadDomainInUrl(domainId: string) {
 /** Tidies the URL once Cards is showing: drops a stale collection and marks
  *  the view as Cards, so a reload or a refresh after saving an option never
  *  gets redirected to Stories. */
-export function normalizeCardsUrl(resolvedDomainId: string) {
+export function normalizeCardsUrl(resolvedCollectionId: string) {
   const url = new URL(window.location.href);
   // Writes a remembered collection into the URL too, so the Cards/Stories
-  // tabs (which read `domain` from the URL) keep it.
-  if (resolvedDomainId === "all") {
-    url.searchParams.delete("domain");
+  // tabs (which read `collection` from the URL) keep it.
+  if (resolvedCollectionId === "all") {
+    url.searchParams.delete("collection");
   } else {
-    url.searchParams.set("domain", resolvedDomainId);
+    url.searchParams.set("collection", resolvedCollectionId);
   }
   if (!url.searchParams.has("termId")) url.searchParams.set("view", "cards");
   replaceUrl(url);
@@ -69,16 +69,16 @@ export function isTypingTarget(target: EventTarget | null) {
   );
 }
 
-function collectionName(domainId: string, collections: StudyCollection[]) {
-  return collections.find((collection) => collection.id === domainId)?.name;
+function collectionName(collectionId: string, collections: StudyCollection[]) {
+  return collections.find((collection) => collection.id === collectionId)?.name;
 }
 
-export function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
-  if (domainId === "all") {
+export function caughtUpDescription(collectionId: string, collections: StudyCollection[]) {
+  if (collectionId === "all") {
     return "No terms in your active collections. Add some terms or resume a collection to start reading.";
   }
 
-  const name = collectionName(domainId, collections);
+  const name = collectionName(collectionId, collections);
   if (!name) {
     return "No terms in this collection. Pick another collection to keep reading.";
   }

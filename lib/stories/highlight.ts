@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { toParagraphs } from "./paragraphs";
 import type { StorySegment } from "./types";
 
@@ -26,7 +26,7 @@ export type StoryTimeline = {
 type ShareOfClip = { start: number; end: number };
 
 /** Sentence starts within the paragraph's text, never inside a term. */
-function sentenceCuts(paragraph: StorySegment[], language: DomainLanguage): number[] {
+function sentenceCuts(paragraph: StorySegment[], language: CollectionLanguage): number[] {
   const text = paragraph.map((segment) => segment.text).join("");
   const termRanges: [number, number][] = [];
   let offset = 0;
@@ -82,7 +82,7 @@ function spokenLength(segments: StorySegment[]): number {
 export function buildTimeline(
   title: string,
   segments: StorySegment[],
-  language: DomainLanguage,
+  language: CollectionLanguage,
 ): StoryTimeline {
   const weights: number[] = [];
   let index = 0;

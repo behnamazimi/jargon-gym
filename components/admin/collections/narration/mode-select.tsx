@@ -8,11 +8,11 @@ import { NARRATION_MODES, narrationModeLabel, type NarrationMode } from "@/lib/n
 
 /** Shows a change at once, and falls back if saving fails. */
 export function NarrationModeSelect({
-  domainId,
+  collectionId,
   name,
   mode,
 }: {
-  domainId: string;
+  collectionId: string;
   name: string;
   mode: NarrationMode;
 }) {
@@ -26,7 +26,7 @@ export function NarrationModeSelect({
     setError(null);
     startTransition(async () => {
       setShown(target);
-      const result = await settleAdminAction(() => setNarrationMode(domainId, target));
+      const result = await settleAdminAction(() => setNarrationMode(collectionId, target));
       if (!result.ok) setError(result.error);
       else toast(`${name} now narrates ${narrationModeLabel(target).toLowerCase()}.`);
     });

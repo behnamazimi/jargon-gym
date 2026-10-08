@@ -8,7 +8,7 @@ describe("parseQueueParams", () => {
     expect(parseQueueParams({})).toEqual({
       q: "",
       userId: null,
-      domainId: null,
+      collectionId: null,
       tab: "read",
       limit: 50,
       page: 1,
@@ -19,20 +19,20 @@ describe("parseQueueParams", () => {
     expect(
       parseQueueParams({
         user: ID,
-        domain: ID,
+        collection: ID,
         tab: "cooldown",
         limit: "250",
         q: " ann ",
         page: "3",
       }),
-    ).toEqual({ q: "ann", userId: ID, domainId: ID, tab: "cooldown", limit: 250, page: 3 });
+    ).toEqual({ q: "ann", userId: ID, collectionId: ID, tab: "cooldown", limit: 250, page: 3 });
   });
 
   it("drops what it doesn't recognise", () => {
-    expect(parseQueueParams({ user: "x", domain: "all", tab: "nope", limit: "7" })).toEqual({
+    expect(parseQueueParams({ user: "x", collection: "all", tab: "nope", limit: "7" })).toEqual({
       q: "",
       userId: null,
-      domainId: null,
+      collectionId: null,
       tab: "read",
       limit: 50,
       page: 1,

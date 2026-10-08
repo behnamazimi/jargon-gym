@@ -7,11 +7,11 @@ import { PageShell } from "@/components/page-container";
 import { LibraryPageSkeleton } from "@/components/page-skeleton";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { loadLibraryCollections } from "@/lib/library/load";
-import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/library/pick-domain";
+import { LIBRARY_LAST_COLLECTION_COOKIE } from "@/lib/library/pick-collection";
 
 /**
  * The Library's frame and collection sidebar. Layouts don't re-render when
- * only the query changes, so switching collections (?domain=) reloads just
+ * only the query changes, so switching collections (?collection=) reloads just
  * the page below while the sidebar stays mounted.
  */
 export const metadata: Metadata = { title: "Library" };
@@ -35,7 +35,7 @@ async function LibraryFrame({ children }: { children: React.ReactNode }) {
     cookies(),
   ]);
   // Empty and failed states are the page's to show, full width.
-  if (!collections || collections.domains.length === 0) return children;
+  if (!collections || collections.collections.length === 0) return children;
 
   return (
     <PageShell>
@@ -44,9 +44,9 @@ async function LibraryFrame({ children }: { children: React.ReactNode }) {
       </div>
       <div className="flex flex-col gap-6 md:flex-row md:items-start">
         <LibrarySidebar
-          domains={collections.domains}
+          collections={collections.collections}
           loadedAt={collections.loadedAt}
-          lastDomainId={cookieStore.get(LIBRARY_LAST_DOMAIN_COOKIE)?.value ?? null}
+          lastCollectionId={cookieStore.get(LIBRARY_LAST_COLLECTION_COOKIE)?.value ?? null}
         />
         {children}
       </div>

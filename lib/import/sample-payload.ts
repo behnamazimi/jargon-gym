@@ -1,7 +1,7 @@
 import type { ImportPayload } from "./types";
 
 export const IMPORT_SAMPLE_PAYLOAD: ImportPayload = {
-  domain: "Software Engineering",
+  collection: "Software Engineering",
   language: "en",
   description: "Core vocabulary for software architecture, design, and delivery.",
   terms: [

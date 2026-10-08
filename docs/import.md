@@ -37,7 +37,7 @@ these rules, never its own guess.
 
 The Check screen's state is a reducer (`check-state.ts`). Duplicates are matched
 against the destination by trimmed, lowercased name, the same rule as the
-`terms_domain_term_idx` index. The default is Skip. Update changes terms in
+`terms_collection_term_idx` index. The default is Skip. Update changes terms in
 place by id, so learning history survives, and never replaces a value with an
 empty one.
 
@@ -83,7 +83,7 @@ Only a term's name is required. A term with no definition (`definition is
 null`) is unfinished. It is saved, and only its owner sees it. It stays out of
 every study and delivery surface until it gets a definition:
 
-- `get_trace_candidates` and `progress_state_by_domain` skip it, so Read,
+- `get_trace_candidates` and `progress_state_by_collection` skip it, so Read,
   Review, Quiz, Stories, Triage, Mastery, the widget, Telegram and every count
   ignore it.
 - Row-level security hides it from everyone but the owner, so shared views,
@@ -129,7 +129,7 @@ longer estimate without touching the dates of requests already sent.
 - **Definitions.** The "Request definitions" button on a collection's "N terms to
   finish" banner (shown only while the person can send a request) opens
   `/app/import/request?definitions=<collection id>`. That request has kind
-  `definitions` and a `target_domain_id`; it never creates a collection. The admin
+  `definitions` and a `target_collection_id`; it never creates a collection. The admin
   pastes definitions on the desk and `admin_fill_definitions` fills them into the
   requester's unfinished terms by name, in place by id, skipping everything else.
   `admin_request_unfinished_terms` is how the admin sees the waiting words, because

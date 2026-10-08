@@ -27,8 +27,8 @@ async function reviewState(userId: string) {
 
 test.describe("Studying a collection", () => {
   test("triage sorts terms into known and not yet", { tag: "@smoke" }, async ({ page, user }) => {
-    const { domainId } = await seedCollection(user);
-    await gotoReady(page, `/app/triage?domain=${domainId}`);
+    const { collectionId } = await seedCollection(user);
+    await gotoReady(page, `/app/triage?collection=${collectionId}`);
     await expect(page.getByText("10 left to sort")).toBeVisible();
 
     await page.getByRole("button", { name: "I know this" }).click();
@@ -49,8 +49,8 @@ test.describe("Studying a collection", () => {
   });
 
   test("reading a card counts as exposure", { tag: "@smoke" }, async ({ page, user }) => {
-    const { domainId } = await seedCollection(user);
-    await gotoReady(page, `/app/read?domain=${domainId}`);
+    const { collectionId } = await seedCollection(user);
+    await gotoReady(page, `/app/read?collection=${collectionId}`);
 
     await page.getByRole("button", { name: "Show definition" }).click();
     await page.getByRole("button", { name: "Next term" }).click();
@@ -59,8 +59,8 @@ test.describe("Studying a collection", () => {
   });
 
   test("reviewing a term records the grade", { tag: "@smoke" }, async ({ page, user }) => {
-    const { domainId } = await seedCollection(user);
-    await gotoReady(page, `/app/review?domain=${domainId}`);
+    const { collectionId } = await seedCollection(user);
+    await gotoReady(page, `/app/review?collection=${collectionId}`);
 
     await page.getByRole("button", { name: /^Recall the meaning/ }).click();
     await page.getByRole("button", { name: "Good" }).click();
@@ -77,8 +77,8 @@ test.describe("Studying a collection", () => {
     "a simple quiz can be finished and shows up in mastery",
     { tag: "@smoke" },
     async ({ page, user }) => {
-      const { domainId } = await seedCollection(user);
-      await gotoReady(page, `/app/quiz?domain=${domainId}`);
+      const { collectionId } = await seedCollection(user);
+      await gotoReady(page, `/app/quiz?collection=${collectionId}`);
       await page.getByRole("button", { name: "5", exact: true }).click();
       await page.getByRole("button", { name: "Start quiz" }).click();
 

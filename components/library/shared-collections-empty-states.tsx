@@ -6,7 +6,7 @@ import { Button, LinkButton } from "@/components/ui/button";
 import type { BrowseGroup } from "@/lib/library/browse";
 import type { RequestEntry } from "@/lib/requests/entry";
 
-export function SharedDomainsEmptyCatalog({ bannerError }: { bannerError: string | null }) {
+export function SharedCollectionsEmptyCatalog({ bannerError }: { bannerError: string | null }) {
   return (
     <div className="space-y-4">
       {bannerError ? (
@@ -39,7 +39,7 @@ const GROUP_LABEL: Record<BrowseGroup, string> = {
   community: "community",
 };
 
-export function SharedDomainsEmptyGroup({
+export function SharedCollectionsEmptyGroup({
   group,
   requestEntry,
 }: {
@@ -64,7 +64,7 @@ export function SharedDomainsEmptyGroup({
   );
 }
 
-export function SharedDomainsNoMatches({
+export function SharedCollectionsNoMatches({
   group,
   allAdded,
   hasActiveFilters,

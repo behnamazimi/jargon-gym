@@ -50,7 +50,7 @@ export function CaptureDetails({
             <TermRelationshipsEditor
               drafts={drafts}
               onChange={onDraftsChange}
-              domainTerms={terms}
+              collectionTerms={terms}
               sourceTermId={undefined}
             />
           ) : null}

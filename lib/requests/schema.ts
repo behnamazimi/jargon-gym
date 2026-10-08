@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DOMAIN_LANGUAGES } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
 import { normalizeKnownTerms } from "./known-terms";
 import { REQUEST_KINDS, REQUEST_LEVELS, REQUEST_SIZES } from "./types";
 
@@ -14,7 +14,7 @@ export const requestFormSchema = z
       .min(MIN_TOPIC_LENGTH, "Add a topic of at least 3 letters.")
       .max(MAX_TOPIC_LENGTH, "Keep the topic under 120 characters."),
     kind: z.enum(REQUEST_KINDS),
-    language: z.enum(DOMAIN_LANGUAGES),
+    language: z.enum(COLLECTION_LANGUAGES),
     level: z.string().optional(),
     size: z
       .number()

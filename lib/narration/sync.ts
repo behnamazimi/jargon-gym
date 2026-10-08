@@ -27,13 +27,13 @@ type AdminClient = SupabaseClient<Database>;
 
 function toJobView(
   row: Database["public"]["Tables"]["narration_sync_jobs"]["Row"],
-  domainName: string,
+  collectionName: string,
   nowMs: number,
 ): NarrationSyncJobView {
   return {
     id: row.id,
-    domainId: row.domain_id,
-    domainName,
+    collectionId: row.collection_id,
+    collectionName,
     status: row.status as NarrationSyncStatus,
     total: row.term_ids.length,
     cursor: row.cursor,
@@ -49,13 +49,13 @@ function toJobView(
   };
 }
 
-async function domainNameFor(client: AdminClient, domainId: string): Promise<string> {
-  const { data: domain } = await client
-    .from("domains")
+async function collectionNameFor(client: AdminClient, collectionId: string): Promise<string> {
+  const { data: collection } = await client
+    .from("collections")
     .select("name")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .maybeSingle();
-  return domain?.name ?? "Unknown collection";
+  return collection?.name ?? "Unknown collection";
 }
 
 export async function getLastNarrationSyncJob(
@@ -70,7 +70,7 @@ export async function getLastNarrationSyncJob(
   if (error) throw error;
   if (!row) return null;
 
-  return toJobView(row, await domainNameFor(client, row.domain_id), Date.now());
+  return toJobView(row, await collectionNameFor(client, row.collection_id), Date.now());
 }
 
 async function getActiveJob(admin: AdminClient) {
@@ -85,7 +85,7 @@ async function getActiveJob(admin: AdminClient) {
 
 export async function enqueueNarrationSync(
   admin: AdminClient,
-  domainId: string,
+  collectionId: string,
   startedBy: string,
 ): Promise<NarrationSyncJobView> {
   if (!(await isNarrationEnabled(admin))) {
@@ -96,23 +96,23 @@ export async function enqueueNarrationSync(
     throw new AdminError("A sync is already running.");
   }
 
-  const termIds = await listMissingNarrationTermIds(admin, domainId);
+  const termIds = await listMissingNarrationTermIds(admin, collectionId);
   if (termIds.length === 0) {
     throw new AdminError("No missing audio in that collection.");
   }
 
-  const { data: domain, error: domainError } = await admin
-    .from("domains")
+  const { data: collection, error: collectionError } = await admin
+    .from("collections")
     .select("id, name")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .maybeSingle();
-  if (domainError) throw domainError;
-  if (!domain) throw new AdminError("Collection not found.");
+  if (collectionError) throw collectionError;
+  if (!collection) throw new AdminError("Collection not found.");
 
   const { data: row, error } = await admin
     .from("narration_sync_jobs")
     .insert({
-      domain_id: domainId,
+      collection_id: collectionId,
       started_by: startedBy,
       status: "queued",
       term_ids: termIds,
@@ -127,7 +127,7 @@ export async function enqueueNarrationSync(
     throw error;
   }
 
-  return toJobView(row, domain.name, Date.now());
+  return toJobView(row, collection.name, Date.now());
 }
 
 export async function cancelNarrationSync(
@@ -146,5 +146,5 @@ export async function cancelNarrationSync(
   if (error) throw error;
   if (!row) return getLastNarrationSyncJob(admin);
 
-  return toJobView(row, await domainNameFor(admin, row.domain_id), Date.now());
+  return toJobView(row, await collectionNameFor(admin, row.collection_id), Date.now());
 }

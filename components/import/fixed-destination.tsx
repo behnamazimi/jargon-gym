@@ -1,5 +1,5 @@
 import type { ImportFlowState } from "@/components/import/use-import-flow";
-import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
 
 /** Shown instead of the destination choice when another screen fixes it. */
 export function FixedDestinationNote({ flow }: { flow: ImportFlowState }) {
@@ -13,7 +13,7 @@ export function FixedDestinationNote({ flow }: { flow: ImportFlowState }) {
     );
   }
   const language =
-    DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === fixed.language)?.label ??
+    COLLECTION_LANGUAGE_OPTIONS.find((option) => option.value === fixed.language)?.label ??
     fixed.language;
   return (
     <p className="m-0 text-sm text-base-content/70" role="status">

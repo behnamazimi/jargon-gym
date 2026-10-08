@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { NARRATION_PAUSE } from "@/lib/ai/speech/pause";
 import type { NarrationMode } from "./mode";
 import type { NarratedTermFields } from "./types";
@@ -18,10 +18,10 @@ type ConnectorPhrases = {
 /**
  * Connector phrases per collection language. A language present here gets
  * the phrased template below; a language without an entry (any future/
- * unsupported DomainLanguage) falls back to plain pause-joined
+ * unsupported CollectionLanguage) falls back to plain pause-joined
  * concatenation in buildNarrationScript, so narration never mixes languages.
  */
-const CONNECTOR_PHRASES: Partial<Record<DomainLanguage, ConnectorPhrases>> = {
+const CONNECTOR_PHRASES: Partial<Record<CollectionLanguage, ConnectorPhrases>> = {
   en: {
     mentalModel: "Think of it like this:",
     example: "For example,",
@@ -118,7 +118,7 @@ const CONNECTOR_PHRASES: Partial<Record<DomainLanguage, ConnectorPhrases>> = {
  */
 export function buildNarrationScript(
   fields: NarratedTermFields,
-  language: DomainLanguage,
+  language: CollectionLanguage,
   mode: NarrationMode,
 ): string {
   if (mode === "term") return `${fields.term.trim()}.`;

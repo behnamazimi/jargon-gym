@@ -43,20 +43,20 @@ declare
   v_rows json;
   v_failed boolean;
 begin
-  insert into public.domains (name, owner_id) values ('Queue Mine', member_id) returning id into d_member;
-  insert into public.domains (name, owner_id) values ('Queue Theirs', other_id) returning id into d_other;
-  insert into public.terms (domain_id, term, category, definition) values (d_member, 'finished', 'c', 'has a definition');
-  insert into public.terms (domain_id, term) values (d_member, 'draft');
-  insert into public.terms (domain_id, term, category, definition) values (d_other, 'elsewhere', 'c', 'x');
+  insert into public.collections (name, owner_id) values ('Queue Mine', member_id) returning id into d_member;
+  insert into public.collections (name, owner_id) values ('Queue Theirs', other_id) returning id into d_other;
+  insert into public.terms (collection_id, term, category, definition) values (d_member, 'finished', 'c', 'has a definition');
+  insert into public.terms (collection_id, term) values (d_member, 'draft');
+  insert into public.terms (collection_id, term, category, definition) values (d_other, 'elsewhere', 'c', 'x');
 
   -- An owned collection that is switched off, and a collection added from someone else.
-  insert into public.domains (name, owner_id) values ('Queue Off', member_id) returning id into d_off;
-  insert into public.domains (name, owner_id) values ('Queue Added', other_id) returning id into d_added;
-  insert into public.terms (domain_id, term, category, definition) values (d_off, 'dormant', 'c', 'd');
-  insert into public.terms (domain_id, term, category, definition) values (d_added, 'borrowed', 'c', 'b') returning id into t_known;
-  insert into public.user_collection_domains (user_id, domain_id) values (member_id, d_added);
-  delete from public.user_active_domains where user_id = member_id;
-  insert into public.user_active_domains (user_id, domain_id) values (member_id, d_member), (member_id, d_added);
+  insert into public.collections (name, owner_id) values ('Queue Off', member_id) returning id into d_off;
+  insert into public.collections (name, owner_id) values ('Queue Added', other_id) returning id into d_added;
+  insert into public.terms (collection_id, term, category, definition) values (d_off, 'dormant', 'c', 'd');
+  insert into public.terms (collection_id, term, category, definition) values (d_added, 'borrowed', 'c', 'b') returning id into t_known;
+  insert into public.user_collections (user_id, collection_id) values (member_id, d_added);
+  delete from public.user_active_collections where user_id = member_id;
+  insert into public.user_active_collections (user_id, collection_id) values (member_id, d_member), (member_id, d_added);
   insert into public.review_state (user_id, term_id, marked_known_at) values (member_id, t_known, now());
 
   assert not has_function_privilege('anon', 'public.admin_queue_debug_terms(uuid)', 'execute'), 'anon could read a queue';

@@ -7,8 +7,8 @@ describe("mapQueueDebugRows", () => {
       {
         term_id: "t1",
         term: "standup",
-        domain_id: "d1",
-        domain_name: "Work",
+        collection_id: "d1",
+        collection_name: "Work",
         active: false,
         finished: true,
         created_at: "2026-09-01T00:00:00Z",
@@ -30,7 +30,7 @@ describe("mapQueueDebugRows", () => {
     expect(row).toMatchObject({
       termId: "t1",
       term: "standup",
-      domainName: "Work",
+      collectionName: "Work",
       active: false,
       recallStability: 3.5,
       lastReviewRecallAt: null,

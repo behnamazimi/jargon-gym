@@ -10,7 +10,7 @@ import {
   DEFAULT_TELEGRAM_QUIZ_COUNT,
   getMaxQuizQuestionCount,
   loadQuizSetup,
-  type QuizDomainSelection,
+  type QuizCollectionSelection,
 } from "./session-store";
 import { edit, send } from "./transport";
 
@@ -22,16 +22,16 @@ async function resolveSetupTextCount(
   client: Client,
   chatId: number,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   trimmed: string,
 ): Promise<CountResolution> {
   if (trimmed === "") {
-    const available = await countTermsForQuiz(client, userId, domainId);
+    const available = await countTermsForQuiz(client, userId, collectionId);
     return { count: Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, getMaxQuizQuestionCount(available)) };
   }
 
   if (trimmed.toLowerCase() === "all") {
-    return { count: await resolveQuizCount(client, userId, domainId, "all") };
+    return { count: await resolveQuizCount(client, userId, collectionId, "all") };
   }
 
   const parsed = parseInt(trimmed, 10);
@@ -41,7 +41,7 @@ async function resolveSetupTextCount(
     };
   }
 
-  const maxCount = getMaxQuizQuestionCount(await countTermsForQuiz(client, userId, domainId));
+  const maxCount = getMaxQuizQuestionCount(await countTermsForQuiz(client, userId, collectionId));
   if (parsed > maxCount) {
     return {
       errorActions: [send(chatId, `Maximum for this selection is ${maxCount}. Try again.`)],
@@ -64,7 +64,7 @@ export async function handleQuizSetupText(
   text: string,
 ): Promise<{ handled: boolean; actions: TelegramAction[] }> {
   const setup = await loadQuizSetup(client, chatId);
-  if (!setup || setup.step !== "count" || !setup.domainId) {
+  if (!setup || setup.step !== "count" || !setup.collectionId) {
     return { handled: false, actions: [] };
   }
 
@@ -73,14 +73,20 @@ export async function handleQuizSetupText(
     return { handled: false, actions: [] };
   }
 
-  const resolution = await resolveSetupTextCount(client, chatId, userId, setup.domainId, trimmed);
+  const resolution = await resolveSetupTextCount(
+    client,
+    chatId,
+    userId,
+    setup.collectionId,
+    trimmed,
+  );
   if ("errorActions" in resolution) {
     return { handled: true, actions: resolution.errorActions };
   }
   const { count } = resolution;
 
   const actions: TelegramAction[] = [];
-  const available = await countTermsForQuiz(client, userId, setup.domainId);
+  const available = await countTermsForQuiz(client, userId, setup.collectionId);
   const maxCount = getMaxQuizQuestionCount(available);
   const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
 
@@ -96,7 +102,7 @@ export async function handleQuizSetupText(
   }
 
   await clearQuizSetup(client, chatId);
-  actions.push(...(await startReviewSession(client, chatId, userId, setup.domainId, count)));
+  actions.push(...(await startReviewSession(client, chatId, userId, setup.collectionId, count)));
 
   return { handled: true, actions };
 }

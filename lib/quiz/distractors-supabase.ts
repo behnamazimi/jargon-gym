@@ -66,7 +66,7 @@ async function fetchRandomDistractors(
   const { data, error } = await client
     .from("terms")
     .select("id, term, definition, category")
-    .eq("domain_id", term.domainId)
+    .eq("collection_id", term.collectionId)
     .not("definition", "is", null)
     .not("id", "in", `(${excludedIds.join(",")})`)
     .limit(Math.max(needed * 3, RANDOM_CANDIDATE_MIN));
@@ -110,7 +110,7 @@ export function supabaseDistractorSource(client: Client): DistractorSource {
       const { data, error } = await client
         .from("terms")
         .select("id, term, definition, category")
-        .eq("domain_id", term.domainId)
+        .eq("collection_id", term.collectionId)
         .neq("id", term.id)
         .ilike("definition", escapeLike(term.definition.trim()))
         .limit(1);

@@ -18,7 +18,7 @@ export function useQuizSession(collections: StudyCollection[], initialSetup: Ini
     questionCount: setup.questionCount,
     questionCountInput: setup.questionCountInput,
     questionCountError: setup.questionCountError,
-    domainIds: setup.domainIds,
+    collectionIds: setup.collectionIds,
     availableTermCount: setup.availableTermCount,
     questionCountPresets: setup.questionCountPresets,
     applyQuestionCount: setup.applyQuestionCount,

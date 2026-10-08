@@ -19,10 +19,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { REPORTED_THANKS } from "@/lib/collections/moderation";
-import type { Domain } from "@/lib/terms/types";
+import type { Collection } from "@/lib/terms/types";
 
-type DomainActionsDropdownProps = {
-  domain: Domain;
+type CollectionActionsDropdownProps = {
+  collection: Collection;
   disabled: boolean;
   onToggleActiveForReview: () => void;
   onResetProgress: () => void;
@@ -35,8 +35,8 @@ type DomainActionsDropdownProps = {
   onRemoveFromCollection: () => void;
 };
 
-export function DomainActionsDropdown({
-  domain,
+export function CollectionActionsDropdown({
+  collection,
   disabled,
   onToggleActiveForReview,
   onResetProgress,
@@ -47,7 +47,7 @@ export function DomainActionsDropdown({
   onDelete,
   onReport,
   onRemoveFromCollection,
-}: DomainActionsDropdownProps) {
+}: CollectionActionsDropdownProps) {
   return (
     <DropdownMenuTrigger>
       <Button
@@ -62,13 +62,17 @@ export function DomainActionsDropdown({
       </Button>
       <DropdownMenu className="min-w-[210px]">
         <DropdownMenuItem isDisabled={disabled} onAction={onToggleActiveForReview}>
-          {domain.isActiveForReview ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          {domain.isActiveForReview ? "Pause review" : "Resume review"}
+          {collection.isActiveForReview ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4" />
+          )}
+          {collection.isActiveForReview ? "Pause review" : "Resume review"}
         </DropdownMenuItem>
 
         <DropdownMenuItem
           variant="destructive"
-          isDisabled={disabled || domain.knownCount === 0}
+          isDisabled={disabled || collection.knownCount === 0}
           onAction={onResetProgress}
         >
           <RotateCcw className="h-4 w-4" />
@@ -80,15 +84,15 @@ export function DomainActionsDropdown({
           Export JSON
         </DropdownMenuItem>
 
-        {domain.source === "owned" ? (
+        {collection.source === "owned" ? (
           <>
             <DropdownMenuItem isDisabled={disabled} onAction={onEdit}>
               <Pencil className="h-4 w-4" />
               Edit collection
             </DropdownMenuItem>
-            {domain.visibility === "private" ? (
+            {collection.visibility === "private" ? (
               <DropdownMenuItem
-                isDisabled={disabled || domain.shareBlockedReason !== null}
+                isDisabled={disabled || collection.shareBlockedReason !== null}
                 onAction={onShare}
               >
                 <Share2 className="h-4 w-4" />
@@ -108,10 +112,13 @@ export function DomainActionsDropdown({
           </>
         ) : (
           <>
-            {domain.isBuiltin ? null : (
-              <DropdownMenuItem isDisabled={disabled || domain.reportedByMe} onAction={onReport}>
+            {collection.isBuiltin ? null : (
+              <DropdownMenuItem
+                isDisabled={disabled || collection.reportedByMe}
+                onAction={onReport}
+              >
                 <Flag className="h-4 w-4" />
-                {domain.reportedByMe ? REPORTED_THANKS : "Report collection"}
+                {collection.reportedByMe ? REPORTED_THANKS : "Report collection"}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem isDisabled={disabled} onAction={onRemoveFromCollection}>

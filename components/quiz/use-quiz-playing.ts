@@ -25,7 +25,7 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     setQuestionCount,
     setQuestionCountInput,
     setErrorMessage,
-    domainIds,
+    collectionIds,
     questionCount,
   } = setup;
   const router = useRouter();
@@ -79,7 +79,7 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     currentIndex,
     answers,
     pendingWrites,
-    domainIds,
+    collectionIds,
     questionStyle,
     startedAt: sessionStartedAt,
   });
@@ -104,7 +104,7 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     advancedQuestionKeyRef.current = null;
     setQuestionStyle(savedSession.setup.questionStyle ?? "ai");
     setSelectedCollectionId(
-      savedSession.setup.domainIds === "all" ? "all" : savedSession.setup.domainIds[0],
+      savedSession.setup.collectionIds === "all" ? "all" : savedSession.setup.collectionIds[0],
     );
     setQuestionCount(savedSession.setup.questionCount);
     setQuestionCountInput(String(savedSession.setup.questionCount));
@@ -158,7 +158,7 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     setStep("generating");
     setSessionStartedAt(new Date().toISOString());
 
-    const result = await generateQuizAction({ domainIds, questionCount, questionStyle });
+    const result = await generateQuizAction({ collectionIds, questionCount, questionStyle });
 
     // The balance may have changed either way, so refresh what shows it.
     if (questionStyle === "ai") router.refresh();
@@ -173,7 +173,7 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     track("quiz_started", {
       question_style: questionStyle,
       question_count: result.questions.length,
-      collection_scope: domainIds === "all" ? "all" : "selected",
+      collection_scope: collectionIds === "all" ? "all" : "selected",
     });
     setQuestions(result.questions);
     setTerms(result.terms);

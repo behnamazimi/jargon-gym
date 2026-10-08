@@ -43,7 +43,7 @@ export default async function MasteryRoute({ searchParams }: PageProps) {
     <MasteryPage
       initialTab={params.tab === "terms" ? "terms" : "overview"}
       initialCollectionId={
-        collections.some((collection) => collection.domainId === params.collection)
+        collections.some((collection) => collection.collectionId === params.collection)
           ? (params.collection ?? "all")
           : "all"
       }

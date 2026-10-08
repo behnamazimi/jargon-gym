@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { jsonSyntaxFailure, validationFailure } from "./errors";
 import { describeZodIssues } from "./issue-messages";
 import { buildTerms } from "./parse/build-terms";
@@ -14,8 +14,8 @@ type JsonLink = {
 };
 
 export type JsonImport = {
-  domain: string;
-  language: DomainLanguage | null;
+  collection: string;
+  language: CollectionLanguage | null;
   description: string | null;
   built: BuiltTerms;
   links: JsonLink[];
@@ -81,7 +81,7 @@ export function readJsonImport(raw: string): JsonReadResult {
   return {
     ok: true,
     data: {
-      domain: payload.domain,
+      collection: payload.collection,
       language: payload.language ?? null,
       description: payload.description ?? null,
       built: buildTerms(list),

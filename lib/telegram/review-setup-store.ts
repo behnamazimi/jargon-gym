@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
-import type { QuizDomainSelection } from "./quiz-session-store";
+import type { QuizCollectionSelection } from "./quiz-session-store";
 
 type Client = SupabaseClient<Database>;
 
@@ -8,7 +8,7 @@ type ReviewSetupStep = "collection" | "count";
 
 export type ReviewSetupState = {
   step: ReviewSetupStep;
-  domainId?: QuizDomainSelection;
+  collectionId?: QuizCollectionSelection;
   promptMessageId?: number;
   startedAt: number;
 };
@@ -21,7 +21,9 @@ function isReviewSetupState(value: unknown): value is ReviewSetupState {
   return (
     (setup.step === "collection" || setup.step === "count") &&
     typeof setup.startedAt === "number" &&
-    (setup.domainId === undefined || setup.domainId === "all" || typeof setup.domainId === "string")
+    (setup.collectionId === undefined ||
+      setup.collectionId === "all" ||
+      typeof setup.collectionId === "string")
   );
 }
 

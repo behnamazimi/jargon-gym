@@ -1,27 +1,27 @@
 import { z } from "zod";
 import { cleanText } from "@/lib/terms/text-clean";
-import { DOMAIN_LANGUAGES } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
 
-const domainFieldsSchema = z.object({
+const collectionFieldsSchema = z.object({
   name: z.string().transform(cleanText).pipe(z.string().trim().min(1, "Enter a collection name")),
   description: z.string().transform(cleanText).nullable().optional(),
-  language: z.enum(DOMAIN_LANGUAGES).default("en"),
+  language: z.enum(COLLECTION_LANGUAGES).default("en"),
 });
 
-export type DomainInput = z.infer<typeof domainFieldsSchema>;
+export type CollectionInput = z.infer<typeof collectionFieldsSchema>;
 
-export function parseDomainInput(
+export function parseCollectionInput(
   input: unknown,
-): { ok: true; data: DomainInput } | { ok: false; error: string } {
-  const result = domainFieldsSchema.safeParse(input);
+): { ok: true; data: CollectionInput } | { ok: false; error: string } {
+  const result = collectionFieldsSchema.safeParse(input);
   if (!result.success) {
     const first = result.error.issues[0];
-    return { ok: false, error: first?.message ?? "Invalid domain data." };
+    return { ok: false, error: first?.message ?? "Invalid collection data." };
   }
   return { ok: true, data: result.data };
 }
 
-export function domainInputToUpdateRow(input: DomainInput) {
+export function collectionInputToUpdateRow(input: CollectionInput) {
   return {
     name: input.name.trim(),
     description: input.description?.trim() || null,
@@ -40,7 +40,7 @@ const newCollectionSchema = z.object({
         .min(1, "Enter a name for your collection.")
         .max(100, "Keep the name under 100 characters."),
     ),
-  language: z.enum(DOMAIN_LANGUAGES).default("en"),
+  language: z.enum(COLLECTION_LANGUAGES).default("en"),
 });
 
 export type NewCollectionInput = z.infer<typeof newCollectionSchema>;

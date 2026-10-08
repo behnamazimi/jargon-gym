@@ -5,13 +5,13 @@ const base = {
   host: "jargon-gym.vercel.app",
   method: "GET",
   pathname: "/app/library",
-  search: "?domain=abc",
+  search: "?collection=abc",
   target: "https://lobyas.com",
 };
 
 describe("legacyHostRedirect", () => {
   it("sends a page on the old host to the same path and query on the new one", () => {
-    expect(legacyHostRedirect(base)).toBe("https://lobyas.com/app/library?domain=abc");
+    expect(legacyHostRedirect(base)).toBe("https://lobyas.com/app/library?collection=abc");
   });
 
   it("does nothing until a target is set", () => {

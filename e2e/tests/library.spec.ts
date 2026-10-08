@@ -20,8 +20,8 @@ test.describe("Managing the library", () => {
     { tag: "@smoke" },
     async ({ page, user, isMobile }) => {
       test.skip(isMobile, "Phones mark known by swiping a row");
-      const { domainId } = await seedCollection(user);
-      await gotoReady(page, `/app/library?domain=${domainId}`);
+      const { collectionId } = await seedCollection(user);
+      await gotoReady(page, `/app/library?collection=${collectionId}`);
       const row = page.getByRole("article").filter({ hasText: FIRST_TERM });
 
       await row.getByRole("button", { name: "Mark known" }).click();
@@ -35,8 +35,8 @@ test.describe("Managing the library", () => {
 
   test("a known term stays known after a reload", async ({ page, user, isMobile }) => {
     test.skip(isMobile, "Phones mark known by swiping a row");
-    const { domainId } = await seedCollection(user);
-    await gotoReady(page, `/app/library?domain=${domainId}`);
+    const { collectionId } = await seedCollection(user);
+    await gotoReady(page, `/app/library?collection=${collectionId}`);
     const row = page.getByRole("article").filter({ hasText: FIRST_TERM });
     await row.getByRole("button", { name: "Mark known" }).click();
     await expect.poll(() => markedKnown(user.id, FIRST_TERM)).toBe(true);
@@ -54,8 +54,8 @@ test.describe("Managing the library", () => {
     "deleting a term removes it from the collection",
     { tag: "@smoke" },
     async ({ page, user }) => {
-      const { domainId } = await seedCollection(user);
-      await gotoReady(page, `/app/library?domain=${domainId}`);
+      const { collectionId } = await seedCollection(user);
+      await gotoReady(page, `/app/library?collection=${collectionId}`);
 
       await page.getByRole("button", { name: `Actions for ${FIRST_TERM}` }).click();
       await page.getByRole("menuitem", { name: "Delete" }).click();
@@ -65,15 +65,16 @@ test.describe("Managing the library", () => {
       await expect
         .poll(
           async () =>
-            (await sql("select 1 from public.terms where domain_id = $1", [domainId])).length,
+            (await sql("select 1 from public.terms where collection_id = $1", [collectionId]))
+              .length,
         )
         .toBe(SAMPLE_TERMS.length - 1);
     },
   );
 
   test("deleting a collection removes its terms", { tag: "@smoke" }, async ({ page, user }) => {
-    const { domainId, name } = await seedCollection(user);
-    await gotoReady(page, `/app/library?domain=${domainId}`);
+    const { collectionId, name } = await seedCollection(user);
+    await gotoReady(page, `/app/library?collection=${collectionId}`);
 
     await page.getByRole("button", { name: "Collection actions" }).click();
     await page.getByRole("menuitem", { name: "Delete collection" }).click();
@@ -82,7 +83,8 @@ test.describe("Managing the library", () => {
     await expect(page.getByRole("link", { name })).toHaveCount(0);
     await expect
       .poll(
-        async () => (await sql("select 1 from public.domains where id = $1", [domainId])).length,
+        async () =>
+          (await sql("select 1 from public.collections where id = $1", [collectionId])).length,
       )
       .toBe(0);
   });

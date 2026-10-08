@@ -2,25 +2,25 @@
 
 import { useRef, useState } from "react";
 import { ReportCollectionDialog } from "@/components/library/report-collection-dialog";
-import { SharedDomainCard } from "@/components/library/shared-domain-card";
-import { BROWSE_PANEL_ID } from "@/components/library/shared-domains-tabs";
-import { SharedDomainsFilterBar } from "@/components/library/shared-domains-filter-bar";
+import { SharedCollectionCard } from "@/components/library/shared-collection-card";
+import { BROWSE_PANEL_ID } from "@/components/library/shared-collections-tabs";
+import { SharedCollectionsFilterBar } from "@/components/library/shared-collections-filter-bar";
 import {
-  SharedDomainsEmptyCatalog,
-  SharedDomainsEmptyGroup,
-  SharedDomainsNoMatches,
-} from "@/components/library/shared-domains-empty-states";
+  SharedCollectionsEmptyCatalog,
+  SharedCollectionsEmptyGroup,
+  SharedCollectionsNoMatches,
+} from "@/components/library/shared-collections-empty-states";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { setCollectionLove } from "@/app/(private)/app/actions";
 import { useToast } from "@/components/ui/toast";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
-import { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
+import { useSharedCollectionsBrowse } from "@/hooks/use-shared-collections-browse";
 import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
 import type { BrowseGroup, BrowsePageResult } from "@/lib/library/browse";
 import type { RequestEntry } from "@/lib/requests/entry";
 import { cn } from "@/lib/utils";
 
-type SharedDomainsBrowseProps = {
+type SharedCollectionsBrowseProps = {
   initialPage: BrowsePageResult;
   initialGroup: BrowseGroup;
   requestEntry: RequestEntry;
@@ -32,17 +32,17 @@ function EmptyResults({
   requestEntry,
   onClearFilters,
 }: {
-  browse: ReturnType<typeof useSharedDomainsBrowse>;
+  browse: ReturnType<typeof useSharedCollectionsBrowse>;
   allAdded: boolean;
   requestEntry: RequestEntry;
   onClearFilters: () => void;
 }) {
   if (browse.isRefreshing) return null;
   if (!browse.hasActiveFilters) {
-    return <SharedDomainsEmptyGroup group={browse.group} requestEntry={requestEntry} />;
+    return <SharedCollectionsEmptyGroup group={browse.group} requestEntry={requestEntry} />;
   }
   return (
-    <SharedDomainsNoMatches
+    <SharedCollectionsNoMatches
       group={browse.group}
       allAdded={allAdded}
       hasActiveFilters={browse.hasActiveFilters}
@@ -54,14 +54,14 @@ function EmptyResults({
   );
 }
 
-export function SharedDomainsBrowse({
+export function SharedCollectionsBrowse({
   initialPage,
   initialGroup,
   requestEntry,
-}: SharedDomainsBrowseProps) {
+}: SharedCollectionsBrowseProps) {
   const { error, busyId, addToCollection, removeFromCollection } = useCollectionActions();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const browse = useSharedDomainsBrowse({ initialPage, initialGroup });
+  const browse = useSharedCollectionsBrowse({ initialPage, initialGroup });
   const { toast } = useToast();
   const [reporting, setReporting] = useState<{
     id: string;
@@ -72,43 +72,43 @@ export function SharedDomainsBrowse({
 
   const [justAdded, setJustAdded] = useState<ReadonlySet<string>>(new Set());
 
-  function setAddedNow(domainId: string, added: boolean) {
+  function setAddedNow(collectionId: string, added: boolean) {
     setJustAdded((current) => {
       const next = new Set(current);
-      if (added) next.add(domainId);
-      else next.delete(domainId);
+      if (added) next.add(collectionId);
+      else next.delete(collectionId);
       return next;
     });
   }
 
-  async function handleAdd(domainId: string) {
-    const name = browse.domains.find((domain) => domain.id === domainId)?.name;
-    browse.markInCollection(domainId, true);
-    const ok = await addToCollection(domainId);
+  async function handleAdd(collectionId: string) {
+    const name = browse.collections.find((collection) => collection.id === collectionId)?.name;
+    browse.markInCollection(collectionId, true);
+    const ok = await addToCollection(collectionId);
     if (!ok) {
       browse.retry();
       return;
     }
-    setAddedNow(domainId, true);
+    setAddedNow(collectionId, true);
     toast(name ? `Added "${name}"` : "Added to your library", "success");
   }
 
-  async function handleRemove(domainId: string) {
-    browse.markInCollection(domainId, false);
-    setAddedNow(domainId, false);
-    const ok = await removeFromCollection(domainId);
+  async function handleRemove(collectionId: string) {
+    browse.markInCollection(collectionId, false);
+    setAddedNow(collectionId, false);
+    const ok = await removeFromCollection(collectionId);
     if (!ok) browse.retry();
   }
 
-  async function handleToggleLove(domainId: string, loved: boolean) {
-    browse.markLoved(domainId, loved);
-    const result = await setCollectionLove(domainId, loved);
+  async function handleToggleLove(collectionId: string, loved: boolean) {
+    browse.markLoved(collectionId, loved);
+    const result = await setCollectionLove(collectionId, loved);
     if (result.error) {
-      browse.markLoved(domainId, !loved);
+      browse.markLoved(collectionId, !loved);
       toast(result.error, "destructive");
       return;
     }
-    if (result.count !== undefined) browse.markLoved(domainId, loved, result.count);
+    if (result.count !== undefined) browse.markLoved(collectionId, loved, result.count);
   }
 
   const allAdded =
@@ -119,7 +119,7 @@ export function SharedDomainsBrowse({
   const bannerError = error ?? browse.listError;
 
   if (browse.isEmptyCatalog) {
-    return <SharedDomainsEmptyCatalog bannerError={bannerError} />;
+    return <SharedCollectionsEmptyCatalog bannerError={bannerError} />;
   }
 
   return (
@@ -130,7 +130,7 @@ export function SharedDomainsBrowse({
         </Alert>
       ) : null}
 
-      <SharedDomainsFilterBar browse={browse} searchInputRef={searchInputRef} />
+      <SharedCollectionsFilterBar browse={browse} searchInputRef={searchInputRef} />
 
       <div
         role="tabpanel"
@@ -139,7 +139,7 @@ export function SharedDomainsBrowse({
         aria-labelledby={`browse-tab-${browse.group}`}
         className="space-y-4"
       >
-        {browse.domains.length === 0 ? (
+        {browse.collections.length === 0 ? (
           <EmptyResults
             browse={browse}
             allAdded={allAdded}
@@ -151,16 +151,16 @@ export function SharedDomainsBrowse({
           />
         ) : (
           <ul className={cn("flex flex-col gap-3", browse.isRefreshing && "opacity-70")}>
-            {browse.domains.map((domain) => (
-              <li key={domain.id}>
-                <SharedDomainCard
-                  domain={domain}
-                  busy={busyId === domain.id}
-                  justAdded={justAdded.has(domain.id)}
-                  onAdd={() => void handleAdd(domain.id)}
-                  onRemove={() => void handleRemove(domain.id)}
-                  onToggleLove={() => void handleToggleLove(domain.id, !domain.lovedByMe)}
-                  onReport={() => setReporting({ id: domain.id, name: domain.name })}
+            {browse.collections.map((collection) => (
+              <li key={collection.id}>
+                <SharedCollectionCard
+                  collection={collection}
+                  busy={busyId === collection.id}
+                  justAdded={justAdded.has(collection.id)}
+                  onAdd={() => void handleAdd(collection.id)}
+                  onRemove={() => void handleRemove(collection.id)}
+                  onToggleLove={() => void handleToggleLove(collection.id, !collection.lovedByMe)}
+                  onReport={() => setReporting({ id: collection.id, name: collection.name })}
                 />
               </li>
             ))}
@@ -170,8 +170,8 @@ export function SharedDomainsBrowse({
 
       {reporting ? (
         <ReportCollectionDialog
-          domainId={reporting.id}
-          domainName={reporting.name}
+          collectionId={reporting.id}
+          collectionName={reporting.name}
           onReported={() => browse.markReported(reporting.id)}
           onClose={() => setReporting(null)}
         />

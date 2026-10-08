@@ -5,12 +5,12 @@ import { MAX_STUDY_TERMS } from "./types";
  *  a selection is just the collection's total term count. */
 export function countTermsForSelection(
   collections: StudyCollection[],
-  domainIds: string[] | "all",
+  collectionIds: string[] | "all",
 ): number {
   const selected =
-    domainIds === "all"
+    collectionIds === "all"
       ? collections
-      : collections.filter((collection) => domainIds.includes(collection.id));
+      : collections.filter((collection) => collectionIds.includes(collection.id));
 
   return selected.reduce((total, collection) => total + collection.termCount, 0);
 }

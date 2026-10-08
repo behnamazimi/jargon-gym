@@ -20,8 +20,8 @@ export type NarrationTermClip = {
 
 export type NarrationSyncJobView = {
   id: string;
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
   status: NarrationSyncStatus;
   total: number;
   cursor: number;

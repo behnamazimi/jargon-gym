@@ -293,7 +293,7 @@ that point, it's just no longer being held back.
 ## Unfinished terms
 
 A term with no definition is "unfinished". It never enters any of the pools
-above: `get_trace_candidates` and `progress_state_by_domain` skip it, so it
+above: `get_trace_candidates` and `progress_state_by_collection` skip it, so it
 earns no exposure, adds nothing to mastery denominators or progress counts, and
 never reaches Read, Review, Quiz, Stories, the widget or Telegram. Finishing a
 term makes it eligible from that moment, with no history, like a newly

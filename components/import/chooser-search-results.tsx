@@ -2,14 +2,14 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, LinkButton } from "@/components/ui/button";
-import type { SharedDomain } from "@/lib/terms/types";
+import type { SharedCollection } from "@/lib/terms/types";
 import { pluralize } from "@/lib/utils";
 
 export type SearchState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "error" }
-  | { status: "done"; query: string; domains: SharedDomain[] };
+  | { status: "done"; query: string; collections: SharedCollection[] };
 
 export function SearchResults({
   state,
@@ -22,7 +22,7 @@ export function SearchResults({
   state: SearchState;
   addingId: string | null;
   addedIds: string[];
-  onAdd: (domainId: string) => void;
+  onAdd: (collectionId: string) => void;
   /** The request form shows close matches only when there are some. */
   hideWhenEmpty?: boolean;
   noMatchMessage?: (query: string) => string;
@@ -38,7 +38,7 @@ export function SearchResults({
       </Alert>
     );
   }
-  if (state.domains.length === 0) {
+  if (state.collections.length === 0) {
     if (hideWhenEmpty) return null;
     return (
       <p className="m-0 text-sm text-base-content/70" role="status">
@@ -51,22 +51,22 @@ export function SearchResults({
 
   return (
     <ul className="m-0 flex list-none flex-col gap-2 p-0">
-      {state.domains.map((domain) => {
-        const added = domain.inCollection || addedIds.includes(domain.id);
+      {state.collections.map((collection) => {
+        const added = collection.inCollection || addedIds.includes(collection.id);
         return (
           <li
-            key={domain.id}
+            key={collection.id}
             className="shadow-surface flex items-center gap-3 rounded-field bg-base-100 p-3"
           >
             <div className="min-w-0 flex-1">
-              <p className="m-0 truncate font-medium">{domain.name}</p>
+              <p className="m-0 truncate font-medium">{collection.name}</p>
               <p className="m-0 text-sm text-base-content/70">
-                {pluralize(domain.termCount, "term")} · Shared
+                {pluralize(collection.termCount, "term")} · Shared
               </p>
             </div>
             {added ? (
               <LinkButton
-                href={`/app/library?domain=${domain.id}`}
+                href={`/app/library?collection=${collection.id}`}
                 variant="outline"
                 size="sm"
                 className="min-h-11 md:min-h-8"
@@ -79,10 +79,10 @@ export function SearchResults({
                 variant="outline"
                 size="sm"
                 className="min-h-11 md:min-h-8"
-                isDisabled={addingId === domain.id}
-                onPress={() => onAdd(domain.id)}
+                isDisabled={addingId === collection.id}
+                onPress={() => onAdd(collection.id)}
               >
-                {addingId === domain.id ? "Adding…" : "Add"}
+                {addingId === collection.id ? "Adding…" : "Add"}
               </Button>
             )}
           </li>

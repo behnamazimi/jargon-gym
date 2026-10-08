@@ -63,7 +63,7 @@ describe("legacy term page redirects", () => {
 
   it("send a term address to its collection", () => {
     expect(termSlug.test("lopen")).toBe(true);
-    expect(redirect.destination).toBe("/collections/:domainSlug");
+    expect(redirect.destination).toBe("/collections/:collectionSlug");
   });
 
   it("leave the collection's share image alone", () => {

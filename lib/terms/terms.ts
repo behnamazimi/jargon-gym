@@ -19,11 +19,11 @@ function isUniqueViolation(error: { code?: string }) {
 
 export async function createTerm(
   client: Client,
-  domainId: string,
+  collectionId: string,
   _ownerId: string,
   input: ParsedTerm,
 ) {
-  const row = termInputToRow(input, domainId);
+  const row = termInputToRow(input, collectionId);
 
   const { data, error } = await client.from("terms").insert(row).select("id").single();
 
@@ -83,12 +83,12 @@ export async function deleteTerm(client: Client, termId: string) {
   if (error) throw error;
 }
 
-export async function fetchTermsByDomain(client: Client, domainId: string) {
+export async function fetchTermsByCollection(client: Client, collectionId: string) {
   return fetchAllRows((from, to) =>
     client
       .from("terms")
       .select("*")
-      .eq("domain_id", domainId)
+      .eq("collection_id", collectionId)
       .order("created_at")
       .order("term")
       .order("id")
@@ -97,12 +97,12 @@ export async function fetchTermsByDomain(client: Client, domainId: string) {
 }
 
 /** Only what the Library list needs per term; see LibraryTerm. */
-export async function fetchTermIndexByDomain(client: Client, domainId: string) {
+export async function fetchTermIndexByCollection(client: Client, collectionId: string) {
   return fetchAllRows((from, to) =>
     client
       .from("terms")
       .select("id, term, category, definition")
-      .eq("domain_id", domainId)
+      .eq("collection_id", collectionId)
       .order("created_at")
       .order("term")
       .order("id")
@@ -166,21 +166,21 @@ export async function fetchTermRelationshipsForTerms(
 }
 
 /**
- * All relationships touching domain `domainId` — source OR target term
- * belongs to it. Domain-scoped RPC, not a term-id list, so it doesn't hit
- * PostgREST's URL length limit for large domains. Only equivalent to
- * fetchTermRelationshipsForTerms(client, everyTermIdInDomain) because
- * term_relationships rows are always single-domain (RLS-enforced on every
- * insert/update, see 20260725140000_user_owned_domains.sql) — do not reuse
- * this for a caller that needs cross-domain relationship lookups.
+ * All relationships touching collection `collectionId` — source OR target term
+ * belongs to it. Collection-scoped RPC, not a term-id list, so it doesn't hit
+ * PostgREST's URL length limit for large collections. Only equivalent to
+ * fetchTermRelationshipsForTerms(client, everyTermIdInCollection) because
+ * term_relationships rows are always single-collection (RLS-enforced on every
+ * insert/update, see 20260725140000_user_owned_collections.sql) — do not reuse
+ * this for a caller that needs cross-collection relationship lookups.
  */
-export async function fetchTermRelationshipsForDomain(
+export async function fetchTermRelationshipsForCollection(
   client: Client,
-  domainId: string,
+  collectionId: string,
 ): Promise<TermRelationshipLink[]> {
   const data = await fetchAllRows((from, to) =>
     client
-      .rpc("my_term_relationships_by_domain", { p_domain_id: domainId })
+      .rpc("my_term_relationships_by_collection", { p_collection_id: collectionId })
       .order("id")
       .range(from, to),
   );

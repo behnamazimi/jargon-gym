@@ -10,7 +10,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { CAPTURE_COPY } from "@/lib/capture/copy";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 /** For someone with no collection yet: create one, then reload this page with it chosen. */
 export function FirstCollectionForm() {
@@ -18,16 +18,16 @@ export function FirstCollectionForm() {
   const searchParams = useSearchParams();
   const { createEmptyCollection, isBusy, error } = useCollectionActions();
   const [name, setName] = useState("");
-  const [language, setLanguage] = useState<DomainLanguage>("en");
+  const [language, setLanguage] = useState<CollectionLanguage>("en");
   const canCreate = name.trim().length > 0 && !isBusy;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!canCreate) return;
-    await createEmptyCollection({ name: name.trim(), language }, (domainId) => {
+    await createEmptyCollection({ name: name.trim(), language }, (collectionId) => {
       track("collection_created", { language, creation_source: "first_capture" });
       const params = new URLSearchParams(searchParams.toString());
-      params.set("to", domainId);
+      params.set("to", collectionId);
       router.replace(`/app/capture?${params.toString()}`);
     });
   }

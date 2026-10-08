@@ -1,5 +1,5 @@
 import type { CollectionKind } from "@/lib/terms/kinds";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import type { TermCard } from "@/lib/terms/term-card";
 
 export type QuizQuestionStyle = "ai" | "simple";
@@ -14,11 +14,11 @@ export type QuizTerm = {
   antiExample: string | null;
   category: string | null;
   kind: CollectionKind;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   /** How well the learner already recognises the term; absent when unknown. */
   recognition?: TermCard["recognition"];
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
 };
 
 /** What a question asks. Drives feedback copy and which kinds and channels
@@ -65,7 +65,7 @@ export type QuizTextQuestion = QuizQuestionBase & {
   interaction: "text";
   /** Typed answers that count as right; the first is the one shown. */
   acceptedAnswers: string[];
-  language: DomainLanguage;
+  language: CollectionLanguage;
   /** Extra help shown under the quote, such as the meaning of a blanked word. */
   hint?: string;
 };

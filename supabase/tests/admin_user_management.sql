@@ -56,9 +56,9 @@ begin
   assert not has_column_privilege('authenticated', 'public.users', 'suspended_at', 'update'), 'suspended_at updatable by clients';
 
   -- Fixtures: the member owns a private and a shared collection, has a session, a telegram link and a widget token.
-  insert into public.domains (name, owner_id) values ('UM Private', member_id) returning id into d_priv;
-  insert into public.domains (name, owner_id, visibility) values ('UM Shared', member_id, 'shared') returning id into d_shared;
-  insert into public.terms (domain_id, term, category, definition) values (d_shared, 'um-term', 'c', 'd') returning id into t_shared;
+  insert into public.collections (name, owner_id) values ('UM Private', member_id) returning id into d_priv;
+  insert into public.collections (name, owner_id, visibility) values ('UM Shared', member_id, 'shared') returning id into d_shared;
+  insert into public.terms (collection_id, term, category, definition) values (d_shared, 'um-term', 'c', 'd') returning id into t_shared;
   insert into auth.sessions (id, user_id) values (gen_random_uuid(), member_id);
   insert into public.telegram_links (user_id, chat_id, cadence, linked_at) values (member_id, 987654321, '6h', now());
 
@@ -173,7 +173,7 @@ begin
 
   -- Delete is refused while another person uses the collections, one way at a time.
   execute 'reset role';
-  insert into public.user_collection_domains (user_id, domain_id) values (other_id, d_shared);
+  insert into public.user_collections (user_id, collection_id) values (other_id, d_shared);
   perform pg_temp.act_as(admin_id);
   assert (select d.people_using_collections = 1 from public.admin_person_detail(member_id) d), 'subscriber not counted';
   v_failed := false;
@@ -181,7 +181,7 @@ begin
   assert v_failed, 'deleted while someone subscribes';
 
   execute 'reset role';
-  delete from public.user_collection_domains where user_id = other_id;
+  delete from public.user_collections where user_id = other_id;
   insert into public.review_state (user_id, term_id) values (other_id, t_shared);
   perform pg_temp.act_as(admin_id);
   v_failed := false;
@@ -198,15 +198,15 @@ begin
 
   execute 'reset role';
   delete from public.review_events where user_id = other_id;
-  insert into public.user_active_domains (user_id, domain_id) values (other_id, d_shared);
+  insert into public.user_active_collections (user_id, collection_id) values (other_id, d_shared);
   perform pg_temp.act_as(admin_id);
   v_failed := false;
   begin perform public.admin_delete_user(member_id, 'um-member@example.test', 'x'); exception when sqlstate 'AD001' then v_failed := true; end;
   assert v_failed, 'deleted while someone studies the collection';
 
   execute 'reset role';
-  delete from public.user_active_domains where user_id = other_id;
-  insert into public.story_collection_prefs (user_id, domain_id, reading_level, cefr_level) values (other_id, d_shared, 'plain', 'B1');
+  delete from public.user_active_collections where user_id = other_id;
+  insert into public.story_collection_prefs (user_id, collection_id, reading_level, cefr_level) values (other_id, d_shared, 'plain', 'B1');
   perform pg_temp.act_as(admin_id);
   v_failed := false;
   begin perform public.admin_delete_user(member_id, 'um-member@example.test', 'x'); exception when sqlstate 'AD001' then v_failed := true; end;
@@ -240,7 +240,7 @@ begin
   execute 'reset role';
   assert not exists (select 1 from auth.users where id = member_id), 'auth user kept';
   assert not exists (select 1 from public.users where id = member_id), 'user kept';
-  assert not exists (select 1 from public.domains where owner_id = member_id), 'collections kept';
+  assert not exists (select 1 from public.collections where owner_id = member_id), 'collections kept';
   assert not exists (select 1 from public.terms where id = t_shared), 'terms kept';
   assert not exists (select 1 from public.user_settings where user_id = member_id), 'settings kept';
   assert not exists (select 1 from public.telegram_links where user_id = member_id), 'telegram link kept';

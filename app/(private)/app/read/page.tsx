@@ -30,7 +30,7 @@ type PageProps = {
   searchParams: Promise<{
     termId?: string;
     alreadyRead?: string;
-    domain?: string;
+    collection?: string;
     view?: string;
     [key: string]: string | undefined;
   }>;
@@ -55,11 +55,11 @@ async function loadLandingState(): Promise<{ options: ReadOptions; hasStory: boo
 }
 
 function resolveReadCollectionId(
-  domainParam: string | undefined,
+  collectionParam: string | undefined,
   collections: StudyCollection[],
 ): string {
-  if (domainParam && collections.some((collection) => collection.id === domainParam)) {
-    return domainParam;
+  if (collectionParam && collections.some((collection) => collection.id === collectionParam)) {
+    return collectionParam;
   }
   return "all";
 }
@@ -88,7 +88,7 @@ export default async function ReadRoute({ searchParams }: PageProps) {
     const setup = await getReadSetupData();
     if ("error" in setup) return <LoginPrompt />;
 
-    const domainId = resolveReadCollectionId(params.domain, setup.collections);
+    const collectionId = resolveReadCollectionId(params.collection, setup.collections);
     const seed = await buildDeepLinkSeed(params.termId, params.alreadyRead === "true");
     if (seed.error === "Log in to continue.") return <LoginPrompt />;
 
@@ -97,7 +97,7 @@ export default async function ReadRoute({ searchParams }: PageProps) {
         key={activeCollectionsKey(setup.collections)}
         seed={seed}
         collections={setup.collections}
-        domainId={domainId}
+        collectionId={collectionId}
         narrationAccess={setup.narrationAccess}
         options={options}
       />
@@ -111,19 +111,19 @@ export default async function ReadRoute({ searchParams }: PageProps) {
   });
   if (storiesPath) redirect(storiesPath);
 
-  // No deep link: the domain is already resolvable from the URL (or
+  // No deep link: the collection is already resolvable from the URL (or
   // defaults to "all"), so fire the feed batch next to setup instead of
   // waiting for setup to resolve first — getReadFeedBatchAction does its
-  // own auth check and an unknown/inactive domain id just yields an empty
-  // pick. Only discard it if the resolved domain turns out different (a
+  // own auth check and an unknown/inactive collection id just yields an empty
+  // pick. Only discard it if the resolved collection turns out different (a
   // stale/removed collection in the URL).
   const rememberedId = parseReadCollectionCookie(
     (await cookies()).get(READ_COLLECTION_COOKIE)?.value,
   );
-  const speculativeDomainId = params.domain ?? rememberedId ?? "all";
+  const speculativeCollectionId = params.collection ?? rememberedId ?? "all";
   const [setup, speculativeSeed] = await Promise.all([
     getReadSetupData(),
-    getReadFeedBatchAction(speculativeDomainId, []),
+    getReadFeedBatchAction(speculativeCollectionId, []),
   ]);
   if ("error" in setup) return <LoginPrompt />;
   if (hasNoCollections({ active: setup.collections, paused: setup.paused }))
@@ -136,13 +136,15 @@ export default async function ReadRoute({ searchParams }: PageProps) {
     );
   }
 
-  const domainId = resolveStudyCollectionId(
-    params.domain,
+  const collectionId = resolveStudyCollectionId(
+    params.collection,
     rememberedId,
     setup.collections.map((collection) => collection.id),
   );
   const seed =
-    domainId === speculativeDomainId ? speculativeSeed : await getReadFeedBatchAction(domainId, []);
+    collectionId === speculativeCollectionId
+      ? speculativeSeed
+      : await getReadFeedBatchAction(collectionId, []);
   if (seed.error === "Log in to continue.") return <LoginPrompt />;
 
   return (
@@ -150,7 +152,7 @@ export default async function ReadRoute({ searchParams }: PageProps) {
       key={activeCollectionsKey(setup.collections)}
       seed={seed}
       collections={setup.collections}
-      domainId={domainId}
+      collectionId={collectionId}
       narrationAccess={setup.narrationAccess}
       options={options}
     />

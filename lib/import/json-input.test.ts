@@ -6,7 +6,7 @@ describe("readJsonImport", () => {
   it("reads terms, links and language, with optional fields left out", () => {
     const result = readJsonImport(
       JSON.stringify({
-        domain: "Startup finance",
+        collection: "Startup finance",
         language: "nl",
         terms: [
           { term: "Churn", definition: "Customers who leave", category: "Growth" },
@@ -16,7 +16,7 @@ describe("readJsonImport", () => {
       }),
     );
     if (!result.ok) throw new Error("expected ok");
-    expect(result.data.domain).toBe("Startup finance");
+    expect(result.data.collection).toBe("Startup finance");
     expect(result.data.language).toBe("nl");
     expect(result.data.built.terms).toMatchObject([
       { term: "Churn", definition: "Customers who leave", category: "Growth" },
@@ -28,7 +28,7 @@ describe("readJsonImport", () => {
   it("folds repeated terms instead of blocking", () => {
     const result = readJsonImport(
       JSON.stringify({
-        domain: "X",
+        collection: "X",
         terms: [
           { term: "A", definition: "a" },
           { term: "a", definition: "A" },
@@ -41,9 +41,9 @@ describe("readJsonImport", () => {
   });
 
   it("tells a syntax problem from a structure problem", () => {
-    const syntax = readJsonImport('{"domain": "X", "terms": [');
+    const syntax = readJsonImport('{"collection": "X", "terms": [');
     expect(syntax.ok === false && syntax.reason).toBe("syntax");
-    const invalid = readJsonImport(JSON.stringify({ domain: "X", terms: [] }));
+    const invalid = readJsonImport(JSON.stringify({ collection: "X", terms: [] }));
     expect(invalid.ok === false && invalid.reason).toBe("invalid");
   });
 });

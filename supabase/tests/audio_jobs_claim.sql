@@ -22,7 +22,7 @@ do $$
 declare
   u_owner uuid := pg_temp.make_user('claim-owner@example.test');
   u_starter uuid := pg_temp.make_user('claim-starter@example.test');
-  v_domain uuid := gen_random_uuid();
+  v_collection uuid := gen_random_uuid();
   v_term uuid := gen_random_uuid();
   v_subject uuid;
   v_story uuid;
@@ -34,9 +34,9 @@ declare
   v_failed boolean;
   r record;
 begin
-  insert into public.domains (id, name, owner_id) values (v_domain, 'Claim', u_owner);
-  insert into public.terms (id, term, category, definition, domain_id)
-  values (v_term, 'Claim', 'c', 'd', v_domain);
+  insert into public.collections (id, name, owner_id) values (v_collection, 'Claim', u_owner);
+  insert into public.terms (id, term, category, definition, collection_id)
+  values (v_term, 'Claim', 'c', 'd', v_collection);
 
   -- No live row: one pending job, version 2, no file yet.
   v_subject := gen_random_uuid();
@@ -221,8 +221,8 @@ begin
 
   -- Deleting the admin who started a sync clears started_by and keeps the job.
   -- Clear the referral pair first: user delete nulls used_by and would leave used_at set.
-  insert into public.narration_sync_jobs (domain_id, started_by, term_ids)
-  values (v_domain, u_starter, array[v_term])
+  insert into public.narration_sync_jobs (collection_id, started_by, term_ids)
+  values (v_collection, u_starter, array[v_term])
   returning id into v_job;
   update public.referral_codes set used_by = null, used_at = null where used_by = u_starter;
   delete from auth.users where id = u_starter;

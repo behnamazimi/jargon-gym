@@ -16,7 +16,7 @@ const MODERATION_REVALIDATE = [
 
 const idSchema = z.guid();
 const stopSchema = z.object({
-  domainId: idSchema,
+  collectionId: idSchema,
   reason: z.enum(REPORT_REASONS),
   note: z.string().trim().min(1).max(TAKEDOWN_NOTE_MAX),
 });
@@ -29,10 +29,10 @@ export async function stopSharingCollection(input: unknown) {
       if (!parsed.success) {
         throw new AdminError("Choose a reason and write a note of up to 200 characters.");
       }
-      await findActable(supabase, user.id, parsed.data.domainId);
+      await findActable(supabase, user.id, parsed.data.collectionId);
 
       const { error } = await supabase.rpc("admin_stop_sharing_collection", {
-        p_domain_id: parsed.data.domainId,
+        p_collection_id: parsed.data.collectionId,
         p_reason: parsed.data.reason,
         p_note: parsed.data.note,
       });
@@ -43,14 +43,14 @@ export async function stopSharingCollection(input: unknown) {
 }
 
 /** Lets the owner share the collection again. Nothing is restored. */
-export async function liftShareLock(domainId: string, note: string) {
+export async function liftShareLock(collectionId: string, note: string) {
   return runAdminAction(
     async ({ supabase, user }) => {
-      const id = idSchema.parse(domainId);
+      const id = idSchema.parse(collectionId);
       await findActable(supabase, user.id, id);
 
       const { error } = await supabase.rpc("admin_lift_share_lock", {
-        p_domain_id: id,
+        p_collection_id: id,
         p_note: z.string().trim().max(TAKEDOWN_NOTE_MAX).parse(note),
       });
       if (error) throwRpcError(error);
@@ -59,14 +59,14 @@ export async function liftShareLock(domainId: string, note: string) {
   );
 }
 
-export async function dismissCollectionReports(domainId: string) {
+export async function dismissCollectionReports(collectionId: string) {
   return runAdminAction(
     async ({ supabase, user }) => {
-      const id = idSchema.parse(domainId);
+      const id = idSchema.parse(collectionId);
       await findActable(supabase, user.id, id);
 
       const { error } = await supabase.rpc("admin_dismiss_collection_reports", {
-        p_domain_id: id,
+        p_collection_id: id,
       });
       if (error) throwRpcError(error);
     },
@@ -75,13 +75,13 @@ export async function dismissCollectionReports(domainId: string) {
 }
 
 /** Who reported it and why, for the Reports dialog. A read: nothing is saved. */
-export async function listCollectionReports(domainId: string) {
+export async function listCollectionReports(collectionId: string) {
   return runAdminAction(async ({ supabase, user }) => {
-    const id = idSchema.parse(domainId);
+    const id = idSchema.parse(collectionId);
     await findActable(supabase, user.id, id);
 
     const { data, error } = await supabase.rpc("admin_list_collection_reports", {
-      p_domain_id: id,
+      p_collection_id: id,
     });
     if (error) throwRpcError(error);
     return (data ?? []).map((row) => ({

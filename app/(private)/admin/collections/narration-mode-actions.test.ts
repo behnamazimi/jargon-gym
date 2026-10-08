@@ -43,7 +43,7 @@ vi.mock("@/lib/auth/require-session", async () => {
           from: () => ({
             select: () => ({
               in: async () => ({
-                data: state.mode ? [{ domain_id: "mine", mode: state.mode }] : [],
+                data: state.mode ? [{ collection_id: "mine", mode: state.mode }] : [],
                 error: null,
               }),
             }),
@@ -95,7 +95,7 @@ beforeEach(() => {
 describe("setNarrationMode", () => {
   it("saves full mode and records the change", async () => {
     expect(await setNarrationMode("mine", "full")).toEqual({ ok: true, data: { mode: "full" } });
-    expect(state.upserts).toEqual([{ domain_id: "mine", mode: "full" }]);
+    expect(state.upserts).toEqual([{ collection_id: "mine", mode: "full" }]);
     expect(state.audits).toEqual([
       {
         action: "app.narration_mode_set",

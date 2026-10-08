@@ -43,7 +43,9 @@ export function MasteryTermList({
 
   const collectionFiltered = useMemo(
     () =>
-      collectionId === "all" ? termRows : termRows.filter((row) => row.domainId === collectionId),
+      collectionId === "all"
+        ? termRows
+        : termRows.filter((row) => row.collectionId === collectionId),
     [termRows, collectionId],
   );
 

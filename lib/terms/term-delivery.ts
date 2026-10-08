@@ -63,7 +63,7 @@ export async function deliverNextTerm(
   userId: string,
   options?: DeliverOptions,
 ): Promise<DeliverResult> {
-  const [term] = await pickReadTermsForUser(client, userId, { domainIds: "all" }, 1);
+  const [term] = await pickReadTermsForUser(client, userId, { collectionIds: "all" }, 1);
 
   if (!term) {
     const result = await maybePersistCaughtUp(client, userId, options);

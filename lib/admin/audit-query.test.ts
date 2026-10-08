@@ -31,7 +31,7 @@ const dbRow = {
   created_at: "2026-09-29T10:00:00Z",
   actor_email: "admin@example.test",
   action: "publish_collection",
-  target_type: "domain",
+  target_type: "collection",
   target_id: "d1",
   details: { slug: "cooking" },
 };
@@ -95,7 +95,7 @@ describe("emailsForTargets", () => {
     const emails = await emailsForTargets(client, [
       row({}),
       row({ id: 2 }),
-      row({ id: 3, targetType: "domain", targetId: "d1" }),
+      row({ id: 3, targetType: "collection", targetId: "d1" }),
     ]);
     expect(calls.find((c) => c.method === "in")?.args).toEqual(["id", ["u1"]]);
     expect(emails.get("u1")).toBe("a@example.test");
@@ -103,7 +103,7 @@ describe("emailsForTargets", () => {
 
   it("makes no query when nothing is about a person", async () => {
     const { client, calls } = fakeClient(0);
-    expect((await emailsForTargets(client, [row({ targetType: "domain" })])).size).toBe(0);
+    expect((await emailsForTargets(client, [row({ targetType: "collection" })])).size).toBe(0);
     expect(calls).toEqual([]);
   });
 });

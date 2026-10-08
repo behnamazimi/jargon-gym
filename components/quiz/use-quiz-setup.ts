@@ -13,13 +13,13 @@ import type { QuizQuestionStyle } from "@/lib/quiz/types";
 
 export type QuizStep = "picker" | "generating" | "playing" | "results" | "error";
 
-function domainIdsFor(collectionId: string): "all" | string[] {
+function collectionIdsFor(collectionId: string): "all" | string[] {
   return collectionId === "all" ? "all" : [collectionId];
 }
 
 export function useQuizSetup(collections: StudyCollection[], initial: InitialQuizSetup) {
   const maxFor = (collectionId: string, style: QuizQuestionStyle) =>
-    maxQuizQuestions(style, countTermsForSelection(collections, domainIdsFor(collectionId)));
+    maxQuizQuestions(style, countTermsForSelection(collections, collectionIdsFor(collectionId)));
 
   const [step, setStep] = useState<QuizStep>("picker");
   const [questionStyle, setQuestionStyleState] = useState<QuizQuestionStyle>(initial.style);
@@ -35,11 +35,14 @@ export function useQuizSetup(collections: StudyCollection[], initial: InitialQui
   const [questionCountInput, setQuestionCountInput] = useState(() => String(questionCount));
   const [questionCountError, setQuestionCountError] = useState<string | null>(null);
 
-  const domainIds = useMemo(() => domainIdsFor(selectedCollectionId), [selectedCollectionId]);
+  const collectionIds = useMemo(
+    () => collectionIdsFor(selectedCollectionId),
+    [selectedCollectionId],
+  );
 
   const availableTermCount = useMemo(
-    () => countTermsForSelection(collections, domainIds),
-    [collections, domainIds],
+    () => countTermsForSelection(collections, collectionIds),
+    [collections, collectionIds],
   );
 
   const maxQuestionCount = maxQuizQuestions(questionStyle, availableTermCount);
@@ -112,7 +115,7 @@ export function useQuizSetup(collections: StudyCollection[], initial: InitialQui
     questionCountInput,
     setQuestionCountInput,
     questionCountError,
-    domainIds,
+    collectionIds,
     availableTermCount,
     questionCountPresets,
     applyQuestionCount,

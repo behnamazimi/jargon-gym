@@ -23,7 +23,7 @@ export async function seedCollection(
   user: TestUser,
   terms: SeedTerm[] = SAMPLE_TERMS,
   name = `E2E ${randomUUID().slice(0, 8)}`,
-): Promise<{ domainId: string; name: string }> {
+): Promise<{ collectionId: string; name: string }> {
   const env = loadSupabaseEnv();
   const client = createClient(env.url, env.publishableKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -45,5 +45,5 @@ export async function seedCollection(
     p_format: "pairs",
   });
   if (error) throw new Error(error.message);
-  return { domainId: (data as { domain_id: string }).domain_id, name };
+  return { collectionId: (data as { collection_id: string }).collection_id, name };
 }

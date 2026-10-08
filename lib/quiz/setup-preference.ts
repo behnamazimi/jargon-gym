@@ -23,7 +23,7 @@ export type InitialQuizSetup = {
   collectionId: string;
   count: number | null;
   savedCollectionId: string | null;
-  /** The collection came from a `?domain=` link, not from the picker. */
+  /** The collection came from a `?collection=` link, not from the picker. */
   collectionFromLink: boolean;
   /** They last used AI quizzes but AI isn't available now, so we opened on Simple. */
   aiFellBack: boolean;
@@ -59,11 +59,11 @@ export function saveQuizSetupPreference(setup: SavedQuizSetup): void {
 
 export function resolveInitialQuizSetup(input: {
   saved: SavedQuizSetup | null;
-  domainParam: string | undefined;
+  collectionParam: string | undefined;
   activeIds: string[];
   aiAvailable: boolean;
 }): InitialQuizSetup {
-  const { saved, domainParam, activeIds, aiAvailable } = input;
+  const { saved, collectionParam, activeIds, aiAvailable } = input;
   const savedCollectionId = saved?.collectionId ?? null;
   const wantedAi = saved?.style === "ai";
 
@@ -71,10 +71,10 @@ export function resolveInitialQuizSetup(input: {
     // An AI quiz can't start without a key or credits, so don't open on it.
     style: wantedAi && aiAvailable ? "ai" : "simple",
     aiFellBack: wantedAi && !aiAvailable,
-    collectionId: resolveStudyCollectionId(domainParam, savedCollectionId, activeIds),
+    collectionId: resolveStudyCollectionId(collectionParam, savedCollectionId, activeIds),
     count: saved?.count ?? null,
     savedCollectionId,
-    collectionFromLink: Boolean(domainParam && activeIds.includes(domainParam)),
+    collectionFromLink: Boolean(collectionParam && activeIds.includes(collectionParam)),
   };
 }
 

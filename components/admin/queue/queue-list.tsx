@@ -49,7 +49,9 @@ export function QueueList<Row>({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="m-0 break-words font-medium text-base-content">{item.term}</p>
-                      <p className="m-0 truncate text-xs text-base-content/50">{item.domainName}</p>
+                      <p className="m-0 truncate text-xs text-base-content/50">
+                        {item.collectionName}
+                      </p>
                     </div>
                     {rank !== undefined ? (
                       <div className="flex shrink-0 items-center gap-2">
@@ -103,7 +105,7 @@ export function QueueList<Row>({
                       ) : null}
                       <td>
                         <p className="m-0 font-medium text-base-content">{item.term}</p>
-                        <p className="m-0 text-xs text-base-content/50">{item.domainName}</p>
+                        <p className="m-0 text-xs text-base-content/50">{item.collectionName}</p>
                       </td>
                       {columns.map((column) => (
                         <td

@@ -84,7 +84,7 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
 
   const debug = buildQueueDebug(terms, {
     now: new Date(),
-    domainId: params.domainId,
+    collectionId: params.collectionId,
     limit: params.limit,
     batch: {
       read: READ_FEED_BATCH_SIZE,
@@ -93,8 +93,8 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
     },
   });
 
-  const collections = [...new Map(terms.map((t) => [t.domainId, t])).values()].sort((a, b) =>
-    a.domainName.localeCompare(b.domainName),
+  const collections = [...new Map(terms.map((t) => [t.collectionId, t])).values()].sort((a, b) =>
+    a.collectionName.localeCompare(b.collectionName),
   );
   const counts: Record<QueueTab, number> = {
     read: debug.read.total,
@@ -132,14 +132,14 @@ export default async function AdminQueuePage({ searchParams }: PageProps) {
         <label className="flex flex-col gap-1 text-sm">
           <span>Collection</span>
           <select
-            name="domain"
-            defaultValue={params.domainId ?? ""}
+            name="collection"
+            defaultValue={params.collectionId ?? ""}
             className="select select-sm w-full max-md:min-h-11 sm:w-auto"
           >
             <option value="">All collections</option>
             {collections.map((c) => (
-              <option key={c.domainId} value={c.domainId}>
-                {c.domainName}
+              <option key={c.collectionId} value={c.collectionId}>
+                {c.collectionName}
                 {c.active ? "" : " (off)"}
               </option>
             ))}

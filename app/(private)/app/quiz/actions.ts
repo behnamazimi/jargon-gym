@@ -145,7 +145,7 @@ async function generateAiQuizResult(
 }
 
 export async function generateQuizAction(input: {
-  domainIds: string[] | "all";
+  collectionIds: string[] | "all";
   questionCount: number;
   questionStyle: QuizQuestionStyle;
 }): Promise<QuizGenerationResult> {
@@ -161,7 +161,7 @@ export async function generateQuizAction(input: {
     const termsPromise = fetchQuizTermPool(
       auth.supabase,
       auth.user.id,
-      input.domainIds,
+      input.collectionIds,
       countResult.questionCount,
     );
 

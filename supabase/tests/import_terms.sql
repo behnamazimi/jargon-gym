@@ -55,33 +55,33 @@ begin
     'skip', 'chooser', 'paste', 'lines');
   assert (r->>'created')::int = 3 and (r->>'unfinished')::int = 1, 'created/unfinished counts';
   assert (r->>'relationships_created')::int = 1 and (r->>'relationships_dropped')::int = 1, 'link counts';
-  d1 := (r->>'domain_id')::uuid;
-  assert (select language = 'nl' and visibility = 'private' from public.domains where id = d1), 'domain shape';
-  assert exists (select 1 from public.user_active_domains where user_id = me and domain_id = d1), 'active';
-  assert (select count(*) from public.terms where domain_id = d1) = 3, 'term rows';
-  assert (select definition is null from public.terms where domain_id = d1 and term = 'Churn'), 'churn unfinished';
+  d1 := (r->>'collection_id')::uuid;
+  assert (select language = 'nl' and visibility = 'private' from public.collections where id = d1), 'collection shape';
+  assert exists (select 1 from public.user_active_collections where user_id = me and collection_id = d1), 'active';
+  assert (select count(*) from public.terms where collection_id = d1) = 3, 'term rows';
+  assert (select definition is null from public.terms where collection_id = d1 and term = 'Churn'), 'churn unfinished';
 
   -- The same import id again returns the stored result and adds nothing.
   r := public.my_import_terms(imp1, '{"name": "Other name"}', '[{"term":"New"}]', '[]', 'skip');
-  assert (r->>'already_applied')::boolean and (r->>'domain_name') = 'Dutch at work', 'idempotent';
-  assert (select count(*) from public.terms where domain_id = d1) = 3, 'a retry added terms';
+  assert (r->>'already_applied')::boolean and (r->>'collection_name') = 'Dutch at work', 'idempotent';
+  assert (select count(*) from public.terms where collection_id = d1) = 3, 'a retry added terms';
 
   -- Skip leaves existing terms alone; Update changes them in place and never blanks a value.
-  select id into t_sla from public.terms where domain_id = d1 and term = 'SLA';
+  select id into t_sla from public.terms where collection_id = d1 and term = 'SLA';
   r := public.my_import_terms(
-    imp2, jsonb_build_object('domain_id', d1),
+    imp2, jsonb_build_object('collection_id', d1),
     '[{"term":"  sla ","definition":"Changed"},{"term":"Brand new","definition":"B"}]', '[]', 'skip');
   assert (r->>'skipped')::int = 1 and (r->>'created')::int = 1, 'skip counts';
   assert (select definition = 'Promised service level' from public.terms where id = t_sla), 'skip changed a term';
 
   r := public.my_import_terms(
-    imp3, jsonb_build_object('domain_id', d1),
+    imp3, jsonb_build_object('collection_id', d1),
     '[{"term":"SLA","definition":"","category":"","example":"An example"},{"term":"Churn","definition":"Customers leaving"}]',
     '[]', 'update');
   assert (r->>'updated')::int = 2, 'update counts';
   assert (select definition = 'Promised service level' and category = 'Legal' and example = 'An example'
           from public.terms where id = t_sla), 'update blanked or missed a value';
-  assert (select definition = 'Customers leaving' from public.terms where domain_id = d1 and term = 'Churn'), 'unfinished term not finished';
+  assert (select definition = 'Customers leaving' from public.terms where collection_id = d1 and term = 'Churn'), 'unfinished term not finished';
 
   -- A failing batch leaves nothing behind, not even its batch row.
   v_failed := false;
@@ -92,7 +92,7 @@ begin
   exception when others then v_failed := true; v_msg := sqlerrm;
   end;
   assert v_failed and v_msg = 'invalid_term', 'bad term should fail';
-  assert not exists (select 1 from public.domains where name = 'Half done'), 'a failed import left a collection';
+  assert not exists (select 1 from public.collections where name = 'Half done'), 'a failed import left a collection';
 
   -- Names are never merged silently.
   v_failed := false;
@@ -121,7 +121,7 @@ begin
   perform pg_temp.act_as(other);
   v_failed := false;
   begin
-    perform public.my_import_terms(gen_random_uuid(), jsonb_build_object('domain_id', d1), '[{"term":"Sneaky"}]', '[]', 'skip');
+    perform public.my_import_terms(gen_random_uuid(), jsonb_build_object('collection_id', d1), '[{"term":"Sneaky"}]', '[]', 'skip');
   exception when others then v_failed := true; v_msg := sqlerrm;
   end;
   assert v_failed and v_msg = 'destination_not_found', 'imported into another user''s collection';

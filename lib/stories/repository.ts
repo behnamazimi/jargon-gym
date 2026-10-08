@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
+import { parseLanguage, type CollectionLanguage } from "@/lib/terms/languages";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import {
   parseCefrLevel,
@@ -16,7 +16,7 @@ type Client = SupabaseClient<Database>;
 type StoryRow = Database["public"]["Tables"]["stories"]["Row"];
 
 const STORY_COLUMNS =
-  "id, domain_id, language, format, tone, reading_level, cefr_level, piece_length, outline, title, segments, term_ids, new_term_ids, vote, read_at";
+  "id, collection_id, language, format, tone, reading_level, cefr_level, piece_length, outline, title, segments, term_ids, new_term_ids, vote, read_at";
 
 export function toVote(value: number | null): -1 | 1 | null {
   return value === 1 || value === -1 ? value : null;
@@ -25,7 +25,7 @@ export function toVote(value: number | null): -1 | 1 | null {
 type StoryRowSubset = Pick<
   StoryRow,
   | "id"
-  | "domain_id"
+  | "collection_id"
   | "language"
   | "format"
   | "tone"
@@ -44,7 +44,7 @@ type StoryRowSubset = Pick<
 function mapStory(row: StoryRowSubset): Story {
   return {
     id: row.id,
-    domainId: row.domain_id,
+    collectionId: row.collection_id,
     language: parseLanguage(row.language),
     format: row.format,
     tone: row.tone,
@@ -65,8 +65,8 @@ export async function insertStory(
   admin: Client,
   input: {
     userId: string;
-    domainId: string;
-    language: DomainLanguage;
+    collectionId: string;
+    language: CollectionLanguage;
     format: string;
     tone: string;
     levels: StoryLevels;
@@ -81,7 +81,7 @@ export async function insertStory(
     .from("stories")
     .insert({
       user_id: input.userId,
-      domain_id: input.domainId,
+      collection_id: input.collectionId,
       language: input.language,
       format: input.format,
       tone: input.tone,
@@ -199,12 +199,12 @@ export async function getStoryTerms(admin: Client, termIds: string[]): Promise<S
 
 export async function getCollection(
   admin: Client,
-  domainId: string,
-): Promise<{ name: string; language: DomainLanguage } | null> {
+  collectionId: string,
+): Promise<{ name: string; language: CollectionLanguage } | null> {
   const { data, error } = await admin
-    .from("domains")
+    .from("collections")
     .select("name, language")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .maybeSingle();
   if (error) throw error;
   return data ? { name: data.name, language: parseLanguage(data.language) } : null;

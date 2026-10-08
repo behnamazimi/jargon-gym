@@ -16,7 +16,7 @@ export async function markReviewRevealed(
   const updated: TelegramReviewSession = { ...session, revealed: true };
 
   await saveStoredReviewSession(client, chatId, {
-    domainId: updated.domainId,
+    collectionId: updated.collectionId,
     terms: updated.terms,
     currentIndex: updated.currentIndex,
     revealed: updated.revealed,
@@ -41,7 +41,7 @@ export async function recordReviewRating(
   };
 
   await saveStoredReviewSession(client, chatId, {
-    domainId: updated.domainId,
+    collectionId: updated.collectionId,
     terms: updated.terms,
     currentIndex: updated.currentIndex,
     revealed: updated.revealed,
@@ -67,7 +67,7 @@ export async function skipCurrentReviewTerm(
   };
 
   await saveStoredReviewSession(client, chatId, {
-    domainId: updated.domainId,
+    collectionId: updated.collectionId,
     terms: updated.terms,
     currentIndex: updated.currentIndex,
     revealed: updated.revealed,

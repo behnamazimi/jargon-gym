@@ -49,12 +49,12 @@ describe("buildQuizPrompt", () => {
 
   it("adds the collection only when the quiz spans several", () => {
     const one = buildQuizPrompt([slot("a", "term_to_meaning"), slot("b", "term_to_meaning")]);
-    expect(one).not.toContain("  domain:");
+    expect(one).not.toContain("  collection:");
     const two = buildQuizPrompt([
       slot("a", "term_to_meaning"),
-      slot("b", "term_to_meaning", { domainName: "Other" }),
+      slot("b", "term_to_meaning", { collectionName: "Other" }),
     ]);
-    expect(two).toContain('  domain: "Other"');
+    expect(two).toContain('  collection: "Other"');
   });
 
   it("gives each kind its own intro and labels guidance when kinds are mixed", () => {

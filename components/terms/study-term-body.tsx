@@ -7,13 +7,13 @@ import { TermLayoutCustomize } from "./term-layout-customize";
 import { useTermLayoutScope } from "./term-layout-provider";
 
 function LayoutAwareTermBody({ term }: { term: ReviewTerm }) {
-  const scope = useTermLayoutScope(term.domainId);
+  const scope = useTermLayoutScope(term.collectionId);
   return (
     <TermBody
       term={term}
-      language={term.domainLanguage}
+      language={term.collectionLanguage}
       placement={scope?.placement}
-      customize={scope ? <TermLayoutCustomize domainId={term.domainId} /> : undefined}
+      customize={scope ? <TermLayoutCustomize collectionId={term.collectionId} /> : undefined}
     />
   );
 }

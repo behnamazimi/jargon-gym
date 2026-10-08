@@ -7,12 +7,12 @@ import type { TraceCandidate } from "./types";
 type Client = SupabaseClient<Database>;
 
 export type ReviewScope = {
-  domainIds: string[] | "all";
+  collectionIds: string[] | "all";
 };
 
 type CandidateRow = {
   term_id: string;
-  domain_id: string;
+  collection_id: string;
   created_at: string;
   read_count: number;
   last_read_at: string | null;
@@ -34,7 +34,7 @@ function mapCandidateRows(data: Json): TraceCandidate[] {
   if (!Array.isArray(data)) throw new Error("Trace candidates must be a JSON array.");
   return (data as CandidateRow[]).map((row) => ({
     termId: row.term_id,
-    domainId: row.domain_id,
+    collectionId: row.collection_id,
     createdAt: new Date(row.created_at),
     readCount: row.read_count,
     lastReadAt: row.last_read_at ? new Date(row.last_read_at) : null,
@@ -105,7 +105,7 @@ export async function fetchTraceCandidates(
   scope: ReviewScope,
 ): Promise<TraceCandidate[]> {
   const { data, error } = await client.rpc("my_get_trace_candidates_json", {
-    p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
+    p_collection_ids: scope.collectionIds === "all" ? undefined : scope.collectionIds,
   });
   if (error) throw error;
   return mapCandidateRows(data);
@@ -119,7 +119,7 @@ export async function fetchTraceCandidatesForUser(
 ): Promise<TraceCandidate[]> {
   const { data, error } = await client.rpc("get_trace_candidates_json", {
     p_user_id: userId,
-    p_domain_ids: scope.domainIds === "all" ? undefined : scope.domainIds,
+    p_collection_ids: scope.collectionIds === "all" ? undefined : scope.collectionIds,
   });
   if (error) throw error;
   return mapCandidateRows(data);

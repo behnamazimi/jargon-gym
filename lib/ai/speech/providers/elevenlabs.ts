@@ -1,5 +1,5 @@
 import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { renderPauses } from "../pause";
 import type { SpeechProviderAdapter } from "./types";
 
@@ -18,7 +18,7 @@ const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
 // has been swapped for a native voice because voice availability can't be
 // verified from this environment. Replace each with a real voice ID from your
 // ElevenLabs dashboard.
-const VOICE_BY_LANGUAGE: Record<DomainLanguage, string> = {
+const VOICE_BY_LANGUAGE: Record<CollectionLanguage, string> = {
   en: DEFAULT_VOICE_ID,
   nl: DEFAULT_VOICE_ID,
   es: DEFAULT_VOICE_ID,

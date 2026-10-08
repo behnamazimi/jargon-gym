@@ -10,8 +10,8 @@ import { pluralize } from "@/lib/utils";
 import { dropSearchParamFromUrl } from "@/components/library/library-page-helpers";
 
 export type ImportedSummary = {
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
   created: number;
   updated: number;
   skipped: number;
@@ -47,18 +47,18 @@ function detailLine(summary: ImportedSummary) {
  *  <Suspense> so the list never waits for it. */
 export function ImportedNotice({
   summary: summaryPromise,
-  domain,
+  collection,
   onFinish,
 }: {
   summary: Promise<ImportedSummary | undefined>;
-  domain: { id: string; name: string };
+  collection: { id: string; name: string };
   onFinish: () => void;
 }) {
   const notice = useImportedNotice(use(summaryPromise));
   return (
     <ImportedBanner
       summary={notice.summary}
-      domain={domain}
+      collection={collection}
       onFinish={onFinish}
       onDismiss={notice.dismiss}
     />
@@ -67,21 +67,21 @@ export function ImportedNotice({
 
 function ImportedBanner({
   summary,
-  domain,
+  collection,
   onFinish,
   onDismiss,
 }: {
   summary: ImportedSummary | undefined;
-  domain: { id: string; name: string };
+  collection: { id: string; name: string };
   onFinish: () => void;
   onDismiss: () => void;
 }) {
-  if (!summary || summary.domainId !== domain.id) return null;
+  if (!summary || summary.collectionId !== collection.id) return null;
 
   const addedAny = summary.created > 0;
   const title = addedAny
-    ? `Added ${pluralize(summary.created, "term")} to ${summary.domainName}`
-    : `Updated ${pluralize(summary.updated, "term")} in ${summary.domainName}`;
+    ? `Added ${pluralize(summary.created, "term")} to ${summary.collectionName}`
+    : `Updated ${pluralize(summary.updated, "term")} in ${summary.collectionName}`;
   const studyable = summary.created - summary.unfinished + summary.updated > 0;
   const details = detailLine(summary);
 
@@ -91,13 +91,13 @@ function ImportedBanner({
       {details ? <AlertDescription>{details}</AlertDescription> : null}
       <AlertAction className="flex-row flex-wrap items-center max-md:[&>*]:min-h-0">
         {studyable ? (
-          <LinkButton href={`/app/read?domain=${domain.id}`} size="sm" className="gap-2">
+          <LinkButton href={`/app/read?collection=${collection.id}`} size="sm" className="gap-2">
             Start reading
             <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
           </LinkButton>
         ) : null}
         {studyable ? (
-          <LinkButton href={`/app/triage?domain=${domain.id}`} size="sm" variant="outline">
+          <LinkButton href={`/app/triage?collection=${collection.id}`} size="sm" variant="outline">
             Mark what you know
           </LinkButton>
         ) : null}

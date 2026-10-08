@@ -378,7 +378,7 @@ enabled = false
 [auth.third_party.clerk]
 enabled = false
 # Obtain from https://clerk.com/setup/supabase
-# domain = "example.clerk.accounts.dev"
+# collection = "example.clerk.accounts.dev"
 
 # OAuth server configuration
 [auth.oauth_server]

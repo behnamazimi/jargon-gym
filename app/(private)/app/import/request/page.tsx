@@ -21,20 +21,20 @@ type PageProps = { searchParams: Promise<{ topic?: string; definitions?: string 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The collection and the words waiting for a definition, read as the person who owns it. */
-async function loadDefinitions(supabase: Client, userId: string, domainId: string | undefined) {
-  if (!domainId || !UUID.test(domainId)) return null;
-  const [{ data: domain }, { data: words }] = await Promise.all([
-    supabase.from("domains").select("name, owner_id").eq("id", domainId).maybeSingle(),
+async function loadDefinitions(supabase: Client, userId: string, collectionId: string | undefined) {
+  if (!collectionId || !UUID.test(collectionId)) return null;
+  const [{ data: collection }, { data: words }] = await Promise.all([
+    supabase.from("collections").select("name, owner_id").eq("id", collectionId).maybeSingle(),
     supabase
       .from("terms")
       .select("term")
-      .eq("domain_id", domainId)
+      .eq("collection_id", collectionId)
       .is("definition", null)
       .order("term")
       .limit(500),
   ]);
-  if (!domain || domain.owner_id !== userId) return null;
-  return { name: domain.name, words: (words ?? []).map((row) => row.term) };
+  if (!collection || collection.owner_id !== userId) return null;
+  return { name: collection.name, words: (words ?? []).map((row) => row.term) };
 }
 
 export default async function RequestPage({ searchParams }: PageProps) {
@@ -87,7 +87,7 @@ export default async function RequestPage({ searchParams }: PageProps) {
       topic: request.topic,
       createdDate: request.createdDate,
       sentence: statusSentence(request),
-      collectionId: request.displayStatus === "ready" ? request.deliveredDomainId : null,
+      collectionId: request.displayStatus === "ready" ? request.deliveredCollectionId : null,
     }));
     const found = await loadDefinitions(supabase, user.id, definitionsId);
     if (definitionsId && (!found || found.words.length === 0)) {
@@ -105,7 +105,7 @@ export default async function RequestPage({ searchParams }: PageProps) {
         <>
           {header}
           <DefinitionsForm
-            domainId={definitionsId}
+            collectionId={definitionsId}
             name={found.name}
             words={found.words}
             count={found.words.length}

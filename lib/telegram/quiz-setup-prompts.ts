@@ -14,7 +14,7 @@ import {
   countTermsForQuiz,
   DEFAULT_TELEGRAM_QUIZ_COUNT,
   getMaxQuizQuestionCount,
-  type QuizDomainSelection,
+  type QuizCollectionSelection,
 } from "./session-store";
 import { send } from "./transport";
 
@@ -23,10 +23,10 @@ type Client = SupabaseClient<Database>;
 export async function resolveQuizCount(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   requestedCount: number | "all",
 ): Promise<number> {
-  const available = await countTermsForQuiz(client, userId, domainId);
+  const available = await countTermsForQuiz(client, userId, collectionId);
   const maxCount = getMaxQuizQuestionCount(available);
   if (maxCount === 0) return 0;
   if (requestedCount === "all") return maxCount;
@@ -72,9 +72,9 @@ export async function sendCountQuestion(
   client: Client,
   chatId: number,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
 ): Promise<TelegramAction[]> {
-  const available = await countTermsForQuiz(client, userId, domainId);
+  const available = await countTermsForQuiz(client, userId, collectionId);
   const maxCount = getMaxQuizQuestionCount(available);
 
   if (maxCount === 0) {
@@ -93,15 +93,15 @@ export async function sendCountQuestion(
   ];
 }
 
-export async function formatDomainChoiceLabel(
+export async function formatCollectionChoiceLabel(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
 ): Promise<string> {
   const stats = await fetchCollectionStats(client, userId, "quiz");
   const activeCollections = stats.filter((collection) => collection.isActive);
 
-  if (domainId === "all") {
+  if (collectionId === "all") {
     const allCount = activeCollections.reduce(
       (total, collection) => total + collection.knownCount,
       0,
@@ -109,6 +109,6 @@ export async function formatDomainChoiceLabel(
     return `All collections (${allCount})`;
   }
 
-  const collection = activeCollections.find((item) => item.id === domainId);
+  const collection = activeCollections.find((item) => item.id === collectionId);
   return collection?.name ?? "Selected collection";
 }

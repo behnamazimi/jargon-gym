@@ -35,10 +35,10 @@ describe("readLandingRedirect", () => {
   it("carries the collection and other params, but not Cards-only ones", () => {
     expect(
       readLandingRedirect({
-        params: { domain: "d1", source: "pwa", view: undefined },
+        params: { collection: "d1", source: "pwa", view: undefined },
         storiesDefault: true,
         hasCurrentStory: false,
       }),
-    ).toBe("/app/read/stories?domain=d1&source=pwa");
+    ).toBe("/app/read/stories?collection=d1&source=pwa");
   });
 });

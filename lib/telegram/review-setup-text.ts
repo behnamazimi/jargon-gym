@@ -10,7 +10,7 @@ import {
   clearReviewSetup,
   countTermsForReview,
   loadReviewSetup,
-  type QuizDomainSelection,
+  type QuizCollectionSelection,
 } from "./session-store";
 import { edit, send } from "./transport";
 
@@ -21,11 +21,11 @@ type ReviewSetupCountResult = { ok: true; count: number } | { ok: false; message
 async function resolveReviewSetupTextCount(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   trimmed: string,
 ): Promise<ReviewSetupCountResult> {
   if (trimmed === "") {
-    const available = await countTermsForReview(client, userId, domainId);
+    const available = await countTermsForReview(client, userId, collectionId);
     return {
       ok: true,
       count: Math.min(DEFAULT_TELEGRAM_REVIEW_COUNT, getMaxStudyCount(available)),
@@ -33,7 +33,7 @@ async function resolveReviewSetupTextCount(
   }
 
   if (trimmed.toLowerCase() === "all") {
-    return { ok: true, count: await resolveReviewCount(client, userId, domainId, "all") };
+    return { ok: true, count: await resolveReviewCount(client, userId, collectionId, "all") };
   }
 
   const parsed = parseInt(trimmed, 10);
@@ -44,7 +44,7 @@ async function resolveReviewSetupTextCount(
     };
   }
 
-  const maxCount = getMaxStudyCount(await countTermsForReview(client, userId, domainId));
+  const maxCount = getMaxStudyCount(await countTermsForReview(client, userId, collectionId));
   if (parsed > maxCount) {
     return { ok: false, message: `Maximum for this selection is ${maxCount}. Try again.` };
   }
@@ -69,7 +69,7 @@ export async function handleReviewSetupText(
   text: string,
 ): Promise<{ handled: boolean; actions: TelegramAction[] }> {
   const setup = await loadReviewSetup(client, chatId);
-  if (!setup || setup.step !== "count" || !setup.domainId) {
+  if (!setup || setup.step !== "count" || !setup.collectionId) {
     return { handled: false, actions: [] };
   }
 
@@ -78,15 +78,15 @@ export async function handleReviewSetupText(
     return { handled: false, actions: [] };
   }
 
-  const domainId = setup.domainId;
-  const resolved = await resolveReviewSetupTextCount(client, userId, domainId, trimmed);
+  const collectionId = setup.collectionId;
+  const resolved = await resolveReviewSetupTextCount(client, userId, collectionId, trimmed);
   if (!resolved.ok) {
     return { handled: true, actions: [send(chatId, resolved.message)] };
   }
   const { count } = resolved;
 
   const actions: TelegramAction[] = [];
-  const available = await countTermsForReview(client, userId, domainId);
+  const available = await countTermsForReview(client, userId, collectionId);
   const maxCount = getMaxStudyCount(available);
   const defaultCount = Math.min(DEFAULT_TELEGRAM_REVIEW_COUNT, maxCount);
 
@@ -105,7 +105,7 @@ export async function handleReviewSetupText(
   }
 
   await clearReviewSetup(client, chatId);
-  actions.push(...(await startReviewFlashcardSession(client, chatId, userId, domainId, count)));
+  actions.push(...(await startReviewFlashcardSession(client, chatId, userId, collectionId, count)));
 
   return { handled: true, actions };
 }

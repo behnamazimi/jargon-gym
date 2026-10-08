@@ -17,7 +17,7 @@ function neighbour(active: BrowseGroup, key: string): BrowseGroup | null {
   return null;
 }
 
-export function SharedDomainsTabs({
+export function SharedCollectionsTabs({
   active,
   counts,
   onChange,

@@ -7,7 +7,7 @@ import { fetchUserCollection, fetchUserCollectionForUser } from "@/lib/library/c
 
 type Client = SupabaseClient<Database>;
 
-export type DomainProgressState = {
+export type CollectionProgressState = {
   knownTermIds: string[];
   /** Terms the user manually marked known — a separate, user-set signal
    *  from TRACE's earned `knownTermIds` label above. Never conflated. */
@@ -41,23 +41,23 @@ function toTraceState(row: {
   };
 }
 
-/** Known-term IDs for every term in the given domains, including paused
+/** Known-term IDs for every term in the given collections, including paused
  *  collections. "Known" is a read-only label derived live from
  *  Mastery_adjusted (lib/trace.deriveKnownLabel) — one RPC joins
- *  terms + review_state server-side by domain_id, avoiding a term-id list
+ *  terms + review_state server-side by collection_id, avoiding a term-id list
  *  in an `.in()` filter that blows past PostgREST's URL length limit for
  *  large collections. */
-export async function fetchProgressStateByDomain(
+export async function fetchProgressStateByCollection(
   client: Client,
-  domainIds: string[],
-): Promise<DomainProgressState> {
-  if (domainIds.length === 0) {
+  collectionIds: string[],
+): Promise<CollectionProgressState> {
+  if (collectionIds.length === 0) {
     return { knownTermIds: [], markedKnownTermIds: [], everMasteredTermIds: [] };
   }
 
   const data = await fetchAllRows((from, to) =>
     client
-      .rpc("my_progress_state_by_domain", { p_domain_ids: domainIds })
+      .rpc("my_progress_state_by_collection", { p_collection_ids: collectionIds })
       .order("term_id")
       .range(from, to),
   );
@@ -82,8 +82,8 @@ export async function fetchProgressStateByDomain(
   return { knownTermIds, markedKnownTermIds, everMasteredTermIds };
 }
 
-async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
-  const { data, error } = await client.rpc("review_domain_ids", {
+async function fetchReviewCollectionIdsFromRpc(client: Client, userId: string) {
+  const { data, error } = await client.rpc("review_collection_ids", {
     p_user_id: userId,
   });
 
@@ -91,36 +91,39 @@ async function fetchReviewDomainIdsFromRpc(client: Client, userId: string) {
   return data ?? [];
 }
 
-export const resolveReviewDomainIds = cache(async function resolveReviewDomainIds(
+export const resolveReviewCollectionIds = cache(async function resolveReviewCollectionIds(
   client: Client,
   userId: string,
 ) {
-  const [collectionRows, reviewDomainIds] = await Promise.all([
+  const [collectionRows, reviewCollectionIds] = await Promise.all([
     fetchUserCollection(client, userId),
-    client.rpc("my_review_domain_ids").then(({ data, error }) => {
+    client.rpc("my_review_collection_ids").then(({ data, error }) => {
       if (error) throw error;
       return data ?? [];
     }),
   ]);
 
-  return { reviewDomainIds, collectionRows };
+  return { reviewCollectionIds, collectionRows };
 });
 
-export const resolveReviewDomainIdsForUser = cache(async function resolveReviewDomainIdsForUser(
+export const resolveReviewCollectionIdsForUser = cache(
+  async function resolveReviewCollectionIdsForUser(client: Client, userId: string) {
+    const [collectionRows, reviewCollectionIds] = await Promise.all([
+      fetchUserCollectionForUser(client, userId),
+      fetchReviewCollectionIdsFromRpc(client, userId),
+    ]);
+
+    return { reviewCollectionIds, collectionRows };
+  },
+);
+
+export async function resetCollectionProgress(
   client: Client,
-  userId: string,
+  _userId: string,
+  collectionId: string,
 ) {
-  const [collectionRows, reviewDomainIds] = await Promise.all([
-    fetchUserCollectionForUser(client, userId),
-    fetchReviewDomainIdsFromRpc(client, userId),
-  ]);
-
-  return { reviewDomainIds, collectionRows };
-});
-
-export async function resetDomainProgress(client: Client, _userId: string, domainId: string) {
-  const { error } = await client.rpc("my_reset_domain_progress", {
-    p_domain_id: domainId,
+  const { error } = await client.rpc("my_reset_collection_progress", {
+    p_collection_id: collectionId,
   });
 
   if (error) throw error;

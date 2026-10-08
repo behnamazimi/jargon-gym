@@ -51,18 +51,18 @@ begin
   assert not has_function_privilege('anon', 'public.my_report_collection(uuid,text,text)', 'execute'), 'anon report';
   assert not has_function_privilege('anon', 'public.admin_stop_sharing_collection(uuid,text,text)', 'execute'), 'anon stop';
   assert has_function_privilege('authenticated', 'public.admin_lift_share_lock(uuid,text)', 'execute'), 'authenticated lift';
-  assert not has_function_privilege('authenticated', 'public._domains_guard_protected()', 'execute'), 'guard callable';
+  assert not has_function_privilege('authenticated', 'public._collections_guard_protected()', 'execute'), 'guard callable';
   assert not has_function_privilege('authenticated', 'public._collection_loves_count()', 'execute'), 'counter callable';
   assert not has_table_privilege('authenticated', 'public.collection_loves', 'insert'), 'loves writable';
   assert not has_table_privilege('authenticated', 'public.collection_reports', 'insert'), 'reports writable';
 
-  insert into public.domains (name, owner_id, visibility) values ('CM Shared', owner_id, 'shared') returning id into d_shared;
-  insert into public.domains (name, owner_id) values ('CM Private', owner_id) returning id into d_private;
-  insert into public.domains (name, owner_id, visibility, is_builtin) values ('CM Builtin', owner_id, 'shared', true) returning id into d_builtin;
-  insert into public.user_collection_domains (user_id, domain_id) values (a_id, d_shared), (b_id, d_shared);
+  insert into public.collections (name, owner_id, visibility) values ('CM Shared', owner_id, 'shared') returning id into d_shared;
+  insert into public.collections (name, owner_id) values ('CM Private', owner_id) returning id into d_private;
+  insert into public.collections (name, owner_id, visibility, is_builtin) values ('CM Builtin', owner_id, 'shared', true) returning id into d_builtin;
+  insert into public.user_collections (user_id, collection_id) values (a_id, d_shared), (b_id, d_shared);
 
   -- A love only changes the counter, so it must not bump updated_at
-  assert (select pg_get_triggerdef(oid) from pg_trigger where tgname = 'domains_set_updated_at' and tgrelid = 'public.domains'::regclass) like '%love_count%', 'updated_at trigger ignores loves';
+  assert (select pg_get_triggerdef(oid) from pg_trigger where tgname = 'collections_set_updated_at' and tgrelid = 'public.collections'::regclass) like '%love_count%', 'updated_at trigger ignores loves';
 
   -- Loves
   perform pg_temp.act_as(owner_id);
@@ -85,12 +85,12 @@ begin
   -- The owner can't edit protected columns, or re-share while blocked
   perform pg_temp.act_as(owner_id);
   v_failed := false;
-  begin update public.domains set love_count = 99 where id = d_shared; exception when others then v_failed := sqlerrm = 'love_count_protected'; end;
+  begin update public.collections set love_count = 99 where id = d_shared; exception when others then v_failed := sqlerrm = 'love_count_protected'; end;
   assert v_failed, 'owner edits love_count';
   v_failed := false;
-  begin update public.domains set share_blocked_at = now(), share_block_reason = 'rules' where id = d_shared; exception when others then v_failed := sqlerrm = 'share_lock_protected'; end;
+  begin update public.collections set share_blocked_at = now(), share_block_reason = 'rules' where id = d_shared; exception when others then v_failed := sqlerrm = 'share_lock_protected'; end;
   assert v_failed, 'owner sets lock';
-  update public.domains set name = 'CM Shared renamed' where id = d_shared;
+  update public.collections set name = 'CM Shared renamed' where id = d_shared;
 
   -- Reports
   perform pg_temp.act_as(owner_id);
@@ -118,16 +118,16 @@ begin
   -- Quota: 10 reports in 24h
   execute 'reset role';
   for i in 1..9 loop
-    insert into public.domains (name, owner_id, visibility) values ('CM Q' || i, owner_id, 'shared') returning id into v_id;
-    insert into public.collection_reports (domain_id, reporter_id, reason) values (v_id, b_id, 'rules');
+    insert into public.collections (name, owner_id, visibility) values ('CM Q' || i, owner_id, 'shared') returning id into v_id;
+    insert into public.collection_reports (collection_id, reporter_id, reason) values (v_id, b_id, 'rules');
   end loop;
-  insert into public.domains (name, owner_id, visibility) values ('CM Q10', owner_id, 'shared') returning id into v_id;
+  insert into public.collections (name, owner_id, visibility) values ('CM Q10', owner_id, 'shared') returning id into v_id;
   perform pg_temp.act_as(b_id);
   v_failed := false;
   begin perform public.my_report_collection(v_id, 'rules', null); exception when others then v_failed := sqlerrm = 'report_quota_reached'; end;
   assert v_failed, 'report quota';
   execute 'reset role';
-  delete from public.collection_reports where domain_id <> d_shared;
+  delete from public.collection_reports where collection_id <> d_shared;
 
   -- Non-admins can't use the admin functions
   perform pg_temp.act_as(owner_id);
@@ -137,7 +137,7 @@ begin
 
   -- Takedown
   perform pg_temp.act_as(admin_id);
-  assert (select count(*) from public.collection_reports where domain_id = d_shared) = 2, 'admin sees both reports';
+  assert (select count(*) from public.collection_reports where collection_id = d_shared) = 2, 'admin sees both reports';
   assert (select count(*) from public.admin_list_collection_reports(d_shared)) = 2, 'report list';
   v_failed := false;
   begin perform public.admin_stop_sharing_collection(d_shared, 'rules', ''); exception when others then v_failed := sqlstate = 'AD001'; end;
@@ -151,19 +151,19 @@ begin
 
   perform public.admin_stop_sharing_collection(d_shared, 'personal_info', 'phone number in term 3');
   execute 'reset role';
-  assert (select visibility from public.domains where id = d_shared) = 'private', 'unshared';
-  assert (select share_block_reason from public.domains where id = d_shared) = 'personal_info', 'reason set';
-  assert not exists (select 1 from public.user_collection_domains where domain_id = d_shared and user_id <> owner_id), 'removed from libraries';
-  assert (select count(*) from public.collection_reports where domain_id = d_shared and status = 'actioned') = 2, 'reports actioned';
+  assert (select visibility from public.collections where id = d_shared) = 'private', 'unshared';
+  assert (select share_block_reason from public.collections where id = d_shared) = 'personal_info', 'reason set';
+  assert not exists (select 1 from public.user_collections where collection_id = d_shared and user_id <> owner_id), 'removed from libraries';
+  assert (select count(*) from public.collection_reports where collection_id = d_shared and status = 'actioned') = 2, 'reports actioned';
   select count(*) into v_audits from public.admin_audit_log where action = 'stop_sharing_collection' and target_id = d_shared::text;
   assert v_audits = 1, 'one audit row';
   assert (select (details->>'removed_from')::int from public.admin_audit_log where action = 'stop_sharing_collection' and target_id = d_shared::text) = 2, 'removed_from counted';
-  assert (select love_count from public.domains where id = d_shared) = 1, 'loves kept';
+  assert (select love_count from public.collections where id = d_shared) = 1, 'loves kept';
 
   -- Blocked: no sharing, no loves, no adding
   perform pg_temp.act_as(owner_id);
   v_failed := false;
-  begin update public.domains set visibility = 'shared' where id = d_shared; exception when others then v_failed := sqlerrm = 'share_blocked'; end;
+  begin update public.collections set visibility = 'shared' where id = d_shared; exception when others then v_failed := sqlerrm = 'share_blocked'; end;
   assert v_failed, 're-share while blocked';
   perform pg_temp.act_as(a_id);
   v_failed := false;
@@ -177,9 +177,9 @@ begin
   execute 'reset role';
   assert (select count(*) from public.admin_audit_log where action = 'lift_share_lock' and target_id = d_shared::text) = 1, 'lift audited once';
   perform pg_temp.act_as(owner_id);
-  update public.domains set visibility = 'shared' where id = d_shared;
+  update public.collections set visibility = 'shared' where id = d_shared;
   execute 'reset role';
-  assert not exists (select 1 from public.user_collection_domains where domain_id = d_shared and user_id <> owner_id), 'nothing restored';
+  assert not exists (select 1 from public.user_collections where collection_id = d_shared and user_id <> owner_id), 'nothing restored';
 
   -- Dismiss
   perform pg_temp.act_as(a_id);
@@ -192,7 +192,7 @@ begin
   perform pg_temp.act_as(a_id);
   perform public.my_report_collection(d_shared, 'rules', null);
   execute 'reset role';
-  assert (select count(*) from public.collection_reports where domain_id = d_shared and status = 'open') = 1, 'later report opens a new one';
+  assert (select count(*) from public.collection_reports where collection_id = d_shared and status = 'open') = 1, 'later report opens a new one';
 
   -- Admin list
   perform pg_temp.act_as(admin_id);

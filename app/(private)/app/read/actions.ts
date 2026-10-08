@@ -43,8 +43,8 @@ export async function getReadSetupData() {
   return { collections, paused, narrationAccess };
 }
 
-function domainIdsForRead(domainId: string | undefined): string[] | "all" {
-  return domainId && domainId !== "all" ? [domainId] : "all";
+function collectionIdsForRead(collectionId: string | undefined): string[] | "all" {
+  return collectionId && collectionId !== "all" ? [collectionId] : "all";
 }
 
 function scheduleRecordRead(userId: string, termId: string) {
@@ -126,12 +126,12 @@ export type ReadFeedBatchResult = {
  * paged view only ever needs one term at a time, but takes the same
  * batch so both surfaces share one queue and one prefetch mechanism.
  *
- * `domainId` is a Read-page filter on top of the active pool. `"all"` (default)
+ * `collectionId` is a Read-page filter on top of the active pool. `"all"` (default)
  * matches Telegram /read. The RPC already intersects with collections that are
  * turned on, so an unknown id just yields an empty pick.
  */
 export async function getReadFeedBatchAction(
-  domainId: string,
+  collectionId: string,
   excludeTermIds: string[],
 ): Promise<ReadFeedBatchResult> {
   const auth = await requireAuthenticatedClient();
@@ -139,7 +139,7 @@ export async function getReadFeedBatchAction(
 
   try {
     const admin = createAdminClient();
-    const scope = { domainIds: domainIdsForRead(domainId) };
+    const scope = { collectionIds: collectionIdsForRead(collectionId) };
     const cards = await pickReadTermsForUser(
       admin,
       auth.user.id,

@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 export const REQUEST_KINDS = ["jargon", "vocabulary"] as const;
 export type RequestKind = (typeof REQUEST_KINDS)[number];
@@ -47,7 +47,7 @@ export type MyRequest = {
   id: string;
   topic: string;
   kind: RequestKind | "definitions";
-  language: DomainLanguage;
+  language: CollectionLanguage;
   status: RequestStatus;
   displayStatus: DisplayStatus;
   /** Already formatted in the person's time zone, so server and browser agree. */
@@ -56,8 +56,8 @@ export type MyRequest = {
   declineReason: DeclineReason | null;
   declineNote: string | null;
   deliveryKind: "prepared" | "added_shared" | "filled" | null;
-  deliveredDomainId: string | null;
-  deliveredDomainName: string | null;
+  deliveredCollectionId: string | null;
+  deliveredCollectionName: string | null;
   deliveredTerms: number | null;
   delayNotified: boolean;
   notifyEmail: boolean;

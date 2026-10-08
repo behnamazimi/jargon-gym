@@ -3,7 +3,7 @@
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
   canStoreCollectionPlacement,
-  isDomainId,
+  isCollectionId,
   parsePlacement,
   withCollectionPlacement,
   withDefaultPlacement,
@@ -14,8 +14,8 @@ import { loadTermLayout, saveTermLayout } from "@/lib/terms/term-layout-reposito
 
 export type TermLayoutChange =
   | { scope: "default"; placement: unknown }
-  | { scope: "collection"; domainId: string; placement: unknown }
-  | { scope: "reset-collection"; domainId: string };
+  | { scope: "collection"; collectionId: string; placement: unknown }
+  | { scope: "reset-collection"; collectionId: string };
 
 export async function saveTermLayoutAction(
   change: TermLayoutChange,
@@ -23,7 +23,7 @@ export async function saveTermLayoutAction(
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: "Log in to continue." };
 
-  if (change.scope !== "default" && !isDomainId(change.domainId)) {
+  if (change.scope !== "default" && !isCollectionId(change.collectionId)) {
     return { error: "Unknown collection." };
   }
   const placement = change.scope === "reset-collection" ? null : parsePlacement(change.placement);
@@ -35,12 +35,12 @@ export async function saveTermLayoutAction(
     if (change.scope === "default" && placement) {
       next = withDefaultPlacement(current, placement);
     } else if (change.scope === "collection" && placement) {
-      if (!canStoreCollectionPlacement(current, change.domainId)) {
+      if (!canStoreCollectionPlacement(current, change.collectionId)) {
         return { error: "Too many collections have their own layout. Reset one first." };
       }
-      next = withCollectionPlacement(current, change.domainId, placement);
+      next = withCollectionPlacement(current, change.collectionId, placement);
     } else if (change.scope === "reset-collection") {
-      next = withoutCollectionPlacement(current, change.domainId);
+      next = withoutCollectionPlacement(current, change.collectionId);
     } else {
       return { error: "Unknown layout." };
     }

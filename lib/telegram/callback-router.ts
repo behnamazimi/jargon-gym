@@ -17,7 +17,7 @@ import { send } from "./transport";
 
 type Client = SupabaseClient<Database>;
 
-/** ReviewGrade's runtime domain is the contiguous integers AGAIN..EASY. */
+/** ReviewGrade's runtime collection is the contiguous integers AGAIN..EASY. */
 function isReviewGrade(value: number): value is ReviewGrade {
   return Number.isInteger(value) && value >= AGAIN && value <= EASY;
 }

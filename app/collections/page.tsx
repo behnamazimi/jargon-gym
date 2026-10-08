@@ -24,14 +24,14 @@ export const metadata: Metadata = {
 
 export default async function PublicCollectionsIndexPage() {
   const collections = await listPublicCollections();
-  const rows: CollectionIndexRow[] = collections.map(({ domain, totalTerms, specimen }) => {
+  const rows: CollectionIndexRow[] = collections.map(({ collection, totalTerms, specimen }) => {
     return {
-      slug: domain.slug,
-      name: domain.name,
-      description: domain.description,
-      kindLine: kindLine(domain.kind, domain.language),
+      slug: collection.slug,
+      name: collection.name,
+      description: collection.description,
+      kindLine: kindLine(collection.kind, collection.language),
       count: totalTerms,
-      lang: domain.language === "en" ? undefined : domain.language,
+      lang: collection.language === "en" ? undefined : collection.language,
       specimen: specimen ? { term: specimen.term, definition: specimen.definition } : null,
     };
   });

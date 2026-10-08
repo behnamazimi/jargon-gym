@@ -142,7 +142,7 @@ Aria's document-level `pointerup`, so its buttons stop working.
 
 The Library's layout (`app/(private)/app/library/layout.tsx`) holds the
 collection sidebar, and the page loads one collection. Switching collections
-is a plain `?domain=` link, so only the page reloads. The page sends a lean
+is a plain `?collection=` link, so only the page reloads. The page sends a lean
 row per term (`LibraryTerm`, from `lib/library/load.ts`). Full details
 load in batches from `GET /api/terms/details` as rows near the screen
 (`lib/library/details-store.ts`). Marking known and deleting don't

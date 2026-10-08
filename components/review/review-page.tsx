@@ -28,22 +28,22 @@ type ReviewPageProps = {
   seed: ReviewQueueSeed;
   collections: StudyCollection[];
   paused: PausedStudyCollection[];
-  domainId: string;
+  collectionId: string;
   narrationAccess: boolean;
 };
 
-function stripReviewDomainParam() {
+function stripReviewCollectionParam() {
   const url = new URL(window.location.href);
-  if (!url.searchParams.has("domain")) return;
-  url.searchParams.delete("domain");
+  if (!url.searchParams.has("collection")) return;
+  url.searchParams.delete("collection");
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-function caughtUpDescription(domainId: string, collections: StudyCollection[]) {
-  if (domainId === "all") {
+function caughtUpDescription(collectionId: string, collections: StudyCollection[]) {
+  if (collectionId === "all") {
     return "No terms in your active collections. Add some terms or resume a collection to start reviewing.";
   }
-  const name = collections.find((collection) => collection.id === domainId)?.name;
+  const name = collections.find((collection) => collection.id === collectionId)?.name;
   if (!name) {
     return "No terms in this collection. Pick another to keep reviewing.";
   }
@@ -54,16 +54,16 @@ export function ReviewPage({
   seed,
   collections,
   paused,
-  domainId,
+  collectionId,
   narrationAccess,
 }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
-  const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
+  const [selectedCollectionId, setSelectedCollectionId] = useState(collectionId);
   const [rememberOnDevice, setRememberOnDevice] = useState(true);
   const [ratings, setRatings] = useState<ReviewRating[]>([]);
   const [revealedTermIds, setRevealedTermIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const queue = useReviewQueue({ domainId: selectedCollectionId, seed });
+  const queue = useReviewQueue({ collectionId: selectedCollectionId, seed });
   const { enqueueRating } = useReviewWriteQueue({ setErrorMessage });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
   const advancedCardIdRef = useRef<string | null>(null);
@@ -80,17 +80,17 @@ export function ReviewPage({
     : undefined;
 
   const handleCollectionChange = useCallback(
-    (nextDomainId: string) => {
-      if (nextDomainId === selectedCollectionIdRef.current) return;
-      setSelectedCollectionId(nextDomainId);
-      selectedCollectionIdRef.current = nextDomainId;
-      stripReviewDomainParam();
-      queue.switchDomain(nextDomainId);
+    (nextCollectionId: string) => {
+      if (nextCollectionId === selectedCollectionIdRef.current) return;
+      setSelectedCollectionId(nextCollectionId);
+      selectedCollectionIdRef.current = nextCollectionId;
+      stripReviewCollectionParam();
+      queue.switchCollection(nextCollectionId);
       if (rememberOnDevice) {
-        saveReviewCollectionPreference(nextDomainId);
+        saveReviewCollectionPreference(nextCollectionId);
       }
     },
-    [queue.switchDomain, rememberOnDevice],
+    [queue.switchCollection, rememberOnDevice],
   );
 
   const handleRememberChange = useCallback((remember: boolean) => {

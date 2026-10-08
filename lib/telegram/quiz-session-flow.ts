@@ -8,7 +8,7 @@ import {
   deleteSession,
   getCurrentQuestion,
   getSession,
-  type QuizDomainSelection,
+  type QuizCollectionSelection,
   type ReviewSession,
 } from "./session-store";
 import { send } from "./transport";
@@ -59,10 +59,10 @@ export async function startReviewSession(
   client: Client,
   chatId: number,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   count: number,
 ): Promise<TelegramAction[]> {
-  const session = await createSession(client, chatId, userId, domainId, count);
+  const session = await createSession(client, chatId, userId, collectionId, count);
 
   if (session.questions.length === 0) {
     await deleteSession(client, chatId);

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { fetchDomainStats } from "./collection-domain-tally";
+import { fetchCollectionStats } from "./collection-tally";
 
-type Row = { domain_id: string; term_id: string; marked_known_at: string | null };
+type Row = { collection_id: string; term_id: string; marked_known_at: string | null };
 
-function progressRow(domainId: string, n: number): Row & Record<string, unknown> {
+function progressRow(collectionId: string, n: number): Row & Record<string, unknown> {
   return {
-    domain_id: domainId,
+    collection_id: collectionId,
     term_id: `t${n}`,
     read_count: 0,
     last_read_at: null,
@@ -36,13 +36,13 @@ function fakeClient(rows: Row[]) {
   };
 }
 
-describe("fetchDomainStats", () => {
+describe("fetchCollectionStats", () => {
   it("counts every term past the 1000-row page limit", async () => {
     const rows = [
       ...Array.from({ length: 1500 }, (_, i) => progressRow("big", i)),
       ...Array.from({ length: 700 }, (_, i) => progressRow("small", 1500 + i)),
     ];
-    const stats = await fetchDomainStats(fakeClient(rows) as never, ["big", "small"]);
+    const stats = await fetchCollectionStats(fakeClient(rows) as never, ["big", "small"]);
     expect(stats.get("big")).toMatchObject({ termCount: 1500, markedKnownCount: 750 });
     expect(stats.get("small")).toMatchObject({ termCount: 700, markedKnownCount: 350 });
   });

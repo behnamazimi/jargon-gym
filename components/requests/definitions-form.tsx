@@ -12,7 +12,7 @@ const DEFS = REQUEST_COPY.definitions;
 const SHOWN_WORDS = 20;
 
 export function DefinitionsForm({
-  domainId,
+  collectionId,
   name,
   words,
   count,
@@ -20,7 +20,7 @@ export function DefinitionsForm({
   paused,
   used,
 }: {
-  domainId: string;
+  collectionId: string;
   name: string;
   /** The first few words, for a look at what is being asked. */
   words: string[];
@@ -40,7 +40,7 @@ export function DefinitionsForm({
   function send() {
     setError(null);
     startSending(async () => {
-      const result = await createDefinitionsRequest({ domainId, notifyEmail: true });
+      const result = await createDefinitionsRequest({ collectionId, notifyEmail: true });
       if (result.ok) setSent(result);
       else setError(result.message);
     });

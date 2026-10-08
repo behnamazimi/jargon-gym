@@ -18,9 +18,9 @@ type HistoryState =
   | { status: "error"; message: string }
   | { status: "ready"; stories: StorySummary[] };
 
-function storyHref(storyId: string, domain: string | null): string {
+function storyHref(storyId: string, collection: string | null): string {
   const params = new URLSearchParams({ story: storyId });
-  if (domain) params.set("domain", domain);
+  if (collection) params.set("collection", collection);
   return `/app/read/stories?${params.toString()}`;
 }
 
@@ -77,12 +77,12 @@ function HistoryRow({
 function HistoryList({
   state,
   currentStoryId,
-  domain,
+  collection,
   onOpen,
 }: {
   state: HistoryState;
   currentStoryId: string | null;
-  domain: string | null;
+  collection: string | null;
   onOpen: () => void;
 }) {
   if (state.status === "loading") {
@@ -104,7 +104,7 @@ function HistoryList({
         <HistoryRow
           key={story.id}
           story={story}
-          href={storyHref(story.id, domain)}
+          href={storyHref(story.id, collection)}
           isCurrent={story.id === currentStoryId}
           onOpen={onOpen}
         />
@@ -139,7 +139,7 @@ export function StoryHistoryMenu() {
 
   if (!pathname.startsWith("/app/read/stories")) return null;
 
-  const domain = searchParams.get("domain");
+  const collection = searchParams.get("collection");
   const currentStoryId = searchParams.get("story");
 
   async function load() {
@@ -161,7 +161,7 @@ export function StoryHistoryMenu() {
     <HistoryList
       state={state}
       currentStoryId={currentStoryId}
-      domain={domain}
+      collection={collection}
       onOpen={() => setOpen(false)}
     />
   );

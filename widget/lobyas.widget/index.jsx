@@ -461,8 +461,8 @@ export const render = ({ output, error }, dispatch) => {
         {revealed ? current.definition : `What is ${current.term}?`}
       </div>
       <div className="actions">
-        <span className="cat" title={current.domainName}>
-          {current.domainName}
+        <span className="cat" title={current.collectionName}>
+          {current.collectionName}
         </span>
         <button
           className="read-more-btn"

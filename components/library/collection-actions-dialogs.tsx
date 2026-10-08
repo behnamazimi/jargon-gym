@@ -8,7 +8,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { Domain } from "@/lib/terms/types";
+import type { Collection } from "@/lib/terms/types";
 import { pluralize } from "@/lib/utils";
 
 function subscriberCountMessage(count: number) {
@@ -25,24 +25,26 @@ function subscriberCountMessage(count: number) {
 export type SubscriberCheck = { count?: number; error?: string };
 
 function UnshareBody({
-  domain,
+  collection,
   check,
   onConfirmUnshare,
 }: {
-  domain: Domain;
+  collection: Collection;
   check: Promise<SubscriberCheck> | null;
   onConfirmUnshare: () => void;
 }) {
   const result = check ? use(check) : null;
-  return <UnshareContent domain={domain} result={result} onConfirmUnshare={onConfirmUnshare} />;
+  return (
+    <UnshareContent collection={collection} result={result} onConfirmUnshare={onConfirmUnshare} />
+  );
 }
 
 function UnshareContent({
-  domain,
+  collection,
   result,
   onConfirmUnshare,
 }: {
-  domain: Domain;
+  collection: Collection;
   /** Undefined while the check is still running. */
   result: SubscriberCheck | null | undefined;
   onConfirmUnshare: () => void;
@@ -62,7 +64,7 @@ function UnshareContent({
             "Unsharing will hide this collection from Browse."
           ) : (
             <>
-              {subscriberCountMessage(result.count)} Unsharing will hide &ldquo;{domain.name}
+              {subscriberCountMessage(result.count)} Unsharing will hide &ldquo;{collection.name}
               &rdquo; from Browse.
             </>
           )}
@@ -78,8 +80,8 @@ function UnshareContent({
   );
 }
 
-type DomainActionsDialogsProps = {
-  domain: Domain;
+type CollectionActionsDialogsProps = {
+  collection: Collection;
   shareConfirmOpen: boolean;
   onShareConfirmOpenChange: (open: boolean) => void;
   onConfirmShare: () => void;
@@ -98,8 +100,8 @@ type DomainActionsDialogsProps = {
   onConfirmResetProgress: () => void;
 };
 
-export function DomainActionsDialogs({
-  domain,
+export function CollectionActionsDialogs({
+  collection,
   shareConfirmOpen,
   onShareConfirmOpenChange,
   onConfirmShare,
@@ -114,14 +116,14 @@ export function DomainActionsDialogs({
   resetProgressOpen,
   onResetProgressOpenChange,
   onConfirmResetProgress,
-}: DomainActionsDialogsProps) {
+}: CollectionActionsDialogsProps) {
   return (
     <>
       <AlertDialog isOpen={shareConfirmOpen} onOpenChange={onShareConfirmOpenChange}>
         <AlertDialogHeader>
           <AlertDialogTitle>Share collection?</AlertDialogTitle>
           <AlertDialogDescription>
-            &ldquo;{domain.name}&rdquo; will show up in Browse. You can unshare it anytime.
+            &ldquo;{collection.name}&rdquo; will show up in Browse. You can unshare it anytime.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -139,14 +141,14 @@ export function DomainActionsDialogs({
         <Suspense
           fallback={
             <UnshareContent
-              domain={domain}
+              collection={collection}
               result={undefined}
               onConfirmUnshare={onConfirmUnshare}
             />
           }
         >
           <UnshareBody
-            domain={domain}
+            collection={collection}
             check={subscriberCheck}
             onConfirmUnshare={onConfirmUnshare}
           />
@@ -163,7 +165,7 @@ export function DomainActionsDialogs({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete collection?</AlertDialogTitle>
           <AlertDialogDescription>
-            Delete &ldquo;{domain.name}&rdquo; and all its terms? This can&apos;t be undone.
+            Delete &ldquo;{collection.name}&rdquo; and all its terms? This can&apos;t be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -183,7 +185,7 @@ export function DomainActionsDialogs({
         <AlertDialogHeader>
           <AlertDialogTitle>Reset progress?</AlertDialogTitle>
           <AlertDialogDescription>
-            {`Erase your learning progress for all ${pluralize(domain.termCount, "term")} in “${domain.name}”? Mastered and marked-known terms start over, and Triage choices are cleared. This can't be undone.`}
+            {`Erase your learning progress for all ${pluralize(collection.termCount, "term")} in “${collection.name}”? Mastered and marked-known terms start over, and Triage choices are cleared. This can't be undone.`}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

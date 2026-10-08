@@ -52,8 +52,8 @@ export function parseTermLayout(value: unknown): TermLayout {
   if (!isRecord(value)) return EMPTY_TERM_LAYOUT;
   const collections: Record<string, PlacementOverrides> = {};
   if (isRecord(value.collections)) {
-    for (const [domainId, overrides] of Object.entries(value.collections)) {
-      if (UUID.test(domainId)) collections[domainId] = parseOverrides(overrides);
+    for (const [collectionId, overrides] of Object.entries(value.collections)) {
+      if (UUID.test(collectionId)) collections[collectionId] = parseOverrides(overrides);
     }
   }
   return { default: parseOverrides(value.default), collections };
@@ -71,7 +71,7 @@ export function parsePlacement(value: unknown): Placement | null {
   return placement;
 }
 
-export function isDomainId(value: unknown): value is string {
+export function isCollectionId(value: unknown): value is string {
   return typeof value === "string" && UUID.test(value);
 }
 
@@ -90,39 +90,42 @@ function toOverrides(placement: Placement): PlacementOverrides {
 }
 
 /** The collection's own map when it has one, else the default for all. */
-export function resolvePlacement(layout: TermLayout, domainId: string | undefined): Placement {
-  const own = domainId ? layout.collections[domainId] : undefined;
+export function resolvePlacement(layout: TermLayout, collectionId: string | undefined): Placement {
+  const own = collectionId ? layout.collections[collectionId] : undefined;
   return toPlacement(own ?? layout.default);
 }
 
-export function hasCollectionOverride(layout: TermLayout, domainId: string | undefined): boolean {
-  return Boolean(domainId && layout.collections[domainId]);
+export function hasCollectionOverride(
+  layout: TermLayout,
+  collectionId: string | undefined,
+): boolean {
+  return Boolean(collectionId && layout.collections[collectionId]);
 }
 
 /** Whether this collection can get its own map: it already has one, or there
  *  is room for another. The limit is checked on save and never trims what is
  *  stored. */
-export function canStoreCollectionPlacement(layout: TermLayout, domainId: string): boolean {
+export function canStoreCollectionPlacement(layout: TermLayout, collectionId: string): boolean {
   return (
-    domainId in layout.collections ||
+    collectionId in layout.collections ||
     Object.keys(layout.collections).length < MAX_COLLECTION_LAYOUTS
   );
 }
 
 export function withCollectionPlacement(
   layout: TermLayout,
-  domainId: string,
+  collectionId: string,
   placement: Placement,
 ): TermLayout {
   return {
     ...layout,
-    collections: { ...layout.collections, [domainId]: toOverrides(placement) },
+    collections: { ...layout.collections, [collectionId]: toOverrides(placement) },
   };
 }
 
-export function withoutCollectionPlacement(layout: TermLayout, domainId: string): TermLayout {
+export function withoutCollectionPlacement(layout: TermLayout, collectionId: string): TermLayout {
   const collections = { ...layout.collections };
-  delete collections[domainId];
+  delete collections[collectionId];
   return { ...layout, collections };
 }
 

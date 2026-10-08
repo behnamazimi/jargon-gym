@@ -16,13 +16,13 @@ export function useTermActions() {
     busyId,
     clearError,
     createTerm: (
-      domainId: string,
+      collectionId: string,
       input: TermInput,
       relationshipSync?: Pick<RelationshipSyncPayload, "create">,
       onSuccess?: () => void,
     ) =>
-      run(() => createTerm(domainId, input, relationshipSync), {
-        busyKey: domainId,
+      run(() => createTerm(collectionId, input, relationshipSync), {
+        busyKey: collectionId,
         onSuccess,
         skipRefresh: true,
       }),

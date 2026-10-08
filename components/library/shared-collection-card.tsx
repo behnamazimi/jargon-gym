@@ -6,11 +6,11 @@ import { Button, LinkButton } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { REPORTED_THANKS } from "@/lib/collections/moderation";
 import { LoveButton } from "./love-button";
-import type { SharedDomain } from "@/lib/terms/types";
+import type { SharedCollection } from "@/lib/terms/types";
 import { cn, pluralize } from "@/lib/utils";
 
-type SharedDomainCardProps = {
-  domain: SharedDomain;
+type SharedCollectionCardProps = {
+  collection: SharedCollection;
   busy: boolean;
   /** Added from this page a moment ago: offers what to do next. */
   justAdded?: boolean;
@@ -20,21 +20,21 @@ type SharedDomainCardProps = {
   onReport: () => void;
 };
 
-export function SharedDomainCard({
-  domain,
+export function SharedCollectionCard({
+  collection,
   busy,
   justAdded = false,
   onAdd,
   onRemove,
   onToggleLove,
   onReport,
-}: SharedDomainCardProps) {
+}: SharedCollectionCardProps) {
   return (
     <article
       className={cn(
         "shadow-surface flex flex-col gap-4 rounded-box bg-base-100 p-5 transition-shadow duration-150",
         "hover:shadow-surface-hover",
-        domain.inCollection && "bg-primary/[0.03]",
+        collection.inCollection && "bg-primary/[0.03]",
       )}
     >
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-6">
@@ -43,31 +43,35 @@ export function SharedDomainCard({
             className="flex size-11 shrink-0 items-center justify-center rounded-field bg-primary/10 text-xl leading-none"
             aria-hidden
           >
-            {domain.icon || "📚"}
+            {collection.icon || "📚"}
           </div>
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 className="font-heading truncate text-base font-medium">{domain.name}</h2>
-              {domain.inCollection ? (
+              <h2 className="font-heading truncate text-base font-medium">{collection.name}</h2>
+              {collection.inCollection ? (
                 <Badge className="badge-soft badge-primary gap-1 border-0">
                   <CheckCircle2 className="size-3" aria-hidden strokeWidth={1.5} />
                   In library
                 </Badge>
               ) : null}
             </div>
-            {domain.description ? (
-              <p className="line-clamp-2 text-sm text-base-content/70">{domain.description}</p>
+            {collection.description ? (
+              <p className="line-clamp-2 text-sm text-base-content/70">{collection.description}</p>
             ) : null}
             <p className="text-sm tabular-nums text-base-content/70">
-              {pluralize(domain.termCount, "term")}
+              {pluralize(collection.termCount, "term")}
             </p>
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col items-stretch gap-2 md:flex-row md:items-center md:ps-2">
           <div className="flex items-center justify-between gap-1 md:justify-start">
-            <LoveButton loved={domain.lovedByMe} count={domain.loveCount} onToggle={onToggleLove} />
-            {domain.isBuiltin ? null : (
+            <LoveButton
+              loved={collection.lovedByMe}
+              count={collection.loveCount}
+              onToggle={onToggleLove}
+            />
+            {collection.isBuiltin ? null : (
               <DropdownMenuTrigger>
                 <Button
                   variant="ghost"
@@ -78,18 +82,18 @@ export function SharedDomainCard({
                   <Ellipsis className="size-5" aria-hidden strokeWidth={1.5} />
                 </Button>
                 <DropdownMenu className="min-w-[200px]" placement="bottom end">
-                  <DropdownMenuItem isDisabled={domain.reportedByMe} onAction={onReport}>
+                  <DropdownMenuItem isDisabled={collection.reportedByMe} onAction={onReport}>
                     <Flag className="h-4 w-4" />
-                    {domain.reportedByMe ? REPORTED_THANKS : "Report collection"}
+                    {collection.reportedByMe ? REPORTED_THANKS : "Report collection"}
                   </DropdownMenuItem>
                 </DropdownMenu>
               </DropdownMenuTrigger>
             )}
           </div>
-          {domain.inCollection ? (
+          {collection.inCollection ? (
             <>
               <LinkButton
-                href={`/app/library?domain=${domain.id}`}
+                href={`/app/library?collection=${collection.id}`}
                 variant="ghost"
                 className="w-full min-h-11 gap-2 md:w-auto"
               >
@@ -121,7 +125,7 @@ export function SharedDomainCard({
           )}
         </div>
       </div>
-      {justAdded && domain.inCollection ? (
+      {justAdded && collection.inCollection ? (
         <div
           role="status"
           className="flex flex-col gap-3 rounded-field bg-primary/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
@@ -129,7 +133,7 @@ export function SharedDomainCard({
           <p className="m-0 text-sm font-medium">Added to your library.</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <LinkButton
-              href={`/app/triage?domain=${domain.id}`}
+              href={`/app/triage?collection=${collection.id}`}
               variant="outline"
               size="sm"
               className="min-h-11 md:min-h-8"
@@ -137,7 +141,7 @@ export function SharedDomainCard({
               Sort what you know
             </LinkButton>
             <LinkButton
-              href={`/app/read?domain=${domain.id}`}
+              href={`/app/read?collection=${collection.id}`}
               size="sm"
               className="min-h-11 md:min-h-8"
             >

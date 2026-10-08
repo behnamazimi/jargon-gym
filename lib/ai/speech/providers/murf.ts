@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { renderPauses, type PauseStyle } from "../pause";
 import type { SpeechProviderAdapter } from "./types";
 
@@ -9,18 +9,19 @@ const REQUEST_TIMEOUT_MS = 25_000;
 // Each voice is native to one language; an English voice reading Dutch mixes the pronunciations.
 // A language missing here has no Murf voice (Russian, Turkish), so the router skips Murf for it.
 // Ids are the Falcon 2 voices listed in Murf's voice library; not yet confirmed against the account.
-const VOICE_BY_LANGUAGE: Partial<Record<DomainLanguage, { voiceId: string; locale: string }>> = {
-  en: { voiceId: "en-US-miles", locale: "en-US" },
-  nl: { voiceId: "nl-NL-dirk", locale: "nl-NL" },
-  es: { voiceId: "es-ES-javier", locale: "es-ES" },
-  fr: { voiceId: "fr-FR-axel", locale: "fr-FR" },
-  de: { voiceId: "de-DE-ralf", locale: "de-DE" },
-  it: { voiceId: "it-IT-angelo", locale: "it-IT" },
-  pt: { voiceId: "pt-BR-heitor", locale: "pt-BR" },
-  ja: { voiceId: "ja-JP-kenji", locale: "ja-JP" },
-  ko: { voiceId: "ko-KR-seok", locale: "ko-KR" },
-  zh: { voiceId: "zh-CN-tao", locale: "zh-CN" },
-};
+const VOICE_BY_LANGUAGE: Partial<Record<CollectionLanguage, { voiceId: string; locale: string }>> =
+  {
+    en: { voiceId: "en-US-miles", locale: "en-US" },
+    nl: { voiceId: "nl-NL-dirk", locale: "nl-NL" },
+    es: { voiceId: "es-ES-javier", locale: "es-ES" },
+    fr: { voiceId: "fr-FR-axel", locale: "fr-FR" },
+    de: { voiceId: "de-DE-ralf", locale: "de-DE" },
+    it: { voiceId: "it-IT-angelo", locale: "it-IT" },
+    pt: { voiceId: "pt-BR-heitor", locale: "pt-BR" },
+    ja: { voiceId: "ja-JP-kenji", locale: "ja-JP" },
+    ko: { voiceId: "ko-KR-seok", locale: "ko-KR" },
+    zh: { voiceId: "zh-CN-tao", locale: "zh-CN" },
+  };
 
 // Lets tests point at a local stub; unset in every real environment.
 const endpoint = (url: string) =>

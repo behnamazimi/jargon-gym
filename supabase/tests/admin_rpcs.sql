@@ -47,12 +47,12 @@ declare
   v_count integer;
 begin
   -- Fixtures: three collections (the first owned by someone else and shared; an admin can't read another person's private collection), one not built-in.
-  insert into public.domains (name, owner_id, is_builtin, visibility) values ('RPC One', other_id, true, 'shared') returning id into d1;
-  insert into public.domains (name, owner_id, is_builtin) values ('RPC Two', admin_id, true) returning id into d2;
-  insert into public.domains (name, owner_id, is_builtin) values ('RPC Three', admin_id, false) returning id into d3;
-  insert into public.terms (domain_id, term, category, definition) values (d1, 'alpha', 'c', 'a') returning id into t1;
-  insert into public.terms (domain_id, term, category, definition) values (d1, 'beta', 'c', 'b') returning id into t2;
-  insert into public.terms (domain_id, term, category, definition) values (d2, 'gamma', 'c', 'g') returning id into t3;
+  insert into public.collections (name, owner_id, is_builtin, visibility) values ('RPC One', other_id, true, 'shared') returning id into d1;
+  insert into public.collections (name, owner_id, is_builtin) values ('RPC Two', admin_id, true) returning id into d2;
+  insert into public.collections (name, owner_id, is_builtin) values ('RPC Three', admin_id, false) returning id into d3;
+  insert into public.terms (collection_id, term, category, definition) values (d1, 'alpha', 'c', 'a') returning id into t1;
+  insert into public.terms (collection_id, term, category, definition) values (d1, 'beta', 'c', 'b') returning id into t2;
+  insert into public.terms (collection_id, term, category, definition) values (d2, 'gamma', 'c', 'g') returning id into t3;
 
   -- Privileges: nothing here is callable by anon, and no client can write the audit log.
   assert not has_function_privilege('anon', 'public.admin_publish_collection(uuid,text,jsonb)', 'execute'), 'line 59';
@@ -121,18 +121,18 @@ begin
 
   -- The list shows everything, including a private collection someone else owns, with counts.
   execute 'reset role';
-  update public.domains set visibility = 'private' where id = d1;
+  update public.collections set visibility = 'private' where id = d1;
   perform pg_temp.act_as(admin_id);
-  assert not exists (select 1 from public.domains where id = d1), 'test setup: an admin normally cannot read this row';
+  assert not exists (select 1 from public.collections where id = d1), 'test setup: an admin normally cannot read this row';
   assert (select term_count from public.admin_list_collections() c where c.id = d1) = 2, 'count for a private collection of someone else';
   assert (select owner_email from public.admin_list_collections() c where c.id = d1) = 'rpc-other@example.test', 'owner email';
   assert (select term_count from public.admin_list_collections() c where c.id = d2) = 1, 'count';
   assert (select term_count from public.admin_list_collections() c where c.id = d3) = 0, 'no terms shows 0';
   assert (select kind from public.admin_list_collections() c where c.id = d1) = 'terms', 'kind defaults to terms';
   execute 'reset role';
-  update public.domains set visibility = 'shared' where id = d1;
+  update public.collections set visibility = 'shared' where id = d1;
   v_failed := false;
-  begin update public.domains set kind = 'slang' where id = d1; exception when check_violation then v_failed := true; end;
+  begin update public.collections set kind = 'slang' where id = d1; exception when check_violation then v_failed := true; end;
   assert v_failed, 'kind only takes terms or vocabulary';
   perform pg_temp.act_as(admin_id);
 
@@ -144,7 +144,7 @@ begin
   -- Bad input is refused, and nothing is left behind.
   v_failed := false;
   begin perform public.admin_publish_collection(d1, 'Bad Slug', jsonb_build_object(t1::text, 'a', t2::text, 'b')); exception when others then v_failed := true; end;
-  assert v_failed, 'a bad domain slug was accepted';
+  assert v_failed, 'a bad collection slug was accepted';
   v_failed := false;
   begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, 'Same', t2::text, 'b')); exception when others then v_failed := true; end;
   assert v_failed, 'a bad term slug was accepted';
@@ -157,7 +157,7 @@ begin
   v_failed := false;
   begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t3::text, 'a', t1::text, 'b', t2::text, 'c')); exception when others then v_failed := sqlerrm like 'A slug was given%'; end;
   assert v_failed, 'a foreign term was accepted';
-  -- A term-slug collision happens after the domain slug was written: all of it must go.
+  -- A term-slug collision happens after the collection slug was written: all of it must go.
   execute 'reset role';
   update public.terms set slug = 'dup' where id = t2;
   perform pg_temp.act_as(admin_id);
@@ -167,7 +167,7 @@ begin
   exception when unique_violation then v_state := sqlstate;
   end;
   assert v_state = '23505', 'a term slug collision should be a unique violation';
-  assert (select slug is null and not is_public from public.domains where id = d1), 'the domain kept its slug after a term collision';
+  assert (select slug is null and not is_public from public.collections where id = d1), 'the collection kept its slug after a term collision';
   assert (select slug is null from public.terms where id = t1), 'a term kept its slug after a collision';
   execute 'reset role';
   update public.terms set slug = null where id = t2;
@@ -185,40 +185,40 @@ begin
   v_failed := false;
   begin perform public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, 'alpha')); exception when others then v_failed := sqlerrm like 'Some terms have no slug%' and sqlstate = '40001'; end;
   assert v_failed, 'published with an unslugged term';
-  assert (select slug is null and not is_public from public.domains where id = d1), 'a failed publish left changes';
-  assert (select count(*) from public.terms where domain_id = d1 and slug is not null) = 0, 'a failed publish left term slugs';
+  assert (select slug is null and not is_public from public.collections where id = d1), 'a failed publish left changes';
+  assert (select count(*) from public.terms where collection_id = d1 and slug is not null) = 0, 'a failed publish left term slugs';
 
   -- The real thing, including a term created by someone else.
   v_slug := public.admin_publish_collection(d1, 'rpc-one', jsonb_build_object(t1::text, 'alpha', t2::text, 'beta'));
   assert v_slug = 'rpc-one', 'line 132';
-  assert (select slug = 'rpc-one' and is_public from public.domains where id = d1), 'line 133';
+  assert (select slug = 'rpc-one' and is_public from public.collections where id = d1), 'line 133';
   assert (select slug from public.terms where id = t1) = 'alpha', 'line 134';
   assert (select slug from public.terms where id = t2) = 'beta', 'line 135';
 
   -- Again: idempotent, keeps the slugs it has, and fills a new term.
   execute 'reset role';
-  insert into public.terms (domain_id, term, category, definition) values (d1, 'delta', 'c', 'd') returning id into t3;
+  insert into public.terms (collection_id, term, category, definition) values (d1, 'delta', 'c', 'd') returning id into t3;
   perform pg_temp.act_as(admin_id);
   v_slug := public.admin_publish_collection(d1, 'other-slug', jsonb_build_object(t3::text, 'delta'));
   assert v_slug = 'rpc-one', 'an existing slug must be kept';
   assert (select slug from public.terms where id = t1) = 'alpha', 'line 141';
 
   -- An empty-string slug counts as missing.
-  update public.domains set is_public = false, slug = '' where id = d2;
-  update public.terms set slug = '' where domain_id = d2;
-  v_slug := public.admin_publish_collection(d2, 'rpc-two', (select jsonb_object_agg(id::text, 'gamma') from public.terms where domain_id = d2));
-  assert v_slug = 'rpc-two' and (select slug from public.terms where domain_id = d2) = 'gamma', 'line 147';
+  update public.collections set is_public = false, slug = '' where id = d2;
+  update public.terms set slug = '' where collection_id = d2;
+  v_slug := public.admin_publish_collection(d2, 'rpc-two', (select jsonb_object_agg(id::text, 'gamma') from public.terms where collection_id = d2));
+  assert v_slug = 'rpc-two' and (select slug from public.terms where collection_id = d2) = 'gamma', 'line 147';
 
   -- A slug already taken by another collection is a unique violation, and nothing sticks.
-  update public.domains set is_public = false, slug = null where id = d2;
-  update public.terms set slug = null where domain_id = d2;
+  update public.collections set is_public = false, slug = null where id = d2;
+  update public.terms set slug = null where collection_id = d2;
   v_state := null;
   begin
-    perform public.admin_publish_collection(d2, 'rpc-one', (select jsonb_object_agg(id::text, 'gamma') from public.terms where domain_id = d2));
+    perform public.admin_publish_collection(d2, 'rpc-one', (select jsonb_object_agg(id::text, 'gamma') from public.terms where collection_id = d2));
   exception when unique_violation then v_state := sqlstate;
   end;
   assert v_state = '23505', 'a taken slug should be a unique violation';
-  assert (select slug is null and not is_public from public.domains where id = d2), 'line 158';
+  assert (select slug is null and not is_public from public.collections where id = d2), 'line 158';
 
   -- Narration.
   perform public.admin_set_narration_enabled(true);
@@ -294,7 +294,7 @@ begin
   assert (select target_id = member_id::text from public.admin_audit_log where actor_id = admin_id and action = 'reset_ai_credits'), 'reset audit target';
 
   -- App-written audit rows.
-  perform public.admin_write_audit('app.set_slug', 'domain', d1::text, '{"slug":"x"}'::jsonb);
+  perform public.admin_write_audit('app.set_slug', 'collection', d1::text, '{"slug":"x"}'::jsonb);
   v_failed := false;
   begin perform public.admin_write_audit('grant_ai_credits'); exception when others then v_failed := true; end;
   assert v_failed, 'an app audit row posed as an RPC one';

@@ -11,8 +11,8 @@ type ImportLlmPromptFieldsProps = {
   isLoadingTerms: boolean;
   selectedCollectionId: string;
   onCollectionChange: (key: string) => void;
-  domain: string;
-  onDomainChange: (value: string) => void;
+  collectionName: string;
+  onCollectionNameChange: (value: string) => void;
   count: string;
   onCountChange: (value: string) => void;
   exclude: string;
@@ -25,8 +25,8 @@ export function ImportLlmPromptFields({
   isLoadingTerms,
   selectedCollectionId,
   onCollectionChange,
-  domain,
-  onDomainChange,
+  collectionName,
+  onCollectionNameChange,
   count,
   onCountChange,
   exclude,
@@ -57,12 +57,12 @@ export function ImportLlmPromptFields({
 
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_8rem]">
         <Field>
-          <FieldLabel htmlFor="import-skill-domain">Collection name</FieldLabel>
+          <FieldLabel htmlFor="import-skill-collection-name">Collection name</FieldLabel>
           <Input
-            id="import-skill-domain"
+            id="import-skill-collection-name"
             type="text"
-            value={domain}
-            onChange={(event) => onDomainChange(event.target.value)}
+            value={collectionName}
+            onChange={(event) => onCollectionNameChange(event.target.value)}
             placeholder="e.g. Product Management"
             className="text-sm"
           />

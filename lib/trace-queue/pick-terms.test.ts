@@ -25,7 +25,7 @@ const client = {} as SupabaseClient<Database>;
 function candidate(termId: string, overrides: Partial<TraceCandidate> = {}): TraceCandidate {
   return {
     termId,
-    domainId: "d",
+    collectionId: "d",
     createdAt: new Date("2026-01-01"),
     everMasteredAt: null,
     everLearningAt: null,
@@ -62,7 +62,7 @@ describe("quiz pickers carry recognition", () => {
       candidate("new"),
     ];
 
-    const cards = await pickQuizTerms(client, "u", { domainIds: "all" } as never, 10);
+    const cards = await pickQuizTerms(client, "u", { collectionIds: "all" } as never, 10);
     const byId = Object.fromEntries(cards.map((c) => [c.id, c.recognition]));
     expect(byId.known).toEqual({ posterior: 0.82, testCount: 3 });
     expect(byId.new).toEqual({ posterior: null, testCount: 0 });
@@ -76,7 +76,7 @@ describe("quiz pickers carry recognition", () => {
         lastQuizTestedAt: new Date("2026-01-02"),
       }),
     ];
-    const [first] = await pickQuizTermsForUser(client, "u", { domainIds: "all" } as never, 10);
+    const [first] = await pickQuizTermsForUser(client, "u", { collectionIds: "all" } as never, 10);
     expect(first.recognition).toEqual({ posterior: 0.5, testCount: 1 });
   });
 });

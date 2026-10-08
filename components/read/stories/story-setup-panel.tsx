@@ -114,7 +114,7 @@ export function StorySetupPanel({
   collections: StoryCollection[];
   ai: AiAccessView;
 }) {
-  const selected = collections.find((collection) => collection.id === session.domainId);
+  const selected = collections.find((collection) => collection.id === session.collectionId);
   const eligibleCount = selected?.eligibleCount ?? 0;
   const use = storyCreditUse(ai, session.pieceLength, eligibleCount);
   const hasEnoughTerms = eligibleCount >= STORY_MIN_TERMS;
@@ -171,7 +171,7 @@ export function StorySetupPanel({
             name: collection.name,
             termCount: collection.eligibleCount,
           }))}
-          value={session.domainId ?? ""}
+          value={session.collectionId ?? ""}
           disabledKeys={collections
             .filter((collection) => collection.eligibleCount < STORY_MIN_TERMS)
             .map((collection) => collection.id)}

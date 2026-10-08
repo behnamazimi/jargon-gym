@@ -2,7 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
-import { parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
+import { parseLanguage, type CollectionLanguage } from "@/lib/terms/languages";
 import { attachRelationshipsToTerms, mapTerm } from "@/lib/terms/mappers";
 import type { TermCard, TermCardRelationship } from "@/lib/terms/term-card";
 import { fetchTermRelationshipsForTerms } from "@/lib/terms/terms";
@@ -26,14 +26,14 @@ function mapRelationshipsJson(raw: Json): TermCardRelationship[] {
   });
 }
 
-async function fetchDomainLanguages(
+async function fetchCollectionLanguages(
   client: Client,
-  domainIds: string[],
-): Promise<Map<string, DomainLanguage>> {
+  collectionIds: string[],
+): Promise<Map<string, CollectionLanguage>> {
   const { data, error } = await client
-    .from("domains")
+    .from("collections")
     .select("id, language")
-    .in("id", [...new Set(domainIds)]);
+    .in("id", [...new Set(collectionIds)]);
   if (error) throw error;
   return new Map(data.map((d) => [d.id, parseLanguage(d.language)]));
 }
@@ -50,11 +50,11 @@ function mapTermCardRow(
     anti_example: string | null;
     controversy: string | null;
     note: string | null;
-    domain_id: string;
-    domain_name: string;
+    collection_id: string;
+    collection_name: string;
     relationships: Json;
   },
-  language: DomainLanguage,
+  language: CollectionLanguage,
 ): TermCard {
   return {
     id: row.id,
@@ -67,9 +67,9 @@ function mapTermCardRow(
     antiExample: row.anti_example,
     controversy: row.controversy,
     note: row.note,
-    domainId: row.domain_id,
-    domainName: row.domain_name,
-    domainLanguage: language,
+    collectionId: row.collection_id,
+    collectionName: row.collection_name,
+    collectionLanguage: language,
     relationships: mapRelationshipsJson(row.relationships),
     isNewToUser: false,
   };
@@ -88,8 +88,8 @@ export async function fetchTermCardForUser(
   if (error) throw error;
   const row = data?.[0];
   if (!row) return null;
-  const languages = await fetchDomainLanguages(client, [row.domain_id]);
-  return mapTermCardRow(row, languages.get(row.domain_id) ?? "en");
+  const languages = await fetchCollectionLanguages(client, [row.collection_id]);
+  return mapTermCardRow(row, languages.get(row.collection_id) ?? "en");
 }
 
 /** Session-client hydrate: full term join → TermCard[] in scored order. */
@@ -109,21 +109,21 @@ export async function hydrateTermsAsTermCards(
     throw new Error("Could not load all selected review terms.");
   }
 
-  const domainIds = [...new Set(fullTerms.map((t) => t.domain_id))];
+  const collectionIds = [...new Set(fullTerms.map((t) => t.collection_id))];
   const mappedTerms = fullTerms.map(mapTerm);
 
-  const [domainsResult, relationshipRows] = await Promise.all([
-    client.from("domains").select("id, name, language").in("id", domainIds),
+  const [collectionsResult, relationshipRows] = await Promise.all([
+    client.from("collections").select("id, name, language").in("id", collectionIds),
     fetchTermRelationshipsForTerms(
       client,
       mappedTerms.map((t) => t.id),
     ),
   ]);
 
-  const { data: domains, error: domainsError } = domainsResult;
-  if (domainsError) throw domainsError;
+  const { data: collections, error: collectionsError } = collectionsResult;
+  if (collectionsError) throw collectionsError;
 
-  const domainById = new Map(domains.map((d) => [d.id, d]));
+  const collectionById = new Map(collections.map((d) => [d.id, d]));
   const termsWithRelationships = attachRelationshipsToTerms(mappedTerms, relationshipRows);
 
   const termOrderMap = new Map(termIds.map((id, idx) => [id, idx]));
@@ -132,8 +132,8 @@ export async function hydrateTermsAsTermCards(
   );
 
   return termsWithRelationships.map((term) => {
-    const domainId = fullTerms.find((t) => t.id === term.id)?.domain_id;
-    const domain = domainId ? domainById.get(domainId) : undefined;
+    const collectionId = fullTerms.find((t) => t.id === term.id)?.collection_id;
+    const collection = collectionId ? collectionById.get(collectionId) : undefined;
     return {
       id: term.id,
       term: term.term,
@@ -145,9 +145,9 @@ export async function hydrateTermsAsTermCards(
       antiExample: term.antiExample || null,
       controversy: term.controversy ?? null,
       note: term.note ?? null,
-      domainId: domainId ?? "",
-      domainName: domain?.name ?? "Unknown",
-      domainLanguage: parseLanguage(domain?.language),
+      collectionId: collectionId ?? "",
+      collectionName: collection?.name ?? "Unknown",
+      collectionLanguage: parseLanguage(collection?.language),
       relationships: term.relationships.map((rel) => ({
         direction: rel.direction,
         relationshipType: rel.relationshipType,
@@ -174,7 +174,10 @@ export async function hydrateTermCardsForUser(
   if (error) throw error;
 
   const cardById = new Map(
-    (data ?? []).map((row) => [row.id, mapTermCardRow(row, parseLanguage(row.domain_language))]),
+    (data ?? []).map((row) => [
+      row.id,
+      mapTermCardRow(row, parseLanguage(row.collection_language)),
+    ]),
   );
   return termIds.map((termId) => {
     const card = cardById.get(termId);

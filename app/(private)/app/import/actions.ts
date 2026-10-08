@@ -28,7 +28,7 @@ export async function getImportSetupData() {
 }
 
 const checkSchema = z.object({
-  domainId: z.guid(),
+  collectionId: z.guid(),
   terms: z.array(z.string().max(200)).max(MAX_IMPORT_TERMS),
 });
 
@@ -46,7 +46,7 @@ export async function checkImportAgainstDestination(
     const matches = await findDestinationMatches(
       auth.supabase,
       auth.user.id,
-      parsed.data.domainId,
+      parsed.data.collectionId,
       parsed.data.terms,
     );
     if (!matches) return { error: "That collection isn't available any more. Choose another." };
@@ -58,9 +58,9 @@ export async function checkImportAgainstDestination(
 
 /** A collection's term names, for the "exclude terms" box of the developer command. */
 export async function getCollectionTermNames(
-  domainId: unknown,
+  collectionId: unknown,
 ): Promise<{ terms: string[] } | { error: string }> {
-  const id = z.guid().safeParse(domainId);
+  const id = z.guid().safeParse(collectionId);
   if (!id.success) return { error: "That collection isn't available." };
 
   const auth = await requireAuthenticatedClient();
@@ -94,8 +94,8 @@ export async function commitImport(input: unknown): Promise<{ ok: false; failure
   const { data: raw, error } = await supabase.rpc("my_import_terms", {
     p_import_id: data.importId,
     p_destination:
-      "domainId" in data.destination
-        ? { domain_id: data.destination.domainId }
+      "collectionId" in data.destination
+        ? { collection_id: data.destination.collectionId }
         : { name: data.destination.name, language: data.destination.language },
     p_terms: data.terms,
     p_relationships: data.links,
@@ -111,5 +111,5 @@ export async function commitImport(input: unknown): Promise<{ ok: false; failure
   }
 
   revalidatePath("/app/library");
-  redirect(`/app/library?domain=${result.data.domain_id}&added=${data.importId}`);
+  redirect(`/app/library?collection=${result.data.collection_id}&added=${data.importId}`);
 }

@@ -8,8 +8,8 @@ function buildReviewCardHeader(term: TermCard, currentIndex: number, totalTerms:
   let message = `<b>Review ${currentIndex + 1}/${totalTerms}</b>\n\n`;
   message += `<b>${escapeText(term.term)}</b>\n`;
   message += term.category
-    ? `<i>${escapeText(term.category)}</i> · ${escapeText(term.domainName)}`
-    : `<i>${escapeText(term.domainName)}</i>`;
+    ? `<i>${escapeText(term.category)}</i> · ${escapeText(term.collectionName)}`
+    : `<i>${escapeText(term.collectionName)}</i>`;
   return message;
 }
 

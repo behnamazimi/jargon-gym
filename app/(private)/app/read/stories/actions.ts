@@ -51,7 +51,7 @@ const LOGIN_ERROR = "Log in to continue.";
 const NOT_ENOUGH_TERMS_ERROR = `This collection needs at least ${STORY_MIN_TERMS} terms left to read.`;
 
 const generateInputSchema = z.object({
-  domainId: z.guid(),
+  collectionId: z.guid(),
   readingLevel: z.enum(READING_LEVELS),
   cefrLevel: z.enum(CEFR_LEVELS),
   pieceLength: z.enum(PIECE_LENGTHS),
@@ -64,7 +64,7 @@ const generateInputSchema = z.object({
 });
 
 export async function generateStoryAction(input: {
-  domainId: string;
+  collectionId: string;
   readingLevel: string;
   cefrLevel: string;
   pieceLength: string;
@@ -75,7 +75,7 @@ export async function generateStoryAction(input: {
 
   const parsed = generateInputSchema.safeParse(input);
   if (!parsed.success) return { error: "Check the story setup and try again." };
-  const { domainId, readingLevel, cefrLevel, pieceLength, outline } = parsed.data;
+  const { collectionId, readingLevel, cefrLevel, pieceLength, outline } = parsed.data;
   const levels = { readingLevel, cefrLevel, pieceLength };
   const userId = auth.user.id;
   const admin = createAdminClient();
@@ -87,13 +87,18 @@ export async function generateStoryAction(input: {
       return noAiFailure(access.reason, "write stories");
     }
 
-    await savePrefs(admin, userId, domainId, levels);
+    await savePrefs(admin, userId, collectionId, levels);
 
     const [cards, collection, votes, recentTitles] = await Promise.all([
-      pickReadTermsForUser(admin, userId, { domainIds: [domainId] }, termsForLength(pieceLength)),
-      getCollection(admin, domainId),
+      pickReadTermsForUser(
+        admin,
+        userId,
+        { collectionIds: [collectionId] },
+        termsForLength(pieceLength),
+      ),
+      getCollection(admin, collectionId),
       loadRecentVotes(admin, userId),
-      loadRecentTitles(admin, userId, domainId),
+      loadRecentTitles(admin, userId, collectionId),
     ]);
     if (!collection || cards.length < STORY_MIN_TERMS) return { error: NOT_ENOUGH_TERMS_ERROR };
 
@@ -134,7 +139,7 @@ export async function generateStoryAction(input: {
       const usedIds = new Set(generated.termIds);
       const story = await insertStory(admin, {
         userId,
-        domainId,
+        collectionId,
         language: collection.language,
         format: format.id,
         tone: tone.id,

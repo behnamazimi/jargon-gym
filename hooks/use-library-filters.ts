@@ -12,7 +12,11 @@ import type { SortMode } from "@/lib/terms/types";
 /** Library filter choices, remembered on this device in a cookie. The server
  *  reads the same cookie (`serverSnapshot`), so the first render already
  *  matches what the browser will show. */
-export function useLibraryFilters(domainId: string, categories: string[], serverSnapshot: string) {
+export function useLibraryFilters(
+  collectionId: string,
+  categories: string[],
+  serverSnapshot: string,
+) {
   const snapshot = useSyncExternalStore(
     subscribeLibraryFilters,
     loadLibraryFiltersSnapshot,
@@ -23,8 +27,10 @@ export function useLibraryFilters(domainId: string, categories: string[], server
   // A remembered category the collection no longer has would hide every term.
   const activeCategories = useMemo(
     () =>
-      new Set((stored.categoriesByDomain[domainId] ?? []).filter((c) => categories.includes(c))),
-    [stored, domainId, categories],
+      new Set(
+        (stored.categoriesByCollection[collectionId] ?? []).filter((c) => categories.includes(c)),
+      ),
+    [stored, collectionId, categories],
   );
 
   const setHideKnown = useCallback((hideKnown: boolean) => {
@@ -38,7 +44,7 @@ export function useLibraryFilters(domainId: string, categories: string[], server
   const toggleCategory = useCallback(
     (category: string) => {
       updateLibraryFilters((prev) => {
-        const { [domainId]: current = [], ...others } = prev.categoriesByDomain;
+        const { [collectionId]: current = [], ...others } = prev.categoriesByCollection;
         const next =
           category === "All"
             ? []
@@ -46,10 +52,10 @@ export function useLibraryFilters(domainId: string, categories: string[], server
               ? current.filter((c) => c !== category)
               : [...current, category];
         // Re-added last so this collection counts as the most recently used.
-        return { ...prev, categoriesByDomain: { ...others, [domainId]: next } };
+        return { ...prev, categoriesByCollection: { ...others, [collectionId]: next } };
       });
     },
-    [domainId],
+    [collectionId],
   );
 
   return {

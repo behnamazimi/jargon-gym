@@ -1,10 +1,10 @@
 import { getBrowseSetupData } from "@/app/(private)/app/browse/actions";
-import { SharedDomainsBrowse } from "@/components/library/shared-domains-browse";
+import { SharedCollectionsBrowse } from "@/components/library/shared-collections-browse";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { parseBrowseGroup } from "@/lib/library/browse";
 import { loadRequestEntryFor } from "@/lib/requests/repository";
 
-export default async function BrowseSharedDomainsPage({
+export default async function BrowseSharedCollectionsPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string }>;
@@ -21,7 +21,7 @@ export default async function BrowseSharedDomainsPage({
   }
 
   return (
-    <SharedDomainsBrowse
+    <SharedCollectionsBrowse
       key={group}
       initialPage={setup.initialPage}
       initialGroup={group}

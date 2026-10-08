@@ -13,7 +13,7 @@ import { normalizeKnownTerms } from "@/lib/requests/known-terms";
 import { fetchRequestQuota } from "@/lib/requests/repository";
 import { requestFormSchema } from "@/lib/requests/schema";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
-import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CreateRequestResult =
@@ -36,7 +36,8 @@ async function notifyTeam(topic: string, kind: string, language: string) {
     email: buildAdminNoticeEmail({
       topic,
       kindLabel: kind === "vocabulary" ? "Vocabulary" : "Jargon",
-      languageLabel: DOMAIN_LANGUAGE_OPTIONS.find((o) => o.value === language)?.label ?? language,
+      languageLabel:
+        COLLECTION_LANGUAGE_OPTIONS.find((o) => o.value === language)?.label ?? language,
       adminUrl: `${origin}/admin/requests`,
     }),
   });
@@ -68,7 +69,7 @@ type CreateArgs = {
   p_size?: number;
   p_known_terms?: string;
   p_notify_email: boolean;
-  p_target_domain_id?: string;
+  p_target_collection_id?: string;
 };
 
 async function sendRequest(auth: Auth, args: CreateArgs): Promise<CreateRequestResult> {
@@ -123,7 +124,7 @@ export async function createRequest(input: unknown): Promise<CreateRequestResult
 }
 
 const definitionsSchema = z.object({
-  domainId: z.guid(),
+  collectionId: z.guid(),
   notifyEmail: z.boolean().default(true),
 });
 
@@ -135,20 +136,20 @@ export async function createDefinitionsRequest(input: unknown): Promise<CreateRe
   const parsed = definitionsSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: REQUEST_COPY.form.sendFailed };
 
-  const { data: domain } = await auth.supabase
-    .from("domains")
+  const { data: collection } = await auth.supabase
+    .from("collections")
     .select("name, language, owner_id")
-    .eq("id", parsed.data.domainId)
+    .eq("id", parsed.data.collectionId)
     .maybeSingle();
-  if (!domain || domain.owner_id !== auth.user.id) {
+  if (!collection || collection.owner_id !== auth.user.id) {
     return { ok: false, message: REQUEST_COPY.definitions.notYours };
   }
 
   return sendRequest(auth, {
-    p_topic: REQUEST_COPY.definitions.topic(domain.name),
+    p_topic: REQUEST_COPY.definitions.topic(collection.name),
     p_kind: "definitions",
-    p_language: domain.language,
+    p_language: collection.language,
     p_notify_email: parsed.data.notifyEmail,
-    p_target_domain_id: parsed.data.domainId,
+    p_target_collection_id: parsed.data.collectionId,
   });
 }

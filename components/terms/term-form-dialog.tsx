@@ -23,14 +23,14 @@ import type { TermFormValues } from "@/lib/terms/term-schema";
 import type { LibraryTerm, Term } from "@/lib/terms/types";
 
 type TermFormDialogProps = {
-  domainTerms: Pick<LibraryTerm, "id" | "term">[];
+  collectionTerms: Pick<LibraryTerm, "id" | "term">[];
   initialTerm: Term;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 };
 
 function EditTermForm({
-  domainTerms,
+  collectionTerms,
   initialTerm,
   onOpenChange,
 }: Omit<TermFormDialogProps, "isOpen">) {
@@ -80,7 +80,7 @@ function EditTermForm({
         canManageRelationships
         relationshipDrafts={relationshipDrafts}
         onRelationshipDraftsChange={setRelationshipDrafts}
-        domainTerms={domainTerms}
+        collectionTerms={collectionTerms}
         sourceTermId={initialTerm.id}
       />
 
@@ -103,7 +103,7 @@ function EditTermForm({
 }
 
 export function TermFormDialog({
-  domainTerms,
+  collectionTerms,
   initialTerm,
   isOpen,
   onOpenChange,
@@ -111,7 +111,7 @@ export function TermFormDialog({
   return (
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange}>
       <EditTermForm
-        domainTerms={domainTerms}
+        collectionTerms={collectionTerms}
         initialTerm={initialTerm}
         onOpenChange={onOpenChange}
       />

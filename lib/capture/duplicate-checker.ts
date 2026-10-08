@@ -1,6 +1,6 @@
 export type DuplicateMatch = { term: string; finished: boolean };
 
-type Lookup = (domainId: string, term: string) => Promise<DuplicateMatch | null>;
+type Lookup = (collectionId: string, term: string) => Promise<DuplicateMatch | null>;
 
 /** Runs a lookup after a pause and reports only the latest one. Each call clears
  *  the shown answer first, so a note never outlives the text it was about; a
@@ -13,17 +13,17 @@ export function createDuplicateChecker(
   let timer: ReturnType<typeof setTimeout> | undefined;
   let latest = 0;
 
-  return function check(domainId: string | null, term: string) {
+  return function check(collectionId: string | null, term: string) {
     clearTimeout(timer);
     const id = ++latest;
     onResult(null);
     const trimmed = term.trim();
-    if (!domainId || !trimmed) return;
+    if (!collectionId || !trimmed) return;
 
     timer = setTimeout(async () => {
       let found: DuplicateMatch | null = null;
       try {
-        found = await lookup(domainId, trimmed);
+        found = await lookup(collectionId, trimmed);
       } catch {
         // Saving still reports a real duplicate.
       }

@@ -22,7 +22,7 @@ export function CaptureDuplicateNote({
       </AlertTitle>
       <AlertDescription>{CAPTURE_COPY.qualifierHint}</AlertDescription>
       <AlertAction>
-        <LinkButton href={`/app/library?domain=${collectionId}`} size="sm" variant="outline">
+        <LinkButton href={`/app/library?collection=${collectionId}`} size="sm" variant="outline">
           {CAPTURE_COPY.openIt}
         </LinkButton>
       </AlertAction>

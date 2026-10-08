@@ -12,13 +12,16 @@ import type { QuizTerm } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-async function fetchDomainKinds(
+async function fetchCollectionKinds(
   client: Client,
-  domainIds: string[],
+  collectionIds: string[],
 ): Promise<Map<string, CollectionKind>> {
-  if (domainIds.length === 0) return new Map();
+  if (collectionIds.length === 0) return new Map();
 
-  const { data, error } = await client.from("domains").select("id, kind").in("id", domainIds);
+  const { data, error } = await client
+    .from("collections")
+    .select("id, kind")
+    .in("id", collectionIds);
   if (error) throw error;
 
   return new Map((data ?? []).map((row) => [row.id, parseKind(row.kind)]));
@@ -27,19 +30,27 @@ async function fetchDomainKinds(
 export async function fetchQuizTermPool(
   client: Client,
   userId: string,
-  domainIds: string[] | "all",
+  collectionIds: string[] | "all",
   questionCount: number,
   mode?: StudyAuthMode,
 ): Promise<QuizTerm[]> {
-  const cards = await fetchStudyQuizTermPool(client, userId, { domainIds }, questionCount, mode);
-  const kinds = await fetchDomainKinds(client, [...new Set(cards.map((card) => card.domainId))]);
+  const cards = await fetchStudyQuizTermPool(
+    client,
+    userId,
+    { collectionIds },
+    questionCount,
+    mode,
+  );
+  const kinds = await fetchCollectionKinds(client, [
+    ...new Set(cards.map((card) => card.collectionId)),
+  ]);
 
-  return cards.map((card) => toQuizTerm(card, kinds.get(card.domainId) ?? "terms"));
+  return cards.map((card) => toQuizTerm(card, kinds.get(card.collectionId) ?? "terms"));
 }
 
 export function countTermsForSelection(
   collections: StudyCollection[],
-  domainIds: string[] | "all",
+  collectionIds: string[] | "all",
 ): number {
-  return countStudyTermsForSelection(collections, domainIds);
+  return countStudyTermsForSelection(collections, collectionIds);
 }

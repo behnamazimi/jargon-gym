@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import type { Database } from "@/lib/supabase/database.types";
 import type { ProviderCall } from "./provider";
 
@@ -17,7 +17,7 @@ export type SpeechSubject = {
   /** Hash of the older version 1 clips, valid while it still matches. Unset
    *  for subjects that no longer accept version 1 clips. */
   legacyHash?: string;
-  loadScript: () => Promise<{ script: string; language: DomainLanguage } | null>;
+  loadScript: () => Promise<{ script: string; language: CollectionLanguage } | null>;
 };
 
 export type AudioResult =

@@ -13,7 +13,7 @@ import { saveReadCollectionPreference } from "@/lib/read/collection-preference";
 import type { ReadOptions } from "@/lib/read/options";
 import type { StudyCollection } from "@/lib/study/types";
 import {
-  replaceReadDomainInUrl,
+  replaceReadCollectionInUrl,
   scrollToTop,
   normalizeCardsUrl,
 } from "@/components/read/read-page-helpers";
@@ -21,21 +21,27 @@ import {
 type ReadPageProps = {
   seed: ReadQueueSeed;
   collections: StudyCollection[];
-  domainId: string;
+  collectionId: string;
   narrationAccess: boolean;
   options: ReadOptions;
 };
 
-export function ReadPage({ seed, collections, domainId, narrationAccess, options }: ReadPageProps) {
-  const [selectedCollectionId, setSelectedCollectionId] = useState(domainId);
+export function ReadPage({
+  seed,
+  collections,
+  collectionId,
+  narrationAccess,
+  options,
+}: ReadPageProps) {
+  const [selectedCollectionId, setSelectedCollectionId] = useState(collectionId);
   const { active: fullscreenActive, exit: handleExitFullscreen } = useReadFocus();
-  const queue = useReadQueue({ domainId: selectedCollectionId, seed });
+  const queue = useReadQueue({ collectionId: selectedCollectionId, seed });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
 
   selectedCollectionIdRef.current = selectedCollectionId;
 
   useMountEffect(() => {
-    normalizeCardsUrl(domainId);
+    normalizeCardsUrl(collectionId);
   });
 
   useReadEnterKey(fullscreenActive, queue);
@@ -52,14 +58,14 @@ export function ReadPage({ seed, collections, domainId, narrationAccess, options
   }, [shownTermId, reveal]);
 
   const handleCollectionChange = useCallback(
-    (nextDomainId: string) => {
-      if (nextDomainId === selectedCollectionIdRef.current) return;
-      setSelectedCollectionId(nextDomainId);
-      replaceReadDomainInUrl(nextDomainId);
-      queue.switchDomain(nextDomainId);
-      saveReadCollectionPreference(nextDomainId);
+    (nextCollectionId: string) => {
+      if (nextCollectionId === selectedCollectionIdRef.current) return;
+      setSelectedCollectionId(nextCollectionId);
+      replaceReadCollectionInUrl(nextCollectionId);
+      queue.switchCollection(nextCollectionId);
+      saveReadCollectionPreference(nextCollectionId);
     },
-    [queue.switchDomain],
+    [queue.switchCollection],
   );
 
   const bindCard = useCallback((node: HTMLDivElement | null) => {

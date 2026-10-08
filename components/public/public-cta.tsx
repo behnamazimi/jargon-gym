@@ -36,8 +36,8 @@ const memberships = new Map<string, CtaState>();
 const pending = new Map<string, Promise<void>>();
 const listeners = new Set<() => void>();
 
-function setMembership(domainId: string, state: CtaState) {
-  memberships.set(domainId, state);
+function setMembership(collectionId: string, state: CtaState) {
+  memberships.set(collectionId, state);
   for (const listener of listeners) listener();
 }
 
@@ -48,10 +48,10 @@ function subscribeMemberships(listener: () => void) {
   };
 }
 
-async function fetchMembership(domainId: string): Promise<CtaState> {
+async function fetchMembership(collectionId: string): Promise<CtaState> {
   try {
     // A signed-out request is redirected to login; manual keeps that from loading the page.
-    const response = await fetch(`/api/collections/${domainId}/membership`, {
+    const response = await fetch(`/api/collections/${collectionId}/membership`, {
       redirect: "manual",
       cache: "no-store",
     });
@@ -63,13 +63,13 @@ async function fetchMembership(domainId: string): Promise<CtaState> {
   }
 }
 
-function loadMembership(domainId: string) {
-  if (pending.has(domainId)) return;
+function loadMembership(collectionId: string) {
+  if (pending.has(collectionId)) return;
   pending.set(
-    domainId,
-    fetchMembership(domainId).then((state) => {
-      pending.delete(domainId);
-      setMembership(domainId, state);
+    collectionId,
+    fetchMembership(collectionId).then((state) => {
+      pending.delete(collectionId);
+      setMembership(collectionId, state);
     }),
   );
 }
@@ -99,7 +99,7 @@ function CollectionCta({ collection }: { collection: CtaCollection }) {
     toast(`Added "${collection.name}"`, "success", {
       action: {
         label: "Start reading",
-        onPress: () => router.push(`/app/read?domain=${collection.id}`),
+        onPress: () => router.push(`/app/read?collection=${collection.id}`),
       },
     });
   }
@@ -108,7 +108,11 @@ function CollectionCta({ collection }: { collection: CtaCollection }) {
 
   if (state === "owned" || state === "added") {
     return (
-      <LinkButton href={`/app/library?domain=${collection.id}`} size="lg" className={BUTTON_CLASS}>
+      <LinkButton
+        href={`/app/library?collection=${collection.id}`}
+        size="lg"
+        className={BUTTON_CLASS}
+      >
         Open in library
         <ArrowRight aria-hidden className="size-4 shrink-0" strokeWidth={2} />
       </LinkButton>

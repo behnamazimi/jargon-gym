@@ -1,29 +1,29 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { DomainSidebar } from "@/components/library/domain-sidebar";
+import { CollectionSidebar } from "@/components/library/collection-sidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import type { Domain } from "@/lib/terms/types";
+import type { Collection } from "@/lib/terms/types";
 import { cn } from "@/lib/utils";
 
-type DomainSidebarDrawerProps = {
-  domains: Domain[];
-  currentDomain: Domain;
-  currentDomainId: string;
+type CollectionSidebarDrawerProps = {
+  collections: Collection[];
+  currentCollection: Collection;
+  currentCollectionId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   className?: string;
 };
 
-export function DomainSidebarDrawer({
-  domains,
-  currentDomain,
-  currentDomainId,
+export function CollectionSidebarDrawer({
+  collections,
+  currentCollection,
+  currentCollectionId,
   open,
   onOpenChange,
   className,
-}: DomainSidebarDrawerProps) {
+}: CollectionSidebarDrawerProps) {
   return (
     <>
       <Button
@@ -41,8 +41,8 @@ export function DomainSidebarDrawer({
         <span className="shrink-0 text-sm font-normal text-base-content/70">Collection</span>
         <span className="flex min-w-0 items-center gap-2">
           <span className="min-w-0 truncate text-sm font-medium">
-            {currentDomain.icon ? `${currentDomain.icon} ` : ""}
-            {currentDomain.name}
+            {currentCollection.icon ? `${currentCollection.icon} ` : ""}
+            {currentCollection.name}
           </span>
           <ChevronDown className="size-4 shrink-0 text-base-content/70" aria-hidden />
         </span>
@@ -58,10 +58,10 @@ export function DomainSidebarDrawer({
           <SheetTitle>Collections</SheetTitle>
         </SheetHeader>
         <div className="flex min-h-0 flex-1 flex-col p-3">
-          <DomainSidebar
-            domains={domains}
-            currentDomainId={currentDomainId}
-            onDomainSelect={() => onOpenChange(false)}
+          <CollectionSidebar
+            collections={collections}
+            currentCollectionId={currentCollectionId}
+            onCollectionSelect={() => onOpenChange(false)}
             className="min-h-0 flex-1"
           />
         </div>

@@ -5,22 +5,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
-  addDomainToCollection,
-  countDomainCollectionSubscribers,
-  createOwnedDomain,
-  deleteDomain,
-  DomainMutationError,
-  removeDomainFromCollection,
-  setDomainActiveForReview,
-  setDomainVisibility,
-  updateOwnedDomain as updateOwnedDomainRecord,
+  addCollectionToCollection,
+  countCollectionSubscribers,
+  createOwnedCollection,
+  deleteCollection,
+  CollectionMutationError,
+  removeCollectionFromCollection,
+  setCollectionActiveForReview,
+  setCollectionVisibility,
+  updateOwnedCollection as updateOwnedCollectionRecord,
 } from "@/lib/library/collections";
 import {
-  parseDomainInput,
+  parseCollectionInput,
   parseNewCollectionInput,
-  type DomainInput,
+  type CollectionInput,
   type NewCollectionInput,
-} from "@/lib/library/domain-schema";
+} from "@/lib/library/collection-schema";
 import {
   LOVE_ERROR_COPY,
   LOVE_FALLBACK_ERROR,
@@ -29,15 +29,15 @@ import {
   REPORT_FALLBACK_ERROR,
   reportInputSchema,
 } from "@/lib/collections/moderation";
-import { resetDomainProgress } from "@/lib/mastery/known-state";
+import { resetCollectionProgress as clearStoredCollectionProgress } from "@/lib/mastery/known-state";
 import { revalidatePath } from "next/cache";
 
-export async function addToCollection(domainId: string): Promise<{ error?: string }> {
+export async function addToCollection(collectionId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await addDomainToCollection(auth.supabase, auth.user.id, domainId);
+    await addCollectionToCollection(auth.supabase, auth.user.id, collectionId);
     trackServer(auth.user.id, "collection_added", {});
     revalidatePath("/app/library");
     return {};
@@ -47,12 +47,12 @@ export async function addToCollection(domainId: string): Promise<{ error?: strin
   }
 }
 
-export async function removeFromCollection(domainId: string): Promise<{ error?: string }> {
+export async function removeFromCollection(collectionId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await removeDomainFromCollection(auth.supabase, auth.user.id, domainId);
+    await removeCollectionFromCollection(auth.supabase, auth.user.id, collectionId);
     revalidatePath("/app/library");
     return {};
   } catch (err) {
@@ -63,14 +63,14 @@ export async function removeFromCollection(domainId: string): Promise<{ error?: 
 }
 
 export async function toggleActiveForReview(
-  domainId: string,
+  collectionId: string,
   active: boolean,
 ): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await setDomainActiveForReview(auth.supabase, auth.user.id, domainId, active);
+    await setCollectionActiveForReview(auth.supabase, auth.user.id, collectionId, active);
     revalidatePath("/app/library");
     return {};
   } catch (err) {
@@ -80,17 +80,17 @@ export async function toggleActiveForReview(
   }
 }
 
-export async function shareDomain(domainId: string): Promise<{ error?: string }> {
+export async function shareCollection(collectionId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await setDomainVisibility(auth.supabase, domainId, "shared");
+    await setCollectionVisibility(auth.supabase, collectionId, "shared");
     revalidatePath("/app/library");
     return {};
   } catch (err) {
     if (isShareBlocked(err)) {
-      return { error: await blockedShareMessage(auth.supabase, domainId) };
+      return { error: await blockedShareMessage(auth.supabase, collectionId) };
     }
     const message =
       err instanceof Error ? err.message : "Couldn't share that collection. Try again.";
@@ -104,24 +104,24 @@ function isShareBlocked(err: unknown) {
   );
 }
 
-async function blockedShareMessage(supabase: SupabaseClient<Database>, domainId: string) {
+async function blockedShareMessage(supabase: SupabaseClient<Database>, collectionId: string) {
   const { data } = await supabase
-    .from("domains")
+    .from("collections")
     .select("share_block_reason")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .maybeSingle();
   return ownerNoticeFor(data?.share_block_reason);
 }
 
 export async function setCollectionLove(
-  domainId: string,
+  collectionId: string,
   loved: boolean,
 ): Promise<{ count?: number; error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   const { data, error } = await auth.supabase.rpc("my_set_collection_love", {
-    p_domain_id: domainId,
+    p_collection_id: collectionId,
     p_loved: loved,
   });
   if (error) return { error: LOVE_ERROR_COPY[error.message] ?? LOVE_FALLBACK_ERROR };
@@ -129,7 +129,7 @@ export async function setCollectionLove(
 }
 
 export async function reportCollection(
-  domainId: string,
+  collectionId: string,
   reason: string,
   note: string,
 ): Promise<{ error?: string }> {
@@ -140,7 +140,7 @@ export async function reportCollection(
   if (!parsed.success) return { error: REPORT_ERROR_COPY.invalid_report };
 
   const { error } = await auth.supabase.rpc("my_report_collection", {
-    p_domain_id: domainId,
+    p_collection_id: collectionId,
     p_reason: parsed.data.reason,
     p_note: parsed.data.note,
   });
@@ -149,12 +149,12 @@ export async function reportCollection(
   return {};
 }
 
-export async function unshareDomain(domainId: string): Promise<{ error?: string }> {
+export async function unshareCollection(collectionId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await setDomainVisibility(auth.supabase, domainId, "private");
+    await setCollectionVisibility(auth.supabase, collectionId, "private");
     revalidatePath("/app/library");
     return {};
   } catch (err) {
@@ -164,32 +164,32 @@ export async function unshareDomain(domainId: string): Promise<{ error?: string 
   }
 }
 
-export async function getDomainSubscriberCount(
-  domainId: string,
+export async function getCollectionSubscriberCount(
+  collectionId: string,
 ): Promise<{ count?: number; error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
-  const { data: domain, error: domainError } = await auth.supabase
-    .from("domains")
+  const { data: collection, error: collectionError } = await auth.supabase
+    .from("collections")
     .select("owner_id")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .maybeSingle();
 
-  if (domainError) {
-    return { error: domainError.message };
+  if (collectionError) {
+    return { error: collectionError.message };
   }
 
-  if (!domain) {
+  if (!collection) {
     return { error: "Collection not found." };
   }
 
-  if (domain.owner_id !== auth.user.id) {
+  if (collection.owner_id !== auth.user.id) {
     return { error: "You don't own this collection." };
   }
 
   try {
-    const count = await countDomainCollectionSubscribers(auth.supabase, domainId, auth.user.id);
+    const count = await countCollectionSubscribers(auth.supabase, collectionId, auth.user.id);
     return { count };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Couldn't load subscriber count.";
@@ -197,39 +197,39 @@ export async function getDomainSubscriberCount(
   }
 }
 
-function domainMutationErrorMessage(err: unknown, fallback: string) {
-  if (err instanceof DomainMutationError) return err.message;
+function collectionMutationErrorMessage(err: unknown, fallback: string) {
+  if (err instanceof CollectionMutationError) return err.message;
   if (err instanceof Error) return err.message;
   return fallback;
 }
 
-export async function updateOwnedDomain(
-  domainId: string,
-  input: DomainInput,
+export async function updateOwnedCollection(
+  collectionId: string,
+  input: CollectionInput,
 ): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
-  const parsed = parseDomainInput(input);
+  const parsed = parseCollectionInput(input);
   if (!parsed.ok) return { error: parsed.error };
 
   try {
-    await updateOwnedDomainRecord(auth.supabase, auth.user.id, domainId, parsed.data);
+    await updateOwnedCollectionRecord(auth.supabase, auth.user.id, collectionId, parsed.data);
     revalidatePath("/app/library");
     return {};
   } catch (err) {
     return {
-      error: domainMutationErrorMessage(err, "Couldn't save that collection. Try again."),
+      error: collectionMutationErrorMessage(err, "Couldn't save that collection. Try again."),
     };
   }
 }
 
-export async function deleteOwnedDomain(domainId: string): Promise<{ error?: string }> {
+export async function deleteOwnedCollection(collectionId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await deleteDomain(auth.supabase, domainId);
+    await deleteCollection(auth.supabase, collectionId);
     revalidatePath("/app/library");
     return {};
   } catch (err) {
@@ -239,12 +239,12 @@ export async function deleteOwnedDomain(domainId: string): Promise<{ error?: str
   }
 }
 
-export async function resetCollectionProgress(domainId: string): Promise<{ error?: string }> {
+export async function resetCollectionProgress(collectionId: string): Promise<{ error?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
   try {
-    await resetDomainProgress(auth.supabase, auth.user.id, domainId);
+    await clearStoredCollectionProgress(auth.supabase, auth.user.id, collectionId);
     revalidatePath("/app/library");
     return {};
   } catch (err) {
@@ -255,7 +255,7 @@ export async function resetCollectionProgress(domainId: string): Promise<{ error
 
 export async function createEmptyCollection(
   input: NewCollectionInput,
-): Promise<{ error?: string; domainId?: string }> {
+): Promise<{ error?: string; collectionId?: string }> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error };
 
@@ -263,11 +263,11 @@ export async function createEmptyCollection(
   if (!parsed.ok) return { error: parsed.error };
 
   try {
-    const created = await createOwnedDomain(auth.supabase, auth.user.id, parsed.data);
+    const created = await createOwnedCollection(auth.supabase, auth.user.id, parsed.data);
     revalidatePath("/app/library");
-    return { domainId: created.id };
+    return { collectionId: created.id };
   } catch (err) {
-    if (err instanceof DomainMutationError) return { error: err.message };
+    if (err instanceof CollectionMutationError) return { error: err.message };
     return { error: "Couldn't create that collection. Try again." };
   }
 }

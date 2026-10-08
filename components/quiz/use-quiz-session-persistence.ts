@@ -15,7 +15,7 @@ export function useQuizSessionPersistence(session: {
   currentIndex: number;
   answers: QuizAnswer[];
   pendingWrites: PendingQuizWrite[];
-  domainIds: "all" | string[];
+  collectionIds: "all" | string[];
   questionStyle: QuizQuestionStyle;
   startedAt: string;
 }) {
@@ -27,7 +27,7 @@ export function useQuizSessionPersistence(session: {
     currentIndex,
     answers,
     pendingWrites,
-    domainIds,
+    collectionIds,
     questionStyle,
     startedAt,
   } = session;
@@ -39,7 +39,7 @@ export function useQuizSessionPersistence(session: {
     if (step === "results" && pendingWrites.length === 0) return;
 
     saveQuizSession({
-      setup: { domainIds, questionCount: questions.length, questionStyle },
+      setup: { collectionIds, questionCount: questions.length, questionStyle },
       questions,
       terms,
       currentIndex,
@@ -55,7 +55,7 @@ export function useQuizSessionPersistence(session: {
     currentIndex,
     answers,
     pendingWrites,
-    domainIds,
+    collectionIds,
     questionStyle,
     startedAt,
     practice,

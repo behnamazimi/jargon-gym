@@ -5,14 +5,14 @@ import { useLinkStatus } from "next/link";
 import { useMemo, useState } from "react";
 import { Button, LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { rememberLibraryDomain } from "@/lib/library/pick-domain";
-import type { Domain } from "@/lib/terms/types";
+import { rememberLibraryCollection } from "@/lib/library/pick-collection";
+import type { Collection } from "@/lib/terms/types";
 import { cn } from "@/lib/utils";
 
-type DomainSidebarProps = {
-  domains: Domain[];
-  currentDomainId: string;
-  onDomainSelect?: () => void;
+type CollectionSidebarProps = {
+  collections: Collection[];
+  currentCollectionId: string;
+  onCollectionSelect?: () => void;
   className?: string;
 };
 
@@ -24,18 +24,18 @@ function OpeningIndicator() {
   ) : null;
 }
 
-function DomainSidebarSection({
+function CollectionSidebarSection({
   label,
-  domains,
-  currentDomainId,
+  collections,
+  currentCollectionId,
   onSelect,
 }: {
   label: string;
-  domains: Domain[];
-  currentDomainId: string;
+  collections: Collection[];
+  currentCollectionId: string;
   onSelect: () => void;
 }) {
-  if (domains.length === 0) return null;
+  if (collections.length === 0) return null;
 
   return (
     <div className="space-y-1">
@@ -43,21 +43,21 @@ function DomainSidebarSection({
         {label}
       </p>
       <ul className="space-y-1">
-        {domains.map((domain) => {
-          const isSelected = domain.id === currentDomainId;
+        {collections.map((collection) => {
+          const isSelected = collection.id === currentCollectionId;
           return (
-            <li key={domain.id}>
+            <li key={collection.id}>
               <LinkButton
-                href={`/app/library?domain=${domain.id}`}
+                href={`/app/library?collection=${collection.id}`}
                 variant="ghost"
                 aria-current={isSelected ? "page" : undefined}
                 aria-label={
-                  domain.source === "added"
-                    ? `${domain.name} (added to your collection)`
-                    : domain.name
+                  collection.source === "added"
+                    ? `${collection.name} (added to your collection)`
+                    : collection.name
                 }
                 onPress={() => {
-                  rememberLibraryDomain(domain.id);
+                  rememberLibraryCollection(collection.id);
                   onSelect();
                 }}
                 className={cn(
@@ -69,10 +69,10 @@ function DomainSidebarSection({
               >
                 <span className="flex w-full min-w-0 items-center gap-2">
                   <span className="truncate text-sm font-medium">
-                    {domain.icon ? `${domain.icon} ` : ""}
-                    {domain.name}
+                    {collection.icon ? `${collection.icon} ` : ""}
+                    {collection.name}
                   </span>
-                  {!domain.isActiveForReview ? (
+                  {!collection.isActiveForReview ? (
                     <PauseCircle
                       className="ml-auto size-3.5 shrink-0 opacity-50"
                       aria-label="Paused"
@@ -87,8 +87,10 @@ function DomainSidebarSection({
                     isSelected ? "text-primary-text" : "text-base-content/70",
                   )}
                 >
-                  {domain.termsLearnedCount} of {domain.termCount} mastered or known
-                  {domain.unfinishedCount > 0 ? ` · ${domain.unfinishedCount} to finish` : ""}
+                  {collection.termsLearnedCount} of {collection.termCount} mastered or known
+                  {collection.unfinishedCount > 0
+                    ? ` · ${collection.unfinishedCount} to finish`
+                    : ""}
                 </span>
               </LinkButton>
             </li>
@@ -99,34 +101,34 @@ function DomainSidebarSection({
   );
 }
 
-export function DomainSidebar({
-  domains,
-  currentDomainId,
-  onDomainSelect,
+export function CollectionSidebar({
+  collections,
+  currentCollectionId,
+  onCollectionSelect,
   className,
-}: DomainSidebarProps) {
+}: CollectionSidebarProps) {
   const [filterQuery, setFilterQuery] = useState("");
 
-  const filteredDomains = useMemo(() => {
+  const filteredCollections = useMemo(() => {
     const query = filterQuery.trim().toLowerCase();
-    if (!query) return domains;
-    return domains.filter((domain) => domain.name.toLowerCase().includes(query));
-  }, [domains, filterQuery]);
+    if (!query) return collections;
+    return collections.filter((collection) => collection.name.toLowerCase().includes(query));
+  }, [collections, filterQuery]);
 
-  const ownedDomains = useMemo(
-    () => filteredDomains.filter((domain) => domain.source === "owned"),
-    [filteredDomains],
+  const ownedCollections = useMemo(
+    () => filteredCollections.filter((collection) => collection.source === "owned"),
+    [filteredCollections],
   );
-  const addedDomains = useMemo(
-    () => filteredDomains.filter((domain) => domain.source === "added"),
-    [filteredDomains],
+  const addedCollections = useMemo(
+    () => filteredCollections.filter((collection) => collection.source === "added"),
+    [filteredCollections],
   );
 
   function handleSelect() {
-    onDomainSelect?.();
+    onCollectionSelect?.();
   }
 
-  if (domains.length === 0) return null;
+  if (collections.length === 0) return null;
 
   return (
     <nav
@@ -163,20 +165,20 @@ export function DomainSidebar({
       </div>
 
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto">
-        {filteredDomains.length === 0 ? (
+        {filteredCollections.length === 0 ? (
           <p className="px-2 text-sm text-base-content/70">No collections match your search.</p>
         ) : (
           <>
-            <DomainSidebarSection
+            <CollectionSidebarSection
               label="Owned"
-              domains={ownedDomains}
-              currentDomainId={currentDomainId}
+              collections={ownedCollections}
+              currentCollectionId={currentCollectionId}
               onSelect={handleSelect}
             />
-            <DomainSidebarSection
+            <CollectionSidebarSection
               label="Added"
-              domains={addedDomains}
-              currentDomainId={currentDomainId}
+              collections={addedCollections}
+              currentCollectionId={currentCollectionId}
               onSelect={handleSelect}
             />
           </>
@@ -187,7 +189,7 @@ export function DomainSidebar({
         href="/app/import"
         variant="outline"
         className="w-full shrink-0 justify-start gap-2 border-dashed"
-        onPress={onDomainSelect}
+        onPress={onCollectionSelect}
       >
         <Plus className="size-4" aria-hidden strokeWidth={1.5} />
         Add collection

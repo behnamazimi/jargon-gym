@@ -6,8 +6,8 @@ export const DEFAULT_COUNT = 100;
 const MIN_COUNT = 1;
 const MAX_COUNT = 100;
 
-export function buildRunCommand(domain: string, countRaw: string, excludeRaw: string) {
-  const domainPart = domain.trim() || "[domain]";
+export function buildRunCommand(collection: string, countRaw: string, excludeRaw: string) {
+  const collectionPart = collection.trim() || "[collection]";
 
   const trimmedCount = countRaw.trim();
   const parsedCount = Number.parseInt(trimmedCount, 10);
@@ -23,7 +23,7 @@ export function buildRunCommand(domain: string, countRaw: string, excludeRaw: st
     .map((term) => term.trim())
     .filter(Boolean);
 
-  const parts = [domainPart, String(count)];
+  const parts = [collectionPart, String(count)];
   if (excludeTerms.length > 0) {
     parts.push(`exclude: ${excludeTerms.join(", ")}`);
   }

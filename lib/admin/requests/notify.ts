@@ -24,7 +24,7 @@ async function buildEmail(
   row: RequestRow,
   kind: RequestEmailKind,
   timeZone: string | null,
-  domainName: string | null,
+  collectionName: string | null,
 ): Promise<RequestEmail | null> {
   const origin = await getAppOrigin();
   switch (kind) {
@@ -36,9 +36,9 @@ async function buildEmail(
           row.delivery_kind === "added_shared" || row.delivery_kind === "filled"
             ? row.delivery_kind
             : "prepared",
-        collectionName: domainName,
-        url: row.delivered_domain_id
-          ? `${origin}/app/library?domain=${row.delivered_domain_id}`
+        collectionName: collectionName,
+        url: row.delivered_collection_id
+          ? `${origin}/app/library?collection=${row.delivered_collection_id}`
           : `${origin}/app/library`,
       });
     case "needs_input":
@@ -89,16 +89,20 @@ export async function notifyRequester(
     if (!row.notify_email) return "skipped";
 
     const service = createAdminClient();
-    const [{ data: user }, { data: settings }, { data: domain }] = await Promise.all([
+    const [{ data: user }, { data: settings }, { data: collection }] = await Promise.all([
       service.from("users").select("email").eq("id", row.user_id).maybeSingle(),
       service.from("user_settings").select("timezone").eq("user_id", row.user_id).maybeSingle(),
-      row.delivered_domain_id
-        ? service.from("domains").select("name").eq("id", row.delivered_domain_id).maybeSingle()
+      row.delivered_collection_id
+        ? service
+            .from("collections")
+            .select("name")
+            .eq("id", row.delivered_collection_id)
+            .maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
     if (!user?.email) throw new Error("The requester has no email address.");
 
-    const email = await buildEmail(row, kind, settings?.timezone ?? null, domain?.name ?? null);
+    const email = await buildEmail(row, kind, settings?.timezone ?? null, collection?.name ?? null);
     if (!email) return "skipped";
 
     await sendRequestEmail({ to: user.email, email });

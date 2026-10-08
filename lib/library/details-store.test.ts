@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
-const SCOPE = "domain:1";
+const SCOPE = "collection:1";
 
 function idsOf(url: string) {
   return new URL(url, "http://test").searchParams.get("ids")!.split(",");
@@ -60,7 +60,7 @@ describe("term details store", () => {
   it("starts fresh for a new snapshot of the collection", async () => {
     const { loadTermDetails } = await import("./details-store");
     await loadTermDetails(SCOPE, id(1));
-    await loadTermDetails("domain:2", id(1));
+    await loadTermDetails("collection:2", id(1));
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 

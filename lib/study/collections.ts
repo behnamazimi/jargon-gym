@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { fetchUserCollectionDomains } from "@/lib/library/collections";
+import { fetchUserCollections } from "@/lib/library/collections";
 import type { PausedStudyCollection, StudyCollection } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -8,11 +8,11 @@ type Client = SupabaseClient<Database>;
 async function fetchTermCounts(client: Client): Promise<Map<string, number>> {
   const { data, error } = await client.rpc("my_study_collection_term_counts");
   if (error) throw error;
-  return new Map(data.map((row) => [row.domain_id, row.term_count]));
+  return new Map(data.map((row) => [row.collection_id, row.term_count]));
 }
 
-async function fetchActiveDomainIds(client: Client): Promise<Set<string>> {
-  const { data, error } = await client.rpc("my_review_domain_ids");
+async function fetchActiveCollectionIds(client: Client): Promise<Set<string>> {
+  const { data, error } = await client.rpc("my_review_collection_ids");
   if (error) throw error;
   return new Set(data ?? []);
 }
@@ -24,19 +24,23 @@ export async function listStudyCollectionState(
   client: Client,
   userId: string,
 ): Promise<{ active: StudyCollection[]; paused: PausedStudyCollection[] }> {
-  const [domains, activeIds, termCounts] = await Promise.all([
-    fetchUserCollectionDomains(client, userId),
-    fetchActiveDomainIds(client),
+  const [collections, activeIds, termCounts] = await Promise.all([
+    fetchUserCollections(client, userId),
+    fetchActiveCollectionIds(client),
     fetchTermCounts(client),
   ]);
 
   const active: StudyCollection[] = [];
   const paused: PausedStudyCollection[] = [];
-  for (const domain of domains) {
-    if (activeIds.has(domain.id)) {
-      active.push({ id: domain.id, name: domain.name, termCount: termCounts.get(domain.id) ?? 0 });
+  for (const collection of collections) {
+    if (activeIds.has(collection.id)) {
+      active.push({
+        id: collection.id,
+        name: collection.name,
+        termCount: termCounts.get(collection.id) ?? 0,
+      });
     } else {
-      paused.push({ id: domain.id, name: domain.name });
+      paused.push({ id: collection.id, name: collection.name });
     }
   }
 

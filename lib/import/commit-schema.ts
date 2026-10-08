@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { cleanText } from "@/lib/terms/text-clean";
-import { DOMAIN_LANGUAGES } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
 
 export const MAX_IMPORT_TERMS = 500;
 
@@ -30,10 +30,10 @@ export const linkSchema = z.object({
 });
 
 const destinationSchema = z.union([
-  z.object({ domainId: z.guid() }),
+  z.object({ collectionId: z.guid() }),
   z.object({
     name: z.string().transform(cleanText).pipe(z.string().trim().min(1).max(100)),
-    language: z.enum(DOMAIN_LANGUAGES),
+    language: z.enum(COLLECTION_LANGUAGES),
   }),
 ]);
 
@@ -62,8 +62,8 @@ export const commitImportSchema = z.object({
 export type CommitImportInput = z.infer<typeof commitImportSchema>;
 
 export const batchResultSchema = z.object({
-  domain_id: z.string(),
-  domain_name: z.string(),
+  collection_id: z.string(),
+  collection_name: z.string(),
   created: z.number(),
   updated: z.number(),
   skipped: z.number(),

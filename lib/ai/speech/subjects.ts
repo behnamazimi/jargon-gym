@@ -13,7 +13,7 @@ import type { SpeechSubject } from "./types";
 type Client = SupabaseClient<Database>;
 
 const TERM_COLUMNS =
-  "domain_id, term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)";
+  "collection_id, term, definition, example, mental_model, discussion, anti_example, controversy, collections(language)";
 
 /** Stories never change once written, so a constant stands in for a hash. The
  *  version 1 value is what the earlier mirror wrote. */
@@ -32,10 +32,10 @@ export async function loadTermSubject(
   if (error) throw error;
   if (!data || data.definition === null) return null;
 
-  const { domains, domain_id: domainId, ...fields } = data;
-  const language = parseLanguage(domains?.language);
+  const { collections, collection_id: collectionId, ...fields } = data;
+  const language = parseLanguage(collections?.language);
   const narrated: NarratedTermFields = fields;
-  const mode = await getNarrationMode(admin, domainId);
+  const mode = await getNarrationMode(admin, collectionId);
   return {
     type: "term",
     id: termId,

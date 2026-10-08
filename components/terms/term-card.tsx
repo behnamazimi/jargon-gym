@@ -2,7 +2,7 @@
 
 import { Check, ChevronRight } from "lucide-react";
 import { memo, useCallback, useContext, useRef } from "react";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import {
   prefetchTermDetails,
   retryTermDetails,
@@ -34,7 +34,7 @@ type TermCardProps = {
   markedKnown: boolean;
   open: boolean;
   isOwner: boolean;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
   onEdit: (termId: string) => void;
@@ -97,7 +97,7 @@ function CardBody({
   onToggleMarkedKnown,
 }: {
   termId: string;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   markedKnown: boolean;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
 }) {

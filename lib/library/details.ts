@@ -2,9 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { attachRelationshipsToTerms, mapTerm, mapTermsByState } from "@/lib/terms/mappers";
 import {
-  fetchTermRelationshipsForDomain,
+  fetchTermRelationshipsForCollection,
   fetchTermRelationshipsForTerms,
-  fetchTermsByDomain,
+  fetchTermsByCollection,
   fetchTermsByIds,
 } from "@/lib/terms/terms";
 import type { Term } from "@/lib/terms/types";
@@ -35,10 +35,13 @@ export async function fetchTermDetails(client: Client, termIds: string[]): Promi
 }
 
 /** Every finished term of a collection in full, for export. */
-export async function fetchCollectionForExport(client: Client, domainId: string): Promise<Term[]> {
+export async function fetchCollectionForExport(
+  client: Client,
+  collectionId: string,
+): Promise<Term[]> {
   const [rows, relationships] = await Promise.all([
-    fetchTermsByDomain(client, domainId),
-    fetchTermRelationshipsForDomain(client, domainId),
+    fetchTermsByCollection(client, collectionId),
+    fetchTermRelationshipsForCollection(client, collectionId),
   ]);
   return attachRelationshipsToTerms(mapTermsByState(rows).terms, relationships);
 }

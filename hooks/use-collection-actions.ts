@@ -4,14 +4,14 @@ import { useActionRunner } from "@/hooks/use-action-runner";
 import {
   addToCollection,
   createEmptyCollection,
-  deleteOwnedDomain,
+  deleteOwnedCollection,
   removeFromCollection,
   resetCollectionProgress,
-  shareDomain,
-  updateOwnedDomain,
-  unshareDomain,
+  shareCollection,
+  updateOwnedCollection,
+  unshareCollection,
 } from "@/app/(private)/app/actions";
-import type { DomainInput, NewCollectionInput } from "@/lib/library/domain-schema";
+import type { CollectionInput, NewCollectionInput } from "@/lib/library/collection-schema";
 
 export function useCollectionActions() {
   const { run, error, busyId, isBusy, clearError } = useActionRunner();
@@ -21,16 +21,21 @@ export function useCollectionActions() {
     isBusy,
     busyId,
     clearError,
-    shareDomain: (domainId: string) => run(() => shareDomain(domainId), { busyKey: domainId }),
-    unshareDomain: (domainId: string) => run(() => unshareDomain(domainId), { busyKey: domainId }),
-    updateOwnedDomain: (domainId: string, input: DomainInput, onSuccess?: () => void) =>
-      run(() => updateOwnedDomain(domainId, input), { busyKey: domainId, onSuccess }),
-    createEmptyCollection: (input: NewCollectionInput, onSuccess?: (domainId: string) => void) => {
+    shareCollection: (collectionId: string) =>
+      run(() => shareCollection(collectionId), { busyKey: collectionId }),
+    unshareCollection: (collectionId: string) =>
+      run(() => unshareCollection(collectionId), { busyKey: collectionId }),
+    updateOwnedCollection: (collectionId: string, input: CollectionInput, onSuccess?: () => void) =>
+      run(() => updateOwnedCollection(collectionId, input), { busyKey: collectionId, onSuccess }),
+    createEmptyCollection: (
+      input: NewCollectionInput,
+      onSuccess?: (collectionId: string) => void,
+    ) => {
       let createdId: string | undefined;
       return run(
         async () => {
           const result = await createEmptyCollection(input);
-          createdId = result.domainId;
+          createdId = result.collectionId;
           return result;
         },
         {
@@ -42,17 +47,17 @@ export function useCollectionActions() {
         },
       );
     },
-    deleteOwnedDomain: (domainId: string, onSuccess?: () => void) =>
-      run(() => deleteOwnedDomain(domainId), { busyKey: domainId, onSuccess }),
-    removeFromCollection: (domainId: string, onSuccess?: () => void) =>
-      run(() => removeFromCollection(domainId), {
-        busyKey: domainId,
+    deleteOwnedCollection: (collectionId: string, onSuccess?: () => void) =>
+      run(() => deleteOwnedCollection(collectionId), { busyKey: collectionId, onSuccess }),
+    removeFromCollection: (collectionId: string, onSuccess?: () => void) =>
+      run(() => removeFromCollection(collectionId), {
+        busyKey: collectionId,
         onSuccess,
         skipRefresh: true,
       }),
-    addToCollection: (domainId: string) =>
-      run(() => addToCollection(domainId), { busyKey: domainId, skipRefresh: true }),
-    resetProgress: (domainId: string, onSuccess?: () => void) =>
-      run(() => resetCollectionProgress(domainId), { busyKey: domainId, onSuccess }),
+    addToCollection: (collectionId: string) =>
+      run(() => addToCollection(collectionId), { busyKey: collectionId, skipRefresh: true }),
+    resetProgress: (collectionId: string, onSuccess?: () => void) =>
+      run(() => resetCollectionProgress(collectionId), { busyKey: collectionId, onSuccess }),
   };
 }

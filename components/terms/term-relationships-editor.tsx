@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 type TermRelationshipsEditorProps = {
   drafts: RelationshipDraft[];
   onChange: (drafts: RelationshipDraft[]) => void;
-  domainTerms: Pick<LibraryTerm, "id" | "term">[];
+  collectionTerms: Pick<LibraryTerm, "id" | "term">[];
   sourceTermId?: string;
 };
 
@@ -29,10 +29,10 @@ function createDraftKey() {
 export function TermRelationshipsEditor({
   drafts,
   onChange,
-  domainTerms,
+  collectionTerms,
   sourceTermId,
 }: TermRelationshipsEditorProps) {
-  const targetOptions = domainTerms.filter((term) => term.id !== sourceTermId);
+  const targetOptions = collectionTerms.filter((term) => term.id !== sourceTermId);
 
   function updateDraft(key: string, patch: Partial<RelationshipDraft>) {
     onChange(drafts.map((draft) => (draft.key === key ? { ...draft, ...patch } : draft)));

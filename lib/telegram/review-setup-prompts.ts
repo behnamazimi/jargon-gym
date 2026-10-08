@@ -11,7 +11,11 @@ import {
   formatReviewSetupCollectionPrompt,
   formatReviewSetupCountPrompt,
 } from "./presentation";
-import { clearReviewSetup, countTermsForReview, type QuizDomainSelection } from "./session-store";
+import {
+  clearReviewSetup,
+  countTermsForReview,
+  type QuizCollectionSelection,
+} from "./session-store";
 import { send } from "./transport";
 
 type Client = SupabaseClient<Database>;
@@ -19,10 +23,10 @@ type Client = SupabaseClient<Database>;
 export async function resolveReviewCount(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   requestedCount: number | "all",
 ): Promise<number> {
-  const available = await countTermsForReview(client, userId, domainId);
+  const available = await countTermsForReview(client, userId, collectionId);
   const maxCount = getMaxStudyCount(available);
   if (maxCount === 0) return 0;
   if (requestedCount === "all") return maxCount;
@@ -68,9 +72,9 @@ export async function sendReviewCountQuestion(
   client: Client,
   chatId: number,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
 ): Promise<TelegramAction[]> {
-  const available = await countTermsForReview(client, userId, domainId);
+  const available = await countTermsForReview(client, userId, collectionId);
   const maxCount = getMaxStudyCount(available);
 
   if (maxCount === 0) {
@@ -89,15 +93,15 @@ export async function sendReviewCountQuestion(
   ];
 }
 
-export async function formatReviewDomainChoiceLabel(
+export async function formatReviewCollectionChoiceLabel(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
 ): Promise<string> {
   const stats = await fetchCollectionStats(client, userId, "review");
   const activeCollections = stats.filter((collection) => collection.isActive);
 
-  if (domainId === "all") {
+  if (collectionId === "all") {
     const allCount = activeCollections.reduce(
       (total, collection) => total + collection.totalCount,
       0,
@@ -105,6 +109,6 @@ export async function formatReviewDomainChoiceLabel(
     return `All collections (${allCount})`;
   }
 
-  const collection = activeCollections.find((item) => item.id === domainId);
+  const collection = activeCollections.find((item) => item.id === collectionId);
   return collection?.name ?? "Selected collection";
 }

@@ -20,22 +20,22 @@ const FILTERS: { value: ClipFilter; label: string }[] = [
   { value: "stale", label: "Stale" },
 ];
 
-function clipsHref(domainId: string, filter: ClipFilter, page: number): string {
+function clipsHref(collectionId: string, filter: ClipFilter, page: number): string {
   const query = new URLSearchParams();
   if (filter !== "all") query.set("clips", filter);
   if (page > 1) query.set("page", String(page));
   const text = query.toString();
-  return `/admin/collections/${domainId}${text ? `?${text}` : ""}#narration`;
+  return `/admin/collections/${collectionId}${text ? `?${text}` : ""}#narration`;
 }
 
 export function ClipList({
-  domainId,
+  collectionId,
   clips,
   total,
   filter,
   page,
 }: {
-  domainId: string;
+  collectionId: string;
   clips: NarrationTermClip[];
   total: number;
   filter: ClipFilter;
@@ -46,7 +46,7 @@ export function ClipList({
       <AdminTabs
         label="Clip status"
         tabs={FILTERS.map((option) => ({
-          href: clipsHref(domainId, option.value, 1),
+          href: clipsHref(collectionId, option.value, 1),
           label: option.label,
           active: option.value === filter,
         }))}
@@ -95,7 +95,7 @@ export function ClipList({
       <AdminPagination
         page={page}
         total={total}
-        hrefFor={(next) => clipsHref(domainId, filter, next)}
+        hrefFor={(next) => clipsHref(collectionId, filter, next)}
       />
     </div>
   );

@@ -74,15 +74,15 @@ export async function fillDefinitions(input: unknown) {
 }
 
 /** For a request a Browse collection already answers: adds it to the requester's library. */
-export async function addExistingCollection(requestId: string, domainId: string) {
+export async function addExistingCollection(requestId: string, collectionId: string) {
   return runAdminAction(async ({ supabase }) => {
     const id = parseId(requestId);
-    const domain = idSchema.safeParse(domainId);
-    if (!domain.success) throw new AdminError("Pick a collection.");
+    const collection = idSchema.safeParse(collectionId);
+    if (!collection.success) throw new AdminError("Pick a collection.");
 
     const { data, error } = await supabase.rpc("admin_deliver_existing_collection", {
       p_request_id: id,
-      p_domain_id: domain.data,
+      p_collection_id: collection.data,
     });
     if (error) throwRpcError(error);
     return emailDeliveries(supabase, asDeliveries(data));

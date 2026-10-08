@@ -21,23 +21,23 @@ export async function getPoolStats(
   return computePoolStats(candidates, context);
 }
 
-function poolStatsByDomain(
+function poolStatsByCollection(
   candidates: TraceCandidate[],
   context: PickContext,
 ): Map<string, PoolStats> {
-  const byDomain = new Map<string, TraceCandidate[]>();
+  const byCollection = new Map<string, TraceCandidate[]>();
 
   for (const candidate of candidates) {
-    const list = byDomain.get(candidate.domainId) ?? [];
+    const list = byCollection.get(candidate.collectionId) ?? [];
     list.push(candidate);
-    byDomain.set(candidate.domainId, list);
+    byCollection.set(candidate.collectionId, list);
   }
 
-  const statsByDomain = new Map<string, PoolStats>();
-  for (const [domainId, domainCandidates] of byDomain) {
-    statsByDomain.set(domainId, computePoolStats(domainCandidates, context));
+  const statsByCollection = new Map<string, PoolStats>();
+  for (const [collectionId, collectionCandidates] of byCollection) {
+    statsByCollection.set(collectionId, computePoolStats(collectionCandidates, context));
   }
-  return statsByDomain;
+  return statsByCollection;
 }
 
 export async function getPoolStatsForUser(
@@ -50,23 +50,23 @@ export async function getPoolStatsForUser(
   return computePoolStats(candidates, context);
 }
 
-export async function getPoolStatsByDomainForUser(
+export async function getPoolStatsByCollectionForUser(
   client: Client,
   userId: string,
   context: PickContext,
 ): Promise<Map<string, PoolStats>> {
-  const candidates = await fetchTraceCandidatesForUser(client, userId, { domainIds: "all" });
-  return poolStatsByDomain(candidates, context);
+  const candidates = await fetchTraceCandidatesForUser(client, userId, { collectionIds: "all" });
+  return poolStatsByCollection(candidates, context);
 }
 
-/** Every active-domain candidate, unsorted — callers group/aggregate
+/** Every active-collection candidate, unsorted — callers group/aggregate
  *  themselves (rollups, mastery). Service-role: explicit userId (Telegram). */
 export const fetchActiveTraceCandidatesForUser = cache(
   async function fetchActiveTraceCandidatesForUser(
     client: Client,
     userId: string,
   ): Promise<TraceCandidate[]> {
-    return fetchTraceCandidatesForUser(client, userId, { domainIds: "all" });
+    return fetchTraceCandidatesForUser(client, userId, { collectionIds: "all" });
   },
 );
 
@@ -75,20 +75,20 @@ export const fetchActiveTraceCandidates = cache(async function fetchActiveTraceC
   client: Client,
   userId: string,
 ): Promise<TraceCandidate[]> {
-  return fetchTraceCandidates(client, userId, { domainIds: "all" });
+  return fetchTraceCandidates(client, userId, { collectionIds: "all" });
 });
 
 /** Read-eligible term count per collection: the same pool Read ranks,
  *  minus terms the user marked known. */
-export async function getReadEligibleCountsByDomainForUser(
+export async function getReadEligibleCountsByCollectionForUser(
   client: Client,
   userId: string,
 ): Promise<Map<string, number>> {
-  const candidates = await fetchTraceCandidatesForUser(client, userId, { domainIds: "all" });
+  const candidates = await fetchTraceCandidatesForUser(client, userId, { collectionIds: "all" });
   const counts = new Map<string, number>();
   for (const candidate of candidates) {
     if (candidate.markedKnownAt) continue;
-    counts.set(candidate.domainId, (counts.get(candidate.domainId) ?? 0) + 1);
+    counts.set(candidate.collectionId, (counts.get(candidate.collectionId) ?? 0) + 1);
   }
   return counts;
 }

@@ -54,7 +54,7 @@ export const MasteryTermRow = memo(function MasteryTermRow({ row }: { row: Maste
           ) : null}
         </div>
         <p className="m-0 mt-0.5 truncate text-xs text-base-content/70">
-          {row.category ? `${row.domainName} · ${row.category}` : row.domainName}
+          {row.category ? `${row.collectionName} · ${row.category}` : row.collectionName}
         </p>
         {row.known && row.journey ? <JourneyLine journey={row.journey} /> : null}
       </div>

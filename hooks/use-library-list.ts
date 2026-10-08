@@ -79,7 +79,7 @@ export function useLibraryList(data: LibraryPageData, filtersCookie: string) {
   const categories = useMemo(() => getCategories(terms), [terms]);
   const categoryCounts = useMemo(() => getCategoryCounts(terms), [terms]);
   const { hideKnown, setHideKnown, sortMode, setSortMode, activeCategories, toggleCategory } =
-    useLibraryFilters(data.domain.id, categories, filtersCookie);
+    useLibraryFilters(data.collection.id, categories, filtersCookie);
 
   const filteredTerms = useMemo(
     () =>
@@ -115,21 +115,27 @@ export function useLibraryList(data: LibraryPageData, filtersCookie: string) {
     markedKnownTerms,
     knownTerms,
     everMasteredTerms,
-    domain: data.domain,
+    collection: data.collection,
   });
-  latest.current = { terms, markedKnownTerms, knownTerms, everMasteredTerms, domain: data.domain };
+  latest.current = {
+    terms,
+    markedKnownTerms,
+    knownTerms,
+    everMasteredTerms,
+    collection: data.collection,
+  };
 
   /** Tells the sidebar this collection's counts after a saved change. */
   const publishCounts = useCallback(
     (termIds: string[], marked: ReadonlySet<string>, savedAt: number) => {
-      const { knownTerms, everMasteredTerms, domain } = latest.current;
+      const { knownTerms, everMasteredTerms, collection } = latest.current;
       let knownCount = 0;
       let termsLearnedCount = 0;
       for (const id of termIds) {
         if (knownTerms.has(id) || marked.has(id)) knownCount += 1;
         if (everMasteredTerms.has(id) || marked.has(id)) termsLearnedCount += 1;
       }
-      overrideCollectionCounts(domain.id, {
+      overrideCollectionCounts(collection.id, {
         termCount: termIds.length,
         knownCount,
         termsLearnedCount,
@@ -194,7 +200,7 @@ export function useLibraryList(data: LibraryPageData, filtersCookie: string) {
   );
 
   return {
-    domain: data.domain,
+    collection: data.collection,
     terms,
     removeTerm,
     categories,

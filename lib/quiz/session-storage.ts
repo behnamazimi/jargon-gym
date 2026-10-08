@@ -3,7 +3,7 @@ import { isQuizQuestion } from "./question-schema";
 import type { QuizAnswer, QuizQuestion, QuizQuestionStyle, QuizTerm } from "./types";
 
 type QuizSetup = {
-  domainIds: string[] | "all";
+  collectionIds: string[] | "all";
   questionCount: number;
   questionStyle: QuizQuestionStyle;
 };

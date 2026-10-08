@@ -22,16 +22,16 @@ import {
 } from "@/lib/collections/moderation";
 
 type ReportCollectionDialogProps = {
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
   onReported: () => void;
   onClose: () => void;
 };
 
 /** Mount it only while it is open, so every opening starts empty. */
 export function ReportCollectionDialog({
-  domainId,
-  domainName,
+  collectionId,
+  collectionName,
   onReported,
   onClose,
 }: ReportCollectionDialogProps) {
@@ -46,7 +46,7 @@ export function ReportCollectionDialog({
     if (!reason || pending) return;
     setPending(true);
     setError(null);
-    const result = await reportCollection(domainId, reason, note);
+    const result = await reportCollection(collectionId, reason, note);
     setPending(false);
     if (result.error) {
       setError(result.error);
@@ -68,8 +68,8 @@ export function ReportCollectionDialog({
       <AlertDialogHeader>
         <AlertDialogTitle>Report collection</AlertDialogTitle>
         <AlertDialogDescription>
-          Tell us what&apos;s wrong with &ldquo;{domainName}&rdquo;. Only the people who look after
-          Lobyas will see this.
+          Tell us what&apos;s wrong with &ldquo;{collectionName}&rdquo;. Only the people who look
+          after Lobyas will see this.
         </AlertDialogDescription>
       </AlertDialogHeader>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">

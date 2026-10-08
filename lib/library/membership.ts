@@ -7,21 +7,21 @@ export type CollectionMembership = "owned" | "added" | "available";
 export async function getCollectionMembership(
   client: SupabaseClient<Database>,
   userId: string,
-  domainId: string,
+  collectionId: string,
 ): Promise<CollectionMembership> {
-  const { data: domain, error: domainError } = await client
-    .from("domains")
+  const { data: collection, error: collectionError } = await client
+    .from("collections")
     .select("owner_id")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .maybeSingle();
-  if (domainError) throw domainError;
-  if (domain?.owner_id === userId) return "owned";
+  if (collectionError) throw collectionError;
+  if (collection?.owner_id === userId) return "owned";
 
   const { count, error } = await client
-    .from("user_collection_domains")
-    .select("domain_id", { count: "exact", head: true })
+    .from("user_collections")
+    .select("collection_id", { count: "exact", head: true })
     .eq("user_id", userId)
-    .eq("domain_id", domainId);
+    .eq("collection_id", collectionId);
   if (error) throw error;
   return count ? "added" : "available";
 }

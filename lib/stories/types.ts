@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 export const STORY_MIN_TERMS = 3;
 export const STORY_OUTLINE_MAX = 280;
@@ -46,8 +46,8 @@ export type StorySegment = { text: string; termId?: string };
 
 export type Story = {
   id: string;
-  domainId: string | null;
-  language: DomainLanguage;
+  collectionId: string | null;
+  language: CollectionLanguage;
   format: string;
   tone: string;
   readingLevel: ReadingLevel;

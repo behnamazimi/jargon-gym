@@ -35,7 +35,7 @@ export async function loadNarrationVersions(
   }
 
   const [modes, jobs] = await Promise.all([
-    getNarrationModes(admin, [...new Set(terms.map((term) => term.domain_id))]),
+    getNarrationModes(admin, [...new Set(terms.map((term) => term.collection_id))]),
     loadLiveJobs(
       admin,
       terms.map((term) => term.id),
@@ -44,7 +44,7 @@ export async function loadNarrationVersions(
 
   for (const term of terms) {
     const job = jobs.get(term.id);
-    const mode = modes.get(term.domain_id) ?? DEFAULT_NARRATION_MODE;
+    const mode = modes.get(term.collection_id) ?? DEFAULT_NARRATION_MODE;
     if (job && isCurrentAudio(term, job, mode)) versions.set(term.id, job.id);
   }
   return versions;

@@ -10,13 +10,13 @@ import { StoriesPage } from "@/components/read/stories/stories-page";
 export const maxDuration = 60;
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string; story?: string }>;
+  searchParams: Promise<{ collection?: string; story?: string }>;
 };
 
 export default async function ReadStoriesRoute({ searchParams }: PageProps) {
-  const { domain, story } = await searchParams;
+  const { collection: collectionId, story } = await searchParams;
   const storyId = z.uuid().safeParse(story).success ? story : undefined;
-  const setup = await getStoriesSetupData(domain, storyId);
+  const setup = await getStoriesSetupData(collectionId, storyId);
   if ("error" in setup) {
     return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }

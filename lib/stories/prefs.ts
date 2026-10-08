@@ -7,32 +7,36 @@ type Client = SupabaseClient<Database>;
 export async function loadPrefs(
   admin: Client,
   userId: string,
-): Promise<{ lastDomainId: string | null; levelsByDomain: Record<string, StoryLevels> }> {
+): Promise<{ lastCollectionId: string | null; levelsByCollection: Record<string, StoryLevels> }> {
   const [prefs, settings] = await Promise.all([
     admin
       .from("story_collection_prefs")
-      .select("domain_id, reading_level, cefr_level, piece_length")
+      .select("collection_id, reading_level, cefr_level, piece_length")
       .eq("user_id", userId),
-    admin.from("user_settings").select("story_last_domain_id").eq("user_id", userId).maybeSingle(),
+    admin
+      .from("user_settings")
+      .select("story_last_collection_id")
+      .eq("user_id", userId)
+      .maybeSingle(),
   ]);
   if (prefs.error) throw prefs.error;
   if (settings.error) throw settings.error;
 
-  const levelsByDomain: Record<string, StoryLevels> = {};
+  const levelsByCollection: Record<string, StoryLevels> = {};
   for (const row of prefs.data ?? []) {
-    levelsByDomain[row.domain_id] = {
+    levelsByCollection[row.collection_id] = {
       readingLevel: parseReadingLevel(row.reading_level),
       cefrLevel: parseCefrLevel(row.cefr_level),
       pieceLength: parsePieceLength(row.piece_length),
     };
   }
-  return { lastDomainId: settings.data?.story_last_domain_id ?? null, levelsByDomain };
+  return { lastCollectionId: settings.data?.story_last_collection_id ?? null, levelsByCollection };
 }
 
 export async function savePrefs(
   admin: Client,
   userId: string,
-  domainId: string,
+  collectionId: string,
   levels: StoryLevels,
 ): Promise<void> {
   const now = new Date().toISOString();
@@ -40,18 +44,18 @@ export async function savePrefs(
     admin.from("story_collection_prefs").upsert(
       {
         user_id: userId,
-        domain_id: domainId,
+        collection_id: collectionId,
         reading_level: levels.readingLevel,
         cefr_level: levels.cefrLevel,
         piece_length: levels.pieceLength,
         updated_at: now,
       },
-      { onConflict: "user_id,domain_id" },
+      { onConflict: "user_id,collection_id" },
     ),
     admin
       .from("user_settings")
       .upsert(
-        { user_id: userId, story_last_domain_id: domainId, updated_at: now },
+        { user_id: userId, story_last_collection_id: collectionId, updated_at: now },
         { onConflict: "user_id" },
       ),
   ]);

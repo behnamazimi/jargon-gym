@@ -11,9 +11,9 @@ export function toQuizTerm(card: TermCard, kind: CollectionKind): QuizTerm {
     antiExample: card.antiExample,
     category: card.category,
     kind,
-    language: card.domainLanguage,
+    language: card.collectionLanguage,
     recognition: card.recognition,
-    domainId: card.domainId,
-    domainName: card.domainName,
+    collectionId: card.collectionId,
+    collectionName: card.collectionName,
   };
 }

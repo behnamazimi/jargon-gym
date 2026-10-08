@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fetchTermIndexByDomain } from "./terms";
+import { fetchTermIndexByCollection } from "./terms";
 
 /** A query builder whose range() caps each page at 1000 rows, like PostgREST. */
 function fakeClient(total: number) {
@@ -19,9 +19,9 @@ function fakeClient(total: number) {
   return { from: () => query };
 }
 
-describe("fetchTermIndexByDomain", () => {
+describe("fetchTermIndexByCollection", () => {
   it("reads a collection larger than one page", async () => {
-    const rows = await fetchTermIndexByDomain(fakeClient(2345) as never, "d1");
+    const rows = await fetchTermIndexByCollection(fakeClient(2345) as never, "d1");
     expect(rows).toHaveLength(2345);
     expect(rows.at(-1)?.id).toBe("t2344");
   });

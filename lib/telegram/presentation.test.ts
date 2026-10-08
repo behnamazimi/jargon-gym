@@ -23,9 +23,9 @@ const dangerousTerm: TermCard = {
   antiExample: null,
   controversy: null,
   note: null,
-  domainId: "domain-1",
-  domainName: `Domain & <Co>`,
-  domainLanguage: "en",
+  collectionId: "collection-1",
+  collectionName: `Collection & <Co>`,
+  collectionLanguage: "en",
   relationships: [],
 };
 

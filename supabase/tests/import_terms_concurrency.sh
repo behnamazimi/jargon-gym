@@ -14,7 +14,7 @@ OUT_B="$(mktemp)"
 cleanup() {
   rm -f "$OUT_A" "$OUT_B"
   if [ -n "$USER_ID" ]; then
-    "${PSQL[@]}" -c "delete from public.domains where owner_id = '$USER_ID'; delete from public.referral_codes where used_by = '$USER_ID'; delete from auth.users where id = '$USER_ID'" >/dev/null
+    "${PSQL[@]}" -c "delete from public.collections where owner_id = '$USER_ID'; delete from public.referral_codes where used_by = '$USER_ID'; delete from auth.users where id = '$USER_ID'" >/dev/null
   fi
 }
 trap cleanup EXIT
@@ -51,8 +51,8 @@ wait
 
 APPLIED="$(cat "$OUT_A" "$OUT_B" | grep -c '^false$' || true)"
 REPEATED="$(cat "$OUT_A" "$OUT_B" | grep -c '^true$' || true)"
-TERMS="$("${PSQL[@]}" -c "select count(*) from public.terms t join public.domains d on d.id = t.domain_id where d.owner_id = '$USER_ID'")"
-COLLECTIONS="$("${PSQL[@]}" -c "select count(*) from public.domains where owner_id = '$USER_ID'")"
+TERMS="$("${PSQL[@]}" -c "select count(*) from public.terms t join public.collections d on d.id = t.collection_id where d.owner_id = '$USER_ID'")"
+COLLECTIONS="$("${PSQL[@]}" -c "select count(*) from public.collections where owner_id = '$USER_ID'")"
 
 if [ "$APPLIED" != "1" ] || [ "$REPEATED" != "1" ] || [ "$TERMS" != "2" ] || [ "$COLLECTIONS" != "1" ]; then
   echo "FAIL: applied=$APPLIED repeated=$REPEATED terms=$TERMS collections=$COLLECTIONS"

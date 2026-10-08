@@ -25,8 +25,8 @@ vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: () => ({}) }));
 vi.mock("@/lib/narration/sync", () => ({
   cancelNarrationSync: async () => state.cancelResult ?? state.lastJob,
   canResumeNarrationSync: () => state.canResume,
-  enqueueNarrationSync: async (_client: unknown, domainId: string) => {
-    state.enqueued.push(domainId);
+  enqueueNarrationSync: async (_client: unknown, collectionId: string) => {
+    state.enqueued.push(collectionId);
     return { id: "job-1" };
   },
   getLastNarrationSyncJob: async () => state.lastJob,
@@ -309,17 +309,17 @@ describe("narration sync collections", () => {
   });
 
   it("records a cancel only when a sync was running, and a resume only when it could resume", async () => {
-    state.lastJob = { id: "j1", domainId: "mine", status: "completed" };
+    state.lastJob = { id: "j1", collectionId: "mine", status: "completed" };
     await cancelNarrationSyncJob();
     expect(state.audits).toEqual([]);
 
     // It finished, or another tab cancelled it, between looking and cancelling.
-    state.lastJob = { id: "j1", domainId: "mine", status: "running" };
-    state.cancelResult = { id: "j1", domainId: "mine", status: "completed" };
+    state.lastJob = { id: "j1", collectionId: "mine", status: "running" };
+    state.cancelResult = { id: "j1", collectionId: "mine", status: "completed" };
     await cancelNarrationSyncJob();
     expect(state.audits).toEqual([]);
 
-    state.cancelResult = { id: "j1", domainId: "mine", status: "cancelled" };
+    state.cancelResult = { id: "j1", collectionId: "mine", status: "cancelled" };
     await cancelNarrationSyncJob();
     expect(state.audits).toEqual([
       { action: "app.narration_sync_cancel", targetId: "mine", details: { job: "j1" } },

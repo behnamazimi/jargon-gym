@@ -7,20 +7,20 @@ function buildSetupCollectionKeyboard(
   allCount: number,
 ): InlineKeyboardMarkup {
   const rows: InlineKeyboardMarkup["inline_keyboard"] = [
-    [{ text: `All collections (${allCount})`, callback_data: `${prefix}:domain:all` }],
+    [{ text: `All collections (${allCount})`, callback_data: `${prefix}:collection:all` }],
   ];
 
   for (let i = 0; i < collections.length; i += 2) {
     const row: InlineKeyboardMarkup["inline_keyboard"][number] = [
       {
         text: `${collections[i].name} (${collections[i].count})`,
-        callback_data: `${prefix}:domain:${collections[i].id}`,
+        callback_data: `${prefix}:collection:${collections[i].id}`,
       },
     ];
     if (i + 1 < collections.length) {
       row.push({
         text: `${collections[i + 1].name} (${collections[i + 1].count})`,
-        callback_data: `${prefix}:domain:${collections[i + 1].id}`,
+        callback_data: `${prefix}:collection:${collections[i + 1].id}`,
       });
     }
     rows.push(row);

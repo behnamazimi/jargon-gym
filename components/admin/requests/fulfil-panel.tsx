@@ -18,7 +18,7 @@ import type { ActionResult } from "@/lib/admin/action";
 import { settleAdminAction } from "@/lib/admin/settle-action";
 import { createDraftStore } from "@/lib/import/draft-store";
 import type { ImportFailure } from "@/lib/import/types";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { pluralize } from "@/lib/utils";
 
 type Payload = Parameters<ImportAdapter["commit"]>[0];
@@ -40,7 +40,7 @@ function doneMessage({ delivered, emailFailed }: Handover): string {
 type FulfilPanelProps = {
   requestId: string;
   topic: string;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   /** Everyone who gets their own copy: the requester and the requests merged into this one. */
   people: number;
   knownTerms: string | null;

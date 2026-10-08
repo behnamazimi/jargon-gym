@@ -146,17 +146,17 @@ async function actableCollections(supabase: Client, adminId: string) {
   return new Map(collections.filter(canNarrateCollection).map((c) => [c.id, c.name] as const));
 }
 
-export async function startNarrationSync(domainId: string) {
+export async function startNarrationSync(collectionId: string) {
   return runAdminAction(async ({ supabase, user }) => {
-    if (!(await actableCollections(supabase, user.id)).has(domainId)) {
+    if (!(await actableCollections(supabase, user.id)).has(collectionId)) {
       throw new AdminError("Collection not found.");
     }
-    const job = await enqueueNarrationSync(createAdminClient(), domainId, user.id);
+    const job = await enqueueNarrationSync(createAdminClient(), collectionId, user.id);
     kickNarrationSyncWorker();
     await writeAudit(supabase, {
       action: "app.narration_sync_start",
-      targetType: "domain",
-      targetId: domainId,
+      targetType: "collection",
+      targetId: collectionId,
       details: { job: job.id },
     });
     return job;
@@ -178,8 +178,8 @@ export async function cancelNarrationSyncJob() {
     ) {
       await writeAudit(supabase, {
         action: "app.narration_sync_cancel",
-        targetType: "domain",
-        targetId: before.domainId,
+        targetType: "collection",
+        targetId: before.collectionId,
         details: { job: before.id },
       });
     }
@@ -196,8 +196,8 @@ export async function resumeNarrationSync() {
     kickNarrationSyncWorker();
     await writeAudit(supabase, {
       action: "app.narration_sync_resume",
-      targetType: "domain",
-      targetId: job.domainId,
+      targetType: "collection",
+      targetId: job.collectionId,
       details: { job: job.id },
     });
   });

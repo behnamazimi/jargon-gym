@@ -2,7 +2,7 @@
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import {
-  fetchSharedDomainsBrowse,
+  fetchSharedCollectionsBrowse,
   type BrowseCollectionFilter,
   type BrowseGroup,
   type BrowsePageResult,
@@ -15,12 +15,12 @@ export async function getBrowseSetupData(group: BrowseGroup) {
     return { error: "Log in to browse collections." as const };
   }
 
-  const initialPage = await fetchSharedDomainsBrowse(auth.supabase, auth.user.id, { group });
+  const initialPage = await fetchSharedCollectionsBrowse(auth.supabase, auth.user.id, { group });
 
   return { initialPage };
 }
 
-export async function searchSharedDomains(input: {
+export async function searchSharedCollections(input: {
   search: string;
   filter: BrowseCollectionFilter;
   group?: BrowseGroup;
@@ -31,7 +31,7 @@ export async function searchSharedDomains(input: {
   if ("error" in auth) return { error: auth.error };
 
   try {
-    const page = await fetchSharedDomainsBrowse(auth.supabase, auth.user.id, {
+    const page = await fetchSharedCollectionsBrowse(auth.supabase, auth.user.id, {
       search: input.search,
       filter: input.filter,
       group: input.group,

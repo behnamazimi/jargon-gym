@@ -35,7 +35,7 @@ test.describe("Public pages", () => {
     await expect
       .poll(async () => {
         const rows = await sql(
-          `select 1 from public.user_active_domains uad join public.domains d on d.id = uad.domain_id
+          `select 1 from public.user_active_collections uad join public.collections d on d.id = uad.collection_id
            where uad.user_id = $1 and d.slug = 'standup'`,
           [user.id],
         );

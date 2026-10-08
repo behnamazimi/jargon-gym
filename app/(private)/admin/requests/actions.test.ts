@@ -76,7 +76,7 @@ const {
 const ID = "11111111-1111-4111-8111-111111111111";
 const OTHER = "22222222-2222-4222-8222-222222222222";
 const CHILD = "33333333-3333-4333-8333-333333333333";
-const DOMAIN = "44444444-4444-4444-8444-444444444444";
+const COLLECTION = "44444444-4444-4444-8444-444444444444";
 
 beforeEach(() => {
   state.queue = {};
@@ -348,7 +348,7 @@ describe("fillDefinitions", () => {
 describe("addExistingCollection", () => {
   it("adds the collection for the requester", async () => {
     state.rpcResult = { data: [{ request_id: ID }], error: null };
-    expect(await addExistingCollection(ID, DOMAIN)).toEqual({
+    expect(await addExistingCollection(ID, COLLECTION)).toEqual({
       ok: true,
       data: { delivered: 1, emailFailed: 0 },
     });

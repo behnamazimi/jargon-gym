@@ -3,35 +3,35 @@
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Suspense, useState } from "react";
-import { getDomainSubscriberCount } from "@/app/(private)/app/actions";
+import { getCollectionSubscriberCount } from "@/app/(private)/app/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { fetchCollectionExport, type CollectionExport } from "@/lib/export/fetch-collection-export";
-import type { Domain } from "@/lib/terms/types";
+import type { Collection } from "@/lib/terms/types";
 import { ReportCollectionDialog } from "./report-collection-dialog";
-import { DomainActionsDialogs, type SubscriberCheck } from "./domain-actions-dialogs";
-import { DomainActionsDropdown } from "./domain-actions-dropdown";
+import { CollectionActionsDialogs, type SubscriberCheck } from "./collection-actions-dialogs";
+import { CollectionActionsDropdown } from "./collection-actions-dropdown";
 
-export { DomainMeta } from "./domain-meta";
+export { CollectionMeta } from "./collection-meta";
 
-const DomainExportDialog = dynamic(() =>
-  import("./domain-export-dialog").then((mod) => mod.DomainExportDialog),
+const CollectionExportDialog = dynamic(() =>
+  import("./collection-export-dialog").then((mod) => mod.CollectionExportDialog),
 );
-const DomainFormDialog = dynamic(() =>
-  import("./domain-form-dialog").then((mod) => mod.DomainFormDialog),
+const CollectionFormDialog = dynamic(() =>
+  import("./collection-form-dialog").then((mod) => mod.CollectionFormDialog),
 );
 
-type DomainActionsMenuProps = {
-  domain: Domain;
+type CollectionActionsMenuProps = {
+  collection: Collection;
   onToggleActiveForReview: () => void;
   togglePending: boolean;
 };
 
-export function DomainActionsMenu({
-  domain,
+export function CollectionActionsMenu({
+  collection,
   onToggleActiveForReview,
   togglePending,
-}: DomainActionsMenuProps) {
+}: CollectionActionsMenuProps) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -52,18 +52,18 @@ export function DomainActionsMenu({
     error,
     isBusy,
     busyId,
-    shareDomain,
-    unshareDomain,
-    deleteOwnedDomain,
+    shareCollection,
+    unshareCollection,
+    deleteOwnedCollection,
     removeFromCollection,
     resetProgress,
   } = useCollectionActions();
 
-  const disabled = togglePending || (isBusy && busyId === domain.id);
+  const disabled = togglePending || (isBusy && busyId === collection.id);
 
   async function handleConfirmDelete() {
     setDeleting(true);
-    const deleted = await deleteOwnedDomain(domain.id, () => router.push("/app/library"));
+    const deleted = await deleteOwnedCollection(collection.id, () => router.push("/app/library"));
     // On success the dialog stays up until the navigation unmounts this menu.
     if (deleted) return;
     setDeleting(false);
@@ -71,36 +71,36 @@ export function DomainActionsMenu({
   }
 
   function handleConfirmShare() {
-    shareDomain(domain.id);
+    shareCollection(collection.id);
     setShareConfirmOpen(false);
   }
 
   function handleConfirmUnshare() {
-    unshareDomain(domain.id);
+    unshareCollection(collection.id);
     setUnshare((current) => current && { ...current, open: false });
   }
 
   function handleConfirmResetProgress() {
-    resetProgress(domain.id);
+    resetProgress(collection.id);
     setResetProgressOpen(false);
   }
 
   return (
     <div className="relative shrink-0">
-      <DomainActionsDropdown
-        domain={{
-          ...domain,
-          reportedByMe: domain.reportedByMe || reported === domain.id,
+      <CollectionActionsDropdown
+        collection={{
+          ...collection,
+          reportedByMe: collection.reportedByMe || reported === collection.id,
         }}
         disabled={disabled}
         onToggleActiveForReview={onToggleActiveForReview}
         onResetProgress={() => setResetProgressOpen(true)}
-        onExport={() => setExportTerms(fetchCollectionExport(domain.id))}
+        onExport={() => setExportTerms(fetchCollectionExport(collection.id))}
         onEdit={() => setEditOpen(true)}
         onShare={() => setShareConfirmOpen(true)}
         onUnshare={() =>
           setUnshare({
-            check: getDomainSubscriberCount(domain.id).catch(() => ({
+            check: getCollectionSubscriberCount(collection.id).catch(() => ({
               error: "Couldn't check who else uses this collection. Try again.",
             })),
             open: true,
@@ -110,21 +110,25 @@ export function DomainActionsMenu({
         onReport={() => setReportOpen(true)}
         onRemoveFromCollection={() => {
           // The Library picks the next collection to show.
-          removeFromCollection(domain.id, () => router.push("/app/library"));
+          removeFromCollection(collection.id, () => router.push("/app/library"));
         }}
       />
 
       {/* Their own boundaries, so loading a dialog's code doesn't suspend the page. */}
-      {domain.source === "owned" && editOpen ? (
+      {collection.source === "owned" && editOpen ? (
         <Suspense fallback={null}>
-          <DomainFormDialog domain={domain} isOpen={editOpen} onOpenChange={setEditOpen} />
+          <CollectionFormDialog
+            collection={collection}
+            isOpen={editOpen}
+            onOpenChange={setEditOpen}
+          />
         </Suspense>
       ) : null}
 
       {exportTerms ? (
         <Suspense fallback={null}>
-          <DomainExportDialog
-            domain={domain}
+          <CollectionExportDialog
+            collection={collection}
             terms={exportTerms}
             isOpen
             onOpenChange={(open) => {
@@ -136,15 +140,15 @@ export function DomainActionsMenu({
 
       {reportOpen ? (
         <ReportCollectionDialog
-          domainId={domain.id}
-          domainName={domain.name}
-          onReported={() => setReported(domain.id)}
+          collectionId={collection.id}
+          collectionName={collection.name}
+          onReported={() => setReported(collection.id)}
           onClose={() => setReportOpen(false)}
         />
       ) : null}
 
-      <DomainActionsDialogs
-        domain={domain}
+      <CollectionActionsDialogs
+        collection={collection}
         shareConfirmOpen={shareConfirmOpen}
         onShareConfirmOpenChange={setShareConfirmOpen}
         onConfirmShare={handleConfirmShare}

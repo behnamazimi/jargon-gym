@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { searchSharedDomains } from "@/app/(private)/app/browse/actions";
+import { searchSharedCollections } from "@/app/(private)/app/browse/actions";
 import type {
   BrowseCollectionFilter,
   BrowseCounts,
@@ -12,18 +12,21 @@ import type {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-type UseSharedDomainsBrowseArgs = {
+type UseSharedCollectionsBrowseArgs = {
   initialPage: BrowsePageResult;
   initialGroup: BrowseGroup;
 };
 
-export function useSharedDomainsBrowse({ initialPage, initialGroup }: UseSharedDomainsBrowseArgs) {
+export function useSharedCollectionsBrowse({
+  initialPage,
+  initialGroup,
+}: UseSharedCollectionsBrowseArgs) {
   const [searchInput, setSearchInput] = useState("");
   const [committedSearch, setCommittedSearch] = useState("");
   const [filter, setFilter] = useState<BrowseCollectionFilter>("all");
   const [sort, setSort] = useState<BrowseSort>("name");
   const [group, setGroupState] = useState<BrowseGroup>(initialGroup);
-  const [domains, setDomains] = useState(initialPage.domains);
+  const [collections, setCollections] = useState(initialPage.collections);
   const [counts, setCounts] = useState(initialPage.counts);
   const [nextOffset, setNextOffset] = useState(initialPage.nextOffset);
   const [listError, setListError] = useState<string | null>(null);
@@ -38,7 +41,7 @@ export function useSharedDomainsBrowse({ initialPage, initialGroup }: UseSharedD
   const applyPage = useCallback((page: BrowsePageResult, append: boolean) => {
     setCounts(page.counts);
     setNextOffset(page.nextOffset);
-    setDomains((current) => (append ? [...current, ...page.domains] : page.domains));
+    setCollections((current) => (append ? [...current, ...page.collections] : page.collections));
   }, []);
 
   const fetchPage = useCallback(
@@ -60,7 +63,7 @@ export function useSharedDomainsBrowse({ initialPage, initialGroup }: UseSharedD
       }
       setListError(null);
 
-      const result = await searchSharedDomains({
+      const result = await searchSharedCollections({
         search,
         filter: nextFilter,
         group: nextGroup,
@@ -135,40 +138,40 @@ export function useSharedDomainsBrowse({ initialPage, initialGroup }: UseSharedD
     setSort("name");
   }
 
-  function markInCollection(domainId: string, inCollection: boolean) {
-    setDomains((current) => {
-      const next = current.map((domain) =>
-        domain.id === domainId ? { ...domain, inCollection } : domain,
+  function markInCollection(collectionId: string, inCollection: boolean) {
+    setCollections((current) => {
+      const next = current.map((collection) =>
+        collection.id === collectionId ? { ...collection, inCollection } : collection,
       );
       if (filter === "available" && inCollection) {
-        return next.filter((domain) => domain.id !== domainId);
+        return next.filter((collection) => collection.id !== collectionId);
       }
       if (filter === "in-collection" && !inCollection) {
-        return next.filter((domain) => domain.id !== domainId);
+        return next.filter((collection) => collection.id !== collectionId);
       }
       return next;
     });
     setCounts((current) => adjustCounts(current, inCollection));
   }
 
-  function markLoved(domainId: string, lovedByMe: boolean, loveCount?: number) {
-    setDomains((current) =>
-      current.map((domain) =>
-        domain.id === domainId
+  function markLoved(collectionId: string, lovedByMe: boolean, loveCount?: number) {
+    setCollections((current) =>
+      current.map((collection) =>
+        collection.id === collectionId
           ? {
-              ...domain,
+              ...collection,
               lovedByMe,
-              loveCount: loveCount ?? Math.max(0, domain.loveCount + (lovedByMe ? 1 : -1)),
+              loveCount: loveCount ?? Math.max(0, collection.loveCount + (lovedByMe ? 1 : -1)),
             }
-          : domain,
+          : collection,
       ),
     );
   }
 
-  function markReported(domainId: string) {
-    setDomains((current) =>
-      current.map((domain) =>
-        domain.id === domainId ? { ...domain, reportedByMe: true } : domain,
+  function markReported(collectionId: string) {
+    setCollections((current) =>
+      current.map((collection) =>
+        collection.id === collectionId ? { ...collection, reportedByMe: true } : collection,
       ),
     );
   }
@@ -178,7 +181,7 @@ export function useSharedDomainsBrowse({ initialPage, initialGroup }: UseSharedD
   const isEmptyCatalog =
     counts.groups.builtin + counts.groups.community === 0 &&
     !hasActiveFilters &&
-    domains.length === 0;
+    collections.length === 0;
 
   return {
     searchInput,
@@ -189,7 +192,7 @@ export function useSharedDomainsBrowse({ initialPage, initialGroup }: UseSharedD
     setSort,
     group,
     setGroup,
-    domains,
+    collections,
     counts,
     matchingCount,
     nextOffset,

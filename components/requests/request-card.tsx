@@ -91,31 +91,31 @@ function ReplyBox({ request }: { request: MyRequest }) {
 }
 
 function deliveredLine(request: MyRequest): string {
-  if (request.deliveryKind === "added_shared" && request.deliveredDomainName) {
-    return CARD.addedShared(request.deliveredDomainName);
+  if (request.deliveryKind === "added_shared" && request.deliveredCollectionName) {
+    return CARD.addedShared(request.deliveredCollectionName);
   }
   if (request.deliveryKind === "filled") return CARD.filled(request.deliveredTerms ?? 0);
   return CARD.ready(request.deliveredTerms ?? 0);
 }
 
 function Delivered({ request }: { request: MyRequest }) {
-  const domainId = request.deliveredDomainId;
+  const collectionId = request.deliveredCollectionId;
   return (
     <div className="space-y-3">
       <p className="m-0 text-sm" role="status">
         {deliveredLine(request)}
       </p>
-      {domainId ? (
+      {collectionId ? (
         <div className="flex flex-wrap gap-2">
           <LinkButton
-            href={`/app/read?domain=${domainId}`}
+            href={`/app/read?collection=${collectionId}`}
             size="sm"
             className="min-h-11 md:min-h-8"
           >
             {CARD.startReading}
           </LinkButton>
           <LinkButton
-            href={`/app/library?domain=${domainId}`}
+            href={`/app/library?collection=${collectionId}`}
             size="sm"
             variant="outline"
             className="min-h-11 md:min-h-8"

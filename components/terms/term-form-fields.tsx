@@ -12,7 +12,7 @@ type TermFormFieldsProps = {
   canManageRelationships: boolean;
   relationshipDrafts: RelationshipDraft[];
   onRelationshipDraftsChange: (drafts: RelationshipDraft[]) => void;
-  domainTerms: Pick<LibraryTerm, "id" | "term">[];
+  collectionTerms: Pick<LibraryTerm, "id" | "term">[];
   sourceTermId: string | undefined;
 };
 
@@ -74,7 +74,7 @@ export function TermFormFields({
   canManageRelationships,
   relationshipDrafts,
   onRelationshipDraftsChange,
-  domainTerms,
+  collectionTerms,
   sourceTermId,
 }: TermFormFieldsProps) {
   return (
@@ -111,7 +111,7 @@ export function TermFormFields({
         <TermRelationshipsEditor
           drafts={relationshipDrafts}
           onChange={onRelationshipDraftsChange}
-          domainTerms={domainTerms}
+          collectionTerms={collectionTerms}
           sourceTermId={sourceTermId}
         />
       ) : null}
