@@ -32,7 +32,7 @@ async function LlmPanelServer() {
   if ("error" in setup) {
     return <p className="text-sm text-base-content/70">{setup.error}</p>;
   }
-  return <LlmPanel ai={setup.ai} costs={setup.costs} schedule={setup.schedule} />;
+  return <LlmPanel ai={setup.ai} schedule={setup.schedule} />;
 }
 
 async function TelegramPanelServer() {

@@ -13,7 +13,7 @@ type Client = SupabaseClient<Database>;
 
 /** The price rows in effect now. A missing price is an error: charging at a
  *  guessed price is worse than not charging. */
-export async function getCreditCosts(client: Client): Promise<CreditCosts> {
+async function getCreditCosts(client: Client): Promise<CreditCosts> {
   const { data, error } = await client
     .from("credit_prices")
     .select("feature, base_credits, credits_per_unit, unit_size, effective_from")

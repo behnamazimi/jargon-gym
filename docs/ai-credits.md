@@ -221,13 +221,7 @@ hidden when credits aren't offered. The balance is looked up only when the menu
 opens, so ordinary page loads don't pay for it. The line links to the AI section
 of Settings.
 
-That section also explains the credits, built from the live prices and the
-person's own ledger (`lib/ai-credits/explainer.ts`): what an AI quiz, a story
-and a story's audio cost, when the next monthly refill comes, and when the
-soonest credits expire, in UTC. `my_credit_schedule()` supplies the dates, so
-the page never guesses. A part that doesn't apply, such as a refill for an
-account without a monthly policy, is left out, and the rows are hidden when
-credits are switched off.
+That section also says when the credits next change (`lib/ai-credits/explainer.ts`): when the next monthly refill comes and when the soonest credits expire, in UTC. `my_credit_schedule()` supplies the dates, so the page never guesses. A part that doesn't apply, such as a refill for an account without a monthly policy, is left out, and the row is hidden when credits are switched off.
 
 ## Setting it up
 
