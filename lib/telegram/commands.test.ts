@@ -15,7 +15,7 @@ vi.mock("./links", () => ({
 }));
 
 const { handleStart } = await import("./commands");
-const { ALREADY_CONNECTED_MESSAGE, CONNECT_MESSAGE, WELCOME_MESSAGE } = await import("./copy");
+const { ALREADY_CONNECTED_MESSAGE, connectMessage, WELCOME_MESSAGE } = await import("./copy");
 
 const client = {} as Parameters<typeof handleStart>[0];
 
@@ -30,7 +30,9 @@ describe("handleStart", () => {
   });
 
   it("asks an unlinked chat to connect in Settings", async () => {
-    expect(texts(await handleStart(client, 1, null))).toEqual([CONNECT_MESSAGE]);
+    const [message] = texts(await handleStart(client, 1, null));
+    expect(message).toBe(connectMessage());
+    expect(message).toContain("/app/settings?tab=telegram");
   });
 
   it("greets an already-connected chat with the commands, not the connect prompt", async () => {

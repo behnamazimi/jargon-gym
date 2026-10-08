@@ -51,7 +51,7 @@ export function SharedDomainCard({
               {domain.inCollection ? (
                 <Badge className="badge-soft badge-primary gap-1 border-0">
                   <CheckCircle2 className="size-3" aria-hidden strokeWidth={1.5} />
-                  In collection
+                  In library
                 </Badge>
               ) : null}
             </div>
@@ -93,7 +93,7 @@ export function SharedDomainCard({
                 variant="ghost"
                 className="w-full min-h-11 gap-2 md:w-auto"
               >
-                View in collection
+                View in library
                 <ArrowRight className="size-4" aria-hidden strokeWidth={1.5} />
               </LinkButton>
               <Button
@@ -116,7 +116,7 @@ export function SharedDomainCard({
               className="w-full min-h-11 gap-2 transition-transform active:scale-[0.96] md:w-auto"
             >
               <Plus className="size-4" aria-hidden strokeWidth={1.5} />
-              Add to collection
+              Add to library
             </Button>
           )}
         </div>

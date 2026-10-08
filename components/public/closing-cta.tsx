@@ -14,10 +14,10 @@ type ClosingCtaProps = {
 export function ClosingCta({
   title = (
     <>
-      <span className="text-primary-text">Free.</span> At your own pace.
+      <span className="text-primary-text">Free to start.</span> At your own pace.
     </>
   ),
-  body = "Free to use, with monthly AI credits. Read, review and quiz the terms you need, with no due dates to fall behind on.",
+  body = "Free to start: you get AI credits when you join and a refill every month. Read, Review and simple quizzes never use credits, and there are no due dates to fall behind on.",
   scene = <InviteScene />,
   collection,
 }: ClosingCtaProps) {

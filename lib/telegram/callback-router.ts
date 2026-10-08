@@ -3,7 +3,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { resolveUserIdByChatId } from "@/lib/terms/term-delivery";
 import { AGAIN, EASY, type ReviewGrade } from "@/lib/trace";
 import type { TelegramAction } from "./actions";
-import { CONNECT_MESSAGE } from "./copy";
+import { connectMessage } from "./copy";
 import { handleReadCallback, handleReadMarkKnown, handleReadReveal } from "./delivery-flow";
 import { handleQuizSetupCallback, handleReviewAnswer } from "./quiz-flow";
 import {
@@ -106,9 +106,9 @@ export async function handleCallback(
       {
         type: "answerCallbackQuery",
         callbackQueryId: callbackId,
-        text: "Connect in Lobyas settings first.",
+        text: "Connect in Settings first.",
       },
-      send(chatId, CONNECT_MESSAGE),
+      send(chatId, connectMessage()),
     ];
   }
 

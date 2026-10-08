@@ -102,10 +102,10 @@ export default async function PublicDomainPage({ params }: { params: Promise<Pag
         title={
           <>
             Learn all {countLabel(domain.kind, totalTerms)}.{" "}
-            <span className="text-primary-text">Free.</span>
+            <span className="text-primary-text">Free to start.</span>
           </>
         }
-        body="Free to use, with monthly AI credits. Read, review and quiz them in Lobyas, with no due dates to fall behind on."
+        body="Free to start: you get AI credits when you join and a refill every month. Read, Review and simple quizzes never use credits, and there are no due dates to fall behind on."
         collection={{ id: domain.id, name: domain.name, canAdd: domain.canAdd }}
       />
     </div>

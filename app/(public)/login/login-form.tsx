@@ -13,7 +13,7 @@ import { SUSPENDED_ERROR } from "@/lib/auth/format-auth-error";
 import { appendNextParam, safeNextPath } from "@/lib/auth/safe-next-path";
 import { login } from "./actions";
 
-const OAUTH_FAILED_ERROR = "Google sign-in didn't work. Try again or use your email instead.";
+const OAUTH_FAILED_ERROR = "Google login didn't work. Try again or use your email instead.";
 
 const LINK_FAILED_ERROR = "That link didn't work here. Log in with your email and password.";
 

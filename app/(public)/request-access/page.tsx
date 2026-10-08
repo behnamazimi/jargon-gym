@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import RequestAccessForm from "./request-access-form";
 import { PageCenter } from "@/components/page-container";
 import { getSessionUser } from "@/lib/auth/require-session";
+
+export const metadata: Metadata = { title: "Request access" };
 
 export default async function RequestAccessPage() {
   const { user } = await getSessionUser();

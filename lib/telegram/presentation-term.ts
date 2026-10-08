@@ -113,7 +113,7 @@ export function buildTermInlineKeyboard(
     [{ text: "Read next", callback_data: `read:${term.id}` }],
   ];
   if (isNewToUser) {
-    rows.push([{ text: "I already know this", callback_data: `read:known:${term.id}` }]);
+    rows.push([{ text: "I know this", callback_data: `read:known:${term.id}` }]);
   }
   appendOpenInWebRow(rows, term.id);
   return { inline_keyboard: rows };

@@ -75,7 +75,7 @@ export function buildReviewRateKeyboard(
     [button(GOOD), button(EASY)],
   ];
   if (isNewToUser) {
-    rows.push([{ text: "I already know this", callback_data: `review:known:${sessionIndex}` }]);
+    rows.push([{ text: "I know this", callback_data: `review:known:${sessionIndex}` }]);
   }
   return {
     inline_keyboard: rows,

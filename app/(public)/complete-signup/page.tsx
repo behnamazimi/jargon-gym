@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { PageCenter } from "@/components/page-container";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
 import { getSessionUser } from "@/lib/auth/require-session";
 import CompleteSignupForm from "./complete-signup-form";
+
+export const metadata: Metadata = { title: "Complete sign up" };
 
 type CompleteSignupPageProps = {
   searchParams: Promise<{ ref?: string; error?: string; next?: string }>;

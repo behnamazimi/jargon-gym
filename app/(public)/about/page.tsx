@@ -13,7 +13,7 @@ export default function AboutPageRoute() {
   return (
     <ShowcasePage
       title="About Lobyas"
-      lead="A handy app for learning the terms of a field or the words of a language, until you can use them."
+      lead="Learn the terms that stick. A handy app for the terms of a field or the words of a language, until you can use them."
       scene={<AboutScene />}
     >
       <About components={showcaseProse} />

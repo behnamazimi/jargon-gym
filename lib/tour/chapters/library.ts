@@ -61,7 +61,7 @@ export const LIBRARY_CHAPTERS = [
       {
         target: "app-streak",
         title: "Your streak",
-        body: "Practice daily to grow it. Open it to see your week.",
+        body: "An optional streak counts the days you practice. Open it to see your week.",
       },
       {
         target: "app-account",

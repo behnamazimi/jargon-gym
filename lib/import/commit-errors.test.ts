@@ -15,7 +15,7 @@ describe("commitFailureFor", () => {
     ["Not authenticated", "Log in to add terms."],
     [
       "duplicate key value violates unique constraint",
-      "We couldn't add your terms. Nothing was added, and your list is still here. Try again.",
+      "Couldn't add your terms. Nothing was added, and your list is still here. Try again.",
     ],
   ])("%s", (message, expected) => {
     expect(commitFailureFor({ message }, "Dutch").message).toBe(expected);

@@ -9,7 +9,7 @@ const SITE_LINKS = [
   { href: "/about", label: "About" },
   { href: "/features", label: "Features" },
   { href: "/how-terms-work", label: "How terms are built" },
-  { href: "/collections", label: "Public collections" },
+  { href: "/collections", label: "Built-in collections" },
   { href: "/before-you-sign-up", label: "Before you sign up" },
   ...LEGAL_LINKS,
 ];

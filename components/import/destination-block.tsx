@@ -120,8 +120,8 @@ function NewCollectionFields({
       </div>
       {fileLanguage && fileLanguage !== language ? (
         <p className="m-0 text-sm text-base-content/70" role="status">
-          The file says {languageLabel(fileLanguage)}, you chose {languageLabel(language)}.
-          We&apos;ll use your choice.
+          The file says {languageLabel(fileLanguage)}, you chose {languageLabel(language)}. Your
+          choice is used.
         </p>
       ) : null}
     </>

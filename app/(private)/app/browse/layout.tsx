@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
 
-export const metadata: Metadata = { title: "Browse" };
+export const metadata: Metadata = { title: "Browse collections" };
 
 export default function BrowseLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,7 +12,7 @@ export default function BrowseLayout({ children }: { children: React.ReactNode }
       <PageHeader
         icon={Compass}
         title="Browse collections"
-        description="Add built-in collections, or ones other members have shared."
+        description="Add built-in collections, or community ones other members have shared."
         compactOnPhone
       />
       <PromoVisit target="browse" />

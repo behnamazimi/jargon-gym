@@ -128,12 +128,12 @@ export function jsonSyntaxMessage(error: string, raw: string): string {
   const lineMatch = error.match(/line\s+(\d+)\s+column\s+(\d+)/i);
 
   if (lineMatch) {
-    return `We couldn't read this as JSON. Look near line ${lineMatch[1]}, column ${lineMatch[2]} for a missing comma, quote or bracket.`;
+    return `Couldn't read this as JSON. Look near line ${lineMatch[1]}, column ${lineMatch[2]} for a missing comma, quote or bracket.`;
   }
   const position = positionMatch ? Number(positionMatch[1]) : positionFromSnippet(error, trimmed);
   if (position !== null) {
     const { line, column } = lineAndColumn(trimmed, position);
-    return `We couldn't read this as JSON. Look near line ${line}, column ${column} for a missing comma, quote or bracket.`;
+    return `Couldn't read this as JSON. Look near line ${line}, column ${column} for a missing comma, quote or bracket.`;
   }
-  return "We couldn't read this as JSON. Look for a missing comma, quote or bracket.";
+  return "Couldn't read this as JSON. Look for a missing comma, quote or bracket.";
 }

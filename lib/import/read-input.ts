@@ -24,7 +24,7 @@ export const TOO_MUCH_TEXT_MESSAGE =
   "That's too much to check at once. Split your list and add it in parts.";
 
 export const NO_TERMS_MESSAGE =
-  "We couldn't find any terms. Put each term on its own line, with a dash or colon before its definition. For example: API – a way for programs to talk to each other.";
+  "Couldn't find any terms. Put each term on its own line, with a dash or colon before its definition. For example: API – a way for programs to talk to each other.";
 
 export function overLimitMessage(count: number): string {
   return `That's ${count} terms. One import adds up to ${MAX_IMPORT_TERMS}, so split your list and add it in parts.`;

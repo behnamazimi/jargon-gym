@@ -16,7 +16,7 @@ import {
   isReviewCommand,
   parseStartToken,
 } from "./commands";
-import { CONNECT_MESSAGE, HELP_MESSAGE } from "./copy";
+import { connectMessage, HELP_MESSAGE } from "./copy";
 import { handleRead, handleSendDue } from "./delivery-flow";
 import { handleQuizCommand, handleQuizSetupText } from "./quiz-flow";
 import { handleReviewCommand, handleReviewSetupText } from "./review-flow";
@@ -56,13 +56,13 @@ async function routeRead(client: Client, chatId: number) {
 
 async function routeQuiz(client: Client, chatId: number, trimmed: string) {
   const userId = await resolveUserIdByChatId(client, chatId);
-  if (!userId) return [send(chatId, CONNECT_MESSAGE)];
+  if (!userId) return [send(chatId, connectMessage())];
   return handleQuizCommand(client, chatId, userId, trimmed);
 }
 
 async function routeReview(client: Client, chatId: number, trimmed: string) {
   const userId = await resolveUserIdByChatId(client, chatId);
-  if (!userId) return [send(chatId, CONNECT_MESSAGE)];
+  if (!userId) return [send(chatId, connectMessage())];
   return handleReviewCommand(client, chatId, userId, trimmed);
 }
 
@@ -111,7 +111,7 @@ export async function handleTelegramUpdate(
   }
 
   const userId = await resolveUserIdByChatId(client, chatId);
-  if (!userId) return [send(chatId, CONNECT_MESSAGE)];
+  if (!userId) return [send(chatId, connectMessage())];
 
   return routeSetupText(client, chatId, userId, trimmed);
 }

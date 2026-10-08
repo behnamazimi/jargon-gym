@@ -1,10 +1,10 @@
 import type { ImportFailure } from "./types";
 
-const TITLE = "We couldn't add your terms";
+const TITLE = "Couldn't add your terms";
 
 const GENERIC: ImportFailure = {
   title: TITLE,
-  message: "We couldn't add your terms. Nothing was added, and your list is still here. Try again.",
+  message: "Couldn't add your terms. Nothing was added, and your list is still here. Try again.",
 };
 
 /** Turns what the commit function raised into plain copy. Nothing from the
