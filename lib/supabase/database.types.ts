@@ -152,7 +152,6 @@ export type Database = {
       ai_credit_ledger: {
         Row: {
           amount: number;
-          billable: boolean;
           created_at: string;
           created_by: string | null;
           expires_at: string | null;
@@ -172,7 +171,6 @@ export type Database = {
         };
         Insert: {
           amount: number;
-          billable?: boolean;
           created_at?: string;
           created_by?: string | null;
           expires_at?: string | null;
@@ -192,7 +190,6 @@ export type Database = {
         };
         Update: {
           amount?: number;
-          billable?: boolean;
           created_at?: string;
           created_by?: string | null;
           expires_at?: string | null;
@@ -220,10 +217,10 @@ export type Database = {
           },
           {
             foreignKeyName: "ai_credit_ledger_feature_fkey";
-            columns: ["feature", "billable"];
+            columns: ["feature"];
             isOneToOne: false;
             referencedRelation: "ai_feature_settings";
-            referencedColumns: ["feature", "billable"];
+            referencedColumns: ["feature"];
           },
           {
             foreignKeyName: "ai_credit_ledger_lot_id_fkey";
@@ -267,7 +264,6 @@ export type Database = {
           default_margin: number;
           enabled: boolean;
           id: boolean;
-          lots_after_id: number;
           peg_usd: number;
           updated_at: string;
         };
@@ -275,7 +271,6 @@ export type Database = {
           default_margin?: number;
           enabled?: boolean;
           id?: boolean;
-          lots_after_id?: number;
           peg_usd?: number;
           updated_at?: string;
         };
@@ -283,7 +278,6 @@ export type Database = {
           default_margin?: number;
           enabled?: boolean;
           id?: boolean;
-          lots_after_id?: number;
           peg_usd?: number;
           updated_at?: string;
         };

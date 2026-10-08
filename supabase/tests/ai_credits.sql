@@ -603,5 +603,43 @@ begin
 end;
 $$;
 
+-- Rows from the earlier two-pool model: a spend with no lots behind it. They are
+-- history, not lots, and a refund of one is written whole.
+do $$
+declare
+  admin_id uuid := pg_temp.make_user('legacy-admin@example.test', true);
+  u1 uuid := pg_temp.make_user('legacy1@example.test');
+  v_old bigint;
+  v_failed boolean := false;
+  r record;
+begin
+  insert into public.ai_credit_ledger (user_id, kind, feature, amount)
+  values (u1, 'spend', 'quiz', 9) returning id into v_old;
+  perform public.reserve_ai_credits(u1, 'quiz', 4);
+
+  perform pg_temp.act_as(admin_id);
+  select * into r from public.admin_ai_credit_usage(100) where user_id = u1;
+  assert r.spent = 4, 'usage leaves out a spend that has no lots behind it';
+  execute 'reset role';
+
+  perform public.refund_ai_credits(v_old, 'old spend');
+  assert (select count(*) from public.ai_credit_ledger
+          where refund_of = v_old and lot_id is null and source = 'refund' and amount = 9) = 1,
+    'an old spend is refunded once, whole';
+  perform public.refund_ai_credits(v_old, 'again');
+  assert (select count(*) from public.ai_credit_ledger where refund_of = v_old) = 1, 'and only once';
+  assert (select sum(x.remaining) from public._ai_credit_lots(u1) x where x.amount = 9) = 9,
+    'the refund is a lot of its own';
+
+  -- Every grant and refund must say where it came from.
+  begin
+    insert into public.ai_credit_ledger (user_id, kind, amount) values (u1, 'grant', 5);
+  exception when check_violation then
+    v_failed := true;
+  end;
+  assert v_failed, 'a grant without a source is refused';
+end;
+$$;
+
 rollback;
 \echo ai_credits.sql: ok
