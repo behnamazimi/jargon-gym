@@ -56,8 +56,11 @@ begin
   assert not has_function_privilege('anon', 'public.ai_credit_balance(uuid)', 'execute');
   assert not has_function_privilege('anon', 'public.admin_ai_credit_summary()', 'execute');
 
-  -- Admins can write a price, and only the price.
-  assert has_column_privilege('authenticated', 'public.ai_feature_settings', 'credit_cost', 'update');
+  -- Prices live in credit_prices; admins can't write feature billing flags.
+  assert not exists (
+    select 1 from information_schema.columns
+    where table_name = 'ai_feature_settings' and column_name = 'credit_cost'
+  ), 'prices no longer live on the feature rows';
   assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update');
 end;
 $$;

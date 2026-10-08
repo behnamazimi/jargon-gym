@@ -41,8 +41,7 @@ begin
   -- Quiz and Stories are open to everyone and priced on their feature rows.
   assert (select enabled and access_mode = 'everyone' from public.ai_feature_settings where feature = 'quiz'),
     'quiz should be enabled for everyone';
-  assert (select credit_cost is not null from public.ai_feature_settings where feature = 'quiz'),
-    'quiz has a price';
+  assert exists (select 1 from public.credit_prices where feature = 'quiz'), 'quiz has a price';
 
   -- Narration keeps its cap.
   assert (select access_mode = 'allowlist' and daily_cap = 20 from public.ai_feature_settings where feature = 'narration_story'),
@@ -57,15 +56,6 @@ begin
   assert (select count(*) from public.ai_feature_allowlist where feature = 'new_feature' and user_id = u1) = 1;
   assert (select count(*) from public.ai_feature_allowlist where feature = 'quiz' and user_id = u1) = 0,
     'an allowlist row for one feature must not grant another';
-
-  -- Billable exactly when a cost is set.
-  begin
-    insert into public.ai_feature_settings (feature, billable, unit) values ('bad_a', true, 'x');
-    v_failed := false;
-  exception when check_violation then
-    v_failed := true;
-  end;
-  assert v_failed, 'a billable feature needs a credit cost';
 
   -- A missing timeout falls back to the default rather than locking the user out.
   v_token := public.begin_ai_run(u2, 'narration_term', null);
@@ -119,19 +109,6 @@ begin
   assert (select enabled from public.ai_feature_settings where feature = 'quiz'), 'feature row unchanged';
   update public.ai_credit_settings set enabled = true;
 
-  -- An admin edits prices on the feature rows; a plain user cannot.
-  perform set_config('request.jwt.claims', json_build_object('sub', admin_id, 'role', 'authenticated')::text, true);
-  execute 'set local role authenticated';
-  update public.ai_feature_settings set credit_cost = 4 where feature = 'quiz';
-  update public.ai_feature_settings set credit_cost = 6 where feature = 'story';
-  execute 'reset role';
-  assert (select credit_cost from public.ai_feature_settings where feature = 'quiz') = 4, 'quiz price saved';
-  assert (select credit_cost from public.ai_feature_settings where feature = 'story') = 6, 'story price saved';
-  perform set_config('request.jwt.claims', json_build_object('sub', u1, 'role', 'authenticated')::text, true);
-  execute 'set local role authenticated';
-  update public.ai_feature_settings set credit_cost = 9 where feature = 'quiz';
-  execute 'reset role';
-  assert (select credit_cost from public.ai_feature_settings where feature = 'quiz') = 4, 'a plain user cannot change a price';
   assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update'), 'other columns stay locked';
 
   -- Run guard.
@@ -161,7 +138,6 @@ begin
   assert has_table_privilege('authenticated', 'public.ai_feature_settings', 'select');
   assert not has_table_privilege('authenticated', 'public.ai_feature_settings', 'insert');
   assert has_column_privilege('authenticated', 'public.ai_feature_settings', 'enabled', 'update');
-  assert has_column_privilege('authenticated', 'public.ai_feature_settings', 'credit_cost', 'update');
   assert not has_column_privilege('authenticated', 'public.ai_feature_settings', 'billable', 'update');
   assert has_table_privilege('service_role', 'public.ai_feature_allowlist', 'select');
   assert not has_table_privilege('service_role', 'public.ai_feature_allowlist', 'insert');
