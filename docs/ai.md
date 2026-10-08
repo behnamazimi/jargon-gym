@@ -58,6 +58,7 @@ bucket. The shared code is `lib/ai/speech/`:
   are in `providers/` and are the only files that know a vendor.
 - Every provider call is recorded in `ai_usage_events` with its provider, so a
   fallback counts as two calls. The job stores the provider that made the clip.
+  Rows older than 90 days are deleted daily by `prune_operational_rows()`.
 - `pause.ts` is the one place that knows about pauses: the marker term scripts
   carry (`NARRATION_PAUSE`), the pause length, and how each provider writes it.
   Adapters call `renderPauses`; to change a pause, change it there.
@@ -82,7 +83,8 @@ bucket. The shared code is `lib/ai/speech/`:
   `null` the player prepares on the first tap instead of a GET that would 404;
   with nothing it asks the server as before.
 - `sweepSupersededAudio` removes the files of superseded jobs, at least an hour
-  after they were replaced. It runs after each sync tick.
+  after they were replaced, and then the jobs themselves. It runs after each
+  sync tick.
 - A term's clip is current while its hash matches. What is spoken depends on
   the collection's narration mode (`lib/narration/mode.ts`), which only admins
   can see or change (`collection_narration_settings`; no row means `term`):

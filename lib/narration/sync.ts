@@ -35,7 +35,7 @@ function toJobView(
     collectionId: row.collection_id,
     collectionName,
     status: row.status as NarrationSyncStatus,
-    total: row.term_ids.length,
+    total: row.term_count || row.term_ids.length,
     cursor: row.cursor,
     generatedCount: row.generated_count,
     failedCount: row.failed_count,
@@ -116,6 +116,7 @@ export async function enqueueNarrationSync(
       started_by: startedBy,
       status: "queued",
       term_ids: termIds,
+      term_count: termIds.length,
     })
     .select("*")
     .single();

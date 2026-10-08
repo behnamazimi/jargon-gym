@@ -78,7 +78,7 @@ begin
 
   -- Counts and study pools leave unfinished terms out.
   assert (select count(*) from public.my_progress_state_by_collection(array[d1])) = 2, 'progress counted an unfinished term';
-  assert (select count(*) from public.my_get_trace_candidates(array[d1])) = 2, 'candidates included an unfinished term';
+  assert json_array_length(public.my_get_trace_candidates_json(array[d1])) = 2, 'candidates included an unfinished term';
 
   -- Relationships never leak an unfinished term's name.
   assert not exists (

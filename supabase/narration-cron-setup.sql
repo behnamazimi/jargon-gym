@@ -1,26 +1,15 @@
--- Run manually in the Supabase SQL Editor after Next.js is deployed.
--- Store secrets in Vault first, then schedule the narration sync kick
--- every minute.
+-- The narration-sync job (every minute) is scheduled by the migration
+-- 20261024120000_cron_from_vault.sql. It reads these four Vault secrets, which
+-- supabase/ops/cron-secrets-to-vault.sql creates from the job that already
+-- exists. On a fresh project create them by hand first:
 --
---   select vault.create_secret('https://your-app-host', 'app_base_url');
---   select vault.create_secret('YOUR_AI_INTERNAL_SECRET', 'telegram_internal_secret');
+--   select vault.create_secret('https://your-app-host', 'cron_app_url');
+--   select vault.create_secret('YOUR_AI_INTERNAL_SECRET', 'cron_ai_internal_secret');
+--   select vault.create_secret('https://YOUR_PROJECT_REF.supabase.co', 'cron_project_url');
+--   select vault.create_secret('YOUR_TELEGRAM_CRON_SECRET', 'cron_telegram_secret');
 --
--- The vault name keeps the old wording so an existing job keeps working; put the
--- AI_INTERNAL_SECRET value in it (the route accepts no other secret). See
--- docs/supabase/narration-sync-cron.md.
-
-select cron.schedule(
-  'narration-sync',
-  '* * * * *',
-  $$
-  select net.http_post(
-    url := (select decrypted_secret from vault.decrypted_secrets where name = 'app_base_url')
-      || '/api/internal/narration/sync',
-    headers := jsonb_build_object(
-      'Content-Type', 'application/json',
-      'Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'telegram_internal_secret')
-    ),
-    body := '{}'::jsonb
-  ) as request_id;
-  $$
-);
+-- then run the migration, or paste its body in the SQL editor. The job posts
+-- to cron_app_url + /api/internal/narration/sync with cron_ai_internal_secret
+-- as the bearer token (the route accepts no other secret). To pause syncing
+-- between runs, switch the job off in Integrations > Cron; later migrations
+-- keep that state. See docs/supabase/narration-sync-cron.md.

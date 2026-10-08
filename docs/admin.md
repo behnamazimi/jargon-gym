@@ -20,6 +20,7 @@ and what they cost. It lives under `/admin`, with the code in `app/(private)/adm
 | `/admin/ai/narration`     | Narration switch, providers, limits, access; links to the running sync                                                    |
 | `/admin/system/audit`     | What admins changed, and when                                                                                             |
 | `/admin/system/queue`     | Queue debug: what Read, Review and Quiz would serve one member now, what is on cooldown, and what is left out             |
+| `/admin/system/health`    | Database health: row counts and size of the tables that grow with use, with a warning past a limit                        |
 
 Old addresses (`/admin/invites`, `/admin/ai-credits`, `/admin/narration`) redirect with
 temporary (307) redirects from `lib/redirects.ts`.
@@ -229,6 +230,19 @@ people's emails; the page looks emails up when it shows them.
 `pages-guarded.test.ts`, `lib/admin/audit-labels.test.ts`, `lib/admin/no-legacy-paths.test.ts`, and
 `lib/ai/narration-isolation.test.ts` (narration never touches credits or the ledger; keep the words it forbids
 out of the narration actions).
+
+## Growth and retention
+
+`/admin/system/health` reads `admin_table_sizes()` and flags a table past the limits in
+`lib/admin/db-health.ts`. What stays small by itself, and what does not:
+
+- `audio_jobs`: the sweeper deletes a superseded job once its file is gone.
+- `ai_usage_events` (90 days) and `narration_sync_jobs` (finished jobs after 90 days; a finished job also drops
+  its list of term ids) are trimmed daily by `prune_operational_rows()`, which `pg_cron` runs at 03:15.
+- `review_events` is never trimmed. Two things read it besides calibration: when a term was first seen
+  (`my_first_seen_at_by_term`) and the streak history. If the page flags it (2 million rows or 1 GB), add
+  `review_state.first_seen_at` (backfilled from `min(created_at)`) and a daily activity count per person, repoint
+  those two readers, and only then delete raw rows older than about two years.
 
 ## Known limits
 

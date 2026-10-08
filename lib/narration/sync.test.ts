@@ -83,6 +83,7 @@ function jobRow(overrides: Partial<JobRow> = {}): JobRow {
     started_by: USER_ID,
     status: "queued",
     term_ids: ["term-1", "term-2"],
+    term_count: 2,
     cursor: 0,
     generated_count: 0,
     failed_count: 0,
@@ -416,6 +417,7 @@ describe("enqueueNarrationSync", () => {
       cursor: 0,
     });
     expect(store.jobs[0]?.term_ids).toEqual(["t1", "t2"]);
+    expect(store.jobs[0]?.term_count).toBe(2);
   });
 });
 
@@ -470,6 +472,20 @@ describe("processNarrationSyncTick", () => {
     });
     expect(job.cursor).toBe(2);
     expect(job.status).toBe("completed");
+  });
+
+  it("drops the term list of a completed job but keeps its total", async () => {
+    vi.mocked(getOrCreateAudio).mockResolvedValue(READY);
+    const job = jobRow({ status: "running", cursor: 1, term_ids: ["term-1", "term-2"] });
+    const store = emptyStore({
+      jobs: [job],
+      claim: [{ job_id: job.id, term_id: "term-2", cursor: 1, term_count: 2 }],
+    });
+
+    await processNarrationSyncTick(makeClient(store));
+    expect(job.term_ids).toEqual([]);
+    expect(job.term_count).toBe(2);
+    await expect(getLastNarrationSyncJob(makeClient(store))).resolves.toMatchObject({ total: 2 });
   });
 
   it("does not overwrite a cancelled job with running/completed", async () => {

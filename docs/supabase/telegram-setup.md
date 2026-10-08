@@ -66,14 +66,17 @@ curl "https://api.telegram.org/bot<BOT_TOKEN>/setWebhook" \
 
 ## 5. Schedule due-term sends
 
-Create the cron job in the Supabase Dashboard — no SQL or Vault required.
+The job runs every 3 hours. Delivery cadences are 6h, 12h and 24h, so a reminder is never more than 3 hours
+late. In this project it is scheduled by a migration that reads its URL and secret from Vault (see
+[`supabase/telegram-cron-setup.sql`](../telegram-cron-setup.sql)). To create it by hand instead, use the
+Supabase Dashboard — no SQL or Vault required.
 
 1. Open **Integrations → Cron → Jobs** in your project:
    `https://supabase.com/dashboard/project/<your-project-ref>/integrations/cron/jobs`
 2. Click **Create job**.
 3. Configure:
    - **Name:** `telegram-send-due`
-   - **Schedule:** `*/15 * * * *` (every 15 minutes)
+   - **Schedule:** `0 */3 * * *` (every 3 hours)
    - **Type:** **HTTP Request**
 4. Set the HTTP request:
    - **URL:** `https://<your-project-ref>.supabase.co/functions/v1/telegram-send-due`
@@ -85,7 +88,7 @@ Use the **History** tab on the job to confirm runs succeed after saving.
 
 **Optional:** On-demand review works without cron (`/read` in Telegram). Scheduled reminders only run after this job is active.
 
-**Advanced (SQL + Vault):** If you prefer a SQL-defined job with secrets in Vault, see [`supabase/telegram-cron-setup.sql`](../telegram-cron-setup.sql). Vault lives under **Project Settings → Configuration → Vault**.
+Vault lives under **Project Settings → Configuration → Vault**.
 
 ### Local development
 

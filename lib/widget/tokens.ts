@@ -67,10 +67,13 @@ async function isSuspended(client: Client, userId: string): Promise<boolean> {
   return data?.suspended_at != null;
 }
 
+const LAST_USED_REFRESH_MS = 60 * 60 * 1000;
+
 /** `widgetVersion` is whatever the calling widget reported on this request
  *  (via X-Widget-Version) — omitted entirely when absent, so we never
  *  overwrite a previously known version with null just because one request
- *  didn't carry the header. */
+ *  didn't carry the header. The use is recorded at most once an hour, or at
+ *  once when the version changes, so a polling widget doesn't rewrite the row. */
 export async function resolveUserFromToken(
   client: Client,
   bearerToken: string,
@@ -80,7 +83,7 @@ export async function resolveUserFromToken(
 
   const { data, error } = await client
     .from("widget_tokens")
-    .select("id, user_id")
+    .select("id, user_id, last_used_at, widget_version")
     .eq("token_hash", tokenHash)
     .maybeSingle();
 
@@ -89,14 +92,19 @@ export async function resolveUserFromToken(
 
   if (await isSuspended(client, data.user_id)) return null;
 
-  const update: { last_used_at: string; widget_version?: string } = {
-    last_used_at: new Date().toISOString(),
-  };
-  if (widgetVersion) {
-    update.widget_version = widgetVersion;
-  }
+  const versionChanged = Boolean(widgetVersion) && widgetVersion !== data.widget_version;
+  const lastUsedAt = data.last_used_at ? Date.parse(data.last_used_at) : null;
+  const stale = lastUsedAt === null || Date.now() - lastUsedAt >= LAST_USED_REFRESH_MS;
 
-  await client.from("widget_tokens").update(update).eq("id", data.id);
+  if (stale || versionChanged) {
+    const update: { last_used_at: string; widget_version?: string } = {
+      last_used_at: new Date().toISOString(),
+    };
+    if (widgetVersion) {
+      update.widget_version = widgetVersion;
+    }
+    await client.from("widget_tokens").update(update).eq("id", data.id);
+  }
 
   return data.user_id;
 }

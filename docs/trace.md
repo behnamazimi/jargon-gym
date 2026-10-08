@@ -375,7 +375,8 @@ it:
    (retrievability just before an event, versus its outcome), FSRS weight
    fitting (the real 1-4 grade, not just pass/fail), per-term lapse rate,
    and real re-read cadence — not for ranking or mastery, which never read
-   from it.
+   from it. It is never trimmed; the plan for when it grows too large is in
+   the Growth and retention section of [admin.md](./admin.md).
 
 If you're trying to understand a bug or add a feature: math questions
 ("why did this term's score change like that") belong in `lib/trace/`,

@@ -24,13 +24,55 @@ function fakeClient(options: { token: unknown; suspendedAt: string | null }) {
 }
 
 describe("resolveUserFromToken", () => {
-  it("returns the token's owner", async () => {
+  it("returns the token's owner and records a first use", async () => {
     const { client, updates } = fakeClient({
-      token: { id: "t1", user_id: "u1" },
+      token: { id: "t1", user_id: "u1", last_used_at: null, widget_version: null },
       suspendedAt: null,
     });
     expect(await resolveUserFromToken(client, "secret")).toBe("u1");
     expect(updates).toHaveLength(1);
+  });
+
+  it("skips the write when the token was used within the hour", async () => {
+    const { client, updates } = fakeClient({
+      token: {
+        id: "t1",
+        user_id: "u1",
+        last_used_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+        widget_version: "3",
+      },
+      suspendedAt: null,
+    });
+    expect(await resolveUserFromToken(client, "secret", "3")).toBe("u1");
+    expect(updates).toHaveLength(0);
+  });
+
+  it("writes again once the last use is over an hour old", async () => {
+    const { client, updates } = fakeClient({
+      token: {
+        id: "t1",
+        user_id: "u1",
+        last_used_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        widget_version: "3",
+      },
+      suspendedAt: null,
+    });
+    await resolveUserFromToken(client, "secret", "3");
+    expect(updates).toHaveLength(1);
+  });
+
+  it("writes at once when the widget reports a new version", async () => {
+    const { client, updates } = fakeClient({
+      token: {
+        id: "t1",
+        user_id: "u1",
+        last_used_at: new Date(Date.now() - 60 * 1000).toISOString(),
+        widget_version: "3",
+      },
+      suspendedAt: null,
+    });
+    await resolveUserFromToken(client, "secret", "4");
+    expect(updates).toEqual([expect.objectContaining({ widget_version: "4" })]);
   });
 
   it("returns nothing for an unknown token", async () => {
