@@ -10,7 +10,7 @@ const DEFAULT_LIMIT = 25;
 const DEFAULT_BUDGET_MS = 10_000;
 
 /** Removes the files of superseded jobs (an edited term, a regenerated clip,
- *  a deleted term or story) and clears the path once the file is gone. A path
+ *  a deleted term or story) and deletes the job once the file is gone. A path
  *  that a live job also uses (version 1 files are reused) is left alone: the
  *  live job owns it. Best effort; a failed row is retried on the next call. */
 export async function sweepSupersededAudio(
@@ -44,13 +44,13 @@ export async function sweepSupersededAudio(
       if (useError) throw useError;
       if ((inUse ?? []).length === 0) await deleteAudio(row.storage_path);
 
-      const { error: clearError } = await admin
+      const { error: removeError } = await admin
         .from("audio_jobs")
-        .update({ storage_path: null })
+        .delete()
         .eq("id", row.id)
         .eq("status", "superseded")
         .select("id");
-      if (clearError) throw clearError;
+      if (removeError) throw removeError;
       cleared += 1;
     } catch (err) {
       console.error("Couldn't sweep an audio file:", err);

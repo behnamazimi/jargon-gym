@@ -509,7 +509,15 @@ export type Database = {
           updated_at?: string;
           user_id?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "audio_jobs_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       collection_loves: {
         Row: {
@@ -1058,6 +1066,7 @@ export type Database = {
           lease_expires_at: string | null;
           started_by: string | null;
           status: string;
+          term_count: number;
           term_ids: string[];
           updated_at: string;
         };
@@ -1073,6 +1082,7 @@ export type Database = {
           lease_expires_at?: string | null;
           started_by?: string | null;
           status?: string;
+          term_count?: number;
           term_ids: string[];
           updated_at?: string;
         };
@@ -1088,6 +1098,7 @@ export type Database = {
           lease_expires_at?: string | null;
           started_by?: string | null;
           status?: string;
+          term_count?: number;
           term_ids?: string[];
           updated_at?: string;
         };
@@ -1632,6 +1643,13 @@ export type Database = {
             columns: ["term_id"];
             isOneToOne: false;
             referencedRelation: "terms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "triage_not_yet_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
             referencedColumns: ["id"];
           },
         ];
@@ -2234,6 +2252,14 @@ export type Database = {
         Args: { p_collection_id: string; p_note: string; p_reason: string };
         Returns: undefined;
       };
+      admin_table_sizes: {
+        Args: never;
+        Returns: {
+          row_estimate: number;
+          table_name: string;
+          total_bytes: number;
+        }[];
+      };
       admin_write_audit: {
         Args: {
           p_action: string;
@@ -2522,26 +2548,6 @@ export type Database = {
           reviewed_count: number;
         }[];
       };
-      my_get_trace_candidates: {
-        Args: { p_collection_ids?: string[] };
-        Returns: {
-          collection_id: string;
-          created_at: string;
-          ever_learning_at: string;
-          ever_mastered_at: string;
-          last_quiz_tested_at: string;
-          last_read_at: string;
-          last_review_recall_at: string;
-          marked_known_at: string;
-          quiz_knowledge_posterior: number;
-          quiz_test_count: number;
-          read_count: number;
-          recall_difficulty: number;
-          recall_stability: number;
-          review_recall_count: number;
-          term_id: string;
-        }[];
-      };
       my_get_trace_candidates_json: {
         Args: { p_collection_ids?: string[] };
         Returns: Json;
@@ -2735,6 +2741,13 @@ export type Database = {
           recall_stability: number;
           review_recall_count: number;
           term_id: string;
+        }[];
+      };
+      prune_operational_rows: {
+        Args: never;
+        Returns: {
+          affected: number;
+          what: string;
         }[];
       };
       record_ai_credit_cost: {

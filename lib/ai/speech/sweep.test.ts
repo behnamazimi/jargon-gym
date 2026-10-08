@@ -14,7 +14,7 @@ function fakeClient(rows: Row[], options: { failClear?: boolean } = {}) {
     from() {
       const filters: Record<string, unknown> = {};
       const negated: Record<string, unknown> = {};
-      let mode: "select" | "update" = "select";
+      let mode: "select" | "update" | "delete" = "select";
       let patch: Record<string, unknown> = {};
       function matching() {
         return rows.filter(
@@ -23,14 +23,22 @@ function fakeClient(rows: Row[], options: { failClear?: boolean } = {}) {
             Object.entries(negated).every(([key, value]) => (row as never)[key] !== value),
         );
       }
-      function runUpdate() {
+      function runWrite() {
         if (options.failClear) return { data: null, error: new Error("db") };
-        for (const row of matching()) Object.assign(row, patch);
+        if (mode === "delete") {
+          for (const row of matching()) rows.splice(rows.indexOf(row), 1);
+        } else {
+          for (const row of matching()) Object.assign(row, patch);
+        }
         return { data: [], error: null };
       }
       const builder: Record<string, unknown> = {
         select: () => {
-          if (mode === "update") return Promise.resolve(runUpdate());
+          if (mode !== "select") return Promise.resolve(runWrite());
+          return builder;
+        },
+        delete: () => {
+          mode = "delete";
           return builder;
         },
         update: (values: Record<string, unknown>) => {
@@ -62,36 +70,36 @@ beforeEach(() => {
 });
 
 describe("sweepSupersededAudio", () => {
-  it("deletes the file of a superseded job and clears its path", async () => {
+  it("deletes the file of a superseded job and the job itself", async () => {
     const rows: Row[] = [
       { id: "a", status: "superseded", storage_path: "terms/t/2/h/a.mp3", updated_at: OLD },
     ];
     expect(await sweepSupersededAudio(fakeClient(rows))).toBe(1);
     expect(deleteAudio).toHaveBeenCalledWith("terms/t/2/h/a.mp3");
-    expect(rows[0]?.storage_path).toBeNull();
+    expect(rows).toEqual([]);
   });
 
-  it("keeps a file that a live job also uses, but still clears the old path", async () => {
+  it("keeps a file that a live job also uses, but still deletes the old job", async () => {
     const rows: Row[] = [
       { id: "old", status: "superseded", storage_path: "t.mp3", updated_at: OLD },
       { id: "live", status: "ready", storage_path: "t.mp3", updated_at: OLD },
     ];
     expect(await sweepSupersededAudio(fakeClient(rows))).toBe(1);
     expect(deleteAudio).not.toHaveBeenCalled();
-    expect(rows[0]?.storage_path).toBeNull();
-    expect(rows[1]?.storage_path).toBe("t.mp3");
+    expect(rows.map((row) => row.id)).toEqual(["live"]);
   });
 
-  it("leaves the path in place when the delete fails, so the next call retries", async () => {
+  it("leaves the job in place when the file delete fails, so the next call retries", async () => {
     deleteAudio.mockRejectedValue(new Error("s3 down"));
     const rows: Row[] = [
       { id: "a", status: "superseded", storage_path: "audio/x.mp3", updated_at: OLD },
     ];
     expect(await sweepSupersededAudio(fakeClient(rows))).toBe(0);
+    expect(rows).toHaveLength(1);
     expect(rows[0]?.storage_path).toBe("audio/x.mp3");
   });
 
-  it("does not count a row whose path could not be cleared", async () => {
+  it("does not count a job that could not be deleted", async () => {
     const rows: Row[] = [
       { id: "a", status: "superseded", storage_path: "audio/x.mp3", updated_at: OLD },
     ];

@@ -1,6 +1,7 @@
 import {
   Bug,
   Coins,
+  HeartPulse,
   Inbox,
   LayoutDashboard,
   Library,
@@ -51,6 +52,7 @@ export const ADMIN_SECTION_GROUPS: AdminSectionGroup[] = [
     sections: [
       { href: "/admin/system/audit", label: "Audit log", icon: ScrollText },
       { href: "/admin/system/queue", label: "Queue debug", icon: ListOrdered },
+      { href: "/admin/system/health", label: "Database health", icon: HeartPulse },
     ],
   },
 ];

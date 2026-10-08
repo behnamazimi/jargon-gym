@@ -2,8 +2,10 @@
 
 Start on the admin narration page kicks the first audio-generation wave
 immediately. A collection that does not finish in that ~45 second invoke
-needs a Supabase Dashboard cron job to start the next wave and to recover
-after a deploy. Without that job, use **Resume** on the admin page.
+needs a Supabase cron job to start the next wave and to recover
+after a deploy. Without that job, use **Resume** on the admin page. In this
+project the job is scheduled by a migration that reads its URL and secret from
+Vault; the Dashboard steps below are for a project without it.
 
 This cron talks to Next.js directly. Telegram due-term sends go through an
 Edge Function because they must call the Bot API; narration already runs
@@ -36,10 +38,9 @@ and Edge Functions keep using `TELEGRAM_INTERNAL_SECRET`.
 
 To change the secret later, set the new value on Vercel, deploy, and change the
 cron job header at the same time. Calls made in between return 401 (the admin
-page warns, and **Resume** works). A job made with
-`supabase/narration-cron-setup.sql` reads the header from the Vault secret
-`telegram_internal_secret`; change it there with
-`select vault.update_secret(id, 'NEW_VALUE') from vault.secrets where name = 'telegram_internal_secret';`.
+page warns, and **Resume** works). The scheduled job reads the header from the
+Vault secret `cron_ai_internal_secret`; change it there with
+`select vault.update_secret(id, 'NEW_VALUE') from vault.secrets where name = 'cron_ai_internal_secret';`.
 
 If the cron job stops calling (a wrong header returns 401), the admin page
 warns when a sync needs it and none was seen in the last 5 minutes.
@@ -74,9 +75,11 @@ Idle ticks are expected when no sync is running.
 **Optional:** Local Start still kicks the first wave. Cron does not fire
 against `localhost` unless you point the job at a tunnel.
 
-**Advanced (SQL + Vault):** If you prefer a SQL-defined job with secrets in
-Vault, see [`supabase/narration-cron-setup.sql`](../../supabase/narration-cron-setup.sql).
-Vault lives under **Project Settings → Configuration → Vault**.
+**SQL + Vault:** the job this project runs is described in
+[`supabase/narration-cron-setup.sql`](../../supabase/narration-cron-setup.sql).
+Vault lives under **Project Settings → Configuration → Vault**. To pause
+syncing between runs, switch the job off in **Integrations → Cron**; the
+scheduling migration keeps that state.
 
 ## Local development
 

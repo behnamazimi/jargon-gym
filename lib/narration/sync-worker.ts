@@ -96,6 +96,7 @@ async function finalizeWave(
       ...counts,
       status: exhausted ? "completed" : "running",
       finished_at: exhausted ? new Date().toISOString() : null,
+      ...(exhausted ? { term_ids: [] } : {}),
     })
     .eq("id", jobId)
     .in("status", [...NARRATION_SYNC_ACTIVE_STATUSES])
