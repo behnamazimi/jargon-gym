@@ -1,4 +1,5 @@
 import { getPasswordValidationError } from "@/lib/auth/password-policy";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export type AuthErrorContext = "login" | "signup" | "reset" | "forgot";
 
@@ -12,10 +13,10 @@ type AuthLikeError = {
   weak_password?: { reasons?: string[] };
 };
 
-const GENERIC_ERROR = "We couldn't complete that. Try again in a moment.";
+const GENERIC_ERROR = "Couldn't complete that. Try again in a moment.";
 const INVALID_LOGIN =
   "That email or password doesn't look right. Signed up with Google? Use Continue with Google.";
-export const SUSPENDED_ERROR = "This account has been suspended.";
+export const SUSPENDED_ERROR = `This account has been suspended. If you think this is a mistake, email ${SUPPORT_EMAIL}.`;
 const INVALID_REFERRAL = "That invite code isn't valid, was already used, or has run out.";
 export const FULL_REFERRAL = "That invite code is full or has expired.";
 export const RATE_LIMITED_ERROR = "Too many attempts right now. Wait a few minutes and try again.";

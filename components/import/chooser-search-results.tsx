@@ -44,7 +44,7 @@ export function SearchResults({
       <p className="m-0 text-sm text-base-content/70" role="status">
         {noMatchMessage
           ? noMatchMessage(state.query)
-          : `Nothing shared matches “${state.query}”. Try a list, or start an empty collection.`}
+          : `No built-in or community collection matches “${state.query}”. Try a list, or start an empty collection.`}
       </p>
     );
   }

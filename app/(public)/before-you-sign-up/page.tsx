@@ -14,7 +14,7 @@ export default function BeforeYouSignUpRoute() {
   return (
     <ShowcasePage
       title="Before you sign up"
-      lead="A private app for learning the terms of a field or language well enough to use them, not just recognize them. Here's the full picture before you ask for an invite."
+      lead="Learn the terms that stick: well enough to use them, not just recognize them. Here's the full picture before you ask for an invite."
       scene={<BeforeYouSignUpScene />}
     >
       <BeforeYouSignUp components={showcaseProse} />

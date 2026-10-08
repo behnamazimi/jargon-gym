@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import SignupForm from "./signup-form";
 import { PageCenter } from "@/components/page-container";
 import { normalizeReferralCode } from "@/lib/auth/referral-code";
+
+export const metadata: Metadata = { title: "Sign up" };
 
 type SignupPageProps = {
   searchParams: Promise<{ ref?: string; email?: string; next?: string }>;

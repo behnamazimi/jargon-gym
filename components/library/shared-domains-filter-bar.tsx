@@ -31,7 +31,7 @@ const FILTERS: Array<{
   },
   {
     value: "in-collection",
-    label: "In collection",
+    label: "In library",
     ariaLabel: "Show collections you've added",
     countKey: "inCollection",
   },

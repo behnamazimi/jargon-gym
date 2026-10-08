@@ -16,9 +16,9 @@ export const dynamic = "force-static";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: "Public collections",
+  title: "Built-in collections",
   description:
-    "Browse public collections of terms from fields and languages, and see what they actually mean.",
+    "Browse built-in collections of terms from fields and languages, and see what they actually mean.",
   alternates: { canonical: `${getPublicBaseUrl()}/collections` },
 };
 
@@ -49,7 +49,7 @@ export default async function PublicCollectionsIndexPage() {
         </p>
         <p className="mt-3 m-0 max-w-[44ch] text-base leading-relaxed text-base-content/70">
           Made and kept up by Lobyas. Community collections, shared by people who use it, are in the
-          app once you sign in.
+          app once you log in.
         </p>
       </SplitWithScene>
 

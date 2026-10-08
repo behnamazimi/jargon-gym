@@ -17,7 +17,7 @@ export function EmptyCollection() {
             <span className="text-primary-text">Your library</span> is empty
           </>
         }
-        description="Add a collection others have shared in one tap, or start your own."
+        description="Add a built-in or community collection in one tap, or start your own."
       >
         <div className="flex flex-wrap items-center justify-center gap-3">
           <LinkButton href="/app/browse" data-tour="library-browse">

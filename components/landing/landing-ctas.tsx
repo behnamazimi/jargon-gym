@@ -12,7 +12,7 @@ export function LandingCtas({ isLoggedIn }: { isLoggedIn: boolean }) {
           size="lg"
           className="group min-h-12 gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96]"
         >
-          Continue reviewing
+          Open Lobyas
           <ArrowRight
             aria-hidden
             className="size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5"

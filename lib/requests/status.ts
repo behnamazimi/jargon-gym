@@ -27,11 +27,11 @@ export function statusSentence(request: Pick<MyRequest, "displayStatus">): strin
     case "in_progress":
       return "It's being prepared.";
     case "needs_input":
-      return "We have a question for you.";
+      return "A question for you.";
     case "ready":
       return "It's ready.";
     case "declined":
-      return "We couldn't prepare it.";
+      return "Couldn't prepare it.";
   }
 }
 

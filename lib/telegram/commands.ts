@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TelegramAction } from "./actions";
 import { resolveUserIdByChatId } from "@/lib/terms/term-delivery";
-import { ALREADY_CONNECTED_MESSAGE, CONNECT_MESSAGE, WELCOME_MESSAGE } from "./copy";
+import { ALREADY_CONNECTED_MESSAGE, connectMessage, WELCOME_MESSAGE } from "./copy";
 import { completeTelegramLink } from "./links";
 import { send } from "./transport";
 
@@ -32,7 +32,7 @@ export async function handleStart(
 ): Promise<TelegramAction[]> {
   if (!token) {
     const linkedUserId = await resolveUserIdByChatId(client, chatId);
-    return [send(chatId, linkedUserId ? ALREADY_CONNECTED_MESSAGE : CONNECT_MESSAGE)];
+    return [send(chatId, linkedUserId ? ALREADY_CONNECTED_MESSAGE : connectMessage())];
   }
 
   const result = await completeTelegramLink(client, chatId, token);
@@ -40,7 +40,7 @@ export async function handleStart(
     const message =
       result.reason === "already_linked"
         ? "This Telegram account is already linked to another Lobyas user."
-        : "That link is invalid or expired. Generate a new one in Lobyas settings.";
+        : "That link is invalid or expired. Generate a new one in Settings.";
     return [send(chatId, message)];
   }
 

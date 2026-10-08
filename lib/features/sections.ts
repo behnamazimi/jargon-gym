@@ -61,7 +61,7 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
     items: [
       {
         icon: "star",
-        title: "Free credits every month",
+        title: "Free credits to start, and every month",
         body: "New accounts get credits, plus a monthly refill.",
       },
       {

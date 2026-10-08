@@ -1,6 +1,6 @@
 import type { AiFailureReason } from "@/lib/llm/types";
 
-export const AI_TEMPORARILY_UNAVAILABLE = "AI is unavailable right now. Try again in a bit.";
+export const AI_TEMPORARILY_UNAVAILABLE = "AI is unavailable right now. Try again in a moment.";
 
 type Failure = { error: string; reason: AiFailureReason };
 

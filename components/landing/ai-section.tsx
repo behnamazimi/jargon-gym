@@ -9,7 +9,7 @@ const AI_FEATURES: { label: string; body: string }[] = [
   },
   {
     label: "Listen",
-    body: "On accounts with voices switched on, hear terms and stories read aloud. Stories highlight each sentence as it's spoken.",
+    body: "Hear terms and stories read aloud. Stories highlight each sentence as it's spoken.",
   },
 ];
 

@@ -29,7 +29,7 @@ export default function RequestAccessForm({
         />
         <h1 className="text-2xl font-medium">You&apos;re on the list</h1>
         <p className="text-sm text-base-content/70">
-          We&apos;ll email you your invite as soon as there&apos;s room. Keep an eye on your inbox.
+          Your invite will be emailed as soon as there&apos;s room. Keep an eye on your inbox.
         </p>
       </div>
     );

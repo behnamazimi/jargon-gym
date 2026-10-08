@@ -65,7 +65,7 @@ export async function handleReviewRate(
   return actions;
 }
 
-/** "I already know this" on a first-exposure card: marks it known (a
+/** "I know this" on a first-exposure card: marks it known (a
  *  separate, user-set signal from TRACE's earned state — see
  *  review_state.marked_known_at) and advances without recording a grade. */
 export async function handleReviewMarkKnown(

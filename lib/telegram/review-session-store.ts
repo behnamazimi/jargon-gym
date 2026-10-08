@@ -17,7 +17,7 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
  *  fast-follow that gives Telegram Review real 4-point grading.
  *  isNewToUser is snapshotted the same way: whether this term had zero
  *  read/review/quiz activity at session-build time, driving the one-time
- *  "I already know this" prompt on first exposure. */
+ *  "I know this" prompt on first exposure. */
 type ReviewSessionTerm = { id: string; status: KnownLabel; isNewToUser: boolean };
 
 export type TelegramReviewSession = {
