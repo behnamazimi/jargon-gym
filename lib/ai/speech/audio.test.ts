@@ -288,3 +288,113 @@ describe("getOrCreateAudio", () => {
     expect(synthesizeSpeech).not.toHaveBeenCalled();
   });
 });
+
+describe("getOrCreateAudio with beforeGenerate", () => {
+  const pending = () => job({ id: "job-2", status: "pending", storage_path: null });
+  const allow = (extra: Record<string, unknown> = {}) =>
+    vi.fn(async () => ({ allowed: true as const, ...extra }));
+
+  it("asks only the request that won the claim, with the text length", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(pending());
+    const beforeGenerate = allow();
+    await getOrCreateAudio(admin, subject(), { beforeGenerate });
+    expect(beforeGenerate).toHaveBeenCalledWith({ characters: "Closure. A function.".length });
+  });
+
+  it("never asks when the clip exists, is being made, or the claim is lost", async () => {
+    const beforeGenerate = allow();
+
+    jobs.getLiveJob.mockResolvedValue(job());
+    await getOrCreateAudio(admin, subject(), { beforeGenerate });
+
+    jobs.getLiveJob.mockResolvedValue(
+      job({ status: "pending", storage_path: null, requested_at: new Date().toISOString() }),
+    );
+    await getOrCreateAudio(admin, subject(), { beforeGenerate });
+
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(null);
+    await getOrCreateAudio(admin, subject(), { beforeGenerate });
+
+    expect(beforeGenerate).not.toHaveBeenCalled();
+  });
+
+  it("stops before any provider when there are not enough credits", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(pending());
+    const beforeGenerate = vi.fn(async () => ({
+      allowed: false as const,
+      reason: "insufficient" as const,
+    }));
+    const result = await getOrCreateAudio(admin, subject(), { beforeGenerate });
+    expect(result).toEqual({ status: "insufficient" });
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+    expect(jobs.markFailed).toHaveBeenCalledWith(admin, "job-2", expect.any(String));
+  });
+
+  it("reports unavailable when the gate cannot charge", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(pending());
+    const beforeGenerate = vi.fn(async () => ({
+      allowed: false as const,
+      reason: "unavailable" as const,
+    }));
+    expect(await getOrCreateAudio(admin, subject(), { beforeGenerate })).toEqual({
+      status: "unavailable",
+    });
+  });
+
+  it("settles a success once, with the provider calls", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(pending());
+    const onSuccess = vi.fn(async () => undefined);
+    const onFailure = vi.fn(async () => undefined);
+    await getOrCreateAudio(admin, subject(), { beforeGenerate: allow({ onSuccess, onFailure }) });
+    expect(onSuccess).toHaveBeenCalledWith(MURF_OK);
+    expect(onFailure).not.toHaveBeenCalled();
+  });
+
+  it("gives the charge back when generation fails", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(pending());
+    synthesizeSpeech.mockRejectedValue(new SpeechSynthesisError("all providers down", []));
+    const onSuccess = vi.fn(async () => undefined);
+    const onFailure = vi.fn(async () => undefined);
+    const result = await getOrCreateAudio(admin, subject(), {
+      beforeGenerate: allow({ onSuccess, onFailure }),
+    });
+    expect(result).toMatchObject({ status: "unavailable" });
+    expect(onFailure).toHaveBeenCalledOnce();
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it("gives the charge back when the job was replaced before synthesis", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(pending());
+    jobs.setJobPath.mockResolvedValue(false);
+    const onFailure = vi.fn(async () => undefined);
+    expect(
+      await getOrCreateAudio(admin, subject(), { beforeGenerate: allow({ onFailure }) }),
+    ).toEqual({
+      status: "pending",
+    });
+    expect(onFailure).toHaveBeenCalledOnce();
+    expect(synthesizeSpeech).not.toHaveBeenCalled();
+  });
+
+  it("does not let a failing refund hide the result", async () => {
+    jobs.getLiveJob.mockResolvedValue(null);
+    jobs.claimJob.mockResolvedValue(pending());
+    synthesizeSpeech.mockRejectedValue(new SpeechSynthesisError("down", []));
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const onFailure = vi.fn(async () => {
+      throw new Error("db down");
+    });
+    expect(
+      await getOrCreateAudio(admin, subject(), { beforeGenerate: allow({ onFailure }) }),
+    ).toMatchObject({
+      status: "unavailable",
+    });
+  });
+});

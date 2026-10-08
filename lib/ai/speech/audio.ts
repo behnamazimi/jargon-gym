@@ -64,19 +64,56 @@ async function awaitLiveJob(
   }
 }
 
+/** What the caller decides before a provider is paid for. `onSuccess` and
+ *  `onFailure` let it settle whatever it set aside (for example a charge) once
+ *  the clip is made or the attempt is lost. This file knows nothing about what
+ *  that is. */
+type GenerationGate =
+  | {
+      allowed: true;
+      onSuccess?: (calls: ProviderCall[]) => Promise<void>;
+      onFailure?: () => Promise<void>;
+    }
+  | { allowed: false; reason: "insufficient" | "unavailable" };
+
+async function settle(action: (() => Promise<void>) | undefined): Promise<void> {
+  if (!action) return;
+  try {
+    await action();
+  } catch (err) {
+    console.error("Couldn't settle a narration charge:", err);
+  }
+}
+
 async function generate(
   admin: Client,
   subject: SpeechSubject,
   job: AudioJob,
+  beforeGenerate?: CreateAudioOptions["beforeGenerate"],
 ): Promise<AudioResult> {
   let calls: ProviderCall[] = [];
   let path: string | null = null;
+  let gate: Extract<GenerationGate, { allowed: true }> | null = null;
   try {
     const loaded = await subject.loadScript();
     if (!loaded) throw new Error("Nothing to narrate.");
 
+    if (beforeGenerate) {
+      const decision = await beforeGenerate({ characters: loaded.script.length });
+      if (!decision.allowed) {
+        await markFailed(admin, job.id, `Not generated: ${decision.reason}`);
+        return decision.reason === "insufficient"
+          ? { status: "insufficient" }
+          : { status: "unavailable" };
+      }
+      gate = decision;
+    }
+
     path = await objectPathFor(admin, job);
-    if (!(await setJobPath(admin, job.id, path))) return { status: "pending" };
+    if (!(await setJobPath(admin, job.id, path))) {
+      await settle(gate?.onFailure);
+      return { status: "pending" };
+    }
 
     const switches = await getProviderSwitches(admin, subject.type);
     const result = await synthesizeSpeech(
@@ -90,8 +127,11 @@ async function generate(
       await deleteAudio(path).catch((err) =>
         console.error("Couldn't remove a superseded clip:", err),
       );
+      await settle(gate?.onFailure);
       return { status: "pending" };
     }
+    const onSuccess = gate?.onSuccess;
+    if (onSuccess) await settle(() => onSuccess(calls));
     return {
       status: "ready",
       job: { ...job, status: "ready", storage_path: path },
@@ -101,6 +141,7 @@ async function generate(
     if (err instanceof SpeechSynthesisError) calls = err.calls;
     console.error("Audio generation failed:", err);
     await markFailed(admin, job.id, err instanceof Error ? err.message : String(err));
+    await settle(gate?.onFailure);
     return { status: "unavailable", generation: { calls } };
   }
 }
@@ -113,6 +154,10 @@ export type CreateAudioOptions = {
   /** Asked only when a new clip is about to be made, so a cache hit or a
    *  generation in progress never counts against a cap. */
   allowGeneration?: () => Promise<boolean>;
+  /** Runs only for the request that won the claim, once the text is known and
+   *  before any provider is called. Whoever starts the clip pays; a request
+   *  that finds it ready or in progress never reaches this. */
+  beforeGenerate?: (info: { characters: number }) => Promise<GenerationGate>;
 };
 
 export async function getOrCreateAudio(
@@ -120,7 +165,7 @@ export async function getOrCreateAudio(
   subject: SpeechSubject,
   options: CreateAudioOptions = {},
 ): Promise<AudioResult> {
-  const { waitMs = 0, regenerate = false, allowGeneration } = options;
+  const { waitMs = 0, regenerate = false, allowGeneration, beforeGenerate } = options;
 
   const live = await getLiveJob(admin, subject);
   if (live && !regenerate && isCurrentJob(live, subject)) return { status: "ready", job: live };
@@ -130,5 +175,5 @@ export async function getOrCreateAudio(
 
   const claimed = await claimJob(admin, subject, regenerate);
   if (!claimed) return awaitLiveJob(admin, subject, waitMs);
-  return generate(admin, subject, claimed);
+  return generate(admin, subject, claimed, beforeGenerate);
 }

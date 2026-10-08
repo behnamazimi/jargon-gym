@@ -24,4 +24,5 @@ export type AudioResult =
   | { status: "ready"; job: AudioJob; generation?: { calls: ProviderCall[] } }
   | { status: "pending" }
   | { status: "capped" }
+  | { status: "insufficient" }
   | { status: "unavailable"; generation?: { calls: ProviderCall[] } };

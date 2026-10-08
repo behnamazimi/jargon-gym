@@ -8,6 +8,7 @@ import { loadStorySubject } from "@/lib/ai/speech/subjects";
 import { recordUsage } from "@/lib/ai/usage";
 import { readVerifiedUser } from "@/lib/auth/verified-user-header";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
+import { chargeStoryNarration } from "@/lib/stories/narration-billing";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Preparing a story synthesizes the audio inside the POST request.
@@ -57,8 +58,10 @@ export async function GET(request: Request, { params }: RouteContext) {
   return serveAudio(request, auth.admin, auth.subject);
 }
 
-/** Explicit "prepare": makes the audio if it does not exist yet.
- *  200 = ready, 202 = another request is still making it, 429 = daily cap. */
+/** Explicit "prepare": makes the audio if it does not exist yet. Whoever starts
+ *  a clip pays for it in credits; a clip that exists or is being made is free.
+ *  200 = ready, 202 = another request is still making it, 402 = not enough
+ *  credits, 429 = daily cap. */
 export async function POST(request: Request, { params }: RouteContext) {
   const auth = await authorize(request, params);
   if (auth.denied) return auth.denied;
@@ -66,7 +69,11 @@ export async function POST(request: Request, { params }: RouteContext) {
 
   const result = await getOrCreateAudio(admin, subject, {
     allowGeneration: () => storyWithinDailyCap(admin, userId),
+    beforeGenerate: chargeStoryNarration(admin, userId),
   });
+  if (result.status === "insufficient") {
+    return NextResponse.json({ ready: false, insufficient: true }, { status: 402 });
+  }
   if (result.status === "capped") {
     return NextResponse.json({ ready: false, capped: true }, { status: 429 });
   }

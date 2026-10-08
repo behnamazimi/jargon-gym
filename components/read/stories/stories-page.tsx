@@ -102,6 +102,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
           narrationHighlight={setup.narrationHighlight}
           tapToPlay={setup.tapToPlay}
           shadowingSettings={setup.shadowing}
+          ai={setup.ai}
         />
       ) : null;
     default:

@@ -8,6 +8,8 @@ import type { StoryPlayerHandle } from "@/components/read/stories/story-audio-co
 import { StoryFooter } from "@/components/read/stories/story-footer";
 import { StoryMarkKnown } from "@/components/read/stories/story-mark-known";
 import { StoryShadowingToggle } from "@/components/read/stories/story-shadowing-toggle";
+import type { AiAccessView } from "@/lib/llm/types";
+import { narrationPrice, type NarrationPrice } from "@/lib/stories/narration-price";
 import { StoryNarrationPlayer } from "@/components/read/stories/story-narration-player";
 import { StoryBody } from "@/components/read/stories/story-body";
 import { useNarrationAutoScroll } from "@/components/read/stories/use-narration-auto-scroll";
@@ -51,9 +53,11 @@ function StoryHeader({
   sentencePlayback,
   playerRef,
   onClipPauses,
+  price,
 }: {
   story: Story;
   narrationAccess: boolean;
+  price: NarrationPrice | null;
   onNarrationProgress?: (fraction: number | null) => void;
   shadowing: ShadowingSetup | null;
   sentencePlayback: ShadowingSetup | null;
@@ -95,6 +99,7 @@ function StoryHeader({
             sentencePlayback={sentencePlayback}
             handleRef={playerRef}
             onClipPauses={onClipPauses}
+            price={price}
           />
         </div>
       ) : null}
@@ -164,6 +169,7 @@ export function StoryReader({
   narrationHighlight,
   tapToPlay,
   shadowingSettings,
+  ai,
 }: {
   session: StorySession;
   story: Story;
@@ -173,6 +179,8 @@ export function StoryReader({
   tapToPlay: boolean;
   /** Set while Shadowing is on. It needs the highlight, so it turns that on. */
   shadowingSettings: ShadowingSettings | null;
+  /** Who pays for AI, to price the first listen. */
+  ai: AiAccessView;
 }) {
   const termById = new Map(terms.map((term) => [term.id, term]));
   const estimatedTimeline = useMemo(
@@ -231,6 +239,7 @@ export function StoryReader({
         sentencePlayback={sentencePlayback}
         playerRef={playerRef}
         onClipPauses={timeline ? setClipPauses : undefined}
+        price={narrationPrice(ai, story)}
       />
       <div
         onWheel={pauseAutoScroll}
