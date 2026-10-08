@@ -2441,6 +2441,7 @@ export type Database = {
         Args: { p_domain_id: string };
         Returns: boolean;
       };
+      is_supported_language: { Args: { p_language: string }; Returns: boolean };
       list_due_telegram_users: {
         Args: never;
         Returns: {
