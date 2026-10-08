@@ -1,4 +1,4 @@
--- Behavior checks for AI feature settings, the ledger's billable rule and the
+-- Behavior checks for AI feature settings, reserve's billable rule and the
 -- run guard. One transaction that rolls back:
 --   psql "$DB_URL" -v ON_ERROR_STOP=1 -f supabase/tests/ai_feature_settings.sql
 begin;
@@ -63,7 +63,7 @@ begin
   update public.ai_feature_runs set started_at = now() - interval '5 minutes' where user_id = u2 and feature = 'narration_term';
   assert public.begin_ai_run(u2, 'narration_term', null) is not null, 'a null timeout should still expire';
 
-  -- Narration and other non-billable features can't be reserved or written to the ledger.
+  -- Narration and other non-billable features can't be reserved.
   begin
     perform public.reserve_ai_credits(u1, 'narration_term', 1);
     v_failed := false;
@@ -81,12 +81,12 @@ begin
   assert v_failed, 'reserve should refuse an unknown feature';
 
   begin
-    insert into public.ai_credit_ledger (user_id, kind, feature, amount) values (u1, 'spend', 'narration_term', 1);
+    insert into public.ai_credit_ledger (user_id, kind, feature, amount) values (u1, 'spend', 'no_such_feature', 1);
     v_failed := false;
   exception when foreign_key_violation then
     v_failed := true;
   end;
-  assert v_failed, 'the ledger should reject a non-billable feature';
+  assert v_failed, 'the ledger should reject an unknown feature';
 
   -- Spend and refund still work with the foreign key.
   select ledger_id into v_ledger from public.reserve_ai_credits(u1, 'quiz', 5);

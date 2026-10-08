@@ -10,7 +10,7 @@ DB_URL="${DB_URL:-postgresql://postgres:postgres@127.0.0.1:54322/postgres}"
 PSQL=(psql "$DB_URL" -v ON_ERROR_STOP=1 -qtA)
 trap 'pnpm -s supabase db reset >/dev/null 2>&1' EXIT
 
-pnpm -s supabase db reset --version 20261017100000 >/dev/null 2>&1
+pnpm -s supabase db reset --no-seed --version 20261017100000 >/dev/null 2>&1
 
 "${PSQL[@]}" <<'SQL'
 create table public._parity (label text primary key, user_id uuid, expected integer);

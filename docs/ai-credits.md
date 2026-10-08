@@ -89,9 +89,11 @@ row. The balance is the sum over lots that haven't expired.
 Spending takes from the lot that expires soonest, then the oldest lot, with
 lots that never expire last. Nothing is ever taken from a lapsed lot.
 
-Rows before the cutover (`ai_credit_settings.lots_after_id`) belong to the
-earlier two-pool model and are history only. The migration gave each person
-opening lots equal to what the old balance function said they had left.
+Rows from the earlier two-pool model are history only. They are told apart from
+lots by their shape: a lot (a `grant` or `refund`) always has a `source`, which
+a check enforces for new rows, and the old rows never had one. The cutover
+migration gave each person opening lots equal to what the old balance function
+said they had left.
 
 ### Settling
 
@@ -148,7 +150,7 @@ refund never edits history. If the source lot never expired, the refund lot
 doesn't either; otherwise it lasts until the source lot's expiry or 30 days
 from now, whichever is later. If an admin reset wrote the source lot off, that
 part isn't refunded. Refunding twice is harmless: there is one refund row per
-spend and lot. A spend from before the cutover has no lots, so it is refunded
+spend and lot. A spend from the old model has no allocations, so it is refunded
 once, whole, as a 30-day lot.
 
 Each refund records a short reason in the refund rows' `note`, such as
