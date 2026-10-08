@@ -27,7 +27,7 @@ export default async function TriageRoute({ searchParams }: PageProps) {
       <PageHeader
         icon={Layers}
         title="Triage"
-        description="Swipe through terms and mark the ones you already know."
+        description="Go through terms and mark the ones you already know."
         backHref={`/app/library?domain=${data.domain.id}`}
         compactOnPhone
       />

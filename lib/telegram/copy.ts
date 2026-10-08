@@ -10,6 +10,8 @@ export const HELP_MESSAGE =
 export const CAUGHT_UP_MESSAGE =
   "You're all caught up. Nothing new in your active collections. Add a collection, or turn one back on, in your Library in the app.";
 
+export const ALREADY_CONNECTED_MESSAGE = `You're connected to Lobyas.\n\n${HELP_MESSAGE}`;
+
 export const READ_NEXT_FAILED_MESSAGE = "Couldn't load the next term. Try /read again in a moment.";
 
 export const REVIEW_REVEAL_FAILED_SUFFIX = "\n\n<i>Couldn't reveal that term. Try again.</i>";

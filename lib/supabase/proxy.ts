@@ -48,6 +48,14 @@ const PUBLIC_PATH_PREFIXES = [
   "/api/internal/narration",
 ];
 
+// Signed-out visitors are sent to login only from these. Any other unknown
+// path falls through to the 404 page instead of a misleading login screen.
+const PRIVATE_PATH_PREFIXES = ["/app", "/admin", "/complete-signup", "/api"];
+
+function isPrivatePath(pathname: string) {
+  return PRIVATE_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 function isPublicPath(pathname: string) {
   return (
     PUBLIC_EXACT_PATHS.has(pathname) || PUBLIC_PATH_PREFIXES.some((p) => pathname.startsWith(p))
@@ -175,7 +183,9 @@ export async function updateSession(request: NextRequest) {
   if (authCodeRedirect) return authCodeRedirect;
 
   if (!user) {
-    return isPublicPath(pathname) ? supabaseResponse : redirectToPathWithNext(request, "/login");
+    return isPublicPath(pathname) || !isPrivatePath(pathname)
+      ? supabaseResponse
+      : redirectToPathWithNext(request, "/login");
   }
 
   const referralVerified = await resolveReferralVerified(

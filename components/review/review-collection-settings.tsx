@@ -84,6 +84,7 @@ export function ReviewCollectionSettings({
             isSelected={rememberOnDevice}
             className="checkbox-sm pointer-events-none"
             tabIndex={-1}
+            aria-label="Remember on this device"
             aria-hidden
           />
           Remember on this device

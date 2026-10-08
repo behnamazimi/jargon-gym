@@ -2,6 +2,7 @@
 
 import { formatAuthError } from "@/lib/auth/format-auth-error";
 import { getAppOrigin } from "@/lib/auth/app-origin";
+import { RESET_FLOW } from "@/lib/auth/callback-flow";
 import { createClient } from "@/lib/supabase/server";
 
 export type ForgotPasswordState = { error: string } | { success: true } | null;
@@ -18,8 +19,10 @@ export async function requestPasswordReset(
 
   const [supabase, origin] = await Promise.all([createClient(), getAppOrigin()]);
 
+  const redirectParams = new URLSearchParams({ flow: RESET_FLOW, next: "/reset-password" });
+
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+    redirectTo: `${origin}/auth/callback?${redirectParams.toString()}`,
   });
 
   if (error) {

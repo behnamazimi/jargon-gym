@@ -20,7 +20,9 @@ describe("formatAuthError", () => {
         { code: "invalid_credentials", message: "Invalid login credentials" },
         "login",
       ),
-    ).toBe("That email or password doesn't look right.");
+    ).toBe(
+      "That email or password doesn't look right. Signed up with Google? Use Continue with Google.",
+    );
   });
 
   it("says when a shared invite code is full or expired", () => {
