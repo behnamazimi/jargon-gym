@@ -10,6 +10,8 @@ on:
       - "supabase/**"
       - "e2e/**"
       - "playwright.config.ts"
+      - ".github/**"
+      - "vercel.json"
       - "package.json"
       - "pnpm-lock.yaml"
   push:
