@@ -11,7 +11,6 @@ import type { AiAccessView } from "@/lib/llm/types";
 function freeCreditsCopy(topUp: TopUpState | undefined): string | null {
   if (topUp?.available) return TOPUP_COPY.eligible(topUp.amount);
   if (topUp?.reason === "already-today") return TOPUP_COPY.alreadyToday;
-  if (topUp?.reason === "balance") return TOPUP_COPY.whenNearlyOut;
   return null;
 }
 
