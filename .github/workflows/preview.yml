@@ -1,0 +1,44 @@
+# Vercel no longer deploys on push (see vercel.json). Pull requests get their
+# preview from the approval-gated job in ci.yml; use this for a branch without
+# a PR: Actions tab, or `gh workflow run preview.yml --ref <branch>`.
+name: Preview deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_checks:
+        description: Run lint, type-check and tests before deploying
+        type: boolean
+        default: false
+
+concurrency:
+  group: preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    environment: Preview
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Lint, type-check and test
+        if: inputs.run_checks
+        run: |
+          pnpm run check
+          pnpm run test
+
+      - name: Deploy to Vercel
+        run: |
+          pnpm dlx vercel@latest pull --yes --environment=preview
+          echo "Preview: $(pnpm dlx vercel@latest deploy)" >> "$GITHUB_STEP_SUMMARY"

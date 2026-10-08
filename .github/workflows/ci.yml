@@ -47,6 +47,44 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run test
 
+  # No secrets here: the "Preview deploy" environment only holds the reviewer
+  # rule, so this job waits until someone approves it.
+  approve-preview:
+    needs: [check, build, test]
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: Preview deploy
+    concurrency:
+      group: preview-approval-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - run: echo "Preview approved"
+
+  preview:
+    needs: approve-preview
+    runs-on: ubuntu-latest
+    environment:
+      name: Preview
+      url: ${{ steps.deploy.outputs.url }}
+    concurrency:
+      group: preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - id: deploy
+        run: |
+          pnpm dlx vercel@latest pull --yes --environment=preview
+          echo "url=$(pnpm dlx vercel@latest deploy)" >> "$GITHUB_OUTPUT"
+
   supabase-changes:
     runs-on: ubuntu-latest
     outputs:
