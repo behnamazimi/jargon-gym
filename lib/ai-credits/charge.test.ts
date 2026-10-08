@@ -4,7 +4,12 @@ import type { Database } from "@/lib/supabase/database.types";
 import { runWithCredits } from "./charge";
 
 type Client = SupabaseClient<Database>;
-type Reservation = { status: string; remaining: number; ledger_id: number | null };
+type Reservation = {
+  status: string;
+  remaining: number;
+  ledger_id: number | null;
+  credits: number;
+};
 
 function fakeAdmin(
   reservation: Reservation,
@@ -22,13 +27,13 @@ function fakeAdmin(
   return { admin, calls };
 }
 
-const base = { userId: "u1", feature: "quiz" as const, cost: 8 };
+const base = { userId: "u1", feature: "quiz" as const, units: 8 };
 
 beforeEach(() => vi.spyOn(console, "error").mockImplementation(() => undefined));
 
 describe("runWithCredits", () => {
   it("keeps the charge when the work succeeds", async () => {
-    const { admin, calls } = fakeAdmin({ status: "ok", remaining: 42, ledger_id: 7 });
+    const { admin, calls } = fakeAdmin({ status: "ok", remaining: 42, ledger_id: 7, credits: 8 });
     const outcome = await runWithCredits({ admin, ...base }, async () => "quiz");
 
     expect(outcome).toEqual({ charged: true, value: "quiz", remaining: 42 });
@@ -36,7 +41,7 @@ describe("runWithCredits", () => {
   });
 
   it("refunds and rethrows when the work throws", async () => {
-    const { admin, calls } = fakeAdmin({ status: "ok", remaining: 42, ledger_id: 7 });
+    const { admin, calls } = fakeAdmin({ status: "ok", remaining: 42, ledger_id: 7, credits: 8 });
     const failure = new Error("model returned garbage");
 
     await expect(
@@ -45,7 +50,7 @@ describe("runWithCredits", () => {
       }),
     ).rejects.toBe(failure);
     expect(calls).toEqual([
-      { name: "reserve_ai_credits", args: { p_user_id: "u1", p_feature: "quiz", p_cost: 8 } },
+      { name: "reserve_ai_credits", args: { p_user_id: "u1", p_feature: "quiz", p_units: 8 } },
       {
         name: "refund_ai_credits",
         args: { p_ledger_id: 7, p_reason: "Error: model returned garbage" },
@@ -54,7 +59,7 @@ describe("runWithCredits", () => {
   });
 
   it("still surfaces the original error when the refund itself fails", async () => {
-    const { admin } = fakeAdmin({ status: "ok", remaining: 42, ledger_id: 7 }, () => ({
+    const { admin } = fakeAdmin({ status: "ok", remaining: 42, ledger_id: 7, credits: 8 }, () => ({
       error: new Error("db down"),
     }));
     const failure = new Error("timeout");
@@ -67,7 +72,12 @@ describe("runWithCredits", () => {
   });
 
   it("does not run the work when the balance is too low", async () => {
-    const { admin, calls } = fakeAdmin({ status: "insufficient", remaining: 3, ledger_id: null });
+    const { admin, calls } = fakeAdmin({
+      status: "insufficient",
+      remaining: 3,
+      ledger_id: null,
+      credits: 8,
+    });
     const run = vi.fn();
     const outcome = await runWithCredits({ admin, ...base }, run);
 
@@ -77,7 +87,7 @@ describe("runWithCredits", () => {
   });
 
   it("does not run the work when credits are switched off", async () => {
-    const { admin } = fakeAdmin({ status: "disabled", remaining: 50, ledger_id: null });
+    const { admin } = fakeAdmin({ status: "disabled", remaining: 50, ledger_id: null, credits: 8 });
     const run = vi.fn();
     const outcome = await runWithCredits({ admin, ...base }, run);
 

@@ -13,7 +13,6 @@ export type FeatureSettings = {
   accessMode: AccessMode;
   /** Rolling 24 hours, per user. Null means no cap. */
   dailyCap: number | null;
-  creditCost: number | null;
   unit: string;
 };
 
@@ -27,7 +26,7 @@ export async function getFeatureSettings(
 ): Promise<FeatureSettings | null> {
   const { data, error } = await client
     .from("ai_feature_settings")
-    .select("feature, billable, enabled, access_mode, daily_cap, credit_cost, unit")
+    .select("feature, billable, enabled, access_mode, daily_cap, unit")
     .eq("feature", feature)
     .maybeSingle();
   if (error) throw error;
@@ -39,7 +38,6 @@ export async function getFeatureSettings(
     enabled: data.enabled,
     accessMode: data.access_mode as AccessMode,
     dailyCap: data.daily_cap,
-    creditCost: data.credit_cost,
     unit: data.unit,
   };
 }

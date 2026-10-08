@@ -8,7 +8,8 @@ type ChargeInput = {
   admin: SupabaseClient<Database>;
   userId: string;
   feature: CreditFeature;
-  cost: number;
+  /** Questions, terms or characters; the database prices them. */
+  units: number;
 };
 
 export type ChargeOutcome<T> =
@@ -19,12 +20,17 @@ export type ChargeOutcome<T> =
  *  work throws for any reason. Credits only stay spent for a result the user
  *  actually received. */
 export async function runWithCredits<T>(
-  { admin, userId, feature, cost }: ChargeInput,
+  { admin, userId, feature, units }: ChargeInput,
   run: () => Promise<T>,
 ): Promise<ChargeOutcome<T>> {
-  const reservation = await reserveCredits(admin, userId, feature, cost);
+  const reservation = await reserveCredits(admin, userId, feature, units);
   if (reservation.status !== "ok") {
-    return { charged: false, reason: reservation.status, remaining: reservation.remaining, cost };
+    return {
+      charged: false,
+      reason: reservation.status,
+      remaining: reservation.remaining,
+      cost: reservation.credits,
+    };
   }
 
   try {

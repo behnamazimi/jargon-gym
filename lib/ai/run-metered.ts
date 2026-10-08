@@ -12,18 +12,19 @@ type MeteredInput = {
   admin: Client;
   userId: string;
   feature: BillableFeatureId;
-  cost: number;
+  units: number;
 };
 
 /** Charges credits around one AI call, allowing a single running request per
  *  user and feature. The guard is taken first, so a second click never gets
- *  charged. Narration must not use this: it is never billed. */
+ *  charged. Story narration bills through its own hook instead (it must only charge
+ *  the request that wins the clip). */
 export async function runMetered<T>(
-  { admin, userId, feature, cost }: MeteredInput,
+  { admin, userId, feature, units }: MeteredInput,
   run: () => Promise<T>,
 ): Promise<MeteredOutcome<T>> {
   const guarded = await withRunGuard({ admin, userId, feature }, () =>
-    runWithCredits({ admin, userId, feature, cost }, run),
+    runWithCredits({ admin, userId, feature, units }, run),
   );
   if (guarded.busy) return { charged: false, reason: "busy" };
   return guarded.value;

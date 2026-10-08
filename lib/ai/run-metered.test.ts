@@ -26,7 +26,7 @@ function fakeAdmin(options: { token: string | null; reservationStatus?: string }
   return { admin, calls };
 }
 
-const base = { userId: "u1", feature: "quiz" as const, cost: 3 };
+const base = { userId: "u1", feature: "quiz" as const, units: 3 };
 
 describe("runMetered", () => {
   it("takes the guard, charges, runs and releases the guard", async () => {

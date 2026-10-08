@@ -9,7 +9,6 @@ import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { runAiTurn } from "@/lib/ai/observability-server";
 import { recordRead } from "@/lib/terms/review-outcome";
 import { runMetered } from "@/lib/ai/run-metered";
-import { storyCost } from "@/lib/ai-credits/costs";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { resolveAiAccess } from "@/lib/llm/access";
 import type { AiFailureReason } from "@/lib/llm/types";
@@ -151,7 +150,7 @@ export async function generateStoryAction(input: {
         admin,
         userId,
         feature: "story",
-        cost: storyCost(cards.length, access.costs),
+        units: cards.length,
       },
       produce,
     );

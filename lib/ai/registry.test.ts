@@ -10,9 +10,9 @@ describe("feature registry", () => {
     }
   });
 
-  it("never bills narration", () => {
+  it("bills story narration but never term narration", () => {
     expect(isBillable("narration_term")).toBe(false);
-    expect(isBillable("narration_story")).toBe(false);
+    expect(isBillable("narration_story")).toBe(true);
     expect(isBillable("quiz")).toBe(true);
   });
 

@@ -35,10 +35,10 @@ export const FEATURES = {
   },
   narration_story: {
     capability: "speech",
-    billing: "none",
+    billing: "credits",
     vendor: "Murf or ElevenLabs",
     sends: "The full text of a story.",
-    unit: "clip",
+    unit: "1,000 characters",
   },
 } as const satisfies Record<string, FeatureDefinition>;
 

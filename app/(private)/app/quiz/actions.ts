@@ -7,7 +7,6 @@ import { hasAnalyticsConsent } from "@/lib/consent/server";
 import { runAiTurn } from "@/lib/ai/observability-server";
 import { busyFailure, creditsRefusedFailure, noAiFailure } from "@/lib/ai-credits/messages";
 import { runMetered } from "@/lib/ai/run-metered";
-import { quizCost } from "@/lib/ai-credits/costs";
 import { getAiAccessView, resolveAiAccess } from "@/lib/llm/access";
 import { LLM_PROVIDER_LABELS, type AiFailureReason } from "@/lib/llm/types";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -123,7 +122,7 @@ async function generateAiQuizResult(
         admin: createAdminClient(),
         userId: auth.user.id,
         feature: "quiz",
-        cost: quizCost(plan.slots.length, access.costs),
+        units: plan.slots.length,
       },
       generate,
     );

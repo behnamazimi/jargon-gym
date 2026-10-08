@@ -29,12 +29,14 @@ vi.mock("@/lib/llm/access", () => ({
   getAiAccessView: async () => ({}),
 }));
 vi.mock("@/lib/ai/run-metered", () => ({
-  runMetered: async (input: { cost: number }) => {
+  runMetered: async (input: { units: number }) => {
     state.meteredCalls += 1;
-    state.meteredCosts.push(input.cost);
+    state.meteredCosts.push(input.units);
     return state.meteredOutcome;
   },
 }));
+
+import { testCosts } from "@/lib/ai-credits/test-costs";
 
 const { generateQuizAction } = await import("./actions");
 
@@ -46,7 +48,7 @@ beforeEach(() => {
     provider: "google",
     apiKey: "central",
     remaining: 50,
-    costs: { quizPerQuestion: 1, storyPerTerm: 1 },
+    costs: testCosts,
   };
   state.meteredOutcome = { charged: true, value: ["q"], remaining: 5 };
   state.meteredCalls = 0;

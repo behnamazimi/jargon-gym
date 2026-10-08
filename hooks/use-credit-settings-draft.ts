@@ -16,7 +16,9 @@ function toDraft(values: CreditSettingsInput): CreditDraft {
     defaultAllowance: String(values.defaultAllowance),
     monthlyRefill: String(values.monthlyRefill),
     quizCreditsPerQuestion: String(values.quizCreditsPerQuestion),
+    storyBaseCredits: String(values.storyBaseCredits),
     storyCreditsPerTerm: String(values.storyCreditsPerTerm),
+    narrationCreditsPerThousand: String(values.narrationCreditsPerThousand),
     selfTopupAmount: String(values.selfTopupAmount),
   };
 }
@@ -25,7 +27,9 @@ const KEYS = [
   "defaultAllowance",
   "monthlyRefill",
   "quizCreditsPerQuestion",
+  "storyBaseCredits",
   "storyCreditsPerTerm",
+  "narrationCreditsPerThousand",
   "selfTopupAmount",
 ] as const;
 
@@ -36,7 +40,9 @@ export function useCreditSettingsDraft(settings: AiCreditSettingsView) {
     defaultAllowance: toNumber(draft.defaultAllowance),
     monthlyRefill: toNumber(draft.monthlyRefill),
     quizCreditsPerQuestion: toNumber(draft.quizCreditsPerQuestion),
+    storyBaseCredits: toNumber(draft.storyBaseCredits),
     storyCreditsPerTerm: toNumber(draft.storyCreditsPerTerm),
+    narrationCreditsPerThousand: toNumber(draft.narrationCreditsPerThousand),
     selfTopupAmount: toNumber(draft.selfTopupAmount),
   });
   // Compared as numbers, so "030" or "1e3" saved as 30 or 1000 doesn't look unsaved.
@@ -49,7 +55,9 @@ export function useCreditSettingsDraft(settings: AiCreditSettingsView) {
     (parsed.data.defaultAllowance < settings.defaultAllowance ||
       parsed.data.monthlyRefill < settings.monthlyRefill ||
       parsed.data.quizCreditsPerQuestion !== settings.quizCreditsPerQuestion ||
-      parsed.data.storyCreditsPerTerm !== settings.storyCreditsPerTerm);
+      parsed.data.storyBaseCredits !== settings.storyBaseCredits ||
+      parsed.data.storyCreditsPerTerm !== settings.storyCreditsPerTerm ||
+      parsed.data.narrationCreditsPerThousand !== settings.narrationCreditsPerThousand);
 
   return {
     draft,
