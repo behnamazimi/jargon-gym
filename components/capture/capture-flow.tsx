@@ -38,7 +38,7 @@ type Saved = { term: string; unfinished: boolean; collectionId: string; collecti
 /** Waits for hydration so the remembered collection (read from this device)
  *  never differs from what the server rendered. */
 export function CaptureFlow(props: CaptureFlowProps) {
-  return useHydrated() ? <CaptureForm {...props} /> : <PanelSkeleton />;
+  return useHydrated() ? <CaptureForm key={props.presetId ?? ""} {...props} /> : <PanelSkeleton />;
 }
 
 type CaptureFlowProps = {
