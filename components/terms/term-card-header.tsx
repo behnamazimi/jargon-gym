@@ -1,5 +1,8 @@
-import type { CSSProperties, ReactNode } from "react";
-import { TermNarrationPlayer } from "@/components/terms/term-narration-player";
+import type { CSSProperties, ReactNode, Ref } from "react";
+import {
+  TermNarrationPlayer,
+  type TermNarrationHandle,
+} from "@/components/terms/term-narration-player";
 import type { ReviewTerm } from "@/lib/review/types";
 
 /** Revealed-card title/meta header, shared by Read and Review. `style` lets
@@ -11,12 +14,14 @@ export function TermCardHeader({
   term,
   narrationAccess,
   narrationPreload = false,
+  narrationHandleRef,
   actions,
   style,
 }: {
   term: ReviewTerm;
   narrationAccess: boolean;
   narrationPreload?: boolean;
+  narrationHandleRef?: Ref<TermNarrationHandle>;
   /** Extra controls shown beside the narration button. */
   actions?: ReactNode;
   style?: CSSProperties;
@@ -50,6 +55,7 @@ export function TermCardHeader({
               termId={term.id}
               clipVersion={term.narrationVersion}
               preload={narrationPreload}
+              handleRef={narrationHandleRef}
             />
           ) : null}
         </div>

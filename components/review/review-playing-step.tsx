@@ -7,7 +7,8 @@ import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import type { ReviewRating, ReviewTerm } from "@/lib/review/types";
 import { ReviewCard } from "@/components/review/review-card";
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
+import type { TermNarrationHandle } from "@/components/terms/term-narration-player";
 
 const GRADE_LABELS: Record<ReviewGrade, string> = {
   [AGAIN]: "Again",
@@ -51,7 +52,10 @@ type ReviewPlayingStepProps = {
   errorMessage: string | null;
   reduceMotion: boolean;
   narrationAccess: boolean;
+  swipeEnabled: boolean;
   collectionControl: ReactNode;
+  optionsControl: ReactNode;
+  narrationHandleRef: Ref<TermNarrationHandle>;
   onReveal: () => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -67,7 +71,10 @@ export function ReviewPlayingStep({
   errorMessage,
   reduceMotion,
   narrationAccess,
+  swipeEnabled,
   collectionControl,
+  optionsControl,
+  narrationHandleRef,
   onReveal,
   onPrevious,
   onNext,
@@ -111,6 +118,7 @@ export function ReviewPlayingStep({
               <ChevronRight className="size-4" aria-hidden strokeWidth={1.5} />
             </Button>
           ) : null}
+          {optionsControl}
         </div>
       </div>
 
@@ -123,8 +131,9 @@ export function ReviewPlayingStep({
         onNext={onNext}
         onMarkedKnown={onMarkedKnown}
         reduceMotion={reduceMotion}
-        swipeEnabled
+        swipeEnabled={swipeEnabled}
         narrationAccess={narrationAccess}
+        narrationHandleRef={narrationHandleRef}
       />
 
       <div className="shrink-0 space-y-3">

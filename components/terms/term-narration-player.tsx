@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Pause, Volume2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import {
   claimActiveAudio,
   isActiveAudio,
@@ -31,6 +31,8 @@ function isAbortError(error: unknown): boolean {
   return error instanceof DOMException && error.name === "AbortError";
 }
 
+export type TermNarrationHandle = { play: () => void };
+
 type PreparedClip = { from: string | null | undefined; version: string };
 
 /** A clip learned from a POST only holds while the parent still hands in the
@@ -53,11 +55,14 @@ export function TermNarrationPlayer({
   clipVersion,
   preload = false,
   showButton = true,
+  handleRef,
 }: {
   termId: string;
   clipVersion?: string | null;
   preload?: boolean;
   showButton?: boolean;
+  /** Lets a parent start the clip from its own press handler. */
+  handleRef?: Ref<TermNarrationHandle>;
 }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -200,6 +205,12 @@ export function TermNarrationPlayer({
     setStatus("loading");
     startWhenReady(audio);
   }
+
+  useImperativeHandle(handleRef, () => ({
+    play: () => {
+      if (status !== "playing") handlePress();
+    },
+  }));
 
   function handlePause() {
     const audio = audioRef.current;

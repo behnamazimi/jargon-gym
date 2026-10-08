@@ -5,13 +5,16 @@ import { useCallback, useRef, useState } from "react";
 import { recordReviewRevealAction } from "@/app/(private)/app/actions";
 import { ReadCaughtUp } from "@/components/read/read-caught-up";
 import { ReadErrorAlert } from "@/components/read/read-error-alert";
+import { ReviewOptionsMenu } from "@/components/review/review-options-menu";
 import { ReviewCollectionSettings } from "@/components/review/review-collection-settings";
 import { ReviewPlayingStep } from "@/components/review/review-playing-step";
 import { useReviewKeyboard } from "@/components/review/use-review-keyboard";
+import { useReviewOptions } from "@/components/review/use-review-options";
 import { useReviewQueue } from "@/components/review/use-review-queue";
 import { useReviewWriteQueue } from "@/components/review/use-review-write-queue";
 import { StudyNoActiveCollectionsState } from "@/components/read/study/study-paused-state";
 import { QuizPanel } from "@/components/quiz/quiz-ui";
+import type { TermNarrationHandle } from "@/components/terms/term-narration-player";
 import { LinkButton } from "@/components/ui/button";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import {
@@ -19,6 +22,7 @@ import {
   saveReviewCollectionPreference,
 } from "@/lib/review/collection-preference";
 import { canMoveForward } from "@/lib/review/keyboard";
+import type { ReviewOptions } from "@/lib/review/options";
 import { upsertRating } from "@/lib/review/writes";
 import type { ReviewQueueSeed, ReviewRating } from "@/lib/review/types";
 import type { PausedStudyCollection, StudyCollection } from "@/lib/study/types";
@@ -30,6 +34,7 @@ type ReviewPageProps = {
   paused: PausedStudyCollection[];
   collectionId: string;
   narrationAccess: boolean;
+  initialOptions: ReviewOptions;
 };
 
 function stripReviewCollectionParam() {
@@ -56,8 +61,10 @@ export function ReviewPage({
   paused,
   collectionId,
   narrationAccess,
+  initialOptions,
 }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
+  const { options, changeOption } = useReviewOptions(initialOptions);
   const [selectedCollectionId, setSelectedCollectionId] = useState(collectionId);
   const [rememberOnDevice, setRememberOnDevice] = useState(true);
   const [ratings, setRatings] = useState<ReviewRating[]>([]);
@@ -67,6 +74,7 @@ export function ReviewPage({
   const { enqueueRating } = useReviewWriteQueue({ setErrorMessage });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
   const advancedCardIdRef = useRef<string | null>(null);
+  const narrationRef = useRef<TermNarrationHandle>(null);
   // State updates land after the event, so two reveal triggers in one
   // event would both see the card as hidden and record the reveal twice.
   const revealRecordedRef = useRef(new Set<string>());
@@ -106,10 +114,18 @@ export function ReviewPage({
     if (!currentCard || revealRecordedRef.current.has(currentCard.id)) return;
     revealRecordedRef.current.add(currentCard.id);
     setRevealedTermIds((ids) => [...ids, currentCard.id]);
+    // Only a clip that already exists plays; this never asks for one to be made.
+    if (
+      options.narrateOnReveal &&
+      narrationAccess &&
+      typeof currentCard.narrationVersion === "string"
+    ) {
+      narrationRef.current?.play();
+    }
     void recordReviewRevealAction(currentCard.id).then((result) => {
       if (result.error) setErrorMessage(result.error);
     });
-  }, [currentCard]);
+  }, [currentCard, options.narrateOnReveal, narrationAccess]);
 
   const handlePrevious = useCallback(() => {
     queue.goPrevious();
@@ -171,10 +187,24 @@ export function ReviewPage({
     />
   );
 
+  const optionsControl = (
+    <ReviewOptionsMenu
+      options={options}
+      narrationAccess={narrationAccess}
+      onChange={(key, value) => void changeOption(key, value)}
+    />
+  );
+  const topBar = (
+    <div className="flex shrink-0 items-center justify-between gap-2">
+      {collectionControl}
+      {optionsControl}
+    </div>
+  );
+
   if (queue.status === "error" && !currentCard) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <div className="flex shrink-0 items-center">{collectionControl}</div>
+        {topBar}
         <ReadErrorAlert
           message={queue.errorMessage ?? "Couldn't load the next term. Try again."}
           isPending={queue.isFetchingMore}
@@ -187,7 +217,7 @@ export function ReviewPage({
   if (queue.status === "loading") {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <div className="flex shrink-0 items-center">{collectionControl}</div>
+        {topBar}
         <QuizPanel>
           <div className="flex items-center gap-3 px-5 py-5 sm:px-6">
             <span className="loading loading-spinner loading-sm text-base-content/70" />
@@ -201,7 +231,7 @@ export function ReviewPage({
   if (queue.status === "caughtUp" || !currentCard) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <div className="flex shrink-0 items-center">{collectionControl}</div>
+        {topBar}
         <ReadCaughtUp
           title="No terms to review"
           description={caughtUpDescription(selectedCollectionId, collections)}
@@ -231,7 +261,10 @@ export function ReviewPage({
       errorMessage={errorMessage ?? queue.errorMessage}
       reduceMotion={reduceMotion}
       narrationAccess={narrationAccess}
+      swipeEnabled={options.swipe}
       collectionControl={collectionControl}
+      optionsControl={optionsControl}
+      narrationHandleRef={narrationRef}
       onReveal={handleReveal}
       onPrevious={handlePrevious}
       onNext={handleNext}

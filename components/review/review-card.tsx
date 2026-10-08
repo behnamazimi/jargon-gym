@@ -1,9 +1,10 @@
 "use client";
 
 import { Eye } from "lucide-react";
-import { useRef } from "react";
+import { useRef, type Ref } from "react";
 import { FirstExposureKnownPrompt } from "@/components/shared/first-exposure-known-prompt";
 import { TermCardHeader } from "@/components/terms/term-card-header";
+import type { TermNarrationHandle } from "@/components/terms/term-narration-player";
 import { StudyTermBody } from "@/components/terms/study-term-body";
 import type { ReviewTerm } from "@/lib/review/types";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ type ReviewCardProps = {
   reduceMotion: boolean;
   swipeEnabled: boolean;
   narrationAccess: boolean;
+  narrationHandleRef?: Ref<TermNarrationHandle>;
   /** The "Recall the meaning" prompt on the front; Triage asks a different question. */
   showRevealHint?: boolean;
 };
@@ -46,6 +48,7 @@ export function ReviewCard({
   reduceMotion,
   swipeEnabled,
   narrationAccess,
+  narrationHandleRef,
   showRevealHint = true,
 }: ReviewCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -131,7 +134,12 @@ export function ReviewCard({
           </div>
 
           <div className="shadow-surface-raised absolute inset-0 flex flex-col overflow-hidden rounded-box bg-base-100 [backface-visibility:hidden] [transform:rotateY(180deg)]">
-            <TermCardHeader term={term} narrationAccess={narrationAccess} narrationPreload />
+            <TermCardHeader
+              term={term}
+              narrationAccess={narrationAccess}
+              narrationPreload
+              narrationHandleRef={narrationHandleRef}
+            />
             <div
               className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pt-4 pb-8 has-[[data-known-prompt]]:pb-0 [mask-image:linear-gradient(to_bottom,#000_calc(100%-1.25rem),transparent)] sm:px-6"
               onClick={(event) => event.stopPropagation()}

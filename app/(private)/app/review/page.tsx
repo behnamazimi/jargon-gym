@@ -5,6 +5,8 @@ import {
   parseReviewCollectionCookie,
   REVIEW_COLLECTION_COOKIE,
 } from "@/lib/review/collection-preference";
+import { getSessionUser } from "@/lib/auth/require-session";
+import { DEFAULT_REVIEW_OPTIONS, getReviewOptions } from "@/lib/review/options";
 import { loadReviewFeed, loadReviewSetup } from "@/lib/review/feed";
 import {
   isCollectionPreference,
@@ -20,6 +22,12 @@ function LoginPrompt({ message }: { message: string }) {
   return <p className="text-sm text-base-content/70">{message}</p>;
 }
 
+async function loadReviewOptions() {
+  const { supabase, user } = await getSessionUser();
+  if (!user) return DEFAULT_REVIEW_OPTIONS;
+  return getReviewOptions(supabase, user.id).catch(() => DEFAULT_REVIEW_OPTIONS);
+}
+
 export default async function ReviewRoute({ searchParams }: PageProps) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
   const rememberedId = parseReviewCollectionCookie(
@@ -29,9 +37,10 @@ export default async function ReviewRoute({ searchParams }: PageProps) {
     ? params.collection
     : (rememberedId ?? "all");
 
-  const [setup, speculativeSeed] = await Promise.all([
+  const [setup, speculativeSeed, options] = await Promise.all([
     loadReviewSetup(),
     loadReviewFeed(speculativeCollectionId, []),
+    loadReviewOptions(),
   ]);
 
   if ("error" in setup) {
@@ -64,6 +73,7 @@ export default async function ReviewRoute({ searchParams }: PageProps) {
       paused={setup.paused}
       collectionId={collectionId}
       narrationAccess={setup.narrationAccess}
+      initialOptions={options}
     />
   );
 }
