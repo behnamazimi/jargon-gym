@@ -1,7 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TelegramAction } from "./actions";
-import { CONNECT_MESSAGE, WELCOME_MESSAGE } from "./copy";
+import { resolveUserIdByChatId } from "@/lib/terms/term-delivery";
+import { ALREADY_CONNECTED_MESSAGE, CONNECT_MESSAGE, WELCOME_MESSAGE } from "./copy";
 import { completeTelegramLink } from "./links";
 import { send } from "./transport";
 
@@ -30,7 +31,8 @@ export async function handleStart(
   token: string | null,
 ): Promise<TelegramAction[]> {
   if (!token) {
-    return [send(chatId, CONNECT_MESSAGE)];
+    const linkedUserId = await resolveUserIdByChatId(client, chatId);
+    return [send(chatId, linkedUserId ? ALREADY_CONNECTED_MESSAGE : CONNECT_MESSAGE)];
   }
 
   const result = await completeTelegramLink(client, chatId, token);

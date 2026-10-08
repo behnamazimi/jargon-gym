@@ -13,7 +13,8 @@ type AuthLikeError = {
 };
 
 const GENERIC_ERROR = "We couldn't complete that. Try again in a moment.";
-const INVALID_LOGIN = "That email or password doesn't look right.";
+const INVALID_LOGIN =
+  "That email or password doesn't look right. Signed up with Google? Use Continue with Google.";
 export const SUSPENDED_ERROR = "This account has been suspended.";
 const INVALID_REFERRAL = "That invite code isn't valid, was already used, or has run out.";
 export const FULL_REFERRAL = "That invite code is full or has expired.";

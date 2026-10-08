@@ -74,6 +74,24 @@ describe("updateSession", () => {
     }
   });
 
+  it("sends every private area to login with the page they asked for", async () => {
+    for (const path of ["/app", "/app/library", "/admin", "/complete-signup", "/api/review/feed"]) {
+      const response = await updateSession(request(path));
+      expect(response.status).toBe(307);
+      const location = new URL(response.headers.get("location")!);
+      expect(location.pathname).toBe("/login");
+      expect(location.searchParams.get("next")).toBe(path);
+    }
+  });
+
+  it("lets a signed-out visitor reach the 404 page for a mistyped address", async () => {
+    for (const path of ["/nonexistent", "/abot", "/applications", "/features/old"]) {
+      const response = await updateSession(request(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    }
+  });
+
   it("forwards no user on a public page when the token has no subject", async () => {
     auth.claims = { data: { claims: {} } };
     const forwarded = forwardedHeaders(await updateSession(request("/")));

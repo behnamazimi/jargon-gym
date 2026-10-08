@@ -17,9 +17,13 @@ const OAUTH_FAILED_ERROR = "Google sign-in didn't work. Try again or use your em
 
 const LINK_FAILED_ERROR = "That link didn't work here. Log in with your email and password.";
 
+const RESET_FAILED_ERROR =
+  "That reset link expired or was opened in a different browser. Request a new one.";
+
 const QUERY_ERRORS: Record<string, string> = {
   "oauth-failed": OAUTH_FAILED_ERROR,
   "link-failed": LINK_FAILED_ERROR,
+  "reset-failed": RESET_FAILED_ERROR,
   suspended: SUSPENDED_ERROR,
 };
 
@@ -30,6 +34,7 @@ export default function LoginForm() {
   const queryError = QUERY_ERRORS[searchParams.get("error") ?? ""] ?? null;
   const [state, action, pending] = useActionState(login, null);
   const error = state?.error ?? queryError;
+  const showResetLink = !state?.error && searchParams.get("error") === "reset-failed";
 
   return (
     <div className="flex w-full max-w-sm flex-col gap-4">
@@ -51,6 +56,11 @@ export default function LoginForm() {
       <form action={action} className="flex flex-col gap-4">
         <input type="hidden" name="next" value={next} />
         <AuthFormError error={error} />
+        {showResetLink ? (
+          <Link href="/forgot-password" className="text-sm underline underline-offset-2">
+            Request a new reset link
+          </Link>
+        ) : null}
 
         <FieldGroup>
           <Field>

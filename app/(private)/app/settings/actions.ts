@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { logout } from "@/app/(private)/auth/actions";
+import { formatAuthError } from "@/lib/auth/format-auth-error";
+import { getPasswordValidationError } from "@/lib/auth/password-policy";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { createClient } from "@/lib/supabase/server";
 import { getAiAccessView } from "@/lib/llm/access";
 import {
   createOrRefreshTelegramLink,
@@ -14,6 +17,94 @@ import {
 import type { TelegramCadence } from "@/lib/telegram/types";
 import { createWidgetToken, listWidgetTokens, revokeWidgetToken } from "@/lib/widget/tokens";
 import { deleteUserScreenshots } from "@/lib/issues/storage";
+
+export type AccountSettings = { email: string | null; hasPassword: boolean };
+
+/** Accounts made with Google have no password until they set one. */
+async function readAccountSettings(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<AccountSettings> {
+  const { data } = await supabase.auth.getUser();
+  return {
+    email: data.user?.email ?? null,
+    hasPassword: data.user?.identities?.some((identity) => identity.provider === "email") ?? false,
+  };
+}
+
+export async function getAccountSettingsData() {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) {
+    return { error: "Log in to view settings." as const };
+  }
+
+  return { account: await readAccountSettings(auth.supabase) };
+}
+
+export type ChangePasswordState = { error: string } | { success: true; id: string } | null;
+
+const WRONG_CURRENT_PASSWORD = "That isn't your current password.";
+const SAME_PASSWORD = "Choose a password different from your current one.";
+
+function validateNewPassword(password: string, confirmPassword: string): string | null {
+  if (!password || !confirmPassword) return "Enter a new password in both fields.";
+  const passwordError = getPasswordValidationError(password);
+  if (passwordError) return passwordError;
+  if (password !== confirmPassword) return "Passwords don't match.";
+  return null;
+}
+
+type Client = Awaited<ReturnType<typeof createClient>>;
+
+/** Returns the message to show, or null when the current password is right. */
+async function checkCurrentPassword(
+  supabase: Client,
+  email: string | null,
+  currentPassword: string,
+  newPassword: string,
+): Promise<string | null> {
+  if (!email || !currentPassword) return "Enter your current password.";
+  if (currentPassword === newPassword) return SAME_PASSWORD;
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+  if (!error) return null;
+  return error.code === "invalid_credentials"
+    ? WRONG_CURRENT_PASSWORD
+    : formatAuthError(error, "login");
+}
+
+export async function changePasswordAction(
+  _prev: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: "Log in to continue." };
+
+  const password = formData.get("password")?.toString() ?? "";
+  const invalid = validateNewPassword(password, formData.get("confirmPassword")?.toString() ?? "");
+  if (invalid) return { error: invalid };
+
+  const { supabase } = auth;
+  const { email, hasPassword } = await readAccountSettings(supabase);
+
+  if (hasPassword) {
+    const currentPassword = formData.get("currentPassword")?.toString() ?? "";
+    const rejected = await checkCurrentPassword(supabase, email, currentPassword, password);
+    if (rejected) return { error: rejected };
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({ password });
+  if (updateError) {
+    return {
+      error:
+        updateError.code === "same_password"
+          ? SAME_PASSWORD
+          : formatAuthError(updateError, "reset"),
+    };
+  }
+
+  await supabase.auth.signOut({ scope: "others" });
+  return { success: true, id: crypto.randomUUID() };
+}
 
 export async function getLlmSettingsData() {
   const auth = await requireAuthenticatedClient();

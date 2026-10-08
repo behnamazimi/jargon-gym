@@ -71,6 +71,7 @@ export function CollectionSelect(props: CollectionSelectProps) {
   return (
     <Select
       className={className}
+      aria-label={ariaLabel ?? "Collection"}
       value={value}
       isDisabled={isDisabled}
       disabledKeys={disabledKeys}

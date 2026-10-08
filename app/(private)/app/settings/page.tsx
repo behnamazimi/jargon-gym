@@ -1,11 +1,12 @@
 import { Suspense } from "react";
 import {
+  getAccountSettingsData,
   getLlmSettingsData,
   getTelegramSettingsData,
   getWidgetSettingsData,
 } from "@/app/(private)/app/settings/actions";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { DeleteAccountPanel } from "@/components/settings/delete-account-panel";
+import { AccountPanel } from "@/components/settings/account-panel";
 import { LlmPanel } from "@/components/settings/llm-panel";
 import { TelegramPanel } from "@/components/settings/telegram-panel";
 import { ScrollToSettingsPanel, type SettingsTabId } from "@/components/settings/ui";
@@ -18,7 +19,7 @@ type PageProps = {
 };
 
 function parseTab(value: string | undefined): SettingsTabId | null {
-  if (value === "telegram" || value === "widget" || value === "ai") {
+  if (value === "telegram" || value === "widget" || value === "ai" || value === "account") {
     return value;
   }
   // The AI panel used to be the "quiz" tab; keep old links working.
@@ -52,6 +53,14 @@ async function WidgetPanelServer() {
   );
 }
 
+async function AccountPanelServer() {
+  const setup = await getAccountSettingsData();
+  if ("error" in setup) {
+    return <p className="text-sm text-base-content/70">{setup.error}</p>;
+  }
+  return <AccountPanel {...setup.account} />;
+}
+
 export default async function SettingsRoute({ searchParams }: PageProps) {
   const [{ tab: tabParam }, auth] = await Promise.all([searchParams, requireAuthenticatedClient()]);
 
@@ -73,7 +82,9 @@ export default async function SettingsRoute({ searchParams }: PageProps) {
       <Suspense fallback={<PanelSkeleton />}>
         <WidgetPanelServer />
       </Suspense>
-      {auth.user.email ? <DeleteAccountPanel email={auth.user.email} /> : null}
+      <Suspense fallback={<PanelSkeleton />}>
+        <AccountPanelServer />
+      </Suspense>
     </div>
   );
 }
