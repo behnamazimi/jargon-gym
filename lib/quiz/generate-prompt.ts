@@ -15,8 +15,8 @@ const KIND_LABEL: Record<CollectionKind, string> = {
   vocabulary: "language words",
 };
 
-function formatDomainLabel(slots: AiSlot[]): string {
-  return [...new Set(slots.map(({ term }) => term.domainName))].join(", ");
+function formatCollectionLabel(slots: AiSlot[]): string {
+  return [...new Set(slots.map(({ term }) => term.collectionName))].join(", ");
 }
 
 function questionShapes(slots: AiSlot[]): string[] {
@@ -51,7 +51,7 @@ ${quote}      "correctAnswer": true
  * kinds in the quiz, and each term's name and (capped) definition.
  */
 export function buildQuizPrompt(slots: AiSlot[]): string {
-  const multipleDomains = new Set(slots.map(({ term }) => term.domainName)).size > 1;
+  const multipleCollections = new Set(slots.map(({ term }) => term.collectionName)).size > 1;
   const kinds = [...new Set(slots.map(({ term }) => term.kind))];
   const templates = [...new Map(slots.map(({ template }) => [template.id, template])).values()];
 
@@ -63,7 +63,7 @@ export function buildQuizPrompt(slots: AiSlot[]): string {
         `  term: ${JSON.stringify(term.term)}`,
         `  definition: ${JSON.stringify(truncateAtWord(term.definition, AI_DEFINITION_MAX_CHARS))}`,
       ];
-      if (multipleDomains) lines.push(`  domain: ${JSON.stringify(term.domainName)}`);
+      if (multipleCollections) lines.push(`  collection: ${JSON.stringify(term.collectionName)}`);
       return lines.join("\n");
     })
     .join("\n");
@@ -78,7 +78,7 @@ export function buildQuizPrompt(slots: AiSlot[]): string {
     )
     .join("\n");
 
-  return `Write exactly ${slots.length} quiz questions in the collection(s): ${JSON.stringify(formatDomainLabel(slots))}, one per term below, in the same order. Each term has a "template" that fixes the question shape; write only the fields described for it. The question wording itself is added for you.
+  return `Write exactly ${slots.length} quiz questions in the collection(s): ${JSON.stringify(formatCollectionLabel(slots))}, one per term below, in the same order. Each term has a "template" that fixes the question shape; write only the fields described for it. The question wording itself is added for you.
 
 ${kinds.map((kind) => KIND_INTRO[kind]).join("\n")}
 

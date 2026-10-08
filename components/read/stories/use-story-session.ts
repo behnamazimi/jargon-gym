@@ -37,10 +37,11 @@ export function useStorySession(setup: StoriesSetupData) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const [step, setStep] = useState<StoryStep>(setup.currentStory ? "reading" : "setup");
-  const [domainId, setDomainId] = useState(setup.initialDomainId);
-  const [levelsByDomain, setLevelsByDomain] = useState(setup.levelsByDomain);
+  const [collectionId, setCollectionId] = useState(setup.initialCollectionId);
+  const [levelsByCollection, setLevelsByCollection] = useState(setup.levelsByCollection);
   const initialLevels =
-    (setup.initialDomainId && setup.levelsByDomain[setup.initialDomainId]) || DEFAULT_LEVELS;
+    (setup.initialCollectionId && setup.levelsByCollection[setup.initialCollectionId]) ||
+    DEFAULT_LEVELS;
   const [readingLevel, setReadingLevel] = useState<ReadingLevel>(initialLevels.readingLevel);
   const [cefrLevel, setCefrLevel] = useState<CefrLevel>(initialLevels.cefrLevel);
   const [pieceLength, setPieceLength] = useState<PieceLength>(initialLevels.pieceLength);
@@ -56,9 +57,9 @@ export function useStorySession(setup: StoriesSetupData) {
   const currentStoryIdRef = useRef(story?.id);
   currentStoryIdRef.current = story?.id;
 
-  function selectCollection(nextDomainId: string) {
-    setDomainId(nextDomainId);
-    const levels = levelsByDomain[nextDomainId] ?? DEFAULT_LEVELS;
+  function selectCollection(nextCollectionId: string) {
+    setCollectionId(nextCollectionId);
+    const levels = levelsByCollection[nextCollectionId] ?? DEFAULT_LEVELS;
     setReadingLevel(levels.readingLevel);
     setCefrLevel(levels.cefrLevel);
     setPieceLength(levels.pieceLength);
@@ -82,14 +83,14 @@ export function useStorySession(setup: StoriesSetupData) {
   }
 
   async function generate() {
-    if (busyRef.current || !domainId) return;
+    if (busyRef.current || !collectionId) return;
     busyRef.current = true;
     setStep("generating");
     setErrorMessage(null);
     setErrorReason(null);
 
     const levels = { readingLevel, cefrLevel, pieceLength };
-    const result = await generateStoryAction({ domainId, ...levels, outline });
+    const result = await generateStoryAction({ collectionId, ...levels, outline });
     busyRef.current = false;
     // The balance may have changed either way, so refresh what shows it.
     router.refresh();
@@ -100,7 +101,7 @@ export function useStorySession(setup: StoriesSetupData) {
       setStep("error");
       return;
     }
-    setLevelsByDomain((current) => ({ ...current, [domainId]: levels }));
+    setLevelsByCollection((current) => ({ ...current, [collectionId]: levels }));
     setOutline("");
     clearStoryParam();
     showStory(result);
@@ -146,7 +147,7 @@ export function useStorySession(setup: StoriesSetupData) {
 
   return {
     step,
-    domainId,
+    collectionId,
     selectCollection,
     readingLevel,
     setReadingLevel,

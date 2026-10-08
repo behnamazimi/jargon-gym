@@ -3,19 +3,19 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildNarrationScript } from "@/lib/narration/template";
 import { createMurfProvider } from "@/lib/ai/speech/providers/murf";
-import { DOMAIN_LANGUAGES, DOMAIN_LANGUAGE_OPTIONS, parseLanguage } from "./languages";
+import { COLLECTION_LANGUAGES, COLLECTION_LANGUAGE_OPTIONS, parseLanguage } from "./languages";
 import { TERM_LABELS } from "./term-labels";
 
 const NEW_LANGUAGES = ["es", "fr", "de", "it", "pt", "ru", "tr", "ja", "ko", "zh"] as const;
 
 describe("supported languages", () => {
   it("offers twelve languages with unique names, English first", () => {
-    expect(DOMAIN_LANGUAGES).toHaveLength(12);
-    expect(DOMAIN_LANGUAGE_OPTIONS).toHaveLength(12);
-    expect(DOMAIN_LANGUAGE_OPTIONS[0]).toEqual({ value: "en", label: "English" });
-    expect(new Set(DOMAIN_LANGUAGE_OPTIONS.map((option) => option.label)).size).toBe(12);
-    expect(DOMAIN_LANGUAGE_OPTIONS.map((option) => option.value).sort()).toEqual(
-      [...DOMAIN_LANGUAGES].sort(),
+    expect(COLLECTION_LANGUAGES).toHaveLength(12);
+    expect(COLLECTION_LANGUAGE_OPTIONS).toHaveLength(12);
+    expect(COLLECTION_LANGUAGE_OPTIONS[0]).toEqual({ value: "en", label: "English" });
+    expect(new Set(COLLECTION_LANGUAGE_OPTIONS.map((option) => option.label)).size).toBe(12);
+    expect(COLLECTION_LANGUAGE_OPTIONS.map((option) => option.value).sort()).toEqual(
+      [...COLLECTION_LANGUAGES].sort(),
     );
   });
 
@@ -32,7 +32,7 @@ describe("supported languages", () => {
     );
     const list = /select p_language in \(([^)]+)\)/.exec(sql)?.[1] ?? "";
     const codes = list.split(",").map((code) => code.trim().replaceAll("'", ""));
-    expect(codes.sort()).toEqual([...DOMAIN_LANGUAGES].sort());
+    expect(codes.sort()).toEqual([...COLLECTION_LANGUAGES].sort());
   });
 
   it.each(NEW_LANGUAGES)("has complete card labels for %s", (language) => {

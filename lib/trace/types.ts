@@ -53,7 +53,7 @@ export type TraceSnapshot = {
  *  and the Mastery page can display them distinctly. */
 export type TraceCandidate = TraceState & {
   termId: string;
-  domainId: string;
+  collectionId: string;
   createdAt: Date;
   everMasteredAt: Date | null;
   everLearningAt: Date | null;

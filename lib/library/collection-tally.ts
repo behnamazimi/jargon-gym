@@ -2,12 +2,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { fetchAllRows } from "@/lib/supabase/fetch-all-rows";
 import { computeTraceSnapshot, type TraceState } from "@/lib/trace";
-import type { CollectionDomainRow } from "./collections";
+import type { CollectionRow } from "./collections";
 
 type Client = SupabaseClient<Database>;
 
 type ProgressStateRow = {
-  domain_id: string;
+  collection_id: string;
   read_count: number;
   last_read_at: string | null;
   recall_stability: number | null;
@@ -43,7 +43,7 @@ function toTraceState(row: ProgressStateRow): TraceState {
  *  but counted into `knownCount`/`termsLearnedCount` too since it reduces
  *  what's left to learn regardless of how it happened; `markedKnownCount`
  *  tracks it on its own for the Mastery page's "N marked known by you" line. */
-type DomainStats = {
+type CollectionStats = {
   termCount: number;
   unfinishedCount: number;
   knownCount: number;
@@ -51,12 +51,12 @@ type DomainStats = {
   markedKnownCount: number;
 };
 
-function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
-  const stats = new Map<string, DomainStats>();
+function tallyCollectionStats(collectionIds: string[], data: ProgressStateRow[]) {
+  const stats = new Map<string, CollectionStats>();
   const now = new Date();
 
-  for (const domainId of domainIds) {
-    stats.set(domainId, {
+  for (const collectionId of collectionIds) {
+    stats.set(collectionId, {
       termCount: 0,
       unfinishedCount: 0,
       knownCount: 0,
@@ -66,7 +66,7 @@ function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
   }
 
   for (const row of data) {
-    const current = stats.get(row.domain_id);
+    const current = stats.get(row.collection_id);
     if (!current) continue;
     current.termCount += 1;
     const markedKnown = row.marked_known_at !== null;
@@ -84,48 +84,52 @@ function tallyDomainStats(domainIds: string[], data: ProgressStateRow[]) {
   return stats;
 }
 
-export async function fetchDomainStats(client: Client, domainIds: string[]) {
-  if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
+export async function fetchCollectionStats(client: Client, collectionIds: string[]) {
+  if (collectionIds.length === 0) return tallyCollectionStats(collectionIds, []);
 
   const [progress, unfinished] = await Promise.all([
     fetchAllRows((from, to) =>
       client
-        .rpc("my_progress_state_by_domain", { p_domain_ids: domainIds })
+        .rpc("my_progress_state_by_collection", { p_collection_ids: collectionIds })
         .order("term_id")
         .range(from, to),
     ),
-    client.rpc("my_unfinished_term_counts", { p_domain_ids: domainIds }),
+    client.rpc("my_unfinished_term_counts", { p_collection_ids: collectionIds }),
   ]);
 
   if (unfinished.error) throw unfinished.error;
 
-  const stats = tallyDomainStats(domainIds, progress);
+  const stats = tallyCollectionStats(collectionIds, progress);
   for (const row of unfinished.data) {
-    const current = stats.get(row.domain_id);
+    const current = stats.get(row.collection_id);
     if (current) current.unfinishedCount = row.unfinished_count;
   }
   return stats;
 }
 
 /** Service-role / admin client: stats for an explicit userId (no `auth.uid()` session). */
-export async function fetchDomainStatsForUser(client: Client, userId: string, domainIds: string[]) {
-  if (domainIds.length === 0) return tallyDomainStats(domainIds, []);
+export async function fetchCollectionStatsForUser(
+  client: Client,
+  userId: string,
+  collectionIds: string[],
+) {
+  if (collectionIds.length === 0) return tallyCollectionStats(collectionIds, []);
 
   const data = await fetchAllRows((from, to) =>
     client
-      .rpc("progress_state_by_domain", { p_user_id: userId, p_domain_ids: domainIds })
+      .rpc("progress_state_by_collection", { p_user_id: userId, p_collection_ids: collectionIds })
       .order("term_id")
       .range(from, to),
   );
-  return tallyDomainStats(domainIds, data);
+  return tallyCollectionStats(collectionIds, data);
 }
 
-export function applyDomainStats<T extends { id: string }>(
+export function applyCollectionStats<T extends { id: string }>(
   rows: T[],
-  stats: Map<string, DomainStats>,
-): (T & CollectionDomainRow)[] {
+  stats: Map<string, CollectionStats>,
+): (T & CollectionRow)[] {
   return rows.map((row) => {
-    const domainStats = stats.get(row.id) ?? {
+    const collectionStats = stats.get(row.id) ?? {
       termCount: 0,
       unfinishedCount: 0,
       knownCount: 0,
@@ -134,11 +138,11 @@ export function applyDomainStats<T extends { id: string }>(
     };
     return {
       ...row,
-      termCount: domainStats.termCount,
-      unfinishedCount: domainStats.unfinishedCount,
-      knownCount: domainStats.knownCount,
-      termsLearnedCount: domainStats.termsLearnedCount,
-      markedKnownCount: domainStats.markedKnownCount,
-    } as T & CollectionDomainRow;
+      termCount: collectionStats.termCount,
+      unfinishedCount: collectionStats.unfinishedCount,
+      knownCount: collectionStats.knownCount,
+      termsLearnedCount: collectionStats.termsLearnedCount,
+      markedKnownCount: collectionStats.markedKnownCount,
+    } as T & CollectionRow;
   });
 }

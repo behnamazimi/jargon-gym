@@ -42,7 +42,7 @@ describe("commitImportSchema text cleaning", () => {
 
 describe("collection ids", () => {
   it("accepts ids whose version and variant bits are not RFC 4122", () => {
-    const destination = { domainId: "22222222-2222-2222-2222-222222222222" };
+    const destination = { collectionId: "22222222-2222-2222-2222-222222222222" };
     expect(commitImportSchema.safeParse({ ...base, destination }).success).toBe(true);
   });
 });

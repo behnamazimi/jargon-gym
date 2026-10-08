@@ -21,13 +21,13 @@ test.describe("Adding terms", () => {
 
       await page.getByLabel("Name", { exact: true }).fill("Imported from a list");
       await page.getByRole("button", { name: /^Add \d+ terms?/ }).click();
-      await expect(page).toHaveURL(/\/app\/library\?domain=/);
+      await expect(page).toHaveURL(/\/app\/library\?collection=/);
 
       await expect
         .poll(async () => {
           const rows = await sql<{ term: string; definition: string | null }>(
             `select t.term, t.definition from public.terms t
-           join public.domains d on d.id = t.domain_id
+           join public.collections d on d.id = t.collection_id
            where d.owner_id = $1 order by t.term`,
             [user.id],
           );
@@ -43,12 +43,12 @@ test.describe("Adding terms", () => {
     await page.getByRole("button", { name: "Check your list" }).click();
     await page.getByLabel("Name", { exact: true }).fill("Imported from a list");
     await page.getByRole("button", { name: /^Add \d+ terms?/ }).click();
-    await expect(page).toHaveURL(/\/app\/library\?domain=/);
+    await expect(page).toHaveURL(/\/app\/library\?collection=/);
 
     const [counts] = await sql<{ finished: string; unfinished: string }>(
       `select count(*) filter (where t.definition is not null and t.definition <> '') as finished,
               count(*) filter (where t.definition is null or t.definition = '') as unfinished
-       from public.terms t join public.domains d on d.id = t.domain_id
+       from public.terms t join public.collections d on d.id = t.collection_id
        where d.owner_id = $1`,
       [user.id],
     );
@@ -60,8 +60,8 @@ test.describe("Adding terms", () => {
     "saving a term adds it to the chosen collection",
     { tag: "@smoke" },
     async ({ page, user }) => {
-      const { domainId } = await seedCollection(user, SAMPLE_TERMS.slice(0, 2));
-      await gotoReady(page, `/app/capture?to=${domainId}`);
+      const { collectionId } = await seedCollection(user, SAMPLE_TERMS.slice(0, 2));
+      await gotoReady(page, `/app/capture?to=${collectionId}`);
 
       await page.getByLabel("Term", { exact: true }).fill("Idempotent retry");
       await page.getByLabel("Definition").fill("Repeating the call is safe.");
@@ -69,8 +69,8 @@ test.describe("Adding terms", () => {
 
       await expect(page.getByText("Saved “Idempotent retry”")).toBeVisible();
       const rows = await sql(
-        "select 1 from public.terms where domain_id = $1 and term = 'Idempotent retry'",
-        [domainId],
+        "select 1 from public.terms where collection_id = $1 and term = 'Idempotent retry'",
+        [collectionId],
       );
       expect(rows).toHaveLength(1);
     },

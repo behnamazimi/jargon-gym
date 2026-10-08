@@ -1,18 +1,18 @@
 import type { Database } from "@/lib/supabase/database.types";
 import type {
-  Domain,
-  DomainSource,
+  Collection,
+  CollectionSource,
   Term,
   TermRelationship,
   TermRelationshipLink,
   UnfinishedTerm,
 } from "./types";
 
-type DomainRow = Database["public"]["Tables"]["domains"]["Row"];
+type CollectionRow = Database["public"]["Tables"]["collections"]["Row"];
 type TermRow = Database["public"]["Tables"]["terms"]["Row"];
 
-type MapDomainOptions = {
-  source: DomainSource;
+type MapCollectionOptions = {
+  source: CollectionSource;
   isActiveForReview: boolean;
   termCount?: number;
   unfinishedCount?: number;
@@ -23,18 +23,18 @@ type MapDomainOptions = {
   reportedByMe?: boolean;
 };
 
-export function mapDomain(
-  row: Pick<DomainRow, "id" | "name" | "visibility" | "description" | "language"> &
-    Partial<Pick<DomainRow, "is_builtin" | "love_count" | "share_block_reason">>,
-  options: MapDomainOptions,
-): Domain {
+export function mapCollection(
+  row: Pick<CollectionRow, "id" | "name" | "visibility" | "description" | "language"> &
+    Partial<Pick<CollectionRow, "is_builtin" | "love_count" | "share_block_reason">>,
+  options: MapCollectionOptions,
+): Collection {
   return {
     id: row.id,
     name: row.name,
     icon: "",
     description: row.description ?? "",
     visibility: row.visibility,
-    language: row.language as Domain["language"],
+    language: row.language as Collection["language"],
     source: options.source,
     isActiveForReview: options.isActiveForReview,
     termCount: options.termCount ?? 0,

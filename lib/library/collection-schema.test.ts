@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseNewCollectionInput } from "./domain-schema";
+import { parseNewCollectionInput } from "./collection-schema";
 
 describe("parseNewCollectionInput", () => {
   it.each([

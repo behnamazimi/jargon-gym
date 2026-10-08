@@ -8,7 +8,7 @@ import { useLibraryList } from "@/hooks/use-library-list";
 import { useSlashToFocus } from "@/hooks/use-slash-to-focus";
 import { useToast } from "@/components/ui/toast";
 import { ImportedNotice, type ImportedSummary } from "@/components/import/imported-banner";
-import { LibraryDomainHeader } from "./library-domain-header";
+import { LibraryCollectionHeader } from "./library-collection-header";
 import { LibraryFilters } from "./library-filters";
 import { UnfinishedSection } from "@/components/terms/unfinished-section";
 import { TermList } from "@/components/terms/term-list";
@@ -33,7 +33,7 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
   const { toast } = useToast();
 
   const {
-    domain,
+    collection,
     terms,
     removeTerm,
     categories,
@@ -56,7 +56,7 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
     clearSearch,
   } = useLibraryList(data, filtersCookie);
 
-  const liveDomain = useMemo(() => {
+  const liveCollection = useMemo(() => {
     const known = new Set<string>();
     const learned = new Set<string>();
     for (const term of terms) {
@@ -64,20 +64,20 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
       if (everMasteredTerms.has(term.id) || markedKnownTerms.has(term.id)) learned.add(term.id);
     }
     return {
-      ...domain,
+      ...collection,
       knownCount: known.size,
       termsLearnedCount: learned.size,
       termCount: terms.length,
     };
-  }, [domain, terms, knownTerms, markedKnownTerms, everMasteredTerms]);
+  }, [collection, terms, knownTerms, markedKnownTerms, everMasteredTerms]);
 
-  const untriagedCount = terms.length - liveDomain.knownCount;
-  const isOwner = domain.source === "owned";
+  const untriagedCount = terms.length - liveCollection.knownCount;
+  const isOwner = collection.source === "owned";
   const windowKey = [searchQuery, hideKnown, sortMode, [...activeCategories].join("|")].join("·");
 
   // Details belong to this server snapshot; an edit's revalidation brings a
   // new one, so nothing needs clearing by hand.
-  const detailsScope = `${domain.id}:${data.loadedAt}`;
+  const detailsScope = `${collection.id}:${data.loadedAt}`;
 
   useSlashToFocus(searchInputRef);
 
@@ -97,12 +97,12 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
         <Suspense fallback={null}>
           <ImportedNotice
             summary={importedSummary}
-            domain={domain}
+            collection={collection}
             onFinish={() => setFinishOpen(true)}
           />
         </Suspense>
-        <LibraryDomainHeader
-          domain={liveDomain}
+        <LibraryCollectionHeader
+          collection={liveCollection}
           categoryCount={categories.length}
           isOwner={isOwner}
           untriagedCount={untriagedCount}
@@ -111,7 +111,7 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
         {isOwner ? (
           <Suspense fallback={null}>
             <UnfinishedSection
-              domainId={domain.id}
+              collectionId={collection.id}
               terms={data.unfinishedTerms}
               isOpen={finishOpen}
               onOpenChange={setFinishOpen}
@@ -144,10 +144,10 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
           markedKnownTerms={markedKnownTerms}
           openTerms={openTerms}
           isOwner={isOwner}
-          language={domain.language}
+          language={collection.language}
           totalCount={terms.length}
           hasUnfinished={data.unfinishedTerms.length > 0}
-          domainId={domain.id}
+          collectionId={collection.id}
           onToggleOpen={toggleOpen}
           onToggleMarkedKnown={toggleMarkedKnown}
           onEdit={handleEdit}
@@ -156,7 +156,7 @@ export function LibraryPage({ data, filtersCookie, importedSummary }: LibraryPag
 
         {isOwner ? (
           <TermRowDialogs
-            domainTerms={terms}
+            collectionTerms={terms}
             editing={editing}
             onEditingChange={setEditing}
             deleting={deleting}

@@ -23,6 +23,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const seed = await loadReviewFeed(input.domainId, input.excludeTermIds);
+  const seed = await loadReviewFeed(input.collectionId, input.excludeTermIds);
   return NextResponse.json(seed, { headers: NO_STORE });
 }

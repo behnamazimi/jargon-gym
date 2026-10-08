@@ -513,26 +513,26 @@ export type Database = {
       };
       collection_loves: {
         Row: {
+          collection_id: string;
           created_at: string;
-          domain_id: string;
           user_id: string;
         };
         Insert: {
+          collection_id: string;
           created_at?: string;
-          domain_id: string;
           user_id: string;
         };
         Update: {
+          collection_id?: string;
           created_at?: string;
-          domain_id?: string;
           user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "collection_loves_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "collection_loves_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -546,34 +546,34 @@ export type Database = {
       };
       collection_narration_settings: {
         Row: {
-          domain_id: string;
+          collection_id: string;
           mode: string;
           updated_at: string;
         };
         Insert: {
-          domain_id: string;
+          collection_id: string;
           mode: string;
           updated_at?: string;
         };
         Update: {
-          domain_id?: string;
+          collection_id?: string;
           mode?: string;
           updated_at?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "collection_narration_settings_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "collection_narration_settings_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: true;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
         ];
       };
       collection_reports: {
         Row: {
+          collection_id: string;
           created_at: string;
-          domain_id: string;
           id: string;
           note: string | null;
           reason: string;
@@ -583,8 +583,8 @@ export type Database = {
           status: string;
         };
         Insert: {
+          collection_id: string;
           created_at?: string;
-          domain_id: string;
           id?: string;
           note?: string | null;
           reason: string;
@@ -594,8 +594,8 @@ export type Database = {
           status?: string;
         };
         Update: {
+          collection_id?: string;
           created_at?: string;
-          domain_id?: string;
           id?: string;
           note?: string | null;
           reason?: string;
@@ -606,10 +606,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "collection_reports_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "collection_reports_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -662,7 +662,7 @@ export type Database = {
           decline_note: string | null;
           decline_reason: string | null;
           delay_notified_at: string | null;
-          delivered_domain_id: string | null;
+          delivered_collection_id: string | null;
           delivered_terms: number | null;
           delivery_kind: string | null;
           dismissed_at: string | null;
@@ -681,7 +681,7 @@ export type Database = {
           replied_at: string | null;
           size: number | null;
           status: string;
-          target_domain_id: string | null;
+          target_collection_id: string | null;
           topic: string;
           updated_at: string;
           user_id: string;
@@ -693,7 +693,7 @@ export type Database = {
           decline_note?: string | null;
           decline_reason?: string | null;
           delay_notified_at?: string | null;
-          delivered_domain_id?: string | null;
+          delivered_collection_id?: string | null;
           delivered_terms?: number | null;
           delivery_kind?: string | null;
           dismissed_at?: string | null;
@@ -712,7 +712,7 @@ export type Database = {
           replied_at?: string | null;
           size?: number | null;
           status?: string;
-          target_domain_id?: string | null;
+          target_collection_id?: string | null;
           topic: string;
           updated_at?: string;
           user_id: string;
@@ -724,7 +724,7 @@ export type Database = {
           decline_note?: string | null;
           decline_reason?: string | null;
           delay_notified_at?: string | null;
-          delivered_domain_id?: string | null;
+          delivered_collection_id?: string | null;
           delivered_terms?: number | null;
           delivery_kind?: string | null;
           dismissed_at?: string | null;
@@ -743,7 +743,7 @@ export type Database = {
           replied_at?: string | null;
           size?: number | null;
           status?: string;
-          target_domain_id?: string | null;
+          target_collection_id?: string | null;
           topic?: string;
           updated_at?: string;
           user_id?: string;
@@ -751,10 +751,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "collection_requests_delivered_domain_id_fkey";
-            columns: ["delivered_domain_id"];
+            foreignKeyName: "collection_requests_delivered_collection_id_fkey";
+            columns: ["delivered_collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -765,15 +765,77 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "collection_requests_target_domain_id_fkey";
-            columns: ["target_domain_id"];
+            foreignKeyName: "collection_requests_target_collection_id_fkey";
+            columns: ["target_collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
             foreignKeyName: "collection_requests_user_id_fkey";
             columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      collections: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_builtin: boolean;
+          is_public: boolean;
+          kind: string;
+          language: string;
+          love_count: number;
+          name: string;
+          owner_id: string;
+          share_block_reason: string | null;
+          share_blocked_at: string | null;
+          slug: string | null;
+          updated_at: string;
+          visibility: Database["public"]["Enums"]["collection_visibility"];
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_builtin?: boolean;
+          is_public?: boolean;
+          kind?: string;
+          language?: string;
+          love_count?: number;
+          name: string;
+          owner_id: string;
+          share_block_reason?: string | null;
+          share_blocked_at?: string | null;
+          slug?: string | null;
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["collection_visibility"];
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_builtin?: boolean;
+          is_public?: boolean;
+          kind?: string;
+          language?: string;
+          love_count?: number;
+          name?: string;
+          owner_id?: string;
+          share_block_reason?: string | null;
+          share_blocked_at?: string | null;
+          slug?: string | null;
+          updated_at?: string;
+          visibility?: Database["public"]["Enums"]["collection_visibility"];
+        };
+        Relationships: [
+          {
+            foreignKeyName: "collections_owner_id_fkey";
+            columns: ["owner_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -885,72 +947,10 @@ export type Database = {
           },
         ];
       };
-      domains: {
-        Row: {
-          created_at: string;
-          description: string | null;
-          id: string;
-          is_builtin: boolean;
-          is_public: boolean;
-          kind: string;
-          language: string;
-          love_count: number;
-          name: string;
-          owner_id: string;
-          share_block_reason: string | null;
-          share_blocked_at: string | null;
-          slug: string | null;
-          updated_at: string;
-          visibility: Database["public"]["Enums"]["domain_visibility"];
-        };
-        Insert: {
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          is_builtin?: boolean;
-          is_public?: boolean;
-          kind?: string;
-          language?: string;
-          love_count?: number;
-          name: string;
-          owner_id: string;
-          share_block_reason?: string | null;
-          share_blocked_at?: string | null;
-          slug?: string | null;
-          updated_at?: string;
-          visibility?: Database["public"]["Enums"]["domain_visibility"];
-        };
-        Update: {
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          is_builtin?: boolean;
-          is_public?: boolean;
-          kind?: string;
-          language?: string;
-          love_count?: number;
-          name?: string;
-          owner_id?: string;
-          share_block_reason?: string | null;
-          share_blocked_at?: string | null;
-          slug?: string | null;
-          updated_at?: string;
-          visibility?: Database["public"]["Enums"]["domain_visibility"];
-        };
-        Relationships: [
-          {
-            foreignKeyName: "domains_owner_id_fkey";
-            columns: ["owner_id"];
-            isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       import_batches: {
         Row: {
+          collection_id: string | null;
           created_at: string;
-          domain_id: string | null;
           entry: string | null;
           format: string | null;
           id: string;
@@ -959,8 +959,8 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          collection_id?: string | null;
           created_at?: string;
-          domain_id?: string | null;
           entry?: string | null;
           format?: string | null;
           id: string;
@@ -969,8 +969,8 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          collection_id?: string | null;
           created_at?: string;
-          domain_id?: string | null;
           entry?: string | null;
           format?: string | null;
           id?: string;
@@ -980,10 +980,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "import_batches_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "import_batches_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -1047,9 +1047,9 @@ export type Database = {
       };
       narration_sync_jobs: {
         Row: {
+          collection_id: string;
           created_at: string;
           cursor: number;
-          domain_id: string;
           failed_count: number;
           finished_at: string | null;
           generated_count: number;
@@ -1062,9 +1062,9 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          collection_id: string;
           created_at?: string;
           cursor?: number;
-          domain_id: string;
           failed_count?: number;
           finished_at?: string | null;
           generated_count?: number;
@@ -1077,9 +1077,9 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          collection_id?: string;
           created_at?: string;
           cursor?: number;
-          domain_id?: string;
           failed_count?: number;
           finished_at?: string | null;
           generated_count?: number;
@@ -1093,10 +1093,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "narration_sync_jobs_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "narration_sync_jobs_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -1330,9 +1330,9 @@ export type Database = {
       stories: {
         Row: {
           cefr_level: string;
+          collection_id: string | null;
           created_at: string;
           dismissed_at: string | null;
-          domain_id: string | null;
           format: string;
           id: string;
           language: string;
@@ -1350,9 +1350,9 @@ export type Database = {
         };
         Insert: {
           cefr_level: string;
+          collection_id?: string | null;
           created_at?: string;
           dismissed_at?: string | null;
-          domain_id?: string | null;
           format: string;
           id?: string;
           language: string;
@@ -1370,9 +1370,9 @@ export type Database = {
         };
         Update: {
           cefr_level?: string;
+          collection_id?: string | null;
           created_at?: string;
           dismissed_at?: string | null;
-          domain_id?: string | null;
           format?: string;
           id?: string;
           language?: string;
@@ -1390,10 +1390,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "stories_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "stories_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -1408,7 +1408,7 @@ export type Database = {
       story_collection_prefs: {
         Row: {
           cefr_level: string;
-          domain_id: string;
+          collection_id: string;
           piece_length: string;
           reading_level: string;
           updated_at: string;
@@ -1416,7 +1416,7 @@ export type Database = {
         };
         Insert: {
           cefr_level: string;
-          domain_id: string;
+          collection_id: string;
           piece_length?: string;
           reading_level: string;
           updated_at?: string;
@@ -1424,7 +1424,7 @@ export type Database = {
         };
         Update: {
           cefr_level?: string;
-          domain_id?: string;
+          collection_id?: string;
           piece_length?: string;
           reading_level?: string;
           updated_at?: string;
@@ -1432,10 +1432,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "story_collection_prefs_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "story_collection_prefs_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -1555,11 +1555,11 @@ export type Database = {
         Row: {
           anti_example: string | null;
           category: string | null;
+          collection_id: string;
           controversy: string | null;
           created_at: string;
           definition: string | null;
           discussion: string | null;
-          domain_id: string;
           example: string | null;
           id: string;
           mental_model: string | null;
@@ -1571,11 +1571,11 @@ export type Database = {
         Insert: {
           anti_example?: string | null;
           category?: string | null;
+          collection_id: string;
           controversy?: string | null;
           created_at?: string;
           definition?: string | null;
           discussion?: string | null;
-          domain_id: string;
           example?: string | null;
           id?: string;
           mental_model?: string | null;
@@ -1587,11 +1587,11 @@ export type Database = {
         Update: {
           anti_example?: string | null;
           category?: string | null;
+          collection_id?: string;
           controversy?: string | null;
           created_at?: string;
           definition?: string | null;
           discussion?: string | null;
-          domain_id?: string;
           example?: string | null;
           id?: string;
           mental_model?: string | null;
@@ -1602,10 +1602,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "terms_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "terms_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
         ];
@@ -1636,29 +1636,29 @@ export type Database = {
           },
         ];
       };
-      user_active_domains: {
+      user_active_collections: {
         Row: {
-          domain_id: string;
+          collection_id: string;
           user_id: string;
         };
         Insert: {
-          domain_id: string;
+          collection_id: string;
           user_id: string;
         };
         Update: {
-          domain_id?: string;
+          collection_id?: string;
           user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "user_active_domains_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "user_active_collections_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_active_domains_user_id_fkey";
+            foreignKeyName: "user_active_collections_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
@@ -1666,29 +1666,29 @@ export type Database = {
           },
         ];
       };
-      user_collection_domains: {
+      user_collections: {
         Row: {
-          domain_id: string;
+          collection_id: string;
           user_id: string;
         };
         Insert: {
-          domain_id: string;
+          collection_id: string;
           user_id: string;
         };
         Update: {
-          domain_id?: string;
+          collection_id?: string;
           user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "user_collection_domains_domain_id_fkey";
-            columns: ["domain_id"];
+            foreignKeyName: "user_collections_collection_id_fkey";
+            columns: ["collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "user_collection_domains_user_id_fkey";
+            foreignKeyName: "user_collections_user_id_fkey";
             columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
@@ -1716,7 +1716,7 @@ export type Database = {
           read_shadowing_repeats: number;
           read_stories_default: boolean;
           read_tap_to_play: boolean;
-          story_last_domain_id: string | null;
+          story_last_collection_id: string | null;
           term_layout: Json;
           timezone: string | null;
           tour_seen: string[];
@@ -1743,7 +1743,7 @@ export type Database = {
           read_shadowing_repeats?: number;
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
-          story_last_domain_id?: string | null;
+          story_last_collection_id?: string | null;
           term_layout?: Json;
           timezone?: string | null;
           tour_seen?: string[];
@@ -1770,7 +1770,7 @@ export type Database = {
           read_shadowing_repeats?: number;
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
-          story_last_domain_id?: string | null;
+          story_last_collection_id?: string | null;
           term_layout?: Json;
           timezone?: string | null;
           tour_seen?: string[];
@@ -1780,10 +1780,10 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "user_settings_story_last_domain_id_fkey";
-            columns: ["story_last_domain_id"];
+            foreignKeyName: "user_settings_story_last_collection_id_fkey";
+            columns: ["story_last_collection_id"];
             isOneToOne: false;
-            referencedRelation: "domains";
+            referencedRelation: "collections";
             referencedColumns: ["id"];
           },
           {
@@ -2086,7 +2086,7 @@ export type Database = {
         Returns: undefined;
       };
       admin_deliver_existing_collection: {
-        Args: { p_domain_id: string; p_request_id: string };
+        Args: { p_collection_id: string; p_request_id: string };
         Returns: Json;
       };
       admin_deliver_request: {
@@ -2100,7 +2100,7 @@ export type Database = {
         Returns: Json;
       };
       admin_dismiss_collection_reports: {
-        Args: { p_domain_id: string };
+        Args: { p_collection_id: string };
         Returns: number;
       };
       admin_fill_definitions: {
@@ -2117,11 +2117,11 @@ export type Database = {
         Returns: undefined;
       };
       admin_lift_share_lock: {
-        Args: { p_domain_id: string; p_note?: string };
+        Args: { p_collection_id: string; p_note?: string };
         Returns: undefined;
       };
       admin_list_collection_reports: {
-        Args: { p_domain_id: string };
+        Args: { p_collection_id: string };
         Returns: {
           created_at: string;
           id: string;
@@ -2149,7 +2149,7 @@ export type Database = {
           slug: string;
           term_count: number;
           updated_at: string;
-          visibility: Database["public"]["Enums"]["domain_visibility"];
+          visibility: Database["public"]["Enums"]["collection_visibility"];
         }[];
       };
       admin_list_shared_referral_codes: {
@@ -2180,7 +2180,11 @@ export type Database = {
         }[];
       };
       admin_publish_collection: {
-        Args: { p_domain_id: string; p_domain_slug: string; p_term_slugs: Json };
+        Args: {
+          p_collection_id: string;
+          p_collection_slug: string;
+          p_term_slugs: Json;
+        };
         Returns: string;
       };
       admin_queue_debug_terms: { Args: { p_user_id: string }; Returns: Json };
@@ -2227,7 +2231,7 @@ export type Database = {
         Returns: undefined;
       };
       admin_stop_sharing_collection: {
-        Args: { p_domain_id: string; p_note: string; p_reason: string };
+        Args: { p_collection_id: string; p_note: string; p_reason: string };
         Returns: undefined;
       };
       admin_write_audit: {
@@ -2269,7 +2273,10 @@ export type Database = {
         Returns: string;
       };
       bump_streak: { Args: { p_user_id: string }; Returns: undefined };
-      can_read_domain: { Args: { p_domain_id: string }; Returns: boolean };
+      can_read_collection: {
+        Args: { p_collection_id: string };
+        Returns: boolean;
+      };
       can_read_term: { Args: { p_term_id: string }; Returns: boolean };
       claim_audio_job: {
         Args: {
@@ -2362,11 +2369,11 @@ export type Database = {
         Returns: {
           anti_example: string;
           category: string;
+          collection_id: string;
+          collection_name: string;
           controversy: string;
           definition: string;
           discussion: string;
-          domain_id: string;
-          domain_name: string;
           example: string;
           id: string;
           mental_model: string;
@@ -2380,12 +2387,12 @@ export type Database = {
         Returns: {
           anti_example: string;
           category: string;
+          collection_id: string;
+          collection_language: string;
+          collection_name: string;
           controversy: string;
           definition: string;
           discussion: string;
-          domain_id: string;
-          domain_language: string;
-          domain_name: string;
           example: string;
           id: string;
           mental_model: string;
@@ -2395,10 +2402,10 @@ export type Database = {
         }[];
       };
       get_trace_candidates: {
-        Args: { p_domain_ids?: string[]; p_user_id: string };
+        Args: { p_collection_ids?: string[]; p_user_id: string };
         Returns: {
+          collection_id: string;
           created_at: string;
-          domain_id: string;
           ever_learning_at: string;
           ever_mastered_at: string;
           last_quiz_tested_at: string;
@@ -2415,7 +2422,7 @@ export type Database = {
         }[];
       };
       get_trace_candidates_json: {
-        Args: { p_domain_ids?: string[]; p_user_id: string };
+        Args: { p_collection_ids?: string[]; p_user_id: string };
         Returns: Json;
       };
       get_trace_state_for_term: {
@@ -2437,8 +2444,8 @@ export type Database = {
         Returns: boolean;
       };
       is_admin: { Args: never; Returns: boolean };
-      is_domain_in_collection: {
-        Args: { p_domain_id: string };
+      is_in_user_collections: {
+        Args: { p_collection_id: string };
         Returns: boolean;
       };
       is_supported_language: { Args: { p_language: string }; Returns: boolean };
@@ -2466,8 +2473,8 @@ export type Database = {
         Args: { p_id: string };
         Returns: undefined;
       };
-      my_clear_not_yet_domain: {
-        Args: { p_domain_id: string };
+      my_clear_not_yet_collection: {
+        Args: { p_collection_id: string };
         Returns: undefined;
       };
       my_collection_request_quota: { Args: never; Returns: Json };
@@ -2479,7 +2486,7 @@ export type Database = {
           p_level?: string;
           p_notify_email?: boolean;
           p_size?: number;
-          p_target_domain_id?: string;
+          p_target_collection_id?: string;
           p_topic: string;
         };
         Returns: Json;
@@ -2516,10 +2523,10 @@ export type Database = {
         }[];
       };
       my_get_trace_candidates: {
-        Args: { p_domain_ids?: string[] };
+        Args: { p_collection_ids?: string[] };
         Returns: {
+          collection_id: string;
           created_at: string;
-          domain_id: string;
           ever_learning_at: string;
           ever_mastered_at: string;
           last_quiz_tested_at: string;
@@ -2536,7 +2543,7 @@ export type Database = {
         }[];
       };
       my_get_trace_candidates_json: {
-        Args: { p_domain_ids?: string[] };
+        Args: { p_collection_ids?: string[] };
         Returns: Json;
       };
       my_get_trace_state_for_term: {
@@ -2581,8 +2588,8 @@ export type Database = {
           decline_note: string;
           decline_reason: string;
           delay_notified_at: string;
-          delivered_domain_id: string;
-          delivered_domain_name: string;
+          delivered_collection_id: string;
+          delivered_collection_name: string;
           delivered_terms: number;
           delivery_kind: string;
           display_due_at: string;
@@ -2601,10 +2608,10 @@ export type Database = {
         Args: { p_all_chapters: string[]; p_chapter: string };
         Returns: undefined;
       };
-      my_progress_state_by_domain: {
-        Args: { p_domain_ids: string[] };
+      my_progress_state_by_collection: {
+        Args: { p_collection_ids: string[] };
         Returns: {
-          domain_id: string;
+          collection_id: string;
           ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
@@ -2650,14 +2657,14 @@ export type Database = {
         Returns: undefined;
       };
       my_report_collection: {
-        Args: { p_domain_id: string; p_note?: string; p_reason: string };
+        Args: { p_collection_id: string; p_note?: string; p_reason: string };
         Returns: string;
       };
-      my_reset_domain_progress: {
-        Args: { p_domain_id: string };
+      my_reset_collection_progress: {
+        Args: { p_collection_id: string };
         Returns: undefined;
       };
-      my_review_domain_ids: { Args: never; Returns: string[] };
+      my_review_collection_ids: { Args: never; Returns: string[] };
       my_self_topup_ai_credits: {
         Args: never;
         Returns: {
@@ -2674,7 +2681,7 @@ export type Database = {
         }[];
       };
       my_set_collection_love: {
-        Args: { p_domain_id: string; p_loved: boolean };
+        Args: { p_collection_id: string; p_loved: boolean };
         Returns: number;
       };
       my_set_request_notify: {
@@ -2688,12 +2695,12 @@ export type Database = {
       my_study_collection_term_counts: {
         Args: never;
         Returns: {
-          domain_id: string;
+          collection_id: string;
           term_count: number;
         }[];
       };
-      my_term_relationships_by_domain: {
-        Args: { p_domain_id: string };
+      my_term_relationships_by_collection: {
+        Args: { p_collection_id: string };
         Returns: {
           description: string;
           id: string;
@@ -2705,17 +2712,17 @@ export type Database = {
         }[];
       };
       my_unfinished_term_counts: {
-        Args: { p_domain_ids: string[] };
+        Args: { p_collection_ids: string[] };
         Returns: {
-          domain_id: string;
+          collection_id: string;
           unfinished_count: number;
         }[];
       };
-      owns_domain: { Args: { p_domain_id: string }; Returns: boolean };
-      progress_state_by_domain: {
-        Args: { p_domain_ids: string[]; p_user_id: string };
+      owns_collection: { Args: { p_collection_id: string }; Returns: boolean };
+      progress_state_by_collection: {
+        Args: { p_collection_ids: string[]; p_user_id: string };
         Returns: {
-          domain_id: string;
+          collection_id: string;
           ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
@@ -2775,11 +2782,11 @@ export type Database = {
           status: string;
         }[];
       };
-      reset_domain_progress: {
-        Args: { p_domain_id: string; p_user_id: string };
+      reset_collection_progress: {
+        Args: { p_collection_id: string; p_user_id: string };
         Returns: undefined;
       };
-      review_domain_ids: { Args: { p_user_id: string }; Returns: string[] };
+      review_collection_ids: { Args: { p_user_id: string }; Returns: string[] };
       set_telegram_all_caught_up: {
         Args: { p_user_id: string };
         Returns: undefined;
@@ -2806,7 +2813,7 @@ export type Database = {
       };
     };
     Enums: {
-      domain_visibility: "private" | "shared";
+      collection_visibility: "private" | "shared";
       review_event: "read" | "reveal" | "review_pass" | "review_fail" | "quiz_pass" | "quiz_fail";
       telegram_cadence: "off" | "6h" | "12h" | "24h";
       user_role: "admin" | "member";
@@ -2938,7 +2945,7 @@ export const Constants = {
   },
   public: {
     Enums: {
-      domain_visibility: ["private", "shared"],
+      collection_visibility: ["private", "shared"],
       review_event: ["read", "reveal", "review_pass", "review_fail", "quiz_pass", "quiz_fail"],
       telegram_cadence: ["off", "6h", "12h", "24h"],
       user_role: ["admin", "member"],

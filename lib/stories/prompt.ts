@@ -1,4 +1,4 @@
-import { DOMAIN_LANGUAGE_OPTIONS, type DomainLanguage } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGE_OPTIONS, type CollectionLanguage } from "@/lib/terms/languages";
 import { lengthPhrase, rangePhrase, type StoryLength } from "./length";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, ReadingLevel, StoryTerm } from "./types";
@@ -56,14 +56,16 @@ const STORY_SYSTEM_PROMPT = [
   "- When a term's parts are split by other words, mark each part separately with the same term number, for example [[trok|3]] zijn jas [[aan|3]] for a separable verb. A whole term is one marker, as always. Never put the words between the parts inside a marker.",
 ].join("\n");
 
-function languageName(language: DomainLanguage): string {
-  return DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? "English";
+function languageName(language: CollectionLanguage): string {
+  return (
+    COLLECTION_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? "English"
+  );
 }
 
 type StoryPromptInput = {
   terms: StoryTerm[];
   collectionName: string;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   format: StyleOption;
   tone: StyleOption;
   readingLevel: ReadingLevel;

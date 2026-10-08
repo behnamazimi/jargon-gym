@@ -1,9 +1,9 @@
-import { parseLanguage, type DomainLanguage } from "@/lib/terms/languages";
+import { parseLanguage, type CollectionLanguage } from "@/lib/terms/languages";
 
 const KEY = "lobyas:import-language";
 
 /** The language last used for a new collection on this device. */
-export function readLanguagePref(): DomainLanguage {
+export function readLanguagePref(): CollectionLanguage {
   try {
     return parseLanguage(window.localStorage.getItem(KEY));
   } catch {
@@ -11,7 +11,7 @@ export function readLanguagePref(): DomainLanguage {
   }
 }
 
-export function writeLanguagePref(language: DomainLanguage): void {
+export function writeLanguagePref(language: CollectionLanguage): void {
   try {
     window.localStorage.setItem(KEY, language);
   } catch {

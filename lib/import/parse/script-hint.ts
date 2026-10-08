@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 const KANA = /[぀-ヿㇰ-ㇿ]/gu;
 const HANGUL = /[ᄀ-ᇿ㄰-㆏가-힯]/gu;
@@ -17,7 +17,7 @@ function count(text: string, pattern: RegExp): number {
 
 /** Japanese, Korean, Chinese or Russian, read from the terms' script. Latin-script
  *  languages can't be told apart this way, so they return null. */
-export function guessScriptLanguage(terms: string[]): DomainLanguage | null {
+export function guessScriptLanguage(terms: string[]): CollectionLanguage | null {
   const text = terms.join(" ");
   const letters = count(text, LETTER);
   if (letters < MIN_LETTERS) return null;

@@ -24,8 +24,10 @@ type Client = SupabaseClient<Database>;
 /** PostgREST returns at most this many rows per request. */
 const PAGE_SIZE = 1000;
 
-function takenSlugs(collections: AdminCollectionRow[], domainId: string) {
-  return new Set(collections.flatMap((row) => (row.id !== domainId && row.slug ? [row.slug] : [])));
+function takenSlugs(collections: AdminCollectionRow[], collectionId: string) {
+  return new Set(
+    collections.flatMap((row) => (row.id !== collectionId && row.slug ? [row.slug] : [])),
+  );
 }
 
 /** The public pages, the public list (cached for a day) and the sitemap. */
@@ -41,13 +43,13 @@ function revalidateCollection(slug: string | null) {
   revalidatePath("/sitemap.xml");
 }
 
-async function listTermsOf(supabase: Client, domainId: string) {
+async function listTermsOf(supabase: Client, collectionId: string) {
   const terms: { id: string; term: string; slug: string | null }[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await supabase
       .from("terms")
       .select("id, term, slug")
-      .eq("domain_id", domainId)
+      .eq("collection_id", collectionId)
       .order("id")
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
@@ -67,16 +69,16 @@ async function publishOnce(
   collection: AdminCollectionRow,
   collections: AdminCollectionRow[],
 ) {
-  const { domainSlug, termSlugs } = buildPublishSlugs({
-    domainName: collection.name,
-    domainSlug: collection.slug,
-    takenDomainSlugs: takenSlugs(collections, collection.id),
+  const { collectionSlug, termSlugs } = buildPublishSlugs({
+    collectionName: collection.name,
+    collectionSlug: collection.slug,
+    takenCollectionSlugs: takenSlugs(collections, collection.id),
     terms: await listTermsOf(supabase, collection.id),
   });
 
   return supabase.rpc("admin_publish_collection", {
-    p_domain_id: collection.id,
-    p_domain_slug: domainSlug,
+    p_collection_id: collection.id,
+    p_collection_slug: collectionSlug,
     p_term_slugs: termSlugs,
   });
 }
@@ -103,10 +105,10 @@ async function publish(
 const statusSchema = z.enum(["none", "builtin", "published"]);
 
 /** Moves a collection to a status. Where it is now comes from the database, not the browser. */
-export async function setCollectionStatus(domainId: string, target: CollectionStatus) {
+export async function setCollectionStatus(collectionId: string, target: CollectionStatus) {
   return runAdminAction(async ({ supabase, user }): Promise<{ slug: string | null }> => {
     const to = statusSchema.parse(target);
-    const found = await findActable(supabase, user.id, domainId);
+    const found = await findActable(supabase, user.id, collectionId);
     const from = statusOf(found.collection);
     let slug = found.collection.slug;
 
@@ -118,9 +120,9 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
           slug = await publish(supabase, user.id, found);
         } else {
           const { error } = await supabase
-            .from("domains")
+            .from("collections")
             .update(step.values)
-            .eq("id", domainId)
+            .eq("id", collectionId)
             .select("id")
             .single();
           if (error) throw error;
@@ -130,7 +132,7 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
     } catch (err) {
       // The first step is already saved, so show the page as it is now and say so.
       if (applied > 0) {
-        await auditStatus(supabase, domainId, from, "builtin", slug, steps);
+        await auditStatus(supabase, collectionId, from, "builtin", slug, steps);
         revalidateCollection(slug);
         throw new AdminError(
           "The collection was marked built-in, but publishing failed. Try again.",
@@ -139,7 +141,7 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
       throw err;
     }
 
-    await auditStatus(supabase, domainId, from, to, slug, steps);
+    await auditStatus(supabase, collectionId, from, to, slug, steps);
     revalidateCollection(slug);
     return { slug };
   });
@@ -148,7 +150,7 @@ export async function setCollectionStatus(domainId: string, target: CollectionSt
 /** Publishing alone is already recorded by the database; everything else the app records. */
 async function auditStatus(
   supabase: Client,
-  domainId: string,
+  collectionId: string,
   from: CollectionStatus,
   reached: CollectionStatus,
   slug: string | null,
@@ -157,8 +159,8 @@ async function auditStatus(
   if (steps.length === 0 || (steps.length === 1 && steps[0]?.kind === "publish")) return;
   await writeAudit(supabase, {
     action: "app.collection_status",
-    targetType: "domain",
-    targetId: domainId,
+    targetType: "collection",
+    targetId: collectionId,
     details: { from, to: reached, slug },
   });
 }
@@ -166,24 +168,24 @@ async function auditStatus(
 const kindSchema = z.enum(COLLECTION_KINDS);
 
 /** Field terms or words and phrases. Only the public pages read it, so only they are refreshed. */
-export async function setCollectionKind(domainId: string, kind: CollectionKind) {
+export async function setCollectionKind(collectionId: string, kind: CollectionKind) {
   return runAdminAction(async ({ supabase, user }): Promise<{ kind: CollectionKind }> => {
     const to = kindSchema.parse(kind);
-    const { collection } = await findActable(supabase, user.id, domainId);
+    const { collection } = await findActable(supabase, user.id, collectionId);
     if (collection.kind === to) return { kind: to };
 
     const { error } = await supabase
-      .from("domains")
+      .from("collections")
       .update({ kind: to })
-      .eq("id", domainId)
+      .eq("id", collectionId)
       .select("id")
       .single();
     if (error) throw error;
 
     await writeAudit(supabase, {
       action: "app.collection_kind",
-      targetType: "domain",
-      targetId: domainId,
+      targetType: "collection",
+      targetId: collectionId,
       details: { from: collection.kind, to },
     });
 
@@ -197,32 +199,32 @@ const rawSlugSchema = z.string().max(300);
 const expectedSchema = z.string().max(120);
 
 /** What a typed address would become, and whether it is free. A read: nothing is saved. */
-export async function checkDomainSlug(domainId: string, raw: string) {
+export async function checkCollectionSlug(collectionId: string, raw: string) {
   return runAdminAction(async ({ supabase, user }) => {
-    const { collections } = await findActable(supabase, user.id, domainId);
-    return resolveSlug(rawSlugSchema.parse(raw), takenSlugs(collections, domainId));
+    const { collections } = await findActable(supabase, user.id, collectionId);
+    return resolveSlug(rawSlugSchema.parse(raw), takenSlugs(collections, collectionId));
   });
 }
 
 /** Saves the address the admin checked. If it isn't that any more (someone took it, or the text
  *  changed), it says so instead of quietly saving a different one. */
-export async function updateDomainSlug(domainId: string, raw: string, expected: string) {
+export async function updateCollectionSlug(collectionId: string, raw: string, expected: string) {
   return runAdminAction(async ({ supabase, user }): Promise<{ slug: string }> => {
-    const { collection, collections } = await findActable(supabase, user.id, domainId);
+    const { collection, collections } = await findActable(supabase, user.id, collectionId);
     if (!collection.isBuiltin && !collection.slug) {
       throw new AdminError("Only built-in collections have a public address.");
     }
 
-    const checked = resolveSlug(rawSlugSchema.parse(raw), takenSlugs(collections, domainId));
+    const checked = resolveSlug(rawSlugSchema.parse(raw), takenSlugs(collections, collectionId));
     if (!checked.valid) throw new AdminError("Use letters or numbers in the address.");
     if (checked.taken) throw new AdminError("That address is taken. Check again.");
     if (checked.slug !== expectedSchema.parse(expected))
       throw new AdminError("The address changed. Check it again.");
 
     const { error } = await supabase
-      .from("domains")
+      .from("collections")
       .update({ slug: checked.slug })
-      .eq("id", domainId)
+      .eq("id", collectionId)
       .select("id")
       .single();
     if (error) {
@@ -233,8 +235,8 @@ export async function updateDomainSlug(domainId: string, raw: string, expected: 
     if (checked.slug !== collection.slug) {
       await writeAudit(supabase, {
         action: "app.collection_slug",
-        targetType: "domain",
-        targetId: domainId,
+        targetType: "collection",
+        targetId: collectionId,
         details: { old: collection.slug, new: checked.slug },
       });
     }

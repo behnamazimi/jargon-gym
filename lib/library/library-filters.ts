@@ -10,13 +10,13 @@ const SORT_MODES: readonly SortMode[] = ["default", "category", "az", "unknown"]
 export type LibraryFilters = {
   hideKnown: boolean;
   sortMode: SortMode;
-  categoriesByDomain: Record<string, string[]>;
+  categoriesByCollection: Record<string, string[]>;
 };
 
 const DEFAULT_LIBRARY_FILTERS: LibraryFilters = {
   hideKnown: false,
   sortMode: "default",
-  categoriesByDomain: {},
+  categoriesByCollection: {},
 };
 
 const listeners = new Set<() => void>();
@@ -32,17 +32,17 @@ export function parseLibraryFilters(raw: string | null): LibraryFilters {
     if (!parsed || typeof parsed !== "object") return DEFAULT_LIBRARY_FILTERS;
     const record = parsed as Record<string, unknown>;
 
-    const categoriesByDomain: Record<string, string[]> = {};
-    if (record.categoriesByDomain && typeof record.categoriesByDomain === "object") {
-      for (const [domainId, categories] of Object.entries(record.categoriesByDomain)) {
-        if (isStringArray(categories)) categoriesByDomain[domainId] = categories;
+    const categoriesByCollection: Record<string, string[]> = {};
+    if (record.categoriesByCollection && typeof record.categoriesByCollection === "object") {
+      for (const [collectionId, categories] of Object.entries(record.categoriesByCollection)) {
+        if (isStringArray(categories)) categoriesByCollection[collectionId] = categories;
       }
     }
 
     return {
       hideKnown: record.hideKnown === true,
       sortMode: SORT_MODES.find((mode) => mode === record.sortMode) ?? "default",
-      categoriesByDomain,
+      categoriesByCollection,
     };
   } catch {
     return DEFAULT_LIBRARY_FILTERS;
@@ -50,7 +50,7 @@ export function parseLibraryFilters(raw: string | null): LibraryFilters {
 }
 
 /** Most recent collections whose category choice is kept. */
-const MAX_REMEMBERED_DOMAINS = 20;
+const MAX_REMEMBERED_COLLECTIONS = 20;
 /** Browsers drop a cookie over 4 KB, name and attributes included. */
 const MAX_COOKIE_VALUE_LENGTH = 3500;
 
@@ -58,12 +58,12 @@ const MAX_COOKIE_VALUE_LENGTH = 3500;
  *  and the least recently changed collections go first (last keys win) until
  *  it fits, since category names can encode to many bytes each. */
 export function serializeLibraryFilters(filters: LibraryFilters): string {
-  const entries = Object.entries(filters.categoriesByDomain)
+  const entries = Object.entries(filters.categoriesByCollection)
     .filter(([, categories]) => categories.length > 0)
-    .slice(-MAX_REMEMBERED_DOMAINS);
+    .slice(-MAX_REMEMBERED_COLLECTIONS);
   for (;;) {
     const value = encodeURIComponent(
-      JSON.stringify({ ...filters, categoriesByDomain: Object.fromEntries(entries) }),
+      JSON.stringify({ ...filters, categoriesByCollection: Object.fromEntries(entries) }),
     );
     if (value.length <= MAX_COOKIE_VALUE_LENGTH || entries.length === 0) return value;
     entries.shift();

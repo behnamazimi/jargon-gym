@@ -5,9 +5,9 @@ import { useState, type RefObject } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { SharedDomainsTabs } from "@/components/library/shared-domains-tabs";
+import { SharedCollectionsTabs } from "@/components/library/shared-collections-tabs";
 import { ToggleChip } from "@/components/ui/toggle";
-import type { useSharedDomainsBrowse } from "@/hooks/use-shared-domains-browse";
+import type { useSharedCollectionsBrowse } from "@/hooks/use-shared-collections-browse";
 import type { BrowseCollectionFilter, BrowseSort } from "@/lib/library/browse";
 import { cn, pluralize } from "@/lib/utils";
 
@@ -45,14 +45,17 @@ const SORTS: Array<{ value: BrowseSort; label: string }> = [
 /** On phones the filter bar is three separate blocks so only the search row can stay pinned. */
 const CARD_ON_PHONE = "max-md:rounded-box max-md:bg-base-100 max-md:shadow-surface";
 
-type SharedDomainsFilterBarProps = {
-  browse: ReturnType<typeof useSharedDomainsBrowse>;
+type SharedCollectionsFilterBarProps = {
+  browse: ReturnType<typeof useSharedCollectionsBrowse>;
   searchInputRef: RefObject<HTMLInputElement | null>;
 };
 
 const FILTER_PANEL_ID = "browse-advanced-filters";
 
-export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomainsFilterBarProps) {
+export function SharedCollectionsFilterBar({
+  browse,
+  searchInputRef,
+}: SharedCollectionsFilterBarProps) {
   const [expanded, setExpanded] = useState(false);
   const activeFilterCount = (browse.filter !== "all" ? 1 : 0) + (browse.sort !== "name" ? 1 : 0);
 
@@ -62,7 +65,7 @@ export function SharedDomainsFilterBar({ browse, searchInputRef }: SharedDomains
       className="md:shadow-surface max-md:contents md:space-y-3 md:rounded-box md:bg-base-100 md:p-5"
     >
       <div className={cn(CARD_ON_PHONE, "max-md:p-3")} data-tour="browse-filters">
-        <SharedDomainsTabs
+        <SharedCollectionsTabs
           active={browse.group}
           counts={browse.counts.groups}
           onChange={browse.setGroup}

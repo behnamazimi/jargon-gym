@@ -1,11 +1,11 @@
 import { Quote } from "lucide-react";
 import type { PublicTermSummary } from "@/lib/terms/public-terms";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { TERM_LABELS } from "@/lib/terms/term-labels";
 
 type TermCardProps = {
   term: PublicTermSummary;
-  language: DomainLanguage;
+  language: CollectionLanguage;
 };
 
 export function TermCard({ term, language }: TermCardProps) {

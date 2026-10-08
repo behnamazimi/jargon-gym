@@ -9,7 +9,7 @@ type ErrorIssue = {
 
 type ErrorContextDetails = {
   term?: string;
-  domain?: string;
+  collection?: string;
 };
 
 type ErrorDetails = {
@@ -28,13 +28,13 @@ type ErrorAlertProps = {
 };
 
 function ErrorContext({ context }: { context: ErrorContextDetails | undefined }) {
-  if (!context?.domain && !context?.term) return null;
+  if (!context?.collection && !context?.term) return null;
   return (
     <dl className="mt-3 grid gap-2 rounded-field bg-error/5 px-3 py-3 ring-1 ring-error/15">
-      {context.domain ? (
+      {context.collection ? (
         <div className="flex gap-2 text-sm">
           <dt className="text-base-content/70">Collection</dt>
-          <dd className="font-medium">{context.domain}</dd>
+          <dd className="font-medium">{context.collection}</dd>
         </div>
       ) : null}
       {context.term ? (

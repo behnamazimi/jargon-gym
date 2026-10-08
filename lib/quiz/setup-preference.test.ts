@@ -48,7 +48,7 @@ describe("resolveInitialQuizSetup", () => {
     expect(
       resolveInitialQuizSetup({
         saved: null,
-        domainParam: undefined,
+        collectionParam: undefined,
         activeIds: [A],
         aiAvailable: true,
       }),
@@ -65,7 +65,7 @@ describe("resolveInitialQuizSetup", () => {
   it("falls back to simple, and says so, when AI isn't available", () => {
     const setup = resolveInitialQuizSetup({
       saved: { style: "ai" },
-      domainParam: undefined,
+      collectionParam: undefined,
       activeIds: [A],
       aiAvailable: false,
     });
@@ -76,7 +76,7 @@ describe("resolveInitialQuizSetup", () => {
   it("stays on AI when it is available", () => {
     const setup = resolveInitialQuizSetup({
       saved: { style: "ai" },
-      domainParam: undefined,
+      collectionParam: undefined,
       activeIds: [A],
       aiAvailable: true,
     });
@@ -84,7 +84,10 @@ describe("resolveInitialQuizSetup", () => {
   });
 
   it("uses the remembered collection only while it's active", () => {
-    const base = { saved: { style: "simple" as const, collectionId: A }, domainParam: undefined };
+    const base = {
+      saved: { style: "simple" as const, collectionId: A },
+      collectionParam: undefined,
+    };
     expect(
       resolveInitialQuizSetup({ ...base, activeIds: [A, B], aiAvailable: false }).collectionId,
     ).toBe(A);
@@ -96,7 +99,7 @@ describe("resolveInitialQuizSetup", () => {
   it("lets a valid link win and marks it as coming from the link", () => {
     const setup = resolveInitialQuizSetup({
       saved: { style: "simple", collectionId: A },
-      domainParam: B,
+      collectionParam: B,
       activeIds: [A, B],
       aiAvailable: false,
     });
@@ -110,7 +113,7 @@ describe("resolveInitialQuizSetup", () => {
   it("ignores a link to a paused collection", () => {
     const setup = resolveInitialQuizSetup({
       saved: null,
-      domainParam: B,
+      collectionParam: B,
       activeIds: [A],
       aiAvailable: false,
     });

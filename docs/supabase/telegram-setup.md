@@ -5,7 +5,7 @@
 ```
 Telegram → Edge (telegram-webhook / telegram-send-due)
          → POST APP_BASE_URL/api/internal/telegram/*
-         → lib/telegram/flows + shared domain core (TRACE, review-outcome, …)
+         → lib/telegram/flows + shared collection core (TRACE, review-outcome, …)
          → Edge executes returned TelegramAction DTOs
 ```
 

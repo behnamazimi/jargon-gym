@@ -25,22 +25,25 @@ type Client = SupabaseClient<Database>;
 /** Modes for the given collections; one without a row gets the default. */
 export async function getNarrationModes(
   client: Client,
-  domainIds: string[],
+  collectionIds: string[],
 ): Promise<Map<string, NarrationMode>> {
   const modes = new Map<string, NarrationMode>();
-  if (domainIds.length === 0) return modes;
+  if (collectionIds.length === 0) return modes;
 
   const { data, error } = await client
     .from("collection_narration_settings")
-    .select("domain_id, mode")
-    .in("domain_id", domainIds);
+    .select("collection_id, mode")
+    .in("collection_id", collectionIds);
   if (error) throw error;
 
-  for (const row of data ?? []) modes.set(row.domain_id, parseNarrationMode(row.mode));
+  for (const row of data ?? []) modes.set(row.collection_id, parseNarrationMode(row.mode));
   return modes;
 }
 
-export async function getNarrationMode(client: Client, domainId: string): Promise<NarrationMode> {
-  const modes = await getNarrationModes(client, [domainId]);
-  return modes.get(domainId) ?? DEFAULT_NARRATION_MODE;
+export async function getNarrationMode(
+  client: Client,
+  collectionId: string,
+): Promise<NarrationMode> {
+  const modes = await getNarrationModes(client, [collectionId]);
+  return modes.get(collectionId) ?? DEFAULT_NARRATION_MODE;
 }

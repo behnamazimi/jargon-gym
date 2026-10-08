@@ -64,7 +64,7 @@ declare
   r3 uuid;
   v_rows jsonb;
   v_count integer;
-  v_domain uuid;
+  v_collection uuid;
   v_before timestamptz;
 begin
   -- Switched off by default.
@@ -177,14 +177,14 @@ begin
   perform pg_temp.act_as(admin);
   assert pg_temp.fails_with(format($q$select public.admin_deliver_request(%L, 'Kubernetes', '[{"term":"Pod"}]', '[]', 'lines')$q$, r1), 'Every term needs a definition'), 'definitions required';
   assert pg_temp.fails_with(format($q$select public.admin_deliver_request(%L, 'Kubernetes', '[]', '[]', 'lines')$q$, r1), 'no terms to deliver'), 'terms required';
-  assert (select count(*) from public.domains where owner_id in (ann, bob, cat)) = 0, 'nothing written on refusal';
+  assert (select count(*) from public.collections where owner_id in (ann, bob, cat)) = 0, 'nothing written on refusal';
 
   perform pg_temp.act_as(ann);
   assert pg_temp.fails_with(format($q$select public.admin_deliver_request(%L, 'Kubernetes', '[{"term":"Pod","definition":"x"}]', '[]', 'lines')$q$, r1), 'Only admins'), 'members cannot deliver';
   perform pg_temp.back_to_owner();
 
   -- Bob already has a collection of that name: delivery suffixes it.
-  insert into public.domains (name, owner_id, visibility, language) values ('Kubernetes', bob, 'private', 'en');
+  insert into public.collections (name, owner_id, visibility, language) values ('Kubernetes', bob, 'private', 'en');
 
   perform pg_temp.act_as(admin);
   v_rows := public.admin_deliver_request(
@@ -194,18 +194,18 @@ begin
   assert jsonb_array_length(v_rows) = 3, 'one copy each';
   perform pg_temp.back_to_owner();
   assert (select count(*) from public.collection_requests where status = 'ready' and id in (r1, r2, r3)) = 3, 'all ready';
-  assert (select count(distinct delivered_domain_id) from public.collection_requests where id in (r1, r2, r3)) = 3, 'separate copies';
-  assert (select count(*) from public.domains d join public.collection_requests q on q.delivered_domain_id = d.id
+  assert (select count(distinct delivered_collection_id) from public.collection_requests where id in (r1, r2, r3)) = 3, 'separate copies';
+  assert (select count(*) from public.collections d join public.collection_requests q on q.delivered_collection_id = d.id
           where d.visibility = 'private' and d.owner_id = q.user_id) = 3, 'private and owned by each requester';
-  assert exists (select 1 from public.domains where owner_id = bob and name = 'Kubernetes (2)'), 'name suffixed';
-  assert (select count(*) from public.user_active_domains where user_id in (ann, bob, cat)) = 3, 'active';
-  assert (select count(*) from public.terms t join public.collection_requests q on q.delivered_domain_id = t.domain_id) = 6, 'terms copied';
+  assert exists (select 1 from public.collections where owner_id = bob and name = 'Kubernetes (2)'), 'name suffixed';
+  assert (select count(*) from public.user_active_collections where user_id in (ann, bob, cat)) = 3, 'active';
+  assert (select count(*) from public.terms t join public.collection_requests q on q.delivered_collection_id = t.collection_id) = 6, 'terms copied';
   assert (select count(*) from public.admin_audit_log where action = 'deliver_collection_request' and target_id = r1::text) = 1, 'audited';
   assert (select details::text not like '%Kubernetes%' from public.admin_audit_log where action = 'deliver_collection_request' and target_id = r1::text), 'audit has no topic';
   perform pg_temp.act_as(admin);
   assert pg_temp.fails_with(format($q$select public.admin_deliver_request(%L, 'Again', '[{"term":"Pod","definition":"x"}]', '[]', 'lines')$q$, r1), 'already closed'), 'not twice';
   perform pg_temp.back_to_owner();
-  assert (select count(*) from public.domains d join public.collection_requests q on q.delivered_domain_id = d.id
+  assert (select count(*) from public.collections d join public.collection_requests q on q.delivered_collection_id = d.id
           where q.id in (r1, r2, r3) and d.kind = 'terms') = 3, 'jargon requests deliver terms collections';
 
   -- A vocabulary request delivers a vocabulary collection.
@@ -215,9 +215,9 @@ begin
   perform pg_temp.act_as(admin);
   perform public.admin_deliver_request(r2, 'Dutch verbs', '[{"term":"lopen","definition":"to walk"}]', '[]', 'lines');
   perform pg_temp.back_to_owner();
-  assert (select d.kind from public.domains d join public.collection_requests q on q.delivered_domain_id = d.id
+  assert (select d.kind from public.collections d join public.collection_requests q on q.delivered_collection_id = d.id
           where q.id = r2) = 'vocabulary', 'vocabulary request delivers a vocabulary collection';
-  assert (select d.language from public.domains d join public.collection_requests q on q.delivered_domain_id = d.id
+  assert (select d.language from public.collections d join public.collection_requests q on q.delivered_collection_id = d.id
           where q.id = r2) = 'nl', 'language still copied';
 
   -- Cancelled and suspended requesters block delivery.
@@ -259,17 +259,17 @@ begin
 
   -- A request answered by a shared collection.
   update public.collection_requests set status = 'in_progress', accepted_at = now() where id = r3;
-  insert into public.domains (name, owner_id, visibility, language)
-  values ('Shared k8s', ann, 'shared', 'en') returning id into v_domain;
-  insert into public.terms (domain_id, term, definition) values (v_domain, 'Pod', 'Smallest unit'), (v_domain, 'Draft', null);
-  insert into public.domains (name, owner_id, visibility, language) values ('Private one', ann, 'private', 'en');
+  insert into public.collections (name, owner_id, visibility, language)
+  values ('Shared k8s', ann, 'shared', 'en') returning id into v_collection;
+  insert into public.terms (collection_id, term, definition) values (v_collection, 'Pod', 'Smallest unit'), (v_collection, 'Draft', null);
+  insert into public.collections (name, owner_id, visibility, language) values ('Private one', ann, 'private', 'en');
   perform pg_temp.act_as(admin);
-  assert pg_temp.fails_with(format($q$select public.admin_deliver_existing_collection(%L, (select id from public.domains where name = 'Private one'))$q$, r3), 'isn''t shared'), 'private refused';
-  v_rows := public.admin_deliver_existing_collection(r3, v_domain);
+  assert pg_temp.fails_with(format($q$select public.admin_deliver_existing_collection(%L, (select id from public.collections where name = 'Private one'))$q$, r3), 'isn''t shared'), 'private refused';
+  v_rows := public.admin_deliver_existing_collection(r3, v_collection);
   perform pg_temp.back_to_owner();
   assert (v_rows->0->>'created')::int = 1, 'counts finished terms only';
-  assert exists (select 1 from public.user_collection_domains where user_id = cat and domain_id = v_domain), 'added to library';
-  assert exists (select 1 from public.user_active_domains where user_id = cat and domain_id = v_domain), 'active';
+  assert exists (select 1 from public.user_collections where user_id = cat and collection_id = v_collection), 'added to library';
+  assert exists (select 1 from public.user_active_collections where user_id = cat and collection_id = v_collection), 'active';
   assert (select delivery_kind from public.collection_requests where id = r3) = 'added_shared', 'delivery kind';
 
   -- Dismiss only closed requests.

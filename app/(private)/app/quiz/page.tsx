@@ -13,7 +13,7 @@ import { hasNoCollections } from "@/lib/study/collections";
 export const maxDuration = 60;
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string }>;
+  searchParams: Promise<{ collection?: string }>;
 };
 
 export default async function QuizRoute({ searchParams }: PageProps) {
@@ -32,7 +32,7 @@ export default async function QuizRoute({ searchParams }: PageProps) {
   const activeIds = setup.collections.map((collection) => collection.id);
   const initialSetup = resolveInitialQuizSetup({
     saved: parseQuizSetupCookie(cookieStore.get(QUIZ_SETUP_COOKIE)?.value),
-    domainParam: params.domain,
+    collectionParam: params.collection,
     activeIds,
     aiAvailable: aiAvailable(setup.ai),
   });

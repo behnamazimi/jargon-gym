@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { checkDomainSlug, updateDomainSlug } from "@/app/(private)/admin/collections/actions";
+import {
+  checkCollectionSlug,
+  updateCollectionSlug,
+} from "@/app/(private)/admin/collections/actions";
 import { useToast } from "@/components/ui/toast";
 import { useAdminAction } from "@/hooks/use-admin-action";
 import type { SlugCheck } from "@/lib/admin/collections/slug-check";
@@ -25,7 +28,7 @@ export function useSlugEditor(collectionId: string, initial: string, onSaved: ()
     const asked = text;
     setChecked(null);
     save.clearError();
-    void check.run(() => checkDomainSlug(collectionId, asked), {
+    void check.run(() => checkCollectionSlug(collectionId, asked), {
       onSuccess: (result) => setChecked({ text: asked, result }),
     });
   }
@@ -33,7 +36,7 @@ export function useSlugEditor(collectionId: string, initial: string, onSaved: ()
   function handleSave() {
     if (!current) return;
     check.clearError();
-    void save.run(() => updateDomainSlug(collectionId, text, current.slug), {
+    void save.run(() => updateCollectionSlug(collectionId, text, current.slug), {
       onSuccess: ({ slug }) => {
         toast(`The address is now /collections/${slug}.`);
         onSaved();

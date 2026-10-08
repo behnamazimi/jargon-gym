@@ -18,7 +18,7 @@ cleanup() {
   rm -f "$OUT_A" "$OUT_B"
   for id in "$USER_ID" "$ADMIN_ID"; do
     if [ -n "$id" ]; then
-      "${PSQL[@]}" -c "delete from public.domains where owner_id = '$id'; delete from public.referral_codes where used_by = '$id'; delete from auth.users where id = '$id'" >/dev/null
+      "${PSQL[@]}" -c "delete from public.collections where owner_id = '$id'; delete from public.referral_codes where used_by = '$id'; delete from auth.users where id = '$id'" >/dev/null
     fi
   done
   if [ -n "$WAS_ENABLED" ]; then
@@ -101,7 +101,7 @@ wait
 
 WON="$(cat "$OUT_A" "$OUT_B" | grep -cE '^(cancelled|delivered)$' || true)"
 STATUS="$("${PSQL[@]}" -c "select status from public.collection_requests where id = '$REQUEST_ID'")"
-COLLECTIONS="$("${PSQL[@]}" -c "select count(*) from public.domains where owner_id = '$USER_ID'")"
+COLLECTIONS="$("${PSQL[@]}" -c "select count(*) from public.collections where owner_id = '$USER_ID'")"
 if [ "$WON" != "1" ]; then
   echo "FAIL (race): winners=$WON status=$STATUS"
   cat "$OUT_A" "$OUT_B"

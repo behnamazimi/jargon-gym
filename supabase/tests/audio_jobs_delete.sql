@@ -21,7 +21,7 @@ $$;
 do $$
 declare
   u1 uuid := pg_temp.make_user('del1@example.test');
-  v_domain uuid := gen_random_uuid();
+  v_collection uuid := gen_random_uuid();
   t1 uuid := gen_random_uuid();
   t2 uuid := gen_random_uuid();
   s1 uuid := gen_random_uuid();
@@ -29,9 +29,9 @@ declare
   j_story uuid;
   j_other uuid;
 begin
-  insert into public.domains (id, name, owner_id) values (v_domain, 'D', u1);
-  insert into public.terms (id, term, category, definition, domain_id) values
-    (t1, 'One', 'c', 'd', v_domain), (t2, 'Two', 'c', 'd', v_domain);
+  insert into public.collections (id, name, owner_id) values (v_collection, 'D', u1);
+  insert into public.terms (id, term, category, definition, collection_id) values
+    (t1, 'One', 'c', 'd', v_collection), (t2, 'Two', 'c', 'd', v_collection);
   insert into public.stories
     (id, user_id, language, format, tone, reading_level, cefr_level, title, segments, term_ids)
   values (s1, u1, 'en', 'email', 'neutral', 'plain', 'B1', 'T', '[]'::jsonb,
@@ -55,14 +55,14 @@ begin
   assert (select status from public.audio_jobs where id = j_story) = 'superseded', 'a deleted story supersedes its job';
   assert (select user_id from public.audio_jobs where id = j_story) = u1, 'and keeps its owner';
 
-  -- A domain delete cascades to its terms and fires the row trigger for each.
-  delete from public.domains where id = v_domain;
+  -- A collection delete cascades to its terms and fires the row trigger for each.
+  delete from public.collections where id = v_collection;
   assert (select status from public.audio_jobs where id = j_other) = 'superseded', 'a cascade delete supersedes too';
 
   -- A failing trigger body never fails the delete.
-  v_domain := gen_random_uuid();
-  insert into public.domains (id, name, owner_id) values (v_domain, 'D2', u1);
-  insert into public.terms (id, term, category, definition, domain_id) values (t1, 'One', 'c', 'd', v_domain);
+  v_collection := gen_random_uuid();
+  insert into public.collections (id, name, owner_id) values (v_collection, 'D2', u1);
+  insert into public.terms (id, term, category, definition, collection_id) values (t1, 'One', 'c', 'd', v_collection);
   insert into public.audio_jobs (subject_type, subject_id, content_hash, hash_version, status, storage_path)
   values ('term', t1, 'h1b', 2, 'ready', 'terms/x/2/h1b/d.mp3');
   create function pg_temp.boom() returns trigger language plpgsql as $f$

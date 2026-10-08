@@ -3,8 +3,8 @@ export type WidgetTerm = {
   term: string;
   category: string;
   definition: string;
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
 };
 
 export type WidgetStateResponse = {

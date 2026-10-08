@@ -37,31 +37,31 @@ begin
   perform pg_temp.act_as(member_id);
 
   -- A user can create an empty private collection in Dutch.
-  insert into public.domains (name, owner_id, visibility, language)
+  insert into public.collections (name, owner_id, visibility, language)
   values ('Dutch at work', member_id, 'private', 'nl') returning id into d1;
-  assert (select language = 'nl' and visibility = 'private' and owner_id = member_id from public.domains where id = d1), 'empty collection shape';
-  assert not exists (select 1 from public.terms where domain_id = d1), 'a new collection has no terms';
+  assert (select language = 'nl' and visibility = 'private' and owner_id = member_id from public.collections where id = d1), 'empty collection shape';
+  assert not exists (select 1 from public.terms where collection_id = d1), 'a new collection has no terms';
 
   -- ...and mark it active for review.
-  insert into public.user_active_domains (user_id, domain_id) values (member_id, d1);
-  assert exists (select 1 from public.user_active_domains where user_id = member_id and domain_id = d1), 'active row';
+  insert into public.user_active_collections (user_id, collection_id) values (member_id, d1);
+  assert exists (select 1 from public.user_active_collections where user_id = member_id and collection_id = d1), 'active row';
 
   -- The same name in a different case is refused by the unique index.
   v_failed := false;
   begin
-    insert into public.domains (name, owner_id) values ('DUTCH AT WORK', member_id);
+    insert into public.collections (name, owner_id) values ('DUTCH AT WORK', member_id);
   exception when unique_violation then v_failed := true;
   end;
   assert v_failed, 'a case variant of an owned name was allowed';
 
   -- Someone else can use the same name for their own collection.
   perform pg_temp.act_as(other_id);
-  insert into public.domains (name, owner_id) values ('Dutch at work', other_id);
+  insert into public.collections (name, owner_id) values ('Dutch at work', other_id);
 
   -- Nobody can create a collection owned by another user.
   v_failed := false;
   begin
-    insert into public.domains (name, owner_id) values ('Stolen', member_id);
+    insert into public.collections (name, owner_id) values ('Stolen', member_id);
   exception when insufficient_privilege then v_failed := true;
   end;
   assert v_failed, 'a user created a collection for someone else';

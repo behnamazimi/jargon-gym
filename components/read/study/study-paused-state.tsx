@@ -42,9 +42,9 @@ export function StudyNoActiveCollectionsState({
     );
   }
 
-  async function handleResume(domainId: string) {
-    setResumingId(domainId);
-    const ok = await setActiveForReview(domainId, true);
+  async function handleResume(collectionId: string) {
+    setResumingId(collectionId);
+    const ok = await setActiveForReview(collectionId, true);
     if (ok) {
       startRefresh(() => router.refresh());
     } else {

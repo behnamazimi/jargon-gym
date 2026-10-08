@@ -22,14 +22,14 @@ export default async function PasteListPage({ searchParams }: PageProps) {
       <PageHeader
         icon={ClipboardPaste}
         title="Paste a list"
-        backHref={preset ? `/app/library?domain=${preset}` : "/app/import"}
+        backHref={preset ? `/app/library?collection=${preset}` : "/app/import"}
         backLabel={preset ? "Back to collection" : "Add a collection"}
         compactOnPhone
       />
       <ImportFlow
         collections={setup.collections}
         addedNames={setup.addedNames}
-        presetDomainId={preset}
+        presetCollectionId={preset}
         entry={preset ? "collection" : "chooser"}
         autoCheck={from === "term"}
       />

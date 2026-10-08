@@ -110,7 +110,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
         <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
           {setup.collections.length === 0 ? (
             <StudyNoActiveCollectionsState paused={setup.paused} activity="reading stories" />
-          ) : setup.initialDomainId === null ? (
+          ) : setup.initialCollectionId === null ? (
             <StoriesNoTerms />
           ) : (
             <StorySetupPanel session={session} collections={setup.collections} ai={setup.ai} />

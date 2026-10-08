@@ -49,7 +49,7 @@ export function StopSharingDialog({
       description={`“${collection.name}” is removed from everyone else's library, without telling them. The owner can't share it again until you lift the lock, and sees only the reason you choose.`}
       confirmLabel="Stop sharing"
       canSubmit={reason !== "" && note.trim().length > 0}
-      onSubmit={() => stopSharingCollection({ domainId: collection.id, reason, note })}
+      onSubmit={() => stopSharingCollection({ collectionId: collection.id, reason, note })}
       onClose={onClose}
     >
       <label className="flex flex-col gap-1">

@@ -11,13 +11,13 @@ const RECENT_VOTE_LIMIT = 50;
 export async function loadRecentTitles(
   admin: Client,
   userId: string,
-  domainId: string,
+  collectionId: string,
 ): Promise<string[]> {
   const { data, error } = await admin
     .from("stories")
     .select("title")
     .eq("user_id", userId)
-    .eq("domain_id", domainId)
+    .eq("collection_id", collectionId)
     .order("created_at", { ascending: false })
     .limit(RECENT_TITLE_LIMIT);
   if (error) throw error;

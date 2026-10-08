@@ -13,8 +13,8 @@ type AdminClient = SupabaseClient<Database>;
 
 export type TermRow = {
   id: string;
-  domain_id: string;
-  domains: { language: string } | null;
+  collection_id: string;
+  collections: { language: string } | null;
 } & NarratedTermFields;
 
 export type JobRow = Pick<
@@ -23,7 +23,7 @@ export type JobRow = Pick<
 >;
 
 export const TERM_FIELD_COLUMNS =
-  "id, domain_id, term, definition, example, mental_model, discussion, anti_example, controversy, domains(language)";
+  "id, collection_id, term, definition, example, mental_model, discussion, anti_example, controversy, collections(language)";
 
 /** PostgREST's default max-rows cap. */
 const PAGE_SIZE = 1000;
@@ -50,7 +50,7 @@ export function isCurrentAudio(
   if (!job) return false;
   const fields = fieldsFromTerm(term);
   return isCurrentJob(job, {
-    contentHash: computeNarrationHash(mode, fields, parseLanguage(term.domains?.language)),
+    contentHash: computeNarrationHash(mode, fields, parseLanguage(term.collections?.language)),
     legacyHash: mode === "full" ? computeContentHash(fields) : undefined,
   });
 }
@@ -75,13 +75,16 @@ export function chunkIds(ids: string[]): string[][] {
   return chunks;
 }
 
-async function fetchAllTermsForDomain(admin: AdminClient, domainId: string): Promise<TermRow[]> {
+async function fetchAllTermsForCollection(
+  admin: AdminClient,
+  collectionId: string,
+): Promise<TermRow[]> {
   const terms: TermRow[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await admin
       .from("terms")
       .select(TERM_FIELD_COLUMNS)
-      .eq("domain_id", domainId)
+      .eq("collection_id", collectionId)
       .not("definition", "is", null)
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
@@ -114,20 +117,21 @@ export async function loadLiveJobs(
 
 export async function listMissingNarrationTermIds(
   admin: AdminClient,
-  domainId: string,
+  collectionId: string,
 ): Promise<string[]> {
-  const clips = await loadCollectionClips(admin, domainId);
+  const clips = await loadCollectionClips(admin, collectionId);
   return clips.filter((clip) => clip.state !== "current").map((clip) => clip.id);
 }
 
 async function loadCollectionClips(
   admin: AdminClient,
-  domainId: string,
+  collectionId: string,
 ): Promise<NarrationTermClip[]> {
-  const terms = await fetchAllTermsForDomain(admin, domainId);
+  const terms = await fetchAllTermsForCollection(admin, collectionId);
   if (terms.length === 0) return [];
 
-  const mode = (await getNarrationModes(admin, [domainId])).get(domainId) ?? DEFAULT_NARRATION_MODE;
+  const mode =
+    (await getNarrationModes(admin, [collectionId])).get(collectionId) ?? DEFAULT_NARRATION_MODE;
   const jobs = await loadLiveJobs(
     admin,
     terms.map((term) => term.id),
@@ -141,9 +145,9 @@ async function loadCollectionClips(
 
 export async function getCollectionNarrationCoverage(
   admin: AdminClient,
-  domainId: string,
+  collectionId: string,
 ): Promise<NarrationCoverage> {
-  const clips = await loadCollectionClips(admin, domainId);
+  const clips = await loadCollectionClips(admin, collectionId);
   const count = (state: NarrationClipState) => clips.filter((clip) => clip.state === state).length;
   return {
     total: clips.length,
@@ -156,10 +160,10 @@ export async function getCollectionNarrationCoverage(
 /** One page of a collection's terms, in alphabetical order, optionally only those in one state. */
 export async function listCollectionTermClips(
   admin: AdminClient,
-  domainId: string,
+  collectionId: string,
   options: { page: number; pageSize: number; state: NarrationClipState | "all" },
 ): Promise<{ clips: NarrationTermClip[]; total: number }> {
-  const all = (await loadCollectionClips(admin, domainId)).sort((a, b) =>
+  const all = (await loadCollectionClips(admin, collectionId)).sort((a, b) =>
     a.term.localeCompare(b.term),
   );
   const filtered =

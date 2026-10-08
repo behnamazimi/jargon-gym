@@ -19,38 +19,46 @@ function issuesFor(payload: unknown): string[] {
 
 describe("plain-language import issues", () => {
   it.each([
-    ["empty term name", { domain: "X", terms: [term({ term: " " })] }, "Term 1 has no name."],
+    ["empty term name", { collection: "X", terms: [term({ term: " " })] }, "Term 1 has no name."],
     [
       "missing term name",
-      { domain: "X", terms: [{ category: "A", definition: "B" }] },
+      { collection: "X", terms: [{ category: "A", definition: "B" }] },
       "Term 1 has no name.",
     ],
     [
       "second term unnamed",
-      { domain: "X", terms: [term(), term({ term: "" })] },
+      { collection: "X", terms: [term(), term({ term: "" })] },
       "Term 2 has no name.",
     ],
     [
       "wrong type",
-      { domain: "X", terms: [term({ definition: 5 })] },
+      { collection: "X", terms: [term({ definition: 5 })] },
       '"Churn": definition should be text.',
     ],
     [
       "wrong optional type",
-      { domain: "X", terms: [term({ mental_model: 5 })] },
+      { collection: "X", terms: [term({ mental_model: 5 })] },
       '"Churn": mental model should be text.',
     ],
-    ["no terms", { domain: "X", terms: [] }, "There are no terms in this file. Add at least one."],
-    ["terms missing", { domain: "X" }, 'Add a "terms" list with at least one term.'],
-    ["no domain", { terms: [term()] }, 'Add a collection name, like "domain": "Startup finance".'],
     [
-      "blank domain",
-      { domain: " ", terms: [term()] },
-      'Add a collection name, like "domain": "Startup finance".',
+      "no terms",
+      { collection: "X", terms: [] },
+      "There are no terms in this file. Add at least one.",
+    ],
+    ["terms missing", { collection: "X" }, 'Add a "terms" list with at least one term.'],
+    [
+      "no collection",
+      { terms: [term()] },
+      'Add a collection name, like "collection": "Startup finance".',
+    ],
+    [
+      "blank collection",
+      { collection: " ", terms: [term()] },
+      'Add a collection name, like "collection": "Startup finance".',
     ],
     [
       "term not an object",
-      { domain: "X", terms: ["Churn"] },
+      { collection: "X", terms: ["Churn"] },
       "Term 1 should have a name and a definition.",
     ],
     [
@@ -63,7 +71,7 @@ describe("plain-language import issues", () => {
   });
 
   it("names the missing part of a link", () => {
-    const payload = { domain: "X", terms: [term()], relationships: [{ source: "Churn" }] };
+    const payload = { collection: "X", terms: [term()], relationships: [{ source: "Churn" }] };
     expect(issuesFor(payload)).toEqual(
       expect.arrayContaining(["Link 1 is missing its second term.", "Link 1 is missing its type."]),
     );
@@ -71,14 +79,14 @@ describe("plain-language import issues", () => {
 
   it("lists at most 10 problems and counts the rest", () => {
     const terms = Array.from({ length: 13 }, (_, i) => term({ term: `T${i}`, definition: 5 }));
-    const issues = issuesFor({ domain: "X", terms });
+    const issues = issuesFor({ collection: "X", terms });
     expect(issues).toHaveLength(11);
     expect(issues[10]).toBe("…and 3 more.");
   });
 
   it("never shows a path", () => {
     const payload = {
-      domain: "X",
+      collection: "X",
       terms: [term({ category: 7 }), term({ term: "" }), term({ definition: 1 })],
       relationships: [{ source: "Churn" }],
     };
@@ -96,13 +104,13 @@ describe("JSON problems", () => {
   });
 
   it("points at the line and column of a syntax error", () => {
-    const message = messagesFor('{\n  "domain": "X",\n  "terms": [ , ]\n}')[0];
+    const message = messagesFor('{\n  "collection": "X",\n  "terms": [ , ]\n}')[0];
     expect(message).toMatch(/^Couldn't read this as JSON\. Look near line \d+, column \d+/);
     expect(message).not.toMatch(/position/i);
   });
 
   it("handles a trailing comma", () => {
-    const message = messagesFor('{"domain": "X", "terms": [],}')[0];
+    const message = messagesFor('{"collection": "X", "terms": [],}')[0];
     expect(message).toContain("Couldn't read this as JSON.");
   });
 });
@@ -115,13 +123,13 @@ describe("optional fields", () => {
     ["no definition", { definition: undefined }],
     ["blank definition", { definition: "" }],
   ])("accepts %s", (_name, overrides) => {
-    const result = readJsonImport(JSON.stringify({ domain: "X", terms: [term(overrides)] }));
+    const result = readJsonImport(JSON.stringify({ collection: "X", terms: [term(overrides)] }));
     expect(result.ok).toBe(true);
   });
 
   it("turns blanks into none", () => {
     const result = readJsonImport(
-      JSON.stringify({ domain: "X", terms: [term({ category: " ", definition: "" })] }),
+      JSON.stringify({ collection: "X", terms: [term({ category: " ", definition: "" })] }),
     );
     if (!result.ok) throw new Error("expected ok");
     expect(result.data.built.terms[0]).toMatchObject({ category: null, definition: null });

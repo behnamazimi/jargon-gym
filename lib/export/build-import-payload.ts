@@ -1,5 +1,5 @@
 import type { ImportPayload } from "@/lib/import/types";
-import type { Domain, Term, UnfinishedTerm } from "@/lib/terms/types";
+import type { Collection, Term, UnfinishedTerm } from "@/lib/terms/types";
 
 function optionalText(value: string | undefined | null): string | undefined {
   const trimmed = value?.trim();
@@ -7,12 +7,12 @@ function optionalText(value: string | undefined | null): string | undefined {
 }
 
 export function buildImportPayloadFromCollection(
-  domain: Domain,
+  collection: Collection,
   terms: (Term | UnfinishedTerm)[],
 ): ImportPayload {
   const payload: ImportPayload = {
-    domain: domain.name,
-    language: domain.language,
+    collection: collection.name,
+    language: collection.language,
     terms: terms.map((term) => {
       const example = optionalText(term.example);
       const mentalModel = optionalText(term.mentalModel);
@@ -35,7 +35,7 @@ export function buildImportPayloadFromCollection(
     }),
   };
 
-  const description = optionalText(domain.description);
+  const description = optionalText(collection.description);
   if (description) {
     payload.description = description;
   }
@@ -61,8 +61,8 @@ export function buildImportPayloadFromCollection(
   return payload;
 }
 
-export function exportFilename(domainName: string): string {
-  const slug = domainName
+export function exportFilename(collectionName: string): string {
+  const slug = collectionName
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")

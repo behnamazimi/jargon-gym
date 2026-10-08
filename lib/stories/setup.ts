@@ -6,7 +6,7 @@ import { DEFAULT_READ_OPTIONS, getReadOptions } from "@/lib/read/options";
 import { listStudyCollectionState } from "@/lib/study/collections";
 import type { PausedStudyCollection } from "@/lib/study/types";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getReadEligibleCountsByDomainForUser } from "@/lib/trace-queue";
+import { getReadEligibleCountsByCollectionForUser } from "@/lib/trace-queue";
 import { loadPrefs } from "./prefs";
 import type { ShadowingSettings } from "./shadowing";
 import { getCurrentStory, getStoryForUser, getStoryTerms } from "./repository";
@@ -17,8 +17,8 @@ export type StoryCollection = { id: string; name: string; eligibleCount: number 
 export type StoriesSetupData = {
   collections: StoryCollection[];
   paused: PausedStudyCollection[];
-  initialDomainId: string | null;
-  levelsByDomain: Record<string, StoryLevels>;
+  initialCollectionId: string | null;
+  levelsByCollection: Record<string, StoryLevels>;
   ai: AiAccessView;
   narrationAccess: boolean;
   narrationHighlight: boolean;
@@ -33,7 +33,7 @@ function isEligible(collection: StoryCollection): boolean {
   return collection.eligibleCount >= STORY_MIN_TERMS;
 }
 
-function resolveInitialDomainId(
+function resolveInitialCollectionId(
   collections: StoryCollection[],
   candidates: (string | null | undefined)[],
 ): string | null {
@@ -57,7 +57,7 @@ async function loadStoryToOpen(
 }
 
 export async function getStoriesSetupData(
-  requestedDomainId?: string,
+  requestedCollectionId?: string,
   requestedStoryId?: string,
 ): Promise<StoriesSetupData | { error: string }> {
   const auth = await requireAuthenticatedClient();
@@ -67,7 +67,7 @@ export async function getStoriesSetupData(
   const [collectionState, eligibleCounts, prefs, ai, narrationAccess, readOptions, unreadStory] =
     await Promise.all([
       listStudyCollectionState(auth.supabase, auth.user.id),
-      getReadEligibleCountsByDomainForUser(admin, auth.user.id),
+      getReadEligibleCountsByCollectionForUser(admin, auth.user.id),
       loadPrefs(admin, auth.user.id),
       getAiAccessView(auth.supabase),
       getNarrationAccessForUser(admin, auth.user.id, "narration_story"),
@@ -90,8 +90,11 @@ export async function getStoriesSetupData(
   return {
     collections,
     paused: collectionState.paused,
-    initialDomainId: resolveInitialDomainId(collections, [requestedDomainId, prefs.lastDomainId]),
-    levelsByDomain: prefs.levelsByDomain,
+    initialCollectionId: resolveInitialCollectionId(collections, [
+      requestedCollectionId,
+      prefs.lastCollectionId,
+    ]),
+    levelsByCollection: prefs.levelsByCollection,
     ai,
     narrationAccess,
     narrationHighlight: readOptions.narrationHighlight,

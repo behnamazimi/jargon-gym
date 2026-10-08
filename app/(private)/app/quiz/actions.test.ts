@@ -40,7 +40,7 @@ import { testCosts } from "@/lib/ai-credits/test-costs";
 
 const { generateQuizAction } = await import("./actions");
 
-const input = { domainIds: "all" as const, questionCount: 5, questionStyle: "ai" as never };
+const input = { collectionIds: "all" as const, questionCount: 5, questionStyle: "ai" as never };
 
 beforeEach(() => {
   state.access = {

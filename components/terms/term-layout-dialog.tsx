@@ -39,12 +39,12 @@ const TARGETS: { value: Target; label: string }[] = [
  *  time it opens. Don't render it inside a card: it is a portal, and a card's
  *  handlers would see its events. */
 export function TermLayoutDialog({
-  domainId,
+  collectionId,
   access,
   isOpen,
   onOpenChange,
 }: {
-  domainId: string | undefined;
+  collectionId: string | undefined;
   access: TermLayoutAccess;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -52,7 +52,7 @@ export function TermLayoutDialog({
   const { placement, hasOverride, save } = access;
   const isPhone = useMediaQuery(PLATFORM_MEDIA.phone, true);
   const [draft, setDraft] = useState(placement);
-  const [target, setTarget] = useState<Target>(domainId ? "collection" : "default");
+  const [target, setTarget] = useState<Target>(collectionId ? "collection" : "default");
   const [isPending, startTransition] = useTransition();
   const [failed, setFailed] = useState(false);
 
@@ -80,7 +80,7 @@ export function TermLayoutDialog({
             onChange={(checked) => setDraft({ ...draft, [block]: checked ? "shown" : "more" })}
           />
         ))}
-        {domainId ? (
+        {collectionId ? (
           <ChoiceRow label="Apply to" options={TARGETS} value={target} onChange={setTarget} />
         ) : null}
       </ul>
@@ -103,12 +103,12 @@ export function TermLayoutDialog({
 
   const footer = (
     <div className="flex shrink-0 items-center gap-2 border-t border-base-300 px-4 py-3">
-      {hasOverride && domainId ? (
+      {hasOverride && collectionId ? (
         <Button
           variant="ghost"
           size="sm"
           isDisabled={isPending}
-          onPress={() => submit({ scope: "reset-collection", domainId })}
+          onPress={() => submit({ scope: "reset-collection", collectionId })}
         >
           Use my default here
         </Button>
@@ -118,8 +118,8 @@ export function TermLayoutDialog({
         isDisabled={isPending}
         onPress={() =>
           submit(
-            target === "collection" && domainId
-              ? { scope: "collection", domainId, placement: draft }
+            target === "collection" && collectionId
+              ? { scope: "collection", collectionId, placement: draft }
               : { scope: "default", placement: draft },
           )
         }

@@ -28,7 +28,7 @@ function JobPanel({ job }: { job: NarrationSyncJobView }) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-base-300 px-4 py-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="m-0 font-medium text-base-content">{job.domainName}</p>
+        <p className="m-0 font-medium text-base-content">{job.collectionName}</p>
         <span className="badge">{job.status}</span>
       </div>
       <progress className="progress" value={done} max={job.total || 1} />
@@ -171,12 +171,12 @@ function SyncButtons({
 
 /** Only one sync can run at a time, across all collections, so the last job may belong to another one. */
 export function NarrationSyncPanel({
-  domainId,
+  collectionId,
   narrationEnabled,
   needsAudioCount,
   lastJob,
 }: {
-  domainId: string;
+  collectionId: string;
   narrationEnabled: boolean;
   needsAudioCount: number;
   lastJob: NarrationSyncJobView | null;
@@ -184,14 +184,16 @@ export function NarrationSyncPanel({
   const sync = useNarrationSync(lastJob);
   const [cancelling, setCancelling] = useState(false);
   const { job, active, isPending } = sync;
-  const mine = job?.domainId === domainId;
+  const mine = job?.collectionId === collectionId;
   const message = sync.error ?? sync.pollError;
 
   return (
     <div className="flex flex-col gap-3">
       <SyncNotices
         narrationEnabled={narrationEnabled}
-        otherRunning={active && !mine && job ? { id: job.domainId, name: job.domainName } : null}
+        otherRunning={
+          active && !mine && job ? { id: job.collectionId, name: job.collectionName } : null
+        }
       />
       <SyncButtons
         startLabel={isPending && !active ? "Starting…" : `Make ${needsAudioCount} missing or stale`}
@@ -201,7 +203,7 @@ export function NarrationSyncPanel({
         showResume={mine && canResumeNarrationSync(job)}
         onStart={() => {
           sync.clearError();
-          void sync.run(() => startNarrationSync(domainId), { onSuccess: sync.setJob });
+          void sync.run(() => startNarrationSync(collectionId), { onSuccess: sync.setJob });
         }}
         onCancel={() => setCancelling(true)}
         onResume={() => void sync.resume()}

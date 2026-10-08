@@ -158,7 +158,7 @@ export function CollectionCard({
       onSelect={() => onSelect(collection.id)}
       footer={
         <LinkButton
-          href={`/app/review?domain=${collection.id}`}
+          href={`/app/review?collection=${collection.id}`}
           variant="outline"
           size="sm"
           className="min-h-11 gap-2 md:min-h-8"

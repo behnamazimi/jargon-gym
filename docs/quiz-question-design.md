@@ -136,12 +136,12 @@ simple question. See "AI mode, as built" in `quiz-implementation-plan.md`.
 `generate-prompt.ts`, `schema.ts`, `grade.ts`, `mappers.ts`, the quiz UI for
 the typed input, and the quiz action's `questionType`.
 
-- `kind` lives on `domains`, but `TermCard` (from the `get_term_card` RPC) has
+- `kind` lives on `collections`, but `TermCard` (from the `get_term_card` RPC) has
   no `kind` and no recognition strength. The quiz pool must carry both, which
   may mean an RPC or query change.
 - Telegram builds its own questions in `lib/telegram/quiz-session-store.ts`
   (calls `buildIllustrationQuestions`) and `quiz-session-flow.ts` (calls
-  `selectDistractorsFromDomain`), not in `quiz-flow.ts`. Removing "None of
+  `selectDistractorsFromCollection`), not in `quiz-flow.ts`. Removing "None of
   these", adding masking and per-kind types has to land there too, and its
   Edge Function runtime must be able to import any new shared code.
 - Update [trace.md](trace.md) if the question types or guess rates change.

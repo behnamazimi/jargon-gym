@@ -62,8 +62,10 @@ describe("isDockPath", () => {
 describe("studyBackTarget", () => {
   it("returns dock pages with their query", () => {
     expect(studyBackTarget("/app/quiz", "")).toBe("/app/quiz");
-    expect(studyBackTarget("/app/library", "domain=abc")).toBe("/app/library?domain=abc");
-    expect(studyBackTarget("/app/read/stories", "domain=abc")).toBe("/app/read/stories?domain=abc");
+    expect(studyBackTarget("/app/library", "collection=abc")).toBe("/app/library?collection=abc");
+    expect(studyBackTarget("/app/read/stories", "collection=abc")).toBe(
+      "/app/read/stories?collection=abc",
+    );
   });
 
   it("never targets overflow or website pages", () => {

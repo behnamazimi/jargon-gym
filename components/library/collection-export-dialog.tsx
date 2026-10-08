@@ -19,12 +19,12 @@ import {
 import { stringifyImportPayload } from "@/lib/import/sample-payload";
 import { collectionToCsv, collectionToText } from "@/lib/export/build-text-export";
 import type { CollectionExport } from "@/lib/export/fetch-collection-export";
-import type { Domain, Term } from "@/lib/terms/types";
+import type { Collection, Term } from "@/lib/terms/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { SkeletonBar } from "@/components/page-skeleton";
 
-type DomainExportDialogProps = {
-  domain: Domain;
+type CollectionExportDialogProps = {
+  collection: Collection;
   /** Started when the dialog was opened; the full terms load only for export. */
   terms: Promise<CollectionExport>;
   isOpen: boolean;
@@ -32,19 +32,19 @@ type DomainExportDialogProps = {
 };
 
 /** Mounted only while open, so its state starts fresh every time. */
-export function DomainExportDialog({
-  domain,
+export function CollectionExportDialog({
+  collection,
   terms,
   isOpen,
   onOpenChange,
-}: DomainExportDialogProps) {
+}: CollectionExportDialogProps) {
   return (
     <Dialog isOpen={isOpen} onOpenChange={onOpenChange} className="max-w-2xl">
       <DialogHeader>
         <DialogTitle>Export collection</DialogTitle>
         <DialogDescription>
-          Export &ldquo;{domain.name}&rdquo; as JSON. Copy it or download a file you can re-import
-          later.
+          Export &ldquo;{collection.name}&rdquo; as JSON. Copy it or download a file you can
+          re-import later.
         </DialogDescription>
       </DialogHeader>
       <Suspense
@@ -54,18 +54,18 @@ export function DomainExportDialog({
           </div>
         }
       >
-        <ExportBody domain={domain} terms={terms} onOpenChange={onOpenChange} />
+        <ExportBody collection={collection} terms={terms} onOpenChange={onOpenChange} />
       </Suspense>
     </Dialog>
   );
 }
 
 function ExportBody({
-  domain,
+  collection,
   terms: termsPromise,
   onOpenChange,
 }: {
-  domain: Domain;
+  collection: Collection;
   terms: Promise<CollectionExport>;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -84,23 +84,23 @@ function ExportBody({
       </>
     );
   }
-  return <ExportPanel domain={domain} terms={result.terms} onOpenChange={onOpenChange} />;
+  return <ExportPanel collection={collection} terms={result.terms} onOpenChange={onOpenChange} />;
 }
 
 function ExportPanel({
-  domain,
+  collection,
   terms,
   onOpenChange,
 }: {
-  domain: Domain;
+  collection: Collection;
   terms: Term[];
   onOpenChange: (open: boolean) => void;
 }) {
   const [copied, setCopied] = useState(false);
 
   const json = useMemo(
-    () => stringifyImportPayload(buildImportPayloadFromCollection(domain, terms)),
-    [domain, terms],
+    () => stringifyImportPayload(buildImportPayloadFromCollection(collection, terms)),
+    [collection, terms],
   );
 
   async function handleCopy() {
@@ -119,12 +119,12 @@ function ExportPanel({
     download(
       collectionToCsv(terms),
       "text/csv",
-      exportFilename(domain.name).replace(/\.json$/, ".csv"),
+      exportFilename(collection.name).replace(/\.json$/, ".csv"),
     );
   }
 
   function handleDownload() {
-    download(json, "application/json", exportFilename(domain.name));
+    download(json, "application/json", exportFilename(collection.name));
   }
 
   function download(contents: string, type: string, filename: string) {

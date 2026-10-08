@@ -1,11 +1,11 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import type { CefrLevel, PieceLength } from "./types";
 
 type LengthUnit = "words" | "characters";
 
 // Languages written without spaces between words (Chinese, Japanese, Thai)
 // should use "characters" here, so length limits and counts stay meaningful.
-const LENGTH_UNIT: Record<DomainLanguage, LengthUnit> = {
+const LENGTH_UNIT: Record<CollectionLanguage, LengthUnit> = {
   en: "words",
   nl: "words",
   es: "words",
@@ -73,7 +73,7 @@ export function termsUsedNote(pieceLength: PieceLength, available: number): stri
 export function storyLength(
   pieceLength: PieceLength,
   cefrLevel: CefrLevel,
-  language: DomainLanguage,
+  language: CollectionLanguage,
 ): StoryLength {
   const spec = PIECE_LENGTH_SPEC[pieceLength];
   const unit = LENGTH_UNIT[language];

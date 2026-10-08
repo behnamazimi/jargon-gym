@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import type { LibraryTerm } from "@/lib/terms/types";
 import { EmptyTermsState } from "./empty-terms-state";
 import { TermCard } from "./term-card";
@@ -19,12 +19,12 @@ type TermListProps = {
   markedKnownTerms: Set<string>;
   openTerms: ReadonlySet<string>;
   isOwner: boolean;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   /** Studyable terms in the collection, before filters. */
   totalCount: number;
   /** The owner has terms that are saved but not finished yet. */
   hasUnfinished: boolean;
-  domainId: string;
+  collectionId: string;
   onToggleOpen: (termId: string) => void;
   onToggleMarkedKnown: (termId: string) => Promise<boolean>;
   onEdit: (termId: string) => void;
@@ -47,7 +47,7 @@ export function TermList({ windowKey, totalCount, hasUnfinished, ...props }: Ter
 
   if (totalCount === 0) {
     return props.isOwner ? (
-      <EmptyTermsState domainId={props.domainId} />
+      <EmptyTermsState collectionId={props.collectionId} />
     ) : (
       <EmptyMessage title="No terms in this collection yet." />
     );
@@ -77,7 +77,7 @@ function TermRows({
   onEdit,
   onDelete,
   windowKey,
-}: Omit<TermListProps, "totalCount" | "hasUnfinished" | "domainId">) {
+}: Omit<TermListProps, "totalCount" | "hasUnfinished" | "collectionId">) {
   // Back to the first rows whenever the filters change. Adjusted during
   // render rather than by remounting, so rows still on screen keep their state.
   const [rowWindow, setRowWindow] = useState({ key: windowKey, limit: ROWS_PER_STEP });

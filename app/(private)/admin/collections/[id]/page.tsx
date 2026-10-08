@@ -95,7 +95,7 @@ export default async function AdminCollectionPage({ params, searchParams }: Page
           title="Narration"
           description="Term only speaks just the name. Full speaks the term, its definition and the details. Changing the mode makes this collection's clips stale until you make new ones."
         >
-          <NarrationModeSelect domainId={id} name={collection.name} mode={narration[0]} />
+          <NarrationModeSelect collectionId={id} name={collection.name} mode={narration[0]} />
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <AdminStat label="Terms with a definition" value={narration[1].total} />
@@ -105,14 +105,14 @@ export default async function AdminCollectionPage({ params, searchParams }: Page
           </div>
 
           <NarrationSyncPanel
-            domainId={id}
+            collectionId={id}
             narrationEnabled={narration[4]}
             needsAudioCount={narration[1].stale + narration[1].missing}
             lastJob={narration[3]}
           />
 
           <ClipList
-            domainId={id}
+            collectionId={id}
             clips={narration[2].clips}
             total={narration[2].total}
             filter={filter}

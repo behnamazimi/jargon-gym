@@ -1,146 +1,154 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { domainInputToUpdateRow, type DomainInput } from "@/lib/library/domain-schema";
-import { DomainMutationError } from "./collections";
+import { collectionInputToUpdateRow, type CollectionInput } from "@/lib/library/collection-schema";
+import { CollectionMutationError } from "./collections";
 import { escapeLike } from "@/lib/terms/like-escape";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 type Client = SupabaseClient<Database>;
-type DomainVisibility = Database["public"]["Enums"]["domain_visibility"];
+type CollectionVisibility = Database["public"]["Enums"]["collection_visibility"];
 
-export async function addDomainToCollection(client: Client, userId: string, domainId: string) {
-  const { error } = await client.from("user_collection_domains").insert({
+export async function addCollectionToCollection(
+  client: Client,
+  userId: string,
+  collectionId: string,
+) {
+  const { error } = await client.from("user_collections").insert({
     user_id: userId,
-    domain_id: domainId,
+    collection_id: collectionId,
   });
 
   if (error) throw error;
 
-  await setDomainActiveForReview(client, userId, domainId, true);
+  await setCollectionActiveForReview(client, userId, collectionId, true);
 }
 
-export async function removeDomainFromCollection(client: Client, userId: string, domainId: string) {
+export async function removeCollectionFromCollection(
+  client: Client,
+  userId: string,
+  collectionId: string,
+) {
   const { error: collectionError } = await client
-    .from("user_collection_domains")
+    .from("user_collections")
     .delete()
     .eq("user_id", userId)
-    .eq("domain_id", domainId);
+    .eq("collection_id", collectionId);
 
   if (collectionError) throw collectionError;
 
-  await setDomainActiveForReview(client, userId, domainId, false);
+  await setCollectionActiveForReview(client, userId, collectionId, false);
 }
 
-export async function setDomainActiveForReview(
+export async function setCollectionActiveForReview(
   client: Client,
   userId: string,
-  domainId: string,
+  collectionId: string,
   active: boolean,
 ) {
   if (active) {
-    const { error } = await client.from("user_active_domains").upsert(
+    const { error } = await client.from("user_active_collections").upsert(
       {
         user_id: userId,
-        domain_id: domainId,
+        collection_id: collectionId,
       },
-      { onConflict: "user_id,domain_id", ignoreDuplicates: true },
+      { onConflict: "user_id,collection_id", ignoreDuplicates: true },
     );
     if (error) throw error;
     return;
   }
 
   const { error } = await client
-    .from("user_active_domains")
+    .from("user_active_collections")
     .delete()
     .eq("user_id", userId)
-    .eq("domain_id", domainId);
+    .eq("collection_id", collectionId);
 
   if (error) throw error;
 }
 
-export async function setDomainVisibility(
+export async function setCollectionVisibility(
   client: Client,
-  domainId: string,
-  visibility: DomainVisibility,
+  collectionId: string,
+  visibility: CollectionVisibility,
 ) {
-  const { error } = await client.from("domains").update({ visibility }).eq("id", domainId);
+  const { error } = await client.from("collections").update({ visibility }).eq("id", collectionId);
 
   if (error) throw error;
 }
 
-export async function updateOwnedDomain(
+export async function updateOwnedCollection(
   client: Client,
   userId: string,
-  domainId: string,
-  input: DomainInput,
+  collectionId: string,
+  input: CollectionInput,
 ) {
-  const { data: domain, error: domainError } = await client
-    .from("domains")
+  const { data: collection, error: collectionError } = await client
+    .from("collections")
     .select("id, owner_id, name")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .maybeSingle();
 
-  if (domainError) throw domainError;
+  if (collectionError) throw collectionError;
 
-  if (!domain) {
-    throw new DomainMutationError("Collection not found.");
+  if (!collection) {
+    throw new CollectionMutationError("Collection not found.");
   }
 
-  if (domain.owner_id !== userId) {
-    throw new DomainMutationError("You don't own this collection.");
+  if (collection.owner_id !== userId) {
+    throw new CollectionMutationError("You don't own this collection.");
   }
 
-  const row = domainInputToUpdateRow(input);
+  const row = collectionInputToUpdateRow(input);
 
-  if (row.name.toLowerCase() !== domain.name.toLowerCase()) {
+  if (row.name.toLowerCase() !== collection.name.toLowerCase()) {
     const { data: existing, error: existingError } = await client
-      .from("domains")
+      .from("collections")
       .select("id")
       .eq("owner_id", userId)
       .ilike("name", escapeLike(row.name))
-      .neq("id", domainId)
+      .neq("id", collectionId)
       .maybeSingle();
 
     if (existingError) throw existingError;
 
     if (existing) {
-      throw new DomainMutationError(`You already have a collection named "${row.name}".`);
+      throw new CollectionMutationError(`You already have a collection named "${row.name}".`);
     }
   }
 
-  const { error } = await client.from("domains").update(row).eq("id", domainId);
+  const { error } = await client.from("collections").update(row).eq("id", collectionId);
 
   if (error) throw error;
 }
 
-export async function countDomainCollectionSubscribers(
+export async function countCollectionSubscribers(
   client: Client,
-  domainId: string,
+  collectionId: string,
   ownerId: string,
 ): Promise<number> {
   const { count, error } = await client
-    .from("user_collection_domains")
+    .from("user_collections")
     .select("*", { count: "exact", head: true })
-    .eq("domain_id", domainId)
+    .eq("collection_id", collectionId)
     .neq("user_id", ownerId);
 
   if (error) throw error;
   return count ?? 0;
 }
 
-export async function deleteDomain(client: Client, domainId: string) {
-  const { data: domain, error: fetchError } = await client
-    .from("domains")
+export async function deleteCollection(client: Client, collectionId: string) {
+  const { data: collection, error: fetchError } = await client
+    .from("collections")
     .select("is_builtin, is_public")
-    .eq("id", domainId)
+    .eq("id", collectionId)
     .single();
   if (fetchError) throw fetchError;
 
-  if (domain.is_builtin || domain.is_public) {
+  if (collection.is_builtin || collection.is_public) {
     throw new Error("This collection is built-in or public, so it can't be deleted.");
   }
 
-  const { error } = await client.from("domains").delete().eq("id", domainId);
+  const { error } = await client.from("collections").delete().eq("id", collectionId);
   if (error) throw error;
 }
 
@@ -148,18 +156,18 @@ function isUniqueViolation(error: { code?: string }) {
   return error.code === "23505";
 }
 
-/** Creates a private, empty collection. Unlike `createOrGetOwnedDomain`, an
+/** Creates a private, empty collection. Unlike `createOrGetOwnedCollection`, an
  *  existing name is an error, never a merge. */
-export async function createOwnedDomain(
+export async function createOwnedCollection(
   client: Client,
   ownerId: string,
-  input: { name: string; language: DomainLanguage },
+  input: { name: string; language: CollectionLanguage },
 ) {
   const name = input.name.trim();
-  const duplicate = new DomainMutationError(`You already have a collection named "${name}".`);
+  const duplicate = new CollectionMutationError(`You already have a collection named "${name}".`);
 
   const { data: existing, error: selectError } = await client
-    .from("domains")
+    .from("collections")
     .select("id")
     .eq("owner_id", ownerId)
     .ilike("name", escapeLike(name))
@@ -169,7 +177,7 @@ export async function createOwnedDomain(
   if (existing) throw duplicate;
 
   const { data, error } = await client
-    .from("domains")
+    .from("collections")
     .insert({ name, owner_id: ownerId, visibility: "private", language: input.language })
     .select("id")
     .single();
@@ -180,9 +188,9 @@ export async function createOwnedDomain(
   }
 
   try {
-    await setDomainActiveForReview(client, ownerId, data.id, true);
+    await setCollectionActiveForReview(client, ownerId, data.id, true);
   } catch (err) {
-    console.error("createOwnedDomain: could not mark the collection active", { err });
+    console.error("createOwnedCollection: could not mark the collection active", { err });
   }
 
   return data;

@@ -11,7 +11,7 @@ import type { CommitImportInput } from "@/lib/import/commit-schema";
 type ImportFlowProps = {
   collections: ImportDestination[];
   addedNames: string[];
-  presetDomainId?: string;
+  presetCollectionId?: string;
   entry: CommitImportInput["entry"];
   /** Go straight to Check, for a list that was pasted somewhere else. */
   autoCheck?: boolean;
@@ -22,12 +22,12 @@ type ImportFlowProps = {
 export function ImportFlow({
   collections,
   addedNames,
-  presetDomainId,
+  presetCollectionId,
   entry,
   autoCheck = false,
   adapter,
 }: ImportFlowProps) {
-  const flow = useImportFlow({ collections, presetDomainId, entry, adapter });
+  const flow = useImportFlow({ collections, presetCollectionId, entry, adapter });
   useMountEffect(() => {
     if (autoCheck && flow.draft) flow.checkText(flow.draft, undefined);
   });

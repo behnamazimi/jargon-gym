@@ -2,8 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { computeTraceSnapshot, daysBetween, hasTraceActivity, type KnownLabel } from "@/lib/trace";
 import { fetchActiveTraceCandidates } from "@/lib/trace-queue";
-import type { CollectionDomainRow } from "@/lib/library/collections";
-import { resolveReviewDomainIds } from "./known-state";
+import type { CollectionRow } from "@/lib/library/collections";
+import { resolveReviewCollectionIds } from "./known-state";
 
 type Client = SupabaseClient<Database>;
 
@@ -15,8 +15,8 @@ const TERM_ID_BATCH_SIZE = 100;
  *  collection-stats.ts's WebStatsSnapshot, which is what the overview card
  *  actually renders. */
 export type MasteryCollectionOption = {
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
 };
 
 /** A coarser 3-band read of the same knownLabel a term already carries
@@ -40,8 +40,8 @@ export type MasteryTermJourney = {
 export type MasteryTermRow = {
   termId: string;
   term: string;
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
   category: string | null;
   /** Mastery_adjusted scaled to 0–100 for display. */
   score: number;
@@ -75,7 +75,7 @@ export type MasteryCountsData = {
 
 type ActiveMasteryCollections = {
   collections: MasteryCollectionOption[];
-  activeCollectionRows: CollectionDomainRow[];
+  activeCollectionRows: CollectionRow[];
 };
 
 /** First-touch timestamp per term, from the append-only `review_events`
@@ -112,12 +112,12 @@ async function loadActiveMasteryCollections(
   client: Client,
   userId: string,
 ): Promise<ActiveMasteryCollections> {
-  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
-  const activeSet = new Set(reviewDomainIds);
+  const { collectionRows, reviewCollectionIds } = await resolveReviewCollectionIds(client, userId);
+  const activeSet = new Set(reviewCollectionIds);
   const activeCollectionRows = collectionRows.filter((row) => activeSet.has(row.id));
   const collections: MasteryCollectionOption[] = activeCollectionRows
-    .map((row) => ({ domainId: row.id, domainName: row.name }))
-    .sort((a, b) => a.domainName.localeCompare(b.domainName));
+    .map((row) => ({ collectionId: row.id, collectionName: row.name }))
+    .sort((a, b) => a.collectionName.localeCompare(b.collectionName));
   return { collections, activeCollectionRows };
 }
 
@@ -157,7 +157,7 @@ export async function loadMasteryTermRows(
 
   const candidates = await fetchActiveTraceCandidates(client, userId);
   const now = new Date();
-  const domainNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
+  const collectionNameById = new Map(activeCollectionRows.map((row) => [row.id, row.name]));
 
   const termIds = candidates.map((c) => c.termId);
   const termInfoById = new Map<string, { term: string; category: string | null }>();
@@ -198,8 +198,8 @@ export async function loadMasteryTermRows(
         {
           termId: candidate.termId,
           term: info.term,
-          domainId: candidate.domainId,
-          domainName: domainNameById.get(candidate.domainId) ?? "Unknown",
+          collectionId: candidate.collectionId,
+          collectionName: collectionNameById.get(candidate.collectionId) ?? "Unknown",
           category: info.category,
           score: Math.round(snapshot.masteryAdjusted * 100),
           tier: tierFromLabel(snapshot.knownLabel),

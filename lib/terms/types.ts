@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "./languages";
+import type { CollectionLanguage } from "./languages";
 
 export type TermRelationship = {
   id: string;
@@ -46,16 +46,16 @@ export type LibraryTerm = Pick<Term, "id" | "term" | "category" | "definition">;
 
 export type UnfinishedLibraryTerm = Pick<UnfinishedTerm, "id" | "term" | "category">;
 
-export type DomainSource = "owned" | "added";
+export type CollectionSource = "owned" | "added";
 
-export type Domain = {
+export type Collection = {
   id: string;
   name: string;
   icon: string;
   description: string;
   visibility: "private" | "shared";
-  language: DomainLanguage;
-  source: DomainSource;
+  language: CollectionLanguage;
+  source: CollectionSource;
   isActiveForReview: boolean;
   termCount: number;
   /** Terms without a definition. Only the owner ever sees a non-zero count. */
@@ -72,20 +72,20 @@ export type Domain = {
 };
 
 export type FullLibraryPageData = {
-  domain: Domain;
-  domains: Domain[];
+  collection: Collection;
+  collections: Collection[];
   terms: Term[];
   unfinishedTerms: UnfinishedTerm[];
   knownTermIds: string[];
   markedKnownTermIds: string[];
   everMasteredTermIds: string[];
-  activeDomainIds: string[];
+  activeCollectionIds: string[];
 };
 
 /** One collection as the Library shows it. `loadedAt` (server time) lets
  *  newer local edits win over this snapshot and older ones lose to it. */
 export type LibraryPageData = {
-  domain: Domain;
+  collection: Collection;
   terms: LibraryTerm[];
   unfinishedTerms: UnfinishedLibraryTerm[];
   knownTermIds: string[];
@@ -105,7 +105,7 @@ export type FilterOptions = {
   markedKnownTerms: Set<string>;
 };
 
-export type SharedDomain = {
+export type SharedCollection = {
   id: string;
   name: string;
   icon: string;

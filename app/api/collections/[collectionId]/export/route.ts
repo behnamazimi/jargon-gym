@@ -6,13 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 const NO_STORE = { "Cache-Control": "private, no-store" };
 
 /** A collection's terms in full, loaded only when the export dialog opens. */
-export async function GET(request: Request, { params }: { params: Promise<{ domainId: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ collectionId: string }> },
+) {
   if (!(await readVerifiedUser(request.headers))) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401, headers: NO_STORE });
   }
 
-  const { domainId } = await params;
-  if (!isUuid(domainId)) {
+  const { collectionId } = await params;
+  if (!isUuid(collectionId)) {
     return NextResponse.json(
       { error: "Invalid collection id." },
       { status: 400, headers: NO_STORE },
@@ -20,7 +23,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ doma
   }
 
   try {
-    const terms = await fetchCollectionForExport(await createClient(), domainId);
+    const terms = await fetchCollectionForExport(await createClient(), collectionId);
     return NextResponse.json({ terms }, { headers: NO_STORE });
   } catch (error) {
     console.error("Couldn't load the collection for export:", error);

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { resolveReviewDomainIdsForUser } from "@/lib/mastery/known-state";
-import { getPoolStatsByDomainForUser, type PickContext } from "@/lib/trace-queue";
+import { resolveReviewCollectionIdsForUser } from "@/lib/mastery/known-state";
+import { getPoolStatsByCollectionForUser, type PickContext } from "@/lib/trace-queue";
 
 type Client = SupabaseClient<Database>;
 
@@ -24,18 +24,21 @@ export async function fetchCollectionStats(
   userId: string,
   context: PickContext = "read",
 ): Promise<CollectionStats[]> {
-  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIdsForUser(client, userId);
+  const { collectionRows, reviewCollectionIds } = await resolveReviewCollectionIdsForUser(
+    client,
+    userId,
+  );
 
   if (collectionRows.length === 0) return [];
 
-  const activeSet = new Set(reviewDomainIds);
-  const statsByDomain = await getPoolStatsByDomainForUser(client, userId, context);
+  const activeSet = new Set(reviewCollectionIds);
+  const statsByCollection = await getPoolStatsByCollectionForUser(client, userId, context);
 
   const stats: CollectionStats[] = collectionRows.map((row) => {
     const totalCount = row.termCount;
     const knownCount = row.knownCount;
     const percentage = totalCount > 0 ? Math.round((knownCount / totalCount) * 100) : 0;
-    const queueStats = statsByDomain.get(row.id);
+    const queueStats = statsByCollection.get(row.id);
 
     return {
       id: row.id,

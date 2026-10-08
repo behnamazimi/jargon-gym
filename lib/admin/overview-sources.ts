@@ -25,12 +25,12 @@ export async function readReportedCollections(client: Client): Promise<number> {
   const rows = await fetchAllRows((from, to) =>
     client
       .from("collection_reports")
-      .select("id, domain_id")
+      .select("id, collection_id")
       .eq("status", "open")
       .order("id")
       .range(from, to),
   );
-  return new Set(rows.map((row) => row.domain_id)).size;
+  return new Set(rows.map((row) => row.collection_id)).size;
 }
 
 export async function readNewIssues(client: Client): Promise<number> {

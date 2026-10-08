@@ -1,5 +1,5 @@
 export type StudyScope = {
-  domainIds: string[] | "all";
+  collectionIds: string[] | "all";
 };
 
 export type StudyCollection = {

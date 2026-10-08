@@ -10,32 +10,32 @@ import { LanguageToggle } from "@/components/shared/language-toggle";
 import type { DestinationMode } from "@/components/import/use-import-flow";
 import type { ImportDestination } from "@/lib/import/import-collections";
 import { findSimilarName } from "@/lib/import/similar-name";
-import { DOMAIN_LANGUAGE_OPTIONS, type DomainLanguage } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGE_OPTIONS, type CollectionLanguage } from "@/lib/terms/languages";
 
 type DestinationBlockProps = {
   collections: ImportDestination[];
   addedNames: string[];
   mode: DestinationMode;
   newName: string;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   existingId: string;
   disabled: boolean;
   /** What the pasted text looks like, for a soft hint. */
-  guessedLanguage: DomainLanguage | null;
-  fileLanguage: DomainLanguage | null;
+  guessedLanguage: CollectionLanguage | null;
+  fileLanguage: CollectionLanguage | null;
   onModeChange: (mode: DestinationMode, existingId?: string) => void;
   onNameChange: (name: string) => void;
-  onLanguageChange: (language: DomainLanguage) => void;
+  onLanguageChange: (language: CollectionLanguage) => void;
 };
 
-function languageLabel(language: DomainLanguage) {
-  return DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? language;
+function languageLabel(language: CollectionLanguage) {
+  return COLLECTION_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label ?? language;
 }
 
 function languageHint(
   mode: DestinationMode,
-  language: DomainLanguage,
-  guessed: DomainLanguage | null,
+  language: CollectionLanguage,
+  guessed: CollectionLanguage | null,
   existingName: string | undefined,
 ): string | null {
   if (!guessed || guessed === language) return null;

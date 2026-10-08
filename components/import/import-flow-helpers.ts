@@ -9,7 +9,7 @@ import type { JsonImport } from "@/lib/import/json-input";
 import { readLanguagePref } from "@/lib/import/language-pref";
 import type { ImportFormat } from "@/lib/import/parse/types";
 import type { ImportFailure } from "@/lib/import/types";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 export type DestinationMode = "new" | "existing";
 
@@ -18,7 +18,7 @@ export type DestinationMode = "new" | "existing";
 export type ImportAdapter = {
   draftStore: DraftStore;
   /** A new collection with this name and language; the person can't change either. */
-  destination: { name: string; language: DomainLanguage };
+  destination: { name: string; language: CollectionLanguage };
   /** Returns what went wrong, or null once the terms are handed over. */
   commit: (payload: {
     terms: CommitTerm[];
@@ -35,9 +35,9 @@ export type ImportAdapter = {
 
 /** Where a file that names its own collection should land. */
 export function jsonDestination(json: JsonImport, collections: ImportDestination[]) {
-  const name = json.domain.trim().toLowerCase();
+  const name = json.collection.trim().toLowerCase();
   return {
-    name: json.domain,
+    name: json.collection,
     language: json.language ?? readLanguagePref(),
     owned: collections.find((c) => c.name.trim().toLowerCase() === name) ?? null,
   };
@@ -103,7 +103,7 @@ export function initialDestination(
   return {
     mode: (preset && !adapter ? "existing" : "new") as DestinationMode,
     name: adapter?.destination.name ?? "",
-    language: adapter?.destination.language ?? ("en" as DomainLanguage),
+    language: adapter?.destination.language ?? ("en" as CollectionLanguage),
     existingId: preset?.id ?? collections[0]?.id ?? "",
   };
 }

@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "./languages";
+import type { CollectionLanguage } from "./languages";
 
 export type TermLabels = {
   mentalModel: string;
@@ -11,7 +11,7 @@ export type TermLabels = {
   searchOnGoogle: (term: string) => string;
 };
 
-export const TERM_LABELS: Record<DomainLanguage, TermLabels> = {
+export const TERM_LABELS: Record<CollectionLanguage, TermLabels> = {
   en: {
     mentalModel: "Mental model",
     example: "Example",

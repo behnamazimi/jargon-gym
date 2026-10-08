@@ -1,6 +1,6 @@
 /** Presentation-neutral term card (from get_term_card RPC). */
 
-import type { DomainLanguage } from "./languages";
+import type { CollectionLanguage } from "./languages";
 
 export type TermCardRelationship = {
   direction: "outgoing" | "incoming";
@@ -20,9 +20,9 @@ export type TermCard = {
   antiExample: string | null;
   controversy: string | null;
   note: string | null;
-  domainId: string;
-  domainName: string;
-  domainLanguage: DomainLanguage;
+  collectionId: string;
+  collectionName: string;
+  collectionLanguage: CollectionLanguage;
   relationships: TermCardRelationship[];
   /** True when this term had no review_state activity at all (no read,
    *  review, or quiz) the moment it was picked for this queue — i.e. this

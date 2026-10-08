@@ -11,7 +11,7 @@ const FinishTermsDialog = dynamic(() =>
 );
 
 type UnfinishedSectionProps = {
-  domainId: string;
+  collectionId: string;
   terms: UnfinishedLibraryTerm[];
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -20,7 +20,7 @@ type UnfinishedSectionProps = {
 
 /** The "N terms to finish" prompt and the sheet that fills them in. */
 export function UnfinishedSection({
-  domainId,
+  collectionId,
   terms,
   isOpen,
   onOpenChange,
@@ -32,7 +32,7 @@ export function UnfinishedSection({
       <UnfinishedBanner
         terms={terms}
         onFinish={() => onOpenChange(true)}
-        requestHref={canRequest ? `/app/import/request?definitions=${domainId}` : undefined}
+        requestHref={canRequest ? `/app/import/request?definitions=${collectionId}` : undefined}
       />
       {isOpen ? (
         <Suspense fallback={null}>

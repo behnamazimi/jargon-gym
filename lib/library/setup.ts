@@ -19,7 +19,9 @@ export type LibrarySetupResult =
 
 /** Every term of one collection in full, for Triage. The Library loads a
  *  lighter shape (lib/library/load.ts). */
-export async function getLibrarySetupData(selectedDomainId?: string): Promise<LibrarySetupResult> {
+export async function getLibrarySetupData(
+  selectedCollectionId?: string,
+): Promise<LibrarySetupResult> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to view your library." as const };
@@ -29,7 +31,7 @@ export async function getLibrarySetupData(selectedDomainId?: string): Promise<Li
     const [data, narrationAccess] = await Promise.all([
       loadLibraryPageData(auth.supabase, {
         userId: auth.user.id,
-        selectedDomainId,
+        selectedCollectionId,
       }),
       getNarrationAccessForUser(createAdminClient(), auth.user.id),
     ]);

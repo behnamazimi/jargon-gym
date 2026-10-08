@@ -22,7 +22,7 @@ describe("readImportInput", () => {
   });
 
   it("reads JSON", () => {
-    const result = readImportInput('{"domain":"X","terms":[{"term":"A"}]}', {});
+    const result = readImportInput('{"collection":"X","terms":[{"term":"A"}]}', {});
     expect(result.ok && result.kind).toBe("json");
   });
 

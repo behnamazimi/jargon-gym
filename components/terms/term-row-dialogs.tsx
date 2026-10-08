@@ -20,7 +20,7 @@ const TermFormDialog = dynamic(() =>
 );
 
 type TermRowDialogsProps = {
-  domainTerms: LibraryTerm[];
+  collectionTerms: LibraryTerm[];
   /** The term being edited, with its details loaded. */
   editing: Term | null;
   onEditingChange: (term: Term | null) => void;
@@ -35,7 +35,7 @@ type TermRowDialogsProps = {
 /** The edit and delete dialogs for whichever row asked, mounted once for
  *  the whole list instead of once per row. */
 export function TermRowDialogs({
-  domainTerms,
+  collectionTerms,
   editing,
   onEditingChange,
   deleting,
@@ -62,7 +62,7 @@ export function TermRowDialogs({
         <Suspense fallback={null}>
           <TermFormDialog
             key={editing.id}
-            domainTerms={domainTerms}
+            collectionTerms={collectionTerms}
             initialTerm={editing}
             isOpen
             onOpenChange={(open) => {

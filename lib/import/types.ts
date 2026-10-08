@@ -1,4 +1,4 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 type ImportTerm = {
   term: string;
@@ -20,9 +20,9 @@ type ImportRelationship = {
 };
 
 export type ImportPayload = {
-  domain: string;
+  collection: string;
   description?: string | null;
-  language?: DomainLanguage;
+  language?: CollectionLanguage;
   terms: ImportTerm[];
   relationships?: ImportRelationship[];
 };

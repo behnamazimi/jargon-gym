@@ -5,7 +5,7 @@ import { setTermMarkedKnownAction } from "@/app/(private)/app/actions";
 import { overrideMarkedKnown } from "@/lib/library/overrides";
 import {
   addNotYetTermsAction,
-  clearNotYetDomainAction,
+  clearNotYetCollectionAction,
   removeNotYetTermAction,
 } from "@/app/(private)/app/actions-triage";
 import { useToast } from "@/components/ui/toast";
@@ -30,13 +30,13 @@ function withoutId(ids: ReadonlySet<string>, id: string) {
  *  or setting it aside drops it from `deck`, so the next card is always
  *  `deck[0]`, and undo just puts it back. */
 export function useTriageDeck({
-  domainId,
+  collectionId,
   terms,
   knownTermIds,
   markedKnownTermIds,
   notYetTermIds,
 }: {
-  domainId: string;
+  collectionId: string;
   terms: Term[];
   knownTermIds: string[];
   markedKnownTermIds: string[];
@@ -129,7 +129,7 @@ export function useTriageDeck({
     const previousIds = notYetIds;
     setNotYetIds(new Set());
     setHistory([]);
-    void clearNotYetDomainAction(domainId).then(({ error }) => {
+    void clearNotYetCollectionAction(collectionId).then(({ error }) => {
       if (error) setNotYetIds(previousIds);
     });
   }

@@ -6,19 +6,19 @@ import {
   serializeLibraryFilters,
 } from "./library-filters";
 
-const defaults = { hideKnown: false, sortMode: "default", categoriesByDomain: {} };
+const defaults = { hideKnown: false, sortMode: "default", categoriesByCollection: {} };
 
 describe("parseLibraryFilters", () => {
   it("reads stored choices", () => {
     const raw = JSON.stringify({
       hideKnown: true,
       sortMode: "az",
-      categoriesByDomain: { d1: ["Theory", "Design"] },
+      categoriesByCollection: { d1: ["Theory", "Design"] },
     });
     expect(parseLibraryFilters(raw)).toEqual({
       hideKnown: true,
       sortMode: "az",
-      categoriesByDomain: { d1: ["Theory", "Design"] },
+      categoriesByCollection: { d1: ["Theory", "Design"] },
     });
   });
 
@@ -33,27 +33,27 @@ describe("parseLibraryFilters", () => {
     const raw = JSON.stringify({
       hideKnown: "yes",
       sortMode: "random",
-      categoriesByDomain: { d1: ["Theory", 3], d2: ["Design"] },
+      categoriesByCollection: { d1: ["Theory", 3], d2: ["Design"] },
     });
     expect(parseLibraryFilters(raw)).toEqual({
       hideKnown: false,
       sortMode: "default",
-      categoriesByDomain: { d2: ["Design"] },
+      categoriesByCollection: { d2: ["Design"] },
     });
   });
 });
 
 describe("serializeLibraryFilters", () => {
   it("keeps only the 20 most recently changed collections", () => {
-    const categoriesByDomain = Object.fromEntries(
+    const categoriesByCollection = Object.fromEntries(
       Array.from({ length: 25 }, (_, i) => [`d${i}`, ["Theory"]]),
     );
     const stored = JSON.parse(
       decodeURIComponent(
-        serializeLibraryFilters({ hideKnown: true, sortMode: "az", categoriesByDomain }),
+        serializeLibraryFilters({ hideKnown: true, sortMode: "az", categoriesByCollection }),
       ),
     );
-    expect(Object.keys(stored.categoriesByDomain)).toEqual(
+    expect(Object.keys(stored.categoriesByCollection)).toEqual(
       Array.from({ length: 20 }, (_, i) => `d${i + 5}`),
     );
     expect(stored.hideKnown).toBe(true);
@@ -66,27 +66,31 @@ describe("serializeLibraryFilters", () => {
         serializeLibraryFilters({
           hideKnown: false,
           sortMode: "default",
-          categoriesByDomain: { d1: [], d2: ["Design"] },
+          categoriesByCollection: { d1: [], d2: ["Design"] },
         }),
       ),
     );
-    expect(stored.categoriesByDomain).toEqual({ d2: ["Design"] });
+    expect(stored.categoriesByCollection).toEqual({ d2: ["Design"] });
   });
 });
 
 describe("cookie size", () => {
   it("drops the oldest collections until the cookie fits", () => {
     const longNames = Array.from({ length: 8 }, (_, i) => `Категория номер ${i}`);
-    const categoriesByDomain = Object.fromEntries(
-      Array.from({ length: 20 }, (_, i) => [`domain-${i}`, longNames]),
+    const categoriesByCollection = Object.fromEntries(
+      Array.from({ length: 20 }, (_, i) => [`collection-${i}`, longNames]),
     );
-    const value = serializeLibraryFilters({ hideKnown: true, sortMode: "az", categoriesByDomain });
+    const value = serializeLibraryFilters({
+      hideKnown: true,
+      sortMode: "az",
+      categoriesByCollection,
+    });
     expect(value.length).toBeLessThanOrEqual(3500);
 
-    const kept = Object.keys(decodeLibraryFilters(value).categoriesByDomain);
+    const kept = Object.keys(decodeLibraryFilters(value).categoriesByCollection);
     expect(kept.length).toBeGreaterThan(0);
     expect(kept.length).toBeLessThan(20);
-    expect(kept.at(-1)).toBe("domain-19");
+    expect(kept.at(-1)).toBe("collection-19");
     expect(decodeLibraryFilters(value).hideKnown).toBe(true);
   });
 });
@@ -96,7 +100,7 @@ describe("reading the cookie", () => {
     const filters = {
       hideKnown: true,
       sortMode: "unknown" as const,
-      categoriesByDomain: { d1: ["A; B", "100%"] },
+      categoriesByCollection: { d1: ["A; B", "100%"] },
     };
     const value = serializeLibraryFilters(filters);
     const header = `other=1; lb_lib_filters=${value}; theme=dark`;

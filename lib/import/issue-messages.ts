@@ -73,8 +73,8 @@ function describeIssue(issue: ZodIssueLike, raw: unknown): string {
   if (issue.path.length === 0) {
     return "This doesn't look like a collection. It should start with { and list your terms.";
   }
-  if (root === "domain") {
-    return 'Add a collection name, like "domain": "Startup finance".';
+  if (root === "collection") {
+    return 'Add a collection name, like "collection": "Startup finance".';
   }
   if (root === "terms" && index === undefined) {
     const hasList = isRecord(raw) && Array.isArray(raw.terms);

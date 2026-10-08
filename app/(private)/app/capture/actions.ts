@@ -5,7 +5,7 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { escapeLike } from "@/lib/terms/like-escape";
 
 const inputSchema = z.object({
-  domainId: z.guid(),
+  collectionId: z.guid(),
   term: z.string().trim().min(1).max(200),
 });
 
@@ -25,9 +25,9 @@ export async function findCaptureDuplicate(input: unknown): Promise<CaptureDupli
 
   const { data, error } = await auth.supabase
     .from("terms")
-    .select("term, definition, domains!inner(owner_id)")
-    .eq("domain_id", parsed.data.domainId)
-    .eq("domains.owner_id", auth.user.id)
+    .select("term, definition, collections!inner(owner_id)")
+    .eq("collection_id", parsed.data.collectionId)
+    .eq("collections.owner_id", auth.user.id)
     .ilike("term", escapeLike(parsed.data.term))
     .limit(1);
 
@@ -39,7 +39,7 @@ export async function findCaptureDuplicate(input: unknown): Promise<CaptureDupli
   };
 }
 
-const contextSchema = z.object({ domainId: z.guid() });
+const contextSchema = z.object({ collectionId: z.guid() });
 
 export type CaptureTerm = { id: string; term: string; category: string | null };
 
@@ -56,9 +56,9 @@ export async function loadCaptureTerms(input: unknown): Promise<CaptureContext> 
 
   const { data, error } = await auth.supabase
     .from("terms")
-    .select("id, term, category, domains!inner(owner_id)")
-    .eq("domain_id", parsed.data.domainId)
-    .eq("domains.owner_id", auth.user.id)
+    .select("id, term, category, collections!inner(owner_id)")
+    .eq("collection_id", parsed.data.collectionId)
+    .eq("collections.owner_id", auth.user.id)
     .not("definition", "is", null)
     .order("term");
 

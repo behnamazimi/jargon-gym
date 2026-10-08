@@ -35,17 +35,17 @@ begin
     '[{"term":"Pod","definition":"Smallest deployable unit"}]', '[]',
     'skip', 'request', 'paste', 'lines', 'suffix');
   assert (select d.owner_id = me and d.visibility = 'private'
-          from public.domains d where d.id = (r->>'domain_id')::uuid), 'owned privately by the given user';
-  assert exists (select 1 from public.user_active_domains where user_id = me and domain_id = (r->>'domain_id')::uuid), 'active for the given user';
+          from public.collections d where d.id = (r->>'collection_id')::uuid), 'owned privately by the given user';
+  assert exists (select 1 from public.user_active_collections where user_id = me and collection_id = (r->>'collection_id')::uuid), 'active for the given user';
   assert (select entry from public.import_batches where user_id = me) = 'request', 'batch entry';
 
   -- A taken name gets a suffix.
   r := public._import_terms_for(me, gen_random_uuid(), '{"name": "Kubernetes", "language": "en"}',
     '[{"term":"Pod","definition":"x"}]', '[]', 'skip', 'request', 'paste', 'lines', 'suffix');
-  assert r->>'domain_name' = 'Kubernetes (2)', 'second name';
+  assert r->>'collection_name' = 'Kubernetes (2)', 'second name';
   r := public._import_terms_for(me, gen_random_uuid(), '{"name": "kubernetes", "language": "en"}',
     '[{"term":"Pod","definition":"x"}]', '[]', 'skip', 'request', 'paste', 'lines', 'suffix');
-  assert r->>'domain_name' = 'kubernetes (3)', 'third name, case-insensitive';
+  assert r->>'collection_name' = 'kubernetes (3)', 'third name, case-insensitive';
 
   -- The default still fails on a taken name, and nothing is left behind.
   begin
@@ -56,7 +56,7 @@ begin
     v_failed := sqlerrm = 'collection_name_taken';
   end;
   assert v_failed, 'default fails on a taken name';
-  assert (select count(*) from public.domains d where d.owner_id = me and lower(name) like 'kubernetes%') = 3, 'no extra domain';
+  assert (select count(*) from public.collections d where d.owner_id = me and lower(name) like 'kubernetes%') = 3, 'no extra collection';
 end;
 $$;
 

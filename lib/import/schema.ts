@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DOMAIN_LANGUAGES } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
 import { termFieldsSchema } from "@/lib/terms/term-schema";
 
 const importRelationshipSchema = z.object({
@@ -10,9 +10,9 @@ const importRelationshipSchema = z.object({
 });
 
 export const importPayloadSchema = z.object({
-  domain: z.string().trim().min(1, "Enter a collection name"),
+  collection: z.string().trim().min(1, "Enter a collection name"),
   description: z.string().nullable().optional(),
-  language: z.enum(DOMAIN_LANGUAGES).optional(),
+  language: z.enum(COLLECTION_LANGUAGES).optional(),
   terms: z.array(termFieldsSchema).min(1, "Add at least one term"),
   relationships: z.array(importRelationshipSchema).optional().default([]),
 });

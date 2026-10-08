@@ -1,11 +1,11 @@
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import type { Term } from "@/lib/terms/types";
 import type { ReviewGrade } from "@/lib/trace";
 
 export type ReviewTerm = Term & {
-  domainId: string;
-  domainName: string;
-  domainLanguage: DomainLanguage;
+  collectionId: string;
+  collectionName: string;
+  collectionLanguage: CollectionLanguage;
   isNewToUser?: boolean;
 };
 

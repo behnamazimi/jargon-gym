@@ -32,14 +32,14 @@ import type { BuiltTerms, ImportFormat, ParseOptions, ParsedList } from "@/lib/i
 import { readImportInput, type PasteProblem } from "@/lib/import/read-input";
 import { findSimilarName } from "@/lib/import/similar-name";
 import type { ImportFailure } from "@/lib/import/types";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 
 export type { DestinationMode };
 export type CardFilter = "all" | "attention" | "there";
 
 type FlowArgs = {
   collections: ImportDestination[];
-  presetDomainId?: string;
+  presetCollectionId?: string;
   entry: CommitImportInput["entry"];
   adapter?: ImportAdapter;
 };
@@ -47,7 +47,7 @@ type FlowArgs = {
 const newImportId = () => crypto.randomUUID();
 
 /** All of the paste, check and add state for one trip through the importer. */
-export function useImportFlow({ collections, presetDomainId, entry, adapter }: FlowArgs) {
+export function useImportFlow({ collections, presetCollectionId, entry, adapter }: FlowArgs) {
   const store = adapter?.draftStore ?? personalDraft;
   const draft = useSyncExternalStore(store.subscribe, store.read, () => "");
   const [step, setStep] = useState<"paste" | "check">("paste");
@@ -62,11 +62,11 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     initialCheckState(newImportId()),
   );
 
-  const preset = collections.find((collection) => collection.id === presetDomainId);
+  const preset = collections.find((collection) => collection.id === presetCollectionId);
   const [start] = useState(() => initialDestination(adapter, preset, collections));
   const [mode, setMode] = useState<DestinationMode>(start.mode);
   const [newName, setNewName] = useState(start.name);
-  const [language, setLanguage] = useState<DomainLanguage>(start.language);
+  const [language, setLanguage] = useState<CollectionLanguage>(start.language);
   const [existingId, setExistingId] = useState(start.existingId);
   const [filter, setFilter] = useState<CardFilter>("all");
   const [reviewAll, setReviewAll] = useState(false);
@@ -85,14 +85,14 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
         )
       : null;
 
-  async function refreshMatches(domainId: string | null, names: string[]) {
+  async function refreshMatches(collectionId: string | null, names: string[]) {
     const request = ++matchRequest.current;
-    if (adapter || !domainId || names.length === 0) {
+    if (adapter || !collectionId || names.length === 0) {
       dispatch({ type: "setMatches", matches: {} });
       return;
     }
     setChecking(true);
-    const result = await checkImportAgainstDestination({ domainId, terms: names });
+    const result = await checkImportAgainstDestination({ collectionId, terms: names });
     if (request !== matchRequest.current) return;
     setChecking(false);
     if ("error" in result) {
@@ -104,12 +104,12 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     dispatch({ type: "setMatches", matches });
   }
 
-  function loadTerms(nextBuilt: BuiltTerms, domainId: string | null) {
+  function loadTerms(nextBuilt: BuiltTerms, collectionId: string | null) {
     setBuilt(nextBuilt);
     setResolved([]);
     dispatch({ type: "load", drafts: nextBuilt.terms, importId: newImportId() });
     void refreshMatches(
-      domainId,
+      collectionId,
       nextBuilt.terms.map((term) => term.term),
     );
   }
@@ -127,7 +127,7 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
       return;
     }
 
-    let domainId = mode === "existing" ? existingId : (preset?.id ?? null);
+    let collectionId = mode === "existing" ? existingId : (preset?.id ?? null);
     if (result.kind === "json") {
       setJson(result.json);
       setParsed(null);
@@ -139,7 +139,7 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
       if (target?.owned) {
         setMode("existing");
         setExistingId(target.owned.id);
-        domainId = target.owned.id;
+        collectionId = target.owned.id;
       }
     } else {
       setJson(null);
@@ -152,7 +152,7 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     }
 
     setStep("check");
-    loadTerms(result.built, domainId);
+    loadTerms(result.built, collectionId);
   }
 
   function changeOptions(patch: Partial<ParseOptions>) {
@@ -201,7 +201,7 @@ export function useImportFlow({ collections, presetDomainId, entry, adapter }: F
     const format: ImportFormat = json ? "json" : (parsed?.format ?? "lines");
     const destination =
       mode === "existing" && existing
-        ? { domainId: existing.id }
+        ? { collectionId: existing.id }
         : { name: newName.trim(), language };
     if (mode === "new" && !adapter) writeLanguagePref(language);
     track("import_submitted", {

@@ -1,4 +1,4 @@
-import type { Domain, Term } from "@/lib/terms/types";
+import type { Collection, Term } from "@/lib/terms/types";
 import type { ReviewTerm } from "@/lib/review/types";
 
 type DeckExclusions = {
@@ -21,12 +21,12 @@ export function buildTriageDeck(terms: Term[], exclusions: DeckExclusions): Term
  *  unset so the card doesn't repeat Triage's own "I know this" prompt. */
 export function toTriageTerm(
   term: Term,
-  domain: Pick<Domain, "id" | "name" | "language">,
+  collection: Pick<Collection, "id" | "name" | "language">,
 ): ReviewTerm {
   return {
     ...term,
-    domainId: domain.id,
-    domainName: domain.name,
-    domainLanguage: domain.language,
+    collectionId: collection.id,
+    collectionName: collection.name,
+    collectionLanguage: collection.language,
   };
 }

@@ -1,9 +1,9 @@
-import type { QuizDomainSelection } from "./session-store";
+import type { QuizCollectionSelection } from "./session-store";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export type ParsedDomainCount = {
-  domainId?: QuizDomainSelection;
+export type ParsedCollectionCount = {
+  collectionId?: QuizCollectionSelection;
   count?: number | "all";
   complete: boolean;
   error: string | null;
@@ -17,15 +17,18 @@ function parseCountToken(token: string): number | "all" | null {
   return count;
 }
 
-/** A bare leading count (no domain token) implies domain "all". */
-function parseLeadingCount(firstArg: string): ParsedDomainCount | null {
+/** A bare leading count (no collection token) implies collection "all". */
+function parseLeadingCount(firstArg: string): ParsedCollectionCount | null {
   if (!/^\d+$/.test(firstArg)) return null;
   const count = parseCountToken(firstArg);
   if (count === null) return { complete: false, error: "Invalid count." };
-  return { domainId: "all", count, complete: true, error: null };
+  return { collectionId: "all", count, complete: true, error: null };
 }
 
-function parseDomainToken(firstArg: string, firstLower: string): QuizDomainSelection | null {
+function parseCollectionToken(
+  firstArg: string,
+  firstLower: string,
+): QuizCollectionSelection | null {
   if (firstLower === "all") return "all";
   if (UUID_RE.test(firstArg)) return firstArg;
   return null;
@@ -33,7 +36,10 @@ function parseDomainToken(firstArg: string, firstLower: string): QuizDomainSelec
 
 /** Parses "[all|<collection>] [count|all]" — shared by /quiz (no status token)
  *  and the tail of /review's grammar once its status token is consumed. */
-export function parseDomainCountArgs(argsText: string, helpMessage: string): ParsedDomainCount {
+export function parseCollectionCountArgs(
+  argsText: string,
+  helpMessage: string,
+): ParsedCollectionCount {
   if (!argsText) {
     return { complete: false, error: null };
   }
@@ -46,24 +52,24 @@ export function parseDomainCountArgs(argsText: string, helpMessage: string): Par
   if (leading) return leading;
 
   if (firstLower === "all" && args.length === 1) {
-    return { domainId: "all", count: "all", complete: true, error: null };
+    return { collectionId: "all", count: "all", complete: true, error: null };
   }
 
-  const domainId = parseDomainToken(firstArg, firstLower);
-  if (domainId === null) {
+  const collectionId = parseCollectionToken(firstArg, firstLower);
+  if (collectionId === null) {
     return { complete: false, error: helpMessage };
   }
 
   if (args.length === 1) {
-    return { domainId, complete: false, error: null };
+    return { collectionId, complete: false, error: null };
   }
 
   const count = parseCountToken(args[1]);
   if (count === null) {
-    return { domainId, complete: false, error: "Invalid count." };
+    return { collectionId, complete: false, error: "Invalid count." };
   }
 
-  return { domainId, count, complete: true, error: null };
+  return { collectionId, count, complete: true, error: null };
 }
 
 export { UUID_RE };

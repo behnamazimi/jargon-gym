@@ -58,7 +58,7 @@ begin
     '{"name": "Spanish basics", "language": "es"}',
     '[{"term":"sobremesa","definition":"time at the table after a meal"}]', '[]',
     'skip', 'request', 'paste', 'lines', 'suffix');
-  assert (select d.language from public.domains d where d.id = (r->>'domain_id')::uuid) = 'es', 'imported as es';
+  assert (select d.language from public.collections d where d.id = (r->>'collection_id')::uuid) = 'es', 'imported as es';
 
   -- An unknown language is still refused.
   assert pg_temp.fails_with(

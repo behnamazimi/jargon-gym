@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { resolveReviewDomainIds } from "@/lib/mastery/known-state";
+import { resolveReviewCollectionIds } from "@/lib/mastery/known-state";
 import {
   fetchActiveTraceCandidates,
   type PickContext,
@@ -15,7 +15,7 @@ import {
   STUDY_TIMEZONE,
   type ReviewGrade,
 } from "@/lib/trace";
-import type { CollectionDomainRow } from "@/lib/library/collections";
+import type { CollectionRow } from "@/lib/library/collections";
 import {
   buildStatsSnapshot,
   EMPTY_STATS_SNAPSHOT,
@@ -125,7 +125,7 @@ function countActivityToday(candidates: TraceCandidate[], context: PickContext, 
   }).length;
 }
 
-function toPausedCollectionSummary(row: CollectionDomainRow): PausedCollectionSummary {
+function toPausedCollectionSummary(row: CollectionRow): PausedCollectionSummary {
   const totalCount = row.termCount;
   const termsLearnedCount = row.termsLearnedCount;
   const percentage = totalCount > 0 ? Math.round((termsLearnedCount / totalCount) * 100) : 0;
@@ -153,7 +153,7 @@ export async function fetchStatsSnapshot(
   client: Client,
   userId: string,
 ): Promise<WebStatsSnapshot> {
-  const { collectionRows, reviewDomainIds } = await resolveReviewDomainIds(client, userId);
+  const { collectionRows, reviewCollectionIds } = await resolveReviewCollectionIds(client, userId);
   if (collectionRows.length === 0) return EMPTY_WEB_STATS_SNAPSHOT;
 
   const [candidates, gradeDistribution] = await Promise.all([
@@ -162,8 +162,8 @@ export async function fetchStatsSnapshot(
   ]);
 
   const now = new Date();
-  const base = buildStatsSnapshot(collectionRows, reviewDomainIds, candidates, now);
-  const activeSet = new Set(reviewDomainIds);
+  const base = buildStatsSnapshot(collectionRows, reviewCollectionIds, candidates, now);
+  const activeSet = new Set(reviewCollectionIds);
   const pausedCollections = collectionRows
     .filter((row) => !activeSet.has(row.id))
     .map(toPausedCollectionSummary)

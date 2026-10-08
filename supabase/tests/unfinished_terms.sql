@@ -39,20 +39,20 @@ declare
   v_count int;
 begin
   -- Setup as the table owner: a shared collection with one finished and one unfinished term.
-  insert into public.domains (name, owner_id, visibility, is_builtin, is_public, slug)
+  insert into public.collections (name, owner_id, visibility, is_builtin, is_public, slug)
   values ('Shared set', owner_id, 'shared', true, true, 'shared-set') returning id into d1;
-  insert into public.terms (domain_id, term, definition) values (d1, 'Done', 'A finished term') returning id into t_done;
-  insert into public.terms (domain_id, term) values (d1, 'Open') returning id into t_open;
-  insert into public.terms (domain_id, term) values (d1, 'Later') returning id into t_later;
+  insert into public.terms (collection_id, term, definition) values (d1, 'Done', 'A finished term') returning id into t_done;
+  insert into public.terms (collection_id, term) values (d1, 'Open') returning id into t_open;
+  insert into public.terms (collection_id, term) values (d1, 'Later') returning id into t_later;
   insert into public.term_relationships (source_term_id, target_term_id, relationship_type, description)
   values (t_done, t_open, 'related', '');
-  insert into public.user_collection_domains (user_id, domain_id) values (viewer_id, d1);
-  insert into public.user_active_domains (user_id, domain_id) values (viewer_id, d1), (owner_id, d1);
+  insert into public.user_collections (user_id, collection_id) values (viewer_id, d1);
+  insert into public.user_active_collections (user_id, collection_id) values (viewer_id, d1), (owner_id, d1);
 
   -- Blank values are refused: "none" is null.
   v_failed := false;
   begin
-    insert into public.terms (domain_id, term, definition) values (d1, 'Blank', '   ');
+    insert into public.terms (collection_id, term, definition) values (d1, 'Blank', '   ');
   exception when check_violation then v_failed := true;
   end;
   assert v_failed, 'a blank definition was allowed';
@@ -68,26 +68,26 @@ begin
 
   -- The owner sees unfinished terms; a viewer of the shared collection does not.
   perform pg_temp.act_as(owner_id);
-  assert (select count(*) from public.terms where domain_id = d1) = 3, 'owner should see all terms';
+  assert (select count(*) from public.terms where collection_id = d1) = 3, 'owner should see all terms';
   assert (select unfinished_count from public.my_unfinished_term_counts(array[d1])) = 1, 'owner unfinished count';
 
   perform pg_temp.act_as(viewer_id);
-  assert (select count(*) from public.terms where domain_id = d1) = 2, 'viewer saw an unfinished term';
+  assert (select count(*) from public.terms where collection_id = d1) = 2, 'viewer saw an unfinished term';
   assert not exists (select 1 from public.terms where id = t_open), 'viewer read an unfinished term by id';
   assert not exists (select 1 from public.my_unfinished_term_counts(array[d1])), 'viewer got an unfinished count';
 
   -- Counts and study pools leave unfinished terms out.
-  assert (select count(*) from public.my_progress_state_by_domain(array[d1])) = 2, 'progress counted an unfinished term';
+  assert (select count(*) from public.my_progress_state_by_collection(array[d1])) = 2, 'progress counted an unfinished term';
   assert (select count(*) from public.my_get_trace_candidates(array[d1])) = 2, 'candidates included an unfinished term';
 
   -- Relationships never leak an unfinished term's name.
   assert not exists (
-    select 1 from public.my_term_relationships_by_domain(d1)
+    select 1 from public.my_term_relationships_by_collection(d1)
     where source_term_name = 'Open' or target_term_name = 'Open'
   ), 'a relationship exposed an unfinished term';
   perform pg_temp.act_as(owner_id);
   assert exists (
-    select 1 from public.my_term_relationships_by_domain(d1) where target_term_name = 'Open'
+    select 1 from public.my_term_relationships_by_collection(d1) where target_term_name = 'Open'
   ), 'the owner lost their own relationship';
   execute 'reset role';
 
@@ -97,7 +97,7 @@ begin
 
   -- The public site hides them too.
   execute 'set local role anon';
-  assert (select count(*) from public.terms where domain_id = d1) = 2, 'anon saw an unfinished term';
+  assert (select count(*) from public.terms where collection_id = d1) = 2, 'anon saw an unfinished term';
   execute 'reset role';
 end;
 $$;

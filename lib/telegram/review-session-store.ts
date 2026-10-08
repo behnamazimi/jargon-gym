@@ -5,7 +5,7 @@ import { getPoolStatsForUser } from "@/lib/trace-queue";
 import { fetchTraceCandidatesForUser } from "@/lib/trace-queue/repository";
 import { computeTraceSnapshot } from "@/lib/trace";
 import type { KnownLabel } from "@/lib/trace";
-import { domainIdsForScope, type QuizDomainSelection } from "./quiz-session-store";
+import { collectionIdsForScope, type QuizCollectionSelection } from "./quiz-session-store";
 
 type Client = SupabaseClient<Database>;
 
@@ -22,7 +22,7 @@ type ReviewSessionTerm = { id: string; status: KnownLabel; isNewToUser: boolean 
 
 export type TelegramReviewSession = {
   userId: string;
-  domainId: QuizDomainSelection;
+  collectionId: QuizCollectionSelection;
   terms: ReviewSessionTerm[];
   currentIndex: number;
   revealed: boolean;
@@ -33,7 +33,7 @@ export type TelegramReviewSession = {
 };
 
 type StoredReviewSession = {
-  domainId: QuizDomainSelection;
+  collectionId: QuizCollectionSelection;
   terms: ReviewSessionTerm[];
   currentIndex: number;
   revealed: boolean;
@@ -56,7 +56,7 @@ function isStoredReviewSession(value: unknown): value is StoredReviewSession {
   if (!value || typeof value !== "object") return false;
   const session = value as StoredReviewSession;
   return (
-    (session.domainId === "all" || typeof session.domainId === "string") &&
+    (session.collectionId === "all" || typeof session.collectionId === "string") &&
     Array.isArray(session.terms) &&
     session.terms.every(isReviewSessionTerm) &&
     typeof session.currentIndex === "number" &&
@@ -97,12 +97,12 @@ export async function deleteReviewSession(client: Client, chatId: number): Promi
 export async function countTermsForReview(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
 ): Promise<number> {
   const stats = await getPoolStatsForUser(
     client,
     userId,
-    { domainIds: domainIdsForScope(domainId) },
+    { collectionIds: collectionIdsForScope(collectionId) },
     "review",
   );
   return stats.total;
@@ -112,10 +112,10 @@ export async function createReviewSession(
   client: Client,
   chatId: number,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   count: number,
 ): Promise<TelegramReviewSession> {
-  const scope = { domainIds: domainIdsForScope(domainId) };
+  const scope = { collectionIds: collectionIdsForScope(collectionId) };
   const [cards, candidates] = await Promise.all([
     fetchStudyTermPool(client, userId, scope, count, "admin"),
     fetchTraceCandidatesForUser(client, userId, scope),
@@ -137,7 +137,7 @@ export async function createReviewSession(
 
   const session: TelegramReviewSession = {
     userId,
-    domainId,
+    collectionId,
     terms,
     currentIndex: 0,
     revealed: false,
@@ -147,7 +147,7 @@ export async function createReviewSession(
 
   if (terms.length > 0) {
     await saveStoredReviewSession(client, chatId, {
-      domainId: session.domainId,
+      collectionId: session.collectionId,
       terms: session.terms,
       currentIndex: session.currentIndex,
       revealed: session.revealed,
@@ -179,7 +179,7 @@ export async function getReviewSession(
 
   return {
     userId: data.user_id,
-    domainId: data.review_session.domainId,
+    collectionId: data.review_session.collectionId,
     terms: data.review_session.terms,
     currentIndex: data.review_session.currentIndex,
     revealed: data.review_session.revealed,

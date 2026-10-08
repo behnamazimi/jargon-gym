@@ -9,7 +9,7 @@ import {
 import { parseQuizCommand, UUID_RE, type ParsedQuizCommand } from "./quiz-parse";
 import { startReviewSession } from "./quiz-session-flow";
 import {
-  formatDomainChoiceLabel,
+  formatCollectionChoiceLabel,
   resolveQuizCount,
   sendCollectionQuestion,
   sendCountQuestion,
@@ -21,7 +21,7 @@ import {
   getMaxQuizQuestionCount,
   loadQuizSetup,
   saveQuizSetup,
-  type QuizDomainSelection,
+  type QuizCollectionSelection,
   type QuizSetupState,
 } from "./session-store";
 import { edit, send } from "./transport";
@@ -36,7 +36,7 @@ async function startQuizSetup(
 ): Promise<TelegramAction[]> {
   const startedAt = Date.now();
 
-  if (!parsed.domainId) {
+  if (!parsed.collectionId) {
     const setup: QuizSetupState = { step: "collection", startedAt };
     await saveQuizSetup(client, chatId, setup);
     return sendCollectionQuestion(client, chatId, userId);
@@ -44,11 +44,11 @@ async function startQuizSetup(
 
   const setup: QuizSetupState = {
     step: "count",
-    domainId: parsed.domainId,
+    collectionId: parsed.collectionId,
     startedAt,
   };
   await saveQuizSetup(client, chatId, setup);
-  return sendCountQuestion(client, chatId, userId, parsed.domainId);
+  return sendCountQuestion(client, chatId, userId, parsed.collectionId);
 }
 
 export async function handleQuizCommand(
@@ -70,15 +70,15 @@ export async function handleQuizCommand(
   const count = await resolveQuizCount(
     client,
     userId,
-    parsed.domainId!,
+    parsed.collectionId!,
     parsed.count ?? DEFAULT_TELEGRAM_QUIZ_COUNT,
   );
 
   await clearQuizSetup(client, chatId);
-  return startReviewSession(client, chatId, userId, parsed.domainId!, count);
+  return startReviewSession(client, chatId, userId, parsed.collectionId!, count);
 }
 
-async function handleQuizSetupDomain(
+async function handleQuizSetupCollection(
   client: Client,
   chatId: number,
   userId: string,
@@ -86,26 +86,26 @@ async function handleQuizSetupDomain(
   parts: string[],
 ): Promise<TelegramAction[]> {
   const actions: TelegramAction[] = [];
-  const domainToken = parts.slice(1).join(":");
-  const domainId: QuizDomainSelection = domainToken === "all" ? "all" : domainToken;
-  if (domainId !== "all" && !UUID_RE.test(domainId)) return actions;
+  const collectionToken = parts.slice(1).join(":");
+  const collectionId: QuizCollectionSelection = collectionToken === "all" ? "all" : collectionToken;
+  if (collectionId !== "all" && !UUID_RE.test(collectionId)) return actions;
 
-  const domainLabel = await formatDomainChoiceLabel(client, userId, domainId);
+  const collectionLabel = await formatCollectionChoiceLabel(client, userId, collectionId);
   actions.push(
     edit(
       chatId,
       messageId,
-      formatSetupPromptWithAnswer(formatQuizSetupCollectionPrompt(), domainLabel),
+      formatSetupPromptWithAnswer(formatQuizSetupCollectionPrompt(), collectionLabel),
     ),
   );
 
   const countSetup: QuizSetupState = {
     step: "count",
-    domainId,
+    collectionId,
     startedAt: Date.now(),
   };
   await saveQuizSetup(client, chatId, countSetup);
-  actions.push(...(await sendCountQuestion(client, chatId, userId, domainId)));
+  actions.push(...(await sendCountQuestion(client, chatId, userId, collectionId)));
   return actions;
 }
 
@@ -118,19 +118,19 @@ async function handleQuizSetupCount(
 ): Promise<TelegramAction[]> {
   const actions: TelegramAction[] = [];
   const setup = await loadQuizSetup(client, chatId);
-  if (!setup?.domainId) return actions;
+  if (!setup?.collectionId) return actions;
 
   const countToken = parts[1];
   let count: number;
 
   if (countToken === "all") {
-    count = await resolveQuizCount(client, userId, setup.domainId, "all");
+    count = await resolveQuizCount(client, userId, setup.collectionId, "all");
   } else {
     count = parseInt(countToken, 10);
     if (isNaN(count) || count < 1) return actions;
   }
 
-  const available = await countTermsForQuiz(client, userId, setup.domainId);
+  const available = await countTermsForQuiz(client, userId, setup.collectionId);
   const maxCount = getMaxQuizQuestionCount(available);
   const defaultCount = Math.min(DEFAULT_TELEGRAM_QUIZ_COUNT, maxCount);
   const countLabel =
@@ -145,7 +145,7 @@ async function handleQuizSetupCount(
   );
 
   await clearQuizSetup(client, chatId);
-  actions.push(...(await startReviewSession(client, chatId, userId, setup.domainId, count)));
+  actions.push(...(await startReviewSession(client, chatId, userId, setup.collectionId, count)));
 
   return actions;
 }
@@ -160,8 +160,8 @@ export async function handleQuizSetupCallback(
   const parts = data.slice("quizsetup:".length).split(":");
   const action = parts[0];
 
-  if (action === "domain") {
-    return handleQuizSetupDomain(client, chatId, userId, messageId, parts);
+  if (action === "collection") {
+    return handleQuizSetupCollection(client, chatId, userId, messageId, parts);
   }
   if (action === "count") {
     return handleQuizSetupCount(client, chatId, userId, messageId, parts);

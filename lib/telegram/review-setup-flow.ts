@@ -12,7 +12,7 @@ import { UUID_RE } from "./command-parse";
 import { parseReviewCommand, type ParsedReviewCommand } from "./review-parse";
 import { startReviewFlashcardSession } from "./review-session-flow";
 import {
-  formatReviewDomainChoiceLabel,
+  formatReviewCollectionChoiceLabel,
   resolveReviewCount,
   sendReviewCollectionQuestion,
   sendReviewCountQuestion,
@@ -23,7 +23,7 @@ import {
   countTermsForReview,
   loadReviewSetup,
   saveReviewSetup,
-  type QuizDomainSelection,
+  type QuizCollectionSelection,
   type ReviewSetupState,
 } from "./session-store";
 import { edit, send } from "./transport";
@@ -38,7 +38,7 @@ async function startReviewSetup(
 ): Promise<TelegramAction[]> {
   const startedAt = Date.now();
 
-  if (!parsed.domainId) {
+  if (!parsed.collectionId) {
     const setup: ReviewSetupState = { step: "collection", startedAt };
     await saveReviewSetup(client, chatId, setup);
     return sendReviewCollectionQuestion(client, chatId, userId);
@@ -46,11 +46,11 @@ async function startReviewSetup(
 
   const setup: ReviewSetupState = {
     step: "count",
-    domainId: parsed.domainId,
+    collectionId: parsed.collectionId,
     startedAt,
   };
   await saveReviewSetup(client, chatId, setup);
-  return sendReviewCountQuestion(client, chatId, userId, parsed.domainId);
+  return sendReviewCountQuestion(client, chatId, userId, parsed.collectionId);
 }
 
 export async function handleReviewCommand(
@@ -74,12 +74,12 @@ export async function handleReviewCommand(
   const count = await resolveReviewCount(
     client,
     userId,
-    parsed.domainId!,
+    parsed.collectionId!,
     parsed.count ?? DEFAULT_TELEGRAM_REVIEW_COUNT,
   );
 
   await clearReviewSetup(client, chatId);
-  return startReviewFlashcardSession(client, chatId, userId, parsed.domainId!, count);
+  return startReviewFlashcardSession(client, chatId, userId, parsed.collectionId!, count);
 }
 
 interface SetupCallbackContext {
@@ -89,7 +89,7 @@ interface SetupCallbackContext {
   messageId: number;
 }
 
-async function handleReviewSetupDomainCallback(
+async function handleReviewSetupCollectionCallback(
   parts: string[],
   ctx: SetupCallbackContext,
 ): Promise<TelegramAction[]> {
@@ -99,37 +99,37 @@ async function handleReviewSetupDomainCallback(
   const setup = await loadReviewSetup(client, chatId);
   if (!setup) return actions;
 
-  const domainToken = parts.slice(1).join(":");
-  const domainId: QuizDomainSelection = domainToken === "all" ? "all" : domainToken;
-  if (domainId !== "all" && !UUID_RE.test(domainId)) return actions;
+  const collectionToken = parts.slice(1).join(":");
+  const collectionId: QuizCollectionSelection = collectionToken === "all" ? "all" : collectionToken;
+  if (collectionId !== "all" && !UUID_RE.test(collectionId)) return actions;
 
-  const domainLabel = await formatReviewDomainChoiceLabel(client, userId, domainId);
+  const collectionLabel = await formatReviewCollectionChoiceLabel(client, userId, collectionId);
   actions.push(
     edit(
       chatId,
       messageId,
-      formatSetupPromptWithAnswer(formatReviewSetupCollectionPrompt(), domainLabel),
+      formatSetupPromptWithAnswer(formatReviewSetupCollectionPrompt(), collectionLabel),
     ),
   );
 
   const countSetup: ReviewSetupState = {
     step: "count",
-    domainId,
+    collectionId,
     startedAt: Date.now(),
   };
   await saveReviewSetup(client, chatId, countSetup);
-  actions.push(...(await sendReviewCountQuestion(client, chatId, userId, domainId)));
+  actions.push(...(await sendReviewCountQuestion(client, chatId, userId, collectionId)));
   return actions;
 }
 
 async function resolveReviewSetupCount(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   countToken: string | undefined,
 ): Promise<number | null> {
   if (countToken === "all") {
-    return resolveReviewCount(client, userId, domainId, "all");
+    return resolveReviewCount(client, userId, collectionId, "all");
   }
   const count = parseInt(countToken ?? "", 10);
   return isNaN(count) || count < 1 ? null : count;
@@ -143,13 +143,13 @@ async function handleReviewSetupCountCallback(
   const actions: TelegramAction[] = [];
 
   const setup = await loadReviewSetup(client, chatId);
-  if (!setup?.domainId) return actions;
+  if (!setup?.collectionId) return actions;
 
   const countToken = parts[1];
-  const count = await resolveReviewSetupCount(client, userId, setup.domainId, countToken);
+  const count = await resolveReviewSetupCount(client, userId, setup.collectionId, countToken);
   if (count === null) return actions;
 
-  const available = await countTermsForReview(client, userId, setup.domainId);
+  const available = await countTermsForReview(client, userId, setup.collectionId);
   const maxCount = getMaxStudyCount(available);
   const defaultCount = Math.min(DEFAULT_TELEGRAM_REVIEW_COUNT, maxCount);
   const countLabel =
@@ -165,7 +165,7 @@ async function handleReviewSetupCountCallback(
 
   await clearReviewSetup(client, chatId);
   actions.push(
-    ...(await startReviewFlashcardSession(client, chatId, userId, setup.domainId, count)),
+    ...(await startReviewFlashcardSession(client, chatId, userId, setup.collectionId, count)),
   );
   return actions;
 }
@@ -176,7 +176,7 @@ type SetupCallbackHandler = (
 ) => Promise<TelegramAction[]>;
 
 const SETUP_CALLBACK_HANDLERS: Record<string, SetupCallbackHandler> = {
-  domain: handleReviewSetupDomainCallback,
+  collection: handleReviewSetupCollectionCallback,
   count: handleReviewSetupCountCallback,
 };
 

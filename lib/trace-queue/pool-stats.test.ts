@@ -9,12 +9,12 @@ vi.mock("./repository", () => ({
 }));
 
 const { fetchTraceCandidatesForUser } = await import("./repository");
-const { getReadEligibleCountsByDomainForUser } = await import("./pool-stats");
+const { getReadEligibleCountsByCollectionForUser } = await import("./pool-stats");
 
-function candidate(termId: string, domainId: string, markedKnown = false): TraceCandidate {
+function candidate(termId: string, collectionId: string, markedKnown = false): TraceCandidate {
   return {
     termId,
-    domainId,
+    collectionId,
     createdAt: new Date("2026-01-01T00:00:00Z"),
     readCount: 0,
     lastReadAt: null,
@@ -31,7 +31,7 @@ function candidate(termId: string, domainId: string, markedKnown = false): Trace
   };
 }
 
-describe("getReadEligibleCountsByDomainForUser", () => {
+describe("getReadEligibleCountsByCollectionForUser", () => {
   it("counts each collection's terms, leaving out marked-known ones", async () => {
     vi.mocked(fetchTraceCandidatesForUser).mockResolvedValue([
       candidate("a", "d1"),
@@ -41,7 +41,10 @@ describe("getReadEligibleCountsByDomainForUser", () => {
       candidate("e", "d3"),
     ]);
 
-    const counts = await getReadEligibleCountsByDomainForUser({} as SupabaseClient<Database>, "u1");
+    const counts = await getReadEligibleCountsByCollectionForUser(
+      {} as SupabaseClient<Database>,
+      "u1",
+    );
     expect(Object.fromEntries(counts)).toEqual({ d1: 2, d3: 1 });
   });
 });

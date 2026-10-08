@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { addToCollection } from "@/app/(private)/app/actions";
-import { searchSharedDomains } from "@/app/(private)/app/browse/actions";
+import { searchSharedCollections } from "@/app/(private)/app/browse/actions";
 import type { SearchState } from "@/components/import/chooser-search-results";
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -30,25 +30,25 @@ export function useBrowseSearch(initialQuery = "") {
 
     setSearch({ status: "loading" });
     timer.current = window.setTimeout(async () => {
-      const result = await searchSharedDomains({ search: trimmed, filter: "all", offset: 0 });
+      const result = await searchSharedCollections({ search: trimmed, filter: "all", offset: 0 });
       if (id !== requestId.current) return;
       setSearch(
         result.page
-          ? { status: "done", query: trimmed, domains: result.page.domains }
+          ? { status: "done", query: trimmed, collections: result.page.collections }
           : { status: "error" },
       );
     }, SEARCH_DEBOUNCE_MS);
   }
 
-  async function add(domainId: string) {
-    setAddingId(domainId);
-    const result = await addToCollection(domainId);
+  async function add(collectionId: string) {
+    setAddingId(collectionId);
+    const result = await addToCollection(collectionId);
     setAddingId(null);
     if (result.error) {
       setSearch({ status: "error" });
       return;
     }
-    setAddedIds((current) => [...current, domainId]);
+    setAddedIds((current) => [...current, collectionId]);
   }
 
   return { query, search, addingId, addedIds, handleQuery, add };

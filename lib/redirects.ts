@@ -8,7 +8,7 @@ export const LEGACY_ADMIN_REDIRECTS = [
 
 /** The private app moved from /jargon to /app, and the library from its index to /app/library.
  *  Order matters: the bare /jargon rule must come before the catch-all. Temporary for now so a
- *  mistake isn't cached by browsers. Query strings are kept (the library uses ?domain=). */
+ *  mistake isn't cached by browsers. Query strings are kept (the library uses ?collection=). */
 export const LEGACY_APP_REDIRECTS = [
   { source: "/app", destination: "/app/library" },
   { source: "/jargon", destination: "/app/library" },
@@ -19,8 +19,8 @@ export const LEGACY_APP_REDIRECTS = [
  *  share image lives at /collections/<slug>/opengraph-image and must stay reachable. */
 export const LEGACY_TERM_PAGE_REDIRECTS = [
   {
-    source: "/collections/:domainSlug/:termSlug((?!opengraph-image$).+)",
-    destination: "/collections/:domainSlug",
+    source: "/collections/:collectionSlug/:termSlug((?!opengraph-image$).+)",
+    destination: "/collections/:collectionSlug",
     permanent: true,
   },
 ];

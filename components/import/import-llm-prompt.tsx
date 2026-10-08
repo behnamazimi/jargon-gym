@@ -15,14 +15,14 @@ import type { ImportDestination } from "@/lib/import/import-collections";
 
 export function ImportLlmPrompt({ collections }: { collections: ImportDestination[] }) {
   const [selectedCollectionId, setSelectedCollectionId] = useState(NEW_COLLECTION_KEY);
-  const [domain, setDomain] = useState("");
+  const [collectionName, setCollectionName] = useState("");
   const [count, setCount] = useState("");
   const [exclude, setExclude] = useState("");
   const [loadError, setLoadError] = useState<string | null>(null);
   const latestPick = useRef(0);
   const [isLoadingTerms, setIsLoadingTerms] = useState(false);
 
-  const runCommand = buildRunCommand(domain, count, exclude);
+  const runCommand = buildRunCommand(collectionName, count, exclude);
 
   async function handleCollectionChange(key: string) {
     const pick = ++latestPick.current;
@@ -31,7 +31,7 @@ export function ImportLlmPrompt({ collections }: { collections: ImportDestinatio
     setIsLoadingTerms(false);
 
     if (key === NEW_COLLECTION_KEY) {
-      setDomain("");
+      setCollectionName("");
       setExclude("");
       return;
     }
@@ -39,7 +39,7 @@ export function ImportLlmPrompt({ collections }: { collections: ImportDestinatio
     const collection = collections.find((item) => item.id === key);
     if (!collection) return;
 
-    setDomain(collection.name);
+    setCollectionName(collection.name);
     setExclude("");
     setIsLoadingTerms(true);
     const result = await getCollectionTermNames(key);
@@ -56,7 +56,7 @@ export function ImportLlmPrompt({ collections }: { collections: ImportDestinatio
     <ImportCard
       icon={<Sparkles aria-hidden strokeWidth={1.5} />}
       title="Generate JSON with an AI skill (for developers)"
-      description="Install the glossary skill once, generate JSON for your domain, then paste it on the Paste screen."
+      description="Install the glossary skill once, generate JSON for your collection, then paste it on the Paste screen."
     >
       <div className="space-y-5">
         <CopyCommand
@@ -77,8 +77,8 @@ export function ImportLlmPrompt({ collections }: { collections: ImportDestinatio
             isLoadingTerms={isLoadingTerms}
             selectedCollectionId={selectedCollectionId}
             onCollectionChange={(key) => void handleCollectionChange(key)}
-            domain={domain}
-            onDomainChange={setDomain}
+            collectionName={collectionName}
+            onCollectionNameChange={setCollectionName}
             count={count}
             onCountChange={setCount}
             exclude={exclude}

@@ -1,4 +1,4 @@
-import { DOMAIN_LANGUAGE_OPTIONS, type DomainLanguage } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGE_OPTIONS, type CollectionLanguage } from "@/lib/terms/languages";
 
 /**
  * What a collection teaches: the terms of a field, or the words and phrases of
@@ -28,9 +28,9 @@ export function parseKind(value: string | null | undefined): CollectionKind {
 }
 
 /** The line above a collection's name on public pages: "Field terms", "Dutch words and phrases". */
-export function kindLine(kind: CollectionKind, language: DomainLanguage): string {
+export function kindLine(kind: CollectionKind, language: CollectionLanguage): string {
   if (kind === "terms") return "Field terms";
-  const label = DOMAIN_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label;
+  const label = COLLECTION_LANGUAGE_OPTIONS.find((option) => option.value === language)?.label;
   return label ? `${label} words and phrases` : "Words and phrases";
 }
 

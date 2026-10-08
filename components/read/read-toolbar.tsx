@@ -6,7 +6,7 @@ type ReadToolbarProps = {
   collections: StudyCollection[];
   selectedCollectionId: string;
   isFetchingMore: boolean;
-  onCollectionChange: (domainId: string) => void;
+  onCollectionChange: (collectionId: string) => void;
 };
 
 export function ReadToolbar({

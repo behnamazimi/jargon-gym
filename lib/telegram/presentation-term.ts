@@ -37,8 +37,8 @@ function buildTermHeader(term: TermCard): string {
   return (
     `<b>${escapeText(term.term)}</b>\n` +
     (term.category
-      ? `${escapeText(term.domainName)} · ${escapeText(term.category)}`
-      : escapeText(term.domainName))
+      ? `${escapeText(term.collectionName)} · ${escapeText(term.category)}`
+      : escapeText(term.collectionName))
   );
 }
 
@@ -95,7 +95,7 @@ function appendOpenInWebRow(rows: InlineKeyboardMarkup["inline_keyboard"], termI
   }
 }
 
-/** Masked prompt: term/domain/category only, gating the definition behind a
+/** Masked prompt: term/collection/category only, gating the definition behind a
  *  reveal tap so the read only counts once the user actually looks. */
 export function formatReadPrompt(term: TermCard): string {
   return `${buildTermHeader(term)}\n\n<i>Tap Reveal to see the definition.</i>`;

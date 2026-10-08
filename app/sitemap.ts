@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { listPublicDomains } from "@/lib/terms/public-terms";
+import { listPublicCollectionSummaries } from "@/lib/terms/public-terms";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 
 export const revalidate = 86400;
@@ -19,13 +19,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/collections`, changeFrequency: "weekly", priority: 0.8 },
   ];
 
-  const domains = await listPublicDomains();
-  const domainRoutes: MetadataRoute.Sitemap = domains.map((domain) => ({
-    url: `${baseUrl}/collections/${domain.slug}`,
-    lastModified: domain.updatedAt,
+  const collections = await listPublicCollectionSummaries();
+  const collectionRoutes: MetadataRoute.Sitemap = collections.map((collection) => ({
+    url: `${baseUrl}/collections/${collection.slug}`,
+    lastModified: collection.updatedAt,
     changeFrequency: "weekly",
     priority: 0.7,
   }));
 
-  return [...staticRoutes, ...domainRoutes];
+  return [...staticRoutes, ...collectionRoutes];
 }

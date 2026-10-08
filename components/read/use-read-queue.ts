@@ -17,7 +17,7 @@ const PREFETCH_REMAINING_THRESHOLD = 4;
 type ReadQueueStatus = "ready" | "caughtUp" | "error";
 
 type UseReadQueueArgs = {
-  domainId: string;
+  collectionId: string;
   seed: ReadQueueSeed;
 };
 
@@ -30,7 +30,7 @@ type UseReadQueueArgs = {
  * term is revealed or scrolled past in one surface and then the other is
  * shown.
  */
-export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
+export function useReadQueue({ collectionId, seed }: UseReadQueueArgs) {
   const [terms, setTerms] = useState<ReviewTerm[]>(seed.terms);
   const [currentIndex, setCurrentIndex] = useState(0);
   // Background-fetch outcome, kept separate from what's currently shown —
@@ -47,21 +47,21 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
   // synchronously so a caller can read the new index before the next paint.
   const termsRef = useRef(terms);
   const currentIndexRef = useRef(currentIndex);
-  const domainIdRef = useRef(domainId);
+  const collectionIdRef = useRef(collectionId);
   const reachedEndRef = useRef(reachedEnd);
   const loadErrorRef = useRef(loadError);
   termsRef.current = terms;
   currentIndexRef.current = currentIndex;
-  domainIdRef.current = domainId;
+  collectionIdRef.current = collectionId;
   reachedEndRef.current = reachedEnd;
   loadErrorRef.current = loadError;
 
   const loadedIdsRef = useRef<Set<string>>(new Set(seed.terms.map((t) => t.id)));
   const inFlightRef = useRef(false);
   // Discards a response that arrives after a newer request has already
-  // superseded it — e.g. a batch fetch still in flight for the old domain
+  // superseded it — e.g. a batch fetch still in flight for the old collection
   // when the user switches collections. Same pattern as
-  // hooks/use-shared-domains-browse.ts's requestId guard.
+  // hooks/use-shared-collections-browse.ts's requestId guard.
   const requestIdRef = useRef(0);
 
   const loadMore = useCallback(async () => {
@@ -70,7 +70,9 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
     setIsFetchingMore(true);
     const requestId = ++requestIdRef.current;
     try {
-      const result = await getReadFeedBatchAction(domainIdRef.current, [...loadedIdsRef.current]);
+      const result = await getReadFeedBatchAction(collectionIdRef.current, [
+        ...loadedIdsRef.current,
+      ]);
       if (requestId !== requestIdRef.current) return; // superseded, discard
 
       if (result.error) {
@@ -161,16 +163,16 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
 
   // Collection switch is lazy: it only changes what FUTURE fetches pull
   // from, never interrupts whatever term is currently on screen. Drop any
-  // terms prefetched-but-not-yet-shown from the old domain so the next
+  // terms prefetched-but-not-yet-shown from the old collection so the next
   // advance pulls from the new selection instead of silently continuing
   // the old one; loadedIdsRef is left as-is (a few stale excluded ids from
-  // the old domain are harmless — exclude-lists only ever prevent
+  // the old collection are harmless — exclude-lists only ever prevent
   // re-showing something, never wrongly show it).
-  const switchDomain = useCallback(
+  const switchCollection = useCallback(
     (nextId: string) => {
-      if (nextId === domainIdRef.current) return;
-      domainIdRef.current = nextId;
-      requestIdRef.current++; // discard any response still in flight for the old domain
+      if (nextId === collectionIdRef.current) return;
+      collectionIdRef.current = nextId;
+      requestIdRef.current++; // discard any response still in flight for the old collection
       const trimmed = termsRef.current.slice(0, currentIndexRef.current + 1);
       termsRef.current = trimmed;
       setTerms(trimmed);
@@ -199,7 +201,7 @@ export function useReadQueue({ domainId, seed }: UseReadQueueArgs) {
     goNext,
     goPrevious,
     goToIndex,
-    switchDomain,
+    switchCollection,
     // Same function serves both "Next" and "Try again" — goNext already
     // re-attempts loadMore and re-checks when called with currentIndex
     // sitting at the past-the-end sentinel.

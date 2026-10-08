@@ -20,10 +20,11 @@ export function isStoriesPath(pathname: string) {
   return pathname.startsWith("/app/read/stories");
 }
 
-function ReadModeTabList({ domain }: { domain: string | null }) {
+function ReadModeTabList({ collection }: { collection: string | null }) {
   const pathname = usePathname();
   const activeHref = isStoriesPath(pathname) ? "/app/read/stories" : "/app/read";
-  const domainParam: Record<string, string> = domain && domain !== "all" ? { domain } : {};
+  const collectionParam: Record<string, string> =
+    collection && collection !== "all" ? { collection } : {};
 
   return (
     <nav
@@ -36,7 +37,7 @@ function ReadModeTabList({ domain }: { domain: string | null }) {
         return (
           <Link
             key={mode.href}
-            href={hrefFor(mode.href, { ...mode.params, ...domainParam })}
+            href={hrefFor(mode.href, { ...mode.params, ...collectionParam })}
             aria-current={active ? "page" : undefined}
             className={cn("tab min-h-9 px-4", active && "tab-active")}
           >
@@ -48,17 +49,17 @@ function ReadModeTabList({ domain }: { domain: string | null }) {
   );
 }
 
-function ReadModeTabListWithDomain() {
+function ReadModeTabListWithCollection() {
   const searchParams = useSearchParams();
-  return <ReadModeTabList domain={searchParams.get("domain")} />;
+  return <ReadModeTabList collection={searchParams.get("collection")} />;
 }
 
 /** Cards ↔ Stories switch at the top of Read. Carries the collection across
  *  so switching modes keeps you in the same context. */
 export function ReadModeTabs() {
   return (
-    <Suspense fallback={<ReadModeTabList domain={null} />}>
-      <ReadModeTabListWithDomain />
+    <Suspense fallback={<ReadModeTabList collection={null} />}>
+      <ReadModeTabListWithCollection />
     </Suspense>
   );
 }

@@ -16,7 +16,7 @@ import {
   getCurrentReviewTerm,
   getReviewSession,
   markReviewRevealed,
-  type QuizDomainSelection,
+  type QuizCollectionSelection,
   type TelegramReviewSession,
 } from "./session-store";
 import { edit, send } from "./transport";
@@ -67,10 +67,10 @@ export async function startReviewFlashcardSession(
   client: Client,
   chatId: number,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   count: number,
 ): Promise<TelegramAction[]> {
-  const session = await createReviewSession(client, chatId, userId, domainId, count);
+  const session = await createReviewSession(client, chatId, userId, collectionId, count);
 
   if (session.terms.length === 0) {
     await deleteReviewSession(client, chatId);

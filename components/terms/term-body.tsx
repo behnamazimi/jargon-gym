@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { TERM_LABELS, type TermLabels as Labels } from "@/lib/terms/term-labels";
 import { relationshipLabel } from "@/lib/terms/relationship-label";
 import { moreCount, TERM_BLOCKS, type Placement, type TermBlock } from "@/lib/terms/term-layout";
@@ -22,7 +22,7 @@ type TermBodyProps = {
   term: Term;
   className?: string;
   showSearchLink?: boolean;
-  language?: DomainLanguage;
+  language?: CollectionLanguage;
   getRelationshipHref?: (relatedTermId: string) => string | undefined;
   /** Which blocks sit under "More". Without it every block is shown. */
   placement?: Placement;

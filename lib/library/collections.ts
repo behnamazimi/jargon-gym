@@ -1,26 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
-  applyDomainStats,
-  fetchDomainStats,
-  fetchDomainStatsForUser,
-} from "./collection-domain-tally";
+  applyCollectionStats,
+  fetchCollectionStats,
+  fetchCollectionStatsForUser,
+} from "./collection-tally";
 
 type Client = SupabaseClient<Database>;
-type DomainVisibility = Database["public"]["Enums"]["domain_visibility"];
+type CollectionVisibility = Database["public"]["Enums"]["collection_visibility"];
 
-export class DomainMutationError extends Error {
+export class CollectionMutationError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "DomainMutationError";
+    this.name = "CollectionMutationError";
   }
 }
 
-export type CollectionDomainRow = {
+export type CollectionRow = {
   id: string;
   name: string;
   description: string | null;
-  visibility: DomainVisibility;
+  visibility: CollectionVisibility;
   language: string;
   owner_id: string;
   is_builtin: boolean;
@@ -34,9 +34,9 @@ export type CollectionDomainRow = {
   markedKnownCount: number;
 };
 
-async function fetchOwnedDomains(client: Client, userId: string) {
+async function fetchOwnedCollections(client: Client, userId: string) {
   const { data, error } = await client
-    .from("domains")
+    .from("collections")
     .select(
       "id, name, description, visibility, language, owner_id, is_builtin, love_count, share_block_reason",
     )
@@ -47,24 +47,24 @@ async function fetchOwnedDomains(client: Client, userId: string) {
   return data;
 }
 
-async function fetchAddedDomains(client: Client, userId: string) {
+async function fetchAddedCollections(client: Client, userId: string) {
   const { data, error } = await client
-    .from("user_collection_domains")
+    .from("user_collections")
     .select(
-      "domain_id, domains(id, name, description, visibility, language, owner_id, is_builtin, love_count, share_block_reason)",
+      "collection_id, collections(id, name, description, visibility, language, owner_id, is_builtin, love_count, share_block_reason)",
     )
     .eq("user_id", userId);
 
   if (error) throw error;
 
   return data
-    .map((row) => row.domains)
-    .filter((domain): domain is NonNullable<typeof domain> => domain !== null);
+    .map((row) => row.collections)
+    .filter((collection): collection is NonNullable<typeof collection> => collection !== null);
 }
 
 function combineOwnedAndAdded(
-  owned: Awaited<ReturnType<typeof fetchOwnedDomains>>,
-  added: Awaited<ReturnType<typeof fetchAddedDomains>>,
+  owned: Awaited<ReturnType<typeof fetchOwnedCollections>>,
+  added: Awaited<ReturnType<typeof fetchAddedCollections>>,
 ) {
   const ownedRows = owned.map((d) => ({
     ...d,
@@ -80,10 +80,10 @@ function combineOwnedAndAdded(
 }
 
 /** The user's collections without their counts, sorted by name. */
-export async function fetchUserCollectionDomains(client: Client, userId: string) {
+export async function fetchUserCollections(client: Client, userId: string) {
   const [owned, added] = await Promise.all([
-    fetchOwnedDomains(client, userId),
-    fetchAddedDomains(client, userId),
+    fetchOwnedCollections(client, userId),
+    fetchAddedCollections(client, userId),
   ]);
   return combineOwnedAndAdded(owned, added);
 }
@@ -91,34 +91,34 @@ export async function fetchUserCollectionDomains(client: Client, userId: string)
 export async function fetchUserCollection(
   client: Client,
   userId: string,
-): Promise<CollectionDomainRow[]> {
-  const combined = await fetchUserCollectionDomains(client, userId);
-  const stats = await fetchDomainStats(
+): Promise<CollectionRow[]> {
+  const combined = await fetchUserCollections(client, userId);
+  const stats = await fetchCollectionStats(
     client,
     combined.map((row) => row.id),
   );
 
-  return applyDomainStats(combined, stats);
+  return applyCollectionStats(combined, stats);
 }
 
 /** Service-role / admin client: collection for an explicit userId (Telegram, widget). */
 export async function fetchUserCollectionForUser(
   client: Client,
   userId: string,
-): Promise<CollectionDomainRow[]> {
+): Promise<CollectionRow[]> {
   const [owned, added] = await Promise.all([
-    fetchOwnedDomains(client, userId),
-    fetchAddedDomains(client, userId),
+    fetchOwnedCollections(client, userId),
+    fetchAddedCollections(client, userId),
   ]);
 
   const combined = combineOwnedAndAdded(owned, added);
-  const stats = await fetchDomainStatsForUser(
+  const stats = await fetchCollectionStatsForUser(
     client,
     userId,
     combined.map((row) => row.id),
   );
 
-  return applyDomainStats(combined, stats);
+  return applyCollectionStats(combined, stats);
 }
 
 export * from "./collection-mutations";

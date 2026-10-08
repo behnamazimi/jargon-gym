@@ -15,7 +15,7 @@ import {
 
 export type QueueDebugTerm = TraceCandidate & {
   term: string;
-  domainName: string;
+  collectionName: string;
   /** The term's collection is turned on for study. */
   active: boolean;
   /** The term has a definition. */
@@ -73,7 +73,7 @@ export type QueueDebug = {
 export type QueueDebugOptions = {
   now: Date;
   /** Only this collection's terms, or all of them. */
-  domainId: string | null;
+  collectionId: string | null;
   /** Rows kept per section. */
   limit: number;
   /** How many top rows each feed takes at once. */
@@ -136,8 +136,8 @@ function cooldownRows(
 /** Ranks one member's terms the way Read, Review and Quiz do, and lists the
  *  terms they hold back and the terms they skip. */
 export function buildQueueDebug(terms: QueueDebugTerm[], options: QueueDebugOptions): QueueDebug {
-  const { now, domainId, limit, batch } = options;
-  const scoped = domainId ? terms.filter((t) => t.domainId === domainId) : terms;
+  const { now, collectionId, limit, batch } = options;
+  const scoped = collectionId ? terms.filter((t) => t.collectionId === collectionId) : terms;
   const byId = new Map(scoped.map((t) => [t.termId, t]));
   const eligible = scoped.filter((t) => excludedReasons(t).length === 0);
 

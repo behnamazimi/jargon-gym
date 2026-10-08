@@ -13,7 +13,7 @@ import {
 import { hasNoCollections } from "@/lib/study/collections";
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string }>;
+  searchParams: Promise<{ collection?: string }>;
 };
 
 function LoginPrompt({ message }: { message: string }) {
@@ -25,13 +25,13 @@ export default async function ReviewRoute({ searchParams }: PageProps) {
   const rememberedId = parseReviewCollectionCookie(
     cookieStore.get(REVIEW_COLLECTION_COOKIE)?.value,
   );
-  const speculativeDomainId = isCollectionPreference(params.domain)
-    ? params.domain
+  const speculativeCollectionId = isCollectionPreference(params.collection)
+    ? params.collection
     : (rememberedId ?? "all");
 
   const [setup, speculativeSeed] = await Promise.all([
     loadReviewSetup(),
-    loadReviewFeed(speculativeDomainId, []),
+    loadReviewFeed(speculativeCollectionId, []),
   ]);
 
   if ("error" in setup) {
@@ -40,13 +40,15 @@ export default async function ReviewRoute({ searchParams }: PageProps) {
   if (hasNoCollections({ active: setup.collections, paused: setup.paused }))
     redirect("/app/library");
 
-  const domainId = resolveStudyCollectionId(
-    params.domain,
+  const collectionId = resolveStudyCollectionId(
+    params.collection,
     rememberedId,
     setup.collections.map((collection) => collection.id),
   );
   const seed =
-    domainId === speculativeDomainId ? speculativeSeed : await loadReviewFeed(domainId, []);
+    collectionId === speculativeCollectionId
+      ? speculativeSeed
+      : await loadReviewFeed(collectionId, []);
 
   if (seed.error === "Log in to continue.") {
     return <LoginPrompt message={seed.error} />;
@@ -60,7 +62,7 @@ export default async function ReviewRoute({ searchParams }: PageProps) {
       seed={seed}
       collections={setup.collections}
       paused={setup.paused}
-      domainId={domainId}
+      collectionId={collectionId}
       narrationAccess={setup.narrationAccess}
     />
   );

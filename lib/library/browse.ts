@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import type { SharedDomain } from "@/lib/terms/types";
+import type { SharedCollection } from "@/lib/terms/types";
 
 type Client = SupabaseClient<Database>;
 
@@ -23,7 +23,7 @@ export type BrowseCounts = {
 };
 
 export type BrowsePageResult = {
-  domains: SharedDomain[];
+  collections: SharedCollection[];
   nextOffset: number | null;
   counts: BrowseCounts;
 };
@@ -39,10 +39,10 @@ export type BrowseQuery = {
   limit?: number;
 };
 
-const DOMAIN_SELECT =
+const COLLECTION_SELECT =
   "id, name, description, owner_id, is_builtin, love_count, terms(count)" as const;
 
-type DomainRow = {
+type CollectionRow = {
   id: string;
   name: string;
   description: string | null;
@@ -63,18 +63,18 @@ export function browseSearchOr(query: string) {
   return `name.ilike."${pattern}",description.ilike."${pattern}"`;
 }
 
-function termCount(terms: DomainRow["terms"]) {
+function termCount(terms: CollectionRow["terms"]) {
   if (!terms) return 0;
   if (Array.isArray(terms)) return terms[0]?.count ?? 0;
   return terms.count ?? 0;
 }
 
-function mapDomain(
-  row: DomainRow,
+function mapCollection(
+  row: CollectionRow,
   inCollection: Set<string>,
   loved: Set<string>,
   reported: Set<string>,
-): SharedDomain {
+): SharedCollection {
   return {
     id: row.id,
     name: row.name,
@@ -92,36 +92,40 @@ function mapDomain(
 
 async function fetchCollectionIds(client: Client, userId: string) {
   const { data, error } = await client
-    .from("user_collection_domains")
-    .select("domain_id")
+    .from("user_collections")
+    .select("collection_id")
     .eq("user_id", userId);
 
   if (error) throw error;
-  return data.map((row) => row.domain_id);
+  return data.map((row) => row.collection_id);
 }
 
-export async function fetchMyLovedAndReported(client: Client, userId: string, domainIds: string[]) {
-  if (domainIds.length === 0) return { loved: new Set<string>(), reported: new Set<string>() };
+export async function fetchMyLovedAndReported(
+  client: Client,
+  userId: string,
+  collectionIds: string[],
+) {
+  if (collectionIds.length === 0) return { loved: new Set<string>(), reported: new Set<string>() };
 
   const [loves, reports] = await Promise.all([
     client
       .from("collection_loves")
-      .select("domain_id")
+      .select("collection_id")
       .eq("user_id", userId)
-      .in("domain_id", domainIds),
+      .in("collection_id", collectionIds),
     client
       .from("collection_reports")
-      .select("domain_id")
+      .select("collection_id")
       .eq("reporter_id", userId)
       .eq("status", "open")
-      .in("domain_id", domainIds),
+      .in("collection_id", collectionIds),
   ]);
   if (loves.error) throw loves.error;
   if (reports.error) throw reports.error;
 
   return {
-    loved: new Set(loves.data.map((row) => row.domain_id)),
-    reported: new Set(reports.data.map((row) => row.domain_id)),
+    loved: new Set(loves.data.map((row) => row.collection_id)),
+    reported: new Set(reports.data.map((row) => row.collection_id)),
   };
 }
 
@@ -169,7 +173,7 @@ async function countMatching(
   group?: BrowseGroup,
 ) {
   const scoped = applyBrowseFilters(
-    client.from("domains").select("id", { count: "exact", head: true }),
+    client.from("collections").select("id", { count: "exact", head: true }),
     userId,
     search,
     filter,
@@ -201,7 +205,7 @@ function selectMatchingCount(filter: BrowseCollectionFilter, counts: BrowseCount
   return counts.all;
 }
 
-export async function fetchSharedDomainsBrowse(
+export async function fetchSharedCollectionsBrowse(
   client: Client,
   userId: string,
   query: BrowseQuery = {},
@@ -234,11 +238,11 @@ export async function fetchSharedDomainsBrowse(
   const matching = selectMatchingCount(filter, counts);
 
   if (matching === 0) {
-    return { domains: [], nextOffset: null, counts };
+    return { collections: [], nextOffset: null, counts };
   }
 
   const pageQuery = applyBrowseFilters(
-    client.from("domains").select(DOMAIN_SELECT),
+    client.from("collections").select(COLLECTION_SELECT),
     userId,
     search,
     filter,
@@ -247,7 +251,7 @@ export async function fetchSharedDomainsBrowse(
   );
 
   if (!pageQuery) {
-    return { domains: [], nextOffset: null, counts };
+    return { collections: [], nextOffset: null, counts };
   }
 
   const ordered =
@@ -257,17 +261,17 @@ export async function fetchSharedDomainsBrowse(
   const { data, error } = await ordered.range(offset, offset + limit - 1);
   if (error) throw error;
 
-  const rows = (data ?? []) as unknown as DomainRow[];
+  const rows = (data ?? []) as unknown as CollectionRow[];
   const { loved, reported } = await fetchMyLovedAndReported(
     client,
     userId,
     rows.map((row) => row.id),
   );
-  const domains = rows.map((row) => mapDomain(row, inCollection, loved, reported));
-  const loaded = offset + domains.length;
+  const collections = rows.map((row) => mapCollection(row, inCollection, loved, reported));
+  const loaded = offset + collections.length;
 
   return {
-    domains,
+    collections,
     nextOffset: loaded < matching ? loaded : null,
     counts,
   };

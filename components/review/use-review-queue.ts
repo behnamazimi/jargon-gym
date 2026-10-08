@@ -8,14 +8,14 @@ import { useMountEffect } from "@/hooks/use-mount-effect";
 const FEED_ERROR = "Couldn't load more terms. Try again.";
 
 async function fetchReviewFeed(
-  domainId: string,
+  collectionId: string,
   excludeTermIds: string[],
 ): Promise<ReviewQueueSeed> {
   try {
     const response = await fetch("/api/review/feed", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ domainId, excludeTermIds }),
+      body: JSON.stringify({ collectionId, excludeTermIds }),
       // An expired session makes the proxy redirect to the login page.
       redirect: "manual",
     });
@@ -32,11 +32,11 @@ async function fetchReviewFeed(
 type ReviewQueueStatus = "ready" | "caughtUp" | "error" | "loading";
 
 type UseReviewQueueArgs = {
-  domainId: string;
+  collectionId: string;
   seed: ReviewQueueSeed;
 };
 
-export function useReviewQueue({ domainId, seed }: UseReviewQueueArgs) {
+export function useReviewQueue({ collectionId, seed }: UseReviewQueueArgs) {
   const [terms, setTerms] = useState<ReviewTerm[]>(seed.terms);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reachedEnd, setReachedEnd] = useState(seed.caughtUp ?? false);
@@ -45,12 +45,12 @@ export function useReviewQueue({ domainId, seed }: UseReviewQueueArgs) {
 
   const termsRef = useRef(terms);
   const currentIndexRef = useRef(currentIndex);
-  const domainIdRef = useRef(domainId);
+  const collectionIdRef = useRef(collectionId);
   const reachedEndRef = useRef(reachedEnd);
   const loadErrorRef = useRef(loadError);
   termsRef.current = terms;
   currentIndexRef.current = currentIndex;
-  domainIdRef.current = domainId;
+  collectionIdRef.current = collectionId;
   reachedEndRef.current = reachedEnd;
   loadErrorRef.current = loadError;
 
@@ -64,7 +64,7 @@ export function useReviewQueue({ domainId, seed }: UseReviewQueueArgs) {
     setIsFetchingMore(true);
     const requestId = ++requestIdRef.current;
     try {
-      const result = await fetchReviewFeed(domainIdRef.current, [...loadedIdsRef.current]);
+      const result = await fetchReviewFeed(collectionIdRef.current, [...loadedIdsRef.current]);
       if (requestId !== requestIdRef.current) return;
 
       if (result.error) {
@@ -129,10 +129,10 @@ export function useReviewQueue({ domainId, seed }: UseReviewQueueArgs) {
     setCurrentIndex(next);
   }, []);
 
-  const switchDomain = useCallback(
+  const switchCollection = useCallback(
     (nextId: string) => {
-      if (nextId === domainIdRef.current) return;
-      domainIdRef.current = nextId;
+      if (nextId === collectionIdRef.current) return;
+      collectionIdRef.current = nextId;
       requestIdRef.current++;
       inFlightRef.current = false;
 
@@ -178,7 +178,7 @@ export function useReviewQueue({ domainId, seed }: UseReviewQueueArgs) {
     isFetchingMore,
     goNext,
     goPrevious,
-    switchDomain,
+    switchCollection,
     retry: goNext,
   };
 }

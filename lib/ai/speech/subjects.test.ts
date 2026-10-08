@@ -14,7 +14,7 @@ const FIELDS = {
 };
 
 function clientReturning(data: unknown, mode?: "term" | "full") {
-  const settings = mode ? [{ domain_id: "d1", mode }] : [];
+  const settings = mode ? [{ collection_id: "d1", mode }] : [];
   return {
     from: () => ({
       select: () => ({
@@ -28,7 +28,7 @@ function clientReturning(data: unknown, mode?: "term" | "full") {
   } as never;
 }
 
-const TERM_ROW = { ...FIELDS, domain_id: "d1", domains: { language: "nl" } };
+const TERM_ROW = { ...FIELDS, collection_id: "d1", collections: { language: "nl" } };
 
 describe("loadTermSubject", () => {
   it("uses the term name alone by default, with no version 1 hash", async () => {

@@ -13,9 +13,9 @@ export function toReviewTerm(card: TermCard): ReviewTerm {
     antiExample: card.antiExample ?? undefined,
     controversy: card.controversy ?? undefined,
     note: card.note ?? undefined,
-    domainId: card.domainId,
-    domainName: card.domainName,
-    domainLanguage: card.domainLanguage,
+    collectionId: card.collectionId,
+    collectionName: card.collectionName,
+    collectionLanguage: card.collectionLanguage,
     isNewToUser: card.isNewToUser,
     relationships: card.relationships.map((rel, index) => ({
       id: `${card.id}-${rel.direction}-${index}`,

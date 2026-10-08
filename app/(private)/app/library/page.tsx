@@ -10,7 +10,7 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { batchResultSchema } from "@/lib/import/commit-schema";
 import { readLibraryFiltersCookie } from "@/lib/library/library-filters";
 import { loadLibraryPage } from "@/lib/library/load";
-import { LIBRARY_LAST_DOMAIN_COOKIE } from "@/lib/library/pick-domain";
+import { LIBRARY_LAST_COLLECTION_COOKIE } from "@/lib/library/pick-collection";
 import { LOAD_FAILED_MESSAGE } from "@/lib/library/setup";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { loadRequestEntryFor } from "@/lib/requests/repository";
@@ -20,7 +20,7 @@ import type { createClient } from "@/lib/supabase/server";
 type Client = Awaited<ReturnType<typeof createClient>>;
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string; added?: string }>;
+  searchParams: Promise<{ collection?: string; added?: string }>;
 };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -40,8 +40,8 @@ async function loadImportedSummary(
   if (!parsed.success) return undefined;
 
   return {
-    domainId: parsed.data.domain_id,
-    domainName: parsed.data.domain_name,
+    collectionId: parsed.data.collection_id,
+    collectionName: parsed.data.collection_name,
     created: parsed.data.created,
     updated: parsed.data.updated,
     skipped: parsed.data.skipped,
@@ -70,7 +70,7 @@ function LoadError({ message }: { message: string }) {
 }
 
 export default async function LibraryRoute({ searchParams }: PageProps) {
-  const [{ domain: requestedDomainId, added }, cookieStore, requestHeaders, auth] =
+  const [{ collection: requestedCollectionId, added }, cookieStore, requestHeaders, auth] =
     await Promise.all([searchParams, cookies(), headers(), requireAuthenticatedClient()]);
 
   if ("error" in auth) {
@@ -90,8 +90,8 @@ export default async function LibraryRoute({ searchParams }: PageProps) {
   let result;
   try {
     result = await loadLibraryPage(supabase, user.id, {
-      requestedDomainId,
-      lastDomainId: cookieStore.get(LIBRARY_LAST_DOMAIN_COOKIE)?.value,
+      requestedCollectionId,
+      lastCollectionId: cookieStore.get(LIBRARY_LAST_COLLECTION_COOKIE)?.value,
     });
   } catch (error) {
     console.error("Couldn't load the Library:", error);

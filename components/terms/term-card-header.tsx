@@ -31,7 +31,7 @@ export function TermCardHeader({
           {term.term}
         </h2>
         <p className="mt-1 mb-0 text-xs text-base-content/70">
-          <span>{term.domainName}</span>
+          <span>{term.collectionName}</span>
           {term.category ? (
             <>
               <span className="mx-1.5 text-base-content/50" aria-hidden>

@@ -11,8 +11,8 @@ export function makeTerm(overrides: Partial<QuizTerm> = {}): QuizTerm {
     category: null,
     kind: "terms",
     language: "en",
-    domainId: "domain-1",
-    domainName: "Testing",
+    collectionId: "collection-1",
+    collectionName: "Testing",
     ...overrides,
   };
 }

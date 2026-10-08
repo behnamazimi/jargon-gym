@@ -3,8 +3,8 @@ import { QuizPanel, QuizPanelBody, QuizPanelHeader, QuizStat } from "@/component
 import { Button, LinkButton } from "@/components/ui/button";
 
 type TriageSummaryProps = {
-  domainId: string;
-  domainName: string;
+  collectionId: string;
+  collectionName: string;
   markedCount: number;
   leftToLearnCount: number;
   hasNotYet: boolean;
@@ -12,14 +12,14 @@ type TriageSummaryProps = {
 };
 
 export function TriageNextSteps({
-  domainId,
+  collectionId,
   hasNotYet,
   onRevisitNotYet,
-}: Pick<TriageSummaryProps, "domainId" | "hasNotYet" | "onRevisitNotYet">) {
+}: Pick<TriageSummaryProps, "collectionId" | "hasNotYet" | "onRevisitNotYet">) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-      <LinkButton href={`/app/read?domain=${domainId}`}>Start reading</LinkButton>
-      <LinkButton href={`/app/library?domain=${domainId}`} variant="outline">
+      <LinkButton href={`/app/read?collection=${collectionId}`}>Start reading</LinkButton>
+      <LinkButton href={`/app/library?collection=${collectionId}`} variant="outline">
         Back to library
       </LinkButton>
       {hasNotYet ? (
@@ -33,8 +33,8 @@ export function TriageNextSteps({
 
 /** End of the deck: how it went, and where to go next. */
 export function TriageSummary({
-  domainId,
-  domainName,
+  collectionId,
+  collectionName,
   markedCount,
   leftToLearnCount,
   hasNotYet,
@@ -45,7 +45,7 @@ export function TriageSummary({
       <QuizPanelHeader
         icon={PartyPopper}
         title="All sorted"
-        description={`You went through every term in ${domainName}.`}
+        description={`You went through every term in ${collectionName}.`}
       />
       <QuizPanelBody>
         <dl className="grid grid-cols-2 gap-2">
@@ -54,7 +54,7 @@ export function TriageSummary({
         </dl>
 
         <TriageNextSteps
-          domainId={domainId}
+          collectionId={collectionId}
           hasNotYet={hasNotYet}
           onRevisitNotYet={onRevisitNotYet}
         />

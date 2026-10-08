@@ -42,10 +42,10 @@ SQL
 
 # A member who owns one shared collection with one term.
 make_owner() {
-  local owner="$1" domain
-  domain="$("${PSQL[@]}" -c "insert into public.domains (name, owner_id, visibility) values ('Race ' || gen_random_uuid(), '$owner', 'shared') returning id" | head -n1)"
-  "${PSQL[@]}" -c "insert into public.terms (domain_id, term, category, definition) values ('$domain', 'race', 'c', 'd')" >/dev/null
-  echo "$domain"
+  local owner="$1" collection
+  collection="$("${PSQL[@]}" -c "insert into public.collections (name, owner_id, visibility) values ('Race ' || gen_random_uuid(), '$owner', 'shared') returning id" | head -n1)"
+  "${PSQL[@]}" -c "insert into public.terms (collection_id, term, category, definition) values ('$collection', 'race', 'c', 'd')" >/dev/null
+  echo "$collection"
 }
 
 # Runs as the admin; holds its transaction open for a second after the delete, so the other session has to wait on its locks.
@@ -62,10 +62,10 @@ SQL
 }
 
 subscribe() {
-  local user="$1" domain="$2" out="$3" hold="$4"
+  local user="$1" collection="$2" out="$3" hold="$4"
   psql "$DB_URL" -qtA > "$out" 2>&1 <<SQL || true
 begin;
-insert into public.user_collection_domains (user_id, domain_id) values ('$user', '$domain');
+insert into public.user_collections (user_id, collection_id) values ('$user', '$collection');
 select 'subscribed';
 select pg_sleep($hold);
 commit;
@@ -87,7 +87,7 @@ PID_B=$!
 wait $PID_A $PID_B
 grep -q '^deleted' "$OUT_A" || fail "1: the delete should have won"
 grep -q 'foreign key\|violates' "$OUT_B" || fail "1: the late subscribe should have failed on the foreign key"
-[ "$("${PSQL[@]}" -c "select count(*) from public.user_collection_domains where domain_id = '$DOM1'")" = "0" ] || fail "1: an orphan subscription survived"
+[ "$("${PSQL[@]}" -c "select count(*) from public.user_collections where collection_id = '$DOM1'")" = "0" ] || fail "1: an orphan subscription survived"
 echo "ok 1: subscribe during a delete fails cleanly"
 
 # 2. Subscribe first (holding its transaction), delete arrives and must see it.
@@ -104,7 +104,7 @@ wait $PID_A $PID_B
 grep -q '^subscribed' "$OUT_B" || fail "2: the subscribe should have committed"
 grep -q "Can't delete: 1 other person" "$OUT_A" || fail "2: the delete should have refused"
 [ "$("${PSQL[@]}" -c "select count(*) from public.users where id = '$OWNER2'")" = "1" ] || fail "2: the owner was deleted anyway"
-[ "$("${PSQL[@]}" -c "select count(*) from public.user_collection_domains where domain_id = '$DOM2'")" = "1" ] || fail "2: the subscription was lost"
+[ "$("${PSQL[@]}" -c "select count(*) from public.user_collections where collection_id = '$DOM2'")" = "1" ] || fail "2: the subscription was lost"
 echo "ok 2: delete during a subscribe refuses"
 
 # 3. Two deletes at once.

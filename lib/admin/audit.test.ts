@@ -8,14 +8,14 @@ describe("writeAudit", () => {
     const rpc = vi.fn(async () => ({ error: null }));
     const ok = await writeAudit({ rpc } as never, {
       action: "app.collection_slug",
-      targetType: "domain",
+      targetType: "collection",
       targetId: "d1",
       details: { old: "a", new: "b" },
     });
     expect(ok).toBe(true);
     expect(rpc).toHaveBeenCalledWith("admin_write_audit", {
       p_action: "app.collection_slug",
-      p_target_type: "domain",
+      p_target_type: "collection",
       p_target_id: "d1",
       p_details: { old: "a", new: "b" },
     });

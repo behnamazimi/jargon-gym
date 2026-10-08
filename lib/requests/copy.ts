@@ -1,8 +1,10 @@
-import { DOMAIN_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
+import { COLLECTION_LANGUAGE_OPTIONS } from "@/lib/terms/languages";
 import { pluralize } from "@/lib/utils";
 import type { DeclineReason, RequestKind, RequestLevel } from "./types";
 
-const SUPPORTED_LANGUAGE_NAMES = DOMAIN_LANGUAGE_OPTIONS.map((option) => option.label).join(", ");
+const SUPPORTED_LANGUAGE_NAMES = COLLECTION_LANGUAGE_OPTIONS.map((option) => option.label).join(
+  ", ",
+);
 
 /** Every user-facing string of the request flow. The never-use rules (no
  *  automation talk, no progress bars, nobody named as doing the work) are

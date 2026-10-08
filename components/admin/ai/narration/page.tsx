@@ -113,8 +113,8 @@ export function AdminNarrationPageClient({
         {lastJob && isActiveNarrationSyncStatus(lastJob.status) ? (
           <p className="m-0 text-sm text-base-content/80">
             Running now:{" "}
-            <Link href={`/admin/collections/${lastJob.domainId}#narration`} className="link">
-              {lastJob.domainName}
+            <Link href={`/admin/collections/${lastJob.collectionId}#narration`} className="link">
+              {lastJob.collectionName}
             </Link>{" "}
             ({Math.min(lastJob.cursor, lastJob.total)}/{lastJob.total})
           </p>

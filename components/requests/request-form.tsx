@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useBrowseSearch } from "@/hooks/use-browse-search";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import { MAX_TOPIC_LENGTH } from "@/lib/requests/schema";
 import {
@@ -96,7 +96,7 @@ export function RequestForm({
   const browse = useBrowseSearch(initialTopic);
   const topic = browse.query;
   const [kind, setKind] = useState<RequestKind>("jargon");
-  const [language, setLanguage] = useState<DomainLanguage>("en");
+  const [language, setLanguage] = useState<CollectionLanguage>("en");
   const [level, setLevel] = useState<string | null>(null);
   const [size, setSize] = useState<number | null>(null);
   const [known, setKnown] = useState("");
@@ -167,7 +167,7 @@ export function RequestForm({
             {FORM.repeatTopic(repeat.topic, repeat.createdDate, repeat.sentence)}{" "}
             {repeat.collectionId ? (
               <LinkButton
-                href={`/app/library?domain=${repeat.collectionId}`}
+                href={`/app/library?collection=${repeat.collectionId}`}
                 variant="outline"
                 size="sm"
                 className="min-h-11 md:min-h-8"
@@ -184,7 +184,7 @@ export function RequestForm({
         </p>
       ) : null}
 
-      {browse.search.status === "done" && browse.search.domains.length > 0 ? (
+      {browse.search.status === "done" && browse.search.collections.length > 0 ? (
         <p className="m-0 text-xs font-semibold tracking-wider text-base-content/70 uppercase">
           {FORM.closeMatches}
         </p>

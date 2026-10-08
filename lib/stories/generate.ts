@@ -1,6 +1,6 @@
 import { generateText } from "ai";
 import { aiGenerationOptions, type AiObservabilityContext } from "@/lib/ai/observability";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import { describeFailure } from "@/lib/ai-credits/failure-reason";
 import type { UsageTally } from "@/lib/ai-credits/usage-tally";
 import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
@@ -36,7 +36,7 @@ type GenerateStoryInput = {
   apiKey: string;
   terms: StoryTerm[];
   collectionName: string;
-  language: DomainLanguage;
+  language: CollectionLanguage;
   format: StyleOption;
   tone: StyleOption;
   readingLevel: ReadingLevel;

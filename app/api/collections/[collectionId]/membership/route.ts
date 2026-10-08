@@ -7,14 +7,17 @@ import { createClient } from "@/lib/supabase/server";
 const NO_STORE = { "Cache-Control": "private, no-store" };
 
 /** For the CTA on cached public collection pages, asked from the browser once signed in. */
-export async function GET(request: Request, { params }: { params: Promise<{ domainId: string }> }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ collectionId: string }> },
+) {
   const user = await readVerifiedUser(request.headers);
   if (!user) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401, headers: NO_STORE });
   }
 
-  const { domainId } = await params;
-  if (!isUuid(domainId)) {
+  const { collectionId } = await params;
+  if (!isUuid(collectionId)) {
     return NextResponse.json(
       { error: "Invalid collection id." },
       { status: 400, headers: NO_STORE },
@@ -22,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ doma
   }
 
   try {
-    const state = await getCollectionMembership(await createClient(), user.id, domainId);
+    const state = await getCollectionMembership(await createClient(), user.id, collectionId);
     return NextResponse.json({ state }, { headers: NO_STORE });
   } catch (error) {
     console.error("Couldn't check the collection membership:", error);

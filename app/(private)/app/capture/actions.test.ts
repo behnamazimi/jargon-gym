@@ -28,7 +28,7 @@ vi.mock("@/lib/auth/require-session", () => ({
 
 import { findCaptureDuplicate } from "./actions";
 
-const domainId = "11111111-1111-4111-8111-111111111111";
+const collectionId = "11111111-1111-4111-8111-111111111111";
 
 beforeEach(() => {
   Object.assign(state, { rows: [], error: null, signedIn: true, ilike: [], eq: [] });
@@ -36,17 +36,19 @@ beforeEach(() => {
 
 describe("findCaptureDuplicate", () => {
   it("rejects bad input", async () => {
-    expect(await findCaptureDuplicate({ domainId: "nope", term: "SLA" })).toEqual({ ok: false });
-    expect(await findCaptureDuplicate({ domainId, term: "   " })).toEqual({ ok: false });
+    expect(await findCaptureDuplicate({ collectionId: "nope", term: "SLA" })).toEqual({
+      ok: false,
+    });
+    expect(await findCaptureDuplicate({ collectionId, term: "   " })).toEqual({ ok: false });
   });
 
   it("fails quietly when signed out", async () => {
     state.signedIn = false;
-    expect(await findCaptureDuplicate({ domainId, term: "SLA" })).toEqual({ ok: false });
+    expect(await findCaptureDuplicate({ collectionId, term: "SLA" })).toEqual({ ok: false });
   });
 
   it("returns no match for an empty result", async () => {
-    expect(await findCaptureDuplicate({ domainId, term: "SLA" })).toEqual({
+    expect(await findCaptureDuplicate({ collectionId, term: "SLA" })).toEqual({
       ok: true,
       match: null,
     });
@@ -54,25 +56,25 @@ describe("findCaptureDuplicate", () => {
 
   it("reports a finished and an unfinished match", async () => {
     state.rows = [{ term: "SLA", definition: "x" }];
-    expect(await findCaptureDuplicate({ domainId, term: " sla " })).toEqual({
+    expect(await findCaptureDuplicate({ collectionId, term: " sla " })).toEqual({
       ok: true,
       match: { term: "SLA", finished: true },
     });
     state.rows = [{ term: "SLA", definition: null }];
-    expect(await findCaptureDuplicate({ domainId, term: "sla" })).toEqual({
+    expect(await findCaptureDuplicate({ collectionId, term: "sla" })).toEqual({
       ok: true,
       match: { term: "SLA", finished: false },
     });
   });
 
   it("escapes wildcards and scopes to the owner", async () => {
-    await findCaptureDuplicate({ domainId, term: "100%_done" });
+    await findCaptureDuplicate({ collectionId, term: "100%_done" });
     expect(state.ilike).toEqual(["100\\%\\_done"]);
-    expect(state.eq).toContainEqual(["domains.owner_id", "u1"]);
+    expect(state.eq).toContainEqual(["collections.owner_id", "u1"]);
   });
 
   it("returns not ok on a database error", async () => {
     state.error = new Error("boom");
-    expect(await findCaptureDuplicate({ domainId, term: "SLA" })).toEqual({ ok: false });
+    expect(await findCaptureDuplicate({ collectionId, term: "SLA" })).toEqual({ ok: false });
   });
 });

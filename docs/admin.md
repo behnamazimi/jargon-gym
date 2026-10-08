@@ -87,7 +87,7 @@ characters is required. Errors the admin should read use the database code `AD00
   deleting the collections would delete that for them. The collections and their terms are locked first, so no
   one can start using them between the check and the delete. The typed email is compared in the database. The
   audit row keeps the id and the reason, not the email, so the audit page shows a deleted person by id.
-  The migration also made `domains.owner_id` cascade and let `referral_codes` keep `used_at` after its user is gone;
+  The migration also made `collections.owner_id` cascade and let `referral_codes` keep `used_at` after its user is gone;
   both used to make every delete fail. Their waitlist row stays.
 - SQL checks: `supabase/tests/admin_user_management.sql` and `admin_delete_concurrency.sh`, run by hand.
 
@@ -160,7 +160,7 @@ Members can love and report collections other members share (migration
 Nothing is automatic: reports only show up for an admin, who decides.
 
 - **Tables.** `collection_loves` (one row per member and collection; members read only their own) keeps
-  `domains.love_count` in step through a trigger, so Browse can sort and page in the database. Nobody, admins
+  `collections.love_count` in step through a trigger, so Browse can sort and page in the database. Nobody, admins
   included, can see who loved. `collection_reports` holds a reason, an optional note of up to 500 characters
   and a status (`open`, `dismissed`, `actioned`); one open report per member and collection. Members read their
   own; admins read all. Neither table takes direct writes.
@@ -173,7 +173,7 @@ Nothing is automatic: reports only show up for an admin, who decides.
   again and restores nothing. `admin_dismiss_collection_reports` closes reports without acting. All three
   audit as `stop_sharing_collection`, `lift_share_lock` and `dismiss_collection_reports`.
 - **Why a trigger guards the columns.** Owners have a table-wide UPDATE grant and an owner UPDATE policy, so a
-  policy can't protect single columns. `domains_guard_protected` refuses a non-admin change to the lock columns
+  policy can't protect single columns. `collections_guard_protected` refuses a non-admin change to the lock columns
   or `love_count` (only the love counter trigger may write it, recognised by `pg_trigger_depth() > 1`) and
   refuses sharing while the lock is set (`share_blocked`, shown to the owner as the moderation sentence).
 - **Where it shows.** Browse cards (love, report, Most loved sort), the Library header and actions menu, and

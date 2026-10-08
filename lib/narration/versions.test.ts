@@ -46,8 +46,8 @@ const FIELDS = {
   controversy: null,
 };
 
-function term(id: string, domain = "d-term", fields = FIELDS) {
-  return { id, domain_id: domain, domains: { language: "en" }, ...fields };
+function term(id: string, collection = "d-term", fields = FIELDS) {
+  return { id, collection_id: collection, collections: { language: "en" }, ...fields };
 }
 
 function job(

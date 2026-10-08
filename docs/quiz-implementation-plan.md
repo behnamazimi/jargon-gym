@@ -49,7 +49,7 @@ A question carries two separate facts.
 | `grade.ts`                | `gradeAnswer(question, response)`: one switch on interaction                                                |
 | `trace-type.ts`           | Interaction to TRACE `QuestionType`                                                                         |
 | `question-schema.ts`      | `isQuizQuestion`, guarding both saved-session stores                                                        |
-| `terms.ts`, `mappers.ts`  | Quiz pool plus a `domains.kind` lookup (no `TermCard` or RPC change)                                        |
+| `terms.ts`, `mappers.ts`  | Quiz pool plus a `collections.kind` lookup (no `TermCard` or RPC change)                                    |
 
 `generate-simple.ts` is `buildQuiz` wired to the Supabase source. `illustration.ts`
 is gone. A term is picked per its own collection's kind, so mixed quizzes work.
@@ -66,7 +66,7 @@ is gone. A term is picked per its own collection's kind, so mixed quizzes work.
   `quiz-options.ts`, which turns a question into tappable options and their
   responses. Long answers are listed in the message with numbered buttons.
   The "category / collection" header line is gone.
-- **Pool.** `lib/quiz/terms.ts` looks up `domains.kind` for the picked terms.
+- **Pool.** `lib/quiz/terms.ts` looks up `collections.kind` for the picked terms.
   The quiz pickers copy each term's recognition posterior and test count onto
   the card (`withRecognition` in `lib/trace-queue/pick-terms.ts`), so no extra
   query is needed.

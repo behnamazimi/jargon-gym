@@ -9,9 +9,9 @@ test.describe("Stories", () => {
     page,
     user,
   }) => {
-    const { domainId } = await seedCollection(user);
+    const { collectionId } = await seedCollection(user);
     const before = await creditsLeft(user.id);
-    await gotoReady(page, `/app/read/stories?domain=${domainId}`);
+    await gotoReady(page, `/app/read/stories?collection=${collectionId}`);
 
     await page.getByRole("button", { name: "Write a story" }).click();
     await expect(page.getByRole("heading", { name: "A Day At Work" })).toBeVisible();

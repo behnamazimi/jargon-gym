@@ -1,11 +1,11 @@
 /**
  * Supported collection content languages. Single source of truth for the
- * domain edit form, domain-schema.ts's Zod enum, and narration's per-language
+ * collection edit form, collection-schema.ts's Zod enum, and narration's per-language
  * template/voice selection — add a new entry here (plus its narration
  * connector phrases, voice, and term-labels.ts labels) to support another
  * language. The database list lives in `public.is_supported_language`.
  */
-export type DomainLanguage =
+export type CollectionLanguage =
   | "en"
   | "nl"
   | "es"
@@ -19,7 +19,7 @@ export type DomainLanguage =
   | "ko"
   | "zh";
 
-export const DOMAIN_LANGUAGES = [
+export const COLLECTION_LANGUAGES = [
   "en",
   "nl",
   "es",
@@ -32,9 +32,9 @@ export const DOMAIN_LANGUAGES = [
   "ja",
   "ko",
   "zh",
-] as const satisfies readonly DomainLanguage[];
+] as const satisfies readonly CollectionLanguage[];
 
-export const DOMAIN_LANGUAGE_OPTIONS: { value: DomainLanguage; label: string }[] = [
+export const COLLECTION_LANGUAGE_OPTIONS: { value: CollectionLanguage; label: string }[] = [
   { value: "en", label: "English" },
   { value: "nl", label: "Dutch" },
   { value: "fr", label: "French" },
@@ -49,8 +49,8 @@ export const DOMAIN_LANGUAGE_OPTIONS: { value: DomainLanguage; label: string }[]
   { value: "tr", label: "Turkish" },
 ];
 
-export function parseLanguage(value: string | null | undefined): DomainLanguage {
-  return (DOMAIN_LANGUAGES as readonly string[]).includes(value ?? "")
-    ? (value as DomainLanguage)
+export function parseLanguage(value: string | null | undefined): CollectionLanguage {
+  return (COLLECTION_LANGUAGES as readonly string[]).includes(value ?? "")
+    ? (value as CollectionLanguage)
     : "en";
 }

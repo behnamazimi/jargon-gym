@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { DomainLanguage } from "@/lib/terms/languages";
+import type { CollectionLanguage } from "@/lib/terms/languages";
 import type { NarrationMode } from "./mode";
 import type { NarratedTermFields } from "./types";
 
@@ -12,7 +12,10 @@ const NARRATION_TEMPLATE_VERSION = 1;
  * regenerates the clip. Version 1 (content-hash.ts) covers the fields only;
  * clips made under it stay valid until an admin chooses to regenerate them.
  */
-export function computeContentHashV2(fields: NarratedTermFields, language: DomainLanguage): string {
+export function computeContentHashV2(
+  fields: NarratedTermFields,
+  language: CollectionLanguage,
+): string {
   const canonical = JSON.stringify([
     2,
     NARRATION_TEMPLATE_VERSION,
@@ -29,7 +32,7 @@ export function computeContentHashV2(fields: NarratedTermFields, language: Domai
 }
 
 /** Term-only clips say just the name, so only the name and the voice's language matter. */
-export function computeTermOnlyHash(term: string, language: DomainLanguage): string {
+export function computeTermOnlyHash(term: string, language: CollectionLanguage): string {
   const canonical = JSON.stringify([2, NARRATION_TEMPLATE_VERSION, language, "term", term]);
   return createHash("sha256").update(canonical).digest("hex");
 }
@@ -37,7 +40,7 @@ export function computeTermOnlyHash(term: string, language: DomainLanguage): str
 export function computeNarrationHash(
   mode: NarrationMode,
   fields: NarratedTermFields,
-  language: DomainLanguage,
+  language: CollectionLanguage,
 ): string {
   return mode === "full"
     ? computeContentHashV2(fields, language)

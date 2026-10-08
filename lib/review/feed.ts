@@ -28,14 +28,14 @@ export async function loadReviewSetup() {
 /** The next few cards TRACE ranks for the signed-in user, skipping the ones
  *  already on screen. Used for the first load and every refill. */
 export async function loadReviewFeed(
-  domainId: string,
+  collectionId: string,
   excludeTermIds: string[],
 ): Promise<ReviewQueueSeed> {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) return { error: auth.error, terms: [] };
 
   try {
-    const scope = { domainIds: domainId === "all" ? ("all" as const) : [domainId] };
+    const scope = { collectionIds: collectionId === "all" ? ("all" as const) : [collectionId] };
     const admin = createAdminClient();
     const cards = await pickReviewTermsForUser(
       admin,
@@ -56,14 +56,14 @@ export async function loadReviewFeed(
 /** Only bounds the request size; a real session never gets near it. */
 const MAX_EXCLUDED_TERMS = 20_000;
 
-/** A refill request body: `{ domainId: "all" | uuid, excludeTermIds: uuid[] }`. */
+/** A refill request body: `{ collectionId: "all" | uuid, excludeTermIds: uuid[] }`. */
 export function parseReviewFeedRequest(
   body: unknown,
-): { domainId: string; excludeTermIds: string[] } | null {
+): { collectionId: string; excludeTermIds: string[] } | null {
   if (!body || typeof body !== "object") return null;
-  const { domainId, excludeTermIds } = body as Record<string, unknown>;
-  if (!isCollectionPreference(domainId)) return null;
+  const { collectionId, excludeTermIds } = body as Record<string, unknown>;
+  if (!isCollectionPreference(collectionId)) return null;
   if (!Array.isArray(excludeTermIds) || excludeTermIds.length > MAX_EXCLUDED_TERMS) return null;
   if (!excludeTermIds.every((id) => typeof id === "string" && isUuid(id))) return null;
-  return { domainId, excludeTermIds };
+  return { collectionId, excludeTermIds };
 }

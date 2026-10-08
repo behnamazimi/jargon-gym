@@ -11,13 +11,13 @@ import { DEFAULT_TELEGRAM_QUIZ_COUNT } from "./constants";
 
 type Client = SupabaseClient<Database>;
 
-export type QuizDomainSelection = "all" | string;
+export type QuizCollectionSelection = "all" | string;
 
 export { DEFAULT_TELEGRAM_QUIZ_COUNT };
 
 export type ReviewSession = {
   userId: string;
-  domainId: QuizDomainSelection;
+  collectionId: QuizCollectionSelection;
   questions: QuizQuestion[];
   currentIndex: number;
   correctCount: number;
@@ -30,7 +30,7 @@ const STORED_SESSION_VERSION = 2;
 
 type StoredQuizSession = {
   version: typeof STORED_SESSION_VERSION;
-  domainId: QuizDomainSelection;
+  collectionId: QuizCollectionSelection;
   questions: QuizQuestion[];
   currentIndex: number;
   correctCount: number;
@@ -44,7 +44,7 @@ function isStoredSession(value: unknown): value is StoredQuizSession {
   const session = value as StoredQuizSession;
   return (
     session.version === STORED_SESSION_VERSION &&
-    (session.domainId === "all" || typeof session.domainId === "string") &&
+    (session.collectionId === "all" || typeof session.collectionId === "string") &&
     Array.isArray(session.questions) &&
     session.questions.every(isQuizQuestion) &&
     typeof session.currentIndex === "number" &&
@@ -53,9 +53,11 @@ function isStoredSession(value: unknown): value is StoredQuizSession {
   );
 }
 
-export function domainIdsForScope(domainId: QuizDomainSelection | undefined): string[] | "all" {
-  if (!domainId || domainId === "all") return "all";
-  return [domainId];
+export function collectionIdsForScope(
+  collectionId: QuizCollectionSelection | undefined,
+): string[] | "all" {
+  if (!collectionId || collectionId === "all") return "all";
+  return [collectionId];
 }
 
 export async function saveStoredSession(
@@ -65,7 +67,7 @@ export async function saveStoredSession(
 ): Promise<void> {
   const stored: StoredQuizSession = {
     version: STORED_SESSION_VERSION,
-    domainId: session.domainId,
+    collectionId: session.collectionId,
     questions: session.questions,
     currentIndex: session.currentIndex,
     correctCount: session.correctCount,
@@ -98,12 +100,12 @@ export async function deleteSession(client: Client, chatId: number): Promise<voi
 export async function countTermsForQuiz(
   client: Client,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
 ): Promise<number> {
   const stats = await getPoolStatsForUser(
     client,
     userId,
-    { domainIds: domainIdsForScope(domainId) },
+    { collectionIds: collectionIdsForScope(collectionId) },
     "quiz",
   );
   return stats.total;
@@ -117,13 +119,13 @@ export async function createSession(
   client: Client,
   chatId: number,
   userId: string,
-  domainId: QuizDomainSelection,
+  collectionId: QuizCollectionSelection,
   count: number,
 ): Promise<ReviewSession> {
   const terms = await fetchQuizTermPool(
     client,
     userId,
-    domainIdsForScope(domainId),
+    collectionIdsForScope(collectionId),
     count,
     "admin",
   );
@@ -131,7 +133,7 @@ export async function createSession(
 
   const session: ReviewSession = {
     userId,
-    domainId,
+    collectionId,
     questions,
     currentIndex: 0,
     correctCount: 0,
@@ -160,7 +162,7 @@ export async function getSession(client: Client, chatId: number): Promise<Review
 
   return {
     userId: data.user_id,
-    domainId: data.quiz_session.domainId,
+    collectionId: data.quiz_session.collectionId,
     questions: data.quiz_session.questions,
     currentIndex: data.quiz_session.currentIndex,
     correctCount: data.quiz_session.correctCount,

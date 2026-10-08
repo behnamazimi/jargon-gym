@@ -55,7 +55,7 @@ export function DeclineDialog({
 }) {
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
-  const [domainId, setDomainId] = useState("");
+  const [collectionId, setCollectionId] = useState("");
   const inBrowse = reason === ALREADY_IN_BROWSE;
   const merged = request.merged.length;
 
@@ -68,10 +68,10 @@ export function DeclineDialog({
           : `They get an email with the reason${merged > 0 ? `, and so do the ${merged} merged request${merged === 1 ? "" : "s"}, which are declined too` : ""}.`
       }
       confirmLabel={inBrowse ? "Add it for them" : "Decline"}
-      canSubmit={inBrowse ? domainId !== "" : reason !== ""}
+      canSubmit={inBrowse ? collectionId !== "" : reason !== ""}
       onSubmit={() =>
         inBrowse
-          ? addExistingCollection(request.id, domainId)
+          ? addExistingCollection(request.id, collectionId)
           : declineRequest(request.id, reason, note)
       }
       onClose={onClose}
@@ -97,8 +97,8 @@ export function DeclineDialog({
           <span className="text-sm">Collection</span>
           <select
             className="select select-bordered w-full"
-            value={domainId}
-            onChange={(e) => setDomainId(e.target.value)}
+            value={collectionId}
+            onChange={(e) => setCollectionId(e.target.value)}
           >
             <option value="">{collections.length === 0 ? "No close matches" : "Choose…"}</option>
             {collections.map((collection) => (

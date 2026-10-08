@@ -36,9 +36,9 @@ export type AdminRequest = {
   declineReason: string | null;
   declineNote: string | null;
   mergedInto: string | null;
-  targetDomainId: string | null;
+  targetCollectionId: string | null;
   deliveryKind: string | null;
-  deliveredDomainId: string | null;
+  deliveredCollectionId: string | null;
   deliveredTerms: number | null;
   delayNotifiedAt: string | null;
   emailFailed: boolean;
@@ -67,9 +67,9 @@ function mapRequest(row: RequestRow, now: number): AdminRequest {
     declineReason: row.decline_reason,
     declineNote: row.decline_note,
     mergedInto: row.merged_into,
-    targetDomainId: row.target_domain_id,
+    targetCollectionId: row.target_collection_id,
     deliveryKind: row.delivery_kind,
-    deliveredDomainId: row.delivered_domain_id,
+    deliveredCollectionId: row.delivered_collection_id,
     deliveredTerms: row.delivered_terms,
     delayNotifiedAt: row.delay_notified_at,
     emailFailed: row.email_failed,
@@ -195,7 +195,7 @@ export async function findSimilarCollections(
 
   const filter = words.map((word) => `name.ilike."%${escapeIlike(word)}%"`).join(",");
   const { data, error } = await client
-    .from("domains")
+    .from("collections")
     .select("id, name, terms(count)")
     .eq("visibility", "shared")
     .or(filter)

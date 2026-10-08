@@ -34,7 +34,7 @@ const { canResumeNarrationSync, isNarrationSyncLeaseStale } = await import("./sy
 type Client = SupabaseClient<Database>;
 type JobRow = Database["public"]["Tables"]["narration_sync_jobs"]["Row"];
 
-const DOMAIN_ID = "dom-1";
+const COLLECTION_ID = "dom-1";
 const USER_ID = "user-1";
 const FIELDS: NarratedTermFields = {
   term: "Closure",
@@ -52,8 +52,8 @@ const READY = { status: "ready", job: {} } as unknown as Awaited<
   ReturnType<typeof getOrCreateAudio>
 >;
 
-function termRow(id: string, domainId = DOMAIN_ID) {
-  return { id, domain_id: domainId, domains: { language: "en" }, ...FIELDS };
+function termRow(id: string, collectionId = COLLECTION_ID) {
+  return { id, collection_id: collectionId, collections: { language: "en" }, ...FIELDS };
 }
 
 function audioJob(
@@ -79,7 +79,7 @@ function audioJob(
 function jobRow(overrides: Partial<JobRow> = {}): JobRow {
   return {
     id: "job-1",
-    domain_id: DOMAIN_ID,
+    collection_id: COLLECTION_ID,
     started_by: USER_ID,
     status: "queued",
     term_ids: ["term-1", "term-2"],
@@ -100,8 +100,8 @@ type Store = {
   jobs: JobRow[];
   terms: ReturnType<typeof termRow>[];
   audioJobs: ReturnType<typeof audioJob>[];
-  domains: { id: string; name: string }[];
-  settings: { domain_id: string; mode: string }[];
+  collections: { id: string; name: string }[];
+  settings: { collection_id: string; mode: string }[];
   claim: { job_id: string; term_id: string; cursor: number; term_count: number }[];
   insertErrorCode?: string;
 };
@@ -116,7 +116,7 @@ function makeClient(store: Store): Client {
   function rowsFor(table: string) {
     if (table === "terms") return store.terms;
     if (table === "audio_jobs") return store.audioJobs;
-    if (table === "domains") return store.domains;
+    if (table === "collections") return store.collections;
     if (table === "narration_sync_jobs") return store.jobs;
     if (table === "collection_narration_settings") return store.settings;
     if (table === "ai_feature_settings") {
@@ -243,7 +243,7 @@ function emptyStore(overrides: Partial<Store> = {}): Store {
     jobs: [],
     terms: [],
     audioJobs: [],
-    domains: [{ id: DOMAIN_ID, name: "Product" }],
+    collections: [{ id: COLLECTION_ID, name: "Product" }],
     settings: [],
     claim: [],
     ...overrides,
@@ -296,7 +296,7 @@ describe("isCurrentAudio", () => {
 
   it("makes a term-only clip stale when the language changes", () => {
     expect(
-      isCurrentAudio({ ...term, domains: { language: "nl" } }, audioJob("term-1"), "term"),
+      isCurrentAudio({ ...term, collections: { language: "nl" } }, audioJob("term-1"), "term"),
     ).toBe(false);
   });
 });
@@ -321,7 +321,7 @@ describe("listMissingNarrationTermIds", () => {
       ],
     });
 
-    await expect(listMissingNarrationTermIds(makeClient(store), DOMAIN_ID)).resolves.toEqual([
+    await expect(listMissingNarrationTermIds(makeClient(store), COLLECTION_ID)).resolves.toEqual([
       "t-missing",
       "t-failed",
       "t-stale",
@@ -334,9 +334,11 @@ describe("listMissingNarrationTermIds", () => {
     const store = emptyStore({
       terms: [termRow("t1")],
       audioJobs: [audioJob("t1", { content_hash: HASH_V2 })],
-      settings: [{ domain_id: DOMAIN_ID, mode: "full" }],
+      settings: [{ collection_id: COLLECTION_ID, mode: "full" }],
     });
-    await expect(listMissingNarrationTermIds(makeClient(store), DOMAIN_ID)).resolves.toEqual([]);
+    await expect(listMissingNarrationTermIds(makeClient(store), COLLECTION_ID)).resolves.toEqual(
+      [],
+    );
   });
 });
 
@@ -347,12 +349,14 @@ describe("getCollectionNarrationCoverage", () => {
       audioJobs: [audioJob("t-current"), audioJob("t-stale", { content_hash: HASH_V2 })],
     });
 
-    await expect(getCollectionNarrationCoverage(makeClient(store), DOMAIN_ID)).resolves.toEqual({
-      total: 3,
-      current: 1,
-      stale: 1,
-      missing: 1,
-    });
+    await expect(getCollectionNarrationCoverage(makeClient(store), COLLECTION_ID)).resolves.toEqual(
+      {
+        total: 3,
+        current: 1,
+        stale: 1,
+        missing: 1,
+      },
+    );
   });
 });
 
@@ -364,7 +368,7 @@ describe("listCollectionTermClips", () => {
     });
 
     await expect(
-      listCollectionTermClips(makeClient(store), DOMAIN_ID, {
+      listCollectionTermClips(makeClient(store), COLLECTION_ID, {
         page: 1,
         pageSize: 25,
         state: "missing",
@@ -376,7 +380,7 @@ describe("listCollectionTermClips", () => {
 describe("enqueueNarrationSync", () => {
   it("rejects when narration is turned off", async () => {
     const store = emptyStore({ enabled: false, terms: [termRow("t1")] });
-    await expect(enqueueNarrationSync(makeClient(store), DOMAIN_ID, USER_ID)).rejects.toThrow(
+    await expect(enqueueNarrationSync(makeClient(store), COLLECTION_ID, USER_ID)).rejects.toThrow(
       "Narration is turned off.",
     );
   });
@@ -386,7 +390,7 @@ describe("enqueueNarrationSync", () => {
       terms: [termRow("t1")],
       jobs: [jobRow({ status: "running" })],
     });
-    await expect(enqueueNarrationSync(makeClient(store), DOMAIN_ID, USER_ID)).rejects.toThrow(
+    await expect(enqueueNarrationSync(makeClient(store), COLLECTION_ID, USER_ID)).rejects.toThrow(
       "A sync is already running.",
     );
   });
@@ -396,17 +400,17 @@ describe("enqueueNarrationSync", () => {
       terms: [termRow("t1")],
       audioJobs: [audioJob("t1")],
     });
-    await expect(enqueueNarrationSync(makeClient(store), DOMAIN_ID, USER_ID)).rejects.toThrow(
+    await expect(enqueueNarrationSync(makeClient(store), COLLECTION_ID, USER_ID)).rejects.toThrow(
       "No missing audio in that collection.",
     );
   });
 
   it("snapshots missing term ids onto a queued job", async () => {
     const store = emptyStore({ terms: [termRow("t1"), termRow("t2")] });
-    const job = await enqueueNarrationSync(makeClient(store), DOMAIN_ID, USER_ID);
+    const job = await enqueueNarrationSync(makeClient(store), COLLECTION_ID, USER_ID);
     expect(job).toMatchObject({
-      domainId: DOMAIN_ID,
-      domainName: "Product",
+      collectionId: COLLECTION_ID,
+      collectionName: "Product",
       status: "queued",
       total: 2,
       cursor: 0,
@@ -727,8 +731,8 @@ describe("canResumeNarrationSync", () => {
     expect(
       canResumeNarrationSync({
         id: "job-1",
-        domainId: DOMAIN_ID,
-        domainName: "Product",
+        collectionId: COLLECTION_ID,
+        collectionName: "Product",
         status: "running",
         total: 2,
         cursor: 0,
@@ -741,8 +745,8 @@ describe("canResumeNarrationSync", () => {
     expect(
       canResumeNarrationSync({
         id: "job-1",
-        domainId: DOMAIN_ID,
-        domainName: "Product",
+        collectionId: COLLECTION_ID,
+        collectionName: "Product",
         status: "running",
         total: 2,
         cursor: 0,
@@ -755,8 +759,8 @@ describe("canResumeNarrationSync", () => {
     expect(
       canResumeNarrationSync({
         id: "job-1",
-        domainId: DOMAIN_ID,
-        domainName: "Product",
+        collectionId: COLLECTION_ID,
+        collectionName: "Product",
         status: "completed",
         total: 2,
         cursor: 2,

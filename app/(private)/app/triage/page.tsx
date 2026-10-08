@@ -7,12 +7,12 @@ import { createClient } from "@/lib/supabase/server";
 import { fetchNotYetTermIds } from "@/lib/triage/repository";
 
 type PageProps = {
-  searchParams: Promise<{ domain?: string }>;
+  searchParams: Promise<{ collection?: string }>;
 };
 
 export default async function TriageRoute({ searchParams }: PageProps) {
-  const { domain: selectedDomainId } = await searchParams;
-  const setup = await getLibrarySetupData(selectedDomainId);
+  const { collection: selectedCollectionId } = await searchParams;
+  const setup = await getLibrarySetupData(selectedCollectionId);
 
   if ("emptyCollection" in setup) redirect("/app/library");
   if ("error" in setup) {
@@ -20,7 +20,7 @@ export default async function TriageRoute({ searchParams }: PageProps) {
   }
 
   const { data, narrationAccess } = setup;
-  const notYetTermIds = await fetchNotYetTermIds(await createClient(), data.domain.id);
+  const notYetTermIds = await fetchNotYetTermIds(await createClient(), data.collection.id);
 
   return (
     <>
@@ -28,14 +28,14 @@ export default async function TriageRoute({ searchParams }: PageProps) {
         icon={Layers}
         title="Triage"
         description="Go through terms and mark the ones you already know."
-        backHref={`/app/library?domain=${data.domain.id}`}
+        backHref={`/app/library?collection=${data.collection.id}`}
         compactOnPhone
       />
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
         <TriagePage
-          key={data.domain.id}
-          domain={data.domain}
-          domains={data.domains}
+          key={data.collection.id}
+          collection={data.collection}
+          collections={data.collections}
           terms={data.terms}
           knownTermIds={data.knownTermIds}
           markedKnownTermIds={data.markedKnownTermIds}

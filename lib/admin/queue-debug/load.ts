@@ -7,8 +7,8 @@ type Client = SupabaseClient<Database>;
 type DebugRow = {
   term_id: string;
   term: string;
-  domain_id: string;
-  domain_name: string;
+  collection_id: string;
+  collection_name: string;
   active: boolean;
   finished: boolean;
   created_at: string;
@@ -33,8 +33,8 @@ export function mapQueueDebugRows(data: Json): QueueDebugTerm[] {
   return (data as DebugRow[]).map((row) => ({
     termId: row.term_id,
     term: row.term,
-    domainId: row.domain_id,
-    domainName: row.domain_name,
+    collectionId: row.collection_id,
+    collectionName: row.collection_name,
     active: row.active,
     finished: row.finished,
     createdAt: new Date(row.created_at),

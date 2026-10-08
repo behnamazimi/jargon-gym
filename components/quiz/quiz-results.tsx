@@ -48,7 +48,7 @@ function MissedTerms({ terms }: { terms: QuizTerm[] }) {
                     {term.term}
                   </span>
                   <span className="block truncate text-xs text-base-content/70">
-                    {term.domainName}
+                    {term.collectionName}
                   </span>
                 </span>
                 <ChevronDown

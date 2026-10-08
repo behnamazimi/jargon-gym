@@ -63,7 +63,7 @@ describe("buildNarrationScript", () => {
   });
 
   it("falls back to plain pause-joined concatenation for a language with no translation", () => {
-    // Cast past the DomainLanguage union to exercise the fallback path for a
+    // Cast past the CollectionLanguage union to exercise the fallback path for a
     // language that isn't translated yet (e.g. a future addition to the type
     // without matching CONNECTOR_PHRASES entry).
     const script = buildNarrationScript({ ...BASE, example: "An example." }, "xx" as never, "full");

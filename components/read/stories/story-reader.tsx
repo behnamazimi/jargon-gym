@@ -42,7 +42,7 @@ function firstOccurrences(story: Story): Map<string, string> {
  *  story read is what credits its terms. */
 function termHref(termId: string, story: Story): string {
   const params = new URLSearchParams({ termId, alreadyRead: "true" });
-  if (story.domainId) params.set("domain", story.domainId);
+  if (story.collectionId) params.set("collection", story.collectionId);
   return `/app/read?${params.toString()}`;
 }
 

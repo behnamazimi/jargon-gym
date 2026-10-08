@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { pickReadTermsForUser } from "@/lib/trace-queue";
 import type { WidgetStateResponse, WidgetTerm } from "@/lib/widget/types";
-import { resolveReviewDomainIdsForUser } from "@/lib/mastery/known-state";
+import { resolveReviewCollectionIdsForUser } from "@/lib/mastery/known-state";
 
 type Client = SupabaseClient<Database>;
 
@@ -17,13 +17,16 @@ export async function fetchWidgetState(
   excludeTermIds: string[] = [],
   limit: number = WIDGET_POOL_SIZE,
 ): Promise<WidgetStateResponse> {
-  const { reviewDomainIds, collectionRows } = await resolveReviewDomainIdsForUser(client, userId);
+  const { reviewCollectionIds, collectionRows } = await resolveReviewCollectionIdsForUser(
+    client,
+    userId,
+  );
 
-  if (reviewDomainIds.length === 0) {
+  if (reviewCollectionIds.length === 0) {
     return { terms: [], totalCount: 0, termsLearnedCount: 0 };
   }
 
-  const scope = { domainIds: reviewDomainIds };
+  const scope = { collectionIds: reviewCollectionIds };
   const cards = await pickReadTermsForUser(client, userId, scope, limit, excludeTermIds);
 
   const terms: WidgetTerm[] = cards.map((card) => ({
@@ -31,11 +34,11 @@ export async function fetchWidgetState(
     term: card.term,
     category: card.category ?? "",
     definition: card.definition,
-    domainId: card.domainId,
-    domainName: card.domainName,
+    collectionId: card.collectionId,
+    collectionName: card.collectionName,
   }));
 
-  const activeSet = new Set(reviewDomainIds);
+  const activeSet = new Set(reviewCollectionIds);
   let totalCount = 0;
   let termsLearnedCount = 0;
   for (const row of collectionRows) {

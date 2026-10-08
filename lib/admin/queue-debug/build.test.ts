@@ -7,7 +7,7 @@ const DAY = 24 * 60 * 60 * 1000;
 function term(id: string, overrides: Partial<QueueDebugTerm> = {}): QueueDebugTerm {
   return {
     termId: id,
-    domainId: "d1",
+    collectionId: "d1",
     createdAt: new Date("2026-09-01T00:00:00Z"),
     readCount: 0,
     lastReadAt: null,
@@ -22,7 +22,7 @@ function term(id: string, overrides: Partial<QueueDebugTerm> = {}): QueueDebugTe
     everLearningAt: null,
     markedKnownAt: null,
     term: id,
-    domainName: "Standup",
+    collectionName: "Standup",
     active: true,
     finished: true,
     ...overrides,
@@ -31,7 +31,7 @@ function term(id: string, overrides: Partial<QueueDebugTerm> = {}): QueueDebugTe
 
 const options = {
   now: NOW,
-  domainId: null,
+  collectionId: null,
   limit: 50,
   batch: { read: 2, review: 2, quiz: 2 },
 };
@@ -132,9 +132,9 @@ describe("buildQueueDebug", () => {
   });
 
   it("filters to one collection", () => {
-    const debug = buildQueueDebug([term("a"), term("b", { domainId: "d2" })], {
+    const debug = buildQueueDebug([term("a"), term("b", { collectionId: "d2" })], {
       ...options,
-      domainId: "d2",
+      collectionId: "d2",
     });
     expect(debug.read.rows.map((r) => r.item.termId)).toEqual(["b"]);
   });

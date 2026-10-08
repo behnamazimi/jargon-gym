@@ -3,7 +3,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import type { Database } from "@/lib/supabase/database.types";
-import { addNotYetTerms, clearNotYetDomain, removeNotYetTerm } from "@/lib/triage/repository";
+import { addNotYetTerms, clearNotYetCollection, removeNotYetTerm } from "@/lib/triage/repository";
 
 async function runNotYetWrite(
   write: (client: SupabaseClient<Database>) => Promise<void>,
@@ -28,6 +28,6 @@ export async function removeNotYetTermAction(termId: string) {
   return runNotYetWrite((client) => removeNotYetTerm(client, termId));
 }
 
-export async function clearNotYetDomainAction(domainId: string) {
-  return runNotYetWrite((client) => clearNotYetDomain(client, domainId));
+export async function clearNotYetCollectionAction(collectionId: string) {
+  return runNotYetWrite((client) => clearNotYetCollection(client, collectionId));
 }

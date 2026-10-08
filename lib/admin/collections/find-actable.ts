@@ -8,10 +8,10 @@ import { listAllCollectionsForAdmin } from "./list-all-collections";
 export async function findActable(
   supabase: SupabaseClient<Database>,
   adminId: string,
-  domainId: string,
+  collectionId: string,
 ) {
   const collections = await listAllCollectionsForAdmin(supabase, adminId);
-  const collection = collections.find((row) => row.id === domainId);
+  const collection = collections.find((row) => row.id === collectionId);
   if (!collection || collection.readOnly) throw new AdminError("Collection not found.");
   return { collection, collections };
 }

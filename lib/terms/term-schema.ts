@@ -56,13 +56,13 @@ function trimmedOptionalFields(input: ParsedTerm) {
   };
 }
 
-export function termInputToRow(input: ParsedTerm, domainId: string) {
+export function termInputToRow(input: ParsedTerm, collectionId: string) {
   return {
     term: input.term.trim(),
     category: input.category,
     definition: input.definition,
     ...trimmedOptionalFields(input),
-    domain_id: domainId,
+    collection_id: collectionId,
   };
 }
 
