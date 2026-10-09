@@ -58,6 +58,12 @@ question type.
 [docs/ai.md](docs/ai.md) is the single map of every AI feature: vendors,
 access rules, cost levers and narration. Start there.
 
+# DevOps monitoring
+
+CI, production deploys, uptime and AI refund spikes post to a separate ops
+Telegram bot (not the learner bot). Read [docs/monitoring.md](docs/monitoring.md)
+before adding an alert.
+
 # AI credits
 
 AI Quiz and Stories run on the app's key (`CENTRAL_LLM_API_KEY`), spending

@@ -22,6 +22,7 @@ const PUBLIC_EXACT_PATHS = new Set([
   "/robots.txt",
   "/collections",
   "/opengraph-image",
+  "/api/health",
 ]);
 
 const PUBLIC_PATH_PREFIXES = [
@@ -46,6 +47,7 @@ const PUBLIC_PATH_PREFIXES = [
   // Bearer-secret auth in route handlers (Edge → Next Telegram proxy, narration sync)
   "/api/internal/telegram",
   "/api/internal/narration",
+  "/api/internal/ai-health",
 ];
 
 // Signed-out visitors are sent to login only from these. Any other unknown
