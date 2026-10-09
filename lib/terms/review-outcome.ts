@@ -21,10 +21,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import {
+  AGAIN,
   GOOD,
   applyQuizAnswer as computeQuizAnswer,
   applyReviewGrade as computeReviewGrade,
   computeTraceSnapshot,
+  crossedThresholds,
 } from "@/lib/trace";
 import type { QuestionType, ReviewGrade, TraceState } from "@/lib/trace";
 import type { ReviewEvent } from "@/lib/trace-queue";
@@ -130,13 +132,14 @@ export async function applyReviewGrade(
     lastReviewRecallAt: now,
   };
   const snapshot = computeTraceSnapshot(postState, now);
+  const crossed = crossedThresholds(snapshot.knownLabel, input.grade !== AGAIN);
   const event: ReviewEvent = input.grade >= GOOD ? "review_pass" : "review_fail";
 
   await writeEvent(client, mode, userId, input.termId, event, {
     recallStability: next.recallStability,
     recallDifficulty: next.recallDifficulty,
-    crossedKnownThreshold: snapshot.knownLabel === "known",
-    crossedLearningThreshold: snapshot.knownLabel !== "unknown",
+    crossedKnownThreshold: crossed.known,
+    crossedLearningThreshold: crossed.learning,
     grade: input.grade,
     retrievabilityBefore: preSnapshot.recallRetrievability ?? undefined,
   });
@@ -176,15 +179,19 @@ export async function applyQuizAnswer(
     lastQuizTestedAt: now,
   };
   const snapshot = computeTraceSnapshot(postState, now);
+  const crossed = crossedThresholds(snapshot.knownLabel, input.passed);
   const event: ReviewEvent = input.passed ? "quiz_pass" : "quiz_fail";
 
   await writeEvent(client, mode, userId, input.termId, event, {
     quizKnowledgePosterior: next.quizKnowledgePosterior,
-    crossedKnownThreshold: snapshot.knownLabel === "known",
-    crossedLearningThreshold: snapshot.knownLabel !== "unknown",
+    crossedKnownThreshold: crossed.known,
+    crossedLearningThreshold: crossed.learning,
     questionType: input.questionType,
     retrievabilityBefore: preSnapshot.recognitionRetrievability ?? undefined,
   });
 
-  return { passed: input.passed, quizKnowledgePosterior: next.quizKnowledgePosterior };
+  return {
+    passed: input.passed,
+    quizKnowledgePosterior: next.quizKnowledgePosterior,
+  };
 }

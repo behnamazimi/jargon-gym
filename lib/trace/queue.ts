@@ -1,18 +1,19 @@
 /** §10 Per-tier queues — pure ranking, no due dates. Read always ranks the
  *  full candidate set. Review/Quiz also rank the full set — a term with no
  *  state yet for that track (§4b/§5's nullable state) has no real R(t), but
- *  it's still eligible: it's treated as maximally at risk (virtual R = -1,
- *  ahead of every real retrievability, which is always ≥ 0) so it surfaces
- *  first rather than being excluded. Excluding it instead would mean no
- *  term could ever receive its first grade — Review/Quiz would stay empty
- *  forever, since the only way a term gets real S_r/posterior is by being
- *  graded through this same queue. */
+ *  it's still eligible: it sorts as if its R(t) were UNTESTED_RETRIEVABILITY,
+ *  so learned terms that have decayed below that line come first and new terms
+ *  come ahead of the rest. Excluding it instead would mean no term could ever
+ *  receive its first grade — Review/Quiz would stay empty forever, since the
+ *  only way a term gets real S_r/posterior is by being graded through this
+ *  same queue. */
 
 import {
   FAMILIARITY_DECAY_SCALE_DAYS,
   READ_TEMPER_WEIGHT,
   RETRIEVABILITY_DECAY_SCALE,
   SESSION_COOLDOWN_RETRIEVABILITY,
+  UNTESTED_RETRIEVABILITY,
 } from "./constants";
 import { daysBetween, hyperbolicDecay } from "./decay";
 import { rawFamiliarityGrowth } from "./familiarity";
@@ -20,11 +21,6 @@ import { blendMastery, masteryAdjusted } from "./mastery";
 import { retrievability as recallRetrievability } from "./recall";
 import { posteriorToStability, retrievability as recognitionRetrievability } from "./recognition";
 import type { TraceCandidate } from "./types";
-
-/** Untested-track virtual retrievability — sorts ahead of every real R(t)
- *  (always in [0, 1]) without needing a separate "no state yet" branch in
- *  the sort/cooldown logic below. */
-const UNTESTED_RETRIEVABILITY = -1;
 
 /** Most recent of the three per-track "last touched" timestamps, or null
  *  if none has ever fired. */
@@ -119,10 +115,12 @@ export function rankReadQueue(candidates: TraceCandidate[], now: Date): TraceCan
 }
 
 /** Review: every term is eligible. Ranked by R_r(t) ascending — most at
- *  risk of forgetting first, with never-graded terms ranked ahead of all
- *  of them — with same-session repeats excluded via the §6 cooldown
- *  (never-graded terms can't be a repeat, so the cooldown never touches
- *  them). Ties (including the untested tier) break by oldest term first. */
+ *  risk of forgetting first — with never-graded terms placed at
+ *  UNTESTED_RETRIEVABILITY, so a learned term that has decayed below it goes
+ *  ahead of them and the rest wait behind. Same-session repeats are excluded
+ *  via the §6 cooldown (never-graded terms can't be a repeat, so the cooldown
+ *  never touches them). Ties (including the untested tier) break by oldest
+ *  term first. */
 export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceCandidate[] {
   return candidates
     .map((c) => ({
@@ -135,7 +133,8 @@ export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceC
 }
 
 /** Quiz: every term is eligible, same shape as Review — ranked by R_g(t)
- *  ascending with never-answered terms ranked first, same cooldown rule. */
+ *  ascending with never-answered terms placed at UNTESTED_RETRIEVABILITY,
+ *  same cooldown rule. */
 export function rankQuizQueue(candidates: TraceCandidate[], now: Date): TraceCandidate[] {
   return candidates
     .map((c) => ({

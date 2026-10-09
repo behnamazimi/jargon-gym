@@ -50,6 +50,18 @@ export function deriveKnownLabel(masteryAdj: number, testCount: number): KnownLa
   return "learning";
 }
 
+/** Which permanent high-water marks (`ever_mastered_at`, `ever_learning_at`)
+ *  an event may stamp. A miss never stamps: right after any answer the graded
+ *  track's retrievability is 1, so the post-event label would otherwise credit
+ *  a Review Again or a missed Quiz question as fresh memory. */
+export function crossedThresholds(
+  label: KnownLabel,
+  succeeded: boolean,
+): { known: boolean; learning: boolean } {
+  if (!succeeded) return { known: false, learning: false };
+  return { known: label === "known", learning: label !== "unknown" };
+}
+
 /** §8 OverallMastery = (Σ Mastery_adjusted) / N_active. Caller passes only
  *  the adjusted-mastery values for N_active terms (≥1 Read) — this
  *  function just averages what it's given. */

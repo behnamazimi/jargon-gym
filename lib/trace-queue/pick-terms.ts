@@ -31,7 +31,10 @@ function excludeMarkedKnown(candidates: TraceCandidate[]): TraceCandidate[] {
  *  hydrated TermCards by id. */
 function withIsNewToUser(cards: TermCard[], candidates: TraceCandidate[]): TermCard[] {
   const isNewById = new Map(candidates.map((c) => [c.termId, !hasTraceActivity(c)]));
-  return cards.map((card) => ({ ...card, isNewToUser: isNewById.get(card.id) ?? false }));
+  return cards.map((card) => ({
+    ...card,
+    isNewToUser: isNewById.get(card.id) ?? false,
+  }));
 }
 
 /** Quiz copies the candidate's recognition facts onto the card so the quiz can
@@ -97,8 +100,9 @@ export async function pickReadTermsForUser(
 }
 
 /** Review: every term is eligible, ranked by R_r(t) ascending — most at
- *  risk of forgetting first. Terms with no recall history yet rank first
- *  (§4b) rather than being excluded, so they can receive their first grade. */
+ *  risk of forgetting first. Terms with no recall history yet are ranked at
+ *  UNTESTED_RETRIEVABILITY (§4b) rather than being excluded, so they can
+ *  receive their first grade. */
 export async function pickReviewTerms(
   client: Client,
   userId: string,
@@ -143,7 +147,8 @@ export async function pickReviewTermsForUser(
 }
 
 /** Quiz: ranked by R_g(t) ascending, same shape as Review — terms with no
- *  quiz history yet rank first (§5) rather than being excluded. */
+ *  quiz history yet are ranked at UNTESTED_RETRIEVABILITY (§5) rather than
+ *  being excluded. */
 export async function pickQuizTerms(
   client: Client,
   userId: string,

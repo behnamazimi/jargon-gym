@@ -7,8 +7,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import { cn, pluralize } from "@/lib/utils";
 
-/** TRACE has no backlog to clear — a term with no history just ranks first
- *  next time this tier comes up. This is a snapshot of current exposure,
+/** TRACE has no backlog to clear — a term with no history is simply served
+ *  when this tier has room for it. This is a snapshot of current exposure,
  *  not a queue count. */
 function formatUnseenLine(unseen: number): string {
   return unseen === 0 ? "Everything started" : `${pluralize(unseen, "term")} not started`;

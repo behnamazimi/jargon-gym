@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { rankQuizQueue, rankReadQueue, rankReviewQueue } from "./queue";
+import { UNTESTED_RETRIEVABILITY } from "./constants";
+import { rankQuizQueue, rankReadQueue, rankReviewQueue, recallRetrievabilityNow } from "./queue";
 import type { TraceCandidate } from "./types";
 
 function makeCandidate(overrides: Partial<TraceCandidate> = {}): TraceCandidate {
@@ -89,18 +90,35 @@ describe("rankReviewQueue", () => {
     expect(rankReviewQueue(candidates, NOW)).toHaveLength(1);
   });
 
-  it("ranks never-graded terms ahead of every graded term, regardless of how weak", () => {
+  it("ranks a graded term that has decayed below the untested line ahead of never-graded terms", () => {
+    const candidates = [
+      makeCandidate({ termId: "never-graded" }),
+      makeCandidate({
+        termId: "decayed",
+        recallStability: 1,
+        lastReviewRecallAt: new Date("2026-01-01"), // R ≈ 0.23, well under UNTESTED_RETRIEVABILITY
+      }),
+    ];
+    expect(recallRetrievabilityNow(candidates[1]!, NOW)).toBeLessThan(UNTESTED_RETRIEVABILITY);
+    expect(rankReviewQueue(candidates, NOW).map((c) => c.termId)).toEqual([
+      "decayed",
+      "never-graded",
+    ]);
+  });
+
+  it("ranks never-graded terms ahead of graded terms still above the untested line", () => {
     const candidates = [
       makeCandidate({
-        termId: "weak-but-graded",
-        recallStability: 1,
-        lastReviewRecallAt: new Date("2026-01-01"), // long ago, low stability => low R, but not null
+        termId: "holding",
+        recallStability: 20,
+        lastReviewRecallAt: new Date("2026-01-15"), // R ≈ 0.91, above UNTESTED_RETRIEVABILITY
       }),
       makeCandidate({ termId: "never-graded" }),
     ];
+    expect(recallRetrievabilityNow(candidates[0]!, NOW)).toBeGreaterThan(UNTESTED_RETRIEVABILITY);
     expect(rankReviewQueue(candidates, NOW).map((c) => c.termId)).toEqual([
       "never-graded",
-      "weak-but-graded",
+      "holding",
     ]);
   });
 
@@ -135,7 +153,7 @@ describe("rankReviewQueue", () => {
       makeCandidate({ termId: "never-graded" }),
     ];
     const ranked = rankReviewQueue(candidates, NOW);
-    expect(ranked.map((c) => c.termId)).toEqual(["never-graded", "due"]);
+    expect(ranked.map((c) => c.termId)).toEqual(["due", "never-graded"]);
   });
 });
 
@@ -145,18 +163,33 @@ describe("rankQuizQueue", () => {
     expect(rankQuizQueue(candidates, NOW)).toHaveLength(1);
   });
 
-  it("ranks never-answered terms ahead of every answered term", () => {
+  it("ranks never-answered terms ahead of answered terms still above the untested line", () => {
     const candidates = [
       makeCandidate({
         termId: "confident-but-answered",
         quizKnowledgePosterior: 0.95,
-        lastQuizTestedAt: new Date("2026-01-15"),
+        lastQuizTestedAt: new Date("2026-01-15"), // R ≈ 0.89
       }),
       makeCandidate({ termId: "never-answered" }),
     ];
     expect(rankQuizQueue(candidates, NOW).map((c) => c.termId)).toEqual([
       "never-answered",
       "confident-but-answered",
+    ]);
+  });
+
+  it("ranks an answered term that has decayed below the untested line ahead of never-answered terms", () => {
+    const candidates = [
+      makeCandidate({ termId: "never-answered" }),
+      makeCandidate({
+        termId: "faded",
+        quizKnowledgePosterior: 0.2,
+        lastQuizTestedAt: new Date("2026-01-01"), // S = 4, R ≈ 0.54
+      }),
+    ];
+    expect(rankQuizQueue(candidates, NOW).map((c) => c.termId)).toEqual([
+      "faded",
+      "never-answered",
     ]);
   });
 
