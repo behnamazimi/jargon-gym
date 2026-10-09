@@ -7,6 +7,7 @@ import { ReadModeTabs } from "@/components/read/read-mode-tabs";
 import { StoryHistoryMenu } from "@/components/read/stories/story-history-menu";
 import { ReadOptionsMenu } from "@/components/read/read-options-menu";
 import { PageShell } from "@/components/page-container";
+import { KeepAwake } from "@/components/shared/keep-awake";
 import { PromoSlot } from "@/components/promos/promo-slot";
 import { TermLayoutScope } from "@/components/terms/term-layout-scope";
 import { getSessionUser } from "@/lib/auth/require-session";
@@ -22,6 +23,7 @@ export default async function ReadLayout({ children }: { children: React.ReactNo
 
   return (
     <ReadFocusProvider>
+      <KeepAwake enabled={options.keepAwake} />
       <TermLayoutScope>
         <PageShell
           className="flex min-h-0 flex-1 flex-col"

@@ -8,7 +8,6 @@ import { useReadFullscreenScroll } from "@/components/read/use-read-fullscreen-s
 import type { ReadQueue } from "@/components/read/use-read-queue";
 import { Button } from "@/components/ui/button";
 import { useFullscreenExit } from "@/hooks/use-fullscreen-exit";
-import { useWakeLock } from "@/hooks/use-wake-lock";
 
 export function ReadFullscreenFeed({
   queue,
@@ -23,7 +22,6 @@ export function ReadFullscreenFeed({
     useReadFullscreenScroll(queue);
 
   const { requestExit } = useFullscreenExit(true, onExit);
-  useWakeLock(true);
 
   const bindContainer = useCallback((node: HTMLDivElement | null) => {
     node?.focus();

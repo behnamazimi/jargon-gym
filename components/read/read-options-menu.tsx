@@ -8,10 +8,12 @@ import { ShadowingOptionRows } from "@/components/read/shadowing-option-rows";
 import { isStoriesPath } from "@/components/read/read-mode-tabs";
 import { OptionsMenu } from "@/components/shared/options-menu";
 import { useToast } from "@/components/ui/toast";
+import { useKeepAwakeAvailable } from "@/hooks/use-wake-lock";
 import type { ReadOptionKey, ReadOptions } from "@/lib/read/options";
 
 type SwitchOptionKey =
   | "storiesDefault"
+  | "keepAwake"
   | "revealedDefault"
   | "hideQuestion"
   | "narrationHighlight"
@@ -22,6 +24,11 @@ const OPTION_ROWS: { key: SwitchOptionKey; label: string; description: string }[
     key: "storiesDefault",
     label: "Open Stories by default",
     description: "Read starts on the Stories tab instead of Cards.",
+  },
+  {
+    key: "keepAwake",
+    label: "Keep screen awake",
+    description: "Stops the screen sleeping while you study, until you’ve been idle for 2 minutes.",
   },
   {
     key: "revealedDefault",
@@ -60,15 +67,21 @@ function disabledNoteFor(key: SwitchOptionKey, options: ReadOptions): string | u
 function OptionsList({
   options,
   onStories,
+  keepAwakeAvailable,
   onChange,
 }: {
   options: ReadOptions;
   onStories: boolean;
+  keepAwakeAvailable: boolean;
   onChange: (key: ReadOptionKey, value: boolean | number) => void;
 }) {
   return (
     <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
-      {OPTION_ROWS.filter((row) => onStories || !STORIES_ONLY_KEYS.has(row.key)).map((row) => (
+      {OPTION_ROWS.filter(
+        (row) =>
+          (onStories || !STORIES_ONLY_KEYS.has(row.key)) &&
+          (keepAwakeAvailable || row.key !== "keepAwake"),
+      ).map((row) => (
         <OptionRow
           key={row.key}
           id={`read-option-${row.key}`}
@@ -101,6 +114,7 @@ export function ReadOptionsMenu({ initialOptions }: { initialOptions: ReadOption
   const router = useRouter();
   const onStories = isStoriesPath(usePathname());
   const { toast } = useToast();
+  const keepAwakeAvailable = useKeepAwakeAvailable();
 
   async function update(key: ReadOptionKey, value: boolean | number) {
     const previous = options[key];
@@ -121,6 +135,7 @@ export function ReadOptionsMenu({ initialOptions }: { initialOptions: ReadOption
       <OptionsList
         options={options}
         onStories={onStories}
+        keepAwakeAvailable={keepAwakeAvailable}
         onChange={(key, value) => void update(key, value)}
       />
     </OptionsMenu>

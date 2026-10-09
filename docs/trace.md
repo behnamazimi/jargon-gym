@@ -239,9 +239,10 @@ clip's pauses, or estimated until they are known), through `sentenceBounds` in
 `components/read/stories/use-shadowing-playback.ts`. If the pauses can't
 be found, boundaries are only as accurate as the estimates, so a pause can land
 a little early or late.
-While Shadowing is playing, or waiting out the pause after a sentence, the
-screen is kept on with the shared `useWakeLock` hook (also used by Read's
-fullscreen feed).
+The screen stays on only when the person turns on "Keep screen awake" in the
+Read options (Review has its own switch). One `KeepAwake` in Read's layout
+covers Cards, Stories, the fullscreen feed and Shadowing, using the shared
+`useWakeLock` hook, which lets go after 2 minutes without a tap or key press.
 
 Tapping a sentence to play it is its own Read option ("Tap a sentence to
 play it", `read_tap_to_play`, on by default) and works with Shadowing on or

@@ -12,6 +12,7 @@ type Client = SupabaseClient<Database>;
 
 export type ReadOptions = {
   storiesDefault: boolean;
+  keepAwake: boolean;
   hideQuestion: boolean;
   revealedDefault: boolean;
   narrationHighlight: boolean;
@@ -26,6 +27,7 @@ export type ReadOptionKey = keyof ReadOptions;
 
 export const DEFAULT_READ_OPTIONS: ReadOptions = {
   storiesDefault: false,
+  keepAwake: false,
   hideQuestion: true,
   revealedDefault: false,
   narrationHighlight: true,
@@ -38,6 +40,7 @@ export const DEFAULT_READ_OPTIONS: ReadOptions = {
 
 const COLUMN_BY_KEY = {
   storiesDefault: "read_stories_default",
+  keepAwake: "read_keep_awake",
   hideQuestion: "read_hide_question",
   revealedDefault: "read_revealed_default",
   narrationHighlight: "read_narration_highlight",
@@ -68,7 +71,7 @@ export const getReadOptions = cache(async function getReadOptions(
   const { data, error } = await client
     .from("user_settings")
     .select(
-      "read_stories_default, read_hide_question, read_revealed_default, read_narration_highlight, read_tap_to_play, read_shadowing, read_shadowing_pause, read_shadowing_gap, read_shadowing_repeats",
+      "read_stories_default, read_keep_awake, read_hide_question, read_revealed_default, read_narration_highlight, read_tap_to_play, read_shadowing, read_shadowing_pause, read_shadowing_gap, read_shadowing_repeats",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -76,6 +79,7 @@ export const getReadOptions = cache(async function getReadOptions(
   if (!data) return DEFAULT_READ_OPTIONS;
   return {
     storiesDefault: data.read_stories_default,
+    keepAwake: data.read_keep_awake,
     hideQuestion: data.read_hide_question,
     revealedDefault: data.read_revealed_default,
     narrationHighlight: data.read_narration_highlight,

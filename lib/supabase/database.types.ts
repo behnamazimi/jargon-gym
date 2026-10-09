@@ -1726,9 +1726,11 @@ export type Database = {
           read_shadowing_gap: number;
           read_shadowing_pause: boolean;
           read_shadowing_repeats: number;
+          read_keep_awake: boolean;
           read_stories_default: boolean;
           read_tap_to_play: boolean;
           review_narrate_on_reveal: boolean;
+          review_keep_awake: boolean;
           review_swipe: boolean;
           story_last_collection_id: string | null;
           term_layout: Json;
@@ -1755,9 +1757,11 @@ export type Database = {
           read_shadowing_gap?: number;
           read_shadowing_pause?: boolean;
           read_shadowing_repeats?: number;
+          read_keep_awake?: boolean;
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
           review_narrate_on_reveal?: boolean;
+          review_keep_awake?: boolean;
           review_swipe?: boolean;
           story_last_collection_id?: string | null;
           term_layout?: Json;
@@ -1784,9 +1788,11 @@ export type Database = {
           read_shadowing_gap?: number;
           read_shadowing_pause?: boolean;
           read_shadowing_repeats?: number;
+          read_keep_awake?: boolean;
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
           review_narrate_on_reveal?: boolean;
+          review_keep_awake?: boolean;
           review_swipe?: boolean;
           story_last_collection_id?: string | null;
           term_layout?: Json;
