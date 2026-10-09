@@ -1,0 +1,56 @@
+# Checks the last day of AI requests and tells the DevOps Telegram chat when
+# many people's requests were refunded. That usually means the app's AI key was
+# revoked or ran out of quota. See docs/monitoring.md.
+name: AI health
+
+on:
+  schedule:
+    - cron: "17 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refunds:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Read the refund numbers
+        id: snapshot
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          AI_INTERNAL_SECRET: ${{ secrets.AI_INTERNAL_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$AI_INTERNAL_SECRET" ]; then
+            echo "::error::Set the APP_URL and AI_INTERNAL_SECRET repository secrets."
+            exit 1
+          fi
+          body="$(curl --fail --silent --show-error --max-time 30 \
+            -H "Authorization: Bearer ${AI_INTERNAL_SECRET}" \
+            "${APP_URL%/}/api/internal/ai-health")"
+          echo "$body"
+          {
+            echo "high=$(echo "$body" | jq -r '.high')"
+            echo "text<<EOF_MESSAGE"
+            echo "$body" | jq -r '"⚠️ Many AI requests failed and were refunded"
+              + "\n\(.refunds24h) refunds from \(.refundUsers24h) people against \(.spends24h) spends in the last 24h"
+              + "\nMost common reason: \(.topReason // "none")"
+              + "\nCheck that CENTRAL_LLM_API_KEY is valid and has quota."'
+            echo "EOF_MESSAGE"
+          } >> "$GITHUB_OUTPUT"
+      - name: Send to Telegram
+        if: steps.snapshot.outputs.high == 'true'
+        env:
+          TELEGRAM_OPS_BOT_TOKEN: ${{ secrets.TELEGRAM_OPS_BOT_TOKEN }}
+          TELEGRAM_OPS_CHAT_ID: ${{ secrets.TELEGRAM_OPS_CHAT_ID }}
+          MESSAGE: ${{ steps.snapshot.outputs.text }}
+        run: scripts/notify-telegram.sh
+      # A failed read (app down, wrong secret) should reach the chat too.
+      - name: Tell the chat the check itself failed
+        if: failure()
+        env:
+          TELEGRAM_OPS_BOT_TOKEN: ${{ secrets.TELEGRAM_OPS_BOT_TOKEN }}
+          TELEGRAM_OPS_CHAT_ID: ${{ secrets.TELEGRAM_OPS_CHAT_ID }}
+          MESSAGE: "❌ AI health check couldn't read the app\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        run: scripts/notify-telegram.sh
