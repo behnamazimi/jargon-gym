@@ -60,7 +60,7 @@ access rules, cost levers and narration. Start there.
 
 # DevOps monitoring
 
-CI, production deploys, uptime and AI refund spikes post to a separate ops
+CI, production deploys and AI refund spikes post to a separate ops
 Telegram bot (not the learner bot). Read [docs/monitoring.md](docs/monitoring.md)
 before adding an alert.
 

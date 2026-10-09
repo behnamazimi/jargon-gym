@@ -14,7 +14,6 @@ app it watches. The ops bot only sends; it has no webhook.
 | Production deployed / failed | same                              | `Deploy production` finishes. Covers the migration push and the Vercel deploy. |
 | Many AI requests refunded    | `.github/workflows/ai-health.yml` | Every 3 hours, when `refundsLookHigh` is true. Repeats until it clears.        |
 | AI health check couldn't run | same                              | The app was unreachable or the secret is wrong.                                |
-| Site or database down        | External uptime probe             | `GET /api/health` stops answering 200.                                         |
 
 Pull request runs are left out on purpose: the author already sees them.
 
@@ -28,17 +27,12 @@ Pull request runs are left out on purpose: the author already sees them.
    - `APP_URL`: the public origin, e.g. `https://lobyas.com`
    - `AI_INTERNAL_SECRET`: the same value the app uses (see
      [narration-sync-cron.md](supabase/narration-sync-cron.md))
-4. Create an uptime monitor (Better Stack, UptimeRobot, …) on
-   `https://<app>/api/health`, expecting HTTP 200, and connect its Telegram
-   integration to the same chat.
 
 Without the two `TELEGRAM_OPS_*` secrets the scripts skip sending, so forks stay green.
 
 ## Pieces
 
 - `scripts/notify-telegram.sh` sends `$MESSAGE`. Both workflows use it.
-- `app/api/health/route.ts` is public. It does one small database read and
-  returns `{ ok }` with 200 or 503, and nothing else.
 - `app/api/internal/ai-health/route.ts` returns the last day's refund counts
   (`lib/ai-credits/refund-snapshot.ts`). It takes `AI_INTERNAL_SECRET` as a
   bearer token. The rule is the one the admin overview uses

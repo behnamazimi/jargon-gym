@@ -22,7 +22,6 @@ const PUBLIC_EXACT_PATHS = new Set([
   "/robots.txt",
   "/collections",
   "/opengraph-image",
-  "/api/health",
 ]);
 
 const PUBLIC_PATH_PREFIXES = [
