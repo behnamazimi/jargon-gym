@@ -122,6 +122,29 @@ describe("rankReviewQueue", () => {
     ]);
   });
 
+  it("breaks a tie at the untested line by oldest term first", () => {
+    // R = 1 / (1 + t / (9·S)) equals the line after 9 days when S = p / (1 − p).
+    const stability = UNTESTED_RETRIEVABILITY / (1 - UNTESTED_RETRIEVABILITY);
+    const atTheLine = makeCandidate({
+      termId: "learned",
+      createdAt: new Date("2026-01-02"),
+      recallStability: stability,
+      lastReviewRecallAt: new Date(NOW.getTime() - 9 * 24 * 60 * 60 * 1000),
+    });
+    expect(recallRetrievabilityNow(atTheLine, NOW)).toBeCloseTo(UNTESTED_RETRIEVABILITY, 10);
+
+    const older = makeCandidate({ termId: "never-graded", createdAt: new Date("2026-01-01") });
+    expect(rankReviewQueue([atTheLine, older], NOW).map((c) => c.termId)).toEqual([
+      "never-graded",
+      "learned",
+    ]);
+    const newer = makeCandidate({ termId: "never-graded", createdAt: new Date("2026-01-03") });
+    expect(rankReviewQueue([newer, atTheLine], NOW).map((c) => c.termId)).toEqual([
+      "learned",
+      "never-graded",
+    ]);
+  });
+
   it("ranks by R_r(t) ascending — most at risk of forgetting first", () => {
     const candidates = [
       makeCandidate({
@@ -157,6 +180,24 @@ describe("rankReviewQueue", () => {
   });
 });
 
+describe("rankReviewQueue cooldown with the untested line", () => {
+  it("holds out a just-graded term, then serves decayed before never-graded", () => {
+    const candidates = [
+      makeCandidate({ termId: "never-graded" }),
+      makeCandidate({ termId: "just-passed", recallStability: 1000, lastReviewRecallAt: NOW }),
+      makeCandidate({
+        termId: "decayed",
+        recallStability: 1,
+        lastReviewRecallAt: new Date("2026-01-01"),
+      }),
+    ];
+    expect(rankReviewQueue(candidates, NOW).map((c) => c.termId)).toEqual([
+      "decayed",
+      "never-graded",
+    ]);
+  });
+});
+
 describe("rankQuizQueue", () => {
   it("includes never-answered terms — otherwise no term could ever get its first answer", () => {
     const candidates = [makeCandidate({ termId: "never-quizzed" })];
@@ -175,6 +216,25 @@ describe("rankQuizQueue", () => {
     expect(rankQuizQueue(candidates, NOW).map((c) => c.termId)).toEqual([
       "never-answered",
       "confident-but-answered",
+    ]);
+  });
+
+  it("treats a term graded in Review but never quizzed as untested in Quiz", () => {
+    const candidates = [
+      makeCandidate({
+        termId: "answered-holding",
+        quizKnowledgePosterior: 0.95,
+        lastQuizTestedAt: new Date("2026-01-15"),
+      }),
+      makeCandidate({
+        termId: "reviewed-only",
+        recallStability: 20,
+        lastReviewRecallAt: new Date("2026-01-30"),
+      }),
+    ];
+    expect(rankQuizQueue(candidates, NOW).map((c) => c.termId)).toEqual([
+      "reviewed-only",
+      "answered-holding",
     ]);
   });
 

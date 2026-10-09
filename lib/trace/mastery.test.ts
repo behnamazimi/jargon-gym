@@ -100,5 +100,9 @@ describe("crossedThresholds", () => {
       known: false,
       learning: false,
     });
+    expect(crossedThresholds("unknown", false)).toEqual({
+      known: false,
+      learning: false,
+    });
   });
 });

@@ -74,8 +74,9 @@ No typed answers for field terms.
   (recognition strength): less known → MCQ, better known → typed. Neither
   `TermCard` nor `QuizTerm` carries that strength today, so the quiz pool has
   to load it. Caveat: the Quiz queue serves the lowest recognition
-  retrievability first (and untested terms before everything), so a typical
-  session is mostly weak terms and typed questions will be rare. Pick a
+  retrievability first (untested terms come after answered terms that have
+  decayed below the untested line, and before the rest), so a typical session
+  is mostly weak terms and typed questions will be rare. Pick a
   strength threshold deliberately and check what share of questions it
   produces on real data.
 - Grading is forgiving on case and spacing only. Accents and articles count;
