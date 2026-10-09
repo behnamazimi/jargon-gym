@@ -22,6 +22,7 @@ import {
   saveReviewCollectionPreference,
 } from "@/lib/review/collection-preference";
 import { canMoveForward } from "@/lib/review/keyboard";
+import { IDLE_WAKE_MS, useKeepAwakeAvailable, useWakeLock } from "@/hooks/use-wake-lock";
 import type { ReviewOptions } from "@/lib/review/options";
 import { upsertRating } from "@/lib/review/writes";
 import type { ReviewQueueSeed, ReviewRating } from "@/lib/review/types";
@@ -65,6 +66,8 @@ export function ReviewPage({
 }: ReviewPageProps) {
   const reduceMotion = usePrefersReducedMotion();
   const { options, changeOption } = useReviewOptions(initialOptions);
+  const keepAwakeAvailable = useKeepAwakeAvailable();
+  useWakeLock(options.keepAwake && keepAwakeAvailable, { idleMs: IDLE_WAKE_MS });
   const [selectedCollectionId, setSelectedCollectionId] = useState(collectionId);
   const [rememberOnDevice, setRememberOnDevice] = useState(true);
   const [ratings, setRatings] = useState<ReviewRating[]>([]);

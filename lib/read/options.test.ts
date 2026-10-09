@@ -30,6 +30,7 @@ describe("getReadOptions", () => {
     const options = await getReadOptions(
       readClient({
         read_stories_default: true,
+        read_keep_awake: true,
         read_hide_question: false,
         read_revealed_default: true,
         read_narration_highlight: false,
@@ -43,6 +44,7 @@ describe("getReadOptions", () => {
     );
     expect(options).toEqual({
       storiesDefault: true,
+      keepAwake: true,
       hideQuestion: false,
       revealedDefault: true,
       narrationHighlight: false,
@@ -58,6 +60,7 @@ describe("getReadOptions", () => {
     const options = await getReadOptions(
       readClient({
         read_stories_default: false,
+        read_keep_awake: false,
         read_hide_question: true,
         read_revealed_default: false,
         read_narration_highlight: true,

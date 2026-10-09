@@ -7,6 +7,7 @@ type Client = SupabaseClient<Database>;
 export type ReviewOptions = {
   narrateOnReveal: boolean;
   swipe: boolean;
+  keepAwake: boolean;
 };
 
 export type ReviewOptionKey = keyof ReviewOptions;
@@ -14,11 +15,13 @@ export type ReviewOptionKey = keyof ReviewOptions;
 export const DEFAULT_REVIEW_OPTIONS: ReviewOptions = {
   narrateOnReveal: false,
   swipe: true,
+  keepAwake: false,
 };
 
 const COLUMN_BY_KEY = {
   narrateOnReveal: "review_narrate_on_reveal",
   swipe: "review_swipe",
+  keepAwake: "review_keep_awake",
 } as const satisfies Record<ReviewOptionKey, string>;
 
 export function isReviewOptionKey(value: string): value is ReviewOptionKey {
@@ -32,7 +35,7 @@ export const getReviewOptions = cache(async function getReviewOptions(
 ): Promise<ReviewOptions> {
   const { data, error } = await client
     .from("user_settings")
-    .select("review_narrate_on_reveal, review_swipe")
+    .select("review_narrate_on_reveal, review_swipe, review_keep_awake")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -40,6 +43,7 @@ export const getReviewOptions = cache(async function getReviewOptions(
   return {
     narrateOnReveal: data.review_narrate_on_reveal,
     swipe: data.review_swipe,
+    keepAwake: data.review_keep_awake,
   };
 });
 

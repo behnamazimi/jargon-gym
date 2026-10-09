@@ -25,7 +25,6 @@ import { formatPlaybackTime } from "@/lib/stories/playback";
 import type { ClipPauses } from "@/lib/stories/silence";
 import { cn } from "@/lib/utils";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { useWakeLock } from "@/hooks/use-wake-lock";
 
 /** What the story reader can ask the player to do. */
 export type StoryPlayerHandle = { pressSentence: (index: number) => void };
@@ -71,8 +70,6 @@ export function StoryAudioControls({
   // Only filled in when the user changes speed, so nothing is read out on load.
   const [speedAnnouncement, setSpeedAnnouncement] = useState("");
   const sentences = useShadowingPlayback({ audioRef, setup: sentencePlayback, speed });
-  // The pause after a sentence is part of shadowing, so the screen stays on through it.
-  useWakeLock(shadowing !== null && (playing || sentences.pauseMs !== null));
 
   useImperativeHandle(handleRef, () => ({ pressSentence: sentences.pressSentence }), [
     sentences.pressSentence,

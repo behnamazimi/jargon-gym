@@ -1,4 +1,5 @@
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
+import { hasReadyAudio } from "@/lib/ai/speech/jobs";
 import { getAiAccessView } from "@/lib/llm/access";
 import type { AiAccessView } from "@/lib/llm/types";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
@@ -26,7 +27,7 @@ export type StoriesSetupData = {
   /** Set while the Shadowing option is on. */
   shadowing: ShadowingSettings | null;
   /** An unread piece to open straight into, instead of the setup screen. */
-  currentStory: { story: Story; terms: StoryTerm[] } | null;
+  currentStory: { story: Story; terms: StoryTerm[]; narrationReady: boolean } | null;
 };
 
 function isEligible(collection: StoryCollection): boolean {
@@ -54,6 +55,17 @@ async function loadStoryToOpen(
     ? await getStoryForUser(admin, userId, requestedStoryId)
     : null;
   return requested ?? getCurrentStory(admin, userId);
+}
+
+/** A failed lookup counts as no clip, so the price is shown rather than hidden wrongly. */
+async function storyHasClip(
+  admin: ReturnType<typeof createAdminClient>,
+  storyId: string,
+): Promise<boolean> {
+  return hasReadyAudio(admin, { type: "story", id: storyId }).catch((err: unknown) => {
+    console.error("Failed to check for a story clip:", err);
+    return false;
+  });
 }
 
 export async function getStoriesSetupData(
@@ -107,7 +119,11 @@ export async function getStoriesSetupData(
         }
       : null,
     currentStory: unreadStory
-      ? { story: unreadStory, terms: await getStoryTerms(admin, unreadStory.termIds) }
+      ? {
+          story: unreadStory,
+          terms: await getStoryTerms(admin, unreadStory.termIds),
+          narrationReady: narrationAccess && (await storyHasClip(admin, unreadStory.id)),
+        }
       : null,
   };
 }

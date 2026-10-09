@@ -111,12 +111,12 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
             <AlertDescription className="text-base-content">
               Install {PWA_NAME} for quicker access.
             </AlertDescription>
-            <AlertAction>
-              <Button size="sm" onPress={() => void promptInstall()}>
-                Install
-              </Button>
+            <AlertAction className="flex-row flex-wrap justify-end">
               <Button size="sm" variant="ghost" onPress={dismissToast}>
                 Not now
+              </Button>
+              <Button size="sm" onPress={() => void promptInstall()}>
+                Install
               </Button>
             </AlertAction>
           </Alert>

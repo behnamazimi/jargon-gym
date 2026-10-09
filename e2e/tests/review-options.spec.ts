@@ -45,7 +45,37 @@ test.describe("Review options", () => {
     ).toBeChecked();
   });
 
+  test("the keep-awake option is saved and survives a reload", async ({ page, user, isMobile }) => {
+    test.skip(!isMobile, "Keep screen awake is offered on touch devices only");
+    const { collectionId } = await seedCollection(user);
+    await gotoReady(page, `/app/review?collection=${collectionId}`);
+
+    await page.getByRole("button", { name: "Review options" }).click();
+    const option = page.getByRole("checkbox", { name: "Keep screen awake" });
+    await expect(option).not.toBeChecked();
+    await option.click();
+    await expect(option).toBeChecked();
+
+    await expect
+      .poll(async () => {
+        const [row] = await sql<{ on: boolean }>(
+          "select review_keep_awake as on from public.user_settings where user_id = $1",
+          [user.id],
+        );
+        return row?.on;
+      })
+      .toBe(true);
+
+    await gotoReady(page, `/app/review?collection=${collectionId}`);
+    await page.getByRole("button", { name: "Review options" }).click();
+    await expect(page.getByRole("checkbox", { name: "Keep screen awake" })).toBeChecked();
+  });
+
   test("there is no gear when nothing in it applies", async ({ page, user }) => {
+    await page.addInitScript(() => {
+      // @ts-expect-error simulate a browser without the Wake Lock API
+      delete Navigator.prototype.wakeLock;
+    });
     const { collectionId } = await seedCollection(user);
     await gotoReady(page, `/app/review?collection=${collectionId}`);
 
