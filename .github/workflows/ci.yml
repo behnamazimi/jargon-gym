@@ -63,6 +63,9 @@ jobs:
   preview:
     needs: approve-preview
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     environment:
       name: Preview
       url: ${{ steps.deploy.outputs.url }}
@@ -84,6 +87,22 @@ jobs:
         run: |
           pnpm dlx vercel@latest pull --yes --environment=preview
           echo "url=$(pnpm dlx vercel@latest deploy)" >> "$GITHUB_OUTPUT"
+      # One comment per PR, edited on each deploy instead of adding a new one.
+      - name: Comment the preview URL on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          marker="<!-- preview-url -->"
+          body="${marker}"$'\n'"Preview: ${PREVIEW_URL}"$'\n'"Commit: ${{ github.event.pull_request.head.sha }}"
+          comment_id=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" \
+            --paginate --jq "[.[] | select(.body | startswith(\"${marker}\"))][0].id // empty")
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/${comment_id}" -f body="$body"
+          else
+            gh api --method POST "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" -f body="$body"
+          fi
 
   supabase-changes:
     runs-on: ubuntu-latest
