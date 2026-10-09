@@ -174,6 +174,7 @@ export function StoryReader({
   tapToPlay,
   shadowingSettings,
   ai,
+  narrationReady,
 }: {
   session: StorySession;
   story: Story;
@@ -185,6 +186,8 @@ export function StoryReader({
   shadowingSettings: ShadowingSettings | null;
   /** Who pays for AI, to price the first listen. */
   ai: AiAccessView;
+  /** The clip already exists, so listening is free and no price is shown. */
+  narrationReady: boolean;
 }) {
   const termById = new Map(terms.map((term) => [term.id, term]));
   const estimatedTimeline = useMemo(
@@ -243,7 +246,7 @@ export function StoryReader({
         sentencePlayback={sentencePlayback}
         playerRef={playerRef}
         onClipPauses={timeline ? setClipPauses : undefined}
-        price={narrationPrice(ai, story)}
+        price={narrationReady ? null : narrationPrice(ai, story)}
         topUp={ai.topUp}
       />
       <div

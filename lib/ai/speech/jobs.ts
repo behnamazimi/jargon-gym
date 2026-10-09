@@ -21,6 +21,24 @@ export async function getLiveJob(admin: Client, subject: SpeechSubject): Promise
   return data;
 }
 
+/** Whether this subject already has a clip that can be played, so nobody has
+ *  to pay to make one. */
+export async function hasReadyAudio(
+  admin: Client,
+  subject: Pick<SpeechSubject, "type" | "id">,
+): Promise<boolean> {
+  const { data, error } = await admin
+    .from("audio_jobs")
+    .select("id")
+    .eq("subject_type", subject.type)
+    .eq("subject_id", subject.id)
+    .eq("status", "ready")
+    .not("storage_path", "is", null)
+    .limit(1);
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
 /** The ready clip with this id for this subject, or null when it is not ready
  *  (replaced, failed or never made). Whether it is still the *current* clip is
  *  not asked: the id was handed out when it was. */

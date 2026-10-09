@@ -103,6 +103,9 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
           tapToPlay={setup.tapToPlay}
           shadowingSettings={setup.shadowing}
           ai={setup.ai}
+          narrationReady={
+            setup.currentStory?.story.id === session.story.id && setup.currentStory.narrationReady
+          }
         />
       ) : null;
     default:
