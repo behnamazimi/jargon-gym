@@ -31,7 +31,13 @@ export {
 } from "./queue";
 export { posteriorToStability } from "./recognition";
 export { daysBetween } from "./decay";
-export { deriveKnownLabel, confidence, blendMastery, masteryAdjusted } from "./mastery";
+export {
+  deriveKnownLabel,
+  crossedThresholds,
+  confidence,
+  blendMastery,
+  masteryAdjusted,
+} from "./mastery";
 export {
   hasTraceActivity,
   partitionMasteryBuckets,

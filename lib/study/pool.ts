@@ -6,9 +6,9 @@ import type { StudyAuthMode, StudyScope } from "./types";
 type Client = SupabaseClient<Database>;
 
 /** Review's pool fetch: ranked by R_r(t) ascending — most at risk of
- *  forgetting first. Terms with no Review history yet rank first (§4b) so
- *  they can receive their first grade — Review no longer blends a
- *  separate unknown pool. */
+ *  forgetting first. Terms with no Review history yet are ranked at
+ *  UNTESTED_RETRIEVABILITY (§4b) so they can receive their first grade —
+ *  Review no longer blends a separate unknown pool. */
 export async function fetchStudyTermPool(
   client: Client,
   userId: string,
@@ -26,7 +26,8 @@ export async function fetchStudyTermPool(
 }
 
 /** Quiz's dedicated pool fetch: ranked by R_g(t) ascending. Terms with no
- *  Quiz history yet rank first (§5) so they can receive their first answer. */
+ *  Quiz history yet are ranked at UNTESTED_RETRIEVABILITY (§5) so they can
+ *  receive their first answer. */
 export async function fetchQuizTermPool(
   client: Client,
   userId: string,

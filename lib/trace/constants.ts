@@ -49,6 +49,14 @@ export const QUIZ_FAIL_PENALTY_RECALL_WEIGHT = 0.5;
 /** §6 Session cooldown — exclude a term with R(t) above this from the same-session queue. */
 export const SESSION_COOLDOWN_RETRIEVABILITY = 0.98;
 
+/** §10 Where a never-graded (Review) or never-answered (Quiz) term sits in the
+ *  queue: it is ranked as if its retrievability were this. Learned terms that
+ *  have decayed below it are served first; learned terms above it wait behind
+ *  new ones. Lower leans toward introducing new terms, higher toward reviewing.
+ *  Picked from a simulated sweep of 0.3–0.8 (best recall without slowing
+ *  progress at 10, 20 and 30 reviews a day); retune from real review data. */
+export const UNTESTED_RETRIEVABILITY = 0.7;
+
 /** §7 Mastery blend weights: Mastery = wF·F_used + wR·R_r + wG·R_g. */
 export const MASTERY_WEIGHT_FAMILIARITY = 0.2; // wF
 export const MASTERY_WEIGHT_RECALL = 0.5; // wR

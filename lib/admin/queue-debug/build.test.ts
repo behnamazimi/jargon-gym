@@ -37,16 +37,27 @@ const options = {
 };
 
 describe("buildQueueDebug", () => {
-  it("ranks never-graded terms ahead of graded ones and marks the next batch", () => {
+  it("ranks never-graded terms ahead of graded ones still above the untested line and marks the next batch", () => {
     const graded = term("graded", {
       recallStability: 2,
-      lastReviewRecallAt: new Date(NOW.getTime() - 10 * DAY),
+      lastReviewRecallAt: new Date(NOW.getTime() - 1 * DAY), // R ≈ 0.95
     });
     const debug = buildQueueDebug([graded, term("a"), term("b")], options);
 
     expect(debug.review.rows.map((r) => r.item.termId)).toEqual(["a", "b", "graded"]);
     expect(debug.review.rows.map((r) => r.nextBatch)).toEqual([true, true, false]);
     expect(debug.review.rows[0]!.retrievability).toBeNull();
+  });
+
+  it("puts a graded term that has decayed below the untested line first", () => {
+    const decayed = term("decayed", {
+      recallStability: 2,
+      lastReviewRecallAt: new Date(NOW.getTime() - 10 * DAY), // R ≈ 0.64
+    });
+    const debug = buildQueueDebug([term("a"), decayed, term("b")], options);
+
+    expect(debug.review.rows.map((r) => r.item.termId)).toEqual(["decayed", "a", "b"]);
+    expect(debug.review.rows.map((r) => r.nextBatch)).toEqual([true, true, false]);
   });
 
   it("holds a just-graded term out of Review and says when it comes back", () => {
@@ -71,7 +82,10 @@ describe("buildQueueDebug", () => {
   it("keeps a term in the queue exactly when the cooldown ends", () => {
     const stability = 4;
     const lastAt = new Date(NOW.getTime() - 60 * 1000);
-    const held = term("held", { recallStability: stability, lastReviewRecallAt: lastAt });
+    const held = term("held", {
+      recallStability: stability,
+      lastReviewRecallAt: lastAt,
+    });
     const [row] = buildQueueDebug([held], options).reviewCooldown.rows;
 
     const later = buildQueueDebug([held], {
@@ -102,8 +116,14 @@ describe("buildQueueDebug", () => {
 
   it("sorts cooldowns by the soonest return", () => {
     const lastAt = new Date(NOW.getTime() - 60 * 1000);
-    const slow = term("slow", { recallStability: 30, lastReviewRecallAt: lastAt });
-    const quick = term("quick", { recallStability: 1, lastReviewRecallAt: lastAt });
+    const slow = term("slow", {
+      recallStability: 30,
+      lastReviewRecallAt: lastAt,
+    });
+    const quick = term("quick", {
+      recallStability: 1,
+      lastReviewRecallAt: lastAt,
+    });
     const debug = buildQueueDebug([slow, quick], options);
 
     expect(debug.reviewCooldown.rows.map((r) => r.item.termId)).toEqual(["quick", "slow"]);
@@ -147,7 +167,9 @@ describe("buildQueueDebug", () => {
   });
 
   it("ties on score break by oldest term, like Read", () => {
-    const older = term("older", { createdAt: new Date("2026-08-01T00:00:00Z") });
+    const older = term("older", {
+      createdAt: new Date("2026-08-01T00:00:00Z"),
+    });
     const debug = buildQueueDebug([term("newer"), older], options);
     expect(debug.read.rows.map((r) => r.item.termId)).toEqual(["older", "newer"]);
   });

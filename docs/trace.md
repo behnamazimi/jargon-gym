@@ -163,6 +163,13 @@ kept forever, even as the live score later fades. The mastery page shows
 both numbers side by side — "current strength" (live, decays) and "terms
 learned" (high-water mark, never decreases).
 
+A failed attempt never earns either stamp. That means an Again in Review or a
+missed question in Quiz, whatever the score says afterwards. Right after you
+answer anything, that track's retrievability is 1 for the instant before it starts
+to decay, so a score taken then would credit a miss as a perfectly fresh memory.
+`crossedThresholds` in `lib/trace/mastery.ts` applies the rule for both
+stamps; Hard still counts, since you did recall the term.
+
 The second, a sibling high-water mark (`ever_learning_at`), does the
 identical thing one threshold lower — stamped the first time
 Mastery_adjusted crosses the learning threshold (0.6) rather than the
@@ -250,8 +257,8 @@ active collections — just by a different signal. There's no separate
 | Tier       | Ranked by                                                                    | Never-tested terms                                                       |
 | ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | **Read**   | Lowest decay-aware exposure (Read+Review+Quiz combined), tempered by mastery | Always included — reading is how a term gets exposure in the first place |
-| **Review** | Lowest recall retrievability first                                           | Ranked _first_, ahead of every graded term                               |
-| **Quiz**   | Lowest recognition retrievability first                                      | Ranked _first_, ahead of every answered term                             |
+| **Review** | Lowest recall retrievability first                                           | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
+| **Quiz**   | Lowest recognition retrievability first                                      | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
 
 Read's ranking used to be a simple "fewest reads first" count. It's now a
 decay-aware signal that also folds in Review and Quiz history: a term's
@@ -266,15 +273,24 @@ once very recently (the old count never faded); and a term graded
 confidently in Review while never actually opened in Read no longer sits
 at the front of Read's queue forever just because `readCount` is 0.
 
-The Review/Quiz "never-tested terms rank first" rule is worth dwelling on,
-because it's easy to get backwards. A term with no recall trace yet isn't
-"low risk because it hasn't decayed" — it's _unknown_ risk, and TRACE treats
-not knowing as more urgent than knowing you're weak. This is also the only
-way a term can ever get its first grade or first answer at all: if
-untested terms were excluded instead of prioritized, Review and Quiz would
-have nothing to show for a term until it had already been tested once,
-which is circular. So being untested is treated as maximally in need of
-attention, not exempt from it.
+The Review/Quiz placement of never-tested terms is worth dwelling on, because
+it's easy to get backwards. A term with no recall trace yet isn't "low risk
+because it hasn't decayed" — it's _unknown_ risk, and TRACE still has to serve
+it: this is the only way a term can ever get its first grade or first answer at
+all. If untested terms were excluded instead, Review and Quiz would have nothing
+to show for a term until it had already been tested once, which is circular.
+
+But "unknown" doesn't mean "more urgent than everything you've learned." TRACE
+used to put untested terms first, and that has a cost: import a big collection
+and every session is spent meeting new terms while the ones you already learned
+quietly fade, so by the time they come back you've mostly forgotten them. So
+an untested term is ranked as if it were 70% retrievable
+(`UNTESTED_RETRIEVABILITY`). A learned term that has decayed below 70% goes
+first, because it's about to slip. Once nothing is below the line, new terms come
+next, ahead of learned terms that are still holding. There's no daily limit
+and nothing to configure; the line adjusts itself to how much you study. With a
+small daily budget most of a session goes to reviewing what's fading. With a large
+one, little decays below the line and most of it goes to new terms.
 
 Within a tier, once you've just gotten something right, it drops out of
 that tier's list — specifically, once its retrievability rises above 0.98
@@ -391,12 +407,19 @@ written before implementation. A few things changed on the way to shipping
 it — this list exists so the two documents don't quietly contradict each
 other:
 
-- **Never-tested terms rank first, not excluded.** The original design's
-  wording ("a term with no state simply has nothing to rank by") reads as
-  exclusion. In practice that would mean Review and Quiz could never
-  surface a term for its first grade or answer, so the actual
-  implementation ranks untested terms ahead of every tested one instead.
+- **Never-tested terms rank at a fixed line, not excluded and not first.** The
+  original design's wording ("a term with no state simply has nothing to rank
+  by") reads as exclusion. In practice that would mean Review and Quiz could
+  never surface a term for its first grade or answer, so the implementation
+  ranks them as if they were 0.7 retrievable instead. They used to go ahead
+  of every tested term, but that starved reviews after a large import; now a
+  learned term that has decayed below the line goes first.
   See [How each tier decides what to show you](#how-each-tier-decides-what-to-show-you).
+- **A miss never stamps a high-water mark.** The design didn't say what
+  happens when the post-answer score crosses a threshold on a failed
+  attempt. Since retrievability is 1 right after any answer, a miss could
+  stamp `ever_mastered_at`, so only a success (not an Again, not a missed
+  Quiz question) can.
 - **No hysteresis on the known/unknown label.** The original design
   proposed a promote-at-0.8/demote-at-0.6 band specifically to stop a term
   from flickering between labels near the boundary, which requires
@@ -435,6 +458,7 @@ writing:
 | Known / unknown thresholds                                 | 0.75 / 0.6          | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
 | Known label minimum test count                             | 3                   | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
 | Session cooldown                                           | 0.98 retrievability | Above this, a term drops out of that tier's list for the rest of the session                                                     |
+| Untested-term queue position                               | 0.7 retrievability  | Where a never-graded (Review) or never-answered (Quiz) term sorts; learned terms that have decayed below it go first             |
 | Read mastery-temper weight                                 | 0.2                 | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
 
 These are reasoned starting points, not values fit to real usage data — this

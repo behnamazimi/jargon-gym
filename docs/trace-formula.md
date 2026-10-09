@@ -223,24 +223,27 @@ Queues still rank by raw `R(t)` ascending regardless of pool, **not** by Mastery
 
 This isn't a separate rule to enforce — it falls directly out of Sections 4b/5's nullable-state design. A term with no S_r simply has no `R_r(t)` to rank by, so it can't appear in the Review queue; same for Quiz. No manual gating logic needed beyond "don't rank what you can't compute."
 
+(As shipped, a term with no state is not left out of the queue: it sorts as if its `R(t)` were 0.7, so decayed terms go first. See [trace.md](./trace.md).)
+
 Nothing is ever locked or overdue for terms that _are_ eligible. Opening a tier the user hasn't touched in weeks just surfaces its weakest terms first.
 
 ---
 
 ## 11. Default parameters (starting point — tune from real usage data)
 
-| Param                      | Value         | Meaning                                  |
-| -------------------------- | ------------- | ---------------------------------------- |
-| w_f                        | 0.3           | familiarity growth rate                  |
-| k                          | 0.5           | exposure diminishing-returns rate        |
-| cap_F                      | 0.35          | max mastery contribution from Read alone |
-| λD, λS                     | 2, 0.5        | cold-start nudge from familiarity        |
-| P(correct\|knows)          | 0.95          | quiz slip allowance                      |
-| P(correct\|guess) MCQ / TF | 0.25 / 0.50   | guess-rate correction                    |
-| k_g                        | 15            | posterior → stability scale              |
-| wF, wR, wG                 | 0.2, 0.5, 0.3 | mastery blend weights                    |
-| known / unknown threshold  | 0.8 / 0.6     | pool hysteresis                          |
-| cooldown R threshold       | 0.98          | same-session repeat suppression          |
+| Param                      | Value         | Meaning                                      |
+| -------------------------- | ------------- | -------------------------------------------- |
+| w_f                        | 0.3           | familiarity growth rate                      |
+| k                          | 0.5           | exposure diminishing-returns rate            |
+| cap_F                      | 0.35          | max mastery contribution from Read alone     |
+| λD, λS                     | 2, 0.5        | cold-start nudge from familiarity            |
+| P(correct\|knows)          | 0.95          | quiz slip allowance                          |
+| P(correct\|guess) MCQ / TF | 0.25 / 0.50   | guess-rate correction                        |
+| k_g                        | 15            | posterior → stability scale                  |
+| wF, wR, wG                 | 0.2, 0.5, 0.3 | mastery blend weights                        |
+| known / unknown threshold  | 0.8 / 0.6     | pool hysteresis                              |
+| cooldown R threshold       | 0.98          | same-session repeat suppression              |
+| untested-term R            | 0.7           | where a never-graded term sorts in the queue |
 
 ---
 

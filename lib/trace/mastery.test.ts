@@ -4,6 +4,7 @@ import {
   aggregateMastery,
   blendMastery,
   confidence,
+  crossedThresholds,
   deriveKnownLabel,
   masteryAdjusted,
 } from "./mastery";
@@ -71,5 +72,33 @@ describe("aggregateMastery", () => {
 
   it("averages the given adjusted-mastery values", () => {
     expect(aggregateMastery([0.2, 0.4, 0.6])).toBeCloseTo(0.4, 10);
+  });
+});
+
+describe("crossedThresholds", () => {
+  it("passes the label through on a success", () => {
+    expect(crossedThresholds("known", true)).toEqual({
+      known: true,
+      learning: true,
+    });
+    expect(crossedThresholds("learning", true)).toEqual({
+      known: false,
+      learning: true,
+    });
+    expect(crossedThresholds("unknown", true)).toEqual({
+      known: false,
+      learning: false,
+    });
+  });
+
+  it("never stamps on a miss, whatever the post-event label says", () => {
+    expect(crossedThresholds("known", false)).toEqual({
+      known: false,
+      learning: false,
+    });
+    expect(crossedThresholds("learning", false)).toEqual({
+      known: false,
+      learning: false,
+    });
   });
 });
