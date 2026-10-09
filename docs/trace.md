@@ -168,7 +168,9 @@ missed question in Quiz, whatever the score says afterwards. Right after you
 answer anything, that track's retrievability is 1 for the instant before it starts
 to decay, so a score taken then would credit a miss as a perfectly fresh memory.
 `crossedThresholds` in `lib/trace/mastery.ts` applies the rule for both
-stamps; Hard still counts, since you did recall the term.
+stamps; Hard still counts, since you did recall the term. A success is still
+read at the instant of the answer, so a lucky Good or Hard on a barely-known
+term can still earn a stamp. Only misses are filtered out.
 
 The second, a sibling high-water mark (`ever_learning_at`), does the
 identical thing one threshold lower — stamped the first time
