@@ -1,4 +1,4 @@
-import { streamText } from "ai";
+import { generateText } from "ai";
 import { aiGenerationOptions, type AiObservabilityContext } from "@/lib/ai/observability";
 import type { CollectionLanguage } from "@/lib/terms/languages";
 import { describeFailure } from "@/lib/ai-credits/failure-reason";
@@ -47,9 +47,7 @@ type GenerateStoryInput = {
   observability?: AiObservabilityContext;
   /** Told each model call's usage, so a charged story can record its cost. */
   onUsage?: UsageTally["add"];
-  /** Gets the model's reply as it is written, markers included. */
-  onText?: (delta: string) => void;
-  /** Told why a first attempt is being retried; the text so far is discarded. */
+  /** Told why a first attempt is being retried. */
   onRetry?: (reason: StoryRetryReason) => void;
 };
 
@@ -89,7 +87,7 @@ async function requestStory(
 ): Promise<GeneratedStory> {
   const length = storyLength(input.pieceLength, input.cefrLevel, input.language);
   const { system, prompt } = buildStoryPrompt({ ...input, length });
-  const result = streamText({
+  const { text, usage } = await generateText({
     model: createModel(input.provider, input.apiKey),
     system,
     prompt,
@@ -97,15 +95,7 @@ async function requestStory(
     abortSignal: signal,
     ...aiGenerationOptions(input.observability, "story_generation"),
   });
-  let text = "";
-  for await (const part of result.fullStream) {
-    if (part.type === "error") throw part.error;
-    if (part.type === "text-delta") {
-      text += part.text;
-      input.onText?.(part.text);
-    }
-  }
-  input.onUsage?.(await result.usage);
+  input.onUsage?.(usage);
   return normalizeStory(parseStoryText(text, input.terms), input.terms, length);
 }
 

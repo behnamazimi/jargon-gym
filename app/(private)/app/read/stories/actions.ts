@@ -7,9 +7,21 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/terms/review-outcome";
 import { listStorySummaries, markStoryRead, setVote } from "@/lib/stories/repository";
 import type { StorySummary } from "@/lib/stories/types";
+import { writeStory, type StoryResult } from "@/lib/stories/write-story";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const LOGIN_ERROR = "Log in to continue.";
+
+export async function generateStoryAction(input: {
+  collectionId: string;
+  cefrLevel: string;
+  pieceLength: string;
+  outline: string | null;
+}): Promise<StoryResult> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: LOGIN_ERROR };
+  return writeStory(auth, input);
+}
 
 export async function markStoryReadAction(
   storyId: string,

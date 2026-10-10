@@ -30,18 +30,13 @@ import {
   type StoryTerm,
 } from "./types";
 
-type StoryResult =
+export type StoryResult =
   | { error: string; reason?: AiFailureReason }
   | { story: Story; terms: StoryTerm[] };
 
 type Auth = {
   supabase: Parameters<typeof resolveAiAccess>[0];
   user: { id: string };
-};
-
-type StoryProgress = {
-  onText: (delta: string) => void;
-  onRetry: () => void;
 };
 
 const NOT_ENOUGH_TERMS_ERROR = `This collection needs at least ${STORY_MIN_TERMS} terms left to read.`;
@@ -59,12 +54,8 @@ const generateInputSchema = z.object({
 });
 
 /** Writes and saves one story for the user, charging credits and refunding
- *  them on any failure. `progress` hears the reply as it is written. */
-export async function writeStory(
-  auth: Auth,
-  rawInput: unknown,
-  progress: StoryProgress,
-): Promise<StoryResult> {
+ *  them on any failure. */
+export async function writeStory(auth: Auth, rawInput: unknown): Promise<StoryResult> {
   const parsed = generateInputSchema.safeParse(rawInput);
   if (!parsed.success) return { error: "Check the story setup and try again." };
   const { collectionId, cefrLevel, pieceLength, outline } = parsed.data;
@@ -122,11 +113,7 @@ export async function writeStory(
           recentTitles,
           observability,
           onUsage: tally.add,
-          onText: progress.onText,
-          onRetry: (reason: StoryRetryReason) => {
-            trackServer(userId, "story_retry", { reason });
-            progress.onRetry();
-          },
+          onRetry: (reason: StoryRetryReason) => trackServer(userId, "story_retry", { reason }),
         }),
       );
 

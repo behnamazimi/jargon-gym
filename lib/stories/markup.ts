@@ -6,7 +6,7 @@ export type StoryGenerationPayload = {
   paragraphs: { segments: StorySegment[] }[];
 };
 
-export const TERM_MARKER = /\[\[([^[\]|\n]+?)\|\s*(?:#|term\s*)?(\d+)\s*\]\]/gi;
+const TERM_MARKER = /\[\[([^[\]|\n]+?)\|\s*(?:#|term\s*)?(\d+)\s*\]\]/gi;
 // What's left of a marker the parser couldn't read: "[x|2]", "[[x|2]",
 // "[[2|x]]", or the extra brackets of "[[[x|2]]]". Brackets in ordinary text
 // (code like "m[i[0]]" or "[[ -f x ]]") have no "|number" and are left alone.
@@ -39,7 +39,7 @@ function replyLines(reply: string): string[] {
   return lines;
 }
 
-export function cleanTitle(line: string): string {
+function cleanTitle(line: string): string {
   return line.replace(TITLE_PREFIX, "").replace(/\*+$/, "").replace(TERM_MARKER, "$1").trim();
 }
 
