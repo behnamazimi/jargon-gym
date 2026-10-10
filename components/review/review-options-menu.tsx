@@ -14,15 +14,21 @@ type ReviewOptionsMenuProps = {
 };
 
 /** Gear above the card. Rows that can't apply to this person or device are
- *  left out, and with none left there's no gear. */
+ *  left out. */
 export function ReviewOptionsMenu({ options, narrationAccess, onChange }: ReviewOptionsMenuProps) {
   const touch = useMediaQuery(PLATFORM_MEDIA.coarsePointer, false);
   const keepAwakeAvailable = useKeepAwakeAvailable();
-  if (!narrationAccess && !touch && !keepAwakeAvailable) return null;
 
   return (
     <OptionsMenu label="Review options">
       <ul className="m-0 list-none divide-y divide-base-300/60 p-0">
+        <OptionRow
+          id="review-option-showNextReview"
+          label="Show when terms come back"
+          description="Each grade button shows roughly when you’ll see the term again."
+          checked={options.showNextReview}
+          onChange={(checked) => onChange("showNextReview", checked)}
+        />
         {narrationAccess ? (
           <OptionRow
             id="review-option-narrateOnReveal"

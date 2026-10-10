@@ -109,6 +109,15 @@ term climbs back in small steps (an Again then two Goods come back after about
 session, so with one session a day anything under a day simply means "next
 session".
 
+Review's grade buttons can show these gaps ("Show when terms come back" in the
+Review options, on by default). `daysUntilNextReview` in `lib/trace/snapshot.ts`
+applies each grade to the term's current state and returns the days until it
+falls back to the line. The card carries that state (`TermCard.recall`), and
+the browser works it out at reveal, since a grade a day after the last one
+switches to the short-term rule. It is an estimate, not a due date: the term
+comes back sooner if nothing else is due, and later on a day when many terms
+have faded further.
+
 These values were picked from simulated Review at 40 and 100 reviews a day: a
 learner who forgets the way stock FSRS-5 predicts, a pool of 3,000 terms and
 one session a day. Moving each knob on its own showed that the per-grade ones

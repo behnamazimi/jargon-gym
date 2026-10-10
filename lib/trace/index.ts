@@ -50,6 +50,7 @@ export {
   computeTraceSnapshot,
   applyReadEvent,
   applyReviewGrade,
+  daysUntilNextReview,
   applyQuizAnswer,
   aggregateMastery,
 } from "./snapshot";

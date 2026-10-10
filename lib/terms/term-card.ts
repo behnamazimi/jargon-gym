@@ -32,4 +32,16 @@ export type TermCard = {
   /** What Quiz knows about the learner's recognition of this term when it was
    *  picked. Set only by the quiz pickers. */
   recognition?: { posterior: number | null; testCount: number };
+  /** What Review knows about the learner's recall of this term when it was
+   *  picked, so the grade buttons can say when it comes back. Set only by the
+   *  Review pickers. Dates are ISO strings so the card survives JSON. */
+  recall?: ReviewRecallState;
+};
+
+export type ReviewRecallState = {
+  stability: number | null;
+  difficulty: number | null;
+  lastReviewAt: string | null;
+  readCount: number;
+  lastReadAt: string | null;
 };

@@ -71,15 +71,36 @@ test.describe("Review options", () => {
     await expect(page.getByRole("checkbox", { name: "Keep screen awake" })).toBeChecked();
   });
 
-  test("there is no gear when nothing in it applies", async ({ page, user }) => {
-    await page.addInitScript(() => {
-      // @ts-expect-error simulate a browser without the Wake Lock API
-      delete Navigator.prototype.wakeLock;
-    });
+  test("grade buttons say when the term comes back, and the option hides it", async ({
+    page,
+    user,
+  }) => {
     const { collectionId } = await seedCollection(user);
     await gotoReady(page, `/app/review?collection=${collectionId}`);
 
-    await expect(page.getByRole("button", { name: "Recall the meaning" }).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: "Review options" })).toHaveCount(0);
+    await page.getByRole("button", { name: /^Recall the meaning/ }).click();
+    await expect(
+      page.getByRole("button", { name: /^Good, back in about \d+ days?$/ }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Review options" }).click();
+    const option = page.getByRole("checkbox", { name: "Show when terms come back" });
+    await expect(option).toBeChecked();
+    await option.click();
+    await expect(option).not.toBeChecked();
+
+    await expect
+      .poll(async () => {
+        const [row] = await sql<{ on: boolean }>(
+          "select review_show_next_review as on from public.user_settings where user_id = $1",
+          [user.id],
+        );
+        return row?.on;
+      })
+      .toBe(false);
+
+    await gotoReady(page, `/app/review?collection=${collectionId}`);
+    await page.getByRole("button", { name: /^Recall the meaning/ }).click();
+    await expect(page.getByRole("button", { name: "Good", exact: true })).toBeVisible();
   });
 });

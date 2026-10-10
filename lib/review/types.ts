@@ -1,4 +1,5 @@
 import type { CollectionLanguage } from "@/lib/terms/languages";
+import type { ReviewRecallState } from "@/lib/terms/term-card";
 import type { Term } from "@/lib/terms/types";
 import type { ReviewGrade } from "@/lib/trace";
 
@@ -7,6 +8,7 @@ export type ReviewTerm = Term & {
   collectionName: string;
   collectionLanguage: CollectionLanguage;
   isNewToUser?: boolean;
+  recall?: ReviewRecallState;
 };
 
 export type ReviewRating = {

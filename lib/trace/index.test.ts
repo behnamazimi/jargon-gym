@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { GOOD } from "./constants";
-import { applyQuizAnswer, applyReadEvent, applyReviewGrade, computeTraceSnapshot } from "./index";
+import { AGAIN, EASY, GOOD, HARD, UNTESTED_RECALL_RETRIEVABILITY } from "./constants";
+import {
+  applyQuizAnswer,
+  applyReadEvent,
+  applyReviewGrade,
+  computeTraceSnapshot,
+  daysUntilNextReview,
+} from "./index";
+import { retrievability } from "./recall";
 import type { TraceState } from "./types";
 
 function emptyState(): TraceState {
@@ -69,5 +76,43 @@ describe("applyQuizAnswer end-to-end", () => {
       new Date(),
     );
     expect(result.quizKnowledgePosterior).toBeGreaterThan(0.5);
+  });
+});
+
+describe("daysUntilNextReview", () => {
+  const now = new Date("2026-03-01T09:00:00Z");
+
+  it("gives each grade the day its stability falls to Review's line", () => {
+    const state = {
+      ...emptyState(),
+      recallStability: 10,
+      recallDifficulty: 5,
+      lastReviewRecallAt: new Date("2026-02-20T09:00:00Z"),
+    };
+    const days = daysUntilNextReview(state, now);
+    for (const grade of [AGAIN, HARD, GOOD, EASY] as const) {
+      const { recallStability } = applyReviewGrade(state, grade, now);
+      expect(retrievability(recallStability, days[grade])).toBeCloseTo(
+        UNTESTED_RECALL_RETRIEVABILITY,
+        10,
+      );
+    }
+  });
+
+  it("orders the grades Again < Hard < Good < Easy", () => {
+    for (const state of [
+      emptyState(),
+      {
+        ...emptyState(),
+        recallStability: 20,
+        recallDifficulty: 5,
+        lastReviewRecallAt: new Date("2026-02-01T09:00:00Z"),
+      },
+    ]) {
+      const days = daysUntilNextReview(state, now);
+      expect(days[AGAIN]).toBeLessThan(days[HARD]);
+      expect(days[HARD]).toBeLessThan(days[GOOD]);
+      expect(days[GOOD]).toBeLessThan(days[EASY]);
+    }
   });
 });
