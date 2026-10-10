@@ -166,7 +166,7 @@ Every charged request has a time limit that is shorter than the platform's
 request being killed:
 
 - AI quizzes give up after 45 seconds (`lib/quiz/generate.ts`) and stories after
-  59 (`lib/stories/generate.ts`). In both, the app retries once at most, only
+  55 (`lib/stories/generate.ts`). In both, the app retries once at most, only
   for a failure a second attempt can fix and only while time remains, and the
   AI SDK's own retries are off. Both attempts share the one limit.
 - Each speech provider gives up after 25 seconds, so Murf and then ElevenLabs
