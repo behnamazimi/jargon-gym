@@ -12,7 +12,7 @@ import { StoryGenerationError, type StoryGenerationFailure } from "./errors";
 import { normalizeStory } from "./normalize";
 import { buildStoryPrompt } from "./prompt";
 import type { StyleOption } from "./styles";
-import type { CefrLevel, PieceLength, ReadingLevel, StorySegment, StoryTerm } from "./types";
+import type { CefrLevel, PieceLength, StorySegment, StoryTerm } from "./types";
 
 export type StoryProviderErrorKind = "auth" | "rate-limit" | "timeout" | "other";
 
@@ -39,7 +39,6 @@ type GenerateStoryInput = {
   language: CollectionLanguage;
   format: StyleOption;
   tone: StyleOption;
-  readingLevel: ReadingLevel;
   cefrLevel: CefrLevel;
   pieceLength: PieceLength;
   outline: string | null;

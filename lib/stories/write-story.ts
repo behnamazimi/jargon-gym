@@ -24,7 +24,6 @@ import { findFormat, findTone } from "./styles";
 import {
   CEFR_LEVELS,
   PIECE_LENGTHS,
-  READING_LEVELS,
   STORY_MIN_TERMS,
   STORY_OUTLINE_MAX,
   type Story,
@@ -49,7 +48,6 @@ const NOT_ENOUGH_TERMS_ERROR = `This collection needs at least ${STORY_MIN_TERMS
 
 const generateInputSchema = z.object({
   collectionId: z.guid(),
-  readingLevel: z.enum(READING_LEVELS),
   cefrLevel: z.enum(CEFR_LEVELS),
   pieceLength: z.enum(PIECE_LENGTHS),
   outline: z
@@ -69,8 +67,8 @@ export async function writeStory(
 ): Promise<StoryResult> {
   const parsed = generateInputSchema.safeParse(rawInput);
   if (!parsed.success) return { error: "Check the story setup and try again." };
-  const { collectionId, readingLevel, cefrLevel, pieceLength, outline } = parsed.data;
-  const levels = { readingLevel, cefrLevel, pieceLength };
+  const { collectionId, cefrLevel, pieceLength, outline } = parsed.data;
+  const levels = { cefrLevel, pieceLength };
   const userId = auth.user.id;
   const admin = createAdminClient();
 
@@ -117,7 +115,6 @@ export async function writeStory(
           language: collection.language,
           format,
           tone,
-          readingLevel,
           cefrLevel,
           pieceLength,
           outline,
@@ -181,7 +178,6 @@ export async function writeStory(
     trackServer(userId, "story_generated", {
       format: format.id,
       tone: tone.id,
-      reading_level: readingLevel,
       cefr_level: cefrLevel,
       piece_length: pieceLength,
       language: collection.language,

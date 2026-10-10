@@ -4,7 +4,6 @@ import type { Database, Json } from "@/lib/supabase/database.types";
 import {
   parseCefrLevel,
   parsePieceLength,
-  parseReadingLevel,
   type Story,
   type StoryLevels,
   type StorySummary,
@@ -16,7 +15,7 @@ type Client = SupabaseClient<Database>;
 type StoryRow = Database["public"]["Tables"]["stories"]["Row"];
 
 const STORY_COLUMNS =
-  "id, collection_id, language, format, tone, reading_level, cefr_level, piece_length, outline, title, segments, term_ids, new_term_ids, vote, read_at";
+  "id, collection_id, language, format, tone, cefr_level, piece_length, outline, title, segments, term_ids, new_term_ids, vote, read_at";
 
 export function toVote(value: number | null): -1 | 1 | null {
   return value === 1 || value === -1 ? value : null;
@@ -29,7 +28,6 @@ type StoryRowSubset = Pick<
   | "language"
   | "format"
   | "tone"
-  | "reading_level"
   | "cefr_level"
   | "piece_length"
   | "outline"
@@ -48,7 +46,6 @@ function mapStory(row: StoryRowSubset): Story {
     language: parseLanguage(row.language),
     format: row.format,
     tone: row.tone,
-    readingLevel: parseReadingLevel(row.reading_level),
     cefrLevel: parseCefrLevel(row.cefr_level),
     pieceLength: parsePieceLength(row.piece_length),
     outline: row.outline,
@@ -85,7 +82,6 @@ export async function insertStory(
       language: input.language,
       format: input.format,
       tone: input.tone,
-      reading_level: input.levels.readingLevel,
       cefr_level: input.levels.cefrLevel,
       piece_length: input.levels.pieceLength,
       outline: input.outline,
@@ -124,7 +120,7 @@ export async function listStorySummaries(
 ): Promise<StorySummary[]> {
   const { data, error } = await admin
     .from("stories")
-    .select("id, title, format, tone, reading_level, cefr_level, vote, read_at")
+    .select("id, title, format, tone, cefr_level, vote, read_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -134,7 +130,6 @@ export async function listStorySummaries(
     title: row.title,
     format: row.format,
     tone: row.tone,
-    readingLevel: parseReadingLevel(row.reading_level),
     cefrLevel: parseCefrLevel(row.cefr_level),
     vote: toVote(row.vote),
     readAt: row.read_at,

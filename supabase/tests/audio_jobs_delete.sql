@@ -33,8 +33,8 @@ begin
   insert into public.terms (id, term, category, definition, collection_id) values
     (t1, 'One', 'c', 'd', v_collection), (t2, 'Two', 'c', 'd', v_collection);
   insert into public.stories
-    (id, user_id, language, format, tone, reading_level, cefr_level, title, segments, term_ids)
-  values (s1, u1, 'en', 'email', 'neutral', 'plain', 'B1', 'T', '[]'::jsonb,
+    (id, user_id, language, format, tone, cefr_level, title, segments, term_ids)
+  values (s1, u1, 'en', 'email', 'neutral', 'B1', 'T', '[]'::jsonb,
           array[gen_random_uuid(), gen_random_uuid(), gen_random_uuid()]);
 
   -- New-style jobs: no row in the old narration tables at all.

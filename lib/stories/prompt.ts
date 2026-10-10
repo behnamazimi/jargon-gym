@@ -1,15 +1,7 @@
 import { COLLECTION_LANGUAGE_OPTIONS, type CollectionLanguage } from "@/lib/terms/languages";
 import { lengthPhrase, rangePhrase, type StoryLength } from "./length";
 import type { StyleOption } from "./styles";
-import type { CefrLevel, ReadingLevel, StoryTerm } from "./types";
-
-// Only how much help each term gets from its context; the language level
-// alone decides how complex the surrounding language is.
-const TERM_SUPPORT: Record<ReadingLevel, string> = {
-  plain: "Give each term strong support: the sentence around it should make its meaning guessable.",
-  professional: "Support a term only where it would otherwise be unclear.",
-  expert: "Use the terms as an insider would, with no extra support.",
-};
+import type { CefrLevel, StoryTerm } from "./types";
 
 type Unit = StoryLength["unit"];
 
@@ -34,7 +26,6 @@ const STORY_SYSTEM_PROMPT = [
   "",
   "Each request option has one job:",
   "- Language level: all vocabulary, grammar, sentence length and structure around the terms. Only the listed terms may exceed it.",
-  "- Term support: only how much help each term gets from its surrounding sentences.",
   "- Format and tone: what the piece is and how it feels.",
   "If anything conflicts, the language level wins.",
   "",
@@ -74,7 +65,6 @@ type StoryPromptInput = {
   language: CollectionLanguage;
   format: StyleOption;
   tone: StyleOption;
-  readingLevel: ReadingLevel;
   cefrLevel: CefrLevel;
   outline: string | null;
   setting: string;
@@ -115,7 +105,6 @@ export function buildStoryPrompt(input: StoryPromptInput): {
     `Short reading passage for a learner of the terms in collection "${input.collectionName}", reading in ${language} at CEFR ${input.cefrLevel}, with a glossary beside the text. It succeeds if they read it comfortably and see each term used correctly.`,
     "",
     `Language level: ${CEFR_GUIDANCE[input.cefrLevel](unit)} Everything outside the listed terms must stay at or below this level as much as possible.`,
-    `Term support: ${TERM_SUPPORT[input.readingLevel]}`,
     `Format: ${input.format.prompt}.`,
     `Tone: ${input.tone.prompt}.`,
     `Length: ${min} to ${max} ${unit}, in ${paragraphs} paragraphs. A thread, interview or notes may instead use one short paragraph per message, turn or section, up to ${turns}.`,

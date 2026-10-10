@@ -22,7 +22,6 @@ const INPUT = {
   language: "en" as const,
   format: findFormat("email")!,
   tone: findTone("neutral")!,
-  readingLevel: "professional" as const,
   cefrLevel: "B2" as const,
   pieceLength: "medium" as const,
   outline: null,

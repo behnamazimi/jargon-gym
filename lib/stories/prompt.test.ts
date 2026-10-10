@@ -17,7 +17,6 @@ const BASE: PromptInput = {
   language: "en",
   format: findFormat("slack-thread")!,
   tone: findTone("humorous")!,
-  readingLevel: "plain",
   cefrLevel: "B1",
   outline: null,
   setting: "a rainy weekend at home",
@@ -47,16 +46,14 @@ describe("buildStoryPrompt", () => {
     expect(prompt).toContain("reading in Dutch at CEFR B1");
     expect(prompt).not.toContain("Language: Dutch");
     expect(prompt).toContain("Language level: B1 (intermediate)");
-    expect(prompt).toContain("Term support: Give each term strong support");
     expect(prompt).toContain("Format: a Slack thread");
     expect(prompt).toContain("Tone: light and humorous.");
     expect(prompt).toContain("Length: 70 to 120 words, in 2 or 3 paragraphs");
   });
 
-  it("keeps sentence complexity out of term support", () => {
-    const prompt = userPrompt({ readingLevel: "expert" });
-    expect(prompt).toContain("Use the terms as an insider would, with no extra support.");
-    expect(prompt).not.toContain("densely");
+  it("leaves out how much help each term gets", () => {
+    expect(userPrompt()).not.toContain("Term support");
+    expect(buildStoryPrompt(BASE).system).not.toContain("Term support");
   });
 
   it("phrases level rules for any language and in the story's length unit", () => {
