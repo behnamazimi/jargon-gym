@@ -1,4 +1,4 @@
-/** What the "Writing your story" screen says while it waits, and when each line
+/** The title of the story loading screen while it waits, and when each line
  *  starts. Only the model call is slow, so these follow typical timing rather than
  *  reported progress. The story time limit is 55 s, so the last line comes well before it. */
 export const GENERATING_STAGES = [
