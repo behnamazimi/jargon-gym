@@ -61,8 +61,8 @@ function StoriesGeneratingStep() {
       <QuizPanelBody className="flex min-h-0 flex-1 items-center justify-center">
         <QuizCenteredState
           illustration={<PreparingScene className="w-48" />}
-          title="Writing your story"
-          description={stage}
+          title={stage}
+          description="This usually takes a few seconds."
         />
       </QuizPanelBody>
     </QuizPanel>
