@@ -13,7 +13,6 @@ const BASE: PromptInput = {
       definition: "Slowing producers to match consumers.",
     },
   ],
-  collectionName: "Distributed Systems",
   language: "en",
   format: findFormat("slack-thread")!,
   tone: findTone("humorous")!,
@@ -31,7 +30,7 @@ function userPrompt(overrides: Partial<PromptInput> = {}) {
 describe("buildStoryPrompt", () => {
   it("opens with who the reader is and what success looks like", () => {
     expect(userPrompt()).toMatch(
-      /^Short reading passage for a learner of the terms in collection "Distributed Systems", reading in English at CEFR B1/,
+      /^Short reading passage for a learner reading in English at CEFR B1/,
     );
   });
 
@@ -106,7 +105,7 @@ describe("buildStoryPrompt", () => {
     expect(system).toContain("Repeat a term only where a real writer would.");
     expect(system).toContain("not forced to the listed base form");
     expect(system).toContain("Make sense. Silently settle");
-    expect(system).toContain("never give a fact as its own reason");
+    expect(system).toContain("Never give a fact as its own reason");
     expect(system).toContain("Sound like a real person wrote it");
     expect(system).toContain("never straight double quotes");
     expect(system).toContain("[[words as written|term number]]");
