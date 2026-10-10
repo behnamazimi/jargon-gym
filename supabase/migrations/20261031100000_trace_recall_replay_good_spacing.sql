@@ -13,13 +13,17 @@
 -- term graded before review_events existed is replayed from its first logged
 -- grade, as if that were its first. Terms with a logged grade missing are left
 -- as they are. review_events itself is not changed.
+--
+-- The helpers use create or replace and are dropped at the end, because a
+-- fresh database applies every migration in one session and the earlier
+-- replay leaves functions with the same names in pg_temp.
 
-create function pg_temp.initial_difficulty(g int) returns double precision
+create or replace function pg_temp.initial_difficulty(g int) returns double precision
 language sql immutable as $$
   select least(10, greatest(1, 7.2102 - exp(0.5316 * (g - 1)) + 1))
 $$;
 
-create function pg_temp.next_difficulty(d double precision, g int) returns double precision
+create or replace function pg_temp.next_difficulty(d double precision, g int) returns double precision
 language sql immutable as $$
   select least(10, greatest(1,
     0.0234 * pg_temp.initial_difficulty(4)
@@ -27,7 +31,7 @@ language sql immutable as $$
   ))
 $$;
 
-create function pg_temp.success_stability(d double precision, s double precision, r double precision, g int)
+create or replace function pg_temp.success_stability(d double precision, s double precision, r double precision, g int)
 returns double precision
 language sql immutable as $$
   select s * (1
@@ -35,7 +39,7 @@ language sql immutable as $$
     * case when g = 4 then 1.6 else 1 end)
 $$;
 
-create function pg_temp.lapse_stability(d double precision, s double precision, r double precision)
+create or replace function pg_temp.lapse_stability(d double precision, s double precision, r double precision)
 returns double precision
 language sql immutable as $$
   select least(
@@ -44,14 +48,14 @@ language sql immutable as $$
   )
 $$;
 
-create function pg_temp.hard_stability(d double precision, s double precision, r double precision)
+create or replace function pg_temp.hard_stability(d double precision, s double precision, r double precision)
 returns double precision
 language sql immutable as $$
   select power(pg_temp.lapse_stability(d, s, r), 0.85)
        * power(pg_temp.success_stability(d, s, r, 3), 0.15)
 $$;
 
-create function pg_temp.familiarity(reads bigint, days_since_read double precision)
+create or replace function pg_temp.familiarity(reads bigint, days_since_read double precision)
 returns double precision
 language sql immutable as $$
   select case when reads <= 0 then 0
@@ -136,3 +140,10 @@ begin
   raise notice 'Replayed recall state for % terms', replayed;
 end;
 $$;
+
+drop function pg_temp.hard_stability(double precision, double precision, double precision);
+drop function pg_temp.success_stability(double precision, double precision, double precision, int);
+drop function pg_temp.lapse_stability(double precision, double precision, double precision);
+drop function pg_temp.next_difficulty(double precision, int);
+drop function pg_temp.initial_difficulty(int);
+drop function pg_temp.familiarity(bigint, double precision);
