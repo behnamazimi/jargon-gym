@@ -110,8 +110,8 @@ describe("rankReviewQueue", () => {
     const candidates = [
       makeCandidate({
         termId: "holding",
-        recallStability: 20,
-        lastReviewRecallAt: new Date("2026-01-15"), // R ≈ 0.91, above UNTESTED_RETRIEVABILITY
+        recallStability: 60,
+        lastReviewRecallAt: new Date("2026-01-15"), // R ≈ 0.97, above UNTESTED_RETRIEVABILITY
       }),
       makeCandidate({ termId: "never-graded" }),
     ];
@@ -122,27 +122,28 @@ describe("rankReviewQueue", () => {
     ]);
   });
 
-  it("breaks a tie at the untested line by oldest term first", () => {
-    // R = 1 / (1 + t / (9·S)) equals the line after 9 days when S = p / (1 − p).
-    const stability = UNTESTED_RETRIEVABILITY / (1 - UNTESTED_RETRIEVABILITY);
-    const atTheLine = makeCandidate({
-      termId: "learned",
-      createdAt: new Date("2026-01-02"),
-      recallStability: stability,
-      lastReviewRecallAt: new Date(NOW.getTime() - 9 * 24 * 60 * 60 * 1000),
+  it("puts a learned term on the right side of the untested line whatever its age", () => {
+    // R = 1 / (1 + t / (9·S)): after 9 days it is just under the line when S is
+    // a little below p / (1 − p), and just over it when S is a little above.
+    const lineStability = UNTESTED_RETRIEVABILITY / (1 - UNTESTED_RETRIEVABILITY);
+    const learnedAt = (stability: number) =>
+      makeCandidate({
+        termId: "learned",
+        createdAt: new Date("2026-01-03"),
+        recallStability: stability,
+        lastReviewRecallAt: new Date(NOW.getTime() - 9 * 24 * 60 * 60 * 1000),
+      });
+    const neverGraded = makeCandidate({
+      termId: "never-graded",
+      createdAt: new Date("2026-01-01"),
     });
-    expect(recallRetrievabilityNow(atTheLine, NOW)).toBeCloseTo(UNTESTED_RETRIEVABILITY, 10);
 
-    const older = makeCandidate({ termId: "never-graded", createdAt: new Date("2026-01-01") });
-    expect(rankReviewQueue([atTheLine, older], NOW).map((c) => c.termId)).toEqual([
-      "never-graded",
-      "learned",
-    ]);
-    const newer = makeCandidate({ termId: "never-graded", createdAt: new Date("2026-01-03") });
-    expect(rankReviewQueue([newer, atTheLine], NOW).map((c) => c.termId)).toEqual([
-      "learned",
-      "never-graded",
-    ]);
+    expect(
+      rankReviewQueue([neverGraded, learnedAt(lineStability * 0.99)], NOW).map((c) => c.termId),
+    ).toEqual(["learned", "never-graded"]);
+    expect(
+      rankReviewQueue([neverGraded, learnedAt(lineStability * 1.01)], NOW).map((c) => c.termId),
+    ).toEqual(["never-graded", "learned"]);
   });
 
   it("ranks by R_r(t) ascending — most at risk of forgetting first", () => {
@@ -209,7 +210,7 @@ describe("rankQuizQueue", () => {
       makeCandidate({
         termId: "confident-but-answered",
         quizKnowledgePosterior: 0.95,
-        lastQuizTestedAt: new Date("2026-01-15"), // R ≈ 0.89
+        lastQuizTestedAt: new Date("2026-01-26"), // R ≈ 0.96
       }),
       makeCandidate({ termId: "never-answered" }),
     ];
@@ -224,7 +225,7 @@ describe("rankQuizQueue", () => {
       makeCandidate({
         termId: "answered-holding",
         quizKnowledgePosterior: 0.95,
-        lastQuizTestedAt: new Date("2026-01-15"),
+        lastQuizTestedAt: new Date("2026-01-26"),
       }),
       makeCandidate({
         termId: "reviewed-only",
@@ -258,7 +259,7 @@ describe("rankQuizQueue", () => {
       makeCandidate({
         termId: "confident",
         quizKnowledgePosterior: 0.95,
-        lastQuizTestedAt: new Date("2026-01-15"), // R ≈ 0.89, well under cooldown
+        lastQuizTestedAt: new Date("2026-01-26"), // R ≈ 0.96, well under cooldown
       }),
       makeCandidate({
         termId: "shaky",

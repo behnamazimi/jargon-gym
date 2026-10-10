@@ -223,7 +223,7 @@ Queues still rank by raw `R(t)` ascending regardless of pool, **not** by Mastery
 
 This isn't a separate rule to enforce — it falls directly out of Sections 4b/5's nullable-state design. A term with no S_r simply has no `R_r(t)` to rank by, so it can't appear in the Review queue; same for Quiz. No manual gating logic needed beyond "don't rank what you can't compute."
 
-(As shipped, a term with no state is not left out of the queue: it sorts as if its `R(t)` were 0.7, so decayed terms go first. See [trace.md](./trace.md).)
+(As shipped, a term with no state is not left out of the queue: it sorts as if its `R(t)` were 0.95, so decayed terms go first. See [trace.md](./trace.md).)
 
 Nothing is ever locked or overdue for terms that _are_ eligible. Opening a tier the user hasn't touched in weeks just surfaces its weakest terms first.
 
@@ -243,7 +243,7 @@ Nothing is ever locked or overdue for terms that _are_ eligible. Opening a tier 
 | wF, wR, wG                 | 0.2, 0.5, 0.3 | mastery blend weights                        |
 | known / unknown threshold  | 0.8 / 0.6     | pool hysteresis                              |
 | cooldown R threshold       | 0.98          | same-session repeat suppression              |
-| untested-term R            | 0.7           | where a never-graded term sorts in the queue |
+| untested-term R            | 0.95          | where a never-graded term sorts in the queue |
 
 ---
 

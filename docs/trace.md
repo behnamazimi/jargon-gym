@@ -260,8 +260,8 @@ active collections — just by a different signal. There's no separate
 | Tier       | Ranked by                                                                    | Never-tested terms                                                       |
 | ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | **Read**   | Lowest decay-aware exposure (Read+Review+Quiz combined), tempered by mastery | Always included — reading is how a term gets exposure in the first place |
-| **Review** | Lowest recall retrievability first                                           | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
-| **Quiz**   | Lowest recognition retrievability first                                      | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
+| **Review** | Lowest recall retrievability first                                           | Ranked as if 0.95 retrievable: after decayed terms, before the rest      |
+| **Quiz**   | Lowest recognition retrievability first                                      | Ranked as if 0.95 retrievable: after decayed terms, before the rest      |
 
 Read's ranking used to be a simple "fewest reads first" count. It's now a
 decay-aware signal that also folds in Review and Quiz history: a term's
@@ -287,8 +287,8 @@ But "unknown" doesn't mean "more urgent than everything you've learned." TRACE
 used to put untested terms first, and that has a cost: import a big collection
 and every session is spent meeting new terms while the ones you already learned
 quietly fade, so by the time they come back you've mostly forgotten them. So
-an untested term is ranked as if it were 70% retrievable
-(`UNTESTED_RETRIEVABILITY`). A learned term that has decayed below 70% goes
+an untested term is ranked as if it were 95% retrievable
+(`UNTESTED_RETRIEVABILITY`). A learned term that has decayed below 95% goes
 first, because it's about to slip. Once nothing is below the line, new terms come
 next, ahead of learned terms that are still holding. There's no daily limit
 and nothing to configure; the line adjusts itself to how much you study. With a
@@ -414,7 +414,7 @@ other:
   original design's wording ("a term with no state simply has nothing to rank
   by") reads as exclusion. In practice that would mean Review and Quiz could
   never surface a term for its first grade or answer, so the implementation
-  ranks them as if they were 0.7 retrievable instead. They used to go ahead
+  ranks them as if they were 0.95 retrievable instead. They used to go ahead
   of every tested term, but that starved reviews after a large import; now a
   learned term that has decayed below the line goes first.
   See [How each tier decides what to show you](#how-each-tier-decides-what-to-show-you).
@@ -461,7 +461,7 @@ writing:
 | Known / unknown thresholds                                 | 0.75 / 0.6          | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
 | Known label minimum test count                             | 3                   | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
 | Session cooldown                                           | 0.98 retrievability | Above this, a term drops out of that tier's list for the rest of the session                                                     |
-| Untested-term queue position                               | 0.7 retrievability  | Where a never-graded (Review) or never-answered (Quiz) term sorts; learned terms that have decayed below it go first             |
+| Untested-term queue position                               | 0.95 retrievability | Where a never-graded (Review) or never-answered (Quiz) term sorts; learned terms that have decayed below it go first             |
 | Read mastery-temper weight                                 | 0.2                 | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
 
 These are reasoned starting points, not values fit to real usage data — this

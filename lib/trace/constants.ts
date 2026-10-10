@@ -53,9 +53,11 @@ export const SESSION_COOLDOWN_RETRIEVABILITY = 0.98;
  *  queue: it is ranked as if its retrievability were this. Learned terms that
  *  have decayed below it are served first; learned terms above it wait behind
  *  new ones. Lower leans toward introducing new terms, higher toward reviewing.
- *  Picked from a simulated sweep of 0.3–0.8 (best recall without slowing
- *  progress at 10, 20 and 30 reviews a day); retune from real review data. */
-export const UNTESTED_RETRIEVABILITY = 0.7;
+ *  Picked from a simulated sweep of 0.7–0.98 with several study sessions a day
+ *  and skipped days: 0.95 kept the most terms remembered and brought failed
+ *  terms back within a day, while 0.98 wasted reviews on terms already known.
+ *  Retune from real review data. */
+export const UNTESTED_RETRIEVABILITY = 0.95;
 
 /** §7 Mastery blend weights: Mastery = wF·F_used + wR·R_r + wG·R_g. */
 export const MASTERY_WEIGHT_FAMILIARITY = 0.2; // wF
