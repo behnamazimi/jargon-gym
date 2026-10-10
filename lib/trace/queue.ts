@@ -1,8 +1,9 @@
 /** §10 Per-tier queues — pure ranking, no due dates. Read always ranks the
  *  full candidate set. Review/Quiz also rank the full set — a term with no
  *  state yet for that track (§4b/§5's nullable state) has no real R(t), but
- *  it's still eligible: it sorts as if its R(t) were UNTESTED_RETRIEVABILITY,
- *  so learned terms that have decayed below that line come first and new terms
+ *  it's still eligible: it sorts as if its R(t) were that tier's untested line
+ *  (UNTESTED_RECALL_RETRIEVABILITY / UNTESTED_RECOGNITION_RETRIEVABILITY), so
+ *  learned terms that have decayed below the line come first and new terms
  *  come ahead of the rest. Excluding it instead would mean no term could ever
  *  receive its first grade — Review/Quiz would stay empty forever, since the
  *  only way a term gets real S_r/posterior is by being graded through this
@@ -11,15 +12,22 @@
 import {
   FAMILIARITY_DECAY_SCALE_DAYS,
   READ_TEMPER_WEIGHT,
-  RETRIEVABILITY_DECAY_SCALE,
   SESSION_COOLDOWN_RETRIEVABILITY,
-  UNTESTED_RETRIEVABILITY,
+  UNTESTED_RECALL_RETRIEVABILITY,
+  UNTESTED_RECOGNITION_RETRIEVABILITY,
 } from "./constants";
 import { daysBetween, hyperbolicDecay } from "./decay";
 import { rawFamiliarityGrowth } from "./familiarity";
 import { blendMastery, masteryAdjusted } from "./mastery";
-import { retrievability as recallRetrievability } from "./recall";
-import { posteriorToStability, retrievability as recognitionRetrievability } from "./recognition";
+import {
+  daysUntilRetrievability as recallDaysUntil,
+  retrievability as recallRetrievability,
+} from "./recall";
+import {
+  daysUntilRetrievability as recognitionDaysUntil,
+  posteriorToStability,
+  retrievability as recognitionRetrievability,
+} from "./recognition";
 import type { TraceCandidate } from "./types";
 
 /** Most recent of the three per-track "last touched" timestamps, or null
@@ -90,9 +98,15 @@ export function recognitionRetrievabilityNow(candidate: TraceCandidate, now: Dat
 }
 
 /** When a term held out by the cooldown (retrievability above the threshold)
- *  decays back to it and re-enters the queue. Inverts R = 1 / (1 + t / (9·S)). */
-export function cooldownEndsAt(stability: number, lastTestedAt: Date): Date {
-  const days = RETRIEVABILITY_DECAY_SCALE * stability * (1 / SESSION_COOLDOWN_RETRIEVABILITY - 1);
+ *  decays back to it and re-enters the queue. Recall and recognition decay on
+ *  different curves, so the caller names the track. */
+export function cooldownEndsAt(
+  track: "recall" | "recognition",
+  stability: number,
+  lastTestedAt: Date,
+): Date {
+  const daysUntil = track === "recall" ? recallDaysUntil : recognitionDaysUntil;
+  const days = daysUntil(stability, SESSION_COOLDOWN_RETRIEVABILITY);
   return new Date(lastTestedAt.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
@@ -116,7 +130,7 @@ export function rankReadQueue(candidates: TraceCandidate[], now: Date): TraceCan
 
 /** Review: every term is eligible. Ranked by R_r(t) ascending — most at
  *  risk of forgetting first — with never-graded terms placed at
- *  UNTESTED_RETRIEVABILITY, so a learned term that has decayed below it goes
+ *  UNTESTED_RECALL_RETRIEVABILITY, so a learned term that has decayed below it goes
  *  ahead of them and the rest wait behind. Same-session repeats are excluded
  *  via the §6 cooldown (never-graded terms can't be a repeat, so the cooldown
  *  never touches them). Ties (including the untested tier) break by oldest
@@ -125,7 +139,7 @@ export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceC
   return candidates
     .map((c) => ({
       candidate: c,
-      r: recallRetrievabilityNow(c, now) ?? UNTESTED_RETRIEVABILITY,
+      r: recallRetrievabilityNow(c, now) ?? UNTESTED_RECALL_RETRIEVABILITY,
     }))
     .filter(({ r }) => r <= SESSION_COOLDOWN_RETRIEVABILITY)
     .sort((a, b) => a.r - b.r || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime())
@@ -133,13 +147,13 @@ export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceC
 }
 
 /** Quiz: every term is eligible, same shape as Review — ranked by R_g(t)
- *  ascending with never-answered terms placed at UNTESTED_RETRIEVABILITY,
+ *  ascending with never-answered terms placed at UNTESTED_RECOGNITION_RETRIEVABILITY,
  *  same cooldown rule. */
 export function rankQuizQueue(candidates: TraceCandidate[], now: Date): TraceCandidate[] {
   return candidates
     .map((c) => ({
       candidate: c,
-      r: recognitionRetrievabilityNow(c, now) ?? UNTESTED_RETRIEVABILITY,
+      r: recognitionRetrievabilityNow(c, now) ?? UNTESTED_RECOGNITION_RETRIEVABILITY,
     }))
     .filter(({ r }) => r <= SESSION_COOLDOWN_RETRIEVABILITY)
     .sort((a, b) => a.r - b.r || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime())

@@ -52,7 +52,7 @@ describe("buildQueueDebug", () => {
   it("puts a graded term that has decayed below the untested line first", () => {
     const decayed = term("decayed", {
       recallStability: 2,
-      lastReviewRecallAt: new Date(NOW.getTime() - 10 * DAY), // R ≈ 0.64
+      lastReviewRecallAt: new Date(NOW.getTime() - 10 * DAY), // R ≈ 0.68
     });
     const debug = buildQueueDebug([term("a"), decayed, term("b")], options);
 
@@ -74,8 +74,8 @@ describe("buildQueueDebug", () => {
     expect(row!.retrievability).toBeGreaterThan(0.98);
     expect(row!.difficulty).toBe(5);
 
-    // 9 · S · (1/0.98 − 1) days after the grade
-    const days = (9 * 3 * 0.02) / 0.98;
+    // (S / (19/81)) · (0.98^-2 − 1) days after the grade, from FSRS-5's curve
+    const days = (3 / (19 / 81)) * (0.98 ** -2 - 1);
     expect(row!.returnsAt!.getTime() - lastAt.getTime()).toBeCloseTo(days * DAY, -2);
   });
 

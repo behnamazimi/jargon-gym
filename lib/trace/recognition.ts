@@ -11,7 +11,7 @@ import {
   QUIZ_FAIL_PENALTY_RECALL_WEIGHT,
   RECOGNITION_INITIAL_PRIOR,
   RECOGNITION_STABILITY_SCALE,
-  RETRIEVABILITY_DECAY_SCALE,
+  RECOGNITION_DECAY_SCALE,
 } from "./constants";
 import type { QuestionType } from "./types";
 
@@ -60,7 +60,12 @@ export function posteriorToStability(posterior: number): number {
   return 1 + RECOGNITION_STABILITY_SCALE * posterior;
 }
 
-/** R_g(t) = (1 + t / (9·S_g))⁻¹ — same shape as recall's retrievability. */
+/** R_g(t) = (1 + t / (9·S_g))⁻¹. */
 export function retrievability(stability: number, elapsedDays: number): number {
-  return 1 / (1 + elapsedDays / (RETRIEVABILITY_DECAY_SCALE * stability));
+  return 1 / (1 + elapsedDays / (RECOGNITION_DECAY_SCALE * stability));
+}
+
+/** Days after an answer until R_g falls to `target` — the inverse of retrievability. */
+export function daysUntilRetrievability(stability: number, target: number): number {
+  return RECOGNITION_DECAY_SCALE * stability * (1 / target - 1);
 }

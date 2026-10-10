@@ -1,5 +1,4 @@
-/** Local calendar-day helpers for "did you do this today" dashboard counts,
- *  and for FSRS-5's same-day re-review branch (§4).
+/** Local calendar-day helpers for "did you do this today" dashboard counts.
  *  Runs on the server; "local" means STUDY_TIMEZONE below, not the
  *  request's browser offset.
  *
