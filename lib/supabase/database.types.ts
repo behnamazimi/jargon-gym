@@ -1730,8 +1730,8 @@ export type Database = {
           read_stories_default: boolean;
           read_tap_to_play: boolean;
           review_keep_awake: boolean;
-          review_show_next_review: boolean;
           review_narrate_on_reveal: boolean;
+          review_show_next_review: boolean;
           review_swipe: boolean;
           story_last_collection_id: string | null;
           term_layout: Json;
@@ -1762,8 +1762,8 @@ export type Database = {
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
           review_keep_awake?: boolean;
-          review_show_next_review?: boolean;
           review_narrate_on_reveal?: boolean;
+          review_show_next_review?: boolean;
           review_swipe?: boolean;
           story_last_collection_id?: string | null;
           term_layout?: Json;
@@ -1794,8 +1794,8 @@ export type Database = {
           read_stories_default?: boolean;
           read_tap_to_play?: boolean;
           review_keep_awake?: boolean;
-          review_show_next_review?: boolean;
           review_narrate_on_reveal?: boolean;
+          review_show_next_review?: boolean;
           review_swipe?: boolean;
           story_last_collection_id?: string | null;
           term_layout?: Json;
