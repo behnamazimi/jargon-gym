@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
-import { parseCefrLevel, parsePieceLength, parseReadingLevel, type StoryLevels } from "./types";
+import { parseCefrLevel, parsePieceLength, type StoryLevels } from "./types";
 
 type Client = SupabaseClient<Database>;
 
@@ -11,7 +11,7 @@ export async function loadPrefs(
   const [prefs, settings] = await Promise.all([
     admin
       .from("story_collection_prefs")
-      .select("collection_id, reading_level, cefr_level, piece_length")
+      .select("collection_id, cefr_level, piece_length")
       .eq("user_id", userId),
     admin
       .from("user_settings")
@@ -25,7 +25,6 @@ export async function loadPrefs(
   const levelsByCollection: Record<string, StoryLevels> = {};
   for (const row of prefs.data ?? []) {
     levelsByCollection[row.collection_id] = {
-      readingLevel: parseReadingLevel(row.reading_level),
       cefrLevel: parseCefrLevel(row.cefr_level),
       pieceLength: parsePieceLength(row.piece_length),
     };
@@ -45,7 +44,6 @@ export async function savePrefs(
       {
         user_id: userId,
         collection_id: collectionId,
-        reading_level: levels.readingLevel,
         cefr_level: levels.cefrLevel,
         piece_length: levels.pieceLength,
         updated_at: now,

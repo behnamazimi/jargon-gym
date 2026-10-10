@@ -2,20 +2,9 @@
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { termsUsedNote } from "@/lib/stories/length";
-import {
-  PIECE_LENGTHS,
-  READING_LEVELS,
-  type PieceLength,
-  type ReadingLevel,
-} from "@/lib/stories/types";
+import { PIECE_LENGTHS, type PieceLength } from "@/lib/stories/types";
 
 type Choice = { label: string; hint: string };
-
-const READING_LEVEL_CHOICES: Record<ReadingLevel, Choice> = {
-  plain: { label: "Plenty", hint: "Sentences make each term easy to guess." },
-  professional: { label: "Some", hint: "Help only where a term would be unclear." },
-  expert: { label: "None", hint: "Terms used as an insider would, no extra help." },
-};
 
 const PIECE_LENGTH_BASE: Record<PieceLength, Choice> = {
   short: { label: "Short", hint: "A quick read of a paragraph or two." },
@@ -64,20 +53,6 @@ function ChoiceField<T extends string>({
       </ToggleGroup>
       <p className="m-0 text-xs text-base-content/70">{choices[value].hint}</p>
     </fieldset>
-  );
-}
-
-export function ReadingLevelField(props: {
-  value: ReadingLevel;
-  onChange: (level: ReadingLevel) => void;
-}) {
-  return (
-    <ChoiceField
-      legend="How much to explain each term"
-      options={READING_LEVELS}
-      choices={READING_LEVEL_CHOICES}
-      {...props}
-    />
   );
 }
 

@@ -22,7 +22,6 @@ const INPUT = {
   language: "en" as const,
   format: findFormat("email")!,
   tone: findTone("neutral")!,
-  readingLevel: "professional" as const,
   cefrLevel: "B2" as const,
   pieceLength: "medium" as const,
   outline: null,
@@ -174,7 +173,7 @@ describe("generateStory", () => {
     mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
     await generateStory(INPUT);
     const call = mockedGenerate.mock.calls[0]![0];
-    expect(call.system).toContain("Each option in a request has one job");
+    expect(call.system).toContain("Each request option has one job");
     expect(call.prompt).toContain("1. Idempotency: d");
   });
 
@@ -184,5 +183,31 @@ describe("generateStory", () => {
       .mockReturnValueOnce(resolveWith(GOOD_TEXT));
     await expect(generateStory(INPUT)).resolves.toBeTruthy();
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it("says why it retries", async () => {
+    mockedGenerate
+      .mockReturnValueOnce(resolveWith(MISSING_TERMS_TEXT))
+      .mockReturnValueOnce(resolveWith(GOOD_TEXT))
+      .mockRejectedValueOnce(apiError(503))
+      .mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    const onRetry = vi.fn();
+    await generateStory({ ...INPUT, onRetry });
+    await generateStory({ ...INPUT, onRetry });
+    expect(onRetry.mock.calls).toEqual([["terms"], ["provider"]]);
+  });
+
+  it("does not retry when the first attempt used up too much of the time limit", async () => {
+    const now = vi.spyOn(Date, "now");
+    try {
+      now.mockReturnValueOnce(0).mockReturnValue(30_000);
+      mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
+      const onRetry = vi.fn();
+      await expect(generateStory({ ...INPUT, onRetry })).rejects.toBeInstanceOf(StoryProviderError);
+      expect(mockedGenerate).toHaveBeenCalledTimes(1);
+      expect(onRetry).not.toHaveBeenCalled();
+    } finally {
+      now.mockRestore();
+    }
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
+import { useEffect, useState } from "react";
 import { EmptyBoxScene } from "@/components/illustrations/scenes/empty-box";
 import { PreparingScene } from "@/components/illustrations/scenes/preparing";
 import type { StoriesSetupData } from "@/lib/stories/setup";
@@ -16,6 +17,7 @@ import { StorySetupPanel } from "@/components/read/stories/story-setup-panel";
 import { useStorySession, type StorySession } from "@/components/read/stories/use-story-session";
 import { StudyNoActiveCollectionsState } from "@/components/read/study/study-paused-state";
 import { Button, LinkButton } from "@/components/ui/button";
+import { GENERATING_STAGES } from "@/lib/stories/generating-stages";
 import { STORY_MIN_TERMS } from "@/lib/stories/types";
 
 const CARDS_HREF = "/app/read?view=cards";
@@ -41,14 +43,26 @@ function StoriesNoTerms() {
   );
 }
 
+function useGeneratingStage() {
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    const timers = GENERATING_STAGES.slice(1).map((stage, offset) =>
+      setTimeout(() => setIndex(offset + 1), stage.startsAtSeconds * 1000),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  return GENERATING_STAGES[index]!.text;
+}
+
 function StoriesGeneratingStep() {
+  const stage = useGeneratingStage();
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <QuizPanelBody className="flex min-h-0 flex-1 items-center justify-center">
         <QuizCenteredState
           illustration={<PreparingScene className="w-48" />}
           title="Writing your story"
-          description="Weaving your next terms into a short piece… This usually takes a few seconds."
+          description={stage}
         />
       </QuizPanelBody>
     </QuizPanel>

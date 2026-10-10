@@ -7,13 +7,16 @@ type PromptInput = Parameters<typeof buildStoryPrompt>[0];
 const BASE: PromptInput = {
   terms: [
     { id: "t1", term: "Idempotency", definition: "Same result when repeated." },
-    { id: "t2", term: "Backpressure", definition: "Slowing producers to match consumers." },
+    {
+      id: "t2",
+      term: "Backpressure",
+      definition: "Slowing producers to match consumers.",
+    },
   ],
   collectionName: "Distributed Systems",
   language: "en",
   format: findFormat("slack-thread")!,
   tone: findTone("humorous")!,
-  readingLevel: "plain",
   cefrLevel: "B1",
   outline: null,
   setting: "a rainy weekend at home",
@@ -28,7 +31,7 @@ function userPrompt(overrides: Partial<PromptInput> = {}) {
 describe("buildStoryPrompt", () => {
   it("opens with who the reader is and what success looks like", () => {
     expect(userPrompt()).toMatch(
-      /^You're writing a short reading passage for someone learning the terms in their collection "Distributed Systems", reading in English at CEFR B1/,
+      /^Short reading passage for a learner of the terms in collection "Distributed Systems", reading in English at CEFR B1/,
     );
   });
 
@@ -43,22 +46,26 @@ describe("buildStoryPrompt", () => {
     expect(prompt).toContain("reading in Dutch at CEFR B1");
     expect(prompt).not.toContain("Language: Dutch");
     expect(prompt).toContain("Language level: B1 (intermediate)");
-    expect(prompt).toContain("Term support: Give each term strong support");
     expect(prompt).toContain("Format: a Slack thread");
     expect(prompt).toContain("Tone: light and humorous.");
     expect(prompt).toContain("Length: 70 to 120 words, in 2 or 3 paragraphs");
   });
 
-  it("keeps sentence complexity out of term support", () => {
-    const prompt = userPrompt({ readingLevel: "expert" });
-    expect(prompt).toContain("Use the terms as an insider would, with no extra support.");
-    expect(prompt).not.toContain("densely");
+  it("leaves out how much help each term gets", () => {
+    expect(userPrompt()).not.toContain("Term support");
+    expect(buildStoryPrompt(BASE).system).not.toContain("Term support");
   });
 
   it("phrases level rules for any language and in the story's length unit", () => {
     const prompt = userPrompt({
       cefrLevel: "A1",
-      length: { min: 140, max: 240, unit: "characters", paragraphs: "3 to 5", turns: 12 },
+      length: {
+        min: 140,
+        max: 240,
+        unit: "characters",
+        paragraphs: "3 to 5",
+        turns: 12,
+      },
     });
     expect(prompt).toContain('everyday equivalents of "and" and "but"');
     expect(prompt).toContain("about 8 to 16 characters");
@@ -94,22 +101,20 @@ describe("buildStoryPrompt", () => {
   it("keeps the fixed rules in a system prompt that never changes", () => {
     const { system } = buildStoryPrompt(BASE);
     expect(buildStoryPrompt({ ...BASE, cefrLevel: "A1", language: "nl" }).system).toBe(system);
-    expect(system).toContain("If anything still conflicts, the language level wins.");
+    expect(system).toContain("If anything conflicts, the language level wins.");
     expect(system).toContain("One coherent piece");
     expect(system).toContain("Repeat a term only where a real writer would.");
-    expect(system).toContain("Don't force the listed base form");
+    expect(system).toContain("not forced to the listed base form");
     expect(system).toContain("Make sense. Silently settle");
-    expect(system).toContain("don't give a fact as its own reason");
+    expect(system).toContain("never give a fact as its own reason");
     expect(system).toContain("Sound like a real person wrote it");
     expect(system).toContain("never straight double quotes");
-    expect(system).toContain("[[the words used|term number]]");
-    expect(system).toContain("mark each part separately with the same term number");
-    expect(system).toContain("separable, reflexive or multi-word term, choose whole or split");
-    expect(system).toContain("no introduction, notes about the piece, length count or code fences");
+    expect(system).toContain("[[words as written|term number]]");
+    expect(system).toContain("mark each part separately with the same number");
+    expect(system).toContain("separable, reflexive or multi-word terms, choose whole or split");
+    expect(system).toContain("no introduction, notes, length count or code fences");
     expect(system).not.toContain("Distributed Systems");
-    expect(system).toContain(
-      "the jargon of a field they work or study in or the words of a new language",
-    );
+    expect(system).toContain("(field jargon or new-language words)");
     expect(system).not.toContain("learning vocabulary");
   });
 });

@@ -6,7 +6,6 @@ import {
   generateStoryAction,
   markStoryReadAction,
   voteStoryAction,
-  type StoryResult,
 } from "@/app/(private)/app/read/stories/actions";
 import { useToast } from "@/components/ui/toast";
 import type { AiFailureReason } from "@/lib/llm/types";
@@ -15,19 +14,15 @@ import type { StoriesSetupData } from "@/lib/stories/setup";
 import {
   DEFAULT_CEFR_LEVEL,
   DEFAULT_PIECE_LENGTH,
-  DEFAULT_READING_LEVEL,
   type CefrLevel,
   type PieceLength,
-  type ReadingLevel,
   type Story,
   type StoryLevels,
   type StoryTerm,
 } from "@/lib/stories/types";
 
 type StoryStep = "setup" | "generating" | "reading" | "error";
-
 const DEFAULT_LEVELS: StoryLevels = {
-  readingLevel: DEFAULT_READING_LEVEL,
   cefrLevel: DEFAULT_CEFR_LEVEL,
   pieceLength: DEFAULT_PIECE_LENGTH,
 };
@@ -42,7 +37,6 @@ export function useStorySession(setup: StoriesSetupData) {
   const initialLevels =
     (setup.initialCollectionId && setup.levelsByCollection[setup.initialCollectionId]) ||
     DEFAULT_LEVELS;
-  const [readingLevel, setReadingLevel] = useState<ReadingLevel>(initialLevels.readingLevel);
   const [cefrLevel, setCefrLevel] = useState<CefrLevel>(initialLevels.cefrLevel);
   const [pieceLength, setPieceLength] = useState<PieceLength>(initialLevels.pieceLength);
   const [outline, setOutline] = useState("");
@@ -60,7 +54,6 @@ export function useStorySession(setup: StoriesSetupData) {
   function selectCollection(nextCollectionId: string) {
     setCollectionId(nextCollectionId);
     const levels = levelsByCollection[nextCollectionId] ?? DEFAULT_LEVELS;
-    setReadingLevel(levels.readingLevel);
     setCefrLevel(levels.cefrLevel);
     setPieceLength(levels.pieceLength);
   }
@@ -75,7 +68,7 @@ export function useStorySession(setup: StoriesSetupData) {
     router.replace(query ? `/app/read/stories?${query}` : "/app/read/stories");
   }
 
-  function showStory(result: Extract<StoryResult, { story: Story }>) {
+  function showStory(result: { story: Story; terms: StoryTerm[] }) {
     setStory(result.story);
     setTerms(result.terms);
     setErrorMessage(null);
@@ -89,7 +82,7 @@ export function useStorySession(setup: StoriesSetupData) {
     setErrorMessage(null);
     setErrorReason(null);
 
-    const levels = { readingLevel, cefrLevel, pieceLength };
+    const levels = { cefrLevel, pieceLength };
     const result = await generateStoryAction({ collectionId, ...levels, outline });
     busyRef.current = false;
     // The balance may have changed either way, so refresh what shows it.
@@ -149,8 +142,6 @@ export function useStorySession(setup: StoriesSetupData) {
     step,
     collectionId,
     selectCollection,
-    readingLevel,
-    setReadingLevel,
     cefrLevel,
     setCefrLevel,
     pieceLength,

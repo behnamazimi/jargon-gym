@@ -8,11 +8,11 @@ import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
 import { storyLength } from "./length";
 import { parseStoryText } from "./markup";
-import { StoryGenerationError } from "./errors";
+import { StoryGenerationError, type StoryGenerationFailure } from "./errors";
 import { normalizeStory } from "./normalize";
 import { buildStoryPrompt } from "./prompt";
 import type { StyleOption } from "./styles";
-import type { CefrLevel, PieceLength, ReadingLevel, StorySegment, StoryTerm } from "./types";
+import type { CefrLevel, PieceLength, StorySegment, StoryTerm } from "./types";
 
 export type StoryProviderErrorKind = "auth" | "rate-limit" | "timeout" | "other";
 
@@ -29,7 +29,7 @@ export class StoryProviderError extends Error {
 
 // The Stories page is cut off at 60 seconds. Stopping earlier lets the failure
 // be reported and the credits refunded instead of the request being killed.
-const STORY_TIMEOUT_MS = 45_000;
+const STORY_TIMEOUT_MS = 55_000;
 
 type GenerateStoryInput = {
   provider: LlmProvider;
@@ -39,7 +39,6 @@ type GenerateStoryInput = {
   language: CollectionLanguage;
   format: StyleOption;
   tone: StyleOption;
-  readingLevel: ReadingLevel;
   cefrLevel: CefrLevel;
   pieceLength: PieceLength;
   outline: string | null;
@@ -48,7 +47,11 @@ type GenerateStoryInput = {
   observability?: AiObservabilityContext;
   /** Told each model call's usage, so a charged story can record its cost. */
   onUsage?: UsageTally["add"];
+  /** Told why a first attempt is being retried. */
+  onRetry?: (reason: StoryRetryReason) => void;
 };
+
+export type StoryRetryReason = StoryGenerationFailure | "provider";
 
 type GeneratedStory = { title: string; segments: StorySegment[]; termIds: string[] };
 
@@ -101,16 +104,30 @@ function failed(input: GenerateStoryInput, error: unknown, deadline: AbortSignal
   return toProviderError(error, deadline.aborted);
 }
 
+function retryReason(error: unknown): StoryRetryReason {
+  return error instanceof StoryGenerationError ? error.reason : "provider";
+}
+
 /** One retry, only for failures a second attempt can plausibly fix: a
  *  story that missed too many terms, a server error, or a network error.
  *  A rejected key, a rate limit, another client error or a timeout fails
- *  straight away. Both attempts share one time limit. */
+ *  straight away, and so does a first attempt that used up so much of the
+ *  time limit that a second could not finish. Both attempts share one time
+ *  limit. */
 export async function generateStory(input: GenerateStoryInput): Promise<GeneratedStory> {
   const deadline = AbortSignal.timeout(STORY_TIMEOUT_MS);
+  const startedAt = Date.now();
   try {
     return await requestStory(input, deadline);
   } catch (firstError) {
-    if (!isRetryable(firstError) || deadline.aborted) throw failed(input, firstError, deadline);
+    // A second attempt takes about as long as the first, so without that much
+    // time left it would only run into the limit.
+    const elapsed = Date.now() - startedAt;
+    const canFinishAnother = STORY_TIMEOUT_MS - elapsed >= elapsed;
+    if (!isRetryable(firstError) || deadline.aborted || !canFinishAnother) {
+      throw failed(input, firstError, deadline);
+    }
+    input.onRetry?.(retryReason(firstError));
     console.warn(
       `Story attempt failed, retrying (${input.provider}):`,
       describeFailure(firstError),

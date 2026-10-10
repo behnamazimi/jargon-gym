@@ -65,7 +65,7 @@ export function parseStoryText(reply: string, terms: StoryTerm[]): StoryGenerati
     .filter(Boolean);
 
   if (texts.some(hasBrokenMarker) || hasBrokenMarker(titleLine)) {
-    throw new StoryGenerationError("The story came back with a broken term marker.");
+    throw new StoryGenerationError("The story came back with a broken term marker.", "markup");
   }
   const paragraphs = texts.map((text) => ({ segments: readParagraph(text, termIdByNumber) }));
   return { title, paragraphs };

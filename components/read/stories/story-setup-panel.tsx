@@ -26,7 +26,7 @@ import {
 } from "@/lib/stories/types";
 import { aiAvailable, type AiAccessView } from "@/lib/llm/types";
 import { storyCreditUse } from "@/lib/stories/credit-fit";
-import { PieceLengthField, ReadingLevelField } from "@/components/read/stories/story-setup-fields";
+import { PieceLengthField } from "@/components/read/stories/story-setup-fields";
 import {
   StoryCreditGate,
   StoryFooterHint,
@@ -180,7 +180,6 @@ export function StorySetupPanel({
         />
       </Field>
 
-      <ReadingLevelField value={session.readingLevel} onChange={session.setReadingLevel} />
       <CefrLevelField value={session.cefrLevel} onChange={session.setCefrLevel} />
       <PieceLengthField
         value={session.pieceLength}

@@ -1345,7 +1345,7 @@ export type Database = {
           outline: string | null;
           piece_length: string;
           read_at: string | null;
-          reading_level: string;
+          reading_level: string | null;
           segments: Json;
           term_ids: string[];
           title: string;
@@ -1365,7 +1365,7 @@ export type Database = {
           outline?: string | null;
           piece_length?: string;
           read_at?: string | null;
-          reading_level: string;
+          reading_level?: string | null;
           segments: Json;
           term_ids: string[];
           title: string;
@@ -1385,7 +1385,7 @@ export type Database = {
           outline?: string | null;
           piece_length?: string;
           read_at?: string | null;
-          reading_level?: string;
+          reading_level?: string | null;
           segments?: Json;
           term_ids?: string[];
           title?: string;
@@ -1415,7 +1415,7 @@ export type Database = {
           cefr_level: string;
           collection_id: string;
           piece_length: string;
-          reading_level: string;
+          reading_level: string | null;
           updated_at: string;
           user_id: string;
         };
@@ -1423,7 +1423,7 @@ export type Database = {
           cefr_level: string;
           collection_id: string;
           piece_length?: string;
-          reading_level: string;
+          reading_level?: string | null;
           updated_at?: string;
           user_id: string;
         };
@@ -1431,7 +1431,7 @@ export type Database = {
           cefr_level?: string;
           collection_id?: string;
           piece_length?: string;
-          reading_level?: string;
+          reading_level?: string | null;
           updated_at?: string;
           user_id?: string;
         };

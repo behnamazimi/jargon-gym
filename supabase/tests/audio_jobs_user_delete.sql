@@ -32,8 +32,8 @@ begin
   insert into public.collections (id, name, owner_id) values (v_collection, 'Keep', pg_temp.make_user('other@example.test'));
   insert into public.terms (id, term, category, definition, collection_id) values (t1, 'One', 'c', 'd', v_collection);
   insert into public.stories
-    (id, user_id, language, format, tone, reading_level, cefr_level, title, segments, term_ids)
-  values (s1, u1, 'en', 'email', 'neutral', 'plain', 'B1', 'T', '[]'::jsonb,
+    (id, user_id, language, format, tone, cefr_level, title, segments, term_ids)
+  values (s1, u1, 'en', 'email', 'neutral', 'B1', 'T', '[]'::jsonb,
           array[gen_random_uuid(), gen_random_uuid(), gen_random_uuid()]);
   insert into public.audio_jobs (subject_type, subject_id, user_id, content_hash, hash_version, status, storage_path)
   values ('story', s1, u1, 'story-v2', 2, 'ready', 'stories/x/2/story-v2/b.mp3') returning id into j_story;

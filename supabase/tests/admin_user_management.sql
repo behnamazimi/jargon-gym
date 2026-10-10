@@ -206,7 +206,7 @@ begin
 
   execute 'reset role';
   delete from public.user_active_collections where user_id = other_id;
-  insert into public.story_collection_prefs (user_id, collection_id, reading_level, cefr_level) values (other_id, d_shared, 'plain', 'B1');
+  insert into public.story_collection_prefs (user_id, collection_id, cefr_level) values (other_id, d_shared, 'B1');
   perform pg_temp.act_as(admin_id);
   v_failed := false;
   begin perform public.admin_delete_user(member_id, 'um-member@example.test', 'x'); exception when sqlstate 'AD001' then v_failed := true; end;
