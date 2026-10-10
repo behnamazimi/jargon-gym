@@ -40,7 +40,7 @@ export const FSRS_WEIGHTS = [
   0.2, // w0, first-ever Again stability. FSRS-5: 0.4072.
   0.7, // w1, first-ever Hard stability. FSRS-5: 1.1829.
   3.1262,
-  5, // w3, first-ever Easy stability. FSRS-5: 15.4722 (back in ~25 days at the target).
+  7, // w3, first-ever Easy stability. FSRS-5: 15.4722 (back in ~25 days at the target).
   7.2102,
   0.5316,
   1.0651,
@@ -53,7 +53,7 @@ export const FSRS_WEIGHTS = [
   0.2975,
   2.2042,
   0.2407, // w15, unused: Hard blends Again and Good instead (HARD_LAPSE_BLEND).
-  1.3, // w16, Easy bonus over Good. FSRS-5: 2.9466.
+  2, // w16, Easy bonus over Good. FSRS-5: 2.9466.
   0.5034,
   0.6567,
 ] as const;

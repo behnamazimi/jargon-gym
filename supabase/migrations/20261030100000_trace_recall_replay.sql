@@ -30,7 +30,7 @@ returns double precision
 language sql immutable as $$
   select s * (1
     + exp(1.616) * (11 - d) * power(s, -0.8) * (exp(1.0824 * (1 - r)) - 1)
-    * case when g = 4 then 1.3 else 1 end)
+    * case when g = 4 then 2 else 1 end)
 $$;
 
 create function pg_temp.lapse_stability(d double precision, s double precision, r double precision)
@@ -106,7 +106,7 @@ begin
           reads, coalesce(extract(epoch from ev.created_at - last_read) / 86400, 0)
         );
         d := least(10, greatest(1, pg_temp.initial_difficulty(ev.grade) - 2 * fam));
-        s := (case ev.grade when 1 then 0.2 when 2 then 0.7 when 3 then 3.1262 else 5 end)
+        s := (case ev.grade when 1 then 0.2 when 2 then 0.7 when 3 then 3.1262 else 7 end)
            * (1 + 0.5 * fam);
       else
         elapsed := greatest(0, extract(epoch from ev.created_at - prev_at) / 86400);
