@@ -29,15 +29,15 @@ create function pg_temp.success_stability(d double precision, s double precision
 returns double precision
 language sql immutable as $$
   select s * (1
-    + exp(1.616) * (11 - d) * power(s, -0.65) * (exp(1.0824 * (1 - r)) - 1)
-    * case when g = 4 then 1.6 else 1 end)
+    + exp(1.616) * (11 - d) * power(s, -0.8) * (exp(1.0824 * (1 - r)) - 1)
+    * case when g = 4 then 1.4 else 1 end)
 $$;
 
 create function pg_temp.lapse_stability(d double precision, s double precision, r double precision)
 returns double precision
 language sql immutable as $$
   select least(
-    0.6935 * power(d, -0.0953) * (power(s + 1, 0.2975) - 1) * exp(2.2042 * (1 - r)),
+    0.4953 * power(d, -0.0953) * (power(s + 1, 0.2975) - 1) * exp(2.2042 * (1 - r)),
     s / exp(0.5034 * 0.6567)
   )
 $$;
@@ -45,8 +45,8 @@ $$;
 create function pg_temp.hard_stability(d double precision, s double precision, r double precision)
 returns double precision
 language sql immutable as $$
-  select power(pg_temp.lapse_stability(d, s, r), 0.65)
-       * power(pg_temp.success_stability(d, s, r, 3), 0.35)
+  select power(pg_temp.lapse_stability(d, s, r), 0.75)
+       * power(pg_temp.success_stability(d, s, r, 3), 0.25)
 $$;
 
 create function pg_temp.familiarity(reads bigint, days_since_read double precision)
@@ -106,7 +106,7 @@ begin
           reads, coalesce(extract(epoch from ev.created_at - last_read) / 86400, 0)
         );
         d := least(10, greatest(1, pg_temp.initial_difficulty(ev.grade) - 2 * fam));
-        s := (case ev.grade when 1 then 0.4072 when 2 then 1.1829 when 3 then 3.1262 else 8 end)
+        s := (case ev.grade when 1 then 0.4072 when 2 then 1.1829 when 3 then 3.1262 else 6 end)
            * (1 + 0.5 * fam);
       else
         elapsed := greatest(0, extract(epoch from ev.created_at - prev_at) / 86400);
