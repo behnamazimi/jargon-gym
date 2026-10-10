@@ -31,16 +31,16 @@ export const HARD = 2;
 export const GOOD = 3;
 export const EASY = 4;
 
-/** §4 FSRS-5 weights w0–w18. Four differ from the FSRS-5 defaults on purpose
+/** §4 FSRS-5 weights w0–w18. Six differ from the FSRS-5 defaults on purpose
  *  (2026-10-10): the defaults are fit to Anki users, and with them a few Goods
  *  sent a term away for years while Again and Hard barely brought it back.
  *  The changed ones make well-known terms move away more slowly and misses
  *  pull terms back harder, with no caps anywhere. */
 export const FSRS_WEIGHTS = [
-  0.4072,
-  1.1829,
+  0.2, // w0, first-ever Again stability. FSRS-5: 0.4072.
+  0.7, // w1, first-ever Hard stability. FSRS-5: 1.1829.
   3.1262,
-  6, // w3, first-ever Easy stability. FSRS-5: 15.4722 (back in ~25 days at the target).
+  5, // w3, first-ever Easy stability. FSRS-5: 15.4722 (back in ~25 days at the target).
   7.2102,
   0.5316,
   1.0651,
@@ -48,21 +48,21 @@ export const FSRS_WEIGHTS = [
   1.616,
   0.8, // w9, diminishing returns: the stronger a term, the less a success adds. FSRS-5: 0.1544.
   1.0824,
-  0.4953, // w11, how much a lapse keeps. FSRS-5: 1.9813 (this is 25% of it).
+  0.2972, // w11, how much a lapse keeps. FSRS-5: 1.9813 (this is 15% of it).
   0.0953,
   0.2975,
   2.2042,
   0.2407, // w15, unused: Hard blends Again and Good instead (HARD_LAPSE_BLEND).
-  1.4, // w16, Easy bonus over Good. FSRS-5: 2.9466.
+  1.3, // w16, Easy bonus over Good. FSRS-5: 2.9466.
   0.5034,
   0.6567,
 ] as const;
 
 /** §4 Hard is a partial recall, so its stability sits between what Again and
- *  Good would give: S_hard = S_again^h · S_good^(1−h). At 0.75 it leans toward
+ *  Good would give: S_hard = S_again^h · S_good^(1−h). At 0.85 it leans toward
  *  Again, so Hard pulls a strong term back and holds a fragile one in place.
  *  Stock FSRS-5 treats Hard as a weaker success that always grows stability. */
-export const HARD_LAPSE_BLEND = 0.75;
+export const HARD_LAPSE_BLEND = 0.85;
 
 /** §5 Bayesian recognition update — quiz slip allowance (still counts as "knows" when correct). */
 export const P_CORRECT_GIVEN_KNOWS = 0.95;
@@ -84,12 +84,12 @@ export const SESSION_COOLDOWN_RETRIEVABILITY = 0.98;
 /** §10 Where a never-graded term sits in Review's queue: it is ranked as if
  *  its recall retrievability were this. It works as Review's target: a learned
  *  term comes back once it decays below it, ahead of new terms, and terms above
- *  it wait behind new ones. Raised from 0.7 to 0.88 (2026-10-10): at 0.7 a term
+ *  it wait behind new ones. Raised from 0.7 to 0.89 (2026-10-10): at 0.7 a term
  *  was only shown once it was 30% likely to be forgotten, which made every wait
- *  about four times FSRS's and let each Good grow stability more. At 0.88 a term
- *  is back once it is 12% likely to be forgotten. Picked with the weights above
+ *  about four times FSRS's and let each Good grow stability more. At 0.89 a term
+ *  is back once it is 11% likely to be forgotten. Picked with the weights above
  *  from a simulated 90 days of 40 and 100 reviews a day (see docs/trace.md). */
-export const UNTESTED_RECALL_RETRIEVABILITY = 0.88;
+export const UNTESTED_RECALL_RETRIEVABILITY = 0.89;
 
 /** §10 The same line for Quiz, on recognition retrievability. Recognition
  *  stability tops out at 1 + RECOGNITION_STABILITY_SCALE days, so a higher line
