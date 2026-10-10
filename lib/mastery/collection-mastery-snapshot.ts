@@ -12,9 +12,10 @@ import {
   GOOD,
   HARD,
   isSameLocalDay,
-  STUDY_TIMEZONE,
+  studyTimezone,
   type ReviewGrade,
 } from "@/lib/trace";
+import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import type { CollectionRow } from "@/lib/library/collections";
 import {
   buildStatsSnapshot,
@@ -118,10 +119,15 @@ function lastActivityAtForContext(candidate: TraceCandidate, context: PickContex
   }
 }
 
-function countActivityToday(candidates: TraceCandidate[], context: PickContext, now: Date): number {
+function countActivityToday(
+  candidates: TraceCandidate[],
+  context: PickContext,
+  now: Date,
+  timeZone: string,
+): number {
   return candidates.filter((candidate) => {
     const lastActivityAt = lastActivityAtForContext(candidate, context);
-    return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, STUDY_TIMEZONE);
+    return lastActivityAt !== null && isSameLocalDay(lastActivityAt, now, timeZone);
   }).length;
 }
 
@@ -156,12 +162,15 @@ export async function fetchStatsSnapshot(
   const { collectionRows, reviewCollectionIds } = await resolveReviewCollectionIds(client, userId);
   if (collectionRows.length === 0) return EMPTY_WEB_STATS_SNAPSHOT;
 
-  const [candidates, gradeDistribution] = await Promise.all([
+  const [candidates, gradeDistribution, settings] = await Promise.all([
     fetchActiveTraceCandidates(client, userId),
     fetchGradeDistribution(client),
+    getStudyPhoneUserSettings(userId),
   ]);
 
   const now = new Date();
+  // The same day boundary as the streak, so "today" agrees with it.
+  const timeZone = studyTimezone(settings.timezone);
   const base = buildStatsSnapshot(collectionRows, reviewCollectionIds, candidates, now);
   const activeSet = new Set(reviewCollectionIds);
   const pausedCollections = collectionRows
@@ -172,9 +181,9 @@ export async function fetchStatsSnapshot(
   return {
     ...base,
     today: {
-      read: countActivityToday(candidates, "read", now),
-      review: countActivityToday(candidates, "review", now),
-      quiz: countActivityToday(candidates, "quiz", now),
+      read: countActivityToday(candidates, "read", now, timeZone),
+      review: countActivityToday(candidates, "review", now, timeZone),
+      quiz: countActivityToday(candidates, "quiz", now, timeZone),
     },
     pausedCollections,
     lifetimeTotals: sumLifetimeTotals(candidates),

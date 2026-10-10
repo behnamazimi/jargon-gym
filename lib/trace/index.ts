@@ -45,7 +45,7 @@ export {
   estimateMilestone,
 } from "./pace";
 export type { MasteryBucketCounts, PaceRate, MilestoneEstimate } from "./pace";
-export { STUDY_TIMEZONE, isSameLocalDay } from "./local-day";
+export { STUDY_TIMEZONE, isSameLocalDay, studyTimezone } from "./local-day";
 export {
   computeTraceSnapshot,
   applyReadEvent,
