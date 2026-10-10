@@ -101,7 +101,7 @@ export async function pickReadTermsForUser(
 
 /** Review: every term is eligible, ranked by R_r(t) ascending — most at
  *  risk of forgetting first. Terms with no recall history yet are ranked at
- *  UNTESTED_RETRIEVABILITY (§4b) rather than being excluded, so they can
+ *  UNTESTED_RECALL_RETRIEVABILITY (§4b) rather than being excluded, so they can
  *  receive their first grade. */
 export async function pickReviewTerms(
   client: Client,
@@ -147,7 +147,7 @@ export async function pickReviewTermsForUser(
 }
 
 /** Quiz: ranked by R_g(t) ascending, same shape as Review — terms with no
- *  quiz history yet are ranked at UNTESTED_RETRIEVABILITY (§5) rather than
+ *  quiz history yet are ranked at UNTESTED_RECOGNITION_RETRIEVABILITY (§5) rather than
  *  being excluded. */
 export async function pickQuizTerms(
   client: Client,

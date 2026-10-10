@@ -1,5 +1,6 @@
-/** §4 Recall trace (S_r, D_r) — from Review. Full FSRS-5, unmodified, using
- *  recall-before-reveal grades. S_r/D_r are null until the first Review —
+/** §4 Recall trace (S_r, D_r) — from Review. FSRS-5 with recall-before-reveal
+ *  grades, retuned weights (see FSRS_WEIGHTS) and one changed rule: Hard blends
+ *  the Again and Good outcomes (HARD_LAPSE_BLEND). S_r/D_r are null until the first Review —
  *  see §4b and applyReviewGrade below for the nullable-state / cold-start
  *  handoff from Familiarity. */
 
@@ -11,10 +12,11 @@ import {
   FSRS_WEIGHTS,
   GOOD,
   HARD,
-  RETRIEVABILITY_DECAY_SCALE,
+  HARD_LAPSE_BLEND,
+  RECALL_CURVE_DECAY,
+  RECALL_CURVE_FACTOR,
 } from "./constants";
 import { daysBetween } from "./decay";
-import { isSameLocalDay, STUDY_TIMEZONE } from "./local-day";
 import type { ReviewGrade } from "./types";
 
 const w = FSRS_WEIGHTS;
@@ -41,41 +43,47 @@ export function updateDifficulty(difficulty: number, grade: ReviewGrade): number
   return clampDifficulty(meanReverted);
 }
 
-function successBonus(grade: ReviewGrade): number {
-  if (grade === HARD) return w[15]!;
-  if (grade === GOOD) return 1;
-  return w[16]!; // EASY
-}
-
-/** Stability update on success (grade 2/3/4). */
+/** Stability update on a Good or Easy review. */
 export function updateStabilityOnSuccess(
   difficulty: number,
   stability: number,
   retrievability: number,
-  grade: ReviewGrade,
+  grade: typeof GOOD | typeof EASY,
 ): number {
   const factor =
     Math.exp(w[8]!) *
     (11 - difficulty) *
     stability ** -w[9]! *
     (Math.exp(w[10]! * (1 - retrievability)) - 1) *
-    successBonus(grade);
+    (grade === EASY ? w[16]! : 1);
 
   return stability * (1 + factor);
 }
 
-/** Stability update on lapse (grade 1, Again). */
+/** Stability update on lapse (grade 1, Again). As in FSRS-5, a lapse never
+ *  leaves more stability than a same-day Good would take away. */
 export function updateStabilityOnLapse(
   difficulty: number,
   stability: number,
   retrievability: number,
 ): number {
-  return (
+  const longTerm =
     w[11]! *
     difficulty ** -w[12]! *
     ((stability + 1) ** w[13]! - 1) *
-    Math.exp(w[14]! * (1 - retrievability))
-  );
+    Math.exp(w[14]! * (1 - retrievability));
+  return Math.min(longTerm, stability / Math.exp(w[17]! * w[18]!));
+}
+
+/** Stability update on Hard: between the Again and Good outcomes. */
+export function updateStabilityOnHard(
+  difficulty: number,
+  stability: number,
+  retrievability: number,
+): number {
+  const again = updateStabilityOnLapse(difficulty, stability, retrievability);
+  const good = updateStabilityOnSuccess(difficulty, stability, retrievability, GOOD);
+  return again ** HARD_LAPSE_BLEND * good ** (1 - HARD_LAPSE_BLEND);
 }
 
 /** Same-day re-review — stability-only special case. */
@@ -95,14 +103,22 @@ export function applyColdStartNudge(
   };
 }
 
-/** R_r(t) = (1 + t / (9·S_r))⁻¹. */
+/** R_r(t) = (1 + factor·t/S_r)^decay — FSRS-5's forgetting curve. */
 export function retrievability(stability: number, elapsedDays: number): number {
-  return 1 / (1 + elapsedDays / (RETRIEVABILITY_DECAY_SCALE * stability));
+  return (1 + (RECALL_CURVE_FACTOR * elapsedDays) / stability) ** RECALL_CURVE_DECAY;
+}
+
+/** Days after a review until R_r falls to `target` — the inverse of retrievability. */
+export function daysUntilRetrievability(stability: number, target: number): number {
+  return (stability / RECALL_CURVE_FACTOR) * (target ** (1 / RECALL_CURVE_DECAY) - 1);
 }
 
 /** Orchestrates one Review grade against the current recall state — null
  *  when this is the term's first-ever Review (nullable state, §4b), in
- *  which case familiarity feeds the cold-start nudge instead of a prior S/D. */
+ *  which case familiarity feeds the cold-start nudge instead of a prior S/D.
+ *  Stability is computed from the difficulty before this grade, as FSRS-5
+ *  does, and a review less than a day after the last one takes the
+ *  short-term branch. */
 export function applyReviewGrade(
   current: { stability: number; difficulty: number } | null,
   grade: ReviewGrade,
@@ -117,17 +133,20 @@ export function applyReviewGrade(
   }
 
   const elapsedDays = lastReviewAt ? daysBetween(lastReviewAt, now) : 0;
-  const r = retrievability(current.stability, elapsedDays);
-  const nextDifficulty = updateDifficulty(current.difficulty, grade);
+  const difficulty = updateDifficulty(current.difficulty, grade);
 
-  if (lastReviewAt && isSameLocalDay(lastReviewAt, now, STUDY_TIMEZONE)) {
-    return { stability: sameDayStability(current.stability, grade), difficulty: nextDifficulty };
+  if (lastReviewAt && elapsedDays < 1) {
+    return { stability: sameDayStability(current.stability, grade), difficulty };
   }
 
-  const nextStability =
+  const r = retrievability(current.stability, elapsedDays);
+  const d = current.difficulty;
+  const stability =
     grade === AGAIN
-      ? updateStabilityOnLapse(nextDifficulty, current.stability, r)
-      : updateStabilityOnSuccess(nextDifficulty, current.stability, r, grade);
+      ? updateStabilityOnLapse(d, current.stability, r)
+      : grade === HARD
+        ? updateStabilityOnHard(d, current.stability, r)
+        : updateStabilityOnSuccess(d, current.stability, r, grade);
 
-  return { stability: nextStability, difficulty: nextDifficulty };
+  return { stability, difficulty };
 }

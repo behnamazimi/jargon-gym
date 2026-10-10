@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { UNTESTED_RETRIEVABILITY } from "./constants";
+import { UNTESTED_RECALL_RETRIEVABILITY } from "./constants";
+import { daysUntilRetrievability } from "./recall";
 import { rankQuizQueue, rankReadQueue, rankReviewQueue, recallRetrievabilityNow } from "./queue";
 import type { TraceCandidate } from "./types";
 
@@ -96,10 +97,12 @@ describe("rankReviewQueue", () => {
       makeCandidate({
         termId: "decayed",
         recallStability: 1,
-        lastReviewRecallAt: new Date("2026-01-01"), // R ≈ 0.23, well under UNTESTED_RETRIEVABILITY
+        lastReviewRecallAt: new Date("2026-01-01"), // R ≈ 0.35, well under the untested line
       }),
     ];
-    expect(recallRetrievabilityNow(candidates[1]!, NOW)).toBeLessThan(UNTESTED_RETRIEVABILITY);
+    expect(recallRetrievabilityNow(candidates[1]!, NOW)).toBeLessThan(
+      UNTESTED_RECALL_RETRIEVABILITY,
+    );
     expect(rankReviewQueue(candidates, NOW).map((c) => c.termId)).toEqual([
       "decayed",
       "never-graded",
@@ -111,11 +114,13 @@ describe("rankReviewQueue", () => {
       makeCandidate({
         termId: "holding",
         recallStability: 20,
-        lastReviewRecallAt: new Date("2026-01-15"), // R ≈ 0.91, above UNTESTED_RETRIEVABILITY
+        lastReviewRecallAt: new Date("2026-01-15"), // R ≈ 0.91, above the untested line
       }),
       makeCandidate({ termId: "never-graded" }),
     ];
-    expect(recallRetrievabilityNow(candidates[0]!, NOW)).toBeGreaterThan(UNTESTED_RETRIEVABILITY);
+    expect(recallRetrievabilityNow(candidates[0]!, NOW)).toBeGreaterThan(
+      UNTESTED_RECALL_RETRIEVABILITY,
+    );
     expect(rankReviewQueue(candidates, NOW).map((c) => c.termId)).toEqual([
       "never-graded",
       "holding",
@@ -123,15 +128,15 @@ describe("rankReviewQueue", () => {
   });
 
   it("breaks a tie at the untested line by oldest term first", () => {
-    // R = 1 / (1 + t / (9·S)) equals the line after 9 days when S = p / (1 − p).
-    const stability = UNTESTED_RETRIEVABILITY / (1 - UNTESTED_RETRIEVABILITY);
+    // Days to reach a given R scale with S, so this S reaches the line after exactly 9 days.
+    const stability = 9 / daysUntilRetrievability(1, UNTESTED_RECALL_RETRIEVABILITY);
     const atTheLine = makeCandidate({
       termId: "learned",
       createdAt: new Date("2026-01-02"),
       recallStability: stability,
       lastReviewRecallAt: new Date(NOW.getTime() - 9 * 24 * 60 * 60 * 1000),
     });
-    expect(recallRetrievabilityNow(atTheLine, NOW)).toBeCloseTo(UNTESTED_RETRIEVABILITY, 10);
+    expect(recallRetrievabilityNow(atTheLine, NOW)).toBeCloseTo(UNTESTED_RECALL_RETRIEVABILITY, 10);
 
     const older = makeCandidate({ termId: "never-graded", createdAt: new Date("2026-01-01") });
     expect(rankReviewQueue([atTheLine, older], NOW).map((c) => c.termId)).toEqual([

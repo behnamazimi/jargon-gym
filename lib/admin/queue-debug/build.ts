@@ -127,7 +127,9 @@ function cooldownRows(
       difficulty: review ? item.recallDifficulty : null,
       posterior: review ? null : item.quizKnowledgePosterior,
       lastAt,
-      returnsAt: lastAt ? cooldownEndsAt(stability, lastAt) : null,
+      returnsAt: lastAt
+        ? cooldownEndsAt(review ? "recall" : "recognition", stability, lastAt)
+        : null,
     });
   }
   return rows.sort(byReturn);
