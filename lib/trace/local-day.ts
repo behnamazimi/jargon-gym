@@ -9,12 +9,17 @@ export const STUDY_TIMEZONE = "Europe/Amsterdam";
 
 /** The person's saved timezone if it's one the runtime knows, else STUDY_TIMEZONE. */
 export function studyTimezone(saved: string | null | undefined): string {
-  if (!saved) return STUDY_TIMEZONE;
+  return saved && isKnownTimeZone(saved) ? saved : STUDY_TIMEZONE;
+}
+
+/** Intl throws on a timezone it doesn't know. The saved value comes from the
+ *  browser, so check it before the day math relies on it. */
+function isKnownTimeZone(timeZone: string): boolean {
   try {
-    new Intl.DateTimeFormat("en-CA", { timeZone: saved });
-    return saved;
+    new Intl.DateTimeFormat(undefined, { timeZone });
+    return true;
   } catch {
-    return STUDY_TIMEZONE;
+    return false;
   }
 }
 
