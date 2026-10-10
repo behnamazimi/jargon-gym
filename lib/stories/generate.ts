@@ -29,7 +29,7 @@ export class StoryProviderError extends Error {
 
 // The Stories page is cut off at 60 seconds. Stopping earlier lets the failure
 // be reported and the credits refunded instead of the request being killed.
-const STORY_TIMEOUT_MS = 45_000;
+const STORY_TIMEOUT_MS = 59_000;
 
 type GenerateStoryInput = {
   provider: LlmProvider;
