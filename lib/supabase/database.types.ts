@@ -1341,7 +1341,6 @@ export type Database = {
           format: string;
           id: string;
           language: string;
-          new_term_ids: string[];
           outline: string | null;
           piece_length: string;
           read_at: string | null;
@@ -1360,7 +1359,6 @@ export type Database = {
           format: string;
           id?: string;
           language: string;
-          new_term_ids?: string[];
           outline?: string | null;
           piece_length?: string;
           read_at?: string | null;
@@ -1379,7 +1377,6 @@ export type Database = {
           format?: string;
           id?: string;
           language?: string;
-          new_term_ids?: string[];
           outline?: string | null;
           piece_length?: string;
           read_at?: string | null;

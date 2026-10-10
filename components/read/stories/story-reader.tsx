@@ -112,7 +112,6 @@ function StoryHeader({
 }
 
 function StoryGlossary({ story, termById }: { story: Story; termById: Map<string, StoryTerm> }) {
-  const newTermIds = new Set(story.newTermIds);
   const occurrences = [...firstOccurrences(story)];
 
   return (
@@ -143,9 +142,7 @@ function StoryGlossary({ story, termById }: { story: Story; termById: Map<string
                 <div className="flex items-center justify-between gap-2">
                   <p className="m-0 min-w-0 text-sm font-medium text-base-content">{term.term}</p>
                   <div className="-me-1.5 flex shrink-0 items-center gap-1">
-                    {newTermIds.has(termId) ? (
-                      <StoryMarkKnown termId={termId} term={term.term} />
-                    ) : null}
+                    <StoryMarkKnown termId={termId} term={term.term} />
                     <Link
                       href={termHref(termId, story)}
                       aria-label={`Open ${term.term}`}

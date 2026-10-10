@@ -131,9 +131,6 @@ export async function writeStory(auth: Auth, rawInput: unknown): Promise<StoryRe
         title: generated.title,
         segments: generated.segments,
         termIds: generated.termIds,
-        newTermIds: cards
-          .filter((card) => card.isNewToUser && usedIds.has(card.id))
-          .map((card) => card.id),
       });
       return { story, usedIds };
     };

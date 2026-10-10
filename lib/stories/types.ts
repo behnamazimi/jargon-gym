@@ -45,7 +45,6 @@ export type Story = {
   title: string;
   segments: StorySegment[];
   termIds: string[];
-  newTermIds: string[];
   vote: -1 | 1 | null;
   readAt: string | null;
 };
