@@ -265,6 +265,7 @@ export function ReviewPage({
       reduceMotion={reduceMotion}
       narrationAccess={narrationAccess}
       swipeEnabled={options.swipe}
+      showNextReview={options.showNextReview}
       collectionControl={collectionControl}
       optionsControl={optionsControl}
       narrationHandleRef={narrationRef}

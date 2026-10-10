@@ -37,6 +37,27 @@ function withIsNewToUser(cards: TermCard[], candidates: TraceCandidate[]): TermC
   }));
 }
 
+/** Review copies the candidate's recall facts onto the card so the grade
+ *  buttons can say when the term comes back. */
+function withRecall(cards: TermCard[], candidates: TraceCandidate[]): TermCard[] {
+  const byId = new Map(candidates.map((c) => [c.termId, c]));
+  return cards.map((card) => {
+    const candidate = byId.get(card.id);
+    return candidate
+      ? {
+          ...card,
+          recall: {
+            stability: candidate.recallStability,
+            difficulty: candidate.recallDifficulty,
+            lastReviewAt: candidate.lastReviewRecallAt?.toISOString() ?? null,
+            readCount: candidate.readCount,
+            lastReadAt: candidate.lastReadAt?.toISOString() ?? null,
+          },
+        }
+      : card;
+  });
+}
+
 /** Quiz copies the candidate's recognition facts onto the card so the quiz can
  *  tell how well each term is known. */
 function withRecognition(cards: TermCard[], candidates: TraceCandidate[]): TermCard[] {
@@ -119,7 +140,7 @@ export async function pickReviewTerms(
     client,
     ranked.map((c) => c.termId),
   );
-  return withIsNewToUser(cards, ranked);
+  return withRecall(withIsNewToUser(cards, ranked), ranked);
 }
 
 /** Service-role counterpart of {@link pickReviewTerms} (Telegram). */
@@ -143,7 +164,7 @@ export async function pickReviewTermsForUser(
     userId,
     ranked.map((c) => c.termId),
   );
-  return withIsNewToUser(cards, ranked);
+  return withRecall(withIsNewToUser(cards, ranked), ranked);
 }
 
 /** Quiz: ranked by R_g(t) ascending, same shape as Review — terms with no

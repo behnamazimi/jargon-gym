@@ -17,6 +17,7 @@ export function toReviewTerm(card: TermCard): ReviewTerm {
     collectionName: card.collectionName,
     collectionLanguage: card.collectionLanguage,
     isNewToUser: card.isNewToUser,
+    recall: card.recall,
     relationships: card.relationships.map((rel, index) => ({
       id: `${card.id}-${rel.direction}-${index}`,
       relationshipType: rel.relationshipType,

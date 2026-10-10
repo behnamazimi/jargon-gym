@@ -27,10 +27,20 @@ describe("getReviewOptions", () => {
 
   it("maps the stored columns", async () => {
     const options = await getReviewOptions(
-      readClient({ review_narrate_on_reveal: true, review_swipe: false, review_keep_awake: true }),
+      readClient({
+        review_narrate_on_reveal: true,
+        review_swipe: false,
+        review_keep_awake: true,
+        review_show_next_review: false,
+      }),
       "u2",
     );
-    expect(options).toEqual({ narrateOnReveal: true, swipe: false, keepAwake: true });
+    expect(options).toEqual({
+      narrateOnReveal: true,
+      swipe: false,
+      keepAwake: true,
+      showNextReview: false,
+    });
   });
 });
 

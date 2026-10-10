@@ -3,6 +3,7 @@ import type { PressEvent } from "react-aria-components";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, type ButtonVariant } from "@/components/ui/button";
 import { canMoveForward } from "@/lib/review/keyboard";
+import { describeNextReview, formatNextReview, nextReviewDays } from "@/lib/review/next-review";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import type { ReviewRating, ReviewTerm } from "@/lib/review/types";
 import { ReviewCard } from "@/components/review/review-card";
@@ -53,6 +54,7 @@ type ReviewPlayingStepProps = {
   reduceMotion: boolean;
   narrationAccess: boolean;
   swipeEnabled: boolean;
+  showNextReview: boolean;
   collectionControl: ReactNode;
   optionsControl: ReactNode;
   narrationHandleRef: Ref<TermNarrationHandle>;
@@ -72,6 +74,7 @@ export function ReviewPlayingStep({
   reduceMotion,
   narrationAccess,
   swipeEnabled,
+  showNextReview,
   collectionControl,
   optionsControl,
   narrationHandleRef,
@@ -83,6 +86,10 @@ export function ReviewPlayingStep({
 }: ReviewPlayingStepProps) {
   const rated = currentRating !== undefined;
   const showForward = canMoveForward({ revealed: currentRevealed, rated });
+  // Worked out on every render, so it is current when the card is revealed.
+  // Also while hidden, so the buttons keep their height when they appear.
+  const nextReview =
+    showNextReview && currentCard.recall ? nextReviewDays(currentCard.recall, new Date()) : null;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -151,12 +158,23 @@ export function ReviewPlayingStep({
                 releaseFocusAfterPointerPress(event);
                 onRate(grade);
               }}
+              aria-label={
+                nextReview
+                  ? `${GRADE_LABELS[grade]}, ${describeNextReview(nextReview[grade])}`
+                  : undefined
+              }
               className={cn(
                 SOFT_ACTION_BUTTON_CLASS,
+                nextReview && "h-auto flex-col gap-0 py-1.5 leading-tight",
                 currentRating?.grade === grade && "ring-2 ring-primary/50",
               )}
             >
               {GRADE_LABELS[grade]}
+              {nextReview ? (
+                <span className="text-xs font-normal tabular-nums opacity-70">
+                  {formatNextReview(nextReview[grade])}
+                </span>
+              ) : null}
             </Button>
           ))}
         </div>

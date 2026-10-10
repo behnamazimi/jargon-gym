@@ -5,6 +5,7 @@
  *  @see docs/trace-formula.md
  */
 
+import { AGAIN, EASY, GOOD, HARD, UNTESTED_RECALL_RETRIEVABILITY } from "./constants";
 import { daysBetween } from "./decay";
 import { familiarityUsed, computeFamiliarity } from "./familiarity";
 import {
@@ -15,6 +16,7 @@ import {
 } from "./mastery";
 import {
   applyReviewGrade as applyRecallGrade,
+  daysUntilRetrievability,
   retrievability as recallRetrievability,
 } from "./recall";
 import {
@@ -90,6 +92,25 @@ export function applyReviewGrade(
 
   const next = applyRecallGrade(current, grade, familiarity, now, state.lastReviewRecallAt);
   return { recallStability: next.stability, recallDifficulty: next.difficulty };
+}
+
+/** Days after a grade given now until the term falls back to Review's line
+ *  (UNTESTED_RECALL_RETRIEVABILITY), for each grade. An estimate of when it
+ *  comes back: the queue serves it then, ahead of new terms, unless other
+ *  terms have faded further. */
+export function daysUntilNextReview(
+  state: Pick<
+    TraceState,
+    "readCount" | "lastReadAt" | "recallStability" | "recallDifficulty" | "lastReviewRecallAt"
+  >,
+  now: Date,
+): Record<ReviewGrade, number> {
+  const days = (grade: ReviewGrade) =>
+    daysUntilRetrievability(
+      applyReviewGrade(state, grade, now).recallStability,
+      UNTESTED_RECALL_RETRIEVABILITY,
+    );
+  return { [AGAIN]: days(AGAIN), [HARD]: days(HARD), [GOOD]: days(GOOD), [EASY]: days(EASY) };
 }
 
 /** Quiz answer: posterior update, softened on failure by current recall

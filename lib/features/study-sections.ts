@@ -43,7 +43,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Review",
-        body: "Try to recall it, then check yourself and say how well you knew it.",
+        body: "Try to recall it, then check yourself and say how well you knew it. Each answer shows roughly when the term comes back.",
       },
       {
         title: "Quiz",
