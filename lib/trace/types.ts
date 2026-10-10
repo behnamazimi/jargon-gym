@@ -58,4 +58,8 @@ export type TraceCandidate = TraceState & {
   everMasteredAt: Date | null;
   everLearningAt: Date | null;
   markedKnownAt: Date | null;
+
+  /** Grade of the latest Review, null until the term is first graded. Review
+   *  ranking brings a term last graded Again or Hard back sooner. */
+  lastReviewGrade: ReviewGrade | null;
 };

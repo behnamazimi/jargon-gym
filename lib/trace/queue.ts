@@ -6,10 +6,15 @@
  *  come ahead of the rest. Excluding it instead would mean no term could ever
  *  receive its first grade — Review/Quiz would stay empty forever, since the
  *  only way a term gets real S_r/posterior is by being graded through this
- *  same queue. */
+ *  same queue. In Review, a term last graded Again or Hard gets a higher line
+ *  (see reviewDueLine). */
 
 import {
+  AGAIN,
   FAMILIARITY_DECAY_SCALE_DAYS,
+  HARD,
+  LAPSE_AGAIN_DUE_RETRIEVABILITY,
+  LAPSE_HARD_DUE_RETRIEVABILITY,
   READ_TEMPER_WEIGHT,
   RETRIEVABILITY_DECAY_SCALE,
   SESSION_COOLDOWN_RETRIEVABILITY,
@@ -114,21 +119,44 @@ export function rankReadQueue(candidates: TraceCandidate[], now: Date): TraceCan
     .map(({ candidate }) => candidate);
 }
 
-/** Review: every term is eligible. Ranked by R_r(t) ascending — most at
+/** The retrievability below which a learned term goes ahead of never-graded
+ *  ones. UNTESTED_RETRIEVABILITY for most terms; higher for a term whose last
+ *  Review grade was Again or Hard, so a failed term is not left waiting behind
+ *  new ones. */
+export function reviewDueLine(candidate: Pick<TraceCandidate, "lastReviewGrade">): number {
+  const lapseLine =
+    candidate.lastReviewGrade === AGAIN
+      ? LAPSE_AGAIN_DUE_RETRIEVABILITY
+      : candidate.lastReviewGrade === HARD
+        ? LAPSE_HARD_DUE_RETRIEVABILITY
+        : 0;
+  return Math.max(UNTESTED_RETRIEVABILITY, lapseLine);
+}
+
+/** What Review sorts by, lowest first. Equals R_r(t) for most terms and
+ *  UNTESTED_RETRIEVABILITY for a never-graded one. A term with a higher due
+ *  line is scaled so its key falls below UNTESTED_RETRIEVABILITY exactly when
+ *  R_r(t) falls below that line. */
+export function reviewSortKey(candidate: TraceCandidate, now: Date): number {
+  const r = recallRetrievabilityNow(candidate, now);
+  if (r === null) return UNTESTED_RETRIEVABILITY;
+  return r * (UNTESTED_RETRIEVABILITY / reviewDueLine(candidate));
+}
+
+/** Review: every term is eligible. Ranked by reviewSortKey ascending — most at
  *  risk of forgetting first — with never-graded terms placed at
- *  UNTESTED_RETRIEVABILITY, so a learned term that has decayed below it goes
- *  ahead of them and the rest wait behind. Same-session repeats are excluded
- *  via the §6 cooldown (never-graded terms can't be a repeat, so the cooldown
- *  never touches them). Ties (including the untested tier) break by oldest
- *  term first. */
+ *  UNTESTED_RETRIEVABILITY, so a learned term that has decayed below its due
+ *  line goes ahead of them and the rest wait behind. Same-session repeats are
+ *  excluded via the §6 cooldown, which looks at the real R_r(t) (never-graded
+ *  terms can't be a repeat, so the cooldown never touches them). Ties
+ *  (including the untested tier) break by oldest term first. */
 export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceCandidate[] {
   return candidates
-    .map((c) => ({
-      candidate: c,
-      r: recallRetrievabilityNow(c, now) ?? UNTESTED_RETRIEVABILITY,
-    }))
-    .filter(({ r }) => r <= SESSION_COOLDOWN_RETRIEVABILITY)
-    .sort((a, b) => a.r - b.r || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime())
+    .filter((c) => (recallRetrievabilityNow(c, now) ?? 0) <= SESSION_COOLDOWN_RETRIEVABILITY)
+    .map((c) => ({ candidate: c, key: reviewSortKey(c, now) }))
+    .sort(
+      (a, b) => a.key - b.key || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime(),
+    )
     .map(({ candidate }) => candidate);
 }
 

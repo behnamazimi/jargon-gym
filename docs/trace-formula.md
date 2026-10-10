@@ -163,6 +163,7 @@ The decay formulas only resolve at day-scale; they don't prevent same-session re
 
 - Exclude any term with `R(t) > 0.98` from that tier's queue for the rest of the current session.
 - Across days, no cooldown needed — decayed R(t) naturally sorts recently-passed terms to the bottom of the queue.
+- The cooldown always uses real `R(t)`, including for the lapse lane in §10.
 
 ---
 
@@ -215,15 +216,17 @@ Queues still rank by raw `R(t)` ascending regardless of pool, **not** by Mastery
 
 ## 10. Per-tier queues (no due dates)
 
-| Tier   | Eligible when                                | Sort by                          | Notes                            |
-| ------ | -------------------------------------------- | -------------------------------- | -------------------------------- |
-| Read   | always                                       | lowest exposure count / lowest F | or content order                 |
-| Review | ≥1 Read done (S_r ≠ null after first grade)  | R_r(t) ascending                 | most at-risk of forgetting first |
-| Quiz   | ≥1 Read done (S_g ≠ null after first answer) | R_g(t) ascending                 | most at-risk of forgetting first |
+| Tier   | Eligible when                                | Sort by                             | Notes                            |
+| ------ | -------------------------------------------- | ----------------------------------- | -------------------------------- |
+| Read   | always                                       | lowest exposure count / lowest F    | or content order                 |
+| Review | ≥1 Read done (S_r ≠ null after first grade)  | R_r(t) ascending (lapse lane below) | most at-risk of forgetting first |
+| Quiz   | ≥1 Read done (S_g ≠ null after first answer) | R_g(t) ascending                    | most at-risk of forgetting first |
 
 This isn't a separate rule to enforce — it falls directly out of Sections 4b/5's nullable-state design. A term with no S_r simply has no `R_r(t)` to rank by, so it can't appear in the Review queue; same for Quiz. No manual gating logic needed beyond "don't rank what you can't compute."
 
 (As shipped, a term with no state is not left out of the queue: it sorts as if its `R(t)` were 0.7, so decayed terms go first. See [trace.md](./trace.md).)
+
+**Lapse lane (Review only).** A term whose last Review grade was Again or Hard is due, and goes ahead of never-graded terms, once `R_r(t)` falls below a higher line `L` (0.81 for Again, 0.78 for Hard) instead of 0.7. The Review sort key is `R_r(t) · (0.7 / L)` for such a term and `R_r(t)` for every other, so the key is below 0.7 exactly when `R_r(t) < L`. The scaling applies at every `R_r(t)`, not only below `L`, so once no never-graded terms are left a lane term is served a little earlier than its recall alone says, until its next Good or Easy. The grade is stored as `review_state.last_review_grade` and does not enter any FSRS formula. There is no cap: a term that keeps getting Again is due about once a day and always goes ahead of new terms, as in plain FSRS.
 
 Nothing is ever locked or overdue for terms that _are_ eligible. Opening a tier the user hasn't touched in weeks just surfaces its weakest terms first.
 
@@ -231,19 +234,20 @@ Nothing is ever locked or overdue for terms that _are_ eligible. Opening a tier 
 
 ## 11. Default parameters (starting point — tune from real usage data)
 
-| Param                      | Value         | Meaning                                      |
-| -------------------------- | ------------- | -------------------------------------------- |
-| w_f                        | 0.3           | familiarity growth rate                      |
-| k                          | 0.5           | exposure diminishing-returns rate            |
-| cap_F                      | 0.35          | max mastery contribution from Read alone     |
-| λD, λS                     | 2, 0.5        | cold-start nudge from familiarity            |
-| P(correct\|knows)          | 0.95          | quiz slip allowance                          |
-| P(correct\|guess) MCQ / TF | 0.25 / 0.50   | guess-rate correction                        |
-| k_g                        | 15            | posterior → stability scale                  |
-| wF, wR, wG                 | 0.2, 0.5, 0.3 | mastery blend weights                        |
-| known / unknown threshold  | 0.8 / 0.6     | pool hysteresis                              |
-| cooldown R threshold       | 0.98          | same-session repeat suppression              |
-| untested-term R            | 0.7           | where a never-graded term sorts in the queue |
+| Param                      | Value         | Meaning                                                              |
+| -------------------------- | ------------- | -------------------------------------------------------------------- |
+| w_f                        | 0.3           | familiarity growth rate                                              |
+| k                          | 0.5           | exposure diminishing-returns rate                                    |
+| cap_F                      | 0.35          | max mastery contribution from Read alone                             |
+| λD, λS                     | 2, 0.5        | cold-start nudge from familiarity                                    |
+| P(correct\|knows)          | 0.95          | quiz slip allowance                                                  |
+| P(correct\|guess) MCQ / TF | 0.25 / 0.50   | guess-rate correction                                                |
+| k_g                        | 15            | posterior → stability scale                                          |
+| wF, wR, wG                 | 0.2, 0.5, 0.3 | mastery blend weights                                                |
+| known / unknown threshold  | 0.8 / 0.6     | pool hysteresis                                                      |
+| cooldown R threshold       | 0.98          | same-session repeat suppression                                      |
+| untested-term R            | 0.7           | where a never-graded term sorts in the queue                         |
+| lapse lane, Again / Hard   | 0.81 / 0.78   | Review: recall below this makes a failed term due ahead of new terms |
 
 ---
 
@@ -252,3 +256,4 @@ Nothing is ever locked or overdue for terms that _are_ eligible. Opening a tier 
 - wF/wR/wG weights and cap_F are reasoned defaults, not fit — revisit once you have real pass/fail logs.
 - Recognition-vs-recall gap (how much lower S_g tends to run vs S_r) should get measured per-user over time rather than assumed.
 - Familiarity decay shape (currently a simple hyperbola) could be replaced with something fit to actual re-Read behavior once you have it.
+- The lapse lines (0.81 and 0.78) and the untested line (0.7) come from a simulation, not real use. From `review_events`, measure the median time to the next Review after Again and after Hard, the share of Again and Hard terms already forgotten when they return, and how fast new terms are introduced, then retune.

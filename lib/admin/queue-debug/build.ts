@@ -1,5 +1,8 @@
 import {
+  AGAIN,
+  HARD,
   SESSION_COOLDOWN_RETRIEVABILITY,
+  UNTESTED_RETRIEVABILITY,
   computeReadExposure,
   computeReadTempering,
   cooldownEndsAt,
@@ -10,6 +13,7 @@ import {
   READ_TEMPER_WEIGHT,
   recallRetrievabilityNow,
   recognitionRetrievabilityNow,
+  reviewSortKey,
   type TraceCandidate,
 } from "@/lib/trace";
 
@@ -41,6 +45,10 @@ export type TierRow = {
   item: QueueDebugTerm;
   /** Null when the term has never been graded (Review) or answered (Quiz). */
   retrievability: number | null;
+  /** What the tier sorts by, lowest first. Differs from retrievability for a lane term. */
+  sortKey: number;
+  /** Review only: the term was last graded Again or Hard and its recall is below that line, so it sorts ahead of new terms. */
+  lane: "again" | "hard" | null;
 };
 
 export type CooldownRow = {
@@ -97,6 +105,11 @@ function byReturn(a: CooldownRow, b: CooldownRow): number {
     return Number(a.returnsAt === null) - Number(b.returnsAt === null);
   }
   return a.returnsAt.getTime() - b.returnsAt.getTime();
+}
+
+function laneOf(c: TraceCandidate, now: Date): TierRow["lane"] {
+  if (reviewSortKey(c, now) >= UNTESTED_RETRIEVABILITY) return null;
+  return c.lastReviewGrade === AGAIN ? "again" : c.lastReviewGrade === HARD ? "hard" : null;
 }
 
 function cooldownRows(
@@ -170,6 +183,11 @@ export function buildQueueDebug(terms: QueueDebugTerm[], options: QueueDebugOpti
       item: byId.get(c.termId)!,
       retrievability:
         track === "review" ? recallRetrievabilityNow(c, now) : recognitionRetrievabilityNow(c, now),
+      sortKey:
+        track === "review"
+          ? reviewSortKey(c, now)
+          : (recognitionRetrievabilityNow(c, now) ?? UNTESTED_RETRIEVABILITY),
+      lane: track === "review" ? laneOf(c, now) : null,
     })),
   });
 

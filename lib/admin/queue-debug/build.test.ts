@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { AGAIN, GOOD } from "@/lib/trace";
 import { buildQueueDebug, excludedReasons, type QueueDebugTerm } from "./build";
 
 const NOW = new Date("2026-10-06T12:00:00Z");
@@ -21,6 +22,7 @@ function term(id: string, overrides: Partial<QueueDebugTerm> = {}): QueueDebugTe
     everMasteredAt: null,
     everLearningAt: null,
     markedKnownAt: null,
+    lastReviewGrade: null,
     term: id,
     collectionName: "Standup",
     active: true,
@@ -58,6 +60,39 @@ describe("buildQueueDebug", () => {
 
     expect(debug.review.rows.map((r) => r.item.termId)).toEqual(["decayed", "a", "b"]);
     expect(debug.review.rows.map((r) => r.nextBatch)).toEqual([true, true, false]);
+  });
+
+  it("puts an Again term ahead of never-graded terms and shows its lane and sort key", () => {
+    // S = 2, 4.5 days on: R = 0.8 — above the normal line, so only the Again lane makes it due
+    const lapsed = term("lapsed", {
+      recallStability: 2,
+      lastReviewRecallAt: new Date(NOW.getTime() - 4.5 * DAY),
+      lastReviewGrade: AGAIN,
+    });
+    const passed = term("passed", {
+      recallStability: 2,
+      lastReviewRecallAt: new Date(NOW.getTime() - 4.5 * DAY),
+      lastReviewGrade: GOOD,
+    });
+    const debug = buildQueueDebug([passed, term("a"), lapsed], options);
+
+    expect(debug.review.rows.map((r) => r.item.termId)).toEqual(["lapsed", "a", "passed"]);
+    const [first, , last] = debug.review.rows;
+    expect(first!.lane).toBe("again");
+    expect(first!.sortKey).toBeLessThan(0.7);
+    expect(first!.retrievability).toBeGreaterThan(0.7);
+    expect(last!.lane).toBeNull();
+    expect(last!.sortKey).toBe(last!.retrievability);
+  });
+
+  it("shows no lane for an Again term whose recall is still above its line", () => {
+    const holding = term("holding", {
+      recallStability: 2,
+      lastReviewRecallAt: new Date(NOW.getTime() - 1 * DAY), // R ≈ 0.95
+      lastReviewGrade: AGAIN,
+    });
+    const [row] = buildQueueDebug([holding], options).review.rows;
+    expect(row!.lane).toBeNull();
   });
 
   it("holds a just-graded term out of Review and says when it comes back", () => {

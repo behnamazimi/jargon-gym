@@ -402,12 +402,13 @@ begin
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
     recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
-    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at
+    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at,
+    last_review_grade
   )
   values (
     v_admin_id, v_idempotency, 2, now() - interval '12 days',
     62.56272343334723, 3.089697659741007, 4, now() - interval '1 days',
-    0.9973500600932171, 6, now(), now()
+    0.9973500600932171, 6, now(), now(), 4
   );
 
   -- Leader Election — three reviews and a quiz, sitting mid-progress (learning band).
@@ -428,12 +429,13 @@ begin
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
     recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
-    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at
+    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at,
+    last_review_grade
   )
   values (
     v_admin_id, v_leader_election, 1, now() - interval '6 days',
     20.32528090777927, 4.648357224453165, 3, now(),
-    0.7916666666666666, 1, now() - interval '1 days', null
+    0.7916666666666666, 1, now() - interval '1 days', null, 3
   );
 
   -- OKR — two reviews and two quizzes, also mid-progress (learning band).
@@ -453,12 +455,13 @@ begin
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
     recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
-    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at
+    quiz_knowledge_posterior, quiz_test_count, last_quiz_tested_at, ever_mastered_at,
+    last_review_grade
   )
   values (
     v_admin_id, v_okr, 1, now() - interval '5 days',
     18.223968588221556, 4.681075550345074, 2, now(),
-    0.878345498783455, 2, now(), null
+    0.878345498783455, 2, now(), null, 3
   );
 
   -- CAP Theorem — one first review, so the admin has the 10 reviews the
@@ -474,11 +477,12 @@ begin
 
   insert into public.review_state (
     user_id, term_id, read_count, last_read_at,
-    recall_stability, recall_difficulty, review_recall_count, last_review_recall_at
+    recall_stability, recall_difficulty, review_recall_count, last_review_recall_at,
+    last_review_grade
   )
   values (
     v_admin_id, v_cap, 1, now() - interval '4 days',
-    3.5951299999999997, 4.714577829570867, 1, now() - interval '4 days'
+    3.5951299999999997, 4.714577829570867, 1, now() - interval '4 days', 3
   );
 end;
 $$;

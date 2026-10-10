@@ -57,6 +57,15 @@ export const SESSION_COOLDOWN_RETRIEVABILITY = 0.98;
  *  progress at 10, 20 and 30 reviews a day); retune from real review data. */
 export const UNTESTED_RETRIEVABILITY = 0.7;
 
+/** §10 Lapse lane — a term whose last Review grade was Again (or Hard) is due,
+ *  and goes ahead of new terms, as soon as its retrievability falls below this
+ *  line instead of UNTESTED_RETRIEVABILITY. Higher brings failed terms back
+ *  sooner but leaves less room for new ones. Never below UNTESTED_RETRIEVABILITY.
+ *  Picked from a simulated sweep (median Again return about 1 day, Hard about
+ *  3.4 days at 90 reviews a day); retune from review_events. */
+export const LAPSE_AGAIN_DUE_RETRIEVABILITY = 0.81;
+export const LAPSE_HARD_DUE_RETRIEVABILITY = 0.78;
+
 /** §7 Mastery blend weights: Mastery = wF·F_used + wR·R_r + wG·R_g. */
 export const MASTERY_WEIGHT_FAMILIARITY = 0.2; // wF
 export const MASTERY_WEIGHT_RECALL = 0.5; // wR

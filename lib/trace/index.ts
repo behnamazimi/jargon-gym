@@ -28,7 +28,10 @@ export {
   recallRetrievabilityNow,
   recognitionRetrievabilityNow,
   cooldownEndsAt,
+  reviewDueLine,
+  reviewSortKey,
 } from "./queue";
+export { asReviewGrade } from "./recall";
 export { posteriorToStability } from "./recognition";
 export { daysBetween } from "./decay";
 export {

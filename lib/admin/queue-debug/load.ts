@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
+import { asReviewGrade } from "@/lib/trace";
 import type { QueueDebugTerm } from "./build";
 
 type Client = SupabaseClient<Database>;
@@ -24,6 +25,7 @@ type DebugRow = {
   ever_mastered_at: string | null;
   ever_learning_at: string | null;
   marked_known_at: string | null;
+  last_review_grade: number | null;
 };
 
 const date = (value: string | null) => (value ? new Date(value) : null);
@@ -50,6 +52,7 @@ export function mapQueueDebugRows(data: Json): QueueDebugTerm[] {
     everMasteredAt: date(row.ever_mastered_at),
     everLearningAt: date(row.ever_learning_at),
     markedKnownAt: date(row.marked_known_at),
+    lastReviewGrade: asReviewGrade(row.last_review_grade),
   }));
 }
 

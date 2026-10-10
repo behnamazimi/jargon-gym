@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { UNTESTED_RETRIEVABILITY } from "./constants";
-import { rankQuizQueue, rankReadQueue, rankReviewQueue, recallRetrievabilityNow } from "./queue";
+import {
+  AGAIN,
+  EASY,
+  GOOD,
+  HARD,
+  LAPSE_AGAIN_DUE_RETRIEVABILITY,
+  LAPSE_HARD_DUE_RETRIEVABILITY,
+  UNTESTED_RETRIEVABILITY,
+} from "./constants";
+import {
+  rankQuizQueue,
+  rankReadQueue,
+  rankReviewQueue,
+  recallRetrievabilityNow,
+  reviewDueLine,
+  reviewSortKey,
+} from "./queue";
 import type { TraceCandidate } from "./types";
 
 function makeCandidate(overrides: Partial<TraceCandidate> = {}): TraceCandidate {
@@ -20,6 +35,7 @@ function makeCandidate(overrides: Partial<TraceCandidate> = {}): TraceCandidate 
     everMasteredAt: null,
     everLearningAt: null,
     markedKnownAt: null,
+    lastReviewGrade: null,
     ...overrides,
   };
 }
@@ -177,6 +193,109 @@ describe("rankReviewQueue", () => {
     ];
     const ranked = rankReviewQueue(candidates, NOW);
     expect(ranked.map((c) => c.termId)).toEqual(["due", "never-graded"]);
+  });
+});
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A graded term whose retrievability right now is `r` (stability 1, so t = 9·(1/r − 1) days). */
+function gradedAt(r: number, overrides: Partial<TraceCandidate> = {}): TraceCandidate {
+  return makeCandidate({
+    recallStability: 1,
+    lastReviewRecallAt: new Date(NOW.getTime() - 9 * (1 / r - 1) * DAY_MS),
+    ...overrides,
+  });
+}
+
+describe("reviewDueLine", () => {
+  it("is the untested line unless the last grade was Again or Hard", () => {
+    expect(reviewDueLine({ lastReviewGrade: null })).toBe(UNTESTED_RETRIEVABILITY);
+    expect(reviewDueLine({ lastReviewGrade: GOOD })).toBe(UNTESTED_RETRIEVABILITY);
+    expect(reviewDueLine({ lastReviewGrade: EASY })).toBe(UNTESTED_RETRIEVABILITY);
+    expect(reviewDueLine({ lastReviewGrade: AGAIN })).toBe(LAPSE_AGAIN_DUE_RETRIEVABILITY);
+    expect(reviewDueLine({ lastReviewGrade: HARD })).toBe(LAPSE_HARD_DUE_RETRIEVABILITY);
+  });
+});
+
+describe("rankReviewQueue lapse lane", () => {
+  const order = (candidates: TraceCandidate[]) =>
+    rankReviewQueue(candidates, NOW).map((c) => c.termId);
+
+  it("puts an Again term below the Again line ahead of never-graded terms", () => {
+    const lapsed = gradedAt(0.78, { termId: "lapsed", lastReviewGrade: AGAIN });
+    const fresh = makeCandidate({ termId: "never-graded" });
+    expect(order([fresh, lapsed])).toEqual(["lapsed", "never-graded"]);
+  });
+
+  it("leaves the same term behind never-graded terms when it was graded Good", () => {
+    const passed = gradedAt(0.78, { termId: "passed", lastReviewGrade: GOOD });
+    const fresh = makeCandidate({ termId: "never-graded" });
+    expect(order([passed, fresh])).toEqual(["never-graded", "passed"]);
+  });
+
+  it("uses a lower line for Hard than for Again", () => {
+    const fresh = makeCandidate({ termId: "never-graded" });
+    const hardAt75 = gradedAt(0.75, { termId: "hard-75", lastReviewGrade: HARD });
+    const hardAt80 = gradedAt(0.8, { termId: "hard-80", lastReviewGrade: HARD });
+    const againAt80 = gradedAt(0.8, { termId: "again-80", lastReviewGrade: AGAIN });
+    expect(order([fresh, hardAt75, hardAt80, againAt80])).toEqual([
+      "hard-75",
+      "again-80",
+      "never-graded",
+      "hard-80",
+    ]);
+  });
+
+  it("sorts a lane term at its line level with never-graded terms, and just either side of it correctly", () => {
+    const line = LAPSE_AGAIN_DUE_RETRIEVABILITY;
+    const atLine = gradedAt(line, { termId: "at-line", lastReviewGrade: AGAIN });
+    expect(reviewSortKey(atLine, NOW)).toBeCloseTo(UNTESTED_RETRIEVABILITY, 10);
+
+    const fresh = makeCandidate({ termId: "never-graded" });
+    const justBelow = gradedAt(line - 0.005, { termId: "below", lastReviewGrade: AGAIN });
+    const justAbove = gradedAt(line + 0.005, { termId: "above", lastReviewGrade: AGAIN });
+    expect(order([justAbove, fresh, justBelow])).toEqual(["below", "never-graded", "above"]);
+  });
+
+  it("orders two lane terms by how far each is past its own line", () => {
+    const worse = gradedAt(0.6, { termId: "worse", lastReviewGrade: AGAIN });
+    const better = gradedAt(0.75, { termId: "better", lastReviewGrade: AGAIN });
+    expect(order([better, worse])).toEqual(["worse", "better"]);
+  });
+
+  it("does not let a lane term jump a normal term that is more at risk", () => {
+    const lane = gradedAt(0.8, { termId: "lane", lastReviewGrade: AGAIN });
+    const normal = gradedAt(0.65, { termId: "normal", lastReviewGrade: GOOD });
+    expect(order([lane, normal])).toEqual(["normal", "lane"]);
+  });
+
+  it("still holds a lane term out above the cooldown", () => {
+    const justGraded = makeCandidate({
+      termId: "just-graded",
+      recallStability: 1000,
+      lastReviewRecallAt: NOW,
+      lastReviewGrade: AGAIN,
+    });
+    const fresh = makeCandidate({ termId: "never-graded" });
+    expect(order([justGraded, fresh])).toEqual(["never-graded"]);
+  });
+
+  it("does not promote a lane term that is still well above its line", () => {
+    const holding = gradedAt(0.9, { termId: "holding", lastReviewGrade: AGAIN });
+    const fresh = makeCandidate({ termId: "never-graded" });
+    expect(order([holding, fresh])).toEqual(["never-graded", "holding"]);
+  });
+
+  it("ignores a grade on a term that was never graded in Review", () => {
+    const odd = makeCandidate({ termId: "odd", lastReviewGrade: AGAIN });
+    const other = makeCandidate({ termId: "other", createdAt: new Date("2026-01-02") });
+    expect(order([other, odd])).toEqual(["odd", "other"]);
+  });
+
+  it("leaves Quiz ranking alone", () => {
+    const lapsed = makeCandidate({ termId: "lapsed", lastReviewGrade: AGAIN });
+    const fresh = makeCandidate({ termId: "fresh", createdAt: new Date("2026-01-02") });
+    expect(rankQuizQueue([fresh, lapsed], NOW).map((c) => c.termId)).toEqual(["lapsed", "fresh"]);
   });
 });
 

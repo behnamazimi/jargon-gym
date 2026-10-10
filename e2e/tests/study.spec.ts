@@ -71,6 +71,11 @@ test.describe("Studying a collection", () => {
       [user.id],
     );
     expect(event?.grade).toBe(3);
+    const [state] = await sql<{ last_review_grade: number }>(
+      "select last_review_grade from public.review_state where user_id = $1 and review_recall_count > 0",
+      [user.id],
+    );
+    expect(state?.last_review_grade).toBe(3);
   });
 
   test(

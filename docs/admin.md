@@ -193,11 +193,14 @@ the same functions the feeds call (`rankReadQueue`, `rankReviewQueue`, `rankQuiz
 they would get at that moment. It is a snapshot with an "As of" time; Refresh recomputes it. Nothing is written
 and viewing is not audited.
 
-- **Data.** `admin_queue_debug_terms` (`20261014100000_admin_queue_debug.sql`) is admin-checked and returns every
+- **Data.** `admin_queue_debug_terms` (`20261014100000_admin_queue_debug.sql`, last grade added in
+  `20261030100000_review_state_last_grade.sql`) is admin-checked and returns every
   term in the member's collections with its TRACE state, whether its collection is on and whether it has a
   definition. `get_trace_candidates` hides the last two kinds, so the page can't use it to explain a missing term.
   Ranking and the rest are in `lib/admin/queue-debug/build.ts` (pure, tested); the URL is parsed in `params.ts`.
-- **Tabs.** Read, Review and Quiz show the rank, the number the sort used and the raw state. The first rows are
+- **Tabs.** Read, Review and Quiz show the rank, the number the sort used and the raw state. Review also shows a
+  "lane" badge for a term last graded Again or Hard: its recall can still be above 0.7, but the sort key puts
+  it ahead of new terms once recall is below 0.81 (Again) or 0.78 (Hard). The first rows are
   marked "next": that is the batch a feed takes at once (`READ_FEED_BATCH_SIZE`, `REVIEW_QUEUE_BUFFER_SIZE`, and
   the default quiz length). Each tab keeps the top rows (25 to 500, default 50) and says how many there are.
 - **Cooldown.** Only Review and Quiz have one: a term above 0.98 retrievability is held out. There is no stored

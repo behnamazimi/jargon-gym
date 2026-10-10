@@ -30,6 +30,7 @@ function candidate(termId: string, overrides: Partial<TraceCandidate> = {}): Tra
     everMasteredAt: null,
     everLearningAt: null,
     markedKnownAt: null,
+    lastReviewGrade: null,
     readCount: 0,
     lastReadAt: null,
     recallStability: null,

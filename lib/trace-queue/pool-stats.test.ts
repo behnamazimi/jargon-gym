@@ -28,6 +28,7 @@ function candidate(termId: string, collectionId: string, markedKnown = false): T
     everMasteredAt: null,
     everLearningAt: null,
     markedKnownAt: markedKnown ? new Date("2026-01-02T00:00:00Z") : null,
+    lastReviewGrade: null,
   };
 }
 

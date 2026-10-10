@@ -2,6 +2,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/supabase/database.types";
+import { asReviewGrade } from "@/lib/trace";
 import type { TraceCandidate } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -26,6 +27,7 @@ type CandidateRow = {
   ever_mastered_at: string | null;
   ever_learning_at: string | null;
   marked_known_at: string | null;
+  last_review_grade: number | null;
 };
 
 /** The candidate RPCs return every row as one JSON array, ordered by term_id,
@@ -48,6 +50,7 @@ function mapCandidateRows(data: Json): TraceCandidate[] {
     everMasteredAt: row.ever_mastered_at ? new Date(row.ever_mastered_at) : null,
     everLearningAt: row.ever_learning_at ? new Date(row.ever_learning_at) : null,
     markedKnownAt: row.marked_known_at ? new Date(row.marked_known_at) : null,
+    lastReviewGrade: asReviewGrade(row.last_review_grade),
   }));
 }
 

@@ -72,6 +72,11 @@ your estimated live probability of recalling it right now, decaying
 smoothly from 1 immediately after a good grade toward 0 the longer you go
 without testing it again.
 
+Review also remembers the last grade you gave each term (`review_state.last_review_grade`),
+because ranking uses it: a term you last graded Again or Hard comes back sooner (see
+[How each tier decides what to show you](#how-each-tier-decides-what-to-show-you)). The grade does not
+feed the memory model itself; stability and difficulty are computed exactly as before.
+
 A term has no recall trace at all until you grade it in Review for the
 first time — there's no default, no "probably fine" starting guess. Once
 graded, every later grade updates the same stability/difficulty pair using
@@ -260,7 +265,7 @@ active collections — just by a different signal. There's no separate
 | Tier       | Ranked by                                                                    | Never-tested terms                                                       |
 | ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | **Read**   | Lowest decay-aware exposure (Read+Review+Quiz combined), tempered by mastery | Always included — reading is how a term gets exposure in the first place |
-| **Review** | Lowest recall retrievability first                                           | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
+| **Review** | Lowest recall retrievability first, with a sooner line for Again/Hard terms  | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
 | **Quiz**   | Lowest recognition retrievability first                                      | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
 
 Read's ranking used to be a simple "fewest reads first" count. It's now a
@@ -295,6 +300,25 @@ and nothing to configure; the line adjusts itself to how much you study. With a
 small daily budget most of a session goes to reviewing what's fading. With a large
 one, little decays below the line and most of it goes to new terms.
 
+One exception keeps a missed term from waiting behind new ones. Waiting for recall to fall below 70%
+takes about 1.6 days for a term first graded Again and about 4.6 days for one first graded Hard, so
+a term whose **last Review grade was Again or Hard** gets a higher line instead: Again at 81%
+(`LAPSE_AGAIN_DUE_RETRIEVABILITY`) and Hard at 78% (`LAPSE_HARD_DUE_RETRIEVABILITY`). Once its recall
+falls below that line it goes ahead of new terms, the same way a decayed learned term does. In a
+simulation at 90 reviews a day this brought the median Again term back after about 1 day instead of
+1.9, and Hard after about 3.4 days instead of 5.3. The price is that new terms arrive a few days
+later, and small budgets feel it most. A Good or Easy grade on the term puts it back on the 70% line.
+
+The lane only changes the order. Review sorts by `reviewSortKey` in `lib/trace/queue.ts`: recall
+itself for most terms, and recall scaled by 0.7 divided by the term's line for a lane term, so its key
+drops below the new-term position exactly when recall drops below its line. The cooldown below still
+looks at real recall, so a just-graded term is held out in the same way.
+
+Two things follow from that scaling. It applies at every recall level, so once no new terms are left
+a lane term is served a little earlier than its recall alone says, until its next Good or Easy grade.
+And there is no cap: a term you keep grading Again comes back about once a day and always goes ahead
+of new terms, which slows new terms down after a big import.
+
 Within a tier, once you've just gotten something right, it drops out of
 that tier's list — specifically, once its retrievability rises above 0.98
 — so a review or quiz session doesn't keep re-serving something you just
@@ -307,7 +331,8 @@ which pushes its stability much higher, can stay excluded for a couple of
 days, since its retrievability decays that much more slowly. Either way,
 once it does drop below 0.98 it re-enters the ranking sorted by its
 now-decayed retrievability like anything else — nothing special happens at
-that point, it's just no longer being held back.
+that point, it's just no longer being held back. The lane doesn't change this:
+the cooldown always uses real retrievability.
 
 ## Unfinished terms
 
@@ -364,9 +389,12 @@ it:
    in `lib/telegram/` that call the same `lib/terms/review-outcome.ts`
    and `lib/trace-queue` functions underneath.
 5. **The database** — two tables. `review_state` holds one row per (user,
-   term), storing exactly the fields `TraceState` needs: read count and
+   term), storing the fields `TraceState` needs: read count and
    last-read time, recall stability/difficulty and last-review time,
-   recognition posterior and last-quiz time, plus the two persisted
+   recognition posterior and last-quiz time, plus the last Review grade
+   (`last_review_grade`, added in
+   [`supabase/migrations/20261030100000_review_state_last_grade.sql`](../supabase/migrations/20261030100000_review_state_last_grade.sql),
+   written only by a Review grade and read only by Review ranking), plus the two persisted
    high-water-mark timestamps for "terms learned" (`ever_mastered_at`) and
    its lower-threshold sibling (`ever_learning_at`, added in
    [`supabase/migrations/20260905120000_ever_learning_at.sql`](../supabase/migrations/20260905120000_ever_learning_at.sql)).
@@ -383,7 +411,8 @@ it:
    yet, as a safety margin during the rewrite. Once TRACE was verified
    working end-to-end, those columns were dropped for good in
    [`supabase/migrations/20260901120000_drop_deprecated_scoring_columns.sql`](../supabase/migrations/20260901120000_drop_deprecated_scoring_columns.sql) —
-   `review_state` today only has the fields `TraceState` needs.
+   `review_state` today has the fields `TraceState` needs plus the marked-known
+   timestamp and the last Review grade.
    `review_events`, added in
    [`supabase/migrations/20260901140000_review_events_log.sql`](../supabase/migrations/20260901140000_review_events_log.sql),
    is the append-only companion: one row per event (all six — read, reveal,
@@ -418,6 +447,11 @@ other:
   of every tested term, but that starved reviews after a large import; now a
   learned term that has decayed below the line goes first.
   See [How each tier decides what to show you](#how-each-tier-decides-what-to-show-you).
+- **Failed Review terms get a sooner line.** The design had no rule for how soon
+  a term graded Again or Hard should return. With only the 0.7 line, a first
+  Again waited about 1.6 days and a first Hard about 4.6 days behind new terms,
+  so Review now uses 0.81 for a term last graded Again and 0.78 for Hard. The
+  memory model is unchanged; only the order is.
 - **A miss never stamps a high-water mark.** The design didn't say what
   happens when the post-answer score crosses a threshold on a failed
   attempt. Since retrievability is 1 right after any answer, a miss could
@@ -462,6 +496,7 @@ writing:
 | Known label minimum test count                             | 3                   | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
 | Session cooldown                                           | 0.98 retrievability | Above this, a term drops out of that tier's list for the rest of the session                                                     |
 | Untested-term queue position                               | 0.7 retrievability  | Where a never-graded (Review) or never-answered (Quiz) term sorts; learned terms that have decayed below it go first             |
+| Lapse lane, Again / Hard                                   | 0.81 / 0.78         | Review only: a term whose last grade was Again (or Hard) is due, and goes ahead of new terms, once its recall falls below this   |
 | Read mastery-temper weight                                 | 0.2                 | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
 
 These are reasoned starting points, not values fit to real usage data — this

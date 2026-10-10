@@ -54,9 +54,13 @@ export function ReviewTable({ section, asOf }: { section: QueueSection<TierRow>;
         r.retrievability === null ? (
           <span className="badge badge-ghost">never graded</span>
         ) : (
-          number(r.retrievability)
+          <span className="inline-flex items-center gap-2">
+            {number(r.retrievability)}
+            {r.lane && <span className="badge badge-warning badge-sm">{r.lane} lane</span>}
+          </span>
         ),
     },
+    { label: "Sort key", cell: (r) => number(r.sortKey) },
     { label: "Stability", cell: (r) => number(r.item.recallStability, 2) },
     { label: "Difficulty", cell: (r) => number(r.item.recallDifficulty, 2) },
     { label: "Grades", cell: (r) => r.item.reviewRecallCount },

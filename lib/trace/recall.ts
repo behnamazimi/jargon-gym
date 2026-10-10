@@ -23,6 +23,11 @@ function clampDifficulty(d: number): number {
   return Math.min(10, Math.max(1, d));
 }
 
+/** A stored grade as a ReviewGrade, or null for anything outside 1-4. */
+export function asReviewGrade(value: number | null | undefined): ReviewGrade | null {
+  return value === AGAIN || value === HARD || value === GOOD || value === EASY ? value : null;
+}
+
 /** S0(G) — initial stability, first-ever grade on a term. */
 export function initialStability(grade: ReviewGrade): number {
   return w[grade - 1]!;

@@ -1272,6 +1272,7 @@ export type Database = {
           ever_mastered_at: string | null;
           last_quiz_tested_at: string | null;
           last_read_at: string | null;
+          last_review_grade: number | null;
           last_review_recall_at: string | null;
           marked_known_at: string | null;
           quiz_knowledge_posterior: number | null;
@@ -1288,6 +1289,7 @@ export type Database = {
           ever_mastered_at?: string | null;
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
+          last_review_grade?: number | null;
           last_review_recall_at?: string | null;
           marked_known_at?: string | null;
           quiz_knowledge_posterior?: number | null;
@@ -1304,6 +1306,7 @@ export type Database = {
           ever_mastered_at?: string | null;
           last_quiz_tested_at?: string | null;
           last_read_at?: string | null;
+          last_review_grade?: number | null;
           last_review_recall_at?: string | null;
           marked_known_at?: string | null;
           quiz_knowledge_posterior?: number | null;
@@ -2442,6 +2445,7 @@ export type Database = {
           ever_mastered_at: string;
           last_quiz_tested_at: string;
           last_read_at: string;
+          last_review_grade: number;
           last_review_recall_at: string;
           marked_known_at: string;
           quiz_knowledge_posterior: number;

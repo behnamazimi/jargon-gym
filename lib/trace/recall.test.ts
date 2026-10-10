@@ -3,6 +3,7 @@ import { AGAIN, EASY, FSRS_WEIGHTS, GOOD, HARD } from "./constants";
 import {
   applyColdStartNudge,
   applyReviewGrade,
+  asReviewGrade,
   initialDifficulty,
   initialStability,
   retrievability,
@@ -156,5 +157,17 @@ describe("applyReviewGrade orchestration", () => {
     const current = { stability: 20, difficulty: 5 };
     const result = applyReviewGrade(current, AGAIN, 0, day10, day1);
     expect(result.stability).toBeLessThan(20);
+  });
+});
+
+describe("asReviewGrade", () => {
+  it("keeps grades 1 to 4", () => {
+    expect([1, 2, 3, 4].map(asReviewGrade)).toEqual([AGAIN, HARD, GOOD, EASY]);
+  });
+
+  it("turns anything else into null", () => {
+    for (const value of [0, 5, -1, 2.5, Number.NaN, null, undefined]) {
+      expect(asReviewGrade(value)).toBeNull();
+    }
   });
 });
