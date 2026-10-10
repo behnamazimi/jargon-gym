@@ -33,7 +33,7 @@ const STORY_SYSTEM_PROMPT = [
   "- One coherent piece: one situation, same people, place, point of view and tense throughout. Each sentence follows from the previous one; clear beginning and end.",
   "- Make sense. Silently settle who is involved, what they want and why, and when and where, then keep every detail consistent with that and with ordinary real-life logic, whatever the format.",
   "  - A humorous tone may exaggerate but never contradicts itself.",
-  '  - Each sentence adds information; never give a fact as its own reason ("he can\'t sleep because he is awake").',
+  '  - Never give a fact as its own reason ("he can\'t sleep because he is awake").',
   "  - Anything unusual (odd hour, rush) gets a reason or is left out.",
   "  - Use only actions, objects and goals that fit the situation.",
   "  - Don't raise a worry or problem the piece never explains or uses.",
@@ -61,7 +61,6 @@ function languageName(language: CollectionLanguage): string {
 
 type StoryPromptInput = {
   terms: StoryTerm[];
-  collectionName: string;
   language: CollectionLanguage;
   format: StyleOption;
   tone: StyleOption;
@@ -102,7 +101,7 @@ export function buildStoryPrompt(input: StoryPromptInput): {
     .join("\n");
 
   const prompt = [
-    `Short reading passage for a learner of the terms in collection "${input.collectionName}", reading in ${language} at CEFR ${input.cefrLevel}, with a glossary beside the text. It succeeds if they read it comfortably and see each term used correctly.`,
+    `Short reading passage for a learner reading in ${language} at CEFR ${input.cefrLevel}, with a glossary beside the text. It succeeds if they read it comfortably and see each term used correctly.`,
     "",
     `Language level: ${CEFR_GUIDANCE[input.cefrLevel](unit)} Everything outside the listed terms must stay at or below this level as much as possible.`,
     `Format: ${input.format.prompt}.`,

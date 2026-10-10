@@ -35,7 +35,6 @@ type GenerateStoryInput = {
   provider: LlmProvider;
   apiKey: string;
   terms: StoryTerm[];
-  collectionName: string;
   language: CollectionLanguage;
   format: StyleOption;
   tone: StyleOption;

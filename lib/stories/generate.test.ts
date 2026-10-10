@@ -18,7 +18,6 @@ const INPUT = {
   provider: "anthropic" as const,
   apiKey: "sk-test",
   terms: TERMS,
-  collectionName: "Systems",
   language: "en" as const,
   format: findFormat("email")!,
   tone: findTone("neutral")!,

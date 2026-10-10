@@ -102,7 +102,6 @@ export async function writeStory(auth: Auth, rawInput: unknown): Promise<StoryRe
           provider: access.provider,
           apiKey: access.apiKey,
           terms,
-          collectionName: collection.name,
           language: collection.language,
           format,
           tone,
