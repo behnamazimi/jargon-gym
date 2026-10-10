@@ -199,12 +199,15 @@ describe("generateStory", () => {
 
   it("does not retry when the first attempt used up too much of the time limit", async () => {
     const now = vi.spyOn(Date, "now");
-    now.mockReturnValueOnce(0).mockReturnValue(30_000);
-    mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
-    const onRetry = vi.fn();
-    await expect(generateStory({ ...INPUT, onRetry })).rejects.toBeInstanceOf(StoryProviderError);
-    expect(mockedGenerate).toHaveBeenCalledTimes(1);
-    expect(onRetry).not.toHaveBeenCalled();
-    now.mockRestore();
+    try {
+      now.mockReturnValueOnce(0).mockReturnValue(30_000);
+      mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
+      const onRetry = vi.fn();
+      await expect(generateStory({ ...INPUT, onRetry })).rejects.toBeInstanceOf(StoryProviderError);
+      expect(mockedGenerate).toHaveBeenCalledTimes(1);
+      expect(onRetry).not.toHaveBeenCalled();
+    } finally {
+      now.mockRestore();
+    }
   });
 });
