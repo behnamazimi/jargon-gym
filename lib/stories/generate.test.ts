@@ -1,11 +1,11 @@
-import { APICallError, generateText } from "ai";
+import { APICallError, streamText } from "ai";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { generateStory, StoryProviderError } from "./generate";
 import { findFormat, findTone } from "./styles";
 
 vi.mock("ai", async (importOriginal) => ({
   ...(await importOriginal<typeof import("ai")>()),
-  generateText: vi.fn(),
+  streamText: vi.fn(),
 }));
 
 const TERMS = [
@@ -49,10 +49,30 @@ function apiError(statusCode: number, message = `HTTP ${statusCode}`) {
   });
 }
 
-const mockedGenerate = vi.mocked(generateText);
+const mockedGenerate = vi.mocked(streamText);
 
-function resolveWith(text: string) {
-  return Promise.resolve({ text }) as unknown as ReturnType<typeof generateText>;
+// Each read of fullStream starts a new stream, so one reply can serve both attempts.
+function replyOf(text: string, usage?: unknown) {
+  return {
+    get fullStream() {
+      return (async function* () {
+        yield { type: "text-delta", id: "1", text: text.slice(0, 20) };
+        yield { type: "text-delta", id: "1", text: text.slice(20) };
+      })();
+    },
+    usage: Promise.resolve(usage),
+  } as unknown as ReturnType<typeof streamText>;
+}
+
+function failWith(error: unknown) {
+  return {
+    get fullStream() {
+      return (async function* () {
+        yield { type: "error", error };
+      })();
+    },
+    usage: Promise.resolve(undefined),
+  } as unknown as ReturnType<typeof streamText>;
 }
 
 let logError: ReturnType<typeof vi.spyOn>;
@@ -68,7 +88,7 @@ beforeEach(() => {
 
 describe("generateStory", () => {
   it("returns the normalized story", async () => {
-    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    mockedGenerate.mockReturnValueOnce(replyOf(GOOD_TEXT));
     const story = await generateStory(INPUT);
     expect(story.termIds).toEqual(["t1", "t2", "t3"]);
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
@@ -77,8 +97,8 @@ describe("generateStory", () => {
   it("reports each successful call's usage, retries included", async () => {
     const usage = { inputTokens: 2000, outputTokens: 300 };
     mockedGenerate
-      .mockReturnValueOnce(Promise.resolve({ text: MISSING_TERMS_TEXT, usage }) as never)
-      .mockReturnValueOnce(Promise.resolve({ text: GOOD_TEXT, usage }) as never);
+      .mockReturnValueOnce(replyOf(MISSING_TERMS_TEXT, usage))
+      .mockReturnValueOnce(replyOf(GOOD_TEXT, usage));
     const onUsage = vi.fn();
     await generateStory({ ...INPUT, onUsage });
     expect(onUsage).toHaveBeenCalledTimes(2);
@@ -87,21 +107,23 @@ describe("generateStory", () => {
 
   it("retries once when the story misses terms", async () => {
     mockedGenerate
-      .mockReturnValueOnce(resolveWith(MISSING_TERMS_TEXT))
-      .mockReturnValueOnce(resolveWith(GOOD_TEXT));
+      .mockReturnValueOnce(replyOf(MISSING_TERMS_TEXT))
+      .mockReturnValueOnce(replyOf(GOOD_TEXT));
     const story = await generateStory(INPUT);
     expect(story.termIds).toHaveLength(3);
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
   });
 
   it("retries once on a server error", async () => {
-    mockedGenerate.mockRejectedValueOnce(apiError(503)).mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    mockedGenerate
+      .mockReturnValueOnce(failWith(apiError(503)))
+      .mockReturnValueOnce(replyOf(GOOD_TEXT));
     await expect(generateStory(INPUT)).resolves.toBeTruthy();
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
   });
 
   it("does not retry a rejected key", async () => {
-    mockedGenerate.mockRejectedValue(apiError(401));
+    mockedGenerate.mockReturnValue(failWith(apiError(401)));
     await expect(generateStory(INPUT)).rejects.toMatchObject({
       kind: "auth",
       message: expect.stringMatching(/Try again/),
@@ -110,7 +132,7 @@ describe("generateStory", () => {
   });
 
   it("does not retry a rate limit", async () => {
-    mockedGenerate.mockRejectedValue(apiError(429));
+    mockedGenerate.mockReturnValue(failWith(apiError(429)));
     await expect(generateStory(INPUT)).rejects.toMatchObject({
       kind: "rate-limit",
       message: expect.stringMatching(/rate-limiting/),
@@ -119,14 +141,14 @@ describe("generateStory", () => {
   });
 
   it("gives up after the second failure", async () => {
-    mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
+    mockedGenerate.mockReturnValue(replyOf(MISSING_TERMS_TEXT));
     await expect(generateStory(INPUT)).rejects.toBeInstanceOf(StoryProviderError);
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
   });
 
   it("does not retry other client errors, and keeps the provider's reason", async () => {
     const providerFailure = apiError(404, "This model is no longer available to new users");
-    mockedGenerate.mockRejectedValue(providerFailure);
+    mockedGenerate.mockReturnValue(failWith(providerFailure));
     await expect(generateStory(INPUT)).rejects.toMatchObject({
       kind: "other",
       cause: providerFailure,
@@ -139,7 +161,9 @@ describe("generateStory", () => {
   });
 
   it("logs a failed first attempt that a retry then recovers from", async () => {
-    mockedGenerate.mockRejectedValueOnce(apiError(503)).mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    mockedGenerate
+      .mockReturnValueOnce(failWith(apiError(503)))
+      .mockReturnValueOnce(replyOf(GOOD_TEXT));
     await generateStory(INPUT);
     expect(logWarning).toHaveBeenCalledWith(
       "Story attempt failed, retrying (anthropic):",
@@ -149,7 +173,7 @@ describe("generateStory", () => {
   });
 
   it("logs and wraps an error that isn't from the provider", async () => {
-    mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
+    mockedGenerate.mockReturnValue(replyOf(MISSING_TERMS_TEXT));
     await expect(generateStory(INPUT)).rejects.toMatchObject({ kind: "other" });
     expect(logError).toHaveBeenCalledWith(
       "Story generation failed (anthropic):",
@@ -159,19 +183,19 @@ describe("generateStory", () => {
 
   it("stops without retrying once the time limit has passed", async () => {
     vi.spyOn(AbortSignal, "timeout").mockReturnValueOnce(AbortSignal.abort());
-    mockedGenerate.mockRejectedValue(new DOMException("aborted", "TimeoutError"));
+    mockedGenerate.mockReturnValue(failWith(new DOMException("aborted", "TimeoutError")));
     await expect(generateStory(INPUT)).rejects.toMatchObject({ kind: "timeout" });
     expect(mockedGenerate).toHaveBeenCalledTimes(1);
   });
 
   it("gives the model the time limit as its abort signal", async () => {
-    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    mockedGenerate.mockReturnValueOnce(replyOf(GOOD_TEXT));
     await generateStory(INPUT);
     expect(mockedGenerate.mock.calls[0]![0].abortSignal).toBeInstanceOf(AbortSignal);
   });
 
   it("sends the fixed rules as the system prompt and the story details as the prompt", async () => {
-    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    mockedGenerate.mockReturnValueOnce(replyOf(GOOD_TEXT));
     await generateStory(INPUT);
     const call = mockedGenerate.mock.calls[0]![0];
     expect(call.system).toContain("Each request option has one job");
@@ -180,9 +204,39 @@ describe("generateStory", () => {
 
   it("retries once when a term marker comes back broken", async () => {
     mockedGenerate
-      .mockReturnValueOnce(resolveWith(`Title\n\n[idempotency|1] ${FILLER}`))
-      .mockReturnValueOnce(resolveWith(GOOD_TEXT));
+      .mockReturnValueOnce(replyOf(`Title\n\n[idempotency|1] ${FILLER}`))
+      .mockReturnValueOnce(replyOf(GOOD_TEXT));
     await expect(generateStory(INPUT)).resolves.toBeTruthy();
     expect(mockedGenerate).toHaveBeenCalledTimes(2);
+  });
+
+  it("streams the reply to onText", async () => {
+    mockedGenerate.mockReturnValueOnce(replyOf(GOOD_TEXT));
+    const onText = vi.fn();
+    await generateStory({ ...INPUT, onText });
+    expect(onText.mock.calls.map(([delta]) => delta).join("")).toBe(GOOD_TEXT);
+  });
+
+  it("says why it retries", async () => {
+    mockedGenerate
+      .mockReturnValueOnce(replyOf(MISSING_TERMS_TEXT))
+      .mockReturnValueOnce(replyOf(GOOD_TEXT))
+      .mockReturnValueOnce(failWith(apiError(503)))
+      .mockReturnValueOnce(replyOf(GOOD_TEXT));
+    const onRetry = vi.fn();
+    await generateStory({ ...INPUT, onRetry });
+    await generateStory({ ...INPUT, onRetry });
+    expect(onRetry.mock.calls).toEqual([["terms"], ["provider"]]);
+  });
+
+  it("does not retry when the first attempt used up too much of the time limit", async () => {
+    const now = vi.spyOn(Date, "now");
+    now.mockReturnValueOnce(0).mockReturnValue(30_000);
+    mockedGenerate.mockReturnValue(replyOf(MISSING_TERMS_TEXT));
+    const onRetry = vi.fn();
+    await expect(generateStory({ ...INPUT, onRetry })).rejects.toBeInstanceOf(StoryProviderError);
+    expect(mockedGenerate).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
+    now.mockRestore();
   });
 });

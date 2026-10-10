@@ -1,4 +1,4 @@
-import { generateText } from "ai";
+import { streamText } from "ai";
 import { aiGenerationOptions, type AiObservabilityContext } from "@/lib/ai/observability";
 import type { CollectionLanguage } from "@/lib/terms/languages";
 import { describeFailure } from "@/lib/ai-credits/failure-reason";
@@ -8,7 +8,7 @@ import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
 import { storyLength } from "./length";
 import { parseStoryText } from "./markup";
-import { StoryGenerationError } from "./errors";
+import { StoryGenerationError, type StoryGenerationFailure } from "./errors";
 import { normalizeStory } from "./normalize";
 import { buildStoryPrompt } from "./prompt";
 import type { StyleOption } from "./styles";
@@ -48,7 +48,13 @@ type GenerateStoryInput = {
   observability?: AiObservabilityContext;
   /** Told each model call's usage, so a charged story can record its cost. */
   onUsage?: UsageTally["add"];
+  /** Gets the model's reply as it is written, markers included. */
+  onText?: (delta: string) => void;
+  /** Told why a first attempt is being retried; the text so far is discarded. */
+  onRetry?: (reason: StoryRetryReason) => void;
 };
+
+export type StoryRetryReason = StoryGenerationFailure | "provider";
 
 type GeneratedStory = { title: string; segments: StorySegment[]; termIds: string[] };
 
@@ -84,7 +90,7 @@ async function requestStory(
 ): Promise<GeneratedStory> {
   const length = storyLength(input.pieceLength, input.cefrLevel, input.language);
   const { system, prompt } = buildStoryPrompt({ ...input, length });
-  const { text, usage } = await generateText({
+  const result = streamText({
     model: createModel(input.provider, input.apiKey),
     system,
     prompt,
@@ -92,7 +98,15 @@ async function requestStory(
     abortSignal: signal,
     ...aiGenerationOptions(input.observability, "story_generation"),
   });
-  input.onUsage?.(usage);
+  let text = "";
+  for await (const part of result.fullStream) {
+    if (part.type === "error") throw part.error;
+    if (part.type === "text-delta") {
+      text += part.text;
+      input.onText?.(part.text);
+    }
+  }
+  input.onUsage?.(await result.usage);
   return normalizeStory(parseStoryText(text, input.terms), input.terms, length);
 }
 
@@ -101,16 +115,30 @@ function failed(input: GenerateStoryInput, error: unknown, deadline: AbortSignal
   return toProviderError(error, deadline.aborted);
 }
 
+function retryReason(error: unknown): StoryRetryReason {
+  return error instanceof StoryGenerationError ? error.reason : "provider";
+}
+
 /** One retry, only for failures a second attempt can plausibly fix: a
  *  story that missed too many terms, a server error, or a network error.
  *  A rejected key, a rate limit, another client error or a timeout fails
- *  straight away. Both attempts share one time limit. */
+ *  straight away, and so does a first attempt that used up so much of the
+ *  time limit that a second could not finish. Both attempts share one time
+ *  limit. */
 export async function generateStory(input: GenerateStoryInput): Promise<GeneratedStory> {
   const deadline = AbortSignal.timeout(STORY_TIMEOUT_MS);
+  const startedAt = Date.now();
   try {
     return await requestStory(input, deadline);
   } catch (firstError) {
-    if (!isRetryable(firstError) || deadline.aborted) throw failed(input, firstError, deadline);
+    // A second attempt takes about as long as the first, so without that much
+    // time left it would only run into the limit.
+    const elapsed = Date.now() - startedAt;
+    const canFinishAnother = STORY_TIMEOUT_MS - elapsed >= elapsed;
+    if (!isRetryable(firstError) || deadline.aborted || !canFinishAnother) {
+      throw failed(input, firstError, deadline);
+    }
+    input.onRetry?.(retryReason(firstError));
     console.warn(
       `Story attempt failed, retrying (${input.provider}):`,
       describeFailure(firstError),

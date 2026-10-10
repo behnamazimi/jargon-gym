@@ -110,6 +110,22 @@ function control(path: string): Route | undefined {
   return routes[path];
 }
 
+// Gemini's streaming reply: server-sent events, the text in two pieces, usage on the last.
+function streamGeminiReply(res: ServerResponse, text: string) {
+  const middle = Math.ceil(text.length / 2);
+  const chunk = (part: string, last: boolean) => {
+    const reply = geminiReply(part);
+    if (!last) {
+      delete (reply as { usageMetadata?: unknown }).usageMetadata;
+      reply.candidates[0]!.finishReason = "";
+    }
+    return `data: ${JSON.stringify(reply)}\n\n`;
+  };
+  res.writeHead(200, { "content-type": "text/event-stream" });
+  res.write(chunk(text.slice(0, middle), false));
+  res.end(chunk(text.slice(middle), true));
+}
+
 const llm: Route = ({ path, raw, res }) => {
   requests.push({ service: "llm", path });
   const body = JSON.parse(raw) as GeminiRequest;
@@ -117,6 +133,7 @@ const llm: Route = ({ path, raw, res }) => {
   if (promptOf(body).includes(FAIL_MARKER)) {
     return json(res, 500, { error: { code: 500, message: "stub failure", status: "INTERNAL" } });
   }
+  if (path.includes(":streamGenerateContent")) return streamGeminiReply(res, storyAnswer(body));
   json(res, 200, geminiReply(body.systemInstruction ? storyAnswer(body) : quizAnswer(body)));
 };
 
@@ -149,7 +166,7 @@ const encodedAudio: Route = ({ path, res }) => {
 };
 
 function service(path: string): Route | undefined {
-  if (path.includes(":generateContent")) return llm;
+  if (path.includes(":generateContent") || path.includes(":streamGenerateContent")) return llm;
   if (path === "/emails") return email;
   if (path.startsWith("/v1/text-to-speech/") || path === "/v1/speech/stream") return rawAudio;
   if (path === "/v1/speech/generate") return encodedAudio;

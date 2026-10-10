@@ -16,6 +16,7 @@ import { StorySetupPanel } from "@/components/read/stories/story-setup-panel";
 import { useStorySession, type StorySession } from "@/components/read/stories/use-story-session";
 import { StudyNoActiveCollectionsState } from "@/components/read/study/study-paused-state";
 import { Button, LinkButton } from "@/components/ui/button";
+import { previewStory } from "@/lib/stories/preview";
 import { STORY_MIN_TERMS } from "@/lib/stories/types";
 
 const CARDS_HREF = "/app/read?view=cards";
@@ -41,15 +42,46 @@ function StoriesNoTerms() {
   );
 }
 
-function StoriesGeneratingStep() {
+function StoriesDraft({ draft }: { draft: string }) {
+  const { title, paragraphs } = previewStory(draft);
+  return (
+    <div className="space-y-3">
+      <p role="status" className="flex items-center gap-2 text-sm text-base-content/60">
+        <span className="loading loading-dots loading-xs" aria-hidden="true" />
+        Writing your story
+      </p>
+      <div className="space-y-3" aria-hidden="true">
+        <h2 className="text-xl font-semibold">{title}</h2>
+        {paragraphs.map((paragraph, index) => (
+          <p key={index} className="leading-relaxed">
+            {paragraph}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StoriesGeneratingStep({ draft }: { draft: string }) {
+  const started = draft.trim().length > 0;
   return (
     <QuizPanel className="flex min-h-0 flex-1 flex-col">
-      <QuizPanelBody className="flex min-h-0 flex-1 items-center justify-center">
-        <QuizCenteredState
-          illustration={<PreparingScene className="w-48" />}
-          title="Writing your story"
-          description="Weaving your next terms into a short piece… This usually takes a few seconds."
-        />
+      <QuizPanelBody
+        className={
+          started
+            ? "min-h-0 flex-1 overflow-y-auto"
+            : "flex min-h-0 flex-1 items-center justify-center"
+        }
+      >
+        {started ? (
+          <StoriesDraft draft={draft} />
+        ) : (
+          <QuizCenteredState
+            illustration={<PreparingScene className="w-48" />}
+            title="Writing your story"
+            description="Weaving your next terms into a short piece… This usually takes a few seconds."
+          />
+        )}
       </QuizPanelBody>
     </QuizPanel>
   );
@@ -88,7 +120,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
 
   switch (session.step) {
     case "generating":
-      return <StoriesGeneratingStep />;
+      return <StoriesGeneratingStep draft={session.draft} />;
     case "error":
       return <StoriesErrorStep session={session} />;
     case "reading":

@@ -29,7 +29,7 @@ export function surfaceMatchesTerm(surface: string, term: string): boolean {
 function checkedTitle(raw: string): string {
   const title = raw.trim();
   if (!title || title.length > MAX_TITLE_LENGTH) {
-    throw new StoryGenerationError("The story came back without a usable title.");
+    throw new StoryGenerationError("The story came back without a usable title.", "title");
   }
   return title;
 }
@@ -38,7 +38,7 @@ function checkLength(segments: StorySegment[], length: LengthRange) {
   const count = countLength(segments.map((segment) => segment.text).join(""), length.unit);
   const accepted = acceptedLength(length);
   if (count < accepted.min || count > accepted.max) {
-    throw new StoryGenerationError(`The story came back at ${count} ${length.unit}.`);
+    throw new StoryGenerationError(`The story came back at ${count} ${length.unit}.`, "length");
   }
 }
 
@@ -88,7 +88,10 @@ export function normalizeStory(
 
   const termIds = terms.map((term) => term.id).filter((id) => used.has(id));
   if (termIds.length < STORY_MIN_TERMS) {
-    throw new StoryGenerationError(`Only ${termIds.length} of the terms made it into the story.`);
+    throw new StoryGenerationError(
+      `Only ${termIds.length} of the terms made it into the story.`,
+      "terms",
+    );
   }
 
   const segments = flattenParagraphs(paragraphs);

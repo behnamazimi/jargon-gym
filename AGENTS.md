@@ -96,6 +96,12 @@ repository, narration) with its page, actions, and components under
 `app/(private)/app/read/stories/` and `components/read/stories/`.
 It credits reads through `recordRead` like Cards; see the Stories section in
 [docs/trace.md](docs/trace.md).
+A story is written by `POST /api/stories/generate`
+(`app/api/stories/generate/route.ts`), not a server action, so the reply streams
+to the page as newline-delimited JSON (`lib/stories/stream.ts`). The work itself
+is `writeStory` in `lib/stories/write-story.ts`; `previewStory` turns the
+partial reply into the text shown while it streams. A retry is counted in the
+`story_retry` event, with the reason.
 
 # Telegram bot
 

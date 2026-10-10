@@ -6,7 +6,7 @@ export type StoryGenerationPayload = {
   paragraphs: { segments: StorySegment[] }[];
 };
 
-const TERM_MARKER = /\[\[([^[\]|\n]+?)\|\s*(?:#|term\s*)?(\d+)\s*\]\]/gi;
+export const TERM_MARKER = /\[\[([^[\]|\n]+?)\|\s*(?:#|term\s*)?(\d+)\s*\]\]/gi;
 // What's left of a marker the parser couldn't read: "[x|2]", "[[x|2]",
 // "[[2|x]]", or the extra brackets of "[[[x|2]]]". Brackets in ordinary text
 // (code like "m[i[0]]" or "[[ -f x ]]") have no "|number" and are left alone.
@@ -39,7 +39,7 @@ function replyLines(reply: string): string[] {
   return lines;
 }
 
-function cleanTitle(line: string): string {
+export function cleanTitle(line: string): string {
   return line.replace(TITLE_PREFIX, "").replace(/\*+$/, "").replace(TERM_MARKER, "$1").trim();
 }
 
@@ -65,7 +65,7 @@ export function parseStoryText(reply: string, terms: StoryTerm[]): StoryGenerati
     .filter(Boolean);
 
   if (texts.some(hasBrokenMarker) || hasBrokenMarker(titleLine)) {
-    throw new StoryGenerationError("The story came back with a broken term marker.");
+    throw new StoryGenerationError("The story came back with a broken term marker.", "markup");
   }
   const paragraphs = texts.map((text) => ({ segments: readParagraph(text, termIdByNumber) }));
   return { title, paragraphs };

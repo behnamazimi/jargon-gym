@@ -2,16 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState } from "react";
-import {
-  generateStoryAction,
-  markStoryReadAction,
-  voteStoryAction,
-  type StoryResult,
-} from "@/app/(private)/app/read/stories/actions";
+import { markStoryReadAction, voteStoryAction } from "@/app/(private)/app/read/stories/actions";
 import { useToast } from "@/components/ui/toast";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { voteFeedback } from "@/lib/stories/feedback";
 import type { StoriesSetupData } from "@/lib/stories/setup";
+import { readStoryStream, type StoryStreamEvent } from "@/lib/stories/stream";
 import {
   DEFAULT_CEFR_LEVEL,
   DEFAULT_PIECE_LENGTH,
@@ -25,6 +21,35 @@ import {
 } from "@/lib/stories/types";
 
 type StoryStep = "setup" | "generating" | "reading" | "error";
+type StoryOutcome = Extract<StoryStreamEvent, { type: "done" | "error" }>;
+
+const GENERIC_ERROR: StoryOutcome = {
+  type: "error",
+  error: "Couldn't write a story this time. Try again.",
+  reason: "unavailable",
+};
+
+/** Asks the route for a story and passes the reply on as it arrives. */
+async function requestStory(
+  input: object,
+  onEvent: (event: StoryStreamEvent) => void,
+): Promise<StoryOutcome> {
+  try {
+    const response = await fetch("/api/stories/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    if (!response.ok || !response.body) return GENERIC_ERROR;
+    for await (const event of readStoryStream(response.body)) {
+      if (event.type === "done" || event.type === "error") return event;
+      onEvent(event);
+    }
+  } catch (err) {
+    console.error("Story request failed:", err);
+  }
+  return GENERIC_ERROR;
+}
 
 const DEFAULT_LEVELS: StoryLevels = {
   readingLevel: DEFAULT_READING_LEVEL,
@@ -48,6 +73,7 @@ export function useStorySession(setup: StoriesSetupData) {
   const [outline, setOutline] = useState("");
   const [story, setStory] = useState<Story | null>(setup.currentStory?.story ?? null);
   const [terms, setTerms] = useState<StoryTerm[]>(setup.currentStory?.terms ?? []);
+  const [draft, setDraft] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorReason, setErrorReason] = useState<AiFailureReason | null>(null);
   const [isMarkingRead, setIsMarkingRead] = useState(false);
@@ -75,9 +101,10 @@ export function useStorySession(setup: StoriesSetupData) {
     router.replace(query ? `/app/read/stories?${query}` : "/app/read/stories");
   }
 
-  function showStory(result: Extract<StoryResult, { story: Story }>) {
+  function showStory(result: { story: Story; terms: StoryTerm[] }) {
     setStory(result.story);
     setTerms(result.terms);
+    setDraft("");
     setErrorMessage(null);
     setStep("reading");
   }
@@ -86,18 +113,23 @@ export function useStorySession(setup: StoriesSetupData) {
     if (busyRef.current || !collectionId) return;
     busyRef.current = true;
     setStep("generating");
+    setDraft("");
     setErrorMessage(null);
     setErrorReason(null);
 
     const levels = { readingLevel, cefrLevel, pieceLength };
-    const result = await generateStoryAction({ collectionId, ...levels, outline });
+    const result = await requestStory({ collectionId, ...levels, outline }, (event) => {
+      if (event.type === "text") setDraft((current) => current + event.text);
+      if (event.type === "reset") setDraft("");
+    });
     busyRef.current = false;
     // The balance may have changed either way, so refresh what shows it.
     router.refresh();
 
-    if ("error" in result) {
+    if (result.type === "error") {
       setErrorMessage(result.error);
       setErrorReason(result.reason ?? null);
+      setDraft("");
       setStep("error");
       return;
     }
@@ -159,6 +191,7 @@ export function useStorySession(setup: StoriesSetupData) {
     setOutline,
     story,
     terms,
+    draft,
     errorMessage,
     setErrorMessage,
     errorReason,
