@@ -216,6 +216,15 @@ stamps; Hard still counts, since you did recall the term. A success is still
 read at the instant of the answer, so a lucky Good or Hard on a barely-known
 term can still earn a stamp. Only misses are filtered out.
 
+The live label has no such filter, and that is a known downside, accepted
+for now. Right after an Again or a missed Quiz question, the term can read
+Known until that track decays below about 0.9, which takes about S days. With
+the current weights that is around 10 hours after an Again on a term that had
+reached 15 days. It shows in Library and Mastery known counts, the widget and
+Telegram; ranking never uses the label. The fix we found is to read the label
+from recall a week ahead instead of right now, which a just-missed term can't
+pass. It also makes Known stricter for every term, so known counts would drop.
+
 The second, a sibling high-water mark (`ever_learning_at`), does the
 identical thing one threshold lower — stamped the first time
 Mastery_adjusted crosses the learning threshold (0.6) rather than the
