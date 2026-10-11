@@ -6,6 +6,10 @@ const { fetchTraceStateForUser, recordTraceEventForUser } = vi.hoisted(() => ({
   recordTraceEventForUser: vi.fn(),
 }));
 
+vi.mock("@/lib/streak/browser-timezone", () => ({
+  readBrowserTimezone: vi.fn().mockResolvedValue(null),
+}));
+
 vi.mock("@/lib/trace-queue/repository", () => ({
   fetchTraceState: vi.fn(),
   fetchTraceStateForUser,

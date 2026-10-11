@@ -61,4 +61,35 @@ test.describe("Streak", () => {
       "done",
     );
   });
+  test("the first study event uses the browser's timezone", async ({ page, user }) => {
+    const { collectionId } = await seedCollection(user);
+    await sql("update public.user_settings set timezone = null where user_id = $1", [user.id]);
+    await gotoReady(page, `/app/read?collection=${collectionId}`);
+
+    await page.getByRole("button", { name: "Show definition" }).click();
+    await page.getByRole("button", { name: "Next term" }).click();
+    await expect
+      .poll(async () => {
+        const [row] = await sql<{ timezone: string | null; current_streak: number }>(
+          "select timezone, current_streak from public.user_settings where user_id = $1",
+          [user.id],
+        );
+        return row?.current_streak ? row.timezone : null;
+      })
+      .toBe("UTC");
+  });
+
+  test("a timezone hint sets the day boundary only while none is saved", async ({ user }) => {
+    await sql("update public.user_settings set timezone = null where user_id = $1", [user.id]);
+    await sql("select public.bump_streak($1, 'Pacific/Auckland')", [user.id]);
+    await sql("select public.bump_streak($1, 'America/Los_Angeles')", [user.id]);
+
+    const [row] = await sql<{ timezone: string; same_day: boolean }>(
+      `select timezone,
+              last_active_date = (now() at time zone 'Pacific/Auckland')::date as same_day
+         from public.user_settings where user_id = $1`,
+      [user.id],
+    );
+    expect(row).toEqual({ timezone: "Pacific/Auckland", same_day: true });
+  });
 });

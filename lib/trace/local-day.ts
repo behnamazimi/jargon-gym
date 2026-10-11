@@ -14,7 +14,7 @@ export function studyTimezone(saved: string | null | undefined): string {
 
 /** Intl throws on a timezone it doesn't know. The saved value comes from the
  *  browser, so check it before the day math relies on it. */
-function isKnownTimeZone(timeZone: string): boolean {
+export function isKnownTimeZone(timeZone: string): boolean {
   try {
     new Intl.DateTimeFormat(undefined, { timeZone });
     return true;

@@ -87,8 +87,8 @@ export async function recordTraceEventForUser(
   if (error) throw error;
 }
 
-export async function bumpStreak(client: Client): Promise<void> {
-  const { error } = await client.rpc("my_bump_streak");
+export async function bumpStreak(client: Client, timezone?: string | null): Promise<void> {
+  const { error } = await client.rpc("my_bump_streak", { p_timezone: timezone ?? undefined });
 
   if (error) throw error;
 }

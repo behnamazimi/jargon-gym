@@ -19,6 +19,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { readBrowserTimezone } from "@/lib/streak/browser-timezone";
 import type { Database } from "@/lib/supabase/database.types";
 import {
   AGAIN,
@@ -61,7 +62,10 @@ async function writeEvent(
   },
 ) {
   if (mode === "session") {
-    await Promise.all([recordTraceEvent(client, termId, event, payload), bumpStreak(client)]);
+    await Promise.all([
+      recordTraceEvent(client, termId, event, payload),
+      readBrowserTimezone().then((timezone) => bumpStreak(client, timezone)),
+    ]);
   } else {
     await Promise.all([
       recordTraceEventForUser(client, userId, termId, event, payload),
