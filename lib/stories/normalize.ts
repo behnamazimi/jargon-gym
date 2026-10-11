@@ -1,30 +1,10 @@
 import { StoryGenerationError } from "./errors";
-import { acceptedLength, countLength, splitWords, type LengthRange } from "./length";
+import { acceptedLength, countLength, type LengthRange } from "./length";
 import { flattenParagraphs, pushSegment, trimParagraph } from "./paragraphs";
 import type { StoryGenerationPayload } from "./markup";
-import { STORY_MIN_TERMS, type StorySegment, type StoryTerm } from "./types";
+import type { StorySegment, StoryTerm } from "./types";
 
 const MAX_TITLE_LENGTH = 120;
-
-function words(text: string): string[] {
-  return splitWords(text.toLocaleLowerCase());
-}
-
-/** True when every word of the term has a word in the text starting with the
- *  same two letters. Loose on purpose: the model says which term it marked,
- *  and this only catches a clearly wrong word, while letting through forms
- *  whose ending changes ("idempotent", "wordt") or whose stem shifts after
- *  the start ("heeft" for "hebben"). */
-export function surfaceMatchesTerm(surface: string, term: string): boolean {
-  const surfaceWords = words(surface);
-  const termWords = words(term);
-  if (termWords.length === 0 || surfaceWords.length === 0) return false;
-
-  return termWords.every((termWord) => {
-    const prefix = termWord.slice(0, 2);
-    return surfaceWords.some((word) => word.startsWith(prefix));
-  });
-}
 
 function checkedTitle(raw: string): string {
   const title = raw.trim();
@@ -42,29 +22,18 @@ function checkLength(segments: StorySegment[], length: LengthRange) {
   }
 }
 
-/** What the model marked for each term, parts joined: a term split around
- *  other words ("trek … aan") is marked in several parts and checked as one. */
-function termSurfaces(payload: StoryGenerationPayload): Map<string, string> {
-  const surfaces = new Map<string, string>();
-  for (const paragraph of payload.paragraphs) {
-    for (const raw of paragraph.segments) {
-      if (raw.termId) surfaces.set(raw.termId, `${surfaces.get(raw.termId) ?? ""} ${raw.text}`);
-    }
-  }
-  return surfaces;
-}
-
+/** Turns the parsed reply into the story to save. A term counts when the
+ *  model marked it with one of the numbers it was given; the words inside the
+ *  marker are the model's choice of form and aren't checked. */
 export function normalizeStory(
   payload: StoryGenerationPayload,
   terms: StoryTerm[],
   length: LengthRange,
+  minTerms: number,
 ): { title: string; segments: StorySegment[]; termIds: string[] } {
   const title = checkedTitle(payload.title);
   const termById = new Map(terms.map((term) => [term.id, term]));
   const used = new Set<string>();
-  let marked = 0;
-  let mismatched = 0;
-  const surfaces = termSurfaces(payload);
   const paragraphs: StorySegment[][] = [];
 
   for (const rawParagraph of payload.paragraphs) {
@@ -73,8 +42,7 @@ export function normalizeStory(
       if (!raw.text) continue;
       const term = raw.termId ? termById.get(raw.termId) : undefined;
       const core = raw.text.trim();
-      if (term) marked += 1;
-      if (term && core && surfaceMatchesTerm(surfaces.get(term.id) ?? core, term.term)) {
+      if (term && core) {
         const start = raw.text.indexOf(core);
         if (start > 0) pushSegment(segments, { text: raw.text.slice(0, start) });
         pushSegment(segments, { text: core, termId: term.id });
@@ -82,7 +50,6 @@ export function normalizeStory(
         if (rest) pushSegment(segments, { text: rest });
         used.add(term.id);
       } else {
-        if (term) mismatched += 1;
         pushSegment(segments, { text: raw.text });
       }
     }
@@ -91,9 +58,9 @@ export function normalizeStory(
   }
 
   const termIds = terms.map((term) => term.id).filter((id) => used.has(id));
-  if (termIds.length < STORY_MIN_TERMS) {
+  if (termIds.length < minTerms) {
     throw new StoryGenerationError(
-      `Only ${termIds.length} of the ${terms.length} terms made it into the story (${marked} marked, ${mismatched} not matching their term).`,
+      `Only ${termIds.length} of the ${terms.length} terms were marked; this length needs ${minTerms}.`,
       "terms",
     );
   }

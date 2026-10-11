@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { StoryGenerationError } from "./errors";
-import { normalizeStory as normalizeWithLength, surfaceMatchesTerm } from "./normalize";
+import { normalizeStory as normalizeWithLength } from "./normalize";
 
 const TERMS = [
   { id: "t1", term: "Idempotency", definition: "d" },
@@ -13,8 +13,8 @@ const LENGTH = { min: 70, max: 120, unit: "words" as const };
 
 type NormalizeArgs = Parameters<typeof normalizeWithLength>;
 
-function normalizeStory(payload: NormalizeArgs[0], terms: NormalizeArgs[1]) {
-  return normalizeWithLength(payload, terms, LENGTH);
+function normalizeStory(payload: NormalizeArgs[0], terms: NormalizeArgs[1], minTerms = 3) {
+  return normalizeWithLength(payload, terms, LENGTH, minTerms);
 }
 
 const FILLER = Array.from({ length: 90 }, (_, index) => `word${index}`).join(" ");
@@ -25,24 +25,6 @@ function payload(segments: { text: string; termId?: string }[]) {
     paragraphs: [{ segments: [...segments, { text: ` ${FILLER}.` }] }],
   };
 }
-
-describe("surfaceMatchesTerm", () => {
-  it("accepts inflected forms", () => {
-    expect(surfaceMatchesTerm("idempotent", "Idempotency")).toBe(true);
-    expect(surfaceMatchesTerm("circuit breakers", "Circuit breaker")).toBe(true);
-  });
-
-  it("accepts irregular forms that keep the first two letters", () => {
-    expect(surfaceMatchesTerm("heeft", "hebben")).toBe(true);
-    expect(surfaceMatchesTerm("wordt", "worden")).toBe(true);
-    expect(surfaceMatchesTerm("ran", "run")).toBe(false);
-  });
-
-  it("rejects unrelated words", () => {
-    expect(surfaceMatchesTerm("the retry", "Idempotency")).toBe(false);
-    expect(surfaceMatchesTerm("circuit", "Circuit breaker")).toBe(false);
-  });
-});
 
 describe("normalizeStory", () => {
   it("keeps matching term segments and reports the terms used", () => {
@@ -62,7 +44,7 @@ describe("normalizeStory", () => {
     expect(result.segments[1]).toEqual({ text: "idempotency", termId: "t1" });
   });
 
-  it("turns unknown ids and mismatched text into plain text", () => {
+  it("counts any form the model marked, and turns unknown ids into plain text", () => {
     const result = normalizeStory(
       payload([
         { text: "idempotency", termId: "t1" },
@@ -75,8 +57,8 @@ describe("normalizeStory", () => {
       ]),
       TERMS,
     );
-    expect(result.termIds).toEqual(["t1", "t3", "t4"]);
-    expect(result.segments.some((segment) => segment.text.includes("the network"))).toBe(true);
+    expect(result.termIds).toEqual(["t1", "t2", "t3", "t4"]);
+    expect(result.segments).toContainEqual({ text: "the network", termId: "t2" });
     expect(result.segments.every((segment) => segment.termId !== "nope")).toBe(true);
   });
 
@@ -117,27 +99,6 @@ describe("normalizeStory", () => {
     );
     expect(result.segments.filter((segment) => segment.termId === "t5")).toHaveLength(2);
     expect(result.termIds).toContain("t5");
-  });
-
-  it("turns every part of a split term into plain text when the parts don't match it", () => {
-    const terms = [...TERMS, { id: "t5", term: "aantrekken", definition: "d" }];
-    const result = normalizeStory(
-      payload([
-        { text: "Hij " },
-        { text: "liep", termId: "t5" },
-        { text: " naar " },
-        { text: "huis", termId: "t5" },
-        { text: ". " },
-        { text: "idempotent", termId: "t1" },
-        { text: " " },
-        { text: "sharding", termId: "t4" },
-        { text: " " },
-        { text: "backpressure", termId: "t3" },
-      ]),
-      terms,
-    );
-    expect(result.segments.some((segment) => segment.termId === "t5")).toBe(false);
-    expect(result.termIds).not.toContain("t5");
   });
 
   it("keeps split parts that sit in different paragraphs", () => {
@@ -182,30 +143,21 @@ describe("normalizeStory", () => {
     expect(result.termIds).toEqual(["t1", "t3", "t4"]);
   });
 
-  it("rejects a story with fewer than three terms", () => {
-    expect(() =>
-      normalizeStory(
-        payload([
-          { text: "idempotency", termId: "t1" },
-          { text: " " },
-          { text: "sharding", termId: "t4" },
-        ]),
-        TERMS,
-      ),
-    ).toThrow(StoryGenerationError);
+  it("rejects a story with fewer terms than its length needs", () => {
+    const twoTerms = payload([
+      { text: "idempotency", termId: "t1" },
+      { text: " " },
+      { text: "sharding", termId: "t4" },
+    ]);
+    expect(() => normalizeStory(twoTerms, TERMS, 3)).toThrow(
+      /Only 2 of the 4 terms were marked; this length needs 3\./,
+    );
+    expect(normalizeStory(twoTerms, TERMS, 2).termIds).toEqual(["t1", "t4"]);
   });
 
-  it("says how many terms were marked and how many didn't match", () => {
-    expect(() =>
-      normalizeStory(
-        payload([
-          { text: "idempotency", termId: "t1" },
-          { text: " " },
-          { text: "banana", termId: "t4" },
-        ]),
-        TERMS,
-      ),
-    ).toThrow(/Only 1 of the \d+ terms .*\(2 marked, 1 not matching their term\)/);
+  it("keeps a story with a single term when one is enough", () => {
+    const result = normalizeStory(payload([{ text: "idempotent", termId: "t1" }]), TERMS, 1);
+    expect(result.termIds).toEqual(["t1"]);
   });
 
   it("rejects a story that is too short", () => {
@@ -329,10 +281,10 @@ describe("normalizeStory", () => {
       { text: " " },
       { text: "backpressure", termId: "t3" },
     ]);
-    // 93 words: inside 0.6 × 70 to 1.3 × 120, outside a longer asked-for range.
-    expect(() => normalizeWithLength(story, TERMS, LENGTH)).not.toThrow();
-    expect(() => normalizeWithLength(story, TERMS, { min: 200, max: 260, unit: "words" })).toThrow(
-      /93 words/,
-    );
+    // 93 words: inside 0.5 × 70 to 1.5 × 120, outside a longer asked-for range.
+    expect(() => normalizeWithLength(story, TERMS, LENGTH, 3)).not.toThrow();
+    expect(() =>
+      normalizeWithLength(story, TERMS, { min: 200, max: 260, unit: "words" }, 3),
+    ).toThrow(/93 words/);
   });
 });

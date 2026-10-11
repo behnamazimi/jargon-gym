@@ -6,7 +6,7 @@ import type { UsageTally } from "@/lib/ai-credits/usage-tally";
 import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
-import { storyLength } from "./length";
+import { minTermsForLength, storyLength } from "./length";
 import { parseStoryText } from "./markup";
 import { StoryGenerationError, type StoryGenerationFailure } from "./errors";
 import { normalizeStory } from "./normalize";
@@ -111,7 +111,8 @@ async function requestStory(
   });
   input.onUsage?.(usage);
   try {
-    return normalizeStory(parseStoryText(text, input.terms), input.terms, length);
+    const payload = parseStoryText(text, input.terms);
+    return normalizeStory(payload, input.terms, length, minTermsForLength(input.pieceLength));
   } catch (error) {
     if (error instanceof StoryGenerationError) {
       console.warn("Rejected story reply:", text.slice(0, REJECTED_REPLY_LOG_LIMIT));

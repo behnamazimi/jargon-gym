@@ -183,7 +183,6 @@ export function StorySetupPanel({
       <CefrLevelField value={session.cefrLevel} onChange={session.setCefrLevel} />
       <PieceLengthField
         value={session.pieceLength}
-        termsAvailable={eligibleCount}
         onChange={session.setPieceLength}
       />
       <OutlineField value={session.outline} onChange={session.setOutline} />
