@@ -24,13 +24,11 @@ export const LOBYA_MARK = {
   smile: "M46 74Q58 84 70 72",
 } as const;
 
-/** Green at rest; `ill-mark-drift` on the svg moves it through the other lobyas' colours. */
-const MARK_COLOR = "var(--ill-mark, var(--ill-green))";
-
 function MarkParts() {
   return (
     <>
-      <Shape d={LOBYA_MARK.body} color={MARK_COLOR} />
+      {/* Green at rest; inside `ill-mark-drift` it moves through the other lobyas' colours. */}
+      <Shape d={LOBYA_MARK.body} color="var(--ill-green)" colorClassName="ill-mark-fill" />
       {LOBYA_MARK.eyes.map(([x, y]) => (
         <Eye key={x} x={x} y={y} r={LOBYA_MARK.eyeRadius} />
       ))}

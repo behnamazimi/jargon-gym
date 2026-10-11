@@ -13,6 +13,8 @@ type ShapeProps = {
   opaque?: boolean;
   offset?: readonly [number, number];
   stroke?: number;
+  /** A class for the colour fill alone, to animate it. */
+  colorClassName?: string;
 };
 
 /** A closed outlined shape: the basic building block of every scene. */
@@ -22,12 +24,18 @@ export function Shape({
   opaque = true,
   offset = MISREGISTER,
   stroke = STROKE.bold,
+  colorClassName,
 }: ShapeProps) {
   return (
     <g>
       {opaque ? <path d={d} style={{ fill: PAPER }} /> : null}
       {color ? (
-        <path d={d} transform={`translate(${offset[0]} ${offset[1]})`} style={{ fill: color }} />
+        <path
+          d={d}
+          transform={`translate(${offset[0]} ${offset[1]})`}
+          className={colorClassName}
+          style={{ fill: color }}
+        />
       ) : null}
       <path d={d} style={{ fill: "none", stroke: INK, strokeWidth: stroke }} />
     </g>
