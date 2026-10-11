@@ -1,6 +1,6 @@
 import { blob, box, curve, polyline, wave, type Point } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, ScribbleLines, Spark } from "../marks";
+import { Dot, DottedPath, Eye, Face, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Line, Shape, STROKE } from "../shape";
@@ -90,7 +90,9 @@ export function BeforeYouSignUpScene({ className, title }: { className?: string;
           <Eye x={270} y={376} />
         </Motion>
       </Motion>
-      <Line d="M254 398Q263 404 272 398" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M254 398Q263 404 272 398" stroke={STROKE.regular} />
+      </Face>
 
       <Line d="M206 430Q232 452 262 446M296 430Q312 446 330 444" />
       <g transform="rotate(-6 320 440)">

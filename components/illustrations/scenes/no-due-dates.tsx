@@ -1,6 +1,6 @@
 import { blob, box, curve, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dashes, Dot, DottedPath, Eye, ScribbleLines, Spark } from "../marks";
+import { Dashes, Dot, DottedPath, Eye, Face, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -81,10 +81,14 @@ function OverduePile() {
 
       {/* Buried up to the chin, sweating. */}
       <Shape d={blob({ cx: 206, cy: 464, rx: 34, ry: 32, seed: 4 })} color={CORAL} />
-      <Line d="M184 445L197 439M215 438L228 444" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M184 445L197 439M215 438L228 444" stroke={STROKE.regular} />
+      </Face>
       <Eye x={196} y={454} />
       <Eye x={219} y={453} />
-      <Line d={wave(196, 474, 22, { amp: 2, period: 8, seed: 3 })} stroke={STROKE.fine} />
+      <Face>
+        <Line d={wave(196, 474, 22, { amp: 2, period: 8, seed: 3 })} stroke={STROKE.fine} />
+      </Face>
       <Motion kind="drip">
         <SweatDrop x={248} y={438} />
       </Motion>
@@ -206,7 +210,9 @@ function CalmReview() {
             <Eye x={528} y={390} />
           </Motion>
         </Motion>
-        <Line d="M510 410Q520 418 532 408" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M510 410Q520 418 532 408" stroke={STROKE.regular} />
+        </Face>
 
         <g transform="rotate(-10 587 374)">
           <Shape d={box(556, 352, 62, 44, { seed: 13 })} stroke={STROKE.regular} />

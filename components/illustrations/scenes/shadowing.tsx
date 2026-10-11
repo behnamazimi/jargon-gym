@@ -1,6 +1,6 @@
 import { blob, box, curve, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, Spark, Squiggle } from "../marks";
+import { Dot, DottedPath, Eye, Face, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -73,7 +73,9 @@ function Listener() {
           <Eye x={242} y={418} />
         </Motion>
       </Motion>
-      <Line d="M222 440Q232 447 244 438" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M222 440Q232 447 244 438" stroke={STROKE.regular} />
+      </Face>
 
       <Line
         d={curve([
@@ -118,10 +120,14 @@ function Repeater() {
           <Eye x={566} y={418} />
         </Motion>
         <Motion kind="hear-mouth-shut">
-          <Line d="M542 442Q552 448 564 441" stroke={STROKE.regular} />
+          <Face>
+            <Line d="M542 442Q552 448 564 441" stroke={STROKE.regular} />
+          </Face>
         </Motion>
         <Motion kind="hear-mouth-open">
-          <Shape d={blob({ cx: 552, cy: 444, rx: 9, ry: 8, seed: 17 })} stroke={STROKE.regular} />
+          <Face>
+            <Shape d={blob({ cx: 552, cy: 444, rx: 9, ry: 8, seed: 17 })} stroke={STROKE.regular} />
+          </Face>
         </Motion>
       </Motion>
     </g>

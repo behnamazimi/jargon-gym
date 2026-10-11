@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
+
 import { wave } from "./geometry";
-import { INK } from "./palette";
+import { FACE, INK } from "./palette";
 import { Line, STROKE } from "./shape";
 
 const toRad = (deg: number) => (deg * Math.PI) / 180;
@@ -146,7 +148,12 @@ export function ScribbleLines({
 }
 
 export function Eye({ x, y, r = 5.5 }: { x: number; y: number; r?: number }) {
-  return <circle cx={x} cy={y} r={r} style={{ fill: INK }} />;
+  return <circle cx={x} cy={y} r={r} style={{ fill: FACE }} />;
+}
+
+/** Wraps a mouth or brows so they stay dark on every theme, like the eyes. */
+export function Face({ children }: { children: ReactNode }) {
+  return <g className="ill-face">{children}</g>;
 }
 
 /** A small round dot or ring of colour. */

@@ -1,6 +1,6 @@
 import { blob, box, curve, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, ScribbleLines, Spark } from "../marks";
+import { Dot, Eye, Face, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -87,7 +87,9 @@ export function CollectionsIndexScene({
           <Eye x={332} y={378} />
           <Eye x={354} y={376} />
         </Motion>
-        <Line d="M334 398Q344 406 354 398" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M334 398Q344 406 354 398" stroke={STROKE.regular} />
+        </Face>
       </Motion>
 
       {/* Arms go behind whatever box they hold. */}

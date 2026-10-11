@@ -1,7 +1,7 @@
 import { Clip } from "../clip";
 import { blob, box, polyline, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, Fleck, ScribbleLines, Spark } from "../marks";
+import { Dot, Eye, Face, Fleck, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, INK, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -72,8 +72,13 @@ export function InviteScene({ className, title }: { className?: string; title?: 
               <Eye x={414} y={288} r={7} />
             </Motion>
             <Motion kind="happy-face">
-              <Line d="M376 292Q384 280 392 292M408 290Q416 278 424 290" stroke={STROKE.regular} />
-              <path d="M382 306Q401 338 420 305Z" style={{ fill: INK }} />
+              <Face>
+                <Line
+                  d="M376 292Q384 280 392 292M408 290Q416 278 424 290"
+                  stroke={STROKE.regular}
+                />
+                <path d="M382 306Q401 338 420 305Z" style={{ fill: INK }} />
+              </Face>
             </Motion>
           </Motion>
         </Motion>

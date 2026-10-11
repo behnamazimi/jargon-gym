@@ -4,6 +4,7 @@
   :root,
   .ill-mark {
     --ill-ink: oklch(22% 0.02 60);
+    --ill-face: oklch(22% 0.02 60);
     --ill-paper: var(--color-base-100);
     --ill-blue: oklch(66% 0.16 252);
     --ill-coral: oklch(75% 0.13 28);
@@ -19,6 +20,11 @@
 
   .ill-mark-tile {
     background: color-mix(in oklab, oklch(76.662% 0.135 153.45) 15%, oklch(99% 0.005 85));
+  }
+
+  /* Faces keep their dark ink on the dim theme (see Face in marks.tsx). */
+  .ill-face {
+    --ill-ink: var(--ill-face);
   }
 
   [data-theme="dim"] {

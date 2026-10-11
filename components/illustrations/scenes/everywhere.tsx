@@ -1,6 +1,6 @@
 import { blob, box, curve, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, ScribbleLines, Spark, Squiggle } from "../marks";
+import { Dot, DottedPath, Eye, Face, ScribbleLines, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -174,7 +174,9 @@ function Person() {
         <Eye x={344} y={408} />
         <Eye x={366} y={407} />
       </Motion>
-      <Line d="M346 428Q356 435 368 427" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M346 428Q356 435 368 427" stroke={STROKE.regular} />
+      </Face>
 
       <g transform="rotate(8 404 420)">
         <Shape

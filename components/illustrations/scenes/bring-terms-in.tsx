@@ -1,6 +1,6 @@
 import { blob, box, curve, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, ScribbleLines, Spark, Squiggle } from "../marks";
+import { Dot, DottedPath, Eye, Face, ScribbleLines, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -188,7 +188,9 @@ function Packer() {
           <Eye x={226} y={392} />
         </Motion>
       </Motion>
-      <Line d="M206 414Q217 422 228 412" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M206 414Q217 422 228 412" stroke={STROKE.regular} />
+      </Face>
 
       {/* Holds the list up over the box and lets it go. */}
       <Motion kind="import-flick" pivot={SHOULDER}>

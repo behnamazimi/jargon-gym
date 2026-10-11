@@ -1,6 +1,6 @@
 import { blob, box, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Spark } from "../marks";
+import { Dot, Face, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Line, Shape, STROKE } from "../shape";
@@ -35,10 +35,12 @@ export function CaughtUpScene({ className, title }: { className?: string; title?
           d={blob({ cx: 236, cy: 130, rx: 36, ry: 50, taper: 0.1, rotate: -8, seed: 4 })}
           color={PURPLE}
         />
-        <Line
-          d="M222 116Q228 109 234 116M242 113Q248 106 254 113M226 132Q238 142 252 128"
-          stroke={STROKE.regular}
-        />
+        <Face>
+          <Line
+            d="M222 116Q228 109 234 116M242 113Q248 106 254 113M226 132Q238 142 252 128"
+            stroke={STROKE.regular}
+          />
+        </Face>
       </Motion>
 
       <Motion kind="bob" amount={4} duration={1.8}>

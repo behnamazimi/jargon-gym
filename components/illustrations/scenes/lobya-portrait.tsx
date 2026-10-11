@@ -1,6 +1,6 @@
 import { blob, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Eye } from "../marks";
+import { Eye, Face } from "../marks";
 import { Motion } from "../motion";
 import { Line, Shape, STROKE } from "../shape";
 
@@ -27,7 +27,9 @@ export function LobyaPortrait({
         <Eye x={90} y={124} />
         <Eye x={110} y={122} />
       </Motion>
-      <Line d="M90 142Q100 150 110 142" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M90 142Q100 150 110 142" stroke={STROKE.regular} />
+      </Face>
       <Line d="M54 156Q42 176 48 196" />
       <Motion kind="wave-search" pivot={SHOULDER} phase={phase}>
         <Line d={`M${SHOULDER[0]} ${SHOULDER[1]}Q164 120 170 98`} />

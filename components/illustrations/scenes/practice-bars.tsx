@@ -1,6 +1,6 @@
 import { blob, box, curve, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, ScribbleLines, Spark } from "../marks";
+import { Dot, DottedPath, Eye, Face, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -68,7 +68,9 @@ function Practiser() {
             <Eye x={256} y={400} />
           </Motion>
         </Motion>
-        <Line d="M236 424Q246 430 257 423" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M236 424Q246 430 257 423" stroke={STROKE.regular} />
+        </Face>
       </Motion>
 
       {/* Holds a card up and turns it over, then lowers it and takes a break. */}

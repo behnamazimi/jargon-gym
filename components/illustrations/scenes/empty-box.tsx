@@ -1,6 +1,6 @@
 import { blob, box, polyline, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, Spark, Squiggle } from "../marks";
+import { Dot, Eye, Face, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -35,7 +35,9 @@ export function EmptyBoxScene({ className, title }: { className?: string; title?
             <Eye x={202} y={166} />
           </Motion>
         </Motion>
-        <Dot x={194} y={192} r={3} ring />
+        <Face>
+          <Dot x={194} y={192} r={3} ring />
+        </Face>
 
         <Motion kind="box-shake" pivot={SHAKE_PIVOT}>
           <Shape

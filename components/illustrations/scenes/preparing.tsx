@@ -1,6 +1,6 @@
 import { blob, box, polyline, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, Spark } from "../marks";
+import { Dot, Eye, Face, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -53,7 +53,9 @@ function Scribe() {
         <Eye x={200} y={68} r={4} />
         <Eye x={213} y={66} r={4} />
       </Motion>
-      <Line d="M202 80Q207 84 213 79" stroke={STROKE.fine} />
+      <Face>
+        <Line d="M202 80Q207 84 213 79" stroke={STROKE.fine} />
+      </Face>
 
       <Shape
         d={polyline(

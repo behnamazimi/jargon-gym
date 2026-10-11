@@ -1,6 +1,6 @@
 import { blob, box, curve, polyline, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, ScribbleLines, Spark, Squiggle } from "../marks";
+import { Dot, Eye, Face, ScribbleLines, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -97,7 +97,9 @@ export function AboutScene({ className, title }: { className?: string; title?: s
         <Eye x={534} y={384} />
         <Eye x={556} y={382} />
       </Motion>
-      <Line d="M536 404Q546 413 557 404" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M536 404Q546 413 557 404" stroke={STROKE.regular} />
+      </Face>
 
       {/* Tips the can from the shoulder over the plant, then brings it back. */}
       <Motion kind="pour" pivot={SHOULDER}>
