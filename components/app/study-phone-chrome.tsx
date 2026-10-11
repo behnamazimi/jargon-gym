@@ -24,8 +24,7 @@ export { StudyPhoneProvider } from "@/components/app/study-phone-context";
 
 export function StudyPhoneTopBar() {
   const pathname = usePathname();
-  const { email, currentStreak, longestStreak, setMoreOpen, backHref, hasInAppHistory } =
-    useStudyPhone();
+  const { email, streak, setMoreOpen, backHref, hasInAppHistory } = useStudyPhone();
   const router = useRouter();
   const initials = emailInitials(email);
   const subPage = isMorePath(pathname);
@@ -65,7 +64,7 @@ export function StudyPhoneTopBar() {
           <p className="m-0 font-heading text-sm font-medium">{studyScreenTitle(pathname)}</p>
         </div>
         <div className="flex items-center justify-end gap-2">
-          <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+          <StreakBadge streak={streak} />
           <Button
             variant="ghost"
             size="sm"

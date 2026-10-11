@@ -13,6 +13,7 @@ import {
   StudyPathOnly,
 } from "@/components/site-header-nav";
 import { StreakBadge } from "@/components/streak-badge";
+import type { StreakSummary } from "@/lib/streak/status";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
@@ -52,15 +53,13 @@ export function SiteHeader({
   initialIsDark,
   user,
   isAdmin,
-  currentStreak,
-  longestStreak,
+  streak,
   aiCreditsMode,
 }: {
   initialIsDark: boolean;
   user: { email?: string | null } | null;
   isAdmin: boolean;
-  currentStreak: number;
-  longestStreak: number;
+  streak: StreakSummary;
   aiCreditsMode: AiCreditsMenuMode;
 }) {
   return (
@@ -98,7 +97,7 @@ export function SiteHeader({
         <>
           {user ? (
             <StudyPathOnly>
-              <StreakBadge currentStreak={currentStreak} longestStreak={longestStreak} />
+              <StreakBadge streak={streak} />
             </StudyPathOnly>
           ) : null}
           {user ? null : <InstallButton />}

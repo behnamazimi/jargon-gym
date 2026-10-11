@@ -5,13 +5,15 @@ import { useEffect, useState, useTransition } from "react";
 import { getStreakHistoryAction } from "@/app/(private)/actions";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { StreakDay } from "@/lib/streak/history";
+import type { StreakSummary } from "@/lib/streak/status";
 import { cn } from "@/lib/utils";
 
 type StreakModalProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  currentStreak: number;
-  longestStreak: number;
+  streak: StreakSummary;
+  /** Called when the loaded history shows today already has activity. */
+  onTodayActive: () => void;
 };
 
 /** Parsed as local midnight (not UTC) so the weekday label is stable
@@ -20,12 +22,7 @@ function weekdayLabel(dateStr: string): string {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", { weekday: "short" });
 }
 
-export function StreakModal({
-  isOpen,
-  onOpenChange,
-  currentStreak,
-  longestStreak,
-}: StreakModalProps) {
+export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: StreakModalProps) {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [days, setDays] = useState<StreakDay[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -51,9 +48,10 @@ export function StreakModal({
         const rows = result.days ?? [];
         setDays(rows);
         setSelectedDate(rows.at(-1)?.date ?? null);
+        if (rows.at(-1)?.isActive) onTodayActive();
       }
     });
-  }, [isOpen, hasLoaded]);
+  }, [isOpen, hasLoaded, onTodayActive]);
 
   const selected = days.find((day) => day.date === selectedDate);
   const showSkeleton = isPending && days.length === 0;
@@ -66,11 +64,11 @@ export function StreakModal({
           <div className="flex items-center gap-2">
             <Flame className="size-6 shrink-0 text-streak" strokeWidth={2} aria-hidden />
             <p className="m-0 text-lg leading-none font-semibold">
-              <span className="tabular-nums">{currentStreak}</span> day streak
+              <span className="tabular-nums">{streak.current}</span> day streak
             </p>
           </div>
           <p className="m-0 ml-8 text-xs leading-none text-base-content/70">
-            Longest {longestStreak}
+            Longest {streak.longest}
           </p>
         </div>
       </DialogHeader>
@@ -87,27 +85,14 @@ export function StreakModal({
                 <span className="size-4 animate-pulse rounded-full bg-base-300/60" />
               </div>
             ))
-          : days.map((day) => (
-              <button
+          : days.map((day, index) => (
+              <DayChip
                 key={day.date}
-                type="button"
-                onClick={() => setSelectedDate(day.date)}
-                aria-pressed={day.date === selectedDate}
-                className={cn(
-                  "flex flex-1 flex-col items-center gap-1 rounded-field py-2 text-xs font-medium transition-colors",
-                  day.date === selectedDate && "ring-2 ring-primary",
-                  day.isActive
-                    ? "bg-streak/10 text-base-content"
-                    : "bg-base-200/60 text-base-content/40",
-                )}
-              >
-                <span>{weekdayLabel(day.date)}</span>
-                <Flame
-                  className={cn("size-4", day.isActive ? "text-streak" : "text-base-content/20")}
-                  strokeWidth={2}
-                  aria-hidden
-                />
-              </button>
+                day={day}
+                isToday={index === days.length - 1}
+                isSelected={day.date === selectedDate}
+                onSelect={() => setSelectedDate(day.date)}
+              />
             ))}
       </div>
 
@@ -132,5 +117,47 @@ export function StreakModal({
 
       {error ? <p className="text-sm text-error-text">{error}</p> : null}
     </Dialog>
+  );
+}
+
+function DayChip({
+  day,
+  isToday,
+  isSelected,
+  onSelect,
+}: {
+  day: StreakDay;
+  isToday: boolean;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const label = isToday ? "Today" : weekdayLabel(day.date);
+  const status = day.isActive ? "studied" : isToday ? "not yet" : "missed";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={isSelected}
+      aria-label={`${label}: ${status}`}
+      className={cn(
+        "flex flex-1 flex-col items-center gap-1 rounded-field border py-2 text-xs font-medium transition-colors",
+        isSelected && "ring-2 ring-primary",
+        day.isActive && "border-transparent bg-streak/15 text-base-content",
+        !day.isActive && isToday && "border-dashed border-streak/60 text-base-content/80",
+        !day.isActive && !isToday && "border-transparent bg-base-200/60 text-base-content/40",
+      )}
+    >
+      <span>{label}</span>
+      {day.isActive ? (
+        <Flame className="size-4 fill-streak text-streak" strokeWidth={2} aria-hidden />
+      ) : isToday ? (
+        <Flame className="size-4 text-streak/60" strokeWidth={2} aria-hidden />
+      ) : (
+        <span className="flex size-4 items-center justify-center" aria-hidden>
+          <span className="h-0.5 w-2.5 rounded-full bg-base-content/25" />
+        </span>
+      )}
+    </button>
   );
 }

@@ -10,13 +10,13 @@ import {
   type AiCreditsMenuMode,
 } from "@/lib/ai-credits/menu-line";
 import { studyBackTarget } from "@/lib/chrome";
+import type { StreakSummary } from "@/lib/streak/status";
 
 type StudyPhoneContextValue = {
   email: string;
   isAdmin: boolean;
   initialIsDark: boolean;
-  currentStreak: number;
-  longestStreak: number;
+  streak: StreakSummary;
   moreOpen: boolean;
   setMoreOpen: (open: boolean) => void;
   /** What the More sheet says about AI credits, or null to say nothing. */
@@ -41,16 +41,14 @@ export function StudyPhoneProvider({
   email,
   isAdmin,
   initialIsDark,
-  currentStreak,
-  longestStreak,
+  streak,
   aiCreditsMode,
   children,
 }: {
   email: string;
   isAdmin: boolean;
   initialIsDark: boolean;
-  currentStreak: number;
-  longestStreak: number;
+  streak: StreakSummary;
   aiCreditsMode: AiCreditsMenuMode;
   children: ReactNode;
 }) {
@@ -86,8 +84,7 @@ export function StudyPhoneProvider({
       email,
       isAdmin,
       initialIsDark,
-      currentStreak,
-      longestStreak,
+      streak,
       moreOpen,
       setMoreOpen,
       aiCreditsLine: aiCreditsLine(aiCreditsMode, aiCreditsLoad),
@@ -98,8 +95,7 @@ export function StudyPhoneProvider({
       email,
       isAdmin,
       initialIsDark,
-      currentStreak,
-      longestStreak,
+      streak,
       moreOpen,
       setMoreOpen,
       aiCreditsMode,
