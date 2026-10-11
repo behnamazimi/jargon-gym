@@ -1,6 +1,6 @@
 import { blob, box, curve, polyline, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, ScribbleLines, Spark, Squiggle } from "../marks";
+import { Dot, Eye, Face, ScribbleLines, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -128,7 +128,9 @@ function Listening() {
           <Eye x={390} y={360} />
           <Eye x={412} y={360} />
         </Motion>
-        <Line d="M390 380Q401 388 413 379" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M390 380Q401 388 413 379" stroke={STROKE.regular} />
+        </Face>
         <Line
           d={curve([
             [350, 372],
@@ -179,7 +181,9 @@ function Quizzing() {
             <Eye x={631} y={358} />
           </Motion>
         </Motion>
-        <Line d="M612 380Q623 388 634 378" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M612 380Q623 388 634 378" stroke={STROKE.regular} />
+        </Face>
 
         <Motion kind="flip-front">
           <Shape d={box(660, 286, 64, 46, { seed: 16, bow: 2 })} stroke={STROKE.regular} />

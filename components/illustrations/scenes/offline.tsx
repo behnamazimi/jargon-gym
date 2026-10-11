@@ -1,6 +1,6 @@
 import { blob, box, curve, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, Squiggle } from "../marks";
+import { Dot, Eye, Face, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -79,7 +79,9 @@ export function OfflineScene({ className, title }: { className?: string; title?:
           <Eye x={388} y={312} />
           <Eye x={408} y={308} />
         </Motion>
-        <Line d="M390 336Q398 332 408 336" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M390 336Q398 332 408 336" stroke={STROKE.regular} />
+        </Face>
       </Motion>
     </Illustration>
   );

@@ -1,6 +1,6 @@
 import { blob, box, curve, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, ScribbleLines, Spark } from "../marks";
+import { Dot, DottedPath, Eye, Face, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -62,7 +62,9 @@ export function TermAnatomyScene({ className, title }: { className?: string; tit
           <Eye x={254} y={374} />
         </Motion>
       </Motion>
-      <Line d="M236 398Q246 405 256 398" stroke={STROKE.regular} />
+      <Face>
+        <Line d="M236 398Q246 405 256 398" stroke={STROKE.regular} />
+      </Face>
       <Line d="M180 420Q160 450 172 476" />
 
       {/* Slides the magnifier along the definition, pauses, comes back. */}

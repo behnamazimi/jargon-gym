@@ -1,6 +1,6 @@
 import { blob, box, curve, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dashes, Dot, DottedPath, Eye, ScribbleLines, Spark, Squiggle } from "../marks";
+import { Dashes, Dot, DottedPath, Eye, Face, ScribbleLines, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -135,7 +135,9 @@ function Reader() {
             <Eye x={225} y={242} />
           </Motion>
         </Motion>
-        <Dot x={219} y={262} r={4.5} ring />
+        <Face>
+          <Dot x={219} y={262} r={4.5} ring />
+        </Face>
       </Motion>
       <Line
         d={curve([
@@ -174,14 +176,16 @@ function QuizFigure() {
             <Eye x={447} y={102} />
           </Motion>
         </Motion>
-        <Line
-          d={curve([
-            [423, 122],
-            [436, 131],
-            [450, 119],
-          ])}
-          stroke={STROKE.regular}
-        />
+        <Face>
+          <Line
+            d={curve([
+              [423, 122],
+              [436, 131],
+              [450, 119],
+            ])}
+            stroke={STROKE.regular}
+          />
+        </Face>
 
         <Motion kind="flip-front">
           <Shape d={box(482, 80, 62, 44, { seed: 4, bow: 2 })} stroke={STROKE.regular} />
@@ -285,7 +289,9 @@ function ReviewFigure() {
             <Eye x={653} y={463} />
           </Motion>
         </Motion>
-        <Dot x={640} y={492} r={8} />
+        <Face>
+          <Dot x={640} y={492} r={8} />
+        </Face>
       </Motion>
       <Motion kind="toss-card">
         <ReviewCard x={HELD_CARD.x} y={HELD_CARD.y} seed={40} />

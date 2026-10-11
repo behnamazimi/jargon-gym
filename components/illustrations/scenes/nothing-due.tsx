@@ -1,6 +1,6 @@
 import { blob, box, curve, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, Spark, Squiggle } from "../marks";
+import { Dot, Eye, Face, Spark, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -157,7 +157,9 @@ function Lounger() {
             <Eye x={320} y={352} />
           </Motion>
         </Motion>
-        <Line d="M300 372Q312 381 325 370" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M300 372Q312 381 325 370" stroke={STROKE.regular} />
+        </Face>
       </Motion>
     </g>
   );

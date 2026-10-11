@@ -1,6 +1,6 @@
 import { blob, box, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, Fleck } from "../marks";
+import { Dot, Eye, Face, Fleck } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, INK, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -68,10 +68,14 @@ export function KeepTrainingScene({ className, title }: { className?: string; ti
       <Motion kind="lift-squash" origin="50% 100%">
         <Shape d={blob({ cx: 200, cy: 206, rx: 44, ry: 54, taper: 0.1, seed: 8 })} color={YELLOW} />
         <Hatch d={blob({ cx: 220, cy: 236, rx: 13, ry: 9, seed: 2 })} cross />
-        <Line d="M180 176L196 182M206 180L222 174" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M180 176L196 182M206 180L222 174" stroke={STROKE.regular} />
+        </Face>
         <Eye x={190} y={192} />
         <Eye x={212} y={190} />
-        <Line d="M192 212L212 210" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M192 212L212 210" stroke={STROKE.regular} />
+        </Face>
       </Motion>
       <Motion kind="drip">
         <Shape

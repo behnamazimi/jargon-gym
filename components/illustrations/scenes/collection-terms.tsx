@@ -1,6 +1,6 @@
 import { blob, box, curve, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, ScribbleLines, Spark } from "../marks";
+import { Dot, Eye, Face, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -22,7 +22,9 @@ export function CollectionTermsScene({ className, title }: { className?: string;
         <Eye x={236} y={384} />
         <Eye x={258} y={382} />
       </Motion>
-      <Shape d={blob({ cx: 250, cy: 410, rx: 9, ry: 7, seed: 5 })} stroke={STROKE.regular} />
+      <Face>
+        <Shape d={blob({ cx: 250, cy: 410, rx: 9, ry: 7, seed: 5 })} stroke={STROKE.regular} />
+      </Face>
       <Line d="M282 428Q304 410 312 384" />
 
       {/* The speech bubble, with the term in it. */}
@@ -49,7 +51,9 @@ export function CollectionTermsScene({ className, title }: { className?: string;
           <Eye x={556} y={394} />
           <Eye x={578} y={396} />
         </Motion>
-        <Line d="M556 418Q567 427 578 418" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M556 418Q567 427 578 418" stroke={STROKE.regular} />
+        </Face>
         <Line
           d={curve([
             [536, 430],

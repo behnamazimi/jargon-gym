@@ -1,6 +1,6 @@
 import { blob, curve, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, Squiggle } from "../marks";
+import { Dot, DottedPath, Eye, Face, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -83,9 +83,13 @@ export function NotFoundScene({ className, title }: { className?: string; title?
             </Motion>
           </Motion>
           <Motion kind="surprise-brows">
-            <Line d="M306 368Q314 360 324 366M332 366Q340 360 350 366" stroke={STROKE.regular} />
+            <Face>
+              <Line d="M306 368Q314 360 324 366M332 366Q340 360 350 366" stroke={STROKE.regular} />
+            </Face>
           </Motion>
-          <Line d="M320 414Q328 410 338 413" stroke={STROKE.regular} />
+          <Face>
+            <Line d="M320 414Q328 410 338 413" stroke={STROKE.regular} />
+          </Face>
         </Motion>
       </Motion>
     </Illustration>

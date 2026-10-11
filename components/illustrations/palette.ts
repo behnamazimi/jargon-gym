@@ -1,6 +1,8 @@
 // Illustration colours. The values live in illustrations.css (--ill-*) so they
 // follow the light and dim themes; scenes only ever use these names.
 export const INK = "var(--ill-ink)";
+/** Eyes and mouths stay dark on every theme. */
+export const FACE = "var(--ill-face)";
 export const PAPER = "var(--ill-paper)";
 export const BLUE = "var(--ill-blue)";
 export const CORAL = "var(--ill-coral)";

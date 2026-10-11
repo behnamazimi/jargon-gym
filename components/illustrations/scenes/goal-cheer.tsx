@@ -1,7 +1,7 @@
 import { GOAL_TIERS, type GoalTier } from "@/lib/goals/levels";
 import { blob, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Fleck, Spark } from "../marks";
+import { Face, Fleck, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, INK, PURPLE, YELLOW } from "../palette";
 import { Line, Shape } from "../shape";
@@ -58,8 +58,10 @@ function Cheerer({
           d={blob({ cx: 100, cy: 204, rx: 40, ry: 52, taper: 0.1, seed })}
           color={color}
         />
-        <Line d="M80 188Q86 180 92 188M104 186Q110 178 116 186" stroke={WEIGHT.detail} />
-        <path d="M88 202Q99 222 112 201Z" style={{ fill: INK }} />
+        <Face>
+          <Line d="M80 188Q86 180 92 188M104 186Q110 178 116 186" stroke={WEIGHT.detail} />
+          <path d="M88 202Q99 222 112 201Z" style={{ fill: INK }} />
+        </Face>
       </Motion>
       {withProp ? (
         <GoalProp tier={tier} x={100} y={104} />

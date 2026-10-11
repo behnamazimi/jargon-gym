@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { blob, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, Eye, Spark } from "../marks";
+import { Dot, Eye, Face, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Line, Shape, STROKE } from "../shape";
@@ -143,10 +143,12 @@ function Done() {
             </>
           }
           face={
-            <Line
-              d="M161 204Q166 198 171 204M177 202Q182 196 187 202M168 216Q178 225 188 214"
-              stroke={STROKE.fine}
-            />
+            <Face>
+              <Line
+                d="M161 204Q166 198 171 204M177 202Q182 196 187 202M168 216Q178 225 188 214"
+                stroke={STROKE.fine}
+              />
+            </Face>
           }
         />
       </Motion>
@@ -187,10 +189,14 @@ function Open() {
                 </Motion>
               </Motion>
               <Motion kind="blow-mouth-rest">
-                <Line d="M172 218Q180 223 188 216" stroke={STROKE.fine} />
+                <Face>
+                  <Line d="M172 218Q180 223 188 216" stroke={STROKE.fine} />
+                </Face>
               </Motion>
               <Motion kind="blow-mouth-o">
-                <Line d="M185 217a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" stroke={STROKE.fine} />
+                <Face>
+                  <Line d="M185 217a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" stroke={STROKE.fine} />
+                </Face>
               </Motion>
               <Motion kind="blow-breath">
                 <Line d="M198 212L212 216M196 222L208 226" stroke={INK_FINE} />
@@ -222,7 +228,9 @@ function None() {
                 <Eye x={170} y={206} r={4.5} />
                 <Eye x={186} y={204} r={4.5} />
               </Motion>
-              <Line d="M174 220Q181 225 188 219" stroke={STROKE.fine} />
+              <Face>
+                <Line d="M174 220Q181 225 188 219" stroke={STROKE.fine} />
+              </Face>
             </>
           }
         />

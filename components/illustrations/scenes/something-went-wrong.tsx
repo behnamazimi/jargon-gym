@@ -1,6 +1,6 @@
 import { blob, box, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dashes, Dot, Eye, ScribbleLines, Squiggle } from "../marks";
+import { Dashes, Dot, Eye, Face, ScribbleLines, Squiggle } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -83,7 +83,9 @@ export function SomethingWentWrongScene({
           <Eye x={232} y={402} />
           <Eye x={252} y={400} />
         </Motion>
-        <Line d="M232 424Q242 418 254 424" stroke={STROKE.regular} />
+        <Face>
+          <Line d="M232 424Q242 418 254 424" stroke={STROKE.regular} />
+        </Face>
       </Motion>
     </Illustration>
   );

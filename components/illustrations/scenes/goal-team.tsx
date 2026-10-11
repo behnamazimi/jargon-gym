@@ -1,7 +1,7 @@
 import type { GoalLevel, GoalTier } from "@/lib/goals/levels";
 import { blob, box, quad, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Eye } from "../marks";
+import { Eye, Face } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, INK, PURPLE, YELLOW } from "../palette";
 import { Line, Shape } from "../shape";
@@ -174,11 +174,13 @@ export function GoalLobyaScene({
             <Eye x={92} y={100} />
             <Eye x={112} y={98} />
           </Motion>
-          {level === "intense" ? (
-            <path d="M94 116Q103 128 112 116Z" style={{ fill: INK }} />
-          ) : (
-            <Line d="M92 116Q102 124 112 116" stroke={WEIGHT.detail} />
-          )}
+          <Face>
+            {level === "intense" ? (
+              <path d="M94 116Q103 128 112 116Z" style={{ fill: INK }} />
+            ) : (
+              <Line d="M92 116Q102 124 112 116" stroke={WEIGHT.detail} />
+            )}
+          </Face>
           <Line stroke={WEIGHT.body} d="M138 120Q152 112 154 100" />
           <GoalProp tier={tier} x={160} y={88} />
           {level === "intense" ? (
@@ -219,7 +221,9 @@ export function LobyaHead({
         <Eye x={42} y={48} r={4.5} />
         <Eye x={58} y={46} r={4.5} />
       </Motion>
-      <Line d="M42 62Q50 69 58 62" stroke={WEIGHT.detail} />
+      <Face>
+        <Line d="M42 62Q50 69 58 62" stroke={WEIGHT.detail} />
+      </Face>
     </Illustration>
   );
 }
@@ -286,11 +290,13 @@ export function GoalRing({
           <Eye x={53} y={57} r={3.8} />
           <Eye x={67} y={55} r={3.8} />
         </Motion>
-        {met ? (
-          <Line d="M50 66Q60 78 70 66" stroke={WEIGHT.detail} />
-        ) : (
-          <Line d="M53 69Q60 74 67 69" stroke={WEIGHT.detail} />
-        )}
+        <Face>
+          {met ? (
+            <Line d="M50 66Q60 78 70 66" stroke={WEIGHT.detail} />
+          ) : (
+            <Line d="M53 69Q60 74 67 69" stroke={WEIGHT.detail} />
+          )}
+        </Face>
       </g>
       {met ? (
         <Motion kind="twinkle">

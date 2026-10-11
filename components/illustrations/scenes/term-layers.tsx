@@ -1,6 +1,6 @@
 import { blob, box, curve, polyline, wave } from "../geometry";
 import { Illustration } from "../illustration";
-import { Dot, DottedPath, Eye, ScribbleLines, Spark } from "../marks";
+import { Dot, DottedPath, Eye, Face, ScribbleLines, Spark } from "../marks";
 import { Motion } from "../motion";
 import { BLUE, CORAL, PURPLE, YELLOW } from "../palette";
 import { Hatch, Line, Shape, STROKE } from "../shape";
@@ -108,7 +108,9 @@ function Speaker() {
         <Eye x={206} y={400} />
         <Eye x={228} y={398} />
       </Motion>
-      <Shape d={blob({ cx: 220, cy: 424, rx: 8, ry: 6, seed: 17 })} stroke={STROKE.regular} />
+      <Face>
+        <Shape d={blob({ cx: 220, cy: 424, rx: 8, ry: 6, seed: 17 })} stroke={STROKE.regular} />
+      </Face>
 
       <Motion kind="learn-gesture" pivot={SHOULDER}>
         <Line
