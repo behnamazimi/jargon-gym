@@ -1,4 +1,5 @@
 import { ArrowLeft } from "lucide-react";
+import { NAV_BACK } from "@/components/shared/view-transitions";
 import { LinkButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ export function BackLink({
   return (
     <LinkButton
       href={href}
+      transitionTypes={NAV_BACK}
       variant={variant}
       className={cn("shrink-0 text-base-content/70 hover:text-base-content", className)}
     >

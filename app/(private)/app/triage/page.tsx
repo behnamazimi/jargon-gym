@@ -5,12 +5,13 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TriagePage } from "@/components/triage/triage-page";
 import { createClient } from "@/lib/supabase/server";
 import { fetchNotYetTermIds } from "@/lib/triage/repository";
+import { withReveal } from "@/components/shared/view-transitions";
 
 type PageProps = {
   searchParams: Promise<{ collection?: string }>;
 };
 
-export default async function TriageRoute({ searchParams }: PageProps) {
+async function TriageRoute({ searchParams }: PageProps) {
   const { collection: selectedCollectionId } = await searchParams;
   const setup = await getLibrarySetupData(selectedCollectionId);
 
@@ -46,3 +47,5 @@ export default async function TriageRoute({ searchParams }: PageProps) {
     </>
   );
 }
+
+export default withReveal(TriageRoute);

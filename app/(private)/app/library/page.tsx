@@ -16,6 +16,7 @@ import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { loadRequestEntryFor } from "@/lib/requests/repository";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { createClient } from "@/lib/supabase/server";
+import { withReveal } from "@/components/shared/view-transitions";
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
@@ -69,7 +70,7 @@ function LoadError({ message }: { message: string }) {
   );
 }
 
-export default async function LibraryRoute({ searchParams }: PageProps) {
+async function LibraryRoute({ searchParams }: PageProps) {
   const [{ collection: requestedCollectionId, added }, cookieStore, requestHeaders, auth] =
     await Promise.all([searchParams, cookies(), headers(), requireAuthenticatedClient()]);
 
@@ -112,3 +113,5 @@ export default async function LibraryRoute({ searchParams }: PageProps) {
     </RequestsAvailable>
   );
 }
+
+export default withReveal(LibraryRoute);

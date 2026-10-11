@@ -8,6 +8,7 @@ import { useMountEffect } from "@/hooks/use-mount-effect";
 import { clearDraft } from "@/lib/import/draft-store";
 import { pluralize } from "@/lib/utils";
 import { dropSearchParamFromUrl } from "@/components/library/library-page-helpers";
+import { NAV_FORWARD } from "@/components/shared/view-transitions";
 
 export type ImportedSummary = {
   collectionId: string;
@@ -97,7 +98,12 @@ function ImportedBanner({
           </LinkButton>
         ) : null}
         {studyable ? (
-          <LinkButton href={`/app/triage?collection=${collection.id}`} size="sm" variant="outline">
+          <LinkButton
+            href={`/app/triage?collection=${collection.id}`}
+            transitionTypes={NAV_FORWARD}
+            size="sm"
+            variant="outline"
+          >
             Mark what you know
           </LinkButton>
         ) : null}

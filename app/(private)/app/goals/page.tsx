@@ -1,8 +1,9 @@
 import { getGoalsPageData } from "@/app/(private)/app/goals/actions";
 import { GoalsPage } from "@/components/goals/goals-page";
 import { PageCenter } from "@/components/page-container";
+import { withReveal } from "@/components/shared/view-transitions";
 
-export default async function GoalsRoute() {
+async function GoalsRoute() {
   const data = await getGoalsPageData();
 
   if ("error" in data) {
@@ -15,3 +16,5 @@ export default async function GoalsRoute() {
 
   return <GoalsPage settings={data.settings} day={data.day} />;
 }
+
+export default withReveal(GoalsRoute);

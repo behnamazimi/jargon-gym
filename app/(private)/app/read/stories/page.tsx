@@ -4,12 +4,13 @@ import { getStoriesSetupData } from "@/lib/stories/setup";
 import { hasNoCollections } from "@/lib/study/collections";
 import { PromoVisit } from "@/components/promos/promo-visit";
 import { StoriesPage } from "@/components/read/stories/stories-page";
+import { withReveal } from "@/components/shared/view-transitions";
 
 type PageProps = {
   searchParams: Promise<{ collection?: string; story?: string }>;
 };
 
-export default async function ReadStoriesRoute({ searchParams }: PageProps) {
+async function ReadStoriesRoute({ searchParams }: PageProps) {
   const { collection: collectionId, story } = await searchParams;
   const storyId = z.uuid().safeParse(story).success ? story : undefined;
   const setup = await getStoriesSetupData(collectionId, storyId);
@@ -36,3 +37,5 @@ export default async function ReadStoriesRoute({ searchParams }: PageProps) {
     </>
   );
 }
+
+export default withReveal(ReadStoriesRoute);

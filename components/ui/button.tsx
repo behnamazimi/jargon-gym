@@ -88,6 +88,7 @@ function LinkButton({
   size = "default",
   href,
   onPress,
+  transitionTypes,
   ...props
 }: Omit<React.ComponentProps<typeof NextLink>, "href" | "className"> & {
   href: string;
@@ -105,7 +106,7 @@ function LinkButton({
   };
 
   if (isAppHref(href)) {
-    return <NextLink href={href} {...shared} {...props} />;
+    return <NextLink href={href} transitionTypes={transitionTypes} {...shared} {...props} />;
   }
 
   return <a href={href} target="_blank" rel="noopener noreferrer" {...shared} {...props} />;

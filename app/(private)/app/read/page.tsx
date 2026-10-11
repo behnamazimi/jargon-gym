@@ -21,6 +21,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveStudyCollectionId } from "@/lib/study/collection-preference";
 import { hasNoCollections } from "@/lib/study/collections";
 import type { StudyCollection } from "@/lib/study/types";
+import { withReveal } from "@/components/shared/view-transitions";
 
 // Narration generation (ElevenLabs) can take longer than the platform's
 // default Server Action timeout on a cache miss.
@@ -79,7 +80,7 @@ function LoginPrompt() {
   return <p className="text-sm text-base-content/70">Log in to read terms.</p>;
 }
 
-export default async function ReadRoute({ searchParams }: PageProps) {
+async function ReadRoute({ searchParams }: PageProps) {
   const params = await searchParams;
 
   const { options, hasStory } = await loadLandingState();
@@ -158,3 +159,5 @@ export default async function ReadRoute({ searchParams }: PageProps) {
     />
   );
 }
+
+export default withReveal(ReadRoute);

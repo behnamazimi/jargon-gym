@@ -1,0 +1,208 @@
+/* Classes named by the <ViewTransition> wrappers in components/shared/view-transitions.tsx. */
+
+:root {
+  --vt-exit: 150ms;
+  --vt-enter: 210ms;
+  --vt-move: 400ms;
+  --vt-stack: 350ms;
+  --vt-stack-ease: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes vt-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vt-slide {
+  from {
+    translate: var(--vt-slide-offset);
+  }
+  to {
+    translate: 0;
+  }
+}
+
+@keyframes vt-slide-y {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* The page underneath stays live: only the named parts below animate, so
+   hover states and clicks keep working while a transition plays. */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-old(root) {
+  display: none;
+}
+
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* Moving between sections without a direction, such as the dock tabs: the
+   old page fades out quickly, then the new one fades and grows in. */
+::view-transition-old(.fade-through-out) {
+  animation: 90ms ease-in both vt-fade reverse;
+}
+
+::view-transition-new(.fade-through-in) {
+  animation:
+    210ms ease-out 90ms both vt-fade,
+    210ms ease-out 90ms both vt-grow;
+}
+
+@keyframes vt-grow {
+  from {
+    scale: 0.96;
+  }
+}
+
+/* A page's data arriving after its skeleton. */
+::view-transition-new(.slide-up) {
+  animation:
+    var(--vt-enter) ease-out both vt-fade,
+    var(--vt-move) ease-out both vt-slide-y;
+}
+
+/* Going deeper (push) and coming back (pop). On desktop the pages nudge
+   sideways and cross-fade. */
+::view-transition-old(.push-out) {
+  --vt-slide-offset: -60px;
+  animation:
+    var(--vt-exit) ease-in both vt-fade reverse,
+    var(--vt-move) ease-in-out both vt-slide reverse;
+}
+
+::view-transition-new(.push-in) {
+  --vt-slide-offset: 60px;
+  animation:
+    var(--vt-enter) ease-out var(--vt-exit) both vt-fade,
+    var(--vt-move) ease-in-out both vt-slide;
+}
+
+::view-transition-old(.pop-out) {
+  --vt-slide-offset: 60px;
+  animation:
+    var(--vt-exit) ease-in both vt-fade reverse,
+    var(--vt-move) ease-in-out both vt-slide reverse;
+}
+
+::view-transition-new(.pop-in) {
+  --vt-slide-offset: -60px;
+  animation:
+    var(--vt-enter) ease-out var(--vt-exit) both vt-fade,
+    var(--vt-move) ease-in-out both vt-slide;
+}
+
+/* On phones it moves like a native screen stack: the new page slides in
+   across the full width over the old one, which drifts left and dims. Popping
+   runs the same motion in reverse. */
+@media (max-width: 767.98px) {
+  ::view-transition-group(.push-in),
+  ::view-transition-group(.pop-out) {
+    z-index: 2;
+  }
+
+  ::view-transition-new(.push-in),
+  ::view-transition-old(.pop-out) {
+    background-color: var(--root-bg, var(--color-base-100));
+    box-shadow: -8px 0 24px oklch(0% 0 0 / 0.12);
+  }
+
+  ::view-transition-new(.push-in) {
+    animation: var(--vt-stack) var(--vt-stack-ease) both vt-stack-enter;
+  }
+
+  ::view-transition-old(.push-out) {
+    animation: var(--vt-stack) var(--vt-stack-ease) both vt-stack-cover;
+  }
+
+  ::view-transition-old(.pop-out) {
+    animation: var(--vt-stack) var(--vt-stack-ease) both vt-stack-enter reverse;
+  }
+
+  ::view-transition-new(.pop-in) {
+    animation: var(--vt-stack) var(--vt-stack-ease) both vt-stack-cover reverse;
+  }
+}
+
+@keyframes vt-stack-enter {
+  from {
+    translate: 100% 0;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+@keyframes vt-stack-cover {
+  from {
+    translate: 0 0;
+    filter: brightness(1);
+  }
+  to {
+    translate: -30% 0;
+    filter: brightness(0.9);
+  }
+}
+
+/* A heading that moves between pages: drawn at its new size from the start
+   so the text never stretches. */
+::view-transition-group(.text-morph) {
+  animation-duration: var(--vt-move);
+}
+
+::view-transition-old(.text-morph) {
+  display: none;
+}
+
+::view-transition-new(.text-morph) {
+  animation: none;
+  object-fit: none;
+  object-position: left top;
+}
+
+/* Rows of a filtered list. */
+::view-transition-group(.list-item) {
+  animation-duration: 250ms;
+}
+
+/* Header, phone top bar and dock stay put above whatever is moving. They are
+   translucent with a backdrop blur, so only the new snapshot is drawn. */
+::view-transition-group(site-header),
+::view-transition-group(phone-topbar),
+::view-transition-group(phone-dock) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-header),
+::view-transition-old(phone-topbar),
+::view-transition-old(phone-dock) {
+  display: none;
+}
+
+::view-transition-new(site-header),
+::view-transition-new(phone-topbar),
+::view-transition-new(phone-dock) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}

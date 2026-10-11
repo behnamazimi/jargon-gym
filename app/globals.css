@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "../components/illustrations/illustrations.css";
+@import "./view-transitions.css";
 @plugin "daisyui" {
   themes: false;
 }

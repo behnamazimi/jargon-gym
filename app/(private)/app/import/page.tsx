@@ -6,6 +6,7 @@ import { RequestsSection } from "@/components/requests/requests-section";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { fetchMyRequests, loadRequestEntryFor } from "@/lib/requests/repository";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
+import { withDirection } from "@/components/shared/view-transitions";
 
 async function loadRequests() {
   const { supabase, user } = await getSessionUser();
@@ -23,7 +24,7 @@ async function loadRequests() {
   }
 }
 
-export default async function ImportPage() {
+async function ImportPage() {
   const [setup, { requests, requestEntry }] = await Promise.all([
     getImportSetupData(),
     loadRequests(),
@@ -46,3 +47,5 @@ export default async function ImportPage() {
     </>
   );
 }
+
+export default withDirection(ImportPage);

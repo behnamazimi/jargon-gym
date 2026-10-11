@@ -11,6 +11,7 @@ import { breadcrumbs, definedTermSet } from "@/lib/seo/json-ld";
 import { countLabel, kindLine } from "@/lib/terms/kinds";
 import { getPublicCollectionPage, listPublicCollectionSummaries } from "@/lib/terms/public-terms";
 import { cn } from "@/lib/utils";
+import { withDirection } from "@/components/shared/view-transitions";
 
 export const revalidate = 86400;
 export const dynamicParams = true;
@@ -49,7 +50,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicCollectionPage({ params }: { params: Promise<PageParams> }) {
+async function PublicCollectionPage({ params }: { params: Promise<PageParams> }) {
   const { collectionSlug } = await params;
   const data = await getPublicCollectionPage(collectionSlug);
   if (!data) notFound();
@@ -112,3 +113,5 @@ export default async function PublicCollectionPage({ params }: { params: Promise
     </div>
   );
 }
+
+export default withDirection(PublicCollectionPage);

@@ -4,12 +4,13 @@ import { MasteryPage } from "@/components/mastery/mastery-page";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageCenter } from "@/components/page-container";
 import { LinkButton } from "@/components/ui/button";
+import { withReveal } from "@/components/shared/view-transitions";
 
 type PageProps = {
   searchParams: Promise<{ tab?: string; collection?: string }>;
 };
 
-export default async function MasteryRoute({ searchParams }: PageProps) {
+async function MasteryRoute({ searchParams }: PageProps) {
   const [params, setup] = await Promise.all([searchParams, getMasterySetupData()]);
 
   if ("error" in setup) {
@@ -54,3 +55,5 @@ export default async function MasteryRoute({ searchParams }: PageProps) {
     />
   );
 }
+
+export default withReveal(MasteryRoute);

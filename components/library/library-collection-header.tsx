@@ -13,6 +13,7 @@ import type { Collection } from "@/lib/terms/types";
 import { CollectionActionsMenu, CollectionMeta } from "./collection-actions-menu";
 import { LoveButton } from "./love-button";
 import { AddTermsMenu } from "@/components/import/add-terms-menu";
+import { NAV_FORWARD } from "@/components/shared/view-transitions";
 
 type LibraryCollectionHeaderProps = {
   collection: Collection;
@@ -48,6 +49,7 @@ function StudyLinkButton({
   return (
     <LinkButton
       href={`${link.path}?collection=${collectionId}`}
+      transitionTypes={link.path === TRIAGE_LINK.path ? NAV_FORWARD : undefined}
       variant={link.path === "/app/read" ? "default" : "outline"}
       size="sm"
       className={cn("min-h-11 gap-2 md:min-h-8", className)}

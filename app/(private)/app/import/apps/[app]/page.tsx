@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LinkButton } from "@/components/ui/button";
 import { APP_GUIDES, findGuide } from "@/lib/import/guides";
+import { NAV_FORWARD, withDirection } from "@/components/shared/view-transitions";
 
 type PageProps = {
   params: Promise<{ app: string }>;
@@ -13,7 +14,7 @@ export function generateStaticParams() {
   return APP_GUIDES.map((guide) => ({ app: guide.slug }));
 }
 
-export default async function AppGuidePage({ params }: PageProps) {
+async function AppGuidePage({ params }: PageProps) {
   const { app } = await params;
   const guide = findGuide(app);
   if (!guide) notFound();
@@ -47,7 +48,11 @@ export default async function AppGuidePage({ params }: PageProps) {
         </Alert>
       ) : null}
       <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
-        <LinkButton href="/app/import/paste" className="min-h-12 w-full md:min-h-11 md:w-auto">
+        <LinkButton
+          href="/app/import/paste"
+          transitionTypes={NAV_FORWARD}
+          className="min-h-12 w-full md:min-h-11 md:w-auto"
+        >
           {guide.canExport ? `Paste from ${guide.name}` : "Paste a list"}
         </LinkButton>
         {!guide.canExport ? (
@@ -68,3 +73,5 @@ export default async function AppGuidePage({ params }: PageProps) {
     </>
   );
 }
+
+export default withDirection(AppGuidePage);

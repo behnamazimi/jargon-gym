@@ -1,4 +1,5 @@
 import { ArrowRight, Inbox } from "lucide-react";
+import { NAV_FORWARD } from "@/components/shared/view-transitions";
 import { LinkButton } from "@/components/ui/button";
 import { REQUEST_COPY } from "@/lib/requests/copy";
 import type { RequestEntry } from "@/lib/requests/entry";
@@ -33,6 +34,7 @@ export function RequestRow({ entry, query }: { entry: RequestEntry; query: strin
       </p>
       <LinkButton
         href={`/app/import/request?topic=${encodeURIComponent(trimmed.slice(0, 120))}`}
+        transitionTypes={NAV_FORWARD}
         variant="ghost"
         className="shadow-surface flex h-auto min-h-16 w-full items-center justify-start gap-3 rounded-field bg-base-100 px-4 py-3 text-left"
       >

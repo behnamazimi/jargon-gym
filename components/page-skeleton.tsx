@@ -10,6 +10,7 @@ export function HeaderSkeleton({ hasLikelySession }: { hasLikelySession: boolean
   return (
     <header
       className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm"
+      style={{ viewTransitionName: "site-header" }}
       aria-busy="true"
       aria-label="Loading"
     >

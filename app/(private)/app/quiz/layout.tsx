@@ -3,26 +3,29 @@ import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { PromoVisit } from "@/components/promos/promo-visit";
 import { PageShell } from "@/components/page-container";
+import { SectionTransition } from "@/components/shared/view-transitions";
 
 export const metadata: Metadata = { title: "Quiz" };
 
 export default function QuizLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PageShell
-      className="flex min-h-0 flex-1 flex-col"
-      innerClassName="flex min-h-0 flex-1 flex-col gap-3 space-y-0 py-3 md:gap-4 md:py-4 max-md:pb-dock! md:pb-4!"
-    >
-      <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
-        <PageHeader
-          badge={<PageBadge page="quiz" />}
-          title="Quiz"
-          description="Test yourself on terms from your active collections."
-          compactOnPhone
-          showBack={false}
-        />
-        <PromoVisit target="quiz" />
-        {children}
-      </div>
-    </PageShell>
+    <SectionTransition>
+      <PageShell
+        className="flex min-h-0 flex-1 flex-col"
+        innerClassName="flex min-h-0 flex-1 flex-col gap-3 space-y-0 py-3 md:gap-4 md:py-4 max-md:pb-dock! md:pb-4!"
+      >
+        <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+          <PageHeader
+            badge={<PageBadge page="quiz" />}
+            title="Quiz"
+            description="Test yourself on terms from your active collections."
+            compactOnPhone
+            showBack={false}
+          />
+          <PromoVisit target="quiz" />
+          {children}
+        </div>
+      </PageShell>
+    </SectionTransition>
   );
 }

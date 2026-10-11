@@ -8,6 +8,7 @@ import { LibraryPageSkeleton } from "@/components/page-skeleton";
 import { getSessionUser } from "@/lib/auth/require-session";
 import { loadLibraryCollections } from "@/lib/library/load";
 import { LIBRARY_LAST_COLLECTION_COOKIE } from "@/lib/library/pick-collection";
+import { SectionTransition } from "@/components/shared/view-transitions";
 
 /**
  * The Library's frame and collection sidebar. Layouts don't re-render when
@@ -38,18 +39,20 @@ async function LibraryFrame({ children }: { children: React.ReactNode }) {
   if (!collections || collections.collections.length === 0) return children;
 
   return (
-    <PageShell>
-      <div className="mb-6 empty:hidden">
-        <PromoSlot route="library" />
-      </div>
-      <div className="flex flex-col gap-6 md:flex-row md:items-start">
-        <LibrarySidebar
-          collections={collections.collections}
-          loadedAt={collections.loadedAt}
-          lastCollectionId={cookieStore.get(LIBRARY_LAST_COLLECTION_COOKIE)?.value ?? null}
-        />
-        {children}
-      </div>
-    </PageShell>
+    <SectionTransition>
+      <PageShell>
+        <div className="mb-6 empty:hidden">
+          <PromoSlot route="library" />
+        </div>
+        <div className="flex flex-col gap-6 md:flex-row md:items-start">
+          <LibrarySidebar
+            collections={collections.collections}
+            loadedAt={collections.loadedAt}
+            lastCollectionId={cookieStore.get(LIBRARY_LAST_COLLECTION_COOKIE)?.value ?? null}
+          />
+          {children}
+        </div>
+      </PageShell>
+    </SectionTransition>
   );
 }

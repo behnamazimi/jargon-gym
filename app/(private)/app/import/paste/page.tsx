@@ -2,12 +2,13 @@ import { getImportSetupData } from "@/app/(private)/app/import/actions";
 import { ImportFlow } from "@/components/import/import-flow";
 import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
+import { withDirection } from "@/components/shared/view-transitions";
 
 type PageProps = {
   searchParams: Promise<{ to?: string; from?: string }>;
 };
 
-export default async function PasteListPage({ searchParams }: PageProps) {
+async function PasteListPage({ searchParams }: PageProps) {
   const { to, from } = await searchParams;
   const setup = await getImportSetupData();
 
@@ -36,3 +37,5 @@ export default async function PasteListPage({ searchParams }: PageProps) {
     </>
   );
 }
+
+export default withDirection(PasteListPage);
