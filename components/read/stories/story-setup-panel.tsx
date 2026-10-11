@@ -152,6 +152,7 @@ export function StorySetupPanel({
       }
     >
       <StudySetupHeading
+        tier="read"
         title="Set up your story"
         description="Mark it read to count a read for every term in it. A short piece built around the next terms in your Read queue."
       />

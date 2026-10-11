@@ -1,5 +1,6 @@
-import { ChevronRight, Layers } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { APP_GUIDES } from "@/lib/import/guides";
 
@@ -7,7 +8,7 @@ export default function AppPickerPage() {
   return (
     <>
       <PageHeader
-        icon={Layers}
+        badge={<PageBadge page="apps" />}
         title="Export from another app"
         backHref="/app/import"
         backLabel="Add a collection"

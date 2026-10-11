@@ -1,6 +1,6 @@
-import { Layers } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getLibrarySetupData } from "@/lib/library/setup";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { TriagePage } from "@/components/triage/triage-page";
 import { createClient } from "@/lib/supabase/server";
@@ -24,14 +24,14 @@ export default async function TriageRoute({ searchParams }: PageProps) {
 
   return (
     <>
-      <PageHeader
-        icon={Layers}
-        title="Triage"
-        description="Go through terms and mark the ones you already know."
-        backHref={`/app/library?collection=${data.collection.id}`}
-        compactOnPhone
-      />
       <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+        <PageHeader
+          badge={<PageBadge page="triage" />}
+          title="Triage"
+          description="Go through terms and mark the ones you already know."
+          backHref={`/app/library?collection=${data.collection.id}`}
+          compactOnPhone
+        />
         <TriagePage
           key={data.collection.id}
           collection={data.collection}

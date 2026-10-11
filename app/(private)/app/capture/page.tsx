@@ -1,7 +1,7 @@
-import { Plus } from "lucide-react";
 import { Suspense } from "react";
 import { getImportSetupData } from "@/app/(private)/app/import/actions";
 import { CaptureFlow } from "@/components/capture/capture-flow";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { parseSharedInput } from "@/lib/capture/shared-input";
 import { CAPTURE_COPY } from "@/lib/capture/copy";
@@ -27,7 +27,7 @@ export default async function CapturePage({ searchParams }: PageProps) {
   return (
     <>
       <PageHeader
-        icon={Plus}
+        badge={<PageBadge page="capture" />}
         title={CAPTURE_COPY.title}
         backHref="/app/import"
         backLabel="Add a collection"

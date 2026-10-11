@@ -1,4 +1,4 @@
-import { Scale } from "lucide-react";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import type { ReactNode } from "react";
 import {
   ContentPageHeader,
@@ -19,7 +19,7 @@ export function LegalPage({ title, description, updated, children }: LegalPagePr
     <ContentPageShell>
       <ContentPageIntro>
         <ContentPageHeader
-          icon={Scale}
+          badge={<PageBadge page="legal" />}
           title={title}
           description={description}
           backHref={PUBLIC_HOME_PATH}

@@ -2,6 +2,7 @@ import { Braces } from "lucide-react";
 import { CopyIconButton } from "@/components/import/copy-icon-button";
 import { ImportCodePanel, ImportCard } from "@/components/import/import-ui";
 import { ImportLlmPrompt } from "@/components/import/import-llm-prompt";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { listImportDestinations } from "@/lib/import/import-collections";
@@ -22,7 +23,7 @@ export default async function MoreImportOptionsPage() {
   return (
     <>
       <PageHeader
-        icon={Braces}
+        badge={<PageBadge page="more" />}
         title="More ways to add"
         backHref="/app/import"
         backLabel="Add a collection"

@@ -234,7 +234,7 @@ export function StoryReader({
   }
 
   return (
-    <QuizPanel className="flex min-h-0 flex-1 flex-col" data-read-peek="">
+    <QuizPanel className="flex min-h-0 flex-1 flex-col">
       <StoryHeader
         story={story}
         narrationAccess={narrationAccess}

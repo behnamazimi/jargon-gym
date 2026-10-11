@@ -1,5 +1,5 @@
-import { Layers } from "lucide-react";
 import { notFound } from "next/navigation";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LinkButton } from "@/components/ui/button";
@@ -23,7 +23,7 @@ export default async function AppGuidePage({ params }: PageProps) {
   return (
     <>
       <PageHeader
-        icon={Layers}
+        badge={<PageBadge page="apps" />}
         title={`From ${guide.name}`}
         backHref="/app/import/apps"
         backLabel="Other apps"

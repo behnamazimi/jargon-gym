@@ -1,5 +1,4 @@
 import { CollectionSelect } from "@/components/library/collection-select";
-import { StudyPeekSlot } from "@/components/read/study/study-peek-slot";
 import type { StudyCollection } from "@/lib/study/types";
 import { allTermCount } from "@/components/read/read-page-helpers";
 
@@ -7,8 +6,6 @@ type ReadToolbarProps = {
   collections: StudyCollection[];
   selectedCollectionId: string;
   isFetchingMore: boolean;
-  /** Only while a card sits right below the toolbar. */
-  showPeek: boolean;
   onCollectionChange: (collectionId: string) => void;
 };
 
@@ -16,7 +13,6 @@ export function ReadToolbar({
   collections,
   selectedCollectionId,
   isFetchingMore,
-  showPeek,
   onCollectionChange,
 }: ReadToolbarProps) {
   return (
@@ -40,8 +36,9 @@ export function ReadToolbar({
             onChange={onCollectionChange}
           />
         </div>
-      ) : null}
-      {showPeek ? <StudyPeekSlot who="read" /> : <div className="flex-1" />}
+      ) : (
+        <div className="flex-1" />
+      )}
     </div>
   );
 }
