@@ -124,7 +124,7 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         ) : null
       }
     >
-      <QuizPanelLabel title="Set up your quiz" />
+      <QuizPanelLabel title="Set up your quiz" description="Lobyaq will ask the questions." />
       {savedSession ? (
         <QuizPickerResumeBanner savedSession={savedSession} onResumeSession={onResumeSession} />
       ) : null}

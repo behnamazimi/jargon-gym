@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef, useState } from "react";
+import { GoalLobyaHead } from "@/components/illustrations/scenes/goal-team";
 import { QuizPanel } from "@/components/quiz/quiz-ui";
 import { QuizAnswerChoices } from "@/components/quiz/quiz-answer-choices";
 import { QuizQuestionFooter } from "@/components/quiz/quiz-question-footer";
@@ -135,9 +136,12 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
   return (
     <QuizPanel className="quiz-feedback-enter flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
-        <h2 className="m-0 text-lg font-medium leading-snug text-base-content sm:text-xl">
-          {question.prompt}
-        </h2>
+        <div className="flex items-start gap-2.5">
+          <GoalLobyaHead tier="quiz" className="mt-0.5 size-6 shrink-0 sm:size-7" />
+          <h2 className="m-0 min-w-0 text-lg font-medium leading-snug text-base-content sm:text-xl">
+            {question.prompt}
+          </h2>
+        </div>
 
         {question.quote ? (
           <blockquote className="mt-3 rounded-field border-l-4 border-primary/40 bg-base-200/60 px-4 py-3 text-base-content/80">
