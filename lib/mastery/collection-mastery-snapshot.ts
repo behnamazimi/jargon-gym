@@ -89,7 +89,9 @@ function foldGradeDistributionCounts(
  *  the overview never re-flows once the panel opens. Grouped server-side
  *  via a GROUP BY grade RPC rather than pulling every graded event into JS.
  *  Null below MIN_GRADINGS_FOR_DISTRIBUTION total gradings. */
-async function fetchGradeDistribution(client: Client): Promise<GradeDistributionSummary | null> {
+export async function fetchGradeDistribution(
+  client: Client,
+): Promise<GradeDistributionSummary | null> {
   const { data, error } = await client.rpc("my_grade_distribution");
   if (error) throw error;
 

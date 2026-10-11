@@ -20,7 +20,7 @@ export const getRequestUserSettingsRow = cache(async function getRequestUserSett
   const { data, error } = await client
     .from("user_settings")
     .select(
-      "timezone, current_streak, longest_streak, last_active_date, tour_status, tour_seen, analytics_consent, analytics_consent_at, analytics_consent_version, promo_seen, promo_dismissed, term_layout, created_at",
+      "timezone, current_streak, longest_streak, last_active_date, tour_status, tour_seen, analytics_consent, analytics_consent_at, analytics_consent_version, promo_seen, promo_dismissed, term_layout, daily_goals, goal_celebrate, created_at",
     )
     .eq("user_id", userId)
     .maybeSingle();

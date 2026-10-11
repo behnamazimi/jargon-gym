@@ -15,6 +15,7 @@ export function isMorePath(pathname: string): boolean {
     pathname.startsWith("/app/import") ||
     pathname.startsWith("/app/capture") ||
     pathname.startsWith("/app/mastery") ||
+    pathname.startsWith("/app/goals") ||
     pathname.startsWith("/app/settings") ||
     pathname.startsWith("/admin")
   );

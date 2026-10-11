@@ -45,6 +45,8 @@ export {
   estimateMilestone,
 } from "./pace";
 export type { MasteryBucketCounts, PaceRate, MilestoneEstimate } from "./pace";
+export { DEFAULT_FORECAST_RATES, FORECAST_SHORT_DAYS, forecastMastery } from "./forecast";
+export type { ForecastRates, MasteryForecast } from "./forecast";
 export { STUDY_TIMEZONE, isSameLocalDay, studyTimezone } from "./local-day";
 export {
   computeTraceSnapshot,

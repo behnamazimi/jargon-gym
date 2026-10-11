@@ -495,6 +495,11 @@ which you can read and test in complete isolation from the app. Questions
 about which terms show up where belong in `lib/trace-queue/`. Questions
 about when something gets written belong in `lib/terms/review-outcome.ts`.
 
+`lib/trace/forecast.ts` is the daily goals forecast. It replays the ranking
+and update functions above one simulated day at a time and never changes
+them, so a change to TRACE carries into the forecast on its own. See
+[goals.md](./goals.md).
+
 ## Where this differs from the original design
 
 [trace-formula.md](./trace-formula.md) is the design document

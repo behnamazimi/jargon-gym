@@ -7,6 +7,7 @@ import {
   markStoryReadAction,
   voteStoryAction,
 } from "@/app/(private)/app/read/stories/actions";
+import { tickGoal } from "@/components/goals/goal-store";
 import { useToast } from "@/components/ui/toast";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { voteFeedback } from "@/lib/stories/feedback";
@@ -111,6 +112,7 @@ export function useStorySession(setup: StoriesSetupData) {
     }
     const readAt = result.readAt ?? new Date().toISOString();
     setStory((current) => (current ? { ...current, readAt } : current));
+    if (result.readAt) tickGoal("read", story.termIds);
   }
 
   async function vote(value: -1 | 1) {

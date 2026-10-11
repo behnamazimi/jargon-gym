@@ -6,6 +6,7 @@ import {
   recordTermReadAction,
   setTermMarkedKnownAction,
 } from "@/app/(private)/app/actions";
+import { tickGoal } from "@/components/goals/goal-store";
 import { filterTerms, getCategories, getCategoryCounts } from "@/lib/library/filter-terms";
 import {
   overrideCollectionCounts,
@@ -104,6 +105,7 @@ export function useLibraryList(data: LibraryPageData, filtersCookie: string) {
     if (countedShownRef.current.has(termId)) return;
     countedShownRef.current.add(termId);
     void recordTermReadAction(termId);
+    tickGoal("read", termId);
   }, []);
 
   const clearSearch = useCallback(() => setSearchQuery(""), []);

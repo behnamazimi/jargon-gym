@@ -200,6 +200,15 @@ problem or an idea with one optional screenshot; admins triage them at
 Read the Issue reports section of [docs/admin.md](docs/admin.md) first. Nothing
 goes back to the member, and no user-facing string may name the admin.
 
+# Daily goals
+
+Learners set a daily pace per tier at `/app/goals`; meeting one opens a lobya
+celebration, and the page forecasts when each collection would be mastered.
+Study code credits a term with `tickGoal` from `components/goals/goal-store.ts`,
+and the server (`my_claim_goal_celebration`) decides each celebration, once per
+tier a day. The forecast (`lib/trace/forecast.ts`) replays TRACE's own ranking
+and update functions. Read [docs/goals.md](docs/goals.md) before changing it.
+
 # Page promos
 
 Banners that point at a page the user hasn't visited live in `lib/promos/`
