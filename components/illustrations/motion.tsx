@@ -113,7 +113,21 @@ type MotionKind =
   | "practice-flip-back"
   | "practice-eyes"
   | "practice-rest"
-  | "listen-arcs";
+  | "listen-arcs"
+  | "flame-sway"
+  | "flame-lick"
+  | "flame-tongue"
+  | "ember-float"
+  | "ember-drift"
+  | "smoke-curl"
+  | "hop-body"
+  | "blow-body"
+  | "blow-eyes"
+  | "blow-mouth-rest"
+  | "blow-mouth-o"
+  | "blow-breath"
+  | "blow-flame"
+  | "blow-ember";
 
 type MotionProps = {
   kind: MotionKind;

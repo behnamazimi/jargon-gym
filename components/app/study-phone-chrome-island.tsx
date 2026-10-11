@@ -21,8 +21,7 @@ export async function StudyPhoneChromeIsland({ initialIsDark }: { initialIsDark:
         email={user.email ?? "Account"}
         isAdmin={isAdmin}
         initialIsDark={initialIsDark}
-        currentStreak={settings.currentStreak}
-        longestStreak={settings.longestStreak}
+        streak={settings.streak}
         aiCreditsMode={aiCreditsMenuMode()}
       >
         <StudyPhoneTopBar />

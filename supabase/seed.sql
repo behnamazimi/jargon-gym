@@ -480,6 +480,15 @@ begin
     v_admin_id, v_cap, 1, now() - interval '4 days',
     3.5951299999999997, 4.714577829570867, 1, now() - interval '4 days'
   );
+
+  -- The streak the events above add up to: something every day from 7 days
+  -- ago through today. Keep it in step if those days change.
+  insert into public.user_settings (user_id, current_streak, longest_streak, last_active_date)
+  values (v_admin_id, 8, 8, (now() at time zone 'Europe/Amsterdam')::date)
+  on conflict (user_id) do update
+    set current_streak = excluded.current_streak,
+        longest_streak = excluded.longest_streak,
+        last_active_date = excluded.last_active_date;
 end;
 $$;
 

@@ -1,6 +1,7 @@
 import { getSessionUser, getUserIsAdmin } from "@/lib/auth/require-session";
 import { aiCreditsMenuMode } from "@/lib/llm/central";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
+import { EMPTY_STREAK } from "@/lib/streak/status";
 import { SiteHeader } from "@/components/site-header";
 
 export async function HeaderIsland({ initialIsDark }: { initialIsDark: boolean }) {
@@ -12,8 +13,7 @@ export async function HeaderIsland({ initialIsDark }: { initialIsDark: boolean }
         initialIsDark={initialIsDark}
         user={null}
         isAdmin={false}
-        currentStreak={0}
-        longestStreak={0}
+        streak={EMPTY_STREAK}
         aiCreditsMode="hidden"
       />
     );
@@ -29,8 +29,7 @@ export async function HeaderIsland({ initialIsDark }: { initialIsDark: boolean }
         initialIsDark={initialIsDark}
         user={user}
         isAdmin={isAdmin}
-        currentStreak={settings.currentStreak}
-        longestStreak={settings.longestStreak}
+        streak={settings.streak}
         aiCreditsMode={aiCreditsMenuMode()}
       />
     );
@@ -41,8 +40,7 @@ export async function HeaderIsland({ initialIsDark }: { initialIsDark: boolean }
         initialIsDark={initialIsDark}
         user={user}
         isAdmin={false}
-        currentStreak={0}
-        longestStreak={0}
+        streak={EMPTY_STREAK}
         aiCreditsMode="hidden"
       />
     );

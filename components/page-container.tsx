@@ -13,7 +13,8 @@ export function PageShell({ children, className, innerClassName, ...aria }: Page
   return (
     <div
       className={cn(
-        "min-h-full flex-1 bg-gradient-to-b from-primary/[0.07] to-base-200 text-base-content",
+        // The gradient is pinned to the screen, so it stays put while a long page scrolls.
+        "relative isolate min-h-full flex-1 bg-base-200 text-base-content before:pointer-events-none before:fixed before:inset-0 before:-z-10 before:bg-gradient-to-b before:from-primary/[0.07] before:to-base-200",
         className,
       )}
       {...aria}
