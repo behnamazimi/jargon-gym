@@ -1,6 +1,5 @@
 "use client";
 
-import { StudyPeekSlot } from "@/components/read/study/study-peek-slot";
 import { track } from "@/lib/analytics/track";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
@@ -176,105 +175,100 @@ function CaptureForm({ collections, presetId, shared = { kind: "none" } }: Captu
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex h-8">
-        <StudyPeekSlot who="capture" />
-      </div>
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void save(false);
-        }}
-        className="shadow-surface space-y-4 rounded-box bg-base-100 p-5"
-      >
-        <Field>
-          <FieldLabel htmlFor="capture-collection">{CAPTURE_COPY.collection}</FieldLabel>
-          <CollectionSelect
-            mode="local"
-            id="capture-collection"
-            aria-label={CAPTURE_COPY.collection}
-            collections={collections.map(({ id, name }) => ({ id, name }))}
-            value={destination.id}
-            className="w-full"
-            onChange={changeDestination}
-          />
-        </Field>
-
-        <Field>
-          <FieldLabel htmlFor="capture-term">{CAPTURE_COPY.term}</FieldLabel>
-          <Input
-            id="capture-term"
-            ref={termRef}
-            value={term}
-            autoFocus
-            className="text-base"
-            placeholder={CAPTURE_COPY.termPlaceholder}
-            onChange={(event) => changeTerm(event.target.value)}
-            onPaste={handlePaste}
-          />
-        </Field>
-
-        {sentence ? (
-          <SharedSentenceChips
-            tokens={tokens}
-            selection={selection}
-            term={term.trim()}
-            onToggle={toggleWord}
-          />
-        ) : null}
-
-        {pastedLines ? (
-          <PastedListPrompt
-            source={pasteSource}
-            lines={pastedLines}
-            onAddAsList={() => addPastedAsList(pastedLines)}
-            onKeepAsOne={() => {
-              changeTerm(pastedLines.join(" "));
-              setPastedLines(null);
-            }}
-          />
-        ) : null}
-
-        {match ? (
-          <CaptureDuplicateNote
-            term={match.term}
-            finished={match.finished}
-            collectionName={destination.name}
-            collectionId={destination.id}
-          />
-        ) : null}
-
-        <Field>
-          <FieldLabel htmlFor="capture-definition">{CAPTURE_COPY.definition}</FieldLabel>
-          <Textarea
-            id="capture-definition"
-            value={definition}
-            className="min-h-20 text-base"
-            placeholder={CAPTURE_COPY.definitionPlaceholder}
-            onChange={(event) => setDefinition(event.target.value)}
-          />
-          <p className="m-0 mt-1 text-xs text-base-content/70">{CAPTURE_COPY.definitionHint}</p>
-        </Field>
-
-        <CaptureDetails
-          form={{ term, definition, ...extra.form }}
-          onFieldChange={extra.updateField}
-          open={extra.open}
-          onOpenChange={extra.setOpen}
-          terms={destinationTerms}
-          drafts={extra.drafts}
-          onDraftsChange={extra.setDrafts}
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save(false);
+      }}
+      className="shadow-surface space-y-4 rounded-box bg-base-100 p-5"
+    >
+      <Field>
+        <FieldLabel htmlFor="capture-collection">{CAPTURE_COPY.collection}</FieldLabel>
+        <CollectionSelect
+          mode="local"
+          id="capture-collection"
+          aria-label={CAPTURE_COPY.collection}
+          collections={collections.map(({ id, name }) => ({ id, name }))}
+          value={destination.id}
+          className="w-full"
+          onChange={changeDestination}
         />
+      </Field>
 
-        {(extra.error ?? error) ? (
-          <Alert variant="destructive">
-            <AlertDescription>{extra.error ?? error}</AlertDescription>
-          </Alert>
-        ) : null}
+      <Field>
+        <FieldLabel htmlFor="capture-term">{CAPTURE_COPY.term}</FieldLabel>
+        <Input
+          id="capture-term"
+          ref={termRef}
+          value={term}
+          autoFocus
+          className="text-base"
+          placeholder={CAPTURE_COPY.termPlaceholder}
+          onChange={(event) => changeTerm(event.target.value)}
+          onPaste={handlePaste}
+        />
+      </Field>
 
-        <CaptureActions canSave={canSave} isBusy={isBusy} onSaveAnother={() => void save(true)} />
-      </form>
-    </div>
+      {sentence ? (
+        <SharedSentenceChips
+          tokens={tokens}
+          selection={selection}
+          term={term.trim()}
+          onToggle={toggleWord}
+        />
+      ) : null}
+
+      {pastedLines ? (
+        <PastedListPrompt
+          source={pasteSource}
+          lines={pastedLines}
+          onAddAsList={() => addPastedAsList(pastedLines)}
+          onKeepAsOne={() => {
+            changeTerm(pastedLines.join(" "));
+            setPastedLines(null);
+          }}
+        />
+      ) : null}
+
+      {match ? (
+        <CaptureDuplicateNote
+          term={match.term}
+          finished={match.finished}
+          collectionName={destination.name}
+          collectionId={destination.id}
+        />
+      ) : null}
+
+      <Field>
+        <FieldLabel htmlFor="capture-definition">{CAPTURE_COPY.definition}</FieldLabel>
+        <Textarea
+          id="capture-definition"
+          value={definition}
+          className="min-h-20 text-base"
+          placeholder={CAPTURE_COPY.definitionPlaceholder}
+          onChange={(event) => setDefinition(event.target.value)}
+        />
+        <p className="m-0 mt-1 text-xs text-base-content/70">{CAPTURE_COPY.definitionHint}</p>
+      </Field>
+
+      <CaptureDetails
+        form={{ term, definition, ...extra.form }}
+        onFieldChange={extra.updateField}
+        open={extra.open}
+        onOpenChange={extra.setOpen}
+        terms={destinationTerms}
+        drafts={extra.drafts}
+        onDraftsChange={extra.setDrafts}
+      />
+
+      {(extra.error ?? error) ? (
+        <Alert variant="destructive">
+          <AlertDescription>{extra.error ?? error}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <CaptureActions canSave={canSave} isBusy={isBusy} onSaveAnother={() => void save(true)} />
+    </form>
   );
 }

@@ -1,7 +1,6 @@
-import { StudyPeekSlot } from "@/components/read/study/study-peek-slot";
 import type { Metadata } from "next";
-import { Zap } from "lucide-react";
 import { Suspense } from "react";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { ReadFocusButton, ReadFocusProvider } from "@/components/read/read-focus";
 import { ReadModeTabs } from "@/components/read/read-mode-tabs";
@@ -30,21 +29,17 @@ export default async function ReadLayout({ children }: { children: React.ReactNo
           className="flex min-h-0 flex-1 flex-col"
           innerClassName="flex min-h-0 flex-1 flex-col gap-3 space-y-0 py-3 md:gap-4 md:py-4 max-md:pb-dock! md:pb-4!"
         >
-          <PageHeader
-            icon={Zap}
-            title="Read"
-            description="Read terms one at a time, or inside short AI-written pieces built from your queue."
-            compactOnPhone
-            showBack={false}
-          />
-          <div className="group/read mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+          <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+            <PageHeader
+              badge={<PageBadge page="read" />}
+              title="Read"
+              description="Read terms one at a time, or inside short AI-written pieces built from your queue."
+              compactOnPhone
+              showBack={false}
+            />
             <PromoSlot route="read" />
             <div className="flex items-center justify-between gap-2">
               <ReadModeTabs />
-              {/* Shown only while a Stories card that wants Lobyar sits right below. */}
-              <div className="hidden min-w-0 flex-1 self-stretch group-has-[[data-read-peek]]/read:flex">
-                <StudyPeekSlot who="read" />
-              </div>
               {user ? (
                 <div className="flex items-center">
                   <Suspense>

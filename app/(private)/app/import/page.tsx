@@ -1,6 +1,6 @@
-import { FolderPlus } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/app/import/actions";
 import { ImportChooser } from "@/components/import/import-chooser";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { RequestsSection } from "@/components/requests/requests-section";
 import { getSessionUser } from "@/lib/auth/require-session";
@@ -36,7 +36,7 @@ export default async function ImportPage() {
   return (
     <>
       <PageHeader
-        icon={FolderPlus}
+        badge={<PageBadge page="import" />}
         title="Add a collection"
         description="Find a collection, or start from what you have."
         compactOnPhone

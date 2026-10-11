@@ -1,5 +1,4 @@
-import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { PageShell } from "@/components/page-container";
 import { cn } from "@/lib/utils";
@@ -30,16 +29,7 @@ export function ContentPageShell({ children, className, innerClassName }: Conten
   );
 }
 
-type ContentPageHeaderProps = {
-  icon: LucideIcon;
-  title: ReactNode;
-  description?: string;
-  backHref?: string;
-  backLabel?: string;
-  showBack?: boolean;
-};
-
-export function ContentPageHeader(props: ContentPageHeaderProps) {
+export function ContentPageHeader(props: ComponentProps<typeof PageHeader>) {
   return <PageHeader {...props} />;
 }
 

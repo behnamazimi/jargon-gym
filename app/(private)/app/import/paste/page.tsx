@@ -1,6 +1,6 @@
-import { ClipboardPaste } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/app/import/actions";
 import { ImportFlow } from "@/components/import/import-flow";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 
 type PageProps = {
@@ -20,7 +20,7 @@ export default async function PasteListPage({ searchParams }: PageProps) {
   return (
     <>
       <PageHeader
-        icon={ClipboardPaste}
+        badge={<PageBadge page="paste" />}
         title="Paste a list"
         backHref={preset ? `/app/library?collection=${preset}` : "/app/import"}
         backLabel={preset ? "Back to collection" : "Add a collection"}

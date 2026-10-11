@@ -1,7 +1,7 @@
-import { Inbox } from "lucide-react";
 import { getImportSetupData } from "@/app/(private)/app/import/actions";
 import { DefinitionsForm } from "@/components/requests/definitions-form";
 import { RequestForm, type RecentRequest } from "@/components/requests/request-form";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LinkButton } from "@/components/ui/button";
@@ -44,7 +44,7 @@ export default async function RequestPage({ searchParams }: PageProps) {
 
   const header = (
     <PageHeader
-      icon={Inbox}
+      badge={<PageBadge page="request" />}
       title={REQUEST_COPY.form.title}
       description={REQUEST_COPY.form.intro}
       backHref="/app/import"

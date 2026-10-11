@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Mail } from "lucide-react";
+import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import {
   ContentPageHeader,
   ContentPageIntro,
@@ -19,7 +19,7 @@ export default function ContactPageRoute() {
     <ContentPageShell>
       <ContentPageIntro>
         <ContentPageHeader
-          icon={Mail}
+          badge={<PageBadge page="contact" />}
           title="Contact"
           description="Questions, problems and ideas are all welcome."
           backHref={PUBLIC_HOME_PATH}

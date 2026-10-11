@@ -7,8 +7,11 @@ import {
 } from "@/components/shared/back-link";
 import { cn } from "@/lib/utils";
 
-type PageHeaderProps = {
-  icon: LucideIcon;
+type PageHeaderProps = (
+  | { icon: LucideIcon; badge?: never }
+  /** Drawn in place of the icon circle, e.g. a PageLobyaBadge. */
+  | { badge: ReactNode; icon?: never }
+) & {
   title: ReactNode;
   description?: string;
   backHref?: string;
@@ -19,6 +22,7 @@ type PageHeaderProps = {
 
 export function PageHeader({
   icon: Icon,
+  badge,
   title,
   description,
   backHref = LIBRARY_HOME_PATH,
@@ -31,9 +35,13 @@ export function PageHeader({
       className={cn("flex items-start justify-between gap-3", compactOnPhone && "max-md:sr-only")}
     >
       <div className="flex min-w-0 items-start gap-3">
-        <div className="hidden size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:flex">
-          <Icon className="size-5" aria-hidden strokeWidth={1.5} />
-        </div>
+        {badge ? (
+          <div className="hidden shrink-0 md:block">{badge}</div>
+        ) : Icon ? (
+          <div className="hidden size-11 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary md:flex">
+            <Icon className="size-5" aria-hidden strokeWidth={1.5} />
+          </div>
+        ) : null}
         <div className="min-w-0">
           <h1 className="font-heading text-xl font-medium text-base-content">{title}</h1>
           {description ? <p className="mt-1 text-sm text-base-content/70">{description}</p> : null}
