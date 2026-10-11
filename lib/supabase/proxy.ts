@@ -26,6 +26,7 @@ const PUBLIC_EXACT_PATHS = new Set([
 
 const PUBLIC_PATH_PREFIXES = [
   "/icon/",
+  "/splash/",
   "/screenshots/",
   "/collections/",
   "/login",

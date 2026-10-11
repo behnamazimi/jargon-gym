@@ -9,7 +9,8 @@ export const PWA_START_URL = `${AUTHENTICATED_HOME_PATH}?source=pwa`;
  *  treat existing installs as a different app. */
 export const PWA_ID = "/jargon?source=pwa";
 export const PWA_THEME_COLOR = "#3f4755";
-export const PWA_BACKGROUND_COLOR = "#ffffff";
+/** The app's paper colour, so Android's splash and the first screen match. */
+export const PWA_BACKGROUND_COLOR = "#fdfcf9";
 export const PWA_INSTALL_DISMISS_KEY = "pwa-install-dismissed";
 
 export const PWA_SCREENSHOT_WIDE = { width: 1280, height: 720 } as const;
