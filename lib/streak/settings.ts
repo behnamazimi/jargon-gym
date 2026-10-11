@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
+import { liveStreak } from "@/lib/streak/live";
 
 type Client = SupabaseClient<Database>;
 
@@ -20,7 +21,7 @@ export const getRequestUserSettingsRow = cache(async function getRequestUserSett
   const { data, error } = await client
     .from("user_settings")
     .select(
-      "timezone, current_streak, longest_streak, tour_status, tour_seen, analytics_consent, analytics_consent_at, analytics_consent_version, promo_seen, promo_dismissed, term_layout, created_at",
+      "timezone, current_streak, longest_streak, last_active_date, tour_status, tour_seen, analytics_consent, analytics_consent_at, analytics_consent_version, promo_seen, promo_dismissed, term_layout, created_at",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -37,7 +38,7 @@ export const getStudyPhoneUserSettings = cache(async function getStudyPhoneUserS
 
   return {
     timezone: data.timezone,
-    currentStreak: data.current_streak,
+    currentStreak: liveStreak(data.current_streak, data.last_active_date, data.timezone),
     longestStreak: data.longest_streak,
   };
 });
