@@ -83,6 +83,14 @@ test.describe("Daily goals", () => {
         return Number(row!.count);
       })
       .toBe(2);
+    // A claim runs after the grade is saved and may retry 2 s later, so give
+    // a second dialog the time it would need to show up before checking.
+    await page.waitForTimeout(3000);
     await expect(page.getByRole("dialog")).toBeHidden();
+    const [settings] = await sql<{ goal_celebrated: { tiers: string[] } }>(
+      "select goal_celebrated from public.user_settings where user_id = $1",
+      [user.id],
+    );
+    expect(settings?.goal_celebrated.tiers).toEqual(["review"]);
   });
 });

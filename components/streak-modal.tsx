@@ -7,7 +7,8 @@ import { getStreakHistoryAction } from "@/app/(private)/actions";
 import { getGoalsSnapshot, subscribeGoals } from "@/components/goals/goal-store";
 import { StreakFlameScene } from "@/components/illustrations/scenes/streak-flame";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { goalProgress, goalTiersSet, metCount } from "@/lib/goals/progress";
+import { GOAL_TIERS } from "@/lib/goals/levels";
+import { goalProgress, metCount } from "@/lib/goals/progress";
 import type { StreakDay } from "@/lib/streak/history";
 import type { StreakSummary } from "@/lib/streak/status";
 import { cn } from "@/lib/utils";
@@ -174,19 +175,19 @@ function DayChip({
 }
 
 function GoalsRow({ today, onNavigate }: { today?: StreakDay; onNavigate: () => void }) {
-  const goals = useSyncExternalStore(
-    subscribeGoals,
-    () => getGoalsSnapshot()?.goals ?? null,
-    () => null,
-  );
-  const progress = goals
-    ? goalProgress(goals, {
-        read: today?.readCount ?? 0,
-        review: today?.reviewedCount ?? 0,
-        quiz: today?.quizzedCount ?? 0,
-      })
-    : null;
-  const total = progress ? goalTiersSet(progress).length : 0;
+  const live = useSyncExternalStore(subscribeGoals, getGoalsSnapshot, () => null);
+  const goals = live?.goals ?? null;
+  // A tier met by running out of terms is only known from the celebrations.
+  const celebrated = today && live?.day.date === today.date ? live.day.celebrated : [];
+  const progress =
+    goals && today
+      ? goalProgress(
+          goals,
+          { read: today.readCount, review: today.reviewedCount, quiz: today.quizzedCount },
+          celebrated,
+        )
+      : null;
+  const total = goals ? GOAL_TIERS.filter((tier) => goals[tier] !== null).length : 0;
 
   return (
     <Link
@@ -194,12 +195,15 @@ function GoalsRow({ today, onNavigate }: { today?: StreakDay; onNavigate: () => 
       onClick={onNavigate}
       className="flex min-h-11 items-center justify-between gap-3 rounded-field bg-base-200/60 px-3 py-2 text-sm font-medium transition-colors hover:bg-base-200"
     >
-      {progress && total > 0 ? (
+      {total > 0 ? (
         <span>
-          Today&apos;s goals ·{" "}
-          <span className="tabular-nums">
-            {metCount(progress)} of {total}
-          </span>
+          Today&apos;s goals
+          {progress ? (
+            <span className="tabular-nums">
+              {" "}
+              · {metCount(progress)} of {total}
+            </span>
+          ) : null}
         </span>
       ) : (
         <span>Set daily goals</span>

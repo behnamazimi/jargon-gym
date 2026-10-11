@@ -16,6 +16,7 @@ export async function GoalsIsland() {
     const day = settings.goals && settings.celebrate ? await loadGoalDay(supabase) : EMPTY_GOAL_DAY;
     return (
       <GoalTracker
+        key={user.id}
         goals={settings.goals}
         celebrate={settings.celebrate}
         timeZone={studyTimezone(phone.timezone)}

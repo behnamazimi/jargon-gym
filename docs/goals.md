@@ -47,14 +47,19 @@ tabs and devices. No write action returns today's counts, and Read and Stories
 write after their response, so the browser only asks when a goal looks met.
 
 1. `GoalsIsland` (mounted in the root layout) seeds `goal-store.ts` with the
-   goals, today's counts, and the tiers already celebrated.
+   goals, today's counts, and the tiers already celebrated. The tracker is
+   keyed by user and resets the store when it unmounts, so signing out and
+   back in on the same tab starts clean.
 2. Study code calls `tickGoal(tier, termId)` after each term it credits. The
-   store adds the id to this tab's set for that tier.
+   store counts each term once per tab and day.
 3. When today's count plus this tab's ids reaches the goal, the store calls
    `claimGoalCelebrationAction`. The `my_claim_goal_celebration` RPC locks the
    row, recounts, and records the tier only if the goal is met.
-4. If the server's count is still behind (a read is in flight), the store
-   tries once more after two seconds, then waits for the next credit.
+4. Every answer carries the server's counts, which replace the store's. The
+   terms sent with that claim are dropped, so a term the server had already
+   counted before the page loaded can't keep a goal looking met. If the claim
+   fails (a read may still be in flight), the store asks once more after two
+   seconds, then waits for the next credit.
 5. A true claim opens `GoalCelebrationDialog` over the current screen.
 
 Running out of terms counts as meeting the goal. `ReadCaughtUp` takes a `goal`
@@ -78,8 +83,13 @@ that stamps `ever_mastered_at`: a successful answer that leaves it known.
 - Mastered needs both Review and Quiz (Read alone tops out far below the known
   line), so the forecast asks for whichever is off instead of showing dates.
 
-A forecast for 1,000 terms takes about a second, so the page asks for one
-400 ms after the last change.
+A run stops early when nothing that's left can finish in time: no collection
+fits in the answers left, nothing was mastered for 90 days, or, from day 60,
+every unfinished collection's recent pace already lands well past the year.
+Pace only slows as fewer new terms are left, so that last check doesn't cut
+off a collection that would have finished. A forecast for 4,000 terms takes
+under a second in most cases, and the page asks for one 400 ms after the last
+change.
 
 ## Next steps
 

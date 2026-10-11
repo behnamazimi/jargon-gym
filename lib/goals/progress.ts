@@ -32,7 +32,7 @@ export function goalProgress(
   return progress;
 }
 
-export function goalTiersSet(progress: GoalProgress): GoalTier[] {
+function goalTiersSet(progress: GoalProgress): GoalTier[] {
   return GOAL_TIERS.filter((tier) => progress[tier].goal !== null);
 }
 

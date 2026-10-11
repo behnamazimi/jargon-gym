@@ -29,15 +29,16 @@ const RETRY_MS = 2000;
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
-/** Terms credited in this tab since the last server count, per tier. */
-const credited: Record<GoalTier, Set<string>> = {
+const emptySets = (): Record<GoalTier, Set<string>> => ({
   read: new Set(),
   review: new Set(),
   quiz: new Set(),
-};
+});
+/** Every term this tab credited today, so a term counts once here. */
+const seen = emptySets();
+/** Credited terms the server hadn't counted at its last answer. */
+const credited = emptySets();
 const claiming = new Set<GoalTier>();
-/** The local total at the last claim, so a failed claim waits for new credit. */
-const claimedAtTotal = new Map<GoalTier, number>();
 const retryTimers = new Map<GoalTier, ReturnType<typeof setTimeout>>();
 
 function emit() {
@@ -65,11 +66,27 @@ export function seedGoals(seed: Omit<State, "celebration">) {
   emit();
 }
 
+/** Forgets everything, so the next account to sign in on this tab starts clean. */
+export function resetGoals() {
+  state = null;
+  clearCredits();
+  claiming.clear();
+  emit();
+}
+
+function clearCredits() {
+  for (const tier of GOAL_TIERS) {
+    seen[tier].clear();
+    credited[tier].clear();
+    clearTimeout(retryTimers.get(tier));
+  }
+  retryTimers.clear();
+}
+
 /** The Goals page calls this so a change applies without a reload. Its
  *  day is fresh from the server, so this tab's own credits start over. */
 export function setLiveGoals(next: { goals: DailyGoals | null; celebrate: boolean; day: GoalDay }) {
-  for (const tier of GOAL_TIERS) credited[tier].clear();
-  claimedAtTotal.clear();
+  clearCredits();
   update(next);
 }
 
@@ -80,10 +97,12 @@ export function closeGoalCelebration() {
 export function tickGoal(tier: GoalTier, termIds: string | readonly string[]) {
   if (!state) return;
   rollOverIfNewDay();
-  for (const id of typeof termIds === "string" ? [termIds] : termIds) credited[tier].add(id);
-  if (looksMet(tier) && localTotal(tier) > (claimedAtTotal.get(tier) ?? -1)) {
-    void claim(tier, false, true);
+  for (const id of typeof termIds === "string" ? [termIds] : termIds) {
+    if (seen[tier].has(id)) continue;
+    seen[tier].add(id);
+    credited[tier].add(id);
   }
+  if (looksMet(tier)) void claim(tier, false, true);
 }
 
 /** The tier has nothing left to serve today, which counts as its goal met
@@ -112,8 +131,7 @@ function rollOverIfNewDay() {
   if (!state) return;
   const today = localDateKey(new Date(), state.timeZone);
   if (state.day.date === today) return;
-  for (const tier of GOAL_TIERS) credited[tier].clear();
-  claimedAtTotal.clear();
+  clearCredits();
   state = {
     ...state,
     day: { date: today, counts: EMPTY_GOAL_COUNTS, celebrated: [] },
@@ -122,8 +140,8 @@ function rollOverIfNewDay() {
 
 async function claim(tier: GoalTier, caughtUp: boolean, mayRetry: boolean) {
   claiming.add(tier);
-  claimedAtTotal.set(tier, localTotal(tier));
   clearTimeout(retryTimers.get(tier));
+  const sent = GOAL_TIERS.map((t) => [t, [...credited[t]]] as const);
   const result = await claimGoalCelebrationAction(tier, caughtUp).catch(() => ({
     claimed: false,
     day: undefined,
@@ -132,13 +150,11 @@ async function claim(tier: GoalTier, caughtUp: boolean, mayRetry: boolean) {
   if (!state) return;
 
   if (result.day) {
-    // The server count now includes everything it has received; keep only
-    // credits it may not have yet (reads land a moment after the response).
-    const serverDay = result.day;
-    for (const t of GOAL_TIERS) {
-      if (serverDay.counts[t] >= state.day.counts[t] + credited[t].size) credited[t].clear();
-    }
-    state = { ...state, day: serverDay };
+    // The server's count is the truth from here on. Credits sent with this
+    // claim are dropped (they're counted, or were already counted before
+    // this tab saw them); only terms credited while it was in flight stay.
+    for (const [t, ids] of sent) for (const id of ids) credited[t].delete(id);
+    state = { ...state, day: result.day };
   }
 
   if (result.claimed && state.goals) {
@@ -148,11 +164,13 @@ async function claim(tier: GoalTier, caughtUp: boolean, mayRetry: boolean) {
   }
   emit();
 
-  if (mayRetry && looksMet(tier)) {
+  // A read is written just after its response, so the server may simply be
+  // behind: ask once more shortly, then wait for the next credit.
+  if (mayRetry && isOpen(tier)) {
     retryTimers.set(
       tier,
       setTimeout(() => {
-        if (looksMet(tier)) void claim(tier, false, false);
+        if (isOpen(tier)) void claim(tier, false, false);
       }, RETRY_MS),
     );
   }
