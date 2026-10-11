@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import { blob } from "../geometry";
 import { Illustration } from "../illustration";
 import { Eye } from "../marks";
+import { Motion } from "../motion";
 import { INK } from "../palette";
 import { Line, Shape, STROKE } from "../shape";
 import { WORDMARK_BYAS, WORDMARK_L } from "./wordmark-letters";
@@ -29,9 +30,11 @@ function MarkParts() {
     <>
       {/* Green at rest; inside `ill-mark-drift` it moves through the other lobyas' colours. */}
       <Shape d={LOBYA_MARK.body} color="var(--ill-green)" colorClassName="ill-mark-fill" />
-      {LOBYA_MARK.eyes.map(([x, y]) => (
-        <Eye key={x} x={x} y={y} r={LOBYA_MARK.eyeRadius} />
-      ))}
+      <Motion kind="blink">
+        {LOBYA_MARK.eyes.map(([x, y]) => (
+          <Eye key={x} x={x} y={y} r={LOBYA_MARK.eyeRadius} />
+        ))}
+      </Motion>
       <Line d={LOBYA_MARK.smile} stroke={STROKE.regular} />
     </>
   );
