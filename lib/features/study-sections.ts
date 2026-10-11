@@ -141,6 +141,10 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         title: "Daily streak",
         body: "An optional streak counts the days you practice. Open it to see your week.",
       },
+      {
+        title: "Daily goals",
+        body: "Set a pace for Read, Review and Quiz, see when each collection would be mastered at that pace, and get a small celebration when a day's goal is done.",
+      },
     ],
   },
 ];

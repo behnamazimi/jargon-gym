@@ -2,7 +2,7 @@ import type { TourChapterId } from "@/lib/tour/chapters";
 
 export type PromoRoute = "library" | "review" | "read";
 
-export type PromoTarget = "quiz" | "stories" | "mastery" | "browse" | "triage";
+export type PromoTarget = "quiz" | "stories" | "mastery" | "browse" | "triage" | "goals";
 
 export type PromoContext = {
   reviews: number;
@@ -60,6 +60,18 @@ export const PROMOS = [
     body: "A short read built from the terms you've been learning.",
     href: "/app/read/stories",
     cta: "Read a story",
+  },
+  {
+    id: "goals",
+    target: "goals",
+    showOn: ["library", "read", "review"],
+    priority: 45,
+    condition: ({ reviews, reads }) => reviews + reads > 0,
+    snoozeDays: 14,
+    title: "Want a daily goal?",
+    body: "Pick a pace for Read, Review and Quiz, and see when you'd master each collection.",
+    href: "/app/goals",
+    cta: "Set my goals",
   },
   {
     id: "mastery",

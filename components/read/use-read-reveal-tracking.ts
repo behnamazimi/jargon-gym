@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { recordReadRevealAction } from "@/app/(private)/app/read/actions";
+import { tickGoal } from "@/components/goals/goal-store";
 
 export function useReadRevealTracking(initialRevealedTermIds: string[] | undefined) {
   const [revealedIds, setRevealedIds] = useState<Set<string>>(
@@ -23,6 +24,7 @@ export function useReadRevealTracking(initialRevealedTermIds: string[] | undefin
     if (recordedIdsRef.current.has(termId)) return;
     recordedIdsRef.current.add(termId);
     void recordReadRevealAction(termId);
+    tickGoal("read", termId);
   }, []);
 
   const isRevealed = useCallback((termId: string) => revealedIds.has(termId), [revealedIds]);

@@ -4,6 +4,7 @@ import {
   LayoutList,
   Settings,
   Signal,
+  Target,
   Upload,
   BadgeQuestionMark,
   BookOpenText,
@@ -39,6 +40,7 @@ export const ACCOUNT_OVERFLOW_NAV: AccountNavItem[] = [
   { href: "/app/browse", label: "Browse", icon: Compass },
   { href: "/app/import", label: "Add collection", icon: Upload },
   { href: "/app/mastery", label: "Mastery", icon: Signal },
+  { href: "/app/goals", label: "Goals", icon: Target },
   { href: "/app/settings", label: "Settings", icon: Settings },
 ];
 
@@ -57,6 +59,7 @@ const STUDY_SCREEN_TITLE_PREFIXES: [string, string][] = [
   ["/app/import", "Add collection"],
   ["/app/capture", "Add a term"],
   ["/app/mastery", "Mastery"],
+  ["/app/goals", "Goals"],
   ["/app/settings", "Settings"],
   ["/admin/collections", "Manage collections"],
   ["/admin/people", "People"],

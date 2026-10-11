@@ -236,6 +236,7 @@ export function ReviewPage({
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         {topBar}
         <ReadCaughtUp
+          goal={{ tier: "review", collectionId: selectedCollectionId }}
           title="No terms to review"
           description={caughtUpDescription(selectedCollectionId, collections)}
           actions={

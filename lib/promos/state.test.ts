@@ -48,12 +48,16 @@ describe("eligiblePromos", () => {
   });
 
   it("only returns promos listed for the route", () => {
-    expect(ids(eligiblePromos("review", ready, NOW))).toEqual(["quiz", "mastery"]);
-    expect(ids(eligiblePromos("read", ready, NOW))).toEqual(["quiz", "stories"]);
+    expect(ids(eligiblePromos("review", ready, NOW))).toEqual(["quiz", "goals", "mastery"]);
+    expect(ids(eligiblePromos("read", ready, NOW))).toEqual(["quiz", "stories", "goals"]);
   });
 
   it("skips pages already visited, by key or by tour chapter", () => {
-    const visited = { ...ready, seen: [visitKey("quiz")], tourSeen: ["stories"] };
+    const visited = {
+      ...ready,
+      seen: [visitKey("quiz"), visitKey("goals")],
+      tourSeen: ["stories"],
+    };
     expect(ids(eligiblePromos("read", visited, NOW))).toEqual([]);
   });
 
@@ -61,9 +65,9 @@ describe("eligiblePromos", () => {
     const dismissedAt = (daysAgo: number) =>
       new Date(NOW.getTime() - daysAgo * DAY_MS).toISOString();
     const snoozed = { ...ready, dismissed: { mastery: dismissedAt(3) } };
-    expect(ids(eligiblePromos("review", snoozed, NOW))).toEqual(["quiz"]);
+    expect(ids(eligiblePromos("review", snoozed, NOW))).toEqual(["quiz", "goals"]);
     const expired = { ...ready, dismissed: { mastery: dismissedAt(15) } };
-    expect(ids(eligiblePromos("review", expired, NOW))).toEqual(["quiz", "mastery"]);
+    expect(ids(eligiblePromos("review", expired, NOW))).toEqual(["quiz", "goals", "mastery"]);
   });
 
   it("ignores an unreadable dismissed time", () => {
@@ -82,17 +86,29 @@ describe("pickPromo", () => {
   it("falls back to a lower priority promo", () => {
     const seen = { ...ready, seen: [visitKey("triage")] };
     const withoutTriage = eligiblePromos("library", seen, NOW);
-    expect(pickPromo(withoutTriage, busy)?.id).toBe("browse");
+    expect(pickPromo(withoutTriage, busy)?.id).toBe("goals");
     expect(pickPromo(candidates, { reviews: 0, reads: 0, accountAgeDays: 2 })?.id).toBe("browse");
   });
 
   it("shows Mastery last", () => {
-    const seen = { ...ready, seen: [visitKey("triage"), visitKey("browse")] };
+    const seen = {
+      ...ready,
+      seen: [visitKey("triage"), visitKey("goals"), visitKey("browse")],
+    };
     expect(pickPromo(eligiblePromos("library", seen, NOW), busy)?.id).toBe("mastery");
   });
 
   it("returns null when no condition holds", () => {
     expect(pickPromo(candidates, { reviews: 0, reads: 0, accountAgeDays: 0 })).toBeNull();
+  });
+});
+
+describe("goals promo", () => {
+  it("shows once anything has been studied", () => {
+    const seen = { ...ready, seen: [visitKey("triage")] };
+    const candidates = eligiblePromos("read", seen, NOW).filter((promo) => promo.id === "goals");
+    expect(pickPromo(candidates, { reviews: 0, reads: 0, accountAgeDays: 0 })).toBeNull();
+    expect(pickPromo(candidates, { reviews: 0, reads: 1, accountAgeDays: 0 })?.id).toBe("goals");
   });
 });
 

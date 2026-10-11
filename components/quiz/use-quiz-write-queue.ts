@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { recordQuizAnswerAction } from "@/app/(private)/app/quiz/actions";
+import { tickGoal } from "@/components/goals/goal-store";
 import { useToast } from "@/components/ui/toast";
 import { hasInflightTraceWrites, useTraceWriteQueue } from "@/lib/study/trace-write-queue";
 import { dropPendingQuizWrite, type PendingQuizWrite } from "@/lib/quiz/session-storage";
@@ -40,6 +41,7 @@ export function useQuizWriteQueue(options: {
         }),
       onSettled: (result, outcome) => {
         if (outcome === "success") {
+          tickGoal("quiz", write.termId);
           setPendingWrites((prev) => prev.filter((w) => w.id !== write.id));
           dropPendingQuizWrite(write.id);
         }

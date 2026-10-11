@@ -15,6 +15,7 @@ import { StudyPhoneDockSkeleton } from "@/components/app/study-phone-dock-skelet
 import { StudyPhoneTopBarSkeleton } from "@/components/app/study-phone-topbar-skeleton";
 import { TimezoneSyncIsland } from "@/components/timezone-sync-island";
 import { TourIsland } from "@/components/tour/tour-island";
+import { GoalsIsland } from "@/components/goals/goals-island";
 import "./globals.css";
 import { getSessionUser, hasLikelySession } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
@@ -126,6 +127,9 @@ export default async function RootLayout({
               </Suspense>
               <Suspense fallback={null}>
                 <TourIsland />
+              </Suspense>
+              <Suspense fallback={null}>
+                <GoalsIsland />
               </Suspense>
               <OfflineBanner />
               <main className="flex min-h-0 flex-1 flex-col">{children}</main>

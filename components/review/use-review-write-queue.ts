@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { rateReviewTermAction } from "@/app/(private)/app/review/actions";
+import { tickGoal } from "@/components/goals/goal-store";
 import { useToast } from "@/components/ui/toast";
 import { useTraceWriteQueue } from "@/lib/study/trace-write-queue";
 import { upsertPendingWrite } from "@/lib/review/writes";
@@ -49,6 +50,7 @@ export function useReviewWriteQueue(options: {
       run: () => rateReviewTermAction(termId, grade),
       onSettled: (result, outcome) => {
         if (outcome === "success") {
+          tickGoal("review", termId);
           setPendingWrites((prev) => {
             const next = prev.filter((w) => w.id !== write.id);
             savePendingReviewWrites(next);

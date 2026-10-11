@@ -43,6 +43,7 @@ export function ReadQueueContent({
   if (queue.status === "caughtUp") {
     return (
       <ReadCaughtUp
+        goal={{ tier: "read", collectionId: selectedCollectionId }}
         description={caughtUpDescription(selectedCollectionId, collections)}
         actions={<ReadCaughtUpActions selectedCollectionId={selectedCollectionId} />}
       />

@@ -1715,6 +1715,9 @@ export type Database = {
           analytics_consent_version: string | null;
           created_at: string;
           current_streak: number;
+          daily_goals: Json | null;
+          goal_celebrate: boolean;
+          goal_celebrated: Json;
           last_active_date: string | null;
           longest_streak: number;
           promo_dismissed: Json;
@@ -1747,6 +1750,9 @@ export type Database = {
           analytics_consent_version?: string | null;
           created_at?: string;
           current_streak?: number;
+          daily_goals?: Json | null;
+          goal_celebrate?: boolean;
+          goal_celebrated?: Json;
           last_active_date?: string | null;
           longest_streak?: number;
           promo_dismissed?: Json;
@@ -1779,6 +1785,9 @@ export type Database = {
           analytics_consent_version?: string | null;
           created_at?: string;
           current_streak?: number;
+          daily_goals?: Json | null;
+          goal_celebrate?: boolean;
+          goal_celebrated?: Json;
           last_active_date?: string | null;
           longest_streak?: number;
           promo_dismissed?: Json;
@@ -2474,6 +2483,15 @@ export type Database = {
           review_recall_count: number;
         }[];
       };
+      goal_day_counts: {
+        Args: { p_user_id: string };
+        Returns: {
+          quizzed_count: number;
+          read_count: number;
+          reviewed_count: number;
+          today: string;
+        }[];
+      };
       has_feature_access: {
         Args: { p_feature: string; p_user_id: string };
         Returns: boolean;
@@ -2507,6 +2525,10 @@ export type Database = {
       my_cancel_collection_request: {
         Args: { p_id: string };
         Returns: undefined;
+      };
+      my_claim_goal_celebration: {
+        Args: { p_caught_up: boolean; p_tier: string };
+        Returns: boolean;
       };
       my_clear_deferred_collection: {
         Args: { p_collection_id: string };
@@ -2545,6 +2567,16 @@ export type Database = {
         Returns: {
           first_seen_at: string;
           term_id: string;
+        }[];
+      };
+      my_get_goal_day: {
+        Args: never;
+        Returns: {
+          celebrated: string[];
+          quizzed_count: number;
+          read_count: number;
+          reviewed_count: number;
+          today: string;
         }[];
       };
       my_get_streak_history: {
@@ -2646,6 +2678,13 @@ export type Database = {
         Returns: {
           reads: number;
           reviews: number;
+        }[];
+      };
+      my_quiz_answer_counts: {
+        Args: never;
+        Returns: {
+          passed: number;
+          total: number;
         }[];
       };
       my_record_review_event: {
