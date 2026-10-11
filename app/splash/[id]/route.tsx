@@ -9,7 +9,7 @@ export function generateStaticParams() {
   return SPLASH_IMAGES.map(({ id }) => ({ id }));
 }
 
-export async function GET(_request: Request, { params }: RouteContext<"/splash/[id]">) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const image = SPLASH_IMAGES.find((splash) => splash.id === id);
   if (!image) return new Response(null, { status: 404 });
