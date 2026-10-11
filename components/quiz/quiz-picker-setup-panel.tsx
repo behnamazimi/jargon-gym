@@ -1,8 +1,8 @@
-import { QuizPanelLabel } from "@/components/quiz/quiz-ui";
 import {
   StudyCollectionField,
   StudyCountField,
   StudyResumeBanner,
+  StudySetupHeading,
   StudySetupPanel,
 } from "@/components/read/study/study-setup-panel";
 import { QuizQuestionStyleField } from "@/components/quiz/quiz-question-style-field";
@@ -124,7 +124,11 @@ export function QuizPickerSetupPanel(props: QuizPickerStepProps) {
         ) : null
       }
     >
-      <QuizPanelLabel title="Set up your quiz" />
+      <StudySetupHeading
+        tier="quiz"
+        title="Set up your quiz"
+        description="Lobyaq will ask the questions."
+      />
       {savedSession ? (
         <QuizPickerResumeBanner savedSession={savedSession} onResumeSession={onResumeSession} />
       ) : null}

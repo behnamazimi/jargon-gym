@@ -194,7 +194,19 @@ export function GoalLobyaScene({
 
 /** Just the lobya's face, for small spots like the progress rings. */
 export function GoalLobyaHead({ tier, className }: { tier: GoalTier; className?: string }) {
-  const { color, seed } = GOAL_LOBYAS[tier];
+  return <LobyaHead {...GOAL_LOBYAS[tier]} className={className} />;
+}
+
+/** Any lobya's face: the seed shapes it, so each seed is a different lobya. */
+export function LobyaHead({
+  color,
+  seed,
+  className,
+}: {
+  color: string;
+  seed: number;
+  className?: string;
+}) {
   return (
     <Illustration viewBox="10 10 80 84" className={className}>
       <Shape

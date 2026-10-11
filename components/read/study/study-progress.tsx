@@ -5,9 +5,17 @@ type StudyProgressProps = {
   total: number;
   unitLabel: string;
   className?: string;
+  /** Colours the bar; defaults to the primary colour. */
+  barClassName?: string;
 };
 
-export function StudyProgress({ current, total, unitLabel, className }: StudyProgressProps) {
+export function StudyProgress({
+  current,
+  total,
+  unitLabel,
+  className,
+  barClassName = "progress-primary",
+}: StudyProgressProps) {
   return (
     <div className={cn("min-w-0 w-full space-y-2", className)}>
       <div className="flex items-center justify-between gap-3 text-xs text-base-content/70">
@@ -16,7 +24,7 @@ export function StudyProgress({ current, total, unitLabel, className }: StudyPro
         </span>
       </div>
       <progress
-        className="progress progress-primary h-1.5 w-full"
+        className={cn("progress h-1.5 w-full", barClassName)}
         value={current}
         max={total}
         aria-valuenow={current}
