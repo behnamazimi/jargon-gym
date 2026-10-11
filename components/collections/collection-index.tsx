@@ -2,7 +2,8 @@
 
 import { ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useState, ViewTransition } from "react";
+import { collectionTitleName, NAV_FORWARD } from "@/components/shared/view-transitions";
 
 export type CollectionIndexRow = {
   slug: string;
@@ -52,40 +53,55 @@ export function CollectionIndex({ rows }: { rows: CollectionIndexRow[] }) {
       ) : (
         <ul className="m-0 mt-8 list-none border-b border-base-300 p-0">
           {visible.map((row) => (
-            <li key={row.slug} className="border-t border-base-300">
-              <Link
-                href={`/collections/${row.slug}`}
-                className="group grid grid-cols-1 gap-x-8 gap-y-2 py-6 text-base-content no-underline sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline"
-              >
-                <span
-                  lang={row.lang}
-                  className="font-heading text-2xl font-medium tracking-tight [overflow-wrap:anywhere] group-hover:underline group-hover:decoration-base-content/30 group-hover:underline-offset-4 sm:text-3xl"
+            <ViewTransition
+              key={row.slug}
+              enter="auto"
+              exit="auto"
+              update="list-item"
+              default="none"
+            >
+              <li className="border-t border-base-300">
+                <Link
+                  href={`/collections/${row.slug}`}
+                  transitionTypes={NAV_FORWARD}
+                  className="group grid grid-cols-1 gap-x-8 gap-y-2 py-6 text-base-content no-underline sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline"
                 >
-                  {row.name}
-                </span>
-                <span className="flex items-center gap-2 text-sm text-base-content/70 sm:justify-end">
-                  {row.kindLine}
-                  <span className="text-base-content/50" aria-hidden>
-                    ·
-                  </span>
-                  <span className="tabular-nums">{row.count}</span>
-                  <ArrowRight
-                    aria-hidden
-                    className="ms-1 size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-1"
-                    strokeWidth={1.75}
-                  />
-                </span>
-                {row.specimen ? (
-                  <span className="line-clamp-1 text-sm text-base-content/65 sm:col-span-2">
-                    <span lang={row.lang} className="font-medium text-base-content/80">
-                      {row.specimen.term}
+                  <ViewTransition
+                    name={collectionTitleName(row.slug)}
+                    share="text-morph"
+                    default="none"
+                  >
+                    <span
+                      lang={row.lang}
+                      className="font-heading text-2xl font-medium tracking-tight [overflow-wrap:anywhere] group-hover:underline group-hover:decoration-base-content/30 group-hover:underline-offset-4 sm:text-3xl"
+                    >
+                      {row.name}
                     </span>
-                    <span aria-hidden> — </span>
-                    <span lang={row.lang}>{row.specimen.definition}</span>
+                  </ViewTransition>
+                  <span className="flex items-center gap-2 text-sm text-base-content/70 sm:justify-end">
+                    {row.kindLine}
+                    <span className="text-base-content/50" aria-hidden>
+                      ·
+                    </span>
+                    <span className="tabular-nums">{row.count}</span>
+                    <ArrowRight
+                      aria-hidden
+                      className="ms-1 size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-1"
+                      strokeWidth={1.75}
+                    />
                   </span>
-                ) : null}
-              </Link>
-            </li>
+                  {row.specimen ? (
+                    <span className="line-clamp-1 text-sm text-base-content/65 sm:col-span-2">
+                      <span lang={row.lang} className="font-medium text-base-content/80">
+                        {row.specimen.term}
+                      </span>
+                      <span aria-hidden> — </span>
+                      <span lang={row.lang}>{row.specimen.definition}</span>
+                    </span>
+                  ) : null}
+                </Link>
+              </li>
+            </ViewTransition>
           ))}
         </ul>
       )}

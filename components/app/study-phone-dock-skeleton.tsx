@@ -17,6 +17,7 @@ export function StudyPhoneDockSkeleton() {
         "dock dock-md dock-safe absolute! bg-base-100/80 backdrop-blur-sm md:hidden",
         !isDockPath(pathname) && "hidden",
       )}
+      style={{ viewTransitionName: "phone-dock" }}
     >
       {Array.from({ length: 5 }, (_, index) => (
         <div key={index} className="flex min-h-11 items-center justify-center">

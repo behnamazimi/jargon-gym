@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || undefined,
   devIndicators: false,
   experimental: {
+    viewTransition: true,
     optimizePackageImports: ["react-aria-components", "lucide-react"],
     // Issue screenshots are shrunk to 2 MB in the browser; the rest is form overhead.
     serverActions: { bodySizeLimit: "3mb" },

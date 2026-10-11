@@ -3,6 +3,7 @@
 import { FolderPlus, Layers, List, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { CreateCollectionDialog } from "@/components/library/create-collection-dialog";
+import { NAV_FORWARD } from "@/components/shared/view-transitions";
 import { LinkButton } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { RequestRow } from "@/components/requests/request-row";
@@ -104,6 +105,7 @@ export function ImportChooser({
           <li>
             <LinkButton
               href="/app/import/paste"
+              transitionTypes={NAV_FORWARD}
               variant="ghost"
               className={`${ROW_CLASS} h-auto rounded-none`}
             >
@@ -117,6 +119,7 @@ export function ImportChooser({
           <li>
             <LinkButton
               href="/app/import/apps"
+              transitionTypes={NAV_FORWARD}
               variant="ghost"
               className={`${ROW_CLASS} h-auto rounded-none`}
             >
@@ -159,6 +162,7 @@ export function ImportChooser({
       <div className="flex justify-center">
         <LinkButton
           href="/app/import/more"
+          transitionTypes={NAV_FORWARD}
           variant="ghost"
           size="sm"
           className="min-h-11 text-base-content/70"

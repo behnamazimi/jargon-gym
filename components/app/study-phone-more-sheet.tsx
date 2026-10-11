@@ -16,6 +16,7 @@ import { ConsentSettingsButton } from "@/components/consent/consent-settings-but
 import { ISSUE_COPY } from "@/lib/issues/copy";
 import { LEGAL_LINKS } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { NAV_FORWARD } from "@/components/shared/view-transitions";
 
 export function MoreSheet() {
   const { email, isAdmin, initialIsDark, moreOpen, setMoreOpen, aiCreditsLine } = useStudyPhone();
@@ -59,6 +60,7 @@ export function MoreSheet() {
               {aiCreditsLine ? (
                 <Link
                   href="/app/settings?tab=ai"
+                  transitionTypes={NAV_FORWARD}
                   onClick={() => setMoreOpen(false)}
                   className={cn(
                     "-my-1.5 flex min-h-11 items-center text-xs no-underline",
@@ -78,6 +80,7 @@ export function MoreSheet() {
               <li key={item.href}>
                 <Link
                   href={item.href}
+                  transitionTypes={NAV_FORWARD}
                   onClick={() => setMoreOpen(false)}
                   className="content-center min-h-11"
                 >

@@ -7,8 +7,9 @@ import { PageHeader } from "@/components/shared/page-header";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { listImportDestinations } from "@/lib/import/import-collections";
 import { IMPORT_SAMPLE_PAYLOAD, stringifyImportPayload } from "@/lib/import/sample-payload";
+import { withDirection } from "@/components/shared/view-transitions";
 
-export default async function MoreImportOptionsPage() {
+async function MoreImportOptionsPage() {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return <p className="text-sm text-base-content/70">Log in to add terms.</p>;
@@ -43,3 +44,5 @@ export default async function MoreImportOptionsPage() {
     </>
   );
 }
+
+export default withDirection(MoreImportOptionsPage);

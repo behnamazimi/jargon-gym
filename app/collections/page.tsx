@@ -11,6 +11,7 @@ import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { kindLine } from "@/lib/terms/kinds";
 import { listPublicCollections } from "@/lib/terms/public-terms";
 import { cn } from "@/lib/utils";
+import { withDirection } from "@/components/shared/view-transitions";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${getPublicBaseUrl()}/collections` },
 };
 
-export default async function PublicCollectionsIndexPage() {
+async function PublicCollectionsIndexPage() {
   const collections = await listPublicCollections();
   const rows: CollectionIndexRow[] = collections.map(({ collection, totalTerms, specimen }) => {
     return {
@@ -65,3 +66,5 @@ export default async function PublicCollectionsIndexPage() {
     </div>
   );
 }
+
+export default withDirection(PublicCollectionsIndexPage);

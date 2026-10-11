@@ -13,6 +13,7 @@ import { blockedMessage, entryFor } from "@/lib/requests/entry";
 import { fetchMyRequests, fetchRequestQuota } from "@/lib/requests/repository";
 import { statusSentence } from "@/lib/requests/status";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
+import { withDirection } from "@/components/shared/view-transitions";
 
 type Client = SupabaseClient<Database>;
 
@@ -37,7 +38,7 @@ async function loadDefinitions(supabase: Client, userId: string, collectionId: s
   return { name: collection.name, words: (words ?? []).map((row) => row.term) };
 }
 
-export default async function RequestPage({ searchParams }: PageProps) {
+async function RequestPage({ searchParams }: PageProps) {
   const { topic = "", definitions: definitionsId } = await searchParams;
   const { supabase, user } = await getSessionUser();
   if (!user) return <p className="text-sm text-base-content/70">{REQUEST_COPY.form.signedOut}</p>;
@@ -141,3 +142,5 @@ export default async function RequestPage({ searchParams }: PageProps) {
     );
   }
 }
+
+export default withDirection(RequestPage);

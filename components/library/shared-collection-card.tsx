@@ -10,6 +10,7 @@ import { REPORTED_THANKS } from "@/lib/collections/moderation";
 import { LoveButton } from "./love-button";
 import type { SharedCollection } from "@/lib/terms/types";
 import { cn, pluralize } from "@/lib/utils";
+import { NAV_FORWARD } from "@/components/shared/view-transitions";
 
 type SharedCollectionCardProps = {
   collection: SharedCollection;
@@ -142,6 +143,7 @@ export function SharedCollectionCard({
           <div className="flex flex-col gap-2 sm:flex-row">
             <LinkButton
               href={`/app/triage?collection=${collection.id}`}
+              transitionTypes={NAV_FORWARD}
               variant="outline"
               size="sm"
               className="min-h-11 md:min-h-8"

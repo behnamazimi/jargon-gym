@@ -9,6 +9,7 @@ export function StudyPhoneTopBarSkeleton() {
   return (
     <header
       className="sticky top-0 z-40 border-b border-base-300 bg-base-100/80 pt-safe backdrop-blur-sm md:hidden"
+      style={{ viewTransitionName: "phone-topbar" }}
       aria-busy="true"
       aria-label="Loading"
     >

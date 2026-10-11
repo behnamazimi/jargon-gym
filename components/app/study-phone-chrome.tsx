@@ -7,6 +7,7 @@ import { type ReactNode } from "react";
 import { STUDY_DOCK_TABS, emailInitials, studyScreenTitle } from "@/components/app/account-nav";
 import { BrandIcon } from "@/components/brand-icon";
 import { StreakBadge } from "@/components/streak-badge";
+import { NAV_BACK } from "@/components/shared/view-transitions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
@@ -30,7 +31,10 @@ export function StudyPhoneTopBar() {
   const subPage = isMorePath(pathname);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-base-300 bg-base-100/80 pt-safe backdrop-blur-sm md:hidden">
+    <header
+      className="sticky top-0 z-40 border-b border-base-300 bg-base-100/80 pt-safe backdrop-blur-sm md:hidden"
+      style={{ viewTransitionName: "phone-topbar" }}
+    >
       <div className="grid min-h-11 grid-cols-[1fr_auto_1fr] items-center px-3 py-1">
         <div className="flex items-center justify-start">
           {subPage && isNestedFlowPath(pathname) && hasInAppHistory ? (
@@ -45,6 +49,7 @@ export function StudyPhoneTopBar() {
           ) : subPage ? (
             <Link
               href={isNestedFlowPath(pathname) ? NESTED_FLOW_PARENT : backHref}
+              transitionTypes={NAV_BACK}
               className="btn btn-ghost btn-square min-h-11 min-w-11"
               aria-label="Back"
             >
@@ -118,6 +123,7 @@ export function StudyPhoneDock() {
         "dock dock-md dock-safe absolute! bg-base-100/80 backdrop-blur-sm md:hidden",
         !isDockPath(pathname) && "hidden",
       )}
+      style={{ viewTransitionName: "phone-dock" }}
     >
       {STUDY_DOCK_TABS.map((tab) => {
         const active =

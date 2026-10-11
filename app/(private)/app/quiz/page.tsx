@@ -9,6 +9,7 @@ import {
 } from "@/lib/quiz/setup-preference";
 import { aiAvailable } from "@/lib/llm/types";
 import { hasNoCollections } from "@/lib/study/collections";
+import { withReveal } from "@/components/shared/view-transitions";
 
 export const maxDuration = 60;
 
@@ -16,7 +17,7 @@ type PageProps = {
   searchParams: Promise<{ collection?: string }>;
 };
 
-export default async function QuizRoute({ searchParams }: PageProps) {
+async function QuizRoute({ searchParams }: PageProps) {
   const [params, setup, cookieStore] = await Promise.all([
     searchParams,
     getQuizSetupData(),
@@ -49,3 +50,5 @@ export default async function QuizRoute({ searchParams }: PageProps) {
     />
   );
 }
+
+export default withReveal(QuizRoute);

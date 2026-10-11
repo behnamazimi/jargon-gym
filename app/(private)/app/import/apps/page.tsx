@@ -3,8 +3,9 @@ import Link from "next/link";
 import { PageBadge } from "@/components/illustrations/scenes/page-badge";
 import { PageHeader } from "@/components/shared/page-header";
 import { APP_GUIDES } from "@/lib/import/guides";
+import { NAV_FORWARD, withDirection } from "@/components/shared/view-transitions";
 
-export default function AppPickerPage() {
+function AppPickerPage() {
   return (
     <>
       <PageHeader
@@ -22,6 +23,7 @@ export default function AppPickerPage() {
           <li key={guide.slug}>
             <Link
               href={`/app/import/apps/${guide.slug}`}
+              transitionTypes={NAV_FORWARD}
               className="flex min-h-16 items-center gap-3 px-4 py-3 no-underline outline-none transition-colors hover:bg-base-200/60 focus-visible:ring-2 focus-visible:ring-primary"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-field bg-base-200 font-medium">
@@ -39,3 +41,5 @@ export default function AppPickerPage() {
     </>
   );
 }
+
+export default withDirection(AppPickerPage);

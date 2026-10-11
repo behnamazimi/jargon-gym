@@ -13,6 +13,7 @@ import {
   resolveStudyCollectionId,
 } from "@/lib/study/collection-preference";
 import { hasNoCollections } from "@/lib/study/collections";
+import { withReveal } from "@/components/shared/view-transitions";
 
 type PageProps = {
   searchParams: Promise<{ collection?: string }>;
@@ -28,7 +29,7 @@ async function loadReviewOptions() {
   return getReviewOptions(supabase, user.id).catch(() => DEFAULT_REVIEW_OPTIONS);
 }
 
-export default async function ReviewRoute({ searchParams }: PageProps) {
+async function ReviewRoute({ searchParams }: PageProps) {
   const [params, cookieStore] = await Promise.all([searchParams, cookies()]);
   const rememberedId = parseReviewCollectionCookie(
     cookieStore.get(REVIEW_COLLECTION_COOKIE)?.value,
@@ -77,3 +78,5 @@ export default async function ReviewRoute({ searchParams }: PageProps) {
     />
   );
 }
+
+export default withReveal(ReviewRoute);
