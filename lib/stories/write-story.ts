@@ -174,10 +174,12 @@ export async function writeStory(auth: Auth, rawInput: unknown): Promise<StoryRe
       terms: terms.filter((term) => produced.usedIds.has(term.id)),
     };
   } catch (err) {
+    const providerError = err instanceof StoryProviderError ? err : null;
     trackServer(userId, "ai_generation_failed", {
       feature: "story",
       using_credits: true,
-      kind: err instanceof StoryProviderError ? err.kind : "other",
+      kind: providerError?.kind ?? "other",
+      rejection: providerError?.rejection ?? null,
     });
     return storyFailure(err);
   }

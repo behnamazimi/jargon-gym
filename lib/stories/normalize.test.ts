@@ -195,6 +195,19 @@ describe("normalizeStory", () => {
     ).toThrow(StoryGenerationError);
   });
 
+  it("says how many terms were marked and how many didn't match", () => {
+    expect(() =>
+      normalizeStory(
+        payload([
+          { text: "idempotency", termId: "t1" },
+          { text: " " },
+          { text: "banana", termId: "t4" },
+        ]),
+        TERMS,
+      ),
+    ).toThrow(/Only 1 of the \d+ terms .*\(2 marked, 1 not matching their term\)/);
+  });
+
   it("rejects a story that is too short", () => {
     expect(() =>
       normalizeStory(

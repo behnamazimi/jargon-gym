@@ -62,6 +62,8 @@ export function normalizeStory(
   const title = checkedTitle(payload.title);
   const termById = new Map(terms.map((term) => [term.id, term]));
   const used = new Set<string>();
+  let marked = 0;
+  let mismatched = 0;
   const surfaces = termSurfaces(payload);
   const paragraphs: StorySegment[][] = [];
 
@@ -71,6 +73,7 @@ export function normalizeStory(
       if (!raw.text) continue;
       const term = raw.termId ? termById.get(raw.termId) : undefined;
       const core = raw.text.trim();
+      if (term) marked += 1;
       if (term && core && surfaceMatchesTerm(surfaces.get(term.id) ?? core, term.term)) {
         const start = raw.text.indexOf(core);
         if (start > 0) pushSegment(segments, { text: raw.text.slice(0, start) });
@@ -79,6 +82,7 @@ export function normalizeStory(
         if (rest) pushSegment(segments, { text: rest });
         used.add(term.id);
       } else {
+        if (term) mismatched += 1;
         pushSegment(segments, { text: raw.text });
       }
     }
@@ -89,7 +93,7 @@ export function normalizeStory(
   const termIds = terms.map((term) => term.id).filter((id) => used.has(id));
   if (termIds.length < STORY_MIN_TERMS) {
     throw new StoryGenerationError(
-      `Only ${termIds.length} of the terms made it into the story.`,
+      `Only ${termIds.length} of the ${terms.length} terms made it into the story (${marked} marked, ${mismatched} not matching their term).`,
       "terms",
     );
   }

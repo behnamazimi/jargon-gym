@@ -11,6 +11,6 @@ export function storyFailure(err: unknown): StoryFailure {
     const keyFault = err.kind === "auth" || err.kind === "rate-limit";
     return { error: keyFault ? AI_TEMPORARILY_UNAVAILABLE : err.message, reason: "unavailable" };
   }
-  console.error("generateStoryAction failed:", err);
+  console.error("Writing a story failed:", err);
   return { error: "Couldn't write a story this time. Try again.", reason: "unavailable" };
 }

@@ -28,6 +28,15 @@ describe("parseStoryText", () => {
     ]);
   });
 
+  it("reads markers the model escaped as if writing Markdown", () => {
+    const result = parseStoryText("Title\n\nWe \\[\\[sharded\\|2\\]\\] it.", TERMS);
+    expect(result.paragraphs[0].segments).toEqual([
+      { text: "We " },
+      { text: "sharded", termId: "t2" },
+      { text: " it." },
+    ]);
+  });
+
   it("turns markers into term segments and keeps the text around them exactly", () => {
     const result = parseStoryText("# Title\n\nWe [[sharded|2]] it.Then [[idempotent|1]]!", TERMS);
     expect(result.title).toBe("Title");

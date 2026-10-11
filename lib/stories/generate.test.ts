@@ -146,9 +146,12 @@ describe("generateStory", () => {
     expect(logError).not.toHaveBeenCalled();
   });
 
-  it("logs and wraps an error that isn't from the provider", async () => {
+  it("logs and wraps a reply that couldn't become a story", async () => {
     mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
-    await expect(generateStory(INPUT)).rejects.toMatchObject({ kind: "other" });
+    await expect(generateStory(INPUT)).rejects.toMatchObject({
+      kind: "rejected",
+      rejection: "terms",
+    });
     expect(logError).toHaveBeenCalledWith(
       "Story generation failed (anthropic):",
       expect.stringMatching(/^StoryGenerationError:/),

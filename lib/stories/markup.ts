@@ -31,9 +31,12 @@ function hasBrokenMarker(text: string): boolean {
   return BROKEN_MARKER.test(text.replace(TERM_MARKER, "\uFFFC"));
 }
 
+// Some models escape brackets and bars as if writing Markdown: "\[\[shards\|2\]\]".
+const ESCAPED_MARKER_CHAR = /\\([[\]|])/g;
+
 /** The reply's lines without a code fence wrapped around the whole reply. */
 function replyLines(reply: string): string[] {
-  const lines = reply.replace(/\r\n?/g, "\n").trim().split("\n");
+  const lines = reply.replace(/\r\n?/g, "\n").replace(ESCAPED_MARKER_CHAR, "$1").trim().split("\n");
   if (CODE_FENCE.test(lines[0]?.trim() ?? "")) lines.shift();
   if (lines.at(-1)?.trim() === "```") lines.pop();
   return lines;

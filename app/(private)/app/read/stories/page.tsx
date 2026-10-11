@@ -5,10 +5,6 @@ import { hasNoCollections } from "@/lib/study/collections";
 import { PromoVisit } from "@/components/promos/promo-visit";
 import { StoriesPage } from "@/components/read/stories/stories-page";
 
-// Writing a story can take two model calls; this raises the Server Action
-// timeout for the page's actions.
-export const maxDuration = 60;
-
 type PageProps = {
   searchParams: Promise<{ collection?: string; story?: string }>;
 };
