@@ -88,7 +88,8 @@ export function StudyPhoneTopBar() {
 function dockItemClass(active: boolean) {
   return cn(
     "mb-0! min-h-11 items-center justify-center gap-1 transition-transform after:content-none active:scale-95 motion-reduce:transition-none",
-    active && "dock-active font-medium text-primary",
+    active &&
+      "dock-active font-medium text-[color-mix(in_oklab,var(--color-primary)_55%,var(--color-primary-text))]",
   );
 }
 
