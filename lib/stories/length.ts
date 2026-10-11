@@ -87,11 +87,6 @@ export function lengthPhrase(words: number, unit: LengthUnit): string {
   return `${inUnit(words, unit)} ${unit}`;
 }
 
-/** A range in the story's unit, like "4 to 8 words". */
-export function rangePhrase(minWords: number, maxWords: number, unit: LengthUnit): string {
-  return `${inUnit(minWords, unit)} to ${lengthPhrase(maxWords, unit)}`;
-}
-
 /** How far a finished piece may stray from the asked-for length before it
  *  is rejected and retried. */
 export type LengthRange = Pick<StoryLength, "min" | "max" | "unit">;

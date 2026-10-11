@@ -5,7 +5,7 @@ import type { StoryVote } from "./types";
 
 type Client = SupabaseClient<Database>;
 
-const RECENT_TITLE_LIMIT = 8;
+const RECENT_TITLE_LIMIT = 3;
 const RECENT_VOTE_LIMIT = 50;
 
 export async function loadRecentTitles(
