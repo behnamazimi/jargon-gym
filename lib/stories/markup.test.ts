@@ -111,14 +111,36 @@ describe("parseStoryText edge cases", () => {
   });
 
   it.each([
-    ["number first", "T\n\nWe [[2|shards]] it."],
-    ["missing bracket", "T\n\nWe [[shards|2] it."],
-    ["triple brackets", "T\n\nWe [[[shards|2]]] it."],
+    ["number first", "We [[2|shards]] it."],
+    ["missing closing bracket", "We [[shards|2] it."],
+    ["no closing brackets", "We [[shards|2 it."],
+    ["missing opening bracket", "We [shards|2]] it."],
+    ["triple brackets", "We [[[shards|2]]] it."],
+    ["single brackets", "We [shards|2] it."],
+    ["single brackets, number first", "We [2|shards] it."],
+  ])("repairs a malformed marker: %s", (_name, paragraph) => {
+    const result = parseStoryText(`T\n\n${paragraph}`, TERMS);
+    expect(result.paragraphs[0].segments).toEqual([
+      { text: "We " },
+      { text: "shards", termId: "t2" },
+      { text: " it." },
+    ]);
+  });
+
+  it("repairs a malformed marker in the title", () => {
+    expect(parseStoryText("[[On|2]\n\nText.", TERMS).title).toBe("On");
+  });
+
+  it("leaves brackets that aren't a marker alone", () => {
+    const result = parseStoryText("T\n\nRun m[i[0]] and [[ -f x ]] here.", TERMS);
+    expect(result.paragraphs[0].segments).toEqual([{ text: "Run m[i[0]] and [[ -f x ]] here." }]);
+  });
+
+  it.each([
     ["marker across a line", "T\n\nWe [[shard\ning|2]] it."],
     ["marker across paragraphs", "T\n\nWe [[shard\n\ning|2]] it."],
-    ["marker in the title", "[[On|2]\n\nText."],
-    ["single brackets", "T\n\nWe [shards|2] it."],
-  ])("rejects a broken marker: %s", (_name, reply) => {
+    ["only closing brackets", "T\n\nWe shards|2]] it."],
+  ])("rejects a marker it can't repair: %s", (_name, reply) => {
     expect(() => parseStoryText(reply, TERMS)).toThrow(StoryGenerationError);
   });
 });

@@ -179,9 +179,9 @@ describe("generateStory", () => {
     expect(call.prompt).toContain("1. Idempotency: d");
   });
 
-  it("retries once when a term marker comes back broken", async () => {
+  it("retries once when a term marker comes back broken beyond repair", async () => {
     mockedGenerate
-      .mockReturnValueOnce(resolveWith(`Title\n\n[idempotency|1] ${FILLER}`))
+      .mockReturnValueOnce(resolveWith(`Title\n\n[[idem\npotency|1]] ${FILLER}`))
       .mockReturnValueOnce(resolveWith(GOOD_TEXT));
     await expect(generateStory(INPUT)).resolves.toBeTruthy();
     expect(mockedGenerate).toHaveBeenCalledTimes(2);

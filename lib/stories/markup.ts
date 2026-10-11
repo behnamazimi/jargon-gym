@@ -34,9 +34,22 @@ function hasBrokenMarker(text: string): boolean {
 // Some models escape brackets and bars as if writing Markdown: "\[\[shards\|2\]\]".
 const ESCAPED_MARKER_CHAR = /\\([[\]|])/g;
 
+// Markers with the wrong number of brackets ("[x|2]", "[[x|2]", "[[[x|2]]]")
+// or with the number first ("[[2|x]]"). The words must hold a letter, so a
+// stray "[2|3]" isn't read as a term. A marker split across lines isn't
+// fixed: there's no telling which words belong to it.
+const MISBRACKETED_MARKER = /\[+([^[\]|\n]*\p{L}[^[\]|\n]*?)\|\s*(?:#|term\s*)?(\d+)(?:\s*\]+)?/giu;
+const NUMBER_FIRST_MARKER = /\[+\s*(?:#|term\s*)?(\d+)\s*\|([^[\]|\n]*\p{L}[^[\]|\n]*?)\]+/giu;
+
+/** Rewrites the malformed markers we can still read as well-formed ones. */
+function repairMarkers(text: string): string {
+  return text.replace(NUMBER_FIRST_MARKER, "[[$2|$1]]").replace(MISBRACKETED_MARKER, "[[$1|$2]]");
+}
+
 /** The reply's lines without a code fence wrapped around the whole reply. */
 function replyLines(reply: string): string[] {
-  const lines = reply.replace(/\r\n?/g, "\n").replace(ESCAPED_MARKER_CHAR, "$1").trim().split("\n");
+  const text = reply.replace(/\r\n?/g, "\n").replace(ESCAPED_MARKER_CHAR, "$1");
+  const lines = repairMarkers(text).trim().split("\n");
   if (CODE_FENCE.test(lines[0]?.trim() ?? "")) lines.shift();
   if (lines.at(-1)?.trim() === "```") lines.pop();
   return lines;
@@ -49,7 +62,8 @@ function cleanTitle(line: string): string {
 /** Reads the model's plain-text reply: the title on the first line, then the
  *  piece with each term written as [[words|number]]. The text itself is kept
  *  exactly as written; only the markers are read out of it. A marker the
- *  parser can't read fails the reply, so no brackets reach the reader. */
+ *  parser can't read, even after repair, fails the reply, so no brackets
+ *  reach the reader. */
 export function parseStoryText(reply: string, terms: StoryTerm[]): StoryGenerationPayload {
   const termIdByNumber = new Map(terms.map((term, index) => [String(index + 1), term.id]));
   const lines = replyLines(reply);
