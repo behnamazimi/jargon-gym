@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { BrandIconImage } from "@/lib/brand-icon";
+import { BrandMarkImage } from "@/lib/brand-icon";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_CONTENT_TYPE = "image/png";
@@ -105,7 +105,7 @@ export async function renderSpecimenImage({
           paddingTop: 28,
         }}
       >
-        <BrandIconImage boxSize={48} />
+        <BrandMarkImage size={56} />
         <div style={{ display: "flex", fontSize: 30, fontWeight: 500 }}>Lobyas</div>
         <div style={{ display: "flex", fontSize: 30, color: MUTED }}>
           {footer ?? "Learn the terms that stick"}

@@ -1,35 +1,32 @@
-import {
-  BRAND_ICON_BOX_SIZES,
-  BrandIconGlyphs,
-  brandIconBaseGlyphsProps,
-  brandIconScaleStyle,
-  brandIconShellStyle,
-} from "@/lib/brand-icon";
+import { LobyaMarkScene } from "@/components/illustrations/scenes/lobya-mark";
 import { cn } from "@/lib/utils";
 
-type BrandIconProps = {
+const SIZES = {
+  sm: "size-5 rounded-[4px]",
+  md: "size-8 rounded",
+} as const;
+
+/**
+ * The brand lobya on its light tile, sized for the header, the phone bar and
+ * the footer. It's drawn too big for the tile, so its bottom is cropped off.
+ */
+export function BrandIcon({
+  className,
+  size = "md",
+}: {
   className?: string;
-  size?: keyof typeof BRAND_ICON_BOX_SIZES;
-};
-
-export function BrandIcon({ className, size = "md" }: BrandIconProps) {
-  const boxSize = BRAND_ICON_BOX_SIZES[size];
-
+  size?: keyof typeof SIZES;
+}) {
   return (
     <span
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded bg-primary/15 text-primary-text",
+        "ill-mark-tile relative inline-block shrink-0 overflow-hidden",
+        SIZES[size],
         className,
       )}
-      style={brandIconShellStyle(boxSize)}
       aria-hidden
     >
-      <span
-        className="inline-flex items-center justify-center"
-        style={brandIconScaleStyle(boxSize)}
-      >
-        <BrandIconGlyphs {...brandIconBaseGlyphsProps()} />
-      </span>
+      <LobyaMarkScene className="absolute top-[26%] left-1/2 h-[108%] w-auto -translate-x-1/2" />
     </span>
   );
 }

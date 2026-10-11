@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { BadgeQuestionMark, BookOpenText, LayoutList, PlayingCardsFan } from "lucide-react";
 import { BrandIcon } from "@/components/brand-icon";
+import { Wordmark } from "@/components/illustrations/scenes/lobya-mark";
 import { pageContainerClass } from "@/components/page-container";
 import { ProfileMenu } from "@/components/settings/profile-menu";
 import { InstallButton } from "@/components/pwa/install-prompt";
@@ -38,7 +39,7 @@ function SiteHeaderChrome({
             aria-label="Lobyas"
           >
             <BrandIcon className="lg:hidden" />
-            <span className="hidden whitespace-nowrap text-primary-text lg:inline">Lobyas</span>
+            <Wordmark className="hidden h-9 w-auto lg:block" />
           </Link>
           {leftNav}
         </div>
