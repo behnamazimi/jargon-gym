@@ -3,6 +3,7 @@
 import { Flame } from "lucide-react";
 import { useEffect, useState, useTransition } from "react";
 import { getStreakHistoryAction } from "@/app/(private)/actions";
+import { StreakFlameScene } from "@/components/illustrations/scenes/streak-flame";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { StreakDay } from "@/lib/streak/history";
 import type { StreakSummary } from "@/lib/streak/status";
@@ -72,6 +73,11 @@ export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: Str
           </p>
         </div>
       </DialogHeader>
+
+      <StreakFlameScene
+        state={streak.doneToday ? "done" : streak.current > 0 ? "open" : "none"}
+        className="mx-auto my-3 max-w-52"
+      />
 
       <div className="flex gap-2">
         {showSkeleton
