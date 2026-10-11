@@ -146,9 +146,12 @@ describe("generateStory", () => {
     expect(logError).not.toHaveBeenCalled();
   });
 
-  it("logs and wraps an error that isn't from the provider", async () => {
+  it("logs and wraps a reply that couldn't become a story", async () => {
     mockedGenerate.mockReturnValue(resolveWith(MISSING_TERMS_TEXT));
-    await expect(generateStory(INPUT)).rejects.toMatchObject({ kind: "other" });
+    await expect(generateStory(INPUT)).rejects.toMatchObject({
+      kind: "rejected",
+      rejection: "terms",
+    });
     expect(logError).toHaveBeenCalledWith(
       "Story generation failed (anthropic):",
       expect.stringMatching(/^StoryGenerationError:/),
@@ -172,13 +175,13 @@ describe("generateStory", () => {
     mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
     await generateStory(INPUT);
     const call = mockedGenerate.mock.calls[0]![0];
-    expect(call.system).toContain("Each request option has one job");
+    expect(call.system).toContain("If they conflict, level wins.");
     expect(call.prompt).toContain("1. Idempotency: d");
   });
 
-  it("retries once when a term marker comes back broken", async () => {
+  it("retries once when a term marker comes back broken beyond repair", async () => {
     mockedGenerate
-      .mockReturnValueOnce(resolveWith(`Title\n\n[idempotency|1] ${FILLER}`))
+      .mockReturnValueOnce(resolveWith(`Title\n\n[[idem\npotency|1]] ${FILLER}`))
       .mockReturnValueOnce(resolveWith(GOOD_TEXT));
     await expect(generateStory(INPUT)).resolves.toBeTruthy();
     expect(mockedGenerate).toHaveBeenCalledTimes(2);

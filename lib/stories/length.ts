@@ -26,16 +26,20 @@ const CHARACTERS_PER_WORD = 2;
 // Beginner levels need more room: shorter sentences carry less per word.
 const LEVEL_FACTOR: Partial<Record<CefrLevel, number>> = { A1: 1.25, A2: 1.15 };
 
-// What each length the user can pick means. Longer pieces carry more terms,
-// so the number of terms per word stays about the same.
+// What each length the user can pick means. `terms` is what the length is
+// charged for; `minTerms` is the fewest the piece must use to be kept.
 const PIECE_LENGTH_SPEC: Record<
   PieceLength,
-  { words: [number, number]; paragraphs: string; turns: number; terms: number }
+  { words: [number, number]; paragraphs: string; turns: number; terms: number; minTerms: number }
 > = {
-  short: { words: [40, 70], paragraphs: "1 or 2", turns: 5, terms: 6 },
-  medium: { words: [70, 120], paragraphs: "2 or 3", turns: 8, terms: 8 },
-  long: { words: [120, 190], paragraphs: "3 to 5", turns: 12, terms: 10 },
+  short: { words: [40, 70], paragraphs: "1 or 2", turns: 5, terms: 6, minTerms: 1 },
+  medium: { words: [70, 120], paragraphs: "2 or 3", turns: 8, terms: 8, minTerms: 2 },
+  long: { words: [120, 190], paragraphs: "3 to 5", turns: 12, terms: 10, minTerms: 3 },
 };
+
+/** How many terms every story is offered, whatever its length. The model uses
+ *  the ones that fit, so a short piece still has enough to pick from. */
+export const STORY_TERM_POOL = 10;
 
 export type StoryLength = {
   min: number;
@@ -55,17 +59,13 @@ function inUnit(words: number, unit: LengthUnit): number {
   return unit === "characters" ? words * CHARACTERS_PER_WORD : words;
 }
 
+/** How many terms a story of this length is charged for. */
 export function termsForLength(pieceLength: PieceLength): number {
   return PIECE_LENGTH_SPEC[pieceLength].terms;
 }
 
-/** How many of the collection's terms a piece of this length will use, like
- *  "Uses 8 of your 9 terms." or "Uses all 6 of your terms." */
-export function termsUsedNote(pieceLength: PieceLength, available: number): string {
-  const cap = termsForLength(pieceLength);
-  if (available <= 0) return "";
-  if (available <= cap) return `Uses all ${available} of your terms.`;
-  return `Uses ${cap} of your ${available} terms.`;
+export function minTermsForLength(pieceLength: PieceLength): number {
+  return PIECE_LENGTH_SPEC[pieceLength].minTerms;
 }
 
 /** The length to ask for: the user's pick, with a bit more room at beginner
@@ -87,20 +87,15 @@ export function lengthPhrase(words: number, unit: LengthUnit): string {
   return `${inUnit(words, unit)} ${unit}`;
 }
 
-/** A range in the story's unit, like "4 to 8 words". */
-export function rangePhrase(minWords: number, maxWords: number, unit: LengthUnit): string {
-  return `${inUnit(minWords, unit)} to ${lengthPhrase(maxWords, unit)}`;
-}
-
 /** How far a finished piece may stray from the asked-for length before it
  *  is rejected and retried. */
 export type LengthRange = Pick<StoryLength, "min" | "max" | "unit">;
 
 export function acceptedLength(length: LengthRange): { min: number; max: number } {
-  return { min: Math.floor(length.min * 0.6), max: Math.ceil(length.max * 1.3) };
+  return { min: Math.floor(length.min * 0.5), max: Math.ceil(length.max * 1.5) };
 }
 
-export function splitWords(text: string): string[] {
+function splitWords(text: string): string[] {
   return text.split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 }
 

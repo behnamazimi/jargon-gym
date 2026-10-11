@@ -1,14 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState } from "react";
-import {
-  generateStoryAction,
-  markStoryReadAction,
-  voteStoryAction,
-} from "@/app/(private)/app/read/stories/actions";
+import { useEffect, useRef, useState } from "react";
+import { markStoryReadAction, voteStoryAction } from "@/app/(private)/app/read/stories/actions";
 import { tickGoal } from "@/components/goals/goal-store";
 import { useToast } from "@/components/ui/toast";
+import { requestStory } from "./request-story";
 import type { AiFailureReason } from "@/lib/llm/types";
 import { voteFeedback } from "@/lib/stories/feedback";
 import type { StoriesSetupData } from "@/lib/stories/setup";
@@ -47,6 +44,10 @@ export function useStorySession(setup: StoriesSetupData) {
   const [errorReason, setErrorReason] = useState<AiFailureReason | null>(null);
   const [isMarkingRead, setIsMarkingRead] = useState(false);
   const busyRef = useRef(false);
+  // Leaving the page drops the wait; the server still finishes and saves the
+  // story, so it is there on the next visit.
+  const pendingRef = useRef<AbortController | null>(null);
+  useEffect(() => () => pendingRef.current?.abort(), []);
   // The story on screen right now, so a late vote result can tell whether the
   // user has already moved on.
   const currentStoryIdRef = useRef(story?.id);
@@ -84,8 +85,17 @@ export function useStorySession(setup: StoriesSetupData) {
     setErrorReason(null);
 
     const levels = { cefrLevel, pieceLength };
-    const result = await generateStoryAction({ collectionId, ...levels, outline });
-    busyRef.current = false;
+    const controller = new AbortController();
+    pendingRef.current = controller;
+    let result: Awaited<ReturnType<typeof requestStory>>;
+    try {
+      result = await requestStory({ collectionId, ...levels, outline }, controller.signal);
+    } catch {
+      return;
+    } finally {
+      busyRef.current = false;
+      pendingRef.current = null;
+    }
     // The balance may have changed either way, so refresh what shows it.
     router.refresh();
 

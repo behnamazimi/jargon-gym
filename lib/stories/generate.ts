@@ -6,7 +6,7 @@ import type { UsageTally } from "@/lib/ai-credits/usage-tally";
 import { isKeyRejected, providerStatus } from "@/lib/llm/errors";
 import { createModel } from "@/lib/llm/model";
 import type { LlmProvider } from "@/lib/llm/types";
-import { storyLength } from "./length";
+import { minTermsForLength, storyLength } from "./length";
 import { parseStoryText } from "./markup";
 import { StoryGenerationError, type StoryGenerationFailure } from "./errors";
 import { normalizeStory } from "./normalize";
@@ -14,7 +14,7 @@ import { buildStoryPrompt } from "./prompt";
 import type { StyleOption } from "./styles";
 import type { CefrLevel, PieceLength, StorySegment, StoryTerm } from "./types";
 
-export type StoryProviderErrorKind = "auth" | "rate-limit" | "timeout" | "other";
+export type StoryProviderErrorKind = "auth" | "rate-limit" | "timeout" | "rejected" | "other";
 
 /** What the user is told, with the original failure kept as `cause`. */
 export class StoryProviderError extends Error {
@@ -25,11 +25,19 @@ export class StoryProviderError extends Error {
   ) {
     super(message, options);
   }
+
+  /** Which check threw the reply away, when the model answered but the
+   *  reply couldn't become a story. */
+  get rejection(): StoryGenerationFailure | undefined {
+    return this.cause instanceof StoryGenerationError ? this.cause.reason : undefined;
+  }
 }
 
-// The Stories page is cut off at 60 seconds. Stopping earlier lets the failure
+// The story route is cut off at 60 seconds (its maxDuration). Stopping earlier lets the failure
 // be reported and the credits refunded instead of the request being killed.
 const STORY_TIMEOUT_MS = 55_000;
+// Enough of a rejected reply to see how the model wrote the term markers.
+const REJECTED_REPLY_LOG_LIMIT = 600;
 
 type GenerateStoryInput = {
   provider: LlmProvider;
@@ -65,6 +73,13 @@ function toProviderError(error: unknown, timedOut: boolean): StoryProviderError 
   if (timedOut) {
     return new StoryProviderError("Writing the story took too long. Try again.", "timeout", cause);
   }
+  if (error instanceof StoryGenerationError) {
+    return new StoryProviderError(
+      "Couldn't write a story this time. Try again.",
+      "rejected",
+      cause,
+    );
+  }
   if (isKeyRejected(error)) {
     return new StoryProviderError("Couldn't write a story this time. Try again.", "auth", cause);
   }
@@ -95,7 +110,15 @@ async function requestStory(
     ...aiGenerationOptions(input.observability, "story_generation"),
   });
   input.onUsage?.(usage);
-  return normalizeStory(parseStoryText(text, input.terms), input.terms, length);
+  try {
+    const payload = parseStoryText(text, input.terms);
+    return normalizeStory(payload, input.terms, length, minTermsForLength(input.pieceLength));
+  } catch (error) {
+    if (error instanceof StoryGenerationError) {
+      console.warn("Rejected story reply:", text.slice(0, REJECTED_REPLY_LOG_LIMIT));
+    }
+    throw error;
+  }
 }
 
 function failed(input: GenerateStoryInput, error: unknown, deadline: AbortSignal) {

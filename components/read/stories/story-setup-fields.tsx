@@ -1,7 +1,6 @@
 "use client";
 
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { termsUsedNote } from "@/lib/stories/length";
 import { PIECE_LENGTHS, type PieceLength } from "@/lib/stories/types";
 
 type Choice = { label: string; hint: string };
@@ -56,23 +55,11 @@ function ChoiceField<T extends string>({
   );
 }
 
-export function PieceLengthField({
-  termsAvailable,
-  ...props
-}: {
+export function PieceLengthField(props: {
   value: PieceLength;
-  termsAvailable: number;
   onChange: (length: PieceLength) => void;
 }) {
-  const choices = Object.fromEntries(
-    PIECE_LENGTHS.map((length) => [
-      length,
-      {
-        label: PIECE_LENGTH_BASE[length].label,
-        hint: `${PIECE_LENGTH_BASE[length].hint} ${termsUsedNote(length, termsAvailable)}`.trim(),
-      },
-    ]),
-  ) as Record<PieceLength, Choice>;
-
-  return <ChoiceField legend="Length" options={PIECE_LENGTHS} choices={choices} {...props} />;
+  return (
+    <ChoiceField legend="Length" options={PIECE_LENGTHS} choices={PIECE_LENGTH_BASE} {...props} />
+  );
 }

@@ -32,8 +32,12 @@ price = ceil(base_credits + credits_per_unit × units ÷ unit_size)
 | Action            | Unit                      | Base | Rate per unit | Examples                             |
 | ----------------- | ------------------------- | ---- | ------------- | ------------------------------------ |
 | `quiz`            | question the model writes | 0    | 1             | 10 questions cost 10                 |
-| `story`           | term used                 | 2    | 0.5           | 3 terms cost 4, 6 cost 5, 10 cost 7  |
+| `story`           | term the length covers    | 2    | 0.5           | 3 terms cost 4, 6 cost 5, 10 cost 7  |
 | `narration_story` | 1,000 characters          | 0    | 7.5           | 524 characters cost 4, 1,737 cost 14 |
+
+A story is charged for the terms its length covers (6, 8 or 10, or fewer when
+the collection has fewer left), even though it is offered 10 and the piece may
+use fewer.
 
 The rows live in `credit_prices`. A price changes by adding a row with a later
 `effective_from`; older spends keep pointing at the row that priced them
@@ -381,8 +385,8 @@ can replace it later without touching the screens.
   calls, and cost recording.
 - `lib/llm/access.ts`: picks credits or unavailable.
 - `lib/llm/central.ts`: reads the app's key from the environment.
-- `app/(private)/app/quiz/actions.ts` and
-  `app/(private)/app/read/stories/actions.ts`: charge and generate.
+- `app/(private)/app/quiz/actions.ts`, and `app/api/stories/route.ts` with
+  `lib/stories/write-story.ts`: charge and generate.
 - `lib/stories/narration-billing.ts` and `lib/ai/speech/audio.ts`: charging for
   story narration.
 - `supabase/migrations/20260929170000_ai_feature_settings.sql` and `lib/ai/`:

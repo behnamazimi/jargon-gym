@@ -14,7 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { pickReadTermsForUser } from "@/lib/trace-queue";
 import { storyFailure } from "./failure";
 import { generateStory, StoryProviderError, type StoryRetryReason } from "./generate";
-import { termsForLength } from "./length";
+import { STORY_TERM_POOL, termsForLength } from "./length";
 import { savePrefs } from "./prefs";
 import { loadRecentTitles, loadRecentVotes } from "./recent";
 import { dismissUnreadStories, getCollection, insertStory } from "./repository";
@@ -71,12 +71,7 @@ export async function writeStory(auth: Auth, rawInput: unknown): Promise<StoryRe
     }
 
     const [cards, collection, votes, recentTitles] = await Promise.all([
-      pickReadTermsForUser(
-        admin,
-        userId,
-        { collectionIds: [collectionId] },
-        termsForLength(pieceLength),
-      ),
+      pickReadTermsForUser(admin, userId, { collectionIds: [collectionId] }, STORY_TERM_POOL),
       getCollection(admin, collectionId),
       loadRecentVotes(admin, userId),
       loadRecentTitles(admin, userId, collectionId),
@@ -139,7 +134,8 @@ export async function writeStory(auth: Auth, rawInput: unknown): Promise<StoryRe
         admin,
         userId,
         feature: "story",
-        units: cards.length,
+        // Charged by length, not by the size of the pool the model picks from.
+        units: Math.min(cards.length, termsForLength(pieceLength)),
       },
       produce,
     );
@@ -174,10 +170,12 @@ export async function writeStory(auth: Auth, rawInput: unknown): Promise<StoryRe
       terms: terms.filter((term) => produced.usedIds.has(term.id)),
     };
   } catch (err) {
+    const providerError = err instanceof StoryProviderError ? err : null;
     trackServer(userId, "ai_generation_failed", {
       feature: "story",
       using_credits: true,
-      kind: err instanceof StoryProviderError ? err.kind : "other",
+      kind: providerError?.kind ?? "other",
+      rejection: providerError?.rejection ?? null,
     });
     return storyFailure(err);
   }

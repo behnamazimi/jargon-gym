@@ -15,7 +15,7 @@ test.describe("Stories", () => {
 
     await page.getByRole("button", { name: "Write a story" }).click();
     await expect(page.getByRole("heading", { name: "A Day At Work" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Terms in this piece (8)" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Terms in this piece (10)" })).toBeVisible();
     expect(await creditsLeft(user.id)).toBeLessThan(before);
 
     await page.getByRole("button", { name: "Mark as read" }).click();
@@ -27,6 +27,6 @@ test.describe("Stories", () => {
         );
         return Number(row!.read);
       })
-      .toBe(8);
+      .toBe(10);
   });
 });
