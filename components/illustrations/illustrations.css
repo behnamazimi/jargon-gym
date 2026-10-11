@@ -3123,16 +3123,10 @@
 }
 
 /* The brand lobya slowly changes colour through the lobyas' palette: it holds
-   each one a few seconds, then takes about ten to fade into the next. The
-   colour is registered so it fades instead of jumping. */
-@property --ill-mark {
-  syntax: "<color>";
-  inherits: true;
-  initial-value: oklch(76% 0.12 153);
-}
-
-.ill-mark-drift {
-  --ill-mark: var(--ill-green);
+   each one a few seconds, then takes about ten to fade into the next. It
+   animates the fill itself: Chrome on Android didn't animate a registered
+   colour variable inherited from the svg. */
+.ill-mark-drift .ill-mark-fill {
   animation: ill-mark-drift 80s ease-in-out infinite;
 }
 
@@ -3140,30 +3134,30 @@
   0%,
   7.5%,
   100% {
-    --ill-mark: var(--ill-green);
+    fill: var(--ill-green);
   }
   20%,
   27.5% {
-    --ill-mark: var(--ill-blue);
+    fill: var(--ill-blue);
   }
   40%,
   47.5% {
-    --ill-mark: var(--ill-coral);
+    fill: var(--ill-coral);
   }
   60%,
   67.5% {
-    --ill-mark: var(--ill-purple);
+    fill: var(--ill-purple);
   }
   80%,
   87.5% {
-    --ill-mark: var(--ill-yellow);
+    fill: var(--ill-yellow);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ill-motion,
   .ill-march,
-  .ill-mark-drift {
+  .ill-mark-drift .ill-mark-fill {
     animation: none;
   }
 }

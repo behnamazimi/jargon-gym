@@ -62,6 +62,9 @@ export const metadata: Metadata = {
     title: PWA_NAME,
     startupImage: SPLASH_IMAGES.map(({ id, media }) => ({ url: splashUrl(id), media })),
   },
+  // Next only writes mobile-web-app-capable, but iOS still needs the Apple
+  // name to show the startup images above (vercel/next.js#74524).
+  other: { "apple-mobile-web-app-capable": "yes" },
 };
 
 export const viewport: Viewport = {
