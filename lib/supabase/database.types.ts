@@ -2316,7 +2316,10 @@ export type Database = {
         Args: { p_feature: string; p_ttl_seconds?: number; p_user_id: string };
         Returns: string;
       };
-      bump_streak: { Args: { p_user_id: string }; Returns: undefined };
+      bump_streak: {
+        Args: { p_timezone?: string; p_user_id: string };
+        Returns: undefined;
+      };
       can_read_collection: {
         Args: { p_collection_id: string };
         Returns: boolean;
@@ -2521,7 +2524,7 @@ export type Database = {
           total: number;
         }[];
       };
-      my_bump_streak: { Args: never; Returns: undefined };
+      my_bump_streak: { Args: { p_timezone?: string }; Returns: undefined };
       my_cancel_collection_request: {
         Args: { p_id: string };
         Returns: undefined;
