@@ -1,13 +1,24 @@
 /* Illustration colours (read through palette.ts) and motion (motion.tsx). */
 
 @layer base {
-  :root {
+  :root,
+  .ill-mark {
     --ill-ink: oklch(22% 0.02 60);
     --ill-paper: var(--color-base-100);
     --ill-blue: oklch(66% 0.16 252);
     --ill-coral: oklch(75% 0.13 28);
     --ill-yellow: oklch(89% 0.15 96);
     --ill-purple: oklch(64% 0.15 300);
+    --ill-green: oklch(76% 0.12 153);
+  }
+
+  /* The logo is a printed badge: it keeps its light colours on the dark theme too. */
+  .ill-mark {
+    --ill-paper: oklch(99% 0.005 85);
+  }
+
+  .ill-mark-tile {
+    background: color-mix(in oklab, oklch(76.662% 0.135 153.45) 15%, oklch(99% 0.005 85));
   }
 
   [data-theme="dim"] {
@@ -16,6 +27,7 @@
     --ill-coral: oklch(66% 0.12 28);
     --ill-yellow: oklch(70% 0.12 96);
     --ill-purple: oklch(56% 0.13 300);
+    --ill-green: oklch(64% 0.1 153);
   }
 }
 
@@ -3110,6 +3122,44 @@
   }
 }
 
+/* The brand lobya slowly changes colour through the lobyas' palette: it holds
+   each one a few seconds, then takes about ten to fade into the next. The
+   colour is registered so it fades instead of jumping. */
+@property --ill-mark {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: oklch(76% 0.12 153);
+}
+
+.ill-mark-drift {
+  --ill-mark: var(--ill-green);
+  animation: ill-mark-drift 80s ease-in-out infinite;
+}
+
+@keyframes ill-mark-drift {
+  0%,
+  7.5%,
+  100% {
+    --ill-mark: var(--ill-green);
+  }
+  20%,
+  27.5% {
+    --ill-mark: var(--ill-blue);
+  }
+  40%,
+  47.5% {
+    --ill-mark: var(--ill-coral);
+  }
+  60%,
+  67.5% {
+    --ill-mark: var(--ill-purple);
+  }
+  80%,
+  87.5% {
+    --ill-mark: var(--ill-yellow);
+  }
+}
+
 /* Study peek: a lobya on the card's edge holds up its prop, does its job and
    puts it away, then sits still for most of the loop. The prop and spark are
    hidden unless the animation shows them, so a still frame is just the lobya. */
@@ -3272,7 +3322,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ill-motion,
-  .ill-march {
+  .ill-march,
+  .ill-mark-drift {
     animation: none;
   }
 }

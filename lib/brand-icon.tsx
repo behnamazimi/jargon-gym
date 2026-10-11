@@ -1,110 +1,58 @@
-import type { CSSProperties } from "react";
-
-export const BRAND_ICON = {
-  box: 32,
-  background: "#3f4755",
-  color: "#f8f9fb",
-  borderRadius: 4,
-  fontSize: 24,
-  fontWeight: 900,
-  stroke: 0.8,
-} as const;
-
-export const BRAND_ICON_BOX_SIZES = {
-  sm: 20,
-  md: BRAND_ICON.box,
-} as const;
+import { LOBYA_MARK } from "@/components/illustrations/scenes/lobya-mark";
 
 export const APPLE_ICON_SIZE = 180;
 
-function scaleBrandIcon(boxSize: number) {
-  const scale = boxSize / BRAND_ICON.box;
+// Light-theme values of the illustration colours (illustrations.css): these
+// images are drawn on the server, where the CSS variables don't exist.
+const INK = "#2a211b";
+const PAPER = "#fdfcf9";
+const GREEN = "#6ac48c";
+/** The brand green at 15% on paper, the tile the in-app icon sits on (BrandIcon). */
+const TILE = "#e4f2e8";
 
-  return {
-    box: boxSize,
-    borderRadius: BRAND_ICON.borderRadius * scale,
-    fontSize: BRAND_ICON.fontSize * scale,
-    stroke: BRAND_ICON.stroke * scale,
-  };
+/**
+ * The brand lobya on its light green tile, as an SVG string. It traces the same
+ * character as LobyaMarkScene, drawn too big for the tile so its bottom is
+ * cropped off, like BrandIcon. `maskable` keeps the face inside the safe zone
+ * Android crops icons to.
+ */
+function brandMarkSvg({ maskable, rounded }: { maskable: boolean; rounded: boolean }) {
+  // The bean's box is LOBYA_MARK.viewBox (19 15 88 103); its top sits at `top` on a 140 tile.
+  const scale = maskable ? 1.1 : 1.445;
+  const top = maskable ? 43 : 36;
+  const transform = `translate(${70 - 63 * scale} ${top - 15 * scale}) scale(${scale})`;
+  const radius = rounded ? 30 : 0;
+  const eyes = LOBYA_MARK.eyes
+    .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="${LOBYA_MARK.eyeRadius}" fill="${INK}"/>`)
+    .join("");
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 140">
+<defs><clipPath id="t"><rect width="140" height="140" rx="${radius}"/></clipPath>
+<filter id="w" filterUnits="userSpaceOnUse" x="-24" y="-24" width="188" height="188" color-interpolation-filters="sRGB">
+<feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="7"/>
+<feDisplacementMap in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/></filter></defs>
+<g clip-path="url(#t)"><rect width="140" height="140" fill="${TILE}"/>
+<g transform="${transform}"><g filter="url(#w)" stroke-linecap="round" stroke-linejoin="round">
+<path d="${LOBYA_MARK.body}" fill="${PAPER}"/>
+<path d="${LOBYA_MARK.body}" transform="translate(6 5)" fill="${GREEN}"/>
+<path d="${LOBYA_MARK.body}" fill="none" stroke="${INK}" stroke-width="6"/>
+${eyes}
+<path d="${LOBYA_MARK.smile}" fill="none" stroke="${INK}" stroke-width="4.5"/>
+</g></g></g></svg>`;
 }
 
-type BrandIconGlyphsProps = {
-  fontSize: number;
-  stroke: number;
-  strokeColor: string;
-};
-
-export function BrandIconGlyphs({ fontSize, stroke, strokeColor }: BrandIconGlyphsProps) {
-  return (
-    <>
-      <span
-        style={{
-          fontSize: fontSize,
-          fontWeight: BRAND_ICON.fontWeight,
-          lineHeight: 1,
-          // An L is heavy on its left and sits low, so nudge it toward the visual centre.
-          transform: `translate(${fontSize * 0.04}px, ${-fontSize * 0.04}px)`,
-          WebkitTextStroke: `${stroke}px ${strokeColor}`,
-          paintOrder: "stroke fill",
-        }}
-      >
-        L
-      </span>
-    </>
-  );
-}
-
-export function brandIconBaseGlyphsProps(strokeColor = "currentColor") {
-  return {
-    fontSize: BRAND_ICON.fontSize,
-    stroke: BRAND_ICON.stroke,
-    strokeColor,
-  };
-}
-
-type BrandIconImageProps = {
-  boxSize: number;
-  fill?: boolean;
-  /** Inset the glyph ~20% so Android adaptive icons keep the L in the safe zone. */
+/** The brand icon as an image, for app icons and share images drawn with ImageResponse. */
+export function BrandMarkImage({
+  size,
+  maskable = false,
+  rounded = true,
+}: {
+  size: number;
   maskable?: boolean;
-};
-
-export function BrandIconImage({ boxSize, fill = false, maskable = false }: BrandIconImageProps) {
-  const glyphBox = maskable ? boxSize * 0.8 : boxSize;
-  const scaled = scaleBrandIcon(glyphBox);
-
-  return (
-    <div
-      style={{
-        width: fill ? "100%" : boxSize,
-        height: fill ? "100%" : boxSize,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: BRAND_ICON.background,
-        color: BRAND_ICON.color,
-        borderRadius: maskable ? 0 : scaled.borderRadius,
-      }}
-    >
-      <BrandIconGlyphs
-        fontSize={scaled.fontSize}
-        stroke={scaled.stroke}
-        strokeColor={BRAND_ICON.color}
-      />
-    </div>
-  );
-}
-
-export function brandIconShellStyle(boxSize: number): CSSProperties {
-  return {
-    width: boxSize,
-    height: boxSize,
-  };
-}
-
-export function brandIconScaleStyle(boxSize: number): CSSProperties {
-  return {
-    transform: `scale(${boxSize / BRAND_ICON.box})`,
-    transformOrigin: "center center",
-  };
+  rounded?: boolean;
+}) {
+  const src = `data:image/svg+xml;base64,${Buffer.from(brandMarkSvg({ maskable, rounded })).toString("base64")}`;
+  // ImageResponse renders a plain img; next/image doesn't apply there.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={src} width={size} height={size} alt="" />;
 }

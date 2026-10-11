@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { APPLE_ICON_SIZE, BrandIconImage } from "@/lib/brand-icon";
+import { APPLE_ICON_SIZE, BrandMarkImage } from "@/lib/brand-icon";
 
 export const size = {
   width: APPLE_ICON_SIZE,
@@ -9,7 +9,7 @@ export const size = {
 export const contentType = "image/png";
 
 export default function AppleIcon() {
-  return new ImageResponse(<BrandIconImage boxSize={APPLE_ICON_SIZE} fill />, {
+  return new ImageResponse(<BrandMarkImage size={APPLE_ICON_SIZE} rounded={false} />, {
     ...size,
   });
 }

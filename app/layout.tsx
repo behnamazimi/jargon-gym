@@ -33,7 +33,7 @@ const figtree = Figtree({
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
-  axes: ["opsz", "SOFT"],
+  axes: ["opsz", "SOFT", "WONK"],
 });
 
 const jetbrainsMono = JetBrains_Mono({

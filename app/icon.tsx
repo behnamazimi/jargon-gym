@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { BrandIconImage } from "@/lib/brand-icon";
+import { BrandMarkImage } from "@/lib/brand-icon";
 
 const ICON_IDS = {
   "32": { size: 32, maskable: false },
@@ -24,8 +24,11 @@ export default async function Icon({ id }: { id: Promise<string | number> }) {
   const iconId = String(await id);
   const icon = iconId in ICON_IDS ? ICON_IDS[iconId as IconId] : ICON_IDS["32"];
 
-  return new ImageResponse(<BrandIconImage boxSize={icon.size} fill maskable={icon.maskable} />, {
-    width: icon.size,
-    height: icon.size,
-  });
+  return new ImageResponse(
+    <BrandMarkImage size={icon.size} maskable={icon.maskable} rounded={!icon.maskable} />,
+    {
+      width: icon.size,
+      height: icon.size,
+    },
+  );
 }
