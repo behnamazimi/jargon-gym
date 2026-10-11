@@ -1,5 +1,7 @@
 "use client";
 
+import { YELLOW } from "@/components/illustrations/palette";
+import { LobyaHead } from "@/components/illustrations/scenes/goal-team";
 import { ArrowRight, BookmarkMinus, CheckCircle2, Ellipsis, Flag, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, LinkButton } from "@/components/ui/button";
@@ -19,6 +21,13 @@ type SharedCollectionCardProps = {
   onToggleLove: () => void;
   onReport: () => void;
 };
+
+/** A stable number per collection, so each one keeps its own lobya. */
+function seedFor(id: string) {
+  let seed = 0;
+  for (const char of id) seed = (seed * 31 + char.charCodeAt(0)) % 997;
+  return seed;
+}
 
 export function SharedCollectionCard({
   collection,
@@ -44,7 +53,9 @@ export function SharedCollectionCard({
             className="flex size-11 shrink-0 items-center justify-center rounded-field bg-primary/10 text-xl leading-none"
             aria-hidden
           >
-            {collection.icon || "📚"}
+            {collection.icon || (
+              <LobyaHead color={YELLOW} seed={seedFor(collection.id)} className="size-7" />
+            )}
           </div>
           <div className="min-w-0 flex-1 space-y-1">
             <h2 className="font-heading truncate text-base font-medium">{collection.name}</h2>

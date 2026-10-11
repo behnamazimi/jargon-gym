@@ -88,6 +88,7 @@ export function ReadPage({
         collections={collections}
         selectedCollectionId={selectedCollectionId}
         isFetchingMore={queue.isFetchingMore}
+        showPeek={queue.status === "ready" && term !== null}
         onCollectionChange={handleCollectionChange}
       />
 
