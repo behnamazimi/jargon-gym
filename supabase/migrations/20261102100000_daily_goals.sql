@@ -15,8 +15,12 @@ comment on column public.user_settings.goal_celebrate is
 comment on column public.user_settings.goal_celebrated is
   'Tiers already celebrated on one local day, as {"date": "YYYY-MM-DD", "tiers": [...]}. A different date means none yet today.';
 
--- Distinct terms per tier on the user's local today, with the same day
--- boundary and event filters as get_streak_history.
+-- Distinct terms per tier on the user's local today. Read from review_state's
+-- last-touched stamps (one row per term, so each term counts once by
+-- construction) rather than the review_events log: a term counts for a tier
+-- when that tier's stamp falls on today. The stamps move on the same events
+-- as get_streak_history's counts (read; review_pass/fail; quiz_pass/fail).
+-- The scan is bounded by the user's terms, via the (user_id, term_id) key.
 create or replace function public.goal_day_counts(p_user_id uuid)
 returns table (
   today date,
@@ -29,29 +33,34 @@ stable
 security definer
 set search_path = public
 as $$
-  with bounds as (
+  with day as (
     select
-      coalesce(
+      tz.v_tz,
+      (now() at time zone tz.v_tz)::date as today
+    from (
+      select coalesce(
         (select timezone from public.user_settings where user_id = p_user_id),
         'Europe/Amsterdam'
       ) as v_tz
-  ),
-  day as (
-    select (now() at time zone bounds.v_tz)::date as today, bounds.v_tz from bounds
-  ),
-  scoped as (
-    select re.term_id, re.event
-    from public.review_events re, day
-    where re.user_id = p_user_id
-      and re.created_at >= now() - interval '2 days'
-      and (re.created_at at time zone day.v_tz)::date = day.today
+    ) tz
   )
   select
-    (select today from day),
-    (count(distinct term_id) filter (where event = 'read'))::integer,
-    (count(distinct term_id) filter (where event in ('review_pass', 'review_fail')))::integer,
-    (count(distinct term_id) filter (where event in ('quiz_pass', 'quiz_fail')))::integer
-  from scoped;
+    day.today,
+    (count(*) filter (
+      where (rs.last_read_at at time zone day.v_tz)::date = day.today
+    ))::integer,
+    (count(*) filter (
+      where (rs.last_review_recall_at at time zone day.v_tz)::date = day.today
+    ))::integer,
+    (count(*) filter (
+      where (rs.last_quiz_tested_at at time zone day.v_tz)::date = day.today
+    ))::integer
+  from day
+  left join public.review_state rs
+    on rs.user_id = p_user_id
+    and greatest(rs.last_read_at, rs.last_review_recall_at, rs.last_quiz_tested_at)
+      >= now() - interval '2 days'
+  group by day.today;
 $$;
 
 revoke all on function public.goal_day_counts(uuid) from public;

@@ -9,6 +9,10 @@ lives, how a celebration is decided, and how the forecast works.
 
 A goal counts distinct terms on the learner's local day, the same numbers the
 streak history shows. It uses the same day boundary as the streak.
+`goal_day_counts` reads them from `review_state`'s last-read, last-reviewed,
+and last-quizzed stamps, not from the `review_events` log, so goals keep
+working if that log is ever dropped. Only the forecast's personal success
+rates read the log, and they fall back to the defaults without it.
 
 - **Read:** terms read, including Stories, the widget, and Telegram.
 - **Review:** cards graded (reveals don't count).
