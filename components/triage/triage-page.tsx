@@ -1,5 +1,6 @@
 "use client";
 
+import { StudyPeekSlot } from "@/components/read/study/study-peek-slot";
 import { useRef } from "react";
 import { CollectionSelect } from "@/components/library/collection-select";
 import { ReadCaughtUp } from "@/components/read/read-caught-up";
@@ -76,7 +77,7 @@ export function TriagePage({
       mode="url"
       id="triage-collection"
       aria-label="Collection"
-      className="min-w-0 w-full flex-1 sm:max-w-xs"
+      className="min-w-0 sm:max-w-xs"
       triggerClassName="text-sm"
       size="sm"
       collections={collections.map((d) => ({ id: d.id, name: d.name, termCount: d.termCount }))}
@@ -99,6 +100,7 @@ export function TriagePage({
   const topRow = (
     <div className="flex shrink-0 items-center justify-between gap-3">
       {collectionPicker}
+      {current ? <StudyPeekSlot who="triage" /> : null}
       {current ? (
         <div className="shrink-0 text-end text-sm tabular-nums text-base-content/70">
           <p className="m-0">{deck.length} left to sort</p>

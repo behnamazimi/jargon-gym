@@ -1,5 +1,6 @@
 "use client";
 
+import { StudyPeekSlot } from "@/components/read/study/study-peek-slot";
 import type { WebStatsSnapshot } from "@/lib/mastery/collection-stats";
 import { CollectionCard, PausedCollectionCard } from "./collection-card";
 import { formatLifetimeTotals } from "./mastery-format";
@@ -55,11 +56,14 @@ export function MasteryOverview({
 
   return (
     <div className="space-y-4">
-      <OverviewHeader
-        termsLearning={termsLearning}
-        termsLearned={termsLearned}
-        lifetimeTotalsLine={hasLifetimeTotals ? formatLifetimeTotals(stats.lifetimeTotals) : null}
-      />
+      <div className="flex items-end gap-3">
+        <OverviewHeader
+          termsLearning={termsLearning}
+          termsLearned={termsLearned}
+          lifetimeTotalsLine={hasLifetimeTotals ? formatLifetimeTotals(stats.lifetimeTotals) : null}
+        />
+        <StudyPeekSlot who="mastery" gap={4} />
+      </div>
 
       <MasteryPracticeActivity stats={stats} />
 

@@ -2,6 +2,7 @@
 
 import { AlertCircle } from "lucide-react";
 import { PreparingScene } from "@/components/illustrations/scenes/preparing";
+import { StudyPeekScene } from "@/components/illustrations/scenes/study-peek";
 import { QuizQuestionView } from "@/components/quiz/quiz-question";
 import {
   QuizCenteredState,
@@ -44,30 +45,40 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
-      <StudyProgress
-        className="shrink-0"
-        current={quiz.currentIndex + 1}
-        total={quiz.questions.length}
-        unitLabel={quiz.practice ? "Practice" : "Question"}
-      />
-      {quiz.practice ? (
-        <p className="m-0 shrink-0 text-xs text-base-content/70">
-          Practice round: answers aren&apos;t counted toward mastery.
-        </p>
-      ) : null}
+      <div className="shrink-0 space-y-3 pr-22">
+        <StudyProgress
+          current={quiz.currentIndex + 1}
+          total={quiz.questions.length}
+          unitLabel={quiz.practice ? "Practice" : "Question"}
+          barClassName="text-[var(--ill-blue)]"
+        />
+        {quiz.practice ? (
+          <p className="m-0 text-xs text-base-content/70">
+            Practice round: answers aren&apos;t counted toward mastery.
+          </p>
+        ) : null}
+      </div>
       {quiz.errorMessage ? (
         <Alert variant="destructive" className="shrink-0">
           <AlertDescription>{quiz.errorMessage}</AlertDescription>
         </Alert>
       ) : null}
-      <QuizQuestionView
-        key={`${question.termId}-${quiz.currentIndex}`}
-        question={question}
-        termLabel={quiz.termById.get(question.termId)?.term ?? "Term"}
-        correct={quiz.correctSoFar}
-        isLast={quiz.currentIndex + 1 === quiz.questions.length}
-        onAnswer={quiz.handleQuestionAnswer}
-      />
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        {quiz.errorMessage ? null : (
+          <StudyPeekScene
+            who="quiz"
+            className="pointer-events-none absolute right-3 bottom-full w-18"
+          />
+        )}
+        <QuizQuestionView
+          key={`${question.termId}-${quiz.currentIndex}`}
+          question={question}
+          termLabel={quiz.termById.get(question.termId)?.term ?? "Term"}
+          correct={quiz.correctSoFar}
+          isLast={quiz.currentIndex + 1 === quiz.questions.length}
+          onAnswer={quiz.handleQuestionAnswer}
+        />
+      </div>
     </div>
   );
 }

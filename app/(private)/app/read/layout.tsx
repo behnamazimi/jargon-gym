@@ -1,3 +1,4 @@
+import { StudyPeekSlot } from "@/components/read/study/study-peek-slot";
 import type { Metadata } from "next";
 import { Zap } from "lucide-react";
 import { Suspense } from "react";
@@ -36,10 +37,14 @@ export default async function ReadLayout({ children }: { children: React.ReactNo
             compactOnPhone
             showBack={false}
           />
-          <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
+          <div className="group/read mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col gap-3 lg:max-w-2xl">
             <PromoSlot route="read" />
             <div className="flex items-center justify-between gap-2">
               <ReadModeTabs />
+              {/* Shown only while a Stories card that wants Lobyar sits right below. */}
+              <div className="hidden min-w-0 flex-1 self-stretch group-has-[[data-read-peek]]/read:flex">
+                <StudyPeekSlot who="read" />
+              </div>
               {user ? (
                 <div className="flex items-center">
                   <Suspense>

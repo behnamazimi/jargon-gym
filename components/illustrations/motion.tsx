@@ -127,7 +127,16 @@ type MotionKind =
   | "blow-mouth-o"
   | "blow-breath"
   | "blow-flame"
-  | "blow-ember";
+  | "blow-ember"
+  | "peek-rise"
+  | "peek-mark"
+  | "peek-glance"
+  | "peek-spark"
+  | "peek-page"
+  | "peek-flip-front"
+  | "peek-flip-back"
+  | "peek-sort"
+  | "peek-grow";
 
 type MotionProps = {
   kind: MotionKind;
