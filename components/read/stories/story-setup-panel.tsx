@@ -181,10 +181,7 @@ export function StorySetupPanel({
       </Field>
 
       <CefrLevelField value={session.cefrLevel} onChange={session.setCefrLevel} />
-      <PieceLengthField
-        value={session.pieceLength}
-        onChange={session.setPieceLength}
-      />
+      <PieceLengthField value={session.pieceLength} onChange={session.setPieceLength} />
       <OutlineField value={session.outline} onChange={session.setOutline} />
     </StudySetupPanel>
   );

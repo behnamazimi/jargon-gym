@@ -131,6 +131,15 @@ describe("parseStoryText edge cases", () => {
     expect(parseStoryText("[[On|2]\n\nText.", TERMS).title).toBe("On");
   });
 
+  it.each([
+    ["a score", "Score [Team A|2-1] today."],
+    ["a status line", "She saw [Status | 200 OK] on the screen."],
+    ["a bracket closed later", "Pick [y|3 and z] now."],
+  ])("leaves ordinary bracketed text alone: %s", (_name, paragraph) => {
+    const result = parseStoryText(`T\n\n${paragraph}`, TERMS);
+    expect(result.paragraphs[0].segments).toEqual([{ text: paragraph }]);
+  });
+
   it("leaves brackets that aren't a marker alone", () => {
     const result = parseStoryText("T\n\nRun m[i[0]] and [[ -f x ]] here.", TERMS);
     expect(result.paragraphs[0].segments).toEqual([{ text: "Run m[i[0]] and [[ -f x ]] here." }]);

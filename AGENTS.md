@@ -99,9 +99,9 @@ It credits reads through `recordRead` like Cards; see the Stories section in
 `POST /api/stories` (`app/api/stories/route.ts`) calls `writeStory`
 (`lib/stories/write-story.ts`), which charges, generates and saves the story.
 It is a route, not a Server Action, because the browser runs Server Actions one
-at a time and a story would hold up every other action on the page. A retry is counted in the `story_retry`
-event, with the reason; the retry is skipped when too little of the time limit
-is left for a second attempt.
+at a time and a story would hold up every other action on the page. A retry
+is counted in the `story_retry` event, with the reason; the retry is skipped
+when too little of the time limit is left for a second attempt.
 
 # Telegram bot
 

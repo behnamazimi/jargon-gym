@@ -33,7 +33,7 @@ export class StoryProviderError extends Error {
   }
 }
 
-// The Stories page is cut off at 60 seconds. Stopping earlier lets the failure
+// The story route is cut off at 60 seconds (its maxDuration). Stopping earlier lets the failure
 // be reported and the credits refunded instead of the request being killed.
 const STORY_TIMEOUT_MS = 55_000;
 // Enough of a rejected reply to see how the model wrote the term markers.
