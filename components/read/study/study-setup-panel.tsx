@@ -1,5 +1,3 @@
-import { GoalLobyaScene } from "@/components/illustrations/scenes/goal-team";
-import type { GoalTier } from "@/lib/goals/levels";
 import { History } from "lucide-react";
 import type { ReactNode } from "react";
 import { CollectionSelect } from "@/components/library/collection-select";
@@ -10,30 +8,6 @@ import { Input } from "@/components/ui/input";
 import { allCollectionsTermCount } from "@/lib/study/count";
 import { MAX_STUDY_TERMS, type StudyCollection } from "@/lib/study/types";
 import { cn } from "@/lib/utils";
-
-/**
- * The setup card's title. Pass `tier` to stand the tab's lobya (the same one
- * as on Goals) beside it, unless the lobya already peeks over the card.
- */
-export function StudySetupHeading({
-  tier,
-  title,
-  description,
-}: {
-  tier?: GoalTier;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      {tier ? <GoalLobyaScene tier={tier} level="light" className="w-20 shrink-0" /> : null}
-      <div className="min-w-0 space-y-1">
-        <p className="m-0 text-sm font-medium text-base-content/80">{title}</p>
-        <p className="m-0 text-xs text-base-content/70">{description}</p>
-      </div>
-    </div>
-  );
-}
 
 export function StudySetupPanel({
   children,

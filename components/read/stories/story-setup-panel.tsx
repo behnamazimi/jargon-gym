@@ -14,7 +14,8 @@ import {
   CollectionSelect,
   type CollectionSelectOption,
 } from "@/components/library/collection-select";
-import { StudySetupHeading, StudySetupPanel } from "@/components/read/study/study-setup-panel";
+import { QuizPanelLabel } from "@/components/quiz/quiz-ui";
+import { StudySetupPanel } from "@/components/read/study/study-setup-panel";
 import type { StoryCollection } from "@/lib/stories/setup";
 import type { StorySession } from "@/components/read/stories/use-story-session";
 import {
@@ -151,7 +152,7 @@ export function StorySetupPanel({
         ) : null
       }
     >
-      <StudySetupHeading
+      <QuizPanelLabel
         title="Set up your story"
         description="Mark it read to count a read for every term in it. A short piece built around the next terms in your Read queue."
       />

@@ -124,12 +124,7 @@ export function StoriesPage({ setup }: { setup: StoriesSetupData }) {
       ) : null;
     default:
       return (
-        <QuizPanel
-          className="flex max-h-full min-h-0 w-full flex-col"
-          data-read-peek={
-            setup.collections.length > 0 && setup.initialCollectionId !== null ? "" : undefined
-          }
-        >
+        <QuizPanel className="flex max-h-full min-h-0 w-full flex-col">
           {setup.collections.length === 0 ? (
             <StudyNoActiveCollectionsState paused={setup.paused} activity="reading stories" />
           ) : setup.initialCollectionId === null ? (

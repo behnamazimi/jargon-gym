@@ -43,6 +43,15 @@ export function QuizPanelHeader({
   );
 }
 
+export function QuizPanelLabel({ title, description }: { title: string; description?: string }) {
+  return (
+    <div className="mb-5 space-y-1">
+      <p className="m-0 text-sm font-medium text-base-content/80">{title}</p>
+      {description ? <p className="m-0 text-xs text-base-content/70">{description}</p> : null}
+    </div>
+  );
+}
+
 export function QuizPanelBody({
   children,
   className,
