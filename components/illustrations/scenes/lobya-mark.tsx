@@ -5,6 +5,7 @@ import { Illustration } from "../illustration";
 import { Eye } from "../marks";
 import { INK } from "../palette";
 import { Line, Shape, STROKE } from "../shape";
+import { WORDMARK_BYAS, WORDMARK_L } from "./wordmark-letters";
 
 /**
  * The brand lobya: the bean that is the o in the wordmark and the app's icon.
@@ -47,29 +48,25 @@ export function LobyaMarkScene({ className }: { className?: string }) {
   );
 }
 
-// The wordmark is laid out in units of its font size (100). The bean takes the
-// o's place at 1.55 times the x-height, a little closer to the l than an o sits.
-const BEAN = { x: 25.3, top: -66.1, width: 58.2 };
-const BEAN_SCALE = BEAN.width / 88;
-const BYAS_X = 83.6;
-
 /**
- * "lobyas" in Fraunces (soft and wonky) with the brand lobya as its o, for big
- * screens. The text stays live type, so it needs the WONK axis loaded.
+ * The wordmark's layout, in units of its font size (100) with the baseline at
+ * 0. The bean takes the o's place at 1.55 times the x-height, a little closer
+ * to the l than an o sits. Shared with the server-drawn splash images.
  */
+export const WORDMARK = {
+  viewBox: "-4 -82 271 112",
+  bean: { x: 25.3, top: -66.1, width: 58.2 },
+  byasX: 83.6,
+} as const;
+
+const BEAN_SCALE = WORDMARK.bean.width / 88;
+
+/** "lobyas" in the soft Fraunces letters with the brand lobya as its o, for big screens. */
 export function Wordmark({ className }: { className?: string }) {
   const filter = `ill-${useId().replace(/[^\w-]/g, "")}-wordmark`;
-  const text = {
-    fill: INK,
-    fontFamily: "var(--font-fraunces)",
-    fontSize: 100,
-    fontWeight: 520,
-    fontVariationSettings: '"SOFT" 100, "WONK" 1, "opsz" 144',
-    letterSpacing: "-0.012em",
-  };
 
   return (
-    <svg viewBox="-4 -82 271 112" className={className} aria-hidden="true" focusable="false">
+    <svg viewBox={WORDMARK.viewBox} className={className} aria-hidden="true" focusable="false">
       <defs>
         {/* The illustrations' marker jitter, tuned for type this size. */}
         <filter
@@ -91,18 +88,18 @@ export function Wordmark({ className }: { className?: string }) {
         </filter>
       </defs>
       <g filter={`url(#${filter})`} strokeLinecap="round" strokeLinejoin="round">
-        <text x="0" y="0" style={text}>
-          l
-        </text>
+        <path d={WORDMARK_L} style={{ fill: INK }} />
         <g
           className="ill-mark ill-mark-drift"
-          transform={`translate(${BEAN.x - 19 * BEAN_SCALE} ${BEAN.top - 15 * BEAN_SCALE}) scale(${BEAN_SCALE})`}
+          transform={`translate(${WORDMARK.bean.x - 19 * BEAN_SCALE} ${WORDMARK.bean.top - 15 * BEAN_SCALE}) scale(${BEAN_SCALE})`}
         >
           <MarkParts />
         </g>
-        <text x={BYAS_X} y="0" style={text}>
-          byas
-        </text>
+        <path
+          d={WORDMARK_BYAS}
+          transform={`translate(${WORDMARK.byasX} 0)`}
+          style={{ fill: INK }}
+        />
       </g>
     </svg>
   );

@@ -20,6 +20,7 @@ import "./globals.css";
 import { getSessionUser, hasLikelySession } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
+import { SPLASH_IMAGES, splashUrl } from "@/lib/splash";
 import { DARK_THEME } from "@/lib/theme";
 import { getTheme } from "@/lib/theme-server";
 import { cn } from "@/lib/utils";
@@ -33,7 +34,7 @@ const figtree = Figtree({
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
-  axes: ["opsz", "SOFT", "WONK"],
+  axes: ["opsz", "SOFT"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -59,6 +60,7 @@ export const metadata: Metadata = {
     // bottom (WebKit bug 301108), leaving a gap under the dock.
     statusBarStyle: "default",
     title: PWA_NAME,
+    startupImage: SPLASH_IMAGES.map(({ id, media }) => ({ url: splashUrl(id), media })),
   },
 };
 
