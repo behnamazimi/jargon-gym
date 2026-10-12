@@ -81,6 +81,9 @@ fading than when it was still fresh, and a lapse drops it sharply, scaled by
 how difficult the term is. A grade less than 24 hours after the last one
 takes the short-term branch instead, which only scales stability: for a young
 term Again ×0.5, Good ×1.4 and Easy ×2.3, and Hard leaves it where it was.
+A recalled term is first lifted to the one-day floor (below) and the gain is
+applied on top, so right after a miss Hard, Good and Easy come back after about
+1, 1.4 and 2.3 days instead of all three showing the same wait.
 As in FSRS-6, the gain shrinks as a term gets stronger (`S^-w19`,
 `SAME_DAY_STABILITY_DECAY`), and a Hard, Good or Easy never takes stability
 away. Grades hours apart are weak
@@ -121,7 +124,7 @@ cards, up to three times (`LEARNING_STEP_MAX_RETRIES`). Web Review does this in
 the browser (`lib/review/retry.ts`, `useReviewQueue.scheduleRetry`); Telegram
 adds the term back into its session list (`recordReviewRating`). Once it is
 recalled, the one-day floor takes over: an Again then a Good a few minutes
-later comes back after a day, then about 3.7, 7.9 and 14.6 days.
+later comes back after about 1.4 days, then about 3.6, 7.9 and 14.6 days.
 
 A retry updates the term's stability and difficulty like any grade, but it is
 not a new test. The server counts it as one only if the term was graded within

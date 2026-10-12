@@ -106,8 +106,10 @@ S' = w11 · D^(−w12) · ((S+1)^w13 − 1) · e^(w14·(1−R))
 **Same-day re-review** (a grade less than 24 hours after the last; FSRS-6's form):
 
 ```
-S' = S · e^(w17·(G − 3 + w18)) · S^(−w19)
-S' = max(S', S)   for G = 2, 3 or 4
+B  = S                    for G = 1
+B  = max(S, S_1d)         for G = 2, 3 or 4     (lift to the one-day floor first)
+S' = B · e^(w17·(G − 3 + w18)) · B^(−w19)
+S' = max(S', B)           for G = 2, 3 or 4
 ```
 
 **One-day floor.** After any Hard, Good or Easy, `S' = max(S', S_1d)`, where
