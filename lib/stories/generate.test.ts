@@ -179,11 +179,12 @@ describe("generateStory", () => {
     expect(call.prompt).toContain("1. Idempotency: d");
   });
 
-  it("asks Gemini to think at a low level", async () => {
+  it("asks both models to think only a little", async () => {
     mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
-    await generateStory({ ...INPUT, provider: "google" });
+    await generateStory(INPUT);
     expect(mockedGenerate.mock.calls[0]![0].providerOptions).toEqual({
       google: { thinkingConfig: { thinkingLevel: "low" } },
+      anthropic: { thinking: { type: "enabled", budgetTokens: 1024 } },
     });
   });
 

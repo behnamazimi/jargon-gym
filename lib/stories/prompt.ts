@@ -38,7 +38,7 @@ Level
 - The level is a ceiling for everything except the terms. Use an above-level word or structure only if there is no alternative.
 
 Terms
-- Use as many of the terms as you can as long as each fits naturally, in any order; one sentence may hold several. Use each in the form the sentence needs (plural, tense, conjugation, possessive, other word class). Repeat a term only where a real writer would, and vary its form.
+- Use as many of the terms as fit naturally, in any order; one sentence may hold several. Use each in the form the sentence needs (plural, tense, conjugation, possessive, other word class). Repeat a term only where a real writer would, and vary its form.
 - Separable, reflexive or multi-word terms: split in finite main clauses, whole in infinitives, participles and subordinate clauses, as a native speaker would. Never split fixed phrases or compound nouns.
 - Mark each use as [[words exactly as written|term number]]; spaces and punctuation stay outside. Mark split parts separately with the same number. Never put the words between parts inside a marker.
 
