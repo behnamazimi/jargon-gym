@@ -105,11 +105,8 @@ async function requestStory(
     model: createModel(input.provider, input.apiKey),
     system,
     prompt,
-    // A little thinking on both models; Gemini's own default made stories slow.
-    providerOptions: {
-      google: { thinkingConfig: { thinkingLevel: "low" } },
-      anthropic: { thinking: { type: "enabled", budgetTokens: 1024 } },
-    },
+    // Gemini decides how long to think by default, which made stories slow.
+    providerOptions: { google: { thinkingConfig: { thinkingLevel: "low" } } },
     maxRetries: 0,
     abortSignal: signal,
     ...aiGenerationOptions(input.observability, "story_generation"),
