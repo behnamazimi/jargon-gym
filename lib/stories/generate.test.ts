@@ -179,6 +179,14 @@ describe("generateStory", () => {
     expect(call.prompt).toContain("1. Idempotency: d");
   });
 
+  it("asks Gemini to think at a low level", async () => {
+    mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
+    await generateStory({ ...INPUT, provider: "google" });
+    expect(mockedGenerate.mock.calls[0]![0].providerOptions).toEqual({
+      google: { thinkingConfig: { thinkingLevel: "low" } },
+    });
+  });
+
   it("retries once when a term marker comes back broken beyond repair", async () => {
     mockedGenerate
       .mockReturnValueOnce(resolveWith(`Title\n\n[[idem\npotency|1]] ${FILLER}`))
