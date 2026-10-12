@@ -3,7 +3,14 @@ import type { PressEvent } from "react-aria-components";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button, type ButtonVariant } from "@/components/ui/button";
 import { canMoveForward } from "@/lib/review/keyboard";
-import { describeNextReview, formatNextReview, nextReviewDays } from "@/lib/review/next-review";
+import {
+  RETRY_DESCRIPTION,
+  RETRY_LABEL,
+  describeNextReview,
+  formatNextReview,
+  nextReviewDays,
+} from "@/lib/review/next-review";
+import { cardKey } from "@/lib/review/retry";
 import { AGAIN, EASY, GOOD, HARD, type ReviewGrade } from "@/lib/trace";
 import type { ReviewRating, ReviewTerm } from "@/lib/review/types";
 import { ReviewCard } from "@/components/review/review-card";
@@ -55,6 +62,8 @@ type ReviewPlayingStepProps = {
   narrationAccess: boolean;
   swipeEnabled: boolean;
   showNextReview: boolean;
+  /** A miss on this card is asked again this session. */
+  willRetry: boolean;
   collectionControl: ReactNode;
   optionsControl: ReactNode;
   narrationHandleRef: Ref<TermNarrationHandle>;
@@ -75,6 +84,7 @@ export function ReviewPlayingStep({
   narrationAccess,
   swipeEnabled,
   showNextReview,
+  willRetry,
   collectionControl,
   optionsControl,
   narrationHandleRef,
@@ -130,7 +140,7 @@ export function ReviewPlayingStep({
       </div>
 
       <ReviewCard
-        key={currentCard.id}
+        key={cardKey(currentCard)}
         term={currentCard}
         revealed={currentRevealed}
         onReveal={onReveal}
@@ -160,7 +170,11 @@ export function ReviewPlayingStep({
               }}
               aria-label={
                 nextReview
-                  ? `${GRADE_LABELS[grade]}, ${describeNextReview(nextReview[grade])}`
+                  ? `${GRADE_LABELS[grade]}, ${
+                      grade === AGAIN && willRetry
+                        ? RETRY_DESCRIPTION
+                        : describeNextReview(nextReview[grade])
+                    }`
                   : undefined
               }
               className={cn(
@@ -172,7 +186,7 @@ export function ReviewPlayingStep({
               {GRADE_LABELS[grade]}
               {nextReview ? (
                 <span className="text-xs font-normal tabular-nums opacity-70">
-                  {formatNextReview(nextReview[grade])}
+                  {grade === AGAIN && willRetry ? RETRY_LABEL : formatNextReview(nextReview[grade])}
                 </span>
               ) : null}
             </Button>

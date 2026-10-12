@@ -1215,6 +1215,7 @@ export type Database = {
           event: Database["public"]["Enums"]["review_event"];
           grade: number | null;
           id: string;
+          is_retry: boolean;
           question_type: string | null;
           quiz_knowledge_posterior: number | null;
           recall_difficulty: number | null;
@@ -1228,6 +1229,7 @@ export type Database = {
           event: Database["public"]["Enums"]["review_event"];
           grade?: number | null;
           id?: string;
+          is_retry?: boolean;
           question_type?: string | null;
           quiz_knowledge_posterior?: number | null;
           recall_difficulty?: number | null;
@@ -1241,6 +1243,7 @@ export type Database = {
           event?: Database["public"]["Enums"]["review_event"];
           grade?: number | null;
           id?: string;
+          is_retry?: boolean;
           question_type?: string | null;
           quiz_knowledge_posterior?: number | null;
           recall_difficulty?: number | null;
@@ -2696,6 +2699,7 @@ export type Database = {
           p_crossed_learning_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
           p_grade?: number;
+          p_is_retry?: boolean;
           p_question_type?: string;
           p_quiz_knowledge_posterior?: number;
           p_recall_difficulty?: number;
@@ -2821,6 +2825,7 @@ export type Database = {
           p_crossed_learning_threshold?: boolean;
           p_event: Database["public"]["Enums"]["review_event"];
           p_grade?: number;
+          p_is_retry?: boolean;
           p_question_type?: string;
           p_quiz_knowledge_posterior?: number;
           p_recall_difficulty?: number;

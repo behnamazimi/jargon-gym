@@ -6,6 +6,7 @@ import {
   GOOD,
   HARD,
   HARD_LAPSE_BLEND,
+  SAME_DAY_STABILITY_DECAY,
   UNTESTED_RECALL_RETRIEVABILITY,
 } from "./constants";
 import {
@@ -14,6 +15,7 @@ import {
   daysUntilRetrievability,
   initialDifficulty,
   initialStability,
+  minPassStability,
   retrievability,
   sameDayStability,
   updateDifficulty,
@@ -159,12 +161,85 @@ describe("updateStabilityOnSuccess / updateStabilityOnLapse / updateStabilityOnH
 });
 
 describe("sameDayStability", () => {
-  it("matches the closed-form formula exactly", () => {
+  it("matches FSRS-6's same-day formula, with Hard, Good and Easy never below the old stability", () => {
     const s = 5;
     for (const g of [AGAIN, HARD, GOOD, EASY] as const) {
-      const expected = s * Math.exp(FSRS_WEIGHTS[17] * (g - 3 + FSRS_WEIGHTS[18]));
+      const factor =
+        Math.exp(FSRS_WEIGHTS[17] * (g - 3 + FSRS_WEIGHTS[18])) * s ** -SAME_DAY_STABILITY_DECAY;
+      const expected = s * (g === AGAIN ? factor : Math.max(factor, 1));
       expect(sameDayStability(s, g)).toBeCloseTo(expected, 10);
     }
+  });
+
+  it("Hard, Good and Easy never lower stability, at any strength", () => {
+    for (const s of [0.1, 1, 10, 100, 1000]) {
+      for (const g of [HARD, GOOD, EASY] as const) {
+        expect(sameDayStability(s, g)).toBeGreaterThanOrEqual(s);
+      }
+    }
+  });
+
+  it("Again still lowers stability", () => {
+    for (const s of [0.1, 1, 10, 100]) expect(sameDayStability(s, AGAIN)).toBeLessThan(s);
+  });
+
+  it("the gain shrinks as a term gets stronger", () => {
+    expect(sameDayStability(0.3, EASY) / 0.3).toBeGreaterThan(sameDayStability(30, EASY) / 30);
+  });
+});
+
+describe("minPassStability (one-day floor)", () => {
+  it("is the stability that comes back after exactly one day", () => {
+    expect(daysUntilRetrievability(minPassStability(), UNTESTED_RECALL_RETRIEVABILITY)).toBeCloseTo(
+      1,
+      10,
+    );
+  });
+
+  it("lifts every recalled grade to at least a one-day wait, first-ever grade included", () => {
+    const now = new Date("2026-01-01T12:00:00Z");
+    for (const g of [HARD, GOOD, EASY] as const) {
+      const first = applyReviewGrade(null, g, 0, now, null);
+      expect(
+        daysUntilRetrievability(first.stability, UNTESTED_RECALL_RETRIEVABILITY),
+      ).toBeGreaterThanOrEqual(1 - 1e-9);
+      const again = applyReviewGrade(
+        { stability: 0.2, difficulty: 7 },
+        g,
+        0,
+        new Date(now.getTime() + 600_000),
+        now,
+      );
+      expect(
+        daysUntilRetrievability(again.stability, UNTESTED_RECALL_RETRIEVABILITY),
+      ).toBeGreaterThanOrEqual(1 - 1e-9);
+    }
+  });
+
+  it("never lifts an Again", () => {
+    const now = new Date("2026-01-01T12:00:00Z");
+    const first = applyReviewGrade(null, AGAIN, 0, now, null);
+    expect(first.stability).toBeCloseTo(initialStability(AGAIN), 10);
+    const later = applyReviewGrade(
+      { stability: 0.6, difficulty: 6 },
+      AGAIN,
+      0,
+      new Date(now.getTime() + 600_000),
+      now,
+    );
+    expect(daysUntilRetrievability(later.stability, UNTESTED_RECALL_RETRIEVABILITY)).toBeLessThan(
+      1,
+    );
+  });
+
+  it("does not change a term that is already past one day", () => {
+    const day1 = new Date("2026-01-01T08:00:00Z");
+    const day2 = new Date(day1.getTime() + DAY_MS);
+    const result = applyReviewGrade({ stability: 5, difficulty: 5 }, GOOD, 0, day2, day1);
+    expect(result.stability).toBeCloseTo(
+      updateStabilityOnSuccess(5, 5, retrievability(5, 1), GOOD),
+      10,
+    );
   });
 });
 

@@ -2,7 +2,9 @@
  *  daily goals as each tier's budget, and reports when every term in a
  *  collection would reach Mastered. It only calls the same ranking and
  *  update functions the app uses, so it follows TRACE when they change.
- *  See docs/goals.md. */
+ *  A term is graded at most once a simulated day, so the same-day rule and
+ *  in-session retries never come up here; the one-day floor on a recalled term
+ *  does carry through. See docs/goals.md. */
 
 import { AGAIN, EASY, GOOD, HARD } from "./constants";
 import { crossedThresholds } from "./mastery";

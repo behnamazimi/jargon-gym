@@ -15,6 +15,8 @@ import {
   HARD_LAPSE_BLEND,
   RECALL_CURVE_DECAY,
   RECALL_CURVE_FACTOR,
+  SAME_DAY_STABILITY_DECAY,
+  UNTESTED_RECALL_RETRIEVABILITY,
 } from "./constants";
 import { daysBetween } from "./decay";
 import type { ReviewGrade } from "./types";
@@ -86,9 +88,22 @@ export function updateStabilityOnHard(
   return again ** HARD_LAPSE_BLEND * good ** (1 - HARD_LAPSE_BLEND);
 }
 
-/** Same-day re-review — stability-only special case. */
+/** Same-day re-review — stability-only special case, as in FSRS-6: the gain
+ *  shrinks as stability grows (S^-w19), and a Hard, Good or Easy never takes
+ *  stability away. */
 export function sameDayStability(stability: number, grade: ReviewGrade): number {
-  return stability * Math.exp(w[17]! * (grade - 3 + w[18]!));
+  const factor = Math.exp(w[17]! * (grade - 3 + w[18]!)) * stability ** -SAME_DAY_STABILITY_DECAY;
+  return stability * (grade === AGAIN ? factor : Math.max(factor, 1));
+}
+
+/** The stability at which a term comes back after exactly one day. A term that
+ *  was recalled is never due sooner than this. */
+export function minPassStability(): number {
+  return 1 / daysUntilRetrievability(1, UNTESTED_RECALL_RETRIEVABILITY);
+}
+
+function floorOnPass(stability: number, grade: ReviewGrade): number {
+  return grade === AGAIN ? stability : Math.max(stability, minPassStability());
 }
 
 /** §3's cold-start handoff: Familiarity nudges the first Review's S0/D0. */
@@ -118,7 +133,8 @@ export function daysUntilRetrievability(stability: number, target: number): numb
  *  which case familiarity feeds the cold-start nudge instead of a prior S/D.
  *  Stability is computed from the difficulty before this grade, as FSRS-5
  *  does, and a review less than a day after the last one takes the
- *  short-term branch. */
+ *  short-term branch. A recalled term (Hard, Good, Easy) is never left
+ *  with a wait shorter than one day. */
 export function applyReviewGrade(
   current: { stability: number; difficulty: number } | null,
   grade: ReviewGrade,
@@ -129,14 +145,18 @@ export function applyReviewGrade(
   if (current === null) {
     const d0 = initialDifficulty(grade);
     const s0 = initialStability(grade);
-    return applyColdStartNudge(d0, s0, familiarity);
+    const nudged = applyColdStartNudge(d0, s0, familiarity);
+    return { stability: floorOnPass(nudged.stability, grade), difficulty: nudged.difficulty };
   }
 
   const elapsedDays = lastReviewAt ? daysBetween(lastReviewAt, now) : 0;
   const difficulty = updateDifficulty(current.difficulty, grade);
 
   if (lastReviewAt && elapsedDays < 1) {
-    return { stability: sameDayStability(current.stability, grade), difficulty };
+    return {
+      stability: floorOnPass(sameDayStability(current.stability, grade), grade),
+      difficulty,
+    };
   }
 
   const r = retrievability(current.stability, elapsedDays);
@@ -148,5 +168,5 @@ export function applyReviewGrade(
         ? updateStabilityOnHard(d, current.stability, r)
         : updateStabilityOnSuccess(d, current.stability, r, grade);
 
-  return { stability, difficulty };
+  return { stability: floorOnPass(stability, grade), difficulty };
 }

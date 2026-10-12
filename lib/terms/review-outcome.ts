@@ -24,6 +24,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import {
   AGAIN,
   GOOD,
+  LEARNING_STEP_WINDOW_MINUTES,
   applyQuizAnswer as computeQuizAnswer,
   applyReviewGrade as computeReviewGrade,
   computeTraceSnapshot,
@@ -59,6 +60,7 @@ async function writeEvent(
     grade?: number;
     questionType?: QuestionType;
     retrievabilityBefore?: number;
+    isRetry?: boolean;
   },
 ) {
   if (mode === "session") {
@@ -110,8 +112,19 @@ export type ReviewGradeResult = {
   recallDifficulty: number;
 };
 
+/** A retry is a missed term re-asked in the same session. It only counts as one
+ *  when the term was graded a moment ago, so a stray flag can't skip a real test. */
+function isLearningStepRetry(state: TraceState, now: Date, requested: boolean): boolean {
+  if (!requested || state.lastReviewRecallAt === null) return false;
+  return (
+    now.getTime() - state.lastReviewRecallAt.getTime() <= LEARNING_STEP_WINDOW_MINUTES * 60_000
+  );
+}
+
 /** Review grade: fetches current state, applies full FSRS-5 via lib/trace,
- *  persists the result. `grade >= HARD` counts as a pass for the event log. */
+ *  persists the result. `grade >= HARD` counts as a pass for the event log.
+ *  A retry (`retry: true`) updates recall stability and difficulty but isn't a
+ *  new test: it adds no test count and stamps no high-water mark. */
 export async function applyReviewGrade(
   client: Client,
   userId: string,
@@ -119,12 +132,14 @@ export async function applyReviewGrade(
     termId: string;
     grade: ReviewGrade;
     mode?: AuthMode;
+    retry?: boolean;
   },
 ): Promise<ReviewGradeResult> {
   const mode = input.mode ?? "session";
   const now = new Date();
 
   const state = await loadState(client, mode, userId, input.termId);
+  const retry = isLearningStepRetry(state, now, input.retry === true);
   const preSnapshot = computeTraceSnapshot(state, now);
   const next = computeReviewGrade(state, input.grade, now);
 
@@ -132,11 +147,13 @@ export async function applyReviewGrade(
     ...state,
     recallStability: next.recallStability,
     recallDifficulty: next.recallDifficulty,
-    reviewRecallCount: state.reviewRecallCount + 1,
+    reviewRecallCount: state.reviewRecallCount + (retry ? 0 : 1),
     lastReviewRecallAt: now,
   };
   const snapshot = computeTraceSnapshot(postState, now);
-  const crossed = crossedThresholds(snapshot.knownLabel, input.grade !== AGAIN);
+  const crossed = retry
+    ? { known: false, learning: false }
+    : crossedThresholds(snapshot.knownLabel, input.grade !== AGAIN);
   const event: ReviewEvent = input.grade >= GOOD ? "review_pass" : "review_fail";
 
   await writeEvent(client, mode, userId, input.termId, event, {
@@ -146,6 +163,7 @@ export async function applyReviewGrade(
     crossedLearningThreshold: crossed.learning,
     grade: input.grade,
     retrievabilityBefore: preSnapshot.recallRetrievability ?? undefined,
+    isRetry: retry,
   });
 
   return { passed: input.grade >= GOOD, ...next };

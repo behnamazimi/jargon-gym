@@ -3,17 +3,23 @@ import type { ReviewGrade } from "@/lib/trace";
 
 export function upsertRating(
   ratings: ReviewRating[],
-  termId: string,
+  key: string,
   grade: ReviewGrade,
 ): ReviewRating[] {
-  const without = ratings.filter((rating) => rating.termId !== termId);
-  return [...without, { termId, grade }];
+  const without = ratings.filter((rating) => rating.key !== key);
+  return [...without, { key, grade }];
+}
+
+function pendingWriteKey(write: Pick<PendingReviewWrite, "termId" | "visit">): string {
+  return `${write.termId}:${write.visit ?? 0}`;
 }
 
 export function upsertPendingWrite(
   pendingWrites: PendingReviewWrite[],
   write: PendingReviewWrite,
 ): PendingReviewWrite[] {
-  const without = pendingWrites.filter((existing) => existing.termId !== write.termId);
+  const without = pendingWrites.filter(
+    (existing) => pendingWriteKey(existing) !== pendingWriteKey(write),
+  );
   return [...without, write];
 }

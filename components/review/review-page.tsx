@@ -1,13 +1,12 @@
 "use client";
 
-import { track } from "@/lib/analytics/track";
 import { useCallback, useRef, useState } from "react";
-import { recordReviewRevealAction } from "@/app/(private)/app/actions";
 import { ReadCaughtUp } from "@/components/read/read-caught-up";
 import { ReadErrorAlert } from "@/components/read/read-error-alert";
 import { ReviewOptionsMenu } from "@/components/review/review-options-menu";
 import { ReviewCollectionSettings } from "@/components/review/review-collection-settings";
 import { ReviewPlayingStep } from "@/components/review/review-playing-step";
+import { useReviewGrading } from "@/components/review/use-review-grading";
 import { useReviewKeyboard } from "@/components/review/use-review-keyboard";
 import { useReviewOptions } from "@/components/review/use-review-options";
 import { useReviewQueue } from "@/components/review/use-review-queue";
@@ -21,13 +20,11 @@ import {
   clearReviewCollectionPreference,
   saveReviewCollectionPreference,
 } from "@/lib/review/collection-preference";
-import { canMoveForward } from "@/lib/review/keyboard";
 import { IDLE_WAKE_MS, useKeepAwakeAvailable, useWakeLock } from "@/hooks/use-wake-lock";
 import type { ReviewOptions } from "@/lib/review/options";
-import { upsertRating } from "@/lib/review/writes";
-import type { ReviewQueueSeed, ReviewRating } from "@/lib/review/types";
+import type { ReviewQueueSeed } from "@/lib/review/types";
 import type { PausedStudyCollection, StudyCollection } from "@/lib/study/types";
-import type { ReviewGrade } from "@/lib/trace";
+import { LEARNING_STEP_MAX_RETRIES } from "@/lib/trace";
 
 type ReviewPageProps = {
   seed: ReviewQueueSeed;
@@ -70,25 +67,25 @@ export function ReviewPage({
   useWakeLock(options.keepAwake && keepAwakeAvailable, { idleMs: IDLE_WAKE_MS });
   const [selectedCollectionId, setSelectedCollectionId] = useState(collectionId);
   const [rememberOnDevice, setRememberOnDevice] = useState(true);
-  const [ratings, setRatings] = useState<ReviewRating[]>([]);
-  const [revealedTermIds, setRevealedTermIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const queue = useReviewQueue({ collectionId: selectedCollectionId, seed });
   const { enqueueRating } = useReviewWriteQueue({ setErrorMessage });
   const selectedCollectionIdRef = useRef(selectedCollectionId);
-  const advancedCardIdRef = useRef<string | null>(null);
   const narrationRef = useRef<TermNarrationHandle>(null);
-  // State updates land after the event, so two reveal triggers in one
-  // event would both see the card as hidden and record the reveal twice.
-  const revealRecordedRef = useRef(new Set<string>());
 
   selectedCollectionIdRef.current = selectedCollectionId;
 
   const currentCard = queue.currentTerm;
-  const currentRevealed = currentCard ? revealedTermIds.includes(currentCard.id) : false;
-  const currentRating = currentCard
-    ? ratings.find((rating) => rating.termId === currentCard.id)
-    : undefined;
+  const { currentRevealed, currentRating, handleReveal, handleNext, handleRate } = useReviewGrading(
+    {
+      queue,
+      enqueueRating,
+      setErrorMessage,
+      narrateOnReveal: options.narrateOnReveal,
+      narrationAccess,
+      narrationRef,
+    },
+  );
 
   const handleCollectionChange = useCallback(
     (nextCollectionId: string) => {
@@ -113,54 +110,13 @@ export function ReviewPage({
     }
   }, []);
 
-  const handleReveal = useCallback(() => {
-    if (!currentCard || revealRecordedRef.current.has(currentCard.id)) return;
-    revealRecordedRef.current.add(currentCard.id);
-    setRevealedTermIds((ids) => [...ids, currentCard.id]);
-    // Only a clip that already exists plays; this never asks for one to be made.
-    if (
-      options.narrateOnReveal &&
-      narrationAccess &&
-      typeof currentCard.narrationVersion === "string"
-    ) {
-      narrationRef.current?.play();
-    }
-    void recordReviewRevealAction(currentCard.id).then((result) => {
-      if (result.error) setErrorMessage(result.error);
-    });
-  }, [currentCard, options.narrateOnReveal, narrationAccess]);
-
   const handlePrevious = useCallback(() => {
     queue.goPrevious();
   }, [queue.goPrevious]);
 
-  const handleNext = useCallback(() => {
-    if (!canMoveForward({ revealed: currentRevealed, rated: currentRating !== undefined })) return;
-    void queue.goNext();
-  }, [currentRevealed, currentRating, queue.goNext]);
-
   const handleMarkedKnown = useCallback(() => {
     void queue.goNext();
   }, [queue.goNext]);
-
-  const handleRate = useCallback(
-    (grade: ReviewGrade) => {
-      if (!currentCard || !currentRevealed) return;
-
-      const alreadyRated = ratings.some((rating) => rating.termId === currentCard.id);
-      if (!alreadyRated && advancedCardIdRef.current === currentCard.id) return;
-
-      setRatings((prev) => upsertRating(prev, currentCard.id, grade));
-      track("review_term_rated", { grade });
-      enqueueRating(currentCard.id, grade);
-
-      if (alreadyRated) return;
-
-      advancedCardIdRef.current = currentCard.id;
-      void queue.goNext();
-    },
-    [currentCard, currentRevealed, ratings, enqueueRating, queue.goNext],
-  );
 
   useReviewKeyboard({
     onReveal: handleReveal,
@@ -267,6 +223,7 @@ export function ReviewPage({
       narrationAccess={narrationAccess}
       swipeEnabled={options.swipe}
       showNextReview={options.showNextReview}
+      willRetry={currentCard ? (currentCard.visit ?? 0) < LEARNING_STEP_MAX_RETRIES : false}
       collectionControl={collectionControl}
       optionsControl={optionsControl}
       narrationHandleRef={narrationRef}

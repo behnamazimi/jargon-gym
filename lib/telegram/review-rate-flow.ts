@@ -42,6 +42,7 @@ export async function handleReviewRate(
     termId: currentTerm.id,
     grade,
     mode: "admin",
+    retry: (session.terms[session.currentIndex]?.retry ?? 0) > 0,
   });
 
   const updatedSession = await recordReviewRating(client, chatId, session, grade);

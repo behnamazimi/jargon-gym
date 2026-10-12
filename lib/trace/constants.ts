@@ -58,6 +58,18 @@ export const FSRS_WEIGHTS = [
   0.6567,
 ] as const;
 
+/** §4 Same-day gains shrink as a term gets stronger: the stability multiplier is
+ *  scaled by S^-w19, as in FSRS-6's same-day formula (its default w19, 0.0658,
+ *  paired with TRACE's own w17/w18; not fitted to our data). */
+export const SAME_DAY_STABILITY_DECAY = 0.0658;
+
+/** A missed term is re-asked in the same session up to this many times. */
+export const LEARNING_STEP_MAX_RETRIES = 3;
+
+/** A retry is only treated as a learning step when the term was graded within
+ *  this many minutes, so a stray flag can't skip counting a real test. */
+export const LEARNING_STEP_WINDOW_MINUTES = 60;
+
 /** §4 Hard is a partial recall, so its stability sits between what Again and
  *  Good would give: S_hard = S_again^h · S_good^(1−h). At 0.85 it leans toward
  *  Again, so Hard pulls a strong term back and holds a fragile one in place.

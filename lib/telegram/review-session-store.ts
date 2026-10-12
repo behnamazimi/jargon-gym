@@ -18,7 +18,18 @@ const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
  *  isNewToUser is snapshotted the same way: whether this term had zero
  *  read/review/quiz activity at session-build time, driving the one-time
  *  "I know this" prompt on first exposure. */
-type ReviewSessionTerm = { id: string; status: KnownLabel; isNewToUser: boolean };
+type ReviewSessionTerm = {
+  id: string;
+  status: KnownLabel;
+  isNewToUser: boolean;
+  /** 1.. when a missed term is asked again in this session; missing for the first showing. */
+  retry?: number;
+};
+
+/** Cards the learner started with, not counting missed ones asked again. */
+export function countOriginalReviewTerms(terms: ReviewSessionTerm[]): number {
+  return terms.filter((term) => !term.retry).length;
+}
 
 export type TelegramReviewSession = {
   userId: string;
@@ -48,7 +59,8 @@ function isReviewSessionTerm(value: unknown): value is ReviewSessionTerm {
     typeof term.id === "string" &&
     (term.status === "known" || term.status === "learning" || term.status === "unknown") &&
     // Tolerant of sessions persisted before isNewToUser existed.
-    (term.isNewToUser === undefined || typeof term.isNewToUser === "boolean")
+    (term.isNewToUser === undefined || typeof term.isNewToUser === "boolean") &&
+    (term.retry === undefined || typeof term.retry === "number")
   );
 }
 

@@ -113,6 +113,7 @@ After deploy, verify:
 3. `/quiz` guided setup + answer flow + summary
 4. Cadence cron (`telegram-send-due`) sends or caught-up
 5. Web quiz + review still record outcomes correctly
+6. `/review`: grade a card Again; the same term comes back about three cards later (or at the end of a short session), says it was missed earlier, and can come back up to three times. A Good on it clears it. The summary counts the cards you started with, not the repeats
 
 ## 6. User flow
 
