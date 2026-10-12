@@ -175,7 +175,7 @@ describe("generateStory", () => {
     mockedGenerate.mockReturnValueOnce(resolveWith(GOOD_TEXT));
     await generateStory(INPUT);
     const call = mockedGenerate.mock.calls[0]![0];
-    expect(call.system).toContain("If they conflict, level wins.");
+    expect(call.system).toContain("If format or tone conflicts with level, level wins.");
     expect(call.prompt).toContain("1. Idempotency: d");
   });
 

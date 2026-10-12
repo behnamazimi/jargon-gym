@@ -32,7 +32,7 @@ describe("buildStoryPrompt", () => {
     const prompt = userPrompt({ language: "nl" });
     expect(prompt).toMatch(/^Language: Dutch\nLevel: B1\. Sentences up to about 18 words\./);
     expect(prompt).toContain("Format: a Slack thread");
-    expect(prompt).toContain("Tone: light and humorous\n");
+    expect(prompt).toContain("Tone: light and humorous: ");
   });
 
   it("numbers every term with its meaning", () => {
@@ -52,7 +52,7 @@ describe("buildStoryPrompt", () => {
 
   it("asks for paragraphs, or one per turn in a thread, interview or notes", () => {
     expect(userPrompt()).toContain(
-      "Length: 70-120 words, one short paragraph per message, turn or section, up to 8",
+      "Length: 70-120 words, one paragraph per message, turn or section, up to 8",
     );
     expect(userPrompt({ format: findFormat("short-story")! })).toContain(
       "Length: 70-120 words, in 2 or 3 paragraphs",
@@ -80,7 +80,7 @@ describe("buildStoryPrompt", () => {
   it("keeps the fixed rules in a system prompt that never changes", () => {
     const { system } = buildStoryPrompt(BASE);
     expect(buildStoryPrompt({ ...BASE, cefrLevel: "A1", language: "nl" }).system).toBe(system);
-    expect(system).toContain("If they conflict, level wins.");
+    expect(system).toContain("If format or tone conflicts with level, level wins.");
     expect(system).toContain("[[words exactly as written|term number]]");
     expect(system).toContain("Mark split parts separately with the same number.");
     expect(system).toContain("never straight ones");
