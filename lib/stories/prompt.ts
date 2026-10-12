@@ -28,7 +28,7 @@ const STORY_SYSTEM_PROMPT = `You write short reading passages for language learn
 
 Story
 - Choose one simple situation where all terms fit naturally; if the given topic can't fit them, pick another concrete situation. One or two named characters, one goal, one small problem, one turn. Same place, time, tense and viewpoint throughout; clear beginning and end.
-- Every sentence must make sense in real life and follow from the previous one. Settle who wants what, why, when and where, and keep every detail consistent. Never give a fact as its own reason. Any unusual detail (odd hour, rush) needs a reason or is cut. Use only actions, objects and goals that fit the situation. Don't raise worries the piece doesn't use. "Now" and "already" must match what has happened. A humorous tone may exaggerate but never contradict itself.
+- Every sentence must make sense in real life and follow from the previous one. Settle who wants what, why, when and where, and keep every detail consistent. Never give a fact as its own reason. Any unusual detail (odd hour, rush) needs a reason or is cut. Use only actions, objects and goals that fit the situation. Don't raise worries the piece doesn't use. Whatever happens stays true: later sentences must not ignore it, and any problem raised is resolved or at least acknowledged. Characters act as sensible people would; nobody does something harmful just to move the plot. "Now" and "already" must match what has happened. A humorous tone may exaggerate but never contradict itself.
 - A plain sentence that makes sense beats a clever one that doesn't.
 - Each term must do real work in its sentence, matching its meaning, so a reader can guess it from context. Never bend the situation or add unrelated sentences to fit a term.
 - Write like a person: concrete details, natural phrasing, contractions where the language uses them, varied sentence length. No stock phrases, filler, overblown drama or rhetorical questions to the reader. End on an action or image, never a moral or summary.
@@ -38,7 +38,7 @@ Level
 - The level is a ceiling for everything except the terms. Use an above-level word or structure only if there is no alternative.
 
 Terms
-- Use as many of the terms as you can, in any order; one sentence may hold several. Use each in the form the sentence needs (plural, tense, conjugation, possessive, other word class). Repeat a term only where a real writer would, and vary its form.
+- Use as many of the terms as you can as long as each fits naturally, in any order; one sentence may hold several. Use each in the form the sentence needs (plural, tense, conjugation, possessive, other word class). Repeat a term only where a real writer would, and vary its form.
 - Separable, reflexive or multi-word terms: split in finite main clauses, whole in infinitives, participles and subordinate clauses, as a native speaker would. Never split fixed phrases or compound nouns.
 - Mark each use as [[words exactly as written|term number]]; spaces and punctuation stay outside. Mark split parts separately with the same number. Never put the words between parts inside a marker.
 
