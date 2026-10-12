@@ -67,7 +67,7 @@ export function GoalsPage({ settings, day }: { settings: GoalSettings; day: Goal
         return;
       }
       setSaved(draft);
-      setLiveGoals({ goals: draft, celebrate, day });
+      setLiveGoals({ goals: draft, celebrate, day: result.day ?? day });
       toast("Goals saved");
     });
   }

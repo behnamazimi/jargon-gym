@@ -39,7 +39,9 @@ export async function forecastGoalsAction(
   }
 }
 
-export async function saveGoalsAction(goals: DailyGoals): Promise<{ error?: string }> {
+export async function saveGoalsAction(
+  goals: DailyGoals,
+): Promise<{ error?: string; day?: GoalDay }> {
   const parsed = parseDailyGoals(goals);
   if (!parsed) return { error: "Those goals don't look right." };
   const auth = await requireAuthenticatedClient();
@@ -47,11 +49,13 @@ export async function saveGoalsAction(goals: DailyGoals): Promise<{ error?: stri
 
   try {
     await saveGoals(auth.supabase, auth.user.id, parsed);
-    revalidatePath("/app/goals");
-    return {};
   } catch {
     return { error: "Couldn't save your goals. Try again." };
   }
+  revalidatePath("/app/goals");
+  // The goals are saved by now; without a fresh day the page keeps its own.
+  const day = await loadGoalDay(auth.supabase).catch(() => undefined);
+  return { day };
 }
 
 export async function setGoalCelebrateAction(celebrate: boolean): Promise<{ error?: string }> {

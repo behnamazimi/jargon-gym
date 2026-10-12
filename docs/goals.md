@@ -64,7 +64,9 @@ write after their response, so the browser only asks when a goal looks met.
 
 Running out of terms counts as meeting the goal. `ReadCaughtUp` takes a `goal`
 prop and calls `goalCaughtUp(tier)` when every active collection is caught up
-and something was studied in that tier today. Editing goals never celebrates.
+and something was studied in that tier today. Editing goals never celebrates by itself,
+but raising a tier's goal (or turning it back on) clears its celebrated mark for today (`saveGoals`), so reaching
+the higher goal celebrates again. Lowering or turning a goal off leaves it.
 
 To credit a new study surface, call `tickGoal` once the term is recorded.
 

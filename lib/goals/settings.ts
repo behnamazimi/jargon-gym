@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { getRequestUserSettingsRow } from "@/lib/streak/settings";
-import { GOAL_TIERS, parseDailyGoals, type DailyGoals, type GoalTier } from "./levels";
+import { GOAL_TIERS, parseDailyGoals, raisedTiers, type DailyGoals, type GoalTier } from "./levels";
 import { EMPTY_GOAL_COUNTS, type GoalDayCounts } from "./progress";
 
 type Client = SupabaseClient<Database>;
@@ -30,13 +30,32 @@ export async function getRequestGoalSettings(userId: string): Promise<GoalSettin
   };
 }
 
+/** Raising a goal, or turning one back on, reopens that tier's celebration for
+ *  today, so reaching the new goal celebrates again. Lowering or turning a goal
+ *  off doesn't. */
 export async function saveGoals(client: Client, userId: string, goals: DailyGoals): Promise<void> {
-  const { error } = await client
+  const { data: current, error: readError } = await client
     .from("user_settings")
-    .upsert(
-      { user_id: userId, daily_goals: goals, updated_at: new Date().toISOString() },
-      { onConflict: "user_id" },
-    );
+    .select("daily_goals, goal_celebrated")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (readError) throw readError;
+
+  const update: Database["public"]["Tables"]["user_settings"]["Insert"] = {
+    user_id: userId,
+    daily_goals: goals,
+    updated_at: new Date().toISOString(),
+  };
+  const reopened = raisedTiers(parseDailyGoals(current?.daily_goals), goals);
+  const celebrated = current?.goal_celebrated as { date?: string; tiers?: unknown } | null;
+  if (reopened.length > 0 && Array.isArray(celebrated?.tiers)) {
+    update.goal_celebrated = {
+      ...celebrated,
+      tiers: celebrated.tiers.filter((tier) => !(reopened as unknown[]).includes(tier)),
+    };
+  }
+
+  const { error } = await client.from("user_settings").upsert(update, { onConflict: "user_id" });
   if (error) throw error;
 }
 

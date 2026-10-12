@@ -86,3 +86,14 @@ export function parseDailyGoals(value: unknown): DailyGoals | null {
   }
   return goals;
 }
+
+/** Tiers whose goal went up or came back on, so today's celebration for them
+ *  can happen again. */
+export function raisedTiers(before: DailyGoals | null, after: DailyGoals): GoalTier[] {
+  if (!before) return [];
+  return GOAL_TIERS.filter((tier) => {
+    const old = before[tier];
+    const next = after[tier];
+    return next !== null && (old === null || next > old);
+  });
+}
