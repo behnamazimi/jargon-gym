@@ -18,9 +18,13 @@ export function formatReviewPrompt(
   term: TermCard,
   currentIndex: number,
   totalTerms: number,
+  isRetry = false,
 ): string {
   const header = buildReviewCardHeader(term, currentIndex, totalTerms);
-  return `${header}\n\n<i>Try to recall it before revealing.</i>`;
+  const hint = isRetry
+    ? "You missed this one earlier. Try to recall it again before revealing."
+    : "Try to recall it before revealing.";
+  return `${header}\n\n<i>${hint}</i>`;
 }
 
 /** Revealed card: full term content appended in place of the recall hint. */

@@ -5,7 +5,7 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { isReviewOptionKey, saveReviewOption } from "@/lib/review/options";
 import type { ReviewGrade } from "@/lib/trace";
 
-export async function rateReviewTermAction(termId: string, grade: ReviewGrade) {
+export async function rateReviewTermAction(termId: string, grade: ReviewGrade, retry = false) {
   const auth = await requireAuthenticatedClient();
   if ("error" in auth) {
     return { error: "Log in to review terms." };
@@ -16,6 +16,7 @@ export async function rateReviewTermAction(termId: string, grade: ReviewGrade) {
       termId,
       grade,
       mode: "session",
+      retry,
     });
 
     return {};

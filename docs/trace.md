@@ -79,7 +79,12 @@ graded, every later grade updates the same stability/difficulty pair using
 the FSRS-5 formulas: success grows stability more when the term was already
 fading than when it was still fresh, and a lapse drops it sharply, scaled by
 how difficult the term is. A grade less than 24 hours after the last one
-takes FSRS-5's short-term branch instead, which only scales stability.
+takes the short-term branch instead, which only scales stability: for a young
+term Again ×0.5, Good ×1.4 and Easy ×2.3, and Hard leaves it where it was.
+As in FSRS-6, the gain shrinks as a term gets stronger (`S^-w19`,
+`SAME_DAY_STABILITY_DECAY`), and a Hard, Good or Easy never takes stability
+away. Grades hours apart are weak
+evidence of long-term memory, so they are not treated as full reviews.
 
 Stock FSRS-5 weights are fit to Anki users, and with them a few Goods sent a
 term away for years while Again and Hard barely brought it back. TRACE
@@ -103,11 +108,36 @@ back after about 3.5, 10, 19, 31 and 45 days, and four Easys after about 8,
 26, 57 and 104. An Again on a term that had reached about 19 days brings it
 back in about 12 hours, and a Hard in about 22. The tests in
 `lib/trace/recall.test.ts` ("review gaps at the Review target") check this
-behaviour. Because grades less than a day apart only scale stability, a failed
-term climbs back in small steps (an Again then two Goods come back after about
-5, 7 and 10 hours) until its gaps pass a day. A term never repeats within a
-session, so with one session a day anything under a day simply means "next
-session".
+behaviour. A term that was recalled is never due sooner than a day
+(`minPassStability` in `lib/trace/recall.ts`, applied to Hard, Good and Easy,
+including a first-ever grade). A missed term is handled in the session instead
+(see Learning steps below). Apart from those retries, a term never repeats
+within a session.
+
+#### Learning steps
+
+A missed term (an Again) is asked again in the same session, after a few other
+cards, up to three times (`LEARNING_STEP_MAX_RETRIES`). Web Review does this in
+the browser (`lib/review/retry.ts`, `useReviewQueue.scheduleRetry`); Telegram
+adds the term back into its session list (`recordReviewRating`). Once it is
+recalled, the one-day floor takes over: an Again then a Good a few minutes
+later comes back after a day, then about 3.7, 7.9 and 14.6 days.
+
+A retry updates the term's stability and difficulty like any grade, but it is
+not a new test. The server counts it as one only if the term was graded within
+the last hour (`LEARNING_STEP_WINDOW_MINUTES`); then it adds nothing to
+`review_recall_count` (so mastery confidence and the Known label's test minimum
+are unchanged), stamps neither high-water mark, and does not tick the daily
+goal. `review_events.is_retry` marks these rows: leave them out when checking
+how well TRACE predicts recall over days, since they are minutes apart.
+
+Why: the spacing and testing research behind this (successive relearning)
+supports re-asking a missed item in the session and then waiting at least a
+day. The size of the gap before the retry is a convention, not a measured
+value. In a simulation of real use (several sessions a day) this and the two
+changes above roughly doubled how many terms were started in two weeks, at a
+cost of about 7% extra cards. No replay of old grades was needed: stored
+stabilities change at the next grade.
 
 Review's grade buttons can show these gaps ("Show when terms come back" in the
 Review options, on by default). `daysUntilNextReview` in `lib/trace/snapshot.ts`
@@ -566,6 +596,8 @@ writing:
 | Confidence time constant                                   | 2 tests                            | How quickly the confidence discount approaches full weight                                                                       |
 | Known / unknown thresholds                                 | 0.75 / 0.6                         | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
 | Known label minimum test count                             | 3                                  | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
+| Same-day stability decay (`w19`)                           | 0.0658                             | FSRS-6's default, paired with TRACE's own `w17`/`w18`; same-day gains shrink as stability grows                                  |
+| Learning-step retries / window                             | 3 / 60 minutes                     | How often a missed term is re-asked in a session, and how recently it must have been graded for a retry to count as one          |
 | Session cooldown                                           | 0.98 retrievability                | Above this, a term drops out of that tier's list for the rest of the session                                                     |
 | Untested-term queue position (Review / Quiz)               | 0.89 / 0.7                         | Where a never-graded or never-answered term sorts; learned terms that have decayed below it go first                             |
 | Read mastery-temper weight                                 | 0.2                                | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
@@ -575,3 +607,61 @@ one in particular is meant to be tuned by feel once it's live, the same way the 
 get adjusted — see
 `trace-formula.md`'s "Open items to validate" section for what's still
 worth measuring once there's real pass/fail history to look at.
+
+## Open follow-up: should TRACE move to FSRS-6? (revisit around early December 2026)
+
+**How we got here.** On 12 October 2026 we noticed that Good and Easy barely
+grow a term after an Again or Hard. Production `review_events` (one learner, 325
+grades) showed why: they study about three times a day, so 86% of repeats came
+less than 24 hours after the previous grade and used the same-day rule. A term
+that started with Again stayed on a loop of hours. We rejected moving the
+24-hour cut-off to 4 or 8 hours (it treats two answers hours apart as proof of
+long-term memory) and shipped learning steps, the one-day floor and FSRS-6's
+same-day formula instead. FSRS-6 itself was kept out on purpose.
+
+**What FSRS-6 is** (from the FSRS algorithm wiki): the forgetting curve's decay
+becomes a fitted value (`w20`, default 0.1542, `R = (1 + (0.9^(-1/w20) - 1)·t/S)^(-w20)`);
+the same-day formula gains `S^(-w19)`; there are 21 weights, defaults
+`[0.212, 1.2931, 2.3065, 8.2956, 6.4133, 0.8334, 3.0194, 0.001, 1.8722, 0.1666,
+0.796, 1.4835, 0.0614, 0.2629, 1.6483, 0.6014, 1.8729, 0.5425, 0.0912, 0.0658,
+0.1542]`. We adopted only the same-day change.
+
+**Why we might want all of it.**
+
+- Its weights are fitted to real learner data. TRACE's (`w0`, `w1`, `w3`, `w9`,
+  `w11`, `w16`, the 0.85 Hard blend, the 0.89 line) were tuned by feel against a
+  simulated learner who forgets like stock FSRS-5, which shows workload, not
+  better memory.
+- Early evidence says TRACE is too cautious: over 136 repeats it predicted 82%
+  recall and the learner got 88%. In a simulation against an FSRS-6 memory, 42%
+  of old-TRACE reviews came when recall was still 95% or better.
+- In that simulation stock FSRS-6 left more terms recalled at day 14 than
+  TRACE with these changes (726 vs 680; 753 with learning steps and the floor;
+  old TRACE 457).
+
+**Why not yet.**
+
+- Stock FSRS-6 sends a term away for years after a few Goods (Good ×6 came back
+  after 2,157 days, Easy ×4 after 2,719). That is the problem the 10 October
+  retune fixed by hand.
+- The simulation favoured FSRS-6, because its hidden memory was FSRS-6 itself.
+  The real data was 3 days old and every gap was in hours, so nothing is known
+  yet about days or weeks.
+
+**What to check** (query `review_events` where `is_retry = false`):
+
+1. Enough data: a few hundred repeats at gaps of a day or more, ideally from
+   more than one learner.
+2. Calibration: predicted `retrievability_before` against actual recall in
+   bands (below 0.7, 0.7-0.8, 0.8-0.9, 0.9 and up), for TRACE and for stock
+   FSRS-6 replayed on the same events; compare log-loss.
+3. Whether real Again rates at gaps of a day or more match what each model
+   predicts, and whether very long waits ever match real forgetting.
+4. Decide: keep TRACE if it is calibrated; adopt FSRS-6 with a longest-wait cap;
+   or fit the weights with the open-source FSRS optimizer on our own events.
+
+If FSRS-6 is adopted, the forgetting curve changes (`retrievability` and
+`daysUntilRetrievability` in `lib/trace/recall.ts`), so `rankReviewQueue`,
+`cooldownEndsAt`, the queue-debug admin view and the 0.89 and 0.98 lines need
+re-checking, and a replay migration is needed (pattern:
+`20261030100000_trace_recall_replay.sql`).

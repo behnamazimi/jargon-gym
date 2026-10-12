@@ -33,9 +33,16 @@ export function useReviewWriteQueue(options: {
   function enqueueRating(
     termId: string,
     grade: ReviewGrade,
+    visit = 0,
     existing?: PendingReviewWrite,
   ): PendingReviewWrite {
-    const write = existing ?? { id: crypto.randomUUID(), termId, grade };
+    const write = existing ?? {
+      id: crypto.randomUUID(),
+      termId,
+      grade,
+      ...(visit > 0 ? { visit } : {}),
+    };
+    const isRetry = (write.visit ?? 0) > 0;
     if (!existing) {
       setPendingWrites((prev) => {
         const next = upsertPendingWrite(prev, write);
@@ -47,10 +54,11 @@ export function useReviewWriteQueue(options: {
     queue.enqueue({
       id: write.id,
       label: `review:${termId}`,
-      run: () => rateReviewTermAction(termId, grade),
+      run: () => rateReviewTermAction(termId, write.grade, isRetry),
       onSettled: (result, outcome) => {
         if (outcome === "success") {
-          tickGoal("review", termId);
+          // A retry is the same term again, not another term done.
+          if (!isRetry) tickGoal("review", termId);
           setPendingWrites((prev) => {
             const next = prev.filter((w) => w.id !== write.id);
             savePendingReviewWrites(next);
@@ -71,7 +79,7 @@ export function useReviewWriteQueue(options: {
 
   function flushPendingWrites(writes: PendingReviewWrite[]) {
     for (const write of writes) {
-      enqueueRating(write.termId, write.grade, write);
+      enqueueRating(write.termId, write.grade, write.visit ?? 0, write);
     }
   }
 

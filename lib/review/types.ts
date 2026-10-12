@@ -9,10 +9,13 @@ export type ReviewTerm = Term & {
   collectionLanguage: CollectionLanguage;
   isNewToUser?: boolean;
   recall?: ReviewRecallState;
+  /** 0 or missing for the first showing in a session; 1.. for a missed term asked again. */
+  visit?: number;
 };
 
 export type ReviewRating = {
-  termId: string;
+  /** `cardKey` of the card, so each showing of a term has its own rating. */
+  key: string;
   grade: ReviewGrade;
 };
 
@@ -20,6 +23,8 @@ export type PendingReviewWrite = {
   id: string;
   termId: string;
   grade: ReviewGrade;
+  /** Which showing of the term this grade is for; 1.. means a retry. */
+  visit?: number;
 };
 
 export type ReviewQueueSeed = {

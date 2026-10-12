@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { REVIEW_QUEUE_PREFETCH_REMAINING } from "@/lib/review/queue";
+import { insertRetry } from "@/lib/review/retry";
 import type { ReviewQueueSeed, ReviewTerm } from "@/lib/review/types";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
@@ -123,6 +124,13 @@ export function useReviewQueue({ collectionId, seed }: UseReviewQueueArgs) {
     return next;
   }, [loadMore, maybePrefetch]);
 
+  /** Asks a missed term again a few cards from now. Call before `goNext`. */
+  const scheduleRetry = useCallback((retry: ReviewTerm) => {
+    const next = insertRetry(termsRef.current, currentIndexRef.current, retry);
+    termsRef.current = next;
+    setTerms(next);
+  }, []);
+
   const goPrevious = useCallback(() => {
     const next = Math.max(0, currentIndexRef.current - 1);
     currentIndexRef.current = next;
@@ -178,6 +186,7 @@ export function useReviewQueue({ collectionId, seed }: UseReviewQueueArgs) {
     isFetchingMore,
     goNext,
     goPrevious,
+    scheduleRetry,
     switchCollection,
     retry: goNext,
   };

@@ -28,6 +28,9 @@ export type TraceEventPayload = {
   /** Recall/recognition retrievability just before this event — review_pass/fail and
    *  quiz_pass/fail only, logged to review_events for calibration checking. */
   retrievabilityBefore?: number;
+  /** review_pass/review_fail only: a missed term re-asked minutes later in the same session.
+   *  It moves recall stability but isn't counted as a test. */
+  isRetry?: boolean;
 };
 
 function toEventRpcRecallFields(payload?: TraceEventPayload) {
@@ -45,6 +48,7 @@ function toEventRpcOutcomeFields(payload?: TraceEventPayload) {
     p_question_type: payload?.questionType,
     p_retrievability_before: payload?.retrievabilityBefore,
     p_crossed_learning_threshold: payload?.crossedLearningThreshold ?? false,
+    p_is_retry: payload?.isRetry ?? false,
   };
 }
 

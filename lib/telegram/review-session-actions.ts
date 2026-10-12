@@ -2,11 +2,14 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { TermCard } from "@/lib/terms/term-card";
 import { fetchTermCardForUser } from "@/lib/trace-queue";
-import { GOOD } from "@/lib/trace";
+import { AGAIN, GOOD, LEARNING_STEP_MAX_RETRIES } from "@/lib/trace";
 import type { ReviewGrade } from "@/lib/trace";
 import { saveStoredReviewSession, type TelegramReviewSession } from "./review-session-store";
 
 type Client = SupabaseClient<Database>;
+
+/** A missed term is asked again after about this many other cards. */
+export const RETRY_AFTER_CARDS_TELEGRAM = 3;
 
 export async function markReviewRevealed(
   client: Client,
@@ -33,11 +36,24 @@ export async function recordReviewRating(
   session: TelegramReviewSession,
   grade: ReviewGrade,
 ): Promise<TelegramReviewSession> {
+  const current = session.terms[session.currentIndex];
+  const retry = current?.retry ?? 0;
+  // A missed term is asked again, up to LEARNING_STEP_MAX_RETRIES times.
+  const terms =
+    current && grade === AGAIN && retry < LEARNING_STEP_MAX_RETRIES
+      ? withRetry(session.terms, session.currentIndex, {
+          ...current,
+          isNewToUser: false,
+          retry: retry + 1,
+        })
+      : session.terms;
   const updated: TelegramReviewSession = {
     ...session,
+    terms,
     currentIndex: session.currentIndex + 1,
     revealed: false,
-    retainedCount: grade >= GOOD ? session.retainedCount + 1 : session.retainedCount,
+    // Only the first showing of a term counts as retained.
+    retainedCount: grade >= GOOD && retry === 0 ? session.retainedCount + 1 : session.retainedCount,
   };
 
   await saveStoredReviewSession(client, chatId, {
@@ -50,6 +66,15 @@ export async function recordReviewRating(
   });
 
   return updated;
+}
+
+function withRetry(
+  terms: TelegramReviewSession["terms"],
+  currentIndex: number,
+  retryTerm: TelegramReviewSession["terms"][number],
+): TelegramReviewSession["terms"] {
+  const at = Math.min(currentIndex + 1 + RETRY_AFTER_CARDS_TELEGRAM, terms.length);
+  return [...terms.slice(0, at), retryTerm, ...terms.slice(at)];
 }
 
 /** Advance past the current term without recording an FSRS-5 grade — used

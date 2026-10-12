@@ -11,6 +11,7 @@ import {
   formatReviewSessionSummary,
 } from "./presentation";
 import {
+  countOriginalReviewTerms,
   createReviewSession,
   deleteReviewSession,
   getCurrentReviewTerm,
@@ -22,6 +23,11 @@ import {
 import { edit, send } from "./transport";
 
 type Client = SupabaseClient<Database>;
+
+/** The current card is a missed term being asked again. */
+function isRetryCard(session: TelegramReviewSession): boolean {
+  return (session.terms[session.currentIndex]?.retry ?? 0) > 0;
+}
 
 /** `knownSession` lets a caller that just mutated the session (rate/skip)
  *  pass it straight through instead of re-reading it back from storage. */
@@ -43,7 +49,12 @@ export async function buildCurrentCardActions(
   return [
     send(
       chatId,
-      formatReviewPrompt(currentTerm, session.currentIndex, session.terms.length),
+      formatReviewPrompt(
+        currentTerm,
+        session.currentIndex,
+        session.terms.length,
+        isRetryCard(session),
+      ),
       buildReviewRevealKeyboard(session.currentIndex),
       true,
     ),
@@ -58,7 +69,10 @@ export async function buildReviewSummaryActions(
   const session = knownSession ?? (await getReviewSession(client, chatId));
   if (!session) return [];
 
-  const message = formatReviewSessionSummary(session.terms.length, session.retainedCount);
+  const message = formatReviewSessionSummary(
+    countOriginalReviewTerms(session.terms),
+    session.retainedCount,
+  );
   await deleteReviewSession(client, chatId);
   return [send(chatId, message)];
 }
@@ -100,7 +114,8 @@ export async function handleReviewReveal(
   if (!currentTerm) return [];
 
   try {
-    await recordReveal(client, session.userId, currentTerm.id, "admin");
+    // Asking a missed term again isn't new exposure.
+    if (!isRetryCard(session)) await recordReveal(client, session.userId, currentTerm.id, "admin");
   } catch (error) {
     console.error("handleReviewReveal: failed to record reveal event", {
       userId: session.userId,
@@ -112,7 +127,7 @@ export async function handleReviewReveal(
       edit(
         chatId,
         messageId,
-        `${formatReviewPrompt(currentTerm, session.currentIndex, session.terms.length)}${REVIEW_REVEAL_FAILED_SUFFIX}`,
+        `${formatReviewPrompt(currentTerm, session.currentIndex, session.terms.length, isRetryCard(session))}${REVIEW_REVEAL_FAILED_SUFFIX}`,
         buildReviewRevealKeyboard(session.currentIndex),
       ),
     ];

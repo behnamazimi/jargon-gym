@@ -74,6 +74,40 @@ test.describe("Studying a collection", () => {
   });
 
   test(
+    "a missed term is asked again in the same session, and the retry is not a new test",
+    { tag: "@smoke" },
+    async ({ page, user }) => {
+      const { collectionId } = await seedCollection(user);
+      await gotoReady(page, `/app/review?collection=${collectionId}`);
+
+      await page.getByRole("button", { name: /^Recall the meaning/ }).click();
+      await page.getByRole("button", { name: "Again" }).click();
+
+      // The missed term comes back after a few other cards.
+      for (let card = 0; card < 7; card++) {
+        await page.getByRole("button", { name: /^Recall the meaning/ }).click();
+        await page.getByRole("button", { name: "Good" }).click();
+      }
+
+      await expect
+        .poll(async () => {
+          const rows = await sql<{ retries: string; tests: string }>(
+            `select count(*) filter (where e.is_retry) as retries,
+                    max(s.review_recall_count) as tests
+             from public.review_events e
+             join public.review_state s on s.user_id = e.user_id and s.term_id = e.term_id
+             where e.user_id = $1 and e.grade is not null
+             group by e.term_id
+             having count(*) filter (where e.is_retry) > 0`,
+            [user.id],
+          );
+          return rows.map((row) => ({ retries: Number(row.retries), tests: Number(row.tests) }));
+        })
+        .toEqual([{ retries: 1, tests: 1 }]);
+    },
+  );
+
+  test(
     "a simple quiz can be finished and shows up in mastery",
     { tag: "@smoke" },
     async ({ page, user }) => {

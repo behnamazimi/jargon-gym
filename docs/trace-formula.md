@@ -103,11 +103,17 @@ bonus(G) = w15 if G=2, 1 if G=3, w16 if G=4
 S' = w11 · D^(−w12) · ((S+1)^w13 − 1) · e^(w14·(1−R))
 ```
 
-**Same-day re-review:**
+**Same-day re-review** (a grade less than 24 hours after the last; FSRS-6's form):
 
 ```
-S' = S · e^(w17·(G − 3 + w18))
+S' = S · e^(w17·(G − 3 + w18)) · S^(−w19)
+S' = max(S', S)   for G = 2, 3 or 4
 ```
+
+**One-day floor.** After any Hard, Good or Easy, `S' = max(S', S_1d)`, where
+`S_1d` is the stability whose wait to the 0.89 line is exactly one day. Again is
+never floored. Missed terms are re-asked in the session (learning steps); see
+trace.md.
 
 **Retrievability:**
 

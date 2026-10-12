@@ -80,6 +80,39 @@ describe("applyReviewGrade stamps", () => {
   });
 });
 
+describe("applyReviewGrade retry", () => {
+  function gradedMinutesAgo(minutes: number): TraceState {
+    return { ...strongState(), lastReviewRecallAt: new Date(NOW.getTime() - minutes * 60_000) };
+  }
+
+  it("a retry right after a grade is logged as a retry and stamps nothing", async () => {
+    fetchTraceStateForUser.mockResolvedValue(gradedMinutesAgo(10));
+    await applyReviewGrade(client, "u1", { termId: "t1", grade: 3, mode: "admin", retry: true });
+    expect(lastPayload()).toMatchObject({
+      isRetry: true,
+      crossedKnownThreshold: false,
+      crossedLearningThreshold: false,
+    });
+  });
+
+  it("ignores the retry flag when the term wasn't graded in the last hour", async () => {
+    fetchTraceStateForUser.mockResolvedValue(gradedMinutesAgo(61));
+    await applyReviewGrade(client, "u1", { termId: "t1", grade: 3, mode: "admin", retry: true });
+    expect(lastPayload()).toMatchObject({ isRetry: false, crossedKnownThreshold: true });
+  });
+
+  it("ignores the retry flag for a term that was never graded", async () => {
+    fetchTraceStateForUser.mockResolvedValue({ ...strongState(), lastReviewRecallAt: null });
+    await applyReviewGrade(client, "u1", { termId: "t1", grade: 3, mode: "admin", retry: true });
+    expect(lastPayload()).toMatchObject({ isRetry: false });
+  });
+
+  it("a normal grade is not a retry", async () => {
+    await applyReviewGrade(client, "u1", { termId: "t1", grade: 3, mode: "admin" });
+    expect(lastPayload()).toMatchObject({ isRetry: false });
+  });
+});
+
 describe("applyQuizAnswer stamps", () => {
   it("stamps on a correct answer for a strong term", async () => {
     await applyQuizAnswer(client, "u1", {

@@ -11,7 +11,8 @@ function isPendingWrite(value: unknown): value is PendingReviewWrite {
   return (
     typeof write.id === "string" &&
     typeof write.termId === "string" &&
-    typeof write.grade === "number"
+    typeof write.grade === "number" &&
+    (write.visit === undefined || typeof write.visit === "number")
   );
 }
 
