@@ -1,7 +1,7 @@
 const WAYS: { label: string; body: string }[] = [
   {
     label: "Read",
-    body: "See a term with real usage, not just a definition. Or read an AI story built around your terms.",
+    body: "See a term, or a word in a sentence, with real usage, not just a definition. Or read an AI story built around your terms.",
   },
   {
     label: "Review",
@@ -9,7 +9,7 @@ const WAYS: { label: string; body: string }[] = [
   },
   {
     label: "Quiz",
-    body: "A real check, sharper with AI questions.",
+    body: "A real check. Language learners also type words from memory. Sharper with AI questions.",
   },
 ];
 
