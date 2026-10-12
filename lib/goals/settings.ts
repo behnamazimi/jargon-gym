@@ -30,14 +30,16 @@ export async function getRequestGoalSettings(userId: string): Promise<GoalSettin
   };
 }
 
-/** Raising a goal reopens that tier's celebration for today, so reaching the
- *  higher goal celebrates again. Lowering or turning a goal off doesn't. */
+/** Raising a goal, or turning one back on, reopens that tier's celebration for
+ *  today, so reaching the new goal celebrates again. Lowering or turning a goal
+ *  off doesn't. */
 export async function saveGoals(client: Client, userId: string, goals: DailyGoals): Promise<void> {
-  const { data: current } = await client
+  const { data: current, error: readError } = await client
     .from("user_settings")
     .select("daily_goals, goal_celebrated")
     .eq("user_id", userId)
     .maybeSingle();
+  if (readError) throw readError;
 
   const update: Database["public"]["Tables"]["user_settings"]["Insert"] = {
     user_id: userId,
@@ -45,11 +47,11 @@ export async function saveGoals(client: Client, userId: string, goals: DailyGoal
     updated_at: new Date().toISOString(),
   };
   const reopened = raisedTiers(parseDailyGoals(current?.daily_goals), goals);
-  const celebrated = current?.goal_celebrated as { date?: string; tiers?: string[] } | null;
-  if (reopened.length > 0 && celebrated?.tiers) {
+  const celebrated = current?.goal_celebrated as { date?: string; tiers?: unknown } | null;
+  if (reopened.length > 0 && Array.isArray(celebrated?.tiers)) {
     update.goal_celebrated = {
       ...celebrated,
-      tiers: celebrated.tiers.filter((tier) => !(reopened as string[]).includes(tier)),
+      tiers: celebrated.tiers.filter((tier) => !(reopened as unknown[]).includes(tier)),
     };
   }
 

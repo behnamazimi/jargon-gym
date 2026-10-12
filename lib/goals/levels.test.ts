@@ -66,10 +66,10 @@ describe("parseDailyGoals", () => {
 });
 
 describe("raisedTiers", () => {
-  it("lists only tiers whose goal went up", () => {
+  it("lists tiers whose goal went up or came back on", () => {
     const before = { read: 10, review: 20, quiz: null };
-    expect(raisedTiers(before, { read: 15, review: 20, quiz: 5 })).toEqual(["read"]);
-    expect(raisedTiers(before, { read: 5, review: null, quiz: 5 })).toEqual([]);
+    expect(raisedTiers(before, { read: 15, review: 20, quiz: 5 })).toEqual(["read", "quiz"]);
+    expect(raisedTiers(before, { read: 5, review: null, quiz: null })).toEqual([]);
   });
 
   it("lists nothing when goals were never saved", () => {

@@ -49,11 +49,13 @@ export async function saveGoalsAction(
 
   try {
     await saveGoals(auth.supabase, auth.user.id, parsed);
-    revalidatePath("/app/goals");
-    return { day: await loadGoalDay(auth.supabase) };
   } catch {
     return { error: "Couldn't save your goals. Try again." };
   }
+  revalidatePath("/app/goals");
+  // The goals are saved by now; without a fresh day the page keeps its own.
+  const day = await loadGoalDay(auth.supabase).catch(() => undefined);
+  return { day };
 }
 
 export async function setGoalCelebrateAction(celebrate: boolean): Promise<{ error?: string }> {
