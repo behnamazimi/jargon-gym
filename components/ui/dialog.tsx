@@ -32,6 +32,17 @@ function DialogClose({ className, ...props }: React.ComponentProps<typeof Button
   );
 }
 
+/** The page-transition layer is drawn above dialogs, so a dialog opened
+ *  mid-transition would sit under the moving page. Jump the transition to its
+ *  end instead. */
+function finishPageTransition() {
+  for (const animation of document.getAnimations()) {
+    const target =
+      animation.effect instanceof KeyframeEffect ? animation.effect.pseudoElement : null;
+    if (target?.startsWith("::view-transition")) animation.finish();
+  }
+}
+
 function DialogOverlay({
   className,
   children,
@@ -42,6 +53,9 @@ function DialogOverlay({
 }) {
   return (
     <ModalOverlayPrimitive
+      ref={(node) => {
+        if (node) finishPageTransition();
+      }}
       data-slot="dialog-overlay"
       className={cn("modal modal-open", className)}
       {...props}
