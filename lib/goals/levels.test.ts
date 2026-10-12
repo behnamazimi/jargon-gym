@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { goalForLevel, nearestLevel, parseDailyGoals, stepGoal } from "./levels";
+import { goalForLevel, nearestLevel, parseDailyGoals, raisedTiers, stepGoal } from "./levels";
 
 describe("nearestLevel", () => {
   it("is off without a goal", () => {
@@ -62,5 +62,17 @@ describe("parseDailyGoals", () => {
       review: null,
       quiz: null,
     });
+  });
+});
+
+describe("raisedTiers", () => {
+  it("lists only tiers whose goal went up", () => {
+    const before = { read: 10, review: 20, quiz: null };
+    expect(raisedTiers(before, { read: 15, review: 20, quiz: 5 })).toEqual(["read"]);
+    expect(raisedTiers(before, { read: 5, review: null, quiz: 5 })).toEqual([]);
+  });
+
+  it("lists nothing when goals were never saved", () => {
+    expect(raisedTiers(null, { read: 10, review: 10, quiz: 5 })).toEqual([]);
   });
 });
