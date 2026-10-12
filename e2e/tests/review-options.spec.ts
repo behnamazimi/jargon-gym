@@ -83,7 +83,7 @@ test.describe("Review options", () => {
       page.getByRole("button", { name: /^Good, back in about \d+ days?$/ }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Again, asked again in a few minutes" }),
+      page.getByRole("button", { name: "Again, asked again in about 2 minutes" }),
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Review options" }).click();

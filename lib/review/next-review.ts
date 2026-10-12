@@ -43,8 +43,8 @@ export function formatNextReview(days: number): string {
 }
 
 /** What the Again button says while a missed term will be asked again this session. */
-export const RETRY_LABEL = "soon";
-export const RETRY_DESCRIPTION = "asked again in a few minutes";
+export const RETRY_LABEL = "~2m";
+export const RETRY_DESCRIPTION = "asked again in about 2 minutes";
 
 /** The same estimate in words, for screen readers. */
 export function describeNextReview(days: number): string {
