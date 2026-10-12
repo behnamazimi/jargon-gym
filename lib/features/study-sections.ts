@@ -43,7 +43,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Review",
-        body: "Try to recall it, then check yourself and say how well you knew it. Each answer shows roughly when the term comes back.",
+        body: "Try to recall it, then check yourself and say how well you knew it. Whatever you're shakiest on comes up sooner.",
       },
       {
         title: "Quiz",
@@ -59,7 +59,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
     layout: "split",
     id: "learn",
     title: "More than a definition",
-    lead: "A definition alone won't help you use a word in a meeting, so each term carries more.",
+    lead: "A definition alone won't help you use a word in a meeting or a conversation, so each term carries more.",
     scene: "learn",
     items: [
       {

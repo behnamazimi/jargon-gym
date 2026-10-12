@@ -1,10 +1,16 @@
 # Lobyas
 
-A private, invite-only app for learning the terms of a field or language well enough to
-actually use them, not just recognize them. Import term lists into collections (or start
-with built-in ones), mark what you already know, review a ranked queue when you
-feel like it, and quiz when you want a check-in. No due dates — there's an
+A private, invite-only app for learning the terms of a field or the words and phrases of a
+language well enough to actually use them, not just recognize them. A collection is either
+field terms (a new job's jargon, a technical area) or a language's vocabulary, including
+phrases and grammar. Import lists into collections (or start with built-in ones), read, review a
+ranked queue when you feel like it, and quiz when you want a check-in. No due dates — there's an
 optional streak badge, but nothing punishes you for breaking it.
+
+AI is optional and works only from your own terms: Stories written around the terms you're due
+to read (a style and setting for any collection, plus an A1–C2 level for a language), AI
+quizzes, and spoken audio for terms and stories. Simple quizzes, Read and Review never use
+credits. Typed-recall quiz questions are for vocabulary collections.
 
 Terms go beyond one-line definitions: optional example, mental model,
 in-practice notes, anti-example, debated angles, a freeform note, and links

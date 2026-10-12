@@ -1,7 +1,7 @@
 const AI_FEATURES: { label: string; body: string }[] = [
   {
     label: "Stories",
-    body: "A short story built around the terms you're due to read, at the language level you pick, A1 to C2.",
+    body: "A short story built around the terms you're due to read. Pick a style and setting; for a language, also a level from A1 to C2.",
   },
   {
     label: "AI quizzes",
