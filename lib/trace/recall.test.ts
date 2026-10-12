@@ -216,6 +216,20 @@ describe("minPassStability (one-day floor)", () => {
     }
   });
 
+  it("a retry after a miss gives Hard, Good and Easy different waits, all at least a day", () => {
+    const now = new Date("2026-01-01T12:00:00Z");
+    const missed = applyReviewGrade(null, AGAIN, 0, now, null);
+    const retryAt = new Date(now.getTime() + 120_000);
+    const wait = (grade: ReviewGrade) =>
+      daysUntilRetrievability(
+        applyReviewGrade(missed, grade, 0, retryAt, now).stability,
+        UNTESTED_RECALL_RETRIEVABILITY,
+      );
+    expect(wait(HARD)).toBeCloseTo(1, 1);
+    expect(wait(GOOD)).toBeGreaterThan(wait(HARD) * 1.2);
+    expect(wait(EASY)).toBeGreaterThan(wait(GOOD) * 1.4);
+  });
+
   it("never lifts an Again", () => {
     const now = new Date("2026-01-01T12:00:00Z");
     const first = applyReviewGrade(null, AGAIN, 0, now, null);

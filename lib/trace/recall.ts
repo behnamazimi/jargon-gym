@@ -90,10 +90,13 @@ export function updateStabilityOnHard(
 
 /** Same-day re-review — stability-only special case, as in FSRS-6: the gain
  *  shrinks as stability grows (S^-w19), and a Hard, Good or Easy never takes
- *  stability away. */
+ *  stability away. A recalled term is first lifted to the one-day floor and
+ *  the grade's gain is applied on top, so Hard, Good and Easy still end up at
+ *  different waits (about 1, 1.4 and 2.3 days for a young term). */
 export function sameDayStability(stability: number, grade: ReviewGrade): number {
-  const factor = Math.exp(w[17]! * (grade - 3 + w[18]!)) * stability ** -SAME_DAY_STABILITY_DECAY;
-  return stability * (grade === AGAIN ? factor : Math.max(factor, 1));
+  const base = grade === AGAIN ? stability : Math.max(stability, minPassStability());
+  const factor = Math.exp(w[17]! * (grade - 3 + w[18]!)) * base ** -SAME_DAY_STABILITY_DECAY;
+  return base * (grade === AGAIN ? factor : Math.max(factor, 1));
 }
 
 /** The stability at which a term comes back after exactly one day. A term that
