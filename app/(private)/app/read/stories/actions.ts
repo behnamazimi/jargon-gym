@@ -1,6 +1,5 @@
 "use server";
 
-import { after } from "next/server";
 import { z } from "zod";
 import { trackServer } from "@/lib/analytics/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
@@ -23,16 +22,15 @@ export async function markStoryReadAction(
     const marked = await markStoryRead(createAdminClient(), userId, storyId);
     if (!marked) return { readAt: null };
 
-    after(async () => {
-      const admin = createAdminClient();
-      for (const termId of marked.termIds) {
-        try {
-          await recordRead(admin, userId, termId, "admin");
-        } catch (err) {
-          console.error("Failed to record story read:", err);
-        }
+    // Saved before returning: the goal check runs right after this action.
+    const admin = createAdminClient();
+    for (const termId of marked.termIds) {
+      try {
+        await recordRead(admin, userId, termId, "admin");
+      } catch (err) {
+        console.error("Failed to record story read:", err);
       }
-    });
+    }
     trackServer(userId, "story_read", { term_count: marked.termIds.length });
     return { readAt: marked.readAt };
   } catch (err) {

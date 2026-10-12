@@ -67,7 +67,7 @@ describe("goal store", () => {
     expect(claim).not.toHaveBeenCalled();
   });
 
-  it("retries once when the server is behind, then waits for new credit", async () => {
+  it("retries a few times when the server is behind, then waits for new credit", async () => {
     seed(2);
     claim.mockResolvedValue({ claimed: false, day: day(2) });
 
@@ -75,11 +75,11 @@ describe("goal store", () => {
     await settle();
     expect(claim).toHaveBeenCalledTimes(1);
 
-    await vi.advanceTimersByTimeAsync(2000);
+    await vi.advanceTimersByTimeAsync(1500);
     expect(claim).toHaveBeenCalledTimes(2);
 
     await vi.advanceTimersByTimeAsync(10_000);
-    expect(claim).toHaveBeenCalledTimes(2);
+    expect(claim).toHaveBeenCalledTimes(4);
   });
 
   it("trusts the server count after a failed claim, so re-counted terms don't keep asking", async () => {
@@ -89,17 +89,18 @@ describe("goal store", () => {
 
     tickGoal("review", ["old-1", "old-2", "new"]);
     await settle();
-    await vi.advanceTimersByTimeAsync(2000);
+    await vi.advanceTimersByTimeAsync(1500);
     expect(claim).toHaveBeenCalledTimes(2);
+    claim.mockClear();
 
     // Back to the server's 2; one more new term brings it to 3 for real.
     claim.mockResolvedValue({ claimed: true, day: day(3, ["review"]) });
     tickGoal("review", "old-1");
     await settle();
-    expect(claim).toHaveBeenCalledTimes(2);
+    expect(claim).not.toHaveBeenCalled();
     tickGoal("review", "another");
     await settle();
-    expect(claim).toHaveBeenCalledTimes(3);
+    expect(claim).toHaveBeenCalledTimes(1);
   });
 
   it("never asks again for a tier already celebrated today", async () => {

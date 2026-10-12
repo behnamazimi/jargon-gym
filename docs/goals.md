@@ -58,8 +58,8 @@ write after their response, so the browser only asks when a goal looks met.
 4. Every answer carries the server's counts, which replace the store's. The
    terms sent with that claim are dropped, so a term the server had already
    counted before the page loaded can't keep a goal looking met. If the claim
-   fails (a read may still be in flight), the store asks once more after two
-   seconds, then waits for the next credit.
+   fails (a read may still be in flight), the store asks again up to three times,
+   1.5 seconds apart, then waits for the next credit.
 5. A true claim opens `GoalCelebrationDialog` over the current screen.
 
 Running out of terms counts as meeting the goal. `ReadCaughtUp` takes a `goal`

@@ -25,7 +25,8 @@ type State = {
   celebration: GoalCelebration | null;
 };
 
-const RETRY_MS = 2000;
+const RETRY_MS = 1500;
+const MAX_RETRIES = 3;
 
 let state: State | null = null;
 const listeners = new Set<() => void>();
@@ -102,7 +103,7 @@ export function tickGoal(tier: GoalTier, termIds: string | readonly string[]) {
     seen[tier].add(id);
     credited[tier].add(id);
   }
-  if (looksMet(tier)) void claim(tier, false, true);
+  if (looksMet(tier)) void claim(tier, false, MAX_RETRIES);
 }
 
 /** The tier has nothing left to serve today, which counts as its goal met
@@ -110,7 +111,7 @@ export function tickGoal(tier: GoalTier, termIds: string | readonly string[]) {
 export function goalCaughtUp(tier: GoalTier) {
   if (!state) return;
   rollOverIfNewDay();
-  if (isOpen(tier) && localTotal(tier) > 0) void claim(tier, true, false);
+  if (isOpen(tier) && localTotal(tier) > 0) void claim(tier, true, 0);
 }
 
 function isOpen(tier: GoalTier): boolean {
@@ -138,7 +139,7 @@ function rollOverIfNewDay() {
   };
 }
 
-async function claim(tier: GoalTier, caughtUp: boolean, mayRetry: boolean) {
+async function claim(tier: GoalTier, caughtUp: boolean, retriesLeft: number) {
   claiming.add(tier);
   clearTimeout(retryTimers.get(tier));
   const sent = GOAL_TIERS.map((t) => [t, [...credited[t]]] as const);
@@ -165,12 +166,12 @@ async function claim(tier: GoalTier, caughtUp: boolean, mayRetry: boolean) {
   emit();
 
   // A read is written just after its response, so the server may simply be
-  // behind: ask once more shortly, then wait for the next credit.
-  if (mayRetry && isOpen(tier)) {
+  // behind: ask again a few times, then wait for the next credit.
+  if (retriesLeft > 0 && isOpen(tier)) {
     retryTimers.set(
       tier,
       setTimeout(() => {
-        if (isOpen(tier)) void claim(tier, false, false);
+        if (isOpen(tier)) void claim(tier, false, retriesLeft - 1);
       }, RETRY_MS),
     );
   }
