@@ -17,7 +17,7 @@ export const STORY_FORMATS: readonly StyleOption[] = [
     id: "blog-post",
     label: "Blog post",
     prompt:
-      "a first-person blog post: a hook in the first line, one experience or idea, and a practical takeaway at the end",
+      "a first-person blog post: a hook statement in the first line, one experience or idea, and a practical takeaway at the end",
   },
   {
     id: "news-brief",
