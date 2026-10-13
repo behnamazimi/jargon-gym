@@ -8,6 +8,8 @@ import type { CollectionLanguage } from "@/lib/terms/languages";
 type Client = SupabaseClient<Database>;
 type CollectionVisibility = Database["public"]["Enums"]["collection_visibility"];
 
+const UNIQUE_VIOLATION = "23505";
+
 export async function addCollectionToCollection(
   client: Client,
   userId: string,
@@ -18,7 +20,8 @@ export async function addCollectionToCollection(
     collection_id: collectionId,
   });
 
-  if (error) throw error;
+  // Already in the library (a second tap, or added in another tab) counts as added.
+  if (error && error.code !== UNIQUE_VIOLATION) throw error;
 
   await setCollectionActiveForReview(client, userId, collectionId, true);
 }

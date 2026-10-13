@@ -9,7 +9,8 @@
 create or replace function public.get_shared_collection_preview(p_collection_id uuid)
 returns jsonb
 language sql
-stable
+-- volatile: the terms are picked with random().
+volatile
 security definer
 set search_path to 'public'
 as $function$

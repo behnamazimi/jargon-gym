@@ -2,9 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import { setVerifiedUser, VERIFIED_USER_HEADERS } from "@/lib/auth/verified-user-header";
-import { isUuid } from "@/lib/admin/list-params";
 import type { Database } from "@/lib/supabase/database.types";
 import { READ_LANDING_COOKIE, readLandingRedirect } from "@/lib/read/landing";
+import { checkSharedLink, forward } from "./proxy-shared-link";
 
 // referral_verified only ever flips false -> true (during onboarding), so once
 // we've confirmed it we can skip the DB round-trip on every subsequent
@@ -141,46 +141,22 @@ function redirectForSignedInUser(
   return null;
 }
 
-const SHARED_LINK_PATH = /^\/c\/([^/]+)$/;
-
 function withCookiesFrom(source: NextResponse, response: NextResponse) {
   source.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
   return response;
 }
 
-/** A shared link that stopped working gets a real 404, and a built-in's link a
- *  real redirect to its public page. Checked here because the page streams,
- *  and a streamed page can no longer change its status. */
-async function sharedLinkResponse(
-  supabase: ReturnType<typeof createServerClient<Database>>,
+function responseForVisitor(
   request: NextRequest,
   pathname: string,
   supabaseResponse: NextResponse,
+  sharedLinkGone: boolean,
 ) {
-  const collectionId = SHARED_LINK_PATH.exec(pathname)?.[1];
-  if (!collectionId) return null;
-
-  // An unmatched path under the same prefix, so the 404 page gets the same chrome.
-  const notFound = () =>
-    withCookiesFrom(
-      supabaseResponse,
-      NextResponse.rewrite(new URL(`${pathname}/not-found`, request.url), { status: 404 }),
-    );
-  if (!isUuid(collectionId)) return notFound();
-
-  const { data, error } = await supabase.rpc("shared_collection_link", {
-    p_collection_id: collectionId,
-  });
-  // The page checks again, so a failed lookup just lets it through.
-  if (error) return null;
-  if (!data) return notFound();
-
-  const publicSlug = (data as { public_slug: string | null }).public_slug;
-  if (!publicSlug) return null;
-  return withCookiesFrom(
-    supabaseResponse,
-    NextResponse.redirect(new URL(`/collections/${publicSlug}`, request.url), 308),
-  );
+  if (!isPublicPath(pathname) && isPrivatePath(pathname)) {
+    return redirectToPathWithNext(request, "/login");
+  }
+  if (!sharedLinkGone) return supabaseResponse;
+  return withCookiesFrom(supabaseResponse, forward(request, request.headers, true));
 }
 
 export async function updateSession(request: NextRequest) {
@@ -229,14 +205,16 @@ export async function updateSession(request: NextRequest) {
   const authCodeRedirect = redirectForAuthCode(request, pathname);
   if (authCodeRedirect) return authCodeRedirect;
 
-  const sharedLink = await sharedLinkResponse(supabase, request, pathname, supabaseResponse);
-  if (sharedLink) return sharedLink;
-
-  if (!user) {
-    return isPublicPath(pathname) || !isPrivatePath(pathname)
-      ? supabaseResponse
-      : redirectToPathWithNext(request, "/login");
+  const sharedLink = await checkSharedLink(supabase, request, pathname);
+  if (sharedLink?.kind === "redirect") {
+    return withCookiesFrom(
+      supabaseResponse,
+      NextResponse.redirect(new URL(sharedLink.to, request.url), 308),
+    );
   }
+  const sharedLinkGone = sharedLink?.kind === "gone";
+
+  if (!user) return responseForVisitor(request, pathname, supabaseResponse, sharedLinkGone);
 
   const referralVerified = await resolveReferralVerified(
     supabase,
@@ -262,7 +240,7 @@ export async function updateSession(request: NextRequest) {
   // behind this proxy don't need to call supabase.auth.getClaims() again.
   const requestHeaders = new Headers(request.headers);
   await setVerifiedUser(requestHeaders, { id: user.id, email: user.email });
-  const responseWithHeader = NextResponse.next({ request: { headers: requestHeaders } });
+  const responseWithHeader = forward(request, requestHeaders, sharedLinkGone);
   // NextResponse.next() returns a fresh response object, which would drop
   // any cookies already queued on supabaseResponse (session refresh,
   // referral_verified) — carry them over instead of losing them.

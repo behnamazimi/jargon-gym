@@ -101,7 +101,8 @@ test.describe("Sharing a collection", () => {
     await sheet.getByRole("button", { name: "Stop sharing" }).click();
     await expect(sheet.getByRole("checkbox", { checked: false })).toBeVisible();
 
-    await gotoReady(page, `/c/${collectionId}`);
+    const response = await page.goto(`/c/${collectionId}`);
+    expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   });
 
@@ -112,7 +113,14 @@ test.describe("Sharing a collection", () => {
       "update public.collections set share_blocked_at = now(), share_block_reason = 'rules' where id = $1",
       [collectionId],
     );
-    await gotoReady(page, `/c/${collectionId}`);
+    const response = await page.goto(`/c/${collectionId}`);
+    expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+  });
+
+  test("a built-in's link opens its public page", async ({ page }) => {
+    // The seed's public `standup` collection.
+    await page.goto("/c/22222222-2222-2222-2222-222222222225");
+    await expect(page).toHaveURL(/\/collections\/standup$/);
   });
 });

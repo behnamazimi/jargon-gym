@@ -9,6 +9,7 @@ const auth = vi.hoisted(() => ({
   claims: undefined as undefined | { data: { claims: Record<string, unknown> } | null },
   /** What shared_collection_link answers: null for a link that doesn't work. */
   sharedLink: { public_slug: null } as null | { public_slug: string | null },
+  sharedLinkLookups: 0,
 }));
 
 vi.mock("@supabase/ssr", () => ({
@@ -19,7 +20,10 @@ vi.mock("@supabase/ssr", () => ({
           data: auth.user ? { claims: { sub: auth.user.id, email: auth.user.email } } : null,
         },
     },
-    rpc: async () => ({ data: auth.sharedLink, error: null }),
+    rpc: async () => {
+      auth.sharedLinkLookups += 1;
+      return { data: auth.sharedLink, error: null };
+    },
   }),
 }));
 
@@ -51,6 +55,7 @@ describe("updateSession", () => {
     auth.user = null;
     auth.claims = undefined;
     auth.sharedLink = { public_slug: null };
+    auth.sharedLinkLookups = 0;
   });
 
   it("drops forged user headers on a public page for a signed-out visitor", async () => {
@@ -101,6 +106,35 @@ describe("updateSession", () => {
     for (const path of ["/c/22222222-2222-2222-2222-222222222223", "/c/not-a-uuid"]) {
       expect((await updateSession(request(path))).status).toBe(404);
     }
+  });
+
+  it("drops forged user headers on a dead shared link and forwards the verified user", async () => {
+    auth.sharedLink = null;
+    const visitor = await updateSession(request("/c/22222222-2222-2222-2222-222222222223"));
+    expect(visitor.status).toBe(404);
+    expect(await readVerifiedUser(forwardedHeaders(visitor))).toBeNull();
+    expect(forwardedHeaders(visitor).get("x-verified-user-id")).toBeNull();
+
+    auth.user = { id: "real-id", email: "a@example.com", banned_until: null };
+    const member = await updateSession(
+      request("/c/22222222-2222-2222-2222-222222222223", `${REFERRAL_VERIFIED_COOKIE}=1`),
+    );
+    expect(member.status).toBe(404);
+    expect(await readVerifiedUser(forwardedHeaders(member))).toEqual({
+      id: "real-id",
+      email: "a@example.com",
+    });
+  });
+
+  it("leaves a Server Action posted from a shared link to the action", async () => {
+    auth.sharedLink = null;
+    const response = await updateSession(
+      new NextRequest("http://localhost/c/22222222-2222-2222-2222-222222222223", {
+        method: "POST",
+      }),
+    );
+    expect(response.status).toBe(200);
+    expect(auth.sharedLinkLookups).toBe(0);
   });
 
   it("sends a built-in's shared link to its public page", async () => {

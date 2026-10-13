@@ -4,7 +4,7 @@ import { Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import type { Collection } from "@/lib/terms/types";
-import { copyCollectionLink, SHARE_ICON_BUTTON_CLASS } from "./collection-share-sheet";
+import { copyCollectionLink, SHARE_ICON_BUTTON_CLASS } from "./collection-share-link";
 
 /** For collections someone else owns: copies the link without opening anything. */
 export function CopyCollectionLinkButton({ collection }: { collection: Collection }) {

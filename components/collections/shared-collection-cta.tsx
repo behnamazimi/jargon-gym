@@ -33,10 +33,15 @@ export function SharedCollectionCta({ collection, state, compact }: SharedCollec
 
   async function add() {
     setAdding(true);
-    const result = await addToCollection(collection.id);
-    if (result.error) {
+    let failure: string | null;
+    try {
+      failure = (await addToCollection(collection.id)).error ?? null;
+    } catch {
+      failure = "Couldn't add that collection. Check your connection and try again.";
+    }
+    if (failure) {
       setAdding(false);
-      toast(result.error, "destructive");
+      toast(failure, "destructive");
       return;
     }
     track("shared_landing_added");

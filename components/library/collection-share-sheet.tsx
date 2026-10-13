@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Copy, Share2, XIcon } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
+import { Share2, XIcon } from "lucide-react";
+import { useState } from "react";
 import {
   getCollectionSubscriberCount,
   shareCollection,
@@ -10,37 +10,12 @@ import {
 import { OptionRow } from "@/components/read/read-option-row";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Sheet, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { useToast } from "@/components/ui/toast";
 import { useMediaQuery } from "@/hooks/use-platform";
-import { track } from "@/lib/analytics/track";
-import { shareLink } from "@/lib/collections/share";
 import { ownerNoticeFor } from "@/lib/collections/moderation";
 import { PLATFORM_MEDIA } from "@/lib/platform";
 import type { Collection } from "@/lib/terms/types";
-
-export const SHARE_ICON_BUTTON_CLASS =
-  "min-h-11 min-w-11 text-base-content/70 hover:text-base-content md:min-h-8 md:min-w-8";
-
-const noSubscribe = () => () => {};
-const canShareNatively = () => typeof navigator.share === "function";
-
-/** Copies the collection's link and says so in a toast. */
-export async function copyCollectionLink(
-  collection: Pick<Collection, "id" | "publicSlug">,
-  toast: ReturnType<typeof useToast>["toast"],
-  owner: boolean,
-) {
-  try {
-    await navigator.clipboard.writeText(shareLink(collection));
-    track("share_link_copied", { owner });
-    return true;
-  } catch {
-    toast("Couldn't copy the link. Try again.", "destructive");
-    return false;
-  }
-}
+import { SHARE_ICON_BUTTON_CLASS, ShareLink } from "./collection-share-link";
 
 const SHARED_HINTS = [
   "Lobyas members see it in Browse, under Community.",
@@ -57,6 +32,9 @@ function stopSharingMessage(count: number) {
 /** The owner's Share button: a bottom sheet on phone and a dialog on larger screens. */
 export function CollectionShareButton({ collection }: { collection: Collection }) {
   const [open, setOpen] = useState(false);
+  // What the sheet last saved, so reopening it before the page refresh lands doesn't show the old state.
+  const [saved, setSaved] = useState<{ id: string; shared: boolean } | null>(null);
+  const shared = saved?.id === collection.id ? saved.shared : collection.visibility === "shared";
 
   return (
     <>
@@ -69,18 +47,31 @@ export function CollectionShareButton({ collection }: { collection: Collection }
       >
         <Share2 className="size-5" />
       </Button>
-      {open ? <ShareSurface collection={collection} onClose={() => setOpen(false)} /> : null}
+      {open ? (
+        <ShareSurface
+          collection={collection}
+          initialShared={shared}
+          onSaved={(next) => setSaved({ id: collection.id, shared: next })}
+          onClose={() => setOpen(false)}
+        />
+      ) : null}
     </>
   );
 }
 
-function ShareSurface({ collection, onClose }: { collection: Collection; onClose: () => void }) {
+type ShareBodyProps = {
+  collection: Collection;
+  initialShared: boolean;
+  onSaved: (shared: boolean) => void;
+};
+
+function ShareSurface({ onClose, ...props }: ShareBodyProps & { onClose: () => void }) {
   const isPhone = useMediaQuery(PLATFORM_MEDIA.phone, true);
   const onOpenChange = (next: boolean) => {
     if (!next) onClose();
   };
   const title = "Share collection";
-  const body = <ShareBody collection={collection} />;
+  const body = <ShareBody {...props} />;
 
   return isPhone ? (
     <Sheet
@@ -115,25 +106,39 @@ function ShareSurface({ collection, onClose }: { collection: Collection; onClose
 
 type SubscriberCount = number | "loading" | "error";
 
-function ShareBody({ collection }: { collection: Collection }) {
+function ShareBody({ collection, initialShared, onSaved }: ShareBodyProps) {
   // The sheet keeps its own copy: the page catches up when the action's refresh lands.
-  const [shared, setShared] = useState(collection.visibility === "shared");
+  const [shared, setShared] = useState(initialShared);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [subscribers, setSubscribers] = useState<SubscriberCount>("loading");
+  const [focusSwitch, setFocusSwitch] = useState(false);
   const blocked = collection.shareBlockedReason !== null;
 
   async function setSharing(next: boolean) {
     setError(null);
     setBusy(true);
     setShared(next);
-    const result = await (next ? shareCollection : unshareCollection)(collection.id);
-    setBusy(false);
-    if (result.error) {
-      setShared(!next);
-      setError(result.error);
+    let failure: string | null;
+    try {
+      const result = await (next ? shareCollection : unshareCollection)(collection.id);
+      failure = result.error ?? null;
+    } catch {
+      failure = "Couldn't save that. Check your connection and try again.";
     }
+    setBusy(false);
+    if (failure) {
+      setShared(!next);
+      setError(failure);
+    } else {
+      onSaved(next);
+    }
+  }
+
+  function closeConfirm() {
+    setConfirming(false);
+    setFocusSwitch(true);
   }
 
   function askToStop() {
@@ -147,15 +152,15 @@ function ShareBody({ collection }: { collection: Collection }) {
 
   async function stop() {
     await setSharing(false);
-    setConfirming(false);
+    closeConfirm();
   }
 
   if (confirming) {
     return (
       <div className="flex flex-col gap-4 p-4">
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1" aria-live="polite">
           <p className="m-0 text-base font-medium">Stop sharing?</p>
-          <p className="m-0 text-sm text-base-content/80" aria-live="polite">
+          <p className="m-0 text-sm text-base-content/80">
             {subscribers === "loading"
               ? "Checking who else uses this collection…"
               : subscribers === "error"
@@ -168,7 +173,8 @@ function ShareBody({ collection }: { collection: Collection }) {
             variant="ghost"
             className="min-h-11 md:min-h-9"
             isDisabled={busy}
-            onPress={() => setConfirming(false)}
+            autoFocus
+            onPress={closeConfirm}
           >
             Keep sharing
           </Button>
@@ -194,6 +200,8 @@ function ShareBody({ collection }: { collection: Collection }) {
           description="Let others find this collection and add it to their library."
           disabledNote={blocked ? ownerNoticeFor(collection.shareBlockedReason) : undefined}
           checked={shared}
+          disabled={busy}
+          autoFocus={focusSwitch}
           onChange={(checked) => (checked ? void setSharing(true) : askToStop())}
         />
       </ul>
@@ -211,61 +219,6 @@ function ShareBody({ collection }: { collection: Collection }) {
         <p role="alert" className="m-0 px-4 pb-3 text-sm text-error-text">
           {error}
         </p>
-      ) : null}
-    </div>
-  );
-}
-
-function ShareLink({ collection }: { collection: Collection }) {
-  const { toast } = useToast();
-  const [copied, setCopied] = useState(false);
-  const nativeShare = useSyncExternalStore(noSubscribe, canShareNatively, () => false);
-  const link = shareLink(collection);
-
-  async function copy() {
-    if (!(await copyCollectionLink(collection, toast, true))) return;
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  async function share() {
-    try {
-      await navigator.share({ title: collection.name, url: link });
-      track("share_native");
-    } catch (err) {
-      if (err instanceof DOMException && err.name === "AbortError") return;
-      toast("Couldn't open sharing. Copy the link instead.", "destructive");
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex gap-2">
-        <Input
-          readOnly
-          value={link}
-          aria-label="Link to this collection"
-          className="min-h-11 min-w-0 flex-1 md:min-h-9"
-          onFocus={(event) => event.currentTarget.select()}
-        />
-        <Button
-          variant="outline"
-          className="min-h-11 shrink-0 gap-1.5 md:min-h-9"
-          onPress={() => void copy()}
-        >
-          {copied ? (
-            <Check className="size-4" aria-hidden />
-          ) : (
-            <Copy className="size-4" aria-hidden />
-          )}
-          {copied ? "Copied" : "Copy"}
-        </Button>
-      </div>
-      {nativeShare ? (
-        <Button className="min-h-11 gap-1.5 md:min-h-9" onPress={() => void share()}>
-          <Share2 className="size-4" aria-hidden />
-          Share…
-        </Button>
       ) : null}
     </div>
   );
