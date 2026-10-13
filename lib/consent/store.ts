@@ -1,9 +1,9 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { saveAnalyticsConsentAction } from "@/app/(private)/app/actions-consent";
 import { startAnalytics, stopAnalytics } from "@/lib/analytics/client";
 import { hasAuthCookie } from "@/lib/auth/has-auth-cookie";
+import { saveInBackground } from "@/lib/background-save";
 import { consentFromCookieHeader, serializeConsentCookie, type Consent } from "./consent";
 
 export const CONSENT_BANNER_ID = "consent-banner";
@@ -72,10 +72,7 @@ export function setConsent(consent: Consent) {
 /** Records a choice on the account when signed in. A failed save is retried by the next page load's sync. */
 export function persistConsent(consent: Consent) {
   if (!hasAuthCookie()) return;
-  saveAnalyticsConsentAction(consent).then(
-    (result) => {
-      if (result.error) console.error("Couldn't save the analytics choice:", result.error);
-    },
-    (err: unknown) => console.error("Couldn't save the analytics choice:", err),
-  );
+  void saveInBackground("/api/settings/consent", { consent }).then((error) => {
+    if (error) console.error("Couldn't save the analytics choice:", error);
+  });
 }

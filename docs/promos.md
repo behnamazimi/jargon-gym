@@ -16,7 +16,8 @@ chosen pages, only once the guided tour is done, and only when a condition holds
   `USAGE_CAP`, and only when a promo is otherwise eligible on that page.
 - `components/promos/` — `PromoSlot` (server, in the first HTML, renders
   nothing when no promo applies), `PromoBanner` (client, dismiss only) and
-  `PromoVisit` + `VisitTimer` (record a visit).
+  `PromoVisit` + `VisitTimer` (record a visit through `POST /api/promos/visit`;
+  a route, not a Server Action, because it runs on page load).
 - `supabase/migrations/20261004100000_promos.sql` — `promo_seen`,
   `promo_dismissed` and the RPCs. Writes are atomic, so two tabs can't overwrite each other.
 

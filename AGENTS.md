@@ -14,6 +14,14 @@ Use DaisyUI components.
 Write code that is self-explanatory. Add comments only when they are
 necessary. Any comment you add should be in plain language and not overkill.
 
+# Saves on page load
+
+Anything sent on its own when a page loads (a synced setting, a visit
+marker) goes through `saveInBackground` (`lib/background-save.ts`) to a
+route, never a Server Action. An action's reply updates Next's router, and
+one that lands while a page's `redirect()` is reloading the page crashes the
+router (React error #310). `e2e/tests/study-redirect.spec.ts` guards this.
+
 # Validating changes
 
 After finishing a change, run `pnpm check` (lint + format check + type-check + knip) and fix anything it flags before considering the change done.
