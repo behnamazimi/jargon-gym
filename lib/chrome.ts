@@ -1,4 +1,5 @@
-const STUDY_PREFIXES = ["/app", "/admin"] as const;
+/** /c is a shared collection link: members see it inside the app, visitors on the website. */
+const STUDY_PREFIXES = ["/app", "/admin", "/c"] as const;
 
 /** Logged-in study/admin surfaces get app chrome on phone. Everything else is the website. */
 export function isStudyPath(pathname: string): boolean {
@@ -17,7 +18,8 @@ export function isMorePath(pathname: string): boolean {
     pathname.startsWith("/app/mastery") ||
     pathname.startsWith("/app/goals") ||
     pathname.startsWith("/app/settings") ||
-    pathname.startsWith("/admin")
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/c/")
   );
 }
 

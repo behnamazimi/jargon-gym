@@ -7,6 +7,8 @@ process.env.SUPABASE_SERVICE_ROLE_KEY ??= "test-signing-secret";
 const auth = vi.hoisted(() => ({
   user: null as null | { id: string; email: string; banned_until: null },
   claims: undefined as undefined | { data: { claims: Record<string, unknown> } | null },
+  /** What shared_collection_link answers: null for a link that doesn't work. */
+  sharedLink: { public_slug: null } as null | { public_slug: string | null },
 }));
 
 vi.mock("@supabase/ssr", () => ({
@@ -17,6 +19,7 @@ vi.mock("@supabase/ssr", () => ({
           data: auth.user ? { claims: { sub: auth.user.id, email: auth.user.email } } : null,
         },
     },
+    rpc: async () => ({ data: auth.sharedLink, error: null }),
   }),
 }));
 
@@ -47,6 +50,7 @@ describe("updateSession", () => {
   beforeEach(() => {
     auth.user = null;
     auth.claims = undefined;
+    auth.sharedLink = { public_slug: null };
   });
 
   it("drops forged user headers on a public page for a signed-out visitor", async () => {
@@ -82,6 +86,28 @@ describe("updateSession", () => {
       expect(location.pathname).toBe("/login");
       expect(location.searchParams.get("next")).toBe(path);
     }
+  });
+
+  it("lets a signed-out visitor open a shared collection link and its preview image", async () => {
+    for (const path of ["/c/22222222-2222-2222-2222-222222222223", "/c/abc/opengraph-image"]) {
+      const response = await updateSession(request(path));
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+    }
+  });
+
+  it("answers a shared link that stopped working with a real 404", async () => {
+    auth.sharedLink = null;
+    for (const path of ["/c/22222222-2222-2222-2222-222222222223", "/c/not-a-uuid"]) {
+      expect((await updateSession(request(path))).status).toBe(404);
+    }
+  });
+
+  it("sends a built-in's shared link to its public page", async () => {
+    auth.sharedLink = { public_slug: "standup" };
+    const response = await updateSession(request("/c/22222222-2222-2222-2222-222222222225"));
+    expect(response.status).toBe(308);
+    expect(new URL(response.headers.get("location")!).pathname).toBe("/collections/standup");
   });
 
   it("lets a signed-out visitor reach the 404 page for a mistyped address", async () => {

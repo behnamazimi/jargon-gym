@@ -67,6 +67,8 @@ export type Collection = {
   loveCount: number;
   /** Why sharing was turned off for this collection; null when it wasn't. Only the owner is shown it. */
   shareBlockedReason: string | null;
+  /** Set for built-in collections that have a public page at /collections/<slug>. */
+  publicSlug: string | null;
   lovedByMe: boolean;
   reportedByMe: boolean;
 };

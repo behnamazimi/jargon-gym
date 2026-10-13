@@ -184,6 +184,13 @@ Nothing is automatic: reports only show up for an admin, who decides.
 - **Browse tabs.** Browse splits shared collections into Built-in and Community (`?tab=`, `group` in
   `lib/library/browse.ts`). Search, sort and the status filter carry across tabs, and each tab shows its own
   match count. Built-ins have no Report action; the import chooser search omits `group` and sees both.
+- **Share links.** The Library header's Share button (owners) turns sharing on and off and gives a link,
+  `/c/<collection id>`; everyone else gets a button that copies it. A built-in public collection's link is its
+  `/collections/<slug>` page (`lib/collections/share.ts`). The link works only while the collection is shared and
+  not blocked, so an unshare or a takedown ends it along with the copies in other libraries. The proxy checks it
+  first through `shared_collection_link` (a real 404, or a 308 to a built-in's page) and the page reads
+  `get_shared_collection_preview` (migration `20261108100000_shared_collection_preview.sql`), which never returns
+  the owner.
 - SQL checks: `supabase/tests/collection_moderation.sql`, run by hand against a local database.
 
 ## Queue debug

@@ -4,6 +4,7 @@ export type FeatureIconKey =
   | "book"
   | "pencil"
   | "download"
+  | "share"
   | "phone"
   | "send"
   | "monitor"

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import { setVerifiedUser, VERIFIED_USER_HEADERS } from "@/lib/auth/verified-user-header";
+import { isUuid } from "@/lib/admin/list-params";
 import type { Database } from "@/lib/supabase/database.types";
 import { READ_LANDING_COOKIE, readLandingRedirect } from "@/lib/read/landing";
 
@@ -30,6 +31,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/splash/",
   "/screenshots/",
   "/collections/",
+  "/c/",
   "/login",
   "/signup",
   "/request-access",
@@ -139,6 +141,48 @@ function redirectForSignedInUser(
   return null;
 }
 
+const SHARED_LINK_PATH = /^\/c\/([^/]+)$/;
+
+function withCookiesFrom(source: NextResponse, response: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+  return response;
+}
+
+/** A shared link that stopped working gets a real 404, and a built-in's link a
+ *  real redirect to its public page. Checked here because the page streams,
+ *  and a streamed page can no longer change its status. */
+async function sharedLinkResponse(
+  supabase: ReturnType<typeof createServerClient<Database>>,
+  request: NextRequest,
+  pathname: string,
+  supabaseResponse: NextResponse,
+) {
+  const collectionId = SHARED_LINK_PATH.exec(pathname)?.[1];
+  if (!collectionId) return null;
+
+  // An unmatched path under the same prefix, so the 404 page gets the same chrome.
+  const notFound = () =>
+    withCookiesFrom(
+      supabaseResponse,
+      NextResponse.rewrite(new URL(`${pathname}/not-found`, request.url), { status: 404 }),
+    );
+  if (!isUuid(collectionId)) return notFound();
+
+  const { data, error } = await supabase.rpc("shared_collection_link", {
+    p_collection_id: collectionId,
+  });
+  // The page checks again, so a failed lookup just lets it through.
+  if (error) return null;
+  if (!data) return notFound();
+
+  const publicSlug = (data as { public_slug: string | null }).public_slug;
+  if (!publicSlug) return null;
+  return withCookiesFrom(
+    supabaseResponse,
+    NextResponse.redirect(new URL(`/collections/${publicSlug}`, request.url), 308),
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   // Drop any client-sent copies before anything forwards this request.
   for (const name of VERIFIED_USER_HEADERS) request.headers.delete(name);
@@ -184,6 +228,9 @@ export async function updateSession(request: NextRequest) {
 
   const authCodeRedirect = redirectForAuthCode(request, pathname);
   if (authCodeRedirect) return authCodeRedirect;
+
+  const sharedLink = await sharedLinkResponse(supabase, request, pathname, supabaseResponse);
+  if (sharedLink) return sharedLink;
 
   if (!user) {
     return isPublicPath(pathname) || !isPrivatePath(pathname)
