@@ -57,7 +57,10 @@ async function requestQuestionsFromModel(input: ModelInput): Promise<QuizQuestio
       model,
       schema: buildQuizGenerationObjectSchema(plan),
       prompt,
-      providerOptions: { google: { structuredOutputs: true } },
+      // Gemini decides how long to think by default, which is slow and billed as output.
+      providerOptions: {
+        google: { structuredOutputs: true, thinkingConfig: { thinkingLevel: "low" } },
+      },
       maxRetries: 0,
       abortSignal: input.signal,
       ...aiGenerationOptions(input.observability, "quiz_generation"),
