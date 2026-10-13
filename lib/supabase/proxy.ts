@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import { setVerifiedUser, VERIFIED_USER_HEADERS } from "@/lib/auth/verified-user-header";
 import type { Database } from "@/lib/supabase/database.types";
+import { READ_LANDING_COOKIE, readLandingRedirect } from "@/lib/read/landing";
 
 // referral_verified only ever flips false -> true (during onboarding), so once
 // we've confirmed it we can skip the DB round-trip on every subsequent
@@ -198,6 +199,17 @@ export async function updateSession(request: NextRequest) {
   );
   const signedInRedirect = redirectForSignedInUser(request, pathname, referralVerified);
   if (signedInRedirect) return signedInRedirect;
+
+  const readLanding = readLandingRedirect(
+    pathname,
+    request.nextUrl.searchParams,
+    request.cookies.get(READ_LANDING_COOKIE)?.value,
+  );
+  if (readLanding) {
+    const redirect = NextResponse.redirect(new URL(readLanding, request.url));
+    supabaseResponse.cookies.getAll().forEach((cookie) => redirect.cookies.set(cookie));
+    return redirect;
+  }
 
   // Forward the already-verified user so pages, actions and route handlers
   // behind this proxy don't need to call supabase.auth.getClaims() again.
