@@ -1,12 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 import type { Database } from "@/lib/supabase/database.types";
-import {
-  dismissUnreadStories,
-  hasCurrentStory,
-  listStorySummaries,
-  markStoryRead,
-} from "./repository";
+import { dismissUnreadStories, listStorySummaries, markStoryRead } from "./repository";
 
 type Client = SupabaseClient<Database>;
 
@@ -94,21 +89,6 @@ function recordingClient(result: { data?: unknown; error: null }) {
   const client = { from: () => builder() } as unknown as Client;
   return { client, calls };
 }
-
-describe("hasCurrentStory", () => {
-  it("only counts stories that are neither read nor dismissed", async () => {
-    const { client, calls } = recordingClient({ data: [{ id: "s1" }], error: null });
-    expect(await hasCurrentStory(client, "u1")).toBe(true);
-    expect(calls).toContainEqual(["eq", "user_id", "u1"]);
-    expect(calls).toContainEqual(["is", "read_at", null]);
-    expect(calls).toContainEqual(["is", "dismissed_at", null]);
-  });
-
-  it("is false when nothing matches", async () => {
-    const { client } = recordingClient({ data: [], error: null });
-    expect(await hasCurrentStory(client, "u1")).toBe(false);
-  });
-});
 
 describe("dismissUnreadStories", () => {
   it("dismisses every other unread story when keeping the new one", async () => {

@@ -148,18 +148,6 @@ export async function getCurrentStory(admin: Client, userId: string): Promise<St
   return data ? mapStory(data) : null;
 }
 
-export async function hasCurrentStory(admin: Client, userId: string): Promise<boolean> {
-  const { data, error } = await admin
-    .from("stories")
-    .select("id")
-    .eq("user_id", userId)
-    .is("read_at", null)
-    .is("dismissed_at", null)
-    .limit(1);
-  if (error) throw error;
-  return (data ?? []).length > 0;
-}
-
 /** Dismisses the user's unread stories, except `keepStoryId` when given. */
 export async function dismissUnreadStories(
   admin: Client,

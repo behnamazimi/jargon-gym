@@ -7,6 +7,7 @@ import {
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { QuizPanel } from "@/components/quiz/quiz-ui";
+import { ReadLandingSync } from "@/components/read/read-landing-sync";
 import { ReadPage } from "@/components/read/read-page";
 import { StudyNoActiveCollectionsState } from "@/components/read/study/study-paused-state";
 import { getSessionUser } from "@/lib/auth/require-session";
@@ -15,9 +16,6 @@ import {
   parseReadCollectionCookie,
   READ_COLLECTION_COOKIE,
 } from "@/lib/read/collection-preference";
-import { readLandingRedirect } from "@/lib/read/landing";
-import { hasCurrentStory } from "@/lib/stories/repository";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveStudyCollectionId } from "@/lib/study/collection-preference";
 import { hasNoCollections } from "@/lib/study/collections";
 import type { StudyCollection } from "@/lib/study/types";
@@ -37,22 +35,14 @@ type PageProps = {
   }>;
 };
 
-/** Options and "is a story in progress" for the landing redirect. Both fall
- *  back safely, so a failure here never takes Cards down with it. */
-async function loadLandingState(): Promise<{ options: ReadOptions; hasStory: boolean }> {
+/** Falls back to the defaults, so a failure here never takes Cards down. */
+async function loadReadOptions(): Promise<ReadOptions> {
   const { supabase, user } = await getSessionUser();
-  if (!user) return { options: DEFAULT_READ_OPTIONS, hasStory: false };
-  const [options, hasStory] = await Promise.all([
-    getReadOptions(supabase, user.id).catch((err: unknown) => {
-      console.error("Failed to load Read options:", err);
-      return DEFAULT_READ_OPTIONS;
-    }),
-    hasCurrentStory(createAdminClient(), user.id).catch((err: unknown) => {
-      console.error("Failed to check for a current story:", err);
-      return false;
-    }),
-  ]);
-  return { options, hasStory };
+  if (!user) return DEFAULT_READ_OPTIONS;
+  return getReadOptions(supabase, user.id).catch((err: unknown) => {
+    console.error("Failed to load Read options:", err);
+    return DEFAULT_READ_OPTIONS;
+  });
 }
 
 function resolveReadCollectionId(
@@ -83,7 +73,7 @@ function LoginPrompt() {
 async function ReadRoute({ searchParams }: PageProps) {
   const params = await searchParams;
 
-  const { options, hasStory } = await loadLandingState();
+  const options = await loadReadOptions();
 
   if (params.termId) {
     const setup = await getReadSetupData();
@@ -104,13 +94,6 @@ async function ReadRoute({ searchParams }: PageProps) {
       />
     );
   }
-
-  const storiesPath = readLandingRedirect({
-    params,
-    storiesDefault: options.storiesDefault,
-    hasCurrentStory: hasStory,
-  });
-  if (storiesPath) redirect(storiesPath);
 
   // No deep link: the collection is already resolvable from the URL (or
   // defaults to "all"), so fire the feed batch next to setup instead of
@@ -149,14 +132,17 @@ async function ReadRoute({ searchParams }: PageProps) {
   if (seed.error === "Log in to continue.") return <LoginPrompt />;
 
   return (
-    <ReadPage
-      key={activeCollectionsKey(setup.collections)}
-      seed={seed}
-      collections={setup.collections}
-      collectionId={collectionId}
-      narrationAccess={setup.narrationAccess}
-      options={options}
-    />
+    <>
+      <ReadLandingSync storiesDefault={options.storiesDefault} />
+      <ReadPage
+        key={activeCollectionsKey(setup.collections)}
+        seed={seed}
+        collections={setup.collections}
+        collectionId={collectionId}
+        narrationAccess={setup.narrationAccess}
+        options={options}
+      />
+    </>
   );
 }
 

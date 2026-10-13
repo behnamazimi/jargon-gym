@@ -1,11 +1,13 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { after } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { recordRead } from "@/lib/terms/review-outcome";
 import { getNarrationAccessForUser } from "@/lib/narration/access";
 import { attachNarrationVersions } from "@/lib/narration/versions";
 import { READ_FEED_BATCH_SIZE } from "@/lib/read/feed-size";
+import { READ_LANDING_COOKIE, readLandingCookieValue } from "@/lib/read/landing";
 import { isReadOptionKey, isReadOptionValue, saveReadOption } from "@/lib/read/options";
 import { toReviewTerm } from "@/lib/review/mappers";
 import type { ReviewTerm } from "@/lib/review/types";
@@ -166,6 +168,13 @@ export async function saveReadOptionAction(
 
   try {
     await saveReadOption(auth.supabase, auth.user.id, key, value);
+    if (key === "storiesDefault") {
+      (await cookies()).set(READ_LANDING_COOKIE, readLandingCookieValue(value === true), {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+      });
+    }
     return {};
   } catch (err) {
     console.error("saveReadOptionAction failed:", err);
