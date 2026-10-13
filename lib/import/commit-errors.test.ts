@@ -10,7 +10,7 @@ describe("commitFailureFor", () => {
     ["destination_not_found", "That collection isn't available any more. Choose another."],
     [
       "import_too_large",
-      "One import adds up to 500 terms, so split your list and add it in parts.",
+      "One import adds up to 1100 terms, so split your list and add it in parts.",
     ],
     ["Not authenticated", "Log in to add terms."],
     [

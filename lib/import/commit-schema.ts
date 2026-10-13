@@ -2,7 +2,7 @@ import { z } from "zod";
 import { cleanText } from "@/lib/terms/text-clean";
 import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
 
-export const MAX_IMPORT_TERMS = 500;
+export const MAX_IMPORT_TERMS = 1100;
 
 /** Control and direction-override characters are removed before the length rules. */
 const text = (max: number) => z.string().transform(cleanText).pipe(z.string().max(max));

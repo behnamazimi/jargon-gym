@@ -1,7 +1,8 @@
 import { commitImport } from "@/app/(private)/app/import/actions";
 import type { CheckState, CheckSummary, CommitTerm } from "@/lib/import/check-state";
 import { toCommitTerms } from "@/lib/import/check-state";
-import { OFFLINE_FAILURE } from "@/lib/import/commit-errors";
+import { OFFLINE_FAILURE, tooBigFailure } from "@/lib/import/commit-errors";
+import { commitBytes, MAX_COMMIT_BYTES } from "@/lib/import/commit-size";
 import type { CommitImportInput } from "@/lib/import/commit-schema";
 import type { DraftStore } from "@/lib/import/draft-store";
 import type { ImportDestination } from "@/lib/import/import-collections";
@@ -72,6 +73,8 @@ export async function submitTerms(args: SubmitArgs): Promise<ImportFailure | nul
   if (navigator.onLine === false) return OFFLINE_FAILURE;
   const terms = toCommitTerms(args.check);
   const links = args.json?.links ?? [];
+  const bytes = commitBytes({ terms, links });
+  if (bytes > MAX_COMMIT_BYTES) return tooBigFailure(bytes);
   try {
     if (args.adapter) {
       const failed = await args.adapter.commit({ terms, links, format: args.format });
