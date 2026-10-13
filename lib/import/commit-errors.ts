@@ -1,3 +1,5 @@
+import { MAX_IMPORT_TERMS } from "./commit-schema";
+import { formatMegabytes, MAX_COMMIT_BYTES } from "./commit-size";
 import type { ImportFailure } from "./types";
 
 const TITLE = "Couldn't add your terms";
@@ -27,13 +29,20 @@ export function commitFailureFor(
   if (text.includes("import_too_large")) {
     return {
       title: TITLE,
-      message: "One import adds up to 500 terms, so split your list and add it in parts.",
+      message: `One import adds up to ${MAX_IMPORT_TERMS} terms, so split your list and add it in parts.`,
     };
   }
   if (text.includes("Not authenticated")) {
     return { title: "Not logged in", message: "Log in to add terms." };
   }
   return GENERIC;
+}
+
+export function tooBigFailure(bytes: number): ImportFailure {
+  return {
+    title: TITLE,
+    message: `These terms come to ${formatMegabytes(bytes)}, and one import can send up to ${formatMegabytes(MAX_COMMIT_BYTES)}. Split your list and add it in parts. Nothing was added, and your list is still here.`,
+  };
 }
 
 export const OFFLINE_FAILURE: ImportFailure = {

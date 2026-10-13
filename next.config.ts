@@ -15,6 +15,7 @@ const nextConfig: NextConfig = {
     viewTransition: true,
     optimizePackageImports: ["react-aria-components", "lucide-react"],
     // Issue screenshots are shrunk to 2 MB in the browser; the rest is form overhead.
+    // Import checks its commit against this in the browser (lib/import/commit-size.ts).
     serverActions: { bodySizeLimit: "3mb" },
   },
   async redirects() {

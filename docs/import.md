@@ -28,7 +28,7 @@ fields, one item per line (split at the first occurrence of the separator that
 covers most lines), alternating short and long lines, then bare words.
 `build-terms.ts` turns rows into terms and folds repeats. JSON goes through
 `json-input.ts` and the same Check screen. `read-input.ts` wraps both and
-enforces the 500-term cap.
+enforces the 1100-term cap.
 
 Papa Parse reads delimited text, always with an explicit delimiter chosen by
 these rules, never its own guess.
@@ -41,7 +41,9 @@ against the destination by trimmed, lowercased name, the same rule as the
 place by id, so learning history survives, and never replaces a value with an
 empty one.
 
-`my_import_terms` commits everything in one transaction. The client creates the
+`my_import_terms` commits everything in one transaction. Before sending, the
+browser checks the payload against the 3 MB Server Action body limit
+(`lib/import/commit-size.ts`) and says how big it is instead of failing. The client creates the
 import id, so a double tap or a retry returns the stored result instead of
 importing twice. `import_batches` keeps counts, the detected format and the
 entry point, never term text. A collection is never merged by name: the
