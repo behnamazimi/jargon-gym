@@ -12,20 +12,24 @@ test.describe("Study pages without collections", () => {
     "/app/quiz",
     "/app/triage",
   ]) {
-    test(`${path} sends a member with no collections to the Library`, async ({ page, user }) => {
-      await page.goto(path);
-      await expect(page).toHaveURL(/\/app\/library/);
+    test(
+      `${path} sends a member with no collections to the Library`,
+      { tag: "@smoke" },
+      async ({ page, user }) => {
+        await page.goto(path);
+        await expect(page).toHaveURL(/\/app\/library/);
 
-      await expect
-        .poll(async () => {
-          const [row] = await sql<{ timezone: string | null; consent: string | null }>(
-            "select timezone, analytics_consent as consent from public.user_settings where user_id = $1",
-            [user.id],
-          );
-          return row ?? null;
-        })
-        .toEqual({ timezone: expect.any(String), consent: "denied" });
-      await page.waitForLoadState("networkidle");
-    });
+        await expect
+          .poll(async () => {
+            const [row] = await sql<{ timezone: string | null; consent: string | null }>(
+              "select timezone, analytics_consent as consent from public.user_settings where user_id = $1",
+              [user.id],
+            );
+            return row ?? null;
+          })
+          .toEqual({ timezone: expect.any(String), consent: "denied" });
+        await page.waitForLoadState("networkidle");
+      },
+    );
   }
 });

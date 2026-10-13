@@ -15,6 +15,7 @@ export async function saveInBackground(path: string, body: unknown): Promise<str
       redirect: "manual",
     });
     if (response.ok) return null;
+    if (response.type === "opaqueredirect") return "Log in to continue.";
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
     return result?.error ?? `Request failed (${response.status}).`;
   } catch (err) {

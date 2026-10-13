@@ -1,8 +1,8 @@
 "use server";
 
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
-import { isPromoId, isVisitKey } from "@/lib/promos/promos";
-import { dismissPromo, markPromosSeen } from "@/lib/promos/settings";
+import { isPromoId } from "@/lib/promos/promos";
+import { dismissPromo } from "@/lib/promos/settings";
 import { fetchStreakHistory, type StreakDay } from "@/lib/streak/history";
 import { isTourChapterId } from "@/lib/tour/chapters";
 import { markTourChapterSeen, skipTour } from "@/lib/tour/settings";
@@ -43,20 +43,6 @@ export async function skipTourAction(): Promise<{ error?: string }> {
     return {};
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Couldn't skip the tour." };
-  }
-}
-
-export async function markPromoVisitAction(target: string): Promise<{ error?: string }> {
-  const key = `visit:${target}`;
-  if (!isVisitKey(key)) return { error: "Unknown page." };
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    await markPromosSeen(auth.supabase, [key]);
-    return {};
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "Couldn't save your visit." };
   }
 }
 

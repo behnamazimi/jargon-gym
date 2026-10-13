@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { saveUserTimezone } from "@/lib/streak/settings";
+import { isKnownTimeZone } from "@/lib/trace/local-day";
 
 function isTimezone(value: unknown): value is string {
-  if (typeof value !== "string" || value.length === 0 || value.length > 64) return false;
-  try {
-    new Intl.DateTimeFormat("en", { timeZone: value });
-    return true;
-  } catch {
-    return false;
-  }
+  return (
+    typeof value === "string" && value.length > 0 && value.length <= 64 && isKnownTimeZone(value)
+  );
 }
 
 /** Saves the browser's IANA timezone, used for streak day boundaries. A route
