@@ -13,12 +13,14 @@ describe("isStudyPath", () => {
     expect(isStudyPath("/app/library")).toBe(true);
     expect(isStudyPath("/app/read")).toBe(true);
     expect(isStudyPath("/admin/people")).toBe(true);
+    expect(isStudyPath("/c/22222222-2222-2222-2222-222222222223")).toBe(true);
   });
 
   it("treats marketing, auth, and public glossary as the website", () => {
     expect(isStudyPath("/")).toBe(false);
     expect(isStudyPath("/login")).toBe(false);
     expect(isStudyPath("/collections/software")).toBe(false);
+    expect(isStudyPath("/contact")).toBe(false);
     expect(isStudyPath("/how-terms-work")).toBe(false);
     expect(isStudyPath("/~offline")).toBe(false);
     expect(isStudyPath("/apple-icon")).toBe(false);
@@ -38,6 +40,7 @@ describe("isMorePath", () => {
     expect(isMorePath("/app/capture")).toBe(true);
     expect(isMorePath("/admin/collections")).toBe(true);
     expect(isMorePath("/admin/system/audit")).toBe(true);
+    expect(isMorePath("/c/22222222-2222-2222-2222-222222222223")).toBe(true);
     expect(isMorePath("/app/read")).toBe(false);
     expect(isMorePath("/app/library")).toBe(false);
   });

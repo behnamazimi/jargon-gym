@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { rememberLibraryCollection } from "@/lib/library/pick-collection";
 import type { Collection } from "@/lib/terms/types";
 import { CollectionActionsMenu, CollectionMeta } from "./collection-actions-menu";
+import { CollectionShareButton } from "./collection-share-sheet";
+import { CopyCollectionLinkButton } from "./copy-collection-link-button";
 import { LoveButton } from "./love-button";
 import { AddTermsMenu } from "@/components/import/add-terms-menu";
 import { NAV_FORWARD } from "@/components/shared/view-transitions";
@@ -200,6 +202,11 @@ export function LibraryCollectionHeader({
             />
           ) : null}
           {isOwner ? <AddTermsMenu collectionId={collection.id} /> : null}
+          {collection.source === "owned" ? (
+            <CollectionShareButton collection={collection} />
+          ) : (
+            <CopyCollectionLinkButton collection={collection} />
+          )}
           <CollectionActionsMenu
             collection={collection}
             togglePending={togglePending}

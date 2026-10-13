@@ -251,6 +251,15 @@ revalidates its pages, but editing a term inside it does not. Optional copy or a
 pinned term goes in `lib/collections/showcase-overrides.ts`. The seed has two
 public samples (`standup`, `dutch-basics`) for checking these pages locally.
 
+A shared link (`/c/<collection id>`, `app/c/[collectionId]/`) opens any
+shared, unblocked collection, signed in or not. It is dynamic and `noindex`,
+shows the collection's name, kind, description and up to 10 random finished
+terms (`lib/collections/shared-preview.ts`), and offers Log in to add, Add or
+Open in library. Signed-in members see it in the app chrome (`lib/chrome.ts`).
+The proxy answers a dead link with a real 404 and a built-in's link with a
+redirect to its public page; see the share links note in
+[docs/admin.md](docs/admin.md).
+
 Search metadata: collection pages carry JSON-LD (`lib/seo/json-ld.ts`,
 rendered with `components/seo/json-ld.tsx`), and public pages get generated
 share images from `lib/seo/og/specimen-image.tsx` (fonts in `assets/fonts/`).

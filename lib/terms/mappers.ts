@@ -25,7 +25,9 @@ type MapCollectionOptions = {
 
 export function mapCollection(
   row: Pick<CollectionRow, "id" | "name" | "visibility" | "description" | "language"> &
-    Partial<Pick<CollectionRow, "is_builtin" | "love_count" | "share_block_reason">>,
+    Partial<
+      Pick<CollectionRow, "is_builtin" | "love_count" | "share_block_reason" | "is_public" | "slug">
+    >,
   options: MapCollectionOptions,
 ): Collection {
   return {
@@ -45,6 +47,7 @@ export function mapCollection(
     isBuiltin: row.is_builtin ?? false,
     loveCount: row.love_count ?? 0,
     shareBlockedReason: row.share_block_reason ?? null,
+    publicSlug: row.is_public && row.slug ? row.slug : null,
     lovedByMe: options.lovedByMe ?? false,
     reportedByMe: options.reportedByMe ?? false,
   };

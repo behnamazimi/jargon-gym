@@ -23,6 +23,11 @@ export const FEATURE_SECTIONS: FeatureSection[] = [
         body: "Every field, category and link between terms, any time.",
       },
       { icon: "download", title: "Export", body: "Take a collection out as text or JSON." },
+      {
+        icon: "share",
+        title: "Share a collection",
+        body: "List it in Browse and send friends a link. They see a few terms and add it in a tap.",
+      },
     ],
   },
   {

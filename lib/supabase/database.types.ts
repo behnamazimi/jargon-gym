@@ -2404,6 +2404,10 @@ export type Database = {
         Args: { p_feature: string; p_token: string; p_user_id: string };
         Returns: undefined;
       };
+      get_shared_collection_preview: {
+        Args: { p_collection_id: string };
+        Returns: Json;
+      };
       get_streak_history: {
         Args: { p_user_id: string };
         Returns: {
@@ -2863,6 +2867,10 @@ export type Database = {
       set_term_marked_known: {
         Args: { p_marked: boolean; p_term_id: string; p_user_id: string };
         Returns: undefined;
+      };
+      shared_collection_link: {
+        Args: { p_collection_id: string };
+        Returns: Json;
       };
       submit_issue_report: {
         Args: {

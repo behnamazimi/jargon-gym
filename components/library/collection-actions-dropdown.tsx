@@ -2,13 +2,11 @@ import {
   BookmarkMinus,
   Download,
   Flag,
-  Lock,
   Pencil,
   RotateCcw,
   Settings,
   Pause,
   Play,
-  Share2,
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,8 +26,6 @@ type CollectionActionsDropdownProps = {
   onResetProgress: () => void;
   onExport: () => void;
   onEdit: () => void;
-  onShare: () => void;
-  onUnshare: () => void;
   onDelete: () => void;
   onReport: () => void;
   onRemoveFromCollection: () => void;
@@ -42,8 +38,6 @@ export function CollectionActionsDropdown({
   onResetProgress,
   onExport,
   onEdit,
-  onShare,
-  onUnshare,
   onDelete,
   onReport,
   onRemoveFromCollection,
@@ -90,20 +84,6 @@ export function CollectionActionsDropdown({
               <Pencil className="h-4 w-4" />
               Edit collection
             </DropdownMenuItem>
-            {collection.visibility === "private" ? (
-              <DropdownMenuItem
-                isDisabled={disabled || collection.shareBlockedReason !== null}
-                onAction={onShare}
-              >
-                <Share2 className="h-4 w-4" />
-                Share collection
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem isDisabled={disabled} onAction={onUnshare}>
-                <Lock className="h-4 w-4" />
-                Unshare collection
-              </DropdownMenuItem>
-            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" isDisabled={disabled} onAction={onDelete}>
               <Trash2 className="h-4 w-4" />

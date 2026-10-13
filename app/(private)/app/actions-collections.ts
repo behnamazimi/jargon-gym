@@ -42,8 +42,8 @@ export async function addToCollection(collectionId: string): Promise<{ error?: s
     revalidatePath("/app/library");
     return {};
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Couldn't add that collection. Try again.";
-    return { error: message };
+    console.error("Couldn't add a collection:", err);
+    return { error: "Couldn't add that collection. Try again." };
   }
 }
 

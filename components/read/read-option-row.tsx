@@ -10,6 +10,8 @@ export function OptionRow({
   description,
   checked,
   disabledNote,
+  disabled: busy = false,
+  autoFocus,
   onChange,
 }: {
   id: string;
@@ -17,6 +19,9 @@ export function OptionRow({
   description: string;
   checked: boolean;
   disabledNote?: string;
+  /** Off for a moment, e.g. while a change saves; unlike `disabledNote` it doesn't dim the row. */
+  disabled?: boolean;
+  autoFocus?: boolean;
   onChange: (checked: boolean) => void;
 }) {
   const disabled = Boolean(disabledNote);
@@ -44,7 +49,8 @@ export function OptionRow({
       <Switch
         id={id}
         checked={checked}
-        disabled={disabled}
+        disabled={disabled || busy}
+        autoFocus={autoFocus}
         aria-describedby={`${id}-description`}
         onCheckedChange={onChange}
         className="toggle-primary shrink-0"

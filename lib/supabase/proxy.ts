@@ -4,6 +4,7 @@ import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import { setVerifiedUser, VERIFIED_USER_HEADERS } from "@/lib/auth/verified-user-header";
 import type { Database } from "@/lib/supabase/database.types";
 import { READ_LANDING_COOKIE, readLandingRedirect } from "@/lib/read/landing";
+import { checkSharedLink, forward } from "./proxy-shared-link";
 
 // referral_verified only ever flips false -> true (during onboarding), so once
 // we've confirmed it we can skip the DB round-trip on every subsequent
@@ -30,6 +31,7 @@ const PUBLIC_PATH_PREFIXES = [
   "/splash/",
   "/screenshots/",
   "/collections/",
+  "/c/",
   "/login",
   "/signup",
   "/request-access",
@@ -139,6 +141,24 @@ function redirectForSignedInUser(
   return null;
 }
 
+function withCookiesFrom(source: NextResponse, response: NextResponse) {
+  source.cookies.getAll().forEach((cookie) => response.cookies.set(cookie));
+  return response;
+}
+
+function responseForVisitor(
+  request: NextRequest,
+  pathname: string,
+  supabaseResponse: NextResponse,
+  sharedLinkGone: boolean,
+) {
+  if (!isPublicPath(pathname) && isPrivatePath(pathname)) {
+    return redirectToPathWithNext(request, "/login");
+  }
+  if (!sharedLinkGone) return supabaseResponse;
+  return withCookiesFrom(supabaseResponse, forward(request, request.headers, true));
+}
+
 export async function updateSession(request: NextRequest) {
   // Drop any client-sent copies before anything forwards this request.
   for (const name of VERIFIED_USER_HEADERS) request.headers.delete(name);
@@ -185,11 +205,16 @@ export async function updateSession(request: NextRequest) {
   const authCodeRedirect = redirectForAuthCode(request, pathname);
   if (authCodeRedirect) return authCodeRedirect;
 
-  if (!user) {
-    return isPublicPath(pathname) || !isPrivatePath(pathname)
-      ? supabaseResponse
-      : redirectToPathWithNext(request, "/login");
+  const sharedLink = await checkSharedLink(supabase, request, pathname);
+  if (sharedLink?.kind === "redirect") {
+    return withCookiesFrom(
+      supabaseResponse,
+      NextResponse.redirect(new URL(sharedLink.to, request.url), 308),
+    );
   }
+  const sharedLinkGone = sharedLink?.kind === "gone";
+
+  if (!user) return responseForVisitor(request, pathname, supabaseResponse, sharedLinkGone);
 
   const referralVerified = await resolveReferralVerified(
     supabase,
@@ -215,7 +240,7 @@ export async function updateSession(request: NextRequest) {
   // behind this proxy don't need to call supabase.auth.getClaims() again.
   const requestHeaders = new Headers(request.headers);
   await setVerifiedUser(requestHeaders, { id: user.id, email: user.email });
-  const responseWithHeader = NextResponse.next({ request: { headers: requestHeaders } });
+  const responseWithHeader = forward(request, requestHeaders, sharedLinkGone);
   // NextResponse.next() returns a fresh response object, which would drop
   // any cookies already queued on supabaseResponse (session refresh,
   // referral_verified) — carry them over instead of losing them.

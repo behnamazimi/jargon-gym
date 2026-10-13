@@ -7,9 +7,7 @@ import {
   deleteOwnedCollection,
   removeFromCollection,
   resetCollectionProgress,
-  shareCollection,
   updateOwnedCollection,
-  unshareCollection,
 } from "@/app/(private)/app/actions";
 import type { CollectionInput, NewCollectionInput } from "@/lib/library/collection-schema";
 
@@ -21,10 +19,6 @@ export function useCollectionActions() {
     isBusy,
     busyId,
     clearError,
-    shareCollection: (collectionId: string) =>
-      run(() => shareCollection(collectionId), { busyKey: collectionId }),
-    unshareCollection: (collectionId: string) =>
-      run(() => unshareCollection(collectionId), { busyKey: collectionId }),
     updateOwnedCollection: (collectionId: string, input: CollectionInput, onSuccess?: () => void) =>
       run(() => updateOwnedCollection(collectionId, input), { busyKey: collectionId, onSuccess }),
     createEmptyCollection: (

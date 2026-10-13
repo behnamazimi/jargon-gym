@@ -16,6 +16,8 @@ test.describe("Shared collections", () => {
     const member = await reporter.newPage();
     await gotoReady(member, "/app/browse");
     await member.getByRole("tab", { name: /Community/ }).click();
+    // Other tests share collections too, so this one may not be on the first page.
+    await member.getByRole("searchbox", { name: /Search collections/ }).fill(name);
     const card = member.getByRole("article").filter({ hasText: name });
     await card.getByRole("button", { name: "More actions" }).click();
     await member.getByRole("menuitem", { name: "Report collection" }).click();

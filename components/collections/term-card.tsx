@@ -3,8 +3,10 @@ import type { PublicTermSummary } from "@/lib/terms/public-terms";
 import type { CollectionLanguage } from "@/lib/terms/languages";
 import { TERM_LABELS } from "@/lib/terms/term-labels";
 
+export type TermCardTerm = Pick<PublicTermSummary, "term" | "definition" | "example">;
+
 type TermCardProps = {
-  term: PublicTermSummary;
+  term: TermCardTerm;
   language: CollectionLanguage;
 };
 
