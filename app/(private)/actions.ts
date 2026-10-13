@@ -4,22 +4,8 @@ import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { isPromoId, isVisitKey } from "@/lib/promos/promos";
 import { dismissPromo, markPromosSeen } from "@/lib/promos/settings";
 import { fetchStreakHistory, type StreakDay } from "@/lib/streak/history";
-import { saveUserTimezone } from "@/lib/streak/settings";
 import { isTourChapterId } from "@/lib/tour/chapters";
 import { markTourChapterSeen, skipTour } from "@/lib/tour/settings";
-
-/** Silently persists the client-detected IANA timezone, used for streak day boundaries. */
-export async function syncTimezoneAction(timezone: string): Promise<{ error?: string }> {
-  const auth = await requireAuthenticatedClient();
-  if ("error" in auth) return { error: auth.error };
-
-  try {
-    await saveUserTimezone(auth.supabase, auth.user.id, timezone);
-    return {};
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : "Couldn't save timezone." };
-  }
-}
 
 /** Last 7 local days of streak activity, for the streak modal. Lazy —
  *  only called when the modal opens, never on page load. */
