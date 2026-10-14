@@ -72,6 +72,13 @@ describe("streakSummary", () => {
     );
   });
 
+  it("drops a pending shield message once the streak has ended", () => {
+    const stale = { savedDate: "2026-03-01", pending: true };
+    expect(streakSummary(row("2026-03-02", "Europe/Amsterdam", stale), now).shield.noticeDate).toBe(
+      null,
+    );
+  });
+
   it("uses the person's timezone for the day boundary", () => {
     expect(streakSummary(row("2026-03-10", "Asia/Tokyo"), now)).toMatchObject({
       current: 5,

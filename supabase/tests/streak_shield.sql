@@ -97,4 +97,52 @@ begin
 end;
 $$;
 
+do $$
+declare
+  u uuid := pg_temp.make_user('shield-edges@example.test');
+  r public.user_settings;
+begin
+  insert into public.user_settings (user_id, timezone, current_streak, longest_streak,
+                                    last_active_date, shield_progress)
+  values (u, 'UTC', 4, 4, (now() at time zone 'UTC')::date - 1, 3);
+
+  perform public.bump_streak(u);
+  perform public.bump_streak(u);
+  select * into r from public.user_settings where user_id = u;
+  assert r.current_streak = 5 and r.shield_progress = 4,
+    'a second bump on the same day changes nothing';
+
+  update public.user_settings
+  set shield_ready = true, shield_notice_pending = true,
+      shield_saved_date = (now() at time zone 'UTC')::date - 9,
+      last_active_date = (now() at time zone 'UTC')::date - 3
+  where user_id = u;
+  perform public.bump_streak(u);
+  select * into r from public.user_settings where user_id = u;
+  assert not r.shield_notice_pending, 'a broken streak clears the old shield message';
+end;
+$$;
+
+do $$
+declare
+  u uuid := pg_temp.make_user('shield-return@example.test');
+  r public.user_settings;
+begin
+  insert into public.user_settings (user_id, timezone, current_streak, longest_streak,
+                                    last_active_date, shield_ready, shield_progress)
+  values (u, 'UTC', 8, 8, (now() at time zone 'UTC')::date - 2, true, 0);
+
+  perform public.bump_streak(u);
+  select * into r from public.user_settings where user_id = u;
+  assert r.shield_progress = 1 and not r.shield_ready, 'the return day is the first of seven';
+
+  update public.user_settings
+  set shield_progress = 6, last_active_date = (now() at time zone 'UTC')::date - 1
+  where user_id = u;
+  perform public.bump_streak(u);
+  select * into r from public.user_settings where user_id = u;
+  assert r.shield_ready and r.shield_progress = 0, 'the seventh day after a spent shield earns the next';
+end;
+$$;
+
 rollback;

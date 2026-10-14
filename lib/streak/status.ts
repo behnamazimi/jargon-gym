@@ -65,7 +65,7 @@ export function streakSummary(
       ready: alive && row.shield_ready,
       progress: alive ? row.shield_progress : 0,
       inUse,
-      noticeDate: row.shield_notice_pending ? row.shield_saved_date : null,
+      noticeDate: alive && row.shield_notice_pending ? row.shield_saved_date : null,
     },
   };
 }

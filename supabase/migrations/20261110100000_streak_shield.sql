@@ -98,6 +98,7 @@ begin
     v_current := 1;
     v_ready := false;
     v_progress := 0;
+    v_notice := false;
   end if;
 
   if not v_ready then
