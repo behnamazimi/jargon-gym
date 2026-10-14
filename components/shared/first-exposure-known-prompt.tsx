@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { setFirstExposureMarked, useFirstExposureMarked } from "./first-exposure-marks";
@@ -46,24 +47,32 @@ export function FirstExposureKnownPrompt({
       data-known-prompt
       className="pointer-events-none sticky bottom-0 flex justify-end pt-2 pb-5 sm:pb-6"
     >
-      <Button
-        size="sm"
-        variant="outline"
-        className="pointer-events-auto bg-base-100 shadow-none"
-        onPress={handlePress}
-      >
-        {isMarked ? (
-          <>
-            <span className="font-normal text-base-content/70">Marked known</span>
-            <span className="font-medium">Mark as unknown</span>
-          </>
-        ) : (
-          <>
-            <span className="font-normal text-base-content/70">Already know it?</span>
-            <span className="font-medium">Mark as known</span>
-          </>
-        )}
-      </Button>
+      {isMarked ? (
+        <div className="pointer-events-auto flex items-center gap-1 rounded-field bg-base-100">
+          <span className="inline-flex items-center gap-1.5 ps-2 text-sm font-medium text-success-text">
+            <CircleCheck className="size-4" aria-hidden strokeWidth={1.5} />
+            Marked known
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="font-normal text-base-content/70 underline underline-offset-2"
+            onPress={handlePress}
+          >
+            Mark as unknown
+          </Button>
+        </div>
+      ) : (
+        <Button
+          size="sm"
+          variant="outline"
+          className="pointer-events-auto bg-base-100 shadow-none"
+          onPress={handlePress}
+        >
+          <span className="font-normal text-base-content/70">Already know it?</span>
+          <span className="font-medium">Mark as known</span>
+        </Button>
+      )}
     </div>
   );
 }

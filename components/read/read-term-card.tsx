@@ -1,13 +1,17 @@
 import { ArrowLeft, ArrowRight, Eye } from "lucide-react";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { FirstExposureKnownPrompt } from "@/components/shared/first-exposure-known-prompt";
 import { QuizKeyboardHint, QuizPanel } from "@/components/quiz/quiz-ui";
 import { TermCardHeader } from "@/components/terms/term-card-header";
 import { StudyTermBody } from "@/components/terms/study-term-body";
 import { Button } from "@/components/ui/button";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import type { ReviewTerm } from "@/lib/review/types";
+import { cn } from "@/lib/utils";
 
 const PRESS_CLASS = "transition-transform duration-150 ease-out active:scale-[0.96]";
+// Matches the card's duration-200 exit.
+const EXIT_MS = 200;
 
 function ReadCardMasked({
   term,
@@ -100,8 +104,31 @@ export const ReadTermCard = memo(function ReadTermCard({
   onPrevious: () => void;
   onNext: () => void;
 }) {
+  const reduceMotion = usePrefersReducedMotion();
+  // Keyed by term so the exit only applies to the card that was marked.
+  const [leavingTermId, setLeavingTermId] = useState<string | null>(null);
+  const leaving = leavingTermId === term.id;
+
+  function handleMarkedKnown() {
+    if (reduceMotion) {
+      onNext();
+      return;
+    }
+    setLeavingTermId(term.id);
+    setTimeout(() => {
+      onNext();
+      setLeavingTermId(null);
+    }, EXIT_MS);
+  }
+
   return (
-    <QuizPanel data-tour="read-card" className="flex min-h-0 flex-1 flex-col">
+    <QuizPanel
+      data-tour="read-card"
+      className={cn(
+        "flex min-h-0 flex-1 flex-col transition-[opacity,translate] duration-200 ease-in motion-reduce:transition-none",
+        leaving && "pointer-events-none -translate-x-6 opacity-0",
+      )}
+    >
       <div
         className={revealed ? undefined : "invisible pointer-events-none h-0 overflow-hidden"}
         aria-hidden={!revealed}
@@ -109,7 +136,7 @@ export const ReadTermCard = memo(function ReadTermCard({
         <TermCardHeader term={term} narrationAccess={narrationAccess} narrationPreload />
       </div>
       {revealed ? (
-        <ReadCardRevealed term={term} onMarkedKnown={onNext} />
+        <ReadCardRevealed term={term} onMarkedKnown={handleMarkedKnown} />
       ) : (
         <ReadCardMasked
           term={term}
