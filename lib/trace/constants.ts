@@ -83,6 +83,9 @@ export const P_CORRECT_GIVEN_GUESS_MCQ = 0.25;
 export const P_CORRECT_GIVEN_GUESS_TF = 0.5;
 /** Typing the word is strong evidence; not zero, so one pass can't saturate the posterior. */
 export const P_CORRECT_GIVEN_GUESS_TYPED = 0.05;
+/** Spelling a word you just heard shows you can hear and write it, not that you
+ *  know its meaning, so it counts about as much as multiple choice. */
+export const P_CORRECT_GIVEN_GUESS_DICTATION = 0.25;
 /** §5 Untested-term starting prior — used only at the moment of the first answer, never stored. */
 export const RECOGNITION_INITIAL_PRIOR = 0.5;
 /** §5 Posterior → stability scale: S_g = 1 + k_g · p. */

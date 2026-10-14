@@ -36,7 +36,10 @@ terms or a language (`lib/terms/kinds.ts`).
   term is not used as a masked example.
 - Masking does not apply to "Does it fit?": the term is the subject of the
   question there, so the stem names it. The example text itself is shown as
-  written.
+  written, so an example or anti-example that names the term (with or without
+  a short leading article, `namesTerm` in `text/mask.ts`) is never used: it
+  would give the answer away. A term with no other quote doesn't get the
+  question.
 - Two terms in one collection can share a gloss ("to walk" for `lopen` and
   `wandelen`). For Meaning → word, either the colliding term is dropped from
   the options and accepted as an answer, or the question is skipped for that
@@ -65,6 +68,25 @@ No typed answers for field terms.
 | Cloze                | MCQ on an example with an exact-match term blanked                  |
 | Typed cloze          | Same blank, the learner types the word                              |
 | Typed meaning → word | Fallback when the term has no usable example                        |
+| Dictation            | Plays the term's clip; the learner types what they hear             |
+
+## Dictation
+
+- Plays the term's narration clip and asks "Type what you hear." Nothing else
+  is shown until the answer is in; then the feedback gives the meaning.
+- Only when the clip says the word alone (the collection's narration mode is
+  `term`), the clip is current and the learner has narration access. The quiz
+  action looks the clips up (`lib/quiz/dictation-clips.ts`) and sets
+  `QuizTerm.dictationClip`.
+- Any term quizzed at least once, up to 3 words. The usual typed readiness
+  bar doesn't apply: listening is worth training early.
+- Graded like other typed answers, article and accents included.
+- Simple quizzes on the web only (`simpleOnly`), never planned into AI quizzes.
+- "Can't listen now", or a clip that won't load, skips the question: no TRACE
+  write, no goal tick, and it doesn't count toward the score.
+- TRACE logs it as its own `dictation` question type with a 0.25 guess rate:
+  spelling a word you hear says less about knowing it than typing it from its
+  meaning.
 
 ## Typed answers
 

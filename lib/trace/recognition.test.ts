@@ -36,6 +36,12 @@ describe("updatePosterior", () => {
     expect(typed).toBeGreaterThan(mcq);
   });
 
+  it("a dictation pass counts like a multiple-choice pass, less than typing from meaning", () => {
+    const dictation = updatePosterior(0.5, true, "dictation", null);
+    expect(dictation).toBeCloseTo(updatePosterior(0.5, true, "multiple_choice", null), 10);
+    expect(dictation).toBeLessThan(updatePosterior(0.5, true, "typed", null));
+  });
+
   it("a typed miss still lowers the posterior", () => {
     expect(updatePosterior(0.7, false, "typed", null)).toBeLessThan(0.7);
   });

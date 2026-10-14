@@ -1,6 +1,7 @@
 import type { CollectionKind } from "@/lib/terms/kinds";
 import type { QuizChannel, QuizQuestion, QuizResponse } from "../types";
 import { definitionToTerm } from "./definition-to-term";
+import { dictation } from "./dictation";
 import { doesItFit } from "./does-it-fit";
 import { maskedExample } from "./masked-example";
 import { termToMeaning } from "./term-to-meaning";
@@ -16,6 +17,7 @@ const QUIZ_TEMPLATES: readonly QuizTemplate[] = [
   doesItFit,
   typedCloze,
   typedMeaningToWord,
+  dictation,
 ];
 
 const DEFAULT_BOOLEAN_LABELS: BooleanLabels = { yes: "True", no: "False" };

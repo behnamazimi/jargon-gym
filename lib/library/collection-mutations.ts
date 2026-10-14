@@ -3,6 +3,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { collectionInputToUpdateRow, type CollectionInput } from "@/lib/library/collection-schema";
 import { CollectionMutationError } from "./collections";
 import { escapeLike } from "@/lib/terms/like-escape";
+import type { CollectionKind } from "@/lib/terms/kinds";
 import type { CollectionLanguage } from "@/lib/terms/languages";
 
 type Client = SupabaseClient<Database>;
@@ -164,7 +165,7 @@ function isUniqueViolation(error: { code?: string }) {
 export async function createOwnedCollection(
   client: Client,
   ownerId: string,
-  input: { name: string; language: CollectionLanguage },
+  input: { name: string; language: CollectionLanguage; kind: CollectionKind },
 ) {
   const name = input.name.trim();
   const duplicate = new CollectionMutationError(`You already have a collection named "${name}".`);
@@ -181,7 +182,13 @@ export async function createOwnedCollection(
 
   const { data, error } = await client
     .from("collections")
-    .insert({ name, owner_id: ownerId, visibility: "private", language: input.language })
+    .insert({
+      name,
+      owner_id: ownerId,
+      visibility: "private",
+      language: input.language,
+      kind: input.kind,
+    })
     .select("id")
     .single();
 

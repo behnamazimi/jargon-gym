@@ -43,6 +43,8 @@ export type QuizTemplate = {
   booleanLabels?: BooleanLabels;
   /** Present when the model can write this template in AI mode. */
   ai?: AiSpec;
+  /** Asked in simple quizzes only, never planned into an AI quiz. */
+  simpleOnly?: boolean;
   /** Cheap check on the term's own fields, before any lookup. */
   eligible(term: QuizTerm): boolean;
   /** Null when the collection can't supply what the question needs. */

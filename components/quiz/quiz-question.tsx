@@ -3,6 +3,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { QuizPanel } from "@/components/quiz/quiz-ui";
 import { QuizAnswerChoices } from "@/components/quiz/quiz-answer-choices";
+import { DictationPlayer } from "@/components/quiz/dictation-player";
 import { QuizQuestionFooter } from "@/components/quiz/quiz-question-footer";
 import type { QuizQuestion } from "@/lib/quiz/types";
 import { gradeAnswer } from "@/lib/quiz/grade";
@@ -29,9 +30,17 @@ type QuizQuestionViewProps = {
   correct: number;
   isLast: boolean;
   onAnswer: (passed: boolean) => void;
+  /** Moves on without scoring, when a dictation clip can't be heard. */
+  onSkip: () => void;
 };
 
-export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQuestionViewProps) {
+export function QuizQuestionView({
+  question,
+  correct,
+  isLast,
+  onAnswer,
+  onSkip,
+}: QuizQuestionViewProps) {
   const [state, dispatch] = useReducer(quizAnswerReducer, initialAnswerState);
   // Brief pop when the advance button unlocks, so the lockout reads as
   // "getting ready" instead of an unresponsive click. Pure animation timing,
@@ -143,6 +152,17 @@ export function QuizQuestionView({ question, correct, isLast, onAnswer }: QuizQu
           <blockquote className="mt-3 rounded-field border-l-4 border-primary/40 bg-base-200/60 px-4 py-3 text-base-content/80">
             <span className="text-base leading-snug">{question.quote}</span>
           </blockquote>
+        ) : null}
+
+        {question.interaction === "text" && question.dictation ? (
+          <DictationPlayer
+            termId={question.termId}
+            clipVersion={question.dictation.clipVersion}
+            answered={submitted}
+            onCantListen={() => {
+              if (stateRef.current.state.phase === "answering") onSkip();
+            }}
+          />
         ) : null}
 
         {question.interaction === "text" && question.hint ? (

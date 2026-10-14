@@ -1,5 +1,6 @@
 import type { PendingQuizWrite } from "@/lib/quiz/session-storage";
 import { traceQuestionType } from "@/lib/quiz/trace-type";
+import { scoredTotal } from "@/lib/quiz/results";
 import type { QuizAnswer, QuizQuestion } from "@/lib/quiz/types";
 import type { QuizStep } from "@/components/quiz/use-quiz-setup";
 
@@ -30,14 +31,19 @@ export function submitQuizAnswer(
     /** Practice rounds replay questions whose answers were just shown, so
      *  they're graded on screen but never sent to TRACE. */
     practice: boolean;
+    /** The learner couldn't answer (no sound): not scored, not sent to TRACE. */
+    skipped?: boolean;
   },
 ) {
   const isLastQuestion = args.currentIndex + 1 >= args.totalQuestions;
-  const nextAnswers = [...args.answers, { termId: args.question.termId, passed }];
+  const answer: QuizAnswer = args.skipped
+    ? { termId: args.question.termId, passed: false, skipped: true }
+    : { termId: args.question.termId, passed };
+  const nextAnswers = [...args.answers, answer];
 
   setters.setAnswers(nextAnswers);
 
-  if (!args.practice) {
+  if (!args.practice && !args.skipped) {
     const write: PendingQuizWrite = {
       id: crypto.randomUUID(),
       termId: args.question.termId,
@@ -55,7 +61,7 @@ export function submitQuizAnswer(
 
   setters.setResultsScore({
     score: nextAnswers.filter((answer) => answer.passed).length,
-    total: args.totalQuestions,
+    total: scoredTotal(args.totalQuestions, nextAnswers),
   });
   setters.setStep("results");
   if (!args.practice) setters.markSessionComplete();

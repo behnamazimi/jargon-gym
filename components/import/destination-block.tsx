@@ -6,10 +6,12 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { CollectionSelect } from "@/components/library/collection-select";
+import { KindToggle } from "@/components/shared/kind-toggle";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import type { DestinationMode } from "@/components/import/use-import-flow";
 import type { ImportDestination } from "@/lib/import/import-collections";
 import { findSimilarName } from "@/lib/import/similar-name";
+import type { CollectionKind } from "@/lib/terms/kinds";
 import { COLLECTION_LANGUAGE_OPTIONS, type CollectionLanguage } from "@/lib/terms/languages";
 
 type DestinationBlockProps = {
@@ -18,6 +20,7 @@ type DestinationBlockProps = {
   mode: DestinationMode;
   newName: string;
   language: CollectionLanguage;
+  kind: CollectionKind | null;
   existingId: string;
   disabled: boolean;
   /** What the pasted text looks like, for a soft hint. */
@@ -26,6 +29,7 @@ type DestinationBlockProps = {
   onModeChange: (mode: DestinationMode, existingId?: string) => void;
   onNameChange: (name: string) => void;
   onLanguageChange: (language: CollectionLanguage) => void;
+  onKindChange: (kind: CollectionKind) => void;
 };
 
 function languageLabel(language: CollectionLanguage) {
@@ -52,11 +56,13 @@ type NewFieldsProps = Pick<
   | "addedNames"
   | "newName"
   | "language"
+  | "kind"
   | "disabled"
   | "fileLanguage"
   | "onModeChange"
   | "onNameChange"
   | "onLanguageChange"
+  | "onKindChange"
 >;
 
 function NewCollectionFields({
@@ -64,11 +70,13 @@ function NewCollectionFields({
   addedNames,
   newName,
   language,
+  kind,
   disabled,
   fileLanguage,
   onModeChange,
   onNameChange,
   onLanguageChange,
+  onKindChange,
 }: NewFieldsProps) {
   const similar = findSimilarName(
     newName,
@@ -124,6 +132,10 @@ function NewCollectionFields({
           choice is used.
         </p>
       ) : null}
+      <Field>
+        <FieldLabel>What it teaches</FieldLabel>
+        <KindToggle value={kind} onChange={onKindChange} isDisabled={disabled} />
+      </Field>
     </>
   );
 }
@@ -134,6 +146,7 @@ export function DestinationBlock({
   mode,
   newName,
   language,
+  kind,
   existingId,
   disabled,
   guessedLanguage,
@@ -141,6 +154,7 @@ export function DestinationBlock({
   onModeChange,
   onNameChange,
   onLanguageChange,
+  onKindChange,
 }: DestinationBlockProps) {
   const existing = collections.find((collection) => collection.id === existingId);
   const effectiveLanguage = mode === "existing" && existing ? existing.language : language;
@@ -175,11 +189,13 @@ export function DestinationBlock({
             addedNames={addedNames}
             newName={newName}
             language={language}
+            kind={kind}
             disabled={disabled}
             fileLanguage={fileLanguage}
             onModeChange={onModeChange}
             onNameChange={onNameChange}
             onLanguageChange={onLanguageChange}
+            onKindChange={onKindChange}
           />
         </>
       ) : (

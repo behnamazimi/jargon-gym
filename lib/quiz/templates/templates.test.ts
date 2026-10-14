@@ -23,6 +23,11 @@ const blocker = makeTerm({
   antiExample: "A task that is simply large.",
 });
 
+const blockerUnnamed = makeTerm({
+  ...blocker,
+  example: "Work stopped until another team fixed the API.",
+});
+
 describe("definition_to_term", () => {
   it("masks the term in the definition and offers the term plus distractors", async () => {
     const q = await buildDefinitionToTerm(blocker, ctx());
@@ -123,14 +128,27 @@ describe("does_it_fit", () => {
   });
 
   it("asks yes for an example and no for an anti-example", async () => {
-    const yes = await doesItFit.build(blocker, { source: sourceOf([]), rng: rngOf(0) });
+    const yes = await doesItFit.build(blockerUnnamed, { source: sourceOf([]), rng: rngOf(0) });
     expect(yes).toMatchObject({
       interaction: "boolean",
       correctAnswer: true,
-      quote: blocker.example,
+      quote: blockerUnnamed.example,
     });
-    const no = await doesItFit.build(blocker, { source: sourceOf([]), rng: rngOf(0.99) });
+    const no = await doesItFit.build(blockerUnnamed, { source: sourceOf([]), rng: rngOf(0.99) });
     expect(no).toMatchObject({ correctAnswer: false, quote: blocker.antiExample });
+  });
+
+  it("never quotes text that names the term", async () => {
+    const q = await doesItFit.build(blocker, { source: sourceOf([]), rng: rngOf(0) });
+    expect(q).toMatchObject({ correctAnswer: false, quote: blocker.antiExample });
+
+    const geval = makeTerm({
+      term: "het geval",
+      example: "In ieder geval kom ik morgen.",
+      antiExample: "Dat geval is gesloten.",
+    });
+    expect(doesItFit.eligible(geval)).toBe(false);
+    expect(await doesItFit.build(geval, { source: sourceOf([]), rng: rngOf(0) })).toBeNull();
   });
 
   it("explains anti-examples and labels the answers Yes and No", async () => {

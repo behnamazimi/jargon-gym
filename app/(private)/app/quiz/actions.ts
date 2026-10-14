@@ -17,6 +17,7 @@ import { AI_QUIZ_MAX_QUESTIONS } from "@/lib/quiz/mix";
 import { supabaseDistractorSource } from "@/lib/quiz/distractors-supabase";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { planAiQuiz } from "@/lib/quiz/plan-ai";
+import { attachDictationClips } from "@/lib/quiz/dictation-clips";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { fetchQuizTermPool } from "@/lib/quiz/terms";
 import { listStudyCollectionState } from "@/lib/study/collections";
@@ -70,10 +71,11 @@ async function generateSimpleQuizResult(
   auth: Extract<Awaited<ReturnType<typeof requireAuthenticatedClient>>, { supabase: unknown }>,
   termsPromise: Promise<QuizTerm[]>,
 ): Promise<QuizGenerationResult> {
-  const terms = await termsPromise;
-  if (terms.length === 0) {
+  const pool = await termsPromise;
+  if (pool.length === 0) {
     return { error: NOTHING_ELIGIBLE_ERROR };
   }
+  const terms = await attachDictationClips(createAdminClient(), auth.user.id, pool);
   const questions = await generateSimpleQuiz(terms, auth.supabase);
   return { questions, terms, providerLabel: "Simple" };
 }

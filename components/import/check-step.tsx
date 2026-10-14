@@ -63,6 +63,7 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
           mode={flow.mode}
           newName={flow.newName}
           language={flow.language}
+          kind={flow.kind}
           existingId={flow.existingId}
           disabled={flow.isCommitting}
           guessedLanguage={guessed}
@@ -70,6 +71,7 @@ export function CheckStep({ flow, addedNames }: { flow: ImportFlowState; addedNa
           onModeChange={flow.setDestination}
           onNameChange={flow.setNewName}
           onLanguageChange={flow.setLanguage}
+          onKindChange={flow.setKind}
         />
       )}
 

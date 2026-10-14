@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { containsWholeWord, MASK, maskWord, maskWords } from "./mask";
+import { containsWholeWord, MASK, maskWord, maskWords, namesTerm } from "./mask";
 
 describe("maskWord", () => {
   it("blanks whole words, case-insensitively", () => {
@@ -40,5 +40,18 @@ describe("containsWholeWord", () => {
 
   it("is false for a blank term", () => {
     expect(containsWholeWord("text", "")).toBe(false);
+  });
+});
+
+describe("namesTerm", () => {
+  it("finds the term with or without its leading article", () => {
+    expect(namesTerm("In ieder geval kom ik morgen.", "het geval")).toBe(true);
+    expect(namesTerm("Ik zie het licht aan.", "het licht")).toBe(true);
+    expect(namesTerm("I'm blocked by a blocker.", "Blocker")).toBe(true);
+  });
+
+  it("keeps the whole term when the first word isn't an article", () => {
+    expect(namesTerm("The review took long.", "PR review")).toBe(false);
+    expect(namesTerm("A task that is simply large.", "Blocker")).toBe(false);
   });
 });

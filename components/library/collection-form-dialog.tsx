@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { KindToggle } from "@/components/shared/kind-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +37,7 @@ function collectionToForm(collection: Collection): CollectionInput {
     name: collection.name,
     description: collection.description || null,
     language: collection.language,
+    kind: collection.kind,
   };
 }
 
@@ -70,6 +72,7 @@ export function CollectionFormDialog({
       name: form.name.trim(),
       description: form.description?.trim() ? form.description.trim() : null,
       language: form.language,
+      kind: form.kind,
     };
 
     await updateOwnedCollection(collection.id, payload, () => onOpenChange(false));
@@ -80,7 +83,9 @@ export function CollectionFormDialog({
       <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
         <DialogHeader>
           <DialogTitle>Edit collection</DialogTitle>
-          <DialogDescription>Change the name, description, or content language.</DialogDescription>
+          <DialogDescription>
+            Change the name, description, language, or what it teaches.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -126,6 +131,11 @@ export function CollectionFormDialog({
                 ))}
               </SelectContent>
             </Select>
+          </Field>
+
+          <Field>
+            <FieldLabel>What it teaches</FieldLabel>
+            <KindToggle value={form.kind} onChange={(kind) => updateField("kind", kind)} />
           </Field>
         </div>
 

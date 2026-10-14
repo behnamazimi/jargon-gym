@@ -33,4 +33,18 @@ describe("traceQuestionType", () => {
       }),
     ).toBe("typed");
   });
+
+  it("weighs dictation on its own", () => {
+    expect(
+      traceQuestionType({
+        interaction: "text",
+        template: "dictation",
+        termId: "t",
+        prompt: "p",
+        acceptedAnswers: ["x"],
+        language: "nl",
+        dictation: { clipVersion: "v", meaning: "m" },
+      }),
+    ).toBe("dictation");
+  });
 });

@@ -1,5 +1,15 @@
+import { namesTerm } from "../text/mask";
+import type { QuizTerm } from "../types";
 import { QUIZ_COPY } from "./copy";
 import type { QuizTemplate } from "./types";
+
+/** Quotes that don't name the term; one that does gives the answer away. */
+function candidates(term: QuizTerm): { text: string; fits: boolean }[] {
+  return [
+    { text: term.example?.trim() ?? "", fits: true },
+    { text: term.antiExample?.trim() ?? "", fits: false },
+  ].filter(({ text }) => text && !namesTerm(text, term.term));
+}
 
 export const doesItFit: QuizTemplate = {
   id: "does_it_fit",
@@ -28,16 +38,12 @@ export const doesItFit: QuizTemplate = {
       };
     },
   },
-  eligible: (term) => Boolean(term.example?.trim() || term.antiExample?.trim()),
+  eligible: (term) => candidates(term).length > 0,
   async build(term, ctx) {
-    const candidates: { text: string; fits: boolean }[] = [];
-    const example = term.example?.trim();
-    const antiExample = term.antiExample?.trim();
-    if (example) candidates.push({ text: example, fits: true });
-    if (antiExample) candidates.push({ text: antiExample, fits: false });
-    if (candidates.length === 0) return null;
+    const options = candidates(term);
+    if (options.length === 0) return null;
 
-    const chosen = candidates[Math.floor(ctx.rng() * candidates.length)];
+    const chosen = options[Math.floor(ctx.rng() * options.length)];
     return {
       interaction: "boolean",
       template: "does_it_fit",

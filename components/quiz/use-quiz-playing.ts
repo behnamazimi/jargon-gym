@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { generateQuizAction } from "@/app/(private)/app/quiz/actions";
 import type { AiFailureReason } from "@/lib/llm/types";
-import { missedQuestions, missedTermIds } from "@/lib/quiz/results";
+import { missedQuestions, missedTermIds, scoredTotal } from "@/lib/quiz/results";
 import type { QuizAnswer, QuizQuestion, QuizTerm } from "@/lib/quiz/types";
 import {
   clearQuizSession,
@@ -200,7 +200,7 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     setStep("playing");
   }
 
-  function handleQuestionAnswer(passed: boolean) {
+  function handleQuestionAnswer(passed: boolean, skipped = false) {
     const question = questions[currentIndex];
     if (!question) return;
 
@@ -211,8 +211,9 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     setErrorMessage(null);
     if (!practice && currentIndex === questions.length - 1) {
       track("quiz_completed", {
-        correct_answers: answers.filter((answer) => answer.passed).length + (passed ? 1 : 0),
-        total_questions: questions.length,
+        correct_answers:
+          answers.filter((answer) => answer.passed).length + (passed && !skipped ? 1 : 0),
+        total_questions: scoredTotal(questions.length, answers) - (skipped ? 1 : 0),
         question_style: questionStyle,
       });
     }
@@ -222,11 +223,12 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
       currentIndex,
       totalQuestions: questions.length,
       practice,
+      skipped,
     });
   }
 
   const score = resultsScore?.score ?? answers.filter((answer) => answer.passed).length;
-  const resultsTotal = resultsScore?.total ?? questions.length;
+  const resultsTotal = resultsScore?.total ?? scoredTotal(questions.length, answers);
 
   return {
     errorReason,
@@ -239,6 +241,7 @@ export function useQuizPlaying(setup: ReturnType<typeof useQuizSetup>) {
     resetQuizState,
     handleStartQuiz,
     handleQuestionAnswer,
+    handleQuestionSkip: () => handleQuestionAnswer(false, true),
     handleStartPractice,
     practice,
     missedTerms: missedTermIds(questions, answers).flatMap((id) => termById.get(id) ?? []),

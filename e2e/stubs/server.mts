@@ -12,11 +12,11 @@ type RecordedRequest = { service: string; path: string };
 const outbox: SentEmail[] = [];
 const requests: RecordedRequest[] = [];
 
-// A short silent MP3 frame, enough for the narration route to store and serve.
-const MP3 = Buffer.from(
-  "//uQxAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-  "base64",
-);
+// Ten silent MPEG-1 Layer III frames (128 kbps, 44.1 kHz, 417 bytes each),
+// so a browser can actually play the clip.
+const MP3_FRAME = Buffer.alloc(417);
+MP3_FRAME.writeUInt32BE(0xfffb9064, 0);
+const MP3 = Buffer.concat(Array.from({ length: 10 }, () => MP3_FRAME));
 
 async function readBody(req: IncomingMessage): Promise<string> {
   const chunks: Buffer[] = [];

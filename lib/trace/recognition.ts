@@ -4,6 +4,7 @@
  *  Quiz answer — see §4b's nullable-state rule, echoed here. */
 
 import {
+  P_CORRECT_GIVEN_GUESS_DICTATION,
   P_CORRECT_GIVEN_GUESS_MCQ,
   P_CORRECT_GIVEN_GUESS_TF,
   P_CORRECT_GIVEN_GUESS_TYPED,
@@ -19,6 +20,7 @@ const GUESS_RATE: Record<QuestionType, number> = {
   multiple_choice: P_CORRECT_GIVEN_GUESS_MCQ,
   true_false: P_CORRECT_GIVEN_GUESS_TF,
   typed: P_CORRECT_GIVEN_GUESS_TYPED,
+  dictation: P_CORRECT_GIVEN_GUESS_DICTATION,
 };
 
 /** Bayesian posterior update for one answer. `prior` is null only for the

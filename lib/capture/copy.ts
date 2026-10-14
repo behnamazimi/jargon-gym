@@ -27,6 +27,7 @@ export const CAPTURE_COPY = {
   firstName: "Name",
   firstNamePlaceholder: "e.g. Startup finance",
   language: "Language",
+  kind: "What it teaches",
   firstCreate: "Create and continue",
   creating: "Creating…",
   sharedHint: "Shared from another app.",
