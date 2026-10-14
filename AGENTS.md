@@ -213,6 +213,11 @@ problem or an idea with one optional screenshot; admins triage them at
 Read the Issue reports section of [docs/admin.md](docs/admin.md) first. Nothing
 goes back to the member, and no user-facing string may name the admin.
 
+# Streak
+
+The daily streak and its shield are described in [docs/streak.md](docs/streak.md).
+`bump_streak` (SQL) and `lib/streak/status.ts` must follow the same rules.
+
 # Daily goals
 
 Learners set a daily pace per tier at `/app/goals`; meeting one opens a lobya

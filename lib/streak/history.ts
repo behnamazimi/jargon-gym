@@ -7,6 +7,8 @@ export type StreakDay = {
   /** Local calendar date, "YYYY-MM-DD", ascending — last entry is today. */
   date: string;
   isActive: boolean;
+  /** A shield covered this missed day. */
+  isShielded: boolean;
   readCount: number;
   reviewedCount: number;
   quizzedCount: number;
@@ -22,8 +24,14 @@ export async function fetchStreakHistory(client: Client): Promise<StreakDay[]> {
   return (data ?? []).map((row) => ({
     date: row.day,
     isActive: row.is_active,
+    isShielded: row.is_shielded,
     readCount: row.read_count,
     reviewedCount: row.reviewed_count,
     quizzedCount: row.quizzed_count,
   }));
+}
+
+export async function clearShieldNotice(client: Client): Promise<void> {
+  const { error } = await client.rpc("my_clear_shield_notice");
+  if (error) throw error;
 }

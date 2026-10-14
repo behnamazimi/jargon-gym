@@ -1739,6 +1739,10 @@ export type Database = {
           review_narrate_on_reveal: boolean;
           review_show_next_review: boolean;
           review_swipe: boolean;
+          shield_notice_pending: boolean;
+          shield_progress: number;
+          shield_ready: boolean;
+          shield_saved_date: string | null;
           story_last_collection_id: string | null;
           term_layout: Json;
           timezone: string | null;
@@ -1774,6 +1778,10 @@ export type Database = {
           review_narrate_on_reveal?: boolean;
           review_show_next_review?: boolean;
           review_swipe?: boolean;
+          shield_notice_pending?: boolean;
+          shield_progress?: number;
+          shield_ready?: boolean;
+          shield_saved_date?: string | null;
           story_last_collection_id?: string | null;
           term_layout?: Json;
           timezone?: string | null;
@@ -1809,6 +1817,10 @@ export type Database = {
           review_narrate_on_reveal?: boolean;
           review_show_next_review?: boolean;
           review_swipe?: boolean;
+          shield_notice_pending?: boolean;
+          shield_progress?: number;
+          shield_ready?: boolean;
+          shield_saved_date?: string | null;
           story_last_collection_id?: string | null;
           term_layout?: Json;
           timezone?: string | null;
@@ -2215,6 +2227,8 @@ export type Database = {
           owned_collections: number;
           people_using_collections: number;
           referral_verified: boolean;
+          shield_progress: number;
+          shield_ready: boolean;
           suspended_at: string;
         }[];
       };
@@ -2413,6 +2427,7 @@ export type Database = {
         Returns: {
           day: string;
           is_active: boolean;
+          is_shielded: boolean;
           quizzed_count: number;
           read_count: number;
           reviewed_count: number;
@@ -2544,6 +2559,7 @@ export type Database = {
         Args: { p_collection_id: string };
         Returns: undefined;
       };
+      my_clear_shield_notice: { Args: never; Returns: undefined };
       my_collection_request_quota: { Args: never; Returns: Json };
       my_create_collection_request: {
         Args: {
@@ -2594,6 +2610,7 @@ export type Database = {
         Returns: {
           day: string;
           is_active: boolean;
+          is_shielded: boolean;
           quizzed_count: number;
           read_count: number;
           reviewed_count: number;

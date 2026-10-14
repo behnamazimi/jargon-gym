@@ -23,6 +23,18 @@ test.describe("Streak", () => {
     await expect(page.getByRole("button", { name: /^0 day streak\./ })).toBeVisible();
   });
 
+  test("a banked shield keeps the streak through one missed day", async ({ page, user }) => {
+    await setStreak(user, 2);
+    await sql("update public.user_settings set shield_ready = true where user_id = $1", [user.id]);
+    await gotoReady(page, "/app/library");
+
+    await page.getByRole("button", { name: /^5 day streak\./ }).click();
+
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("button", { name: /: shielded$/ })).toBeVisible();
+    await expect(dialog.getByText("Your shield is covering yesterday")).toBeVisible();
+  });
+
   test("a streak waiting on today marks today as open", async ({ page, user }) => {
     await setStreak(user, 1);
     await gotoReady(page, "/app/library");

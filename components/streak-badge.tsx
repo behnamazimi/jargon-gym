@@ -1,7 +1,7 @@
 "use client";
 
 import { Flame } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { StreakModal } from "@/components/streak-modal";
 import { type StreakSummary, withTodayDone } from "@/lib/streak/status";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,12 @@ export function StreakBadge({
   // The header isn't re-rendered after studying, so the history the modal
   // loads can show today already counts.
   const [todaySeenActive, setTodaySeenActive] = useState(false);
-  const streak = todaySeenActive ? withTodayDone(initialStreak) : initialStreak;
+  const [noticeSeen, setNoticeSeen] = useState(false);
+  const withToday = todaySeenActive ? withTodayDone(initialStreak) : initialStreak;
+  const streak = noticeSeen
+    ? { ...withToday, shield: { ...withToday.shield, noticeDate: null } }
+    : withToday;
+  const markNoticeSeen = useCallback(() => setNoticeSeen(true), []);
 
   return (
     <>
@@ -48,6 +53,7 @@ export function StreakBadge({
         onOpenChange={setIsOpen}
         streak={streak}
         onTodayActive={() => setTodaySeenActive(true)}
+        onNoticeSeen={markNoticeSeen}
       />
     </>
   );

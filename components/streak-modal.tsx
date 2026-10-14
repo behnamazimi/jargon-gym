@@ -1,16 +1,16 @@
 "use client";
 
-import { ChevronRight, Flame } from "lucide-react";
+import { ChevronRight, Flame, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore, useTransition } from "react";
-import { getStreakHistoryAction } from "@/app/(private)/actions";
+import { clearShieldNoticeAction, getStreakHistoryAction } from "@/app/(private)/actions";
 import { getGoalsSnapshot, subscribeGoals } from "@/components/goals/goal-store";
 import { StreakFlameScene } from "@/components/illustrations/scenes/streak-flame";
 import { Dialog, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GOAL_TIERS } from "@/lib/goals/levels";
 import { goalProgress, metCount } from "@/lib/goals/progress";
 import type { StreakDay } from "@/lib/streak/history";
-import type { StreakSummary } from "@/lib/streak/status";
+import { SHIELD_DAYS, type ShieldSummary, type StreakSummary } from "@/lib/streak/status";
 import { cn } from "@/lib/utils";
 
 type StreakModalProps = {
@@ -19,6 +19,8 @@ type StreakModalProps = {
   streak: StreakSummary;
   /** Called when the loaded history shows today already has activity. */
   onTodayActive: () => void;
+  /** Called once the shield message has been shown, so it is not shown again. */
+  onNoticeSeen: () => void;
 };
 
 /** Parsed as local midnight (not UTC) so the weekday label is stable
@@ -27,11 +29,18 @@ function weekdayLabel(dateStr: string): string {
   return new Date(`${dateStr}T00:00:00`).toLocaleDateString("en-US", { weekday: "short" });
 }
 
-export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: StreakModalProps) {
+export function StreakModal({
+  isOpen,
+  onOpenChange,
+  streak,
+  onTodayActive,
+  onNoticeSeen,
+}: StreakModalProps) {
   const [hasLoaded, setHasLoaded] = useState(false);
   const [days, setDays] = useState<StreakDay[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [noticeDate, setNoticeDate] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -40,11 +49,18 @@ export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: Str
       setDays([]);
       setError(null);
       setSelectedDate(null);
+      setNoticeDate(null);
       return;
     }
     if (hasLoaded) return;
 
     setHasLoaded(true);
+    const pendingNotice = streak.shield.noticeDate;
+    if (pendingNotice) {
+      setNoticeDate(pendingNotice);
+      onNoticeSeen();
+      void clearShieldNoticeAction();
+    }
     startTransition(async () => {
       const result = await getStreakHistoryAction();
       if (result.error) {
@@ -56,7 +72,7 @@ export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: Str
         if (rows.at(-1)?.isActive) onTodayActive();
       }
     });
-  }, [isOpen, hasLoaded, onTodayActive]);
+  }, [isOpen, hasLoaded, onTodayActive, onNoticeSeen, streak.shield.noticeDate]);
 
   const selected = days.find((day) => day.date === selectedDate);
   const showSkeleton = isPending && days.length === 0;
@@ -77,6 +93,13 @@ export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: Str
           </p>
         </div>
       </DialogHeader>
+
+      {noticeDate ? (
+        <div role="status" className="alert alert-info alert-soft text-sm">
+          <ShieldCheck className="size-4 shrink-0" aria-hidden />
+          <span>Your shield covered {weekdayLabel(noticeDate)}. Your streak is safe.</span>
+        </div>
+      ) : null}
 
       <StreakFlameScene
         state={streak.doneToday ? "done" : streak.current > 0 ? "open" : "none"}
@@ -106,6 +129,8 @@ export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: Str
             ))}
       </div>
 
+      <ShieldLine shield={streak.shield} />
+
       <div className="grid grid-cols-3 gap-2 rounded-field bg-base-200/60 p-3 text-center">
         <div>
           <p className="text-xl font-semibold tabular-nums">{selected?.readCount ?? 0}</p>
@@ -132,6 +157,38 @@ export function StreakModal({ isOpen, onOpenChange, streak, onTodayActive }: Str
   );
 }
 
+type ChipState = "studied" | "shielded" | "not yet" | "missed";
+
+function chipState(day: StreakDay, isToday: boolean): ChipState {
+  if (day.isActive) return "studied";
+  if (day.isShielded) return "shielded";
+  return isToday ? "not yet" : "missed";
+}
+
+const CHIP_STYLES: Record<ChipState, string> = {
+  studied: "border-transparent bg-streak/15 text-base-content",
+  shielded: "border-transparent bg-info/10 text-base-content",
+  "not yet": "border-dashed border-streak/60 text-base-content/80",
+  missed: "border-transparent bg-base-200/60 text-base-content/40",
+};
+
+function ChipIcon({ state }: { state: ChipState }) {
+  if (state === "studied") {
+    return <Flame className="size-4 fill-streak text-streak" strokeWidth={2} aria-hidden />;
+  }
+  if (state === "shielded") {
+    return <ShieldCheck className="size-4 text-info" strokeWidth={2} aria-hidden />;
+  }
+  if (state === "not yet") {
+    return <Flame className="size-4 text-streak/60" strokeWidth={2} aria-hidden />;
+  }
+  return (
+    <span className="flex size-4 items-center justify-center" aria-hidden>
+      <span className="h-0.5 w-2.5 rounded-full bg-base-content/25" />
+    </span>
+  );
+}
+
 function DayChip({
   day,
   isToday,
@@ -144,33 +201,38 @@ function DayChip({
   onSelect: () => void;
 }) {
   const label = isToday ? "Today" : weekdayLabel(day.date);
-  const status = day.isActive ? "studied" : isToday ? "not yet" : "missed";
+  const state = chipState(day, isToday);
 
   return (
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={isSelected}
-      aria-label={`${label}: ${status}`}
+      aria-label={`${label}: ${state}`}
       className={cn(
         "flex flex-1 flex-col items-center gap-1 rounded-field border py-2 text-xs font-medium transition-colors",
         isSelected && "ring-2 ring-primary",
-        day.isActive && "border-transparent bg-streak/15 text-base-content",
-        !day.isActive && isToday && "border-dashed border-streak/60 text-base-content/80",
-        !day.isActive && !isToday && "border-transparent bg-base-200/60 text-base-content/40",
+        CHIP_STYLES[state],
       )}
     >
       <span>{label}</span>
-      {day.isActive ? (
-        <Flame className="size-4 fill-streak text-streak" strokeWidth={2} aria-hidden />
-      ) : isToday ? (
-        <Flame className="size-4 text-streak/60" strokeWidth={2} aria-hidden />
-      ) : (
-        <span className="flex size-4 items-center justify-center" aria-hidden>
-          <span className="h-0.5 w-2.5 rounded-full bg-base-content/25" />
-        </span>
-      )}
+      <ChipIcon state={state} />
     </button>
+  );
+}
+
+function ShieldLine({ shield }: { shield: ShieldSummary }) {
+  const text = shield.inUse
+    ? "Your shield is covering yesterday. Study today to keep your streak."
+    : shield.ready
+      ? "Shield ready: one missed day won't break your streak."
+      : `${shield.progress}/${SHIELD_DAYS} active days to your next shield.`;
+
+  return (
+    <p className="m-0 flex items-center gap-2 text-xs text-base-content/70">
+      <ShieldCheck className="size-4 shrink-0 text-info" aria-hidden />
+      {text}
+    </p>
   );
 }
 

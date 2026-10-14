@@ -142,6 +142,10 @@ export const STUDY_SECTIONS: FeatureSection[] = [
         body: "An optional streak counts the days you practice. Open it to see your week.",
       },
       {
+        title: "Streak shield",
+        body: "After seven days in a row you bank a shield. One missed day won't break your streak, and seven more days earn the next.",
+      },
+      {
         title: "Daily goals",
         body: "Set a pace for Read, Review and Quiz, see when each collection would be mastered at that pace, and get a small celebration when a day's goal is done.",
       },
