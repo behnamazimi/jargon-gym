@@ -2,12 +2,12 @@
  *  @see docs/trace-formula.md
  */
 
-import { AGAIN, EASY, GOOD, HARD } from "./constants";
+import { AGAIN, EASY, GOOD, HARD, QUESTION_TYPES } from "./constants";
 
 /** Review grade — recall-before-reveal, FSRS-5 grading (§4). */
 export type ReviewGrade = typeof AGAIN | typeof HARD | typeof GOOD | typeof EASY;
 
-export type QuestionType = "multiple_choice" | "true_false" | "typed";
+export type QuestionType = (typeof QUESTION_TYPES)[number];
 
 export type KnownLabel = "known" | "learning" | "unknown";
 

@@ -17,6 +17,9 @@ export type QuizTerm = {
   language: CollectionLanguage;
   /** How well the learner already recognises the term; absent when unknown. */
   recognition?: TermCard["recognition"];
+  /** Job id of the term's spoken clip, set only when it says the word alone and
+   *  the learner may hear it. */
+  dictationClip?: string;
   collectionId: string;
   collectionName: string;
 };
@@ -29,7 +32,8 @@ export type PlannedTemplateId =
   | "masked_example"
   | "does_it_fit"
   | "typed_cloze"
-  | "typed_meaning_to_word";
+  | "typed_meaning_to_word"
+  | "dictation";
 
 export const QUIZ_TEMPLATE_IDS = [
   "definition_to_term",
@@ -38,6 +42,7 @@ export const QUIZ_TEMPLATE_IDS = [
   "does_it_fit",
   "typed_cloze",
   "typed_meaning_to_word",
+  "dictation",
 ] as const satisfies readonly PlannedTemplateId[];
 
 type QuizTemplateId = (typeof QUIZ_TEMPLATE_IDS)[number];
@@ -68,6 +73,8 @@ export type QuizTextQuestion = QuizQuestionBase & {
   language: CollectionLanguage;
   /** Extra help shown under the quote, such as the meaning of a blanked word. */
   hint?: string;
+  /** Set when the learner types a word they hear instead of reading a prompt. */
+  dictation?: { clipVersion: string; meaning: string };
 };
 
 export type QuizQuestion = QuizChoiceQuestion | QuizBooleanQuestion | QuizTextQuestion;
@@ -80,4 +87,6 @@ export type QuizResponse =
 export type QuizAnswer = {
   termId: string;
   passed: boolean;
+  /** Left out of the score: the learner couldn't listen to a dictation clip. */
+  skipped?: boolean;
 };

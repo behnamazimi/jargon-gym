@@ -23,6 +23,7 @@ export async function seedCollection(
   user: TestUser,
   terms: SeedTerm[] = SAMPLE_TERMS,
   name = `E2E ${randomUUID().slice(0, 8)}`,
+  { language = "en", kind = "terms" }: { language?: string; kind?: "terms" | "vocabulary" } = {},
 ): Promise<{ collectionId: string; name: string }> {
   const env = loadSupabaseEnv();
   const client = createClient(env.url, env.publishableKey, {
@@ -36,7 +37,7 @@ export async function seedCollection(
 
   const { data, error } = await client.rpc("my_import_terms", {
     p_import_id: randomUUID(),
-    p_destination: { name, language: "en" },
+    p_destination: { name, language, kind },
     p_terms: terms,
     p_relationships: [],
     p_policy: "skip",

@@ -12,7 +12,7 @@ const base = {
 describe("commitImportSchema text cleaning", () => {
   const parse = (terms: unknown, destination: unknown) =>
     commitImportSchema.safeParse({ ...base, terms, destination });
-  const dest = { name: "Fine", language: "en" };
+  const dest = { name: "Fine", language: "en", kind: "terms" };
 
   it("removes control and override characters from terms and details", () => {
     const result = parse([{ term: "AP\u0000I", definition: "a\u202E way", note: "n\u0007" }], dest);
@@ -24,7 +24,11 @@ describe("commitImportSchema text cleaning", () => {
   });
 
   it("cleans the new collection's name", () => {
-    const result = parse([{ term: "API" }], { name: "Fi\u0000ne\u202E", language: "en" });
+    const result = parse([{ term: "API" }], {
+      name: "Fi\u0000ne\u202E",
+      language: "en",
+      kind: "terms",
+    });
     expect(
       result.success && "name" in result.data.destination && result.data.destination.name,
     ).toBe("Fine");

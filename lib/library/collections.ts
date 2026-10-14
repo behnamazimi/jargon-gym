@@ -22,6 +22,7 @@ export type CollectionRow = {
   description: string | null;
   visibility: CollectionVisibility;
   language: string;
+  kind: string;
   owner_id: string;
   is_builtin: boolean;
   love_count: number;
@@ -40,7 +41,7 @@ async function fetchOwnedCollections(client: Client, userId: string) {
   const { data, error } = await client
     .from("collections")
     .select(
-      "id, name, description, visibility, language, owner_id, is_builtin, love_count, share_block_reason, is_public, slug",
+      "id, name, description, visibility, language, kind, owner_id, is_builtin, love_count, share_block_reason, is_public, slug",
     )
     .eq("owner_id", userId)
     .order("name");
@@ -53,7 +54,7 @@ async function fetchAddedCollections(client: Client, userId: string) {
   const { data, error } = await client
     .from("user_collections")
     .select(
-      "collection_id, collections(id, name, description, visibility, language, owner_id, is_builtin, love_count, share_block_reason, is_public, slug)",
+      "collection_id, collections(id, name, description, visibility, language, kind, owner_id, is_builtin, love_count, share_block_reason, is_public, slug)",
     )
     .eq("user_id", userId);
 

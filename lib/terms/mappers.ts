@@ -1,4 +1,5 @@
 import type { Database } from "@/lib/supabase/database.types";
+import { parseKind } from "./kinds";
 import type {
   Collection,
   CollectionSource,
@@ -24,7 +25,7 @@ type MapCollectionOptions = {
 };
 
 export function mapCollection(
-  row: Pick<CollectionRow, "id" | "name" | "visibility" | "description" | "language"> &
+  row: Pick<CollectionRow, "id" | "name" | "visibility" | "description" | "language" | "kind"> &
     Partial<
       Pick<CollectionRow, "is_builtin" | "love_count" | "share_block_reason" | "is_public" | "slug">
     >,
@@ -37,6 +38,7 @@ export function mapCollection(
     description: row.description ?? "",
     visibility: row.visibility,
     language: row.language as Collection["language"],
+    kind: parseKind(row.kind),
     source: options.source,
     isActiveForReview: options.isActiveForReview,
     termCount: options.termCount ?? 0,

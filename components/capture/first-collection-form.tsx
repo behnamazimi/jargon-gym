@@ -3,6 +3,7 @@
 import { track } from "@/lib/analytics/track";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { KindToggle } from "@/components/shared/kind-toggle";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { CAPTURE_COPY } from "@/lib/capture/copy";
+import type { CollectionKind } from "@/lib/terms/kinds";
 import type { CollectionLanguage } from "@/lib/terms/languages";
 
 /** For someone with no collection yet: create one, then reload this page with it chosen. */
@@ -19,13 +21,14 @@ export function FirstCollectionForm() {
   const { createEmptyCollection, isBusy, error } = useCollectionActions();
   const [name, setName] = useState("");
   const [language, setLanguage] = useState<CollectionLanguage>("en");
-  const canCreate = name.trim().length > 0 && !isBusy;
+  const [kind, setKind] = useState<CollectionKind | null>(null);
+  const canCreate = name.trim().length > 0 && kind !== null && !isBusy;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!canCreate) return;
-    await createEmptyCollection({ name: name.trim(), language }, (collectionId) => {
-      track("collection_created", { language, creation_source: "first_capture" });
+    if (!canCreate || !kind) return;
+    await createEmptyCollection({ name: name.trim(), language, kind }, (collectionId) => {
+      track("collection_created", { language, kind, creation_source: "first_capture" });
       const params = new URLSearchParams(searchParams.toString());
       params.set("to", collectionId);
       router.replace(`/app/capture?${params.toString()}`);
@@ -53,6 +56,10 @@ export function FirstCollectionForm() {
       <Field>
         <FieldLabel>{CAPTURE_COPY.language}</FieldLabel>
         <LanguageToggle value={language} onChange={setLanguage} isDisabled={isBusy} />
+      </Field>
+      <Field>
+        <FieldLabel>{CAPTURE_COPY.kind}</FieldLabel>
+        <KindToggle value={kind} onChange={setKind} isDisabled={isBusy} />
       </Field>
       {error ? (
         <Alert variant="destructive">

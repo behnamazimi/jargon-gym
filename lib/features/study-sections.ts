@@ -47,7 +47,7 @@ export const STUDY_SECTIONS: FeatureSection[] = [
       },
       {
         title: "Quiz",
-        body: "Free questions come from your definitions, or let AI write them.",
+        body: "Free questions come from your definitions, or let AI write them. For words and phrases, hear a word and type it.",
       },
       {
         title: "Shakiest first",

@@ -3,6 +3,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { escapeLike } from "@/lib/terms/like-escape";
 import type { DistractorSource, DistractorTerm, PickDistractorsOptions } from "./distractors";
 import { shuffle } from "./random";
+import { withoutPronunciation } from "./text/pronunciation";
 import type { QuizTerm } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -18,7 +19,12 @@ const RANDOM_CANDIDATE_MIN = 60;
 
 function toDistractor(row: RelatedTermRow): DistractorTerm | null {
   if (!row.definition) return null;
-  return { id: row.id, term: row.term, definition: row.definition, category: row.category };
+  return {
+    id: row.id,
+    term: row.term,
+    definition: withoutPronunciation(row.definition),
+    category: row.category,
+  };
 }
 
 async function fetchRelatedDistractors(
@@ -112,11 +118,16 @@ export function supabaseDistractorSource(client: Client): DistractorSource {
         .select("id, term, definition, category")
         .eq("collection_id", term.collectionId)
         .neq("id", term.id)
-        .ilike("definition", escapeLike(term.definition.trim()))
-        .limit(1);
+        .ilike("definition", `${escapeLike(term.definition.trim())}%`)
+        .limit(20);
 
       if (error || !data) return [];
-      return data.map(toDistractor).filter((row): row is DistractorTerm => row !== null);
+      // Stored definitions may still end in a pronunciation, so compare without it.
+      const gloss = term.definition.trim().toLowerCase();
+      return data
+        .map(toDistractor)
+        .filter((row): row is DistractorTerm => row?.definition.toLowerCase() === gloss)
+        .slice(0, 1);
     },
   };
 }

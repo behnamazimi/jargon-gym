@@ -1,11 +1,15 @@
 import { z } from "zod";
 import { cleanText } from "@/lib/terms/text-clean";
+import { COLLECTION_KINDS } from "@/lib/terms/kinds";
 import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
+
+const kindSchema = z.enum(COLLECTION_KINDS, { error: "Choose what this collection teaches." });
 
 const collectionFieldsSchema = z.object({
   name: z.string().transform(cleanText).pipe(z.string().trim().min(1, "Enter a collection name")),
   description: z.string().transform(cleanText).nullable().optional(),
   language: z.enum(COLLECTION_LANGUAGES).default("en"),
+  kind: kindSchema,
 });
 
 export type CollectionInput = z.infer<typeof collectionFieldsSchema>;
@@ -26,6 +30,7 @@ export function collectionInputToUpdateRow(input: CollectionInput) {
     name: input.name.trim(),
     description: input.description?.trim() || null,
     language: input.language,
+    kind: input.kind,
   };
 }
 
@@ -41,6 +46,7 @@ const newCollectionSchema = z.object({
         .max(100, "Keep the name under 100 characters."),
     ),
   language: z.enum(COLLECTION_LANGUAGES).default("en"),
+  kind: kindSchema,
 });
 
 export type NewCollectionInput = z.infer<typeof newCollectionSchema>;

@@ -9,27 +9,13 @@ import {
 } from "@/components/shared/active-audio";
 import { Button } from "@/components/ui/button";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-
-/** With a version the address names one exact clip, which the browser may keep. */
-function narrationSrc(termId: string, version?: string): string {
-  const base = `/api/narration/${termId}`;
-  return version ? `${base}?v=${version}` : base;
-}
-
-function srcMatches(audio: HTMLAudioElement, src: string): boolean {
-  const attr = audio.getAttribute("src");
-  if (attr === src) return true;
-  if (!audio.src) return false;
-  return audio.src === new URL(src, document.baseURI).href;
-}
-
-function canPlayThrough(audio: HTMLAudioElement): boolean {
-  return audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA;
-}
-
-function isAbortError(error: unknown): boolean {
-  return error instanceof DOMException && error.name === "AbortError";
-}
+import {
+  canPlayThrough,
+  isAbortError,
+  isAutoplayBlocked,
+  narrationSrc,
+  srcMatches,
+} from "@/components/terms/narration-audio";
 
 export type TermNarrationHandle = { play: () => void };
 
@@ -56,6 +42,8 @@ export function TermNarrationPlayer({
   preload = false,
   showButton = true,
   handleRef,
+  onUnavailable,
+  canPrepare = true,
 }: {
   termId: string;
   clipVersion?: string | null;
@@ -63,10 +51,15 @@ export function TermNarrationPlayer({
   showButton?: boolean;
   /** Lets a parent start the clip from its own press handler. */
   handleRef?: Ref<TermNarrationHandle>;
+  /** Called when the clip can't be loaded or made. */
+  onUnavailable?: () => void;
+  /** False plays only the given clip and never asks the server to make one. */
+  canPrepare?: boolean;
 }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wantPlayingRef = useRef(false);
+  const mountedRef = useRef(true);
   const abortRetriedRef = useRef(false);
   const prepareRef = useRef<"idle" | "running" | "done">("idle");
   const [prepared, setPrepared] = useState<PreparedClip>();
@@ -75,6 +68,7 @@ export function TermNarrationPlayer({
 
   useMountEffect(() => {
     return () => {
+      mountedRef.current = false;
       wantPlayingRef.current = false;
       const audio = audioRef.current;
       if (audio) {
@@ -90,13 +84,18 @@ export function TermNarrationPlayer({
     setStatus("idle");
   }
 
+  function fail(audio: HTMLAudioElement) {
+    giveUp(audio);
+    if (mountedRef.current) onUnavailable?.();
+  }
+
   // Loading never generates audio. When the clip is not cached yet, ask the
   // server to make it once, then load it again.
   async function prepareThenPlay(audio: HTMLAudioElement) {
     // An error event and a rejected play() can both land for one failed load.
     if (prepareRef.current === "running") return;
-    if (prepareRef.current === "done") {
-      giveUp(audio);
+    if (prepareRef.current === "done" || !canPrepare) {
+      fail(audio);
       return;
     }
     prepareRef.current = "running";
@@ -106,7 +105,7 @@ export function TermNarrationPlayer({
       const response = await fetch(narrationSrc(termId), { method: "POST" });
       if (!response.ok) {
         prepareRef.current = "done";
-        giveUp(audio);
+        fail(audio);
         return;
       }
       const body: { version?: string } = await response.json();
@@ -116,7 +115,7 @@ export function TermNarrationPlayer({
       }
     } catch {
       prepareRef.current = "done";
-      giveUp(audio);
+      fail(audio);
       return;
     }
     prepareRef.current = "done";
@@ -134,6 +133,10 @@ export function TermNarrationPlayer({
         if (wantPlayingRef.current) setStatus("playing");
       })
       .catch((error: unknown) => {
+        if (isAutoplayBlocked(error)) {
+          giveUp(audio);
+          return;
+        }
         // preload "none" never fires canplay unless something asks it to load.
         if (isAbortError(error) && wantPlayingRef.current && !abortRetriedRef.current) {
           abortRetriedRef.current = true;
@@ -208,7 +211,7 @@ export function TermNarrationPlayer({
 
   useImperativeHandle(handleRef, () => ({
     play: () => {
-      if (status !== "playing") handlePress();
+      if (status !== "playing" && status !== "loading") handlePress();
     },
   }));
 
@@ -233,7 +236,8 @@ export function TermNarrationPlayer({
     const audio = audioRef.current;
     if (!audio) return;
     if (wantPlayingRef.current) void prepareThenPlay(audio);
-    else giveUp(audio);
+    else if (canPrepare) giveUp(audio);
+    else fail(audio);
   }
 
   return (

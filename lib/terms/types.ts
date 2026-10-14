@@ -1,3 +1,4 @@
+import type { CollectionKind } from "./kinds";
 import type { CollectionLanguage } from "./languages";
 
 export type TermRelationship = {
@@ -55,6 +56,7 @@ export type Collection = {
   description: string;
   visibility: "private" | "shared";
   language: CollectionLanguage;
+  kind: CollectionKind;
   source: CollectionSource;
   isActiveForReview: boolean;
   termCount: number;

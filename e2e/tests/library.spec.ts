@@ -72,6 +72,29 @@ test.describe("Managing the library", () => {
     },
   );
 
+  test("the owner can say a collection holds words and phrases", async ({ page, user }) => {
+    const { collectionId } = await seedCollection(user);
+    await gotoReady(page, `/app/library?collection=${collectionId}`);
+
+    await page.getByRole("button", { name: "Collection actions" }).click();
+    await page.getByRole("menuitem", { name: "Edit collection" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByRole("radio", { name: "Field terms" })).toBeChecked();
+    await dialog.getByRole("radio", { name: "Words and phrases" }).click();
+    await dialog.getByRole("button", { name: "Save changes" }).click();
+
+    await expect
+      .poll(
+        async () =>
+          (
+            await sql<{ kind: string }>("select kind from public.collections where id = $1", [
+              collectionId,
+            ])
+          )[0]?.kind,
+      )
+      .toBe("vocabulary");
+  });
+
   test("deleting a collection removes its terms", { tag: "@smoke" }, async ({ page, user }) => {
     const { collectionId, name } = await seedCollection(user);
     await gotoReady(page, `/app/library?collection=${collectionId}`);

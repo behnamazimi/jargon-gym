@@ -24,6 +24,20 @@ describe("planAiQuiz", () => {
     }
   });
 
+  it("never plans a dictation question", async () => {
+    const term = makeTerm({
+      id: "w",
+      kind: "vocabulary",
+      term: "toch",
+      dictationClip: "job-1",
+      recognition: { posterior: 0.9, testCount: 2 },
+    });
+    for (let i = 0; i < 40; i++) {
+      const plan = await planAiQuiz([term], source);
+      expect(plan.built.get("w")?.template).not.toBe("dictation");
+    }
+  });
+
   it("builds a typed question for a known vocabulary term instead of asking the model", async () => {
     const term = makeTerm({
       id: "w",

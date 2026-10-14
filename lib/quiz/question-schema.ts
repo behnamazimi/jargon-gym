@@ -27,6 +27,7 @@ const quizQuestionSchema: z.ZodType<QuizQuestion> = z.discriminatedUnion("intera
     acceptedAnswers: z.array(z.string()).min(1),
     language: z.enum(COLLECTION_LANGUAGES),
     hint: z.string().optional(),
+    dictation: z.object({ clipVersion: z.string(), meaning: z.string() }).optional(),
   }),
 ]);
 

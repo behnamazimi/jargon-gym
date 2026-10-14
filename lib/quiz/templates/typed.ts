@@ -2,7 +2,7 @@ import { closeMiss } from "../text/answer-match";
 import { TYPED_MAX_WORDS, TYPED_MIN_POSTERIOR, TYPED_MIN_TESTS } from "../mix";
 import type { QuizResponse, QuizTerm, QuizTextQuestion } from "../types";
 
-function wordCount(text: string): number {
+export function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 

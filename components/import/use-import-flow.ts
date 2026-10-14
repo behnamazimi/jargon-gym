@@ -32,6 +32,7 @@ import type { BuiltTerms, ImportFormat, ParseOptions, ParsedList } from "@/lib/i
 import { readImportInput, type PasteProblem } from "@/lib/import/read-input";
 import { findSimilarName } from "@/lib/import/similar-name";
 import type { ImportFailure } from "@/lib/import/types";
+import type { CollectionKind } from "@/lib/terms/kinds";
 import type { CollectionLanguage } from "@/lib/terms/languages";
 
 export type { DestinationMode };
@@ -67,6 +68,7 @@ export function useImportFlow({ collections, presetCollectionId, entry, adapter 
   const [mode, setMode] = useState<DestinationMode>(start.mode);
   const [newName, setNewName] = useState(start.name);
   const [language, setLanguage] = useState<CollectionLanguage>(start.language);
+  const [kind, setKind] = useState<CollectionKind | null>(null);
   const [existingId, setExistingId] = useState(start.existingId);
   const [filter, setFilter] = useState<CardFilter>("all");
   const [reviewAll, setReviewAll] = useState(false);
@@ -184,7 +186,8 @@ export function useImportFlow({ collections, presetCollectionId, entry, adapter 
   }
 
   const summary = summarize(check);
-  const nameOk = newName.trim().length > 0 && similar?.kind !== "exact";
+  const nameOk =
+    newName.trim().length > 0 && similar?.kind !== "exact" && (Boolean(adapter) || kind !== null);
   const canAdd = canCommit({
     summary,
     checking,
@@ -202,12 +205,13 @@ export function useImportFlow({ collections, presetCollectionId, entry, adapter 
     const destination =
       mode === "existing" && existing
         ? { collectionId: existing.id }
-        : { name: newName.trim(), language };
+        : { name: newName.trim(), language, kind: kind ?? "terms" };
     if (mode === "new" && !adapter) writeLanguagePref(language);
     track("import_submitted", {
       source: json ? "json" : "paste",
       format,
       destination_mode: mode,
+      ...(mode === "new" && kind ? { kind } : {}),
       term_count: summary.toAdd,
     });
 
@@ -240,6 +244,7 @@ export function useImportFlow({ collections, presetCollectionId, entry, adapter 
     mode,
     newName,
     language,
+    kind,
     existingId,
     existing,
     filter,
@@ -259,6 +264,7 @@ export function useImportFlow({ collections, presetCollectionId, entry, adapter 
     setDestination,
     setNewName,
     setLanguage,
+    setKind,
     setFilter,
     setReviewAll,
     ...checkActions({ dispatch, setLastRemoved, setResolved, newImportId }),

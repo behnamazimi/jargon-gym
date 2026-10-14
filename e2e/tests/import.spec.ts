@@ -1,7 +1,15 @@
+import type { Page } from "@playwright/test";
 import { test, expect } from "../fixtures";
 import { sql } from "../support/db";
 import { gotoReady } from "../support/navigation";
 import { SAMPLE_TERMS, seedCollection } from "../support/seed";
+
+async function chooseKind(page: Page, kind: "Field terms" | "Words and phrases") {
+  await page
+    .getByRole("radiogroup", { name: "What it teaches" })
+    .getByRole("radio", { name: kind })
+    .click();
+}
 
 const LIST = [
   "Idempotent\tSafe to run more than once",
@@ -20,8 +28,17 @@ test.describe("Adding terms", () => {
       await page.getByRole("button", { name: "Check your list" }).click();
 
       await page.getByLabel("Name", { exact: true }).fill("Imported from a list");
-      await page.getByRole("button", { name: /^Add \d+ terms?/ }).click();
+      const add = page.getByRole("button", { name: /^Add \d+ terms?/ });
+      await expect(add).toBeDisabled();
+      await chooseKind(page, "Words and phrases");
+      await add.click();
       await expect(page).toHaveURL(/\/app\/library\?collection=/);
+
+      const [collection] = await sql<{ kind: string }>(
+        "select kind from public.collections where owner_id = $1",
+        [user.id],
+      );
+      expect(collection?.kind).toBe("vocabulary");
 
       await expect
         .poll(async () => {
@@ -42,6 +59,7 @@ test.describe("Adding terms", () => {
     await page.getByLabel("Your list").fill(LIST);
     await page.getByRole("button", { name: "Check your list" }).click();
     await page.getByLabel("Name", { exact: true }).fill("Imported from a list");
+    await chooseKind(page, "Field terms");
     await page.getByRole("button", { name: /^Add \d+ terms?/ }).click();
     await expect(page).toHaveURL(/\/app\/library\?collection=/);
 
@@ -82,6 +100,7 @@ test.describe("Adding terms", () => {
   }) => {
     await gotoReady(page, "/app/capture");
     await page.getByLabel("Name").fill("My first collection");
+    await chooseKind(page, "Field terms");
     await page.getByRole("button", { name: "Create and continue" }).click();
 
     await expect(page.getByLabel("Term", { exact: true })).toBeVisible();

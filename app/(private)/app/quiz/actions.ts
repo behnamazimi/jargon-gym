@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { trackServer } from "@/lib/analytics/server";
 import { applyQuizAnswer } from "@/lib/terms/review-outcome";
 import { createAiTurn } from "@/lib/ai/observability";
@@ -17,11 +18,12 @@ import { AI_QUIZ_MAX_QUESTIONS } from "@/lib/quiz/mix";
 import { supabaseDistractorSource } from "@/lib/quiz/distractors-supabase";
 import { generateQuizQuestions } from "@/lib/quiz/generate";
 import { planAiQuiz } from "@/lib/quiz/plan-ai";
+import { attachDictationClips } from "@/lib/quiz/dictation-clips";
 import { generateSimpleQuiz } from "@/lib/quiz/generate-simple";
 import { fetchQuizTermPool } from "@/lib/quiz/terms";
 import { listStudyCollectionState } from "@/lib/study/collections";
 import type { QuizQuestion, QuizQuestionStyle, QuizTerm } from "@/lib/quiz/types";
-import type { QuestionType } from "@/lib/trace";
+import { QUESTION_TYPES, type QuestionType } from "@/lib/trace";
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { MAX_STUDY_TERMS } from "@/lib/study";
 
@@ -70,10 +72,11 @@ async function generateSimpleQuizResult(
   auth: Extract<Awaited<ReturnType<typeof requireAuthenticatedClient>>, { supabase: unknown }>,
   termsPromise: Promise<QuizTerm[]>,
 ): Promise<QuizGenerationResult> {
-  const terms = await termsPromise;
-  if (terms.length === 0) {
+  const pool = await termsPromise;
+  if (pool.length === 0) {
     return { error: NOTHING_ELIGIBLE_ERROR };
   }
+  const terms = await attachDictationClips(createAdminClient(), auth.user.id, pool);
   const questions = await generateSimpleQuiz(terms, auth.supabase);
   return { questions, terms, providerLabel: "Simple" };
 }
@@ -181,6 +184,12 @@ export async function generateQuizAction(input: {
   }
 }
 
+const quizAnswerSchema = z.object({
+  termId: z.guid(),
+  passed: z.boolean(),
+  questionType: z.enum(QUESTION_TYPES),
+});
+
 /** Record outcome for a single answer: updates the Bayesian recognition
  *  posterior. Library and Review read fresh data on their next visit. */
 export async function recordQuizAnswerAction(input: {
@@ -193,13 +202,11 @@ export async function recordQuizAnswerAction(input: {
     return { error: "Log in to take a quiz." };
   }
 
+  const parsed = quizAnswerSchema.safeParse(input);
+  if (!parsed.success) return { error: "Couldn't update term progress." };
+
   try {
-    await applyQuizAnswer(auth.supabase, auth.user.id, {
-      termId: input.termId,
-      passed: input.passed,
-      questionType: input.questionType,
-      mode: "session",
-    });
+    await applyQuizAnswer(auth.supabase, auth.user.id, { ...parsed.data, mode: "session" });
   } catch (err) {
     console.error("Quiz answer failed:", err);
     const message = "Couldn't update term progress.";

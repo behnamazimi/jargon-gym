@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cleanText } from "@/lib/terms/text-clean";
+import { COLLECTION_KINDS } from "@/lib/terms/kinds";
 import { COLLECTION_LANGUAGES } from "@/lib/terms/languages";
 
 export const MAX_IMPORT_TERMS = 1100;
@@ -34,6 +35,7 @@ const destinationSchema = z.union([
   z.object({
     name: z.string().transform(cleanText).pipe(z.string().trim().min(1).max(100)),
     language: z.enum(COLLECTION_LANGUAGES),
+    kind: z.enum(COLLECTION_KINDS),
   }),
 ]);
 

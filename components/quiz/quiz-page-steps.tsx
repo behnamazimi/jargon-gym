@@ -68,6 +68,7 @@ function QuizActiveQuestionStep({ quiz }: { quiz: UseQuizSessionResult }) {
         correct={quiz.correctSoFar}
         isLast={quiz.currentIndex + 1 === quiz.questions.length}
         onAnswer={quiz.handleQuestionAnswer}
+        onSkip={quiz.handleQuestionSkip}
       />
     </div>
   );

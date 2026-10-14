@@ -136,7 +136,7 @@ export async function generateQuizQuestions(input: {
   for (const question of written) byTermId.set(question.termId, question);
 
   const missing = plan.terms.filter((term) => !byTermId.has(term.id));
-  for (const question of await buildQuiz(missing, source, "web")) {
+  for (const question of await buildQuiz(missing, source, "web", "ai")) {
     byTermId.set(question.termId, question);
   }
 

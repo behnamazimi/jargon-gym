@@ -35,4 +35,6 @@ export const TEMPLATE_WEIGHTS: Record<PlannedTemplateId, number> = {
   typed_cloze: 6,
   // Mostly the fallback for terms without an exact-match example.
   typed_meaning_to_word: 2,
+  // Listening and spelling; a regular share without crowding out the cloze.
+  dictation: 3,
 };

@@ -96,7 +96,11 @@ export async function commitImport(input: unknown): Promise<{ ok: false; failure
     p_destination:
       "collectionId" in data.destination
         ? { collection_id: data.destination.collectionId }
-        : { name: data.destination.name, language: data.destination.language },
+        : {
+            name: data.destination.name,
+            language: data.destination.language,
+            kind: data.destination.kind,
+          },
     p_terms: data.terms,
     p_relationships: data.links,
     p_policy: data.policy,

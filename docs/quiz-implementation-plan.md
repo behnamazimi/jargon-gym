@@ -18,14 +18,15 @@ A question carries two separate facts.
 
 - **template**: what it asks (`definition_to_term`, `term_to_meaning`,
   `masked_example`, `does_it_fit`, and the web-only vocabulary templates
-  `typed_cloze` and `typed_meaning_to_word`). Both kinds share
+  `typed_cloze`, `typed_meaning_to_word` and `dictation`). Both kinds share
   a template when the question is the same; `templates/copy.ts` holds the
   kind-specific wording ("Which term…" vs "Which word or phrase…"), and
   `does_it_fit` is field terms only. Drives feedback copy and AI guidance.
   AI-written questions carry the same template ids.
 - **interaction**: how it is answered (`choice`, `boolean`, `text`). Drives
   grading, keyboard handling, the answer UI and the TRACE question type
-  (`multiple_choice`, `true_false`, `typed`).
+  (`multiple_choice`, `true_false`, `typed`). Dictation is the one exception:
+  a `text` question logged as `dictation`, a weaker signal.
 
 `QuizQuestion` becomes a union by interaction, each with `template` and
 `termId`. Nothing detects a template from prompt text (today's

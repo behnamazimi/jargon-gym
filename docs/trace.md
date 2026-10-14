@@ -184,7 +184,8 @@ question. So instead of a discrete grade, each Quiz answer updates a
 Bayesian update: how much a correct or incorrect answer should move your
 estimate depends on how easy it'd be to get right by guessing (25% for
 4-option multiple choice, 50% for true/false, 5% for a typed answer, where
-you have to produce the word yourself). That posterior maps onto a
+you have to produce the word yourself, and 25% for dictation, where you type a
+word you just heard, which shows you can spell it more than that you know it). That posterior maps onto a
 stability value the same way recall's does, and decays the same way into a
 retrievability number.
 
@@ -583,27 +584,27 @@ Every constant TRACE uses is named and commented in
 the source of truth rather than this table, since the two can drift. As of
 writing:
 
-| Parameter                                                  | Value                              | Meaning                                                                                                                          |
-| ---------------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Familiarity growth rate / decay rate                       | 0.3 / 0.5                          | How fast familiarity grows per read, and how quickly that growth diminishes with repetition                                      |
-| Familiarity cap                                            | 0.35                               | Most familiarity alone can ever contribute to mastery                                                                            |
-| Familiarity decay scale                                    | 10 days                            | How fast familiarity fades if you stop reading a term                                                                            |
-| Cold-start nudge (difficulty / stability)                  | 2 / 0.5                            | How much familiarity shifts a term's very first recall grade                                                                     |
-| Quiz slip allowance                                        | 0.95                               | Assumed chance of answering correctly when you do know the term                                                                  |
-| Guess rate, multiple choice / true-false / typed           | 0.25 / 0.5 / 0.05                  | Assumed chance of answering correctly by guessing                                                                                |
-| Recall forgetting curve                                    | FSRS-5                             | `(1 + 19/81·t/S)^-0.5`, so recall is exactly 90% after S days                                                                    |
-| Recognition decay scale                                    | 9                                  | Recognition only: `(1 + t/(9·S))⁻¹`                                                                                              |
-| Changed FSRS-5 weights (w0 / w1 / w3 / w9 / w11 / w16)     | 0.2 / 0.7 / 7 / 0.626 / 0.30 / 1.6 | First-ever Again, Hard and Easy stability, diminishing returns, how much a lapse keeps, Easy bonus                               |
-| Hard blend toward Again                                    | 0.85                               | Where Hard's stability sits between the Again and Good outcomes                                                                  |
-| Mastery blend weights (familiarity / recall / recognition) | 0.2 / 0.5 / 0.3                    | How much each trace counts toward overall mastery                                                                                |
-| Confidence time constant                                   | 2 tests                            | How quickly the confidence discount approaches full weight                                                                       |
-| Known / unknown thresholds                                 | 0.75 / 0.6                         | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
-| Known label minimum test count                             | 3                                  | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
-| Same-day stability decay (`w19`)                           | 0.0658                             | FSRS-6's default, paired with TRACE's own `w17`/`w18`; same-day gains shrink as stability grows                                  |
-| Learning-step retries / window                             | 3 / 60 minutes                     | How often a missed term is re-asked in a session, and how recently it must have been graded for a retry to count as one          |
-| Session cooldown                                           | 0.98 retrievability                | Above this, a term drops out of that tier's list for the rest of the session                                                     |
-| Untested-term queue position (Review / Quiz)               | 0.89 / 0.7                         | Where a never-graded or never-answered term sorts; learned terms that have decayed below it go first                             |
-| Read mastery-temper weight                                 | 0.2                                | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
+| Parameter                                                    | Value                              | Meaning                                                                                                                          |
+| ------------------------------------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Familiarity growth rate / decay rate                         | 0.3 / 0.5                          | How fast familiarity grows per read, and how quickly that growth diminishes with repetition                                      |
+| Familiarity cap                                              | 0.35                               | Most familiarity alone can ever contribute to mastery                                                                            |
+| Familiarity decay scale                                      | 10 days                            | How fast familiarity fades if you stop reading a term                                                                            |
+| Cold-start nudge (difficulty / stability)                    | 2 / 0.5                            | How much familiarity shifts a term's very first recall grade                                                                     |
+| Quiz slip allowance                                          | 0.95                               | Assumed chance of answering correctly when you do know the term                                                                  |
+| Guess rate, multiple choice / true-false / typed / dictation | 0.25 / 0.5 / 0.05 / 0.25           | Assumed chance of answering correctly by guessing                                                                                |
+| Recall forgetting curve                                      | FSRS-5                             | `(1 + 19/81·t/S)^-0.5`, so recall is exactly 90% after S days                                                                    |
+| Recognition decay scale                                      | 9                                  | Recognition only: `(1 + t/(9·S))⁻¹`                                                                                              |
+| Changed FSRS-5 weights (w0 / w1 / w3 / w9 / w11 / w16)       | 0.2 / 0.7 / 7 / 0.626 / 0.30 / 1.6 | First-ever Again, Hard and Easy stability, diminishing returns, how much a lapse keeps, Easy bonus                               |
+| Hard blend toward Again                                      | 0.85                               | Where Hard's stability sits between the Again and Good outcomes                                                                  |
+| Mastery blend weights (familiarity / recall / recognition)   | 0.2 / 0.5 / 0.3                    | How much each trace counts toward overall mastery                                                                                |
+| Confidence time constant                                     | 2 tests                            | How quickly the confidence discount approaches full weight                                                                       |
+| Known / unknown thresholds                                   | 0.75 / 0.6                         | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
+| Known label minimum test count                               | 3                                  | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
+| Same-day stability decay (`w19`)                             | 0.0658                             | FSRS-6's default, paired with TRACE's own `w17`/`w18`; same-day gains shrink as stability grows                                  |
+| Learning-step retries / window                               | 3 / 60 minutes                     | How often a missed term is re-asked in a session, and how recently it must have been graded for a retry to count as one          |
+| Session cooldown                                             | 0.98 retrievability                | Above this, a term drops out of that tier's list for the rest of the session                                                     |
+| Untested-term queue position (Review / Quiz)                 | 0.89 / 0.7                         | Where a never-graded or never-answered term sorts; learned terms that have decayed below it go first                             |
+| Read mastery-temper weight                                   | 0.2                                | How much the mastery-tempering nudge can push an already-tested term later in Read's queue, relative to its decay-aware exposure |
 
 These are reasoned starting points, not values fit to real usage data — this
 one in particular is meant to be tuned by feel once it's live, the same way the rest of the scoring engine's constants

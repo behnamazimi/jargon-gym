@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { QuizQuestion } from "./types";
-import { missedQuestions, missedTermIds } from "./results";
+import { missedQuestions, missedTermIds, scoredTotal } from "./results";
 
 function question(termId: string): QuizQuestion {
   return {
@@ -26,6 +26,15 @@ describe("missedQuestions", () => {
 
   it("doesn't count unanswered questions as missed", () => {
     expect(missedQuestions(questions, [{ termId: "a", passed: false }])).toHaveLength(1);
+  });
+
+  it("doesn't count skipped questions as missed or toward the total", () => {
+    const answers = [
+      { termId: "a", passed: false, skipped: true },
+      { termId: "b", passed: false },
+    ];
+    expect(missedQuestions(questions, answers).map((q) => q.termId)).toEqual(["b"]);
+    expect(scoredTotal(questions.length, answers)).toBe(2);
   });
 });
 

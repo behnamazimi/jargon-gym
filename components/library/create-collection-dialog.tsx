@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { KindToggle } from "@/components/shared/kind-toggle";
 import { LanguageToggle } from "@/components/shared/language-toggle";
 import { useCollectionActions } from "@/hooks/use-collection-actions";
 import { findSimilarName } from "@/lib/import/similar-name";
+import type { CollectionKind } from "@/lib/terms/kinds";
 import type { CollectionLanguage } from "@/lib/terms/languages";
 
 type ExistingCollection = { id: string; name: string };
@@ -38,6 +40,7 @@ function CreateCollectionForm({
   const { createEmptyCollection, isBusy, error } = useCollectionActions();
   const [name, setName] = useState("");
   const [language, setLanguage] = useState<CollectionLanguage>("en");
+  const [kind, setKind] = useState<CollectionKind | null>(null);
 
   const similar = findSimilarName(
     name,
@@ -47,14 +50,14 @@ function CreateCollectionForm({
     ? existingCollections.find((collection) => collection.name === similar.name)
     : undefined;
   const isExact = similar?.kind === "exact";
-  const canCreate = name.trim().length > 0 && !isExact && !isBusy;
+  const canCreate = name.trim().length > 0 && kind !== null && !isExact && !isBusy;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!canCreate) return;
+    if (!canCreate || !kind) return;
 
-    await createEmptyCollection({ name: name.trim(), language }, (collectionId) => {
-      track("collection_created", { language });
+    await createEmptyCollection({ name: name.trim(), language, kind }, (collectionId) => {
+      track("collection_created", { language, kind });
       onClose();
       router.push(`/app/library?collection=${collectionId}`);
     });
@@ -65,7 +68,7 @@ function CreateCollectionForm({
       <DialogHeader>
         <DialogTitle>New collection</DialogTitle>
         <DialogDescription>
-          Name it, pick a language, then add terms one at a time.
+          Name it, say what it teaches, then add terms one at a time.
         </DialogDescription>
       </DialogHeader>
 
@@ -87,6 +90,11 @@ function CreateCollectionForm({
         <Field>
           <FieldLabel>Language</FieldLabel>
           <LanguageToggle value={language} onChange={setLanguage} isDisabled={isBusy} />
+        </Field>
+
+        <Field>
+          <FieldLabel>What it teaches</FieldLabel>
+          <KindToggle value={kind} onChange={setKind} isDisabled={isBusy} />
         </Field>
       </div>
 

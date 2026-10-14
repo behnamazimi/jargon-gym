@@ -14,8 +14,10 @@ export type AiQuizPlan = {
   slots: AiSlot[];
 };
 
-/** The model can write a template for any term; the others need what the term has. */
+/** The model can write a template for any term; the others need what the term
+ *  has. Simple-only templates never go into an AI quiz. */
 function isEligibleForAi(template: QuizTemplate, term: QuizTerm): boolean {
+  if (template.simpleOnly) return false;
   return template.ai ? true : template.eligible(term);
 }
 
