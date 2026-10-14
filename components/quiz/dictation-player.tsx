@@ -18,7 +18,9 @@ type DictationPlayerProps = {
 };
 
 /** Plays the word when the question opens; the learner can replay it any time.
- *  If the clip won't load, or they can't listen, the question is skipped. */
+ *  Only the clip the question was built with plays: a new one could say more
+ *  than the word, or a renamed word. If it won't load, or they can't listen,
+ *  the question is skipped. */
 export function DictationPlayer({
   termId,
   clipVersion,
@@ -37,6 +39,7 @@ export function DictationPlayer({
         termId={termId}
         clipVersion={clipVersion}
         preload
+        canPrepare={false}
         showButton={false}
         handleRef={playerRef}
         onUnavailable={onCantListen}

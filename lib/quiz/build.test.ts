@@ -70,4 +70,23 @@ describe("buildQuiz", () => {
       }
     }
   });
+
+  it("asks dictation only in simple quizzes", async () => {
+    const word = makeTerm({
+      id: "w",
+      kind: "vocabulary",
+      term: "lopen",
+      dictationClip: "job-1",
+      recognition: { posterior: 0.3, testCount: 1 },
+    });
+    const seen = { simple: new Set<string>(), ai: new Set<string>() };
+    for (let run = 0; run < 60; run++) {
+      const [simple] = await buildQuiz([word], sourceOf(distractors), "web");
+      const [ai] = await buildQuiz([word], sourceOf(distractors), "web", "ai");
+      seen.simple.add(simple.template);
+      seen.ai.add(ai.template);
+    }
+    expect(seen.simple.has("dictation")).toBe(true);
+    expect(seen.ai.has("dictation")).toBe(false);
+  });
 });

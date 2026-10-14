@@ -33,6 +33,15 @@ describe("dictation", () => {
     expect(dictation.eligible({ ...geval, term: "het is de moeite waard" })).toBe(false);
   });
 
+  it("skips entries with characters you can't hear", () => {
+    expect(dictation.eligible({ ...geval, term: "Hoe gaat het?" })).toBe(false);
+    expect(dictation.eligible({ ...geval, term: "kopen (kocht, gekocht)" })).toBe(false);
+    expect(dictation.eligible({ ...geval, term: "de/het" })).toBe(false);
+    expect(dictation.eligible({ ...geval, term: "café" })).toBe(true);
+    expect(dictation.eligible({ ...geval, term: "zo'n" })).toBe(true);
+    expect(dictation.eligible({ ...geval, term: "e-mail" })).toBe(true);
+  });
+
   it("plays the clip and accepts the whole entry", async () => {
     const q = await dictation.build(geval, ctx);
     expect(q).toMatchObject({

@@ -1,3 +1,6 @@
+import type { CollectionLanguage } from "@/lib/terms/languages";
+import { withoutArticle } from "./articles";
+
 export const MASK = "_____";
 
 function wholeWordPattern(word: string): RegExp {
@@ -21,13 +24,10 @@ export function maskWords(text: string, words: string[]): string {
   return words.reduce((masked, word) => maskWord(masked, word), text);
 }
 
-/** A short lowercase first word ("het", "la", "der", "the") is treated as an
- *  article, so "In ieder geval" still names "het geval". */
-const LEADING_ARTICLE = /^\p{Ll}{1,3}\s+(.+)$/u;
-
-/** True when the text shows the term, with or without its leading article. */
-export function namesTerm(text: string, term: string): boolean {
+/** True when the text shows the term, with or without its leading article,
+ *  so "In ieder geval" still names "het geval". */
+export function namesTerm(text: string, term: string, language: CollectionLanguage): boolean {
   if (containsWholeWord(text, term)) return true;
-  const rest = term.trim().match(LEADING_ARTICLE)?.[1];
+  const rest = withoutArticle(term, language);
   return rest ? containsWholeWord(text, rest) : false;
 }

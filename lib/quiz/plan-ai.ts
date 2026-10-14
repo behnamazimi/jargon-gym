@@ -14,8 +14,10 @@ export type AiQuizPlan = {
   slots: AiSlot[];
 };
 
-/** The model can write a template for any term; the others need what the term has. */
+/** The model can write a template for any term; the others need what the term
+ *  has. Simple-only templates never go into an AI quiz. */
 function isEligibleForAi(template: QuizTemplate, term: QuizTerm): boolean {
+  if (template.simpleOnly) return false;
   return template.ai ? true : template.eligible(term);
 }
 
@@ -35,10 +37,7 @@ export async function planAiQuiz(
 
   await Promise.all(
     terms.map(async (term) => {
-      const templates = orderTemplates(term, "web", rng, isEligibleForAi).filter(
-        (template) => !template.simpleOnly,
-      );
-      for (const template of templates) {
+      for (const template of orderTemplates(term, "web", rng, isEligibleForAi)) {
         if (template.ai) {
           slots.set(term.id, { term, template });
           return;

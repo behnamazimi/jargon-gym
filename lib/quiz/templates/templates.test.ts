@@ -143,6 +143,7 @@ describe("does_it_fit", () => {
     expect(q).toMatchObject({ correctAnswer: false, quote: blocker.antiExample });
 
     const geval = makeTerm({
+      language: "nl",
       term: "het geval",
       example: "In ieder geval kom ik morgen.",
       antiExample: "Dat geval is gesloten.",

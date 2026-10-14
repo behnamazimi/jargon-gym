@@ -51,7 +51,8 @@ build questions with `buildQuiz` in `lib/quiz/build.ts`; each question type is
 a module in `lib/quiz/templates/`, listed in `registry.ts`. A question carries
 its `template` (what it asks) and `interaction` (`choice`, `boolean` or
 `text`, how it is answered), and grading, keys and the TRACE question type
-follow the interaction. Typed (`text`) questions are web-only and only for
+follow the interaction (dictation is the one exception: TRACE logs it as
+`dictation`, see `lib/quiz/trace-type.ts`). Typed (`text`) questions are web-only and only for
 vocabulary terms the learner already knows (`lib/quiz/mix.ts`), except
 dictation, which plays a term's word-only clip to anyone quizzed on it once
 and runs in simple quizzes only. AI mode

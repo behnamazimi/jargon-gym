@@ -79,7 +79,10 @@ bucket. The shared code is `lib/ai/speech/`:
   `attachNarrationVersions` (`lib/narration/versions.ts`) give the current
   clip's job id for a batch of terms (null when none). It is attached to Read
   and Review terms and to the Library's `/api/terms/details` batches as
-  `narrationVersion`. Triage has no lookup yet and plays unversioned. With
+  `narrationVersion`. Simple quizzes look it up for vocabulary terms in `term`
+  mode (`lib/quiz/dictation-clips.ts`), and a dictation question plays only
+  that clip, never asking for a new one. Triage has no lookup yet and plays
+  unversioned. With
   `null` the player prepares on the first tap instead of a GET that would 404;
   with nothing it asks the server as before.
 - `sweepSupersededAudio` removes the files of superseded jobs, at least an hour

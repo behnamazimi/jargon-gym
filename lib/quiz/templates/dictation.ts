@@ -3,6 +3,10 @@ import { QUIZ_COPY } from "./copy";
 import { textQuestion, typedFeedback, wordCount } from "./typed";
 import type { QuizTemplate } from "./types";
 
+/** Letters, spaces, apostrophes and hyphens: everything else (punctuation,
+ *  brackets, slashes) can't be heard, so it can't fairly be typed. */
+const HEARABLE = /^[\p{L}\p{M}' ’-]+$/u;
+
 /** Plays the term's clip and asks the learner to type what they hear. */
 export const dictation: QuizTemplate = {
   id: "dictation",
@@ -12,7 +16,8 @@ export const dictation: QuizTemplate = {
   eligible: (term) =>
     Boolean(term.dictationClip) &&
     (term.recognition?.testCount ?? 0) >= 1 &&
-    wordCount(term.term) <= TYPED_MAX_WORDS,
+    wordCount(term.term) <= TYPED_MAX_WORDS &&
+    HEARABLE.test(term.term.trim()),
   async build(term) {
     if (!term.dictationClip) return null;
     return {

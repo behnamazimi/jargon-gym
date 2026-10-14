@@ -78,6 +78,9 @@ export const HARD_LAPSE_BLEND = 0.85;
 
 /** §5 Bayesian recognition update — quiz slip allowance (still counts as "knows" when correct). */
 export const P_CORRECT_GIVEN_KNOWS = 0.95;
+/** How a quiz answer was given; each has its own guess rate below. */
+export const QUESTION_TYPES = ["multiple_choice", "true_false", "typed", "dictation"] as const;
+
 /** §5 Guess-rate correction per question type. */
 export const P_CORRECT_GIVEN_GUESS_MCQ = 0.25;
 export const P_CORRECT_GIVEN_GUESS_TF = 0.5;

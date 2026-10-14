@@ -43,6 +43,7 @@ export function TermNarrationPlayer({
   showButton = true,
   handleRef,
   onUnavailable,
+  canPrepare = true,
 }: {
   termId: string;
   clipVersion?: string | null;
@@ -52,10 +53,13 @@ export function TermNarrationPlayer({
   handleRef?: Ref<TermNarrationHandle>;
   /** Called when the clip can't be loaded or made. */
   onUnavailable?: () => void;
+  /** False plays only the given clip and never asks the server to make one. */
+  canPrepare?: boolean;
 }) {
   const [status, setStatus] = useState<"idle" | "loading" | "playing" | "paused">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wantPlayingRef = useRef(false);
+  const mountedRef = useRef(true);
   const abortRetriedRef = useRef(false);
   const prepareRef = useRef<"idle" | "running" | "done">("idle");
   const [prepared, setPrepared] = useState<PreparedClip>();
@@ -64,6 +68,7 @@ export function TermNarrationPlayer({
 
   useMountEffect(() => {
     return () => {
+      mountedRef.current = false;
       wantPlayingRef.current = false;
       const audio = audioRef.current;
       if (audio) {
@@ -81,7 +86,7 @@ export function TermNarrationPlayer({
 
   function fail(audio: HTMLAudioElement) {
     giveUp(audio);
-    onUnavailable?.();
+    if (mountedRef.current) onUnavailable?.();
   }
 
   // Loading never generates audio. When the clip is not cached yet, ask the
@@ -89,7 +94,7 @@ export function TermNarrationPlayer({
   async function prepareThenPlay(audio: HTMLAudioElement) {
     // An error event and a rejected play() can both land for one failed load.
     if (prepareRef.current === "running") return;
-    if (prepareRef.current === "done") {
+    if (prepareRef.current === "done" || !canPrepare) {
       fail(audio);
       return;
     }
@@ -206,7 +211,7 @@ export function TermNarrationPlayer({
 
   useImperativeHandle(handleRef, () => ({
     play: () => {
-      if (status !== "playing") handlePress();
+      if (status !== "playing" && status !== "loading") handlePress();
     },
   }));
 
@@ -231,7 +236,8 @@ export function TermNarrationPlayer({
     const audio = audioRef.current;
     if (!audio) return;
     if (wantPlayingRef.current) void prepareThenPlay(audio);
-    else giveUp(audio);
+    else if (canPrepare) giveUp(audio);
+    else fail(audio);
   }
 
   return (

@@ -8,7 +8,7 @@ function candidates(term: QuizTerm): { text: string; fits: boolean }[] {
   return [
     { text: term.example?.trim() ?? "", fits: true },
     { text: term.antiExample?.trim() ?? "", fits: false },
-  ].filter(({ text }) => text && !namesTerm(text, term.term));
+  ].filter(({ text }) => text && !namesTerm(text, term.term, term.language));
 }
 
 export const doesItFit: QuizTemplate = {
