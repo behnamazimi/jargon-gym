@@ -1,10 +1,8 @@
 "use client";
 
-import { useRef } from "react";
-import { setTermMarkedKnownAction } from "@/app/(private)/app/actions";
-import { overrideMarkedKnown } from "@/lib/library/overrides";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { setFirstExposureMarked, useFirstExposureMarked } from "./first-exposure-marks";
 
 /** Shown once, the very first time a term is ever revealed to this user
  *  (term.isNewToUser) — a chance to say "I already know this" before it
@@ -16,8 +14,8 @@ import { useToast } from "@/components/ui/toast";
  *  area, so it stays reachable however long the definition is. Render it
  *  inside that scroll container.
  *
- *  Marking moves straight on to the next term, so the confirmation and its
- *  Undo live in a toast that outlasts this card. */
+ *  Marking moves straight on to the next term. There is no toast to undo it:
+ *  the term's own card (reached with Previous) now offers "Mark as unknown". */
 export function FirstExposureKnownPrompt({
   termId,
   term,
@@ -27,44 +25,20 @@ export function FirstExposureKnownPrompt({
   term: string;
   onMarkedKnown: () => void;
 }) {
-  const { toast, dismiss } = useToast();
-  const pressedRef = useRef(false);
+  const { toast } = useToast();
+  const isMarked = useFirstExposureMarked(termId);
 
-  function handleUndo(marked: Promise<{ error?: string }>) {
-    void (async () => {
-      // Undo only after the mark lands, or the two writes could race.
-      const markResult = await marked;
-      if (markResult.error) return;
-      const { error, savedAt } = await setTermMarkedKnownAction(termId, false);
-      if (savedAt) overrideMarkedKnown(termId, false, savedAt);
-      toast(
-        error
-          ? `Couldn't undo: "${term}" is still marked known.`
-          : "Undone. It'll come back in your queue.",
-        error ? "destructive" : "success",
+  function handlePress() {
+    if (isMarked) {
+      setFirstExposureMarked(termId, false, () =>
+        toast(`Couldn't move "${term}" back to learning. Try again.`, "destructive"),
       );
-    })();
-  }
-
-  function handleMarkKnown() {
-    if (pressedRef.current) return;
-    pressedRef.current = true;
-
-    const marked = setTermMarkedKnownAction(termId, true);
+      return;
+    }
+    setFirstExposureMarked(termId, true, () =>
+      toast("Couldn't mark that term known. It may show up again.", "destructive"),
+    );
     onMarkedKnown();
-    const toastId = toast(`Marked "${term}" known`, "success", {
-      action: { label: "Undo", onPress: () => handleUndo(marked) },
-    });
-
-    void marked.then(({ error, savedAt }) => {
-      if (savedAt) {
-        overrideMarkedKnown(termId, true, savedAt);
-        return;
-      }
-      if (!error) return;
-      dismiss(toastId);
-      toast("Couldn't mark that term known. It may show up again.", "destructive");
-    });
   }
 
   return (
@@ -76,10 +50,19 @@ export function FirstExposureKnownPrompt({
         size="sm"
         variant="outline"
         className="pointer-events-auto bg-base-100 shadow-none"
-        onPress={handleMarkKnown}
+        onPress={handlePress}
       >
-        <span className="font-normal text-base-content/70">Already know it?</span>
-        <span className="font-medium">Mark as known</span>
+        {isMarked ? (
+          <>
+            <span className="font-normal text-base-content/70">Marked known</span>
+            <span className="font-medium">Mark as unknown</span>
+          </>
+        ) : (
+          <>
+            <span className="font-normal text-base-content/70">Already know it?</span>
+            <span className="font-medium">Mark as known</span>
+          </>
+        )}
       </Button>
     </div>
   );
