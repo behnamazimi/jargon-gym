@@ -10,8 +10,7 @@ test.describe("Settings", () => {
     await expect(page.getByText(new RegExp(`${left} of \\d+ credits left`))).toBeVisible();
   });
 
-  test("a member can sign out", async ({ page, user }) => {
-    expect(user.id).toBeTruthy();
+  test("a member can sign out", async ({ page, user: _user }) => {
     await gotoReady(page, "/app/library");
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.getByRole("menuitem", { name: /log out|sign out/i }).click();

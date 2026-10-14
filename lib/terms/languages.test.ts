@@ -9,11 +9,11 @@ import { TERM_LABELS } from "./term-labels";
 const NEW_LANGUAGES = ["es", "fr", "de", "it", "pt", "ru", "tr", "ja", "ko", "zh"] as const;
 
 describe("supported languages", () => {
-  it("offers twelve languages with unique names, English first", () => {
-    expect(COLLECTION_LANGUAGES).toHaveLength(12);
-    expect(COLLECTION_LANGUAGE_OPTIONS).toHaveLength(12);
+  it("offers each language once, with unique names, English first", () => {
     expect(COLLECTION_LANGUAGE_OPTIONS[0]).toEqual({ value: "en", label: "English" });
-    expect(new Set(COLLECTION_LANGUAGE_OPTIONS.map((option) => option.label)).size).toBe(12);
+    expect(new Set(COLLECTION_LANGUAGE_OPTIONS.map((option) => option.label)).size).toBe(
+      COLLECTION_LANGUAGES.length,
+    );
     expect(COLLECTION_LANGUAGE_OPTIONS.map((option) => option.value).sort()).toEqual(
       [...COLLECTION_LANGUAGES].sort(),
     );

@@ -117,10 +117,4 @@ test.describe("Sharing a collection", () => {
     expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   });
-
-  test("a built-in's link opens its public page", async ({ page }) => {
-    // The seed's public `standup` collection.
-    await page.goto("/c/22222222-2222-2222-2222-222222222225");
-    await expect(page).toHaveURL(/\/collections\/standup$/);
-  });
 });

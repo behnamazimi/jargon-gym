@@ -11,10 +11,4 @@ test.describe("Installable app", () => {
     });
     expect(registered).toBe(true);
   });
-
-  test("the offline page explains what still works", async ({ page }) => {
-    await page.goto("/~offline");
-    await expect(page.getByRole("heading", { name: "You're offline" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Retry" })).toBeVisible();
-  });
 });

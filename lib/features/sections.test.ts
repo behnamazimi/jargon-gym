@@ -15,17 +15,6 @@ describe("feature sections", () => {
     for (const id of ids) expect(id).toMatch(/^[a-z]+(-[a-z]+)*$/);
   });
 
-  it("has no empty copy", () => {
-    for (const text of allText) expect(text.trim()).not.toBe("");
-  });
-
-  it("gives every item in a section a unique title", () => {
-    for (const section of FEATURE_SECTIONS) {
-      const titles = section.items.map((item) => item.title);
-      expect(new Set(titles).size).toBe(titles.length);
-    }
-  });
-
   it("says terms, not jargon", () => {
     for (const text of allText) expect(text).not.toMatch(/jargon/i);
   });

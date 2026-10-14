@@ -19,10 +19,9 @@ function client({ ownerId, added }: { ownerId: string | null; added: number }) {
 }
 
 describe("getCollectionMembership", () => {
-  it("says owned without looking at the library", async () => {
-    const fake = client({ ownerId: "me", added: 0 });
+  it("says owned even when it is also in the library", async () => {
+    const fake = client({ ownerId: "me", added: 1 });
     expect(await getCollectionMembership(fake.client, "me", "d1")).toBe("owned");
-    expect(fake.calls).toEqual(["collections"]);
   });
 
   it("says added when it is in the library", async () => {

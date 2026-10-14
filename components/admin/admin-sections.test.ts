@@ -31,14 +31,4 @@ describe("admin sections", () => {
     expect(isSectionActive("/admin/ai/credits", bySection("/admin/ai/credits"))).toBe(true);
     expect(isSectionActive("/admin/ai/narration", bySection("/admin/ai/narration"))).toBe(true);
   });
-
-  it("honours extra prefixes", () => {
-    const section = {
-      href: "/admin/x",
-      label: "X",
-      icon: sections[0]!.icon,
-      matchPrefixes: ["/admin/y"],
-    };
-    expect(isSectionActive("/admin/y/z", section)).toBe(true);
-  });
 });

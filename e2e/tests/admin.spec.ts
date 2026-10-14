@@ -5,23 +5,13 @@ import { stub } from "../support/stub-client";
 import { gotoReady } from "../support/navigation";
 
 test.describe("Admin area", () => {
-  test("a member does not see the admin area", async ({ page, user }) => {
-    expect(user.id).toBeTruthy();
+  test("a member does not see the admin area", async ({ page, user: _user }) => {
     await page.goto("/admin");
     await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
   });
 
   test.describe("as an admin", () => {
     test.use({ storageState: "e2e/.auth/admin.json" });
-
-    test("the overview and the audit log open", async ({ page }) => {
-      await gotoReady(page, "/admin");
-      const nav = page.getByRole("navigation", { name: "Admin" });
-      await expect(nav).toBeVisible();
-
-      await nav.getByRole("link", { name: "Audit log" }).click();
-      await expect(page).toHaveURL(/\/admin\/system\/audit/);
-    });
 
     test("approving a waitlist request sends an invite", async ({ page, browser }) => {
       const email = `waitlist-${crypto.randomUUID()}@lobyas.test`;

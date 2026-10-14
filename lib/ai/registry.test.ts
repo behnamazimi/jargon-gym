@@ -1,15 +1,8 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { FEATURE_IDS, FEATURES, isBillable } from "./registry";
+import { FEATURE_IDS, isBillable } from "./registry";
 
 describe("feature registry", () => {
-  it("gives every feature a unit and a plain description of what leaves the app", () => {
-    for (const id of FEATURE_IDS) {
-      expect(FEATURES[id].unit).not.toBe("");
-      expect(FEATURES[id].sends).not.toBe("");
-    }
-  });
-
   it("bills story narration but never term narration", () => {
     expect(isBillable("narration_term")).toBe(false);
     expect(isBillable("narration_story")).toBe(true);

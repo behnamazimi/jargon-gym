@@ -34,6 +34,37 @@ with a stub server standing in for the model, Resend and narration. Read
 updates a spec, and a hot path gets `{ tag: "@smoke" }`. Run `pnpm test:e2e:smoke`
 when you change a flow they cover.
 
+# Writing tests
+
+A test earns its place by failing when behaviour a user or another module
+relies on breaks. Before adding one, ask what real regression it would catch;
+if you can't name one, don't write it.
+
+Don't add a test that:
+
+- repeats a constant, a UI string, a media query or a price (`expect(X).toBe("X")`);
+- checks that static data is non-empty, sorted or has a fixed length;
+- greps source files for strings (page titles, imports, comments). Only the
+  existing guards that enforce a security or billing rule may do this, and
+  new ones need that reason;
+- stubs a Supabase query chain just to assert which methods were called.
+  Test the pure mapping or error handling around it, or cover it in a
+  `supabase/tests` SQL test or an e2e spec;
+- re-checks a code path that another unit test, the proxy tests or an e2e
+  spec already covers;
+- needs no browser (only SQL, or only a function call) but lives in `e2e/`.
+
+Do add a test for: branching logic and edge cases, security-sensitive paths
+(redirects, auth, escaping), money and credits, anything that migrates or
+caches data (golden hashes), and database/code parity that would otherwise
+drift silently.
+
+Keep tests small. One behaviour per `it`, no unused fixture variables, no
+`expect(x).toBeTruthy()` placeholders. Banned-word copy checks go through the
+existing copy tests, not a new loop per file. An e2e spec covers a user flow
+end to end; if a unit test can prove the same thing, write the unit test.
+When you change a feature, delete or fix the tests it makes obsolete.
+
 # Scoring engine (TRACE)
 
 Read, Review, and Quiz are all driven by TRACE, the scoring engine that
