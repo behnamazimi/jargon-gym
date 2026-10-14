@@ -58,6 +58,28 @@ test.describe("Studying a collection", () => {
     await expect.poll(() => reviewState(user.id)).toMatchObject({ read: 1 });
   });
 
+  test(
+    "a term marked known in Read can be moved back from its own card",
+    { tag: "@smoke" },
+    async ({ page, user }) => {
+      const { collectionId } = await seedCollection(user);
+      await gotoReady(page, `/app/read?collection=${collectionId}`);
+
+      await page.getByRole("button", { name: "Show definition" }).click();
+      await page.getByRole("button", { name: "Mark as known" }).click();
+
+      // The next term is clean: no toast, and its own Show definition is reachable.
+      await expect(page.getByRole("button", { name: "Show definition" })).toBeVisible();
+      await expect(page.getByText(/^Marked ".*" known$/)).toHaveCount(0);
+      await expect.poll(() => reviewState(user.id)).toMatchObject({ markedKnown: 1 });
+
+      await page.getByRole("button", { name: "Previous" }).click();
+      await page.getByRole("button", { name: "Mark as unknown" }).click();
+      await expect(page.getByRole("button", { name: "Mark as known" })).toBeVisible();
+      await expect.poll(() => reviewState(user.id)).toMatchObject({ markedKnown: 0 });
+    },
+  );
+
   test("reviewing a term records the grade", { tag: "@smoke" }, async ({ page, user }) => {
     const { collectionId } = await seedCollection(user);
     await gotoReady(page, `/app/review?collection=${collectionId}`);
