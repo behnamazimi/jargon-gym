@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { FeaturesPage } from "@/components/features/features-page";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Features",
   description:

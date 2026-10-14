@@ -1,7 +1,5 @@
-export default function PrivateLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return children;
+import { AppChrome } from "@/components/app-chrome";
+
+export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <AppChrome>{children}</AppChrome>;
 }

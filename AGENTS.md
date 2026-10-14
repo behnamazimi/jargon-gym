@@ -285,7 +285,17 @@ page: some have over a thousand terms and every read is Supabase egress. There
 are no term pages; old `/collections/<slug>/<term>` addresses redirect to the
 collection (`LEGACY_TERM_PAGE_REDIRECTS`). The index shows each collection by one
 of its terms (`lib/collections/pick.ts` picks it from the loaded terms, stable
-per slug). Public pages are cached for 24 hours; saving a collection in admin
+per slug). The content pages (`app/(site)/`, with the `/collections` index) are cached for an
+hour, the index for a day (`dynamic = "force-static"` with `revalidate`), so they render without a
+session. They sit in their own route group because the root layout reads no
+cookies: a layout shared with them would stay stale on a soft navigation, and a
+signed-in member who clicked into `/app` would keep a signed-out frame. `(site)`
+uses `StaticChrome`, where `VisitorHeader` (`/api/chrome/profile`) and the
+theme script in the root layout restore the visitor's account menu and theme in
+the browser. Every other route group uses `AppChrome`, which reads the session;
+a new page goes there unless it can be cached for everyone. Public collection
+pages (`/collections/[slug]`) are not cached, so a taken-down collection stops
+at once. Saving a collection in admin
 revalidates its pages, but editing a term inside it does not. Optional copy or a
 pinned term goes in `lib/collections/showcase-overrides.ts`. The seed has two
 public samples (`standup`, `dutch-basics`) for checking these pages locally.

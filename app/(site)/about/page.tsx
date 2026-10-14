@@ -4,6 +4,9 @@ import { ShowcasePage } from "@/components/content/showcase-page";
 import { AboutScene } from "@/components/illustrations/scenes/about";
 import About from "@/content/pages/about.mdx";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "About",
   description: "Who builds Lobyas and why it exists.",
