@@ -1,29 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Suspense } from "react";
-import { AppFooter } from "@/components/app-footer";
-import { AppShell } from "@/components/app-shell";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
 import { ToastProvider } from "@/components/ui/toast";
 import { ConsentBanner } from "@/components/consent/consent-banner";
-import { ConsentSyncIsland } from "@/components/consent/consent-sync-island";
-import { OfflineBanner } from "@/components/pwa/offline-banner";
-import { SiteFooter } from "@/components/site-footer";
-import { HeaderIsland } from "@/components/header-island";
-import { HeaderSkeleton } from "@/components/page-skeleton";
-import { StudyPhoneChromeIsland } from "@/components/app/study-phone-chrome-island";
-import { StudyPhoneDockSkeleton } from "@/components/app/study-phone-dock-skeleton";
-import { StudyPhoneTopBarSkeleton } from "@/components/app/study-phone-topbar-skeleton";
-import { TimezoneSyncIsland } from "@/components/timezone-sync-island";
-import { TourIsland } from "@/components/tour/tour-island";
-import { GoalsIsland } from "@/components/goals/goals-island";
 import "./globals.css";
-import { getSessionUser, hasLikelySession } from "@/lib/auth/require-session";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { SPLASH_IMAGES, splashUrl } from "@/lib/splash";
-import { BROWSER_TIMEZONE_SCRIPT } from "@/lib/streak/browser-timezone";
-import { DARK_THEME, THEME_RESTORE_SCRIPT } from "@/lib/theme";
-import { getTheme } from "@/lib/theme-server";
+import { LIGHT_THEME, THEME_RESTORE_SCRIPT } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { Figtree, Fraunces, JetBrains_Mono } from "next/font/google";
 
@@ -74,22 +57,15 @@ export const viewport: Viewport = {
   interactiveWidget: "resizes-content",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [theme, hasSession, { user }] = await Promise.all([
-    getTheme(),
-    hasLikelySession(),
-    getSessionUser(),
-  ]);
-  const initialIsDark = theme === DARK_THEME;
-
   return (
     <html
       lang="en"
-      data-theme={theme}
+      data-theme={LIGHT_THEME}
       suppressHydrationWarning
       className={cn(
         "h-full",
@@ -104,46 +80,9 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_RESTORE_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
-        {user && <script dangerouslySetInnerHTML={{ __html: BROWSER_TIMEZONE_SCRIPT }} />}
-        <PwaProviders user={user}>
+        <PwaProviders>
           <ToastProvider>
-            <AppShell
-              header={
-                <Suspense fallback={<HeaderSkeleton hasLikelySession={hasSession} />}>
-                  <HeaderIsland initialIsDark={initialIsDark} />
-                </Suspense>
-              }
-              footer={<SiteFooter />}
-              appFooter={<AppFooter />}
-              studyPhoneChrome={
-                <Suspense
-                  fallback={
-                    <>
-                      <StudyPhoneTopBarSkeleton />
-                      <StudyPhoneDockSkeleton />
-                    </>
-                  }
-                >
-                  <StudyPhoneChromeIsland initialIsDark={initialIsDark} />
-                </Suspense>
-              }
-              hasLikelySession={hasSession}
-            >
-              <Suspense fallback={null}>
-                <TimezoneSyncIsland />
-              </Suspense>
-              <Suspense fallback={null}>
-                <ConsentSyncIsland />
-              </Suspense>
-              <Suspense fallback={null}>
-                <TourIsland />
-              </Suspense>
-              <Suspense fallback={null}>
-                <GoalsIsland />
-              </Suspense>
-              <OfflineBanner />
-              <main className="flex min-h-0 flex-1 flex-col">{children}</main>
-            </AppShell>
+            {children}
             <ConsentBanner />
           </ToastProvider>
         </PwaProviders>

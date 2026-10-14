@@ -13,8 +13,7 @@ import { getPublicCollectionPage, listPublicCollectionSummaries } from "@/lib/te
 import { cn } from "@/lib/utils";
 import { withDirection } from "@/components/shared/view-transitions";
 
-export const dynamic = "force-static";
-export const revalidate = 600;
+export const revalidate = 86400;
 export const dynamicParams = true;
 
 type PageParams = { collectionSlug: string };

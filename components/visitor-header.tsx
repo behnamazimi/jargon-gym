@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { AnalyticsIdentity } from "@/components/pwa/analytics-identity";
 import { SiteHeader } from "@/components/site-header";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
 import { hasAuthCookie } from "@/lib/auth/has-auth-cookie";
 import { EMPTY_STREAK } from "@/lib/streak/status";
 
-type Profile = { email: string; isAdmin: boolean; aiCreditsMode: AiCreditsMenuMode };
+type Profile = {
+  id: string;
+  email: string | null;
+  isAdmin: boolean;
+  aiCreditsMode: AiCreditsMenuMode;
+};
 
 async function fetchProfile(): Promise<Profile | null> {
   try {
@@ -37,12 +43,15 @@ export function VisitorHeader({ initialIsDark }: { initialIsDark: boolean }) {
   });
 
   return (
-    <SiteHeader
-      initialIsDark={initialIsDark}
-      user={profile ? { email: profile.email } : null}
-      isAdmin={profile?.isAdmin ?? false}
-      streak={EMPTY_STREAK}
-      aiCreditsMode={profile?.aiCreditsMode ?? "hidden"}
-    />
+    <>
+      {profile && <AnalyticsIdentity user={profile} />}
+      <SiteHeader
+        initialIsDark={initialIsDark}
+        user={profile ? { email: profile.email ?? "Account" } : null}
+        isAdmin={profile?.isAdmin ?? false}
+        streak={EMPTY_STREAK}
+        aiCreditsMode={profile?.aiCreditsMode ?? "hidden"}
+      />
+    </>
   );
 }

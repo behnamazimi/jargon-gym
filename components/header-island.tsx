@@ -3,12 +3,21 @@ import { aiCreditsMenuMode } from "@/lib/llm/central";
 import { getStudyPhoneUserSettings } from "@/lib/streak/settings";
 import { EMPTY_STREAK } from "@/lib/streak/status";
 import { SiteHeader } from "@/components/site-header";
-import { VisitorHeader } from "@/components/visitor-header";
 
 export async function HeaderIsland({ initialIsDark }: { initialIsDark: boolean }) {
   const { user } = await getSessionUser();
 
-  if (!user) return <VisitorHeader initialIsDark={initialIsDark} />;
+  if (!user) {
+    return (
+      <SiteHeader
+        initialIsDark={initialIsDark}
+        user={null}
+        isAdmin={false}
+        streak={EMPTY_STREAK}
+        aiCreditsMode="hidden"
+      />
+    );
+  }
 
   try {
     const [isAdmin, settings] = await Promise.all([

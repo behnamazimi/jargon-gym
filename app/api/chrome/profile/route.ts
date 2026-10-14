@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   try {
     const isAdmin = await getUserIsAdmin(user.id);
     return NextResponse.json(
-      { email: user.email ?? "Account", isAdmin, aiCreditsMode: aiCreditsMenuMode() },
+      { id: user.id, email: user.email, isAdmin, aiCreditsMode: aiCreditsMenuMode() },
       { headers: NO_STORE },
     );
   } catch (error) {

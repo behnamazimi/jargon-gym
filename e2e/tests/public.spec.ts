@@ -37,6 +37,17 @@ test.describe("Public pages", () => {
     await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
   });
 
+  test("a member who opens the app from a cached page gets the app frame", async ({
+    page,
+    user: _user,
+  }) => {
+    await page.goto("/about");
+    await page.getByRole("link", { name: "Study" }).click();
+
+    await expect(page).toHaveURL(/\/app\//);
+    await expect(page.locator("[data-chrome]")).toHaveAttribute("data-chrome", "study");
+  });
+
   test("a signed-in member adds a public collection to their library", async ({ page, user }) => {
     await gotoReady(page, "/collections/standup");
     await page
