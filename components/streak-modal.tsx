@@ -111,7 +111,7 @@ export function StreakModal({
           ? Array.from({ length: 7 }).map((_, i) => (
               <div
                 key={i}
-                className="flex flex-1 flex-col items-center gap-1 rounded-field bg-base-200/60 py-2"
+                className="flex flex-1 flex-col items-center gap-1 rounded-field border border-transparent bg-base-200/60 py-2"
                 aria-hidden
               >
                 <span className="h-4 w-6 animate-pulse rounded bg-base-300/60" />
