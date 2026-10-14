@@ -3,7 +3,7 @@
 import { requireAuthenticatedClient } from "@/lib/auth/require-session";
 import { isPromoId } from "@/lib/promos/promos";
 import { dismissPromo } from "@/lib/promos/settings";
-import { fetchStreakHistory, type StreakDay } from "@/lib/streak/history";
+import { clearShieldNotice, fetchStreakHistory, type StreakDay } from "@/lib/streak/history";
 import { isTourChapterId } from "@/lib/tour/chapters";
 import { markTourChapterSeen, skipTour } from "@/lib/tour/settings";
 
@@ -18,6 +18,19 @@ export async function getStreakHistoryAction(): Promise<{ days?: StreakDay[]; er
     return { days };
   } catch (err) {
     return { error: err instanceof Error ? err.message : "Couldn't load streak history." };
+  }
+}
+
+/** Called when the streak modal opens with a shield message to show. */
+export async function clearShieldNoticeAction(): Promise<{ error?: string }> {
+  const auth = await requireAuthenticatedClient();
+  if ("error" in auth) return { error: auth.error };
+
+  try {
+    await clearShieldNotice(auth.supabase);
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Couldn't save that." };
   }
 }
 

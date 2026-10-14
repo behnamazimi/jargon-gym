@@ -12,6 +12,7 @@ import { formatAdminDate } from "@/lib/admin/format";
 import { isUuid } from "@/lib/admin/list-params";
 import { requireAdminPage } from "@/lib/admin/page-guard";
 import { canModifyPerson, getPerson } from "@/lib/admin/people/person";
+import { SHIELD_DAYS } from "@/lib/streak/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 type PageProps = { params: Promise<{ id: string }> };
@@ -44,9 +45,13 @@ export default async function AdminPersonPage({ params }: PageProps) {
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <AdminStat label="Current streak" value={person.currentStreak} />
         <AdminStat label="Longest streak" value={person.longestStreak} />
+        <AdminStat
+          label="Streak shield"
+          value={person.shieldReady ? "Ready" : `${person.shieldProgress}/${SHIELD_DAYS}`}
+        />
         <AdminStat label="Last active" value={person.lastActiveDate ?? "—"} />
         <AdminStat label="Collections" value={person.ownedCollections} />
       </div>

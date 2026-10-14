@@ -30,6 +30,8 @@ export type AdminPerson = {
   banMismatch: boolean;
   currentStreak: number;
   longestStreak: number;
+  shieldReady: boolean;
+  shieldProgress: number;
   lastActiveDate: string | null;
   ownedCollections: number;
   /** Other people with something that would be deleted along with this person's collections. */
@@ -147,6 +149,8 @@ export async function getPerson(
     banMismatch: info.ban_mismatch,
     currentStreak: info.current_streak,
     longestStreak: info.longest_streak,
+    shieldReady: info.shield_ready,
+    shieldProgress: info.shield_progress,
     lastActiveDate: info.last_active_date,
     ownedCollections: info.owned_collections,
     peopleUsingCollections: info.people_using_collections,
