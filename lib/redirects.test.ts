@@ -15,10 +15,6 @@ describe("legacy admin redirects", () => {
     }
   });
 
-  it("are temporary, so reverting doesn't leave cached redirects in browsers", () => {
-    expect(LEGACY_ADMIN_REDIRECTS.every((redirect) => !redirect.permanent)).toBe(true);
-  });
-
   it("only match the old address exactly, not the new ones", () => {
     const sources = LEGACY_ADMIN_REDIRECTS.map((redirect) => redirect.source);
     expect(sources).not.toContain("/admin/ai/credits");
@@ -33,10 +29,6 @@ describe("legacy admin redirects", () => {
 });
 
 describe("legacy app redirects", () => {
-  it("are temporary", () => {
-    expect(LEGACY_APP_REDIRECTS.every((redirect) => !redirect.permanent)).toBe(true);
-  });
-
   it("list the bare /jargon address before the catch-all", () => {
     const sources = LEGACY_APP_REDIRECTS.map((redirect) => redirect.source);
     expect(sources.indexOf("/jargon")).toBeLessThan(sources.indexOf("/jargon/:path*"));

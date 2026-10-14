@@ -11,7 +11,7 @@
  */
 
 /** Canonical form-factor breakpoint. Must match Tailwind `md`. */
-export const PLATFORM_MD_MIN_PX = 768;
+const PLATFORM_MD_MIN_PX = 768;
 
 export const PLATFORM_MEDIA = {
   phone: `(max-width: ${PLATFORM_MD_MIN_PX - 1}px)`,

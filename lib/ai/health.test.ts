@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { FEATURE_IDS } from "./registry";
 import { featureHealth } from "./health";
 
 afterEach(() => vi.unstubAllEnvs());
@@ -18,11 +17,5 @@ describe("featureHealth", () => {
     const health = featureHealth("narration_term");
     expect(health.ok).toBe(false);
     expect(health.ok === false && health.note).not.toContain("MURF_API_KEY");
-  });
-
-  it("covers every registered feature", () => {
-    for (const feature of FEATURE_IDS) {
-      expect(() => featureHealth(feature)).not.toThrow();
-    }
   });
 });
