@@ -10,8 +10,8 @@ const READ_STATE_CMD =
 
 export const command = READ_STATE_CMD;
 
-// Poll every 5 minutes so changes in the web app (e.g. unmark known) show up.
-export const refreshFrequency = 5 * 60 * 1000;
+// Poll every 30 minutes so changes in the web app (e.g. unmark known) show up.
+export const refreshFrequency = 30 * 60 * 1000;
 
 export const initialState = { output: "", error: null };
 

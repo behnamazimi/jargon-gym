@@ -3,6 +3,9 @@ import { LegalPage } from "@/components/content/legal-page";
 import { legalProse } from "@/components/content/mdx-prose";
 import Terms from "@/content/pages/terms.mdx";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Terms",
   description: "The ground rules for using Lobyas.",

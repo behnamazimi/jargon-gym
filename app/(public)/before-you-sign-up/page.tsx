@@ -4,6 +4,9 @@ import { ShowcasePage } from "@/components/content/showcase-page";
 import { BeforeYouSignUpScene } from "@/components/illustrations/scenes/before-you-sign-up";
 import BeforeYouSignUp from "@/content/pages/before-you-sign-up.mdx";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Before you sign up",
   description:

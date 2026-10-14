@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures";
+import { APP_URL } from "../support/env";
 import { sql } from "../support/db";
 import { gotoReady } from "../support/navigation";
 import { createReferralCode } from "../support/users";
@@ -23,6 +24,17 @@ test.describe("Public pages", () => {
     const response = await request.get("/sitemap.xml");
     expect(response.ok()).toBe(true);
     expect(await response.text()).toContain("/collections/standup");
+  });
+
+  test("a cached public page still shows a signed-in member's account menu and theme", async ({
+    page,
+    context,
+    user: _user,
+  }) => {
+    await context.addCookies([{ name: "theme", value: "dim", url: APP_URL }]);
+    await page.goto("/about");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dim");
+    await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
   });
 
   test("a signed-in member adds a public collection to their library", async ({ page, user }) => {

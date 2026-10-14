@@ -9,7 +9,7 @@ import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
 function ProseLink({ href = "", children }: ComponentProps<"a">) {
   if (href.startsWith("/")) {
     return (
-      <Link href={href} className={contentPageLinkClass}>
+      <Link href={href} prefetch={false} className={contentPageLinkClass}>
         {children}
       </Link>
     );

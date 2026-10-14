@@ -3,6 +3,9 @@ import { LegalPage } from "@/components/content/legal-page";
 import { legalProse } from "@/components/content/mdx-prose";
 import Privacy from "@/content/pages/privacy.mdx";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "What Lobyas keeps about you, why, and who else handles it.",

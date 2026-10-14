@@ -22,7 +22,7 @@ import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { SPLASH_IMAGES, splashUrl } from "@/lib/splash";
 import { BROWSER_TIMEZONE_SCRIPT } from "@/lib/streak/browser-timezone";
-import { DARK_THEME } from "@/lib/theme";
+import { DARK_THEME, THEME_RESTORE_SCRIPT } from "@/lib/theme";
 import { getTheme } from "@/lib/theme-server";
 import { cn } from "@/lib/utils";
 import { Figtree, Fraunces, JetBrains_Mono } from "next/font/google";
@@ -100,6 +100,9 @@ export default async function RootLayout({
         "font-sans",
       )}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_RESTORE_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         {user && <script dangerouslySetInnerHTML={{ __html: BROWSER_TIMEZONE_SCRIPT }} />}
         <PwaProviders user={user}>

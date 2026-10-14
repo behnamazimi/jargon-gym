@@ -5,6 +5,9 @@ import { PWA_NAME } from "@/lib/pwa";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { website } from "@/lib/seo/json-ld";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 const DESCRIPTION =
   "Learn the terms of any field or language with real examples, AI stories, AI quizzes, and audio, and keep testing what you're weakest on so they actually stick. Invite-only.";
 

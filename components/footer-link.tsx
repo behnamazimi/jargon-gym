@@ -6,5 +6,7 @@ export const footerLinkClass =
   "text-xs text-base-content/70 underline underline-offset-2 transition-colors hover:text-base-content";
 
 export function FooterLink({ className, href, ...props }: ComponentProps<typeof Link>) {
-  return <Link href={href} className={cn(footerLinkClass, className)} {...props} />;
+  return (
+    <Link href={href} prefetch={false} className={cn(footerLinkClass, className)} {...props} />
+  );
 }

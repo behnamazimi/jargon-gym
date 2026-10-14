@@ -285,7 +285,12 @@ page: some have over a thousand terms and every read is Supabase egress. There
 are no term pages; old `/collections/<slug>/<term>` addresses redirect to the
 collection (`LEGACY_TERM_PAGE_REDIRECTS`). The index shows each collection by one
 of its terms (`lib/collections/pick.ts` picks it from the loaded terms, stable
-per slug). Public pages are cached for 24 hours; saving a collection in admin
+per slug). Public collection pages are cached for 10 minutes and the
+content pages for an hour (`dynamic = "force-static"` with `revalidate`), so they
+render without a session: the layout's theme script and `VisitorHeader`
+(`/api/chrome/profile`) restore the visitor's theme and account menu in the
+browser. A page that must stay per-user (`/c`, login) must not be made static.
+Saving a collection in admin
 revalidates its pages, but editing a term inside it does not. Optional copy or a
 pinned term goes in `lib/collections/showcase-overrides.ts`. The seed has two
 public samples (`standup`, `dutch-basics`) for checking these pages locally.

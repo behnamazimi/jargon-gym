@@ -9,6 +9,9 @@ import { PUBLIC_HOME_PATH } from "@/components/shared/back-link";
 import { LinkButton } from "@/components/ui/button";
 import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "Contact",
   description: "How to reach Lobyas with a question, a problem or an idea.",

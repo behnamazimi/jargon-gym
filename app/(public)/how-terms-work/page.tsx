@@ -4,6 +4,9 @@ import { ShowcasePage } from "@/components/content/showcase-page";
 import { TermAnatomyScene } from "@/components/illustrations/scenes/term-anatomy";
 import HowTermsWork from "@/content/pages/how-terms-work.mdx";
 
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: "How terms are built",
   description:

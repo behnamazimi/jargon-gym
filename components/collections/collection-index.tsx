@@ -63,6 +63,7 @@ export function CollectionIndex({ rows }: { rows: CollectionIndexRow[] }) {
               <li className="border-t border-base-300">
                 <Link
                   href={`/collections/${row.slug}`}
+                  prefetch={false}
                   transitionTypes={NAV_FORWARD}
                   className="group grid grid-cols-1 gap-x-8 gap-y-2 py-6 text-base-content no-underline sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline"
                 >

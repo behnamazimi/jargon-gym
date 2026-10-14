@@ -20,15 +20,15 @@ export function HeaderSkeleton({ hasLikelySession }: { hasLikelySession: boolean
           <SkeletonBar className="hidden h-6 w-28 md:block" />
           {hasLikelySession ? (
             <div className="hidden items-center gap-1 md:flex">
-              <SkeletonBar className="h-9 w-16 rounded-field" />
-              <SkeletonBar className="h-9 w-16 rounded-field" />
-              <SkeletonBar className="h-9 w-16 rounded-field" />
+              <SkeletonBar className="h-10 w-16 rounded-field" />
+              <SkeletonBar className="h-10 w-16 rounded-field" />
+              <SkeletonBar className="h-10 w-16 rounded-field" />
             </div>
           ) : null}
         </div>
         <div className="flex items-center gap-1">
-          {hasLikelySession ? <SkeletonBar className="h-9 w-14 rounded-field" /> : null}
-          <SkeletonBar className="h-9 w-9 rounded-field" />
+          {hasLikelySession ? <SkeletonBar className="h-10 w-14 rounded-field" /> : null}
+          <SkeletonBar className="h-10 w-10 rounded-field" />
           <SkeletonBar className="h-9 w-9 rounded-full" />
         </div>
       </div>
