@@ -52,10 +52,19 @@ describe("supabaseDistractorSource.sameDefinition", () => {
 
   it("finds other terms with the same meaning, matching it literally", async () => {
     const seen: { pattern?: string } = {};
-    const source = supabaseDistractorSource(sameDefinitionClient([row("b", null)], seen));
+    const source = supabaseDistractorSource(
+      sameDefinitionClient([row("b", null, "100%_sure")], seen),
+    );
     const found = await source.sameDefinition(makeTerm({ id: "a", definition: "100%_sure" }));
     expect(found.map((d) => d.id)).toEqual(["b"]);
-    expect(seen.pattern).toBe("100\\%\\_sure");
+    expect(seen.pattern).toBe("100\\%\\_sure%");
+  });
+
+  it("ignores a pronunciation when comparing meanings", async () => {
+    const rows = [row("b", null, "to cycle. /ˈfitsə(n)/"), row("c", null, "to cycle around")];
+    const source = supabaseDistractorSource(sameDefinitionClient(rows, {}));
+    const found = await source.sameDefinition(makeTerm({ id: "a", definition: "to cycle." }));
+    expect(found.map((d) => d.id)).toEqual(["b"]);
   });
 
   it("finds none when no term shares it", async () => {

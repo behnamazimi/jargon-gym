@@ -34,6 +34,10 @@ terms or a language (`lib/terms/kinds.ts`).
   other terms' definitions shown as options (Term → meaning). Match whole
   words, case-insensitive. An example that only holds a changed form of the
   term is not used as a masked example.
+- A pronunciation written at the end of a definition ("light. /ət ˈlɪxt/") is
+  dropped everywhere the quiz uses definitions (`text/pronunciation.ts`,
+  applied in `toQuizTerm` and the distractor source): it would give the term
+  away.
 - Masking does not apply to "Does it fit?": the term is the subject of the
   question there, so the stem names it. The example text itself is shown as
   written, so an example or anti-example that names the term (with or without
