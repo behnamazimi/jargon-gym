@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AnalyticsIdentity } from "@/components/pwa/analytics-identity";
 import { SiteHeader } from "@/components/site-header";
-import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
 import { hasAuthCookie } from "@/lib/auth/has-auth-cookie";
 import { EMPTY_STREAK } from "@/lib/streak/status";
@@ -30,9 +30,15 @@ async function fetchProfile(): Promise<Profile | null> {
  *  auth cookie and gets their account menu once it loads. */
 export function VisitorHeader({ initialIsDark }: { initialIsDark: boolean }) {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const pathname = usePathname();
 
-  useMountEffect(() => {
-    if (!hasAuthCookie()) return;
+  // The layout outlives soft navigations (login, logout), so the auth cookie is
+  // checked again on every page change.
+  useEffect(() => {
+    if (!hasAuthCookie()) {
+      setProfile(null);
+      return;
+    }
     let active = true;
     void fetchProfile().then((loaded) => {
       if (active) setProfile(loaded);
@@ -40,7 +46,7 @@ export function VisitorHeader({ initialIsDark }: { initialIsDark: boolean }) {
     return () => {
       active = false;
     };
-  });
+  }, [pathname]);
 
   return (
     <>

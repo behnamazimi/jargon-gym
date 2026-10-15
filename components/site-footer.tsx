@@ -16,7 +16,7 @@ const SITE_LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-base-300 bg-base-100">
+    <footer className="relative border-t border-base-300 bg-base-100">
       <div className={cn(pageContainerClass, "flex flex-col items-center gap-3 py-5")}>
         <nav
           aria-label="Footer"
