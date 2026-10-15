@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+// Passed by the mobile workflow as -PappVersionCode / -PappVersionName.
+def appVersionCode = (project.findProperty("appVersionCode") ?: "1").toInteger()
+def appVersionName = project.findProperty("appVersionName") ?: "1.0"
+
 android {
     namespace = "com.lobyas.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +11,8 @@ android {
         applicationId "com.lobyas.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (findProperty("versionCode") ?: "1").toInteger()
-        versionName findProperty("versionName") ?: "1.0"
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
