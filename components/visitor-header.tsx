@@ -45,7 +45,7 @@ export function VisitorHeader({ initialIsDark }: { initialIsDark: boolean }) {
         return;
       }
       void fetchProfile().then((loaded) => {
-        if (active) setProfile(loaded);
+        if (active && isSignedIn()) setProfile(loaded);
       });
     }
     refresh();

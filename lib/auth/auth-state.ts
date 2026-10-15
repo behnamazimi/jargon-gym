@@ -19,14 +19,27 @@ function setSignedIn(signedIn: boolean) {
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 }
 
+let signingOut = false;
+
 export function syncAuthAttribute() {
-  setSignedIn(hasAuthCookie());
+  const hasCookie = hasAuthCookie();
+  if (!hasCookie) signingOut = false;
+  // The cookie lasts until the logout response arrives; reading it before then would undo the switch.
+  if (signingOut) return;
+  setSignedIn(hasCookie);
 }
 
 /** Logging out redirects to a page that may be the one already open, so nothing
  *  would re-read the cookie. Called before the request so the page switches at once. */
 export function markSignedOut() {
+  signingOut = true;
   setSignedIn(false);
+}
+
+/** For a logout that failed: the cookie is still there, so the page is signed in again. */
+export function restoreSignedIn() {
+  signingOut = false;
+  syncAuthAttribute();
 }
 
 export function onAuthChange(listener: () => void) {

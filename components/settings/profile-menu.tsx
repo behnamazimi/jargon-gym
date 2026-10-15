@@ -4,7 +4,7 @@ import { resetAnalytics } from "@/lib/analytics/track";
 import { Bug, Download, LogOut, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
-import { markSignedOut } from "@/lib/auth/auth-state";
+import { markSignedOut, restoreSignedIn } from "@/lib/auth/auth-state";
 import { ACCOUNT_HOME_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { AppRouterProvider } from "@/components/app-router-provider";
 import { ReportIssueDialog } from "@/components/issues/report-issue-dialog";
@@ -41,7 +41,12 @@ export function ProfileMenu({ email, isAdmin = false, aiCreditsMode }: ProfileMe
     setIsBusy(true);
     resetAnalytics();
     markSignedOut();
-    await logout();
+    try {
+      await logout();
+    } catch {
+      restoreSignedIn();
+      setIsBusy(false);
+    }
   }
 
   return (

@@ -5,7 +5,7 @@ import { Bug, Download, LogOut, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
-import { markSignedOut } from "@/lib/auth/auth-state";
+import { markSignedOut, restoreSignedIn } from "@/lib/auth/auth-state";
 import { ACCOUNT_OVERFLOW_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { ReportIssueDialog } from "@/components/issues/report-issue-dialog";
 import { INSTALL_MENU_LABEL, useInstallAction } from "@/components/pwa/install-prompt";
@@ -30,7 +30,12 @@ export function MoreSheet() {
     setIsBusy(true);
     resetAnalytics();
     markSignedOut();
-    await logout();
+    try {
+      await logout();
+    } catch {
+      restoreSignedIn();
+      setIsBusy(false);
+    }
   }
 
   return (
