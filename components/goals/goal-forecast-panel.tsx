@@ -29,10 +29,8 @@ function message(forecast: GoalForecast): string | null {
       return "Set a goal to see a forecast.";
     case "noCollections":
       return "Add a collection to see when you'd master it.";
-    case "needsReviewAndQuiz": {
-      const missing = forecast.missing.map((tier) => (tier === "review" ? "Review" : "Quiz"));
-      return `Mastered takes both Review and Quiz. Turn on ${missing.join(" and ")} to see when you'll get there.`;
-    }
+    case "needsReview":
+      return "Mastered takes Review. Turn on Review to see when you'll get there.";
     case "forecast":
       return null;
   }

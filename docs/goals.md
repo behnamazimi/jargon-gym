@@ -82,8 +82,9 @@ that stamps `ever_mastered_at`: a successful answer that leaves it known.
   history, or 85% before that.
 - Three runs give the date range. The horizon is 365 days; past it, the row says
   "Over a year." Each row shows the later end of the range.
-- Mastered needs both Review and Quiz (Read alone tops out far below the known
-  line), so the forecast asks for whichever is off instead of showing dates.
+- Mastered needs Review (Read adds nothing to mastery, and Quiz alone tops out
+  below the known line), so with Review off the forecast asks for it instead of
+  showing dates. Quiz is optional.
 
 A run stops early when nothing that's left can finish in time: no collection
 fits in the answers left, nothing was mastered for 90 days, or, from day 60,

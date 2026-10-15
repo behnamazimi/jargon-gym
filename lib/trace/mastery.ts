@@ -19,17 +19,21 @@ export function confidence(testCount: number): number {
 }
 
 /** Mastery = wF·F_used + wR·R_r + wG·R_g. A track with no history yet
- *  (null retrievability, §4b/§5) contributes 0 rather than making the
- *  whole blend undefined — an unreviewed term's mastery is just whatever
- *  Read alone has earned it. */
+ *  (null, §4b/§5) contributes 0. The one exception: a term reviewed but never
+ *  quizzed gives recall the recognition weight too, so Review alone can make a
+ *  term known. Quiz alone can't, since its questions can be guessed. */
 export function blendMastery(input: {
   familiarityUsed: number;
   recallRetrievability: number | null;
   recognitionRetrievability: number | null;
 }): number {
+  const recallWeight =
+    input.recognitionRetrievability === null
+      ? MASTERY_WEIGHT_RECALL + MASTERY_WEIGHT_RECOGNITION
+      : MASTERY_WEIGHT_RECALL;
   return (
     MASTERY_WEIGHT_FAMILIARITY * input.familiarityUsed +
-    MASTERY_WEIGHT_RECALL * (input.recallRetrievability ?? 0) +
+    recallWeight * (input.recallRetrievability ?? 0) +
     MASTERY_WEIGHT_RECOGNITION * (input.recognitionRetrievability ?? 0)
   );
 }

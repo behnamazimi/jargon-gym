@@ -6,6 +6,7 @@ import {
   GOOD,
   HARD,
   HARD_LAPSE_BLEND,
+  HARD_MIN_KEEP,
   SAME_DAY_STABILITY_DECAY,
   UNTESTED_RECALL_RETRIEVABILITY,
 } from "./constants";
@@ -138,13 +139,18 @@ describe("updateStabilityOnSuccess / updateStabilityOnLapse / updateStabilityOnH
     expect(hard).toBeGreaterThan(again);
   });
 
-  it("Hard is the HARD_LAPSE_BLEND geometric blend of the Again and Good outcomes", () => {
-    const again = updateStabilityOnLapse(6, 4, 0.8);
-    const good = updateStabilityOnSuccess(6, 4, 0.8, GOOD);
-    expect(updateStabilityOnHard(6, 4, 0.8)).toBeCloseTo(
+  it("Hard is the HARD_LAPSE_BLEND geometric blend of the Again and Good outcomes on a long-overdue term", () => {
+    const again = updateStabilityOnLapse(6, 1, 0.3);
+    const good = updateStabilityOnSuccess(6, 1, 0.3, GOOD);
+    expect(updateStabilityOnHard(6, 1, 0.3)).toBeGreaterThan(HARD_MIN_KEEP);
+    expect(updateStabilityOnHard(6, 1, 0.3)).toBeCloseTo(
       again ** HARD_LAPSE_BLEND * good ** (1 - HARD_LAPSE_BLEND),
       10,
     );
+  });
+
+  it("Hard keeps at least HARD_MIN_KEEP of a strong term's stability", () => {
+    expect(updateStabilityOnHard(5, 60, 0.89)).toBeCloseTo(HARD_MIN_KEEP * 60, 10);
   });
 
   it("lapse stability is a positive number, well below pre-lapse stability", () => {
@@ -359,8 +365,13 @@ describe("review gaps at the Review target", () => {
     expect(gaps([GOOD, GOOD, GOOD, AGAIN]).at(-1)!).toBeLessThan(7);
   });
 
-  it("a Hard on a well-known term shortens the next gap", () => {
-    const g = gaps([GOOD, GOOD, GOOD, HARD]);
+  it("a Hard on a well-known term shortens the next gap, but keeps at least half of it", () => {
+    const g = gaps([GOOD, GOOD, GOOD, GOOD, GOOD, HARD]);
     expect(g.at(-1)!).toBeLessThan(g.at(-2)!);
+    expect(g.at(-1)!).toBeGreaterThanOrEqual(HARD_MIN_KEEP * g.at(-2)! - 1e-9);
+  });
+
+  it("repeated Hards stay at the one-day floor", () => {
+    for (const gap of gaps([HARD, HARD, HARD, HARD, HARD])) expect(gap).toBeCloseTo(1, 5);
   });
 });

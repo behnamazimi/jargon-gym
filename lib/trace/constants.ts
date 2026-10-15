@@ -76,6 +76,13 @@ export const LEARNING_STEP_WINDOW_MINUTES = 60;
  *  Stock FSRS-5 treats Hard as a weaker success that always grows stability. */
 export const HARD_LAPSE_BLEND = 0.85;
 
+/** §4 A Hard never leaves a term with less than this share of its stability.
+ *  The blend above alone sent almost every Hard to the one-day floor: a term
+ *  five Goods had sent 62 days away came back in 1.4. With this, a young term
+ *  still comes back within a couple of days (real Hard terms were recalled only
+ *  80% of the time a day later), and a strong one keeps half its gap (2026-10-15). */
+export const HARD_MIN_KEEP = 0.5;
+
 /** §5 Bayesian recognition update — quiz slip allowance (still counts as "knows" when correct). */
 export const P_CORRECT_GIVEN_KNOWS = 0.95;
 /** How a quiz answer was given; each has its own guess rate below. */
@@ -115,10 +122,20 @@ export const UNTESTED_RECALL_RETRIEVABILITY = 0.89;
  *  simulated sweep of 0.3–0.8; retune from real quiz data. */
 export const UNTESTED_RECOGNITION_RETRIEVABILITY = 0.7;
 
-/** §7 Mastery blend weights: Mastery = wF·F_used + wR·R_r + wG·R_g. */
-export const MASTERY_WEIGHT_FAMILIARITY = 0.2; // wF
-export const MASTERY_WEIGHT_RECALL = 0.5; // wR
-export const MASTERY_WEIGHT_RECOGNITION = 0.3; // wG
+/** §7 Mastery blend weights: Mastery = wF·F_used + wR·R_r + wG·p·R_g. Familiarity
+ *  went from 0.2 to 0 (2026-10-15): it only ever added a few points to tested
+ *  terms and pushed mastery away from how likely a term is to be recalled.
+ *  Read still matters through the cold-start nudge. Recall and recognition keep
+ *  their 5:3 ratio. */
+export const MASTERY_WEIGHT_FAMILIARITY = 0; // wF
+export const MASTERY_WEIGHT_RECALL = 0.625; // wR
+export const MASTERY_WEIGHT_RECOGNITION = 0.375; // wG
+
+/** §7 Mastery reads recall and recognition this many days ahead. Both are 1
+ *  right after any answer, a miss included, so reading them now let a term that
+ *  was just failed read as known. A week ahead, a missed term has already faded
+ *  and a well-known one hasn't (2026-10-15). */
+export const MASTERY_HORIZON_DAYS = 7;
 
 /** §7 Confidence discount time constant: confidence(n) = 1 − e^(−n/τ).
  *  Lowered from 3 to 2 (2026-09-05): at τ=3, reaching KNOWN_THRESHOLD
@@ -126,14 +143,18 @@ export const MASTERY_WEIGHT_RECOGNITION = 0.3; // wG
  *  since each successful FSRS grade grows stability and lengthens the
  *  wait before the term is due again). τ=2 needs ~4 correct grades
  *  instead — this only reshapes the label's confidence curve, not
- *  ranking or the underlying memory model. */
-export const CONFIDENCE_TIME_CONSTANT = 2; // τ
+ *  ranking or the underlying memory model. Lowered again from 2 to 1
+ *  (2026-10-15): the count includes misses, so a slow discount rewarded terms
+ *  that were failed often; mastery itself now carries how well a term holds. */
+export const CONFIDENCE_TIME_CONSTANT = 1; // τ
 
 /** §9 Known/unknown label thresholds (no hysteresis — see plan's deviation note).
  *  KNOWN_THRESHOLD lowered from 0.8 to 0.75 (2026-09-05) alongside the
  *  CONFIDENCE_TIME_CONSTANT change above, as part of the same
- *  time-to-mastery recalibration. */
-export const KNOWN_THRESHOLD = 0.75;
+ *  time-to-mastery recalibration. Raised back to 0.8 (2026-10-15) with the
+ *  week-ahead mastery: it marks known the terms a simulated learner still
+ *  recalls a week later most closely (see docs/trace.md). */
+export const KNOWN_THRESHOLD = 0.8;
 export const UNKNOWN_THRESHOLD = 0.6;
 /** §9 Minimum test count before a term can be labeled "known" — closes the
  *  gap where confidence(n) alone doesn't stop a single lucky grade from
@@ -143,8 +164,10 @@ export const KNOWN_MIN_TEST_COUNT = 3;
 /** §10 Read ranking — weight on the mastery-tempering nudge relative to
  *  decay-aware exposure (see rankReadQueue in queue.ts). A reasoned
  *  starting point, meant to be retuned by feel once it's
- *  live, same as everything else in this file. */
-export const READ_TEMPER_WEIGHT = 0.2;
+ *  live, same as everything else in this file. Lowered from 0.2 to 0.16
+ *  (2026-10-15) when the recall and recognition weights grew by a quarter, so
+ *  the nudge keeps its size. */
+export const READ_TEMPER_WEIGHT = 0.16;
 
 /** Per-collection "time to mastery" insight (Mastery page) — window-widening
  *  ladder for estimating how often terms have recently crossed a mastery

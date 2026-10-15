@@ -13,6 +13,7 @@ import {
   GOOD,
   HARD,
   HARD_LAPSE_BLEND,
+  HARD_MIN_KEEP,
   RECALL_CURVE_DECAY,
   RECALL_CURVE_FACTOR,
   SAME_DAY_STABILITY_DECAY,
@@ -77,7 +78,8 @@ export function updateStabilityOnLapse(
   return Math.min(longTerm, stability / Math.exp(w[17]! * w[18]!));
 }
 
-/** Stability update on Hard: between the Again and Good outcomes. */
+/** Stability update on Hard: between the Again and Good outcomes, but never
+ *  below HARD_MIN_KEEP of the stability it had. */
 export function updateStabilityOnHard(
   difficulty: number,
   stability: number,
@@ -85,7 +87,8 @@ export function updateStabilityOnHard(
 ): number {
   const again = updateStabilityOnLapse(difficulty, stability, retrievability);
   const good = updateStabilityOnSuccess(difficulty, stability, retrievability, GOOD);
-  return again ** HARD_LAPSE_BLEND * good ** (1 - HARD_LAPSE_BLEND);
+  const blend = again ** HARD_LAPSE_BLEND * good ** (1 - HARD_LAPSE_BLEND);
+  return Math.max(blend, HARD_MIN_KEEP * stability);
 }
 
 /** Same-day re-review — stability-only special case, as in FSRS-6: the gain

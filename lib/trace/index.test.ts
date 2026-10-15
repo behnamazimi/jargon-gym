@@ -35,6 +35,64 @@ describe("computeTraceSnapshot", () => {
   });
 });
 
+describe("mastery follows the grades", () => {
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  /** Grades a term each time it falls to Review's line; returns the state and the time of the last grade. */
+  function graded(grades: (typeof AGAIN | typeof HARD | typeof GOOD | typeof EASY)[]) {
+    let state = emptyState();
+    let at = new Date("2026-01-01T09:00:00Z");
+    grades.forEach((grade, i) => {
+      if (i > 0 && state.recallStability !== null) {
+        const due =
+          (state.recallStability / (19 / 81)) * (UNTESTED_RECALL_RETRIEVABILITY ** -2 - 1);
+        at = new Date(at.getTime() + Math.max(due, 1) * DAY_MS);
+      }
+      state = {
+        ...state,
+        ...applyReviewGrade(state, grade, at),
+        reviewRecallCount: state.reviewRecallCount + 1,
+        lastReviewRecallAt: at,
+      };
+    });
+    return { state, at };
+  }
+
+  function quizzed(state: TraceState, correct: boolean, at: Date): TraceState {
+    return {
+      ...state,
+      ...applyQuizAnswer(state, correct, "multiple_choice", at),
+      quizTestCount: state.quizTestCount + 1,
+      lastQuizTestedAt: at,
+    };
+  }
+
+  it("a term just graded Again doesn't read known, however often it was tested", () => {
+    const { state, at } = graded([AGAIN, AGAIN, GOOD, AGAIN, EASY, HARD, AGAIN]);
+    expect(computeTraceSnapshot(quizzed(state, true, at), at).knownLabel).not.toBe("known");
+  });
+
+  it("a quiz miss lowers mastery and a pass raises it", () => {
+    const { state, at } = graded([GOOD, GOOD]);
+    const before = computeTraceSnapshot(state, at).mastery;
+    expect(computeTraceSnapshot(quizzed(state, false, at), at).mastery).toBeLessThan(before);
+    expect(computeTraceSnapshot(quizzed(state, true, at), at).mastery).toBeGreaterThan(
+      computeTraceSnapshot(quizzed(state, false, at), at).mastery,
+    );
+  });
+
+  it("three Goods make a term known without a quiz", () => {
+    const { state, at } = graded([GOOD, GOOD, GOOD]);
+    expect(computeTraceSnapshot(state, at).knownLabel).toBe("known");
+  });
+
+  it("three quiz passes without Review don't", () => {
+    const at = new Date("2026-01-01T09:00:00Z");
+    const state = [true, true, true].reduce((s) => quizzed(s, true, at), emptyState());
+    expect(computeTraceSnapshot(state, at).knownLabel).not.toBe("known");
+  });
+});
+
 describe("applyReadEvent", () => {
   it("bumps read count and sets last read to now", () => {
     const now = new Date("2026-01-01T00:00:00Z");

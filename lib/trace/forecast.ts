@@ -60,7 +60,7 @@ type CollectionForecast = {
 
 export type MasteryForecast =
   | { kind: "noGoals" }
-  | { kind: "needsReviewAndQuiz"; missing: ("review" | "quiz")[] }
+  | { kind: "needsReview" }
   | {
       kind: "forecast";
       collections: CollectionForecast[];
@@ -70,8 +70,8 @@ export type MasteryForecast =
       remaining: number;
     };
 
-/** Mastered needs Review and Quiz both (Read alone tops out far below the
- *  known line), so a plan without one of them never gets a date. */
+/** Mastered needs Review (Read adds nothing to mastery and Quiz alone tops
+ *  out below the known line), so a plan without it never gets a date. */
 export function forecastMastery(
   candidates: TraceCandidate[],
   budget: ForecastBudget,
@@ -79,8 +79,7 @@ export function forecastMastery(
   now: Date,
 ): MasteryForecast {
   if (budget.read <= 0 && budget.review <= 0 && budget.quiz <= 0) return { kind: "noGoals" };
-  const missing = (["review", "quiz"] as const).filter((tier) => budget[tier] <= 0);
-  if (missing.length > 0) return { kind: "needsReviewAndQuiz", missing };
+  if (budget.review <= 0) return { kind: "needsReview" };
 
   const pool = candidates.filter((c) => !c.markedKnownAt);
   const runs = Array.from({ length: FORECAST_RUNS }, (_, run) =>

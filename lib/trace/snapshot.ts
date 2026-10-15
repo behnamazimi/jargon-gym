@@ -5,7 +5,15 @@
  *  @see docs/trace-formula.md
  */
 
-import { AGAIN, EASY, GOOD, HARD, UNTESTED_RECALL_RETRIEVABILITY } from "./constants";
+import {
+  AGAIN,
+  EASY,
+  GOOD,
+  HARD,
+  MASTERY_HORIZON_DAYS,
+  RECOGNITION_INITIAL_PRIOR,
+  UNTESTED_RECALL_RETRIEVABILITY,
+} from "./constants";
 import { daysBetween } from "./decay";
 import { familiarityUsed, computeFamiliarity } from "./familiarity";
 import {
@@ -25,6 +33,38 @@ import {
   updatePosterior,
 } from "./recognition";
 import type { QuestionType, ReviewGrade, TraceCandidate, TraceSnapshot, TraceState } from "./types";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Recall retrievability MASTERY_HORIZON_DAYS from now, or null with no
+ *  Review history. Mastery reads it there so a grade, even a miss, doesn't
+ *  count as a fresh memory. */
+function recallAhead(
+  state: Pick<TraceState, "recallStability" | "lastReviewRecallAt">,
+  now: Date,
+): number | null {
+  if (state.recallStability === null) return null;
+  const ahead = new Date(now.getTime() + MASTERY_HORIZON_DAYS * DAY_MS);
+  return recallRetrievability(
+    state.recallStability,
+    daysBetween(state.lastReviewRecallAt ?? now, ahead),
+  );
+}
+
+/** The chance the term is known from Quiz (the posterior) times how much of
+ *  it is left MASTERY_HORIZON_DAYS from now, or null with no Quiz history. */
+function recognitionAhead(
+  state: Pick<TraceState, "quizKnowledgePosterior" | "lastQuizTestedAt">,
+  now: Date,
+): number | null {
+  if (state.quizKnowledgePosterior === null) return null;
+  const ahead = new Date(now.getTime() + MASTERY_HORIZON_DAYS * DAY_MS);
+  const kept = recognitionRetrievability(
+    posteriorToStability(state.quizKnowledgePosterior),
+    daysBetween(state.lastQuizTestedAt ?? now, ahead),
+  );
+  return state.quizKnowledgePosterior * kept;
+}
 
 /** Full live snapshot of one term's trace state — familiarity, both
  *  retrievabilities, and the blended mastery/label. */
@@ -48,8 +88,8 @@ export function computeTraceSnapshot(state: TraceState, now: Date): TraceSnapsho
   const familiarityUsedValue = familiarityUsed(familiarity);
   const mastery = blendMastery({
     familiarityUsed: familiarityUsedValue,
-    recallRetrievability: recallR,
-    recognitionRetrievability: recognitionR,
+    recallRetrievability: recallAhead(state, now),
+    recognitionRetrievability: recognitionAhead(state, now),
   });
   const testCount = state.reviewRecallCount + state.quizTestCount;
   const adjustedMastery = masteryAdjusted(mastery, testCount);
@@ -115,7 +155,8 @@ export function daysUntilNextReview(
 
 /** Quiz answer: posterior update, softened on failure by current recall
  *  strength (null recallStability — no Review history yet — applies the
- *  full, unsoftened penalty). */
+ *  full, unsoftened penalty). A term's first answer starts from its recall
+ *  a week ahead when it has been reviewed, and from 50/50 otherwise. */
 export function applyQuizAnswer(
   state: Pick<TraceState, "quizKnowledgePosterior" | "recallStability" | "lastReviewRecallAt">,
   correct: boolean,
@@ -130,7 +171,12 @@ export function applyQuizAnswer(
         )
       : null;
 
-  const posterior = updatePosterior(state.quizKnowledgePosterior, correct, questionType, recallR);
+  const firstPrior = recallAhead(state, now);
+  const prior =
+    state.quizKnowledgePosterior === null && firstPrior !== null
+      ? Math.max(RECOGNITION_INITIAL_PRIOR, firstPrior)
+      : state.quizKnowledgePosterior;
+  const posterior = updatePosterior(prior, correct, questionType, recallR);
   return { quizKnowledgePosterior: posterior };
 }
 

@@ -48,23 +48,27 @@ describe("forecastMastery", () => {
     ).toEqual({ kind: "noGoals" });
   });
 
-  it("asks for Review and Quiz when either is off", () => {
+  it("asks for Review when it is off", () => {
     expect(
       forecastMastery(
         collection("a", 5),
-        { read: 20, review: 0, quiz: 0 },
+        { read: 20, review: 0, quiz: 10 },
         DEFAULT_FORECAST_RATES,
         NOW,
       ),
-    ).toEqual({ kind: "needsReviewAndQuiz", missing: ["review", "quiz"] });
-    expect(
+    ).toEqual({ kind: "needsReview" });
+  });
+
+  it("gives a date with Quiz off", () => {
+    const result = forecastOf(
       forecastMastery(
         collection("a", 5),
         { read: 0, review: 10, quiz: 0 },
         DEFAULT_FORECAST_RATES,
         NOW,
       ),
-    ).toEqual({ kind: "needsReviewAndQuiz", missing: ["quiz"] });
+    );
+    expect(result.collections[0]!.highDays).not.toBeNull();
   });
 
   it("predicts a small collection gets mastered", () => {

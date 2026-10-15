@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { KNOWN_MIN_TEST_COUNT, KNOWN_THRESHOLD, UNKNOWN_THRESHOLD } from "./constants";
+import {
+  KNOWN_MIN_TEST_COUNT,
+  KNOWN_THRESHOLD,
+  MASTERY_WEIGHT_RECALL,
+  MASTERY_WEIGHT_RECOGNITION,
+  UNKNOWN_THRESHOLD,
+} from "./constants";
 import {
   aggregateMastery,
   blendMastery,
@@ -22,22 +28,31 @@ describe("confidence", () => {
 });
 
 describe("blendMastery", () => {
-  it("untested tracks (null retrievability) contribute 0, not undefined behavior", () => {
+  it("weights recall and recognition when both are present", () => {
     const mastery = blendMastery({
-      familiarityUsed: 0.2,
-      recallRetrievability: null,
-      recognitionRetrievability: null,
-    });
-    expect(mastery).toBeCloseTo(0.2 * 0.2, 10); // wF * F_used only
-  });
-
-  it("weights sum to a full blend when all three tracks are present", () => {
-    const mastery = blendMastery({
-      familiarityUsed: 0.35,
+      familiarityUsed: 0,
       recallRetrievability: 0.9,
       recognitionRetrievability: 0.8,
     });
-    expect(mastery).toBeCloseTo(0.2 * 0.35 + 0.5 * 0.9 + 0.3 * 0.8, 10);
+    expect(mastery).toBeCloseTo(MASTERY_WEIGHT_RECALL * 0.9 + MASTERY_WEIGHT_RECOGNITION * 0.8, 10);
+  });
+
+  it("gives recall the recognition weight too when the term was never quizzed", () => {
+    const mastery = blendMastery({
+      familiarityUsed: 0,
+      recallRetrievability: 0.9,
+      recognitionRetrievability: null,
+    });
+    expect(mastery).toBeCloseTo((MASTERY_WEIGHT_RECALL + MASTERY_WEIGHT_RECOGNITION) * 0.9, 10);
+  });
+
+  it("keeps a never-reviewed term below the known line, however well it was quizzed", () => {
+    const mastery = blendMastery({
+      familiarityUsed: 0.35,
+      recallRetrievability: null,
+      recognitionRetrievability: 1,
+    });
+    expect(mastery).toBeLessThan(KNOWN_THRESHOLD);
   });
 });
 
