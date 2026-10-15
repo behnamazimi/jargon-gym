@@ -25,6 +25,19 @@ export type StoryTimeline = {
 
 type ShareOfClip = { start: number; end: number };
 
+const LEADING_CLOSERS = /^[\p{Pf}\p{Pe}"'»“”‘’]+\s*/u;
+const ENDS_IN_CLOSER = /[\p{Pf}\p{Pe}"'»“”‘’]\s*$/u;
+const STARTS_LOWERCASE = /^\p{Ll}/u;
+
+/** The segmenter can cut before a closing quote (French « Viens ! » ) or between
+ *  a quote and its speech tag ("Stop!" he said); neither starts a sentence. */
+function adjustCut(text: string, index: number): number | null {
+  const cut = index + (LEADING_CLOSERS.exec(text.slice(index))?.[0].length ?? 0);
+  const endsInQuote = ENDS_IN_CLOSER.test(text.slice(0, cut));
+  if (endsInQuote && STARTS_LOWERCASE.test(text.slice(cut))) return null;
+  return cut;
+}
+
 /** Sentence starts within the paragraph's text, never inside a term. */
 function sentenceCuts(paragraph: StorySegment[], language: CollectionLanguage): number[] {
   const text = paragraph.map((segment) => segment.text).join("");
@@ -38,8 +51,10 @@ function sentenceCuts(paragraph: StorySegment[], language: CollectionLanguage): 
   const cuts = new Set<number>();
   for (const { index } of new Intl.Segmenter(language, { granularity: "sentence" }).segment(text)) {
     if (index === 0) continue;
-    const term = termRanges.find(([start, end]) => index > start && index < end);
-    const cut = term ? term[1] : index;
+    const adjusted = adjustCut(text, index);
+    if (adjusted === null) continue;
+    const term = termRanges.find(([start, end]) => adjusted > start && adjusted < end);
+    const cut = term ? term[1] : adjusted;
     if (cut < text.length) cuts.add(cut);
   }
   return [...cuts].sort((a, b) => a - b);

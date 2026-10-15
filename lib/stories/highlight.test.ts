@@ -27,6 +27,24 @@ describe("buildTimeline", () => {
     ]);
   });
 
+  it("keeps a closing quote with the sentence it ends", () => {
+    expect(
+      sentenceTexts([{ text: "Elle dit : « Viens ici. Vite ! » Puis elle partit." }], "en"),
+    ).toEqual([["Elle dit : « Viens ici. ", "Vite ! » ", "Puis elle partit."]]);
+  });
+
+  it("keeps a speech tag with its quote", () => {
+    expect(sentenceTexts([{ text: "„Verdomme!” riep hij. Daarna ging hij." }], "nl")).toEqual([
+      ["„Verdomme!” riep hij. ", "Daarna ging hij."],
+    ]);
+  });
+
+  it("starts a new sentence after a quote when a capital follows", () => {
+    expect(sentenceTexts([{ text: "Hij riep: „Weg!” Dat was vreemd." }], "nl")).toEqual([
+      ["Hij riep: „Weg!” ", "Dat was vreemd."],
+    ]);
+  });
+
   it("numbers sentences across paragraphs", () => {
     const { paragraphs } = buildTimeline("Title", [{ text: "One. Two.\n\nThree." }], "en");
     expect(paragraphs.map((paragraph) => paragraph.map((sentence) => sentence.index))).toEqual([

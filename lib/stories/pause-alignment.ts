@@ -91,12 +91,16 @@ function interpolate(anchors: [number, number][], estimate: number): number {
  *  after the colon, often for longer than between sentences. */
 const SPEAKER_LABEL = /^\s*[\p{L}][\p{L}\p{N} .'’-]{0,24}:\s/u;
 
-/** How far into a sentence's text its speaker label ends, from 0 to 1; 0 when
+/** A colon that introduces a quote ("he shouted: „Damn!”"). Voices pause after it. */
+const QUOTE_INTRO = /[:：](?=\s*[\p{Pi}"'„«「『])/u;
+
+/** How far into a sentence's text its speaker label or quote introduction ends, from 0 to 1; 0 when
  *  it has none. */
 function labelShare(timeline: StoryTimeline, index: number): number {
   const sentence = timeline.paragraphs.flat().find((candidate) => candidate.index === index);
   const text = sentence?.segments.map((segment) => segment.text).join("") ?? "";
-  const label = SPEAKER_LABEL.exec(text)?.[0].trimEnd().length ?? 0;
+  const intro = QUOTE_INTRO.exec(text);
+  const label = SPEAKER_LABEL.exec(text)?.[0].trimEnd().length ?? (intro ? intro.index + 1 : 0);
   const spoken = text.trim().length;
   return label > 0 && label < spoken ? label / spoken : 0;
 }

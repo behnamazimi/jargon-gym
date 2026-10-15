@@ -140,6 +140,22 @@ describe("snapTimeline", () => {
     expect(speech[1]!.start * duration).toBeCloseTo(pause.quiet!.end - GUARD);
   });
 
+  describe("with a quote introduced by a colon", () => {
+    const story = buildTimeline(
+      "Title",
+      [{ text: "We stood in the dark and a customer shouted: “Damn!” That was a strange moment." }],
+      "en",
+    );
+    const endOfFirst = story.ends[0]! * duration;
+    const afterColon: Pause = { start: endOfFirst - 2.2, end: endOfFirst - 1.6 };
+    const afterQuote: Pause = { start: endOfFirst - 0.3, end: endOfFirst + 0.3 };
+
+    it("ends the sentence at the pause after the quote, not the one after the colon", () => {
+      const snapped = snapTimeline(story, [afterColon, afterQuote], duration);
+      expect(snapped.ends[0]! * duration).toBeCloseTo((afterQuote.start + afterQuote.end) / 2);
+    });
+  });
+
   describe("with speaker labels", () => {
     const dialogue = buildTimeline(
       "Title",
