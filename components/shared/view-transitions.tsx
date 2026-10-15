@@ -16,12 +16,14 @@ const PUSH_EXIT = { "nav-forward": "push-out", "nav-back": "pop-out" };
 /** Wraps a section's layout (Library, Read, Settings…). Links tagged
  *  `NAV_FORWARD` push the next section in over it and `NAV_BACK` pops back,
  *  like a phone app's screen stack. Untagged moves, such as the dock tabs,
- *  get a quick fade-through. Pages within the section don't trigger it. */
+ *  swap at once and the new section fades in, so the old one never lingers
+ *  over the next page's loading state. Pages within the section don't
+ *  trigger it. */
 export function SectionTransition({ children }: { children: ReactNode }) {
   return (
     <ViewTransition
       enter={{ ...PUSH_ENTER, default: "fade-through-in" }}
-      exit={{ ...PUSH_EXIT, default: "fade-through-out" }}
+      exit={{ ...PUSH_EXIT, default: "none" }}
       default="none"
     >
       {children}

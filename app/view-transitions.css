@@ -50,15 +50,11 @@
 }
 
 /* Moving between sections without a direction, such as the dock tabs: the
-   old page fades out quickly, then the new one fades and grows in. */
-::view-transition-old(.fade-through-out) {
-  animation: 90ms ease-in both vt-fade reverse;
-}
-
+   old page is swapped out at once and the new one fades and grows in. */
 ::view-transition-new(.fade-through-in) {
   animation:
-    210ms ease-out 90ms both vt-fade,
-    210ms ease-out 90ms both vt-grow;
+    210ms ease-out both vt-fade,
+    210ms ease-out both vt-grow;
 }
 
 @keyframes vt-grow {
@@ -178,23 +174,32 @@
 }
 
 /* Header, phone top bar and dock stay put above whatever is moving. They are
-   translucent with a backdrop blur, so only the new snapshot is drawn. */
+   translucent with a backdrop blur, so only the new snapshot is drawn. The
+   More sheet joins them so a page that finishes loading while it is open
+   doesn't paint over it. */
 ::view-transition-group(site-header),
 ::view-transition-group(phone-topbar),
-::view-transition-group(phone-dock) {
+::view-transition-group(phone-dock),
+::view-transition-group(phone-sheet) {
   animation: none;
   z-index: 100;
 }
 
+::view-transition-group(phone-sheet) {
+  z-index: 101;
+}
+
 ::view-transition-old(site-header),
 ::view-transition-old(phone-topbar),
-::view-transition-old(phone-dock) {
+::view-transition-old(phone-dock),
+::view-transition-old(phone-sheet) {
   display: none;
 }
 
 ::view-transition-new(site-header),
 ::view-transition-new(phone-topbar),
-::view-transition-new(phone-dock) {
+::view-transition-new(phone-dock),
+::view-transition-new(phone-sheet) {
   animation: none;
 }
 
