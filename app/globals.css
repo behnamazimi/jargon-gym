@@ -97,6 +97,8 @@
 /* Must match PLATFORM_MEDIA in lib/platform.ts */
 @custom-variant standalone (@media (display-mode: standalone));
 @custom-variant coarse (@media (pointer: coarse));
+/* Set on <html> before paint from the auth cookie (lib/auth/auth-state.ts). */
+@custom-variant signed-in (:is([data-auth="in"] &));
 
 /* The app's Android shell also sets --safe-area-inset-* (Capacitor SystemBars),
    in case env() isn't filled in the WebView. */

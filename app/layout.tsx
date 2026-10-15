@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
 import { ToastProvider } from "@/components/ui/toast";
+import { AuthStateSync } from "@/components/auth-state-sync";
 import { ConsentBanner } from "@/components/consent/consent-banner";
 import { NativeAuthBridge } from "@/components/native/native-auth-bridge";
 import "./globals.css";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
+import { AUTH_RESTORE_SCRIPT } from "@/lib/auth/auth-state";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { SPLASH_IMAGES, splashUrl } from "@/lib/splash";
 import { LIGHT_THEME, THEME_RESTORE_SCRIPT } from "@/lib/theme";
@@ -30,7 +32,10 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getPublicBaseUrl()),
   applicationName: PWA_NAME,
-  title: { default: "Lobyas: learn the terms that stick", template: "%s | Lobyas" },
+  title: {
+    default: "Lobyas: learn the terms that stick",
+    template: "%s | Lobyas",
+  },
   description: PWA_DESCRIPTION,
   openGraph: {
     siteName: PWA_NAME,
@@ -45,7 +50,10 @@ export const metadata: Metadata = {
     // bottom (WebKit bug 301108), leaving a gap under the dock.
     statusBarStyle: "default",
     title: PWA_NAME,
-    startupImage: SPLASH_IMAGES.map(({ id, media }) => ({ url: splashUrl(id), media })),
+    startupImage: SPLASH_IMAGES.map(({ id, media }) => ({
+      url: splashUrl(id),
+      media,
+    })),
   },
   // Next only writes mobile-web-app-capable, but iOS still needs the Apple
   // name to show the startup images above (vercel/next.js#74524).
@@ -67,6 +75,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme={LIGHT_THEME}
+      data-auth="out"
       suppressHydrationWarning
       className={cn(
         "h-full",
@@ -79,11 +88,13 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_RESTORE_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: AUTH_RESTORE_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <PwaProviders>
           <ToastProvider>
             {children}
+            <AuthStateSync />
             <ConsentBanner />
             <NativeAuthBridge />
           </ToastProvider>

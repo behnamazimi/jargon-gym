@@ -3,7 +3,7 @@ import { contentPageLinkClass } from "@/components/content/content-page-shell";
 import { InviteScene } from "@/components/illustrations/scenes/invite";
 import { LandingCtas } from "./landing-ctas";
 
-export function FinalCtaSection({ isLoggedIn }: { isLoggedIn: boolean }) {
+export function FinalCtaSection() {
   return (
     <div className="grid grid-cols-1 items-center gap-8 border-t-2 border-base-content/80 pt-10 sm:pt-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,4fr)] lg:gap-20">
       <div>
@@ -15,7 +15,7 @@ export function FinalCtaSection({ isLoggedIn }: { isLoggedIn: boolean }) {
           simple quizzes never use credits, and there are no due dates to fall behind on.
         </p>
         <div className="mt-6">
-          <LandingCtas isLoggedIn={isLoggedIn} />
+          <LandingCtas />
         </div>
         <p className="mt-8 m-0 max-w-[52ch] text-sm leading-relaxed text-base-content/70">
           If you want to know more before signing up:{" "}
