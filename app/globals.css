@@ -98,8 +98,10 @@
 @custom-variant standalone (@media (display-mode: standalone));
 @custom-variant coarse (@media (pointer: coarse));
 
+/* The app's Android shell also sets --safe-area-inset-* (Capacitor SystemBars),
+   in case env() isn't filled in the WebView. */
 @utility pt-safe {
-  padding-top: env(safe-area-inset-top);
+  padding-top: max(env(safe-area-inset-top, 0px), var(--safe-area-inset-top, 0px));
 }
 
 @utility pb-safe {
@@ -155,7 +157,10 @@
     --dock-height: 3.5rem;
     /* iOS home-screen apps can report an inflated bottom inset until the first
        rotation; 34px is the tallest real home indicator. */
-    --safe-bottom: min(34px, env(safe-area-inset-bottom, 0px));
+    --safe-bottom: min(
+      34px,
+      max(env(safe-area-inset-bottom, 0px), var(--safe-area-inset-bottom, 0px))
+    );
     --dock-inset: max(0.25rem, calc(var(--safe-bottom) - 0.75rem));
     --dock-bottom: calc(var(--dock-height) + var(--dock-inset));
     /* Text-safe variants: the fill colours are too light to read as text on white. */

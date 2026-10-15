@@ -29,6 +29,10 @@ on:
         description: Sign and upload to TestFlight / Play internal
         type: boolean
         default: false
+      server_url:
+        description: Site the app loads, e.g. a Vercel preview URL (default lobyas.com)
+        type: string
+        default: ""
 
 concurrency:
   group: mobile-${{ github.ref }}
@@ -50,6 +54,8 @@ jobs:
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
       - run: pnpm exec cap sync android
+        env:
+          CAP_SERVER_URL: ${{ inputs.server_url }}
       - run: ./gradlew assembleDebug
         working-directory: android
       - uses: actions/upload-artifact@v5
@@ -69,6 +75,8 @@ jobs:
         with:
           xcode-version: latest-stable
       - run: pnpm exec cap sync ios
+        env:
+          CAP_SERVER_URL: ${{ inputs.server_url }}
       - name: Build for the simulator, unsigned
         run: >-
           xcodebuild build

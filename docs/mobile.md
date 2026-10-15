@@ -35,6 +35,11 @@ on the same network) before syncing:
 CAP_SERVER_URL=https://<preview>.vercel.app pnpm mobile:sync
 ```
 
+The app shows whatever the site serves, so a web change (CSS, a component) only
+appears in an app that points at a deploy containing it. To get an APK for a
+branch, run the Mobile workflow manually and put the branch's Vercel preview URL
+in `server_url`; download the APK from the run's artifacts.
+
 Web code detects the app with `isNativeShell()` (`lib/native/shell.ts`, the
 `LobyasApp` user agent). Load Capacitor plugins with a dynamic `import()` inside
 a check for it, and assume an installed app may be older than the web code: a

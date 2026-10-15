@@ -2,6 +2,9 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const PRODUCTION_URL = "https://lobyas.com";
 
+// Preview builds point at a Vercel preview with CAP_SERVER_URL.
+const serverUrl = process.env.CAP_SERVER_URL || PRODUCTION_URL;
+
 const config: CapacitorConfig = {
   appId: "com.lobyas.app",
   appName: "Lobyas",
@@ -9,9 +12,8 @@ const config: CapacitorConfig = {
   appendUserAgent: "LobyasApp",
   backgroundColor: "#fdfcf9",
   server: {
-    // Preview builds point at a Vercel preview with CAP_SERVER_URL.
-    url: process.env.CAP_SERVER_URL ?? PRODUCTION_URL,
-    allowNavigation: ["lobyas.com", "*.lobyas.com"],
+    url: serverUrl,
+    allowNavigation: ["lobyas.com", "*.lobyas.com", new URL(serverUrl).hostname],
     errorPath: "offline.html",
   },
   plugins: {
