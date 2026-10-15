@@ -9,7 +9,6 @@ const config: CapacitorConfig = {
   appId: "com.lobyas.app",
   appName: "Lobyas",
   webDir: "native/www",
-  appendUserAgent: "LobyasApp",
   backgroundColor: "#fdfcf9",
   server: {
     url: serverUrl,
@@ -17,9 +16,13 @@ const config: CapacitorConfig = {
     errorPath: "offline.html",
   },
   ios: {
+    appendUserAgent: "LobyasApp/ios",
     // Lets the service worker run in WKWebView. Info.plist lists the allowed
     // domain, so it can't apply to a preview host.
     limitsNavigationsToAppBoundDomains: serverUrl === PRODUCTION_URL,
+  },
+  android: {
+    appendUserAgent: "LobyasApp/android",
   },
   plugins: {
     SplashScreen: { launchAutoHide: true, backgroundColor: "#fdfcf9" },

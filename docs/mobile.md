@@ -40,10 +40,26 @@ appears in an app that points at a deploy containing it. To get an APK for a
 branch, run the Mobile workflow manually and put the branch's Vercel preview URL
 in `server_url`; download the APK from the run's artifacts.
 
-Web code detects the app with `isNativeShell()` (`lib/native/shell.ts`, the
-`LobyasApp` user agent). Load Capacitor plugins with a dynamic `import()` inside
-a check for it, and assume an installed app may be older than the web code: a
-plugin added later won't exist in it.
+## Telling the app from a browser
+
+The shell adds `LobyasApp/ios` or `LobyasApp/android` to the WebView's user agent
+(`ios.appendUserAgent` / `android.appendUserAgent`; apps built before that send
+plain `LobyasApp`, so the os can be unknown). Everything reads it through
+`lib/native/shell.ts`, and there is no cookie: the user agent is on every
+request, including the first, and a cookie would make the cached public pages
+dynamic.
+
+- Component: `const { native, os } = useShell()` (`hooks/use-shell.ts`). It
+  reports "not native" on the server and during hydration, then the real value.
+- Event handler or effect: `isNativeShell()`.
+- CSS: `native-app:`, `ios-app:` and `android-app:` variants. An inline script
+  copies the user agent to `data-shell` on `<html>` before paint, so cached pages
+  need no server work.
+
+It is a hint for the UI only; anything that must be restricted to the app still
+needs the `x-lobyas-native` header or a server check. Load Capacitor plugins with
+a dynamic `import()` inside a check for it, and assume an installed app may be
+older than the web code: a plugin added later won't exist in it.
 
 ## Offline and the service worker
 

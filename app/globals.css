@@ -99,6 +99,10 @@
 @custom-variant coarse (@media (pointer: coarse));
 /* Set on <html> before paint from the auth cookie (lib/auth/auth-state.ts). */
 @custom-variant signed-in (:is([data-auth="in"] &));
+/* Set on <html> before paint from the user agent (lib/native/shell.ts). */
+@custom-variant native-app (:is([data-shell] &));
+@custom-variant ios-app (:is([data-shell="ios"] &));
+@custom-variant android-app (:is([data-shell="android"] &));
 
 /* The app's Android shell also sets --safe-area-inset-* (Capacitor SystemBars),
    in case env() isn't filled in the WebView. */
