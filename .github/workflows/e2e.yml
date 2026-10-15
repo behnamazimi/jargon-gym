@@ -2,18 +2,6 @@ name: E2E
 
 on:
   pull_request:
-    paths:
-      - "app/**"
-      - "lib/**"
-      - "components/**"
-      - "hooks/**"
-      - "supabase/**"
-      - "e2e/**"
-      - "playwright.config.ts"
-      - ".github/**"
-      - "vercel.json"
-      - "package.json"
-      - "pnpm-lock.yaml"
   push:
     branches: [main]
   schedule:
@@ -25,9 +13,33 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Hot paths on every pull request.
-  smoke:
+  # The workflow runs on every pull request so the required checks always
+  # report. A path filter on the trigger would leave them waiting forever on
+  # pull requests that only touch native projects or docs.
+  changes:
     if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.check.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Check for changes that can affect the app
+        id: check
+        run: |
+          if git diff --quiet "origin/${{ github.base_ref }}"...HEAD -- \
+            app lib components hooks supabase e2e playwright.config.ts .github \
+            vercel.json package.json pnpm-lock.yaml; then
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Hot paths on every pull request that can affect the app.
+  smoke:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
