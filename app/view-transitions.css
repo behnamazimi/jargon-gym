@@ -178,23 +178,32 @@
 }
 
 /* Header, phone top bar and dock stay put above whatever is moving. They are
-   translucent with a backdrop blur, so only the new snapshot is drawn. */
+   translucent with a backdrop blur, so only the new snapshot is drawn. The
+   More sheet joins them so a page that finishes loading while it is open
+   doesn't paint over it. */
 ::view-transition-group(site-header),
 ::view-transition-group(phone-topbar),
-::view-transition-group(phone-dock) {
+::view-transition-group(phone-dock),
+::view-transition-group(phone-sheet) {
   animation: none;
   z-index: 100;
 }
 
+::view-transition-group(phone-sheet) {
+  z-index: 101;
+}
+
 ::view-transition-old(site-header),
 ::view-transition-old(phone-topbar),
-::view-transition-old(phone-dock) {
+::view-transition-old(phone-dock),
+::view-transition-old(phone-sheet) {
   display: none;
 }
 
 ::view-transition-new(site-header),
 ::view-transition-new(phone-topbar),
-::view-transition-new(phone-dock) {
+::view-transition-new(phone-dock),
+::view-transition-new(phone-sheet) {
   animation: none;
 }
 

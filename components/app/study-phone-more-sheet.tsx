@@ -38,6 +38,7 @@ export function MoreSheet() {
         onOpenChange={setMoreOpen}
         side="bottom"
         showCloseButton={false}
+        style={{ viewTransitionName: "phone-sheet" }}
         className="max-h-[min(36rem,85dvh)] rounded-t-2xl pb-safe md:hidden"
       >
         <SheetHeader className="border-b border-base-300 px-4 py-3">
