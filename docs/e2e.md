@@ -84,4 +84,6 @@ every real environment: `LLM_BASE_URL`, `RESEND_BASE_URL`, `MURF_BASE_URL`,
 
 `.github/workflows/e2e.yml` runs `@smoke` on pull requests that touch app code,
 and the full suite in two shards on pushes to `main` and nightly, merging the
-blob reports into one HTML report.
+blob reports into one HTML report. The workflow starts on every pull request
+and skips the jobs when nothing relevant changed, so the required `smoke` and
+`full` checks always report.

@@ -2,18 +2,6 @@ name: E2E
 
 on:
   pull_request:
-    paths:
-      - "app/**"
-      - "lib/**"
-      - "components/**"
-      - "hooks/**"
-      - "supabase/**"
-      - "e2e/**"
-      - "playwright.config.ts"
-      - ".github/**"
-      - "vercel.json"
-      - "package.json"
-      - "pnpm-lock.yaml"
   push:
     branches: [main]
   schedule:
@@ -25,9 +13,34 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Hot paths on every pull request.
-  smoke:
+  # The workflow runs on every pull request so the required checks always
+  # report. A path filter on the trigger would leave them waiting forever on
+  # pull requests that only touch native projects or docs.
+  changes:
     if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.check.outputs.relevant }}
+    steps:
+      - name: Check for changes that can affect the app
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pattern='^(app|lib|components|hooks|supabase|e2e|\.github)/|^(playwright\.config\.ts|vercel\.json|package\.json|pnpm-lock\.yaml)$'
+          files=$(gh api --paginate "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --jq '.[].filename')
+          if grep -Eq "$pattern" <<< "$files"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # Hot paths on every pull request that can affect the app.
+  smoke:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
