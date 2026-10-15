@@ -108,6 +108,17 @@ describe("buildTimeline", () => {
     expect(ends[1]! - ends[0]!).toBeGreaterThan(ends[0]! - titleEnd);
   });
 
+  it("gives a sentence with commas more of the clip than a plain one of the same letters", () => {
+    const { ends, titleEnd } = buildTimeline("Title", [{ text: "Aa, bb, cc. Aa bb cc." }], "en");
+    expect(ends[0]! - titleEnd).toBeGreaterThan(ends[1]! - ends[0]!);
+  });
+
+  it("doesn't count quote marks as speech", () => {
+    const plain = buildTimeline("Title", [{ text: "Stop now. Go on." }], "en");
+    const quoted = buildTimeline("Title", [{ text: "„Stop now.” Go on." }], "nl");
+    expect(quoted.ends).toEqual(plain.ends);
+  });
+
   it("has nothing to time for an empty story", () => {
     const timeline = buildTimeline("Title", [], "en");
     expect(timeline.paragraphs).toEqual([]);
