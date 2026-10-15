@@ -76,6 +76,12 @@ export const LEARNING_STEP_WINDOW_MINUTES = 60;
  *  Stock FSRS-5 treats Hard as a weaker success that always grows stability. */
 export const HARD_LAPSE_BLEND = 0.85;
 
+/** Hard never leaves a term with less than this share of its stability
+ *  (2026-10-15). The blend above alone dropped any term, even one that had
+ *  lasted two months, to about a day. Young terms still come back in a day,
+ *  which matches real grades (about 80% recalled a day after a Hard). */
+export const HARD_MIN_KEEP = 0.5;
+
 /** §5 Bayesian recognition update — quiz slip allowance (still counts as "knows" when correct). */
 export const P_CORRECT_GIVEN_KNOWS = 0.95;
 /** How a quiz answer was given; each has its own guess rate below. */
@@ -115,10 +121,29 @@ export const UNTESTED_RECALL_RETRIEVABILITY = 0.89;
  *  simulated sweep of 0.3–0.8; retune from real quiz data. */
 export const UNTESTED_RECOGNITION_RETRIEVABILITY = 0.7;
 
-/** §7 Mastery blend weights: Mastery = wF·F_used + wR·R_r + wG·R_g. */
-export const MASTERY_WEIGHT_FAMILIARITY = 0.2; // wF
-export const MASTERY_WEIGHT_RECALL = 0.5; // wR
-export const MASTERY_WEIGHT_RECOGNITION = 0.3; // wG
+/** §7 Mastery reads each track this many days ahead, so it answers "will you
+ *  still know this in two weeks?" rather than "did you just answer it?". Any
+ *  answer, right or wrong, sets retrievability to 1, so reading it now let a
+ *  just-failed term look mastered (2026-10-15). */
+export const MASTERY_HORIZON_DAYS = 14;
+
+/** §7 Recall and recognition are combined as a weighted geometric mean,
+ *  R_r^wR · K_g^wG, so the weaker one pulls mastery down. The 5:3 ratio is the
+ *  original design's 0.5/0.3. */
+export const MASTERY_WEIGHT_RECALL = 0.625; // wR
+export const MASTERY_WEIGHT_RECOGNITION = 0.375; // wG
+
+/** §7 A track with no tests yet counts as a coin flip, not as 0. With it, a
+ *  term never quizzed tops out at 0.5^wG ≈ 0.77, below KNOWN_THRESHOLD, so a
+ *  passed quiz is what lifts a term to Known. */
+export const UNTESTED_TRACK_EVIDENCE = 0.5;
+
+/** §7 Reading fills this share of what recall is missing, scaled by
+ *  familiarity: R' = R_r + w·F_used·(1 − R_r). A fixed slice for reading put
+ *  part of the score out of reach unless the term was read again; this way it
+ *  helps weak terms more. It lifts recall only, so a term never quizzed still
+ *  can't reach Known. */
+export const READ_GAP_WEIGHT = 0.3;
 
 /** §7 Confidence discount time constant: confidence(n) = 1 − e^(−n/τ).
  *  Lowered from 3 to 2 (2026-09-05): at τ=3, reaching KNOWN_THRESHOLD
@@ -126,14 +151,18 @@ export const MASTERY_WEIGHT_RECOGNITION = 0.3; // wG
  *  since each successful FSRS grade grows stability and lengthens the
  *  wait before the term is due again). τ=2 needs ~4 correct grades
  *  instead — this only reshapes the label's confidence curve, not
- *  ranking or the underlying memory model. */
-export const CONFIDENCE_TIME_CONSTANT = 2; // τ
+ *  ranking or the underlying memory model. Lowered again to 1 (2026-10-15):
+ *  mastery now reads stability two weeks ahead, which already carries the
+ *  evidence, and counting misses as tests had propped fail-heavy terms up. */
+export const CONFIDENCE_TIME_CONSTANT = 1; // τ
 
 /** §9 Known/unknown label thresholds (no hysteresis — see plan's deviation note).
  *  KNOWN_THRESHOLD lowered from 0.8 to 0.75 (2026-09-05) alongside the
  *  CONFIDENCE_TIME_CONSTANT change above, as part of the same
- *  time-to-mastery recalibration. */
-export const KNOWN_THRESHOLD = 0.75;
+ *  time-to-mastery recalibration. Set to 0.78 (2026-10-15) for the
+ *  two-week mastery: in simulation terms it marks Known still had about 87%
+ *  recall three weeks later. */
+export const KNOWN_THRESHOLD = 0.78;
 export const UNKNOWN_THRESHOLD = 0.6;
 /** §9 Minimum test count before a term can be labeled "known" — closes the
  *  gap where confidence(n) alone doesn't stop a single lucky grade from

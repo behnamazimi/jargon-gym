@@ -258,6 +258,32 @@ describe("rankQuizQueue", () => {
     ]);
   });
 
+  it("brings a recently missed term back ahead of one passed long ago", () => {
+    const candidates = [
+      makeCandidate({
+        termId: "passed",
+        quizKnowledgePosterior: 0.79,
+        lastQuizTestedAt: new Date("2026-01-12T00:00:00Z"), // R ≈ 0.85
+      }),
+      makeCandidate({
+        termId: "missed",
+        quizKnowledgePosterior: 0.28,
+        lastQuizTestedAt: new Date("2026-01-30T00:00:00Z"), // R ≈ 0.96, past the cooldown
+      }),
+      makeCandidate({ termId: "never-answered" }),
+    ];
+    expect(rankQuizQueue(candidates, NOW)[0]!.termId).toBe("missed");
+  });
+
+  it("holds a missed term out for the rest of the session it was answered in", () => {
+    const missed = makeCandidate({
+      termId: "missed",
+      quizKnowledgePosterior: 0.28,
+      lastQuizTestedAt: new Date(NOW.getTime() - 60 * 60 * 1000),
+    });
+    expect(rankQuizQueue([missed], NOW)).toEqual([]);
+  });
+
   it("ranks by R_g(t) ascending", () => {
     const candidates = [
       makeCandidate({

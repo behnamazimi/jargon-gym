@@ -4,9 +4,9 @@
  *  recall/recognition (one trace each) → mastery/queue (compose across
  *  traces) → snapshot.ts (compose across layers into the shapes callers
  *  actually want) → this barrel. Nothing outside lib/trace should reach
- *  past this file. mastery.ts and queue.ts may import from each other
- *  directly (queue's Read ranking reuses mastery's blend) — both are the
- *  same "compose across traces" layer, just not the same file.
+ *  past this file. queue.ts imports from mastery.ts directly (Read's ranking
+ *  reuses the two-weeks-ahead mastery) — both are the same "compose across
+ *  traces" layer, just not the same file.
  *  @see docs/trace-formula.md
  */
 
@@ -27,6 +27,7 @@ export {
   computeReadTempering,
   recallRetrievabilityNow,
   recognitionRetrievabilityNow,
+  quizRankScore,
   cooldownEndsAt,
 } from "./queue";
 export { posteriorToStability } from "./recognition";

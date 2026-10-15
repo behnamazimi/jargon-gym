@@ -4,6 +4,7 @@ import {
   computeReadTempering,
   cooldownEndsAt,
   posteriorToStability,
+  quizRankScore,
   rankQuizQueue,
   rankReadQueue,
   rankReviewQueue,
@@ -171,7 +172,11 @@ export function buildQueueDebug(terms: QueueDebugTerm[], options: QueueDebugOpti
       nextBatch: i < size,
       item: byId.get(c.termId)!,
       retrievability:
-        track === "review" ? recallRetrievabilityNow(c, now) : recognitionRetrievabilityNow(c, now),
+        track === "review"
+          ? recallRetrievabilityNow(c, now)
+          : c.quizKnowledgePosterior === null
+            ? null
+            : quizRankScore(c, now),
     })),
   });
 

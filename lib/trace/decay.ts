@@ -15,3 +15,8 @@ export function daysBetween(from: Date, to: Date): number {
   const ms = to.getTime() - from.getTime();
   return Math.max(0, ms / (1000 * 60 * 60 * 24));
 }
+
+/** The instant `days` days after `from`. */
+export function addDays(from: Date, days: number): Date {
+  return new Date(from.getTime() + days * 24 * 60 * 60 * 1000);
+}

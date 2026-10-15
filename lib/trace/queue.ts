@@ -18,7 +18,7 @@ import {
 } from "./constants";
 import { daysBetween, hyperbolicDecay } from "./decay";
 import { rawFamiliarityGrowth } from "./familiarity";
-import { blendMastery, masteryAdjusted } from "./mastery";
+import { masteryAdjusted, masteryAhead } from "./mastery";
 import {
   daysUntilRetrievability as recallDaysUntil,
   retrievability as recallRetrievability,
@@ -65,16 +65,13 @@ export function computeReadExposure(candidate: TraceCandidate, now: Date): numbe
  *  Familiarity is deliberately excluded from the blend (familiarityUsed:
  *  0) so this doesn't double-count the exposure signal above — it's
  *  purely "how well does recall/recognition say this term is known."
- *  Reuses the same recall/recognition retrievability derivation
- *  rankReviewQueue/rankQuizQueue use below. Naturally 0 for a completely
- *  untested term (masteryAdjusted multiplies by confidence(0) = 0). */
+ *  Uses the same two-weeks-ahead mastery the label does. Naturally 0 for a
+ *  completely untested term (masteryAdjusted multiplies by confidence(0) = 0). */
 export function computeReadTempering(candidate: TraceCandidate, now: Date): number {
-  const mastery = blendMastery({
-    familiarityUsed: 0,
-    recallRetrievability: recallRetrievabilityNow(candidate, now),
-    recognitionRetrievability: recognitionRetrievabilityNow(candidate, now),
-  });
-  return masteryAdjusted(mastery, candidate.reviewRecallCount + candidate.quizTestCount);
+  return masteryAdjusted(
+    masteryAhead(candidate, now, false),
+    candidate.reviewRecallCount + candidate.quizTestCount,
+  );
 }
 
 /** Live recall retrievability, or null for a term never graded in Review. */
@@ -146,16 +143,30 @@ export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceC
     .map(({ candidate }) => candidate);
 }
 
-/** Quiz: every term is eligible, same shape as Review — ranked by R_g(t)
- *  ascending with never-answered terms placed at UNTESTED_RECOGNITION_RETRIEVABILITY,
- *  same cooldown rule. */
+/** Where a term sorts in Quiz: how likely the learner is to recognise it now,
+ *  posterior × R_g(t), so a missed term comes back ahead of one answered
+ *  right. A never-answered term sits at UNTESTED_RECOGNITION_RETRIEVABILITY. */
+export function quizRankScore(candidate: TraceCandidate, now: Date): number {
+  const r = recognitionRetrievabilityNow(candidate, now);
+  return r !== null && candidate.quizKnowledgePosterior !== null
+    ? candidate.quizKnowledgePosterior * r
+    : UNTESTED_RECOGNITION_RETRIEVABILITY;
+}
+
+/** Quiz: every term is eligible, same shape as Review — ranked by
+ *  quizRankScore ascending, with the cooldown on R_g(t) holding out a term
+ *  answered moments ago, right or wrong. */
 export function rankQuizQueue(candidates: TraceCandidate[], now: Date): TraceCandidate[] {
   return candidates
     .map((c) => ({
       candidate: c,
       r: recognitionRetrievabilityNow(c, now) ?? UNTESTED_RECOGNITION_RETRIEVABILITY,
+      score: quizRankScore(c, now),
     }))
     .filter(({ r }) => r <= SESSION_COOLDOWN_RETRIEVABILITY)
-    .sort((a, b) => a.r - b.r || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime())
+    .sort(
+      (a, b) =>
+        a.score - b.score || a.candidate.createdAt.getTime() - b.candidate.createdAt.getTime(),
+    )
     .map(({ candidate }) => candidate);
 }

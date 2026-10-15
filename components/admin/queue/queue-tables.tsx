@@ -80,7 +80,7 @@ export function ReviewTable({ section, asOf }: { section: QueueSection<TierRow>;
 export function QuizTable({ section, asOf }: { section: QueueSection<TierRow>; asOf: Date }) {
   const columns: Column<TierRow>[] = [
     {
-      label: "Recognition now",
+      label: "Likely to recognise",
       cell: (r) =>
         r.retrievability === null ? (
           <span className="badge badge-ghost">never answered</span>
