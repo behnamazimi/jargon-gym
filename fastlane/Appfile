@@ -1,0 +1,2 @@
+app_identifier("com.lobyas.app")
+package_name("com.lobyas.app")

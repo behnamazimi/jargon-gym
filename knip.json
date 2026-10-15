@@ -9,6 +9,11 @@
     "e2e/**/*.setup.ts",
     "e2e/stubs/server.mts"
   ],
-  "ignore": ["lib/supabase/database.types.ts", "supabase/functions/**", "components/ui/**"],
-  "ignoreDependencies": ["uebersicht"]
+  "ignore": [
+    "lib/supabase/database.types.ts",
+    "supabase/functions/**",
+    "components/ui/**",
+    "native/www/**"
+  ],
+  "ignoreDependencies": ["uebersicht", "@capacitor/splash-screen"]
 }

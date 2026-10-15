@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { PwaProviders } from "@/components/pwa/pwa-providers";
 import { ToastProvider } from "@/components/ui/toast";
 import { ConsentBanner } from "@/components/consent/consent-banner";
+import { NativeAuthBridge } from "@/components/native/native-auth-bridge";
 import "./globals.css";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
@@ -84,6 +85,7 @@ export default function RootLayout({
           <ToastProvider>
             {children}
             <ConsentBanner />
+            <NativeAuthBridge />
           </ToastProvider>
         </PwaProviders>
       </body>

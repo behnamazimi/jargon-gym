@@ -367,6 +367,15 @@ widget's logic must bump the version in [widget/version.json](widget/version.jso
 `lib/widget/version.ts` and `scripts/widget-zip.sh` both read it as the
 single source of truth for the widget's release counter.
 
+# Mobile app
+
+The Android and iOS apps are a Capacitor shell that loads the live site
+(`capacitor.config.ts`, `native/`, `ios/`, `android/`, `fastlane/`,
+`.github/workflows/mobile.yml`, `lib/native/`). Read [docs/mobile.md](docs/mobile.md)
+before touching any of them. Web code detects the app with `isNativeShell()`
+and loads plugins with a dynamic `import()`, because an installed app can be
+older than the web code.
+
 # Brand
 
 The product is "Lobyas" in prose and UI, "lobyas" in identifiers, slugs and

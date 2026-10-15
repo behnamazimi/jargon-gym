@@ -1,0 +1,137 @@
+# Builds the Capacitor shells (see docs/mobile.md). The shell loads the live site,
+# so nothing here builds the web app. Pull requests that touch native files get an
+# unsigned build; a `mobile-v*` tag, or a manual run with "upload", signs the app
+# and sends it to TestFlight and the Play internal track.
+name: Mobile
+
+on:
+  pull_request:
+    paths:
+      - capacitor.config.ts
+      - native/**
+      - ios/**
+      - android/**
+      - fastlane/**
+      - resources/**
+      - package.json
+      - pnpm-lock.yaml
+      - Gemfile*
+      - .github/workflows/mobile.yml
+      - .github/actions/setup-web/**
+  push:
+    tags: ["mobile-v*"]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Which app to build
+        type: choice
+        options: [both, android, ios]
+        default: both
+      upload:
+        description: Sign and upload to TestFlight / Play internal
+        type: boolean
+        default: false
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  android-check:
+    if: github.event_name != 'push' && !inputs.upload && inputs.platform != 'ios'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-web
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - run: pnpm exec cap sync android
+      - run: ./gradlew assembleDebug
+        working-directory: android
+
+  ios-check:
+    if: github.event_name != 'push' && !inputs.upload && inputs.platform != 'android'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-web
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: pnpm exec cap sync ios
+      - name: Build for the simulator, unsigned
+        run: >-
+          xcodebuild build
+          -project ios/App/App.xcodeproj
+          -scheme App
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+
+  android-release:
+    if: (github.event_name == 'push' || inputs.upload) && inputs.platform != 'ios'
+    runs-on: ubuntu-latest
+    environment: Mobile release
+    env:
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-web
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v5
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - run: pnpm exec cap sync android
+      - name: Restore the upload keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+      - name: Build the signed bundle
+        working-directory: android
+        run: >-
+          ./gradlew bundleRelease
+          -PversionCode=${{ github.run_number }}
+          -PversionName=$(node -p "require('../package.json').version")
+      - run: bundle exec fastlane android beta
+
+  ios-release:
+    if: (github.event_name == 'push' || inputs.upload) && inputs.platform != 'android'
+    runs-on: macos-latest
+    environment: Mobile release
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_KEY: ${{ secrets.APP_STORE_CONNECT_KEY }}
+      MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+      MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+      MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-web
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+      - run: pnpm exec cap sync ios
+      - name: Sign, build and upload to TestFlight
+        run: >-
+          bundle exec fastlane ios beta
+          version:$(node -p "require('./package.json').version")
+          build_number:${{ github.run_number }}

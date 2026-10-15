@@ -1,5 +1,8 @@
+"use client";
+
 import { signInWithGoogle } from "@/lib/auth/oauth-actions";
 import { Button } from "@/components/ui/button";
+import { isNativeShell } from "@/lib/native/shell";
 
 type GoogleSignInButtonProps = {
   next?: string;
@@ -31,6 +34,25 @@ function GoogleMark({ className }: { className?: string }) {
   );
 }
 
+/** Google blocks sign-in inside a WebView, so the app opens it in the system browser instead. */
+async function startNativeSignIn(form: HTMLFormElement) {
+  try {
+    const response = await fetch("/auth/native/google", {
+      method: "POST",
+      body: new FormData(form),
+    });
+    const result: { url?: string; error?: string } = await response.json();
+    if (!result.url) {
+      window.location.assign(`/login?error=${result.error ?? "oauth-failed"}`);
+      return;
+    }
+    const { Browser } = await import("@capacitor/browser");
+    await Browser.open({ url: result.url });
+  } catch {
+    window.location.assign("/login?error=oauth-failed");
+  }
+}
+
 export function GoogleSignInButton({
   next = "/complete-signup",
   referenceCode,
@@ -38,7 +60,15 @@ export function GoogleSignInButton({
   label = "Continue with Google",
 }: GoogleSignInButtonProps) {
   return (
-    <form action={signInWithGoogle} className="flex flex-col gap-4">
+    <form
+      action={signInWithGoogle}
+      onSubmit={(event) => {
+        if (!isNativeShell()) return;
+        event.preventDefault();
+        void startNativeSignIn(event.currentTarget);
+      }}
+      className="flex flex-col gap-4"
+    >
       <input type="hidden" name="next" value={next} />
       {referenceCode !== undefined ? (
         <input type="hidden" name="ref" value={referenceCode} />

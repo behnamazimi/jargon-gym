@@ -1,0 +1,48 @@
+IOS_PROJECT = "ios/App/App.xcodeproj".freeze
+PROFILE_NAME = "match AppStore com.lobyas.app".freeze
+
+platform :ios do
+  desc "Sign, build and upload the app to TestFlight"
+  lane :beta do |options|
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("APP_STORE_CONNECT_KEY_ID"),
+      issuer_id: ENV.fetch("APP_STORE_CONNECT_ISSUER_ID"),
+      key_content: ENV.fetch("APP_STORE_CONNECT_KEY")
+    )
+
+    match(type: "appstore", readonly: true, api_key: api_key)
+
+    increment_version_number(xcodeproj: IOS_PROJECT, version_number: options.fetch(:version))
+    increment_build_number(xcodeproj: IOS_PROJECT, build_number: options.fetch(:build_number))
+    update_code_signing_settings(
+      path: IOS_PROJECT,
+      use_automatic_signing: false,
+      team_id: ENV.fetch("APPLE_TEAM_ID"),
+      code_sign_identity: "Apple Distribution",
+      profile_name: PROFILE_NAME
+    )
+
+    build_app(
+      project: IOS_PROJECT,
+      scheme: "App",
+      export_method: "app-store",
+      export_options: { provisioningProfiles: { "com.lobyas.app" => PROFILE_NAME } }
+    )
+
+    upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true)
+  end
+end
+
+platform :android do
+  desc "Upload the signed bundle to the Play internal track"
+  lane :beta do
+    upload_to_play_store(
+      track: "internal",
+      aab: "android/app/build/outputs/bundle/release/app-release.aab",
+      json_key_data: ENV.fetch("PLAY_SERVICE_ACCOUNT_JSON"),
+      skip_upload_metadata: true,
+      skip_upload_images: true,
+      skip_upload_screenshots: true
+    )
+  end
+end
