@@ -61,6 +61,10 @@ needs the `x-lobyas-native` header or a server check. Load Capacitor plugins wit
 a dynamic `import()` inside a check for it, and assume an installed app may be
 older than the web code: a plugin added later won't exist in it.
 
+The proxy uses it for one thing: a request for `/` from the app redirects to the
+study area (`AUTHENTICATED_HOME_PATH`) for a signed-in member, or to `/login`
+otherwise (`lib/native/landing.ts`). Every other public page still opens by link.
+
 ## Offline and the service worker
 
 The site's service worker (`app/sw.ts`, which serves the `/~offline` page and the

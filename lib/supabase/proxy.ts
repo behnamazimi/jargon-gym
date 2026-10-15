@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requestPathWithSearch, safeNextPath } from "@/lib/auth/safe-next-path";
 import { setVerifiedUser, VERIFIED_USER_HEADERS } from "@/lib/auth/verified-user-header";
 import type { Database } from "@/lib/supabase/database.types";
+import { nativeLandingPath } from "@/lib/native/landing";
 import { READ_LANDING_COOKIE, readLandingRedirect } from "@/lib/read/landing";
 import { checkSharedLink, forward } from "./proxy-shared-link";
 
@@ -214,6 +215,14 @@ export async function updateSession(request: NextRequest) {
     );
   }
   const sharedLinkGone = sharedLink?.kind === "gone";
+
+  const nativeLanding = nativeLandingPath(pathname, request.headers.get("user-agent"), !!user);
+  if (nativeLanding) {
+    return withCookiesFrom(
+      supabaseResponse,
+      NextResponse.redirect(new URL(nativeLanding, request.url)),
+    );
+  }
 
   if (!user) return responseForVisitor(request, pathname, supabaseResponse, sharedLinkGone);
 
