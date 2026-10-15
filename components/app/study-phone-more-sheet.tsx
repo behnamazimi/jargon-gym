@@ -5,6 +5,7 @@ import { Bug, Download, LogOut, XIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { logout } from "@/app/(private)/auth/actions";
+import { markSignedOut, restoreSignedIn } from "@/lib/auth/auth-state";
 import { ACCOUNT_OVERFLOW_NAV, ADMIN_NAV_ITEMS, emailInitials } from "@/components/app/account-nav";
 import { ReportIssueDialog } from "@/components/issues/report-issue-dialog";
 import { INSTALL_MENU_LABEL, useInstallAction } from "@/components/pwa/install-prompt";
@@ -28,7 +29,13 @@ export function MoreSheet() {
   async function handleLogout() {
     setIsBusy(true);
     resetAnalytics();
-    await logout();
+    markSignedOut();
+    try {
+      await logout();
+    } catch {
+      restoreSignedIn();
+      setIsBusy(false);
+    }
   }
 
   return (
@@ -41,7 +48,7 @@ export function MoreSheet() {
         style={{ viewTransitionName: "phone-sheet" }}
         className="max-h-[min(36rem,85dvh)] rounded-t-2xl pb-safe md:hidden"
       >
-        <SheetHeader className="border-b border-base-300 px-4 py-3">
+        <SheetHeader className="shrink-0 border-b border-base-300 px-4 py-3">
           <div className="flex items-center gap-1">
             <SheetTitle className="min-w-0 flex-1">More</SheetTitle>
             <ThemeToggle initialIsDark={initialIsDark} className="btn-sm shrink-0" />
@@ -74,7 +81,7 @@ export function MoreSheet() {
             </div>
           </div>
         </SheetHeader>
-        <ul className="menu w-full p-2">
+        <ul className="menu min-h-0 w-full flex-1 flex-nowrap overflow-y-auto p-2">
           {ACCOUNT_OVERFLOW_NAV.map((item) => {
             const Icon = item.icon;
             return (
@@ -150,7 +157,7 @@ export function MoreSheet() {
         </ul>
         <nav
           aria-label="Legal"
-          className="flex items-center justify-center gap-x-5 border-t border-base-300 px-4 py-1"
+          className="flex shrink-0 items-center justify-center gap-x-5 border-t border-base-300 px-4 py-1"
         >
           {LEGAL_LINKS.map((link) => (
             <Link
