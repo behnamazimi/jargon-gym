@@ -13,6 +13,7 @@ import {
   SignedInHeaderNav,
   StudyPathOnly,
 } from "@/components/site-header-nav";
+import { SkeletonBar } from "@/components/page-skeleton";
 import { StreakBadge } from "@/components/streak-badge";
 import type { StreakSummary } from "@/lib/streak/status";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -59,12 +60,16 @@ export function SiteHeader({
   isAdmin,
   streak,
   aiCreditsMode,
+  cachedPage = false,
 }: {
   initialIsDark: boolean;
   user: { email?: string | null } | null;
   isAdmin: boolean;
   streak: StreakSummary;
   aiCreditsMode: AiCreditsMenuMode;
+  /** Cached pages don't know the visitor yet. The signed-in parts are in the page
+   *  too, and `signed-in:` shows them while the account loads. */
+  cachedPage?: boolean;
 }) {
   return (
     <SiteHeaderChrome
@@ -94,7 +99,17 @@ export function SiteHeader({
             />
           </SignedInHeaderNav>
         ) : (
-          <FeaturesNavLink />
+          <>
+            <FeaturesNavLink />
+            {cachedPage ? (
+              <Link
+                href={AUTHENTICATED_HOME_PATH}
+                className="btn btn-ghost hidden signed-in:inline-flex"
+              >
+                Study
+              </Link>
+            ) : null}
+          </>
         )
       }
       rightNav={
@@ -104,7 +119,11 @@ export function SiteHeader({
               <StreakBadge streak={streak} />
             </StudyPathOnly>
           ) : null}
-          {user ? null : <InstallButton />}
+          {user ? null : (
+            <span className={cn("contents", cachedPage && "signed-in:hidden")}>
+              <InstallButton />
+            </span>
+          )}
           <ThemeToggle initialIsDark={initialIsDark} />
           {user ? (
             <ProfileMenu
@@ -113,7 +132,14 @@ export function SiteHeader({
               aiCreditsMode={aiCreditsMode}
             />
           ) : (
-            <LoggedOutHeaderNav />
+            <>
+              <span className={cn("contents", cachedPage && "signed-in:hidden")}>
+                <LoggedOutHeaderNav />
+              </span>
+              {cachedPage ? (
+                <SkeletonBar className="hidden size-8 rounded-full signed-in:block" />
+              ) : null}
+            </>
           )}
         </>
       }

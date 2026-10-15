@@ -3,26 +3,40 @@ import Link from "next/link";
 import { LinkButton } from "@/components/ui/button";
 import { AUTHENTICATED_HOME_PATH } from "@/lib/auth/safe-next-path";
 
-export function LandingCtas({ isLoggedIn }: { isLoggedIn: boolean }) {
-  if (isLoggedIn) {
-    return (
-      <div className="flex flex-wrap items-center gap-3">
-        <LinkButton
-          href={AUTHENTICATED_HOME_PATH}
-          size="lg"
-          className="group min-h-12 gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96]"
-        >
-          Open Lobyas
-          <ArrowRight
-            aria-hidden
-            className="size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5"
-            strokeWidth={2}
-          />
-        </LinkButton>
+/** Both versions are in the page; `signed-in:` picks one before paint. */
+export function LandingCtas() {
+  return (
+    <>
+      <div className="signed-in:hidden">
+        <SignedOutCtas />
       </div>
-    );
-  }
+      <div className="hidden signed-in:block">
+        <SignedInCtas />
+      </div>
+    </>
+  );
+}
 
+export function SignedInCtas() {
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <LinkButton
+        href={AUTHENTICATED_HOME_PATH}
+        size="lg"
+        className="group min-h-12 gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96]"
+      >
+        Open Lobyas
+        <ArrowRight
+          aria-hidden
+          className="size-4 shrink-0 transition-transform duration-150 ease-out group-hover:translate-x-0.5"
+          strokeWidth={2}
+        />
+      </LinkButton>
+    </div>
+  );
+}
+
+export function SignedOutCtas() {
   return (
     <div className="max-w-[48ch]">
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">

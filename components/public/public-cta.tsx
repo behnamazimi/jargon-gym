@@ -4,17 +4,16 @@ import { ArrowRight, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { addToCollection } from "@/app/(private)/app/actions";
-import { LandingCtas } from "@/components/landing/landing-ctas";
+import { LandingCtas, SignedInCtas, SignedOutCtas } from "@/components/landing/landing-ctas";
+import { SkeletonBar } from "@/components/page-skeleton";
 import { Button, LinkButton } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { hasAuthCookie } from "@/lib/auth/has-auth-cookie";
 import type { CollectionMembership } from "@/lib/library/membership";
 
-const subscribe = () => () => {};
-
-// Public pages are cached and rendered without a session, so the server always
-// sends the visitor CTA and a signed-in visitor is spotted from the auth cookie.
+// Public pages are cached and rendered without a session. Both versions are in
+// the page and the auth cookie, read before paint, picks one (see LandingCtas).
 // A stale cookie just leads to the login page.
 const BUTTON_CLASS =
   "group min-h-12 w-full gap-2 ps-5 pe-4 transition-transform duration-150 ease-out active:scale-[0.96] sm:w-auto";
@@ -22,10 +21,18 @@ const BUTTON_CLASS =
 type CtaCollection = { id: string; name: string; canAdd: boolean };
 
 export function PublicCta({ collection }: { collection?: CtaCollection }) {
-  const signedIn = useSyncExternalStore(subscribe, hasAuthCookie, () => false);
+  if (!collection) return <LandingCtas />;
 
-  if (signedIn && collection) return <CollectionCta collection={collection} />;
-  return <LandingCtas isLoggedIn={signedIn} />;
+  return (
+    <>
+      <div className="signed-in:hidden">
+        <SignedOutCtas />
+      </div>
+      <div className="hidden signed-in:block">
+        <CollectionCta collection={collection} />
+      </div>
+    </>
+  );
 }
 
 type CtaState = CollectionMembership | "checking" | "signed-out";
@@ -84,7 +91,9 @@ function CollectionCta({ collection }: { collection: CtaCollection }) {
   const { toast } = useToast();
   const router = useRouter();
 
-  useMountEffect(() => loadMembership(collection.id));
+  useMountEffect(() => {
+    if (hasAuthCookie()) loadMembership(collection.id);
+  });
 
   async function add() {
     setAdding(true);
@@ -104,7 +113,8 @@ function CollectionCta({ collection }: { collection: CtaCollection }) {
     });
   }
 
-  if (state === "checking" || state === "signed-out") return <LandingCtas isLoggedIn={false} />;
+  if (state === "checking") return <SkeletonBar className="h-12 w-full rounded-field sm:w-44" />;
+  if (state === "signed-out") return <SignedOutCtas />;
 
   if (state === "owned" || state === "added") {
     return (
@@ -119,7 +129,7 @@ function CollectionCta({ collection }: { collection: CtaCollection }) {
     );
   }
 
-  if (!collection.canAdd) return <LandingCtas isLoggedIn />;
+  if (!collection.canAdd) return <SignedInCtas />;
 
   return (
     <Button size="lg" onPress={() => void add()} isDisabled={adding} className={BUTTON_CLASS}>

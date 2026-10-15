@@ -1,5 +1,4 @@
 import { pageContainerClass } from "@/components/page-container";
-import { getSessionUser } from "@/lib/auth/require-session";
 import { cn } from "@/lib/utils";
 import { AiSection } from "./ai-section";
 import { BringYourOwnSection } from "./bring-your-own-section";
@@ -9,14 +8,11 @@ import { NotSrsSection } from "./not-srs-section";
 import { PlatformsSection } from "./platforms-section";
 import { ThreeWaysSection } from "./three-ways-section";
 
-export async function LandingPage() {
-  const { user } = await getSessionUser();
-  const isLoggedIn = Boolean(user);
-
+export function LandingPage() {
   return (
     <section className="flex flex-1 flex-col overflow-x-clip">
       <div className={cn(pageContainerClass, "flex flex-1 flex-col py-10 sm:py-16 lg:py-24")}>
-        <HeroSection isLoggedIn={isLoggedIn} />
+        <HeroSection />
 
         <div className="mt-20 space-y-16 sm:mt-28 sm:space-y-24">
           <ThreeWaysSection />
@@ -24,7 +20,7 @@ export async function LandingPage() {
           <AiSection />
           <BringYourOwnSection />
           <PlatformsSection />
-          <FinalCtaSection isLoggedIn={isLoggedIn} />
+          <FinalCtaSection />
         </div>
       </div>
     </section>

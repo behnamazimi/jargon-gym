@@ -18,7 +18,10 @@ type Profile = {
 async function fetchProfile(): Promise<Profile | null> {
   try {
     // A signed-out request is redirected to login; manual keeps that from loading the page.
-    const response = await fetch("/api/chrome/profile", { redirect: "manual", cache: "no-store" });
+    const response = await fetch("/api/chrome/profile", {
+      redirect: "manual",
+      cache: "no-store",
+    });
     return response.ok ? ((await response.json()) as Profile) : null;
   } catch {
     return null;
@@ -55,6 +58,7 @@ export function VisitorHeader({ initialIsDark }: { initialIsDark: boolean }) {
         initialIsDark={initialIsDark}
         user={profile ? { email: profile.email ?? "Account" } : null}
         isAdmin={profile?.isAdmin ?? false}
+        cachedPage
         streak={EMPTY_STREAK}
         aiCreditsMode={profile?.aiCreditsMode ?? "hidden"}
       />
