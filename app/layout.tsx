@@ -7,6 +7,7 @@ import { NativeAuthBridge } from "@/components/native/native-auth-bridge";
 import "./globals.css";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { AUTH_RESTORE_SCRIPT } from "@/lib/auth/auth-state";
+import { SHELL_RESTORE_SCRIPT } from "@/lib/native/shell";
 import { getPublicBaseUrl } from "@/lib/seo/base-url";
 import { SPLASH_IMAGES, splashUrl } from "@/lib/splash";
 import { LIGHT_THEME, THEME_RESTORE_SCRIPT } from "@/lib/theme";
@@ -89,6 +90,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_RESTORE_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: AUTH_RESTORE_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: SHELL_RESTORE_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <PwaProviders>

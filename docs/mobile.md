@@ -40,10 +40,48 @@ appears in an app that points at a deploy containing it. To get an APK for a
 branch, run the Mobile workflow manually and put the branch's Vercel preview URL
 in `server_url`; download the APK from the run's artifacts.
 
-Web code detects the app with `isNativeShell()` (`lib/native/shell.ts`, the
-`LobyasApp` user agent). Load Capacitor plugins with a dynamic `import()` inside
-a check for it, and assume an installed app may be older than the web code: a
-plugin added later won't exist in it.
+## Telling the app from a browser
+
+The shell adds `LobyasApp/ios` or `LobyasApp/android` to the WebView's user agent
+(`ios.appendUserAgent` / `android.appendUserAgent`; apps built before that send
+plain `LobyasApp`, so the os can be unknown). Everything reads it through
+`lib/native/shell.ts`, and there is no cookie: the user agent is on every
+request, including the first, and a cookie would make the cached public pages
+dynamic.
+
+- Component: `const { native, os } = useShell()` (`hooks/use-shell.ts`). It
+  reports "not native" on the server and during hydration, then the real value.
+- Event handler or effect: `isNativeShell()`.
+- CSS: `native-app:`, `ios-app:` and `android-app:` variants. An inline script
+  copies the user agent to `data-shell` on `<html>` before paint, so cached pages
+  need no server work.
+
+It is a hint for the UI only; anything that must be restricted to the app still
+needs the `x-lobyas-native` header or a server check. Load Capacitor plugins with
+a dynamic `import()` inside a check for it, and assume an installed app may be
+older than the web code: a plugin added later won't exist in it.
+
+## Offline and the service worker
+
+The site's service worker (`app/sw.ts`, which serves the `/~offline` page and the
+offline banner) runs inside the apps too. Android's WebView allows it on https.
+iOS's WKWebView only allows it for App-Bound Domains, so `Info.plist` lists
+`lobyas.com` under `WKAppBoundDomains` and `capacitor.config.ts` sets
+`ios.limitsNavigationsToAppBoundDomains`. `localhost` is listed too: the bundled
+`offline.html` loads from it. The webview can then only navigate to those hosts,
+and a navigation to any other host (a subdomain such as `www` included, until
+tested on a device) fails instead of opening in Safari. Sign-in goes through the
+system browser and is not affected. The flag is off when `CAP_SERVER_URL` points
+at a preview, because the preview host isn't in the list; a preview build on iOS
+has no service worker and falls back to `native/www/offline.html`.
+
+Capacitor Android would also show `offline.html` for any HTTP error on a page
+load (404, 5xx). `MainActivity` replaces its client so only a failed connection
+does; an error page from the site is shown as is.
+
+After changing either setting run `pnpm mobile:sync`, then test on a real iPhone:
+load the app, turn on airplane mode, and open a page. It should show `/~offline`,
+not `offline.html`.
 
 ## Google sign-in
 
