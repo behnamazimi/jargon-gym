@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { AnalyticsIdentity } from "@/components/pwa/analytics-identity";
 import { SiteHeader } from "@/components/site-header";
 import type { AiCreditsMenuMode } from "@/lib/ai-credits/menu-line";
-import { hasAuthCookie } from "@/lib/auth/has-auth-cookie";
+import { isSignedIn, onAuthChange } from "@/lib/auth/auth-state";
 import { EMPTY_STREAK } from "@/lib/streak/status";
 
 type Profile = {
@@ -35,19 +35,24 @@ export function VisitorHeader({ initialIsDark }: { initialIsDark: boolean }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const pathname = usePathname();
 
-  // The layout outlives soft navigations (login, logout), so the auth cookie is
-  // checked again on every page change.
+  // The layout outlives soft navigations (login, logout), so the account is
+  // loaded again whenever the signed-in state or the page changes.
   useEffect(() => {
-    if (!hasAuthCookie()) {
-      setProfile(null);
-      return;
-    }
     let active = true;
-    void fetchProfile().then((loaded) => {
-      if (active) setProfile(loaded);
-    });
+    function refresh() {
+      if (!isSignedIn()) {
+        setProfile(null);
+        return;
+      }
+      void fetchProfile().then((loaded) => {
+        if (active) setProfile(loaded);
+      });
+    }
+    refresh();
+    const stopListening = onAuthChange(refresh);
     return () => {
       active = false;
+      stopListening();
     };
   }, [pathname]);
 
