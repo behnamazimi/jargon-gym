@@ -31,7 +31,7 @@ function SiteHeaderChrome({
 }) {
   return (
     <header
-      className="border-b border-base-300 bg-base-100/80 backdrop-blur-sm"
+      className="border-b border-base-300 bg-base-100/80 pt-safe backdrop-blur-sm"
       style={{ viewTransitionName: "site-header" }}
     >
       <div className={cn(pageContainerClass, "flex items-center justify-between gap-4 py-4")}>
