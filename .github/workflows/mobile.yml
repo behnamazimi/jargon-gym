@@ -52,6 +52,12 @@ jobs:
       - run: pnpm exec cap sync android
       - run: ./gradlew assembleDebug
         working-directory: android
+      - uses: actions/upload-artifact@v5
+        with:
+          name: lobyas-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
 
   ios-check:
     if: github.event_name != 'push' && !inputs.upload && inputs.platform != 'android'
