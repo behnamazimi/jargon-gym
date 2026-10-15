@@ -39,9 +39,10 @@ function forwardedHeaders(response: Response) {
   return forwarded;
 }
 
-function request(path: string, cookie = "") {
+function request(path: string, cookie = "", userAgent = "") {
   return new NextRequest(`http://localhost${path}`, {
     headers: {
+      "user-agent": userAgent,
       "x-verified-user-id": "forged-id",
       "x-verified-user-email": "forged%40example.com",
       "x-verified-user-sig": "00",
@@ -63,6 +64,16 @@ describe("updateSession", () => {
     expect(forwarded.get("x-verified-user-id")).toBeNull();
     expect(forwarded.get("x-verified-user-sig")).toBeNull();
     expect(await readVerifiedUser(forwarded)).toBeNull();
+  });
+
+  it("opens the app on the study area when signed in and on login when not", async () => {
+    const app = "LobyasApp/android";
+    const visitor = await updateSession(request("/", "", app));
+    expect(new URL(visitor.headers.get("location")!).pathname).toBe("/login");
+
+    auth.user = { id: "real-id", email: "a@example.com", banned_until: null };
+    const member = await updateSession(request("/", "", app));
+    expect(new URL(member.headers.get("location")!).pathname).toBe("/app/review");
   });
 
   it("forwards the verified user, signed, instead of what the client sent", async () => {
