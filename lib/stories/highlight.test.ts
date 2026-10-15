@@ -27,6 +27,24 @@ describe("buildTimeline", () => {
     ]);
   });
 
+  it("keeps a closing quote with the sentence it ends", () => {
+    expect(
+      sentenceTexts([{ text: "Elle dit : « Viens ici. Vite ! » Puis elle partit." }], "en"),
+    ).toEqual([["Elle dit : « Viens ici. ", "Vite ! » ", "Puis elle partit."]]);
+  });
+
+  it("keeps a speech tag with its quote", () => {
+    expect(sentenceTexts([{ text: "„Verdomme!” riep hij. Daarna ging hij." }], "nl")).toEqual([
+      ["„Verdomme!” riep hij. ", "Daarna ging hij."],
+    ]);
+  });
+
+  it("starts a new sentence after a quote when a capital follows", () => {
+    expect(sentenceTexts([{ text: "Hij riep: „Weg!” Dat was vreemd." }], "nl")).toEqual([
+      ["Hij riep: „Weg!” ", "Dat was vreemd."],
+    ]);
+  });
+
   it("numbers sentences across paragraphs", () => {
     const { paragraphs } = buildTimeline("Title", [{ text: "One. Two.\n\nThree." }], "en");
     expect(paragraphs.map((paragraph) => paragraph.map((sentence) => sentence.index))).toEqual([
@@ -88,6 +106,17 @@ describe("buildTimeline", () => {
       "en",
     );
     expect(ends[1]! - ends[0]!).toBeGreaterThan(ends[0]! - titleEnd);
+  });
+
+  it("gives a sentence with commas more of the clip than a plain one of the same letters", () => {
+    const { ends, titleEnd } = buildTimeline("Title", [{ text: "Aa, bb, cc.\n\nAa bb cc." }], "en");
+    expect(ends[0]! - titleEnd).toBeGreaterThan(ends[1]! - ends[0]!);
+  });
+
+  it("doesn't count quote marks as speech", () => {
+    const plain = buildTimeline("Title", [{ text: "Stop now. Go on." }], "en");
+    const quoted = buildTimeline("Title", [{ text: "„Stop now.” Go on." }], "nl");
+    expect(quoted.ends).toEqual(plain.ends);
   });
 
   it("has nothing to time for an empty story", () => {

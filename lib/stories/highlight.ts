@@ -25,6 +25,19 @@ export type StoryTimeline = {
 
 type ShareOfClip = { start: number; end: number };
 
+const LEADING_CLOSERS = /^[\p{Pf}\p{Pe}"'»“”‘’]+\s*/u;
+const ENDS_IN_CLOSER = /[\p{Pf}\p{Pe}"'»“”‘’]\s*$/u;
+const STARTS_LOWERCASE = /^\p{Ll}/u;
+
+/** The segmenter can cut before a closing quote (French « Viens ! » ) or between
+ *  a quote and its speech tag ("Stop!" he said); neither starts a sentence. */
+function adjustCut(text: string, index: number): number | null {
+  const cut = index + (LEADING_CLOSERS.exec(text.slice(index))?.[0].length ?? 0);
+  const endsInQuote = ENDS_IN_CLOSER.test(text.slice(0, cut));
+  if (endsInQuote && STARTS_LOWERCASE.test(text.slice(cut))) return null;
+  return cut;
+}
+
 /** Sentence starts within the paragraph's text, never inside a term. */
 function sentenceCuts(paragraph: StorySegment[], language: CollectionLanguage): number[] {
   const text = paragraph.map((segment) => segment.text).join("");
@@ -38,8 +51,10 @@ function sentenceCuts(paragraph: StorySegment[], language: CollectionLanguage): 
   const cuts = new Set<number>();
   for (const { index } of new Intl.Segmenter(language, { granularity: "sentence" }).segment(text)) {
     if (index === 0) continue;
-    const term = termRanges.find(([start, end]) => index > start && index < end);
-    const cut = term ? term[1] : index;
+    const adjusted = adjustCut(text, index);
+    if (adjusted === null) continue;
+    const term = termRanges.find(([start, end]) => adjusted > start && adjusted < end);
+    const cut = term ? term[1] : adjusted;
     if (cut < text.length) cuts.add(cut);
   }
   return [...cuts].sort((a, b) => a - b);
@@ -69,11 +84,33 @@ function splitAtCuts(paragraph: StorySegment[], cuts: number[]): StorySegment[][
   return sentences.filter((sentence) => sentence.length > 0);
 }
 
-function spokenLength(segments: StorySegment[]): number {
-  return segments
+const SPOKEN_CHARACTER = /[\p{L}\p{N}\s]/gu;
+const SOFT_PAUSE = /[,;、，；]/gu;
+const HARD_PAUSE = /[:：—–]/gu;
+const TRAILING_CLOSERS = /[\p{Pf}\p{Pe}"'»“”‘’\s]+$/u;
+// Voices linger longer on a question or an ellipsis than on a full stop.
+const SOFT_PAUSE_WEIGHT = 2;
+const HARD_PAUSE_WEIGHT = 3;
+const ENDING_WEIGHTS: [RegExp, number][] = [
+  [/(\.\.\.|…)$/u, 6],
+  [/[!?！？]$/u, 5],
+];
+
+/** What a sentence costs in the clip: its letters and spaces (quote marks and
+ *  punctuation aren't spoken), plus the beat a voice takes at each comma, colon
+ *  and at the sentence's own ending. */
+function sentenceWeight(segments: StorySegment[]): number {
+  const text = segments
     .map((segment) => segment.text)
     .join("")
-    .trim().length;
+    .trim();
+  const spoken = (text.match(SPOKEN_CHARACTER) ?? []).length;
+  const soft = (text.match(SOFT_PAUSE) ?? []).length * SOFT_PAUSE_WEIGHT;
+  const hard = (text.match(HARD_PAUSE) ?? []).length * HARD_PAUSE_WEIGHT;
+  const ending = text.replace(TRAILING_CLOSERS, "");
+  const endWeight =
+    ENDING_WEIGHTS.find(([pattern]) => pattern.test(ending))?.[1] ?? SENTENCE_PAUSE_WEIGHT;
+  return spoken + soft + hard + endWeight;
 }
 
 /** Splits the story into sentences and estimates when each one is spoken. The
@@ -89,7 +126,7 @@ export function buildTimeline(
   const paragraphs = toParagraphs(segments).map((paragraph) => {
     const sentences = splitAtCuts(paragraph, sentenceCuts(paragraph, language)).map(
       (sentenceSegments) => {
-        weights.push(spokenLength(sentenceSegments) + SENTENCE_PAUSE_WEIGHT);
+        weights.push(sentenceWeight(sentenceSegments));
         return { index: index++, segments: sentenceSegments };
       },
     );
