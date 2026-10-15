@@ -11,7 +11,8 @@ at once; a store release is only needed for native changes.
 - `capacitor.config.ts`: app id `com.lobyas.app`, the server URL, and
   `allowNavigation` (only lobyas.com; other links leave the app).
 - `native/www/`: the only bundled pages. `offline.html` is shown by
-  `server.errorPath` when the site can't be reached.
+  `server.errorPath` when the site can't be reached; its button always goes to
+  lobyas.com, even in a preview build.
 - `ios/` (Swift Package Manager) and `android/`: committed native projects.
   `ios/` and `android/` are skipped by oxlint, oxfmt, knip and Vercel.
 - `resources/icon-only.png`, `resources/splash.png`: the source art. Run
@@ -22,7 +23,7 @@ at once; a store release is only needed for native changes.
 ## Working on it
 
 ```bash
-pnpm mobile:sync       # copy config and plugins into ios/ and android/
+pnpm mobile:sync       # copy config and plugins into ios/ and android/; run it after pnpm install
 pnpm mobile:android    # open Android Studio
 pnpm mobile:ios        # open Xcode
 ```
@@ -42,8 +43,9 @@ plugin added later won't exist in it.
 ## Google sign-in
 
 Google refuses sign-in inside a WebView, so `GoogleSignInButton` calls
-`POST /auth/native/google` from the WebView (which stores the sign-in cookie
-there), opens the returned URL in the system browser, and Supabase sends the
+`POST /auth/native/google` from the WebView (the `x-lobyas-native` header keeps a
+cross-site form from calling it), which stores the sign-in cookie there. It
+opens the returned URL in the system browser, and Supabase sends the
 user back to `com.lobyas.app://auth/callback?code=…`. `NativeAuthBridge`
 catches that link (`parseAuthDeepLink`, which accepts only that exact link and
 sanitises `next`) and loads `/auth/callback` in the WebView, which exchanges the
@@ -77,5 +79,6 @@ Signed jobs run in the `Mobile release` environment. The version comes from
 
 One-time setup outside the repo: create both apps (`com.lobyas.app`), run
 `fastlane match appstore` once locally to create the certificate and profile,
+add `com.lobyas.app://auth/**` to the hosted Supabase project's redirect URLs,
 and upload a first bundle to Play by hand (the API can't create the first
 release of a new app).

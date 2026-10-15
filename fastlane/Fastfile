@@ -12,8 +12,6 @@ platform :ios do
 
     match(type: "appstore", readonly: true, api_key: api_key)
 
-    increment_version_number(xcodeproj: IOS_PROJECT, version_number: options.fetch(:version))
-    increment_build_number(xcodeproj: IOS_PROJECT, build_number: options.fetch(:build_number))
     update_code_signing_settings(
       path: IOS_PROJECT,
       use_automatic_signing: false,
@@ -25,6 +23,7 @@ platform :ios do
     build_app(
       project: IOS_PROJECT,
       scheme: "App",
+      xcargs: "MARKETING_VERSION=#{options.fetch(:version)} CURRENT_PROJECT_VERSION=#{options.fetch(:build_number)}",
       export_method: "app-store",
       export_options: { provisioningProfiles: { "com.lobyas.app" => PROFILE_NAME } }
     )

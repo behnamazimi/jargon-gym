@@ -2,7 +2,7 @@
 
 import { signInWithGoogle } from "@/lib/auth/oauth-actions";
 import { Button } from "@/components/ui/button";
-import { isNativeShell } from "@/lib/native/shell";
+import { isNativeShell, NATIVE_REQUEST_HEADER } from "@/lib/native/shell";
 
 type GoogleSignInButtonProps = {
   next?: string;
@@ -39,6 +39,7 @@ async function startNativeSignIn(form: HTMLFormElement) {
   try {
     const response = await fetch("/auth/native/google", {
       method: "POST",
+      headers: { [NATIVE_REQUEST_HEADER]: "1" },
       body: new FormData(form),
     });
     const result: { url?: string; error?: string } = await response.json();
