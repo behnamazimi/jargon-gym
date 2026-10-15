@@ -109,7 +109,7 @@ describe("buildTimeline", () => {
   });
 
   it("gives a sentence with commas more of the clip than a plain one of the same letters", () => {
-    const { ends, titleEnd } = buildTimeline("Title", [{ text: "Aa, bb, cc. Aa bb cc." }], "en");
+    const { ends, titleEnd } = buildTimeline("Title", [{ text: "Aa, bb, cc.\n\nAa bb cc." }], "en");
     expect(ends[0]! - titleEnd).toBeGreaterThan(ends[1]! - ends[0]!);
   });
 
