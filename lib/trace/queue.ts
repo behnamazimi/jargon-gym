@@ -147,10 +147,15 @@ export function rankReviewQueue(candidates: TraceCandidate[], now: Date): TraceC
  *  posterior × R_g(t), so a missed term comes back ahead of one answered
  *  right. A never-answered term sits at UNTESTED_RECOGNITION_RETRIEVABILITY. */
 export function quizRankScore(candidate: TraceCandidate, now: Date): number {
-  const r = recognitionRetrievabilityNow(candidate, now);
-  return r !== null && candidate.quizKnowledgePosterior !== null
-    ? candidate.quizKnowledgePosterior * r
-    : UNTESTED_RECOGNITION_RETRIEVABILITY;
+  const posterior = candidate.quizKnowledgePosterior;
+  if (posterior === null) return UNTESTED_RECOGNITION_RETRIEVABILITY;
+  return (
+    posterior *
+    recognitionRetrievability(
+      posteriorToStability(posterior),
+      daysBetween(candidate.lastQuizTestedAt ?? now, now),
+    )
+  );
 }
 
 /** Quiz: every term is eligible, same shape as Review — ranked by

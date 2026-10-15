@@ -5,6 +5,7 @@ import {
   FSRS_WEIGHTS,
   GOOD,
   HARD,
+  HARD_LAPSE_BLEND,
   HARD_MIN_KEEP,
   SAME_DAY_STABILITY_DECAY,
   UNTESTED_RECALL_RETRIEVABILITY,
@@ -136,6 +137,14 @@ describe("updateStabilityOnSuccess / updateStabilityOnLapse / updateStabilityOnH
     expect(good).toBeGreaterThan(s);
     expect(hard).toBeLessThan(s);
     expect(hard).toBeGreaterThan(again);
+  });
+
+  it("Hard is the HARD_LAPSE_BLEND blend of Again and Good when that keeps more than HARD_MIN_KEEP", () => {
+    const again = updateStabilityOnLapse(8, 0.05, 0.31);
+    const good = updateStabilityOnSuccess(8, 0.05, 0.31, GOOD);
+    const blend = again ** HARD_LAPSE_BLEND * good ** (1 - HARD_LAPSE_BLEND);
+    expect(blend).toBeGreaterThan(HARD_MIN_KEEP * 0.05);
+    expect(updateStabilityOnHard(8, 0.05, 0.31)).toBeCloseTo(blend, 10);
   });
 
   it("Hard never keeps less than HARD_MIN_KEEP of a term's stability", () => {

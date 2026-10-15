@@ -204,11 +204,13 @@ retrievability number.
 Two details worth knowing:
 
 - Like recall, a term has no recognition trace until you answer a Quiz
-  question about it for the first time. The very first answer starts from
+  question about it for the first time. A right first answer starts from
   what Review already says: the term's recall retrievability two weeks
-  ahead, never below 0.5. A term never graded in Review starts from 50/50.
-  Either way this is only the prior at that moment, never a standing
-  default beforehand.
+  ahead, never below 0.5, so a pass on a well-recalled term counts in full.
+  A wrong first answer, or any first answer on a term never graded in
+  Review, starts from 50/50. Starting a miss from strong recall softened it
+  so much that it lifted mastery above a term never quizzed. Either way this
+  is only the prior at that moment, never a standing default beforehand.
 - A Quiz miss is softened if your current recall retrievability for that
   term is high. If you can clearly still recall a term from memory, a Quiz
   miss on it is more likely a misclick than real forgetting, so the
@@ -233,7 +235,8 @@ and recognition pulls the score down. A track you haven't tested yet counts
 as 0.5 (`UNTESTED_TRACK_EVIDENCE`), a coin flip rather than 0. A term never
 quizzed tops out at 0.5^0.375 ≈ 0.77, below the Known line, so a passed quiz
 is what lifts a term to Known. That comes from the formula, with no separate
-rule. A wrong quiz answer lowers the posterior and so lowers mastery. A term
+rule. A term whose only quiz answer is wrong scores below one never quizzed,
+so a miss can't stand in for a pass. A term
 neither Review nor Quiz has tested has mastery 0, whatever Read did.
 
 Reading lifts only the recall side (`READ_GAP_WEIGHT`, 0.3). It helps a weak
@@ -279,9 +282,10 @@ fully protect against a single strong grade nudging a brand-new term over
 0.78 by chance — the explicit count check closes that gap.
 
 Importantly, **this label never affects what Review or Quiz shows you.**
-Ranking always uses the raw, undiscounted retrievability described below —
-confidence-weighting and the known/unknown split are a reporting layer on
-top of the ranking, not part of it.
+Ranking uses each tier's own live signal described below (recall
+retrievability for Review, posterior × recognition retrievability for Quiz),
+never Mastery_adjusted — confidence-weighting and the known/unknown split are
+a reporting layer on top of the ranking, not part of it.
 
 ### Terms learned: the numbers that are actually stored
 

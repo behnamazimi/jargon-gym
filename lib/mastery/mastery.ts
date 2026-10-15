@@ -46,7 +46,7 @@ export type MasteryTermRow = {
   /** Mastery_adjusted scaled to 0–100 for display. */
   score: number;
   tier: MasteryTier;
-  /** True only when the label is "known" (mastery ≥0.8 & n≥3) — the same
+  /** True only when the label is "known" (KNOWN_THRESHOLD & n≥3) — the same
    *  bar the checkmark badge elsewhere in the app uses. */
   known: boolean;
   /** True when the user manually marked this term known — separate from

@@ -97,6 +97,24 @@ describe("computeTraceSnapshot mastery", () => {
 });
 
 describe("applyQuizAnswer end-to-end", () => {
+  it("a term whose only quiz answer is wrong never reads Known, however strong its recall", () => {
+    const at = new Date("2026-03-01T00:00:00Z");
+    const reviewed: TraceState = {
+      ...emptyState(),
+      recallStability: 120,
+      recallDifficulty: 4,
+      reviewRecallCount: 6,
+      lastReviewRecallAt: new Date(at.getTime() - 3 * DAY_MS),
+    };
+    const state: TraceState = {
+      ...reviewed,
+      ...applyQuizAnswer(reviewed, false, "true_false", at),
+      quizTestCount: 1,
+      lastQuizTestedAt: at,
+    };
+    expect(computeTraceSnapshot(state, at).knownLabel).not.toBe("known");
+  });
+
   it("a term's first answer starts from what Review knows, not a coin flip", () => {
     const now = new Date("2026-03-01T00:00:00Z");
     const recalledWell = applyQuizAnswer(

@@ -40,8 +40,9 @@ export type TierRow = {
   rank: number;
   nextBatch: boolean;
   item: QueueDebugTerm;
-  /** Null when the term has never been graded (Review) or answered (Quiz). */
-  retrievability: number | null;
+  /** What the tier sorts by: recall retrievability for Review, quizRankScore
+   *  for Quiz. Null when the term has never been graded or answered. */
+  score: number | null;
 };
 
 export type CooldownRow = {
@@ -171,7 +172,7 @@ export function buildQueueDebug(terms: QueueDebugTerm[], options: QueueDebugOpti
       rank: i + 1,
       nextBatch: i < size,
       item: byId.get(c.termId)!,
-      retrievability:
+      score:
         track === "review"
           ? recallRetrievabilityNow(c, now)
           : c.quizKnowledgePosterior === null

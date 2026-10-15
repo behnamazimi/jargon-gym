@@ -46,7 +46,7 @@ describe("buildQueueDebug", () => {
 
     expect(debug.review.rows.map((r) => r.item.termId)).toEqual(["a", "b", "graded"]);
     expect(debug.review.rows.map((r) => r.nextBatch)).toEqual([true, true, false]);
-    expect(debug.review.rows[0]!.retrievability).toBeNull();
+    expect(debug.review.rows[0]!.score).toBeNull();
   });
 
   it("puts a graded term that has decayed below the untested line first", () => {

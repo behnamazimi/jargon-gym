@@ -16,11 +16,29 @@
 -- constants are written out here rather than shared.
 --
 -- Each term is replayed from its review and quiz events in order, retries
--- included (they update stability but are not tests). A term graded before
--- review_events existed is replayed from its first logged event, as if that
--- were its first. Terms with a logged grade missing are left as they are.
--- A track with no logged events keeps its stored values. review_events itself
--- is not changed.
+-- included (they update stability but are not tests). A term is replayed only
+-- when its log tells its whole story: its counts and last review / quiz times
+-- match review_state. That skips terms graded before review_events existed and
+-- terms whose progress was reset (reset_collection_progress deletes the
+-- review_state row but keeps the log), so neither gets state rebuilt from
+-- history it doesn't own. Terms with a logged grade missing are skipped too.
+-- review_events itself is not changed.
+--
+-- Every row it rewrites is copied to review_state_trace_retune_backup first,
+-- so the old values, the stamps included, can be put back.
+
+create table public.review_state_trace_retune_backup as
+select user_id, term_id, recall_stability, recall_difficulty, quiz_knowledge_posterior,
+  ever_mastered_at, ever_learning_at, now() as backed_up_at
+from public.review_state
+with no data;
+
+alter table public.review_state_trace_retune_backup enable row level security;
+revoke all on table public.review_state_trace_retune_backup
+  from public, anon, authenticated, service_role;
+
+comment on table public.review_state_trace_retune_backup is
+  'review_state values before 20261111100000_trace_retune_replay rewrote them. One-off, for restoring if needed; nothing reads it.';
 
 create or replace function pg_temp.initial_difficulty(g int) returns double precision
 language sql immutable as $$
@@ -128,11 +146,17 @@ declare
   recognition double precision;
   mastery double precision;
   succeeded boolean;
+  log_reviews bigint;
+  log_quizzes bigint;
+  log_last_review timestamptz;
+  log_last_quiz timestamptz;
   replayed int := 0;
   skipped int := 0;
+  partial int := 0;
 begin
   for term in
-    select rs.user_id, rs.term_id
+    select rs.user_id, rs.term_id, rs.review_recall_count, rs.quiz_test_count,
+      rs.last_review_recall_at, rs.last_quiz_tested_at
     from public.review_state rs
     where exists (
       select 1 from public.review_events e
@@ -149,6 +173,24 @@ begin
       continue;
     end if;
 
+    select
+      count(*) filter (where e.event in ('review_pass', 'review_fail') and not e.is_retry),
+      count(*) filter (where e.event in ('quiz_pass', 'quiz_fail')),
+      max(e.created_at) filter (where e.event in ('review_pass', 'review_fail')),
+      max(e.created_at) filter (where e.event in ('quiz_pass', 'quiz_fail'))
+    into log_reviews, log_quizzes, log_last_review, log_last_quiz
+    from public.review_events e
+    where e.user_id = term.user_id and e.term_id = term.term_id;
+
+    if log_reviews <> term.review_recall_count
+      or log_quizzes <> term.quiz_test_count
+      or log_last_review is distinct from term.last_review_recall_at
+      or log_last_quiz is distinct from term.last_quiz_tested_at
+    then
+      partial := partial + 1;
+      continue;
+    end if;
+
     s := null; d := null; p := null;
     last_review := null; last_quiz := null;
     reviews := 0; quizzes := 0;
@@ -156,7 +198,7 @@ begin
     mastered_at := null; learning_at := null;
 
     for ev in
-      select e.event, e.grade, e.question_type, coalesce(e.is_retry, false) as is_retry, e.created_at
+      select e.event, e.grade, e.question_type, e.is_retry, e.created_at
       from public.review_events e
       where e.user_id = term.user_id and e.term_id = term.term_id
         and e.event in ('review_pass', 'review_fail', 'quiz_pass', 'quiz_fail')
@@ -201,7 +243,7 @@ begin
         r := case when s is null then null else pg_temp.recall_r(s, pg_temp.days(last_review, ev.created_at)) end;
         prior := coalesce(
           p,
-          case when s is null then null
+          case when s is null or not succeeded then null
             else greatest(0.5, pg_temp.recall_r(s, pg_temp.days(last_review, ev.created_at + interval '14 days')))
           end,
           0.5
@@ -235,6 +277,12 @@ begin
       end if;
     end loop;
 
+    insert into public.review_state_trace_retune_backup
+    select user_id, term_id, recall_stability, recall_difficulty, quiz_knowledge_posterior,
+      ever_mastered_at, ever_learning_at, now()
+    from public.review_state
+    where user_id = term.user_id and term_id = term.term_id;
+
     update public.review_state
     set recall_stability = case when had_reviews then s else recall_stability end,
         recall_difficulty = case when had_reviews then d else recall_difficulty end,
@@ -245,9 +293,15 @@ begin
     replayed := replayed + 1;
   end loop;
 
-  raise notice 'Replayed % terms, skipped % with a missing grade', replayed, skipped;
+  raise notice 'Replayed % terms; skipped % with a missing grade and % whose log is incomplete',
+    replayed, skipped, partial;
 end;
 $$;
+
+comment on column public.review_state.ever_mastered_at is
+  'High-water mark: set the first time Mastery_adjusted reaches the known threshold on a success. Never cleared as mastery later decays — backs the "terms learned" count. Recomputed once by 20261111100000_trace_retune_replay.';
+comment on column public.review_state.ever_learning_at is
+  'High-water mark: set the first time Mastery_adjusted reaches the learning threshold (0.6) on a success. Never cleared as mastery later decays. Sibling of ever_mastered_at. Recomputed once by 20261111100000_trace_retune_replay.';
 
 drop function pg_temp.days(timestamptz, timestamptz);
 drop function pg_temp.familiarity(bigint, double precision);

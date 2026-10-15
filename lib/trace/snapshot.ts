@@ -110,8 +110,11 @@ export function daysUntilNextReview(
 
 /** Quiz answer: posterior update, softened on failure by current recall
  *  strength (null recallStability — no Review history yet — applies the
- *  full, unsoftened penalty). A term's first answer starts from what Review
- *  already says about it two weeks ahead, never below the 0.5 prior. */
+ *  full, unsoftened penalty). A term's first right answer starts from what
+ *  Review already says about it two weeks ahead, never below the 0.5 prior, so
+ *  a pass on a well-recalled term counts in full. A first wrong answer starts
+ *  from 0.5: starting a miss from strong recall would soften it so much that
+ *  it lifted mastery above a term never quizzed. */
 export function applyQuizAnswer(
   state: Pick<TraceState, "quizKnowledgePosterior" | "recallStability" | "lastReviewRecallAt">,
   correct: boolean,
@@ -122,7 +125,7 @@ export function applyQuizAnswer(
   const recallAhead = recallRetrievabilityAt(state, addDays(now, MASTERY_HORIZON_DAYS));
   const prior =
     state.quizKnowledgePosterior ??
-    (recallAhead !== null ? Math.max(RECOGNITION_INITIAL_PRIOR, recallAhead) : null);
+    (correct && recallAhead !== null ? Math.max(RECOGNITION_INITIAL_PRIOR, recallAhead) : null);
 
   const posterior = updatePosterior(prior, correct, questionType, recallR);
   return { quizKnowledgePosterior: posterior };

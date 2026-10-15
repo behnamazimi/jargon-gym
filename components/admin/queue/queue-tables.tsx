@@ -51,10 +51,10 @@ export function ReviewTable({ section, asOf }: { section: QueueSection<TierRow>;
     {
       label: "Recall now",
       cell: (r) =>
-        r.retrievability === null ? (
+        r.score === null ? (
           <span className="badge badge-ghost">never graded</span>
         ) : (
-          number(r.retrievability)
+          number(r.score)
         ),
     },
     { label: "Stability", cell: (r) => number(r.item.recallStability, 2) },
@@ -82,10 +82,10 @@ export function QuizTable({ section, asOf }: { section: QueueSection<TierRow>; a
     {
       label: "Likely to recognise",
       cell: (r) =>
-        r.retrievability === null ? (
+        r.score === null ? (
           <span className="badge badge-ghost">never answered</span>
         ) : (
-          number(r.retrievability)
+          number(r.score)
         ),
     },
     { label: "Posterior", cell: (r) => number(r.item.quizKnowledgePosterior) },

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { UNTESTED_RECALL_RETRIEVABILITY } from "./constants";
 import { daysUntilRetrievability } from "./recall";
 import { rankQuizQueue, rankReadQueue, rankReviewQueue, recallRetrievabilityNow } from "./queue";
+import { applyQuizAnswer } from "./snapshot";
 import type { TraceCandidate } from "./types";
 
 function makeCandidate(overrides: Partial<TraceCandidate> = {}): TraceCandidate {
@@ -284,7 +285,23 @@ describe("rankQuizQueue", () => {
     expect(rankQuizQueue([missed], NOW)).toEqual([]);
   });
 
-  it("ranks by R_g(t) ascending", () => {
+  it("serves a term after a wrong first answer ahead of never-answered terms", () => {
+    const answeredAt = new Date("2026-01-30T00:00:00Z");
+    const missed = makeCandidate({
+      termId: "missed",
+      createdAt: new Date("2026-01-02T00:00:00Z"),
+      recallStability: 40,
+      recallDifficulty: 5,
+      lastReviewRecallAt: new Date("2026-01-27T00:00:00Z"),
+      quizTestCount: 1,
+      lastQuizTestedAt: answeredAt,
+    });
+    Object.assign(missed, applyQuizAnswer(missed, false, "multiple_choice", answeredAt));
+    const ranked = rankQuizQueue([makeCandidate({ termId: "never-answered" }), missed], NOW);
+    expect(ranked[0]!.termId).toBe("missed");
+  });
+
+  it("ranks answered terms by how likely they are to be recognised", () => {
     const candidates = [
       makeCandidate({
         termId: "confident",
