@@ -63,3 +63,10 @@ ui-debug.log*
 **/.dataconnect/
 certificates
 .env
+
+# mobile shells: keystores and fastlane output (ios/ and android/ ship their own ignores)
+*.keystore
+*.jks
+fastlane/report.xml
+fastlane/test_output
+fastlane/*.p8

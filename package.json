@@ -24,6 +24,10 @@
     "supabase:status": "supabase status",
     "supabase:reset": "supabase db reset",
     "supabase:types": "supabase gen types typescript --local > lib/supabase/database.types.ts",
+    "mobile:sync": "cap sync",
+    "mobile:assets": "capacitor-assets generate --ios --android --assetPath resources --iconBackgroundColor '#fdfcf9' --splashBackgroundColor '#fdfcf9'",
+    "mobile:android": "cap open android",
+    "mobile:ios": "cap open ios",
     "widget:zip": "WIDGET_PRODUCTION_URL=https://lobyas.com scripts/widget-zip.sh",
     "widget:install": "LOBYAS_BASE_URL=${LOBYAS_BASE_URL:-https://lobyas.com} scripts/widget-install.sh",
     "widget:link": "scripts/widget-link.sh"
@@ -33,6 +37,10 @@
     "@ai-sdk/google": "^4.0.24",
     "@ai-sdk/otel": "^1.0.114",
     "@aws-sdk/client-s3": "^3.1126.0",
+    "@capacitor/app": "^8",
+    "@capacitor/browser": "^8",
+    "@capacitor/core": "^8",
+    "@capacitor/splash-screen": "^8",
     "@elevenlabs/elevenlabs-js": "^2.66.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
@@ -63,6 +71,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@capacitor/android": "^8",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8",
+    "@capacitor/ios": "^8",
     "@playwright/test": "^1.64.0",
     "@serwist/turbopack": "^9.5.12",
     "@tailwindcss/postcss": "^4",

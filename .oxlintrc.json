@@ -17,7 +17,9 @@
     "build/**",
     "next-env.d.ts",
     "node_modules/**",
-    "lib/supabase/database.types.ts"
+    "lib/supabase/database.types.ts",
+    "ios/**",
+    "android/**"
   ],
   "overrides": [
     {

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Lobyas</string>
+    <string name="title_activity_main">Lobyas</string>
+    <string name="package_name">com.lobyas.app</string>
+    <string name="custom_url_scheme">com.lobyas.app</string>
+</resources>
