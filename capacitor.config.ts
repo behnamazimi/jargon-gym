@@ -4,6 +4,7 @@ const PRODUCTION_URL = "https://lobyas.com";
 
 // Preview builds point at a Vercel preview with CAP_SERVER_URL.
 const serverUrl = process.env.CAP_SERVER_URL || PRODUCTION_URL;
+const isProduction = new URL(serverUrl).hostname === new URL(PRODUCTION_URL).hostname;
 
 const config: CapacitorConfig = {
   appId: "com.lobyas.app",
@@ -19,7 +20,7 @@ const config: CapacitorConfig = {
     appendUserAgent: "LobyasApp/ios",
     // Lets the service worker run in WKWebView. Info.plist lists the allowed
     // domain, so it can't apply to a preview host.
-    limitsNavigationsToAppBoundDomains: serverUrl === PRODUCTION_URL,
+    limitsNavigationsToAppBoundDomains: isProduction,
   },
   android: {
     appendUserAgent: "LobyasApp/android",

@@ -21,7 +21,7 @@ const SHELL_ATTRIBUTE = "data-shell";
 
 /** Cached pages can't read the user agent on the server, so it is copied to
  *  <html> before paint, for CSS (`native-app:`, `ios-app:`, `android-app:`). */
-export const SHELL_RESTORE_SCRIPT = `try{var m=/LobyasApp(?:\\/(ios|android))?/.exec(navigator.userAgent);if(m)document.documentElement.setAttribute("${SHELL_ATTRIBUTE}",m[1]||"app")}catch(e){}`;
+export const SHELL_RESTORE_SCRIPT = `try{var m=/${SHELL_USER_AGENT.source}/.exec(navigator.userAgent);if(m)document.documentElement.setAttribute("${SHELL_ATTRIBUTE}",m[1]||"app")}catch(e){}`;
 
 export function isNativeShell(): boolean {
   return typeof navigator !== "undefined" && parseShell(navigator.userAgent).native;

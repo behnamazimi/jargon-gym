@@ -80,6 +80,7 @@
 	<key>WKAppBoundDomains</key>
 	<array>
 		<string>lobyas.com</string>
+		<string>localhost</string>
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>

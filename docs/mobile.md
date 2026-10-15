@@ -67,10 +67,16 @@ The site's service worker (`app/sw.ts`, which serves the `/~offline` page and th
 offline banner) runs inside the apps too. Android's WebView allows it on https.
 iOS's WKWebView only allows it for App-Bound Domains, so `Info.plist` lists
 `lobyas.com` under `WKAppBoundDomains` and `capacitor.config.ts` sets
-`ios.limitsNavigationsToAppBoundDomains`. The webview can then only navigate to
-that domain; other links already open in the system browser. The flag is off when
-`CAP_SERVER_URL` points at a preview, because the preview host isn't in the list;
-a preview build on iOS has no service worker and falls back to `native/www/offline.html`.
+`ios.limitsNavigationsToAppBoundDomains`. `localhost` is listed too: the bundled
+`offline.html` loads from it. The webview can then only navigate to those hosts,
+and a navigation to any other host (a subdomain such as `www` included, until
+tested on a device) fails instead of opening in Safari. Sign-in goes through the
+system browser and is not affected. The flag is off when `CAP_SERVER_URL` points
+at a preview, because the preview host isn't in the list; a preview build on iOS
+has no service worker and falls back to `native/www/offline.html`.
+
+On Android, Capacitor also shows `offline.html` for any HTTP error on a page
+load (404, 5xx), not only when offline.
 
 After changing either setting run `pnpm mobile:sync`, then test on a real iPhone:
 load the app, turn on airplane mode, and open a page. It should show `/~offline`,
