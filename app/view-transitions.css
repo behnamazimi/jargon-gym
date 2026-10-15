@@ -50,15 +50,11 @@
 }
 
 /* Moving between sections without a direction, such as the dock tabs: the
-   old page fades out quickly, then the new one fades and grows in. */
-::view-transition-old(.fade-through-out) {
-  animation: 90ms ease-in both vt-fade reverse;
-}
-
+   old page is swapped out at once and the new one fades and grows in. */
 ::view-transition-new(.fade-through-in) {
   animation:
-    210ms ease-out 90ms both vt-fade,
-    210ms ease-out 90ms both vt-grow;
+    210ms ease-out both vt-fade,
+    210ms ease-out both vt-grow;
 }
 
 @keyframes vt-grow {
