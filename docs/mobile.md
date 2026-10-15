@@ -45,6 +45,21 @@ Web code detects the app with `isNativeShell()` (`lib/native/shell.ts`, the
 a check for it, and assume an installed app may be older than the web code: a
 plugin added later won't exist in it.
 
+## Offline and the service worker
+
+The site's service worker (`app/sw.ts`, which serves the `/~offline` page and the
+offline banner) runs inside the apps too. Android's WebView allows it on https.
+iOS's WKWebView only allows it for App-Bound Domains, so `Info.plist` lists
+`lobyas.com` under `WKAppBoundDomains` and `capacitor.config.ts` sets
+`ios.limitsNavigationsToAppBoundDomains`. The webview can then only navigate to
+that domain; other links already open in the system browser. The flag is off when
+`CAP_SERVER_URL` points at a preview, because the preview host isn't in the list;
+a preview build on iOS has no service worker and falls back to `native/www/offline.html`.
+
+After changing either setting run `pnpm mobile:sync`, then test on a real iPhone:
+load the app, turn on airplane mode, and open a page. It should show `/~offline`,
+not `offline.html`.
+
 ## Google sign-in
 
 Google refuses sign-in inside a WebView, so `GoogleSignInButton` calls

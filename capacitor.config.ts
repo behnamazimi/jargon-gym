@@ -16,6 +16,11 @@ const config: CapacitorConfig = {
     allowNavigation: ["lobyas.com", "*.lobyas.com", new URL(serverUrl).hostname],
     errorPath: "offline.html",
   },
+  ios: {
+    // Lets the service worker run in WKWebView. Info.plist lists the allowed
+    // domain, so it can't apply to a preview host.
+    limitsNavigationsToAppBoundDomains: serverUrl === PRODUCTION_URL,
+  },
   plugins: {
     SplashScreen: { launchAutoHide: true, backgroundColor: "#fdfcf9" },
   },

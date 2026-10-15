@@ -77,6 +77,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>lobyas.com</string>
+	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
