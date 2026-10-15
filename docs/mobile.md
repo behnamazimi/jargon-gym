@@ -75,8 +75,9 @@ system browser and is not affected. The flag is off when `CAP_SERVER_URL` points
 at a preview, because the preview host isn't in the list; a preview build on iOS
 has no service worker and falls back to `native/www/offline.html`.
 
-On Android, Capacitor also shows `offline.html` for any HTTP error on a page
-load (404, 5xx), not only when offline.
+Capacitor Android would also show `offline.html` for any HTTP error on a page
+load (404, 5xx). `MainActivity` replaces its client so only a failed connection
+does; an error page from the site is shown as is.
 
 After changing either setting run `pnpm mobile:sync`, then test on a real iPhone:
 load the app, turn on airplane mode, and open a page. It should show `/~offline`,
