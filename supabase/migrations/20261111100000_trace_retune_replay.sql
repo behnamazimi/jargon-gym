@@ -24,20 +24,24 @@
 -- history it doesn't own. Terms with a logged grade missing are skipped too.
 -- review_events itself is not changed.
 --
--- Every row it rewrites is copied to review_state_trace_retune_backup first,
--- so the old values, the stamps included, can be put back.
+-- Every row it rewrites is copied to trace_retune_backup.review_state first,
+-- so the old values, the stamps included, can be put back. The copy lives in
+-- its own schema, outside the API and the generated types.
 
-create table public.review_state_trace_retune_backup as
+create schema trace_retune_backup;
+revoke all on schema trace_retune_backup from public, anon, authenticated;
+
+create table trace_retune_backup.review_state as
 select user_id, term_id, recall_stability, recall_difficulty, quiz_knowledge_posterior,
   ever_mastered_at, ever_learning_at, now() as backed_up_at
 from public.review_state
 with no data;
 
-alter table public.review_state_trace_retune_backup enable row level security;
-revoke all on table public.review_state_trace_retune_backup
+alter table trace_retune_backup.review_state enable row level security;
+revoke all on table trace_retune_backup.review_state
   from public, anon, authenticated, service_role;
 
-comment on table public.review_state_trace_retune_backup is
+comment on table trace_retune_backup.review_state is
   'review_state values before 20261111100000_trace_retune_replay rewrote them. One-off, for restoring if needed; nothing reads it.';
 
 create or replace function pg_temp.initial_difficulty(g int) returns double precision
@@ -277,7 +281,7 @@ begin
       end if;
     end loop;
 
-    insert into public.review_state_trace_retune_backup
+    insert into trace_retune_backup.review_state
     select user_id, term_id, recall_stability, recall_difficulty, quiz_knowledge_posterior,
       ever_mastered_at, ever_learning_at, now()
     from public.review_state
