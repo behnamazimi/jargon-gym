@@ -7,7 +7,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.13.0'
+        classpath 'com.android.tools.build:gradle:9.4.1'
         classpath 'com.google.gms:google-services:4.4.4'
 
         // NOTE: Do not place your application dependencies here; they belong
@@ -15,12 +15,24 @@ buildscript {
     }
 }
 
-apply from: "variables.gradle"
-
 allprojects {
+    // Each module gets its own copy of the versions; Gradle 10 stops
+    // looking them up on the root project.
+    apply from: "${rootDir}/variables.gradle"
     repositories {
         google()
         mavenCentral()
+    }
+}
+
+// `cap sync` always gives this module a flatDir repository, which AGP warns
+// about. Drop it while its folders hold no local libraries.
+project(':capacitor-cordova-android-plugins') {
+    afterEvaluate {
+        repositories.removeAll { repo ->
+            repo instanceof FlatDirectoryArtifactRepository &&
+                repo.dirs.every { !it.exists() || it.list().length == 0 }
+        }
     }
 }
 
