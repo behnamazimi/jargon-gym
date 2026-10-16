@@ -81,7 +81,12 @@ has no service worker and falls back to `native/www/offline.html`.
 
 Capacitor Android would also show `offline.html` for any HTTP error on a page
 load (404, 5xx). `MainActivity` replaces its client so only a failed connection
-does; an error page from the site is shown as is.
+does; an error page from the site is shown as is. Offline, Android's WebView
+also reports the service worker's navigation preload request as a failed page
+load, and Capacitor would swap in `offline.html` before the worker answers.
+`MainActivity` ignores errors on requests with the
+`Service-Worker-Navigation-Preload` header, so `offline.html` only shows when
+no service worker is installed yet (first launch while offline).
 
 After changing either setting run `pnpm mobile:sync`, then test on a real iPhone:
 load the app, turn on airplane mode, and open a page. It should show `/~offline`,
