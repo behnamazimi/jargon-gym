@@ -16,6 +16,10 @@ export function readLandingCookieValue(storiesDefault: boolean): string {
   return storiesDefault ? "stories" : "cards";
 }
 
+export function hasReadLandingPreference(): boolean {
+  return document.cookie.split("; ").some((pair) => pair.startsWith(`${READ_LANDING_COOKIE}=`));
+}
+
 export function saveReadLandingPreference(storiesDefault: boolean): void {
   writePreferenceCookie(READ_LANDING_COOKIE, readLandingCookieValue(storiesDefault));
 }
