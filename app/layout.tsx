@@ -4,6 +4,8 @@ import { ToastProvider } from "@/components/ui/toast";
 import { AuthStateSync } from "@/components/auth-state-sync";
 import { ConsentBanner } from "@/components/consent/consent-banner";
 import { NativeAuthBridge } from "@/components/native/native-auth-bridge";
+import { NativeSplash } from "@/components/native/native-splash";
+import { NativeSystemBars } from "@/components/native/native-system-bars";
 import "./globals.css";
 import { PWA_DESCRIPTION, PWA_NAME, PWA_THEME_COLOR } from "@/lib/pwa";
 import { AUTH_RESTORE_SCRIPT } from "@/lib/auth/auth-state";
@@ -99,6 +101,8 @@ export default function RootLayout({
             <AuthStateSync />
             <ConsentBanner />
             <NativeAuthBridge />
+            <NativeSystemBars />
+            <NativeSplash />
           </ToastProvider>
         </PwaProviders>
       </body>

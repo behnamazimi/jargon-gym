@@ -65,6 +65,14 @@ The proxy uses it for one thing: a request for `/` from the app redirects to the
 study area (`AUTHENTICATED_HOME_PATH`) for a signed-in member, or to `/login`
 otherwise (`lib/native/landing.ts`). Every other public page still opens by link.
 
+## Launch
+
+The shell opens `/app/review` directly (not `/`), so a launch has no redirect hop;
+the proxy sends a signed-out member on to login. The splash stays up until the
+page has painted: `NativeSplash` hides it, and `launchShowDuration` (4s) hides it
+anyway when the site is slow or `offline.html` loads. These are native settings,
+so they reach users with the next store release.
+
 ## Offline and the service worker
 
 The site's service worker (`app/sw.ts`, which serves the `/~offline` page and the
