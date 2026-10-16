@@ -48,9 +48,10 @@ right now, even though you haven't reviewed anything since.
 Every time you read a term, familiarity grows a little, but with steeply
 diminishing returns — the first read counts for a lot, the tenth barely
 moves it. It also decays fairly quickly if you stop reading a term (faster
-than the other two traces), and on its own it can never contribute more
-than a small, capped share of a term's overall mastery. Reading alone
-cannot make a term "mastered."
+than the other two traces, over a 10-day scale). In mastery it fills a
+small part of what recall is still missing, so it helps weak terms more
+than strong ones (see Mastery below). Reading alone cannot make a term
+"mastered."
 
 Familiarity's real job is to give recall a head start. The first time you
 grade a term in Review, its starting recall strength gets nudged up (and
@@ -99,17 +100,18 @@ changes four things, all smoothly, with no caps:
   starts at 0.2 days of stability instead of 0.41. After a lapse, stability
   also never ends up higher than before, as in FSRS-5.
 - **Hard is a partial recall**: its stability is a geometric blend of what
-  Again and Good would give, 85% toward Again (`HARD_LAPSE_BLEND`). Hard
-  pulls a strong term back and holds a fragile one in place. In stock FSRS-5
-  Hard always grows stability. A first-ever Hard starts at 0.7 days instead
-  of 1.18.
+  Again and Good would give, 85% toward Again (`HARD_LAPSE_BLEND`), but never
+  less than half the stability the term had (`HARD_MIN_KEEP`). Hard pulls a
+  strong term back to about half its gap and holds a fragile one at the
+  one-day floor. In stock FSRS-5 Hard always grows stability. A first-ever
+  Hard starts at 0.7 days instead of 1.18.
 - **Easy moves less**: the Easy bonus drops from 2.95× to 1.6× Good's growth,
   and a first-ever Easy starts at 7 days of stability instead of 15.5.
 
 Graded each time it falls to Review's 0.89 line, five Goods in a row come
 back after about 3.5, 10, 19, 31 and 45 days, and four Easys after about 8,
 26, 57 and 104. An Again on a term that had reached about 19 days brings it
-back in about 12 hours, and a Hard in about 22. The tests in
+back in about 12 hours, and a Hard in about 9 days. The tests in
 `lib/trace/recall.test.ts` ("review gaps at the Review target") check this
 behaviour. A term that was recalled is never due sooner than a day
 (`minPassStability` in `lib/trace/recall.ts`, applied to Hard, Good and Easy,
@@ -175,6 +177,16 @@ earlier rules had sent away for years came back into range.
 [`20261031100000_trace_recall_replay_good_spacing.sql`](../supabase/migrations/20261031100000_trace_recall_replay_good_spacing.sql)
 replayed them again after the `w9` and Easy change.
 
+`HARD_MIN_KEEP` came on 15 October 2026. Before it, a Hard sent any term,
+even one that had lasted two months, back to about a day, so Hard looked out
+of place next to Good and Easy. Stock FSRS-5 and FSRS-6 grow stability on a
+Hard; real grades here say young Hard terms really are fragile (about 80%
+recalled a day later, below the 0.89 line), so only the collapse of strong
+terms was changed. Good and Easy were left alone: their gaps are at or below
+both FSRS versions. [`20261111100000_trace_retune_replay.sql`](../supabase/migrations/20261111100000_trace_retune_replay.sql)
+replayed every term's logged events under the current rules, including the
+one-day floor and the same-day rule.
+
 ### Recognition, from Quiz
 
 Quiz answers are noisier than Review grades — a wrong answer might be a
@@ -192,9 +204,13 @@ retrievability number.
 Two details worth knowing:
 
 - Like recall, a term has no recognition trace until you answer a Quiz
-  question about it for the first time. The very first answer starts from
-  an assumed 50/50 prior — but only at that moment, never as a standing
-  default beforehand.
+  question about it for the first time. A right first answer starts from
+  what Review already says: the term's recall retrievability two weeks
+  ahead, never below 0.5, so a pass on a well-recalled term counts in full.
+  A wrong first answer, or any first answer on a term never graded in
+  Review, starts from 50/50. Starting a miss from strong recall softened it
+  so much that it lifted mastery above a term never quizzed. Either way this
+  is only the prior at that moment, never a standing default beforehand.
 - A Quiz miss is softened if your current recall retrievability for that
   term is high. If you can clearly still recall a term from memory, a Quiz
   miss on it is more likely a misclick than real forgetting, so the
@@ -203,26 +219,51 @@ Two details worth knowing:
 
 ## Mastery: the one number that blends all three
 
-A term's live mastery score blends all three traces — familiarity's capped
-contribution, recall retrievability, and recognition retrievability —
-weighted so recall counts for the most, recognition next, and familiarity
-least:
+A term's live mastery asks one question: will you still know it two weeks
+from now? Every track is read `MASTERY_HORIZON_DAYS` (14) days ahead, so a
+term you just answered, right or wrong, isn't credited as fresh. What
+counts is how much stability the term has built up.
 
 ```
-Mastery = 0.2 · Familiarity_used + 0.5 · Recall_retrievability + 0.3 · Recognition_retrievability
+R'      = R_r + 0.3 · F_used · (1 − R_r)          (reading fills part of what recall is missing)
+K_g     = posterior · R_g                         (how likely you are to recognise it)
+Mastery = R'^0.625 · K_g^0.375                     (weighted geometric mean)
 ```
 
-A track you haven't touched yet (no recall trace, no recognition trace)
-contributes zero rather than making the whole thing undefined — a
-freshly-read, never-tested term's mastery is exactly whatever Read alone
-earned it, which is small by design.
+`R_r`, `R_g` and `F_used` are all read 14 days ahead. The weaker of recall
+and recognition pulls the score down. A track you haven't tested yet counts
+as 0.5 (`UNTESTED_TRACK_EVIDENCE`), a coin flip rather than 0. A term never
+quizzed tops out at 0.5^0.375 ≈ 0.77, below the Known line, so a passed quiz
+is what lifts a term to Known. That comes from the formula, with no separate
+rule. A term whose only quiz answer is wrong scores below one never quizzed,
+so a miss can't stand in for a pass. A term
+neither Review nor Quiz has tested has mastery 0, whatever Read did.
+
+Reading lifts only the recall side (`READ_GAP_WEIGHT`, 0.3). It helps a weak
+term more than a strong one, and it never makes an unquizzed term Known.
+The lift fades with familiarity: one read halves after about 10 days.
+
+The 5 : 3 split between recall and recognition is the original design's
+0.5 / 0.3. Recall counts more because in Review you produce the answer,
+while in Quiz you can pick it or guess.
 
 That raw number then gets discounted by how many times you've actually
 been tested on the term (Review + Quiz combined), so a single lucky "Easy"
 grade on a brand-new term can't read as mastery the way ten consistent
-grades would. This adjusted number — **Mastery_adjusted** — is what
-everything else (the known/learning/unknown label, the mastery page's
-"current strength" figure) is actually built from.
+grades would (`CONFIDENCE_TIME_CONSTANT`, 1). This adjusted number —
+**Mastery_adjusted** — is what everything else (the known/learning/unknown
+label, the mastery page's "current strength" figure) is actually built from.
+
+These values come from 15 October 2026. Real events from one learner showed
+the old blend (0.2 · F + 0.5 · R_r + 0.3 · R_g, read now) rewarding misses:
+retrievability is 1 right after any answer, a wrong quiz answer added about
+as much as a right one, and Agains counted as tests. Terms failed over and
+over read Known while cleanly learned ones didn't. In a simulated learner
+whose memory follows stock FSRS-6, the new mastery tracks real recall a
+week ahead much more closely (rank correlation about 0.68 against 0.35). On
+a 500-term collection at 40 reviews a day, a term reaches Known after
+about 4 reviews and a passed quiz, about four weeks after it is first seen.
+About 1% of those turn out weak, against 8–14% before.
 
 ### The known / learning / unknown label
 
@@ -232,18 +273,19 @@ recalculated live from Mastery_adjusted every time it's shown:
 
 | Label        | Condition                                                              |
 | ------------ | ---------------------------------------------------------------------- |
-| **Known**    | Mastery_adjusted ≥ 0.75, and you've been tested on it at least 3 times |
+| **Known**    | Mastery_adjusted ≥ 0.78, and you've been tested on it at least 3 times |
 | **Learning** | Everything in between                                                  |
 | **Unknown**  | Mastery_adjusted < 0.6                                                 |
 
 The test-count floor exists because the confidence discount alone doesn't
 fully protect against a single strong grade nudging a brand-new term over
-0.75 by chance — the explicit count check closes that gap.
+0.78 by chance — the explicit count check closes that gap.
 
 Importantly, **this label never affects what Review or Quiz shows you.**
-Ranking always uses the raw, undiscounted retrievability described below —
-confidence-weighting and the known/unknown split are a reporting layer on
-top of the ranking, not part of it.
+Ranking uses each tier's own live signal described below (recall
+retrievability for Review, posterior × recognition retrievability for Quiz),
+never Mastery_adjusted — confidence-weighting and the known/unknown split are
+a reporting layer on top of the ranking, not part of it.
 
 ### Terms learned: the numbers that are actually stored
 
@@ -262,26 +304,24 @@ learned" (high-water mark, never decreases).
 
 A failed attempt never earns either stamp. That means an Again in Review or a
 missed question in Quiz, whatever the score says afterwards. Right after you
-answer anything, that track's retrievability is 1 for the instant before it starts
-to decay, so a score taken then would credit a miss as a perfectly fresh memory.
-`crossedThresholds` in `lib/trace/mastery.ts` applies the rule for both
-stamps; Hard still counts, since you did recall the term. A success is still
-read at the instant of the answer, so a lucky Good or Hard on a barely-known
-term can still earn a stamp. Only misses are filtered out.
+answer anything, that track's retrievability is 1 at that instant. Mastery is
+read two weeks ahead, so a miss no longer looks fresh, but the rule still
+holds. `crossedThresholds` in `lib/trace/mastery.ts` applies it for both
+stamps; Hard still counts, since you did recall the term.
 
-The live label has no such filter, and that is a known downside, accepted
-for now. Right after an Again or a missed Quiz question, the term can read
-Known until that track decays below about 0.9, which takes about S days. With
-the current weights that is around 10 hours after an Again on a term that had
-reached 15 days. It shows in Library and Mastery known counts, the widget and
-Telegram; ranking never uses the label. The fix we found is to read the label
-from recall a week ahead instead of right now, which a just-missed term can't
-pass. It also makes Known stricter for every term, so known counts would drop.
+The live label used to have a known downside: right after an Again or a
+missed Quiz question, a term could read Known for hours. Reading every track
+two weeks ahead fixed that, since a term that was just missed has little
+stability left to carry it that far.
+
+The stamps were recomputed under the 15 October 2026 rules by
+[`20261111100000_trace_retune_replay.sql`](../supabase/migrations/20261111100000_trace_retune_replay.sql),
+so stamps that misses had earned under the old scoring were cleared.
 
 The second, a sibling high-water mark (`ever_learning_at`), does the
 identical thing one threshold lower — stamped the first time
 Mastery_adjusted crosses the learning threshold (0.6) rather than the
-known one (0.75). That stamp is still written, but it no longer drives
+known one (0.78). That stamp is still written, but it no longer drives
 the mastery page. Collection cards there put every earned term (not
 marked known) into exactly one of three buckets from live activity
 counts plus `ever_mastered_at` (`lib/trace/pace.ts`):
@@ -369,7 +409,7 @@ active collections — just by a different signal. There's no separate
 | ---------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | **Read**   | Lowest decay-aware exposure (Read+Review+Quiz combined), tempered by mastery | Always included — reading is how a term gets exposure in the first place |
 | **Review** | Lowest recall retrievability first                                           | Ranked as if 0.89 retrievable: after decayed terms, before the rest      |
-| **Quiz**   | Lowest recognition retrievability first                                      | Ranked as if 0.7 retrievable: after decayed terms, before the rest       |
+| **Quiz**   | Least likely to be recognised first (posterior × recognition retrievability) | Ranked as if 0.7: after missed and decayed terms, before the rest        |
 
 Read's ranking used to be a simple "fewest reads first" count. It's now a
 decay-aware signal that also folds in Review and Quiz history: a term's
@@ -423,10 +463,17 @@ target, which still come back most-faded first, only later. Past about 20%,
 a third of started terms don't stick. It was left out on purpose, so check
 with the product owner before adding it.
 
+Quiz ranks by posterior × recognition retrievability (`quizRankScore`), not
+by retrievability alone, so a term answered wrong comes back at the next
+Quiz session after its cooldown (about a day), ahead of new terms and of
+terms answered right. Ranking by retrievability alone let a missed term wait
+about as long as a passed one, which held it back from Known for weeks.
+
 Within a tier, once you've just gotten something right, it drops out of
 that tier's list — specifically, once its retrievability rises above 0.98
 — so a review or quiz session doesn't keep re-serving something you just
-nailed thirty seconds ago. There's no actual concept of a "session" behind
+nailed thirty seconds ago. The same holds for a Quiz term answered wrong:
+it sits out for about a day. There's no actual concept of a "session" behind
 this, though: it's the same live retrievability check used everywhere
 else, so how long a term stays excluded depends entirely on how strong the
 grade was. A shaky term you just barely passed drops back below 0.98 (and
@@ -572,6 +619,14 @@ other:
   recompute from a snapshot — see [Terms learned](#terms-learned-the-one-number-thats-actually-stored).
   This is the one intentional exception, stored as `ever_mastered_at` on
   `review_state`.
+- **Mastery reads two weeks ahead and blends geometrically.** The design's
+  `wF·F + wR·R_r + wG·R_g`, read now, rewarded misses (retrievability is 1
+  right after any answer). Mastery now reads every track two weeks ahead,
+  multiplies recognition by the quiz posterior, combines recall and
+  recognition as a weighted geometric mean with untested tracks at 0.5, and
+  lets reading fill part of what recall is missing; see
+  [Mastery](#mastery-the-one-number-that-blends-all-three). Quiz also ranks
+  by posterior × recognition rather than recognition alone.
 - **The old known/unknown pool toggle is gone entirely,** not repurposed.
   There's no manual "mark as known" action anywhere in the app anymore, on
   web or Telegram — the label described above is the only thing that plays
@@ -587,7 +642,7 @@ writing:
 | Parameter                                                    | Value                              | Meaning                                                                                                                          |
 | ------------------------------------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | Familiarity growth rate / decay rate                         | 0.3 / 0.5                          | How fast familiarity grows per read, and how quickly that growth diminishes with repetition                                      |
-| Familiarity cap                                              | 0.35                               | Most familiarity alone can ever contribute to mastery                                                                            |
+| Familiarity cap                                              | 0.35                               | Most familiarity can count, both in mastery and in the cold-start nudge                                                          |
 | Familiarity decay scale                                      | 10 days                            | How fast familiarity fades if you stop reading a term                                                                            |
 | Cold-start nudge (difficulty / stability)                    | 2 / 0.5                            | How much familiarity shifts a term's very first recall grade                                                                     |
 | Quiz slip allowance                                          | 0.95                               | Assumed chance of answering correctly when you do know the term                                                                  |
@@ -595,10 +650,13 @@ writing:
 | Recall forgetting curve                                      | FSRS-5                             | `(1 + 19/81·t/S)^-0.5`, so recall is exactly 90% after S days                                                                    |
 | Recognition decay scale                                      | 9                                  | Recognition only: `(1 + t/(9·S))⁻¹`                                                                                              |
 | Changed FSRS-5 weights (w0 / w1 / w3 / w9 / w11 / w16)       | 0.2 / 0.7 / 7 / 0.626 / 0.30 / 1.6 | First-ever Again, Hard and Easy stability, diminishing returns, how much a lapse keeps, Easy bonus                               |
-| Hard blend toward Again                                      | 0.85                               | Where Hard's stability sits between the Again and Good outcomes                                                                  |
-| Mastery blend weights (familiarity / recall / recognition)   | 0.2 / 0.5 / 0.3                    | How much each trace counts toward overall mastery                                                                                |
-| Confidence time constant                                     | 2 tests                            | How quickly the confidence discount approaches full weight                                                                       |
-| Known / unknown thresholds                                   | 0.75 / 0.6                         | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
+| Hard blend toward Again / least kept                         | 0.85 / 0.5                         | Where Hard's stability sits between the Again and Good outcomes, and the least share of its stability a Hard keeps               |
+| Mastery horizon                                              | 14 days                            | How far ahead every track is read for mastery                                                                                    |
+| Mastery blend exponents (recall / recognition)               | 0.625 / 0.375                      | Weights of the geometric mean of recall and recognition knowledge                                                                |
+| Untested track evidence                                      | 0.5                                | What a track with no tests yet counts as in mastery                                                                              |
+| Read gap weight                                              | 0.3                                | Share of what recall is missing that full familiarity fills in mastery                                                           |
+| Confidence time constant                                     | 1 test                             | How quickly the confidence discount approaches full weight                                                                       |
+| Known / unknown thresholds                                   | 0.78 / 0.6                         | Mastery_adjusted bounds for the known/learning/unknown label                                                                     |
 | Known label minimum test count                               | 3                                  | Tests needed (Review + Quiz combined) before "known" can apply                                                                   |
 | Same-day stability decay (`w19`)                             | 0.0658                             | FSRS-6's default, paired with TRACE's own `w17`/`w18`; same-day gains shrink as stability grows                                  |
 | Learning-step retries / window                               | 3 / 60 minutes                     | How often a missed term is re-asked in a session, and how recently it must have been graded for a retry to count as one          |

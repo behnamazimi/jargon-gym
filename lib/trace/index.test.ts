@@ -8,7 +8,9 @@ import {
   daysUntilNextReview,
 } from "./index";
 import { retrievability } from "./recall";
-import type { TraceState } from "./types";
+import type { ReviewGrade, TraceState } from "./types";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function emptyState(): TraceState {
   return {
@@ -67,7 +69,71 @@ describe("applyReviewGrade end-to-end", () => {
   });
 });
 
+describe("computeTraceSnapshot mastery", () => {
+  const graded = (state: TraceState, grades: ReviewGrade[], days: number[]): TraceState => {
+    let at = new Date("2026-01-01T00:00:00Z");
+    let next = state;
+    grades.forEach((grade, i) => {
+      at = new Date(at.getTime() + days[i]! * DAY_MS);
+      next = {
+        ...next,
+        ...applyReviewGrade(next, grade, at),
+        reviewRecallCount: next.reviewRecallCount + 1,
+        lastReviewRecallAt: at,
+      };
+    });
+    return next;
+  };
+
+  it("doesn't read Known moments after a miss, however many tests the term has", () => {
+    const state = {
+      ...graded(emptyState(), [GOOD, GOOD, GOOD, AGAIN], [0, 4, 10, 19]),
+      quizKnowledgePosterior: 0.9,
+      quizTestCount: 2,
+      lastQuizTestedAt: new Date("2026-01-30T00:00:00Z"),
+    };
+    expect(computeTraceSnapshot(state, state.lastReviewRecallAt!).knownLabel).not.toBe("known");
+  });
+});
+
 describe("applyQuizAnswer end-to-end", () => {
+  it("a term whose only quiz answer is wrong never reads Known, however strong its recall", () => {
+    const at = new Date("2026-03-01T00:00:00Z");
+    const reviewed: TraceState = {
+      ...emptyState(),
+      recallStability: 120,
+      recallDifficulty: 4,
+      reviewRecallCount: 6,
+      lastReviewRecallAt: new Date(at.getTime() - 3 * DAY_MS),
+    };
+    const state: TraceState = {
+      ...reviewed,
+      ...applyQuizAnswer(reviewed, false, "true_false", at),
+      quizTestCount: 1,
+      lastQuizTestedAt: at,
+    };
+    expect(computeTraceSnapshot(state, at).knownLabel).not.toBe("known");
+  });
+
+  it("a term's first answer starts from what Review knows, not a coin flip", () => {
+    const now = new Date("2026-03-01T00:00:00Z");
+    const recalledWell = applyQuizAnswer(
+      { quizKnowledgePosterior: null, recallStability: 60, lastReviewRecallAt: now },
+      true,
+      "multiple_choice",
+      now,
+    );
+    const neverReviewed = applyQuizAnswer(
+      { quizKnowledgePosterior: null, recallStability: null, lastReviewRecallAt: null },
+      true,
+      "multiple_choice",
+      now,
+    );
+    expect(recalledWell.quizKnowledgePosterior).toBeGreaterThan(
+      neverReviewed.quizKnowledgePosterior,
+    );
+  });
+
   it("a correct answer on an untested term raises the posterior above the 0.5 starting prior", () => {
     const result = applyQuizAnswer(
       { quizKnowledgePosterior: null, recallStability: null, lastReviewRecallAt: null },

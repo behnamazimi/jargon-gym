@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { UNTESTED_RECALL_RETRIEVABILITY } from "./constants";
 import { daysUntilRetrievability } from "./recall";
 import { rankQuizQueue, rankReadQueue, rankReviewQueue, recallRetrievabilityNow } from "./queue";
+import { applyQuizAnswer } from "./snapshot";
 import type { TraceCandidate } from "./types";
 
 function makeCandidate(overrides: Partial<TraceCandidate> = {}): TraceCandidate {
@@ -258,7 +259,49 @@ describe("rankQuizQueue", () => {
     ]);
   });
 
-  it("ranks by R_g(t) ascending", () => {
+  it("brings a recently missed term back ahead of one passed long ago", () => {
+    const candidates = [
+      makeCandidate({
+        termId: "passed",
+        quizKnowledgePosterior: 0.79,
+        lastQuizTestedAt: new Date("2026-01-12T00:00:00Z"), // R ≈ 0.85
+      }),
+      makeCandidate({
+        termId: "missed",
+        quizKnowledgePosterior: 0.28,
+        lastQuizTestedAt: new Date("2026-01-30T00:00:00Z"), // R ≈ 0.96, past the cooldown
+      }),
+      makeCandidate({ termId: "never-answered" }),
+    ];
+    expect(rankQuizQueue(candidates, NOW)[0]!.termId).toBe("missed");
+  });
+
+  it("holds a missed term out for the rest of the session it was answered in", () => {
+    const missed = makeCandidate({
+      termId: "missed",
+      quizKnowledgePosterior: 0.28,
+      lastQuizTestedAt: new Date(NOW.getTime() - 60 * 60 * 1000),
+    });
+    expect(rankQuizQueue([missed], NOW)).toEqual([]);
+  });
+
+  it("serves a term after a wrong first answer ahead of never-answered terms", () => {
+    const answeredAt = new Date("2026-01-30T00:00:00Z");
+    const missed = makeCandidate({
+      termId: "missed",
+      createdAt: new Date("2026-01-02T00:00:00Z"),
+      recallStability: 40,
+      recallDifficulty: 5,
+      lastReviewRecallAt: new Date("2026-01-27T00:00:00Z"),
+      quizTestCount: 1,
+      lastQuizTestedAt: answeredAt,
+    });
+    Object.assign(missed, applyQuizAnswer(missed, false, "multiple_choice", answeredAt));
+    const ranked = rankQuizQueue([makeCandidate({ termId: "never-answered" }), missed], NOW);
+    expect(ranked[0]!.termId).toBe("missed");
+  });
+
+  it("ranks answered terms by how likely they are to be recognised", () => {
     const candidates = [
       makeCandidate({
         termId: "confident",

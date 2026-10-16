@@ -6,32 +6,75 @@ import {
   CONFIDENCE_TIME_CONSTANT,
   KNOWN_MIN_TEST_COUNT,
   KNOWN_THRESHOLD,
-  MASTERY_WEIGHT_FAMILIARITY,
+  MASTERY_HORIZON_DAYS,
   MASTERY_WEIGHT_RECALL,
   MASTERY_WEIGHT_RECOGNITION,
+  READ_GAP_WEIGHT,
   UNKNOWN_THRESHOLD,
+  UNTESTED_TRACK_EVIDENCE,
 } from "./constants";
-import type { KnownLabel } from "./types";
+import { addDays, daysBetween } from "./decay";
+import { computeFamiliarity, familiarityUsed } from "./familiarity";
+import { retrievability as recallRetrievability } from "./recall";
+import { posteriorToStability, retrievability as recognitionRetrievability } from "./recognition";
+import type { KnownLabel, TraceState } from "./types";
 
 /** confidence(n) = 1 − e^(−n/τ) — discounts mastery on lightly-tested terms. */
 export function confidence(testCount: number): number {
   return 1 - Math.exp(-testCount / CONFIDENCE_TIME_CONSTANT);
 }
 
-/** Mastery = wF·F_used + wR·R_r + wG·R_g. A track with no history yet
- *  (null retrievability, §4b/§5) contributes 0 rather than making the
- *  whole blend undefined — an unreviewed term's mastery is just whatever
- *  Read alone has earned it. */
+/** Mastery = R'^wR · K_g^wG, a weighted geometric mean of recall
+ *  retrievability and recognition knowledge (quiz posterior × recognition
+ *  retrievability), both read MASTERY_HORIZON_DAYS ahead by the caller, so
+ *  the weaker track pulls mastery down. Reading fills part of what recall is
+ *  missing: R' = R_r + w·F_used·(1 − R_r). A track with no history yet counts
+ *  as UNTESTED_TRACK_EVIDENCE. A term with neither track tested has no
+ *  mastery, whatever Read has done. */
 export function blendMastery(input: {
   familiarityUsed: number;
   recallRetrievability: number | null;
-  recognitionRetrievability: number | null;
+  recognitionKnowledge: number | null;
 }): number {
+  if (input.recallRetrievability === null && input.recognitionKnowledge === null) return 0;
+
+  const recall = input.recallRetrievability ?? UNTESTED_TRACK_EVIDENCE;
+  const recallWithReading = recall + READ_GAP_WEIGHT * input.familiarityUsed * (1 - recall);
   return (
-    MASTERY_WEIGHT_FAMILIARITY * input.familiarityUsed +
-    MASTERY_WEIGHT_RECALL * (input.recallRetrievability ?? 0) +
-    MASTERY_WEIGHT_RECOGNITION * (input.recognitionRetrievability ?? 0)
+    recallWithReading ** MASTERY_WEIGHT_RECALL *
+    (input.recognitionKnowledge ?? UNTESTED_TRACK_EVIDENCE) ** MASTERY_WEIGHT_RECOGNITION
   );
+}
+
+/** Recall retrievability at `at`, or null for a term never graded. */
+export function recallRetrievabilityAt(
+  state: Pick<TraceState, "recallStability" | "lastReviewRecallAt">,
+  at: Date,
+): number | null {
+  return state.recallStability !== null
+    ? recallRetrievability(state.recallStability, daysBetween(state.lastReviewRecallAt ?? at, at))
+    : null;
+}
+
+/** Raw mastery, with every track read MASTERY_HORIZON_DAYS after `now`.
+ *  `withReading: false` leaves Read out, for Read's own queue tempering. */
+export function masteryAhead(state: TraceState, now: Date, withReading = true): number {
+  const ahead = addDays(now, MASTERY_HORIZON_DAYS);
+  const recognitionKnowledge =
+    state.quizKnowledgePosterior !== null
+      ? state.quizKnowledgePosterior *
+        recognitionRetrievability(
+          posteriorToStability(state.quizKnowledgePosterior),
+          daysBetween(state.lastQuizTestedAt ?? now, ahead),
+        )
+      : null;
+  return blendMastery({
+    familiarityUsed: withReading
+      ? familiarityUsed(computeFamiliarity(state.readCount, state.lastReadAt, ahead))
+      : 0,
+    recallRetrievability: recallRetrievabilityAt(state, ahead),
+    recognitionKnowledge,
+  });
 }
 
 /** Mastery_adjusted = confidence(n) · Mastery(term, t). `testCount` is the

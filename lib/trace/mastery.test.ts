@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { KNOWN_MIN_TEST_COUNT, KNOWN_THRESHOLD, UNKNOWN_THRESHOLD } from "./constants";
+import {
+  FAMILIARITY_CAP,
+  KNOWN_MIN_TEST_COUNT,
+  KNOWN_THRESHOLD,
+  UNKNOWN_THRESHOLD,
+} from "./constants";
 import {
   aggregateMastery,
   blendMastery,
@@ -22,22 +27,32 @@ describe("confidence", () => {
 });
 
 describe("blendMastery", () => {
-  it("untested tracks (null retrievability) contribute 0, not undefined behavior", () => {
-    const mastery = blendMastery({
-      familiarityUsed: 0.2,
-      recallRetrievability: null,
-      recognitionRetrievability: null,
+  const blend = (recall: number | null, recognition: number | null, familiarity = 0) =>
+    blendMastery({
+      familiarityUsed: familiarity,
+      recallRetrievability: recall,
+      recognitionKnowledge: recognition,
     });
-    expect(mastery).toBeCloseTo(0.2 * 0.2, 10); // wF * F_used only
+
+  it("is 0 when neither Review nor Quiz has tested the term, whatever Read did", () => {
+    expect(blend(null, null, FAMILIARITY_CAP)).toBe(0);
   });
 
-  it("weights sum to a full blend when all three tracks are present", () => {
-    const mastery = blendMastery({
-      familiarityUsed: 0.35,
-      recallRetrievability: 0.9,
-      recognitionRetrievability: 0.8,
-    });
-    expect(mastery).toBeCloseTo(0.2 * 0.35 + 0.5 * 0.9 + 0.3 * 0.8, 10);
+  it("keeps a term never quizzed below Known, however strong its recall", () => {
+    expect(blend(1, null, FAMILIARITY_CAP)).toBeLessThan(KNOWN_THRESHOLD);
+  });
+
+  it("lets a passed quiz lift strong recall over the Known line", () => {
+    expect(blend(0.97, 0.95)).toBeGreaterThan(KNOWN_THRESHOLD);
+  });
+
+  it("drops when recognition falls below the untested coin flip", () => {
+    expect(blend(0.95, 0.3)).toBeLessThan(blend(0.95, null));
+  });
+
+  it("raises a weak term more than a strong one for the same reading", () => {
+    const lift = (recall: number) => blend(recall, 0.8, FAMILIARITY_CAP) - blend(recall, 0.8);
+    expect(lift(0.4)).toBeGreaterThan(lift(0.95));
   });
 });
 

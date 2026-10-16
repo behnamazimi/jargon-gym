@@ -4,6 +4,8 @@
 
 A memory-scoring engine derived from FSRS, redesigned for learning terms with three tiers (Read, Review, Quiz), no due dates, and independent queues per tier.
 
+This is the original design. The shipped engine differs in places (mastery blend, thresholds, Hard, Quiz order); [trace.md](./trace.md) describes it and lists the differences, and is the one to trust.
+
 ---
 
 ## 1. Core idea
