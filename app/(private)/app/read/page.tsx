@@ -133,7 +133,7 @@ async function ReadRoute({ searchParams }: PageProps) {
 
   return (
     <>
-      <ReadLandingSync storiesDefault={options.storiesDefault} />
+      <ReadLandingSync storiesDefault={options.storiesDefault} redirectToStories />
       <ReadPage
         key={activeCollectionsKey(setup.collections)}
         seed={seed}

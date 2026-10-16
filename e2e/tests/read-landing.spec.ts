@@ -60,6 +60,22 @@ test.describe("Read landing", () => {
     );
   });
 
+  test("Stories by default with no cookie yet moves to Stories in the browser", async ({
+    page,
+    user,
+  }) => {
+    const { collectionId } = await seedCollection(user);
+    await gotoReady(page, `/app/read?collection=${collectionId}`);
+    await page.getByRole("button", { name: "Read options" }).click();
+    await page.getByRole("checkbox", { name: "Open Stories by default" }).click();
+    await expect.poll(() => landingCookie(page)).toBe("stories");
+
+    await page.context().clearCookies({ name: LANDING_COOKIE });
+    await page.goto(`/app/read?collection=${collectionId}`);
+    await expect(page).toHaveURL(new RegExp(`/app/read/stories\\?collection=${collectionId}$`));
+    await expect.poll(() => landingCookie(page)).toBe("stories");
+  });
+
   test("an unfinished story doesn't pull Read away from Cards", async ({ page, user }) => {
     const { collectionId } = await seedCollection(user);
     await gotoReady(page, `/app/read/stories?collection=${collectionId}`);
